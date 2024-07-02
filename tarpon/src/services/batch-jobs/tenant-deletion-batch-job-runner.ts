@@ -301,33 +301,37 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteRiskParameters.bind(this),
         order: 2,
       },
+      PARAMETER_RISK_SCORES_DETAILS_V8: {
+        method: this.deleteRiskParametersV8.bind(this),
+        order: 3,
+      },
       TRANSACTION: {
         method: this.deleteTransactions.bind(this),
-        order: 3,
+        order: 4,
       },
       USER: {
         method: this.deleteUsers.bind(this),
-        order: 4,
+        order: 5,
       },
       RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION: {
         method: this.deleteRuleInstanceTimeAggregation.bind(this),
-        order: 5,
+        order: 6,
       },
       RULE_INSTANCE: {
         method: this.deleteRuleInstances.bind(this),
-        order: 6,
+        order: 7,
       },
       LIST_HEADER: {
         method: this.deleteListHeaders.bind(this),
-        order: 7,
+        order: 8,
       },
       LIST_DELETED: {
         method: this.deleteListDeleted.bind(this),
-        order: 8,
+        order: 9,
       },
       TENANT_SETTINGS: {
         method: this.deleteTenantSettings.bind(this),
-        order: 9,
+        order: 10,
       },
     }
 
@@ -697,6 +701,19 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
     const partitionKeyId =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(tenantId).PartitionKeyID
+
+    await this.deletePartition(
+      tenantId,
+      partitionKeyId,
+      tableName,
+      'Risk RiskParameters'
+    )
+  }
+
+  private async deleteRiskParametersV8(tenantId: string) {
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const partitionKeyId =
+      DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(tenantId).PartitionKeyID
 
     await this.deletePartition(
       tenantId,

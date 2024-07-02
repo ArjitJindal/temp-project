@@ -43,6 +43,8 @@ import {
   getContext,
   updateTenantRiskClassificationValues,
 } from '@/core/utils/context'
+import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
+import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -406,6 +408,71 @@ export class RiskRepository {
     return parameterRiskLevels
   }
 
+  async createOrUpdateParameterRiskItemV8(
+    parameter: ParameterAttributeRiskValuesV8
+  ) {
+    logger.info(`Updating parameter risk levels for V8.`)
+
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...parameter,
+        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
+          this.tenantId,
+          parameter.id
+        ),
+      },
+    }
+
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    logger.info(`Updated parameter risk levels.`)
+
+    return parameter
+  }
+
+  async getParameterRiskItemV8(
+    parameterId: string
+  ): Promise<ParameterAttributeRiskValuesV8 | null> {
+    const getInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
+        this.tenantId,
+        parameterId
+      ),
+    }
+
+    try {
+      const result = await this.dynamoDb.send(new GetCommand(getInput))
+
+      if (!result.Item) {
+        return null
+      }
+
+      return result.Item as ParameterAttributeRiskValuesV8
+    } catch (e) {
+      logger.error(e)
+      throw new InternalServerError(
+        `Parameter Risk Item not found for ${parameterId}`
+      )
+    }
+  }
+
+  async deleteParameterRiskItemV8(parameterId: string) {
+    logger.info(`Deleting parameter risk item.`)
+    const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
+      this.tenantId,
+      parameterId
+    )
+
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+    }
+
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    logger.info(`Deleted parameter risk item.`)
+  }
+
   async deleteParameterRiskItem(
     parameter: ParameterAttributeRiskValuesParameterEnum,
     entityType: RiskEntityType
@@ -508,6 +575,58 @@ export class RiskRepository {
     } catch (e) {
       logger.error(e)
       return null
+    }
+  }
+
+  async getParameterRiskItemsV8(
+    entityType?: RiskEntityType
+  ): Promise<Array<ParameterAttributeRiskValuesV8> | null> {
+    const keyConditionExpr = 'PartitionKeyID = :pk'
+    const expressionAttributeVals = {
+      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
+        .PartitionKeyID,
+    }
+
+    let filterExpression = ''
+
+    if (entityType) {
+      filterExpression = 'riskEntityType = :entityType'
+      expressionAttributeVals[':entityType'] = entityType
+    }
+
+    const queryString =
+      ParameterAttributeValuesListV8.getAttributeTypeMap().reduce(
+        (acc, curr) => {
+          if (curr.baseName === 'name') {
+            return acc + '#name' + ','
+          }
+
+          return acc + curr.baseName + ','
+        },
+        ''
+      )
+
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: keyConditionExpr,
+      ExpressionAttributeValues: expressionAttributeVals,
+      ExpressionAttributeNames: {
+        '#name': 'name',
+      },
+      ProjectionExpression: queryString.slice(0, -1),
+      ...(filterExpression && { FilterExpression: filterExpression }),
+    }
+
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0
+        ? (result.Items.map((item) =>
+            omit(item, ['PartitionKeyID', 'SortKeyID'])
+          ) as ParameterAttributeRiskValuesV8[])
+        : []
+    } catch (e) {
+      logger.error(e)
+      return []
     }
   }
 

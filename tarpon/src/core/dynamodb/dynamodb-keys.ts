@@ -307,6 +307,13 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#provided-parameter-risk-values`,
     SortKeyID: `${entityType}#${parameter}`,
   }),
+  PARAMETER_RISK_SCORES_DETAILS_V8: (
+    tenantId: string,
+    parameterId?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#risk-factors`,
+    SortKeyID: parameterId,
+  }),
   KRS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${KRS_KEY_IDENTIFIER}`,
     SortKeyID: version,

@@ -3338,6 +3338,106 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ParameterAttributeRiskValues'
+  /pulse/risk-parameters-v8:
+    parameters: []
+    post:
+      summary: Parameters Risk Level - POST
+      operationId: post-pulse-risk-parameters-v8
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
+    get:
+      summary: Parameters Risk Level - GET
+      operationId: get-pulse-risk-parameters-v8
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/RiskEntityType'
+          in: query
+          name: entityType
+          description: Entity type you want to filter on
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
+  /pulse/{riskParameterId}/risk-parameters-v8:
+    parameters:
+      - schema:
+          type: string
+        name: riskParameterId
+        in: path
+        required: true
+    put:
+      summary: Parameters Risk Level - PUT
+      operationId: put-pulse-risk-parameters-v8
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
+    get:
+      summary: Parameters Risk Level - GET
+      operationId: get-pulse-risk-parameter-id-risk-parameters-v8
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
+    delete:
+      summary: Parameters Risk Level - DELETE
+      operationId: delete-pulse-risk-parameters-v8
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect
@@ -8451,6 +8551,22 @@ components:
       required:
         - parameterValue
         - riskValue
+    RiskParameterLevelKeyValueV8:
+      type: object
+      title: RiskParameterLevelKeyValues
+      properties:
+        logic:
+          type: object
+        riskValue:
+          oneOf:
+            - $ref: '#/components/schemas/RiskScoreValueLevel'
+            - $ref: '#/components/schemas/RiskScoreValueScore'
+        weight:
+          type: number
+      required:
+        - logic
+        - riskValue
+        - weight
     RiskParameterValue:
       type: object
       properties:
@@ -8568,6 +8684,100 @@ components:
         - end
         - startGranularity
         - endGranularity
+    ParameterAttributeValuesListV8:
+      title: ParameterAttributeValuesListV8
+      allOf:
+        - $ref: '#/components/schemas/ParameterAttibutesValuesDerivedV8'
+        - type: object
+          properties:
+            isActive:
+              type: boolean
+            defaultWeight:
+              type: number
+              minimum: 0.01
+              maximum: 1
+            defaultValue:
+              oneOf:
+                - $ref: '#/components/schemas/RiskScoreValueLevel'
+                - $ref: '#/components/schemas/RiskScoreValueScore'
+            name:
+              type: string
+            riskEntityType:
+              $ref: '#/components/schemas/RiskEntityType'
+            description:
+              type: string
+      required:
+        - isActive
+        - logicAggregationVariables
+        - logicEntityVariables
+        - defaultWeight
+        - defaultValue
+        - name
+        - riskEntityType
+        - riskLevelAssignmentValues
+        - description
+    ParameterAttributeValuesV8Request:
+      title: ParameterAttributeValuesV8
+      type: object
+      properties:
+        isActive:
+          type: boolean
+        logicAggregationVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAggregationVariable'
+        logicEntityVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleEntityVariable'
+        defaultWeight:
+          type: number
+          minimum: 0.01
+          maximum: 1
+        defaultValue:
+          oneOf:
+            - $ref: '#/components/schemas/RiskScoreValueLevel'
+            - $ref: '#/components/schemas/RiskScoreValueScore'
+        name:
+          type: string
+        riskEntityType:
+          $ref: '#/components/schemas/RiskEntityType'
+        riskLevelAssignmentValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskParameterLevelKeyValueV8'
+        description:
+          type: string
+        baseCurrency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+      required:
+        - isActive
+        - logicAggregationVariables
+        - logicEntityVariables
+        - defaultWeight
+        - defaultValue
+        - name
+        - riskEntityType
+        - riskLevelAssignmentValues
+        - description
+    ParameterAttibutesValuesDerivedV8:
+      title: ParameterAttibutesValuesDerivedV8
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - createdAt
+        - updatedAt
+    ParameterAttributeRiskValuesV8:
+      title: ParameterAttributeRiskValuesV8
+      allOf:
+        - $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
+        - $ref: '#/components/schemas/ParameterAttibutesValuesDerivedV8'
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object

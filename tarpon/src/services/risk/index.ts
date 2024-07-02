@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
+import { CounterRepository } from '../counter/repository'
 import { PulseAuditLogService } from './pulse-audit-log'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -12,6 +13,8 @@ import {
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { traceable } from '@/core/xray'
+import { ParameterAttributeValuesV8Request } from '@/@types/openapi-internal/ParameterAttributeValuesV8Request'
+import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -34,6 +37,7 @@ export class RiskService {
   dynamoDb: DynamoDBDocumentClient
   riskRepository: RiskRepository
   auditLogService: PulseAuditLogService
+  mongoDb?: MongoClient
 
   constructor(
     tenantId: string,
@@ -46,6 +50,7 @@ export class RiskService {
       mongoDb: connections.mongoDb,
     })
     this.auditLogService = new PulseAuditLogService(tenantId)
+    this.mongoDb = connections.mongoDb
   }
 
   async getRiskClassificationValues() {
@@ -85,6 +90,66 @@ export class RiskService {
       parameter as ParameterAttributeRiskValuesParameterEnum,
       entityType
     )
+  }
+
+  async getParameterRiskItemsV8(
+    entityType?: RiskEntityType
+  ): Promise<Array<ParameterAttributeRiskValuesV8> | null> {
+    return this.riskRepository.getParameterRiskItemsV8(entityType)
+  }
+
+  async createOrUpdateRiskParameterV8(
+    parameter: ParameterAttributeValuesV8Request,
+    riskParameterId?: string
+  ): Promise<ParameterAttributeRiskValuesV8> {
+    if (!this.mongoDb) {
+      throw new Error('MongoDB connection not available')
+    }
+
+    const currentId = riskParameterId
+    let currentParameter: ParameterAttributeRiskValuesV8 | null = null
+
+    if (riskParameterId) {
+      currentParameter = await this.riskRepository.getParameterRiskItemV8(
+        riskParameterId
+      )
+    }
+
+    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const id: string =
+      currentId ??
+      `CRF-${(
+        await counterRepository.getNextCounterAndUpdate('CustomRiskFactor')
+      )
+        .toString()
+        .padStart(3, '0')}`
+
+    const data: ParameterAttributeRiskValuesV8 = {
+      ...parameter,
+      id,
+      createdAt: currentParameter?.createdAt ?? Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    await this.riskRepository.createOrUpdateParameterRiskItemV8(data)
+
+    return data
+  }
+
+  async getRiskParameterV8(
+    parameterId: string
+  ): Promise<ParameterAttributeRiskValuesV8> {
+    const data = await this.riskRepository.getParameterRiskItemV8(parameterId)
+
+    if (!data) {
+      throw new BadRequest('Invalid request - parameter not found')
+    }
+
+    return data
+  }
+
+  async deleteRiskParameterV8(parameterId: string) {
+    return this.riskRepository.deleteParameterRiskItemV8(parameterId)
   }
 
   async getAllRiskParameters(): Promise<ParameterAttributeRiskValues[]> {

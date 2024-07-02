@@ -51,7 +51,8 @@ export const parameterRiskAssignmentHandler = lambdaApi({
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const riskService = new RiskService(tenantId, { dynamoDb })
+    const mongoDb = await getMongoDbClient()
+    const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
     const handlers = new Handlers()
 
     handlers.registerGetPulseRiskParameter(
@@ -76,6 +77,27 @@ export const parameterRiskAssignmentHandler = lambdaApi({
             riskService.createOrUpdateRiskParameter(riskParameter)
         )
       )
+    })
+
+    handlers.registerPostPulseRiskParametersV8(async (ctx, request) => {
+      return await riskService.createOrUpdateRiskParameterV8(
+        request.ParameterAttributeValuesV8Request
+      )
+    })
+
+    handlers.registerGetPulseRiskParametersV8(async (ctx, request) => {
+      return await riskService.getParameterRiskItemsV8(request.entityType)
+    })
+
+    handlers.registerPutPulseRiskParametersV8(async (ctx, request) => {
+      return await riskService.createOrUpdateRiskParameterV8(
+        request.ParameterAttributeValuesV8Request,
+        request.riskParameterId
+      )
+    })
+
+    handlers.registerDeletePulseRiskParametersV8(async (ctx, request) => {
+      return await riskService.deleteRiskParameterV8(request.riskParameterId)
     })
 
     handlers.registerGetPulseRiskParameters(async (_ctx, _request) => {
