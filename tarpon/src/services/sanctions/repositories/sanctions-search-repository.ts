@@ -130,6 +130,11 @@ export class SanctionsSearchRepository {
       })
     }
 
+    if (params.filterManualSearch) {
+      conditions.push({
+        searchedBy: { $exists: true },
+      })
+    }
     if (params.filterSearchedBy?.length) {
       conditions.push({
         searchedBy: { $in: params.filterSearchedBy },

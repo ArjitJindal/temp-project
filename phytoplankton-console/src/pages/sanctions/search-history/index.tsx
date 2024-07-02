@@ -44,6 +44,7 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
         types,
         start: from,
         filterSearchedBy: searchedBy,
+        filterManualSearch: true,
         ...rest,
       });
 

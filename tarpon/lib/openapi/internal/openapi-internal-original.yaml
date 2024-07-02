@@ -4951,6 +4951,10 @@ paths:
               type: string
           in: query
           name: filterSearchedBy
+        - schema:
+            type: boolean
+          in: query
+          name: filterManualSearch
   /sanctions/activity/stats:
     get:
       summary: Get sanctions screening activity stats
