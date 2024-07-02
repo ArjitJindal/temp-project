@@ -4,7 +4,7 @@
   "projectId": "c33bd5b9-2599-4133-aceb-6ac5bdaec23a",
   "sendCrashReports": "true",
   "terraformProviders": [
-    "hashicorp/aws@5.40.0",
+    "hashicorp/aws@5.56.1",
     "databricks/databricks@1.34.0",
     "kota65535/maven@0.1.2"
   ],

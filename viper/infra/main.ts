@@ -62,14 +62,16 @@ const jobs = [
     description: 'Stream live from kinesis and transform',
     continuous: true,
     compute: 'G.025X',
-    numWorkers: 1,
+    // Minimum workers allowed by AWS API is currently 2
+    numWorkers: 2,
   },
   {
     name: 'optimize',
     description: 'Optimize all tables nightly',
     schedule: 'CRON(0 0 0 * * ?)',
     compute: 'G.025X',
-    numWorkers: 1,
+    // Minimum workers allowed by AWS API is currently 2
+    numWorkers: 2,
   },
 ]
 
@@ -459,16 +461,20 @@ class DatabricksStack extends TerraformStack {
       connections.push(mongoConnection.name)
     }
 
-    const log4PropertiesFile = new aws.s3Object.S3Object(this, `spark-properties`, {
-      bucket: datalakeBucket.bucket,
-      key: `log4j2.properties`,
-      content: `
+    const log4PropertiesFile = new aws.s3Object.S3Object(
+      this,
+      `spark-properties`,
+      {
+        bucket: datalakeBucket.bucket,
+        key: `log4j2.properties`,
+        content: `
 log4j.rootCategory=ERROR,console
 log4j.appender.console=org.apache.log4j.ConsoleAppender
 log4j.appender.console.target=System.err
 log4j.appender.console.layout=org.apache.log4j.PatternLayout
 log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n`,
-    })
+      }
+    )
 
     jobs.map((job) => {
       const script = new aws.s3Object.S3Object(this, `${job.name}-script`, {
