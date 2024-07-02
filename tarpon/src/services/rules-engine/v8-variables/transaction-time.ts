@@ -18,6 +18,9 @@ export const TRANSACTION_TIME: TransactionRuleVariable = {
   valueType: 'number',
   uiDefinition: getUiDefinition(),
   load: async (transaction) => {
+    if (!transaction) {
+      return null
+    }
     const time = dayjs(transaction.timestamp)
     return time.diff(time.startOf('day'), 'seconds')
   },

@@ -65,6 +65,7 @@ import { getS3Client } from '@/utils/s3'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { RuleLogicConfig } from '@/@types/openapi-internal/RuleLogicConfig'
+import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -555,7 +556,8 @@ You have to answer in below format as string. If you don't know any field, just 
   public static async validateRuleLogic(
     ruleLogic: unknown,
     riskLevelRuleLogic?: RuleInstance['riskLevelLogic'],
-    logicAggregationVariables?: Array<RuleAggregationVariable>
+    logicAggregationVariables?: Array<RuleAggregationVariable>,
+    logicEntityVariables?: RuleEntityVariableInUse[]
   ) {
     if (!isEmpty(riskLevelRuleLogic)) {
       // all keys in riskLevelRuleLogic should be in RISK_LEVELS
@@ -580,7 +582,13 @@ You have to answer in below format as string. If you don't know any field, just 
       ...(logicAggregationVariables ?? []).map((x) => x.filtersLogic),
     ].filter(notNullish)
 
+    const entityVarKeys = logicEntityVariables?.map((x) => x.key) ?? []
     const aggVarKeys = logicAggregationVariables?.map((x) => x.key) ?? []
+    logicEntityVariables?.forEach((v) => {
+      if (!getRuleVariableByKey(v.entityKey)) {
+        throw new BadRequest(`Unknown entity variable '${v}'`)
+      }
+    })
     logicAggregationVariables?.forEach((v) => {
       if (
         v.aggregationFunc === 'UNIQUE_VALUES' &&
@@ -627,8 +635,11 @@ You have to answer in below format as string. If you don't know any field, just 
           const { entityVariableKeys, aggVariableKeys } =
             getVariableKeysFromLogic(logic)
           entityVariableKeys.forEach((entityVar) => {
-            if (!getRuleVariableByKey(entityVar)) {
-              throw new BadRequest(`Unknown entity variable: '${entityVar}'`)
+            if (
+              !entityVarKeys.includes(entityVar) &&
+              !getRuleVariableByKey(entityVar)
+            ) {
+              throw new BadRequest(`Unknown entity variable '${entityVar}'`)
             }
           })
           aggVariableKeys.forEach((aggVar) => {

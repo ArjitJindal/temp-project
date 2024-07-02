@@ -3,7 +3,6 @@ import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import { isEmpty } from 'lodash';
 import s from './index.module.less';
-import { JSON_LOGIC_FUNCTIONS } from './functions';
 import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS } from './operators';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
@@ -44,7 +43,6 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
     funcs: {
       ...InitialConfig.funcs,
       ...params.funcs,
-      ...JSON_LOGIC_FUNCTIONS,
     },
     operators: operators,
     fields: fields,

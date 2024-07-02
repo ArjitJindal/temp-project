@@ -7,10 +7,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import {
-  getNewTransactionID,
-  DynamoDbTransactionRepository,
-} from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
+import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -150,11 +147,12 @@ export const transactionHandler = lambdaApi()(
         JSON.parse(event.body) as Transaction,
         Transaction
       )
-      const transactionId = getNewTransactionID(transaction)
-
       validationSegment?.addAnnotation('tenantId', tenantId)
-      validationSegment?.addAnnotation('transactionId', transactionId)
-      updateLogMetadata({ transactionId })
+      validationSegment?.addAnnotation(
+        'transactionId',
+        transaction.transactionId
+      )
+      updateLogMetadata({ transactionId: transaction.transactionId })
       logger.info(`Processing transaction`) // Need to log to show on the logs
 
       if (

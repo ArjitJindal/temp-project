@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
-import { getAllEntityVariables } from '../../../utils';
 import { Mode } from '..';
 import s from './style.module.less';
 import BasicDetailsStep, {
@@ -289,7 +288,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
     const ruleIsHitWhenStep: RuleIsHitWhenStepFormValues = {
       ...RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
       ruleLogic: rule?.defaultLogic,
-      ruleLogicEntityVariables: getAllEntityVariables(rule?.defaultLogic),
+      ruleLogicEntityVariables: [],
       ruleLogicAggregationVariables: rule?.defaultLogicAggregationVariables ?? [],
       baseCurrency: rule?.defaultBaseCurrency,
     };

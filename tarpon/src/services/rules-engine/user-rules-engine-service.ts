@@ -87,16 +87,43 @@ export class UserManagementService {
       }
     }
 
+    const monitoringResult = await this.rulesEngineService.verifyUser(
+      userPayload
+    )
     const userResult = {
       ...userPayload,
-      ...(await this.rulesEngineService.verifyUser(userPayload)),
+      ...monitoringResult,
     }
 
-    isConsumerUser
-      ? await this.userRepository.saveConsumerUser(userResult)
-      : await this.userRepository.saveBusinessUser(
+    if (isConsumerUser) {
+      await Promise.all([
+        this.userRepository.saveConsumerUser(userResult),
+        this.userEventRepository.saveUserEvent(
+          {
+            timestamp: userResult.createdTimestamp,
+            userId: userResult.userId,
+            updatedConsumerUserAttributes: userResult,
+          },
+          'CONSUMER',
+          monitoringResult
+        ),
+      ])
+    } else {
+      await Promise.all([
+        this.userRepository.saveBusinessUser(
           userResult as BusinessWithRulesResult
-        )
+        ),
+        this.userEventRepository.saveUserEvent(
+          {
+            timestamp: userResult.createdTimestamp,
+            userId: userResult.userId,
+            updatedBusinessUserAttributes: userResult,
+          },
+          'BUSINESS',
+          monitoringResult
+        ),
+      ])
+    }
 
     return userResult
   }
@@ -253,13 +280,20 @@ export class UserManagementService {
         )
     }
 
+    const monitoringResult = await this.rulesEngineService.verifyUser(
+      updatedConsumerUser
+    )
     const updatedConsumerUserResult: UserWithRulesResult = {
       ...updatedConsumerUser,
-      ...(await this.rulesEngineService.verifyUser(updatedConsumerUser)),
+      ...monitoringResult,
       riskScoreDetails,
     }
 
-    await this.userEventRepository.saveUserEvent(userEvent, 'CONSUMER')
+    await this.userEventRepository.saveUserEvent(
+      userEvent,
+      'CONSUMER',
+      monitoringResult
+    )
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
     await this.caseRepository.syncUsersCases(
       userId,
@@ -320,13 +354,20 @@ export class UserManagementService {
         )
     }
 
+    const monitoringResult = await this.rulesEngineService.verifyUser(
+      updatedBusinessUser
+    )
     const updatedBusinessUserResult = {
       ...updatedBusinessUser,
-      ...(await this.rulesEngineService.verifyUser(updatedBusinessUser)),
+      ...monitoringResult,
       riskScoreDetails,
     }
 
-    await this.userEventRepository.saveUserEvent(userEvent, 'BUSINESS')
+    await this.userEventRepository.saveUserEvent(
+      userEvent,
+      'BUSINESS',
+      monitoringResult
+    )
     await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
     await this.caseRepository.syncUsersCases(
       userId,

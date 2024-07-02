@@ -160,7 +160,8 @@ export class RuleInstanceService {
       await RuleService.validateRuleLogic(
         ruleInstance.logic,
         ruleInstance.riskLevelLogic,
-        ruleInstance.logicAggregationVariables
+        ruleInstance.logicAggregationVariables,
+        ruleInstance.logicEntityVariables
       )
     }
 

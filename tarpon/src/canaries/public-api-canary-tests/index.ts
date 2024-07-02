@@ -11,9 +11,9 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { UserState } from '@/@types/openapi-public/UserState'
 import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
-import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { User } from '@/@types/openapi-internal/User'
-import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { Business } from '@/@types/openapi-public/Business'
 
@@ -825,7 +825,7 @@ const getTestBusinessUserSuccess = async () => {
 
   await pMap(
     [
-      executeHttpStep<Business, BusinessUsersResponse>(
+      executeHttpStep<Business, BusinessUserMonitoringResult>(
         'Create Business User',
         '/business/users',
         businessUserPayload,
@@ -1376,27 +1376,25 @@ const getTestBusinessUserSuccess = async () => {
 
   await pMap(
     [
-      executeHttpStep<Business, BusinessUsersResponse & { message: string }>(
-        'Duplicate User Id',
-        '/business/users',
-        businessUserPayload,
-        {
-          statusCode: 200,
-          statusMessage: 'OK',
-          dataCallback: (inputPayload, data, reject) => {
-            if (data.userId !== inputPayload.userId) {
-              reject('User ID does not match')
-            }
+      executeHttpStep<
+        Business,
+        BusinessUserMonitoringResult & { message: string }
+      >('Duplicate User Id', '/business/users', businessUserPayload, {
+        statusCode: 200,
+        statusMessage: 'OK',
+        dataCallback: (inputPayload, data, reject) => {
+          if (data.userId !== inputPayload.userId) {
+            reject('User ID does not match')
+          }
 
-            if (
-              data.message !==
-              'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
-            ) {
-              reject('Message is incorrect or missing')
-            }
-          },
-        }
-      ),
+          if (
+            data.message !==
+            'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.'
+          ) {
+            reject('Message is incorrect or missing')
+          }
+        },
+      }),
 
       executeHttpStep<Partial<Business>, NotFoundError>(
         'Linked entity does not exist',
@@ -1487,7 +1485,7 @@ const getTestCustomerUserSuccess = async () => {
 
   await pMap(
     [
-      executeHttpStep<User, ConsumerUsersResponse>(
+      executeHttpStep<User, ConsumerUserMonitoringResult>(
         'Create Consumer User',
         '/consumer/users',
         consumerUserPayload,
@@ -1914,7 +1912,7 @@ const getTestCustomerUserSuccess = async () => {
 
   await pMap(
     [
-      executeHttpStep<User, ConsumerUsersResponse & { message: string }>(
+      executeHttpStep<User, ConsumerUserMonitoringResult & { message: string }>(
         'Duplicate User Id',
         '/consumer/users',
         consumerUserPayload,

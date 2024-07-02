@@ -35,7 +35,7 @@ export abstract class UserRuleFilter<P> extends RuleFilter {
     return (
       await new RuleJsonLogicEvaluator(this.tenantId, this.dynamoDb).evaluate(
         migratedFilter?.logic ?? { and: [true] },
-        [],
+        {},
         {
           tenantId: '',
           baseCurrency: migratedFilter?.baseCurrency,

@@ -1,4 +1,3 @@
-import { getAllValuesByKey } from '@flagright/lib/utils';
 import { useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { RuleIsHitWhenStepFormValues } from '../index';
@@ -20,6 +19,7 @@ import { CurrencyCode, RuleType } from '@/apis';
 import Alert from '@/components/library/Alert';
 import { isError } from '@/components/library/Form/utils/validation/types';
 import Button from '@/components/library/Button';
+import { getAllEntityVariableKeys } from '@/pages/rules/utils';
 
 interface Props {
   ruleType: RuleType;
@@ -62,8 +62,13 @@ export default function DefineLogicCard(props: Props) {
     ? riskLevelsLogicFieldState.validationResult
     : logicFieldState.validationResult;
   const hasTransactionAmountVariable = useMemo(() => {
-    return Boolean(getAllValuesByKey<string>('var', jsonLogic).find(isTransactionAmountVariable));
-  }, [jsonLogic]);
+    const entityVariablesInUse = entityVariablesFieldState.value ?? [];
+    const varKeysInLogic = getAllEntityVariableKeys(jsonLogic);
+    const entityVariableKeys = entityVariablesInUse
+      .filter((v) => varKeysInLogic.includes(v.key))
+      .map((v) => v.entityKey);
+    return Boolean(entityVariableKeys.find(isTransactionAmountVariable));
+  }, [entityVariablesFieldState.value, jsonLogic]);
   const hasVariables = useMemo(() => {
     return Boolean(entityVariablesFieldState.value?.length || aggVariablesFieldState.value?.length);
   }, [aggVariablesFieldState.value?.length, entityVariablesFieldState.value?.length]);
@@ -131,7 +136,13 @@ export default function DefineLogicCard(props: Props) {
               <RuleLogicBuilder
                 ruleType={ruleType}
                 key={currentRiskLevel}
-                entityVariableTypes={['TRANSACTION', 'CONSUMER_USER', 'BUSINESS_USER', 'USER']}
+                entityVariableTypes={[
+                  'TRANSACTION',
+                  'TRANSACTION_EVENT',
+                  'CONSUMER_USER',
+                  'BUSINESS_USER',
+                  'USER',
+                ]}
                 entityVariablesInUse={entityVariablesFieldState.value ?? []}
                 jsonLogic={jsonLogic}
                 aggregationVariables={aggVariablesFieldState.value}

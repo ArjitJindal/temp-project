@@ -8,6 +8,7 @@ import {
   RuleVariableBase as RuleVariable,
   TransactionRuleVariable,
   RuleVariableContext,
+  TransactionEventRuleVariable,
 } from './types'
 import {
   CONSUMER_USER_CREATION_AGE_DAYS,
@@ -54,6 +55,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { CurrencyService } from '@/services/currency'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 const currencyService = new CurrencyService()
 
@@ -188,7 +190,7 @@ const USER_DERIVED_VARIABLES: Array<
 ]
 
 function isTimestampVariable(key: string): boolean {
-  return key.endsWith('timestamp') || key.endsWith('Timestamp')
+  return key.toLowerCase().endsWith('timestamp')
 }
 
 function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
@@ -242,7 +244,7 @@ function updatedTransactionEntityVariables(
   if (originAmountVariable) {
     originAmountVariable.load = async (transaction, context) => {
       return await loadTransactionAmount(
-        transaction.originAmountDetails,
+        transaction?.originAmountDetails,
         context
       )
     }
@@ -252,7 +254,7 @@ function updatedTransactionEntityVariables(
   if (destinationAmountVariable) {
     destinationAmountVariable.load = async (transaction, context) => {
       return await loadTransactionAmount(
-        transaction.destinationAmountDetails,
+        transaction?.destinationAmountDetails,
         context
       )
     }
@@ -280,13 +282,25 @@ const getTransactionEntityVariables = memoize(
     return Object.fromEntries(transactionEntityVariables.map((v) => [v.key, v]))
   }
 )
+const getTransactionEventVariables = memoize(
+  (): { [key: string]: TransactionEventRuleVariable } => {
+    const transactionEntityVariables = getAutoRuleEntityVariables(
+      'TRANSACTION_EVENT',
+      TransactionEvent,
+      ['updatedTransactionAttributes']
+    ) as TransactionEventRuleVariable[]
+    return Object.fromEntries(transactionEntityVariables.map((v) => [v.key, v]))
+  }
+)
 
 export const getTransactionRuleEntityVariables = memoize(
   (): { [key: string]: RuleVariable } => {
     const transactionEntityVariables = Object.values(
       getTransactionEntityVariables()
     )
-
+    const transactionEventVariables = Object.values(
+      getTransactionEventVariables()
+    )
     updatedTransactionEntityVariables(
       transactionEntityVariables as TransactionRuleVariable[]
     )
@@ -301,6 +315,7 @@ export const getTransactionRuleEntityVariables = memoize(
     return Object.fromEntries(
       [
         ...txEntityVariableWithoutDirection(transactionEntityVariables),
+        ...transactionEventVariables,
         ...userEntityVariableWithDirection(
           consumerUserEntityVariables.concat(
             businessUserEntityVariables,
@@ -352,9 +367,15 @@ function getUiDefinition(info: EntityLeafValueInfo): FieldOrGroup {
 
 function getAutoRuleEntityVariables(
   entityType: RuleEntityType,
-  entityClass: typeof EntityModel
+  entityClass: typeof EntityModel,
+  ignoreFields: string[] = []
 ): RuleVariable[] {
-  const leafValueInfos = getPublicModelLeafAttrs(entityClass)
+  let leafValueInfos = getPublicModelLeafAttrs(entityClass)
+  if (ignoreFields.length) {
+    leafValueInfos = leafValueInfos.filter((info) =>
+      ignoreFields.every((ignoreField) => !info.pathKey.startsWith(ignoreField))
+    )
+  }
   const nonArrayVariables: RuleVariable[] = leafValueInfos
     .filter((info) => !info.pathKey.includes(ARRAY_ITEM_INDICATOR))
     .map((info) => {

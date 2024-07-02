@@ -411,6 +411,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [
           {
             transactionId: 1,
+            timestamp: -1,
+          },
+          {
+            transactionId: 1,
             transactionState: 1,
             timestamp: -1,
           },

@@ -7,13 +7,18 @@ import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuil
 import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { RuleAggregationVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
+import {
+  RuleAggregationVariable,
+  RuleEntityVariableEntityEnum,
+  RuleEntityVariableInUse,
+  RuleType,
+} from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
 
 interface Props {
   ruleType: RuleType;
   jsonLogic: RuleLogic | undefined;
-  entityVariableTypes: Array<'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER'>;
+  entityVariableTypes: RuleEntityVariableEntityEnum[];
   entityVariablesInUse?: RuleEntityVariableInUse[];
   aggregationVariables: RuleAggregationVariable[] | undefined;
   onChange: (jsonLogic: RuleLogic | undefined) => void;

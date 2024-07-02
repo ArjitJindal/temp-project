@@ -4,7 +4,10 @@ import { createAggregationVariable } from '../test-utils'
 import { AggregationRepository } from '../aggregation-repository'
 import { TransactionRuleData } from '..'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  getTestTransaction,
+  getTestTransactionEvent,
+} from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { LegalDocument } from '@/@types/openapi-public/LegalDocument'
@@ -28,7 +31,7 @@ describe('Entity variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -50,7 +53,7 @@ describe('Entity variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -70,7 +73,7 @@ describe('Entity variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'abc'] }] },
-      [],
+      {},
       { tenantId },
       {
         type: 'USER',
@@ -95,7 +98,7 @@ describe('Entity variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'abc'] }] },
-      [],
+      {},
       { tenantId },
       {
         type: 'USER',
@@ -113,7 +116,60 @@ describe('Entity variable', () => {
       hitDirections: [],
     })
   })
+
+  test('executes the json logic - hit (tx event)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'TRANSACTION_EVENT:reason' }, 'abc'] }] },
+      {},
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+        transactionEvents: [getTestTransactionEvent({ reason: 'abc' })],
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'TRANSACTION_EVENT:reason': 'abc' },
+        },
+      ],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+
+  test('executes the json logic - no hit (tx event)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'TRANSACTION_EVENT:reason' }, 'abc'] }] },
+      {},
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+        transactionEvents: [getTestTransactionEvent({ reason: 'def' })],
+      }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'TRANSACTION_EVENT:reason': 'def' },
+        },
+      ],
+      hitDirections: [],
+    })
+  })
 })
+
 describe('Entity variable (array)', () => {
   const TEST_LOGIC = {
     and: [
@@ -155,7 +211,7 @@ describe('Entity variable (array)', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, getDynamoDbClient())
     const result = await evaluator.evaluate(
       TEST_LOGIC,
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -189,7 +245,7 @@ describe('Entity variable (array)', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       TEST_LOGIC,
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -229,7 +285,7 @@ describe('Entity variable (array)', () => {
     ]
     const result = await evaluator.evaluate(
       TEST_LOGIC_NESTED,
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -261,7 +317,7 @@ describe('Entity variable (array)', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       TEST_LOGIC_NESTED,
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -285,6 +341,115 @@ describe('Entity variable (array)', () => {
   })
 })
 
+describe('Entity variable (filters)', () => {
+  test('executes the json logic - hit', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const testTransaction = getTestTransaction({ transactionState: 'CREATED' })
+    const targetTimestamp = dayjs('2024-01-02').valueOf()
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'entity:1' }, targetTimestamp] }] },
+      {
+        entity: [
+          {
+            key: 'entity:1',
+            entityKey: 'TRANSACTION_EVENT:timestamp',
+            filtersLogic: {
+              and: [
+                {
+                  '==': [{ var: 'TRANSACTION:transactionState' }, 'PROCESSING'],
+                },
+              ],
+            },
+          },
+        ],
+      },
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: testTransaction,
+        transactionEvents: [
+          getTestTransactionEvent({
+            timestamp: dayjs('2024-01-01').valueOf(),
+            transactionState: 'CREATED',
+            updatedTransactionAttributes: testTransaction,
+          }),
+          getTestTransactionEvent({
+            timestamp: targetTimestamp,
+            transactionState: 'PROCESSING',
+          }),
+          getTestTransactionEvent({
+            timestamp: dayjs('2024-01-03').valueOf(),
+            transactionState: 'SUCCESSFUL',
+          }),
+        ],
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'entity:1': targetTimestamp },
+        },
+      ],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+  test('executes the json logic - no hit', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const testTransaction = getTestTransaction({ transactionState: 'CREATED' })
+    const targetTimestamp = dayjs('2024-01-02').valueOf()
+    const result = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'entity:1' }, targetTimestamp] }] },
+      {
+        entity: [
+          {
+            key: 'entity:1',
+            entityKey: 'TRANSACTION_EVENT:timestamp',
+            filtersLogic: {
+              and: [
+                {
+                  '==': [{ var: 'TRANSACTION:transactionState' }, 'PROCESSING'],
+                },
+              ],
+            },
+          },
+        ],
+      },
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: testTransaction,
+        transactionEvents: [
+          getTestTransactionEvent({
+            timestamp: dayjs('2024-01-01').valueOf(),
+            transactionState: 'CREATED',
+            updatedTransactionAttributes: testTransaction,
+          }),
+          getTestTransactionEvent({
+            timestamp: dayjs('2024-01-03').valueOf(),
+            transactionState: 'SUCCESSFUL',
+          }),
+        ],
+      }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {},
+        },
+      ],
+      hitDirections: [],
+    })
+  })
+})
+
 describe('Aggregation variable', () => {
   test('executes the json logic (sending)', async () => {
     const tenantId = 'tenant-id'
@@ -292,20 +457,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -330,20 +497,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'RECEIVER',
-          transactionDirection: 'RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'RECEIVER',
+            transactionDirection: 'RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -373,32 +542,34 @@ describe('Aggregation variable', () => {
           { '==': [{ var: 'agg:456' }, 1] },
         ],
       },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:456',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'RECEIVER',
-          transactionDirection: 'RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:456',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'RECEIVER',
+            transactionDirection: 'RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -423,20 +594,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER_OR_RECEIVER',
-          transactionDirection: 'SENDING_RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING_RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -465,20 +638,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING_RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING_RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -503,20 +678,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'RECEIVER',
-          transactionDirection: 'SENDING_RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'RECEIVER',
+            transactionDirection: 'SENDING_RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -541,20 +718,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'RECEIVING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'RECEIVING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -574,20 +753,22 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'RECEIVER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'RECEIVER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -619,14 +800,16 @@ describe('Aggregation variable', () => {
     } as const
     const resultFilteredOut = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          ...testAggVar,
-          filtersLogic: {
-            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
+      {
+        agg: [
+          {
+            ...testAggVar,
+            filtersLogic: {
+              and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -645,18 +828,96 @@ describe('Aggregation variable', () => {
     })
     const resultFiltered = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          ...testAggVar,
-          filtersLogic: {
-            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
+      {
+        agg: [
+          {
+            ...testAggVar,
+            filtersLogic: {
+              and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
         transaction: getTestTransaction({ type: 'TRANSFER' }),
+      }
+    )
+    expect(resultFiltered).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 1 },
+        },
+      ],
+      hitDirections: ['DESTINATION'],
+    })
+  })
+
+  test('executes the json logic (filters logic + tx event)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const testAggVar = {
+      key: 'agg:123',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: { units: 30, granularity: 'day' },
+        end: { units: 0, granularity: 'day' },
+      },
+    } as const
+    const resultFilteredOut = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      {
+        agg: [
+          {
+            ...testAggVar,
+            filtersLogic: {
+              and: [{ '==': [{ var: 'TRANSACTION_EVENT:reason' }, 'reason1'] }],
+            },
+          },
+        ],
+      },
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+        transactionEvents: [getTestTransactionEvent({ reason: 'reason2' })],
+      }
+    )
+    expect(resultFilteredOut).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'agg:123': 0 },
+        },
+      ],
+      hitDirections: [],
+    })
+    const resultFiltered = await evaluator.evaluate(
+      { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
+      {
+        agg: [
+          {
+            ...testAggVar,
+            filtersLogic: {
+              and: [{ '==': [{ var: 'TRANSACTION_EVENT:reason' }, 'reason1'] }],
+            },
+          },
+        ],
+      },
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({ type: 'TRANSFER' }),
+        transactionEvents: [getTestTransactionEvent({ reason: 'reason1' })],
       }
     )
     expect(resultFiltered).toEqual({
@@ -685,15 +946,17 @@ describe('Aggregation variable', () => {
     } as const
     const resultNotWithinTimeWindow = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          ...testAggVar,
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 1, granularity: 'day' },
+      {
+        agg: [
+          {
+            ...testAggVar,
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 1, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -712,15 +975,17 @@ describe('Aggregation variable', () => {
     })
     const resultWithinTimeWindow = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
-      [
-        {
-          ...testAggVar,
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            ...testAggVar,
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -745,22 +1010,24 @@ describe('Aggregation variable', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '>': [{ var: 'agg:123' }, 100] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey:
-            'TRANSACTION:originAmountDetails-transactionAmount',
-          baseCurrency: 'USD',
-          aggregationFunc: 'AVG',
-          timeWindow: {
-            start: { units: 1, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            baseCurrency: 'USD',
+            aggregationFunc: 'AVG',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'USD', tenantId },
       {
         type: 'TRANSACTION',
@@ -811,10 +1078,11 @@ describe('Aggregation variable', () => {
         originUserId: 'U-1',
         originPaymentDetails: undefined,
       }),
+      transactionEvents: [],
     }
     const result1 = await evaluator.evaluate(
       logic,
-      aggVars,
+      { agg: aggVars },
       { baseCurrency: 'EUR', tenantId },
       data
     )
@@ -830,7 +1098,7 @@ describe('Aggregation variable', () => {
     })
     const result2 = await evaluator.evaluate(
       logic,
-      aggVars,
+      { agg: aggVars },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -884,10 +1152,11 @@ describe('Aggregation variable', () => {
           cardFingerprint: '1234',
         },
       }),
+      transactionEvents: [],
     }
     const result1 = await evaluator.evaluate(
       logic,
-      aggVars,
+      { agg: aggVars },
       { baseCurrency: 'EUR', tenantId },
       data
     )
@@ -903,7 +1172,7 @@ describe('Aggregation variable', () => {
     })
     const result2 = await evaluator.evaluate(
       logic,
-      aggVars,
+      { agg: aggVars },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -947,58 +1216,60 @@ describe('Dataloder cache', () => {
           { '==': [{ var: 'agg:126' }, 1] },
         ],
       },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:124',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:124',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:125',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:125',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:126',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey:
-            'TRANSACTION:originAmountDetails-transactionAmount',
-          aggregationFunc: 'SUM',
-          baseCurrency: 'EUR',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:126',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'SUM',
+            baseCurrency: 'EUR',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       { type: 'TRANSACTION', transaction: testTransaction }
     )
@@ -1010,46 +1281,48 @@ describe('Dataloder cache', () => {
           { '==': [{ var: 'agg:126' }, 1] },
         ],
       },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:124',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey: 'TRANSACTION:transactionId',
-          aggregationFunc: 'COUNT',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:124',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-        {
-          key: 'agg:126',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER',
-          transactionDirection: 'SENDING',
-          aggregationFieldKey:
-            'TRANSACTION:originAmountDetails-transactionAmount',
-          aggregationFunc: 'SUM',
-          baseCurrency: 'EUR',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+          {
+            key: 'agg:126',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'SUM',
+            baseCurrency: 'EUR',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
           },
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       { type: 'TRANSACTION', transaction: testTransaction }
     )
@@ -1065,24 +1338,26 @@ describe('Different aggregate fields for receiving and sending', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 100] }] },
-      [
-        {
-          key: 'agg:123',
-          type: 'USER_TRANSACTIONS',
-          userDirection: 'SENDER_OR_RECEIVER',
-          transactionDirection: 'SENDING_RECEIVING',
-          aggregationFieldKey:
-            'TRANSACTION:originAmountDetails-transactionAmount',
-          secondaryAggregationFieldKey:
-            'TRANSACTION:destinationAmountDetails-transactionAmount',
-          aggregationFunc: 'SUM',
-          timeWindow: {
-            start: { units: 30, granularity: 'day' },
-            end: { units: 0, granularity: 'day' },
+      {
+        agg: [
+          {
+            key: 'agg:123',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING_RECEIVING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            secondaryAggregationFieldKey:
+              'TRANSACTION:destinationAmountDetails-transactionAmount',
+            aggregationFunc: 'SUM',
+            timeWindow: {
+              start: { units: 30, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            baseCurrency: 'EUR',
           },
-          baseCurrency: 'EUR',
-        },
-      ],
+        ],
+      },
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -1193,7 +1468,7 @@ describe('operators', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['a', ['b']] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -1202,7 +1477,7 @@ describe('operators', () => {
     )
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['b', ['b']] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -1217,7 +1492,7 @@ describe('operators', () => {
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['a', ['b']] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',
@@ -1226,7 +1501,7 @@ describe('operators', () => {
     )
     await evaluator.evaluate(
       { and: [{ 'op:startswith': ['a', ['b']] }] },
-      [],
+      {},
       { baseCurrency: 'EUR', tenantId },
       {
         type: 'TRANSACTION',

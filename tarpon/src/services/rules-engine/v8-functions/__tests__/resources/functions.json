@@ -3,5 +3,6 @@
   "string_to_number",
   "number_to_string",
   "lowercase",
-  "uppercase"
+  "uppercase",
+  "timestamp_diff_seconds"
 ]

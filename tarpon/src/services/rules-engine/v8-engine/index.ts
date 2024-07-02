@@ -3,7 +3,9 @@ import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
 import {
   groupBy,
+  isEmpty,
   isEqual,
+  last,
   mapValues,
   memoize,
   mergeWith,
@@ -31,6 +33,7 @@ import {
   getTransactionStatsTimeGroupLabel,
   getTransactionsGenerator,
   groupTransactionsByGranularity,
+  hydrateTransactionEvents,
 } from '../utils/transaction-rule-utils'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import {
@@ -39,6 +42,7 @@ import {
   ConsumerUserRuleVariable,
   TransactionRuleVariable,
   RuleVariableContext,
+  TransactionEventRuleVariable,
 } from '../v8-variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
 import {
@@ -48,6 +52,7 @@ import {
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { CUSTOM_BUILT_IN_RULE_OPERATORS } from '../v8-operators/custom-built-in-operators'
 import { RULE_OPERATORS } from '../v8-operators'
+import { TransactionEventRepository } from '../repositories/transaction-event-repository'
 import {
   AggregationData,
   AggregationRepository,
@@ -75,12 +80,16 @@ import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationTy
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
+import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEntityVariable'
 
 const sqs = getSQSClient()
 
 export type TransactionRuleData = {
   type: 'TRANSACTION'
   transaction: Transaction
+  transactionEvents: TransactionEvent[]
   senderUser?: User | Business
   receiverUser?: User | Business
 }
@@ -99,6 +108,8 @@ type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
   direction?: 'origin' | 'destination'
 }
 const MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY = 3
+const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: RuleEntityVariableEntityEnum =
+  'TRANSACTION_EVENT'
 
 export function canAggregate(variable: RuleAggregationVariable) {
   const { units: startUnits, granularity: startGranularity } =
@@ -179,63 +190,16 @@ export const getJsonLogicEngine = memoizeOne(
   isEqual
 )
 
-const getDataLoader = memoizeOne(
-  (data: RuleData, context: RuleVariableContext) => {
-    return new DataLoader(async (variableKeys: readonly string[]) => {
-      return Promise.all(
-        variableKeys.map(async (variableKey) => {
-          const variable = getRuleVariableByKey(variableKey)
-          if (!variable) {
-            logger.error(`Rule variable not found: ${variableKey}`)
-            return null
-          }
-          if (
-            variable.entity === 'TRANSACTION' &&
-            data.type === 'TRANSACTION'
-          ) {
-            return (variable as TransactionRuleVariable<any>).load(
-              data.transaction,
-              context
-            )
-          }
-
-          const user =
-            data.type === 'TRANSACTION'
-              ? isSenderUserVariable(variable)
-                ? data.senderUser
-                : data.receiverUser
-              : data.user
-
-          if (!user) {
-            return null
-          }
-          if (variable.entity === 'CONSUMER_USER') {
-            return (variable as ConsumerUserRuleVariable<any>).load(
-              user as User,
-              context
-            )
-          }
-          if (variable.entity === 'BUSINESS_USER') {
-            return (variable as BusinessUserRuleVariable<any>).load(
-              user as Business,
-              context
-            )
-          }
-          if (variable.entity === 'USER') {
-            return (variable as CommonUserRuleVariable<any>).load(user, context)
-          }
-          return null
-        })
-      )
-    })
-  },
-  // Don't take dynamoDb into account
-  ([data1, context1], [data2, context2]) =>
-    isEqual(
-      [data1, omit(context1, 'dynamoDb')],
-      [data2, omit(context2, 'dynamoDb')]
-    )
-)
+function getEntityVariableLoaderKey(
+  entityVariable: RuleEntityVariableInUse
+): Omit<RuleEntityVariableInUse, 'name'> {
+  const { filtersLogic } = entityVariable
+  return {
+    key: entityVariable.key,
+    entityKey: entityVariable.entityKey,
+    filtersLogic: isEmpty(filtersLogic) ? undefined : filtersLogic,
+  }
+}
 
 type Mode = 'MONGODB' | 'DYNAMODB'
 export class RuleJsonLogicEvaluator {
@@ -243,6 +207,7 @@ export class RuleJsonLogicEvaluator {
   private dynamoDb: DynamoDBDocumentClient
   private aggregationRepository: AggregationRepository
   private mode: Mode
+  private transactionEventRepository?: TransactionEventRepository
 
   constructor(
     tenantId: string,
@@ -258,13 +223,26 @@ export class RuleJsonLogicEvaluator {
     this.mode = mode
   }
 
+  private async initialize() {
+    if (this.transactionEventRepository) {
+      return
+    }
+    this.transactionEventRepository = new TransactionEventRepository(
+      this.tenantId,
+      { dynamoDb: this.dynamoDb, mongoDb: await getMongoDbClient() }
+    )
+  }
+
   public setMode(mode: Mode) {
     this.mode = mode
   }
 
   public async evaluate(
     rawJsonLogic: object,
-    aggregationVariables: RuleAggregationVariable[],
+    variables: {
+      agg?: RuleAggregationVariable[]
+      entity?: RuleEntityVariableInUse[]
+    },
     context: Omit<RuleVariableContext, 'dynamoDb'>,
     data: RuleData
   ): Promise<{
@@ -272,7 +250,7 @@ export class RuleJsonLogicEvaluator {
     hitDirections: RuleHitDirection[]
     vars: ExecutedRuleVars[]
   }> {
-    const entityVarDataloader = getDataLoader(data, {
+    const entityVarDataloader = this.entityVarLoader(data, {
       ...context,
       dynamoDb: this.dynamoDb,
     })
@@ -280,14 +258,20 @@ export class RuleJsonLogicEvaluator {
     const { entityVariableKeys, aggVariableKeys } =
       getVariableKeysFromLogic(jsonLogic)
     const entityVarEntries = await Promise.all(
-      entityVariableKeys.map(async (key) => [
-        key,
-        await entityVarDataloader.load(key),
-      ])
+      entityVariableKeys.map(async (key) => {
+        const variable = variables.entity?.find((v) => v.key === key) ?? {
+          key: key,
+          entityKey: key,
+        }
+        return [
+          key,
+          await entityVarDataloader.load(getEntityVariableLoaderKey(variable)),
+        ]
+      })
     )
     const aggVariables = aggVariableKeys
       .map((key) => {
-        const aggVariable = aggregationVariables.find((v) => v.key === key)
+        const aggVariable = variables.agg?.find((v) => v.key === key)
         if (!aggVariable) {
           logger.error(`Aggregation variable ${key} not found`)
           return
@@ -386,6 +370,127 @@ export class RuleJsonLogicEvaluator {
       vars,
     }
   }
+
+  private async findTransactionEvent(
+    transactionEvents: TransactionEvent[],
+    logic: any,
+    context: RuleVariableContext
+  ): Promise<TransactionEvent | undefined> {
+    const txEvents = hydrateTransactionEvents(transactionEvents)
+    for (const transactionEvent of txEvents.slice().reverse()) {
+      const result = await this.evaluate(logic, {}, context, {
+        type: 'TRANSACTION',
+        transaction:
+          transactionEvent.updatedTransactionAttributes as Transaction,
+        transactionEvents: [transactionEvent],
+      })
+      if (result.hit) {
+        return transactionEvent
+      }
+    }
+  }
+
+  private entityVarLoader = memoizeOne(
+    (data: RuleData, context: RuleVariableContext) => {
+      return new DataLoader<Omit<RuleEntityVariableInUse, 'name'>, any, string>(
+        async (entityVariables) => {
+          return Promise.all(
+            entityVariables.map(async (entityVariable) => {
+              const variable = getRuleVariableByKey(
+                entityVariable.entityKey ?? entityVariable.key
+              )
+              if (!variable) {
+                logger.error(
+                  `Rule variable not found: ${entityVariable.entityKey}`
+                )
+                return null
+              }
+              if (
+                variable.entity === 'TRANSACTION' &&
+                data.type === 'TRANSACTION'
+              ) {
+                let transaction: Transaction | undefined = data.transaction
+                if (!isEmpty(entityVariable.filtersLogic)) {
+                  const targetTransactionEvent =
+                    await this.findTransactionEvent(
+                      data.transactionEvents ?? [],
+                      entityVariable.filtersLogic,
+                      context
+                    )
+                  transaction = targetTransactionEvent
+                    ? (targetTransactionEvent.updatedTransactionAttributes as Transaction)
+                    : undefined
+                }
+                return (variable as TransactionRuleVariable<any>).load(
+                  transaction,
+                  context
+                )
+              }
+              if (
+                variable.entity === 'TRANSACTION_EVENT' &&
+                data.type === 'TRANSACTION'
+              ) {
+                let transactionEvent: TransactionEvent | undefined = last(
+                  data.transactionEvents
+                )
+                if (!isEmpty(entityVariable.filtersLogic)) {
+                  const targetTransactionEvent =
+                    await this.findTransactionEvent(
+                      data.transactionEvents ?? [],
+                      entityVariable.filtersLogic,
+                      context
+                    )
+                  transactionEvent = targetTransactionEvent
+                }
+                return (variable as TransactionEventRuleVariable<any>).load(
+                  transactionEvent,
+                  context
+                )
+              }
+
+              const user =
+                data.type === 'TRANSACTION'
+                  ? isSenderUserVariable(variable)
+                    ? data.senderUser
+                    : data.receiverUser
+                  : data.user
+
+              if (!user) {
+                return null
+              }
+              if (variable.entity === 'CONSUMER_USER') {
+                return (variable as ConsumerUserRuleVariable<any>).load(
+                  user as User,
+                  context
+                )
+              }
+              if (variable.entity === 'BUSINESS_USER') {
+                return (variable as BusinessUserRuleVariable<any>).load(
+                  user as Business,
+                  context
+                )
+              }
+              if (variable.entity === 'USER') {
+                return (variable as CommonUserRuleVariable<any>).load(
+                  user,
+                  context
+                )
+              }
+              return null
+            })
+          )
+        },
+        { cacheKeyFn: generateChecksum }
+      )
+    },
+    // Don't take dynamoDb into account
+    ([data1, context1], [data2, context2]) => {
+      return isEqual(
+        [data1, omit(context1, 'dynamoDb')],
+        [data2, omit(context2, 'dynamoDb')]
+      )
+    }
+  )
 
   private aggregationVarLoader = memoizeOne(
     (data: RuleData) => {
@@ -587,6 +692,7 @@ export class RuleJsonLogicEvaluator {
           await this.isDataIncludedInAggregationVariable(aggregationVariable, {
             type: 'TRANSACTION',
             transaction: transaction as TransactionWithRiskDetails,
+            transactionEvents: [],
           })
         if (isTransactionFiltered) {
           targetTransactions.push(transaction)
@@ -617,6 +723,7 @@ export class RuleJsonLogicEvaluator {
           const aggregateValues = await Promise.all(
             groupTransactions.map(
               async (transaction: AuxiliaryIndexTransactionWithDirection) => {
+                // TODO: support tx event for aggregation variable
                 const entityVariable =
                   transaction.direction === 'origin'
                     ? sendingTxEntityVariable
@@ -728,19 +835,27 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable,
       data
     )
-    const entityVarDataloader = getDataLoader(data, {
+    const entityVarDataloader = this.entityVarLoader(data, {
       baseCurrency: aggregationVariable.baseCurrency,
       tenantId: this.tenantId,
       dynamoDb: this.dynamoDb,
     })
+    const aggFieldKey = this.getAggregationVarFieldKey(
+      aggregationVariable,
+      direction
+    )
     const newDataValue = await entityVarDataloader.load(
-      this.getAggregationVarFieldKey(aggregationVariable, direction)
+      getEntityVariableLoaderKey({
+        key: aggFieldKey,
+        entityKey: aggFieldKey,
+      })
     )
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
-      ? await entityVarDataloader.load(
-          aggregationVariable.aggregationGroupByFieldKey
-        )
+      ? await entityVarDataloader.load({
+          key: aggregationVariable.aggregationGroupByFieldKey,
+          entityKey: aggregationVariable.aggregationGroupByFieldKey,
+        })
       : undefined
     if (!isNewDataFiltered || !newDataValue || (hasGroups && !newGroupValue)) {
       return
@@ -908,14 +1023,17 @@ export class RuleJsonLogicEvaluator {
     }
     const aggregator = getRuleVariableAggregator(aggregationFunc)
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
-    const entityVarDataloader = getDataLoader(data, {
+    const entityVarDataloader = this.entityVarLoader(data, {
       baseCurrency: aggregationVariable.baseCurrency,
       tenantId: this.tenantId,
       dynamoDb: this.dynamoDb,
     })
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
       ? ((await entityVarDataloader.load(
-          aggregationVariable.aggregationGroupByFieldKey
+          getEntityVariableLoaderKey({
+            key: aggregationVariable.aggregationGroupByFieldKey,
+            entityKey: aggregationVariable.aggregationGroupByFieldKey,
+          })
         )) as string)
       : undefined
     let result = aggData.reduce((acc: unknown, cur: AggregationData) => {
@@ -945,8 +1063,15 @@ export class RuleJsonLogicEvaluator {
           data
         )
       if (shouldIncludeNewData) {
+        const aggFieldKey = this.getAggregationVarFieldKey(
+          aggregationVariable,
+          direction
+        )
         const newDataValue = await entityVarDataloader.load(
-          this.getAggregationVarFieldKey(aggregationVariable, direction)
+          getEntityVariableLoaderKey({
+            key: aggFieldKey,
+            entityKey: aggFieldKey,
+          })
         )
         // NOTE: Merge the incoming transaction/user into the aggregation result
         if (newDataValue) {
@@ -987,20 +1112,51 @@ export class RuleJsonLogicEvaluator {
     aggregationVariable: RuleAggregationVariable,
     data: RuleData
   ) {
-    return (
-      !aggregationVariable.filtersLogic ||
-      (
-        await this.evaluate(
-          aggregationVariable.filtersLogic,
-          [],
-          {
-            baseCurrency: aggregationVariable.baseCurrency,
-            tenantId: this.tenantId,
-          },
-          data
-        )
-      ).hit
+    if (isEmpty(aggregationVariable.filtersLogic)) {
+      return true
+    }
+
+    const { entityVariableKeys } = getVariableKeysFromLogic(
+      aggregationVariable.filtersLogic
     )
+
+    // Load the last transaction event for the transaction if the filters logic
+    // contains a transaction event entity variable.
+    // This is a less efficient approach as we need to load tx event one by one
+    // TODO: Optimize loading transaction events
+    if (
+      data.type === 'TRANSACTION' &&
+      !isEmpty(data.transactionEvents) &&
+      entityVariableKeys.find((v) =>
+        v.startsWith(TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE)
+      )
+    ) {
+      await this.initialize()
+      if (this.transactionEventRepository) {
+        const lastTransactionEvent =
+          this.mode === 'DYNAMODB'
+            ? await this.transactionEventRepository.getLastTransactionEvent(
+                data.transaction.transactionId
+              )
+            : await this.transactionEventRepository.getMongoLastTransactionEvent(
+                data.transaction.transactionId
+              )
+        if (lastTransactionEvent) {
+          data.transactionEvents = [lastTransactionEvent]
+        }
+      }
+    }
+
+    const filterResult = await this.evaluate(
+      aggregationVariable.filtersLogic,
+      {},
+      {
+        baseCurrency: aggregationVariable.baseCurrency,
+        tenantId: this.tenantId,
+      },
+      data
+    )
+    return filterResult.hit
   }
 
   private isNewDataWithinTimeWindow(

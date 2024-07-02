@@ -1,4 +1,5 @@
 import { Func } from '@react-awesome-query-builder/ui';
+import { RuleFunction } from '@/apis';
 
 type JsonLogicFunc = Func & Required<Pick<Func, 'jsonLogic' | 'jsonLogicImport'>>;
 
@@ -27,10 +28,30 @@ function getArithmeticFunc(label: string, op: string): JsonLogicFunc {
   };
 }
 
-export const JSON_LOGIC_FUNCTIONS: { [key: string]: Func } = {
-  add: getArithmeticFunc('Add (+)', '+'),
-  subtract: getArithmeticFunc('Subtract (-)', '-'),
-  multiply: getArithmeticFunc('Multiply (×)', '*'),
-  divide: getArithmeticFunc('Divide (÷)', '/'),
-  modulo: getArithmeticFunc('Modulo (%)', '%'),
-};
+export const JSON_LOGIC_FUNCTIONS: RuleFunction[] = [
+  {
+    key: 'add',
+    group: 'number',
+    uiDefinition: getArithmeticFunc('Add (+)', '+'),
+  },
+  {
+    key: 'subtract',
+    group: 'number',
+    uiDefinition: getArithmeticFunc('Subtract (-)', '-'),
+  },
+  {
+    key: 'multiply',
+    group: 'number',
+    uiDefinition: getArithmeticFunc('Multiply (×)', '*'),
+  },
+  {
+    key: 'divide',
+    group: 'number',
+    uiDefinition: getArithmeticFunc('Divide (÷)', '/'),
+  },
+  {
+    key: 'modulo',
+    group: 'number',
+    uiDefinition: getArithmeticFunc('Modulo (%)', '%'),
+  },
+];

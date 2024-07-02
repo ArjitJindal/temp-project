@@ -15,7 +15,7 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { pickKnownEntityFields } from '@/utils/object'
-import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 
 export const userHandler = lambdaApi()(
@@ -107,7 +107,7 @@ export const userHandler = lambdaApi()(
           executedRules: user.executedRules,
           hitRules: user.hitRules,
         }),
-      } as ConsumerUsersResponse
+      } as ConsumerUserMonitoringResult
     }
     return 'Unhandled request'
   }

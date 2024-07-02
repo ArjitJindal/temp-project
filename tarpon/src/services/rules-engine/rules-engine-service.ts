@@ -98,8 +98,8 @@ import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionSta
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 import { envIs } from '@/utils/env'
 import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
-import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
-import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
+import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
@@ -265,7 +265,7 @@ export class RulesEngineService {
   }
 
   public async verifyAllUsersRules(): Promise<
-    Record<string, ConsumerUsersResponse | BusinessUsersResponse>
+    Record<string, ConsumerUserMonitoringResult | BusinessUserMonitoringResult>
   > {
     const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances(
@@ -294,7 +294,7 @@ export class RulesEngineService {
 
     const groupedResults: Record<
       string,
-      ConsumerUsersResponse | BusinessUsersResponse
+      ConsumerUserMonitoringResult | BusinessUserMonitoringResult
     > = results.flat().reduce((acc, result) => {
       const userDetail = acc[result.userId]
       if (userDetail) {
@@ -321,7 +321,10 @@ export class RulesEngineService {
     const ruleClass =
       USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
 
-    const hitResults: (ConsumerUsersResponse | BusinessUsersResponse)[] = []
+    const hitResults: (
+      | ConsumerUserMonitoringResult
+      | BusinessUserMonitoringResult
+    )[] = []
 
     if (ruleClass) {
       const ruleClassInstance = new ruleClass(
@@ -377,12 +380,13 @@ export class RulesEngineService {
                     isShadow: isShadowRule(ruleInstance),
                   }
 
-                  const result: ConsumerUsersResponse | BusinessUsersResponse =
-                    {
-                      userId: user.userId,
-                      executedRules: [{ ...hitRuleResult, ruleHit: true }],
-                      hitRules: [hitRuleResult],
-                    }
+                  const result:
+                    | ConsumerUserMonitoringResult
+                    | BusinessUserMonitoringResult = {
+                    userId: user.userId,
+                    executedRules: [{ ...hitRuleResult, ruleHit: true }],
+                    hitRules: [hitRuleResult],
+                  }
 
                   hitResults.push(result)
                 }
@@ -416,10 +420,13 @@ export class RulesEngineService {
       }
     }
 
-    const previousTransactionEvents =
-      await this.transactionEventRepository.getTransactionEvents(
-        transaction.transactionId
-      )
+    const initialTransactionState = transaction.transactionState || 'CREATED'
+    const initialTransactionEvent: TransactionEvent = {
+      transactionId: transaction.transactionId,
+      timestamp: transaction.timestamp,
+      transactionState: initialTransactionState,
+      updatedTransactionAttributes: transaction,
+    }
 
     const {
       executedRules,
@@ -427,13 +434,14 @@ export class RulesEngineService {
       transactionAggregationTasks,
       riskScoreDetails,
       riskScoreComponents,
-    } = await this.verifyTransactionInternal(transaction)
+    } = await this.verifyTransactionInternal(transaction, [
+      initialTransactionEvent,
+    ])
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
       'Save Transaction/Event'
     )
-    const initialTransactionState = transaction.transactionState || 'CREATED'
 
     if (hasFeature('RISK_SCORING') && riskScoreDetails) {
       await this.riskRepository.createOrUpdateArsScore(
@@ -460,9 +468,7 @@ export class RulesEngineService {
 
     await this.transactionEventRepository.saveTransactionEvent(
       {
-        transactionId: savedTransaction.transactionId as string,
-        timestamp: savedTransaction.timestamp as number,
-        transactionState: initialTransactionState,
+        ...initialTransactionEvent,
         updatedTransactionAttributes: savedTransaction,
       },
       { executedRules, hitRules, riskScoreDetails }
@@ -474,7 +480,7 @@ export class RulesEngineService {
       ...transactionAggregationTasks.map((task) =>
         this.sendTransactionAggregationTasks(task)
       ),
-      this.updateGlobalAggregation(savedTransaction, previousTransactionEvents),
+      this.updateGlobalAggregation(savedTransaction, []),
     ])
 
     return {
@@ -514,7 +520,10 @@ export class RulesEngineService {
       hitRules,
       transactionAggregationTasks,
       riskScoreDetails,
-    } = await this.verifyTransactionInternal(updatedTransaction)
+    } = await this.verifyTransactionInternal(
+      updatedTransaction,
+      previousTransactionEvents.concat(transactionEvent)
+    )
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -604,7 +613,7 @@ export class RulesEngineService {
   public async verifyUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
     options?: { ongoingScreeningMode?: boolean }
-  ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
+  ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const ruleInstances = (
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
     ).filter(
@@ -627,7 +636,7 @@ export class RulesEngineService {
     ruleInstances: readonly RuleInstance[],
     rules: readonly Rule[],
     options?: { ongoingScreeningMode?: boolean }
-  ): Promise<ConsumerUsersResponse | BusinessUsersResponse> {
+  ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
     const userRiskLevel = await this.getUserRiskLevel(user)
@@ -675,7 +684,10 @@ export class RulesEngineService {
     return keyBy(rules, 'id')
   }
 
-  private async verifyTransactionInternal(transaction: Transaction): Promise<{
+  private async verifyTransactionInternal(
+    transaction: Transaction,
+    transactionEvents: TransactionEvent[]
+  ): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
     transactionAggregationTasks: TransactionAggregationTaskEntry[]
@@ -735,6 +747,7 @@ export class RulesEngineService {
             ruleInstance,
             senderUserRiskLevel: await senderUserRiskLevelPromise,
             transaction: transactionWithRiskDetails,
+            transactionEvents,
             senderUser,
             receiverUser,
             transactionRiskScore: transactionRisk?.score,
@@ -744,7 +757,11 @@ export class RulesEngineService {
       // Update aggregation variables in V8 user rules
       Promise.all(
         userRuleInstances.map((ruleInstance) =>
-          this.handleV8Aggregation(ruleInstance, transactionWithRiskDetails)
+          this.handleV8Aggregation(
+            ruleInstance,
+            transactionWithRiskDetails,
+            transactionEvents
+          )
         )
       ),
     ])
@@ -793,6 +810,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     senderUserRiskLevel?: RiskLevel
     transaction?: Transaction
+    transactionEvents?: TransactionEvent[]
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
@@ -809,6 +827,7 @@ export class RulesEngineService {
       ruleInstance,
       senderUserRiskLevel,
       transaction,
+      transactionEvents,
       senderUser,
       receiverUser,
       database,
@@ -852,6 +871,7 @@ export class RulesEngineService {
         ? ({
             type: 'TRANSACTION',
             transaction: transactionWithValidUserId,
+            transactionEvents,
             senderUser,
             receiverUser,
             transactionRiskScore,
@@ -866,7 +886,10 @@ export class RulesEngineService {
           vars: ruleVars,
         } = await this.ruleLogicEvaluator.evaluate(
           logic,
-          ruleInstance.logicAggregationVariables ?? [],
+          {
+            agg: ruleInstance.logicAggregationVariables,
+            entity: ruleInstance.logicEntityVariables,
+          },
           {
             baseCurrency: ruleInstance.baseCurrency,
             tenantId: this.tenantId,
@@ -1041,6 +1064,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
     transaction: TransactionWithRiskDetails
+    transactionEvents: TransactionEvent[]
     senderUser?: User | Business
     receiverUser?: User | Business
     transactionRiskScore?: number
@@ -1073,7 +1097,11 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          await this.handleV8Aggregation(ruleInstance, options.transaction)
+          await this.handleV8Aggregation(
+            ruleInstance,
+            options.transaction,
+            options.transactionEvents
+          )
 
           const transactionAggregationTasks =
             ruleClassInstance instanceof TransactionAggregationRule
@@ -1106,7 +1134,8 @@ export class RulesEngineService {
 
   private async handleV8Aggregation(
     ruleInstance: RuleInstance,
-    transaction: TransactionWithRiskDetails
+    transaction: TransactionWithRiskDetails,
+    transactionEvents: TransactionEvent[]
   ) {
     if (!hasFeature('RULES_ENGINE_V8')) {
       return
@@ -1126,6 +1155,7 @@ export class RulesEngineService {
                 aggVar,
                 {
                   transaction,
+                  transactionEvents,
                   type: 'TRANSACTION',
                 },
                 'origin'
@@ -1136,6 +1166,7 @@ export class RulesEngineService {
                 aggVar,
                 {
                   transaction,
+                  transactionEvents,
                   type: 'TRANSACTION',
                 },
                 'destination'

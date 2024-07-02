@@ -6211,6 +6211,7 @@ components:
           type: string
           enum:
             - TRANSACTION
+            - TRANSACTION_EVENT
             - USER
             - CONSUMER_USER
             - BUSINESS_USER
@@ -6269,19 +6270,38 @@ components:
           type: object
         uiDefinition:
           type: object
+        group:
+          $ref: '#/components/schemas/RuleFunctionGroup'
       required:
         - key
         - uiDefinition
+        - group
+    RuleFunctionGroup:
+      title: RuleFunctionGroup
+      type: string
+      enum:
+        - datetime
+        - number
+        - string
     RuleEntityVariableInUse:
       title: RuleEntityVariableInUse
       type: object
       properties:
         key:
           type: string
+          description:
+            Unique variable key (uuid). We can create multiple variables for
+            the same entity with different filters
+        entityKey:
+          type: string
+          description: Entity variable key (e.g TRANSACTION:type)
         name:
           type: string
+        filtersLogic:
+          type: object
       required:
         - key
+        - entityKey
     RuleAggregationType:
       title: RuleAggregationType
       type: string

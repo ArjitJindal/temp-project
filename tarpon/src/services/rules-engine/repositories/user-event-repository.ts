@@ -18,6 +18,8 @@ import { DefaultApiGetEventsListRequest } from '@/@types/openapi-internal/Reques
 import { USER_EVENTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { pickKnownEntityFields } from '@/utils/object'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
+import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 
 @traceable
 export class UserEventRepository {
@@ -39,7 +41,8 @@ export class UserEventRepository {
 
   public async saveUserEvent(
     userEvent: ConsumerUserEvent | BusinessUserEvent,
-    userType: UserType
+    userType: UserType,
+    rulesResult?: ConsumerUserMonitoringResult | BusinessUserMonitoringResult
   ): Promise<string> {
     const eventId = userEvent.eventId || uuidv4()
     let primaryKey
@@ -65,6 +68,7 @@ export class UserEventRepository {
                 ...primaryKey,
                 eventId,
                 ...userEvent,
+                ...rulesResult,
               },
             },
           },

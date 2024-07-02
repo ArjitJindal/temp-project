@@ -14,7 +14,7 @@ export const TRANSACTION_TRS_SCORE: TransactionRuleVariable<number> = {
   },
   requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
   load: async (transaction, context) => {
-    let riskScore = transaction.riskScoreDetails?.trsScore
+    let riskScore = transaction?.riskScoreDetails?.trsScore
 
     if (riskScore != null) {
       return riskScore
@@ -25,7 +25,7 @@ export const TRANSACTION_TRS_SCORE: TransactionRuleVariable<number> = {
         dynamoDb: context.dynamoDb,
       })
 
-      if (!riskScore && transaction.transactionId) {
+      if (!riskScore && transaction?.transactionId) {
         riskScore = (
           await riskRepository.getArsScore(transaction.transactionId)
         )?.arsScore

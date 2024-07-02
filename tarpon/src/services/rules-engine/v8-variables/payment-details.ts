@@ -38,11 +38,11 @@ const createPaymentDetailsIdentifier = (
     valueType: 'string',
     load: async (transaction) => {
       if (direction === 'ORIGIN') {
-        return transaction.originPaymentDetails
+        return transaction?.originPaymentDetails
           ? getPaymentDetailsIdentifiersKey(transaction.originPaymentDetails)
           : ''
       }
-      return transaction.destinationPaymentDetails
+      return transaction?.destinationPaymentDetails
         ? getPaymentDetailsIdentifiersKey(transaction.destinationPaymentDetails)
         : ''
     },

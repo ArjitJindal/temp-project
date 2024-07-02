@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import { chunk, get, isEmpty, omit, pickBy, set, sum, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
@@ -28,11 +27,7 @@ import {
 } from './transaction-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import {
-  DynamoDbKeys,
-  TRANSACTION_ID_SUFFIX_DEPLOYED_TIME,
-} from '@/core/dynamodb/dynamodb-keys'
-import { getTimestampBasedIDPrefix } from '@/utils/timestampUtils'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import {
   dynamoDbQueryHelper,
@@ -44,15 +39,7 @@ import { mergeObjects } from '@/utils/object'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
-import { envIs } from '@/utils/env'
 import { traceable } from '@/core/xray'
-
-export function getNewTransactionID(transaction: Transaction) {
-  return (
-    transaction.transactionId ||
-    `${getTimestampBasedIDPrefix(transaction.timestamp)}-${uuidv4()}`
-  )
-}
 
 @traceable
 export class DynamoDbTransactionRepository
@@ -85,7 +72,6 @@ export class DynamoDbTransactionRepository
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<Transaction> {
     this.sanitizeTransactionInPlace(transaction)
-    transaction.transactionId = getNewTransactionID(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
 
     const primaryKey = DynamoDbKeys.TRANSACTION(
@@ -115,11 +101,6 @@ export class DynamoDbTransactionRepository
       },
     }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
-
-    await this.removeOldAuxiliaryIndexesIfNeeded(
-      transaction.timestamp,
-      auxiliaryIndexes
-    )
 
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
@@ -157,36 +138,6 @@ export class DynamoDbTransactionRepository
       },
     }
 
-    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
-  }
-
-  // TODO: We can remove this after 2024-04-01 assuming that a transaction event won't be created
-  // for a transaction which was created more than 6 months ago
-  private async removeOldAuxiliaryIndexesIfNeeded(
-    transactionTimestamp: number,
-    auxiliaryIndexes: Array<{ PartitionKeyID: string; SortKeyID: string }>
-  ) {
-    if (
-      transactionTimestamp > TRANSACTION_ID_SUFFIX_DEPLOYED_TIME.valueOf() ||
-      auxiliaryIndexes.length === 0 ||
-      !envIs('prod')
-    ) {
-      return
-    }
-    const batchWriteItemParams: BatchWriteCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: auxiliaryIndexes.map(
-          (key) => ({
-            DeleteRequest: {
-              Key: {
-                PartitionKeyID: key.PartitionKeyID,
-                SortKeyID: key.SortKeyID.split('-')[0],
-              },
-            },
-          })
-        ),
-      },
-    }
     await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
   }
 

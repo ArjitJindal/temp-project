@@ -6,6 +6,22 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
+import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+
+export function getTestTransactionEvent(
+  transactionEvent: Partial<TransactionEvent> = {}
+): TransactionEvent {
+  return {
+    transactionState: 'CREATED',
+    timestamp: dayjs().valueOf(),
+    transactionId: uuidv4(),
+    eventId: uuidv4(),
+    reason: 'Some reason',
+    eventDescription: 'Some description',
+    updatedTransactionAttributes: {},
+    ...transactionEvent,
+  }
+}
 
 export function getTestTransaction(
   transaction: Partial<Transaction | InternalTransaction> = {}

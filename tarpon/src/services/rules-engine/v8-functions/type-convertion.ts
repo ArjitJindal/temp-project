@@ -2,6 +2,7 @@ import { RuleFunction } from './types'
 
 export const NUMBER_TO_STRING: RuleFunction<string> = {
   key: 'number_to_string',
+  group: 'number',
   uiDefinition: {
     label: 'Number to String',
     returnType: 'text',
@@ -20,6 +21,7 @@ export const NUMBER_TO_STRING: RuleFunction<string> = {
 
 export const STRING_TO_NUMBER: RuleFunction<number> = {
   key: 'string_to_number',
+  group: 'string',
   uiDefinition: {
     label: 'String to Number',
     returnType: 'number',

@@ -632,7 +632,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/ConsumerUsersResponse'
+                  - $ref: '#/components/schemas/ConsumerUserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -812,7 +812,7 @@ paths:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BusinessUsersResponse'
+                  - $ref: '#/components/schemas/BusinessUserMonitoringResult'
                   - type: object
                     properties:
                       message:
@@ -3402,8 +3402,8 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-    BusinessUsersResponse:
-      title: BusinessUsersResponse
+    BusinessUserMonitoringResult:
+      title: BusinessUserMonitoringResult
       type: object
       description: Model for business user risk score response
       x-examples:
@@ -3431,8 +3431,8 @@ components:
             $ref: '#/components/schemas/ExecutedRulesResult'
       required:
         - userId
-    ConsumerUsersResponse:
-      title: ConsumerUsersResponse
+    ConsumerUserMonitoringResult:
+      title: ConsumerUserMonitoringResult
       type: object
       x-examples:
         example-1:

@@ -25,8 +25,8 @@ import {
   getRuleByRuleId,
 } from '@/services/rules-engine/transaction-rules/library'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ConsumerUsersResponse } from '@/@types/openapi-public/ConsumerUsersResponse'
-import { BusinessUsersResponse } from '@/@types/openapi-public/BusinessUsersResponse'
+import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
+import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import {
   TRANSACTION_RULES,
@@ -165,7 +165,7 @@ export async function bulkVerifyUsers(
   tenantId: string,
   users: Array<Business | User>,
   ongoingScreeningMode?: boolean
-): Promise<Array<ConsumerUsersResponse | BusinessUsersResponse>> {
+): Promise<Array<ConsumerUserMonitoringResult | BusinessUserMonitoringResult>> {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const results: any[] = []
@@ -179,8 +179,8 @@ export async function bulkVerifyUsers(
 export function getRuleHits(
   results: (
     | TransactionMonitoringResult
-    | ConsumerUsersResponse
-    | BusinessUsersResponse
+    | ConsumerUserMonitoringResult
+    | BusinessUserMonitoringResult
   )[]
 ): boolean[] {
   return results.map((result) => {
@@ -194,8 +194,8 @@ export function getRuleHits(
 export function getRuleHitMetadata(
   results: (
     | TransactionMonitoringResult
-    | ConsumerUsersResponse
-    | BusinessUsersResponse
+    | ConsumerUserMonitoringResult
+    | BusinessUserMonitoringResult
   )[]
 ): RuleHitMeta[] {
   return results.map((result) => {
@@ -209,8 +209,8 @@ export function getRuleHitMetadata(
 export function getRuleDescriptions(
   results: (
     | TransactionMonitoringResult
-    | ConsumerUsersResponse
-    | BusinessUsersResponse
+    | ConsumerUserMonitoringResult
+    | BusinessUserMonitoringResult
   )[]
 ): string[] {
   return results.map((result) => {

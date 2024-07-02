@@ -1,4 +1,5 @@
-import { groupBy, inRange, mapValues } from 'lodash'
+import { groupBy, inRange, last, mapValues } from 'lodash'
+import memoizeOne from 'memoize-one'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -14,6 +15,8 @@ import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { zipGenerators, staticValueGenerator } from '@/utils/generator'
 import { CurrencyService } from '@/services/currency'
 import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
+import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+import { mergeEntities } from '@/utils/object'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -400,20 +403,7 @@ export function getTransactionStatsTimeGroupLabel(
   }
 }
 
-export function removePrefixFromName(
-  name: string,
-  toLowerCase: boolean = false
-): string {
-  prefixes.forEach((prefix) => {
-    name = name?.replace(new RegExp(`^${prefix}\\.? `, 'gi'), '')
-  })
-  if (toLowerCase) {
-    name = name.toLowerCase()
-  }
-  return name
-}
-
-export const prefixes = [
+const NAME_PREFIXES = [
   'Mr',
   'Mrs',
   'Miss',
@@ -436,3 +426,37 @@ export const prefixes = [
   'Srta',
   'Dr',
 ]
+
+export function removePrefixFromName(
+  name: string,
+  toLowerCase: boolean = false
+): string {
+  NAME_PREFIXES.forEach((prefix) => {
+    name = name?.replace(new RegExp(`^${prefix}\\.? `, 'gi'), '')
+  })
+  if (toLowerCase) {
+    name = name.toLowerCase()
+  }
+  return name
+}
+
+export const hydrateTransactionEvents = memoizeOne(
+  // NOTE: transactionEvents should already be sorted by timestamp (1st to last)
+  (transactionEvents: TransactionEvent[]): TransactionEvent[] => {
+    const hydratedTransactionEvents: TransactionEvent[] = []
+    for (const transactionEvent of transactionEvents) {
+      const prevTransactionEvent = last(hydratedTransactionEvents)
+      hydratedTransactionEvents.push({
+        ...transactionEvent,
+        updatedTransactionAttributes: {
+          ...mergeEntities(
+            prevTransactionEvent?.updatedTransactionAttributes ?? {},
+            transactionEvent.updatedTransactionAttributes ?? {}
+          ),
+          transactionState: transactionEvent.transactionState,
+        },
+      })
+    }
+    return hydratedTransactionEvents
+  }
+)

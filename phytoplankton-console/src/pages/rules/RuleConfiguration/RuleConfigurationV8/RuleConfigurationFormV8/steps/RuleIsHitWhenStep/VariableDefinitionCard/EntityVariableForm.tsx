@@ -1,4 +1,7 @@
 import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import { shortId } from '@flagright/lib/utils';
+import { Link } from 'react-router-dom';
+import { isEqual } from 'lodash';
 import {
   isTransactionDestinationVariable,
   isTransactionOriginOrDestinationVariable,
@@ -7,11 +10,17 @@ import {
   isUserSenderOrReceiverVariable,
   isUserSenderVariable,
 } from '../helpers';
+import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import NestedSelects, { RefType, Option as NestedSelectsOption } from './NestedSelects';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleEntityVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
+import {
+  RuleEntityVariable,
+  RuleEntityVariableEntityEnum,
+  RuleEntityVariableInUse,
+  RuleType,
+} from '@/apis';
 // TODO: Move PropertyColumns to library
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
@@ -20,6 +29,7 @@ import Select from '@/components/library/Select';
 import { firstLetterUpper } from '@/utils/humanize';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
+import Alert from '@/components/library/Alert';
 
 type UserType = 'SENDER' | 'RECEIVER' | 'BOTH';
 type TransactionDirection = 'ORIGIN' | 'DESTINATION' | 'BOTH';
@@ -31,6 +41,8 @@ type FormRuleEntityVariable = {
   userType?: UserType;
   userNatures?: Array<'CONSUMER_USER' | 'BUSINESS_USER'>;
   variableKey?: string;
+  entityVariableKey?: string;
+  filtersLogic?: any;
 };
 
 interface EntityVariableFormProps {
@@ -66,12 +78,16 @@ const USER_NATURE_OPTIONS: Array<{ value: 'CONSUMER_USER' | 'BUSINESS_USER'; lab
   { value: 'BUSINESS_USER', label: 'Business' },
 ];
 
+export function getNewEntityVariableKey() {
+  return `entity:${shortId()}`;
+}
+
 function getInitialFormValues(
   ruleType: RuleType,
   variable: RuleEntityVariableInUse | undefined,
   entityVariables: RuleEntityVariable[],
 ): FormRuleEntityVariable {
-  const entityVariable = entityVariables.find((v) => v.key === variable?.key);
+  const entityVariable = entityVariables.find((v) => v.key === variable?.entityKey);
   if (!entityVariable) {
     if (ruleType === 'TRANSACTION') {
       return { type: 'TRANSACTION' };
@@ -80,9 +96,11 @@ function getInitialFormValues(
   }
   const result: FormRuleEntityVariable = {
     name: variable?.name,
-    variableKey: entityVariable.key,
+    variableKey: variable?.key,
+    entityVariableKey: entityVariable.key,
+    filtersLogic: variable?.filtersLogic,
   };
-  if (entityVariable.entity === 'TRANSACTION') {
+  if (entityVariable.entity === 'TRANSACTION' || entityVariable.entity === 'TRANSACTION_EVENT') {
     result.type = 'TRANSACTION';
     result.transactionDirection = entityVariable.key.startsWith('TRANSACTION:origin')
       ? 'ORIGIN'
@@ -124,11 +142,28 @@ function oppositeVariableKey(variableKey: string): string | undefined {
   return undefined;
 }
 
+function getFilterEntityVariableTypes(
+  entityVariable?: RuleEntityVariable,
+): RuleEntityVariableEntityEnum[] {
+  if (entityVariable?.entity === 'TRANSACTION' || entityVariable?.entity === 'TRANSACTION_EVENT') {
+    return ['TRANSACTION', 'TRANSACTION_EVENT'];
+  }
+  if (entityVariable?.entity === 'USER') {
+    return ['USER', 'CONSUMER_USER', 'BUSINESS_USER'];
+  }
+  if (entityVariable?.entity === 'CONSUMER_USER') {
+    return ['CONSUMER_USER'];
+  }
+  if (entityVariable?.entity === 'BUSINESS_USER') {
+    return ['BUSINESS_USER'];
+  }
+  return [];
+}
+
 export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   ruleType,
   variable,
   entityVariables,
-  entityVariablesInUse,
   isNew,
   readOnly,
   onUpdate,
@@ -138,6 +173,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     getInitialFormValues(ruleType, variable, entityVariables),
   );
   const [searchKey, setSearchKey] = useState<string | undefined>();
+  const [showFilters, setShowFilters] = useState(false);
   const handleUpdateForm = useCallback((newValues: Partial<FormRuleEntityVariable>) => {
     setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
     if (!newValues.name || Object.keys(newValues).length > 1) {
@@ -147,7 +183,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const allVariableOptions = useMemo(() => {
     const filteredEntityVariables =
       ruleType === 'USER'
-        ? entityVariables.filter((v) => v.entity !== 'TRANSACTION' && isUserSenderVariable(v.key))
+        ? entityVariables.filter(
+            (v) => !v.entity?.startsWith('TRANSACTION') && isUserSenderVariable(v.key),
+          )
         : entityVariables;
     return filteredEntityVariables.map((v) => ({
       value: v.key,
@@ -157,9 +195,6 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
 
   const entityVariablesFiltered = useMemo(() => {
     return entityVariables.filter((v) => {
-      if (entityVariablesInUse.find((e) => e.key === v.key && formValues.variableKey !== v.key)) {
-        return false;
-      }
       if (formValues.type === 'TRANSACTION') {
         const isOriginEnabled = formValues.transactionDirection === 'ORIGIN';
         const isDestinationEnabled = formValues.transactionDirection === 'DESTINATION';
@@ -171,7 +206,8 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           (isOriginEnabled && isOriginVar) ||
           (isDestinationEnabled && isDestinationVar) ||
           (isBothEnabled && isBothVar) ||
-          (!(isOriginVar || isDestinationVar) && v.entity === 'TRANSACTION')
+          (!(isOriginVar || isDestinationVar) &&
+            (v.entity === 'TRANSACTION' || v.entity === 'TRANSACTION_EVENT'))
         );
       } else if (formValues.type === 'USER') {
         const isSenderEnabled = formValues.userType === 'SENDER';
@@ -191,38 +227,42 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     });
   }, [
     entityVariables,
-    entityVariablesInUse,
     formValues.transactionDirection,
     formValues.type,
     formValues.userNatures,
     formValues.userType,
-    formValues.variableKey,
   ]);
 
   // If variable is not available anymore - reset it and reset nested select
   const nestedSelectsRef = useRef<RefType>(null);
   const isVarAvailable = useMemo(() => {
-    return entityVariablesFiltered.some((x) => x.key === formValues.variableKey);
-  }, [entityVariablesFiltered, formValues.variableKey]);
+    return entityVariablesFiltered.some((x) => x.key === formValues.entityVariableKey);
+  }, [entityVariablesFiltered, formValues.entityVariableKey]);
   const isVarAvailableChanges = useIsChanged(isVarAvailable);
   useEffect(() => {
-    const variableKey = formValues.variableKey;
+    const variableKey = formValues.entityVariableKey;
     if (variableKey != null && !isVarAvailable && isVarAvailableChanges) {
       const keyToCheck = oppositeVariableKey(variableKey);
       const newVariableKey = entityVariablesFiltered.find((x) => x.key === keyToCheck)?.key;
-      setFormValues((prevState) => ({ ...prevState, variableKey: newVariableKey }));
+      setFormValues((prevState) => ({ ...prevState, entityVariableKey: newVariableKey }));
       nestedSelectsRef.current?.reset(newVariableKey);
     }
-  }, [entityVariablesFiltered, formValues.variableKey, isVarAvailable, isVarAvailableChanges]);
+  }, [
+    entityVariablesFiltered,
+    formValues.entityVariableKey,
+    formValues.variableKey,
+    isVarAvailable,
+    isVarAvailableChanges,
+  ]);
 
   // If search key changed - reset nested selects
   const isSearchKeyChanged = useIsChanged(searchKey);
   useEffect(() => {
-    const variableKey = formValues.variableKey;
+    const variableKey = formValues.entityVariableKey;
     if (variableKey != null && isSearchKeyChanged) {
       nestedSelectsRef.current?.reset(variableKey);
     }
-  }, [formValues.variableKey, isSearchKeyChanged]);
+  }, [formValues.entityVariableKey, isSearchKeyChanged]);
 
   const variableOptions = useMemo((): NestedSelectsOption[] => {
     type Tree = {
@@ -236,7 +276,10 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     for (const v of entityVariablesFiltered) {
       // "Transaction / origin payment details > bank address > postcode" ->
       // "origin payment details > bank address > postcode"
-      const label = v.uiDefinition.label.split('/')[1].trim();
+      let label = v.uiDefinition.label.split('/')[1].trim();
+      if (v.entity?.endsWith('EVENT')) {
+        label = `${label} (event)`;
+      }
 
       // "origin payment details > bank address > postcode" ->
       // ["origin payment details", "bank address", "postcode"]
@@ -267,8 +310,12 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
     return options;
   }, [entityVariablesFiltered]);
 
-  const entityVariable = entityVariables.find((v) => v.key === formValues.variableKey);
+  const entityVariable = entityVariables.find((v) => v.key === formValues.entityVariableKey);
   const [isOpen, setIsOpen] = useState(true);
+  const isOkDisabled = useMemo(() => {
+    return !formValues.entityVariableKey;
+  }, [formValues.entityVariableKey]);
+
   return (
     <div>
       <Modal
@@ -280,13 +327,18 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
           onCancel();
         }}
         onOk={() => {
-          if (formValues.variableKey) {
-            onUpdate({ key: formValues.variableKey, name: formValues.name });
+          if (formValues.entityVariableKey) {
+            onUpdate({
+              key: formValues.variableKey ?? getNewEntityVariableKey(),
+              entityKey: formValues.entityVariableKey,
+              name: formValues.name,
+              filtersLogic: formValues.filtersLogic,
+            });
           }
         }}
         hideOk={readOnly}
         okText={isNew ? 'Add' : 'Update'}
-        okProps={{ isDisabled: !formValues.variableKey }}
+        okProps={{ isDisabled: isOkDisabled }}
         disablePadding
         subTitle="
         Entity variable is used to reference specific fields from an entity or instrument (e.g
@@ -299,7 +351,11 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
               setSearchKey(variableKey ?? undefined);
               if (variableKey) {
                 setFormValues(
-                  getInitialFormValues(ruleType, { key: variableKey }, entityVariables),
+                  getInitialFormValues(
+                    ruleType,
+                    { key: getNewEntityVariableKey(), entityKey: variableKey },
+                    entityVariables,
+                  ),
                 );
               }
             }}
@@ -376,11 +432,41 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 ref={nestedSelectsRef}
                 label="Entity"
                 options={variableOptions}
-                value={formValues.variableKey}
-                onChange={(variableKey) => handleUpdateForm({ variableKey })}
+                value={formValues.entityVariableKey}
+                onChange={(entityVariableKey) => handleUpdateForm({ entityVariableKey })}
               />
             )}
           </PropertyColumns>
+          {/* TODO: suppport user event filters */}
+          {entityVariable && formValues.type === 'TRANSACTION' && (
+            <div>
+              {!formValues.filtersLogic && !showFilters ? (
+                <Link to="" onClick={() => setShowFilters(true)}>
+                  Add filters
+                </Link>
+              ) : (
+                <Label label="Filters">
+                  <Alert type="info">
+                    The system will search from the latest to the earliest{' '}
+                    {formValues.type.toLowerCase()} event to find the first match based on your
+                    filters
+                  </Alert>
+                  <RuleLogicBuilder
+                    ruleType={ruleType}
+                    entityVariableTypes={getFilterEntityVariableTypes(entityVariable)}
+                    jsonLogic={formValues.filtersLogic}
+                    // NOTE: Only entity variables are allowed for entity variable filters
+                    aggregationVariables={[]}
+                    onChange={(jsonLogic) => {
+                      if (!isEqual(jsonLogic, formValues.filtersLogic)) {
+                        handleUpdateForm({ filtersLogic: jsonLogic });
+                      }
+                    }}
+                  />
+                </Label>
+              )}
+            </div>
+          )}
         </Card.Section>
       </Modal>
     </div>

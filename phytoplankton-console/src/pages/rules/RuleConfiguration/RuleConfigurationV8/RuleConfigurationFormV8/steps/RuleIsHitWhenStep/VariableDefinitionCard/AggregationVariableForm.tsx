@@ -465,7 +465,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             <Label label="Filters">
               <RuleLogicBuilder
                 ruleType={ruleType}
-                entityVariableTypes={['TRANSACTION']}
+                entityVariableTypes={['TRANSACTION', 'TRANSACTION_EVENT']}
                 jsonLogic={formValues.filtersLogic}
                 // NOTE: Only entity variables are allowed for aggregation variable filters
                 aggregationVariables={[]}

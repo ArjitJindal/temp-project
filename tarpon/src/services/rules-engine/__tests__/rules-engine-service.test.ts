@@ -598,7 +598,6 @@ describe('Verify Transaction for Simulation', () => {
   test('Applies manual action to transaction', async () => {
     const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
     const transaction = getTestTransaction({ status: 'SUSPEND' })
-    transaction.transactionId = ''
     const t = await rulesEngine.verifyTransaction(transaction)
     const mongoDb = await getMongoDbClient()
     const transactionRepository = new MongoDbTransactionRepository(
@@ -1236,6 +1235,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         logicEntityVariables: [
           {
             key: 'CONSUMER_USER:savedPaymentDetails__SENDER',
+            entityKey: 'CONSUMER_USER:savedPaymentDetails__SENDER',
           },
         ],
         defaultAction: 'FLAG',

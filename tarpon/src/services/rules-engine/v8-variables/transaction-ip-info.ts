@@ -32,8 +32,8 @@ const createIpVariable = (
     load: async (transaction) => {
       const ipAddress =
         direction === 'ORIGIN'
-          ? transaction.originDeviceData?.ipAddress
-          : transaction.destinationDeviceData?.ipAddress
+          ? transaction?.originDeviceData?.ipAddress
+          : transaction?.destinationDeviceData?.ipAddress
       const info = ipAddress ? await lookupIpLocation(ipAddress) : undefined
       return info?.[granularity.toLowerCase()]
     },

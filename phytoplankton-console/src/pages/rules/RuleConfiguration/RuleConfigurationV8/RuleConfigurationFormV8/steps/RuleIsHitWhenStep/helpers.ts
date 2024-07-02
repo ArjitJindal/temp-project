@@ -1,5 +1,6 @@
 import { Config, BasicConfig } from '@react-awesome-query-builder/ui';
 import { useState, useEffect, useMemo } from 'react';
+import { compact } from 'lodash';
 import { AsyncResource, init, isSuccess, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -8,6 +9,7 @@ import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
 import {
   RuleAggregationVariable,
+  RuleEntityVariableEntityEnum,
   RuleEntityVariableInUse,
   RuleLogicConfig,
   RuleType,
@@ -19,6 +21,7 @@ import {
   getOperatorsByValueType,
 } from '@/components/ui/LogicBuilder/operators';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { JSON_LOGIC_FUNCTIONS } from '@/components/ui/LogicBuilder/functions';
 
 const InitialConfig = BasicConfig;
 
@@ -91,9 +94,7 @@ export function useRuleLogicConfig(ruleType: RuleType) {
 
 export function useLogicBuilderConfig(
   ruleType: RuleType,
-  entityVariableTypes: Array<
-    'TRANSACTION' | 'CONSUMER_USER' | 'BUSINESS_USER' | 'USER' | 'PAYMENT_DETAILS'
-  >,
+  entityVariableTypes: RuleEntityVariableEntityEnum[],
   entityVariablesInUse: RuleEntityVariableInUse[] | undefined,
   aggregationVariables: RuleAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
@@ -122,24 +123,28 @@ export function useLogicBuilderConfig(
           }
           return definition;
         });
-        const filteredEntityVariables = entityVariables
-          .filter(
-            (v) =>
-              v.entity != null &&
-              entityVariableTypes.includes(v.entity) &&
-              (!entityVariablesInUse ||
-                entityVariablesInUse.find((varInUse) => varInUse.key === v.key)),
-          )
-          .map((v) => ({
-            ...v,
-            uiDefinition: {
-              ...v.uiDefinition,
-              label:
-                entityVariablesInUse?.find((varInUse) => varInUse.key === v.key)?.name ??
-                v.uiDefinition.label,
-            },
-          }));
-        const variables = filteredEntityVariables.concat(aggregationVariablesGrouped);
+        const filteredEntityVariables = entityVariablesInUse
+          ? compact(
+              entityVariablesInUse.map((v) => {
+                const entityVariable = entityVariables.find((e) => e.key === v.entityKey);
+                if (!entityVariable) {
+                  return;
+                }
+                return {
+                  ...entityVariable,
+                  uiDefinition: {
+                    ...entityVariable.uiDefinition,
+                    label: v.name || entityVariable.uiDefinition.label,
+                  },
+                  key: v.key,
+                };
+              }),
+            )
+          : entityVariables;
+        const finalEntityVariables = filteredEntityVariables.filter(
+          (v) => v.entity != null && entityVariableTypes.includes(v.entity),
+        );
+        const variables = finalEntityVariables.concat(aggregationVariablesGrouped);
         const types = InitialConfig.types;
         for (const key in types) {
           if (types[key].widgets[key]) {
@@ -195,6 +200,18 @@ export function useLogicBuilderConfig(
           .filter((op) => op.uiDefinition)
           .map(getOperatorWithParameter);
         const operatorsWithoutParameters = operators.filter((op) => !op.parameters);
+
+        // TODO: Support option gruops and uncomment below
+        // const funcionGroups = groupBy(functions.concat(JSON_LOGIC_FUNCTIONS), (v) => v.group);
+        // const funcs = mapValues(
+        //   funcionGroups,
+        //   (value, key) =>
+        //     ({
+        //       type: '!struct',
+        //       label: humanizeAuto(key),
+        //       subfields: Object.fromEntries(value.map((f) => [f.key, f.uiDefinition])),
+        //     } as FuncGroup),
+        // );
         const config = makeConfig({
           ...configParams,
           types,
@@ -206,7 +223,9 @@ export function useLogicBuilderConfig(
             ),
           },
           funcs: {
-            ...Object.fromEntries(functions.map((v) => [v.key, v.uiDefinition])),
+            ...Object.fromEntries(
+              functions.concat(JSON_LOGIC_FUNCTIONS).map((v) => [v.key, v.uiDefinition]),
+            ),
           },
           fields: {
             ...Object.fromEntries(variables.map((v) => [v.key, v.uiDefinition])),

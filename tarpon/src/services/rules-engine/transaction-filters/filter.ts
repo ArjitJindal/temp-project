@@ -35,12 +35,16 @@ export abstract class TransactionRuleFilter<P> extends RuleFilter {
     return (
       await new RuleJsonLogicEvaluator('', getDynamoDbClient()).evaluate(
         migratedFilter?.logic ?? { and: [true] },
-        [],
+        {},
         {
           tenantId: '',
           baseCurrency: migratedFilter?.baseCurrency,
         },
-        { type: 'TRANSACTION', transaction: this.transaction }
+        {
+          type: 'TRANSACTION',
+          transaction: this.transaction,
+          transactionEvents: [],
+        }
       )
     ).hit
   }

@@ -1,9 +1,9 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { v4 as uuid } from 'uuid';
+import { shortId } from '@flagright/lib/utils';
 import { useRuleLogicConfig } from '../helpers';
 import s from './style.module.less';
 import { AggregationVariableForm, FormRuleAggregationVariable } from './AggregationVariableForm';
-import { EntityVariableForm } from './EntityVariableForm';
+import { EntityVariableForm, getNewEntityVariableKey } from './EntityVariableForm';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -20,7 +20,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 function getNewAggregationVariableKey() {
-  return `agg:${uuid()}`;
+  return `agg:${shortId()}`;
 }
 
 function augmentAggregationVariables(
@@ -131,7 +131,24 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     },
     [aggregationVariables, entityVariables],
   );
-  const handleDuplicate = useCallback(
+  const handleDuplicateEntityVar = useCallback(
+    (varKey: string, index: number) => {
+      const entityVar = entityVariables?.find((v) => v.key === varKey);
+      if (!entityVar) {
+        return;
+      }
+      const newEntityVar = { ...entityVar, key: getNewEntityVariableKey() };
+      const entityVarDefinition = entityVariableDefinitions.find(
+        (v) => v.key === entityVar.entityKey,
+      );
+      newEntityVar.name = `${newEntityVar.name || entityVarDefinition?.uiDefinition.label} (copy)`;
+      const newEntityVariables = [...(entityVariables ?? [])];
+      newEntityVariables.splice(index + 1, 0, newEntityVar);
+      onChange({ entityVariables: newEntityVariables });
+    },
+    [entityVariableDefinitions, entityVariables, onChange],
+  );
+  const handleDuplicateAggVar = useCallback(
     (varKey: string, index: number) => {
       const aggVar = aggregationVariables?.find((v) => v.key === varKey);
       if (!aggVar) {
@@ -235,22 +252,27 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           <div className={s.tagsContainer}>
             {entityVariables?.map((entityVar, index) => {
               const entityVarDefinition = entityVariableDefinitions.find(
-                (v) => v.key === entityVar.key,
+                (v) => v.key === entityVar.entityKey,
               );
 
               const name = entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown';
 
               return (
-                <Tooltip key={entityVar.key} title={name}>
+                <Tooltip key={index} title={name}>
                   <div>
                     <Tag
-                      key={entityVar.key}
+                      key={index}
                       color="action"
                       actions={[
                         {
                           key: 'edit',
                           icon: <PencilLineIcon className={s.editVariableIcon} />,
                           action: () => handleEdit(entityVar.key, index),
+                        },
+                        {
+                          key: 'copy',
+                          icon: <FileCopyLineIcon />,
+                          action: () => handleDuplicateEntityVar(entityVar.key, index),
                         },
                         {
                           key: 'delete',
@@ -285,7 +307,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                           {
                             key: 'copy',
                             icon: <FileCopyLineIcon />,
-                            action: () => handleDuplicate(aggVar.key, index),
+                            action: () => handleDuplicateAggVar(aggVar.key, index),
                           },
                           {
                             key: 'delete',

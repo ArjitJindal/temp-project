@@ -94,6 +94,46 @@ export class TransactionEventRepository {
     return Items as TransactionEvent[]
   }
 
+  public async getLastTransactionEvent(
+    transactionId: string
+  ): Promise<TransactionEvent | null> {
+    const PartitionKeyID = DynamoDbKeys.TRANSACTION_EVENT(
+      this.tenantId,
+      transactionId
+    ).PartitionKeyID
+
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
+      ExpressionAttributeValues: {
+        ':PartitionKeyID': PartitionKeyID,
+      },
+      ScanIndexForward: false,
+      Limit: 1,
+    }
+    const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
+    return Items?.[0] ? (Items[0] as TransactionEvent) : null
+  }
+
+  public async getMongoLastTransactionEvent(
+    transactionId: string
+  ): Promise<TransactionEvent | null> {
+    const db = this.mongoDb.db()
+    const result = await db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .find({ transactionId })
+      .sort({ timestamp: -1 })
+      .limit(1)
+      .next()
+
+    if (!result) {
+      return null
+    }
+    return pickKnownEntityFields(result, TransactionEvent)
+  }
+
   public async getMongoTransactionEvents(
     transactionIds: string[]
   ): Promise<Map<string, TransactionEvent[]>> {

@@ -8,6 +8,7 @@ import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 
 export type RuleValueTypesEnum =
   | 'string'
@@ -17,6 +18,7 @@ export type RuleValueTypesEnum =
   | 'array'
 export type RuleEntityType =
   | 'TRANSACTION'
+  | 'TRANSACTION_EVENT'
   | 'USER'
   | 'CONSUMER_USER'
   | 'BUSINESS_USER'
@@ -41,10 +43,22 @@ export interface TransactionRuleVariable<ReturnType = unknown>
   extends RuleVariableBase {
   entity: 'TRANSACTION'
   load: (
-    transaction: TransactionWithRiskDetails | AuxiliaryIndexTransaction,
+    transaction:
+      | TransactionWithRiskDetails
+      | AuxiliaryIndexTransaction
+      | undefined,
     context?: RuleVariableContext
   ) => Promise<ReturnType>
   sourceField: keyof TransactionWithRiskDetails
+}
+
+export interface TransactionEventRuleVariable<ReturnType = unknown>
+  extends RuleVariableBase {
+  entity: 'TRANSACTION_EVENT'
+  load: (
+    transactionEvent: TransactionEvent | undefined,
+    context?: RuleVariableContext
+  ) => Promise<ReturnType>
 }
 
 export interface ConsumerUserRuleVariable<ReturnType = unknown>

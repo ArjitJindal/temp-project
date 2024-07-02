@@ -11,7 +11,6 @@ import {
   RuleLabels,
   RuleNature,
   TriggersOnHit,
-  RuleEntityVariableInUse,
   RuleType,
 } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
@@ -240,8 +239,7 @@ export function ruleInstanceToFormValuesV8(
     },
     ruleIsHitWhenStep: {
       baseCurrency: ruleInstance.baseCurrency,
-      ruleLogicEntityVariables:
-        ruleInstance.logicEntityVariables ?? getAllEntityVariables(ruleInstance.logic),
+      ruleLogicEntityVariables: ruleInstance.logicEntityVariables,
       ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
       ...(isRiskLevelsEnabled
         ? {
@@ -593,10 +591,8 @@ export function useIsV8Rule(rule?: Rule | null): boolean {
   return isV8Rule(v8Enabled, rule);
 }
 
-export function getAllEntityVariables(logic: object): RuleEntityVariableInUse[] {
-  return getAllValuesByKey<string>('var', logic ?? {})
-    .filter((v) => !v.startsWith('agg:'))
-    .map((v) => ({ key: v }));
+export function getAllEntityVariableKeys(logic: object): string[] {
+  return getAllValuesByKey<string>('var', logic ?? {}).filter((v) => !v.startsWith('agg:'));
 }
 
 export const getRuleInstanceDescription = (

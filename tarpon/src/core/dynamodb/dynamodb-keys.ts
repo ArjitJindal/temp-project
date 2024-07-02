@@ -45,9 +45,6 @@ type AuxiliaryIndexTransactionSortKeyData = {
   transactionId: string
 }
 
-export const TRANSACTION_ID_SUFFIX_DEPLOYED_TIME = new Date(
-  '2023-09-29T09:47:00.000Z'
-)
 function getAuxiliaryIndexTransactionSortKey(
   sortKeyData?: AuxiliaryIndexTransactionSortKeyData
 ) {
