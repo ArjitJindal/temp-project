@@ -61,15 +61,15 @@ const jobs = [
     name: 'stream',
     description: 'Stream live from kinesis and transform',
     continuous: true,
-    compute: 'G.1X',
-    numWorkers: 2,
+    compute: 'G.025X',
+    numWorkers: 1,
   },
   {
     name: 'optimize',
     description: 'Optimize all tables nightly',
     schedule: 'CRON(0 0 0 * * ?)',
-    compute: 'G.1X',
-    numWorkers: 2,
+    compute: 'G.025X',
+    numWorkers: 1,
   },
 ]
 
@@ -459,6 +459,17 @@ class DatabricksStack extends TerraformStack {
       connections.push(mongoConnection.name)
     }
 
+    const log4PropertiesFile = new aws.s3Object.S3Object(this, `spark-properties`, {
+      bucket: datalakeBucket.bucket,
+      key: `log4j2.properties`,
+      content: `
+log4j.rootCategory=ERROR,console
+log4j.appender.console=org.apache.log4j.ConsoleAppender
+log4j.appender.console.target=System.err
+log4j.appender.console.layout=org.apache.log4j.PatternLayout
+log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: %m%n`,
+    })
+
     jobs.map((job) => {
       const script = new aws.s3Object.S3Object(this, `${job.name}-script`, {
         bucket: datalakeBucket.bucket,
@@ -483,6 +494,8 @@ class DatabricksStack extends TerraformStack {
           '--datalake_bucket': datalakeBucket.bucket,
           '--job-language': 'python-3',
           '--enable-spark-ui': 'true',
+          '--enable-continuous-cloudwatch-log': 'true',
+          '--enable-continuous-log-filter': 'true',
           '--spark-event-logs-path': `s3://${datalakeBucket.bucket}/spark-logs/`,
           '--job-bookmark-option': 'job-bookmark-disable',
           '--enable-glue-datacatalog': 'true',
@@ -490,6 +503,7 @@ class DatabricksStack extends TerraformStack {
           '--conf': `spark.sql.streaming.stateStore.stateSchemaCheck=false --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension --conf spark.sql.warehouse.dir=s3://${datalakeBucket.bucket}/warehouse/ --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog --conf spark.delta.logStore.class=org.apache.spark.sql.delta.storage.S3SingleDriverLogStore`,
           '--additional-python-modules': `s3://${datalakeBucket.bucket}/${pythonPackage.key},delta-spark`,
           '--extra-jars': `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
+          '--extra-files': `s3://${datalakeBucket.bucket}/${log4PropertiesFile.key}`,
         },
       })
       if (job.schedule) {
@@ -1665,8 +1679,12 @@ import os
 from src.jobs.jobs import Jobs
 from pyspark.context import SparkContext
 from awsglue.context import GlueContext
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.WARN)
 
 sc = SparkContext.getOrCreate()
+sc.setLogLevel("WARN")
 glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 

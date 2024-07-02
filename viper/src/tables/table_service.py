@@ -160,7 +160,7 @@ class TableService:
             df_with_new_schema = self.spark.createDataFrame([], df.schema)
             df_with_new_schema.write.format("delta").partitionBy(
                 ["tenant", "date"]
-            ).mode(mode).option("overwriteSchema", "true").saveAsTable(table)
+            ).mode(mode).option("mergeSchema", "true").saveAsTable(table)
 
 
 def data_types_equal(type1, type2):
