@@ -580,7 +580,7 @@ export class RiskRepository {
 
   async getParameterRiskItemsV8(
     entityType?: RiskEntityType
-  ): Promise<Array<ParameterAttributeRiskValuesV8> | null> {
+  ): Promise<Array<ParameterAttributeValuesListV8>> {
     const keyConditionExpr = 'PartitionKeyID = :pk'
     const expressionAttributeVals = {
       ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
@@ -622,7 +622,7 @@ export class RiskRepository {
       return result.Items && result.Items.length > 0
         ? (result.Items.map((item) =>
             omit(item, ['PartitionKeyID', 'SortKeyID'])
-          ) as ParameterAttributeRiskValuesV8[])
+          ) as ParameterAttributeValuesListV8[])
         : []
     } catch (e) {
       logger.error(e)

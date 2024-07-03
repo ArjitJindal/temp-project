@@ -3383,7 +3383,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
+                  $ref: '#/components/schemas/ParameterAttributeValuesListV8'
   /pulse/{riskParameterId}/risk-parameters-v8:
     parameters:
       - schema:

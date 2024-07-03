@@ -15,6 +15,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { traceable } from '@/core/xray'
 import { ParameterAttributeValuesV8Request } from '@/@types/openapi-internal/ParameterAttributeValuesV8Request'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
+import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -94,7 +95,7 @@ export class RiskService {
 
   async getParameterRiskItemsV8(
     entityType?: RiskEntityType
-  ): Promise<Array<ParameterAttributeRiskValuesV8> | null> {
+  ): Promise<Array<ParameterAttributeValuesListV8>> {
     return this.riskRepository.getParameterRiskItemsV8(entityType)
   }
 
