@@ -96,10 +96,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     { auth0Domain },
     { mongoDb: client }
   )
-  await tenantRepository.createOrUpdateTenantSettings({
-    ...settings,
-    features: ['SANCTIONS'],
-  })
 
   logger.info(`TenantId: ${tenantId}`)
 
