@@ -1528,6 +1528,11 @@ components:
             - key: customKey
               value: customValue
       properties:
+        activatedTimestamp:
+          type: number
+          description: Timestamp when user was activated
+          minimum: 1262300400000
+          maximum: 4133890801000
         userDetails:
           $ref: '#/components/schemas/UserDetails'
         userStateDetails:
@@ -3352,6 +3357,11 @@ components:
               value: customValue
       description: Model for a business user - optional fields
       properties:
+        activatedTimestamp:
+          type: number
+          description: Timestamp when the user was activated
+          minimum: 1262300400000
+          maximum: 4133890801000
         userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
         kycStatusDetails:
