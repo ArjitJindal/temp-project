@@ -515,6 +515,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () =>
         [
           { createdAt: 1, _id: 1 },
+          { 'response.rawComplyAdvantageResponse.content.data.created_at': 1 },
           { 'response.rawComplyAdvantageResponse.content.data.id': 1 },
           { 'request.searchTerm': 1 },
           { 'response.data.doc.types': 1 },

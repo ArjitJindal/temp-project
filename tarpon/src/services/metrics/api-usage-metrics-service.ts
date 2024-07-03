@@ -54,7 +54,11 @@ import {
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
-import { MONTH_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
+import {
+  DAY_DATE_FORMAT,
+  MONTH_DATE_FORMAT_JS,
+  getMongoDbClientDb,
+} from '@/utils/mongodb-utils'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 
@@ -98,9 +102,8 @@ export class ApiUsageMetricsService {
       'createdAt',
       timeRange
     )
-    const sanctionsChecksCounts = await getDailyUsage(
-      SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id),
-      'createdAt',
+    const sanctionsChecksCounts = await this.getDailySanctionSearchsCount(
+      tenantInfo,
       timeRange
     )
     const ibanResolutinosCounts = await getDailyUsage(
@@ -329,6 +332,53 @@ export class ApiUsageMetricsService {
       ...dailyValues,
       [dayjs().format(MONTH_DATE_FORMAT_JS)]: filteredAccount.length,
     }
+  }
+
+  private async getDailySanctionSearchsCount(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange
+  ): Promise<DailyStats> {
+    const db = await getMongoDbClientDb()
+    const collection = db.collection(
+      SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id)
+    )
+    const createdAtField =
+      'response.rawComplyAdvantageResponse.content.data.created_at'
+    const CA_TIME_FORMAT = 'YYYY-MM-DD HH:MM:SS'
+    const CA_MONGO_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
+    const result = await collection
+      .aggregate<{ _id: string; caSearchIds: string[] }>([
+        {
+          $match: {
+            [createdAtField]: {
+              $gte: dayjs(timeRange.startTimestamp).format(CA_TIME_FORMAT),
+              $lte: dayjs(timeRange.endTimestamp).format(CA_TIME_FORMAT),
+            },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: {
+                format: DAY_DATE_FORMAT,
+                date: {
+                  $dateFromString: {
+                    dateString: `$${createdAtField}`,
+                    format: CA_MONGO_TIME_FORMAT,
+                  },
+                },
+              },
+            },
+            caSearchIds: {
+              $addToSet: '$response.rawComplyAdvantageResponse.content.data.id',
+            },
+          },
+        },
+      ])
+      .toArray()
+    return Object.fromEntries(
+      result.map((item) => [item._id, item.caSearchIds.length])
+    )
   }
 
   private getDimensions(tenantInfo: TenantBasic): Dimension[] {
