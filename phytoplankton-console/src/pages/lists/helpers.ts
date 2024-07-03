@@ -24,6 +24,7 @@ const LIST_SUBTYPES: ListSubtype[] = [
   'BANK_SWIFT_CODE',
   'UPI_IDENTIFYING_NUMBER',
   'IP_ADDRESS',
+  'DEVICE_IDENTIFIER',
 ];
 
 export const BLACKLIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
@@ -51,6 +52,8 @@ export function getListSubtypeTitle(subtype: ListSubtype) {
       return 'UPI/Identifying number';
     case 'IP_ADDRESS':
       return 'IP address';
+    case 'DEVICE_IDENTIFIER':
+      return 'Device identifier';
     case 'STRING':
       return 'String';
   }

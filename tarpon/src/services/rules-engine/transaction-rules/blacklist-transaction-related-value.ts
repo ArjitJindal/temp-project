@@ -270,6 +270,7 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
         return fields
       }
       case 'IP_ADDRESS':
+      case 'DEVICE_IDENTIFIER':
       case 'STRING':
         return []
     }

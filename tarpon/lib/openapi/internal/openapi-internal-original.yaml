@@ -10689,6 +10689,7 @@ components:
         - COUNTRY
         - BANK_NAMES
         - PRODUCT_TYPES
+        - DEVICE_IDENTIFIER
     UsersUniquesField:
       title: UsersUniquesField
       type: string

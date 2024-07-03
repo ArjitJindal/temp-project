@@ -784,6 +784,11 @@ export class MongoDbTransactionRepository
         ? 'originDeviceData.ipAddress'
         : 'destinationDeviceData.ipAddress'
 
+    const deviceIdentifierPath =
+      params.direction === 'origin'
+        ? 'originDeviceData.deviceIdentifier'
+        : 'destinationDeviceData.deviceIdentifier'
+
     switch (params.field) {
       case 'TRANSACTION_STATE':
         fieldPath = 'transactionState'
@@ -856,6 +861,9 @@ export class MongoDbTransactionRepository
         break
       case 'IP_ADDRESS':
         fieldPath = ipAddressPath
+        break
+      case 'DEVICE_IDENTIFIER':
+        fieldPath = deviceIdentifierPath
         break
       case 'CURRENCY':
         fieldPath = `${amountDetailsPath}.transactionCurrency`

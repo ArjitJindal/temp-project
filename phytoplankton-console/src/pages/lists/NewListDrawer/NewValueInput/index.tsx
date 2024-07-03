@@ -104,6 +104,8 @@ function SearchInput(
         return 'UPI_IDENTIFYING_NUMBER';
       case 'IP_ADDRESS':
         return 'IP_ADDRESS';
+      case 'DEVICE_IDENTIFIER':
+        return 'DEVICE_IDENTIFIER';
       case 'STRING':
         throw new Error(`This value is not supported: ${listSubtype}`);
       default:

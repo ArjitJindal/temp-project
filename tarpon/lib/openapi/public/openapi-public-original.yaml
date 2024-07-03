@@ -4715,6 +4715,7 @@ components:
         - BANK_SWIFT_CODE
         - UPI_IDENTIFYING_NUMBER
         - IP_ADDRESS
+        - DEVICE_IDENTIFIER
         - STRING
     ListKeyMetadata:
       type: object
