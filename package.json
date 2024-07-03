@@ -47,7 +47,7 @@
     "@slack/web-api": "^7.0.4",
     "@types/lodash": "^4.17.1",
     "aws-cdk": "~2.144.0",
-    "aws-cdk-lib": "~2.142.1",
+    "aws-cdk-lib": "~2.145",
     "lodash": "^4.17.21",
     "octokit": "^3.2.1"
   },
