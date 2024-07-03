@@ -25,6 +25,8 @@ const env = `${stage}-${region}`
 const config = getTarponConfig(stage, region)
 const awsRegion = config.env.region || ''
 const regionalAdminGroupName = `${awsRegion}-admins`
+const stateBucket = `flagright-terraform-state-databricks-${env}`
+const prefix = `flagright-databricks-${stage}-${region}`
 const awsPrefix = `flagright-datalake-${stage}-${region}`
 const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
@@ -146,9 +148,6 @@ class DatabricksStack extends TerraformStack {
     const { securityGroupIds, subnetIds, vpcId } = config.viper.CREATE_VPC
       ? this.createVpc()
       : this.fetchVpc()
-
-    const storageConfigurationId = this.rootStorage()
-    const { credentialsId, profileRoleName } = this.crossAccountRole()
 
     this.awsWorkspace(
       config.viper.CREATE_VPC
@@ -430,6 +429,7 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
           scriptLocation: `s3://${datalakeBucket.bucket}/${script.key}`,
           pythonVersion: '3',
         },
+        glueVersion: '4.0',
         workerType: job.compute,
         numberOfWorkers: job.numWorkers,
         defaultArguments: {
