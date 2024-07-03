@@ -432,6 +432,7 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
         glueVersion: '4.0',
         workerType: job.compute,
         numberOfWorkers: job.numWorkers,
+        cloudwatchMetricsEnabled: true,
         defaultArguments: {
           '--force_backfill': 'false',
           '--tenants': `${this.tenantIds.join(',')}`,
@@ -448,6 +449,7 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
           '--additional-python-modules': `s3://${datalakeBucket.bucket}/${pythonPackage.key},delta-spark`,
           '--extra-jars': `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
           '--extra-files': `s3://${datalakeBucket.bucket}/${log4PropertiesFile.key}`,
+          '--enable-metrics': '',
         },
       })
       if (job.schedule) {
