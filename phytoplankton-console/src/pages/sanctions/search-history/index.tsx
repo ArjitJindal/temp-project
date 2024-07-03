@@ -59,7 +59,8 @@ export const SanctionsSearchHistoryTable: React.FC = () => {
       title: 'Created',
       key: 'createdAt',
       type: DATE_TIME,
-      filtering: true,
+      // NOTE: No filtering here. Time filter is handled by the extra tools.
+      filtering: false,
     }),
     helper.simple<'request.searchTerm'>({
       title: 'Search term',
