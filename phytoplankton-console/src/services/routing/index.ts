@@ -9,6 +9,7 @@ import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-factors';
+import CustomRiskFactorsPage from '@/pages/risk-levels/custom-risk-factors';
 import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
 import TransactionsFilesPage from '@/pages/import/import-transactions';
 import TransactionsListPage from '@/pages/transactions';
@@ -41,12 +42,14 @@ import { QASamplePage } from '@/pages/qa-sample-item';
 import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
 import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
 import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
+import RiskFactorItemPage from '@/pages/risk-levels/custom-risk-factors/RiskItem';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
+  const isCustomRiskFactorsEnabled = useFeatureEnabled('CUSTOM_RISK_FACTORS');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -335,6 +338,37 @@ export function useRoutes(): RouteItem[] {
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'],
           },
+          ...(isCustomRiskFactorsEnabled
+            ? [
+                {
+                  name: 'custom-risk-factors',
+                  path: '/risk-levels/custom-risk-factors',
+                  component: CustomRiskFactorsPage,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'custom-risk-factors',
+                  path: '/risk-levels/custom-risk-factors/:type',
+                  component: CustomRiskFactorsPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'custom-risk-factors',
+                  path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'custom-risk-factors',
+                  path: '/risk-levels/custom-risk-factors/:type/:mode',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+              ]
+            : []),
           {
             name: 'configure',
             path: '/risk-levels/configure',
@@ -492,6 +526,7 @@ export function useRoutes(): RouteItem[] {
     isAtLeastAdminUser,
     hasAuditLogPermission,
     permissions,
+    isCustomRiskFactorsEnabled,
   ]);
 }
 

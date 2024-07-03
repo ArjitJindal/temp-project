@@ -126,6 +126,7 @@ export class RiskService {
         .padStart(3, '0')}`
 
     const data: ParameterAttributeRiskValuesV8 = {
+      ...(currentParameter ?? {}),
       ...parameter,
       id,
       createdAt: currentParameter?.createdAt ?? Date.now(),

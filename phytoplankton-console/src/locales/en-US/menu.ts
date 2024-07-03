@@ -63,4 +63,5 @@ export default {
   'menu.risk-levels.risk-algorithms': 'Risk algorithms',
   'menu.risk-levels.risk-algorithms.description': 'Algorithms used to calculate risk scores',
   'menu.sanctions': 'Sanctions',
+  'menu.risk-levels.custom-risk-factors': 'Custom risk factors',
 };

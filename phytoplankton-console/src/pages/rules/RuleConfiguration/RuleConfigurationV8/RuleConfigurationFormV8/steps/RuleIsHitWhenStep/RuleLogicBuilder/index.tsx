@@ -54,8 +54,16 @@ export function RuleLogicBuilder(props: Props) {
   );
   useEffect(() => {
     if (isSuccess(configRes) && props.aggregationVariables) {
-      if (state === null || isConfigChanged) {
-        const config = configRes.value;
+      let isJsonLogicChanged = false;
+      const config = configRes.value;
+      if (state && state.tree && props.jsonLogic) {
+        const jsonLogic = QbUtils.jsonLogicFormat(
+          QbUtils.checkTree(state.tree, config),
+          config,
+        ).logic;
+        isJsonLogicChanged = !isEqual(jsonLogic, props.jsonLogic);
+      }
+      if (state === null || isConfigChanged || isJsonLogicChanged) {
         setState((prevState) => {
           const tree = QbUtils.loadFromJsonLogic(props.jsonLogic, config);
           const newState: State = {

@@ -9,7 +9,12 @@ import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-lin
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleAggregationVariable, RuleEntityVariableInUse, RuleType } from '@/apis';
+import {
+  RuleAggregationVariable,
+  RuleEntityVariableEntityEnum,
+  RuleEntityVariableInUse,
+  RuleType,
+} from '@/apis';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
@@ -73,6 +78,7 @@ interface RuleAggregationVariablesEditorProps {
     entityVariables?: RuleEntityVariableInUse[];
     aggregationVariables?: RuleAggregationVariable[];
   }) => void;
+  entity?: RuleEntityVariableEntityEnum;
 }
 
 const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
@@ -81,6 +87,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   entityVariables,
   aggregationVariables,
   onChange,
+  entity,
 }) => {
   const [editingVariable, setEditingVariable] = useState<
     EditingAggVariable | EditingEntityVariable | undefined
@@ -330,11 +337,14 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           ruleType={ruleType}
           variable={editingVariable.variable}
           isNew={isNewVariable}
-          entityVariables={entityVariableDefinitions}
+          entityVariables={entityVariableDefinitions.filter((v) =>
+            entity ? entity === v.entity : true,
+          )}
           entityVariablesInUse={entityVariables ?? []}
           readOnly={readOnly}
           onUpdate={handleUpdateEntityVariable}
           onCancel={handleCancelEditVariable}
+          entity={entity}
         />
       )}
       {editingVariable?.type === 'aggregation' && entityVariableDefinitions.length > 0 && (

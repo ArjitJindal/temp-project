@@ -8729,7 +8729,7 @@ components:
         logicEntityVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleEntityVariable'
+            $ref: '#/components/schemas/RuleEntityVariableInUse'
         defaultWeight:
           type: number
           minimum: 0.01
@@ -8750,16 +8750,6 @@ components:
           type: string
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
-      required:
-        - isActive
-        - logicAggregationVariables
-        - logicEntityVariables
-        - defaultWeight
-        - defaultValue
-        - name
-        - riskEntityType
-        - riskLevelAssignmentValues
-        - description
     ParameterAttibutesValuesDerivedV8:
       title: ParameterAttibutesValuesDerivedV8
       properties:
@@ -8918,6 +8908,7 @@ components:
         - NOTIFICATIONS
         - KINESIS_ASYNC
         - FILES_AI_SUMMARY
+        - CUSTOM_RISK_FACTORS
       description: ''
     ManagedRoleName:
       type: string

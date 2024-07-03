@@ -54,6 +54,7 @@ interface EntityVariableFormProps {
   readOnly?: boolean;
   onUpdate: (newEntityVariable: RuleEntityVariableInUse) => void;
   onCancel: () => void;
+  entity?: RuleEntityVariableEntityEnum;
 }
 
 const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
@@ -168,6 +169,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   readOnly,
   onUpdate,
   onCancel,
+  entity,
 }) => {
   const [formValues, setFormValues] = useState<FormRuleEntityVariable>(
     getInitialFormValues(ruleType, variable, entityVariables),
@@ -420,7 +422,9 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                     value={formValues.userNatures}
                     onChange={(userNatures) => handleUpdateForm({ userNatures })}
                     mode={'MULTIPLE'}
-                    options={USER_NATURE_OPTIONS}
+                    options={USER_NATURE_OPTIONS.filter((opt) =>
+                      entity ? opt.value === entity : true,
+                    )}
                     testName="variable-user-nature-v8"
                   />
                 </Label>
