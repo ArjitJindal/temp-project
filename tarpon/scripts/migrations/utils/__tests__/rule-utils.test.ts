@@ -54,7 +54,7 @@ describe('testing v8 key migration', () => {
           },
         ],
       },
-      { ruleInstanceId: 'test-rule-instance' }
+      { ruleInstanceId: 'test-rule-instance', ruleId: 'RC-123' }
     )
   })
 

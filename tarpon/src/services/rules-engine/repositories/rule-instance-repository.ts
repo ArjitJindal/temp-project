@@ -11,8 +11,10 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEqual } from 'lodash'
+import { isEmpty, isEqual, uniqBy } from 'lodash'
 import { getAggVarHash } from '../v8-engine/aggregation-repository'
+import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
+import { isV2RuleInstance } from '../utils'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -24,6 +26,8 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
+import { hasFeature } from '@/core/utils/context'
+import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 
 function toRuleInstance(item: any): RuleInstance {
   return {
@@ -67,7 +71,6 @@ function toRuleInstance(item: any): RuleInstance {
 @traceable
 export class RuleInstanceRepository {
   dynamoDb: DynamoDBDocumentClient
-
   tenantId: string
 
   constructor(
@@ -111,11 +114,106 @@ export class RuleInstanceRepository {
     return `RC-${count}`
   }
 
+  public getV8PropsForV2RuleInstance(ruleInstance: RuleInstance) {
+    const ruleId = ruleInstance.ruleId
+    let migratedData: RuleMigrationConfig | null = null
+    let v2RiskLevelLogic: RuleInstance['riskLevelLogic']
+    let baseCurrency = ruleInstance.baseCurrency
+    let logicAggregationVariables: RuleAggregationVariable[] = []
+
+    const v2RuleInstance = isV2RuleInstance(ruleInstance)
+
+    if (v2RuleInstance && ruleId) {
+      if (isEmpty(ruleInstance.parameters)) {
+        ruleInstance.parameters =
+          ruleInstance.riskLevelParameters?.[DEFAULT_RISK_LEVEL]
+      }
+
+      migratedData = getMigratedV8Config(
+        ruleId,
+        ruleInstance.parameters,
+        ruleInstance.filters
+      )
+
+      logicAggregationVariables.push(
+        ...(migratedData?.logicAggregationVariables ?? [])
+      )
+
+      if (migratedData == null && !hasFeature('RISK_LEVELS')) {
+        return
+      }
+
+      if (!baseCurrency && migratedData?.baseCurrency) {
+        baseCurrency = migratedData.baseCurrency
+      }
+
+      if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
+        v2RiskLevelLogic = Object.entries(
+          ruleInstance.riskLevelParameters
+        ).reduce((acc, [riskLevel, params]) => {
+          const migratedDataByRiskLevel = getMigratedV8Config(
+            ruleId,
+            params,
+            ruleInstance.filters
+          )
+
+          logicAggregationVariables.push(
+            ...(migratedDataByRiskLevel?.logicAggregationVariables ?? [])
+          )
+
+          if (!migratedData) {
+            migratedData = migratedDataByRiskLevel
+          }
+
+          if (!baseCurrency && migratedDataByRiskLevel?.baseCurrency) {
+            baseCurrency = migratedDataByRiskLevel.baseCurrency
+          }
+
+          acc[riskLevel] = migratedDataByRiskLevel?.logic
+
+          return acc
+        }, {} as RiskLevelRuleLogic)
+      }
+    }
+
+    logicAggregationVariables = uniqBy(logicAggregationVariables, (v) => {
+      return getAggVarHash(v, false)
+    }).map((newAggVar) => {
+      const existingAggVar = ruleInstance.logicAggregationVariables?.find(
+        (existingAggVar) => {
+          return (
+            getAggVarHash(newAggVar, false) ===
+            getAggVarHash(existingAggVar, false)
+          )
+        }
+      )
+      return {
+        ...newAggVar,
+        version: existingAggVar?.version,
+      }
+    })
+
+    const logic: object =
+      migratedData?.logic ?? Object.values(v2RiskLevelLogic ?? {})[0]
+
+    const riskLevelLogic = v2RiskLevelLogic
+
+    return { logic, riskLevelLogic, logicAggregationVariables, baseCurrency }
+  }
+
   public async createOrUpdateRuleInstance(
     ruleInstance: RuleInstance,
     updatedAt?: number
   ): Promise<RuleInstance> {
     const ruleId = ruleInstance.ruleId ?? (await this.getNewCustomRuleId(true))
+
+    if (isV2RuleInstance(ruleInstance)) {
+      ruleInstance = {
+        ...ruleInstance,
+        ...this.getV8PropsForV2RuleInstance(ruleInstance),
+      }
+    }
+
     const ruleInstanceId =
       ruleInstance.id || (await this.getNewRuleInstanceId(ruleId, true))
 
@@ -144,6 +242,7 @@ export class RuleInstanceRepository {
       alertConfig: ruleInstance.alertConfig,
       ruleId,
     }
+
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {

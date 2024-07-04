@@ -23,6 +23,7 @@ import {
 } from '@flagright/lib/tenants/usage-plans'
 import { uniq } from 'lodash'
 import { createNewApiKeyForTenant } from '../api-key'
+import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
@@ -46,6 +47,7 @@ import {
 import { isDemoTenant } from '@/utils/tenant'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -72,6 +74,55 @@ export class TenantService {
     this.tenantId = tenantId
   }
 
+  private async featureFlagChangeCapture(
+    oldFeatures: Feature[],
+    newFeatures: Feature[]
+  ) {
+    const handlers: Partial<
+      Record<
+        'ENABLED' | 'DISABLED',
+        Partial<Record<Feature, () => Promise<void>>>
+      >
+    > = {
+      ENABLED: {
+        RISK_SCORING: async () => {
+          await sendBatchJobCommand({
+            type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
+            tenantId: this.tenantId,
+          })
+        },
+        RULES_ENGINE_V8_FOR_V2_RULES: async () => {
+          const service = new RuleInstanceService(this.tenantId, {
+            dynamoDb: this.dynamoDb,
+            mongoDb: this.mongoDb,
+          })
+          await service.preAggregateV2RuleInstance()
+        },
+      },
+      DISABLED: {
+        RULES_ENGINE_V8_FOR_V2_RULES: async () =>
+          RuleInstanceService.bumpV2RuleInstanceAggregationVersion(
+            this.tenantId
+          ),
+      },
+    }
+
+    const featuresAdded = newFeatures.filter(
+      (feature) => !oldFeatures.includes(feature)
+    )
+
+    const featuresRemoved = oldFeatures.filter(
+      (feature) => !newFeatures.includes(feature)
+    )
+
+    for (const feature of featuresAdded) {
+      await handlers.ENABLED?.[feature]?.()
+    }
+
+    for (const feature of featuresRemoved) {
+      await handlers.DISABLED?.[feature]?.()
+    }
+  }
   public static getTenantsToDelete = async (): Promise<DeleteTenant[]> => {
     const mongoDb = await getMongoDbClient()
     const collectionName = TENANT_DELETION_COLLECTION
@@ -483,6 +534,8 @@ export class TenantService {
   async createOrUpdateTenantSettings(
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
+    const existingTenantSettings = getContext()?.settings
+
     const tenantRepository = new TenantRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
       mongoDb: this.mongoDb,
@@ -490,6 +543,10 @@ export class TenantService {
     const updatedResult = await tenantRepository.createOrUpdateTenantSettings(
       newTenantSettings
     )
+    updateTenantSettings({
+      ...existingTenantSettings,
+      ...newTenantSettings,
+    })
 
     // Update auth0 tenant metadata for the selected tenant setting properties
     if (
@@ -504,14 +561,10 @@ export class TenantService {
       })
     }
 
-    const existingTenantSettings = getContext()?.settings
-
-    const mergedTenantSettings: TenantSettings = {
-      ...existingTenantSettings,
-      ...newTenantSettings,
-    }
-
-    updateTenantSettings(mergedTenantSettings)
+    await this.featureFlagChangeCapture(
+      existingTenantSettings?.features ?? [],
+      newTenantSettings.features ?? []
+    )
 
     return updatedResult
   }

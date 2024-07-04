@@ -8,10 +8,11 @@ import {
 } from '@lib/constants'
 import { Umzug, MongoDBStorage } from 'umzug'
 import { STS, AssumeRoleCommand } from '@aws-sdk/client-sts'
+import { RuleInstanceService } from '../../src/services/rules-engine/rule-instance-service'
 import { syncMongoDbIndexes } from './always-run/sync-mongodb-indexes'
 import { getConfig, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
-import { syncFeatureFlags } from './utils/tenant'
+import { migrateAllTenants, syncFeatureFlags } from './utils/tenant'
 import { syncAccountsLocally } from './always-run/sync-accounts'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -152,6 +153,10 @@ async function syncData() {
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
+  await migrateAllTenants(async (tenant) => {
+    await RuleInstanceService.migrateV2RuleInstancesToV8(tenant.id)
+  })
+
   if (envIs('local')) {
     await syncAccountsLocally()
   }

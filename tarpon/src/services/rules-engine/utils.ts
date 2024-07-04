@@ -11,6 +11,7 @@ import { RiskLevelRuleActions } from '@/@types/openapi-internal/RiskLevelRuleAct
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import { hasFeature } from '@/core/utils/context'
 
 export function getSenderKeys(
   tenantId: string,
@@ -193,11 +194,42 @@ export function getAggregatedRuleStatus(
 }
 
 export function isV8RuleInstance(ruleInstance: RuleInstance): boolean {
-  return !!(ruleInstance.logic || ruleInstance.riskLevelLogic)
+  if (ruleInstance.logic || ruleInstance.riskLevelLogic) {
+    if (hasFeature('RULES_ENGINE_V8_FOR_V2_RULES')) {
+      return !!ruleInstance.ruleId?.startsWith('RC')
+    }
+
+    return true
+  }
+
+  return false
 }
 
 export function isV8Rule(rule: Rule): boolean {
   return !!rule.defaultLogic
+}
+
+export function isV2RuleInstance(ruleInstance: RuleInstance): boolean {
+  return !!(ruleInstance.ruleId && !ruleInstance.ruleId.startsWith('RC'))
+}
+
+export function runOnV8Engine(
+  ruleInstance: RuleInstance,
+  rule?: Rule
+): boolean {
+  if (hasFeature('RULES_ENGINE_V8')) {
+    if (
+      hasFeature('RULES_ENGINE_V8_FOR_V2_RULES') &&
+      rule?.engineVersion === 'V8'
+    ) {
+      return true
+    }
+
+    if (!isV2RuleInstance(ruleInstance)) {
+      return true
+    }
+  }
+  return false
 }
 
 export async function ruleInstanceAggregationVariablesRebuild(

@@ -24,26 +24,24 @@ import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationD
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
-export function getMigratedV8Config(
-  ruleId: string,
-  parameters: any = {},
-  filters: LegacyFilters = {}
-): {
+export type RuleMigrationConfig = {
   logic: object
   logicAggregationVariables: RuleAggregationVariable[]
   alertCreationDirection?: AlertCreationDirection
   baseCurrency?: CurrencyCode
-} | null {
+}
+
+export function getMigratedV8Config(
+  ruleId: string,
+  parameters: any = {},
+  filters: LegacyFilters = {}
+): RuleMigrationConfig | null {
   const migrationFunc = V8_CONVERSION[ruleId]
+
   if (!migrationFunc && Object.keys(filters).length === 0) {
-    return {
-      logic: {
-        and: [true],
-      },
-      logicAggregationVariables: [],
-      alertCreationDirection: 'ALL',
-    }
+    return null
   }
+
   const historicalFilters = pickBy(filters, (_value, key) =>
     key.includes('Historical')
   ) as TransactionHistoricalFilters
@@ -290,14 +288,9 @@ const DEVIATION_RULE_MIGRATION = (
   }
 }
 
-const V8_CONVERSION: {
-  [ruleId: string]: (parameters: any) => {
-    logic: object
-    logicAggregationVariables: RuleAggregationVariable[]
-    alertCreationDirection?: AlertCreationDirection
-    baseCurrency?: CurrencyCode
-  }
-} = {
+const V8_CONVERSION: Readonly<
+  Record<string, (parameters: any) => RuleMigrationConfig>
+> = {
   'R-30': (parameters: TransactionsVelocityRuleParameters) => {
     const { logicAggregationVariables, alertCreationDirection } =
       migrateCheckDirectionParameters({ type: 'COUNT', parameters })
@@ -756,3 +749,5 @@ const V8_CONVERSION: {
   'R-121': (params) => DEVIATION_RULE_MIGRATION('COUNT', 'COUNT', true, params),
   'R-122': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'SUM', true, params),
 }
+
+export const V8_MIGRATED_RULES = Object.keys(V8_CONVERSION)

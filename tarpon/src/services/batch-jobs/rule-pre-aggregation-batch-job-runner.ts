@@ -1,6 +1,5 @@
-import { compact, uniq, uniqBy } from 'lodash'
+import { compact, isEmpty, uniq, uniqBy } from 'lodash'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
-import { isV8RuleInstance } from '../rules-engine/utils'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { sendAggregationTask } from '../rules-engine/v8-engine'
@@ -44,7 +43,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
       const isV8Rule =
         (await tenantHasFeature(job.tenantId, 'RULES_ENGINE_V8')) &&
-        isV8RuleInstance(ruleInstance)
+        !isEmpty(ruleInstance.logicAggregationVariables)
+
       if (!isV8Rule) {
         logger.warn(
           `Pre-aggregation only supports V8 rules for now. Skipping job.`

@@ -92,6 +92,7 @@ import {
   getAggregatedRuleStatus,
   isShadowRule,
   isV8RuleInstance,
+  runOnV8Engine,
 } from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
@@ -758,15 +759,23 @@ export class RulesEngineService {
         )
       ),
       // Update aggregation variables in V8 user rules
-      Promise.all(
-        userRuleInstances.map((ruleInstance) =>
-          this.ruleLogicEvaluator.handleV8Aggregation(
+      await Promise.all(
+        userRuleInstances.map((ruleInstance) => {
+          const rule = ruleInstance.ruleId
+            ? rulesById[ruleInstance.ruleId]
+            : undefined
+
+          if (!runOnV8Engine(ruleInstance, rule)) {
+            return
+          }
+
+          return this.ruleLogicEvaluator.handleV8Aggregation(
             'RULES',
             ruleInstance.logicAggregationVariables ?? [],
-            transactionWithRiskDetails,
+            transaction,
             transactionEvents
           )
-        )
+        })
       ),
     ])
     const verifyTransactionResults = compact(originalVerifyTransactionResults)
@@ -870,7 +879,8 @@ export class RulesEngineService {
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedRuleVars[] | undefined
-    if (hasFeature('RULES_ENGINE_V8') && logic) {
+
+    if (runOnV8Engine(ruleInstance, rule) && logic) {
       const data = transactionWithValidUserId
         ? ({
             type: 'TRANSACTION',
@@ -1101,12 +1111,14 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          await this.ruleLogicEvaluator.handleV8Aggregation(
-            'RULES',
-            ruleInstance.logicAggregationVariables ?? [],
-            options.transaction,
-            options.transactionEvents
-          )
+          if (runOnV8Engine(ruleInstance, options.rule)) {
+            await this.ruleLogicEvaluator.handleV8Aggregation(
+              'RULES',
+              ruleInstance.logicAggregationVariables ?? [],
+              options.transaction,
+              options.transactionEvents
+            )
+          }
 
           const transactionAggregationTasks =
             ruleClassInstance instanceof TransactionAggregationRule

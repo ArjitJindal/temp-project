@@ -14,13 +14,17 @@ import { RuleAuditLogService } from './rules-audit-log-service'
 import {
   assertValidRiskLevelParameters,
   isShadowRule,
+  isV2RuleInstance,
   isV8RuleInstance,
   ruleInstanceAggregationVariablesRebuild,
+  runOnV8Engine,
 } from './utils'
 import { RuleRepository } from './repositories/rule-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
+import { V8_MIGRATED_RULES } from './v8-migrations'
+import { getRuleByRuleId } from './transaction-rules/library'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
@@ -28,6 +32,9 @@ import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
 import { RuleInstanceExecutionStats } from '@/@types/openapi-internal/RuleInstanceExecutionStats'
 import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { generateChecksum } from '@/utils/object'
+import { logger } from '@/core/logger'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -88,6 +95,47 @@ export class RuleInstanceService {
     return ruleInstance
   }
 
+  public static async migrateV2RuleInstancesToV8(
+    tenantId: string
+  ): Promise<void> {
+    const dynamoDb = getDynamoDbClient()
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+
+    for (const ruleInstance of ruleInstances) {
+      const currentRuleLogic = {
+        logic: ruleInstance.logic,
+        riskLevelLogic: ruleInstance.riskLevelLogic,
+        baseCurrency: ruleInstance.baseCurrency,
+        logicAggregationVariables: ruleInstance.logicAggregationVariables,
+      }
+
+      if (
+        isV2RuleInstance(ruleInstance) &&
+        V8_MIGRATED_RULES.includes(ruleInstance.ruleId as string)
+      ) {
+        const updatedRuleLogic =
+          ruleInstanceRepository.getV8PropsForV2RuleInstance(ruleInstance)
+
+        if (
+          !updatedRuleLogic ||
+          generateChecksum(currentRuleLogic) ===
+            generateChecksum(updatedRuleLogic)
+        ) {
+          continue
+        }
+        logger.info(`Migrating rule instance ${ruleInstance.id} to V8`)
+
+        await ruleInstanceRepository.createOrUpdateRuleInstance({
+          ...ruleInstance,
+        })
+      }
+    }
+  }
+
   public async putRuleInstance(
     ruleInstanceId: string,
     ruleInstance: RuleInstance
@@ -135,7 +183,8 @@ export class RuleInstanceService {
   }
 
   async createOrUpdateRuleInstance(
-    ruleInstance: RuleInstance
+    ruleInstance: RuleInstance,
+    updatedAt?: number
   ): Promise<RuleInstance> {
     const rule = ruleInstance.ruleId
       ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
@@ -169,15 +218,17 @@ export class RuleInstanceService {
     const updatedRuleInstance =
       await this.ruleInstanceRepository.createOrUpdateRuleInstance(
         { ...ruleInstance, type: ruleInstance.type, mode: ruleInstance.mode },
-        undefined
+        updatedAt
       )
 
-    await ruleInstanceAggregationVariablesRebuild(
-      updatedRuleInstance,
-      now,
-      this.tenantId,
-      this.ruleInstanceRepository
-    )
+    if (runOnV8Engine(updatedRuleInstance, rule)) {
+      await ruleInstanceAggregationVariablesRebuild(
+        updatedRuleInstance,
+        now,
+        this.tenantId,
+        this.ruleInstanceRepository
+      )
+    }
 
     return updatedRuleInstance
   }
@@ -300,6 +351,75 @@ export class RuleInstanceService {
       alertsHit,
       investigationTime,
       executionStats,
+    }
+  }
+
+  public static async bumpV2RuleInstanceAggregationVersion(tenantId: string) {
+    const dynamoDb = getDynamoDbClient()
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const ruleRepository = new RuleRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const ruleIds = (await ruleRepository.getAllRules())
+      .filter((rule) => rule.engineVersion === 'V8')
+      .map((rule) => rule.id)
+
+    const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
+
+    const ruleInstancesToUpdate = ruleInstances.filter(
+      (ruleInstance) =>
+        !!ruleInstance.ruleId && ruleIds.includes(ruleInstance.ruleId)
+    )
+
+    await Promise.all(
+      ruleInstancesToUpdate.map((ruleInstance) =>
+        ruleInstanceRepository.createOrUpdateRuleInstance(
+          ruleInstance,
+          (ruleInstance.updatedAt || 0) + 1
+        )
+      )
+    )
+  }
+
+  public async preAggregateV2RuleInstance() {
+    const ruleIds = (await this.ruleRepository.getAllRules())
+      .filter((rule) => rule.engineVersion === 'V8')
+      .map((rule) => rule.id)
+    const ruleInstances =
+      await this.ruleInstanceRepository.getAllRuleInstances()
+    const ruleInstancesToUpdate = ruleInstances.filter(
+      (ruleInstance) =>
+        !!ruleInstance.ruleId && ruleIds.includes(ruleInstance.ruleId)
+    )
+
+    for (const ruleInstance of ruleInstancesToUpdate) {
+      if (ruleInstance.ruleId) {
+        const rule = getRuleByRuleId(ruleInstance.ruleId)
+        if (runOnV8Engine(ruleInstance, rule)) {
+          const originalStatus = ruleInstance.status
+          if (originalStatus === 'ACTIVE') {
+            await this.createOrUpdateRuleInstance(
+              {
+                ...ruleInstance,
+                status: 'INACTIVE',
+              },
+              ruleInstance.updatedAt
+            )
+            await this.createOrUpdateRuleInstance(
+              {
+                ...ruleInstance,
+                status: 'ACTIVE',
+                logicAggregationVariables: undefined,
+              },
+              ruleInstance.updatedAt
+            )
+          }
+        }
+      }
     }
   }
 }

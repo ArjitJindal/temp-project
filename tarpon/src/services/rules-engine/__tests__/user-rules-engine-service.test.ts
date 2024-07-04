@@ -35,7 +35,7 @@ describe('Verify User', () => {
     withFeatureHook(['RULES_ENGINE_V8'])
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'test-rule',
+        id: 'RC-test-rule',
         type: 'USER',
         defaultLogic: {
           and: [
@@ -80,8 +80,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.1',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
             vars: [
               {
@@ -106,8 +106,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.1',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
           },
         ],
@@ -160,8 +160,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.1',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
             vars: [
               {
@@ -186,8 +186,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.1',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
           },
         ],
@@ -199,7 +199,7 @@ describe('Verify User', () => {
     withFeatureHook(['RULES_ENGINE_V8'])
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'test-rule',
+        id: 'RC-test-rule',
         type: 'USER',
         defaultLogic: {
           and: [
@@ -246,8 +246,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.2',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
             vars: [
               {
@@ -273,8 +273,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.2',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
           },
         ],
@@ -324,8 +324,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.2',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
             vars: [
               {
@@ -351,8 +351,8 @@ describe('Verify User', () => {
               isOngoingScreeningHit: undefined,
               sanctionsDetails: undefined,
             },
-            ruleId: 'test-rule',
-            ruleInstanceId: 'test-rule.2',
+            ruleId: 'RC-test-rule',
+            ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
           },
         ],
@@ -366,7 +366,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'test-rule',
+      id: 'RC-test-rule',
       type: 'USER',
       defaultLogicAggregationVariables: [
         {
@@ -421,8 +421,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           ruleDescription: '',
           ruleHit: false,
           ruleHitMeta: undefined,
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
           vars: [
             {
@@ -473,8 +473,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
             isOngoingScreeningHit: undefined,
             sanctionsDetails: undefined,
           },
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
           vars: [
             {
@@ -505,8 +505,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
             isOngoingScreeningHit: undefined,
             sanctionsDetails: undefined,
           },
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
         },
       ],
@@ -534,8 +534,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           ruleDescription: '',
           ruleHit: false,
           ruleHitMeta: undefined,
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
           vars: [
             {
@@ -586,8 +586,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
             isOngoingScreeningHit: undefined,
             sanctionsDetails: undefined,
           },
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
           vars: [
             {
@@ -618,8 +618,8 @@ describe('Verify user with V8 rule with aggregation variables', () => {
             isOngoingScreeningHit: undefined,
             sanctionsDetails: undefined,
           },
-          ruleId: 'test-rule',
-          ruleInstanceId: 'test-rule.3',
+          ruleId: 'RC-test-rule',
+          ruleInstanceId: 'RC-test-rule.2',
           ruleName: 'test rule name',
         },
       ],

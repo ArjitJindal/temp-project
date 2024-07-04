@@ -78,6 +78,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Console Notifications',
     description: 'Enables console notifications',
   },
+  RULES_ENGINE_V8_FOR_V2_RULES: {
+    title: 'Rules Engine V8 for V2 Rules',
+    description: 'Enables new rules Engine V8 for V2 rules (Experimental)',
+  },
   KINESIS_ASYNC: {
     title: 'Kinesis Async',
     description: 'Enables Kinesis Async for case creation',

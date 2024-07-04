@@ -131,8 +131,10 @@ export const tenantsHandler = lambdaApi()(
       assertCurrentUserRole('admin')
       const dynamoDb = getDynamoDbClientByEvent(event)
       const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
+      const newTenantSettings = request.TenantSettings
+
       const changedTenantSettings = Object.fromEntries(
-        Object.entries(request.TenantSettings).filter(
+        Object.entries(newTenantSettings).filter(
           ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
         )
       ) as TenantSettings
@@ -178,16 +180,7 @@ export const tenantsHandler = lambdaApi()(
       const updatedResult = await tenantService.createOrUpdateTenantSettings(
         changedTenantSettings
       )
-      if (
-        !tenantSettingsCurrent.features?.includes('RISK_SCORING') &&
-        changedTenantSettings.features?.includes('RISK_SCORING')
-      ) {
-        await sendBatchJobCommand({
-          type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
-          tenantId: tenantId,
-          awsCredentials: getCredentialsFromEvent(event),
-        })
-      }
+
       const auditLog: AuditLog = {
         type: 'ACCOUNT',
         action: 'UPDATE',

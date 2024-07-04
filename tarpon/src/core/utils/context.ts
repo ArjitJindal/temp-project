@@ -219,6 +219,7 @@ export function updateTenantSettings(settings: TenantSettings) {
   const context = asyncLocalStorage.getStore()
   if (context) {
     context.settings = settings
+    context.features = settings.features ?? []
   }
 }
 

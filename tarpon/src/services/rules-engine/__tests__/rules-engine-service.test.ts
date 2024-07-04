@@ -7,6 +7,7 @@ import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { RuleInstanceRepository } from '../repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
 import { RuleJsonLogicEvaluator } from '../v8-engine'
+import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import {
@@ -645,7 +646,7 @@ describe('Verify Transaction: V8 engine', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'V8-R-1',
+        id: 'RC-V8-R-1',
         defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
         defaultLogicAggregationVariables: [
           {
@@ -681,7 +682,7 @@ describe('Verify Transaction: V8 engine', () => {
         status: 'ALLOW',
         executedRules: [
           {
-            ruleId: 'V8-R-1',
+            ruleId: 'RC-V8-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -722,7 +723,7 @@ describe('Verify Transaction: V8 engine', () => {
         status: 'FLAG',
         executedRules: [
           {
-            ruleId: 'V8-R-1',
+            ruleId: 'RC-V8-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -752,7 +753,7 @@ describe('Verify Transaction: V8 engine', () => {
         ],
         hitRules: [
           {
-            ruleId: 'V8-R-1',
+            ruleId: 'RC-V8-R-1',
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -773,7 +774,7 @@ describe('Verify Transaction: V8 engine', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'V8-R-1',
+        id: 'RC-V8-R-1',
         defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
         defaultLogicAggregationVariables: [
           {
@@ -828,7 +829,7 @@ describe('Verify Transaction: V8 engine', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
-        id: 'V8-R-2',
+        id: 'RC-V8-R-2',
         defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
         defaultLogicAggregationVariables: [
           {
@@ -898,13 +899,13 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
 
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'V8-R-1',
+      id: 'RC-V8-R-1',
       defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [aggregationVariables],
       type: 'TRANSACTION',
     },
     {
-      id: 'V8-R-2',
+      id: 'RC-V8-R-2',
       defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [aggregationVariables],
       type: 'TRANSACTION',
@@ -935,7 +936,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'V8-R-1',
+      id: 'RC-V8-R-1',
       defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [
         {
@@ -971,7 +972,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       status: 'ALLOW',
       executedRules: [
         {
-          ruleId: 'V8-R-1',
+          ruleId: 'RC-V8-R-1',
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -1006,7 +1007,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       status: 'FLAG',
       executedRules: [
         {
-          ruleId: 'V8-R-1',
+          ruleId: 'RC-V8-R-1',
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -1030,7 +1031,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       ],
       hitRules: [
         {
-          ruleId: 'V8-R-1',
+          ruleId: 'RC-V8-R-1',
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -1053,7 +1054,7 @@ describe('Verify Transaction: V8 engine with second/minute granularity', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'V8-R-1',
+      id: 'RC-V8-R-1',
       defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 0] }] },
       defaultLogicAggregationVariables: [
         {
@@ -1121,7 +1122,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
-      id: 'V8-R-1',
+      id: 'RC-V8-R-1',
       defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
       defaultLogicAggregationVariables: [
         {
@@ -1161,7 +1162,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       status: 'ALLOW',
       executedRules: [
         {
-          ruleId: 'V8-R-1',
+          ruleId: 'RC-V8-R-1',
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -1197,7 +1198,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       status: 'ALLOW',
       executedRules: [
         {
-          ruleId: 'V8-R-1',
+          ruleId: 'RC-V8-R-1',
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -1452,5 +1453,49 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         hitRules: [],
       } as TransactionMonitoringResult)
     })
+  })
+})
+
+describe('Run v2 rules on v8 engine', () => {
+  withFeatureHook(['RULES_ENGINE_V8', 'RULES_ENGINE_V8_FOR_V2_RULES'])
+
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'R-2',
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 100,
+        },
+      } as TransactionAmountRuleParameters,
+      ruleImplementationName: 'transaction-amount',
+    },
+  ])
+
+  test('executes the json logic - hit for course grained aggregation', async () => {
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+
+    const data = await ruleInstanceRepository.getAllRuleInstances()
+
+    expect(data[0].logic).not.toBeUndefined()
+
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+
+    const v8Mock = jest.spyOn(RuleJsonLogicEvaluator.prototype, 'evaluate')
+
+    await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-1',
+        originAmountDetails: {
+          transactionCurrency: 'USD',
+          transactionAmount: 101,
+        },
+      })
+    )
+
+    expect(v8Mock).toBeCalledTimes(1)
   })
 })
