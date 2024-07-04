@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
+import { isEqual } from 'lodash';
 import { RiskFactorConfigurationStepFormValues } from '..';
 import s from './style.module.less';
 import * as Card from '@/components/ui/Card';
@@ -9,7 +10,7 @@ import { CurrencyCode, RiskParameterLevelKeyValueV8, RuleType } from '@/apis';
 import { FieldState } from '@/components/library/Form/utils/hooks';
 import Label from '@/components/library/Label';
 import Modal from '@/components/library/Modal';
-import { getAllEntityVariableKeys } from '@/pages/rules/utils';
+import { getAllAggVariableKeys, getAllEntityVariableKeys } from '@/pages/rules/utils';
 import { isTransactionAmountVariable } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/helpers';
 import Select from '@/components/library/Select';
 import IfThen from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/DefineLogicCard/IfThen';
@@ -66,7 +67,25 @@ export const LogicDefinationCard = (props: Props) => {
   const hasVariables = useMemo(() => {
     return Boolean(entityVariablesFieldState.value?.length || aggVariablesFieldState.value?.length);
   }, [aggVariablesFieldState.value?.length, entityVariablesFieldState.value?.length]);
-
+  useEffect(() => {
+    const entityVariablesInUse = entityVariablesFieldState.value ?? [];
+    const aggVarsInUse = aggVariablesFieldState.value ?? [];
+    const riskConfigs = riskLevelAssignmentValues.value ?? [];
+    const filteredRiskConfigs = riskConfigs.filter((config) => {
+      const varKeysInLogic = getAllEntityVariableKeys(config.logic ?? {});
+      const aggVarKeysInLogic = getAllAggVariableKeys(config.logic ?? {});
+      const entityVariableKeys = entityVariablesInUse
+        .filter((v) => varKeysInLogic.includes(v.key))
+        .map((v) => v.entityKey);
+      const aggVariableKeys = aggVarsInUse
+        .filter((v) => aggVarKeysInLogic.includes(v.key))
+        .map((v) => v.key);
+      return entityVariableKeys.length > 0 || aggVariableKeys.length > 0;
+    });
+    if (!isEqual(riskConfigs, filteredRiskConfigs)) {
+      riskLevelAssignmentValues.onChange(filteredRiskConfigs);
+    }
+  }, [entityVariablesFieldState.value, riskLevelAssignmentValues, aggVariablesFieldState.value]);
   useEffect(() => {
     if (hasTransactionAmountVariable && !baseCurrencyFieldState.value) {
       baseCurrencyFieldState.onChange(settings.defaultValues?.currency ?? 'USD');

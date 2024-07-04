@@ -1,3 +1,4 @@
+import { getSelectedRiskLevel, getSelectedRiskScore } from '../../../utils';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import * as Card from '@/components/ui/Card';
@@ -6,15 +7,20 @@ import TextInput from '@/components/library/TextInput';
 import Slider from '@/components/library/Slider';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { RiskLevel } from '@/apis';
+import NumberInput from '@/components/library/NumberInput';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { getOr } from '@/utils/asyncResource';
 
 export interface BasicDetailsFormValues {
   name: string;
   description: string;
-  defaultRiskLevel: RiskLevel;
+  defaultRiskLevel: RiskLevel | number;
   defaultWeight: number;
 }
 
 export const BasicDetailsStep = () => {
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
   return (
     <div className={s.root}>
       <Card.Root>
@@ -42,7 +48,22 @@ export const BasicDetailsStep = () => {
               labelProps={{ required: { showHint: true, value: true } }}
               description="Add a default risk level to consider for this risk factor if no risk factor value is defined during configuration."
             >
-              {(inputProps) => <RiskLevelSwitch {...inputProps} />}
+              {(inputProps) => (
+                <div className={s.risklevelInput}>
+                  <RiskLevelSwitch
+                    {...inputProps}
+                    value={getSelectedRiskLevel(inputProps.value, riskClassificationValues)}
+                  />
+                  <span>or</span>
+                  <NumberInput
+                    {...inputProps}
+                    value={getSelectedRiskScore(inputProps.value, riskClassificationValues)}
+                    min={0}
+                    max={100}
+                    placeholder="Enter risk score (0-100)"
+                  />
+                </div>
+              )}
             </InputField>
             <InputField<BasicDetailsFormValues, 'defaultWeight'>
               name={'defaultWeight'}

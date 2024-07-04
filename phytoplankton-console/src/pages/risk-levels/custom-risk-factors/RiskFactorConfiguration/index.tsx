@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
+import { getSelectedRiskScore } from '../utils';
 import s from './style.module.less';
 import RiskFactorConfigurationForm, {
   RiskFactorConfigurationFormValues,
@@ -16,11 +17,14 @@ import { useApi } from '@/api';
 import {
   ParameterAttributeRiskValuesV8,
   ParameterAttributeValuesV8Request,
+  RiskClassificationScore,
   RiskLevel,
 } from '@/apis';
 import { message } from '@/components/library/Message';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { getOr } from '@/utils/asyncResource';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
@@ -31,6 +35,8 @@ interface Props {
 
 export const RiskFactorConfiguration = (props: Props) => {
   const { riskItemType, mode, id, riskItem } = props;
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
   const navigate = useNavigate();
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
@@ -47,7 +53,11 @@ export const RiskFactorConfiguration = (props: Props) => {
       }
       return api.putPulseRiskParametersV8({
         riskParameterId: riskItem?.id,
-        ParameterAttributeV8RequestUpdate: serializeRiskItem(riskFactorFormValues, riskItemType),
+        ParameterAttributeV8RequestUpdate: serializeRiskItem(
+          riskFactorFormValues,
+          riskItemType,
+          riskClassificationValues,
+        ),
       });
     },
     {
@@ -64,7 +74,11 @@ export const RiskFactorConfiguration = (props: Props) => {
   const createRiskFactorMutation = useMutation(
     async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
       return api.postPulseRiskParametersV8({
-        ParameterAttributeValuesV8Request: serializeRiskItem(riskFactorFormValues, riskItemType),
+        ParameterAttributeValuesV8Request: serializeRiskItem(
+          riskFactorFormValues,
+          riskItemType,
+          riskClassificationValues,
+        ),
       });
     },
     {
@@ -156,8 +170,8 @@ export const RiskFactorConfiguration = (props: Props) => {
         {canWriteRiskFactors && mode === 'EDIT' && (
           <Button
             htmlType="submit"
-            isLoading={false}
-            isDisabled={false}
+            isLoading={updateRiskFactorMutation.isLoading}
+            isDisabled={!canWriteRiskFactors}
             onClick={() => {
               if (!formRef?.current?.validate()) {
                 formRef?.current?.submit(); // To show errors
@@ -215,7 +229,12 @@ function deserializaRiskItem(
 function serializeRiskItem(
   riskFactorFormValues: RiskFactorConfigurationFormValues,
   type: 'consumer' | 'business' | 'transaction',
+  riskClassificationValues: RiskClassificationScore[],
 ): ParameterAttributeValuesV8Request {
+  const riskValue = getSelectedRiskScore(
+    riskFactorFormValues.basicDetailsStep.defaultRiskLevel,
+    riskClassificationValues,
+  );
   return {
     name: riskFactorFormValues.basicDetailsStep.name,
     description: riskFactorFormValues.basicDetailsStep.description,
@@ -226,8 +245,8 @@ function serializeRiskItem(
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
     defaultValue: {
-      type: 'RISK_LEVEL',
-      value: riskFactorFormValues.basicDetailsStep.defaultRiskLevel as RiskLevel,
+      type: 'RISK_SCORE',
+      value: riskValue,
     },
     riskEntityType:
       type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',

@@ -56,11 +56,11 @@ export function RuleLogicBuilder(props: Props) {
     if (isSuccess(configRes) && props.aggregationVariables) {
       let isJsonLogicChanged = false;
       const config = configRes.value;
+      if (state && !state.tree && props.jsonLogic) {
+        isJsonLogicChanged = true;
+      }
       if (state && state.tree && props.jsonLogic) {
-        const jsonLogic = QbUtils.jsonLogicFormat(
-          QbUtils.checkTree(state.tree, config),
-          config,
-        ).logic;
+        const jsonLogic = QbUtils.jsonLogicFormat(state.tree, config).logic;
         isJsonLogicChanged = !isEqual(jsonLogic, props.jsonLogic);
       }
       if (state === null || isConfigChanged || isJsonLogicChanged) {

@@ -595,6 +595,10 @@ export function getAllEntityVariableKeys(logic: object): string[] {
   return getAllValuesByKey<string>('var', logic ?? {}).filter((v) => !v.startsWith('agg:'));
 }
 
+export function getAllAggVariableKeys(logic: object): string[] {
+  return getAllValuesByKey<string>('var', logic ?? {}).filter((v) => v.startsWith('agg:'));
+}
+
 export const getRuleInstanceDescription = (
   ruleId: string,
   ruleInstances: RuleInstanceMap,
