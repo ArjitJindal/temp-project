@@ -1,11 +1,15 @@
-import { RiskScoringService } from '..'
+import { RiskEntity, RiskScoringService } from '..'
 import {
   DEFAULT_CLASSIFICATION_SETTINGS,
   RiskRepository,
 } from '../repositories/risk-repository'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import {
+  getTestBusiness,
+  getTestUser,
+  setUpUsersHooks,
+} from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -16,6 +20,8 @@ import {
 } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
@@ -26,9 +32,20 @@ const testTenantId = getTestTenantId()
 
 setUpUsersHooks(testTenantId, [testUser1, testUser2])
 
-const getRiskRepository = async () => {
+type OptionalParameterAttributeRiskValuesV8 = Omit<
+  ParameterAttributeRiskValuesV8,
+  | 'id'
+  | 'updatedAt'
+  | 'createdAt'
+  | 'isActive'
+  | 'defaultWeight'
+  | 'defaultValue'
+  | 'description'
+>
+
+const getRiskRepository = async (tenantId = testTenantId) => {
   const mongoDb = await getMongoDbClient()
-  return new RiskRepository(testTenantId, {
+  return new RiskRepository(tenantId, {
     dynamoDb,
     mongoDb,
   })
@@ -186,6 +203,305 @@ describe('Risk Scoring', () => {
         destinationUserId: testUser2.userId,
       })
     )
+  })
+})
+
+describe('V8, Tests', () => {
+  withFeatureHook(['RISK_LEVELS', 'RISK_SCORING', 'RISK_FACTORS_V8'])
+  const tenantId = getTestTenantId()
+  const testUser1 = getTestUser({
+    acquisitionChannel: 'PAID',
+    userId: 'test-user-0',
+  })
+
+  const testBusinessUser = getTestBusiness({
+    acquisitionChannel: 'PAID',
+  })
+
+  const testTransaction = getTestTransaction({
+    originUserId: testUser1.userId,
+    destinationUserId: testUser2.userId,
+    originAmountDetails: {
+      country: 'IN',
+      transactionAmount: 10000000,
+      transactionCurrency: 'INR',
+    },
+    timestamp: Date.now(),
+  })
+
+  setUpUsersHooks(tenantId, [testUser1, testBusinessUser])
+
+  describe.each<{
+    parameter: OptionalParameterAttributeRiskValuesV8[]
+    output: RiskScoreComponent[]
+    entity: RiskEntity
+  }>([
+    {
+      entity: { type: 'CONSUMER_USER', data: testUser1 },
+      parameter: [
+        {
+          logicAggregationVariables: [],
+          logicEntityVariables: [
+            {
+              entityKey: 'CONSUMER_USER:acquisitionChannel__SENDER',
+              key: 'entity:acquisitionChannel',
+              name: 'acquisitionChannel',
+            },
+          ],
+          name: 'acquisitionChannel',
+          riskEntityType: 'CONSUMER_USER',
+          riskLevelAssignmentValues: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [{ var: 'entity:acquisitionChannel' }, 'PAID'],
+                  },
+                ],
+              },
+              riskValue: { type: 'RISK_LEVEL', value: 'LOW' },
+              weight: 1,
+            },
+          ],
+        },
+      ],
+      output: [
+        {
+          entityType: 'CONSUMER_USER',
+          parameter: 'acquisitionChannel',
+          value:
+            '[{"direction":"ORIGIN","value":{"entity:acquisitionChannel":"PAID"}}]',
+          score: 30,
+          riskLevel: 'LOW',
+          weight: 1,
+        },
+      ],
+    },
+    {
+      entity: { type: 'BUSINESS', data: testBusinessUser },
+      parameter: [
+        {
+          logicAggregationVariables: [],
+          logicEntityVariables: [
+            {
+              entityKey: 'BUSINESS_USER:acquisitionChannel__SENDER',
+              key: 'entity:businessAcquisitionChannel',
+              name: 'businessAcquisitionChannel',
+            },
+          ],
+          name: 'businessAcquisitionChannel',
+          riskEntityType: 'BUSINESS',
+          riskLevelAssignmentValues: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [
+                      { var: 'entity:businessAcquisitionChannel' },
+                      'PAID',
+                    ],
+                  },
+                ],
+              },
+              riskValue: { type: 'RISK_LEVEL', value: 'LOW' },
+              weight: 1,
+            },
+          ],
+        },
+      ],
+      output: [
+        {
+          entityType: 'BUSINESS',
+          parameter: 'businessAcquisitionChannel',
+          value:
+            '[{"direction":"ORIGIN","value":{"entity:businessAcquisitionChannel":"PAID"}}]',
+          score: 30,
+          riskLevel: 'LOW',
+          weight: 1,
+        },
+      ],
+    },
+    {
+      entity: { type: 'TRANSACTION', data: testTransaction },
+      parameter: [
+        {
+          logicAggregationVariables: [],
+          logicEntityVariables: [
+            {
+              entityKey: 'TRANSACTION:originAmountDetails-country',
+              key: 'entity:originCountry',
+              name: 'originCountry',
+            },
+          ],
+          name: 'originCountry',
+          riskEntityType: 'TRANSACTION',
+          riskLevelAssignmentValues: [
+            {
+              logic: {
+                and: [
+                  {
+                    '==': [{ var: 'entity:originCountry' }, 'IN'],
+                  },
+                ],
+              },
+              riskValue: { type: 'RISK_LEVEL', value: 'LOW' },
+              weight: 1,
+            },
+          ],
+        },
+      ],
+      output: [
+        {
+          entityType: 'TRANSACTION',
+          parameter: 'originCountry',
+          value:
+            '[{"direction":"ORIGIN","value":{"entity:originCountry":"IN"}}]',
+          score: 30,
+          riskLevel: 'LOW',
+          weight: 1,
+        },
+      ],
+    },
+  ])(`Risk Scoring Service`, ({ parameter, output, entity }) => {
+    test(`getRiskScoreComponentsForCustomRiskFactors - ${entity.type}`, async () => {
+      const riskScoringService = new RiskScoringService(tenantId, {
+        dynamoDb: getDynamoDbClient(),
+        mongoDb: await getMongoDbClient(),
+      })
+
+      const riskRepository = await getRiskRepository(tenantId)
+
+      await Promise.all(
+        parameter.map((p) =>
+          riskRepository.createOrUpdateParameterRiskItemV8({
+            ...p,
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            defaultValue: { type: 'RISK_LEVEL', value: 'VERY_HIGH' },
+            defaultWeight: 1,
+            isActive: true,
+            id: p.name,
+            description: 'Some description',
+          })
+        )
+      )
+
+      const data =
+        await riskScoringService.getRiskScoreComponentsForCustomRiskFactors(
+          entity
+        )
+
+      expect(data).toEqual(output)
+
+      await Promise.all(
+        parameter.map((p) => riskRepository.deleteParameterRiskItemV8(p.name))
+      )
+    })
+  })
+
+  describe('Risk Scoring Service -Aggregation', () => {
+    it('should update inital the risk score of a user', async () => {
+      const mongoDb = await getMongoDbClient()
+      const riskScoringService = new RiskScoringService(testTenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+      const riskRepository = await getRiskRepository(testTenantId)
+
+      const parameter: OptionalParameterAttributeRiskValuesV8 = {
+        riskEntityType: 'TRANSACTION',
+        logicEntityVariables: [],
+        name: 'Transaction Count',
+        riskLevelAssignmentValues: [
+          {
+            logic: { and: [{ '>': [{ var: 'agg:276a828d' }, 1] }] },
+            riskValue: {
+              type: 'RISK_LEVEL',
+              value: 'MEDIUM',
+            },
+            weight: 0.18,
+          },
+        ],
+        logicAggregationVariables: [
+          {
+            key: 'agg:276a828d',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            baseCurrency: 'INR',
+            timeWindow: {
+              start: {
+                units: 1,
+                granularity: 'day',
+              },
+              end: {
+                units: 0,
+                granularity: 'now',
+              },
+            },
+          },
+        ],
+      }
+      await riskRepository.createOrUpdateParameterRiskItemV8({
+        ...parameter,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        defaultValue: { type: 'RISK_LEVEL', value: 'VERY_HIGH' },
+        defaultWeight: 1,
+        isActive: true,
+        id: parameter.name,
+        description: 'Some description',
+      })
+
+      const testTransaction = getTestTransaction({
+        originUserId: testUser1.userId,
+        destinationUserId: testUser2.userId,
+        originAmountDetails: {
+          country: 'IN',
+          transactionAmount: 10000000,
+          transactionCurrency: 'INR',
+        },
+      })
+
+      const data =
+        await riskScoringService.getRiskScoreComponentsForCustomRiskFactors({
+          type: 'TRANSACTION',
+          data: testTransaction,
+        })
+
+      const data2 =
+        await riskScoringService.getRiskScoreComponentsForCustomRiskFactors({
+          type: 'TRANSACTION',
+          data: {
+            ...testTransaction,
+            transactionId: 'test-transaction-1',
+          },
+        })
+
+      expect(data).toEqual([
+        {
+          entityType: 'TRANSACTION',
+          parameter: 'Transaction Count',
+          value: 'DEFAULT',
+          score: 90,
+          riskLevel: 'VERY_HIGH',
+          weight: 1,
+        },
+      ])
+
+      expect(data2).toEqual([
+        {
+          entityType: 'TRANSACTION',
+          parameter: 'Transaction Count',
+          value: '[{"direction":"ORIGIN","value":{"agg:276a828d":2}}]',
+          score: 50,
+          riskLevel: 'MEDIUM',
+          weight: 0.18,
+        },
+      ])
+    })
   })
 })
 

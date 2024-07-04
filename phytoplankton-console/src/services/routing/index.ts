@@ -49,7 +49,7 @@ export function useRoutes(): RouteItem[] {
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
-  const isCustomRiskFactorsEnabled = useFeatureEnabled('CUSTOM_RISK_FACTORS');
+  const isCustomRiskFactorsEnabled = useFeatureEnabled('RISK_FACTORS_V8');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');

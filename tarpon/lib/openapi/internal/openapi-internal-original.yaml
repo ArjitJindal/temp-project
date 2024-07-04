@@ -3401,7 +3401,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
+              $ref: '#/components/schemas/ParameterAttributeV8RequestUpdate'
         required: true
       responses:
         '200':
@@ -8716,8 +8716,8 @@ components:
         - riskEntityType
         - riskLevelAssignmentValues
         - description
-    ParameterAttributeValuesV8Request:
-      title: ParameterAttributeValuesV8
+    ParameterAttributeV8RequestUpdate:
+      title: ParameterAttributeV8RequestUpdate
       type: object
       properties:
         isActive:
@@ -8750,6 +8750,20 @@ components:
           type: string
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+    ParameterAttributeValuesV8Request:
+      title: ParameterAttributeValuesV8
+      allOf:
+        - $ref: '#/components/schemas/ParameterAttributeV8RequestUpdate'
+      required:
+        - isActive
+        - logicAggregationVariables
+        - logicEntityVariables
+        - defaultWeight
+        - defaultValue
+        - name
+        - riskEntityType
+        - riskLevelAssignmentValues
+        - description
     ParameterAttibutesValuesDerivedV8:
       title: ParameterAttibutesValuesDerivedV8
       properties:
@@ -8908,7 +8922,7 @@ components:
         - NOTIFICATIONS
         - KINESIS_ASYNC
         - FILES_AI_SUMMARY
-        - CUSTOM_RISK_FACTORS
+        - RISK_FACTORS_V8
       description: ''
     ManagedRoleName:
       type: string

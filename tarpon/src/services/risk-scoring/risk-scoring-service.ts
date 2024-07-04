@@ -10,6 +10,8 @@ import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '../cases/repository'
 import { CurrencyService } from '../currency'
+import { RuleData, RuleJsonLogicEvaluator } from '../rules-engine/v8-engine'
+import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -46,6 +48,29 @@ import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
+import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { RiskParameterLevelKeyValueV8 } from '@/@types/openapi-internal/RiskParameterLevelKeyValueV8'
+
+interface UserRiskEntity {
+  type: 'CONSUMER_USER'
+  data: User
+}
+
+type BusinessRiskEntity = {
+  type: 'BUSINESS'
+  data: Business
+}
+
+type TransactionRiskEntity = {
+  type: 'TRANSACTION'
+  data: Transaction
+}
+
+export type RiskEntity =
+  | UserRiskEntity
+  | BusinessRiskEntity
+  | TransactionRiskEntity
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -355,12 +380,21 @@ export class RiskScoringService {
   ): Promise<RiskScoreDetails> {
     logger.info(`Calculating KRS score for user ${user.userId}`)
     const isUserConsumerUser = isConsumerUser(user)
-    const components = await this.getRiskFactorScores(
-      isUserConsumerUser ? ['CONSUMER_USER'] : ['BUSINESS'],
-      user,
-      riskFactors || [],
-      riskClassificationValues
-    )
+    const allComponents = await Promise.all([
+      this.getRiskFactorScores(
+        isUserConsumerUser ? ['CONSUMER_USER'] : ['BUSINESS'],
+        user,
+        riskFactors || [],
+        riskClassificationValues
+      ),
+      this.getRiskScoreComponentsForCustomRiskFactors(
+        isUserConsumerUser
+          ? { type: 'CONSUMER_USER', data: user as User }
+          : { type: 'BUSINESS', data: user as Business }
+      ),
+    ])
+
+    const components = allComponents.flat()
 
     logger.info(`Calculated KRS score for user ${user.userId}`)
     return {
@@ -423,12 +457,21 @@ export class RiskScoringService {
     logger.info(
       `Calculating ARS score for transaction ${transaction.transactionId}`
     )
-    const components = await this.getRiskFactorScores(
-      ['TRANSACTION'],
-      transaction,
-      riskFactors || [],
-      riskClassificationValues
-    )
+    const allComponents = await Promise.all([
+      this.getRiskFactorScores(
+        ['TRANSACTION'],
+        transaction,
+        riskFactors,
+        riskClassificationValues
+      ),
+      this.getRiskScoreComponentsForCustomRiskFactors({
+        type: 'TRANSACTION',
+        data: transaction,
+      }),
+    ])
+
+    const components = allComponents.flat()
+
     logger.info(
       `Calculated ARS score for transaction ${transaction.transactionId}`
     )
@@ -637,6 +680,174 @@ export class RiskScoringService {
     ])
 
     return { originDrsScore, destinationDrsScore }
+  }
+
+  private sortRiskAssignmentValues(
+    riskAssignmentValues: Array<RiskParameterLevelKeyValueV8>,
+    riskClassificationValues: Array<RiskClassificationScore>
+  ): Array<RiskParameterLevelKeyValueV8> {
+    return riskAssignmentValues.sort((a, b) => {
+      const scoreA =
+        a.riskValue.type === 'RISK_LEVEL'
+          ? getRiskScoreFromLevel(riskClassificationValues, a.riskValue.value)
+          : a.riskValue.value
+
+      const scoreB =
+        b.riskValue.type === 'RISK_LEVEL'
+          ? getRiskScoreFromLevel(riskClassificationValues, b.riskValue.value)
+          : b.riskValue.value
+
+      if (scoreA === scoreB) {
+        return b.weight - a.weight
+      }
+
+      return scoreB - scoreA
+    })
+  }
+
+  private async evaluateRiskFactors(
+    riskFactor: ParameterAttributeRiskValuesV8,
+    evaluationContext: RuleData
+  ): Promise<RiskScoreComponent> {
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+
+    // Prioritize High Risk Scores first then lower risk scores So if there are multiple risk factors that match the condition, the one with the highest risk score will be used
+    const riskAssignmentValues = this.sortRiskAssignmentValues(
+      riskFactor.riskLevelAssignmentValues,
+      riskClassificationValues
+    )
+
+    for (const value of riskAssignmentValues) {
+      const { hit, vars } = await this.riskFactorEvaluateService().evaluate(
+        value.logic,
+        {
+          agg: riskFactor.logicAggregationVariables,
+          entity: riskFactor.logicEntityVariables,
+        },
+        {
+          tenantId: this.tenantId,
+          baseCurrency: riskFactor.baseCurrency,
+        },
+        evaluationContext
+      )
+
+      if (hit) {
+        return {
+          entityType: riskFactor.riskEntityType,
+          parameter: riskFactor.name,
+          value: JSON.stringify(vars),
+          score:
+            value.riskValue.type === 'RISK_LEVEL'
+              ? getRiskScoreFromLevel(
+                  riskClassificationValues,
+                  value.riskValue.value
+                )
+              : value.riskValue.value,
+          riskLevel:
+            value.riskValue.type === 'RISK_LEVEL'
+              ? value.riskValue.value
+              : getRiskLevelFromScore(
+                  riskClassificationValues,
+                  value.riskValue.value
+                ),
+          weight: value.weight ?? riskFactor.defaultWeight,
+        }
+      }
+    }
+
+    return {
+      entityType: riskFactor.riskEntityType,
+      parameter: riskFactor.name,
+      value: 'DEFAULT',
+      score:
+        riskFactor.defaultValue.type === 'RISK_LEVEL'
+          ? getRiskScoreFromLevel(
+              riskClassificationValues,
+              riskFactor.defaultValue.value
+            )
+          : riskFactor.defaultValue.value,
+      riskLevel:
+        riskFactor.defaultValue.type === 'RISK_LEVEL'
+          ? riskFactor.defaultValue.value
+          : getRiskLevelFromScore(
+              riskClassificationValues,
+              riskFactor.defaultValue.value
+            ),
+      weight: riskFactor.defaultWeight,
+    }
+  }
+
+  private riskFactorEvaluateService = memoize(
+    () => new RuleJsonLogicEvaluator(this.tenantId, this.dynamoDb),
+    () => this.tenantId
+  )
+
+  public async getRiskScoreComponentsForCustomRiskFactors(
+    entity: RiskEntity
+  ): Promise<RiskScoreComponent[]> {
+    if (!hasFeature('RISK_FACTORS_V8')) {
+      return []
+    }
+
+    const customRiskFactors =
+      await this.riskRepository.getActiveParameterRiskItemsV8(entity.type)
+
+    if (!customRiskFactors?.length) {
+      return []
+    }
+
+    let riskScoreComponents: RiskScoreComponent[] = []
+
+    if (entity.type === 'CONSUMER_USER' || entity.type === 'BUSINESS') {
+      const user = entity.data
+
+      riskScoreComponents = await Promise.all(
+        customRiskFactors.map((riskFactor) =>
+          this.evaluateRiskFactors(riskFactor, { type: 'USER', user })
+        )
+      )
+    }
+
+    if (entity.type === 'TRANSACTION') {
+      const transactionEventRepository = new TransactionEventRepository(
+        this.tenantId,
+        { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+      )
+
+      const [{ originUser, destinationUser }, transactionEvents] =
+        await Promise.all([
+          this.getUsersFromTransaction(entity.data),
+          transactionEventRepository.getTransactionEvents(
+            entity.data.transactionId
+          ),
+        ])
+
+      const aggregationVariables: RuleAggregationVariable[] = []
+
+      riskScoreComponents = await Promise.all(
+        customRiskFactors.map((riskFactor) => {
+          aggregationVariables.push(...riskFactor.logicAggregationVariables)
+
+          return this.evaluateRiskFactors(riskFactor, {
+            type: 'TRANSACTION',
+            transaction: entity.data,
+            senderUser: originUser || undefined,
+            receiverUser: destinationUser || undefined,
+            transactionEvents,
+          })
+        })
+      )
+
+      await this.riskFactorEvaluateService().handleV8Aggregation(
+        'RISK',
+        aggregationVariables,
+        entity.data,
+        transactionEvents
+      )
+    }
+
+    return riskScoreComponents
   }
 
   public async getRiskFactorScores(

@@ -12,7 +12,7 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, omit } from 'lodash'
+import { isEmpty, isEqual, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -45,6 +45,8 @@ import {
 } from '@/core/utils/context'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -387,6 +389,60 @@ export class RiskRepository {
     return newDrsRiskValue
   }
 
+  private async getLogicAggVarsWithUpdatedVersion(
+    parameter: ParameterAttributeRiskValuesV8
+  ): Promise<RuleAggregationVariable[] | undefined> {
+    // Early return if no aggregation variables
+    if (
+      !parameter.logicAggregationVariables ||
+      parameter.logicAggregationVariables.length === 0
+    ) {
+      return parameter.logicAggregationVariables
+    }
+
+    const oldRiskFactor = parameter.id
+      ? await this.getParameterRiskItemV8(parameter.id)
+      : null
+    // Early return if aggregation variables are not changed
+    const isBeingEnabled =
+      (!oldRiskFactor || !oldRiskFactor.isActive) && parameter.isActive === true
+
+    if (
+      !parameter.isActive ||
+      (!isBeingEnabled &&
+        isEqual(
+          oldRiskFactor?.logicAggregationVariables?.map((v) =>
+            getAggVarHash(v, false)
+          ),
+          parameter.logicAggregationVariables?.map((v) =>
+            getAggVarHash(v, false)
+          )
+        ))
+    ) {
+      return parameter.logicAggregationVariables
+    }
+    const activeRiskFactors = await this.getActiveParameterRiskItemsV8(
+      parameter.riskEntityType
+    )
+
+    const activeLogicAggregationVariables = activeRiskFactors.flatMap(
+      (r) => r.logicAggregationVariables ?? []
+    )
+    const newVersion = Date.now()
+    return parameter.logicAggregationVariables.map((aggVar) => {
+      const existingSameAggVar = activeLogicAggregationVariables.find(
+        (v) => getAggVarHash(v, false) === getAggVarHash(aggVar, false)
+      )
+
+      // NOTE: An aggregation variable's version is determined by the timestamp when
+      // it is first created and enabled. This is to ensure that the version is consistent.
+      return {
+        ...aggVar,
+        version: existingSameAggVar?.version ?? newVersion,
+      }
+    })
+  }
+
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
@@ -413,10 +469,16 @@ export class RiskRepository {
   ) {
     logger.info(`Updating parameter risk levels for V8.`)
 
+    const riskFactor: ParameterAttributeRiskValuesV8 = {
+      ...parameter,
+      logicAggregationVariables:
+        (await this.getLogicAggVarsWithUpdatedVersion(parameter)) ?? [],
+    }
+
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
       Item: {
-        ...parameter,
+        ...riskFactor,
         ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
           this.tenantId,
           parameter.id
@@ -427,7 +489,7 @@ export class RiskRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
     logger.info(`Updated parameter risk levels.`)
 
-    return parameter
+    return riskFactor
   }
 
   async getParameterRiskItemV8(
@@ -623,6 +685,34 @@ export class RiskRepository {
         ? (result.Items.map((item) =>
             omit(item, ['PartitionKeyID', 'SortKeyID'])
           ) as ParameterAttributeValuesListV8[])
+        : []
+    } catch (e) {
+      logger.error(e)
+      return []
+    }
+  }
+
+  async getActiveParameterRiskItemsV8(
+    riskEntityType: RiskEntityType
+  ): Promise<Array<ParameterAttributeRiskValuesV8>> {
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
+          .PartitionKeyID,
+        ':isActive': true,
+        ':entityType': riskEntityType,
+      },
+      FilterExpression: 'isActive = :isActive AND riskEntityType = :entityType',
+    }
+
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0
+        ? (result.Items.map((item) =>
+            omit(item, ['PartitionKeyID', 'SortKeyID'])
+          ) as ParameterAttributeRiskValuesV8[])
         : []
     } catch (e) {
       logger.error(e)

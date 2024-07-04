@@ -8,10 +8,10 @@ import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { RiskLevel } from '@/apis';
 
 export interface BasicDetailsFormValues {
-  name?: string;
-  description?: string;
-  defaultRiskLevel?: RiskLevel;
-  defaultWeight?: number;
+  name: string;
+  description: string;
+  defaultRiskLevel: RiskLevel;
+  defaultWeight: number;
 }
 
 export const BasicDetailsStep = () => {
@@ -23,14 +23,14 @@ export const BasicDetailsStep = () => {
             <InputField<BasicDetailsFormValues, 'name'>
               name={'name'}
               label={'Risk factor name'}
-              labelProps={{ required: true }}
+              labelProps={{ required: { showHint: true, value: true } }}
             >
               {(inputProps) => <TextInput {...inputProps} placeholder={'Enter risk factor name'} />}
             </InputField>
             <InputField<BasicDetailsFormValues, 'description'>
               name={'description'}
               label={'Risk factor description'}
-              labelProps={{ required: true }}
+              labelProps={{ required: { showHint: true, value: true } }}
             >
               {(inputProps) => (
                 <TextInput {...inputProps} placeholder={'Enter risk factor description'} />
@@ -39,7 +39,7 @@ export const BasicDetailsStep = () => {
             <InputField<BasicDetailsFormValues, 'defaultRiskLevel'>
               name={'defaultRiskLevel'}
               label={'Default risk level'}
-              labelProps={{ required: true }}
+              labelProps={{ required: { showHint: true, value: true } }}
               description="Add a default risk level to consider for this risk factor if no risk factor value is defined during configuration."
             >
               {(inputProps) => <RiskLevelSwitch {...inputProps} />}
@@ -47,7 +47,7 @@ export const BasicDetailsStep = () => {
             <InputField<BasicDetailsFormValues, 'defaultWeight'>
               name={'defaultWeight'}
               label={'Default risk weight'}
-              labelProps={{ required: true }}
+              labelProps={{ required: { showHint: true, value: true } }}
               description="Add a default risk weight to consider for this risk factor if no risk factor value is defined during configuration."
             >
               {(inputProps) => (

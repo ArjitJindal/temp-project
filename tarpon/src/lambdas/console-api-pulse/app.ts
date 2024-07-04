@@ -91,7 +91,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
 
     handlers.registerPutPulseRiskParametersV8(async (ctx, request) => {
       return await riskService.createOrUpdateRiskParameterV8(
-        request.ParameterAttributeValuesV8Request,
+        request.ParameterAttributeV8RequestUpdate,
         request.riskParameterId
       )
     })

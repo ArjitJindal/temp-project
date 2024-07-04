@@ -14,7 +14,7 @@ export default function () {
   const { type = 'consumer', mode = 'read', id } = useParams();
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <Feature name="CUSTOM_RISK_FACTORS" fallback={'Not enabled'}>
+      <Feature name="RISK_FACTORS_V8" fallback={'Not enabled'}>
         <PageWrapper
           header={
             <Breadcrumbs

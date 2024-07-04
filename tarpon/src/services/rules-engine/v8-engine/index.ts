@@ -83,6 +83,7 @@ import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEntityVariable'
+import { hasFeature } from '@/core/utils/context'
 
 const sqs = getSQSClient()
 
@@ -98,7 +99,7 @@ export type UserRuleData = {
   type: 'USER'
   user: User | Business
 }
-type RuleData = TransactionRuleData | UserRuleData
+export type RuleData = TransactionRuleData | UserRuleData
 type UserIdentifier = {
   userId?: string
   paymentDetails?: PaymentDetails
@@ -1219,5 +1220,50 @@ export class RuleJsonLogicEvaluator {
         maxHoursToAggregateWithMinuteGranularity
       ? 'minute'
       : end.granularity
+  }
+
+  public updatedAggregationVariables: Set<string> = new Set()
+
+  public async handleV8Aggregation(
+    type: 'RULES' | 'RISK',
+    logicAggregationVariables: RuleAggregationVariable[],
+    transaction: TransactionWithRiskDetails,
+    transactionEvents: TransactionEvent[]
+  ) {
+    if (
+      (!hasFeature('RULES_ENGINE_V8') && type === 'RULES') ||
+      (!hasFeature('RISK_FACTORS_V8') && type === 'RISK')
+    ) {
+      return
+    }
+
+    const promises =
+      logicAggregationVariables?.flatMap((aggVar) => {
+        const hash = getAggVarHash(aggVar)
+        if (this.updatedAggregationVariables.has(hash)) {
+          return
+        }
+
+        this.updatedAggregationVariables.add(hash)
+
+        return [
+          aggVar.transactionDirection !== 'RECEIVING'
+            ? this.updateAggregationVariable(
+                aggVar,
+                { transaction, transactionEvents, type: 'TRANSACTION' },
+                'origin'
+              )
+            : undefined,
+          aggVar.transactionDirection !== 'SENDING'
+            ? this.updateAggregationVariable(
+                aggVar,
+                { transaction, transactionEvents, type: 'TRANSACTION' },
+                'destination'
+              )
+            : undefined,
+        ].filter(Boolean)
+      }) ?? []
+
+    await Promise.all(promises)
   }
 }

@@ -56,7 +56,6 @@ import {
   TransactionRuleData,
   UserRuleData,
 } from './v8-engine'
-import { getAggVarHash } from './v8-engine/aggregation-repository'
 import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
@@ -135,13 +134,17 @@ export type V8TransactionAggregationTask = {
 export type V8RuleAggregationRebuildTask = {
   type: 'PRE_AGGREGATION'
   tenantId: string
-  ruleInstanceId: string
+  entity:
+    | { type: 'RULE'; ruleInstanceId: string }
+    | { type: 'RISK_FACTOR'; riskFactorId: string }
   jobId: string
   aggregationVariable: RuleAggregationVariable
   currentTimestamp: number
   userId?: string
   paymentDetails?: PaymentDetails
+  ruleInstanceId?: string
 }
+
 export type TransactionAggregationTaskEntry = {
   userKeyId: string
   payload:
@@ -757,8 +760,9 @@ export class RulesEngineService {
       // Update aggregation variables in V8 user rules
       Promise.all(
         userRuleInstances.map((ruleInstance) =>
-          this.handleV8Aggregation(
-            ruleInstance,
+          this.ruleLogicEvaluator.handleV8Aggregation(
+            'RULES',
+            ruleInstance.logicAggregationVariables ?? [],
             transactionWithRiskDetails,
             transactionEvents
           )
@@ -795,7 +799,7 @@ export class RulesEngineService {
     )
 
     updateStatsSegment?.close()
-    this.updatedAggregationVariables.clear()
+    this.ruleLogicEvaluator.updatedAggregationVariables.clear()
 
     return {
       ...executedAndHitRulesResult,
@@ -1057,8 +1061,6 @@ export class RulesEngineService {
     }
   }
 
-  private updatedAggregationVariables: Set<string> = new Set()
-
   private async verifyTransactionRule(options: {
     rule?: Rule
     ruleInstance: RuleInstance
@@ -1097,8 +1099,9 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
-          await this.handleV8Aggregation(
-            ruleInstance,
+          await this.ruleLogicEvaluator.handleV8Aggregation(
+            'RULES',
+            ruleInstance.logicAggregationVariables ?? [],
             options.transaction,
             options.transactionEvents
           )
@@ -1130,51 +1133,6 @@ export class RulesEngineService {
         },
       }
     )
-  }
-
-  private async handleV8Aggregation(
-    ruleInstance: RuleInstance,
-    transaction: TransactionWithRiskDetails,
-    transactionEvents: TransactionEvent[]
-  ) {
-    if (!hasFeature('RULES_ENGINE_V8')) {
-      return
-    }
-    const promises =
-      ruleInstance.logicAggregationVariables?.flatMap((aggVar) => {
-        const hash = getAggVarHash(aggVar)
-        if (this.updatedAggregationVariables.has(hash)) {
-          return
-        }
-
-        this.updatedAggregationVariables.add(hash)
-
-        return [
-          aggVar.transactionDirection !== 'RECEIVING'
-            ? this.ruleLogicEvaluator.updateAggregationVariable(
-                aggVar,
-                {
-                  transaction,
-                  transactionEvents,
-                  type: 'TRANSACTION',
-                },
-                'origin'
-              )
-            : undefined,
-          aggVar.transactionDirection !== 'SENDING'
-            ? this.ruleLogicEvaluator.updateAggregationVariable(
-                aggVar,
-                {
-                  transaction,
-                  transactionEvents,
-                  type: 'TRANSACTION',
-                },
-                'destination'
-              )
-            : undefined,
-        ].filter(Boolean)
-      }) ?? []
-    await Promise.all(promises)
   }
 
   private async handleTransactionRuleAggregation(

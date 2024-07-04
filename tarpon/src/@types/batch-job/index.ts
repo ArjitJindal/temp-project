@@ -9,6 +9,7 @@ import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
+import { V8RuleAggregationRebuildTask } from '@/services/rules-engine'
 
 /* File Import */
 type FileImportBatchJobParameters = {
@@ -99,7 +100,8 @@ export type GlobalRuleAggregationRebuildBatchJob = {
 
 /* Rule pre-aggregation */
 type RulePreAggregationBatchJobParameters = {
-  ruleInstanceId: string
+  entity: V8RuleAggregationRebuildTask['entity']
+  ruleInstanceId?: string
   aggregationVariables: RuleAggregationVariable[]
 }
 export type RulePreAggregationMetadata = {

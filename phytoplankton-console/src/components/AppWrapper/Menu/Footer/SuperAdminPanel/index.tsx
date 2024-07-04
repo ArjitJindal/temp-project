@@ -86,7 +86,7 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'AI Attachment Summarization',
     description: 'Enables AI Attachment Summarization (pdf only)',
   },
-  CUSTOM_RISK_FACTORS: {
+  RISK_FACTORS_V8: {
     title: 'Custom Risk Factors',
     description: 'Enables custom risk factors',
   },

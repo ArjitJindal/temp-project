@@ -1,3 +1,4 @@
+import { uniqueId } from 'lodash'
 import { getTestTenantId } from './tenant-test-utils'
 import { setUpUsersHooks } from './user-test-utils'
 import { User } from '@/@types/openapi-public/User'
@@ -13,6 +14,7 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
+import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
@@ -450,3 +452,22 @@ export function createArsRiskFactorTestCases(
     )
   })
 }
+
+export const getTestV8RiskFactor = (
+  parameter: Partial<ParameterAttributeRiskValuesV8>
+): ParameterAttributeRiskValuesV8 => ({
+  baseCurrency: 'USD',
+  createdAt: Date.now(),
+  defaultValue: DEFAULT_RISK_VALUE,
+  defaultWeight: 1,
+  description: 'test',
+  id: uniqueId(),
+  isActive: true,
+  logicAggregationVariables: [],
+  logicEntityVariables: [],
+  name: 'test',
+  riskEntityType: 'TRANSACTION',
+  riskLevelAssignmentValues: [],
+  updatedAt: Date.now(),
+  ...parameter,
+})

@@ -14,7 +14,7 @@ import { makeUrl } from '@/utils/routing';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { CUSTOM_RISK_FACTORS } from '@/utils/queries/keys';
+import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ParameterAttributeValuesListV8 } from '@/apis';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -31,7 +31,7 @@ export default function () {
   const { type = 'consumer' } = useParams();
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <Feature name="CUSTOM_RISK_FACTORS" fallback={'Not enabled'}>
+      <Feature name="RISK_FACTORS_V8" fallback={'Not enabled'}>
         <PageWrapper
           header={
             <Breadcrumbs
@@ -79,7 +79,7 @@ const CustomRiskFactors = (props: Props) => {
     });
   }, [selectedSection, navigate]);
   const api = useApi();
-  const queryResult = useQuery(CUSTOM_RISK_FACTORS(type), async () => {
+  const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
     const entityType =
       type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION';
     return await api.getPulseRiskParametersV8({
@@ -95,7 +95,7 @@ const CustomRiskFactors = (props: Props) => {
     },
     {
       onSuccess: async () => {
-        await queryClient.invalidateQueries(CUSTOM_RISK_FACTORS(type));
+        await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor deleted`);
       },
       onError: async (err) => {
@@ -158,7 +158,7 @@ const CustomRiskFactors = (props: Props) => {
               onChange={async (checked) => {
                 await api.putPulseRiskParametersV8({
                   riskParameterId: entity.id,
-                  ParameterAttributeValuesV8Request: {
+                  ParameterAttributeV8RequestUpdate: {
                     isActive: checked,
                   },
                 });

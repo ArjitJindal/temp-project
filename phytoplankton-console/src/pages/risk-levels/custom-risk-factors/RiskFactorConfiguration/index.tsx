@@ -19,7 +19,7 @@ import {
   RiskLevel,
 } from '@/apis';
 import { message } from '@/components/library/Message';
-import { CUSTOM_RISK_FACTORS } from '@/utils/queries/keys';
+import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
 
 interface Props {
@@ -47,13 +47,13 @@ export const RiskFactorConfiguration = (props: Props) => {
       }
       return api.putPulseRiskParametersV8({
         riskParameterId: riskItem?.id,
-        ParameterAttributeValuesV8Request: serializeRiskItem(riskFactorFormValues, riskItemType),
+        ParameterAttributeV8RequestUpdate: serializeRiskItem(riskFactorFormValues, riskItemType),
       });
     },
     {
       onSuccess: async (newRiskFactor) => {
         navigateToRiskFactors();
-        await queryClient.invalidateQueries(CUSTOM_RISK_FACTORS(riskItemType));
+        await queryClient.invalidateQueries(RISK_FACTORS_V8(riskItemType));
         message.success(`Risk factor updated - ${newRiskFactor.id}`);
       },
       onError: async (err) => {
@@ -70,7 +70,7 @@ export const RiskFactorConfiguration = (props: Props) => {
     {
       onSuccess: async (newRiskFactor) => {
         navigateToRiskFactors();
-        await queryClient.invalidateQueries(CUSTOM_RISK_FACTORS(riskItemType));
+        await queryClient.invalidateQueries(RISK_FACTORS_V8(riskItemType));
         message.success(`Risk factor created - ${newRiskFactor.id}`);
       },
       onError: async (err) => {
@@ -220,7 +220,7 @@ function serializeRiskItem(
     name: riskFactorFormValues.basicDetailsStep.name,
     description: riskFactorFormValues.basicDetailsStep.description,
     isActive: true,
-    defaultWeight: riskFactorFormValues.basicDetailsStep.defaultWeight,
+    defaultWeight: riskFactorFormValues.basicDetailsStep.defaultWeight ?? 1,
     baseCurrency: riskFactorFormValues.riskFactorConfigurationStep.baseCurrency,
     logicAggregationVariables:
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],

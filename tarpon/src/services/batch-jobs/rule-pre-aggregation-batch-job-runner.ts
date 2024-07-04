@@ -5,6 +5,7 @@ import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { sendAggregationTask } from '../rules-engine/v8-engine'
 import { getPaymentDetailsIdentifiersKey } from '../rules-engine/v8-variables/payment-details'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import {
@@ -13,7 +14,7 @@ import {
 } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
-import { tenantHasFeature } from '@/core/utils/context'
+import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { generateChecksum } from '@/utils/object'
@@ -22,26 +23,50 @@ import { generateChecksum } from '@/utils/object'
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     const dynamoDb = getDynamoDbClient()
-    const { ruleInstanceId, aggregationVariables } = job.parameters
+    const { entity, aggregationVariables } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb,
     })
-    const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
-      ruleInstanceId
-    )
-    if (!ruleInstance) {
-      logger.warn(`Rule instance ${ruleInstanceId} not found. Skipping job.`)
-      return
-    }
 
-    const isV8Rule =
-      (await tenantHasFeature(job.tenantId, 'RULES_ENGINE_V8')) &&
-      isV8RuleInstance(ruleInstance)
-    if (!isV8Rule) {
-      logger.warn(
-        `Pre-aggregation only supports V8 rules for now. Skipping job.`
+    const ruleInstanceId =
+      entity.type === 'RULE'
+        ? entity.ruleInstanceId
+        : job.parameters.ruleInstanceId
+
+    if (ruleInstanceId) {
+      const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+        ruleInstanceId
       )
-      return
+      if (!ruleInstance) {
+        logger.warn(`Rule instance ${ruleInstanceId} not found. Skipping job.`)
+        return
+      }
+
+      const isV8Rule =
+        (await tenantHasFeature(job.tenantId, 'RULES_ENGINE_V8')) &&
+        isV8RuleInstance(ruleInstance)
+      if (!isV8Rule) {
+        logger.warn(
+          `Pre-aggregation only supports V8 rules for now. Skipping job.`
+        )
+        return
+      }
+    } else if (entity.type === 'RISK_FACTOR') {
+      const riskRepository = new RiskRepository(job.tenantId, {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      })
+
+      const { riskFactorId } = entity
+
+      const riskFactor = await riskRepository.getParameterRiskItemV8(
+        riskFactorId
+      )
+
+      if (!(riskFactor && hasFeature('RISK_FACTORS_V8'))) {
+        logger.warn(`Risk factor ${riskFactorId} not found. Skipping job.`)
+        return
+      }
     }
 
     const metadata: RulePreAggregationMetadata = {
@@ -56,16 +81,17 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     for (const aggregationVariable of aggregationVariables) {
       tasks += await this.preAggregateVariable(
         job.tenantId,
-        ruleInstanceId,
-        aggregationVariable
+        entity,
+        aggregationVariable,
+        ruleInstanceId
       )
     }
-    if (tasks === 0 && ruleInstance.status === 'DEPLOYING') {
+    if (tasks === 0 && ruleInstanceId) {
       logger.info(
-        `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE`
+        `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE.`
       )
       await ruleInstanceRepository.updateRuleInstanceStatus(
-        ruleInstance.id as string,
+        ruleInstanceId,
         'ACTIVE'
       )
     }
@@ -73,8 +99,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
   private async preAggregateVariable(
     tenantId: string,
-    ruleInstanceId: string,
-    aggregationVariable: RuleAggregationVariable
+    entity: RulePreAggregationBatchJob['parameters']['entity'],
+    aggregationVariable: RuleAggregationVariable,
+    ruleInstanceId?: string
   ): Promise<number> {
     const transactionsRepo = new MongoDbTransactionRepository(
       tenantId,
@@ -107,6 +134,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             userId,
             currentTimestamp: Date.now(),
             jobId: this.jobId,
+            entity,
             ruleInstanceId,
           },
         })
@@ -147,6 +175,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             paymentDetails: userInfo.paymentDetails,
             currentTimestamp: Date.now(),
             jobId: this.jobId,
+            entity,
             ruleInstanceId,
           },
         })

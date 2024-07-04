@@ -3,6 +3,8 @@ import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
 import { CounterRepository } from '../counter/repository'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { DEFAULT_RISK_VALUE } from '../risk-scoring/utils'
 import { PulseAuditLogService } from './pulse-audit-log'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -16,6 +18,7 @@ import { traceable } from '@/core/xray'
 import { ParameterAttributeValuesV8Request } from '@/@types/openapi-internal/ParameterAttributeValuesV8Request'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
+import { ParameterAttributeV8RequestUpdate } from '@/@types/openapi-internal/ParameterAttributeV8RequestUpdate'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -100,7 +103,7 @@ export class RiskService {
   }
 
   async createOrUpdateRiskParameterV8(
-    parameter: ParameterAttributeValuesV8Request,
+    parameter: ParameterAttributeV8RequestUpdate,
     riskParameterId?: string
   ): Promise<ParameterAttributeRiskValuesV8> {
     if (!this.mongoDb) {
@@ -125,15 +128,47 @@ export class RiskService {
         .toString()
         .padStart(3, '0')}`
 
-    const data: ParameterAttributeRiskValuesV8 = {
-      ...(currentParameter ?? {}),
-      ...parameter,
-      id,
-      createdAt: currentParameter?.createdAt ?? Date.now(),
-      updatedAt: Date.now(),
+    const DEFUALT_VALUES: ParameterAttributeValuesV8Request = {
+      defaultValue: DEFAULT_RISK_VALUE,
+      defaultWeight: 1,
+      description: '',
+      isActive: true,
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      name: '',
+      riskEntityType: 'CONSUMER_USER',
+      riskLevelAssignmentValues: [],
     }
 
-    await this.riskRepository.createOrUpdateParameterRiskItemV8(data)
+    const now = Date.now()
+
+    const data: ParameterAttributeRiskValuesV8 = {
+      ...(currentParameter ?? DEFUALT_VALUES),
+      ...parameter,
+      id,
+      createdAt: currentParameter?.createdAt ?? now,
+      updatedAt: now,
+    }
+
+    const updatedParmeter =
+      await this.riskRepository.createOrUpdateParameterRiskItemV8(data)
+
+    const aggVarsToRebuild =
+      updatedParmeter.logicAggregationVariables.filter(
+        (aggVar) => aggVar.version && aggVar.version >= now
+      ) ?? []
+
+    await sendBatchJobCommand({
+      type: 'RULE_PRE_AGGREGATION',
+      parameters: {
+        aggregationVariables: aggVarsToRebuild,
+        entity: {
+          type: 'RISK_FACTOR',
+          riskFactorId: id,
+        },
+      },
+      tenantId: this.tenantId,
+    })
 
     return data
   }

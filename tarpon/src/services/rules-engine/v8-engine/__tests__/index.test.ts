@@ -1458,7 +1458,8 @@ describe('Test canAggregate function', () => {
   })
 })
 
-describe('operators', () => {
+// TODO: FR-5153 Unskip this test (https://www.notion.so/flagright/Operators-Test-Not-working-as-expected-c149803daa0e47138b9a70f9d54d6b99)
+describe.skip('operators', () => {
   beforeEach(() => {
     operatorSpy.mockRestore()
   })

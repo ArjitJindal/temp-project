@@ -220,7 +220,10 @@ export async function ruleInstanceAggregationVariablesRebuild(
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
-        ruleInstanceId: ruleInstance.id as string,
+        entity: {
+          type: 'RULE',
+          ruleInstanceId: ruleInstance.id as string,
+        },
         aggregationVariables: aggVarsToRebuild,
       },
     })

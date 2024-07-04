@@ -67,51 +67,104 @@ export async function handleV8PreAggregationTask(
     tenantId: task.tenantId,
   })
   const dynamoDb = getDynamoDbClient()
-  const jobRepository = new BatchJobRepository(
-    task.tenantId,
-    await getMongoDbClient()
-  )
+  const mongoDb = await getMongoDbClient()
+  const jobRepository = new BatchJobRepository(task.tenantId, mongoDb)
+
   const ruleInstanceRepository = new RuleInstanceRepository(task.tenantId, {
     dynamoDb,
   })
-  const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
-    task.ruleInstanceId
-  )
-  if (
-    !ruleInstance ||
-    ruleInstance.status === 'INACTIVE' ||
-    ruleInstance.logicAggregationVariables?.find(
-      (v) => v.version !== task.aggregationVariable.version
+
+  const riskRepository = new RiskRepository(task.tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+
+  const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+
+  if (task.entity.type === 'RULE' || task.ruleInstanceId) {
+    const ruleInstanceId =
+      task.entity.type === 'RULE'
+        ? task.entity.ruleInstanceId
+        : task.ruleInstanceId
+
+    if (!ruleInstanceId) {
+      logger.error(`Rule instance ID is required for pre-aggregation task`)
+      return
+    }
+
+    const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
+      ruleInstanceId
     )
-  ) {
-    logger.warn(
-      `Rule instance ${task.ruleInstanceId} is changed/deleted. Skipping pre-aggregation.`
+
+    const noRuleAggregateConditions = !!(
+      !ruleInstance ||
+      ruleInstance.status === 'INACTIVE' ||
+      ruleInstance.logicAggregationVariables?.find(
+        (v) => v.version !== task.aggregationVariable.version
+      )
     )
-  } else {
-    const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+
+    if (noRuleAggregateConditions) {
+      logger.warn(
+        `Rule instance ${ruleInstanceId} is changed/deleted. Skipping pre-aggregation.`
+      )
+      return
+    }
+
     await ruleEvaluator.rebuildAggregationVariable(
       task.aggregationVariable,
       task.currentTimestamp,
       task.userId,
       task.paymentDetails
     )
-  }
-  const newJob = (await jobRepository.updateJob(task.jobId, {
-    $inc: { 'metadata.completeTasksCount': 1 },
-  })) as RulePreAggregationBatchJob
 
-  if (
-    newJob.metadata &&
-    newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
-    ruleInstance?.status === 'DEPLOYING'
-  ) {
-    logger.info(
-      `Pr-aggregation complete (job: ${task.jobId}). Switching rule instance ${task.ruleInstanceId} to ACTIVE`
+    const newJob = (await jobRepository.updateJob(task.jobId, {
+      $inc: { 'metadata.completeTasksCount': 1 },
+    })) as RulePreAggregationBatchJob
+
+    if (
+      newJob.metadata &&
+      newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
+      ruleInstance?.status === 'DEPLOYING'
+    ) {
+      logger.info(
+        `Pre-aggregation complete (job: ${task.jobId}). Switching rule instance ${ruleInstanceId} to ACTIVE.`
+      )
+      await ruleInstanceRepository.updateRuleInstanceStatus(
+        ruleInstance.id as string,
+        'ACTIVE'
+      )
+    }
+  } else if (task.entity.type === 'RISK_FACTOR') {
+    const riskFactor = await riskRepository.getParameterRiskItemV8(
+      task.entity.riskFactorId
     )
-    await ruleInstanceRepository.updateRuleInstanceStatus(
-      ruleInstance.id as string,
-      'ACTIVE'
+
+    const noRiskFactorAggregateConditions = !!(
+      !riskFactor ||
+      !riskFactor.isActive ||
+      riskFactor.logicAggregationVariables?.find(
+        (v) => v.version !== task.aggregationVariable.version
+      )
     )
+
+    if (noRiskFactorAggregateConditions) {
+      logger.warn(
+        `Risk factor ${task.entity.riskFactorId} is changed/deleted. Skipping pre-aggregation.`
+      )
+      return
+    }
+
+    await ruleEvaluator.rebuildAggregationVariable(
+      task.aggregationVariable,
+      task.currentTimestamp,
+      task.userId,
+      task.paymentDetails
+    )
+
+    await jobRepository.updateJob(task.jobId, {
+      $inc: { 'metadata.completeTasksCount': 1 },
+    })
   }
 }
 
