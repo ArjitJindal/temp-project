@@ -21,7 +21,7 @@ export default function KycRiskDisplay({ userId }: Props) {
         result && (
           <RiskScoreDisplay
             values={
-              result?.krsScore
+              result?.krsScore != null
                 ? [
                     {
                       score: result.krsScore,

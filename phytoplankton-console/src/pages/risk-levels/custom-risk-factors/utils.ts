@@ -2,7 +2,7 @@ import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/uti
 import { RiskClassificationScore } from '@/apis';
 
 export const getSelectedRiskLevel = (x, riskClassificationValues: RiskClassificationScore[]) => {
-  if (!x) {
+  if (x == null) {
     return x;
   }
   if (typeof x === 'string') {
@@ -12,7 +12,7 @@ export const getSelectedRiskLevel = (x, riskClassificationValues: RiskClassifica
 };
 
 export const getSelectedRiskScore = (x, riskClassificationValues: RiskClassificationScore[]) => {
-  if (!x) {
+  if (x == null) {
     return x;
   }
   if (typeof x === 'number') {
