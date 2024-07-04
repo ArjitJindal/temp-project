@@ -49,6 +49,7 @@ export type DataItem = {
   ruleDescription: string | null;
   arsRiskLevel?: RiskLevel;
   arsScore?: number;
+  transactionState?: TransactionState;
 };
 
 export function Content(props: { userId: string }) {
@@ -179,10 +180,10 @@ export function Content(props: { userId: string }) {
           tooltip: 'Describes the conditions required for this rule to be hit.',
           key: 'ruleDescription',
         }),
-        helper.derived<TransactionState>({
+        helper.simple<'transactionState'>({
           id: 'lastTransactionState',
           title: 'Last transaction state',
-          value: (entity) => entity.events?.[entity.events.length - 1]?.transactionState,
+          key: 'transactionState',
           type: TRANSACTION_STATE,
         }),
         helper.simple<'timestamp'>({
