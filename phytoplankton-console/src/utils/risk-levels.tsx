@@ -75,8 +75,12 @@ export function useRiskClassificationScores(): AsyncResource<ApiRiskClassificati
   return riskValuesQueryResults.data;
 }
 
-export function useRiskLevel(score: number): RiskLevel | null {
+export function useRiskLevel(score?: number): RiskLevel | null {
   const classificationScores = useRiskClassificationScores();
+  if (score == null) {
+    return null;
+  }
+
   for (const { lowerBoundRiskScore, upperBoundRiskScore, riskLevel } of getOr(
     classificationScores,
     [],

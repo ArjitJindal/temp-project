@@ -15,7 +15,7 @@ export type MainPanelCustomStyles = Partial<{
 interface Props {
   icon: React.ReactNode;
   title: string;
-  lastItem: ValueItem;
+  lastItem?: ValueItem;
   onClickInfo?: () => void;
   customStyling?: MainPanelCustomStyles;
   riskScoreAlgo: (value: ValueItem) => number;
@@ -26,7 +26,7 @@ interface Props {
 export default function MainPanel(props: Props) {
   const { title, lastItem, icon, customStyling, onClickInfo, riskScoreAlgo, sortedItems } = props;
   const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
-  const currentScore: number | null = riskScoreAlgo(lastItem);
+  const currentScore: number | undefined = lastItem && riskScoreAlgo(lastItem);
   const derivedRiskLevel = useRiskLevel(currentScore);
   const manualRiskLevel = lastItem?.manualRiskLevel;
   const currentRiskLevel = manualRiskLevel ?? derivedRiskLevel ?? undefined;
