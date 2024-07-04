@@ -629,13 +629,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await this.deleteS3Directory(tenantId, DOCUMENT_BUCKET as string)
   }
 
-  private async deleteS3Directory(tenantId: string, directory: string) {
+  private async deleteS3Directory(tenantId: string, bucket: string) {
     let marker: string | undefined
 
     do {
       const response = await s3Client.send(
         new ListObjectsCommand({
-          Bucket: process.env.DOCUMENT_BUCKET,
+          Bucket: bucket,
           Prefix: `${tenantId}/`,
           MaxKeys: 1000,
           Marker: marker,
@@ -654,7 +654,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
       await s3Client.send(
         new DeleteObjectsCommand({
-          Bucket: directory,
+          Bucket: bucket,
           Delete: { Objects: objects },
         })
       )
