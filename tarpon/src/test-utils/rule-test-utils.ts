@@ -39,7 +39,7 @@ import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
 
-const DEFAULT_DESCRIPTION = 'test rule description.'
+const DEFAULT_DESCRIPTION = ''
 
 export async function createRule(
   testTenantId: string,

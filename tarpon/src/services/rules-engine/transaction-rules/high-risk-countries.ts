@@ -36,16 +36,14 @@ export default class HighRiskCountryRule extends TransactionRule<HighRiskCountry
       this.parameters.highRiskCountries.includes(receivingCountry)
 
     const hitResult: RuleHitResult = []
-    if (senderHit) {
+    if (senderHit || receiverHit) {
       hitResult.push({
         direction: 'ORIGIN',
-        vars: super.getTransactionVars('origin'),
+        vars: senderHit ? super.getTransactionVars('origin') : undefined,
       })
-    }
-    if (receiverHit) {
       hitResult.push({
         direction: 'DESTINATION',
-        vars: super.getTransactionVars('destination'),
+        vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
     return hitResult

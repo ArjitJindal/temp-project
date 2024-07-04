@@ -1022,9 +1022,11 @@ export class RulesEngineService {
               )
             )
           : [rule.description]
-      ).map((description) =>
-        last(description) !== '.' ? `${description}.` : description
       )
+        .filter(Boolean)
+        .map((description) =>
+          last(description) !== '.' ? `${description}.` : description
+        )
       ruleDescription = Array.from(new Set(ruleDescriptions)).join(' ')
     }
     const sanctionsDetails = filteredRuleResult.flatMap(

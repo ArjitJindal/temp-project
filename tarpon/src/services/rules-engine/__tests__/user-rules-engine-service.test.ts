@@ -72,7 +72,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHit: true,
             ruleHitMeta: {
               falsePositiveDetails: undefined,
@@ -99,7 +99,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHitMeta: {
               falsePositiveDetails: undefined,
               hitDirections: ['ORIGIN'],
@@ -152,7 +152,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHit: true,
             ruleHitMeta: {
               falsePositiveDetails: undefined,
@@ -179,7 +179,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHitMeta: {
               falsePositiveDetails: undefined,
               hitDirections: ['ORIGIN'],
@@ -238,7 +238,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHit: true,
             ruleHitMeta: {
               falsePositiveDetails: undefined,
@@ -266,7 +266,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHitMeta: {
               falsePositiveDetails: undefined,
               hitDirections: ['ORIGIN'],
@@ -316,7 +316,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHit: true,
             ruleHitMeta: {
               falsePositiveDetails: undefined,
@@ -344,7 +344,7 @@ describe('Verify User', () => {
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
-            ruleDescription: 'test rule description.',
+            ruleDescription: '',
             ruleHitMeta: {
               falsePositiveDetails: undefined,
               hitDirections: ['ORIGIN'],
@@ -418,7 +418,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHit: false,
           ruleHitMeta: undefined,
           ruleId: 'test-rule',
@@ -465,7 +465,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHit: true,
           ruleHitMeta: {
             falsePositiveDetails: undefined,
@@ -498,7 +498,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHitMeta: {
             falsePositiveDetails: undefined,
             hitDirections: ['ORIGIN'],
@@ -531,7 +531,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHit: false,
           ruleHitMeta: undefined,
           ruleId: 'test-rule',
@@ -578,7 +578,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHit: true,
           ruleHitMeta: {
             falsePositiveDetails: undefined,
@@ -611,7 +611,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
-          ruleDescription: 'test rule description.',
+          ruleDescription: '',
           ruleHitMeta: {
             falsePositiveDetails: undefined,
             hitDirections: ['ORIGIN'],

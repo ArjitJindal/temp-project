@@ -86,22 +86,20 @@ export default class BlacklistPaymentdetailsRule extends TransactionRule<Blackli
 
   public async computeRule() {
     const hitResult: RuleHitResult = []
-    if (
+    const senderHit =
       this.transaction.originPaymentDetails &&
       this.isPaymentBlacklisted(this.transaction.originPaymentDetails)
-    ) {
-      hitResult.push({
-        direction: 'ORIGIN',
-        vars: super.getTransactionVars('origin'),
-      })
-    }
-    if (
+    const receiverHit =
       this.transaction.destinationPaymentDetails &&
       this.isPaymentBlacklisted(this.transaction.destinationPaymentDetails)
-    ) {
+    if (senderHit || receiverHit) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: senderHit ? super.getTransactionVars('origin') : undefined,
+      })
       hitResult.push({
         direction: 'DESTINATION',
-        vars: super.getTransactionVars('destination'),
+        vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
     return hitResult

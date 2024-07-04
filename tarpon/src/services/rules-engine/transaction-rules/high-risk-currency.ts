@@ -36,16 +36,14 @@ export default class HighRiskCurrencyRule extends TransactionRule<HighRiskCurren
       this.parameters.highRiskCurrencies.includes(receivingCurrency)
 
     const hitResult: RuleHitResult = []
-    if (senderHit) {
+    if (senderHit || receiverHit) {
       hitResult.push({
         direction: 'ORIGIN',
-        vars: super.getTransactionVars('origin'),
+        vars: senderHit ? super.getTransactionVars('origin') : undefined,
       })
-    }
-    if (receiverHit) {
       hitResult.push({
         direction: 'DESTINATION',
-        vars: super.getTransactionVars('destination'),
+        vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
     return hitResult

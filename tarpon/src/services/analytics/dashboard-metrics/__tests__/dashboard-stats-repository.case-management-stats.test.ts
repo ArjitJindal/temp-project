@@ -100,7 +100,7 @@ describe('Verify case and alerts closing reason stats', () => {
     const alert: Alert = {
       alertId: 'A-0',
       ruleName: 'test-rule-1',
-      ruleDescription: 'test rule description',
+      ruleDescription: '',
       ruleId: 'R-1',
       ruleAction: 'ALLOW',
       numberOfTransactionsHit: 10,
@@ -276,7 +276,7 @@ describe('Verify case and alerts closing reason stats', () => {
     const alert: Alert = {
       alertId: 'A-0',
       ruleName: 'test-rule-1',
-      ruleDescription: 'test rule description',
+      ruleDescription: '',
       ruleId: 'R-1',
       ruleAction: 'ALLOW',
       numberOfTransactionsHit: 10,

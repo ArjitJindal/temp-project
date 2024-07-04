@@ -54,29 +54,30 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
 
     const { highRiskCountries } = this.parameters
 
-    if (
+    const senderHit =
       originIpCountry &&
       highRiskCountries.includes(originIpCountry as CountryCode)
-    ) {
-      ruleHitResult.push({
-        direction: 'ORIGIN',
-        vars: {
-          ...this.getTransactionVars('origin'),
-          ipCountry: originIpCountry,
-        },
-      })
-    }
-
-    if (
+    const receiverHit =
       destinationIpCountry &&
       highRiskCountries.includes(destinationIpCountry as CountryCode)
-    ) {
+    if (senderHit || receiverHit) {
+      ruleHitResult.push({
+        direction: 'ORIGIN',
+        vars: senderHit
+          ? {
+              ...this.getTransactionVars('origin'),
+              ipCountry: originIpCountry,
+            }
+          : undefined,
+      })
       ruleHitResult.push({
         direction: 'DESTINATION',
-        vars: {
-          ...this.getTransactionVars('destination'),
-          ipCountry: destinationIpCountry,
-        },
+        vars: receiverHit
+          ? {
+              ...this.getTransactionVars('destination'),
+              ipCountry: destinationIpCountry,
+            }
+          : undefined,
       })
     }
 

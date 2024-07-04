@@ -35,22 +35,20 @@ export default class BlacklistCardIssuedCountryRule extends TransactionRule<Blac
       .transaction.destinationPaymentDetails || {}) as CardDetails
 
     const hitResult: RuleHitResult = []
-    if (
+    const senderHit =
       originCardIssuedCountry &&
       blacklistedCountries.includes(originCardIssuedCountry)
-    ) {
-      hitResult.push({
-        direction: 'ORIGIN',
-        vars: super.getTransactionVars('origin'),
-      })
-    }
-    if (
+    const receiverHit =
       destinationCardIssuedCountry &&
       blacklistedCountries.includes(destinationCardIssuedCountry)
-    ) {
+    if (senderHit || receiverHit) {
+      hitResult.push({
+        direction: 'ORIGIN',
+        vars: senderHit ? super.getTransactionVars('origin') : undefined,
+      })
       hitResult.push({
         direction: 'DESTINATION',
-        vars: super.getTransactionVars('destination'),
+        vars: receiverHit ? super.getTransactionVars('destination') : undefined,
       })
     }
     return hitResult
