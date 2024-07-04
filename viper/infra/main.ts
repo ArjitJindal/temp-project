@@ -107,6 +107,7 @@ class DatabricksStack extends TerraformStack {
           },
         },
       ],
+      skipRegionValidation: true,
     })
 
     new mvn.provider.MavenProvider(this, 'mvn', {})
