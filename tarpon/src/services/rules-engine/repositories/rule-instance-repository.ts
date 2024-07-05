@@ -122,58 +122,62 @@ export class RuleInstanceRepository {
     let logicAggregationVariables: RuleAggregationVariable[] = []
 
     const v2RuleInstance = isV2RuleInstance(ruleInstance)
+    if (!v2RuleInstance) {
+      throw new Error('Rule instance is not a v2 rule instance')
+    }
+    if (!ruleId) {
+      throw new Error('Rule ID is required for v2 rule instance')
+    }
 
-    if (v2RuleInstance && ruleId) {
-      if (isEmpty(ruleInstance.parameters)) {
-        ruleInstance.parameters =
-          ruleInstance.riskLevelParameters?.[DEFAULT_RISK_LEVEL]
-      }
+    if (isEmpty(ruleInstance.parameters)) {
+      ruleInstance.parameters =
+        ruleInstance.riskLevelParameters?.[DEFAULT_RISK_LEVEL]
+    }
 
-      migratedData = getMigratedV8Config(
-        ruleId,
-        ruleInstance.parameters,
-        ruleInstance.filters
-      )
+    migratedData = getMigratedV8Config(
+      ruleId,
+      ruleInstance.parameters,
+      ruleInstance.filters
+    )
 
-      logicAggregationVariables.push(
-        ...(migratedData?.logicAggregationVariables ?? [])
-      )
+    logicAggregationVariables.push(
+      ...(migratedData?.logicAggregationVariables ?? [])
+    )
 
-      if (migratedData == null && !hasFeature('RISK_LEVELS')) {
-        return
-      }
+    if (!migratedData) {
+      return
+    }
 
-      if (!baseCurrency && migratedData?.baseCurrency) {
-        baseCurrency = migratedData.baseCurrency
-      }
+    if (!baseCurrency && migratedData?.baseCurrency) {
+      baseCurrency = migratedData.baseCurrency
+    }
 
-      if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
-        v2RiskLevelLogic = Object.entries(
-          ruleInstance.riskLevelParameters
-        ).reduce((acc, [riskLevel, params]) => {
-          const migratedDataByRiskLevel = getMigratedV8Config(
-            ruleId,
-            params,
-            ruleInstance.filters
-          )
+    if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
+      v2RiskLevelLogic = Object.entries(
+        ruleInstance.riskLevelParameters
+      ).reduce((acc, [riskLevel, params]) => {
+        const migratedDataByRiskLevel = getMigratedV8Config(
+          ruleId,
+          params,
+          ruleInstance.filters
+        )
 
-          logicAggregationVariables.push(
-            ...(migratedDataByRiskLevel?.logicAggregationVariables ?? [])
-          )
+        logicAggregationVariables.push(
+          ...(migratedDataByRiskLevel?.logicAggregationVariables ?? [])
+        )
 
-          if (!migratedData) {
-            migratedData = migratedDataByRiskLevel
-          }
+        if (!migratedData) {
+          migratedData = migratedDataByRiskLevel
+        }
 
-          if (!baseCurrency && migratedDataByRiskLevel?.baseCurrency) {
-            baseCurrency = migratedDataByRiskLevel.baseCurrency
-          }
+        if (!baseCurrency && migratedDataByRiskLevel?.baseCurrency) {
+          baseCurrency = migratedDataByRiskLevel.baseCurrency
+        }
 
-          acc[riskLevel] = migratedDataByRiskLevel?.logic
+        acc[riskLevel] = migratedDataByRiskLevel?.logic
 
-          return acc
-        }, {} as RiskLevelRuleLogic)
-      }
+        return acc
+      }, {} as RiskLevelRuleLogic)
     }
 
     logicAggregationVariables = uniqBy(logicAggregationVariables, (v) => {

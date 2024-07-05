@@ -106,7 +106,7 @@ export class RuleInstanceService {
     const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
 
     for (const ruleInstance of ruleInstances) {
-      const currentRuleLogic = {
+      const currentRuleV8Props = {
         logic: ruleInstance.logic,
         riskLevelLogic: ruleInstance.riskLevelLogic,
         baseCurrency: ruleInstance.baseCurrency,
@@ -117,13 +117,13 @@ export class RuleInstanceService {
         isV2RuleInstance(ruleInstance) &&
         V8_MIGRATED_RULES.includes(ruleInstance.ruleId as string)
       ) {
-        const updatedRuleLogic =
+        const updatedRuleV8PProps =
           ruleInstanceRepository.getV8PropsForV2RuleInstance(ruleInstance)
 
         if (
-          !updatedRuleLogic ||
-          generateChecksum(currentRuleLogic) ===
-            generateChecksum(updatedRuleLogic)
+          !updatedRuleV8PProps ||
+          generateChecksum(currentRuleV8Props) ===
+            generateChecksum(updatedRuleV8PProps)
         ) {
           continue
         }
