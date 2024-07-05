@@ -7,9 +7,10 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 export function getTestTransactionEvent(
-  transactionEvent: Partial<TransactionEvent> = {}
+  transactionEvent: Partial<TransactionEventWithRulesResult> = {}
 ): TransactionEvent {
   return {
     transactionState: 'CREATED',

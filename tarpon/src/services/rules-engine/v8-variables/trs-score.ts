@@ -14,6 +14,10 @@ export const TRANSACTION_TRS_SCORE: TransactionRuleVariable<number> = {
   },
   requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
   load: async (transaction, context) => {
+    if (!transaction) {
+      return NaN
+    }
+
     let riskScore = transaction?.riskScoreDetails?.trsScore
 
     if (riskScore != null) {

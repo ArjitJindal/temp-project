@@ -216,4 +216,9 @@ async function main() {
   console.info(`\nDone. See results: ${outputPath}`)
 }
 
-main().catch((e) => console.error(e))
+main()
+  .then(() => process.exit(0))
+  .catch((e) => {
+    console.error(e)
+    process.exit(1)
+  })

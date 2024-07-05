@@ -16,6 +16,7 @@ import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 @traceable
 export class TransactionEventRepository {
@@ -75,7 +76,7 @@ export class TransactionEventRepository {
 
   public async getTransactionEvents(
     transactionId: string
-  ): Promise<TransactionEvent[]> {
+  ): Promise<TransactionEventWithRulesResult[]> {
     const PartitionKeyID = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,
       transactionId
@@ -91,7 +92,7 @@ export class TransactionEventRepository {
 
     const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
 
-    return Items as TransactionEvent[]
+    return Items as TransactionEventWithRulesResult[]
   }
 
   public async getLastTransactionEvent(

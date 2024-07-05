@@ -108,6 +108,7 @@ import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationD
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 const sqs = getSQSClient()
 
@@ -425,7 +426,7 @@ export class RulesEngineService {
     }
 
     const initialTransactionState = transaction.transactionState || 'CREATED'
-    const initialTransactionEvent: TransactionEvent = {
+    const initialTransactionEvent: TransactionEventWithRulesResult = {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
       transactionState: initialTransactionState,
@@ -526,7 +527,9 @@ export class RulesEngineService {
       riskScoreDetails,
     } = await this.verifyTransactionInternal(
       updatedTransaction,
-      previousTransactionEvents.concat(transactionEvent)
+      previousTransactionEvents.concat(
+        transactionEvent as TransactionEventWithRulesResult
+      )
     )
 
     const saveTransactionSegment = await addNewSubsegment(
@@ -690,7 +693,7 @@ export class RulesEngineService {
 
   private async verifyTransactionInternal(
     transaction: Transaction,
-    transactionEvents: TransactionEvent[]
+    transactionEvents: TransactionEventWithRulesResult[]
   ): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
@@ -732,6 +735,10 @@ export class RulesEngineService {
     const transactionWithRiskDetails: TransactionWithRiskDetails = {
       ...transaction,
       riskScoreDetails,
+    }
+    const lastTransactionEvent = last(transactionEvents)
+    if (lastTransactionEvent) {
+      lastTransactionEvent.riskScoreDetails = riskScoreDetails
     }
 
     const rulesById = await this.getRulesById(transactionRuleInstances)
@@ -823,7 +830,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     senderUserRiskLevel?: RiskLevel
     transaction?: Transaction
-    transactionEvents?: TransactionEvent[]
+    transactionEvents?: TransactionEventWithRulesResult[]
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
@@ -1078,7 +1085,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
     transaction: TransactionWithRiskDetails
-    transactionEvents: TransactionEvent[]
+    transactionEvents: TransactionEventWithRulesResult[]
     senderUser?: User | Business
     receiverUser?: User | Business
     transactionRiskScore?: number

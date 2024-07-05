@@ -3,6 +3,7 @@ import memoizeOne from 'memoize-one'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
+  TransactionWithRiskDetails,
 } from '../repositories/transaction-repository-interface'
 import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from './time-utils'
@@ -15,8 +16,8 @@ import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { zipGenerators, staticValueGenerator } from '@/utils/generator'
 import { CurrencyService } from '@/services/currency'
 import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
-import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { mergeEntities } from '@/utils/object'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 export async function isTransactionAmountAboveThreshold(
   transactionAmountDefails: TransactionAmountDetails | undefined,
@@ -442,19 +443,28 @@ export function removePrefixFromName(
 
 export const hydrateTransactionEvents = memoizeOne(
   // NOTE: transactionEvents should already be sorted by timestamp (1st to last)
-  (transactionEvents: TransactionEvent[]): TransactionEvent[] => {
-    const hydratedTransactionEvents: TransactionEvent[] = []
+  (
+    transactionEvents: TransactionEventWithRulesResult[]
+  ): Array<{
+    transactionEvent: TransactionEventWithRulesResult
+    transaction: TransactionWithRiskDetails
+  }> => {
+    const hydratedTransactionEvents: Array<{
+      transactionEvent: TransactionEventWithRulesResult
+      transaction: TransactionWithRiskDetails
+    }> = []
     for (const transactionEvent of transactionEvents) {
       const prevTransactionEvent = last(hydratedTransactionEvents)
       hydratedTransactionEvents.push({
-        ...transactionEvent,
-        updatedTransactionAttributes: {
+        transactionEvent,
+        transaction: {
           ...mergeEntities(
-            prevTransactionEvent?.updatedTransactionAttributes ?? {},
+            prevTransactionEvent?.transaction ?? {},
             transactionEvent.updatedTransactionAttributes ?? {}
           ),
           transactionState: transactionEvent.transactionState,
-        },
+          riskScoreDetails: transactionEvent.riskScoreDetails,
+        } as TransactionWithRiskDetails,
       })
     }
     return hydratedTransactionEvents

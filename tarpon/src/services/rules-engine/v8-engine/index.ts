@@ -84,13 +84,14 @@ import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVar
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEntityVariable'
 import { hasFeature } from '@/core/utils/context'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
 const sqs = getSQSClient()
 
 export type TransactionRuleData = {
   type: 'TRANSACTION'
-  transaction: Transaction
-  transactionEvents: TransactionEvent[]
+  transaction: TransactionWithRiskDetails
+  transactionEvents: TransactionEventWithRulesResult[]
   senderUser?: User | Business
   receiverUser?: User | Business
 }
@@ -373,20 +374,28 @@ export class RuleJsonLogicEvaluator {
   }
 
   private async findTransactionEvent(
-    transactionEvents: TransactionEvent[],
+    transactionEvents: TransactionEventWithRulesResult[],
     logic: any,
     context: RuleVariableContext
-  ): Promise<TransactionEvent | undefined> {
+  ): Promise<
+    | {
+        transactionEvent: TransactionEventWithRulesResult
+        transaction: TransactionWithRiskDetails
+      }
+    | undefined
+  > {
     const txEvents = hydrateTransactionEvents(transactionEvents)
-    for (const transactionEvent of txEvents.slice().reverse()) {
+    for (const txEvent of txEvents.slice().reverse()) {
       const result = await this.evaluate(logic, {}, context, {
         type: 'TRANSACTION',
-        transaction:
-          transactionEvent.updatedTransactionAttributes as Transaction,
-        transactionEvents: [transactionEvent],
+        transaction: txEvent.transaction,
+        transactionEvents: [txEvent.transactionEvent],
       })
       if (result.hit) {
-        return transactionEvent
+        return {
+          transaction: txEvent.transaction,
+          transactionEvent: txEvent.transactionEvent,
+        }
       }
     }
   }
@@ -419,8 +428,11 @@ export class RuleJsonLogicEvaluator {
                       context
                     )
                   transaction = targetTransactionEvent
-                    ? (targetTransactionEvent.updatedTransactionAttributes as Transaction)
+                    ? targetTransactionEvent.transaction
                     : undefined
+                }
+                if (!transaction) {
+                  return null
                 }
                 return (variable as TransactionRuleVariable<any>).load(
                   transaction,
@@ -441,7 +453,10 @@ export class RuleJsonLogicEvaluator {
                       entityVariable.filtersLogic,
                       context
                     )
-                  transactionEvent = targetTransactionEvent
+                  transactionEvent = targetTransactionEvent?.transactionEvent
+                }
+                if (!transactionEvent) {
+                  return null
                 }
                 return (variable as TransactionEventRuleVariable<any>).load(
                   transactionEvent,

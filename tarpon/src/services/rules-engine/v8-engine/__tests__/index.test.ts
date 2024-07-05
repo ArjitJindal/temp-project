@@ -448,6 +448,115 @@ describe('Entity variable (filters)', () => {
       hitDirections: [],
     })
   })
+
+  test('executes the json logic (TRS) - hit', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const testTransaction = getTestTransaction({
+      transactionState: 'CREATED',
+    })
+    const result = await evaluator.evaluate(
+      { and: [{ '>': [{ var: 'entity:1' }, 50] }] },
+      {
+        entity: [
+          {
+            key: 'entity:1',
+            entityKey: 'TRANSACTION:trsScore',
+            filtersLogic: {
+              and: [
+                {
+                  '==': [{ var: 'TRANSACTION:transactionState' }, 'PROCESSING'],
+                },
+              ],
+            },
+          },
+        ],
+      },
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: testTransaction,
+        transactionEvents: [
+          getTestTransactionEvent({
+            transactionState: 'CREATED',
+            updatedTransactionAttributes: testTransaction,
+          }),
+          getTestTransactionEvent({
+            transactionState: 'PROCESSING',
+            riskScoreDetails: {
+              trsScore: 80,
+              trsRiskLevel: 'HIGH',
+            },
+          }),
+          getTestTransactionEvent({
+            transactionState: 'SUCCESSFUL',
+            riskScoreDetails: {
+              trsScore: 20,
+              trsRiskLevel: 'LOW',
+            },
+          }),
+        ],
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'entity:1': 80 },
+        },
+      ],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+  test('executes the json logic (TRS) - no hit', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const testTransaction = getTestTransaction({
+      transactionState: 'CREATED',
+    })
+    const result = await evaluator.evaluate(
+      { and: [{ '>': [{ var: 'entity:1' }, 50] }] },
+      {
+        entity: [
+          {
+            key: 'entity:1',
+            entityKey: 'TRANSACTION:trsScore',
+            filtersLogic: {
+              and: [
+                {
+                  '==': [{ var: 'TRANSACTION:transactionState' }, 'PROCESSING'],
+                },
+              ],
+            },
+          },
+        ],
+      },
+      { tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: testTransaction,
+        transactionEvents: [
+          getTestTransactionEvent({
+            transactionState: 'CREATED',
+            updatedTransactionAttributes: testTransaction,
+          }),
+        ],
+      }
+    )
+    expect(result).toEqual({
+      hit: false,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {},
+        },
+      ],
+      hitDirections: [],
+    })
+  })
 })
 
 describe('Aggregation variable', () => {

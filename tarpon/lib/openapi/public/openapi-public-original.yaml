@@ -2194,6 +2194,25 @@ components:
                 If a user makes a remittance transaction >= 1800 in EUR - ask
                 for proof of funds
               ruleAction: BLOCK
+    TransactionEventWithRulesResult:
+      title: TransactionEventWithRulesResult
+      description: Model for transaction event payload with rules result
+      allOf:
+        - $ref: '#/components/schemas/TransactionEvent'
+        - type: object
+          properties:
+            executedRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/ExecutedRulesResult'
+            hitRules:
+              type: array
+              items:
+                $ref: '#/components/schemas/HitRulesDetails'
+            status:
+              $ref: '#/components/schemas/RuleAction'
+            riskScoreDetails:
+              $ref: '#/components/schemas/TransactionRiskScoringResult'
     DeviceData:
       title: DeviceData
       type: object
