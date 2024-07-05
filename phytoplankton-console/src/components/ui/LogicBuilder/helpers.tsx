@@ -62,6 +62,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
         },
       },
       showNot: false,
+      removeEmptyRulesOnLoad: false,
       canLeaveEmptyGroup: false,
       maxNesting: enableNesting ? undefined : 1,
       forceShowConj: false,
