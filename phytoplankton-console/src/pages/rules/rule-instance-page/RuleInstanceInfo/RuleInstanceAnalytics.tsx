@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useCallback } from 'react';
 import { isEqual, round } from 'lodash';
 import { isShadowRule } from '../../utils';
 import s from './styles.module.less';
@@ -29,7 +29,9 @@ import { UsersTable } from '@/pages/users/users-list/users-table';
 import { COLORS_V2_ANALYTICS_CHARTS_01 } from '@/components/ui/colors';
 
 const HIT_RATE_SERIES = 'Hit rate (%)';
+
 type TimeRange = { afterTimestamp?: number; beforeTimestamp?: number };
+
 const DEFAULT_TIME_RANGE = {
   startTimestamp: dayjs().subtract(2, 'week').valueOf(),
   endTimestamp: dayjs().valueOf(),
@@ -38,8 +40,14 @@ const DEFAULT_TIME_RANGE = {
 export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => {
   const { ruleInstance } = props;
   const api = useApi();
-
   const [timeRange, setTimeRange] = useState<WidgetRangePickerValue>(DEFAULT_TIME_RANGE);
+
+  const handleDateReset = useCallback(() => {
+    setTimeRange({
+      startTimestamp: ruleInstance.createdAt,
+      endTimestamp: dayjs().valueOf(),
+    });
+  }, [ruleInstance.createdAt]);
 
   const analyticsQueryResult = useQuery(
     RULE_STATS({ ...timeRange, ruleInstanceId: ruleInstance.id }),
@@ -67,6 +75,8 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                 onChange={(timeRange) => {
                   if (timeRange) {
                     setTimeRange(timeRange);
+                  } else {
+                    handleDateReset();
                   }
                 }}
               />
