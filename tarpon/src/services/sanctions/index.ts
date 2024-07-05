@@ -231,7 +231,7 @@ export class SanctionsService {
     const existedSearch =
       await this.sanctionsSearchRepository.getSearchResultByParams(request)
     let rawResponse
-    if (existedSearch?.response == null) {
+    if (!existedSearch?.response) {
       const searchProfileId =
         this.complyAdvantageSearchProfileId ||
         this.pickSearchProfileId(request.types) ||
@@ -276,7 +276,8 @@ export class SanctionsService {
       searchedBy: !context ? getContext()?.user?.id : undefined,
       hitContext: context,
     })
-    if (request.monitoring) {
+
+    if (!existedSearch?.response && request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
     }
 
@@ -423,7 +424,7 @@ export class SanctionsService {
     await this.initialize()
     const search = await this.getSearchHistory(searchId)
     if (!search) {
-      logger.warn(`Cannot find search ${searchId}. Skip updating search.`)
+      logger.error(`Cannot find search ${searchId}. Skip updating search.`)
       return
     }
     const caSearchId =
