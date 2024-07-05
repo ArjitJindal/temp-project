@@ -177,7 +177,7 @@ export class DashboardStatsRepository {
 
   public async refreshAlertsStats(alertCreatedAtTimeRange?: TimeRange) {
     await Promise.all([
-      this.recalculateRuleHitStats(alertCreatedAtTimeRange),
+      this.recalculateRuleHitAlertsStats(alertCreatedAtTimeRange),
       this.recalculateHitsByUser('ORIGIN', alertCreatedAtTimeRange),
       this.recalculateHitsByUser('DESTINATION', alertCreatedAtTimeRange),
     ])

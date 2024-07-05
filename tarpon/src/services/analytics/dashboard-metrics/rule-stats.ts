@@ -222,7 +222,7 @@ export class RuleHitsStatsDashboardMetric {
       lastUpdatedAt,
       timeRange,
       'HOUR',
-      { hitCount: { $exists: true }, openAlertsCount: { $exists: false } }
+      { hitCount: { $exists: true } }
     )
   }
 

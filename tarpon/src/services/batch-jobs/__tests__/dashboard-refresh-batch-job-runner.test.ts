@@ -26,6 +26,7 @@ const TEST_ALERT: Alert = {
   priority: 'P1',
   ruleDescription: 'Test rule which always hit',
   numberOfTransactionsHit: 1,
+  ruleId: 'R-1',
 }
 
 const refreshAlertsStatsMock = jest.spyOn(
