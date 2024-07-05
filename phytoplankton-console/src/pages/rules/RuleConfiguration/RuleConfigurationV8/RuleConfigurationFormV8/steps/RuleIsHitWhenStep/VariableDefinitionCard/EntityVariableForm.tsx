@@ -317,7 +317,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
   const isOkDisabled = useMemo(() => {
     return !formValues.entityVariableKey;
   }, [formValues.entityVariableKey]);
-
+  const isEntityUser = ruleType === 'USER' && entity != null;
   return (
     <div>
       <Modal
@@ -419,11 +419,15 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 )}
                 <Label label="User nature" required={{ value: false, showHint: true }}>
                   <SelectionGroup
-                    value={formValues.userNatures}
+                    value={
+                      isEntityUser
+                        ? ([entity] as ('CONSUMER_USER' | 'BUSINESS_USER')[])
+                        : formValues.userNatures
+                    }
                     onChange={(userNatures) => handleUpdateForm({ userNatures })}
                     mode={'MULTIPLE'}
                     options={USER_NATURE_OPTIONS.filter((opt) =>
-                      entity ? opt.value === entity : true,
+                      isEntityUser ? opt.value === entity : true,
                     )}
                     testName="variable-user-nature-v8"
                   />
