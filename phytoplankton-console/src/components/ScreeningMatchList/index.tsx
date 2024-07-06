@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import s from './index.module.less';
 import { SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { success, getOr, map } from '@/utils/asyncResource';
@@ -15,6 +16,8 @@ import SanctionsTable, { TableSearchParams } from '@/components/SanctionsTable';
 import { message } from '@/components/library/Message';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import Select from '@/components/library/Select';
+import { humanizeConstant } from '@/utils/humanize';
 
 const MATCH_LIST_TAB_KEY = 'match_list';
 const CLEARED_MATCH_LIST_TAB_KEY = 'cleared_match_list';
@@ -56,8 +59,16 @@ export default function ScreeningMatchList(props: Props) {
     statuses: ['CLEARED'],
   });
 
-  const hitsQueryResults = useSanctionHitsQuery(details, tableParams);
-  const clearedHitsQueryResults = useSanctionHitsQuery(details, clearedTableParams);
+  const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
+    details[0]?.searchId,
+  );
+  const selectedSanctionsDetailsItem = details.filter((x) => x.searchId === sanctionsDetailsId);
+
+  const hitsQueryResults = useSanctionHitsQuery(selectedSanctionsDetailsItem, tableParams);
+  const clearedHitsQueryResults = useSanctionHitsQuery(
+    selectedSanctionsDetailsItem,
+    clearedTableParams,
+  );
 
   const hitsCount = getOr(
     map(hitsQueryResults.data, (x) => x.count),
@@ -75,44 +86,66 @@ export default function ScreeningMatchList(props: Props) {
           title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
           key: CLEARED_MATCH_LIST_TAB_KEY,
           children: (
-            <SanctionsTable
-              tableRef={null}
-              queryResult={clearedHitsQueryResults}
-              isEmbedded={true}
-              selection={true}
-              params={clearedTableParams}
-              onChangeParams={setClearedTableParams}
-              selectedIds={selectedSanctionsHitsIds}
-              onSelect={(sanctionHitsIds) => {
-                if (!alert?.alertId) {
-                  message.fatal('Unable to select transactions, alert id is empty');
-                  return;
-                }
-                onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
-              }}
-            />
+            <div className={s.selectWithTable}>
+              <Select
+                value={sanctionsDetailsId}
+                options={details.map((detailsItem) => ({
+                  label: getOptionName(detailsItem),
+                  value: detailsItem.searchId,
+                }))}
+                onChange={setSanctionsDetailsId}
+                allowClear={false}
+              />
+              <SanctionsTable
+                tableRef={null}
+                queryResult={clearedHitsQueryResults}
+                isEmbedded={true}
+                selection={true}
+                params={clearedTableParams}
+                onChangeParams={setClearedTableParams}
+                selectedIds={selectedSanctionsHitsIds}
+                onSelect={(sanctionHitsIds) => {
+                  if (!alert?.alertId) {
+                    message.fatal('Unable to select transactions, alert id is empty');
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
+                }}
+              />
+            </div>
           ),
         },
         {
           title: 'Human review' + (hitsCount != null ? ` (${hitsCount})` : ''),
           key: MATCH_LIST_TAB_KEY,
           children: (
-            <SanctionsTable
-              tableRef={null}
-              queryResult={hitsQueryResults}
-              isEmbedded={true}
-              selectedIds={selectedSanctionsHitsIds}
-              selection={true}
-              params={tableParams}
-              onChangeParams={setTableParams}
-              onSelect={(sanctionHitsIds) => {
-                if (!alert?.alertId) {
-                  message.fatal('Unable to select transactions, alert id is empty');
-                  return;
-                }
-                onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
-              }}
-            />
+            <div className={s.selectWithTable}>
+              <Select
+                value={sanctionsDetailsId}
+                options={details.map((detailsItem) => ({
+                  label: getOptionName(detailsItem),
+                  value: detailsItem.searchId,
+                }))}
+                onChange={setSanctionsDetailsId}
+                allowClear={false}
+              />
+              <SanctionsTable
+                tableRef={null}
+                queryResult={hitsQueryResults}
+                isEmbedded={true}
+                selectedIds={selectedSanctionsHitsIds}
+                selection={true}
+                params={tableParams}
+                onChangeParams={setTableParams}
+                onSelect={(sanctionHitsIds) => {
+                  if (!alert?.alertId) {
+                    message.fatal('Unable to select transactions, alert id is empty');
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
+                }}
+              />
+            </div>
           ),
         },
         ...(alert != null && alert.alertId != null
@@ -143,6 +176,8 @@ export default function ScreeningMatchList(props: Props) {
           : []),
       ].filter(notEmpty),
     [
+      sanctionsDetailsId,
+      details,
       hitsQueryResults,
       alert,
       tableParams,
@@ -211,4 +246,15 @@ function useSanctionHitsQuery(
       });
     },
   );
+}
+
+function getOptionName(details: SanctionsDetails) {
+  let result = details.name;
+  if (details.iban) {
+    result += ` (IBAN: ${details.iban})`;
+  }
+  if (details.entityType) {
+    result += ` (${humanizeConstant(details.entityType)})`;
+  }
+  return result;
 }
