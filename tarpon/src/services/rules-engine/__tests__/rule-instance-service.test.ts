@@ -191,6 +191,29 @@ describe('RuleInstanceService', () => {
             hitCount: 0,
           },
         ],
+        ruleInstanceUpdateStats: [],
+        alertsStats: [
+          {
+            alertsCreated: 0,
+            date: now.subtract(2, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 0,
+            date: now.subtract(1, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 2,
+            date: now.format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 0,
+            date: now.add(1, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+        ],
       })
     })
     it('user rule stats', async () => {
@@ -226,6 +249,29 @@ describe('RuleInstanceService', () => {
             hitCount: 0,
           },
         ],
+        alertsStats: [
+          {
+            alertsCreated: 0,
+            date: now.subtract(2, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 0,
+            date: now.subtract(1, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 3,
+            date: now.format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+          {
+            alertsCreated: 0,
+            date: now.add(1, 'day').format('YYYY-MM-DD'),
+            falsePositiveAlerts: 0,
+          },
+        ],
+        ruleInstanceUpdateStats: [],
       })
     })
   })

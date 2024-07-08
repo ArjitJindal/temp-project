@@ -32,6 +32,7 @@ import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
 import { RuleInstanceExecutionStats } from '@/@types/openapi-internal/RuleInstanceExecutionStats'
 import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
+import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { generateChecksum } from '@/utils/object'
 import { logger } from '@/core/logger'
@@ -261,6 +262,12 @@ export class RuleInstanceService {
     let alertsHit = 0
     let investigationTime: number | undefined = undefined
     let executionStats: RuleInstanceExecutionStats[] = []
+    let alertsStats: RuleInstanceAlertsStats[] = []
+    const ruleInstanceUpdateStats =
+      await this.ruleInstanceRepository.getRuleInstancesUpdateData(
+        ruleInstanceId,
+        timeRange
+      )
     let stats: {
       [key: string]: {
         [key: string]: number
@@ -328,13 +335,24 @@ export class RuleInstanceService {
     )
 
     if (isShadow) {
-      alertsHit = usersHit
       investigationTime =
         await OverviewStatsDashboardMetric.getAverageInvestigationTime(
           this.tenantId,
           'alerts'
         )
     } else {
+      const stats = await this.alertsRepository.getRuleInstanceStats(
+        ruleInstanceId,
+        timeRange
+      )
+      alertsStats = allTimeLabels.map((timeLabel) => {
+        const stat = stats.find((v) => v.date === timeLabel)
+        return {
+          date: timeLabel,
+          alertsCreated: stat?.alertsCreated ?? 0,
+          falsePositiveAlerts: stat?.falsePositiveAlerts ?? 0,
+        }
+      })
       const alertsResult = await this.alertsRepository.getAlerts({
         filterRulesHit: [ruleInstanceId],
         filterAlertAfterCreatedTimestamp: timeRange.afterTimestamp,
@@ -348,12 +366,15 @@ export class RuleInstanceService {
       }
       alertsHit = alertsResult.total
     }
+
     return {
       transactionsHit,
       usersHit,
       alertsHit,
       investigationTime,
       executionStats,
+      alertsStats,
+      ruleInstanceUpdateStats,
     }
   }
 

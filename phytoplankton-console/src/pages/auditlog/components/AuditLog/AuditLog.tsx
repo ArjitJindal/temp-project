@@ -2,11 +2,12 @@ import { useRef, useState, useContext, useMemo } from 'react';
 import { Typography } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
+import { useLocation } from 'react-router';
 import { HighlightOutlined } from '@ant-design/icons';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
-import { useTableData } from './helpers';
+import { deserializeParams, useTableData } from './helpers';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
@@ -24,10 +25,19 @@ import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
+import { parseQueryString } from '@/utils/routing';
 
 export default function AuditLogTable() {
   const api = useApi();
-  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const location = useLocation();
+  const deserializedParams = useMemo(
+    () => deserializeParams(parseQueryString(location.search)),
+    [location.search],
+  );
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    ...deserializedParams,
+  });
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(

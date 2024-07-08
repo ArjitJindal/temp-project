@@ -12594,6 +12594,14 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleInstanceExecutionStats'
+        alertsStats:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleInstanceAlertsStats'
+        ruleInstanceUpdateStats:
+          type: array
+          items:
+            type: string
       required:
         - usersHit
         - alertsHit
@@ -12611,6 +12619,19 @@ components:
       required:
         - date
         - runCount
+    RuleInstanceAlertsStats:
+      title: RuleInstanceAlertsStats
+      type: object
+      properties:
+        date:
+          type: string
+        alertsCreated:
+          type: number
+        falsePositiveAlerts:
+          type: number
+      required:
+        - date
+        - alertsCreated
   securitySchemes:
     Authorization:
       type: http

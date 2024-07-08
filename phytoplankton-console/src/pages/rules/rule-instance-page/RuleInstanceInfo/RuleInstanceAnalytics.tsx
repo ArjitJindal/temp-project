@@ -1,10 +1,9 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { isEqual, round } from 'lodash';
-import { isShadowRule } from '../../utils';
+import { FROZEN_STATUSES, isShadowRule as checkShadowRule } from '../../utils';
 import s from './styles.module.less';
 import Widget from '@/components/library/Widget';
 import { RuleInstance } from '@/apis';
-import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
 import TransactionsTable, {
   transactionParamsToRequest,
@@ -26,9 +25,17 @@ import { map } from '@/utils/asyncResource';
 import { LineChart } from '@/pages/dashboard/analysis/components/charts/Line';
 import WidgetGrid, { WidgetGroupItem } from '@/components/library/WidgetGrid';
 import { UsersTable } from '@/pages/users/users-list/users-table';
-import { COLORS_V2_ANALYTICS_CHARTS_01 } from '@/components/ui/colors';
+import {
+  COLORS_V2_ALERT_WARNING,
+  COLORS_V2_ANALYTICS_CHARTS_06,
+  COLORS_V2_ANALYTICS_CHARTS_10,
+} from '@/components/ui/colors';
+import { makeUrl } from '@/utils/routing';
+import { dayjs } from '@/utils/dayjs';
 
 const HIT_RATE_SERIES = 'Hit rate (%)';
+const FALSE_POSITIVE_RATE_SERIES = 'False positive rate (%)';
+const RULE_UPDATED = 'Rule is edited';
 
 type TimeRange = { afterTimestamp?: number; beforeTimestamp?: number };
 
@@ -36,6 +43,13 @@ const DEFAULT_TIME_RANGE = {
   startTimestamp: dayjs().subtract(2, 'week').valueOf(),
   endTimestamp: dayjs().valueOf(),
 };
+
+const ALL_STATUS = [
+  'OPEN',
+  'ESCALATED',
+  'CLOSED',
+  ...Object.entries(FROZEN_STATUSES).map(([_key, value]) => value.value),
+];
 
 export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => {
   const { ruleInstance } = props;
@@ -59,8 +73,8 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
       });
     },
   );
-
   const dataRes = analyticsQueryResult.data;
+  const isShadowRule = checkShadowRule(ruleInstance);
   const items: WidgetGroupItem[] = [
     {
       renderComponent: () => (
@@ -88,10 +102,38 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                     {
                       title: 'Transactions hit',
                       value: map(dataRes, (data) => data.transactionsHit ?? 0),
+                      hyperlink: makeUrl(
+                        '/transactions/list',
+                        {},
+                        {
+                          ruleInstancesHitFilter: ruleInstance.id,
+                          timestamp: `${timeRange.startTimestamp},${timeRange.endTimestamp}`,
+                        },
+                      ),
                     },
                   ]}
                 />
               )}
+              <OverviewCard
+                sections={[
+                  {
+                    title: isShadowRule ? 'Estimated alerts created' : 'Alerts created',
+                    value: map(dataRes, (data) => data.alertsHit ?? 0),
+                    hyperlink: isShadowRule
+                      ? undefined
+                      : makeUrl(
+                          '/case-management/cases',
+                          {},
+                          {
+                            showCases: 'ALL_ALERTS',
+                            rulesHitFilter: ruleInstance.id,
+                            createdTimestamp: `${timeRange.startTimestamp},${timeRange.endTimestamp}`,
+                            alertStatus: ALL_STATUS.join(','),
+                          },
+                        ),
+                  },
+                ]}
+              />
               <OverviewCard
                 sections={[
                   {
@@ -103,17 +145,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
               <OverviewCard
                 sections={[
                   {
-                    title: isShadowRule(ruleInstance)
-                      ? 'Estimated alerts created'
-                      : 'Alerts created',
-                    value: map(dataRes, (data) => data.alertsHit ?? 0),
-                  },
-                ]}
-              />
-              <OverviewCard
-                sections={[
-                  {
-                    title: isShadowRule(ruleInstance)
+                    title: isShadowRule
                       ? 'Estimated avg investigation time'
                       : 'Avg investigation time',
                     value: map(dataRes, (data) =>
@@ -131,29 +163,114 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
     },
     {
       renderComponent: () => (
-        <Widget title="Rule hit rate (%)">
+        <Widget title="Rule hit rate and False positive rate">
           <AsyncResourceRenderer resource={analyticsQueryResult.data}>
-            {(stats) => (
-              <LineChart
-                data={stats.executionStats.map((v) => ({
+            {(stats) => {
+              const executionStats = stats.executionStats.map((v) => ({
+                xValue: v.date,
+                yValue: v.runCount ? round(((v.hitCount ?? 0) / v.runCount) * 100, 2) : 0,
+                series: HIT_RATE_SERIES,
+              }));
+              const falsePositiveStats =
+                stats.alertsStats?.map((v) => ({
                   xValue: v.date,
-                  yValue: v.runCount ? round(((v.hitCount ?? 0) / v.runCount) * 100, 2) : 0,
-                  series: HIT_RATE_SERIES,
-                }))}
-                colors={{
-                  [HIT_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_01,
-                }}
-                height={200}
-                hideLegend={true}
-              />
-            )}
+                  yValue: v.alertsCreated
+                    ? round(((v.falsePositiveAlerts ?? 0) / v.alertsCreated) * 100, 2)
+                    : 0,
+                  series: FALSE_POSITIVE_RATE_SERIES,
+                })) ?? [];
+              const maxYVal = [...falsePositiveStats, ...executionStats].reduce((max, obj) => {
+                return Math.max(max, obj.yValue);
+              }, 100);
+              const ruleInstanceUpdateStats = stats.ruleInstanceUpdateStats ?? [];
+              const ruleUpdatedAtStats =
+                ruleInstanceUpdateStats.flatMap((date) => {
+                  return [
+                    {
+                      xValue: date,
+                      yValue: 0,
+                      series: `${RULE_UPDATED} (${date})`,
+                    },
+                    {
+                      xValue: date,
+                      yValue: maxYVal,
+                      series: `${RULE_UPDATED} (${date})`,
+                    },
+                  ];
+                }) ?? [];
+              const ruleUpdatedColors = ruleInstanceUpdateStats.reduce((acc, date) => {
+                acc[`${RULE_UPDATED} (${date})`] = COLORS_V2_ALERT_WARNING;
+                return acc;
+              }, {});
+              const colors = {
+                [HIT_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_06,
+                [FALSE_POSITIVE_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_10,
+                ...ruleUpdatedColors,
+              };
+              const customContent = (title: string, data) => {
+                return (
+                  <div className={s.tooltip}>
+                    <div className={s.tooltipTitle}>{title}</div>
+                    {data.map(({ data }) => {
+                      const date = title.replace(`${RULE_UPDATED} (`, '').replace(`)`, '');
+                      return (
+                        <div key={data.series} className={s.tooltipRow}>
+                          <div className={s.tooltipLeft}>
+                            <div
+                              className={s.tooltipMarker}
+                              style={{ backgroundColor: colors[data.series] }}
+                            ></div>
+                            <div>{data.series}</div>
+                          </div>
+                          {!data.series.startsWith(RULE_UPDATED) ? (
+                            <div>{data.yValue}%</div>
+                          ) : (
+                            <a
+                              href={makeUrl(
+                                '/auditlog',
+                                {},
+                                {
+                                  filterTypes: 'RULE',
+                                  searchEntityId: ruleInstance.id,
+                                  filterActions: 'UPDATE',
+                                  createdTimestamp: `${dayjs(date)
+                                    .startOf('day')
+                                    .valueOf()},${dayjs(date).endOf('day').valueOf()}`,
+                                },
+                              )}
+                              target="_blank"
+                            >
+                              ➡️
+                            </a>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              };
+              return (
+                <LineChart
+                  data={[...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats]}
+                  colors={colors}
+                  height={200}
+                  hideLegend={true}
+                  dashedLinesSeries={Object.keys(ruleUpdatedColors)}
+                  customTooltip={{
+                    customContent: customContent,
+                    //eslint-disable-next-line
+                    enterable: true,
+                  }}
+                />
+              );
+            }}
           </AsyncResourceRenderer>
         </Widget>
       ),
     },
   ];
   // Only show transaction and user hit tables for shadow rules for now
-  if (isShadowRule(ruleInstance) && ruleInstance.type === 'TRANSACTION') {
+  if (isShadowRule && ruleInstance.type === 'TRANSACTION') {
     items.push({
       renderComponent: () => (
         <Widget title="Transactions hit">
@@ -180,7 +297,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
         </Widget>
       ),
     });
-  } else if (isShadowRule(ruleInstance) && ruleInstance.type === 'USER') {
+  } else if (isShadowRule && ruleInstance.type === 'USER') {
     items.push({
       renderComponent: () => (
         <Widget title="Users hit">
@@ -242,7 +359,7 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     return await api.getTransactionsList({
       ...transactionParamsToRequest(params),
       start: from,
-      filterShadowHit: isShadowRule(ruleInstance),
+      filterShadowHit: checkShadowRule(ruleInstance),
       filterRuleInstancesHit: [ruleInstance.id as string],
     });
   });
@@ -366,7 +483,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
       sortOrder: sort[0]?.[1] ?? 'descend',
       filterRiskLevelLocked: riskLevelLocked,
       ruleInstanceId: ruleInstance.id as string,
-      filterShadowHit: isShadowRule(ruleInstance),
+      filterShadowHit: checkShadowRule(ruleInstance),
     });
   });
 

@@ -3,9 +3,11 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
 import { compact, difference } from 'lodash'
+import dayjsLib from '@flagright/lib/utils/dayjs'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
+  DAY_DATE_FORMAT,
   lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
@@ -46,6 +48,8 @@ import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
+import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
+import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 export const API_USER = 'API'
@@ -1421,5 +1425,88 @@ export class AlertsRepository {
     )
 
     return updatedCaseData.value as Case
+  }
+
+  public async getRuleInstanceStats(
+    ruleInstanceId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number }
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const FALSE_POSITIVE_REASON: CaseReasons = 'False positive'
+    const timezone = dayjsLib.tz.guess()
+    const pipeline = [
+      {
+        $match: {
+          'alerts.ruleInstanceId': ruleInstanceId,
+          'alerts.createdTimestamp': {
+            $gte: timeRange.afterTimestamp,
+            $lte: timeRange.beforeTimestamp,
+          },
+        },
+      },
+      {
+        $unwind: '$alerts',
+      },
+      {
+        $match: {
+          'alerts.ruleInstanceId': ruleInstanceId,
+          'alerts.createdTimestamp': {
+            $gte: timeRange.afterTimestamp,
+            $lte: timeRange.beforeTimestamp,
+          },
+        },
+      },
+      {
+        $project: {
+          createdTimestamp: '$alerts.createdTimestamp',
+          alertStatus: '$alerts.alertStatus',
+          isFalsePositive: {
+            $in: [
+              FALSE_POSITIVE_REASON,
+              { $ifNull: ['$alerts.lastStatusChange.reason', []] },
+            ],
+          },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            date: {
+              $dateToString: {
+                format: DAY_DATE_FORMAT,
+                date: { $toDate: '$createdTimestamp' },
+                timezone: timezone,
+              },
+            },
+          },
+          alertsCreated: { $sum: 1 },
+          falsePositiveAlerts: {
+            $sum: {
+              $cond: {
+                if: { $eq: ['$isFalsePositive', true] },
+                then: 1,
+                else: 0,
+              },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: false,
+          date: '$_id.date',
+          alertsCreated: 1,
+          falsePositiveAlerts: 1,
+        },
+      },
+      {
+        $sort: {
+          date: 1,
+        },
+      },
+    ]
+
+    return collection.aggregate<RuleInstanceAlertsStats>(pipeline).toArray()
   }
 }

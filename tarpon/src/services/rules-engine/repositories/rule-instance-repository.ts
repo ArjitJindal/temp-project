@@ -11,7 +11,8 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, isEqual, uniqBy } from 'lodash'
+import { isEqual, uniq, isEmpty, uniqBy } from 'lodash'
+import dayjsLib from '@flagright/lib/utils/dayjs'
 import { getAggVarHash } from '../v8-engine/aggregation-repository'
 import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
 import { isV2RuleInstance } from '../utils'
@@ -22,10 +23,15 @@ import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import {
+  DAY_DATE_FORMAT,
+  getMongoDbClient,
+  getMongoDbClientDb,
+} from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 
@@ -460,5 +466,47 @@ export class RuleInstanceRepository {
         queueId: undefined,
       })
     }
+  }
+
+  public async getRuleInstancesUpdateData(
+    ruleInstanceId: string,
+    timeRange: { afterTimestamp: number; beforeTimestamp: number }
+  ) {
+    const db = await getMongoDbClientDb()
+    const auditLogsCollection = db.collection(
+      AUDITLOG_COLLECTION(this.tenantId)
+    )
+    const timezone = dayjsLib.tz.guess()
+    const data = await auditLogsCollection
+      .aggregate([
+        {
+          $match: {
+            entityId: ruleInstanceId,
+            type: 'RULE',
+            action: 'UPDATE',
+            timestamp: {
+              $gte: timeRange.afterTimestamp,
+              $lte: timeRange.beforeTimestamp,
+            },
+          },
+        },
+        {
+          $sort: { timestamp: 1 },
+        },
+        {
+          $project: {
+            _id: false,
+            date: {
+              $dateToString: {
+                format: DAY_DATE_FORMAT,
+                date: { $toDate: '$timestamp' },
+                timezone: timezone,
+              },
+            },
+          },
+        },
+      ])
+      .toArray()
+    return uniq(data.map((d) => d.date))
   }
 }
