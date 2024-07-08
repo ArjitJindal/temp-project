@@ -19,7 +19,7 @@ export const UserTrsRiskDisplay: React.FC<Props> = ({ userId }) => {
       {(result) => (
         <RiskScoreDisplay
           icon={<Icon />}
-          values={[]}
+          values={[{ score: result.average, createdAt: Date.now() }]}
           title="Average TRS risk score"
           riskScoreName="Average TRS risk score"
           showFormulaBackLink
