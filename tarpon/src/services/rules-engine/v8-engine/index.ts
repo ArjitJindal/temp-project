@@ -14,6 +14,7 @@ import {
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { canAggregateMinute } from '@flagright/lib/rules-engine'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
 import { getTimeRangeByTimeWindows } from '../utils/time-utils'
@@ -29,7 +30,6 @@ import {
   V8TransactionAggregationTask,
 } from '../rules-engine-service'
 import {
-  MINUTE_GROUP_SIZE,
   getTransactionStatsTimeGroupLabel,
   getTransactionsGenerator,
   groupTransactionsByGranularity,
@@ -122,11 +122,11 @@ export function canAggregate(variable: RuleAggregationVariable) {
     return false
   }
   if (startGranularity === 'minute' || endGranularity === 'minute') {
-    return (
-      startGranularity === 'all_time' ||
-      (endGranularity === 'now'
-        ? startUnits >= MINUTE_GROUP_SIZE
-        : startUnits - endUnits >= MINUTE_GROUP_SIZE)
+    return canAggregateMinute(
+      startGranularity,
+      startUnits,
+      endGranularity,
+      endUnits
     )
   }
   return true

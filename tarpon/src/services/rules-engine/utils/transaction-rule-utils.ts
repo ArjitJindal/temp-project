@@ -1,3 +1,4 @@
+import { MINUTE_GROUP_SIZE } from '@flagright/lib/constants'
 import { groupBy, inRange, last, mapValues } from 'lodash'
 import memoizeOne from 'memoize-one'
 import {
@@ -376,8 +377,6 @@ export async function groupTransactions<T>(
 
 // TODO: We use UTC time for getting the time label for now. We could use
 // the customer specified timezone if there's a need.
-
-export const MINUTE_GROUP_SIZE = 10 // Will require a migration (use bumpRuleAggregationVariableVersion util) to be run whenever updated.
 
 export function getTransactionStatsTimeGroupLabel(
   timestamp: number,

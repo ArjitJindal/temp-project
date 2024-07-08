@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
-import { isEqual, lowerCase } from 'lodash';
-import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
+import { isEqual, lowerCase, round } from 'lodash';
+import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/constants';
+import { canAggregateMinute } from '@flagright/lib/rules-engine';
 import pluralize from 'pluralize';
 import { getAllValuesByKey } from '@flagright/lib/utils';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
@@ -89,6 +90,29 @@ function swapOriginAndDestination(text?: string): string {
     return match === 'origin' ? 'destination' : 'origin';
   });
 }
+function roundToNearestMultiple(value: number, step: number) {
+  return round(value / step) * step;
+}
+
+const roundedTimeWindowMinutes = (timeWindow?: RuleAggregationVariableTimeWindow) => {
+  if (!timeWindow) {
+    return timeWindow;
+  }
+  const { start, end } = timeWindow;
+  if (start.granularity === 'minute' || end.granularity === 'minute') {
+    if (canAggregateMinute(start.granularity, start.units, end.granularity, end.units)) {
+      start.units =
+        start.granularity === 'hour'
+          ? start.units
+          : roundToNearestMultiple(start.units, MINUTE_GROUP_SIZE);
+      end.units =
+        start.granularity === 'all_time' || end.granularity === 'hour'
+          ? end.units
+          : roundToNearestMultiple(end.units, MINUTE_GROUP_SIZE);
+    }
+  }
+  return { start, end };
+};
 
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   ruleType,
@@ -433,6 +457,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             <VariableTimeWindow
               value={formValues.timeWindow}
               onChange={(newValue) => {
+                newValue = roundedTimeWindowMinutes(newValue);
                 handleUpdateForm({
                   timeWindow: newValue,
                 });
