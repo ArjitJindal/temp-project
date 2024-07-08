@@ -880,7 +880,7 @@ export class AlertsService extends CaseAlertsCommonService {
       updateChecklistStatus = true,
       externalRequest = false,
     } = options ?? {}
-    const userId = externalRequest ? API_USER : getContext()?.user?.id ?? ''
+    const userId = externalRequest ? API_USER : getContext()?.user?.id
     const statusChange: CaseStatusChange = {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
@@ -896,7 +896,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     const accountsService = await AccountsService.getInstance()
     let userAccount: Account | undefined = undefined
-    if (!externalRequest) {
+    if (!externalRequest && userId) {
       userAccount = account ?? (await accountsService.getAccount(userId))
       if (userAccount == null) {
         throw new Error(`User account not found`)
@@ -980,7 +980,7 @@ export class AlertsService extends CaseAlertsCommonService {
                 alertIds,
                 [
                   {
-                    assigneeUserId: userId,
+                    assigneeUserId: userId ?? '',
                     assignedByUserId: FLAGRIGHT_SYSTEM_USER,
                     timestamp: Date.now(),
                   },

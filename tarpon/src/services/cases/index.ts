@@ -284,7 +284,7 @@ export class CaseService extends CaseAlertsCommonService {
   ): CaseStatusChange {
     const userId = externalRequest
       ? API_USER
-      : (getContext()?.user as Account).id
+      : (getContext()?.user as Account)?.id
     return {
       userId: bySystem
         ? FLAGRIGHT_SYSTEM_USER
@@ -458,9 +458,10 @@ export class CaseService extends CaseAlertsCommonService {
     const context = getContext()
     const accountsService = await AccountsService.getInstance()
     const userId = externalRequest ? API_USER : (context?.user as Account)?.id
-    const accountUser = externalRequest
-      ? undefined
-      : account ?? (await accountsService.getAccount(userId))
+    const accountUser =
+      externalRequest || !userId
+        ? undefined
+        : account ?? (await accountsService.getAccount(userId))
     const isLastInReview = isStatusInReview(
       cases[0].lastStatusChange?.caseStatus
     )
