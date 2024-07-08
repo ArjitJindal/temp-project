@@ -1,8 +1,18 @@
 import { getEditDistancePercentage } from '@flagright/lib/utils'
 import { isArray } from 'lodash'
+import { JSONSchemaType } from 'ajv'
 import { TextRuleOperator } from './types'
 import { getNegatedOperator } from './utils'
 import { logger } from '@/core/logger'
+
+export const FUZZINESS_PARAMETER: JSONSchemaType<any> = {
+  title: 'Fuzziness %',
+  description:
+    'The allowed Levenshtein distance as a percentage of the length of the string. For example specifying 50% means that the allowed Levenshtein distance will be half of the number of characters in the string.',
+  type: 'number',
+  minimum: 0,
+  maximum: 100,
+}
 
 export const SIMILAR_TO_WORDS_OPERATOR: TextRuleOperator = {
   key: 'op:similartowords',
@@ -11,16 +21,7 @@ export const SIMILAR_TO_WORDS_OPERATOR: TextRuleOperator = {
     valueTypes: ['text'],
     valueSources: ['value', 'field', 'func'],
   },
-  parameters: [
-    {
-      title: 'Fuzziness %',
-      description:
-        'The allowed Levenshtein distance as a percentage of the length of the string. For example specifying 50% means that the allowed Levenshtein distance will be half of the number of characters in the string.',
-      type: 'number',
-      minimum: 0,
-      maximum: 100,
-    },
-  ],
+  parameters: [FUZZINESS_PARAMETER],
   run: async (lhs, rhs, parameters) => {
     if (!lhs) {
       return false
@@ -50,7 +51,5 @@ export const SIMILAR_TO_WORDS_OPERATOR: TextRuleOperator = {
   },
 }
 
-export const NOT_SIMILAR_TO_WORDS_OPERATOR = getNegatedOperator(
-  SIMILAR_TO_WORDS_OPERATOR,
-  'Not similar to (words)'
-)
+export const NOT_SIMILAR_TO_WORDS_OPERATOR: TextRuleOperator =
+  getNegatedOperator(SIMILAR_TO_WORDS_OPERATOR, 'Not similar to (words)')

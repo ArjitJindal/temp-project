@@ -2,6 +2,7 @@ import { getEditDistancePercentage } from '@flagright/lib/utils'
 import { isArray } from 'lodash'
 import { TextRuleOperator } from './types'
 import { getNegatedOperator } from './utils'
+import { FUZZINESS_PARAMETER } from './similar-to-words'
 import { logger } from '@/core/logger'
 
 export const SIMILAR_TO_OPERATOR: TextRuleOperator = {
@@ -11,16 +12,7 @@ export const SIMILAR_TO_OPERATOR: TextRuleOperator = {
     valueTypes: ['text'],
     valueSources: ['value', 'field', 'func'],
   },
-  parameters: [
-    {
-      title: 'Fuzziness %',
-      description:
-        'The allowed Levenshtein distance as a percentage of the length of the string. For example specifying 50% means that the allowed Levenshtein distance will be half of the number of characters in the string.',
-      type: 'number',
-      minimum: 0,
-      maximum: 100,
-    },
-  ],
+  parameters: [FUZZINESS_PARAMETER],
   run: async (lhs, rhs, parameters) => {
     if (!lhs) {
       return false

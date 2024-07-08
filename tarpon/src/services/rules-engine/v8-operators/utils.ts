@@ -5,6 +5,7 @@ export function getNegatedOperator(
   label: string
 ): RuleOperator {
   return {
+    ...operator,
     key: `op:!${operator.key.split('op:')[1]}` as any,
     uiDefinition: {
       ...operator.uiDefinition,
