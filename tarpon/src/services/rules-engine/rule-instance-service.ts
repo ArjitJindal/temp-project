@@ -129,9 +129,12 @@ export class RuleInstanceService {
         }
         logger.info(`Migrating rule instance ${ruleInstance.id} to V8`)
 
-        await ruleInstanceRepository.createOrUpdateRuleInstance({
-          ...ruleInstance,
-        })
+        await ruleInstanceRepository.createOrUpdateRuleInstance(
+          {
+            ...ruleInstance,
+          },
+          ruleInstance.updatedAt
+        )
       }
     }
   }

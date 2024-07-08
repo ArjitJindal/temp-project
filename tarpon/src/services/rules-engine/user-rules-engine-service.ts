@@ -295,10 +295,6 @@ export class UserManagementService {
       monitoringResult
     )
     await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
-    await this.caseRepository.syncUsersCases(
-      userId,
-      updatedConsumerUserAttributes
-    )
     return omit(updatedConsumerUserResult, 'type')
   }
 
@@ -369,10 +365,6 @@ export class UserManagementService {
       monitoringResult
     )
     await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
-    await this.caseRepository.syncUsersCases(
-      userId,
-      updatedBusinessUserAttributes
-    )
     return omit(updatedBusinessUserResult, 'type')
   }
 }

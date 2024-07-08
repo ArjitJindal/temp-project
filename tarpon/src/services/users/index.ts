@@ -721,8 +721,6 @@ export class UserService {
       isBusiness ? 'BUSINESS' : 'CONSUMER'
     )
 
-    await this.caseRepository.syncUsersCases(user.userId, updateRequest)
-
     const commentBody = this.getKycAndUserUpdateComment({
       caseId: options?.caseId,
       kycRuleInstance: options?.kycRuleInstance,

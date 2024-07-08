@@ -3,8 +3,10 @@ import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { CaseRepository } from '@/services/cases/repository'
+import { Case } from '@/@types/openapi-internal/Case'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { logger } from '@/core/logger'
 
 async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()
@@ -13,32 +15,33 @@ async function migrateTenant(tenant: Tenant) {
   const usersRepository = new UserRepository(tenant.id, {
     mongoDb,
   })
-
   const caseRepository = new CaseRepository(tenant.id, {
     mongoDb,
     dynamoDb,
   })
 
-  const allUsersCursor = usersRepository.getAllUsersCursor()
-  for await (const user of allUsersCursor) {
-    const updateRequest: UserUpdateRequest = {}
-    if (user.userStateDetails) {
-      updateRequest.userStateDetails = {
-        ...user.userStateDetails,
-        reason: user.userStateDetails.reason ?? 'Migration',
+  const db = mongoDb.db()
+  const collection = db.collection<Case>(CASES_COLLECTION(tenant.id))
+  const syncedUsers = new Set<string>()
+  for await (const c of collection.find({})) {
+    const originUserId = c.caseUsers?.origin?.userId
+    const destinationUserId = c.caseUsers?.destination?.userId
+    if (originUserId && !syncedUsers.has(originUserId)) {
+      const user = await usersRepository.getMongoUser(originUserId)
+      if (user) {
+        logger.info(`Syncing case users for user ${originUserId}`)
+        await caseRepository.syncCaseUsers(user)
       }
+      syncedUsers.add(originUserId)
     }
-    if (user.kycStatusDetails) {
-      updateRequest.kycStatusDetails = {
-        ...user.kycStatusDetails,
-        reason: user.kycStatusDetails.reason ?? 'Migration',
+    if (destinationUserId && !syncedUsers.has(destinationUserId)) {
+      const user = await usersRepository.getMongoUser(destinationUserId)
+      if (user) {
+        logger.info(`Syncing case users for user ${destinationUserId}`)
+        await caseRepository.syncCaseUsers(user)
       }
+      syncedUsers.add(destinationUserId)
     }
-    if (user.transactionLimits) {
-      updateRequest.transactionLimits = user.transactionLimits
-    }
-
-    await caseRepository.syncUsersCases(user.userId, updateRequest)
   }
 }
 

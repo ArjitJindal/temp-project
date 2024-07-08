@@ -30,6 +30,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserService } from '@/services/users'
+import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',
@@ -107,7 +108,7 @@ const TEST_ALERT_3: Alert = {
 }
 
 dynamoDbSetupHook()
-
+enableLocalChangeHandler()
 withFeatureHook(['ADVANCED_WORKFLOWS'])
 
 jest.mock('@/core/utils/context', () => {

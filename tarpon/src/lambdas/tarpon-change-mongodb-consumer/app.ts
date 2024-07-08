@@ -132,6 +132,8 @@ async function userHandler(
     ])
   }
 
+  await casesRepo.syncCaseUsers(internalUser)
+
   if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
     // Will backfill KRS score for all users without KRS score
     await sendBatchJobCommand({
