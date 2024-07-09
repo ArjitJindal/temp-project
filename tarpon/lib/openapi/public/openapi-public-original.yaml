@@ -4494,9 +4494,7 @@ components:
         isPepHit:
           type: boolean
         pepCountry:
-          type: string
-          minLength: 2
-          maxLength: 2
+          $ref: '#/components/schemas/CountryCode'
       required:
         - isPepHit
     KYCStatusDetails:
