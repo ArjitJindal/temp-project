@@ -1,7 +1,6 @@
 import { Row, Select, Space, Typography } from 'antd';
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import ProDescriptions from '@ant-design/pro-descriptions';
 import { merge } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import s from './styles.module.less';
@@ -14,7 +13,7 @@ import {
   InternalConsumerUser,
   UserUpdateRequest,
 } from '@/apis';
-import Label from '@/components/ui/Form/Layout/Label';
+import Label from '@/components/library/Label';
 import Money from '@/components/ui/Money';
 import Table from '@/components/library/Table';
 import { TransactionLimit } from '@/apis/models/TransactionLimit';
@@ -160,8 +159,8 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
       }
     >
       {editMode !== 'NONE' ? (
-        <ProDescriptions column={1} colon={false} layout="vertical">
-          <ProDescriptions.Item key="payment-method" label="Payment method" valueType="text">
+        <div className={s.drawerBody}>
+          <Label label="Payment method">
             <Select<PaymentMethod>
               style={{ width: '100%' }}
               value={paymentMethod}
@@ -177,8 +176,8 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                 ),
               )}
             </Select>
-          </ProDescriptions.Item>
-          <ProDescriptions.Item key="currency" label="Currency" valueType="text">
+          </Label>
+          <Label label="Currency">
             <Select<CurrencyCode>
               style={{ width: '100%' }}
               value={currency}
@@ -186,13 +185,9 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               options={CURRENCIES_SELECT_OPTIONS}
               showSearch
             />
-          </ProDescriptions.Item>
+          </Label>
           {timeFrames.map((timeFrame) => (
-            <ProDescriptions.Item
-              key={`count-${timeFrame}`}
-              label={`Max transaction count / ${timeFrame}`}
-              valueType="text"
-            >
+            <Label key={`count-${timeFrame}`} label={`Max transaction count / ${timeFrame}`}>
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -206,14 +201,10 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                   }
                 />
               </div>
-            </ProDescriptions.Item>
+            </Label>
           ))}
           {timeFrames.map((timeFrame) => (
-            <ProDescriptions.Item
-              key={`amount-${timeFrame}`}
-              label={`Max transaction amount / ${timeFrame}`}
-              valueType="text"
-            >
+            <Label key={`amount-${timeFrame}`} label={`Max transaction amount / ${timeFrame}`}>
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -233,14 +224,10 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                   }}
                 />
               </div>
-            </ProDescriptions.Item>
+            </Label>
           ))}
           {timeFrames.map((timeFrame) => (
-            <ProDescriptions.Item
-              key={`avg-amount-${timeFrame}`}
-              label={`Avg transaction amount / ${timeFrame}`}
-              valueType="text"
-            >
+            <Label key={`avg-amount-${timeFrame}`} label={`Avg transaction amount / ${timeFrame}`}>
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -260,9 +247,9 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
                   }}
                 />
               </div>
-            </ProDescriptions.Item>
+            </Label>
           ))}
-        </ProDescriptions>
+        </div>
       ) : null}
     </Drawer>
   );
@@ -454,36 +441,35 @@ export default function ExpectedTransactionLimits(props: Props) {
   return (
     <>
       <Card.Section>
-        {/* <Card.Row> */}
         <Typography.Title level={4}>On all transactions</Typography.Title>
         <Card.Row border={false}>
           <Card.Column>
-            <Label title={'Daily'}>
+            <Label label={'Daily'}>
               <Money amount={user.transactionLimits?.maximumDailyTransactionLimit} />
             </Label>
           </Card.Column>
           <Card.Column>
-            <Label title={'Weekly'}>
+            <Label label={'Weekly'}>
               <Money amount={user.transactionLimits?.maximumWeeklyTransactionLimit} />
             </Label>
           </Card.Column>
           <Card.Column>
-            <Label title={'Monthly'}>
+            <Label label={'Monthly'}>
               <Money amount={user.transactionLimits?.maximumMonthlyTransactionLimit} />
             </Label>
           </Card.Column>
           <Card.Column>
-            <Label title={'Quarterly'}>
+            <Label label={'Quarterly'}>
               <Money amount={user.transactionLimits?.maximumQuarterlyTransactionLimit} />
             </Label>
           </Card.Column>
           <Card.Column>
-            <Label title={'Yearly'}>
+            <Label label={'Yearly'}>
               <Money amount={user.transactionLimits?.maximumYearlyTransactionLimit} />
             </Label>
           </Card.Column>
           <Card.Column>
-            <Label title={'Maximum'}>
+            <Label label={'Maximum'}>
               <Money amount={user.transactionLimits?.maximumTransactionLimit} />
             </Label>
           </Card.Column>
