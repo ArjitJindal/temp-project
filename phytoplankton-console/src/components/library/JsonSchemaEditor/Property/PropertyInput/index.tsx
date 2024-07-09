@@ -27,6 +27,7 @@ import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/Property
 import ElectronicAddress from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/ElectronicAddress';
 import Gender from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/Gender';
 import { Props as LabelProps } from '@/components/library/Label';
+import ListSelect from '@/components/ui/LogicBuilder/ListSelect';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -96,6 +97,10 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'WEBHOOK') {
     return <WebhookInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'WHITELIST') {
+    const listType = uiSchema['ui:subtype'];
+    return <ListSelect {...props} listType={listType} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

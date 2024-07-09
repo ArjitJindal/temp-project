@@ -6,10 +6,16 @@ import { LISTS } from '@/utils/queries/keys';
 import { isFailed, getOr, isSuccess } from '@/utils/asyncResource';
 import Select, { TagsProps as SelectProps } from '@/components/library/Select';
 
-export default function ListSelect(props: Pick<SelectProps<string>, 'value' | 'onChange'>) {
+interface Props extends Pick<SelectProps<string>, 'value' | 'onChange'> {
+  listType?: string;
+}
+
+export default function ListSelect(props: Props) {
+  const { listType } = props;
   const api = useApi();
   const queryResults = useQuery(LISTS(), () => {
-    return api.getLists();
+    const params = listType ? { listType } : {};
+    return api.getLists(params);
   });
   const res = queryResults.data;
   if (isFailed(res)) {

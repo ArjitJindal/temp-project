@@ -32,6 +32,9 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
               items: { type: 'string' },
               uniqueItems: true,
               nullable: true,
+              ...uiSchema({
+                subtype: 'WHITELIST',
+              }),
             },
             userIds: {
               type: 'array',

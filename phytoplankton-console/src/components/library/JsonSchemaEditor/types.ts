@@ -96,6 +96,10 @@ export interface UiSchemaElectronicAddress extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_ELECTRONIC_ADDRESS';
 }
 
+export interface UiSchemaList extends UiSchemaCommon {
+  'ui:subtype': 'WHITELIST' | 'BLACKLIST';
+}
+
 export interface UiSchemaFincenGender extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_GENDER';
   'ui:maleIndicatorField'?: string;
@@ -131,7 +135,8 @@ export type UiSchema =
   | UiSchemaFincenPhoneNumber
   | UiSchemaElectronicAddress
   | UiSchemaFincenGender
-  | UiSchemaWebhook;
+  | UiSchemaWebhook
+  | UiSchemaList;
 
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
