@@ -22,6 +22,11 @@ const BUILT_IN_OPERATORS = omit(BasicConfig.operators, [
   'multi_select_contains',
   'multi_select_not_contains',
 ]) as CoreOperators<Config>;
+BUILT_IN_OPERATORS.equal.label = '=';
+BUILT_IN_OPERATORS.not_equal.label = '≠';
+BUILT_IN_OPERATORS.greater_or_equal.label = '≥';
+BUILT_IN_OPERATORS.less_or_equal.label = '≤';
+
 export const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
 export const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
 export const SELECT_OPERATORS: Array<keyof CoreOperators> = [

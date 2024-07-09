@@ -195,7 +195,7 @@ export function getAggregatedRuleStatus(
 
 export function isV8RuleInstance(ruleInstance: RuleInstance): boolean {
   if (ruleInstance.logic || ruleInstance.riskLevelLogic) {
-    if (hasFeature('RULES_ENGINE_V8_FOR_V2_RULES')) {
+    if (hasFeature('RULES_ENGINE_V8_FOR_V2_RULES') && ruleInstance.ruleId) {
       return !!ruleInstance.ruleId?.startsWith('RC')
     }
 
