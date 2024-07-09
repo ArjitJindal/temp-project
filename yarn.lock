@@ -985,9 +985,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@slack/web-api@npm:^7.0.4":
-  version: 7.0.4
-  resolution: "@slack/web-api@npm:7.0.4"
+"@slack/web-api@npm:^7.1.0":
+  version: 7.3.1
+  resolution: "@slack/web-api@npm:7.3.1"
   dependencies:
     "@slack/logger": "npm:^4.0.0"
     "@slack/types": "npm:^2.9.0"
@@ -1001,7 +1001,7 @@ __metadata:
     p-queue: "npm:^6"
     p-retry: "npm:^4"
     retry: "npm:^0.13.1"
-  checksum: 8c54ccfb94fcddf951ee49e11f7a90e2af15e83e656b7d9a36c21f321ca376d49bf8169ffcc40c3b34ae2330251b9b2bb139db2be707b4e5e7d6ad56d2a72c2b
+  checksum: 949960962ce0e81b829370727fe2f02031b20590c09c467feca835b39f459e2847331bcc12e99491732980d7bb8e06c4edfdb575a61903e9a33a10fc5123bab4
   languageName: node
   linkType: hard
 
@@ -3304,7 +3304,7 @@ __metadata:
     "@aws-sdk/client-cloudformation": "npm:^3.441.0"
     "@flagright/lib": "link:./lib"
     "@notionhq/client": "npm:^2.2.14"
-    "@slack/web-api": "npm:^7.0.4"
+    "@slack/web-api": "npm:^7.1.0"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.1"
     aws-cdk: "npm:~2.146.0"
