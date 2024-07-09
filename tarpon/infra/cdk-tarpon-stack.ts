@@ -116,7 +116,7 @@ import {
   createFargateTaskDefinition,
 } from './cdk-utils/cdk-fargate-utils'
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -508,7 +508,10 @@ export class CdkTarponStack extends cdk.Stack {
 
     // On production the role name was set without a suffix, it's dangerous for us
     // to change without downtime.
-    if (this.config.stage === 'prod' && config.region !== 'asia-2') {
+    if (
+      (this.config.stage === 'prod' && config.region !== 'asia-2') ||
+      (this.config.stage === 'sandbox' && config.region !== 'eu-1')
+    ) {
       lambdaRoleName += `-${config.region}`
       ecsRoleName += `-${config.region}`
     }
@@ -1535,11 +1538,11 @@ export class CdkTarponStack extends cdk.Stack {
 }
 
 const getSubdomain = (): string => {
+  if (envIsNot('dev')) {
+    throw new Error('Automated domain generation is only available in dev')
+  }
   if (isQaEnv()) {
     return `${process.env.QA_SUBDOMAIN}.api`
-  }
-  if (process.env.ENV === 'sandbox') {
-    return `sandbox.api`
   }
   return `api`
 }

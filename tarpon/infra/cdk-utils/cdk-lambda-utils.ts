@@ -66,9 +66,7 @@ export function createFunction(
     const cwInsightsLayer = LayerVersion.fromLayerVersionArn(
       context,
       `cw-insights-layer_${name}`,
-      context.config.region
-        ? LAMBDA_LAYER_ARN_BY_REGION[context.config.region]
-        : LAMBDA_LAYER_ARN_BY_REGION['eu-1']
+      LAMBDA_LAYER_ARN_BY_REGION[context.config.region ?? 'eu-1']
     ) as LayerVersion
 
     layersArray.push(cwInsightsLayer)

@@ -9,6 +9,7 @@ const region = 'eu-central-1'
 export const config: Config = {
   stage: 'sandbox',
   env: { account, region },
+  region: 'eu-1',
   budgets: {
     CLOUDWATCH: 200,
     DYNAMODB: 10,

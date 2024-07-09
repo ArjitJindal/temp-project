@@ -18,7 +18,7 @@ import {
 } from './constants/artifcats'
 import { tarponDeployStage } from './utils/tarpon-deploy-stage'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
-import { config as sandboxConfig } from '@flagright/lib/config/config-sandbox'
+import { config as sandboxConfig } from '@flagright/lib/config/config-sandbox-eu-1'
 import { config as phytoDevConfig } from '../phytoplankton-console/lib/configs/config-dev'
 import { config as phytoSandboxConfig } from '../phytoplankton-console/lib/configs/config-sandbox'
 import { config as phytoProdConfig } from '../phytoplankton-console/lib/configs/config-prod'
@@ -26,7 +26,10 @@ import { getCodeDeployRole } from './utils/code-deploy-role'
 import { phytoplanktonDeployStage } from './utils/phytoplankton-console-deploy'
 import { getE2ETestProject } from './utils/e2e_test_stage'
 import { postDeploymentCodeBuildProject } from './utils/post_deploy_tarpon'
-import { PRODUCTION_REGIONS } from '@flagright/lib/constants/deploy'
+import {
+  PRODUCTION_REGIONS,
+  SANDBOX_REGIONS,
+} from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { viperDeployStage } from './utils/viper-deploy'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
@@ -35,6 +38,10 @@ import {
   postSandboxDeployIntegrationsUpdateBuildProject,
 } from './utils/integrations-update'
 const PIPLINE_NAME = 'orca-pipeline'
+
+function getCodeBuildActionName(actionName: string, region: string) {
+  return `${actionName}_${region.toUpperCase().replace('-', '_')}`
+}
 
 export type CdkOrcaPipelineStackProps = StackProps
 
@@ -181,12 +188,27 @@ export class CdkOrcaPipelineStack extends Stack {
         {
           stageName: 'Deploy_Sandbox',
           actions: [
-            new codepipline_actions.CodeBuildAction({
-              actionName: 'Deploy_Tarpon',
-              project: tarponDeployStage(this, sandboxConfig, role, vpc),
-              input: SOURCE_ARTIFACT,
-              extraInputs: [TARPON_BUILD_ARTIFACT],
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
+            ...SANDBOX_REGIONS.flatMap((region) => {
+              const config = getTarponConfig('sandbox', region)
+              const actions = [
+                new codepipline_actions.CodeBuildAction({
+                  actionName: getCodeBuildActionName('Deploy_Tarpon', region),
+                  project: tarponDeployStage(this, config, role, vpc),
+                  input: SOURCE_ARTIFACT,
+                  extraInputs: [TARPON_BUILD_ARTIFACT],
+                  environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                }),
+              ]
+              if (config.viper) {
+                actions.push(
+                  new codepipline_actions.CodeBuildAction({
+                    actionName: getCodeBuildActionName('Deploy_Viper', region),
+                    project: viperDeployStage(this, config, role),
+                    input: SOURCE_ARTIFACT,
+                  })
+                )
+              }
+              return actions
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Deploy_Phytoplankton_Console',
@@ -196,11 +218,6 @@ export class CdkOrcaPipelineStack extends Stack {
                 SANDBOX_CODE_DEPLOY_ROLE_ARN,
                 role
               ),
-              input: SOURCE_ARTIFACT,
-            }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: 'Deploy_Viper',
-              project: viperDeployStage(this, sandboxConfig, role),
               input: SOURCE_ARTIFACT,
             }),
           ],
@@ -250,9 +267,7 @@ export class CdkOrcaPipelineStack extends Stack {
               const config = getTarponConfig('prod', region)
               const actions = [
                 new codepipline_actions.CodeBuildAction({
-                  actionName: `Deploy_Tarpon_${region
-                    .toUpperCase()
-                    .replace('-', '_')}`,
+                  actionName: getCodeBuildActionName('Deploy_Tarpon', region),
                   project: tarponDeployStage(this, config, role, vpc),
                   input: SOURCE_ARTIFACT,
                   extraInputs: [TARPON_BUILD_ARTIFACT],
@@ -262,9 +277,7 @@ export class CdkOrcaPipelineStack extends Stack {
               if (config.viper) {
                 actions.push(
                   new codepipline_actions.CodeBuildAction({
-                    actionName: `Deploy_Viper_${region
-                      .toUpperCase()
-                      .replace('-', '_')}`,
+                    actionName: getCodeBuildActionName('Deploy_Viper', region),
                     project: viperDeployStage(this, config, role),
                     input: SOURCE_ARTIFACT,
                   })
@@ -296,9 +309,7 @@ export class CdkOrcaPipelineStack extends Stack {
             }),
             ...PRODUCTION_REGIONS.map((region) => {
               return new codepipline_actions.CodeBuildAction({
-                actionName: `Post_Deploy_Prod_${region
-                  .toUpperCase()
-                  .replace('-', '_')}`,
+                actionName: getCodeBuildActionName('Post_Deploy_Prod', region),
                 project: postDeploymentCodeBuildProject(
                   this,
                   getTarponConfig('prod', region),

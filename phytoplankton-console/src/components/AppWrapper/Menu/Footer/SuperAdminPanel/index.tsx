@@ -137,11 +137,9 @@ export default function SuperAdminPanel() {
           <Tag key="id" color="blue">
             id: {tenant.id}
           </Tag>,
-          tenant.region && (
-            <Tag key="region" color="orange">
-              region: {tenant.region}
-            </Tag>
-          ),
+          <Tag key="region" color="orange">
+            region: {tenant.region || 'eu-1'}
+          </Tag>,
           !isWhiteLabeled() && tenant.whitelabel && (
             <Tag key="whitelabel" color="cyan">
               white-label: {tenant.whitelabel.name}

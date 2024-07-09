@@ -31,7 +31,7 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
-import { envIsNot } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
 
 // todo: move to config?
@@ -755,12 +755,23 @@ export class AccountsService {
     )
     const organizationManager = managementClient.organizations
 
-    const auth0Audience = process.env.AUTH0_AUDIENCE?.split('https://')[1]
-    const regionPrefix =
-      process.env.ENV === 'prod' ? `${process.env.REGION}.` : ''
+    let consoleApiUrl = ''
+    if (envIs('prod')) {
+      consoleApiUrl = `https://${process.env.REGION}.api.flagright.com/console`
+    } else if (envIs('sandbox')) {
+      if (process.env.REGION === 'eu-1') {
+        // Keeping the old sandbox URL for now
+        consoleApiUrl = `https://sandbox.api.flagright.com/console`
+      } else {
+        // NOTE: We're using 'sandbox-{region}' instead of 'sandbox.{region}' as 3-level subdoamin is not allowed
+        consoleApiUrl = `https://sandbox-${process.env.REGION}.api.flagright.com/console`
+      }
+    } else {
+      consoleApiUrl = 'https://api.flagright.dev/console'
+    }
     const metadata: Auth0TenantMetadata = {
       tenantId,
-      consoleApiUrl: `https://${regionPrefix}${auth0Audience}console`,
+      consoleApiUrl,
       apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
       auth0Domain: tenantData.auth0Domain,
       region: process.env.REGION as FlagrightRegion,
