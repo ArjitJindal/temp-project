@@ -12,6 +12,7 @@ import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRule
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { hasFeature } from '@/core/utils/context'
+import { logger } from '@/core/logger'
 
 export function getSenderKeys(
   tenantId: string,
@@ -236,18 +237,25 @@ export async function ruleInstanceAggregationVariablesRebuild(
   ruleInstance: RuleInstance,
   comparisonTime: number,
   tenantId: string,
-  ruleInstanceRepository: RuleInstanceRepository
+  ruleInstanceRepository: RuleInstanceRepository,
+  options?: { updateRuleInstanceStatus?: boolean }
 ) {
   const aggVarsToRebuild =
     ruleInstance.logicAggregationVariables?.filter(
       (aggVar) => aggVar.version && aggVar.version >= comparisonTime
     ) ?? []
+  const updateRuleInstanceStatus = options?.updateRuleInstanceStatus ?? true
 
   if (aggVarsToRebuild.length > 0) {
-    await ruleInstanceRepository.updateRuleInstanceStatus(
-      ruleInstance.id as string,
-      'DEPLOYING'
-    )
+    if (updateRuleInstanceStatus) {
+      await ruleInstanceRepository.updateRuleInstanceStatus(
+        ruleInstance.id as string,
+        'DEPLOYING'
+      )
+      logger.info(
+        `Updated rule instance status to DEPLOYING: ${ruleInstance.id}`
+      )
+    }
     await sendBatchJobCommand({
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
@@ -259,6 +267,9 @@ export async function ruleInstanceAggregationVariablesRebuild(
         aggregationVariables: aggVarsToRebuild,
       },
     })
+    logger.info(
+      `Created rule pre-aggregation job for rule instance: ${ruleInstance.id}`
+    )
   }
 }
 

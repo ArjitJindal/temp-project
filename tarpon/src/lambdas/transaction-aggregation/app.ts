@@ -36,6 +36,7 @@ import { IBANService } from '@/services/iban'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RulePreAggregationBatchJob } from '@/@types/batch-job'
+import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
@@ -96,27 +97,36 @@ export async function handleV8PreAggregationTask(
       ruleInstanceId
     )
 
-    const noRuleAggregateConditions = !!(
-      !ruleInstance ||
-      ruleInstance.status === 'INACTIVE' ||
-      ruleInstance.logicAggregationVariables?.find(
-        (v) => v.version !== task.aggregationVariable.version
-      )
-    )
-
-    if (noRuleAggregateConditions) {
+    let shouldSkipPreAggregation = false
+    if (!ruleInstance) {
       logger.warn(
-        `Rule instance ${ruleInstanceId} is changed/deleted. Skipping pre-aggregation.`
+        `Rule instance ${ruleInstanceId} is deleted. Skipping pre-aggregation.`
       )
-      return
+      shouldSkipPreAggregation = true
+    } else if (ruleInstance.status === 'INACTIVE') {
+      logger.warn(
+        `Rule instance ${ruleInstanceId} is inactive. Skipping pre-aggregation.`
+      )
+      shouldSkipPreAggregation = true
+    } else if (
+      !ruleInstance.logicAggregationVariables?.find(
+        (v) => getAggVarHash(v) === getAggVarHash(task.aggregationVariable)
+      )
+    ) {
+      logger.warn(
+        `Rule instance ${ruleInstanceId} has changed. Skipping pre-aggregation.`
+      )
+      shouldSkipPreAggregation = true
     }
 
-    await ruleEvaluator.rebuildAggregationVariable(
-      task.aggregationVariable,
-      task.currentTimestamp,
-      task.userId,
-      task.paymentDetails
-    )
+    if (!shouldSkipPreAggregation) {
+      await ruleEvaluator.rebuildAggregationVariable(
+        task.aggregationVariable,
+        task.currentTimestamp,
+        task.userId,
+        task.paymentDetails
+      )
+    }
 
     const newJob = (await jobRepository.updateJob(task.jobId, {
       $inc: { 'metadata.completeTasksCount': 1 },
@@ -143,8 +153,8 @@ export async function handleV8PreAggregationTask(
     const noRiskFactorAggregateConditions = !!(
       !riskFactor ||
       !riskFactor.isActive ||
-      riskFactor.logicAggregationVariables?.find(
-        (v) => v.version !== task.aggregationVariable.version
+      !riskFactor.logicAggregationVariables?.find(
+        (v) => getAggVarHash(v) === getAggVarHash(task.aggregationVariable)
       )
     )
 
