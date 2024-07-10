@@ -16,6 +16,7 @@ import { updateLogMetadata } from '@/core/utils/context'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { logger } from '@/core/logger'
 import { getFullTenantId } from '@/utils/tenant'
+import { envIs } from '@/utils/env'
 
 const UNAUTHORIZED_RESPONSE = {
   principalId: 'unknown',
@@ -160,7 +161,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     const verifiedEmail =
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
     const demoMode =
-      process.env.ENV === 'sandbox' &&
+      envIs('sandbox') &&
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/demoMode`] === true
     const allowTenantDeletion =
       verifiedDecoded[

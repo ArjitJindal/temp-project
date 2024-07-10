@@ -14,6 +14,7 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { createNewApiKeyForTenant } from '@/services/api-key'
 import { getFullTenantId } from '@/utils/tenant'
+import { envIs } from '@/utils/env'
 
 export type ApiKeyGeneratorQueryStringParameters = {
   tenantId: string
@@ -30,7 +31,7 @@ export const apiKeyGeneratorHandler = lambdaApi()(
     const { tenantId, usagePlanId, demoTenant } =
       event.queryStringParameters as ApiKeyGeneratorQueryStringParameters
     const mongoClient = await getMongoDbClient()
-    const isDemo = demoTenant === 'true' && process.env.ENV === 'sandbox'
+    const isDemo = demoTenant === 'true' && envIs('sandbox')
     const fullTenantId = getFullTenantId(tenantId, isDemo)
     await createMongoDBCollections(mongoClient, fullTenantId)
     if (isDemo) {
