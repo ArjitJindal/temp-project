@@ -3,7 +3,7 @@
   "envName": "sandbox",
   "define": {
     "EXPORT_ENTRIES_LIMIT": 10000,
-    "API_BASE_PATH": "https://sandbox.api.flagright.com/console",
+    "API_BASE_PATH": null,
     "AUTH0_AUDIENCE": "https://sandbox.api.flagright.com/",
     "AUTH0_DOMAIN": "login.sandbox.console.flagright.com",
     "AUTH0_CLIENT_ID": "dbinWZ63vFLquTEcbvg56o32HpVpuEJU",

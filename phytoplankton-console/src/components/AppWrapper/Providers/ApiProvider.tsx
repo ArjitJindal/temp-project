@@ -46,7 +46,7 @@ export default function ApiProvider(props: Props) {
   const auth = useAuth();
   const user = useAuth0User();
   const api = useMemo(() => {
-    const apiUrl = user.tenantConsoleApiUrl || API_BASE_PATH || '';
+    const apiUrl = API_BASE_PATH || user.tenantConsoleApiUrl || '';
     const apiConfig: Configuration = {
       baseServer: new ServerConfiguration(apiUrl, {}),
       httpApi: new IsomorphicFetchHttpLibrary(),
