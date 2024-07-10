@@ -47,7 +47,10 @@ function Donut<Series extends string>(props: Props<Series>) {
     data: showSkeleton ? SKELETON_DATA : dataValue ?? [],
     angleField: ANGLE_FIELD,
     colorField: COLOR_FIELD,
-    color: (data: any) => (showSkeleton ? COLORS_V2_SKELETON_COLOR : colors[data[COLOR_FIELD]]),
+    color: (data: any) =>
+      showSkeleton
+        ? COLORS_V2_SKELETON_COLOR
+        : colors?.[data?.[COLOR_FIELD]] ?? COLORS_V2_SKELETON_COLOR,
     radius: 1,
     innerRadius: 0.65,
     startAngle: shape === 'CIRCLE' ? 0 : Math.PI,
