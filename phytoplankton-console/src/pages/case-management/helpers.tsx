@@ -301,7 +301,7 @@ export const useCaseAlertFilters = (
         kind: 'select',
         mode: 'MULTIPLE',
         displayMode: 'list',
-        options: RULE_NATURES.map((x) => ({ value: x, label: x })),
+        options: RULE_NATURES.map((x) => ({ value: x, label: humanizeConstant(x) })),
       },
       showFilterByDefault: true,
     },
