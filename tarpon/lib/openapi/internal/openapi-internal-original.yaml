@@ -10673,7 +10673,7 @@ components:
       title: ComplyAdvantageMonitoredSearchUpdated
       type: object
       properties:
-        searchId:
+        search_id:
           type: number
         updated:
           type: array
@@ -10687,7 +10687,7 @@ components:
           type: array
           items:
             type: string
-        isSuspended:
+        is_suspended:
           type: boolean
     TransactionsUniquesField:
       title: TransactionsUniquesField
