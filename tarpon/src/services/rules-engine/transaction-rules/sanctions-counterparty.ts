@@ -189,6 +189,11 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
           iban,
           entityType,
         }): Promise<SanctionsDetails | undefined> => {
+          const hitContext = {
+            entity: 'EXTERNAL_USER' as const,
+            ruleInstanceId: this.ruleInstance.id ?? '',
+            transactionId: this.transaction.transactionId,
+          }
           const result = await this.sanctionsService.search(
             {
               searchTerm: name,
@@ -198,11 +203,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
                 enabled: false,
               },
             },
-            {
-              entity: 'EXTERNAL_USER',
-              ruleInstanceId: this.ruleInstance.id ?? '',
-              transactionId: this.transaction.transactionId,
-            }
+            hitContext
           )
 
           if (result.hitsCount > 0) {
@@ -211,6 +212,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
               iban,
               searchId: result.searchId,
               entityType,
+              hitContext,
             }
           }
         }

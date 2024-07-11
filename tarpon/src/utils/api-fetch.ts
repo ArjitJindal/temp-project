@@ -2,6 +2,7 @@ import fetchRetry, { RequestInitWithRetry } from 'fetch-retry'
 import createHttpError from 'http-errors'
 import fetch from 'isomorphic-fetch'
 import { addNewSubsegment } from '@/core/xray'
+import { logger } from '@/core/logger'
 
 const fetchWithRetry = fetchRetry(fetch, {
   retryOn: [429, 500, 502, 503, 504],
@@ -20,6 +21,7 @@ export const apiFetch = async <T>(
   url: RequestInfo,
   options?: RequestInitWithRetry
 ): Promise<ApiFetchResult<T>> => {
+  logger.debug(`HTTP call to ${url} (${options?.method ?? 'GET'})`)
   const subsegment = await addNewSubsegment('ApiFetch', url.toString())
   subsegment?.addMetadata('url', url.toString())
   subsegment?.addMetadata('options', options)

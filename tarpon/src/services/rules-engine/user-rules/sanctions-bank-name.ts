@@ -98,6 +98,13 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
             if (!bankName) {
               return
             }
+            const hitContext = {
+              entity: 'BANK' as const,
+              userId: this.user.userId,
+              ruleInstanceId: this.ruleInstance.id ?? '',
+              iban: bankInfo.iban,
+              isOngoingScreening: this.ongoingScreeningMode,
+            }
             const result = await this.sanctionsService.search(
               {
                 searchTerm: bankName,
@@ -105,13 +112,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: ongoingScreening },
               },
-              {
-                entity: 'BANK',
-                userId: this.user.userId,
-                ruleInstanceId: this.ruleInstance.id ?? '',
-                iban: bankInfo.iban,
-                isOngoingScreening: this.ongoingScreeningMode,
-              }
+              hitContext
             )
             let sanctionsDetails: SanctionsDetails
             if (result.hitsCount > 0) {
@@ -119,6 +120,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 name: bankName,
                 iban: bankInfo.iban,
                 searchId: result.searchId,
+                hitContext,
               }
               return sanctionsDetails
             }

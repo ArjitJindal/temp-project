@@ -9,6 +9,7 @@ import {
   pick,
   sample,
   uniq,
+  uniqBy,
 } from 'lodash'
 import pluralize from 'pluralize'
 import createHttpError from 'http-errors'
@@ -73,11 +74,14 @@ import {
   sendWebhookTasks,
 } from '@/services/webhook/utils'
 import { CaseOpenedDetails } from '@/@types/openapi-public/CaseOpenedDetails'
+import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { notNullish } from '@/utils/array'
 import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
+import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 
 type CaseSubject =
   | {
@@ -100,6 +104,8 @@ export class CaseCreationService {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   tenantRepository: TenantRepository
+  sanctionsHitsRepository: SanctionsHitsRepository
+  sanctionsSearchRepository: SanctionsSearchRepository
 
   constructor(
     tenantID: string,
@@ -120,6 +126,14 @@ export class CaseCreationService {
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
     this.tenantRepository = new TenantRepository(tenantID, connections)
+    this.sanctionsSearchRepository = new SanctionsSearchRepository(
+      tenantID,
+      connections.mongoDb
+    )
+    this.sanctionsHitsRepository = new SanctionsHitsRepository(
+      tenantID,
+      connections.mongoDb
+    )
   }
 
   private tenantSettings = memoize(async () => {
@@ -457,7 +471,7 @@ export class CaseCreationService {
 
       const updatedExistingAlerts =
         existingAlerts.length > 0
-          ? this.updateExistingAlerts(
+          ? await this.updateExistingAlerts(
               existingAlerts,
               latestTransaction,
               latestTransactionArrivalTimestamp,
@@ -517,6 +531,10 @@ export class CaseCreationService {
         const alertCount = await counterRepository.getNextCounterAndUpdate(
           'Alert'
         )
+        const updatedRuleHitMeta =
+          hitRule.ruleHitMeta != null
+            ? await this.addOrUpdateSanctionsHits(hitRule.ruleHitMeta, false)
+            : undefined
         return {
           _id: alertCount,
           alertId: `A-${alertCount}`,
@@ -530,7 +548,7 @@ export class CaseCreationService {
           ruleName: hitRule.ruleName,
           ruleDescription: hitRule.ruleDescription,
           ruleAction: hitRule.ruleAction,
-          ruleHitMeta: hitRule.ruleHitMeta,
+          ruleHitMeta: updatedRuleHitMeta,
           ruleNature: hitRule.nature,
           ruleQueueId: ruleInstanceMatch?.queueId,
           numberOfTransactionsHit: transaction ? 1 : 0,
@@ -563,81 +581,143 @@ export class CaseCreationService {
     return alerts
   }
 
-  private updateExistingAlerts(
+  private async updateExistingAlerts(
     alerts: Alert[],
     transaction?: InternalTransaction,
     latestTransactionArrivalTimestamp?: number,
     ruleInstances?: readonly RuleInstance[],
     checkListTemplates?: ChecklistTemplate[],
     hitRules?: HitRulesDetails[]
-  ): Alert[] {
-    return alerts.map((alert) => {
-      if (!transaction || !latestTransactionArrivalTimestamp) {
-        return alert
-      }
-      const transactionBelongsToAlert = Boolean(
-        transaction.hitRules.find((rule) =>
-          this.getFrozenStatusFilter(alert, rule, ruleInstances)
+  ): Promise<Alert[]> {
+    return Promise.all(
+      alerts.map(async (alert) => {
+        if (!transaction || !latestTransactionArrivalTimestamp) {
+          return alert
+        }
+        const transactionBelongsToAlert = Boolean(
+          transaction.hitRules.find((rule) =>
+            this.getFrozenStatusFilter(alert, rule, ruleInstances)
+          )
         )
-      )
-      if (!transactionBelongsToAlert) {
-        return alert
-      }
-      const txnSet = new Set(alert.transactionIds).add(
-        transaction.transactionId
-      )
-      const originPaymentDetails = new Set(alert.originPaymentMethods)
-      const destinationPaymentDetails = new Set(alert.destinationPaymentMethods)
-      if (transaction.originPaymentDetails?.method) {
-        originPaymentDetails.add(transaction.originPaymentDetails.method)
-      }
-      if (transaction.destinationPaymentDetails?.method) {
-        destinationPaymentDetails.add(
-          transaction.destinationPaymentDetails.method
+        if (!transactionBelongsToAlert) {
+          return alert
+        }
+        const txnSet = new Set(alert.transactionIds).add(
+          transaction.transactionId
         )
-      }
+        const originPaymentDetails = new Set(alert.originPaymentMethods)
+        const destinationPaymentDetails = new Set(
+          alert.destinationPaymentMethods
+        )
+        if (transaction.originPaymentDetails?.method) {
+          originPaymentDetails.add(transaction.originPaymentDetails.method)
+        }
+        if (transaction.destinationPaymentDetails?.method) {
+          destinationPaymentDetails.add(
+            transaction.destinationPaymentDetails.method
+          )
+        }
 
-      const sanctionsDetails = (hitRules ?? [])
-        .filter((hit) => alert.ruleInstanceId === hit.ruleInstanceId)
-        .flatMap((hit) => hit.ruleHitMeta?.sanctionsDetails ?? [])
+        const sanctionsDetails = (hitRules ?? [])
+          .filter((hit) => alert.ruleInstanceId === hit.ruleInstanceId)
+          .flatMap((hit) => hit.ruleHitMeta?.sanctionsDetails ?? [])
 
-      return {
-        ...alert,
-        latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
-        transactionIds: Array.from(txnSet),
-        originPaymentMethods: Array.from(originPaymentDetails),
-        destinationPaymentMethods: Array.from(destinationPaymentDetails),
-        numberOfTransactionsHit: txnSet.size,
-        updatedAt: Date.now(),
-        ruleHitMeta:
+        let updatedRuleHitMeta =
           sanctionsDetails.length > 0
             ? {
                 ...alert.ruleHitMeta,
-                sanctionsDetails: [
-                  ...(alert?.ruleHitMeta?.sanctionsDetails ?? []),
-                  ...(sanctionsDetails ?? []),
-                ],
+                sanctionsDetails: uniqBy(
+                  [
+                    ...(alert?.ruleHitMeta?.sanctionsDetails ?? []),
+                    ...(sanctionsDetails ?? []),
+                  ],
+                  'searchId'
+                ),
               }
-            : alert.ruleHitMeta,
-        ruleChecklistTemplateId:
-          alert?.ruleChecklistTemplateId ??
-          ruleInstances?.find((rule) => rule.id === alert.ruleInstanceId)
-            ?.checklistTemplateId,
-        ruleChecklist:
-          alert?.ruleChecklist ??
-          checkListTemplates?.flatMap((template) =>
-            template.categories.flatMap((category) =>
-              category.checklistItems.map(
-                (item) =>
-                  ({
-                    checklistItemId: item.id,
-                    done: 'NOT_STARTED',
-                  } as ChecklistItemValue)
+            : alert.ruleHitMeta
+
+        updatedRuleHitMeta =
+          updatedRuleHitMeta != null
+            ? await this.addOrUpdateSanctionsHits(updatedRuleHitMeta, true)
+            : undefined
+
+        return {
+          ...alert,
+          latestTransactionArrivalTimestamp: latestTransactionArrivalTimestamp,
+          transactionIds: Array.from(txnSet),
+          originPaymentMethods: Array.from(originPaymentDetails),
+          destinationPaymentMethods: Array.from(destinationPaymentDetails),
+          numberOfTransactionsHit: txnSet.size,
+          updatedAt: Date.now(),
+          ruleHitMeta: updatedRuleHitMeta,
+          ruleChecklistTemplateId:
+            alert?.ruleChecklistTemplateId ??
+            ruleInstances?.find((rule) => rule.id === alert.ruleInstanceId)
+              ?.checklistTemplateId,
+          ruleChecklist:
+            alert?.ruleChecklist ??
+            checkListTemplates?.flatMap((template) =>
+              template.categories.flatMap((category) =>
+                category.checklistItems.map(
+                  (item) =>
+                    ({
+                      checklistItemId: item.id,
+                      done: 'NOT_STARTED',
+                    } as ChecklistItemValue)
+                )
               )
+            ),
+        }
+      })
+    )
+  }
+
+  private async addOrUpdateSanctionsHits(
+    ruleHitMeta: RuleHitMeta,
+    update: boolean
+  ): Promise<RuleHitMeta> {
+    const sanctionsDetailsList = ruleHitMeta?.sanctionsDetails ?? []
+
+    const updatedSanctionsDetailsList = await Promise.all(
+      sanctionsDetailsList.map(async (sanctionsDetail) => {
+        const searchResult =
+          await this.sanctionsSearchRepository.getSearchResult(
+            sanctionsDetail.searchId
+          )
+        const rawHits =
+          searchResult?.response?.rawComplyAdvantageResponse?.content?.data
+            ?.hits ?? []
+        if (update) {
+          const { updatedIds, newIds } =
+            await this.sanctionsHitsRepository.mergeHits(
+              sanctionsDetail.searchId,
+              rawHits,
+              sanctionsDetail.hitContext
             )
-          ),
-      }
-    })
+          return {
+            ...sanctionsDetail,
+            sanctionHitIds: [...updatedIds, ...newIds],
+          }
+        } else {
+          const hits = await this.sanctionsHitsRepository.addHits(
+            sanctionsDetail.searchId,
+            rawHits,
+            sanctionsDetail.hitContext
+          )
+          return {
+            ...sanctionsDetail,
+            sanctionHitIds: hits.map((x) => x.sanctionsHitId),
+          }
+        }
+      })
+    )
+
+    return updatedSanctionsDetailsList.length > 0
+      ? {
+          ...ruleHitMeta,
+          sanctionsDetails: updatedSanctionsDetailsList,
+        }
+      : ruleHitMeta
   }
 
   private getNewUserCase(

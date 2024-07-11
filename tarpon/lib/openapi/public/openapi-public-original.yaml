@@ -5672,9 +5672,36 @@ components:
           type: string
         entityType:
           $ref: '#/components/schemas/SanctionsDetailsEntityType'
+        sanctionHitIds:
+          type: array
+          items:
+            type: string
+        hitContext:
+          $ref: '#/components/schemas/SanctionsHitContext'
       required:
         - name
         - searchId
+    SanctionsHitContext:
+      type: object
+      title: SanctionsHitContext
+      properties:
+        entity:
+          $ref: '#/components/schemas/SanctionsScreeningEntity'
+        userId:
+          type: string
+        transactionId:
+          type: string
+        ruleInstanceId:
+          type: string
+        iban:
+          type: string
+    SanctionsScreeningEntity:
+      type: string
+      enum:
+        - USER
+        - BANK
+        - IBAN
+        - EXTERNAL_USER
     SanctionsDetailsEntityType:
       title: SanctionsDetailsEntityType
       type: string

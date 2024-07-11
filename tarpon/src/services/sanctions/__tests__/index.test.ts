@@ -7,7 +7,10 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { fromAsync } from '@/utils/array'
+import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
+import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
+import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -37,19 +40,10 @@ describe('Sanctions Service', () => {
         monitoring: { enabled: true },
       }
       const response = await service.search(request)
-      const hits = await fromAsync(
-        service.sanctionsHitsRepository.iterateHits({
-          filterSearchId: [response.searchId],
-        })
-      )
       testSearchId = response.searchId
       expect(
         response.rawComplyAdvantageResponse?.content?.data?.hits
       ).toHaveLength(totalMockHitsCount)
-      expect(response).toMatchObject({
-        hitsCount: hits.length,
-        searchId: expect.any(String),
-      })
       // 1 for creating new search
       // 5 for paginating entities
       // 1 for updating monitoring state
@@ -92,6 +86,12 @@ describe('Sanctions Service', () => {
 
     test('Skip searching CA on cache hit', async () => {
       const service = new SanctionsService(TEST_TENANT_ID)
+      const mongoDb = await getMongoDbClient()
+      const db = mongoDb.db()
+      const collection = db.collection<SanctionsSearchHistory>(
+        SANCTIONS_SEARCHES_COLLECTION(TEST_TENANT_ID)
+      )
+
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -101,8 +101,10 @@ describe('Sanctions Service', () => {
       }
       await service.search(request)
       const firstSearchCallsCount = mockFetch.mock.calls.length
+      const firstSearchDocCount = await collection.countDocuments()
       await service.search(request)
       expect(mockFetch).toBeCalledTimes(firstSearchCallsCount)
+      expect(await collection.countDocuments()).toEqual(firstSearchDocCount)
     })
 
     test('Filter out whitelist entities (global level)', async () => {
@@ -117,11 +119,9 @@ describe('Sanctions Service', () => {
       }
       {
         const response = await service.search(request)
+        const hits = await service.createHitsForSearch(response, undefined)
         expect(response.hitsCount).toEqual(totalMockHitsCount)
-        const hitsCount = await service.sanctionsHitsRepository.countHits({
-          filterSearchId: [response.searchId],
-        })
-        expect(hitsCount).toEqual(totalMockHitsCount)
+        expect(hits).toHaveLength(totalMockHitsCount)
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
@@ -132,19 +132,15 @@ describe('Sanctions Service', () => {
       }
       {
         const response = await service.search(request)
+        const hits = await service.createHitsForSearch(response, undefined)
         expect(response.hitsCount).toEqual(0)
-        const hitsCount = await service.sanctionsHitsRepository.countHits({
-          filterSearchId: [response.searchId],
-        })
-        expect(hitsCount).toEqual(0)
+        expect(hits).toHaveLength(0)
       }
     })
 
     test('Filter out whitelist entities (user level)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const service = new SanctionsService(TEST_TENANT_ID)
-      const testUserId = 'test-user-id'
-      const testUserId2 = 'test-user-id-2'
       const request: SanctionsSearchRequest = {
         searchTerm: 'test',
         fuzziness: 0.5,
@@ -152,46 +148,39 @@ describe('Sanctions Service', () => {
         yearOfBirth: 1992,
         types: ['SANCTIONS', 'PEP'],
       }
+      const hitContext1 = {
+        ruleInstanceId: 'test',
+        userId: 'test-user-id',
+      }
+      const hitContext2 = {
+        ruleInstanceId: 'test',
+        userId: 'test-user-id-2',
+      }
       {
-        const response = await service.search(request, {
-          ruleInstanceId: 'test',
-          userId: testUserId,
-        })
+        const response = await service.search(request, hitContext1)
         expect(response.hitsCount).toEqual(totalMockHitsCount)
-        const hitsCount = await service.sanctionsHitsRepository.countHits({
-          filterSearchId: [response.searchId],
-        })
-        expect(hitsCount).toEqual(totalMockHitsCount)
+        const hits = await service.createHitsForSearch(response, hitContext1)
+        expect(hits).toHaveLength(totalMockHitsCount)
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
           entityList.content.map(
             (v) => convertEntityToHit(v).doc
           ) as any as ComplyAdvantageSearchHitDoc[],
-          testUserId
+          hitContext1.userId
         )
       }
       {
-        const response = await service.search(request, {
-          ruleInstanceId: 'test',
-          userId: testUserId,
-        })
+        const response = await service.search(request, hitContext1)
         expect(response.hitsCount).toEqual(0)
-        const hitsCount = await service.sanctionsHitsRepository.countHits({
-          filterSearchId: [response.searchId],
-        })
-        expect(hitsCount).toEqual(0)
+        const hits = await service.createHitsForSearch(response, hitContext1)
+        expect(hits).toHaveLength(0)
       }
       {
-        const response = await service.search(request, {
-          ruleInstanceId: 'test',
-          userId: testUserId2,
-        })
+        const response = await service.search(request, hitContext2)
         expect(response.hitsCount).toEqual(totalMockHitsCount)
-        const hitsCount = await service.sanctionsHitsRepository.countHits({
-          filterSearchId: [response.searchId],
-        })
-        expect(hitsCount).toEqual(totalMockHitsCount)
+        const hits = await service.createHitsForSearch(response, hitContext2)
+        expect(hits).toHaveLength(totalMockHitsCount)
       }
     })
   })
@@ -224,6 +213,67 @@ describe('Sanctions Service', () => {
       )
       expect(searchHistory?.request.monitoring?.enabled).toBe(false)
     })
+
+    test('Old hits should not be added as new', async () => {
+      const repository = new SanctionsHitsRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+      const rawHits = [...new Array(10)].map(() => ({
+        ...SAMPLE_HIT_1,
+        id: `${Date.now()}`,
+      }))
+
+      const hits = await repository.addHits('test', rawHits, undefined)
+      expect(hits).toHaveLength(rawHits.length)
+
+      const newHits = await repository.addNewHits('test', rawHits, undefined)
+      expect(newHits).toHaveLength(0)
+    })
+
+    test('Old hits entities should be updated properly', async () => {
+      const repository = new SanctionsHitsRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      const hits = await repository.addHits('test2', [SAMPLE_HIT_1], undefined)
+      expect(hits).toHaveLength(1)
+
+      {
+        const mergeResult = await repository.mergeHits(
+          'test2',
+          [SAMPLE_HIT_1],
+          undefined
+        )
+        expect(mergeResult.newIds).toHaveLength(0)
+        expect(mergeResult.updatedIds).toHaveLength(1)
+      }
+      {
+        const mergeResult = await repository.mergeHits(
+          'test2',
+          [
+            {
+              ...SAMPLE_HIT_1,
+              doc: {
+                ...SAMPLE_HIT_1.doc,
+                name: 'New name',
+              },
+            },
+            SAMPLE_HIT_2,
+          ],
+          undefined
+        )
+        expect(mergeResult.newIds).toHaveLength(1)
+        expect(mergeResult.updatedIds).toHaveLength(1)
+
+        const savedHit = await repository.searchHits({
+          filterIds: [hits[0]?.sanctionsHitId],
+        })
+        expect(savedHit.count).toEqual(1)
+        expect(savedHit.items[0]?.caEntity.name).toEqual('New name')
+      }
+    })
   })
 
   describe('Get search histories', () => {
@@ -236,3 +286,64 @@ describe('Sanctions Service', () => {
     })
   })
 })
+
+/*
+  Mock data
+ */
+const SAMPLE_HIT_1: ComplyAdvantageSearchHit = {
+  doc: {
+    id: 'LIZCQ58HX6MYKMO',
+    last_updated_utc: new Date('2024-06-20T10:09:30Z'),
+    fields: [],
+    types: ['adverse-media'],
+    name: 'Vladimir Putiin',
+    entity_type: 'person',
+    aka: [
+      {
+        name: 'Vladimir Putin',
+      },
+    ],
+    sources: ['company-am'],
+    keywords: [],
+    media: [],
+    source_notes: {
+      'company-am': {
+        aml_types: ['adverse-media', 'adverse-media-v2-other-minor'],
+        country_codes: ['AU', 'CZ'],
+        name: 'company AM',
+      },
+    },
+  },
+  match_types: ['aka_exact'],
+  match_types_details: [],
+  score: 1.7,
+}
+
+const SAMPLE_HIT_2: ComplyAdvantageSearchHit = {
+  doc: {
+    id: '999999999999999',
+    last_updated_utc: new Date('2024-06-21T10:09:30Z'),
+    fields: [],
+    types: ['adverse-media'],
+    name: 'Genadiy Zuganov',
+    entity_type: 'person',
+    aka: [
+      {
+        name: 'Genadiy Zuganov',
+      },
+    ],
+    sources: ['company-am'],
+    keywords: [],
+    media: [],
+    source_notes: {
+      'company-am': {
+        aml_types: ['adverse-media', 'adverse-media-v2-other-minor'],
+        country_codes: ['AU', 'CZ'],
+        name: 'company AM',
+      },
+    },
+  },
+  match_types: ['aka_exact'],
+  match_types_details: [],
+  score: 1.5,
+}

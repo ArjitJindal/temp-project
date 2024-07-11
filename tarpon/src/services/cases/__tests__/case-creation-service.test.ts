@@ -1261,7 +1261,7 @@ describe('Screening user rules', () => {
       expect(caseCreationResult[0].alerts).toHaveLength(1)
       expect(
         caseCreationResult?.[0].alerts?.[0].ruleHitMeta?.sanctionsDetails
-      ).toHaveLength(2)
+      ).toHaveLength(1)
     }
   })
 })

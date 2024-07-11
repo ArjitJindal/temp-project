@@ -5,11 +5,9 @@ import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsService } from '@/services/sanctions'
 import { logger } from '@/core/logger'
+import { envIs } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
-  if (tenant.id !== 'flagright') {
-    return
-  }
   const mongoDb = await getMongoDbClientDb()
   const sanctionsService = new SanctionsService(tenant.id)
 
@@ -27,6 +25,9 @@ async function migrateTenant(tenant: Tenant) {
 }
 
 export const up = async () => {
+  if (!envIs('prod')) {
+    return
+  }
   await migrateAllTenants(migrateTenant)
 }
 export const down = async () => {

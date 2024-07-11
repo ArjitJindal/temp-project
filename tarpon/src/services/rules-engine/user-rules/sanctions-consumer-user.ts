@@ -58,6 +58,12 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       return
     }
 
+    const hitContext = {
+      entity: 'USER' as const,
+      userId: this.user.userId,
+      ruleInstanceId: this.ruleInstance.id ?? '',
+      isOngoingScreening: this.ongoingScreeningMode,
+    }
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
@@ -66,12 +72,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         fuzziness: fuzziness / 100,
         monitoring: { enabled: ongoingScreening },
       },
-      {
-        entity: 'USER',
-        userId: this.user.userId,
-        ruleInstanceId: this.ruleInstance.id ?? '',
-        isOngoingScreening: this.ongoingScreeningMode,
-      }
+      hitContext
     )
     if (result.hitsCount > 0) {
       hitResult.push({
@@ -82,6 +83,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
             name,
             entityType: 'CONSUMER_NAME',
             searchId: result.searchId,
+            hitContext,
           },
         ],
       })

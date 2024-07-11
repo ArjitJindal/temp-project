@@ -5105,7 +5105,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/SanctionsScreeningEntity'
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
           in: query
           name: filterEntities
         - schema:
@@ -5178,6 +5178,12 @@ paths:
             items:
               type: string
           name: filterSearchId
+          in: query
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterHitIds
           in: query
         - schema:
             type: array
@@ -10143,13 +10149,6 @@ components:
           type: object
       required:
         - searchTerm
-    SanctionsScreeningEntity:
-      type: string
-      enum:
-        - USER
-        - BANK
-        - IBAN
-        - EXTERNAL_USER
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
@@ -10222,7 +10221,7 @@ components:
         searchedBy:
           type: string
         hitContext:
-          $ref: '#/components/schemas/SanctionsHitContext'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
       required:
         - _id
         - request
@@ -10244,7 +10243,7 @@ components:
         name:
           type: string
         entity:
-          $ref: '#/components/schemas/SanctionsScreeningEntity'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
         ruleInstanceIds:
           type: array
           items:
@@ -10285,7 +10284,7 @@ components:
       type: object
       properties:
         entity:
-          $ref: '#/components/schemas/SanctionsScreeningEntity'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
         newCount:
           type: number
         screenedCount:
@@ -10512,7 +10511,7 @@ components:
         updatedAt:
           type: number
         hitContext:
-          $ref: '#/components/schemas/SanctionsHitContext'
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
         caEntity:
           $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
         caMatchTypes:
@@ -10526,20 +10525,6 @@ components:
         - updatedAt
         - caEntity
         - caMatchTypes
-    SanctionsHitContext:
-      type: object
-      title: SanctionsHitContext
-      properties:
-        entity:
-          $ref: '#/components/schemas/SanctionsScreeningEntity'
-        userId:
-          type: string
-        transactionId:
-          type: string
-        ruleInstanceId:
-          type: string
-        iban:
-          type: string
     ComplyAdvantageSearchHit:
       type: object
       properties:

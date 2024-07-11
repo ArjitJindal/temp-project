@@ -72,11 +72,6 @@ export class SanctionsHitsRepository {
     } while (nextCursor != null)
   }
 
-  public async countHits(filters: HitsFilters): Promise<number> {
-    const firstPage = await this.searchHits(filters)
-    return firstPage.count
-  }
-
   async addHits(
     searchId: string,
     rawHits: ComplyAdvantageSearchHit[],
@@ -153,6 +148,56 @@ export class SanctionsHitsRepository {
     })
 
     return await this.addHits(searchId, newHits, hitContext)
+  }
+
+  /*
+    For passed raw hits creates missing hits and update existed hits entities
+   */
+  public async mergeHits(
+    searchId: string,
+    rawHits: ComplyAdvantageSearchHit[],
+    hitContext: SanctionsHitContext | undefined
+  ): Promise<{
+    updatedIds: string[]
+    newIds: string[]
+  }> {
+    // Update existed hits
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsHit>(
+      SANCTIONS_HITS_COLLECTION(this.tenantId)
+    )
+
+    const docIds = rawHits.map((x) => x.doc.id)
+    const foundHitsCursor = collection.find({
+      searchId: searchId,
+      'caEntity.id': { $in: docIds },
+    })
+    const updatedIds: string[] = []
+    for await (const { sanctionsHitId, caEntity } of foundHitsCursor) {
+      const newCaEntity = rawHits.find((x) => x.doc.id === caEntity.id)?.doc
+      if (newCaEntity) {
+        const updateResult = await collection.updateOne(
+          {
+            sanctionsHitId,
+          },
+          {
+            $set: {
+              caEntity: newCaEntity,
+            },
+          }
+        )
+        if (updateResult.matchedCount > 0) {
+          updatedIds.push(sanctionsHitId)
+        }
+      }
+    }
+
+    // Add new hits
+    const newHits = await this.addNewHits(searchId, rawHits, hitContext)
+    return {
+      updatedIds,
+      newIds: newHits.map((x) => x.sanctionsHitId),
+    }
   }
 
   async filterWhitelistedHits(

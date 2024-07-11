@@ -102,6 +102,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           const yearOfBirth = entity.dateOfBirth
             ? dayjs(entity.dateOfBirth).year()
             : undefined
+          const hitContext = {
+            entity: 'USER' as const,
+            userId: this.user.userId,
+            ruleInstanceId: this.ruleInstance.id ?? '',
+            isOngoingScreening: this.ongoingScreeningMode,
+          }
           const result = await this.sanctionsService.search(
             {
               searchTerm: entity.name,
@@ -110,18 +116,14 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               fuzziness: fuzziness / 100,
               monitoring: { enabled: ongoingScreening },
             },
-            {
-              entity: 'USER',
-              userId: this.user.userId,
-              ruleInstanceId: this.ruleInstance.id ?? '',
-              isOngoingScreening: this.ongoingScreeningMode,
-            }
+            hitContext
           )
           if (result.hitsCount > 0) {
             const resultDetails: SanctionsDetails = {
               name: entity.name,
               entityType: entity.entityType,
               searchId: result.searchId,
+              hitContext,
             }
             return resultDetails
           }

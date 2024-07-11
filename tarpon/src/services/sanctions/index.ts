@@ -39,6 +39,7 @@ import {
   ComplyAdvantageApi,
   ComplyAdvantageEntity,
 } from '@/services/sanctions/comply-advantage-api'
+import { SanctionsHit } from '@/@types/openapi-internal/all'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -165,7 +166,9 @@ export class SanctionsService {
     return (await getSecretByName('complyAdvantageCreds')).apiKey
   }
 
-  public async refreshSearch(caSearchId: number) {
+  public async refreshSearch(
+    caSearchId: number
+  ): Promise<{ newHitsCount: number }> {
     await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByCASearchId(
@@ -175,7 +178,7 @@ export class SanctionsService {
       logger.error(
         `Cannot find complyadvantage monitored search - ${caSearchId}`
       )
-      return
+      return { newHitsCount: 0 }
     }
     const response = await this.fetchFullSearchState(caSearchId)
 
@@ -201,6 +204,8 @@ export class SanctionsService {
     logger.info(
       `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
     )
+
+    return { newHitsCount: newHits.length }
   }
 
   public async search(
@@ -226,56 +231,72 @@ export class SanctionsService {
       ? request.types
       : SANCTIONS_SEARCH_TYPES
 
-    const searchId = uuidv4()
+    let searchId: string = uuidv4()
+    let createdAt: number | undefined = undefined
 
     const existedSearch =
       await this.sanctionsSearchRepository.getSearchResultByParams(request)
-    let rawResponse
+    let rawComplyAdvantageResponse
+
     if (!existedSearch?.response) {
       const searchProfileId =
         this.complyAdvantageSearchProfileId ||
         this.pickSearchProfileId(request.types) ||
         (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
-      rawResponse = await this.complyAdvantageApi.postSearch(searchProfileId, {
-        ...request,
-      })
-      const caSearchRef = rawResponse.content?.data?.ref
+      rawComplyAdvantageResponse = await this.complyAdvantageApi.postSearch(
+        searchProfileId,
+        {
+          ...request,
+        }
+      )
+      const caSearchRef = rawComplyAdvantageResponse.content?.data?.ref
       if (caSearchRef == null) {
         throw new Error(`Unable to get search ref from CA raw response`)
       }
-      if (rawResponse.content?.data?.hits != null) {
+      if (rawComplyAdvantageResponse.content?.data?.hits != null) {
         const restHits = await this.fetchAllHits(caSearchRef, 2)
-        rawResponse = {
-          ...rawResponse,
+        rawComplyAdvantageResponse = {
+          ...rawComplyAdvantageResponse,
           content: {
-            ...rawResponse.content,
+            ...rawComplyAdvantageResponse.content,
             data: {
-              ...rawResponse.content.data,
-              hits: [...rawResponse.content.data.hits, ...restHits],
+              ...rawComplyAdvantageResponse.content.data,
+              hits: [
+                ...rawComplyAdvantageResponse.content.data.hits,
+                ...restHits,
+              ],
             },
           },
         }
       }
     } else {
-      rawResponse = existedSearch.response.rawComplyAdvantageResponse
+      createdAt = existedSearch?.createdAt
+      searchId = existedSearch.response.searchId
+      rawComplyAdvantageResponse =
+        existedSearch.response.rawComplyAdvantageResponse
     }
 
-    const hits = await this.sanctionsHitsRepository.addHits(
-      searchId,
-      rawResponse.content?.data?.hits ?? [],
-      context
-    )
+    const filteredHits =
+      await this.sanctionsHitsRepository.filterWhitelistedHits(
+        rawComplyAdvantageResponse?.content?.data?.hits ?? [],
+        context
+      )
+
     const response = {
-      rawComplyAdvantageResponse: rawResponse,
+      rawComplyAdvantageResponse,
       searchId,
-      hitsCount: hits.length,
+      hitsCount: filteredHits.length,
     }
-    await this.sanctionsSearchRepository.saveSearchResult({
-      request,
-      response,
-      searchedBy: !context ? getContext()?.user?.id : undefined,
-      hitContext: context,
-    })
+
+    if (!existedSearch) {
+      await this.sanctionsSearchRepository.saveSearchResult({
+        createdAt: createdAt,
+        request,
+        response,
+        searchedBy: !context ? getContext()?.user?.id : undefined,
+        hitContext: context,
+      })
+    }
 
     if (!existedSearch?.response && request.monitoring) {
       await this.updateSearch(searchId, request.monitoring)
@@ -309,6 +330,17 @@ export class SanctionsService {
       }
     }
     return response
+  }
+
+  public createHitsForSearch(
+    search: SanctionsSearchResponse,
+    hitContext: SanctionsHitContext | undefined
+  ): Promise<SanctionsHit[]> {
+    return this.sanctionsHitsRepository.addHits(
+      search.searchId,
+      search?.rawComplyAdvantageResponse?.content?.data?.hits ?? [],
+      hitContext
+    )
   }
 
   private getSanitizedFuzziness(

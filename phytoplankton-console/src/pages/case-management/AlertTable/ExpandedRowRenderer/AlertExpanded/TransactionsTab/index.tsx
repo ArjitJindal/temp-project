@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import TransactionsTable, {
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { message } from '@/components/library/Message';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
@@ -77,7 +76,7 @@ export default function TransactionsTab(props: Props) {
         selectedIds={selectedTransactionIds}
         onSelect={(transactionIds) => {
           if (!alert.alertId) {
-            message.fatal('Unable to select transactions, alert id is empty');
+            // message.fatal('Unable to select transactions, alert id is empty');
             return;
           }
           onTransactionSelect && onTransactionSelect(alert.alertId, transactionIds);

@@ -13,7 +13,6 @@ import { useApi } from '@/api';
 import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
 import { SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
 import SanctionsTable, { TableSearchParams } from '@/components/SanctionsTable';
-import { message } from '@/components/library/Message';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
@@ -100,13 +99,12 @@ export default function ScreeningMatchList(props: Props) {
                 tableRef={null}
                 queryResult={clearedHitsQueryResults}
                 isEmbedded={true}
-                selection={true}
+                selection={onSanctionsHitSelect != null}
                 params={clearedTableParams}
                 onChangeParams={setClearedTableParams}
                 selectedIds={selectedSanctionsHitsIds}
                 onSelect={(sanctionHitsIds) => {
                   if (!alert?.alertId) {
-                    message.fatal('Unable to select transactions, alert id is empty');
                     return;
                   }
                   onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
@@ -134,12 +132,11 @@ export default function ScreeningMatchList(props: Props) {
                 queryResult={hitsQueryResults}
                 isEmbedded={true}
                 selectedIds={selectedSanctionsHitsIds}
-                selection={true}
+                selection={onSanctionsHitSelect != null}
                 params={tableParams}
                 onChangeParams={setTableParams}
                 onSelect={(sanctionHitsIds) => {
                   if (!alert?.alertId) {
-                    message.fatal('Unable to select transactions, alert id is empty');
                     return;
                   }
                   onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
@@ -205,7 +202,6 @@ export default function ScreeningMatchList(props: Props) {
         onChange={(key) => {
           setActiveTabKey(key);
           if (!alert?.alertId) {
-            message.fatal('Unable to select hits, alert id is empty');
             return;
           }
           onSanctionsHitSelect?.(
@@ -227,9 +223,9 @@ function useSanctionHitsQuery(
   params: AllParams<TableSearchParams>,
 ): QueryResult<CursorPaginatedData<SanctionsHit>> {
   const api = useApi();
-  const searchIds = sanctionDetails.map((sanctionsDetails) => sanctionsDetails.searchId);
+  const sanctionHitIds = sanctionDetails.flatMap(({ sanctionHitIds }) => sanctionHitIds ?? []);
   const filters = {
-    filterSearchId: searchIds,
+    filterHitIds: sanctionHitIds,
     filterStatus: params.statuses ?? ['OPEN' as const],
   };
   return useCursorQuery(

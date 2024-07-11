@@ -110,9 +110,11 @@ function Content(props: {
   const tabItems = useTabs(hit, allFields, pdfMode);
   return (
     <>
-      <Section title={'Searched at'}>
-        {searchedAt ? <TimestampDisplay timestamp={searchedAt} /> : 'N/A'}
-      </Section>
+      {searchedAt && (
+        <Section title={'Searched at'}>
+          {searchedAt ? <TimestampDisplay timestamp={searchedAt} /> : 'N/A'}
+        </Section>
+      )}
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
           <Form.Layout.Label title={'Full name'}>{hit.caEntity?.name}</Form.Layout.Label>

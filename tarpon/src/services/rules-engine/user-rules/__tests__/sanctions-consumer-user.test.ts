@@ -91,6 +91,7 @@ describe('Core logic', () => {
               name: 'Vladimir Putin',
               entityType: 'CONSUMER_NAME',
               searchId: expect.any(String),
+              hitContext: expect.any(Object),
             },
           ],
         },
