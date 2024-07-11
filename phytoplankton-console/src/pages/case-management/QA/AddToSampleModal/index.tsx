@@ -12,7 +12,6 @@ import { P } from '@/components/ui/Typography';
 import TextInput from '@/components/library/TextInput';
 import TextArea from '@/components/library/TextArea';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
-import Alert from '@/components/library/Alert';
 
 type Props = {
   isModalOpen: boolean;
@@ -47,9 +46,6 @@ const SampleDetails = (props: { sampleId: string }) => {
               options={PRIORITYS.map((p) => ({ value: p, label: p }))}
             />
           </Label>
-          <Alert type="info">
-            "Note that the initial 'Sampling %' will not be affected with the alerts added."
-          </Alert>
         </>
       )}
     </AsyncResourceRenderer>

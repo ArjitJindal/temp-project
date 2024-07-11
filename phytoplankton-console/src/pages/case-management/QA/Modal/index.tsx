@@ -25,6 +25,7 @@ const initialValues: QAFormValues = {
   samplingQuantity: 0,
   filters: {},
   numberOfAlertsQaDone: 0,
+  numberOfAlerts: 0,
 };
 
 type QAModalProps = {
@@ -136,7 +137,7 @@ const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } })
         labelProps={{ required: true }}
       >
         {(inputProps) => {
-          const currentAlerts = initialValues?.samplingQuantity || 0;
+          const currentAlerts = initialValues?.numberOfAlerts || 0;
 
           return (
             <Slider

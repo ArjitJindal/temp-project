@@ -7,4 +7,5 @@ export interface QAFormValues {
   samplingQuantity: number;
   filters?: Record<string, any>;
   numberOfAlertsQaDone?: number;
+  numberOfAlerts?: number;
 }

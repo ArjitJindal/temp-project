@@ -90,7 +90,9 @@ export const QASamplePage = () => {
                     <div className={s.cardSection}>
                       <PriorityTag priority={sample.priority} />
                       <Tag color="gray">{`Sampling - ${
-                        sample.samplingQuantity ? `${sample.samplingQuantity}` : 'Manual'
+                        sample.samplingType === 'AUTOMATIC'
+                          ? `${sample.numberOfAlerts} alerts`
+                          : 'Manual'
                       }`}</Tag>
                       <Link style={{ fontWeight: 600 }} to="#">
                         {sample.samplingId}

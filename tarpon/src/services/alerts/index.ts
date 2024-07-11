@@ -1477,7 +1477,10 @@ export class AlertsService extends CaseAlertsCommonService {
 
       const queryWithExcludedAlerts =
         await this.alertsRepository.getAlertsPipeline(
-          { ...filters, excludeAlertIds: sampling.alertIds },
+          {
+            ...filters,
+            excludeAlertIds: uniq(sampling?.alertIds ?? []),
+          },
           {
             excludeProject: true,
             hideTransactionIds: true,
