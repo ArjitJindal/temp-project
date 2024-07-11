@@ -35,6 +35,9 @@ import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 
+const ACTIVE_STATUS: RuleInstanceStatus = 'ACTIVE'
+const DEPLOYING_STATUS: RuleInstanceStatus = 'DEPLOYING'
+
 function toRuleInstance(item: any): RuleInstance {
   return {
     id: item.id,
@@ -349,7 +352,19 @@ export class RuleInstanceRepository {
   public async getActiveRuleInstances(
     type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
-    const status: RuleInstanceStatus = 'ACTIVE'
+    return this.getRuleInstancesByStatus(ACTIVE_STATUS, type)
+  }
+
+  public async getDeployingRuleInstances(
+    type?: RuleType
+  ): Promise<ReadonlyArray<RuleInstance>> {
+    return this.getRuleInstancesByStatus(DEPLOYING_STATUS, type)
+  }
+
+  private async getRuleInstancesByStatus(
+    status: RuleInstanceStatus,
+    type?: RuleType
+  ): Promise<ReadonlyArray<RuleInstance>> {
     const ruleInstances = await this.getRuleInstances({
       FilterExpression: '#status = :status',
       ExpressionAttributeValues: {

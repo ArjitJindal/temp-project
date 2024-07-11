@@ -1,7 +1,12 @@
+import { BatchJobRepository } from '../repositories/batch-job-repository'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { BatchJobWithId } from '@/@types/batch-job'
+import {
+  BatchJobInDb,
+  BatchJobWithId,
+  RulePreAggregationBatchJob,
+} from '@/@types/batch-job'
 import dayjs from '@/utils/dayjs'
 import * as v8Engine from '@/services/rules-engine/v8-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -16,6 +21,8 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getTestV8RiskFactor } from '@/test-utils/pulse-test-utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { generateChecksum } from '@/utils/object'
 
 dynamoDbSetupHook()
 withFeatureHook(['RULES_ENGINE_V8', 'RISK_FACTORS_V8'])
@@ -24,7 +31,11 @@ withLocalChangeHandler()
 const dynamoDb = getDynamoDbClient()
 
 const sendAggregationTaskMock = jest.spyOn(v8Engine, 'sendAggregationTask')
-sendAggregationTaskMock.mockImplementation(() => Promise.resolve())
+sendAggregationTaskMock.mockImplementation((task) =>
+  Promise.resolve(
+    task.userKeyId ?? generateChecksum((task as any).paymentDetails)
+  )
+)
 
 async function setUpAggregationVariables(
   tenantId: string,
@@ -55,6 +66,16 @@ async function setUpAggregationVariablesRiskFactors(
   await riskRepository.createOrUpdateParameterRiskItemV8(riskFactor)
 
   return { riskFactorId: riskFactor.id }
+}
+
+async function createJob(tenantId: string, job: BatchJobWithId) {
+  const repo = new BatchJobRepository(tenantId, await getMongoDbClient())
+  await repo.insertJob(job)
+}
+
+async function getJob(tenantId: string, jobId: string): Promise<BatchJobInDb> {
+  const repo = new BatchJobRepository(tenantId, await getMongoDbClient())
+  return (await repo.getJobById(jobId)) as BatchJobInDb
 }
 
 describe('Rule/Risk Factor pre-aggregation job runner', () => {
@@ -562,5 +583,99 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     ]
     expect(sentTasks.length).toBe(expectedSentTasks.length)
     expect(sentTasks).toEqual(expect.arrayContaining(expectedSentTasks))
+  })
+
+  test('submits unique pre-aggregation tasks (user ID)', async () => {
+    const aggregationVariables: RuleAggregationVariable[] = [
+      {
+        key: 'agg:test',
+        type: 'USER_TRANSACTIONS',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 1, granularity: 'day' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+      {
+        key: 'agg:test-2',
+        type: 'USER_TRANSACTIONS',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 1, granularity: 'day' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+    ]
+    const { ruleInstanceId } = await setUpAggregationVariables(
+      tenantId,
+      aggregationVariables
+    )
+
+    const testJob: BatchJobWithId = {
+      jobId: 'test-job-id-1',
+      type: 'RULE_PRE_AGGREGATION',
+      tenantId: tenantId,
+      parameters: {
+        entity: { type: 'RULE', ruleInstanceId },
+        aggregationVariables,
+      },
+    }
+    await createJob(tenantId, testJob)
+    await jobRunnerHandler(testJob)
+    expect(
+      ((await getJob(tenantId, testJob.jobId)) as RulePreAggregationBatchJob)
+        .metadata?.tasksCount
+    ).toBe(1)
+  })
+
+  test('submits unique pre-aggregation tasks (payment details)', async () => {
+    const aggregationVariables: RuleAggregationVariable[] = [
+      {
+        key: 'agg:test',
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        transactionDirection: 'SENDING_RECEIVING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 1, granularity: 'hour' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+      {
+        key: 'agg:test-2',
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+        transactionDirection: 'SENDING_RECEIVING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 1, granularity: 'hour' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+    ]
+    const { ruleInstanceId } = await setUpAggregationVariables(
+      tenantId,
+      aggregationVariables
+    )
+
+    const testJob: BatchJobWithId = {
+      jobId: 'test-job-id-1',
+      type: 'RULE_PRE_AGGREGATION',
+      tenantId: tenantId,
+      parameters: {
+        entity: { type: 'RULE', ruleInstanceId },
+        aggregationVariables,
+      },
+    }
+    await createJob(tenantId, testJob)
+    await jobRunnerHandler(testJob)
+    expect(
+      ((await getJob(tenantId, testJob.jobId)) as RulePreAggregationBatchJob)
+        .metadata?.tasksCount
+    ).toBe(2)
   })
 })

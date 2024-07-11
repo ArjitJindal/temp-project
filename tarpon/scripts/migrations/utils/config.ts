@@ -18,4 +18,5 @@ export function loadConfigEnv() {
   process.env.ENV = `${config.stage}:${config.region || 'eu-1'}`
   process.env.REGION = config.region
   process.env.AWS_REGION = config.env.region
+  process.env.AWS_ACCOUNT = config.env.account
 }

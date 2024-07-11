@@ -134,31 +134,33 @@ export function canAggregate(variable: RuleAggregationVariable) {
 
 export async function sendAggregationTask(
   task: TransactionAggregationTaskEntry
-) {
+): Promise<string> {
   const payload = task.payload as
     | V8TransactionAggregationTask
     | V8RuleAggregationRebuildTask
+  const deduplicationId = generateChecksum(
+    `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}:${
+      payload.type === 'TRANSACTION_AGGREGATION'
+        ? payload.transaction.transactionId
+        : ''
+    }`
+  )
   if (envIs('local') || envIs('test')) {
     if (payload.type === 'TRANSACTION_AGGREGATION') {
       await handleV8TransactionAggregationTask(payload)
     } else if (payload.type === 'PRE_AGGREGATION') {
       await handleV8PreAggregationTask(payload)
     }
-    return
+    return deduplicationId
   }
   const command = new SendMessageCommand({
     MessageBody: JSON.stringify(payload),
     QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
     MessageGroupId: generateChecksum(task.userKeyId),
-    MessageDeduplicationId: generateChecksum(
-      `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}:${
-        payload.type === 'TRANSACTION_AGGREGATION'
-          ? payload.transaction.transactionId
-          : ''
-      }`
-    ),
+    MessageDeduplicationId: deduplicationId,
   })
   await sqs.send(command)
+  return deduplicationId
 }
 
 export const getJsonLogicEngine = memoizeOne(

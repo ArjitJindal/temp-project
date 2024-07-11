@@ -24,9 +24,12 @@ import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { UserService } from '@/services/users'
-import { filterLiveRules } from '@/services/rules-engine/utils'
+import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
+import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
+import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 interface TransactionEventTask {
   tenantId: string
@@ -115,17 +118,52 @@ export const transactionHandler = async (
     )
   }
 
-  const [transactionInMongo, ruleInstances] = await Promise.all([
-    transactionsRepo.addTransactionToMongo(
-      omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
-      arsScore
-    ),
-    ruleInstancesRepo.getRuleInstancesByIds(
-      filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
-        (rule) => rule.ruleInstanceId
+  const [transactionInMongo, ruleInstances, deployingRuleInstances] =
+    await Promise.all([
+      transactionsRepo.addTransactionToMongo(
+        omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
+        arsScore
+      ),
+      ruleInstancesRepo.getRuleInstancesByIds(
+        filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
+          (rule) => rule.ruleInstanceId
+        )
+      ),
+      ruleInstancesRepo.getDeployingRuleInstances(),
+    ])
+
+  // Update rule aggregation data for the transactions created when the rule is still deploying
+  if (deployingRuleInstances.length > 0) {
+    const ruleLogicEvaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDb)
+    const transactionEventRepository = new TransactionEventRepository(
+      tenantId,
+      {
+        dynamoDb,
+      }
+    )
+    const transactionEvents =
+      await transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
       )
-    ),
-  ])
+    await Promise.all(
+      deployingRuleInstances.map((ruleInstance) => {
+        const rule = ruleInstance.ruleId
+          ? getRuleByRuleId(ruleInstance.ruleId)
+          : undefined
+
+        if (!runOnV8Engine(ruleInstance, rule)) {
+          return
+        }
+
+        return ruleLogicEvaluator.handleV8Aggregation(
+          'RULES',
+          ruleInstance.logicAggregationVariables ?? [],
+          transaction,
+          transactionEvents
+        )
+      })
+    )
+  }
 
   const caseCreationService = new CaseCreationService(tenantId, {
     mongoDb,

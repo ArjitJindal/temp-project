@@ -916,7 +916,7 @@ export class CdkTarponStack extends cdk.Stack {
         .addRetry({
           interval: Duration.seconds(30),
           maxDelay: Duration.hours(1),
-          maxAttempts: 2, // Update when ready
+          maxAttempts: 15,
           jitterStrategy: JitterType.FULL,
         })
         .next(
@@ -929,7 +929,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     const batchJobStateMachine = new StateMachine(
       this,
-      getResourceNameForTarpon('BatchJobStateMachine'),
+      StackConstants.BATCH_JOB_STATE_MACHINE_NAME,
       {
         definition: new LambdaInvoke(
           this,

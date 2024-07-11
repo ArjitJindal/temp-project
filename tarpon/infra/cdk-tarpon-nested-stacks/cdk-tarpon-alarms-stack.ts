@@ -31,6 +31,7 @@ import {
   createCanarySuccessPercentageAlarm,
   createRuleHitRateAlarm,
   createGlueJobFailedAlarm,
+  createStateMachineAlarm,
 } from '../cdk-utils/cdk-cw-alarms-utils'
 
 const allLambdas = Object.keys(LAMBDAS)
@@ -273,5 +274,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
 
     createGlueJobFailedAlarm(this, this.betterUptimeCloudWatchTopic, 'stream')
     createGlueJobFailedAlarm(this, this.betterUptimeCloudWatchTopic, 'optimize')
+
+    createStateMachineAlarm(this, this.betterUptimeCloudWatchTopic)
   }
 }

@@ -458,25 +458,26 @@ export class RulesEngineService {
       )
     }
 
-    const savedTransaction = await this.transactionRepository.saveTransaction(
+    const transactionToSave = {
+      ...transaction,
+      transactionState: initialTransactionState,
+    }
+
+    await this.transactionEventRepository.saveTransactionEvent(
       {
-        ...transaction,
-        transactionState: initialTransactionState,
+        ...initialTransactionEvent,
+        updatedTransactionAttributes: transactionToSave,
       },
+      { executedRules, hitRules, riskScoreDetails }
+    )
+    const savedTransaction = await this.transactionRepository.saveTransaction(
+      transactionToSave,
       {
         status: getAggregatedRuleStatus(hitRules),
         executedRules,
         hitRules,
         riskScoreDetails,
       }
-    )
-
-    await this.transactionEventRepository.saveTransactionEvent(
-      {
-        ...initialTransactionEvent,
-        updatedTransactionAttributes: savedTransaction,
-      },
-      { executedRules, hitRules, riskScoreDetails }
     )
 
     saveTransactionSegment?.close()

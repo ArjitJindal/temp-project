@@ -590,3 +590,27 @@ export const createCanarySuccessPercentageAlarm = (
     }),
   }).addAlarmAction(new SnsAction(betterUptimeTopic))
 }
+
+export const createStateMachineAlarm = (
+  context: Construct,
+  betterUptimeTopic: Topic
+) => {
+  if (isDevUserStack) {
+    return null
+  }
+  new Alarm(context, `stateMachineFailedAlarm`, {
+    metric: new Metric({
+      namespace: 'AWS/States',
+      metricName: 'ExecutionsFailed',
+      // dimensionsMap: {
+      //   StateMachineArn: 'To specify if we'll have multiple state machines',
+      // }
+      statistic: 'sum',
+      period: Duration.minutes(5),
+    }),
+    threshold: 1,
+    evaluationPeriods: 1,
+    comparisonOperator: ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
+    alarmDescription: `Alarm if step function fails`,
+  }).addAlarmAction(new SnsAction(betterUptimeTopic))
+}

@@ -16,10 +16,11 @@ import { logger } from '@/core/logger'
 import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { generateChecksum } from '@/utils/object'
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
+  private sentTaskDedupIds = new Set<string>()
+
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     const dynamoDb = getDynamoDbClient()
     const { entity, aggregationVariables } = job.parameters
@@ -79,13 +80,17 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
     let tasks = 0
     for (const aggregationVariable of aggregationVariables) {
-      tasks += await this.preAggregateVariable(
+      const aggVarTasks = await this.preAggregateVariable(
         job.tenantId,
         entity,
         aggregationVariable,
         ruleInstanceId
       )
+      logger.info(`Tasks (${aggregationVariable.key}): ${aggVarTasks}`)
+      tasks += aggVarTasks
     }
+    logger.info(`Total tasks: ${tasks}`)
+
     if (tasks === 0 && ruleInstanceId) {
       logger.info(
         `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE.`
@@ -123,9 +128,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           ? []
           : await transactionsRepo.getUniqueUserIds('DESTINATION', timeRange)
       const allUserIds = uniq(originUserIds.concat(destinationUserIds))
-      await this.incrementTasksCount(allUserIds.length)
+
+      let sentTasksCount = 0
       for (const userId of allUserIds) {
-        await sendAggregationTask({
+        const dedupId = await sendAggregationTask({
           userKeyId: userId,
           payload: {
             type: 'PRE_AGGREGATION',
@@ -138,8 +144,13 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             ruleInstanceId,
           },
         })
+        if (!this.sentTaskDedupIds.has(dedupId)) {
+          sentTasksCount += 1
+          this.sentTaskDedupIds.add(dedupId)
+        }
       }
-      return allUserIds.length
+      await this.incrementTasksCount(sentTasksCount)
+      return sentTasksCount
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
       const originPaymentDetails =
         aggregationVariable.transactionDirection === 'RECEIVING'
@@ -155,7 +166,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       const userInfos = compact(
         uniqBy(
           originPaymentDetails.concat(destinationPaymentDetails),
-          generateChecksum
+          getPaymentDetailsIdentifiersKey
         ).map((v) => {
           const userKeyId = getPaymentDetailsIdentifiersKey(v)
           if (userKeyId) {
@@ -163,10 +174,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           }
         })
       )
-      await this.incrementTasksCount(userInfos.length)
-
+      let sentTasksCount = 0
       for (const userInfo of userInfos) {
-        await sendAggregationTask({
+        const dedupId = await sendAggregationTask({
           userKeyId: userInfo.userKeyId,
           payload: {
             type: 'PRE_AGGREGATION',
@@ -179,8 +189,13 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             ruleInstanceId,
           },
         })
+        if (!this.sentTaskDedupIds.has(dedupId)) {
+          sentTasksCount += 1
+          this.sentTaskDedupIds.add(dedupId)
+        }
       }
-      return userInfos.length
+      await this.incrementTasksCount(sentTasksCount)
+      return sentTasksCount
     }
 
     throw new Error(

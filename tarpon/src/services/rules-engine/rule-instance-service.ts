@@ -36,6 +36,7 @@ import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceA
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { generateChecksum } from '@/utils/object'
 import { logger } from '@/core/logger'
+import dayjs from '@/utils/dayjs'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -135,6 +136,17 @@ export class RuleInstanceService {
             ...ruleInstance,
           },
           ruleInstance.updatedAt
+        )
+      }
+
+      // Alert if rule instance is stuck in deploying state for more than 24 hours
+      if (
+        ruleInstance.status === 'DEPLOYING' &&
+        dayjs().diff(ruleInstance.updatedAt, 'hour') >= 24
+      ) {
+        logger.error(
+          `Rule instance ${ruleInstance.id} has been deploying for more than 24 hours`,
+          { tenantId }
         )
       }
     }

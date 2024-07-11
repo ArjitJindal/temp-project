@@ -276,6 +276,9 @@ export const StackConstants = {
   TRANSACTION_EVENT_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'TransactionEventQueueConsumerFunction'
   ),
+  BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
+    'BatchJobStateMachine'
+  ),
 }
 
 export const SQSQueues: {

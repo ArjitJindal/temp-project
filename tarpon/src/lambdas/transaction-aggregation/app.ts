@@ -46,6 +46,7 @@ export async function handleV8TransactionAggregationTask(
     tenantId: task.tenantId,
     direction: task.direction,
     transactionId: task.transaction.transactionId,
+    type: task.type,
   })
   const dynamoDb = getDynamoDbClient()
   const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
@@ -66,6 +67,10 @@ export async function handleV8PreAggregationTask(
   updateLogMetadata({
     aggregationVariableKey: task.aggregationVariable.key,
     tenantId: task.tenantId,
+    type: task.type,
+    userId: task.userId,
+    entity: task.entity,
+    jobId: task.jobId,
   })
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
@@ -162,15 +167,14 @@ export async function handleV8PreAggregationTask(
       logger.warn(
         `Risk factor ${task.entity.riskFactorId} is changed/deleted. Skipping pre-aggregation.`
       )
-      return
+    } else {
+      await ruleEvaluator.rebuildAggregationVariable(
+        task.aggregationVariable,
+        task.currentTimestamp,
+        task.userId,
+        task.paymentDetails
+      )
     }
-
-    await ruleEvaluator.rebuildAggregationVariable(
-      task.aggregationVariable,
-      task.currentTimestamp,
-      task.userId,
-      task.paymentDetails
-    )
 
     await jobRepository.updateJob(task.jobId, {
       $inc: { 'metadata.completeTasksCount': 1 },

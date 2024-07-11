@@ -4,7 +4,7 @@ import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn'
 import { AwsStub, mockClient } from 'aws-sdk-client-mock'
 import { jobTriggerHandler as handler } from '@/lambdas/batch-job/app'
 import { createSqsEvent } from '@/test-utils/sqs-test-utils'
-import { BatchJob } from '@/@types/batch-job'
+import { BatchJobWithId } from '@/@types/batch-job'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
 const MOCK_BATCH_JOB_STATE_MACHINE_ARN = 'mock-sfn-arn'
@@ -20,12 +20,13 @@ describe('Batch job trigger', () => {
 
   test('Triggers single step function to start', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const batchJob: BatchJob = {
+    const batchJob: BatchJobWithId = {
+      jobId: 'test-job-id',
       tenantId: TEST_TENANT_ID,
       type: 'DASHBOARD_REFRESH',
       parameters: { checkTimeRange: {} },
     }
-    jobTriggerHandler(createSqsEvent([batchJob]))
+    await jobTriggerHandler(createSqsEvent([batchJob]))
 
     expect(sfnMock).toHaveReceivedCommandTimes(StartExecutionCommand as any, 1)
 
@@ -37,7 +38,8 @@ describe('Batch job trigger', () => {
 
   test('Triggers multiple step function to start', async () => {
     const TEST_TENANT_ID = getTestTenantId()
-    const batchJob: BatchJob = {
+    const batchJob: BatchJobWithId = {
+      jobId: 'test-job-id',
       tenantId: TEST_TENANT_ID,
       type: 'DASHBOARD_REFRESH',
       parameters: { checkTimeRange: {} },

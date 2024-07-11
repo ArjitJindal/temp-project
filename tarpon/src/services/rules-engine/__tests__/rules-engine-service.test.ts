@@ -1499,3 +1499,106 @@ describe('Run v2 rules on v8 engine', () => {
     expect(v8Mock).toBeCalledTimes(1)
   })
 })
+
+describe('Verify Transaction: V8 engine with Deploying status', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'RC-deploying',
+      defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:test',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { units: 1, granularity: 'day' },
+            end: { units: 0, granularity: 'day' },
+          },
+        },
+      ],
+      type: 'TRANSACTION',
+      status: 'DEPLOYING',
+    },
+  ])
+  setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
+
+  test('transactions created duing Deploying should be put to aggregation data', async () => {
+    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
+      dynamoDb,
+    })
+
+    const result1 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-1',
+        originUserId: '1',
+      })
+    )
+    expect(result1).toEqual({
+      transactionId: 'tx-1',
+      status: 'ALLOW',
+      executedRules: [],
+      hitRules: [],
+    } as TransactionMonitoringResult)
+
+    await ruleInstanceRepository.updateRuleInstanceStatus(
+      'RC-deploying',
+      'ACTIVE'
+    )
+    const result2 = await rulesEngine.verifyTransaction(
+      getTestTransaction({
+        transactionId: 'tx-2',
+        originUserId: '1',
+      })
+    )
+    expect(result2).toEqual({
+      transactionId: 'tx-2',
+      status: 'FLAG',
+      executedRules: [
+        {
+          ruleId: 'RC-deploying',
+          ruleInstanceId: 'RC-deploying',
+          ruleName: 'test rule name',
+          ruleDescription: '',
+          ruleAction: 'FLAG',
+          ruleHit: true,
+          labels: [],
+          nature: 'AML',
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN'],
+          },
+          vars: [
+            {
+              direction: 'ORIGIN',
+              value: {
+                'agg:test': 2,
+              },
+            },
+          ],
+          isShadow: false,
+        },
+      ],
+      hitRules: [
+        {
+          ruleId: 'RC-deploying',
+          ruleInstanceId: 'RC-deploying',
+          ruleName: 'test rule name',
+          ruleDescription: '',
+          ruleAction: 'FLAG',
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN'],
+          },
+          labels: [],
+          nature: 'AML',
+          isShadow: false,
+        },
+      ],
+    } as TransactionMonitoringResult)
+  })
+})
