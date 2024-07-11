@@ -141,7 +141,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         (v) =>
           v.entity === 'TRANSACTION' &&
           !isTransactionOriginOrDestinationVariable(v.key) &&
-          v.valueType === 'string' &&
+          (v.valueType === 'string' || isTransactionAmountVariable(v.key)) &&
           v.key !== formValues.aggregationFieldKey &&
           v.key !== 'TRANSACTION:transactionId',
       )
@@ -247,11 +247,22 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     const hasTxAmountInFilters = Boolean(
       getAllValuesByKey<string>('var', formValues.filtersLogic).find(isTransactionAmountVariable),
     );
+
     const isAggFieldTxAmount = formValues.aggregationFieldKey
       ? isTransactionAmountVariable(formValues.aggregationFieldKey)
       : false;
-    return hasTxAmountInFilters || isAggFieldTxAmount;
-  }, [formValues.aggregationFieldKey, formValues.filtersLogic]);
+
+    const isGroupByFieldTxAmount = formValues.aggregationGroupByFieldKey
+      ? isTransactionAmountVariable(formValues.aggregationGroupByFieldKey)
+      : false;
+
+    return hasTxAmountInFilters || isAggFieldTxAmount || isGroupByFieldTxAmount;
+  }, [
+    formValues.aggregationFieldKey,
+    formValues.filtersLogic,
+    formValues.aggregationGroupByFieldKey,
+  ]);
+
   useEffect(() => {
     if (baseCurrencyRequired && !formValues.baseCurrency) {
       setFormValues((prevValues) => ({

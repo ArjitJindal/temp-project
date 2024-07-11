@@ -825,6 +825,96 @@ describe('Verify Transaction: V8 engine', () => {
     })
   })
 
+  describe('Aggregation group by field with transaction origin amount', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    // Transaction amount is by default by default converted to base currency
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-2',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationGroupByFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            baseCurrency: 'USD',
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('aggregation values are grouped', async () => {
+      const results = await bulkVerifyTransactions(
+        TEST_TENANT_ID,
+        [
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            originAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'USD',
+            },
+            timestamp: 1713172716112,
+          }),
+          getTestTransaction({
+            type: 'DEPOSIT',
+            originUserId: 'U-1',
+            originAmountDetails: {
+              transactionAmount: 200,
+              transactionCurrency: 'USD',
+            },
+            timestamp: 1713172716113,
+          }),
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            originAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'USD',
+            },
+            timestamp: 1713172716114,
+          }),
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            originAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'USD',
+            },
+            timestamp: 1713172716115,
+          }),
+          getTestTransaction({
+            type: 'TRANSFER',
+            originUserId: 'U-1',
+            originAmountDetails: {
+              transactionAmount: 100,
+              transactionCurrency: 'EUR',
+            },
+            timestamp: 1713172716116,
+          }),
+        ],
+        { autoCreateUser: true }
+      )
+      expect(results.map((v) => v.status !== 'ALLOW')).toEqual([
+        false,
+        false,
+        true,
+        true,
+        false,
+      ])
+    })
+  })
+
   describe('"All time" granularity', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
