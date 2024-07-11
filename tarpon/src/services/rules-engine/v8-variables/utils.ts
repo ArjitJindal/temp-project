@@ -1,4 +1,11 @@
-import { concat, groupBy, lowerCase, snakeCase, startCase } from 'lodash'
+import {
+  concat,
+  findLastIndex,
+  groupBy,
+  lowerCase,
+  snakeCase,
+  startCase,
+} from 'lodash'
 import {
   COUNTRIES,
   COUNTRY_GROUP_LABELS,
@@ -112,6 +119,29 @@ export function getPublicModelLeafAttrs(
   }
 
   return result
+}
+
+export function isArrayIntermediateNode(info: EntityLeafValueInfo) {
+  const index = info.path.indexOf(ARRAY_ITEM_INDICATOR)
+  return index !== -1 && index !== info.path.length - 1
+}
+export function isArrayLeafNode(info: EntityLeafValueInfo) {
+  return info.path.indexOf(ARRAY_ITEM_INDICATOR) === info.path.length - 1
+}
+
+export function isArrayIntermediateNodeandHasLeafArrayNode(
+  info: EntityLeafValueInfo
+) {
+  const index = info.path.indexOf(ARRAY_ITEM_INDICATOR)
+  const reverseIndex = findLastIndex(
+    info.path,
+    (v) => v === ARRAY_ITEM_INDICATOR
+  )
+  return (
+    index !== -1 &&
+    index !== info.path.length - 1 &&
+    reverseIndex === info.path.length - 1
+  )
 }
 
 function handleArrayTypes(

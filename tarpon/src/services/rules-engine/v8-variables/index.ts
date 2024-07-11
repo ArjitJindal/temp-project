@@ -31,6 +31,9 @@ import {
   EntityLeafValueInfo,
   EntityModel,
   getPublicModelLeafAttrs,
+  isArrayIntermediateNode,
+  isArrayIntermediateNodeandHasLeafArrayNode,
+  isArrayLeafNode,
 } from './utils'
 import { USER_TYPE } from './user-type'
 import { TRANSACTION_TIME } from './transaction-time'
@@ -391,16 +394,12 @@ function getAutoRuleEntityVariables(
       }
     })
   const multiselectVariables = leafValueInfos
-    .filter((info) => info.pathKey.endsWith(ARRAY_ITEM_INDICATOR))
+    .filter((info) => isArrayLeafNode(info))
     .map((info) => {
       return getLeafArrayEntityVariables(info, entityType)
     })
   const arrayLeafValueInfos = leafValueInfos
-    .filter(
-      (info) =>
-        info.pathKey.includes(ARRAY_ITEM_INDICATOR) &&
-        !info.pathKey.endsWith(ARRAY_ITEM_INDICATOR)
-    )
+    .filter((info) => isArrayIntermediateNode(info))
     .map((info) => ({
       ...info,
       arrayGroupLevels: info.pathKey
@@ -424,6 +423,19 @@ function getAutoArrayRuleEntityVariableSubfields(
     groupBy(infos, (v) => v.arrayGroupLevels[0].join('.')),
     (infos) => {
       if (infos.length === 1) {
+        if (isArrayIntermediateNodeandHasLeafArrayNode(infos[0])) {
+          return {
+            ...infos[0],
+            ...{
+              label: infos[0].arrayGroupLevels[0].map(lowerCase).join(' > '),
+              type: 'multiselect',
+              preferWidgets: ['multiselect'],
+              valueSources: ['value', 'field', 'func'] as ValueSource[],
+              allowCustomValues: true,
+              path: infos[0].arrayGroupLevels[0],
+            },
+          } as FieldOrGroup
+        }
         return getUiDefinition({
           ...infos[0],
           path: infos[0].arrayGroupLevels[0],

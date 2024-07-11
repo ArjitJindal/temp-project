@@ -95,7 +95,7 @@ export const postCodes: () => number[] = memoize(() => {
   return [...Array(5000)].map(() => randomInt(100000) + 100000)
 })
 
-export const mapAddressLineAndPostcode: () => Record<string, Address> = memoize(
+export const mapAddressLineAndPostcode: () => Record<string, string> = memoize(
   () => {
     return postCodes().reduce(
       (acc, postcode) => ({
