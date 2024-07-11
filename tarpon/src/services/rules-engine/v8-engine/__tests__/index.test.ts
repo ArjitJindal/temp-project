@@ -30,7 +30,9 @@ describe('Entity variable', () => {
     const dynamoDbClient = getDynamoDbClient()
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
-      { and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }] },
+      {
+        and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
+      },
       {},
       { baseCurrency: 'EUR', tenantId },
       {

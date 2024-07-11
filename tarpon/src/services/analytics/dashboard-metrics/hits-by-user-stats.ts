@@ -201,12 +201,28 @@ export class HitsByUserStatsDashboardMetric {
           },
           rulesHitCount: {
             $sum: {
-              $size: { $ifNull: ['$hitRules', []] },
+              $size: {
+                $filter: {
+                  input: { $ifNull: ['$hitRules', []] },
+                  as: 'hitRule',
+                  cond: {
+                    $ne: ['$$hitRule.isShadow', true],
+                  },
+                },
+              },
             },
           },
           rulesRunCount: {
             $sum: {
-              $size: { $ifNull: ['$executedRules', []] },
+              $size: {
+                $filter: {
+                  input: { $ifNull: ['$executedRules', []] },
+                  as: 'executedRule',
+                  cond: {
+                    $ne: ['$$executedRule.isShadow', true],
+                  },
+                },
+              },
             },
           },
         },

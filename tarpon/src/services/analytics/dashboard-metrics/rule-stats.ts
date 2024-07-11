@@ -172,6 +172,7 @@ export class RuleHitsStatsDashboardMetric {
         $match: {
           'hitRules.ruleId': { $exists: true },
           'hitRules.ruleInstanceId': { $exists: true },
+          'hitRules.isShadow': { $ne: true },
         },
       },
       {
