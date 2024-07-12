@@ -45,7 +45,7 @@ export const ApiKeysSettings = () => {
       sandbox:
         region === 'eu-1'
           ? 'https://sandbox.api.flagright.com'
-          : 'https://sandbox-asia-1.api.flagright.com',
+          : `https://sandbox-${region}.api.flagright.com`,
       dev: 'https://api.flagright.dev',
       'dev:user': 'https://api.flagright.dev',
       local: `https://region.api.flagright.com`,

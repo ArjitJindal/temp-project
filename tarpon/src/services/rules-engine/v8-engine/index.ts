@@ -688,6 +688,17 @@ export class RuleJsonLogicEvaluator {
       },
       fieldsToFetch as Array<keyof Transaction>
     )
+
+    // NOTE: As we're still using lambda to rebuild aggregation, there's a hard 15 minuites timeout.
+    // As we support 'all time' time window, it's possible that it takes more than 15 minutes to rebuild as
+    // we need to fetch all the transaction of a user.
+    // For now, as a workaround, we stop fetching transactions if the timeout is reached to avoid repeatedly
+    // retrying to rebuild and fail.
+    // TODO: Proper fix by FR-5225
+    let timeoutReached = false
+    const timeout = setTimeout(() => {
+      timeoutReached = true
+    }, 14 * 60 * 1000)
     let timeAggregatedResult: {
       [time: string]: AggregationData
     } = {}
@@ -788,7 +799,13 @@ export class RuleJsonLogicEvaluator {
           }
         }
       )
+
+      if (timeoutReached) {
+        logger.error('Timeout reached while rebuilding aggregation (FR-5225)')
+        break
+      }
     }
+    clearTimeout(timeout)
     return timeAggregatedResult
   }
 
