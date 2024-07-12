@@ -15,6 +15,7 @@ interface Props {
 
 export default function AxisY(props: Props) {
   const { max, totalHeight, ticks, currency } = props;
+
   return (
     <div className={cn(s.root)}>
       {ticks.map((tick) => {
@@ -31,7 +32,7 @@ export default function AxisY(props: Props) {
               {currency ? (
                 <Money compact currency={currency} value={tick} />
               ) : (
-                `${Math.round(tick)}`
+                `${tick % 1 === 0 ? tick : tick.toFixed(1)}`
               )}
             </Label>
           </React.Fragment>

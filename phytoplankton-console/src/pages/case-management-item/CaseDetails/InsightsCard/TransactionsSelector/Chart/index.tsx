@@ -31,6 +31,7 @@ export default function CountChart(props: Props) {
 
   const [highlightedColumn, setHighlightedColumn] = useState<string | null>(null);
 
+  const yTicksCount = Math.min(Y_TICKS_COUNT, calculatedParams.yMax);
   return (
     <div className={s.root} style={{ width, height }}>
       <div
@@ -48,7 +49,7 @@ export default function CountChart(props: Props) {
             max={calculatedParams.yMax}
             totalHeight={usefulHeight}
             ticks={[...new Array(Y_TICKS_COUNT + 1)].map(
-              (_, i) => (calculatedParams.yMax / Y_TICKS_COUNT) * i,
+              (_, i) => (calculatedParams.yMax / yTicksCount) * i,
             )}
             currency={currency}
           />
@@ -60,6 +61,7 @@ export default function CountChart(props: Props) {
               return <React.Fragment key={series.name}></React.Fragment>;
             }
             const total = Object.values(dataItem.values).reduce((acc, x) => acc + x, 0);
+
             return (
               <Column
                 index={i}
@@ -69,7 +71,7 @@ export default function CountChart(props: Props) {
                 item={dataItem}
                 series={series}
                 calculatedParams={calculatedParams}
-                height={height * (total / calculatedParams.yMax)}
+                height={usefulHeight * (total / calculatedParams.yMax)}
                 currency={currency}
                 onHighlight={(highlighted) => {
                   setHighlightedColumn(highlighted ? series.name : null);

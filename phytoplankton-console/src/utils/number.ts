@@ -27,8 +27,13 @@ export function formatNumber(
     minimumFractionDigits: options?.keepDecimals ? 2 : 0,
   }).format(Number(formattedNumber));
 
-  if (compact && amount >= 1000) {
-    formattedNumber = `${formattedNumber}k`;
+  if (compact) {
+    if (amount >= 1000 && amount < 1000000) {
+      formattedNumber = `${formattedNumber}k`;
+    }
+    if (amount >= 1000000) {
+      formattedNumber = `${formattedNumber}m`;
+    }
   }
 
   return formattedNumber;

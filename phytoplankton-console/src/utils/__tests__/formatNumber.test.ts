@@ -35,7 +35,7 @@ describe('formatNumber', () => {
   });
 
   it('should format a large number correctly with compact option enabled', () => {
-    expect(formatNumber(1234567890, { compact: true })).toEqual('1,234.57k');
+    expect(formatNumber(1234567890, { compact: true })).toEqual('1,234.57m');
   });
 
   it('should format a small number correctly with compact option enabled', () => {

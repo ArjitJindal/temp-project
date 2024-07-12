@@ -22,6 +22,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
+import dayjsLib from '@flagright/lib/utils/dayjs'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
 import {
@@ -50,8 +51,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
-import dayjs, { duration } from '@/utils/dayjs'
-import { getTimeLabels } from '@/services/dashboard/utils'
+import { duration } from '@/utils/dayjs'
 import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/TransactionsStatsByTimeResponse'
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
@@ -1033,35 +1033,23 @@ export class MongoDbTransactionRepository
     const { oldest, youngest } = minMax
 
     const difference = youngest - oldest
+    const timezone = dayjsLib.tz.guess()
 
     let seriesFormat: string
     let labelFormat: string
-    let granularity: 'HOUR' | 'DAY' | 'MONTH'
     const dur = duration(difference)
     if (dur.asMonths() > 1) {
       seriesFormat = 'YYYY/MM/01 00:00 Z'
       labelFormat = 'YYYY/MM'
-      granularity = 'MONTH'
     } else if (dur.asDays() > 1) {
       seriesFormat = 'YYYY/MM/DD 00:00 Z'
       labelFormat = 'MM/DD'
-      granularity = 'DAY'
     } else {
       seriesFormat = 'YYYY/MM/DD HH:00 Z'
-      labelFormat = 'HH:mm'
-      granularity = 'HOUR'
+      labelFormat = 'MM/DD HH:00'
     }
 
-    const result: TransactionsStatsByTimeResponse['data'] = getTimeLabels(
-      seriesFormat,
-      oldest,
-      youngest,
-      granularity
-    ).map((series) => ({
-      series: series,
-      label: dayjs(series, seriesFormat).format(labelFormat),
-      values: {},
-    }))
+    const result: TransactionsStatsByTimeResponse['data'] = []
 
     const transactionsCursor = collection.find(query, {
       sort: { [sortField]: sortOrder },
@@ -1069,8 +1057,12 @@ export class MongoDbTransactionRepository
     })
     for await (const transaction of transactionsCursor) {
       if (transaction.timestamp && transaction.status) {
-        const series = dayjs(transaction.timestamp).format(seriesFormat)
-        const label = dayjs(transaction.timestamp).format(labelFormat)
+        const series = dayjsLib
+          .tz(transaction.timestamp, timezone)
+          .format(seriesFormat)
+        const label = dayjsLib
+          .tz(transaction.timestamp, timezone)
+          .format(labelFormat)
         const amount = await this.getAmount(transaction, referenceCurrency)
 
         let counters = result.find((x) => x.series === series)
