@@ -38,7 +38,7 @@ const TopUsersHitCard = (props: Props) => {
   const direction = selectedSection !== 'ALL' ? selectedSection : undefined;
 
   const hitsPerUserResult = usePaginatedQuery(
-    HITS_PER_USER(dateRange, direction),
+    HITS_PER_USER(dateRange, userType, direction),
     async (paginationParams) => {
       const [start, end] = dateRange ?? [];
       const startTimestamp = start?.startOf('day').valueOf();

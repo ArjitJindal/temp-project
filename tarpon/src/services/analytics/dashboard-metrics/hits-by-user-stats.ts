@@ -342,9 +342,6 @@ export class HitsByUserStatsDashboardMetric {
           {
             $sort: { rulesHitCount: -1 },
           },
-          {
-            $limit: 10,
-          },
           lookupPipelineStage(
             {
               from: USERS_COLLECTION(tenantId),
@@ -359,6 +356,9 @@ export class HitsByUserStatsDashboardMetric {
             $set: {
               user: { $first: '$user' },
             },
+          },
+          {
+            $limit: 10,
           },
         ],
         { allowDiskUse: true }

@@ -139,8 +139,11 @@ export const RULE_LOGIC_CONFIG = (): QueryKey => ['rule-logic-config'];
 export const RULES = (): QueryKey => ['rules'];
 export const RULE_INSTANCES = (): QueryKey => ['rule-instances'];
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
-export const HITS_PER_USER = (dateRange: RangeValue<Dayjs>, direction?: string): QueryKey =>
-  ['hits-per-user', dateRange, direction].filter(Boolean);
+export const HITS_PER_USER = (
+  dateRange: RangeValue<Dayjs>,
+  type: string,
+  direction?: string,
+): QueryKey => ['hits-per-user', dateRange, type, direction].filter(Boolean);
 export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
