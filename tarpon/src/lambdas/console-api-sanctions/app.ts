@@ -94,7 +94,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         if (updates.status === 'CLEARED' && whitelistHits) {
           for await (const hit of sanctionsService.sanctionsHitsRepository.iterateHits(
             {
-              filterIds: sanctionHitIds,
+              filterHitIds: sanctionHitIds,
             }
           )) {
             if (

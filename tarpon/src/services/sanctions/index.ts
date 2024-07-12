@@ -527,6 +527,7 @@ export class SanctionsService {
    */
   public async searchHits(
     params: {
+      filterHitIds?: string[]
       filterSearchId?: string[]
       filterStatus?: SanctionsHitStatus[]
     } & CursorPaginationParams

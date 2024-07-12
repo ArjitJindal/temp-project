@@ -15,7 +15,7 @@ import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 
 export interface HitsFilters {
-  filterIds?: string[]
+  filterHitIds?: string[]
   filterSearchId?: string[]
   filterStatus?: SanctionsHitStatus[]
 }
@@ -43,8 +43,8 @@ export class SanctionsHitsRepository {
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
     const filter: Filter<SanctionsHit> = {}
-    if (params?.filterIds) {
-      filter.sanctionsHitId = { $in: params?.filterIds }
+    if (params?.filterHitIds) {
+      filter.sanctionsHitId = { $in: params?.filterHitIds }
     }
     if (params?.filterStatus) {
       filter.status = { $in: params?.filterStatus }

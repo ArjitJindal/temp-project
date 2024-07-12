@@ -268,7 +268,7 @@ describe('Sanctions Service', () => {
         expect(mergeResult.updatedIds).toHaveLength(1)
 
         const savedHit = await repository.searchHits({
-          filterIds: [hits[0]?.sanctionsHitId],
+          filterHitIds: [hits[0]?.sanctionsHitId],
         })
         expect(savedHit.count).toEqual(1)
         expect(savedHit.items[0]?.caEntity.name).toEqual('New name')
