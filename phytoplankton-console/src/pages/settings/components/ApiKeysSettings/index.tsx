@@ -42,7 +42,10 @@ export const ApiKeysSettings = () => {
   const generateApiUrl = (environment, region) => {
     const envUrls = {
       prod: `https://${region}.api.flagright.com`,
-      sandbox: 'https://sandbox.api.flagright.com',
+      sandbox:
+        region === 'eu-1'
+          ? 'https://sandbox.api.flagright.com'
+          : 'https://sandbox-asia-1.api.flagright.com',
       dev: 'https://api.flagright.dev',
       'dev:user': 'https://api.flagright.dev',
       local: `https://region.api.flagright.com`,
