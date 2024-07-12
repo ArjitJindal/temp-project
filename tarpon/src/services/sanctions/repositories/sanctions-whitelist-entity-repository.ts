@@ -1,16 +1,14 @@
-import { MongoClient } from 'mongodb'
+import { MongoClient, Filter } from 'mongodb'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { traceable } from '@/core/xray'
-
-export type SanctionsWhitelistEntity = {
-  createdAt: number
-  caEntity: ComplyAdvantageSearchHitDoc
-  userId?: string
-  reason?: string
-  comment?: string
-}
+import {
+  CursorPaginationParams,
+  cursorPaginate,
+  CursorPaginationResponse,
+} from '@/utils/pagination'
+import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 
 @traceable
 export class SanctionsWhitelistEntityRepository {
@@ -81,5 +79,24 @@ export class SanctionsWhitelistEntityRepository {
       .find({ 'caEntity.id': { $in: requestEntityIds }, userId })
       .toArray()
     return result
+  }
+
+  public async searchWhitelistEntities(
+    params: {
+      filterUserId?: string[]
+    } & CursorPaginationParams
+  ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsWhitelistEntity>(
+      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
+    )
+    const filter: Filter<SanctionsWhitelistEntity> = {}
+    if (params.filterUserId) {
+      filter.userId = { $in: params.filterUserId }
+    }
+    return cursorPaginate<SanctionsWhitelistEntity>(collection, filter, {
+      ...params,
+      sortField: params.sortField || 'createdAt',
+    })
   }
 }

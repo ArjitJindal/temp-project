@@ -25,6 +25,7 @@ import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
+import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { getContext, tenantSettings } from '@/core/utils/context'
@@ -34,7 +35,10 @@ import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsSc
 import { SanctionsSettingsMarketType } from '@/@types/openapi-internal/SanctionsSettingsMarketType'
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
-import { CursorPaginationParams } from '@/utils/pagination'
+import {
+  CursorPaginationParams,
+  CursorPaginationResponse,
+} from '@/utils/pagination'
 import {
   ComplyAdvantageApi,
   ComplyAdvantageEntity,
@@ -518,6 +522,28 @@ export class SanctionsService {
     await this.initialize()
     await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
       caEntityIds,
+      userId
+    )
+  }
+
+  public async searchWhitelistEntities(
+    params: {
+      filterUserId?: string[]
+    } & CursorPaginationParams
+  ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
+    await this.initialize()
+    return this.sanctionsWhitelistEntityRepository.searchWhitelistEntities(
+      params
+    )
+  }
+
+  public async deleteWhitelistRecord(
+    caEntityId: string,
+    userId: string
+  ): Promise<void> {
+    await this.initialize()
+    await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
+      [caEntityId],
       userId
     )
   }

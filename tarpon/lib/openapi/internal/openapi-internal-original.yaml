@@ -5208,6 +5208,66 @@ paths:
           in: query
           name: sortField
       operationId: search-sanctions-hits
+  /sanctions/whitelist:
+    get:
+      summary: Get whitelist records
+      tags: []
+      x-flagright:
+        permissions:
+          - sanctions:search:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SanctionsWhitelistSearchResponse'
+      parameters:
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterUserId
+          in: query
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+          in: query
+          name: start
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
+      operationId: search-sanctions-whitelist
+  /sanctions/whitelist/{userId}/{caEntityId}:
+    delete:
+      summary: Delete whitelist record
+      tags: []
+      x-flagright:
+        permissions:
+          - sanctions:search:write
+      responses:
+        '200':
+          description: OK
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: caEntityId
+          in: path
+          required: true
+      operationId: delete-sanctions-whitelist-record
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -9910,6 +9970,54 @@ components:
         - count
         - limit
         - last
+    SanctionsWhitelistSearchResponse:
+      title: SanctionsWhitelistSearchResponse
+      type: object
+      properties:
+        hasPrev:
+          type: boolean
+        prev:
+          type: string
+        next:
+          type: string
+        count:
+          type: number
+        limit:
+          type: number
+        last:
+          type: string
+        hasNext:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsWhitelistEntity'
+      required:
+        - hasPrev
+        - prev
+        - next
+        - hasNext
+        - items
+        - count
+        - limit
+        - last
+    SanctionsWhitelistEntity:
+      title: SanctionsWhitelistEntity
+      type: object
+      properties:
+        createdAt:
+          type: number
+        caEntity:
+          $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
+        userId:
+          type: string
+        reason:
+          type: string
+        comment:
+          type: string
+      required:
+        - createdAt
+        - caEntity
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object

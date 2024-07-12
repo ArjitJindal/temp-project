@@ -537,7 +537,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     },
     [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: {
       getIndexes: () =>
-        [{ 'caEntity.id': 1, userId: 1 }].map((index) => ({ index })),
+        [{ 'caEntity.id': 1, userId: 1 }, { userId: 1 }].map((index) => ({
+          index,
+        })),
     },
     [SANCTIONS_SCREENING_DETAILS_COLLECTION(tenantId)]: {
       getIndexes: () => [

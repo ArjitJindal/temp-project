@@ -6,7 +6,10 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { DefaultApiSearchSanctionsHitsRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiSearchSanctionsHitsRequest,
+  DefaultApiDeleteSanctionsWhitelistRecordRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { AlertsService } from '@/services/alerts'
 
 export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
@@ -62,6 +65,29 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
           sortField: request.sortField,
           sortOrder: request.sortOrder,
         })
+      }
+    )
+
+    handlers.registerSearchSanctionsWhitelist(
+      async (_ctx, request: DefaultApiSearchSanctionsHitsRequest) => {
+        const result = await sanctionsService.searchWhitelistEntities({
+          ...request,
+          pageSize: request.pageSize,
+          fromCursorKey: request.start,
+          sortField: request.sortField,
+          sortOrder: request.sortOrder,
+        })
+        return result
+      }
+    )
+
+    handlers.registerDeleteSanctionsWhitelistRecord(
+      async (
+        _ctx,
+        request: DefaultApiDeleteSanctionsWhitelistRecordRequest
+      ) => {
+        const { userId, caEntityId } = request
+        await sanctionsService.deleteWhitelistRecord(caEntityId, userId)
       }
     )
 

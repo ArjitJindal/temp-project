@@ -221,6 +221,12 @@ export const SANCTIONS_HITS_SEARCH = (params: AnyParameters): QueryKey => [
   'search',
   params,
 ];
+export const SANCTIONS_WHITELIST_SEARCH = (params: AnyParameters): QueryKey => [
+  'sanctions',
+  'whitelist',
+  'search',
+  params,
+];
 export const ALERT_ITEM = (alertId: string): QueryKey => ['alerts', 'item', alertId];
 export const ALERT_CHECKLIST = (alertId: string | undefined): QueryKey => [
   'alerts',

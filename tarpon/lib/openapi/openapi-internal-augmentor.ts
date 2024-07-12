@@ -222,6 +222,9 @@ export const ConsoleApiPathToLambda: any = {
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/hits/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/whitelist': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+  '/sanctions/whitelist/{userId}/{caEntityId}':
+    StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/hits/status': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/activity/stats':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
