@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
-import { round, startCase } from 'lodash'
+import { BadRequest } from 'http-errors'
+import { isEmpty, round, startCase } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
@@ -558,6 +559,10 @@ export class SanctionsService {
       filterStatus?: SanctionsHitStatus[]
     } & CursorPaginationParams
   ): Promise<SanctionsHitListResponse> {
+    if (isEmpty(params.filterHitIds) && !params.filterSearchId) {
+      throw new BadRequest('Search ID or Hit IDs must be provided')
+    }
+
     await this.initialize()
     const hits = await this.sanctionsHitsRepository.searchHits(params)
     return hits
