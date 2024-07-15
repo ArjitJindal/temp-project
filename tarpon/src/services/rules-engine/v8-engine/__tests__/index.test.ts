@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import { STARTS_WITH_OPERATOR } from '../../v8-operators/starts-ends-with'
 import { createAggregationVariable } from '../test-utils'
 import { AggregationRepository } from '../aggregation-repository'
 import { TransactionRuleData } from '..'
@@ -15,7 +14,19 @@ import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregati
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
 
-const operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
+jest.mock('../../v8-operators/starts-ends-with', () => {
+  const actualModule = jest.requireActual('../../v8-operators/starts-ends-with')
+  return {
+    ...actualModule,
+    STARTS_WITH_OPERATOR: {
+      ...actualModule.STARTS_WITH_OPERATOR,
+      run: jest.fn().mockImplementation(actualModule.STARTS_WITH_OPERATOR.run),
+    },
+  }
+})
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { STARTS_WITH_OPERATOR } = require('../../v8-operators/starts-ends-with')
+
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { RuleJsonLogicEvaluator, canAggregate } = require('..')
 const bulkVerifyTransactions =
@@ -1569,9 +1580,12 @@ describe('Test canAggregate function', () => {
   })
 })
 
-// TODO: FR-5153 Unskip this test (https://www.notion.so/flagright/Operators-Test-Not-working-as-expected-c149803daa0e47138b9a70f9d54d6b99)
-describe.skip('operators', () => {
+describe('operators', () => {
+  let operatorSpy: jest.SpyInstance
   beforeEach(() => {
+    operatorSpy = jest.spyOn(STARTS_WITH_OPERATOR, 'run')
+  })
+  afterEach(() => {
     operatorSpy.mockRestore()
   })
   test('be called multiple times for different lhs/rhs values', async () => {
@@ -1596,7 +1610,7 @@ describe.skip('operators', () => {
         transaction: getTestTransaction({ type: 'TRANSFER' }),
       }
     )
-    expect(operatorSpy).toBeCalledTimes(2)
+    expect(operatorSpy).toHaveBeenCalledTimes(2)
   })
   test('be called once for the same lhs/rhs values', async () => {
     const tenantId = 'tenant-id'
@@ -1620,7 +1634,7 @@ describe.skip('operators', () => {
         transaction: getTestTransaction({ type: 'TRANSFER' }),
       }
     )
-    expect(operatorSpy).toBeCalledTimes(1)
+    expect(operatorSpy).toHaveBeenCalledTimes(1)
   })
 })
 
