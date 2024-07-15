@@ -8,79 +8,30 @@ import { MerchantRepository } from '@/services/merchant-monitoring/merchant-repo
 import { logger } from '@/core/logger'
 import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
 import { traceable } from '@/core/xray'
-import { prompt } from '@/utils/openai'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { ensureHttps } from '@/utils/http'
 import { apiFetch } from '@/utils/api-fetch'
-import { addSentryExtras } from '@/core/utils/context'
+import { MerchantSummariser } from '@/services/merchant-monitoring/merchant-summariser'
 
-const industries: string[] = [
-  'Agriculture and Forestry',
-  'Automotive',
-  'Banking and Financial Services',
-  'Biotechnology',
-  'Construction',
-  'Consumer Goods and Services',
-  'Education',
-  'Energy',
-  'Entertainment and Leisure',
-  'Food and Beverage',
-  'Healthcare',
-  'Information Technology',
-  'Manufacturing',
-  'Media and Communications',
-  'Mining and Natural Resources',
-  'Pharmaceuticals',
-  'Professional Services',
-  'Real Estate',
-  'Retail',
-  'Transportation and Logistics',
-  'Travel and Tourism',
-  'Utilities',
-  'Wholesale Trade',
-  'Others',
-]
-
-const productTypes: string[] = [
-  'Apparel',
-  'Appliances',
-  'Automobiles',
-  'Books',
-  'Chemicals',
-  'Computers and Electronics',
-  'Consumer Packaged Goods',
-  'Cosmetics and Personal Care',
-  'Food and Beverages',
-  'Furniture',
-  'Hardware and Building Materials',
-  'Health and Wellness Products',
-  'Housewares',
-  'Industrial Equipment',
-  'Jewelry',
-  'Medical Devices',
-  'Pharmaceuticals',
-  'Software and Applications',
-  'Sports and Recreation Equipment',
-  'Toys and Games',
-  'Transportation Equipment',
-  'Others',
-]
-
-const MAX_TOKEN_OUTPUT = 4096
-
-const OUTPUT_REGEX =
-  /Industry:(.*)\nProducts:(.*)\nLocation:(.*)\nEmployees:(.*)\nRevenue:(.*)\nSummary:(.*)/i
 @traceable
 export class MerchantMonitoringScrapeService {
   private companiesHouseApiKey?: string
-  private rapidApiKey?: string
   private scrapflyApiKey?: string
   private exploriumApiKey?: string
   private axios: AxiosInstance
+  private summariser: MerchantSummariser
 
-  constructor() {
+  constructor(
+    companiesHouseApiKey: string,
+    scrapflyApiKey: string,
+    exploriumApiKey: string,
+    summariser: MerchantSummariser
+  ) {
+    this.companiesHouseApiKey = companiesHouseApiKey
+    this.scrapflyApiKey = scrapflyApiKey
+    this.exploriumApiKey = exploriumApiKey
+    this.summariser = summariser
     this.axios = axios.create()
-
     this.axios.interceptors.response.use(
       (response) => response,
       (error) => {
@@ -93,13 +44,12 @@ export class MerchantMonitoringScrapeService {
   public static async init(): Promise<MerchantMonitoringScrapeService> {
     const secrets = await getSecretByName('MerchantMonitoring')
 
-    const service = new MerchantMonitoringScrapeService()
-
-    service.companiesHouseApiKey = secrets.companiesHouse
-    service.rapidApiKey = secrets.rapidApi
-    service.scrapflyApiKey = secrets.scrapfly
-    service.exploriumApiKey = secrets.explorium
-    return service
+    return new MerchantMonitoringScrapeService(
+      secrets.companiesHouse,
+      secrets.scrapfly,
+      secrets.explorium,
+      new MerchantSummariser()
+    )
   }
 
   async getMerchantMonitoringSummaries(
@@ -252,7 +202,7 @@ export class MerchantMonitoringScrapeService {
         text = response.result.result.content
       }
 
-      const summary = await this.summarise('SCRAPE', text)
+      const summary = await this.summariser.summarise('SCRAPE', text)
       return {
         ...summary,
         source: { sourceType: 'SCRAPE', sourceValue: website },
@@ -282,7 +232,10 @@ export class MerchantMonitoringScrapeService {
         }
       )
 
-      return this.summarise('COMPANIES_HOUSE', response?.result?.items[0])
+      return this.summariser.summarise(
+        'COMPANIES_HOUSE',
+        response?.result?.items[0]
+      )
     } catch (e) {
       logger.error(e)
       throw e
@@ -307,92 +260,6 @@ export class MerchantMonitoringScrapeService {
       data: `[{"company": "${companyName}"}]`,
     })
 
-    return this.summarise('EXPLORIUM', JSON.stringify(data.data))
-  }
-
-  private async summarise(
-    source: MerchantMonitoringSourceType,
-    content: string
-  ): Promise<MerchantMonitoringSummary | undefined> {
-    try {
-      if (!content) {
-        throw new Error('Unable to extract information from the given site')
-      }
-      const output = await prompt([
-        {
-          role: 'system',
-          content:
-            'You are a business intelligence API that will retrieve key values about a business from unstructured data. The key values are industry, products sold, location, number of employees, revenue and an overall summary.',
-        },
-        {
-          role: 'system',
-          content: `You will output your findings in the exact same format as this example:
-Industry: Healthcare
-Products: Medical Devices, Pharmaceuticals
-Location: Delhi, India
-Employees: 54
-Revenue: $100000
-Summary: Acme is a textile company which sells shoes in Delhi, India and generates a revenue of $100000 with 54 employees`,
-        },
-        {
-          role: 'system',
-          content: `Please choose the relevant industry from the following list: ${industries.join(
-            ', '
-          )}`,
-        },
-        {
-          role: 'system',
-          content: `Please choose the products sold from the following list: ${productTypes.join(
-            ', '
-          )}`,
-        },
-        {
-          role: 'system',
-          content: `Output the location one of the following formats "City, Country" or "Country"`,
-        },
-        {
-          role: 'system',
-          content: `Output the number of employees as a number range e.g. 1000-5000`,
-        },
-        {
-          role: 'system',
-          content: `Output the revenue as number range e.g. $1000-5000`,
-        },
-        {
-          role: 'system',
-          content: `If a value is unknown, please just say "Unspecified"`,
-        },
-        {
-          role: 'user',
-          content:
-            `Please analyse the following content for a business:\n ${content}`.substring(
-              0,
-              MAX_TOKEN_OUTPUT
-            ),
-        },
-      ])
-      const re = new RegExp(OUTPUT_REGEX, 'm')
-      const result: string[] = re.exec(output as string) as string[]
-
-      if (!result || result.length < 2) {
-        addSentryExtras({ content, output, result })
-        logger.error(`Unable to summarise ${source} content`)
-        throw new Error('Unable to extract information from the given site')
-      }
-
-      return {
-        source: { sourceType: source },
-        industry: result[1],
-        products: result[2].split(','),
-        location: result[3] ?? '',
-        employees: result[4] ?? '',
-        revenue: result[5] ?? '',
-        summary: result[6] ?? '',
-        raw: content,
-      }
-    } catch (e) {
-      logger.error(e)
-      throw e
-    }
+    return this.summariser.summarise('EXPLORIUM', JSON.stringify(data.data))
   }
 }

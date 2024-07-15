@@ -1,4 +1,3 @@
-import { uniq } from 'lodash'
 import {
   AttributeBuilder,
   AttributeSet,
@@ -6,6 +5,9 @@ import {
   InputData,
 } from '@/services/copilot/attributes/builder'
 import { traceable } from '@/core/xray'
+import { ruleNarratives } from '@/services/copilot/rule-narratives'
+import { isV8RuleInstance } from '@/services/rules-engine/utils'
+import { RULES_LIBRARY } from '@/services/rules-engine/transaction-rules/library'
 
 @traceable
 export class CaseAttributeBuilder implements AttributeBuilder {
@@ -14,25 +16,36 @@ export class CaseAttributeBuilder implements AttributeBuilder {
   }
 
   build(attributes: AttributeSet, inputData: InputData) {
-    if (!inputData.ruleInstances?.length) {
-      attributes.setAttribute(
-        'ruleHitNames',
-        uniq(inputData._case?.alerts?.map((a) => a.ruleName) || [])
-      )
-      attributes.setAttribute(
-        'ruleHitNature',
-        uniq(inputData._case?.alerts?.map((r) => r.ruleNature))
-      )
-    } else {
-      attributes.setAttribute(
-        'ruleHitNames',
-        uniq(inputData.ruleInstances.map((r) => r.ruleNameAlias))
-      )
-      attributes.setAttribute(
-        'ruleHitNature',
-        uniq(inputData.ruleInstances.map((r) => r.nature))
-      )
+    if (!inputData._case) {
+      return
     }
+
+    attributes.setAttribute(
+      'rules',
+      inputData.ruleInstances?.map((ri) => {
+        const rule = RULES_LIBRARY.find((r) => r.id === r.id)
+
+        return {
+          name: ri.ruleNameAlias,
+          nature: ri.nature,
+          ...(!isV8RuleInstance(ri)
+            ? {
+                checksFor: rule?.checksFor,
+                types: rule?.types,
+                typologies: rule?.typologies,
+                sampleUseCases: rule?.sampleUseCases,
+              }
+            : {
+                logic: ri.logic,
+                logicAggregationVariables: ri.logicAggregationVariables,
+              }),
+          narrative:
+            ruleNarratives.find((rn) => rn.id === ri.ruleId)?.narrative || '',
+        }
+      })
+    )
+
+    attributes.setAttribute('reasons', inputData.reasons)
 
     attributes.setAttribute(
       'caseComments',
@@ -40,13 +53,14 @@ export class CaseAttributeBuilder implements AttributeBuilder {
     )
     attributes.setAttribute(
       'alertComments',
-      inputData._case?.alerts?.flatMap((a) => a.comments?.map((c) => c.body)) ||
-        []
+      inputData._case?.alerts
+        ?.flatMap((a) => a.comments?.map((c) => c.body))
+        .filter((c): c is string => Boolean(c)) || []
     )
     attributes.setAttribute(
       'caseGenerationDate',
       new Date(inputData._case?.createdTimestamp || 0).toLocaleDateString() ||
-        []
+        undefined
     )
     attributes.setAttribute('closureDate', new Date().toLocaleDateString())
   }

@@ -5,19 +5,14 @@ import {
 import { NotFound } from 'http-errors'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { CopilotService } from '@/services/copilot/copilot-service'
+import { AutoNarrativeService } from '@/services/copilot/auto-narrative-service'
 import { CaseService } from '@/services/cases'
-import { UserService } from '@/services/users'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ReportService } from '@/services/sar/service'
 import { QuestionService } from '@/services/copilot/questions/question-service'
 import { AlertsService } from '@/services/alerts'
 import { AutocompleteService } from '@/services/copilot/questions/autocompletion-service'
-import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
-import { Case } from '@/@types/openapi-internal/Case'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { RetrievalService } from '@/services/copilot/retrieval-service'
 
 export const copilotHandler = lambdaApi({})(
   async (
@@ -25,94 +20,39 @@ export const copilotHandler = lambdaApi({})(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const [caseService, alertsService, userService, txnRepository] =
-      await Promise.all([
-        CaseService.fromEvent(event),
-        AlertsService.fromEvent(event),
-        UserService.fromEvent(event),
-        MongoDbTransactionRepository.fromEvent(event),
-      ])
+    const [caseService, alertsService] = await Promise.all([
+      CaseService.fromEvent(event),
+      AlertsService.fromEvent(event),
+    ])
 
     const handlers = new Handlers()
 
+    const copilotService = new AutoNarrativeService()
+    const retrievalService = await RetrievalService.new(event)
     handlers.registerGenerateNarrative(async (ctx, request) => {
-      const copilotService = await CopilotService.new(event)
       const { entityId, entityType, reasons } = request.NarrativeRequest
-
-      if (entityType === 'REPORT') {
-        const reportService = await ReportService.fromEvent(event)
-
-        const report = await reportService.getReport(entityId)
-        const _case = await caseService.getCase(report.caseId)
-
-        const userId =
-          _case.caseUsers?.origin?.userId ||
-          _case.caseUsers?.destination?.userId
-        if (!userId) {
-          throw new NotFound('No user for found for report')
-        }
-
-        const user = await userService.getUser(userId)
-
-        // Hydrate case transactions
-        const transactions = await txnRepository.getTransactionsByIds(
-          report.parameters.transactions?.map((t) => t.id) ||
-            _case.caseTransactionsIds ||
-            []
-        )
-        return copilotService.getSarNarrative({
-          _case,
-          user,
-          reasons,
-          transactions,
-        })
-      }
-
-      const _case =
-        entityType === 'CASE'
-          ? ((await caseService.getCase(entityId)) as Case)
-          : ((await caseService.getCaseByAlertId(entityId)) as Case)
-
-      const ruleInstanceIds =
-        entityType === 'CASE'
-          ? _case?.alerts?.map((a) => a.ruleInstanceId as string) || []
-          : [
-              _case?.alerts?.find((a) => a.alertId === entityId)
-                ?.ruleInstanceId as string,
-            ]
-
-      const user = await userService.getUser(
-        _case?.caseUsers?.origin?.userId ||
-          _case?.caseUsers?.destination?.userId ||
-          ''
+      const attributes = await retrievalService.getAttributes(
+        entityId,
+        entityType,
+        reasons
       )
-
-      const ruleInstanceRepository = new RuleInstanceRepository(ctx.tenantId, {
-        dynamoDb: getDynamoDbClientByEvent(event),
-      })
-
-      const [transactions, ruleInstances] = await Promise.all([
-        txnRepository.getTransactionsByIds(_case.caseTransactionsIds || []),
-        ruleInstanceRepository.getRuleInstancesByIds(
-          ruleInstanceIds.filter((id) => id)
-        ),
-      ])
-
-      if (_case) {
-        return copilotService.getCaseNarrative({
-          _case,
-          user,
-          reasons,
-          transactions,
-          ruleInstances,
-        })
+      if (entityType === 'REPORT') {
+        return copilotService.getSarNarrative(attributes)
       }
-      throw new NotFound('Case not found')
+      if (entityType === 'CASE' || entityType === 'ALERT') {
+        return copilotService.getNarrative(attributes)
+      }
+      throw new NotFound(`Entity type not supported: ${entityType}`)
     })
 
     handlers.registerFormatNarrative(async (_ctx, request) => {
-      const copilotService = await CopilotService.new(event)
-      return copilotService.formatNarrative(request)
+      const { entityId, entityType, narrative, reasons } =
+        request.NarrativeRequest
+
+      return copilotService.formatNarrative(
+        narrative,
+        await retrievalService.getAttributes(entityId, entityType, reasons)
+      )
     })
 
     handlers.registerGetQuestions(async (_ctx, request) => {

@@ -18,6 +18,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials,
 } from 'aws-lambda'
+import { Credentials as StsCredentials } from '@aws-sdk/client-sts'
 import { uuid4 } from '@sentry/utils'
 import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
 import { CaseRepository } from '../cases/repository'
@@ -65,7 +66,6 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
-import { JWTAuthorizerResult } from '@/@types/jwt'
 import {
   getMentionsFromComments,
   getParsedCommentBody,
@@ -94,7 +94,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
-      APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
+      APIGatewayEventLambdaAuthorizerContext<StsCredentials>
     >
   ): Promise<AlertsService> {
     const { principalId: tenantId } = event.requestContext.authorizer

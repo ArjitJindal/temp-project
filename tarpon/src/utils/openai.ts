@@ -1,15 +1,10 @@
-import { Configuration, OpenAIApi } from 'openai'
-import {
-  ChatCompletionRequestMessage,
-  CreateChatCompletionRequest,
-} from 'openai/api'
+import { OpenAI } from 'openai'
 import { getSecret } from './secrets-manager'
 import { GPT_REQUESTS_COLLECTION } from './mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context'
 
-const MAX_TOKEN_INPUT = 1000
-let openai: OpenAIApi | null = null
+let openai: OpenAI | null = null
 
 export enum ModelVersion {
   GPT3 = 'gpt-3.5-turbo',
@@ -19,64 +14,47 @@ export enum ModelVersion {
 const modelVersion: ModelVersion = ModelVersion.GPT4O
 
 export type GPTLogObject = {
-  prompts: string[] | ChatCompletionRequestMessage[]
+  prompts: any
   response: string
   createdAt: number
 }
 
 export async function ask(
-  prompt: string,
-  params?: { temperature?: number; modelVersion?: ModelVersion }
+  promptString: string,
+  options?: Partial<OpenAI.ChatCompletionCreateParamsNonStreaming>
 ): Promise<string> {
-  const tenantId = getContext()?.tenantId
-  if (!openai) {
-    const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
-    openai = new OpenAIApi(
-      new Configuration({
-        apiKey,
-      })
-    )
-  }
-
-  const completion = await openai.createChatCompletion({
-    model: params?.modelVersion ?? modelVersion,
-    temperature: params?.temperature ?? 0.5,
-    messages: [
+  return prompt(
+    [
       {
-        content: prompt,
-        role: 'assistant',
+        role: 'system',
+        content: promptString,
       },
     ],
-    max_tokens: MAX_TOKEN_INPUT,
-  })
-  const completionChoice = completion.data.choices[0].message?.content || ''
-  tenantId && (await logGPTResponses(tenantId, [prompt], completionChoice))
-  return completionChoice
+    options
+  )
 }
 
 export async function prompt(
-  messages: ChatCompletionRequestMessage[],
-  params?: Partial<CreateChatCompletionRequest>
+  messages: OpenAI.ChatCompletionMessageParam[],
+  options?: Partial<OpenAI.ChatCompletionCreateParamsNonStreaming>
 ): Promise<string> {
   const tenantId = getContext()?.tenantId
 
   if (!openai) {
     const { apiKey } = await getSecret<{ apiKey: string }>('openAI')
-    openai = new OpenAIApi(
-      new Configuration({
-        apiKey,
-      })
-    )
+    openai = new OpenAI({
+      apiKey,
+    })
   }
 
-  const completion = await openai.createChatCompletion({
-    model: modelVersion,
-    temperature: params?.temperature ?? 0.5,
+  const completion = await openai.chat.completions.create({
+    ...options,
     messages,
-    max_tokens: MAX_TOKEN_INPUT,
-    ...params,
+    model: options?.model ?? modelVersion,
+    temperature: options?.temperature ?? 0.5,
   })
-  const completionChoice = completion.data.choices[0].message?.content || ''
+
+  const completionChoice = completion.choices[0].message.content || ''
 
   tenantId && (await logGPTResponses(tenantId, messages, completionChoice))
 
@@ -85,7 +63,7 @@ export async function prompt(
 
 async function logGPTResponses(
   tenantId: string,
-  prompts: string[] | ChatCompletionRequestMessage[],
+  prompts: OpenAI.ChatCompletionMessageParam[],
   completionChoice: string
 ) {
   const mongodbClient = await getMongoDbClient()

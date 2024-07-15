@@ -1693,7 +1693,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/FormatRequest'
+              $ref: '#/components/schemas/NarrativeRequest'
         required: true
   /copilot/sources:
     get:
@@ -8040,6 +8040,14 @@ components:
                 type: string
       required:
         - body
+    NarrativeType:
+      type: string
+      enum:
+        - ALERT
+        - CASE
+        - TRANSACTION
+        - REPORT
+        - SANCTIONS_HIT
     NarrativeRequest:
       title: NarrativeRequest
       type: object
@@ -8047,37 +8055,15 @@ components:
         entityId:
           type: string
         entityType:
-          type: string
-          enum:
-            - ALERT
-            - CASE
-            - TRANSACTION
-            - REPORT
-            - SANCTIONS_HIT
+          $ref: '#/components/schemas/NarrativeType'
         reasons:
           type: array
           items:
             $ref: '#/components/schemas/CaseReasons'
-      required:
-        - reasons
-        - entityId
-    FormatRequest:
-      title: FormatRequest
-      type: object
-      properties:
-        entityId:
-          type: string
-        entityType:
-          type: string
-          enum:
-            - ALERT
-            - CASE
-            - TRANSACTION
-            - REPORT
-            - SANCTIONS_HIT
         narrative:
           type: string
       required:
+        - reasons
         - entityId
         - entityType
         - narrative
@@ -8355,8 +8341,7 @@ components:
       enum:
         - userType
         - country
-        - ruleHitNames
-        - ruleHitNature
+        - reasons
         - caseComments
         - alertComments
         - userComments
@@ -8373,6 +8358,7 @@ components:
         - industry
         - productsSold
         - transactionIds
+        - rules
     AIAttributeCategory:
       title: CoPilotAttributeCategory
       type: string

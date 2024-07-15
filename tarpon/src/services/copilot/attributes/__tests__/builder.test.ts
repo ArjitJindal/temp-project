@@ -7,10 +7,13 @@ import {
 
 describe('Attribute generator', () => {
   test('Attributes are built correctly', async () => {
-    const attributeGenerator = new AttributeGenerator(DefaultAttributeBuilders)
+    const attributeGenerator = new AttributeGenerator(
+      DefaultAttributeBuilders,
+      []
+    )
     const { user } = sampleBusinessUser({ country: 'AF' })
     const originUserId = user.userId
-    const attributes = attributeGenerator.getAttributes({
+    const attributes = await attributeGenerator.getAttributes({
       transactions: [
         sampleTransaction({ originUserId, destinationCountry: 'AF' }),
         sampleTransaction({ originUserId, destinationCountry: 'GB' }),
@@ -19,6 +22,7 @@ describe('Attribute generator', () => {
         sampleTransaction({ originUserId, destinationCountry: 'GB' }),
       ],
       user,
+      reasons: [],
     })
     expect(attributes.getAttribute('transactionsCount')).toEqual(5)
   })

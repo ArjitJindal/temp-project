@@ -226,6 +226,7 @@ export const CopilotWrapperContent = ({
           entityType: entityType || 'CASE',
           // TODO make this generic
           reasons: reasons as CaseReasons[],
+          narrative: '',
         },
       });
       setNarrativeValue(response.narrative);
@@ -240,10 +241,11 @@ export const CopilotWrapperContent = ({
     try {
       setFormatLoading(true);
       const response = await api.formatNarrative({
-        FormatRequest: {
+        NarrativeRequest: {
           entityId,
           entityType: entityType || 'CASE',
           narrative,
+          reasons: reasons as CaseReasons[],
         },
       });
       setNarrativeValue(response.narrative);

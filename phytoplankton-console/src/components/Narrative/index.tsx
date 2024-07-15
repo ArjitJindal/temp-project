@@ -10,7 +10,7 @@ import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/
 import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
-import { CaseReasons, FileInfo, NarrativeRequestEntityTypeEnum } from '@/apis';
+import { CaseReasons, FileInfo, NarrativeType } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
@@ -37,7 +37,7 @@ export const CLOSING_REASONS: CaseReasons[] = [
   'Escalated',
 ];
 
-export type EntityType = NarrativeRequestEntityTypeEnum;
+export type EntityType = NarrativeType;
 
 export type FormValues<R, ExtraFields = unknown> = {
   reasons: R[];

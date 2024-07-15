@@ -271,7 +271,7 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
   private async getAIResponse(prompt: string) {
     return await ask(prompt, {
       temperature: 0.7,
-      modelVersion: ModelVersion.GPT4O,
+      model: ModelVersion.GPT4O,
     })
   }
 

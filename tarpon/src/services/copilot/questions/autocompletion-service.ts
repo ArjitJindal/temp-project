@@ -1,6 +1,6 @@
 import { uniq } from 'lodash'
+import { OpenAI } from 'openai'
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import { ChatCompletionRequestMessage } from 'openai/api'
 import { QuestionCategory } from './types'
 import {
   getQueries,
@@ -10,7 +10,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { ModelVersion, prompt } from '@/utils/openai'
+import { prompt } from '@/utils/openai'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
@@ -245,8 +245,11 @@ export class AutocompleteService {
                 variables: preparedVariables,
               }
             })
-          )}
-            You will be asked a to provide an array of questionId's and their corresponding "variables" based on user input. You must always return a question.`,
+          )}`,
+        },
+        {
+          role: 'system',
+          content: `You will be asked a to provide a JSON array of questionId's and their corresponding "variables" based on user input. You must always return a question.`,
         },
         {
           role: 'system',
@@ -261,34 +264,46 @@ export class AutocompleteService {
           content: `Unless specified, any questions for transactions will be for the question with ID "Transactions".`,
         },
         ...examples.map(
-          (example): ChatCompletionRequestMessage => ({
+          (example): OpenAI.ChatCompletionMessageParam => ({
             role: 'system',
             content: `For the input "${
               example.prompt
-            }", the following response is expected:\n ${JSON.stringify(
-              example.response
-            )}`,
+            }", the following JSON response is expected:\n ${JSON.stringify({
+              response: example.response,
+            })}`,
           })
         ),
         {
-          role: 'assistant',
-          content: `Please parse "${questionPrompt}" to give the best matching questionId and variables.`,
+          role: 'system',
+          content: `Please parse "${questionPrompt}" to give the best matching questionIds and variables in an array.`,
         },
       ],
       {
-        model: ModelVersion.GPT4O,
+        response_format: {
+          type: 'json_object',
+        },
       }
     )
     const results: {
-      questionId: string
-      variables: QuestionVariable[]
-    }[] = JSON.parse(response.replace('```json', '').replace('```', ''))
-    if (!Array.isArray(results) || results.length === 0) {
+      response: {
+        questionId: string
+        variables: QuestionVariable[]
+      }[]
+    } = JSON.parse(response)
+
+    results.response = results.response.map((r) => {
+      r.variables = r.variables.filter((v) => {
+        return Boolean(v.value) && !['REQUIRED', 'STRING'].includes(v.value)
+      })
+      return r
+    })
+
+    if (results.response.length === 0) {
       addSentryExtras({ questionPrompt, response, results })
       logger.error('AI could not determine a relevant question', results)
       return []
     }
-    return results
+    return results.response
   }
 
   async autocompleteVariable(
