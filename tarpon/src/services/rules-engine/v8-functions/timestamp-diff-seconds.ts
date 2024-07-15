@@ -20,7 +20,7 @@ export const TIMESTAMP_DIFF_SECONDS: RuleFunction<number> = {
       },
     },
   },
-  run: async ([t1, t2]: [number?, number?]) => {
+  run: async ([t1, t2]: number[]) => {
     if (!Number.isFinite(t1) || !Number.isFinite(t2)) {
       return NaN
     }

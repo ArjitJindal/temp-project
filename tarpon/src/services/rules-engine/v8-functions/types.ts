@@ -5,5 +5,5 @@ export type RuleFunction<ReturnType = unknown> = {
   key: string
   uiDefinition: Omit<Func, 'jsonLogic'>
   group: RuleFunctionGroup
-  run: (...args: any[]) => Promise<ReturnType>
+  run: (values: any[]) => Promise<ReturnType>
 }

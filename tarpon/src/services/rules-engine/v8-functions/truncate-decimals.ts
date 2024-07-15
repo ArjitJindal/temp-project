@@ -14,7 +14,7 @@ export const TRUNCATE_DECIMAL: RuleFunction<number> = {
       },
     },
   },
-  run: async (value: number) => {
+  run: async ([value]: number[]) => {
     return Math.trunc(value)
   },
 }

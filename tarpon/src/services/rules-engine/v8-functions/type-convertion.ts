@@ -14,7 +14,7 @@ export const NUMBER_TO_STRING: RuleFunction<string> = {
       },
     },
   },
-  run: async (value: string) => {
+  run: async ([value]: number[]) => {
     return value.toString()
   },
 }
@@ -33,7 +33,7 @@ export const STRING_TO_NUMBER: RuleFunction<number> = {
       },
     },
   },
-  run: async (value: string) => {
+  run: async ([value]: string[]) => {
     return Number.isNaN(Number(value)) ? 0 : Number(value)
   },
 }

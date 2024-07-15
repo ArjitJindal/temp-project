@@ -14,7 +14,7 @@ export const LOWERCASE: RuleFunction<string> = {
       },
     },
   },
-  run: async (value: string) => {
+  run: async ([value]: string[]) => {
     return value.toLowerCase()
   },
 }
@@ -32,7 +32,7 @@ export const UPPERCASE: RuleFunction<string> = {
       },
     },
   },
-  run: async (value: string) => {
+  run: async ([value]: string[]) => {
     return value.toUpperCase()
   },
 }
