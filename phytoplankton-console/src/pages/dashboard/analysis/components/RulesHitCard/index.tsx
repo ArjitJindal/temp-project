@@ -41,7 +41,7 @@ export default function RuleHitCard() {
       },
     }),
     helper.simple<'hitCount'>({
-      title: 'Rules hit',
+      title: 'Rule hits',
       key: 'hitCount',
     }),
     helper.simple<'openAlertsCount'>({
