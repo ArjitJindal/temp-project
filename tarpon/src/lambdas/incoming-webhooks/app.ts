@@ -52,8 +52,9 @@ export const webhooksHandler = lambdaApi()(
         if (!searchUpdated.search_id) {
           throw new Error('Missing search ID!')
         }
+        const searchId = searchUpdated.search_id as number
         logger.info(
-          `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${searchUpdated.search_id})`
+          `Received ComplyAdvantage webhook event 'monitored_search_updated' (search ID: ${searchId})`
         )
         const allTenantIds = await TenantService.getAllTenantIds()
         for (const tenantId of allTenantIds) {
@@ -63,9 +64,13 @@ export const webhooksHandler = lambdaApi()(
           updateLogMetadata({ tenantId })
           const tenantSettings = await tenantRepository.getTenantSettings()
           if (tenantSettings.features?.includes('SANCTIONS')) {
-            const searchId = searchUpdated.search_id as number
             const sanctionsService = new SanctionsService(tenantId)
-            await sanctionsService.refreshSearch(searchId)
+            const refreshed = await sanctionsService.refreshSearch(searchId)
+            if (refreshed) {
+              logger.info(
+                `Sanctions search ${searchId} refreshed for tenant ${tenantId}`
+              )
+            }
           }
         }
       } else {

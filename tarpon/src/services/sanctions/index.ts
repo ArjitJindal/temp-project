@@ -171,19 +171,14 @@ export class SanctionsService {
     return (await getSecretByName('complyAdvantageCreds')).apiKey
   }
 
-  public async refreshSearch(
-    caSearchId: number
-  ): Promise<{ newHitsCount: number }> {
+  public async refreshSearch(caSearchId: number): Promise<boolean> {
     await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByCASearchId(
         caSearchId
       )
     if (!result) {
-      logger.error(
-        `Cannot find complyadvantage monitored search - ${caSearchId}`
-      )
-      return { newHitsCount: 0 }
+      return false
     }
     const response = await this.fetchFullSearchState(caSearchId)
 
@@ -210,7 +205,7 @@ export class SanctionsService {
       `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
     )
 
-    return { newHitsCount: newHits.length }
+    return true
   }
 
   public async search(
