@@ -62,10 +62,17 @@ export async function seedDynamo(
 
     await userRepo.saveUser(dynamoUser, type)
   }
+
   logger.info('Creating lists...')
   for (const list of listsData()) {
-    await listRepo.createList(list.listType, list.subtype, list.data)
+    await listRepo.createList(
+      list.listType,
+      list.subtype,
+      list.data,
+      list.listId
+    )
   }
+
   logger.info('Creating transactions...')
   for (const txn of getTransactions()) {
     const publicTxn = internalToPublic(txn)

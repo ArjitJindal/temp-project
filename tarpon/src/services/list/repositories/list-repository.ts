@@ -113,6 +113,7 @@ export class ListRepository {
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
         Key: DynamoDbKeys.LIST_HEADER(this.tenantId, listId),
+        ConsistentRead: true,
       })
     )
     if (Item == null) {
