@@ -134,15 +134,11 @@ class DatabricksStack extends TerraformStack {
       ? this.createVpc()
       : this.fetchVpc()
 
-    this.awsWorkspace(
-      config.viper.CREATE_VPC
-        ? undefined
-        : {
-            availabilityZone: `${awsRegion}a`,
-            vpcId: vpcId,
-            subnetId: Fn.element(subnetIds, 0),
-          }
-    )
+    this.awsWorkspace({
+      availabilityZone: `${awsRegion}a`,
+      vpcId: vpcId,
+      subnetId: Fn.element(subnetIds, 0),
+    })
   }
 
   private awsWorkspace(vpc?: {
