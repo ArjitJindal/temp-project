@@ -1,13 +1,13 @@
-import { useRef, useState, useContext, useMemo } from 'react';
+import { useRef, useState, useContext, useMemo, useCallback } from 'react';
 import { Typography } from 'antd';
 import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
-import { useLocation } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import { HighlightOutlined } from '@ant-design/icons';
 import AuditLogModal from '../AuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
-import { deserializeParams, useTableData } from './helpers';
+import { auditLogQueryAdapter, useTableData } from './helpers';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import DatePicker from '@/components/ui/DatePicker';
 import { useApi } from '@/api';
@@ -25,19 +25,42 @@ import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import AccountTag from '@/components/AccountTag';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
-import { parseQueryString } from '@/utils/routing';
+import { makeUrl, parseQueryString } from '@/utils/routing';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 export default function AuditLogTable() {
   const api = useApi();
   const location = useLocation();
-  const deserializedParams = useMemo(
-    () => deserializeParams(parseQueryString(location.search)),
+  const parsedParams = useMemo(
+    () => auditLogQueryAdapter.deserializer(parseQueryString(location.search)),
     [location.search],
   );
-  const [params, setParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    ...deserializedParams,
-  });
+
+  const [params, setParams] = useState<AllParams<TableSearchParams>>(DEFAULT_PARAMS_STATE);
+  const navigate = useNavigate();
+
+  const pushParamsToNavigation = useCallback(
+    (params) => {
+      navigate(makeUrl('/auditlog', {}, auditLogQueryAdapter.serializer(params)), {
+        replace: true,
+      });
+    },
+    [navigate],
+  );
+
+  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
+    pushParamsToNavigation(newParams);
+  };
+
+  useDeepEqualEffect(() => {
+    setParams((prevState: AllParams<TableSearchParams>) => ({
+      ...prevState,
+      ...parsedParams,
+      sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PARAMS_STATE.pageSize,
+      page: parsedParams.page ?? DEFAULT_PARAMS_STATE.page,
+    }));
+  }, [parsedParams]);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState<boolean>(false);
   const context = useContext(SuperAdminModeContext);
   const finalParams = useMemo(
@@ -221,7 +244,7 @@ export default function AuditLogTable() {
         rowKey="auditlogId"
         queryResults={tableQueryResult}
         params={params}
-        onChangeParams={setParams}
+        onChangeParams={handleChangeParams}
         pagination={true}
         extraFilters={[
           {
