@@ -28,14 +28,7 @@ import {
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
 
-import {
-  Alias,
-  Code,
-  FunctionProps,
-  LayerVersion,
-  Runtime,
-  StartingPosition,
-} from 'aws-cdk-lib/aws-lambda'
+import { Alias, FunctionProps, StartingPosition } from 'aws-cdk-lib/aws-lambda'
 
 import { Construct } from 'constructs'
 import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
@@ -459,18 +452,6 @@ export class CdkTarponStack extends cdk.Stack {
         sharedAssetsBucketName
       )
     }
-    /**
-     * Lambda Layers
-     */
-
-    const geoipLayer = new LayerVersion(this, StackConstants.GEOIP_LAYER_NAME, {
-      compatibleRuntimes: [Runtime.NODEJS_18_X],
-      code:
-        process.env.INFRA_CI === 'true'
-          ? Code.fromAsset('infra')
-          : Code.fromAsset('dist/layers/geoip-lite'),
-      description: 'geoip-lite npm module',
-    })
 
     /**
      * Lambda Functions
@@ -656,7 +637,6 @@ export class CdkTarponStack extends cdk.Stack {
     const transactionFunctionProps = {
       provisionedConcurrency:
         config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
-      layers: [geoipLayer],
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     }
 
@@ -686,7 +666,6 @@ export class CdkTarponStack extends cdk.Stack {
     /*  User Event */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
-      layers: [geoipLayer],
     })
 
     /* Rule Template (Public) */
@@ -722,7 +701,6 @@ export class CdkTarponStack extends cdk.Stack {
     /* User */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
-      layers: [geoipLayer],
       provisionedConcurrency:
         config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
       memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
@@ -761,7 +739,6 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.TRANSACTION_AGGREGATION_FUNCTION_NAME,
-        layers: [geoipLayer],
         memorySize:
           this.config.resource.TRANSACTION_AGGREGATION_LAMBDA?.MEMORY_SIZE,
       }
@@ -833,7 +810,6 @@ export class CdkTarponStack extends cdk.Stack {
         memorySize:
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
-        layers: [geoipLayer],
       }
     )
 
@@ -1112,13 +1088,11 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           memorySize:
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-          layers: [geoipLayer],
         }
       )
       const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
         createFunction(this, lambdaExecutionRole, {
           name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-          layers: [geoipLayer],
         })
 
       this.createKinesisEventSource(

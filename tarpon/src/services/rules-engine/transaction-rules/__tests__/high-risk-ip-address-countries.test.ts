@@ -12,6 +12,18 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import dayjs from '@/utils/dayjs'
 
+const TEST_IP_LOOKUPS = {
+  '18.184.45.226': 'DE',
+  '115.240.90.163': 'IN',
+}
+jest.mock('../../utils/geoip', () => {
+  return {
+    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+      return { country: TEST_IP_LOOKUPS[ip] }
+    }),
+  }
+})
+
 dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {

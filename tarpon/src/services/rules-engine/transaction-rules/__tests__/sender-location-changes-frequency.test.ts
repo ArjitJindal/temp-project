@@ -21,6 +21,21 @@ const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
   },
 }
 
+const TEST_IP_LOOKUPS = {
+  '18.184.45.226': 'Berlin',
+  '49.136.0.0': 'Mumbai',
+  '109.228.192.0': 'Istanbul',
+  '24.184.45.226': 'Sydney',
+  '14.228.192.0': 'New York',
+}
+jest.mock('../../utils/geoip', () => {
+  return {
+    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+      return { city: TEST_IP_LOOKUPS[ip] }
+    }),
+  }
+})
+
 dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: true }, () => {
@@ -45,24 +60,24 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Sungai Petani
-              ipAddress: '175.141.76.76',
+              // City: Berlin
+              ipAddress: '18.184.45.226',
             },
           }),
           getTestTransaction({
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Bourg-en-Bresse
-              ipAddress: '176.135.186.17',
+              // City: Mumbai
+              ipAddress: '49.136.0.0',
             },
           }),
           getTestTransaction({
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Newcastle-under-Lyme
-              ipAddress: '160.5.125.137',
+              // City: Istanbul
+              ipAddress: '109.228.192.0',
             },
           }),
         ],
@@ -85,15 +100,15 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Sungai Petani
-              ipAddress: '175.141.76.76',
+              // City: Berlin
+              ipAddress: '18.184.45.226',
             },
           }),
           getTestTransaction({
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Bourg-en-Bresse
+              // City: Mumbai
               ipAddress: '176.135.186.17',
             },
           }),
@@ -101,16 +116,16 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '1-1',
             timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Newcastle-under-Lyme
-              ipAddress: '160.5.125.137',
+              // City: Istanbul
+              ipAddress: '109.228.192.0',
             },
           }),
           getTestTransaction({
             originUserId: '1-1',
             timestamp: dayjs('2022-01-03T12:00:00.000Z').valueOf(),
             originDeviceData: {
-              // City: Rock Hill
-              ipAddress: '67.197.77.43',
+              // City: New York
+              ipAddress: '14.228.192.0',
             },
           }),
         ],
@@ -123,21 +138,21 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '2-1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '175.141.76.76',
+              ipAddress: '14.228.192.0',
             },
           }),
           getTestTransaction({
             originUserId: '2-1',
             timestamp: dayjs('2022-01-01T06:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '175.141.76.77',
+              ipAddress: '14.228.192.0',
             },
           }),
           getTestTransaction({
             originUserId: '2-1',
             timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '175.141.76.78',
+              ipAddress: '14.228.192.0',
             },
           }),
         ],
@@ -150,21 +165,21 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '3-1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '175.141.76.76',
+              ipAddress: '14.228.192.0',
             },
           }),
           getTestTransaction({
             originUserId: '3-1',
             timestamp: dayjs('2022-01-03T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '176.135.186.17',
+              ipAddress: '18.184.45.226',
             },
           }),
           getTestTransaction({
             originUserId: '3-1',
             timestamp: dayjs('2022-01-06T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '160.5.125.137',
+              ipAddress: '24.184.45.226',
             },
           }),
         ],
@@ -177,21 +192,21 @@ ruleVariantsTest({ aggregation: true }, () => {
             originUserId: '4-1',
             timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '175.141.76.76',
+              ipAddress: '24.184.45.226',
             },
           }),
           getTestTransaction({
             originUserId: '4-2',
             timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '176.135.186.17',
+              ipAddress: '18.184.45.226',
             },
           }),
           getTestTransaction({
             originUserId: '4-3',
             timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
             originDeviceData: {
-              ipAddress: '160.5.125.137',
+              ipAddress: '14.228.192.0',
             },
           }),
         ],
@@ -221,36 +236,36 @@ testAggregationRebuild(
       originUserId: '1-1',
       timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
       originDeviceData: {
-        // City: Sungai Petani
-        ipAddress: '175.141.76.76',
+        // City: Berlin
+        ipAddress: '18.184.45.226',
       },
     }),
     getTestTransaction({
       originUserId: '1-1',
       timestamp: dayjs('2022-01-01T00:30:00.000Z').valueOf(),
       originDeviceData: {
-        // City: Bourg-en-Bresse
-        ipAddress: '176.135.186.17',
+        // City: Mumbai
+        ipAddress: '49.136.0.0',
       },
     }),
     getTestTransaction({
       originUserId: '1-1',
       timestamp: dayjs('2022-01-01T12:00:00.000Z').valueOf(),
       originDeviceData: {
-        // City: Newcastle-under-Lyme
-        ipAddress: '160.5.125.137',
+        // City: Istanbul
+        ipAddress: '109.228.192.0',
       },
     }),
   ],
   {
     origin: [
       {
-        ipAddresses: ['176.135.186.17', '175.141.76.76'],
+        ipAddresses: ['49.136.0.0', '18.184.45.226'],
         transactionsCount: 2,
         hour: '2022010100',
       },
       {
-        ipAddresses: ['160.5.125.137'],
+        ipAddresses: ['109.228.192.0'],
         transactionsCount: 1,
         hour: '2022010112',
       },

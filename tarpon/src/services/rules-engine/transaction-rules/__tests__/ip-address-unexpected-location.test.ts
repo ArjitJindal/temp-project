@@ -13,6 +13,21 @@ import {
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 
+const TEST_IP_LOOKUPS = {
+  '18.184.45.226': 'DE',
+  '49.136.0.0': 'IN',
+  '109.228.192.0': 'TR',
+  '24.184.45.226': 'AU',
+  '14.228.192.0': 'US',
+}
+jest.mock('../../utils/geoip', () => {
+  return {
+    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+      return { country: TEST_IP_LOOKUPS[ip] }
+    }),
+  }
+})
+
 dynamoDbSetupHook()
 
 ruleVariantsTest({ aggregation: false }, () => {

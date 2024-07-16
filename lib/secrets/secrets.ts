@@ -21,6 +21,10 @@ export type Secrets = {
   }
   fincenCreds: { username: string; password: string }
   githubCreds: { auth: string }
+  geoip2Creds: {
+    accountId: string
+    licenseKey: string
+  }
 }
 
 export type SecretName = keyof Secrets

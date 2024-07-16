@@ -13,6 +13,19 @@ import {
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
 
+const TEST_IP_LOOKUPS = {
+  '69.162.81.155': 'US',
+  '101.33.10.0': 'DE',
+}
+
+jest.mock('@/services/rules-engine/utils/geoip', () => {
+  return {
+    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+      return { country: TEST_IP_LOOKUPS[ip] }
+    }),
+  }
+})
+
 const RISK_FACTOR: (
   parameter: ParameterAttributeRiskValuesParameterEnum
 ) => ParameterAttributeRiskValues = (parameter) => ({

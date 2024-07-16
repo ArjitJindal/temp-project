@@ -1,10 +1,28 @@
-import { Lookup } from 'geoip-lite'
+import * as ipLocationAPI from '@maxmind/geoip2-node'
+import { logger } from '@/core/logger'
+import { getSecretByName } from '@/utils/secrets-manager'
 
-export async function lookupIpLocation(
-  ipAddress: string
-): Promise<Lookup | null> {
-  // NOTE: importing geoip-lite will load the geoip database into memory. we only do it on demand.
-  // It'll only be loaded once. The subsequent calls will use the cached database.
-  const geoIp = (await import('geoip-lite')).default
-  return geoIp.lookup(ipAddress)
+export type IpLocation = {
+  country?: string
+  continent?: string
+  city?: string
+}
+
+export async function lookupIpLocation(ipAddress: string): Promise<IpLocation> {
+  const geoip2secret = await getSecretByName('geoip2Creds')
+  const ipLocationClient = new ipLocationAPI.WebServiceClient(
+    geoip2secret.accountId,
+    geoip2secret.licenseKey
+  )
+  try {
+    const data = await ipLocationClient.city(ipAddress)
+    return {
+      country: data.country?.isoCode,
+      continent: data.continent?.code,
+      city: data.city?.names?.en,
+    }
+  } catch (e) {
+    logger.error('Error looking up IP location', e)
+    return { country: '', continent: '', city: '' }
+  }
 }

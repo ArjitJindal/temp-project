@@ -6,7 +6,7 @@ import { getCountriesOptions } from './utils'
 
 const getUiDefinition = (
   direction: 'ORIGIN' | 'DESTINATION',
-  granularity: 'CITY' | 'COUNTRY'
+  granularity: 'COUNTRY' | 'CITY'
 ): FieldOrGroup => ({
   label: `${direction.toLowerCase()} IP ${granularity.toLowerCase()}`,
   type: 'text',
@@ -22,7 +22,7 @@ const getUiDefinition = (
 
 const createIpVariable = (
   direction: 'ORIGIN' | 'DESTINATION',
-  granularity: 'CITY' | 'COUNTRY'
+  granularity: 'COUNTRY' | 'CITY'
 ): TransactionRuleVariable => {
   return {
     key: `${direction.toLowerCase()}Ip${capitalize(granularity)}`,

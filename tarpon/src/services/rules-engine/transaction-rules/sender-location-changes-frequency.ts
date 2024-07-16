@@ -64,12 +64,10 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
     )
 
     const uniqueCities = new Set(
-      // NOTE: ipInfo.city could be sometimes empty, if it's empty, we use region or country as an approximation
-      ipInfos
-        .map((ipInfo) => ipInfo?.city || ipInfo?.region || ipInfo?.country)
-        .filter(Boolean)
+      ipInfos.map((ipInfo) => ipInfo?.city || ipInfo?.country).filter(Boolean)
     )
     const hitResult: RuleHitResult = []
+
     if (uniqueCities.size > this.parameters.uniqueCitiesCountThreshold) {
       hitResult.push({
         direction: 'ORIGIN',

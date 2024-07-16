@@ -186,7 +186,6 @@ export const StackConstants = {
     'BetterUptimeCloudWatchTopic'
   ),
   BETTER_UPTIME_SUBSCRIPTION_NAME: getResourceName('Subscription'),
-  GEOIP_LAYER_NAME: getResourceName('geoip-layer'),
   TARPON_API_NAME: getResourceName('TarponAPI'),
   TARPON_API_GATEWAY_ALARM_NAME: getResourceName('TarponApiErrorPercentage'),
   TARPON_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(

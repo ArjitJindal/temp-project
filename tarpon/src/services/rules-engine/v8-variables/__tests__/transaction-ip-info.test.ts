@@ -1,14 +1,27 @@
 import {
   TRANSACTION_DESTINATION_IP_CITY_VARIABLE,
   TRANSACTION_DESTINATION_IP_COUNTRY_VARIABLE,
-  TRANSACTION_ORIGIN_IP_COUNTRY_VARIABLE,
   TRANSACTION_ORIGIN_IP_CITY_VARIABLE,
+  TRANSACTION_ORIGIN_IP_COUNTRY_VARIABLE,
 } from '../transaction-ip-info'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-
+const TEST_IP_LOOKUPS = {
+  '101.223.255.254': { country: 'IN', city: 'Mumbai' },
+  '101.46.183.254': { country: 'SG', city: 'Jurong East' },
+  '1.199.255.254': { country: 'CN', city: 'Beijing' },
+  '182.56.66.85': { country: 'IN', city: 'Mumbai' },
+  '188.34.130.40': { country: 'DE', city: 'Frankfurt am Main' },
+  '95.90.241.171': { country: 'DE', city: 'Berlin' },
+}
+jest.mock('../../utils/geoip', () => {
+  return {
+    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+      return TEST_IP_LOOKUPS[ip]
+    }),
+  }
+})
 const TEST_TENANT_ID = getTestTenantId()
 
 const dynamoDb = getDynamoDbClient()
@@ -79,7 +92,6 @@ test('Transaction with destination ip', async () => {
   )
   expect(value3).toBe('CN')
 })
-
 test('Transaction with ip - city', async () => {
   const value = await TRANSACTION_DESTINATION_IP_CITY_VARIABLE.load(
     getTestTransaction({
