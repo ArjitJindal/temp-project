@@ -17,12 +17,13 @@ import {
   Account,
   AuditLog,
   Alert,
+  RiskClassificationScore,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
 import { ALERT_ITEM_COMMENTS, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
-import { all, AsyncResource, map, success } from '@/utils/asyncResource';
+import { all, AsyncResource, getOr, map, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -62,6 +63,7 @@ import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
 
 interface Props {
   caseItem: Case;
@@ -175,6 +177,9 @@ function useTabs(
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
+
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
 
   const queryClient = useQueryClient();
 
@@ -368,7 +373,7 @@ function useTabs(
                     includeRootUserRecords: true,
                     pageSize: 100,
                   });
-                  return getLogData(response.data, users, 'CASE');
+                  return getLogData(response.data, users, 'CASE', riskClassificationValues);
                 },
                 filters: ([params, setParams]) => (
                   <>
@@ -454,6 +459,7 @@ const getLogData = (
   logs: AuditLog[],
   users: { [userId: string]: Account },
   type: 'USER' | 'CASE',
+  riskClassificationValues: Array<RiskClassificationScore>,
 ): LogItemData[] => {
   const logItemData: LogItemData[] = logs
     .map((log) => {
@@ -469,7 +475,7 @@ const getLogData = (
         );
       };
 
-      const createStatement = getCreateStatement(log, users, type);
+      const createStatement = getCreateStatement(log, users, type, riskClassificationValues);
       if (isActionUpdate(log)) {
         return createStatement
           ? {

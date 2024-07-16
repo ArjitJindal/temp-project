@@ -1,7 +1,8 @@
 import { ReactElement } from 'react';
 import { capitalize, has } from 'lodash';
+import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { LogItemData } from './LogCard/LogContainer/LogItem';
-import { Account, AuditLog, Case, CaseStatus } from '@/apis';
+import { Account, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
 import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { firstLetterUpper, humanizeAuto } from '@/utils/humanize';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
@@ -28,6 +29,7 @@ export const getCreateStatement = (
   log: AuditLog,
   users: { [userId: string]: Account },
   type: 'USER' | 'CASE',
+  riskClassificationValues: Array<RiskClassificationScore>,
 ): ReactElement | null => {
   const user = log.user?.id ? users[log.user?.id] : undefined;
   const userName = user ? (user.role === 'root' ? 'system' : user.name ?? user.email) : 'system';
@@ -131,16 +133,20 @@ export const getCreateStatement = (
     case 'DRS_RISK_LEVEL': {
       const riskLevelLockChange = !!log.newImage?.isUpdatable !== !!log.oldImage?.isUpdatable;
       const riskLevelUpdatebleStatus = log.newImage?.isUpdatable ? 'unlocked' : 'locked';
-      const newRiskLevel = log.newImage?.manualRiskLevel;
+      const newRiskScore = log.newImage?.drsScore;
+      const newRiskLevel =
+        newRiskScore != null ? getRiskLevelFromScore(riskClassificationValues, newRiskScore) : null;
       return riskLevelLockChange ? (
         <>
           Risk level <b>{riskLevelUpdatebleStatus}</b> by <b>{userName}</b>
         </>
-      ) : (
+      ) : newRiskLevel ? (
         <>
           Risk level changed to <b>{RISK_LEVEL_LABELS[newRiskLevel].toLowerCase()}</b> by{' '}
           <b>{userName}</b>
         </>
+      ) : (
+        <></>
       );
     }
     case 'USER_STATUS_CHANGE': {

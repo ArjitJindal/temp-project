@@ -14,13 +14,21 @@ import {
   isActionEscalate,
   isActionDelete,
 } from '@/components/ActivityCard/helpers';
-import { AuditLog, Account, InternalConsumerUser, InternalBusinessUser, Comment } from '@/apis';
-import { success } from '@/utils/asyncResource';
+import {
+  AuditLog,
+  Account,
+  InternalConsumerUser,
+  InternalBusinessUser,
+  Comment,
+  RiskClassificationScore,
+} from '@/apis';
+import { getOr, success } from '@/utils/asyncResource';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { FormValues } from '@/components/CommentEditor';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -36,6 +44,9 @@ export default function UserActivityCard(props: Props) {
   const [users, _] = useUsers();
 
   const queryClient = useQueryClient();
+
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -87,7 +98,7 @@ export default function UserActivityCard(props: Props) {
             includeRootUserRecords: true,
             pageSize: 100,
           });
-          return getLogData(response.data, users, 'CASE');
+          return getLogData(response.data, users, 'CASE', riskClassificationValues);
         },
         filters: ([params, setParams]) => {
           return (
@@ -123,6 +134,7 @@ const getLogData = (
   logs: AuditLog[],
   users: { [userId: string]: Account },
   type: 'USER' | 'CASE',
+  riskClassificationValues: RiskClassificationScore[],
 ): LogItemData[] => {
   const logItemData: LogItemData[] = logs
     .map((log) => {
@@ -138,7 +150,7 @@ const getLogData = (
         );
       };
 
-      const createStatement = getCreateStatement(log, users, type);
+      const createStatement = getCreateStatement(log, users, type, riskClassificationValues);
       if (isActionUpdate(log)) {
         return createStatement
           ? {
