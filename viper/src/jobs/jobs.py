@@ -1,4 +1,5 @@
 import os
+import sys
 
 from pyspark.sql import SparkSession
 
@@ -14,8 +15,14 @@ from src.version_service import VersionService
 # Tried and failed to use "--customer-driver-env-vars" from
 # https://docs.aws.amazon.com/glue/latest/dg/aws-glue-programming-etl-glue-arguments.html
 # so instead we're using flags.
-os.environ["DATALAKE_BUCKET"] = get_arg("datalake_bucket")
-os.environ["TENANTS"] = get_arg("tenants")
+args = sys.argv
+datalake_bucket = get_arg("datalake_bucket")
+tenants = get_arg("tenants")
+
+os.environ["DATALAKE_BUCKET"] = (
+    datalake_bucket if datalake_bucket is not None else args[1]
+)
+os.environ["TENANTS"] = tenants if tenants is not None else args[2]
 
 
 class Jobs:
@@ -40,14 +47,6 @@ class Jobs:
 
     def backfill(self):
         self.spark.sql("create database if not exists main")
-
-        force = get_arg("force_backfill") == "true"
-
-        if not force and self.table_service.table_exists("kinesis_events"):
-            raise Exception(  # pylint: disable=broad-exception-raised
-                "Backfill has already been run, please run with force parameter as true to override"
-            )
-
         self.version_service.clear_pipeline_checkpoint_id()
 
         self.table_service.clear_table("kinesis_events")

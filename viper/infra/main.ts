@@ -3,7 +3,7 @@ import { App, TerraformStack, S3Backend } from 'cdktf'
 import * as aws from './.gen/providers/aws'
 import * as databricks from './.gen/providers/databricks'
 import * as mvn from './.gen/providers/maven'
-import { sleep, provider } from '@cdktf/provider-time'
+import { provider } from '@cdktf/provider-time'
 import { TerraformHclModule } from 'cdktf'
 import { Fn } from 'cdktf'
 import { TerraformProvider } from 'cdktf/lib/terraform-provider'
@@ -14,17 +14,17 @@ import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 import { provider as nullProvider } from '@cdktf/provider-null'
-import { ALL_ENGINEERS } from '../../lib/constants/engineers'
+import { EmrCluster } from '@cdktf/provider-aws/lib/emr-cluster'
+import { IamRole } from '@cdktf/provider-aws/lib/iam-role'
+import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy'
 
 // Toggle this to remove tenants.
-const preventTenantDestruction = false
 const stage = process.env.STAGE as Stage
 
 const region = process.env.REGION as FlagrightRegion
 const env = `${stage}-${region}`
 const config = getTarponConfig(stage, region)
 const awsRegion = config.env.region || ''
-const regionalAdminGroupName = `${awsRegion}-admins`
 const stateBucket = `flagright-terraform-state-databricks-${env}`
 const prefix = `flagright-databricks-${stage}-${region}`
 const awsPrefix = `flagright-datalake-${stage}-${region}`
@@ -32,14 +32,6 @@ const cidrBlock = '10.4.0.0/16'
 const databricksClientId = 'cb9efcf2-ffd5-484a-badc-6317ba4aef91'
 const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
 const awsAccountId = AWS_ACCOUNTS[stage]
-const serverlessRegions = [
-  'eu-central-1',
-  'ap-southeast-2',
-  'eu-west-1',
-  'us-west-2',
-  'us-east-1',
-  'us-east-2',
-]
 
 const jobs = [
   {
@@ -56,14 +48,6 @@ const jobs = [
     continuous: false,
     compute: 'G.2X',
     numWorkers: 4,
-  },
-  {
-    name: 'stream',
-    description: 'Stream live from kinesis and transform',
-    continuous: true,
-    compute: 'G.025X',
-    // Minimum workers allowed by AWS API is currently 2
-    numWorkers: 2,
   },
   {
     name: 'optimize',
@@ -414,12 +398,301 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
       }
     )
 
+    // IAM Policy Document for EMR Assume Role
+    const emrAssumeRolePolicy =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'emr-assume-role-policy',
+        {
+          statement: [
+            {
+              effect: 'Allow',
+              principals: [
+                {
+                  type: 'Service',
+                  identifiers: ['elasticmapreduce.amazonaws.com'],
+                },
+              ],
+              actions: ['sts:AssumeRole'],
+            },
+          ],
+        }
+      )
+
+    // IAM Role for EMR Service
+    const emrServiceRole = new IamRole(this, 'iam-emr-service-role', {
+      name: `iam_emr_service_role_${awsRegion}`,
+      assumeRolePolicy: emrAssumeRolePolicy.json,
+    })
+
+    // IAM Policy Document for EMR Service Policy
+    const emrServicePolicyDocument =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'iam-emr-service-policy-doc',
+        {
+          statement: [
+            {
+              effect: 'Allow',
+              actions: [
+                'ec2:AuthorizeSecurityGroupEgress',
+                'ec2:AuthorizeSecurityGroupIngress',
+                'ec2:CancelSpotInstanceRequests',
+                'ec2:CreateNetworkInterface',
+                'ec2:CreateSecurityGroup',
+                'ec2:CreateTags',
+                'ec2:DeleteNetworkInterface',
+                'ec2:DeleteSecurityGroup',
+                'ec2:DeleteTags',
+                'ec2:DescribeAvailabilityZones',
+                'ec2:DescribeAccountAttributes',
+                'ec2:DescribeDhcpOptions',
+                'ec2:DescribeInstanceStatus',
+                'ec2:DescribeInstances',
+                'ec2:DescribeKeyPairs',
+                'ec2:DescribeNetworkAcls',
+                'ec2:DescribeNetworkInterfaces',
+                'ec2:DescribePrefixLists',
+                'ec2:DescribeRouteTables',
+                'ec2:DescribeSecurityGroups',
+                'ec2:DescribeSpotInstanceRequests',
+                'ec2:DescribeSpotPriceHistory',
+                'ec2:DescribeSubnets',
+                'ec2:DescribeVpcAttribute',
+                'ec2:DescribeVpcEndpoints',
+                'ec2:DescribeVpcEndpointServices',
+                'ec2:DescribeVpcs',
+                'ec2:DetachNetworkInterface',
+                'ec2:ModifyImageAttribute',
+                'ec2:ModifyInstanceAttribute',
+                'ec2:RequestSpotInstances',
+                'ec2:RevokeSecurityGroupEgress',
+                'ec2:RunInstances',
+                'ec2:TerminateInstances',
+                'ec2:DeleteVolume',
+                'ec2:DescribeVolumeStatus',
+                'ec2:DescribeVolumes',
+                'ec2:DetachVolume',
+                'iam:GetRole',
+                'iam:GetRolePolicy',
+                'iam:ListInstanceProfiles',
+                'iam:ListRolePolicies',
+                'iam:PassRole',
+                's3:CreateBucket',
+                's3:Get*',
+                's3:List*',
+                'sdb:BatchPutAttributes',
+                'sdb:Select',
+                'sqs:CreateQueue',
+                'sqs:Delete*',
+                'sqs:GetQueue*',
+                'sqs:PurgeQueue',
+                'sqs:ReceiveMessage',
+                'secretsmanager:*',
+                'glue:*',
+              ],
+              resources: ['*'],
+            },
+          ],
+        }
+      )
+
+    // IAM Role Policy for EMR Service
+    new IamRolePolicy(this, 'iam-emr-service-policy', {
+      name: `iam_emr_service_policy_${awsRegion}`,
+      role: emrServiceRole.id,
+      policy: emrServicePolicyDocument.json,
+    })
+
+    // IAM Policy Document for EC2 Assume Role
+    const ec2AssumeRolePolicy =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'ec2-assume-role-policy',
+        {
+          statement: [
+            {
+              effect: 'Allow',
+              principals: [
+                {
+                  type: 'Service',
+                  identifiers: ['ec2.amazonaws.com'],
+                },
+              ],
+              actions: ['sts:AssumeRole'],
+            },
+          ],
+        }
+      )
+
+    // IAM Role for EC2 Instance Profile
+    const emrProfileRole = new IamRole(this, 'iam-emr-profile-role', {
+      name: `iam_emr_profile_role_${awsRegion}`,
+      assumeRolePolicy: ec2AssumeRolePolicy.json,
+    })
+
+    // IAM Instance Profile
+    const emrProfile = new aws.iamInstanceProfile.IamInstanceProfile(
+      this,
+      'emr-rrofile',
+      {
+        name: `emr_profile__${awsRegion}`,
+        role: emrProfileRole.name,
+      }
+    )
+
+    // IAM Policy Document for EC2 Instance Profile Policy
+    const emrProfilePolicyDocument =
+      new aws.dataAwsIamPolicyDocument.DataAwsIamPolicyDocument(
+        this,
+        'iam-emr-rrofile-policy',
+        {
+          statement: [
+            {
+              effect: 'Allow',
+              actions: [
+                'cloudwatch:*',
+                'dynamodb:*',
+                'ec2:Describe*',
+                'elasticmapreduce:Describe*',
+                'elasticmapreduce:ListBootstrapActions',
+                'elasticmapreduce:ListClusters',
+                'elasticmapreduce:ListInstanceGroups',
+                'elasticmapreduce:ListInstances',
+                'elasticmapreduce:ListSteps',
+                'kinesis:CreateStream',
+                'kinesis:DeleteStream',
+                'kinesis:DescribeStream',
+                'kinesis:GetRecords',
+                'kinesis:GetShardIterator',
+                'kinesis:MergeShards',
+                'kinesis:PutRecord',
+                'kinesis:SplitShard',
+                'rds:Describe*',
+                's3:*',
+                'sdb:*',
+                'sns:*',
+                'sqs:*',
+                'glue:*',
+                'secretsmanager:*',
+              ],
+              resources: ['*'],
+            },
+          ],
+        }
+      )
+
+    // IAM Role Policy for EC2 Instance Profile
+    new IamRolePolicy(this, 'iam-emr-profile-policy', {
+      name: `iam_emr_profile_policy_${awsRegion}`,
+      role: emrProfileRole.id,
+      policy: emrProfilePolicyDocument.json,
+    })
+
+    const installScript = new aws.s3Object.S3Object(
+      this,
+      `stream-install-script`,
+      {
+        bucket: datalakeBucket.bucket,
+        key: `stream.sh`,
+        content: `
+#!/bin/bash
+aws s3 cp s3://${datalakeBucket.bucket}/${pythonPackage.key} /tmp/${pythonPackage.key} 
+sudo python3 -m pip install /tmp/${pythonPackage.key} --no-dependencies
+sudo python3 -m pip install delta-spark==3.2.0 --no-dependencies
+sudo python3 -m pip install boto3
+`,
+      }
+    )
+
+    const emrScript = new aws.s3Object.S3Object(this, `stream-emr-script`, {
+      bucket: datalakeBucket.bucket,
+      key: `stream.py`,
+      content: this.templateAwsEmrJobNotebook('stream'),
+    })
+
+    new EmrCluster(this, 'my-emr-cluster', {
+      name: 'streaming',
+      releaseLabel: 'emr-7.1.0',
+      applications: ['Hadoop', 'Spark', 'Hive'],
+      serviceRole: emrServiceRole.name,
+      ec2Attributes: {
+        instanceProfile: emrProfile.arn,
+        subnetId: vpc?.subnetId,
+      },
+      masterInstanceGroup: {
+        instanceType: 'm5.xlarge',
+        instanceCount: 1,
+      },
+      coreInstanceGroup: {
+        instanceType: 'm5.xlarge',
+        instanceCount: 1,
+      },
+      configurations: `
+[
+{
+  "Classification": "spark-defaults",
+  "Properties": {
+    "spark.sql.streaming.stateStore.stateSchemaCheck": "false",
+    "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
+    "spark.sql.warehouse.dir": "s3://${datalakeBucket.bucket}/warehouse/",
+    "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
+    "spark.delta.logStore.class": "io.delta.storage.S3SingleDriverLogStore",
+    "spark.sql.catalogImplementation": "hive",
+    "spark.hadoop.hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
+    "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
+  }
+}
+]
+`,
+      terminationProtection: false,
+      keepJobFlowAliveWhenNoSteps: true,
+      bootstrapAction: [
+        {
+          name: 'pip',
+          path: `s3://${datalakeBucket.bucket}/${installScript.key}`,
+        },
+      ],
+      logUri: `s3://${datalakeBucket.bucket}/emr-logs/`,
+      step: [
+        {
+          name: 'stream',
+          actionOnFailure: 'CANCEL_AND_WAIT',
+          hadoopJarStep: [
+            {
+              jar: 'command-runner.jar',
+              args: [
+                'spark-submit',
+                '--packages',
+                'io.delta:delta-spark_2.12:3.2.0',
+                '--jars',
+                `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
+                `s3://${datalakeBucket.bucket}/${emrScript.key}`,
+                `${datalakeBucket.bucket}`,
+                `${this.tenantIds.join(',')}`,
+              ],
+            },
+          ],
+        },
+      ],
+    })
+
     jobs.map((job) => {
       const script = new aws.s3Object.S3Object(this, `${job.name}-script`, {
         bucket: datalakeBucket.bucket,
         key: `${job.name}.script`,
         content: this.templateAwsJobNotebook(job.name),
       })
+
+      let sparkConfig = `
+    spark.sql.streaming.stateStore.stateSchemaCheck=false
+    --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+    --conf spark.sql.warehouse.dir=s3://${datalakeBucket.bucket}/warehouse/
+    --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+    --conf spark.delta.logStore.class=io.delta.storage.S3SingleDriverLogStore
+    --conf spark.hadoop.hive.metastore.client.factory.class=com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
+    --conf hive.metastore.client.factory.class=com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory
+`
       const glueJob = new aws.glueJob.GlueJob(this, `${job.name}-glue-job`, {
         name: job.name,
         description: job.schedule,
@@ -445,9 +718,9 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
           '--job-bookmark-option': 'job-bookmark-disable',
           '--enable-glue-datacatalog': 'true',
           '--datalake-formats': 'delta',
-          '--conf': `spark.sql.streaming.stateStore.stateSchemaCheck=false --conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension --conf spark.sql.warehouse.dir=s3://${datalakeBucket.bucket}/warehouse/ --conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog --conf spark.delta.logStore.class=org.apache.spark.sql.delta.storage.S3SingleDriverLogStore`,
+          '--conf': sparkConfig,
           '--additional-python-modules': `s3://${datalakeBucket.bucket}/${pythonPackage.key},delta-spark`,
-          '--extra-jars': `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
+          '--extra-jars': `s3://${datalakeBucket.bucket}/${mongoJarObject.key},s3://awslabs-code-us-east-1/spark-sql-kinesis-connector/spark-streaming-sql-kinesis-connector_2.12-1.2.1.jar`,
           '--extra-files': `s3://${datalakeBucket.bucket}/${log4PropertiesFile.key}`,
           '--enable-metrics': '',
         },
@@ -630,6 +903,27 @@ glueContext = GlueContext(sc)
 spark = glueContext.spark_session
 
 Jobs(spark).${job}()`
+  }
+
+  private templateAwsEmrJobNotebook(job: string) {
+    return `
+import os
+from src.jobs.jobs import Jobs
+from pyspark.sql import SparkSession
+from pyspark.context import SparkContext
+
+spark = SparkSession.builder.appName("ExamplePySparkJob").enableHiveSupport().getOrCreate()
+
+import logging
+logger = logging.getLogger()
+logger.setLevel(logging.WARN)
+
+sc = SparkContext.getOrCreate()
+sc.setLogLevel("WARN")
+
+Jobs(spark).${job}()
+spark.stop()
+`
   }
 }
 

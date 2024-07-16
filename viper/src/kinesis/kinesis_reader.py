@@ -33,12 +33,13 @@ class KinesisReader:
             return existing_stream
         checkpoint_id = self.version_service.get_kinesis_checkpoint_id()
         region = os.environ["AWS_DEFAULT_REGION"]
+
         stream = kinesis_events_transformation(
-            self.spark.readStream.format("kinesis")
-            .option("streamName", kinesis_stream_name)
-            .option("region", region)
-            .option("endpointUrl", f"https://kinesis.{region}.amazonaws.com")
-            .option("initialPosition", "latest")
+            self.spark.readStream.format("aws-kinesis")
+            .option("kinesis.streamName", kinesis_stream_name)
+            .option("kinesis.region", region)
+            .option("kinesis.endpointUrl", f"https://kinesis.{region}.amazonaws.com")
+            .option("kinesis.startingPosition", "latest")
             .option(
                 "checkpointLocation",
                 checkpoint_dir(f"read/main/{kinesis_stream_name}/{checkpoint_id}"),
