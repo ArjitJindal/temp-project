@@ -217,6 +217,8 @@ export const CopilotWrapperContent = ({
   const [formatLoading, setFormatLoading] = useState(false);
   const [attributes, setAttributes] = useState<NarrativeResponseAttributes[]>([]);
 
+  const boldPlaceholders = (text: string) => text.replace(/\[(.*?)\]/g, '**[$1]**');
+
   const onAsk = async () => {
     try {
       setAskLoading(true);
@@ -229,7 +231,8 @@ export const CopilotWrapperContent = ({
           narrative: '',
         },
       });
-      setNarrativeValue(response.narrative);
+      const processedNarrative = boldPlaceholders(response.narrative);
+      setNarrativeValue(processedNarrative);
       setAttributes(response.attributes);
     } catch (e) {
       message.error('Failed to generate narrative with AI');
@@ -248,7 +251,8 @@ export const CopilotWrapperContent = ({
           reasons: reasons as CaseReasons[],
         },
       });
-      setNarrativeValue(response.narrative);
+      const processedNarrative = boldPlaceholders(response.narrative);
+      setNarrativeValue(processedNarrative);
     } catch (e) {
       message.error('Failed to format narrative with AI');
     } finally {

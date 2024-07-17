@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction } from 'react';
 import { uniqBy } from 'lodash';
+import { Editor } from '@toast-ui/react-editor';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
 import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
@@ -14,7 +15,6 @@ import { CaseReasons, FileInfo, NarrativeType } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
-import TextArea from '@/components/library/TextArea';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
@@ -90,6 +90,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     advancedOptionsValidators,
   } = props;
 
+  const editorRef = React.createRef<Editor>();
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
 
@@ -172,15 +173,25 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
               <NarrativesSelectStatusChange
                 templateValue={null}
                 setTemplateValue={(value) => {
-                  inputProps?.onChange?.(value);
+                  if (value) {
+                    inputProps?.onChange?.(value);
+                    editorRef.current?.getInstance().setMarkdown(value);
+                  }
                 }}
               />
-              <TextArea
-                {...inputProps}
-                rows={4}
+              <Editor
+                onChange={() => {
+                  const editorInstance = editorRef.current?.getInstance();
+                  if (editorInstance) {
+                    inputProps.onChange?.(editorInstance.getMarkdown());
+                  }
+                }}
+                ref={editorRef}
+                hideModeSwitch={true}
+                previewStyle="vertical"
+                initialEditType="wysiwyg"
+                usageStatistics={false}
                 placeholder={placeholder}
-                className={s.commentBox}
-                minHeight={'250px'}
               />
             </>
           )}
@@ -198,6 +209,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                 narrative={props.value || ''}
                 setNarrativeValue={(value) => {
                   props.onChange?.(value);
+                  editorRef.current?.getInstance().setMarkdown(value);
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
                 entityType={entityType}
