@@ -216,9 +216,14 @@ const customTextWidget: TextWidget<BasicConfig> = {
 const customBooleanWidget: BooleanWidget<BasicConfig> = {
   type: `boolean`,
   factory: (props) => {
+    if (props.value === undefined) {
+      setTimeout(() => {
+        props.setValue(false);
+      }, 2);
+    }
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <Toggle size="SMALL" value={props.value ?? undefined} onChange={props.setValue} />
+        <Toggle size="SMALL" value={props.value ?? false} onChange={props.setValue} />
       </WidgetWrapper>
     );
   },
