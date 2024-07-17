@@ -575,10 +575,9 @@ You have to answer in below format as string. If you don't know any field, just 
       }
     }
     const logicToCheck = [
-      ...(!isEmpty(ruleLogic) ? [ruleLogic] : []),
       ...(!isEmpty(riskLevelRuleLogic)
         ? [...Object.values(riskLevelRuleLogic as Record<RiskLevel, unknown>)]
-        : []),
+        : [ruleLogic]),
       ...(logicAggregationVariables ?? []).map((x) => x.filtersLogic),
     ].filter(notNullish)
 
