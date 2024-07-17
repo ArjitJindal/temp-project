@@ -831,47 +831,9 @@ sudo python3 -m pip install boto3
       },
     })
 
-    new TerraformHclModule(this, 'vpc-endpoints', {
-      source: 'terraform-aws-modules/vpc/aws//modules/vpc-endpoints',
-
-      variables: {
-        vpc_id: vpc.get('vpc_id'),
-        security_group_ids: [vpc.get('default_security_group_id')],
-        endpoints: {
-          s3: {
-            service: 's3',
-            service_type: 'Gateway',
-            route_table_ids: Fn.flatten([
-              vpc.get('private_route_table_ids'),
-              vpc.get('public_route_table_ids'),
-            ]),
-            tags: {
-              Name: `${prefix}-s3-vpc-endpoint`,
-            },
-          },
-          sts: {
-            service: 'sts',
-            private_dns_enabled: true,
-            subnet_ids: vpc.get('private_subnets'),
-            tags: {
-              Name: `${prefix}-sts-vpc-endpoint`,
-            },
-          },
-          'kinesis-streams': {
-            service: 'kinesis-streams',
-            private_dns_enabled: true,
-            subnet_ids: vpc.get('private_subnets'),
-            tags: {
-              Name: `${prefix}-kinesis-vpc-endpoint`,
-            },
-          },
-        },
-      },
-    })
-
     return {
       securityGroupIds: [vpc.get('default_security_group_id')],
-      subnetIds: vpc.get('private_subnets'),
+      subnetIds: vpc.get('public_subnets'),
       vpcId: vpc.get('vpc_id'),
     }
   }
