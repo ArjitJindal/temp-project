@@ -64,6 +64,7 @@ interface AttributeTypes extends Record<AIAttribute, any> {
   industry: string[]
   productsSold: string[]
   transactionIds: string[]
+  ruleHitNames: string[]
 }
 type AttributeValue<T extends AIAttribute> = T extends keyof AttributeTypes
   ? AttributeTypes[T]

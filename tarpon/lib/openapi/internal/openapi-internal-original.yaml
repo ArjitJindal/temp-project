@@ -8359,6 +8359,7 @@ components:
         - productsSold
         - transactionIds
         - rules
+        - ruleHitNames
     AIAttributeCategory:
       title: CoPilotAttributeCategory
       type: string

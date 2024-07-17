@@ -87,6 +87,10 @@ const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
     isPii: false,
     category: 'CASE',
   },
+  ruleHitNames: {
+    isPii: false,
+    category: 'CASE',
+  },
 }
 
 export const AI_SOURCES: AiSource[] = Object.entries(AI_SOURCES_MAP).map(

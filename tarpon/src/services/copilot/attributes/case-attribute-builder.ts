@@ -45,6 +45,11 @@ export class CaseAttributeBuilder implements AttributeBuilder {
       })
     )
 
+    attributes.setAttribute(
+      'ruleHitNames',
+      inputData.ruleInstances?.map((ri) => ri.ruleNameAlias || '') || []
+    )
+
     attributes.setAttribute('reasons', inputData.reasons)
 
     attributes.setAttribute(
