@@ -130,7 +130,7 @@ class DatabricksStack extends TerraformStack {
     }
 
     // Create or retrieve metastores, VPC, users.
-    const { securityGroupIds, subnetIds, vpcId } = config.viper.CREATE_VPC
+    const { privateSubnetIds, subnetIds, vpcId } = config.viper.CREATE_VPC
       ? this.createVpc()
       : this.fetchVpc()
 
@@ -138,6 +138,7 @@ class DatabricksStack extends TerraformStack {
       availabilityZone: `${awsRegion}a`,
       vpcId: vpcId,
       subnetId: Fn.element(subnetIds, 0),
+      privateSubnetId: Fn.element(privateSubnetIds, 0),
     })
   }
 
@@ -145,6 +146,7 @@ class DatabricksStack extends TerraformStack {
     availabilityZone: string
     vpcId: string
     subnetId: string
+    privateSubnetId: string
   }) {
     const datalakeBucket = new aws.s3Bucket.S3Bucket(
       this,
@@ -372,7 +374,7 @@ class DatabricksStack extends TerraformStack {
           physicalConnectionRequirements: {
             availabilityZone: vpc.availabilityZone,
             securityGroupIdList: [sg.id],
-            subnetId: vpc.subnetId,
+            subnetId: vpc.privateSubnetId,
           },
         }
       )
@@ -729,7 +731,12 @@ sudo python3 -m pip install boto3
     })
   }
 
-  private fetchVpc() {
+  private fetchVpc(): {
+    securityGroupIds: string[]
+    privateSubnetIds: string[]
+    subnetIds: string[]
+    vpcId: string
+  } {
     const vpcs = new aws.dataAwsVpcs.DataAwsVpcs(this, 'vpc', {
       filter: [
         {
@@ -781,6 +788,7 @@ sudo python3 -m pip install boto3
 
     return {
       subnetIds: subnets.ids,
+      privateSubnetIds: subnets.ids,
       vpcId,
       securityGroupIds: securityGroups.ids,
     }
@@ -788,6 +796,7 @@ sudo python3 -m pip install boto3
 
   private createVpc(): {
     securityGroupIds: string[]
+    privateSubnetIds: string[]
     subnetIds: string[]
     vpcId: string
   } {
@@ -872,6 +881,7 @@ sudo python3 -m pip install boto3
     return {
       securityGroupIds: [vpc.get('default_security_group_id')],
       subnetIds: vpc.get('public_subnets'),
+      privateSubnetIds: vpc.get('private_subnets'),
       vpcId: vpc.get('vpc_id'),
     }
   }
