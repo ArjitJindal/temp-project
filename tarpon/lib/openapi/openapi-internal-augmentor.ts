@@ -29,6 +29,7 @@ export const ConsoleApiPathToLambda: any = {
   '/tenants/settings/checklist-templates/{checklistTemplateId}':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/delete': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/deletion-data': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues/{ruleQueueId}':

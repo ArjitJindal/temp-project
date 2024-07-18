@@ -21,7 +21,7 @@ import {
   doesUsagePlanExist,
   getAllUsagePlans,
 } from '@flagright/lib/tenants/usage-plans'
-import { uniq } from 'lodash'
+import { flatten, uniq } from 'lodash'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
@@ -30,7 +30,7 @@ import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreation
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountsService, Tenant } from '@/services/accounts'
 import { checkMultipleEmails } from '@/utils/helpers'
-import { getAuth0Domain } from '@/utils/auth0-utils'
+import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { traceable } from '@/core/xray'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
@@ -38,7 +38,7 @@ import { TenantUsageData } from '@/@types/openapi-internal/TenantUsageData'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { TenantApiKey } from '@/@types/openapi-internal/TenantApiKey'
-import { isFlagrightInternalUser } from '@/@types/jwt'
+import { assertCurrentUserRole, isFlagrightInternalUser } from '@/@types/jwt'
 import {
   getContext,
   tenantSettings,
@@ -632,5 +632,62 @@ export class TenantService {
       tenantId: tenantIdToDelete,
       parameters: { notRecoverable: notRecoverable ?? false },
     })
+  }
+
+  public async getAllTenants(auth0Domain: string) {
+    let tenants: Tenant[] = []
+    const accountsService = new AccountsService(
+      { auth0Domain },
+      { mongoDb: this.mongoDb }
+    )
+    if (isWhitelabelAuth0Domain(auth0Domain)) {
+      tenants = await accountsService.getTenants()
+    } else {
+      assertCurrentUserRole('root')
+      tenants = flatten(
+        await Promise.all(
+          getAuth0TenantConfigs(process.env.ENV as Stage).map(
+            async (config) => {
+              const host = new URL(config.consoleUrl).host
+              const auth0Domain = getAuth0Domain(
+                config.tenantName,
+                config.region
+              )
+              const partialTenants = await accountsService.getTenants(
+                auth0Domain
+              )
+              return partialTenants.map((v) => ({ ...v, host }))
+            }
+          )
+        )
+      )
+    }
+    return tenants
+  }
+
+  public async getTenantsDeletionData(auth0Domain: string) {
+    const tenantRepository = new TenantRepository('', {
+      mongoDb: this.mongoDb,
+    })
+    const {
+      tenantIdsDeletedRecently,
+      tenantIdsFailedToDelete,
+      tenantIdsMarkedForDelete,
+    } = await tenantRepository.getTenantsDeletionData()
+    const tenants = await this.getAllTenants(auth0Domain)
+    return {
+      tenantsDeletedRecently: tenantIdsDeletedRecently.map((tenantId) => ({
+        tenantId,
+        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
+      })),
+      tenantsFailedToDelete: tenantIdsFailedToDelete.map((tenantId) => ({
+        tenantId,
+        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
+      })),
+      tenantsMarkedForDelete: tenantIdsMarkedForDelete.map((tenantId) => ({
+        tenantId,
+        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
+      })),
+    }
   }
 }

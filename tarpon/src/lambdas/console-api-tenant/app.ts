@@ -2,12 +2,9 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { Stage } from '@flagright/lib/constants/deploy'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
-import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import { flatten, isEmpty, isEqual } from 'lodash'
-import { AccountsService } from '../../services/accounts'
+import { isEmpty, isEqual } from 'lodash'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   JWTAuthorizerResult,
@@ -15,7 +12,6 @@ import {
   assertCurrentUserRoleAboveAdmin,
   assertHasDangerousTenantDelete,
 } from '@/@types/jwt'
-import { Tenant } from '@/@types/openapi-internal/Tenant'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TenantService } from '@/services/tenants'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
@@ -41,7 +37,6 @@ import {
   getContext,
   tenantSettings,
 } from '@/core/utils/context'
-import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -58,36 +53,15 @@ export const tenantsHandler = lambdaApi()(
     const { principalId: tenantId, auth0Domain } =
       event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     const handlers = new Handlers()
 
-    handlers.registerGetTenantsList(async () => {
+    handlers.registerGetTenantsList(async (ctx) => {
       assertCurrentUserRoleAboveAdmin()
-      let tenants: Tenant[] = []
-
-      if (isWhitelabelAuth0Domain(auth0Domain)) {
-        tenants = await accountsService.getTenants()
-      } else {
-        assertCurrentUserRole('root')
-        tenants = flatten(
-          await Promise.all(
-            getAuth0TenantConfigs(process.env.ENV as Stage).map(
-              async (config) => {
-                const host = new URL(config.consoleUrl).host
-                const auth0Domain = getAuth0Domain(
-                  config.tenantName,
-                  config.region
-                )
-                const partialTenants = await accountsService.getTenants(
-                  auth0Domain
-                )
-                return partialTenants.map((v) => ({ ...v, host }))
-              }
-            )
-          )
-        )
-      }
-      return tenants
+      const tenantService = new TenantService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+      return await tenantService.getAllTenants(auth0Domain)
     })
 
     handlers.registerPostCreateTenant(async (ctx, request) => {
@@ -378,6 +352,14 @@ export const tenantsHandler = lambdaApi()(
       async (ctx, request) =>
         await ruleQueueService.deleteQueue(request.ruleQueueId)
     )
+
+    handlers.registerGetTenantsDeletionData(async (ctx) => {
+      const tenantService = new TenantService(ctx.tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClientByEvent(event),
+      })
+      return await tenantService.getTenantsDeletionData(auth0Domain)
+    })
 
     return await handlers.handle(event)
   }

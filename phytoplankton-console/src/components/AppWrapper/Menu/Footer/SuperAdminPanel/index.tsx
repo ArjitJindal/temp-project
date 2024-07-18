@@ -1,6 +1,5 @@
 import { Divider, Input, Space } from 'antd';
 import React, { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { validate } from 'uuid';
 import NumberInput from '../../../../library/NumberInput';
 import Label from '../../../../library/Label';
@@ -9,6 +8,7 @@ import { COLORS_V2_ALERT_CRITICAL } from '../../../../ui/colors';
 import Checkbox from '../../../../library/Checkbox';
 import { CreateTenantModal } from './CreateTenantModal';
 import s from './styles.module.less';
+import { useQuery } from '@/utils/queries/hooks';
 import Modal from '@/components/library/Modal';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
@@ -36,6 +36,7 @@ import Select, { Option } from '@/components/library/Select';
 import Tag from '@/components/library/Tag';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import SelectionGroup from '@/components/library/SelectionGroup';
+import { isSuccess } from '@/utils/asyncResource';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
@@ -117,18 +118,21 @@ export default function SuperAdminPanel() {
     enabled: isModalVisible,
   });
   const tenants: Array<Tenant & { whitelabel?: { host: string; name: string } }> = useMemo(() => {
-    return (
-      queryResult.data?.map((tenant) => {
-        const whitelabelBranding =
-          !isWhiteLabeled() && tenant.host ? getWhiteLabelBrandingByHost(tenant.host) : undefined;
-        return {
-          ...tenant,
-          whitelabel: whitelabelBranding
-            ? { host: tenant.host as string, name: whitelabelBranding.companyName }
-            : undefined,
-        };
-      }) ?? []
-    );
+    if (isSuccess(queryResult.data)) {
+      return (
+        queryResult.data.value.map((tenant) => {
+          const whitelabelBranding =
+            !isWhiteLabeled() && tenant.host ? getWhiteLabelBrandingByHost(tenant.host) : undefined;
+          return {
+            ...tenant,
+            whitelabel: whitelabelBranding
+              ? { host: tenant.host as string, name: whitelabelBranding.companyName }
+              : undefined,
+          };
+        }) ?? []
+      );
+    }
+    return [];
   }, [queryResult.data]);
   const tenantOptions: Option<string>[] = useMemo(
     () =>
@@ -200,6 +204,16 @@ export default function SuperAdminPanel() {
     }
   };
 
+  const tenantsDeletionQueryResult = useQuery(['tenantsFailedToDelete'], async () => {
+    return await api.getTenantsDeletionData();
+  });
+
+  const { tenantsDeletedRecently, tenantsFailedToDelete, tenantsMarkedForDelete } = useMemo(() => {
+    if (isSuccess(tenantsDeletionQueryResult.data)) {
+      return tenantsDeletionQueryResult.data.value;
+    }
+    return {};
+  }, [tenantsDeletionQueryResult.data]);
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleSave = async () => {
     // Sanctions settings validation
@@ -271,6 +285,42 @@ export default function SuperAdminPanel() {
             >
               Create new tenant
             </Button>
+
+            {tenantsDeletedRecently?.length ? (
+              <Label
+                label={`Tenants recently deleted in last 30 days (${tenantsDeletedRecently.length})`}
+              >
+                {tenantsDeletedRecently.map((tenant) => (
+                  <Tag color={'success'}>
+                    {tenant.tenantName} ({tenant.tenantId})
+                  </Tag>
+                ))}
+              </Label>
+            ) : (
+              <></>
+            )}
+            {tenantsMarkedForDelete?.length ? (
+              <Label label={`Tenants marked for delete (${tenantsMarkedForDelete.length})`}>
+                {tenantsMarkedForDelete.map((tenant) => (
+                  <Tag color={'warning'}>
+                    {tenant.tenantName} ({tenant.tenantId})
+                  </Tag>
+                ))}
+              </Label>
+            ) : (
+              <></>
+            )}
+            {tenantsFailedToDelete?.length ? (
+              <Label label={`Tenants failed to delete (${tenantsFailedToDelete.length})`}>
+                {tenantsFailedToDelete.map((tenant) => (
+                  <Tag color={'error'}>
+                    {tenant.tenantName} ({tenant.tenantId})
+                  </Tag>
+                ))}
+              </Label>
+            ) : (
+              <></>
+            )}
             <Divider />
             <Label
               label="Features"

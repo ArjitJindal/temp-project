@@ -168,4 +168,40 @@ export class TenantRepository {
       type: 1,
     })
   }
+
+  public async getTenantsDeletionData() {
+    const db = this.mongoDb.db()
+    const collection = db.collection<DeleteTenant>(TENANT_DELETION_COLLECTION)
+    const [
+      tenantsFailedToDelete,
+      tenantsMarkedForDelete,
+      tenantsDeletedRecently,
+    ] = await Promise.all([
+      collection.find({ latestStatus: 'FAILED' }).toArray(),
+      collection
+        .find({
+          latestStatus: { $nin: ['FAILED', 'CANCELLED', 'HARD_DELETED'] },
+        })
+        .toArray(),
+      collection
+        .find({
+          latestStatus: 'HARD_DELETED',
+          updatedTimestamp: {
+            $gte: dayjs().subtract(30, 'day').unix(),
+          },
+        })
+        .toArray(),
+    ])
+    return {
+      tenantIdsFailedToDelete: tenantsFailedToDelete.map(
+        (tenant) => tenant.tenantId
+      ),
+      tenantIdsMarkedForDelete: tenantsMarkedForDelete.map(
+        (tenant) => tenant.tenantId
+      ),
+      tenantIdsDeletedRecently: tenantsDeletedRecently.map(
+        (tenant) => tenant.tenantId
+      ),
+    }
+  }
 }

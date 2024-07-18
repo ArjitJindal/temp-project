@@ -5768,6 +5768,33 @@ paths:
             schema:
               $ref: '#/components/schemas/DeleteTenant'
         required: true
+  /tenants/deletion-data:
+    get:
+      summary: Get tenant deletion data
+      operationId: get-tenants-deletion-data
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  tenantsFailedToDelete:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantData'
+                  tenantsMarkedForDelete:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantData'
+                  tenantsDeletedRecently:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantData'
   /tenants/settings/checklist-templates/{checklistTemplateId}:
     parameters:
       - schema:
@@ -6079,6 +6106,13 @@ components:
       required:
         - name
         - value
+    TenantData:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        tenantName:
+          type: string
     AnyValue: {}
     QuestionRequest:
       title: QuestionRequest
