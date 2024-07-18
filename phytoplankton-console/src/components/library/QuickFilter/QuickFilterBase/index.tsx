@@ -15,6 +15,7 @@ export interface Props {
     | ((props: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => React.ReactNode);
   analyticsName?: string;
   innerRef?: React.RefObject<any>;
+  allowClear?: boolean;
 }
 
 export default function QuickFilterBase(props: Props) {
@@ -28,6 +29,7 @@ export default function QuickFilterBase(props: Props) {
     onUpdateFilterClose,
     onClear,
     innerRef,
+    allowClear = true,
   } = props;
 
   const [isOpen, setOpen] = useState(false);
@@ -44,7 +46,7 @@ export default function QuickFilterBase(props: Props) {
   return (
     <>
       <QuickFilterButton
-        isActive={isOpen || onClear != null}
+        isActive={isOpen || onClear != null || !allowClear}
         buttonText={
           <>
             {title}

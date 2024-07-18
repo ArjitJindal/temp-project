@@ -19,6 +19,7 @@ export function AutoFilter(props: Props): JSX.Element {
   const { filter, value, onChange } = props;
 
   const inputRef = useRef<any>(null);
+  const allowClear = filter.dataType.allowClear != null ? filter.dataType.allowClear : true;
   const sharedProps = {
     title: filter.title,
     description: filter.description,
@@ -27,6 +28,7 @@ export function AutoFilter(props: Props): JSX.Element {
     value: value as any,
     onChange,
     innerRef: inputRef,
+    allowClear,
   };
 
   if (filter.dataType.kind === 'dateRange') {
@@ -122,7 +124,7 @@ function DateRangeInput(props: InputProps<[string | undefined, string | undefine
 }
 
 function DateTimeRangeInput(props: InputProps<[string | undefined, string | undefined]>) {
-  const { value } = props;
+  const { value, allowClear } = props;
   const startTime = dayjs().subtract(1, 'day').startOf('day');
   const endTime = dayjs().endOf('day');
   const defaultDateRange: RangeValue<Dayjs> = [startTime, endTime];
@@ -147,6 +149,7 @@ function DateTimeRangeInput(props: InputProps<[string | undefined, string | unde
       onOpenChange={(state) => {
         setIsDatePickerOpen(state);
       }}
+      allowClear={allowClear}
     />
   );
 }

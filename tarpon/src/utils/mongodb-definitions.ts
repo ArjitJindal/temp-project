@@ -310,19 +310,15 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'originUserId',
           'status',
           'tags.key',
-          'timestamp',
           'transactionId',
           'transactionState',
           'type',
+          'hitRules.ruleInstanceId',
         ].flatMap((i) => {
-          return [{ [i]: 1, _id: 1 }]
+          return [{ [i]: 1, timestamp: 1, _id: 1 }]
         })
 
         txnIndexes.push(
-          {
-            'hitRules.ruleInstanceId': 1,
-            timestamp: 1,
-          },
           {
             destinationUserId: 1,
             'executedRules.ruleInstanceId': 1,
@@ -335,13 +331,14 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             timestamp: 1,
             _id: 1,
           },
-          { transactionId: 1, timestamp: 1 },
-          { originUserId: 1, timestamp: 1, _id: 1 },
-          { destinationUserId: 1, timestamp: 1, _id: 1 },
           { originUserId: 1, timestamp: -1, _id: -1 },
           { destinationUserId: 1, timestamp: -1, _id: -1 },
           { arsScore: 1 },
-          { alertIds: 1, timestamp: -1, _id: -1 }
+          { alertIds: 1, timestamp: -1, _id: -1 },
+          {
+            timestamp: 1,
+            _id: 1,
+          }
         )
 
         // NOTE: These indexes are for running the rules in the Simulation mode

@@ -20,6 +20,7 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
     onChange = () => {},
     extraInputProps,
     debounce: isDebounce = false,
+    allowClear = true,
     ...rest
   } = props;
 
@@ -51,15 +52,21 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
     <QuickFilter
       buttonText={buttonText}
       onClear={
-        value == null
+        value == null || !allowClear
           ? undefined
           : () => {
               onChange(undefined);
             }
       }
+      allowClear={allowClear}
       {...rest}
     >
-      <InputComponent value={state} onChange={handleChange} {...extraInputProps} />
+      <InputComponent
+        value={state}
+        onChange={handleChange}
+        allowClear={allowClear}
+        {...extraInputProps}
+      />
     </QuickFilter>
   );
 }

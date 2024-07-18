@@ -17,4 +17,5 @@ export interface InputProps<Value> {
   onSearch?: (value: string) => void;
   onFocus?: () => void;
   onBlur?: () => void;
+  allowClear?: boolean;
 }

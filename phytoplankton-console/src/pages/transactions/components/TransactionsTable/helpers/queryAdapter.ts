@@ -5,12 +5,16 @@ import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
 import { Adapter } from '@/utils/routing';
 
+const DEFAULT_TIMESTAMP = [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')];
+
 export const queryAdapter: Adapter<TransactionsTableParams> = {
   serializer: (params: TransactionsTableParams) => {
     return {
       ...defaultQueryAdapter.serializer(params),
       current: params.current,
-      timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(',') ?? '',
+      timestamp:
+        params.timestamp?.map((x) => dayjs(x).valueOf()).join(',') ??
+        DEFAULT_TIMESTAMP.map((x) => x.valueOf()).join(','),
       transactionId: params.transactionId,
       type: params.type,
       transactionState: params.transactionState?.join(',') ?? '',
@@ -34,7 +38,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       current: raw.current,
       timestamp: raw.timestamp
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
-        : undefined,
+        : DEFAULT_TIMESTAMP.map((x) => x.format()),
       transactionId: raw.transactionId,
       type: raw.type,
       transactionState: raw.transactionState

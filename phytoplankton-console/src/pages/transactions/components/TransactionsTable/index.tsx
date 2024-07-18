@@ -270,7 +270,13 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'timestamp'>({
         title: 'Timestamp',
         key: 'timestamp',
-        type: DATE,
+        type: {
+          ...DATE,
+          autoFilterDataType: {
+            kind: 'dateTimeRange',
+            allowClear: false,
+          },
+        },
         sorting: true,
         filtering: true,
       }),
