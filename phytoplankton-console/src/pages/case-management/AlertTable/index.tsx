@@ -32,7 +32,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
-import { getAlertUrl, makeUrl, parseQueryString } from '@/utils/routing';
+import { getAlertUrl, makeUrl } from '@/utils/routing';
 import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
@@ -146,7 +146,9 @@ export default function AlertTable(props: Props) {
 
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
-  const params = useMemo(() => internalParams ?? externalParams, [externalParams, internalParams]);
+  const params = useMemo(() => {
+    return internalParams ?? externalParams;
+  }, [externalParams, internalParams]);
   const selectedTransactionIds = useMemo(() => {
     return Object.values(selectedTxns)
       .flatMap((v) => v)
@@ -164,11 +166,6 @@ export default function AlertTable(props: Props) {
   }, [selectedSanctionHits]);
   const navigate = useNavigate();
   const location = useLocation();
-  const parsedParams = useMemo(() => {
-    return queryAdapter.deserializer({
-      ...parseQueryString(location.search),
-    });
-  }, [location.search]);
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -298,9 +295,7 @@ export default function AlertTable(props: Props) {
   const ruleQueues = useRuleQueues();
 
   const showClosingReason =
-    parsedParams.caseStatus?.includes('CLOSED') ||
-    parsedParams.alertStatus?.includes('CLOSED') ||
-    false;
+    params.caseStatus?.includes('CLOSED') || params.alertStatus?.includes('CLOSED') || false;
 
   const columns = useMemo(() => {
     const mergedColumns = (
@@ -734,15 +729,17 @@ export default function AlertTable(props: Props) {
       handleAlertsReviewAssignments,
       icpEnabled
         ? (alertInfo) => {
+            const updatedParams = {
+              ...params,
+              forensicsFor: {
+                alertId: alertInfo.alertId,
+                caseId: alertInfo.caseId,
+              },
+            };
+            setInternalParams(updatedParams);
             navigate(
               makeUrl(location.pathname, undefined, {
-                ...queryAdapter.serializer({
-                  ...params,
-                  forensicsFor: {
-                    alertId: alertInfo.alertId,
-                    caseId: alertInfo.caseId,
-                  },
-                }),
+                ...queryAdapter.serializer(updatedParams),
                 expandedAlertId,
               }),
             );
@@ -1191,15 +1188,17 @@ export default function AlertTable(props: Props) {
         }}
       />
       <InvestigativeCoPilotModal
-        alertId={parsedParams.forensicsFor?.alertId}
-        caseId={parsedParams.forensicsFor?.caseId}
+        alertId={params.forensicsFor?.alertId}
+        caseId={params.forensicsFor?.caseId}
         onClose={() => {
+          const updatedParams = {
+            ...params,
+            forensicsFor: undefined,
+          };
+          setInternalParams(updatedParams);
           navigate(
             makeUrl(location.pathname, undefined, {
-              ...queryAdapter.serializer({
-                ...params,
-                forensicsFor: undefined,
-              }),
+              ...queryAdapter.serializer(updatedParams),
               expandedAlertId,
             }),
           );
