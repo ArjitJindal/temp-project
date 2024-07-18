@@ -7,14 +7,11 @@ import FlagrightLightLogo from '@/branding/flagright-logo-light.svg';
 import FlagrightDarkLogo from '@/branding/flagright-logo-dark.svg';
 import RegtankLightLogo from '@/branding/regtank-logo-light.svg';
 import RegtankDarkLogo from '@/branding/regtank-logo-dark.svg';
-import ZigramLightLogo from '@/branding/zigram-logo-light.png';
-import ZigramDarkLogo from '@/branding/zigram-logo-dark.svg';
 import TraxionRightLightLogo from '@/branding/traxionright-logo-light.png';
 import TraxionRightDarkLogo from '@/branding/traxion-logo-dark.svg';
 import FlagrightFavicon from '@/branding/flagright-favicon.png';
 import FlagrightNoTextLogo from '@/branding/flagright-no-text.svg';
 import RegtankFaviconSvg from '@/branding/regtank-favicon.svg';
-import ZigramFaivcon from '@/branding/zigram-favicon.png';
 import TraxionRightFavicon from '@/branding/traxion-favicon.svg';
 import { neverThrow } from '@/utils/lang';
 
@@ -69,19 +66,6 @@ const REGTANK_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> 
   systemAvatarUrl: RegtankFaviconSvg,
 };
 
-const ZIGRAM_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
-  supportEmail: 'tmsupport@zigram.tech',
-  logoLight: ZigramLightLogo,
-  logoDark: ZigramDarkLogo,
-  companyName: 'Transact Comply',
-  notProvisionedWarning: `User does not have a provisioned Transact Comply Account.`,
-  apiDocsLinks: {
-    webhooks: undefined,
-  },
-  faviconUrl: ZigramFaivcon,
-  systemAvatarUrl: ZigramFaivcon,
-};
-
 const TRAXIONRIGHT_BRANDING: Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> = {
   supportEmail: 'support@traxionright.com',
   logoLight: TraxionRightLightLogo,
@@ -100,9 +84,6 @@ function getBrandingSettings(
 ): Omit<BrandingSettings, 'auth0Domain' | 'auth0ClientId'> {
   if (brandId === 'REGTANK') {
     return REGTANK_BRANDING;
-  }
-  if (brandId === 'ZIGRAM') {
-    return ZIGRAM_BRANDING;
   }
   if (brandId === 'TRAXIONRIGHT') {
     return TRAXIONRIGHT_BRANDING;

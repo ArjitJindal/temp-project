@@ -3,7 +3,11 @@
   "app": "npx ts-node --project tsconfig.infra.json infra/bin/cdktf-tarpon-pipeline.ts",
   "projectId": "6b90b9c1-6a15-4e3b-87b3-b15624cf1096",
   "sendCrashReports": "false",
-  "terraformProviders": ["auth0/auth0@0.43.0", "hashicorp/aws@4.53.0"],
+  "terraformProviders": [
+    "auth0/auth0@0.43.0",
+    "hashicorp/aws@4.53.0",
+    "ClickHouse/clickhouse@0.0.10"
+  ],
   "context": {
     "excludeStackIdFromLogicalIds": "true",
     "allowSepCharsInLogicalIds": "true"

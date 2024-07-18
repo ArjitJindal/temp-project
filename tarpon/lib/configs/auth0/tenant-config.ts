@@ -4,7 +4,6 @@ import { Auth0DevTenantConfig } from './tenant-config-dev'
 import { Auth0ProdTenantConfig } from './tenant-config-prod'
 import { Auth0SandboxTenantConfig } from './tenant-config-sandbox'
 import { Auth0SandboxRegtankTenantConfig } from './tenant-config-sandbox-regtank'
-import { Auth0SandboxZigramTenantConfig } from './tenant-config-sandbox-zigram'
 import { Auth0ProdRegtankTenantConfig } from './tenant-config-prod-regtank'
 import { Auth0SandboxTraxionRightTenantConfig } from './tenant-config-sandbox-traxionright'
 import { Auth0ProdTraxionRightTenantConfig } from './tenant-config-prod-traxionright'
@@ -28,7 +27,6 @@ export function getAuth0TenantConfigs(
       return [
         Auth0SandboxTenantConfig,
         Auth0SandboxRegtankTenantConfig,
-        Auth0SandboxZigramTenantConfig,
         Auth0SandboxTraxionRightTenantConfig,
       ]
     }

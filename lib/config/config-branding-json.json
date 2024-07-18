@@ -15,22 +15,6 @@
       }
     }
   },
-  "ZIGRAM": {
-    "consoleSettings": {
-      "sandbox": {
-        "allowedDomains": ["*.transactcomply.com"],
-        "host": "sandboxconsole.transactcomply.com",
-        "auth0Domain": "login.sandboxconsole.transactcomply.com",
-        "auth0ClientId": "qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6"
-      },
-      "prod": {
-        "allowedDomains": ["*.transactcomply.com"],
-        "host": "console.transactcomply.com/",
-        "auth0Domain": "login.sandboxconsole.transactcomply.com",
-        "auth0ClientId": "qW5HsNLzyfKoKlG8orZza1EQBUqTxfj6"
-      }
-    }
-  },
   "TRAXIONRIGHT": {
     "consoleSettings": {
       "sandbox": {
