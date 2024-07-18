@@ -82,38 +82,6 @@ export default function ScreeningMatchList(props: Props) {
     () =>
       [
         {
-          title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
-          key: CLEARED_MATCH_LIST_TAB_KEY,
-          children: (
-            <div className={s.selectWithTable}>
-              <Select
-                value={sanctionsDetailsId}
-                options={details.map((detailsItem) => ({
-                  label: getOptionName(detailsItem),
-                  value: detailsItem.searchId,
-                }))}
-                onChange={setSanctionsDetailsId}
-                allowClear={false}
-              />
-              <SanctionsTable
-                tableRef={null}
-                queryResult={clearedHitsQueryResults}
-                isEmbedded={true}
-                selection={onSanctionsHitSelect != null}
-                params={clearedTableParams}
-                onChangeParams={setClearedTableParams}
-                selectedIds={selectedSanctionsHitsIds}
-                onSelect={(sanctionHitsIds) => {
-                  if (!alert?.alertId) {
-                    return;
-                  }
-                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
-                }}
-              />
-            </div>
-          ),
-        },
-        {
           title: 'Human review' + (hitsCount != null ? ` (${hitsCount})` : ''),
           key: MATCH_LIST_TAB_KEY,
           children: (
@@ -140,6 +108,38 @@ export default function ScreeningMatchList(props: Props) {
                     return;
                   }
                   onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
+                }}
+              />
+            </div>
+          ),
+        },
+        {
+          title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
+          key: CLEARED_MATCH_LIST_TAB_KEY,
+          children: (
+            <div className={s.selectWithTable}>
+              <Select
+                value={sanctionsDetailsId}
+                options={details.map((detailsItem) => ({
+                  label: getOptionName(detailsItem),
+                  value: detailsItem.searchId,
+                }))}
+                onChange={setSanctionsDetailsId}
+                allowClear={false}
+              />
+              <SanctionsTable
+                tableRef={null}
+                queryResult={clearedHitsQueryResults}
+                isEmbedded={true}
+                selection={onSanctionsHitSelect != null}
+                params={clearedTableParams}
+                onChangeParams={setClearedTableParams}
+                selectedIds={selectedSanctionsHitsIds}
+                onSelect={(sanctionHitsIds) => {
+                  if (!alert?.alertId) {
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
                 }}
               />
             </div>
