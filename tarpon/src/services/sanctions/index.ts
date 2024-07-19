@@ -554,7 +554,7 @@ export class SanctionsService {
       filterStatus?: SanctionsHitStatus[]
     } & CursorPaginationParams
   ): Promise<SanctionsHitListResponse> {
-    if (isEmpty(params.filterHitIds) && !params.filterSearchId) {
+    if (isEmpty(params.filterHitIds) && isEmpty(params.filterSearchId)) {
       throw new BadRequest('Search ID or Hit IDs must be provided')
     }
 

@@ -1,6 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import s from './index.module.less';
-import { SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
+import {
+  SanctionsDetails,
+  SanctionsHit,
+  SanctionsHitStatus,
+  SanctionsHitListResponse,
+} from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { success, getOr, map } from '@/utils/asyncResource';
 import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
@@ -230,7 +235,19 @@ function useSanctionHitsQuery(
   };
   return useCursorQuery(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
-    async (paginationParams) => {
+    async (paginationParams): Promise<SanctionsHitListResponse> => {
+      if (filters.filterHitIds.length === 0) {
+        return {
+          items: [],
+          next: '',
+          prev: '',
+          last: '',
+          hasNext: false,
+          hasPrev: false,
+          count: 0,
+          limit: 100000,
+        };
+      }
       const request = {
         ...filters,
         ...params,
