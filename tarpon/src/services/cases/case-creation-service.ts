@@ -2,6 +2,7 @@ import {
   compact,
   flatten,
   groupBy,
+  isEmpty,
   isEqual,
   last,
   memoize,
@@ -1373,7 +1374,15 @@ export class CaseCreationService {
 
     const savedCases: Case[] = []
     for (const caseItem of result) {
-      savedCases.push(await this.addOrUpdateCase(caseItem))
+      const alerts = this.filterOurEmptySanctionHits(caseItem.alerts ?? [])
+      if (alerts.length) {
+        savedCases.push(
+          await this.addOrUpdateCase({
+            ...caseItem,
+            alerts,
+          })
+        )
+      }
     }
 
     logger.info(`Updated/created cases count`, {
@@ -1440,5 +1449,30 @@ export class CaseCreationService {
           timestamp: Date.now(),
         } as Assignment)
       : null
+  }
+
+  // NOTE: sanctionHitIds could be empty if all the corresponding hit entities are white-listed
+  private filterOurEmptySanctionHits(alerts: Alert[]): Alert[] {
+    return compact(
+      alerts.map((alert) => {
+        if (!alert.ruleHitMeta?.sanctionsDetails) {
+          return alert
+        }
+        const filteredSanctionsDetails =
+          alert.ruleHitMeta.sanctionsDetails.filter(
+            (v) => !isEmpty(v.sanctionHitIds)
+          )
+        if (filteredSanctionsDetails.length === 0) {
+          return null
+        }
+        return {
+          ...alert,
+          ruleHitMeta: {
+            ...alert.ruleHitMeta,
+            sanctionsDetails: filteredSanctionsDetails,
+          },
+        }
+      })
+    )
   }
 }

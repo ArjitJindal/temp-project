@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { pick, omit } from 'lodash'
+import { pick, omit, isEqual } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { CaseCreationService } from '../../services/cases/case-creation-service'
 import { sendTransactionEvent } from '../transaction-events-consumer/app'
@@ -47,15 +47,16 @@ async function transactionHandler(
 
 async function userHandler(
   tenantId: string,
-  user: BusinessWithRulesResult | UserWithRulesResult | undefined
+  oldUser: BusinessWithRulesResult | UserWithRulesResult | undefined,
+  newUser: BusinessWithRulesResult | UserWithRulesResult | undefined
 ) {
-  if (!user || !user.userId) {
+  if (!newUser || !newUser.userId) {
     return
   }
-  updateLogMetadata({ userId: user.userId })
+  updateLogMetadata({ userId: newUser.userId })
   logger.info(`Processing User`)
 
-  let internalUser = user as InternalUser
+  let internalUser = newUser as InternalUser
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   const casesRepo = new CaseRepository(tenantId, {
@@ -113,25 +114,29 @@ async function userHandler(
     ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
   })
 
-  const timestampBeforeCasesCreation = Date.now()
-
-  const anyOngoingHitRule = savedUser.hitRules?.find(
-    (rule) => rule.ruleHitMeta?.isOngoingScreeningHit
+  const newHitRules = savedUser.hitRules?.filter(
+    (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
   )
-
-  if (savedUser.hitRules?.length && !anyOngoingHitRule) {
-    const cases = await caseCreationService.handleUser(savedUser)
-
-    await Promise.all([
-      caseCreationService.handleNewCases(
-        tenantId,
-        timestampBeforeCasesCreation,
-        cases
-      ),
-      casesRepo.updateUsersInCases(internalUser),
-    ])
+  // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
+  // user.riskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel
+  // alone will trigger a new case which is unexpected. We only want to create a new case if the user details
+  // have changes (when there're changes, we'll run user rules again).
+  const userDetailsChanged = !isEqual(
+    omit(oldUser, 'riskLevel'),
+    omit(newUser, 'riskLevel')
+  )
+  if (userDetailsChanged && newHitRules?.length) {
+    const cases = await caseCreationService.handleUser({
+      ...savedUser,
+      hitRules: newHitRules,
+    })
+    const timestampBeforeCasesCreation = Date.now()
+    await caseCreationService.handleNewCases(
+      tenantId,
+      timestampBeforeCasesCreation,
+      cases
+    )
   }
-
   await casesRepo.syncCaseUsers(internalUser)
 
   if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
@@ -212,7 +217,7 @@ const tarponBuilder = new StreamConsumerBuilder(
     transactionHandler(tenantId, newTransaction)
   )
   .setUserHandler((tenantId, oldUser, newUser) =>
-    userHandler(tenantId, newUser)
+    userHandler(tenantId, oldUser, newUser)
   )
   .setUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
     userEventHandler(tenantId, newUserEvent)

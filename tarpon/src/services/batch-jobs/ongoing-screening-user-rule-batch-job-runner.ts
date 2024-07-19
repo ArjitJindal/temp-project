@@ -1,7 +1,6 @@
 import pMap from 'p-map'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { isEqual } from 'lodash'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -19,6 +18,8 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import dayjs from '@/utils/dayjs'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 
 const CONCURRENT_BATCH_SIZE = 100
 
@@ -150,16 +151,9 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         if (!user) {
           return
         }
-
-        const hitResults = data[userId].executedRules
-        const existingHitResults = user.hitRules ?? []
-
-        if (!isEqual(hitResults, existingHitResults)) {
-          await this.userRepository?.updateUserWithExecutedRules(
-            userId,
-            data[userId].executedRules ?? [],
-            data[userId].hitRules ?? []
-          )
+        const { hitRules, executedRules } = data[userId]
+        if (hitRules && hitRules.length > 0) {
+          await this.createCase(user, executedRules ?? [], hitRules)
         }
       },
       { concurrency: CONCURRENT_BATCH_SIZE }
@@ -180,27 +174,35 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           rules,
           { ongoingScreeningMode: true }
         )
-
-        if (
-          result?.hitRules?.length &&
-          !isEqual(user.hitRules ?? [], result.hitRules ?? [])
-        ) {
-          const timestampBeforeCasesCreation = Date.now()
-
-          const cases = await this.caseCreationService?.handleUser({
-            ...user,
-            hitRules: result.hitRules,
-            executedRules: result.executedRules,
-          })
-
-          await this.caseCreationService?.handleNewCases(
-            this.tenantId ?? '',
-            timestampBeforeCasesCreation,
-            cases ?? []
+        if (result?.hitRules && result.hitRules.length > 0) {
+          await this.createCase(
+            user,
+            result.executedRules ?? [],
+            result.hitRules
           )
         }
       },
       { concurrency: CONCURRENT_BATCH_SIZE }
+    )
+  }
+
+  private async createCase(
+    user: InternalUser,
+    executedRules: ExecutedRulesResult[],
+    hitRules: HitRulesDetails[]
+  ) {
+    const timestampBeforeCasesCreation = Date.now()
+
+    const cases = await this.caseCreationService?.handleUser({
+      ...user,
+      hitRules,
+      executedRules,
+    })
+
+    await this.caseCreationService?.handleNewCases(
+      this.tenantId ?? '',
+      timestampBeforeCasesCreation,
+      cases ?? []
     )
   }
 }
