@@ -5928,6 +5928,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@types/ip@npm:^1.1.3":
+  version: 1.1.3
+  resolution: "@types/ip@npm:1.1.3"
+  dependencies:
+    "@types/node": "npm:*"
+  checksum: 75a0d1527697d3578857c9e64db264ed9d86b8030740cec217b04895f9a0666eca8a2d15ccfc80be88b79729716a32484d2b62db448af94a8628962c05648526
+  languageName: node
+  linkType: hard
+
 "@types/is-stream@npm:^1.1.0":
   version: 1.1.0
   resolution: "@types/is-stream@npm:1.1.0"
@@ -11960,6 +11969,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"ip@npm:^2.0.1":
+  version: 2.0.1
+  resolution: "ip@npm:2.0.1"
+  checksum: d6dd154e1bc5e8725adfdd6fb92218635b9cbe6d873d051bd63b178f009777f751a5eea4c67021723a7056325fc3052f8b6599af0a2d56f042c93e684b4a0349
+  languageName: node
+  linkType: hard
+
 "ipaddr.js@npm:1.9.1":
   version: 1.9.1
   resolution: "ipaddr.js@npm:1.9.1"
@@ -17755,6 +17771,7 @@ __metadata:
     "@types/google-spreadsheet": "npm:^3.3.1"
     "@types/html-to-text": "npm:^9.0.0"
     "@types/http-errors": "npm:^1.8.2"
+    "@types/ip": "npm:^1.1.3"
     "@types/isomorphic-fetch": "npm:^0.0.36"
     "@types/jest": "npm:^28.1.8"
     "@types/js-yaml": "npm:^4.0.5"
@@ -17826,6 +17843,7 @@ __metadata:
     ibantools: "npm:^4.2.2"
     io-ts: "npm:^2.2.16"
     io-ts-reporters: "npm:^2.0.1"
+    ip: "npm:^2.0.1"
     isomorphic-fetch: "npm:^3.0.0"
     jest: "npm:^28.1.3"
     js-yaml: "npm:^4.1.0"

@@ -1,4 +1,5 @@
 import * as ipLocationAPI from '@maxmind/geoip2-node'
+import * as ip from 'ip'
 import { logger } from '@/core/logger'
 import { getSecretByName } from '@/utils/secrets-manager'
 
@@ -9,6 +10,10 @@ export type IpLocation = {
 }
 
 export async function lookupIpLocation(ipAddress: string): Promise<IpLocation> {
+  if (ip.isPrivate(ipAddress)) {
+    return { country: '', continent: '', city: '' }
+  }
+
   const geoip2secret = await getSecretByName('geoip2Creds')
   const ipLocationClient = new ipLocationAPI.WebServiceClient(
     geoip2secret.accountId,
