@@ -24,6 +24,7 @@ import { useRules } from '@/utils/rules';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { SANCTIONS_SCREENING_ENTITYS } from '@/apis/models-custom/SanctionsScreeningEntity';
 import { BOOLEAN } from '@/components/library/Table/standardDataTypes';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type TableSearchParams = AllParams<{
   entity?: SanctionsScreeningEntity[];
@@ -71,6 +72,7 @@ export const SanctionsScreeningActivity = () => {
       });
     },
   );
+  const isIBANResolutionEnabled = useFeatureEnabled('IBAN_RESOLUTION');
   const detailsResult = usePaginatedQuery(
     SANCTIONS_SCREENING_DETAILS(params),
     async (paginationParams) => {
@@ -151,7 +153,9 @@ export const SanctionsScreeningActivity = () => {
           stringify: (entity) => (entity ? getEntityName(entity) : '-'),
           autoFilterDataType: {
             kind: 'select',
-            options: SANCTIONS_SCREENING_ENTITYS.map((v) => ({
+            options: SANCTIONS_SCREENING_ENTITYS.filter(
+              (entity) => !(entity === 'IBAN' && !isIBANResolutionEnabled),
+            ).map((v) => ({
               label: getEntityName(v),
               value: v,
             })),
@@ -255,7 +259,7 @@ export const SanctionsScreeningActivity = () => {
         },
       }),
     ]);
-  }, [ruleInstances]);
+  }, [ruleInstances, isIBANResolutionEnabled]);
 
   return (
     <>
@@ -283,13 +287,17 @@ export const SanctionsScreeningActivity = () => {
           const emptyState: SanctionsScreeningEntityStats = { screenedCount: 0, hitCount: 0 };
           const user = response.data?.find((v) => v.entity === 'USER');
           const bank = response.data?.find((v) => v.entity === 'BANK');
-          const iban = response.data?.find((v) => v.entity === 'IBAN');
+          const iban = isIBANResolutionEnabled
+            ? response.data?.find((v) => v.entity === 'IBAN')
+            : undefined;
           const externalUser = response.data?.find((v) => v.entity === 'EXTERNAL_USER');
           return (
             <div className={s.root}>
               <KpiCard data={user ?? emptyState} title="Users" className={s['user']} />
               <KpiCard data={bank ?? emptyState} title="Bank names" className={s['bank']} />
-              <KpiCard data={iban ?? emptyState} title="IBAN" className={s['iban']} />
+              {isIBANResolutionEnabled && (
+                <KpiCard data={iban ?? emptyState} title="IBAN" className={s['iban']} />
+              )}
               <KpiCard
                 data={externalUser ?? emptyState}
                 title="Transaction counterparty"
