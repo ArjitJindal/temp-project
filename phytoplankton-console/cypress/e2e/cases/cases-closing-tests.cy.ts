@@ -89,7 +89,7 @@ function closeCase() {
   cy.intercept('PATCH', '**/cases/statusChange').as('case');
   cy.multiSelect('.ant-modal', 'False positive');
   cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-  cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
+  cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
   cy.get('.ant-modal-footer button').eq(1).click();
   cy.get('.ant-modal-footer button').eq(3).click();
   cy.wait('@case', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 304]);

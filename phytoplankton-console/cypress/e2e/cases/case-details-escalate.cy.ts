@@ -27,7 +27,7 @@ describe('Escalate a case from case-details', () => {
     cy.intercept('POST', '**/cases/*/escalate').as('escalate');
     cy.multiSelect('.ant-modal', 'Fraud');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-    cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
+    cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(1).click();
     cy.wait('@escalate').its('response.statusCode').should('eq', 200);
@@ -52,7 +52,7 @@ describe('Escalate a case from case-details', () => {
     cy.intercept('PATCH', '**/cases/statusChange').as('case');
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
-    cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
+    cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(1).click();
     cy.wait('@case').its('response.statusCode').should('eq', 200);
