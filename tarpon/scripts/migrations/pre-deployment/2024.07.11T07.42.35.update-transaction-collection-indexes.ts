@@ -1,4 +1,5 @@
 import { isEqual } from 'lodash'
+import { Document } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
 import {
   TRANSACTIONS_COLLECTION,
@@ -13,7 +14,13 @@ async function migrateTenant(tenant: Tenant) {
   const indexes = allIndexes[TRANSACTIONS_COLLECTION(tenant.id)].getIndexes()
   const db = await getMongoDbClientDb()
   const collection = db.collection(TRANSACTIONS_COLLECTION(tenant.id))
-  const currentIndexes = await collection.indexes()
+  let currentIndexes: Document[]
+  try {
+    currentIndexes = await collection.indexes()
+  } catch (e) {
+    // collection does not exist
+    return
+  }
   const indexesToDrop = currentIndexes.filter(
     (desired) =>
       !isEqual({ _id: 1 }, desired.key) &&
