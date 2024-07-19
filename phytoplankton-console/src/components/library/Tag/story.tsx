@@ -9,7 +9,6 @@ import RecommendedTag from './RecommendedTag';
 import RuleQueueTag from './RuleQueueTag';
 import RoleTag from './RoleTag';
 import RuleHitInsightsTag from './RuleHitInsightsTag';
-import { RuleActionTag } from './RuleActionTag';
 import RiskLevelTag from './RiskLevelTag';
 import UserTypeTag from './UserTypeTag';
 import Tag, { TagColor } from './index';
@@ -24,6 +23,7 @@ import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import SanctionsHitStatusTag from '@/components/ui/SanctionsHitStatusTag';
+import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 
 function TagsList<T>(props: { items: T[]; children: (value: T) => JSX.Element }) {
   return (
@@ -173,7 +173,7 @@ export default function (): JSX.Element {
         <RuleQueueTag />
       </UseCase>
       <UseCase title={'RuleActionTag'}>
-        <TagsList items={RULE_ACTIONS}>{(x) => <RuleActionTag ruleAction={x} />}</TagsList>
+        <TagsList items={RULE_ACTIONS}>{(x) => <RuleActionStatus ruleAction={x} />}</TagsList>
       </UseCase>
       <UseCase title={'RiskLevel'}>
         <PropertyMatrix x={[...RISK_LEVELS, undefined]}>

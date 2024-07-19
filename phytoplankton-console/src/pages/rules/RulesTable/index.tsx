@@ -12,7 +12,7 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getBranding } from '@/utils/branding';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { ENUM, LONG_TEXT, RULE_ACTION } from '@/components/library/Table/standardDataTypes';
+import { ENUM, LONG_TEXT, RULE_ACTION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { RULE_ACTION_VALUES } from '@/utils/rules';
 import RuleChecksForTag from '@/components/library/RuleChecksForTag';
@@ -152,7 +152,7 @@ export const RulesTable: React.FC<Props> = (props) => {
       helper.simple<'defaultAction'>({
         title: 'Default action',
         key: 'defaultAction',
-        type: RULE_ACTION,
+        type: RULE_ACTION_STATUS,
         sorting: true,
         defaultWidth: 100,
         // todo: implement

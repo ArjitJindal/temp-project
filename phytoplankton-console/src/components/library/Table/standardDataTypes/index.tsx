@@ -45,7 +45,6 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import UserLink from '@/components/UserLink';
-import { RuleActionTag } from '@/components/library/Tag/RuleActionTag';
 import Money from '@/components/ui/Money';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
@@ -603,12 +602,6 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
     mode: 'SINGLE',
   },
 });
-
-export const RULE_ACTION: ColumnDataType<RuleAction> = {
-  render: (ruleAction) => {
-    return ruleAction ? <RuleActionTag ruleAction={ruleAction} /> : <></>;
-  },
-};
 
 export const RULE_ACTION_STATUS: ColumnDataType<RuleAction> = {
   render: (ruleAction) => {

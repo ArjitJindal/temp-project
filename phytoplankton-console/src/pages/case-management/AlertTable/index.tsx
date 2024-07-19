@@ -49,8 +49,8 @@ import {
   CASEID,
   DATE,
   PRIORITY,
-  RULE_ACTION,
   RULE_NATURE,
+  RULE_ACTION_STATUS,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SarButton as SarButton } from '@/components/Sar';
@@ -418,7 +418,7 @@ export default function AlertTable(props: Props) {
         helper.simple<'ruleAction'>({
           title: 'Rule action',
           key: 'ruleAction',
-          type: RULE_ACTION,
+          type: RULE_ACTION_STATUS,
         }),
         helper.simple<'ruleNature'>({
           title: 'Rule nature',

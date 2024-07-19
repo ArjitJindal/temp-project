@@ -40,7 +40,7 @@ import {
   MONEY_CURRENCY,
   PAYMENT_METHOD,
   RISK_LEVEL,
-  RULE_ACTION,
+  RULE_ACTION_STATUS,
   STRING,
   TAGS,
   TRANSACTION_STATE,
@@ -293,14 +293,14 @@ export default function TransactionsTable(props: Props) {
               defaultWidth: 80,
               key: 'executedRules.ruleAction',
               value: (entity) => getStatus(entity.executedRules, alert, entity.status),
-              type: RULE_ACTION,
+              type: RULE_ACTION_STATUS,
             } as DerivedColumn<InternalTransaction, RuleAction>,
           ]
         : [
             helper.simple<'status'>({
               title: 'Status',
               key: 'status',
-              type: RULE_ACTION,
+              type: RULE_ACTION_STATUS,
             }),
           ]),
       helper.simple<'originUserId'>({
