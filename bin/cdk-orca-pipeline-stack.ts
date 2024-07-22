@@ -18,7 +18,6 @@ import {
 } from './constants/artifcats'
 import { tarponDeployStage } from './utils/tarpon-deploy-stage'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
-import { config as sandboxConfig } from '@flagright/lib/config/config-sandbox-eu-1'
 import { config as phytoDevConfig } from '../phytoplankton-console/lib/configs/config-dev'
 import { config as phytoSandboxConfig } from '../phytoplankton-console/lib/configs/config-sandbox'
 import { config as phytoProdConfig } from '../phytoplankton-console/lib/configs/config-prod'
@@ -225,18 +224,22 @@ export class CdkOrcaPipelineStack extends Stack {
         {
           stageName: 'Post_Deploy_Sandbox',
           actions: [
-            new codepipline_actions.CodeBuildAction({
-              actionName: 'Post_Deploy_Sandbox',
-              project: postDeploymentCodeBuildProject(
-                this,
-                sandboxConfig,
-                role,
-                vpc
-              ),
-              input: SOURCE_ARTIFACT,
-              environmentVariables: getSentryReleaseSpec(false).actionEnv,
-              extraInputs: [TARPON_BUILD_ARTIFACT],
-              runOrder: 1,
+            ...SANDBOX_REGIONS.map((region) => {
+              return new codepipline_actions.CodeBuildAction({
+                actionName: getCodeBuildActionName(
+                  'Post_Deploy_Sandbox',
+                  region
+                ),
+                project: postDeploymentCodeBuildProject(
+                  this,
+                  getTarponConfig('sandbox', region),
+                  role,
+                  vpc
+                ),
+                input: SOURCE_ARTIFACT,
+                environmentVariables: getSentryReleaseSpec(false).actionEnv,
+                extraInputs: [TARPON_BUILD_ARTIFACT],
+              })
             }),
             new codepipline_actions.CodeBuildAction({
               actionName: 'Integrations_Update',
