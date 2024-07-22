@@ -1673,7 +1673,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.147":
+"aws-cdk-lib@npm:~2.147.1":
   version: 2.147.3
   resolution: "aws-cdk-lib@npm:2.147.3"
   dependencies:
@@ -3317,7 +3317,7 @@ __metadata:
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.5"
     aws-cdk: "npm:~2.147.1"
-    aws-cdk-lib: "npm:~2.147"
+    aws-cdk-lib: "npm:~2.147.1"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"

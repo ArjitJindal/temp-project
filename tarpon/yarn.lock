@@ -7157,9 +7157,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.142.0":
-  version: 2.142.1
-  resolution: "aws-cdk-lib@npm:2.142.1"
+"aws-cdk-lib@npm:~2.147.1":
+  version: 2.147.3
+  resolution: "aws-cdk-lib@npm:2.147.3"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -7172,18 +7172,18 @@ __metadata:
     mime-types: "npm:^2.1.35"
     minimatch: "npm:^3.1.2"
     punycode: "npm:^2.3.1"
-    semver: "npm:^7.6.0"
+    semver: "npm:^7.6.2"
     table: "npm:^6.8.2"
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: e4d7666f5eae11e7c15a1e94b072b1d4105c34fd41ba21fbd9ddd361fbef2cabad08b134ba6943dad748ad0aeca8f0d3207c88861a77cfb9ca3ec6aae5ba6eb0
+  checksum: f48955b0045c2893cf6755f86e9a3053f375681ea0cd3e5267136b8d6e8ff76b3f1997c3e788aeb71e7f0db980600ece7d2fd731a2e725fb0491d1697084d1c9
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.144.0":
-  version: 2.144.0
-  resolution: "aws-cdk@npm:2.144.0"
+"aws-cdk@npm:~2.147.1":
+  version: 2.147.3
+  resolution: "aws-cdk@npm:2.147.3"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -7191,7 +7191,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: b06fe9eb19cf641fbcbf625afcee3a19ce8ac0e66793026940bc6360ca17022c20071de76a7afdd60a5291f58f36a1397b8a9131d8163a55a8fe7145e970b1f9
+  checksum: 370199bc9e34ad19988513e3aced8dbe8bc638e17d90a67f0604d886db08445af75da2a7168bd95c9016ac445c841eed040ec415858c4d4782a6837a71dcc65d
   languageName: node
   linkType: hard
 
@@ -16699,6 +16699,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.6.2":
+  version: 7.6.3
+  resolution: "semver@npm:7.6.3"
+  bin:
+    semver: bin/semver.js
+  checksum: 36b1fbe1a2b6f873559cd57b238f1094a053dbfd997ceeb8757d79d1d2089c56d1321b9f1069ce263dc64cfa922fa1d2ad566b39426fe1ac6c723c1487589e10
+  languageName: node
+  linkType: hard
+
 "send@npm:0.18.0":
   version: 0.18.0
   resolution: "send@npm:0.18.0"
@@ -17793,8 +17802,8 @@ __metadata:
     ajv: "npm:8.11.0"
     athena-struct-parser: "npm:^1.1.0"
     auth0: "npm:^4.4.0"
-    aws-cdk: "npm:~2.144.0"
-    aws-cdk-lib: "npm:~2.142.0"
+    aws-cdk: "npm:~2.147.1"
+    aws-cdk-lib: "npm:~2.147.1"
     aws-sdk: "npm:^2.1634.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"

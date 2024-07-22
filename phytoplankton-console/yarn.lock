@@ -9121,9 +9121,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.140.0":
-  version: 2.140.0
-  resolution: "aws-cdk-lib@npm:2.140.0"
+"aws-cdk-lib@npm:~2.147.1":
+  version: 2.147.3
+  resolution: "aws-cdk-lib@npm:2.147.3"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
@@ -9136,18 +9136,18 @@ __metadata:
     mime-types: "npm:^2.1.35"
     minimatch: "npm:^3.1.2"
     punycode: "npm:^2.3.1"
-    semver: "npm:^7.6.0"
+    semver: "npm:^7.6.2"
     table: "npm:^6.8.2"
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: c02a0d200cb23c165297e4082ab8b484b8d06d76d1d139d2905c116505bb04f528d6ce8a2755e634fe47977b46822af4a141af5375fc44bdbe38fc9f86823b16
+  checksum: bd77bd384e9c5b16e55de10f2bbd055d9cbeb5138116e58afc213941d7b15363bd710076f48351c3dccb84cc68ac01c0a332ae07359d423943828f73b1df63cb
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.139.0":
-  version: 2.139.1
-  resolution: "aws-cdk@npm:2.139.1"
+"aws-cdk@npm:~2.147.1":
+  version: 2.147.3
+  resolution: "aws-cdk@npm:2.147.3"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -9155,7 +9155,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 532dd3082fd61972b36221faafb2adde0400d2d1fa786a109818199e5d4aab8904fbc90eecac4926601c6f95cde9dbc53e5d51fc018168f2b166346b0323c04e
+  checksum: ec755a8b1531e1b844bf428040d43e710563463a49642dc35cca44def7404b634814aa42464503ea5724cf9fbeed361552bdef98b8493d71d98c14e3818b17c5
   languageName: node
   linkType: hard
 
@@ -18317,8 +18317,8 @@ __metadata:
     ahooks: "npm:^2.0.0"
     ajv: "npm:^8.12.0"
     antd: "npm:4.21.4"
-    aws-cdk: "npm:~2.139.0"
-    aws-cdk-lib: "npm:~2.140.0"
+    aws-cdk: "npm:~2.147.1"
+    aws-cdk-lib: "npm:~2.147.1"
     axios: "npm:^0.26.0"
     carlo: "npm:^0.9.46"
     clsx: "npm:^1.2.1"
@@ -21059,14 +21059,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"semver@npm:^7.6.0":
-  version: 7.6.0
-  resolution: "semver@npm:7.6.0"
-  dependencies:
-    lru-cache: "npm:^6.0.0"
+"semver@npm:^7.6.2":
+  version: 7.6.3
+  resolution: "semver@npm:7.6.3"
   bin:
     semver: bin/semver.js
-  checksum: fbfe717094ace0aa8d6332d7ef5ce727259815bd8d8815700853f4faf23aacbd7192522f0dc5af6df52ef4fa85a355ebd2f5d39f554bd028200d6cf481ab9b53
+  checksum: 88f33e148b210c153873cb08cfe1e281d518aaa9a666d4d148add6560db5cd3c582f3a08ccb91f38d5f379ead256da9931234ed122057f40bb5766e65e58adaf
   languageName: node
   linkType: hard
 
