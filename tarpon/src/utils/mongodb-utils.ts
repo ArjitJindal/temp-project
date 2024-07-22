@@ -291,43 +291,48 @@ export async function syncIndexes<T>(
   indexes: { index: Document; unique?: boolean }[]
 ) {
   const currentIndexes = await collection.indexes()
+  let currentTotalIndexes = currentIndexes.length
   const indexesToCreate = indexes.filter(
     (desired) =>
       !currentIndexes.find((current) => isEqual(desired.index, current.key))
+  )
+  const indexesToDrop = currentIndexes.filter(
+    (index) =>
+      index.name !== '_id_' &&
+      !indexes.find((desired) => isEqual(desired.index, index.key))
   )
 
   if (indexesToCreate.length > 64) {
     throw new Error("Can't create more than 64 indexes")
   }
-
-  if (indexesToCreate.length > 0) {
-    for (const index of indexesToCreate) {
-      await collection.createIndex(index.index, {
-        unique: index.unique ?? false,
-      })
-      logger.info(
-        `Created index - ${JSON.stringify(index)} (${
-          collection.collectionName
-        })`
-      )
-    }
-  }
-
-  // NOTE: We remove orphaned indexes after the new indexes are created as those indexes could be
-  // created manually for urgent fix. Removing it first could cause performance downgrade before the
-  // new ones are created.
-  for (const index of currentIndexes) {
-    // Don't drop ID index
-    if (index.name === '_id_') {
-      continue
-    }
-
-    // If index is not desired, delete it
-    if (!indexes.find((desired) => isEqual(desired.index, index.key))) {
-      await collection.dropIndex(index.name)
-      logger.info(
-        `Dropped index - ${index.name} (${collection.collectionName})`
-      )
+  // Do "Blue-Green" index creation if possible:
+  // - create new indexes until we cannot (64 limit)
+  // - only drop old indexes when we must to (64 limit reached) or when the new indexes are
+  //   already created
+  while (indexesToDrop.length > 0 || indexesToCreate.length > 0) {
+    if (currentTotalIndexes === 64 || indexesToCreate.length === 0) {
+      const indexToDrop = indexesToDrop.pop()
+      if (indexToDrop) {
+        await collection.dropIndex(indexToDrop.name)
+        logger.info(
+          `Dropped index - ${indexToDrop.name} (${collection.collectionName})`
+        )
+        currentTotalIndexes -= 1
+      }
+    } else {
+      const indexToCreate = indexesToCreate.pop()
+      if (indexToCreate) {
+        await collection.createIndex(indexToCreate.index, {
+          unique: indexToCreate.unique ?? false,
+          background: true,
+        })
+        logger.info(
+          `Created index - ${JSON.stringify(indexToCreate)} (${
+            collection.collectionName
+          })`
+        )
+        currentTotalIndexes += 1
+      }
     }
   }
 }
