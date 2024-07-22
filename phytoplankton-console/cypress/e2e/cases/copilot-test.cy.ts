@@ -34,6 +34,8 @@ describe('Copilot', () => {
           expect(interception.response?.statusCode).to.eq(200);
           const narrative = interception.response?.body?.narrative;
           expect(narrative).to.contain(userName);
+          /* eslint-disable cypress/no-unnecessary-waiting */
+          cy.wait(1000);
           cy.get('.toastui-editor-contents', { timeout: 8000 }).then((el) => {
             const innerText = el[el.length - 2].innerText;
             expect(getCleanText(innerText)).to.eq(getCleanText(narrative));
