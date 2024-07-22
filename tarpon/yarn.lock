@@ -15221,9 +15221,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:4.47.3":
-  version: 4.47.3
-  resolution: "openai@npm:4.47.3"
+"openai@npm:4.52.2":
+  version: 4.52.2
+  resolution: "openai@npm:4.52.2"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -15235,7 +15235,7 @@ __metadata:
     web-streams-polyfill: "npm:^3.2.1"
   bin:
     openai: bin/cli
-  checksum: 8fbe3402bbe60d089832f58b88fbfa6ad0f17852a6d30bcc8ec3b5d8ca689439a05c660983f572d333f9f75df9450294f038f69ce4635fd83753b3288bd3f96a
+  checksum: 2c240dbcf8e14ce2121207809edf3844bca28c21095ffc9b58dd8279b2d68b3552da707ee2a529258581d8a4d39a448f1f4152b52eed456065280792cc1904c8
   languageName: node
   linkType: hard
 
@@ -17864,7 +17864,7 @@ __metadata:
     node-fetch: "npm:^2.6.12"
     npm-run-all: "npm:^4.1.5"
     octokit: "npm:^3.2.1"
-    openai: "npm:4.47.3"
+    openai: "npm:4.52.2"
     p-limit: "npm:^3.0.0"
     p-map: "npm:^4.0.0"
     pdf2json: "npm:^3.1.3"
