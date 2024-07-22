@@ -1,9 +1,9 @@
 import { useApi } from '@/api';
+import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import RiskScoreDisplay from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { useQuery } from '@/utils/queries/hooks';
 import { USER_TRS_RISK_SCORES } from '@/utils/queries/keys';
-import Icon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 
 type Props = {
   userId: string;
@@ -18,13 +18,12 @@ export const UserTrsRiskDisplay: React.FC<Props> = ({ userId }) => {
     <AsyncResourceRenderer resource={queryResult.data}>
       {(result) => (
         <RiskScoreDisplay
-          icon={<Icon />}
+          icon={<User3LineIcon />}
           values={[{ score: result.average, createdAt: Date.now() }]}
           title="Average TRS risk score"
           riskScoreName="Average TRS risk score"
           showFormulaBackLink
           riskScoreAlgo={() => result.average}
-          hideInfo
         />
       )}
     </AsyncResourceRenderer>
