@@ -16,6 +16,7 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
+import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
 
 dynamoDbSetupHook()
 
@@ -109,22 +110,25 @@ describe('Simulation (Pulse) batch job runner', () => {
     }
 
     await jobRunnerHandler(testJob)
-    expect(
+    const data: SimulationRiskLevelsJob | null =
       await simulationTaskRepository.getSimulationJob(jobId)
-    ).toMatchObject({
+
+    expect(data).toMatchObject({
       iterations: [
         {
           progress: 1,
           statistics: {
             current: [
-              { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
               { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
+              { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
             ],
             simulated: [{ count: 2, riskLevel: 'MEDIUM', riskType: 'DRS' }],
           },
           latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
           statuses: [
             { status: 'PENDING', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
             { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
             { status: 'SUCCESS', timestamp: expect.any(Number) },
           ],
@@ -423,33 +427,36 @@ describe('Simulation (Pulse) batch job runner', () => {
 
     await jobRunnerHandler(testJob)
 
-    expect(
+    const data: SimulationRiskLevelsJob | null =
       await simulationTaskRepository.getSimulationJob(jobId)
-    ).toMatchObject({
+
+    expect(data).toMatchObject({
       iterations: [
         {
           progress: 1,
           statistics: {
-            current: [
+            current: expect.arrayContaining([
               { count: 1, riskLevel: 'HIGH', riskType: 'KRS' },
               { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
               { count: 1, riskLevel: 'HIGH', riskType: 'DRS' },
               { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
               { count: 1, riskLevel: 'HIGH', riskType: 'ARS' },
               { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
-            ],
-            simulated: [
+            ]),
+            simulated: expect.arrayContaining([
               { count: 1, riskLevel: 'LOW', riskType: 'KRS' },
               { count: 1, riskLevel: 'MEDIUM', riskType: 'KRS' },
               { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
               { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
               { count: 1, riskLevel: 'LOW', riskType: 'ARS' },
               { count: 1, riskLevel: 'MEDIUM', riskType: 'ARS' },
-            ],
+            ]),
           },
           latestStatus: { status: 'SUCCESS', timestamp: expect.any(Number) },
           statuses: [
             { status: 'PENDING', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
             { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
             { status: 'SUCCESS', timestamp: expect.any(Number) },
           ],

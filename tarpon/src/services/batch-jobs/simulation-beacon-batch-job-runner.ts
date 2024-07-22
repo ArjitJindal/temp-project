@@ -1,4 +1,5 @@
 import pMap from 'p-map'
+import PQueue from 'p-queue'
 import { chain, chunk, compact, uniq, uniqBy } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
@@ -32,6 +33,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
   private rulesEngineService?: RulesEngineService
   private casesRepository?: CaseRepository
   private userRepository?: UserRepository
+  private executionDetails: SimulatedTransactionHit[] = []
 
   protected async run(job: SimulationBeaconBatchJob): Promise<void> {
     const { tenantId, awsCredentials, parameters } = job
@@ -71,36 +73,36 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
         timestampFilter
       )
 
-      // simulate transactions
-      const executionDetails = await this.simulateTransactions(
+      await this.simulateTransactions(
         transactions,
         parameters,
         async (progress: number) => {
-          await simulationRepository.updateTaskStatus(
-            parameters.taskId,
-            'IN_PROGRESS',
-            progress
-          )
+          const simulationBeaconStatistics =
+            await this.getSimulationBeaconStatistics(
+              this.executionDetails,
+              transactions,
+              parameters.defaultRuleInstance,
+              parameters.sampling?.filters
+            )
+          await Promise.all([
+            simulationRepository.updateTaskStatus(
+              parameters.taskId,
+              'IN_PROGRESS',
+              progress,
+              transactions.length
+            ),
+            simulationRepository.updateStatistics<SimulationBeaconStatisticsResult>(
+              parameters.taskId,
+              simulationBeaconStatistics
+            ),
+          ])
         }
       )
-
-      const simulationBeaconStatistics =
-        await this.getSimulationBeaconStatistics(
-          executionDetails,
-          transactions,
-          parameters.defaultRuleInstance,
-          parameters.sampling?.filters
-        )
-
-      await simulationRepository.updateStatistics<SimulationBeaconStatisticsResult>(
-        parameters.taskId,
-        simulationBeaconStatistics
-      )
+      await simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS')
     } catch (error) {
       await simulationRepository.updateTaskStatus(parameters.taskId, 'FAILED')
       throw error
     }
-    await simulationRepository.updateTaskStatus(parameters.taskId, 'SUCCESS')
   }
 
   private async getTransactionsCount(
@@ -435,7 +437,7 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     transactions: InternalTransaction[],
     parameters: SimulationBeaconParameters,
     onProgressChange: (progress: number) => Promise<void>
-  ): Promise<SimulatedTransactionHit[]> {
+  ) {
     const ruleInstance = parameters.ruleInstance
     const rulesEngineService = this.rulesEngineService
     if (!rulesEngineService) {
@@ -443,40 +445,35 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     }
     const onePercentTransactionsCount = Math.floor(transactions.length * 0.01)
     let processedTransactionsCount = 0
-    const executionResults = await pMap(
+    const progressQueue = new PQueue({ concurrency: 1 })
+    await pMap(
       transactions,
       async (transaction) => {
-        try {
-          const executedRules =
-            await rulesEngineService.verifyTransactionForSimulation(
-              transaction,
-              ruleInstance
-            )
-
-          return { transaction, executedRules }
-        } catch (e) {
-          logger.error(e)
-        } finally {
-          if (processedTransactionsCount % onePercentTransactionsCount === 0) {
-            const progress = processedTransactionsCount / transactions.length
-            logger.info(
-              `Progress: ${progress * 100} % (${processedTransactionsCount} / ${
-                transactions.length
-              })`
-            )
-            await onProgressChange(progress)
-          }
-          processedTransactionsCount += 1
+        const executedRules =
+          await rulesEngineService.verifyTransactionForSimulation(
+            transaction,
+            ruleInstance
+          )
+        if (executedRules) {
+          this.executionDetails.push({ transaction, executedRules })
+        }
+        processedTransactionsCount += 1
+        const progress = processedTransactionsCount / transactions.length
+        if (
+          onePercentTransactionsCount === 0 ||
+          progress === 1 ||
+          processedTransactionsCount % onePercentTransactionsCount === 0
+        ) {
+          logger.info(
+            `Progress: ${progress * 100} % (${processedTransactionsCount} / ${
+              transactions.length
+            })`
+          )
+          await progressQueue.add(() => onProgressChange(progress))
         }
       },
       { concurrency: 10 }
     )
-
-    const filteredExecutionResults = executionResults.filter(
-      (executedRule) => executedRule?.executedRules
-    ) as SimulatedTransactionHit[]
-
-    return filteredExecutionResults
   }
 
   private async getFalsePositiveUserIdsByRuleInstance(

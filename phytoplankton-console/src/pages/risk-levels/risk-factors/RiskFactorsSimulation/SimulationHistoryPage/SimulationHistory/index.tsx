@@ -8,12 +8,11 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { DATE, NUMBER, SIMULATION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 import Id from '@/components/ui/Id';
-import Tag from '@/components/library/Tag';
 import { makeUrl } from '@/utils/routing';
 
 export function SimulationHistory() {
@@ -116,14 +115,10 @@ export function SimulationHistory() {
             type: NUMBER,
             sorting: true,
           }),
-          helper.derived<boolean>({
+          helper.simple<'iterations'>({
             title: 'Status',
-            value: (item) =>
-              item.iterations.every((iteration) => iteration.latestStatus.status === 'SUCCESS'),
-            type: {
-              render: (success) =>
-                success ? <Tag color="green"> Done </Tag> : <Tag color="purple">In progress</Tag>,
-            },
+            key: 'iterations',
+            type: SIMULATION_STATUS,
           }),
         ])}
         hideFilters={true}

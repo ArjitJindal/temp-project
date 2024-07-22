@@ -2,6 +2,7 @@ import pMap from 'p-map'
 import { cloneDeep } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import PQueue from 'p-queue'
 import { RiskScoringService } from '../risk-scoring'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -44,6 +45,10 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   transactionsResult?: SimulationRiskFactorsResultRaw
   usersResult?: SimulationRiskFactorsResultRaw
   parameterAttributeRiskValues?: ParameterAttributeRiskValues[]
+  userResultsSaved: number = 0
+  usersResultArray: SimulationRiskFactorsResult[] = []
+  totalEntities: number = 0
+  progressQueue = new PQueue({ concurrency: 1 })
 
   protected async run(job: SimulationRiskFactorsBatchJob): Promise<void> {
     const { parameters, tenantId } = job
@@ -81,12 +86,28 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       mongoDb
     )
 
-    await simulationTaskRepository.updateTaskStatus(
-      parameters.taskId,
-      'IN_PROGRESS'
+    const allTransactionsCount =
+      await this.transactionRepo.getAllTransactionsCount()
+
+    const transactionsCount = Math.min(
+      allTransactionsCount,
+      SAMPLE_TRANSACTIONS_COUNT
     )
 
-    let interval: NodeJS.Timeout | undefined
+    const allUsersCount = await this.userRepository.getUsersCount()
+    const usersCount =
+      job.parameters.sampling.usersCount === 'ALL'
+        ? allUsersCount
+        : Math.min(allUsersCount, SAMPLE_USERS_COUNT)
+
+    this.totalEntities = transactionsCount + usersCount
+
+    await simulationTaskRepository.updateTaskStatus(
+      parameters.taskId,
+      'IN_PROGRESS',
+      0,
+      this.totalEntities
+    )
 
     try {
       const resultRaw: SimulationRiskFactorsResultRaw = {
@@ -102,60 +123,49 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
 
       this.transactionsResult = transactionsResult
 
-      const allTransactionsCount =
-        await this.transactionRepo.getAllTransactionsCount()
-
-      const transactionsCount = Math.min(
-        allTransactionsCount,
-        SAMPLE_TRANSACTIONS_COUNT
-      )
-
-      const allUsersCount = await this.userRepository.getUsersCount()
-
-      const usersCount =
-        job.parameters.sampling.usersCount === 'ALL'
-          ? allUsersCount
-          : Math.min(allUsersCount, SAMPLE_USERS_COUNT)
-
-      const totalEntities = transactionsCount + usersCount
-
       const usersResult: SimulationRiskFactorsResultRaw = cloneDeep(resultRaw)
 
       this.usersResult = usersResult
-
       const riskClassificationValues =
         await riskRepository.getRiskClassificationValues()
-
-      interval = setInterval(async () => {
-        await simulationTaskRepository.updateTaskStatus(
-          parameters.taskId,
-          'IN_PROGRESS',
-          this.progress / totalEntities
+      const taskId = this.job?.parameters.taskId
+      const updateProgress = async (progress: number) => {
+        const totalUserResults = this.usersResultArray.length
+        const userResultsToSave = this.usersResultArray.slice(
+          this.userResultsSaved,
+          totalUserResults
         )
-      }, 10000)
+        this.userResultsSaved = totalUserResults
+        await Promise.all([
+          await simulationTaskRepository.updateTaskStatus(
+            parameters.taskId,
+            'IN_PROGRESS',
+            progress
+          ),
+          simulationResultRepository.saveSimulationResults(userResultsToSave),
+          simulationTaskRepository.updateStatistics<SimulationRiskFactorsStatisticsResult>(
+            taskId,
+            this.getStatistics(
+              this.extrapolateStats(usersCount, allUsersCount, usersResult),
+              this.extrapolateStats(
+                transactionsCount,
+                allTransactionsCount,
+                this.transactionsResult ?? transactionsResult
+              )
+            )
+          ),
+        ])
+      }
 
-      const usersResultArray = await this.processAllUsers(
-        riskClassificationValues
-      )
+      await this.processAllUsers(riskClassificationValues, updateProgress)
 
-      await this.processAllTransactions(riskClassificationValues)
-
-      await simulationResultRepository.saveSimulationResults(usersResultArray)
-      await simulationTaskRepository.updateStatistics<SimulationRiskFactorsStatisticsResult>(
-        this.job?.parameters.taskId,
-        this.getStatistics(
-          this.extrapolateStats(usersCount, allUsersCount, usersResult),
-          this.extrapolateStats(
-            transactionsCount,
-            allTransactionsCount,
-            transactionsResult
-          )
-        )
+      await this.processAllTransactions(
+        riskClassificationValues,
+        updateProgress
       )
       await simulationTaskRepository.updateTaskStatus(
         parameters.taskId,
-        'SUCCESS',
-        1
+        'SUCCESS'
       )
     } catch (error) {
       logger.error('Error in SimulationRiskFactorsBatchJobRunner', error)
@@ -165,10 +175,6 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
         0
       )
       throw error
-    } finally {
-      if (interval) {
-        clearInterval(interval)
-      }
     }
   }
 
@@ -238,36 +244,34 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
   }
 
   private async processAllUsers(
-    riskClassificationValues: RiskClassificationScore[]
-  ): Promise<SimulationRiskFactorsResult[]> {
+    riskClassificationValues: RiskClassificationScore[],
+    updateProgress: (progress: number) => Promise<void>
+  ) {
     const sampling = this.job?.parameters.sampling.usersCount || 'RANDOM'
     const usersCursor =
       sampling === 'ALL'
         ? this.userRepository?.getAllUsersCursor()
         : this.userRepository?.sampleUsersCursor(SAMPLE_USERS_COUNT)
 
-    const usersResultArray: SimulationRiskFactorsResult[] = []
     if (!usersCursor) {
       throw new Error('usersCursor is undefined')
     }
     await processCursorInBatch<InternalUser>(
       usersCursor,
       async (usersChunk) => {
-        const data = await this.processUsers(
+        await this.processUsers(
           usersChunk,
-          riskClassificationValues
+          riskClassificationValues,
+          updateProgress
         )
-
-        usersResultArray.push(...data)
       },
       { mongoBatchSize: 100, processBatchSize: 10 }
     )
-
-    return usersResultArray
   }
 
   private async processAllTransactions(
-    riskClassificationValues: RiskClassificationScore[]
+    riskClassificationValues: RiskClassificationScore[],
+    updateProgress: (progress: number) => Promise<void>
   ): Promise<void> {
     const transactionsCursor = this.transactionRepo?.sampleTransactionsCursor(
       SAMPLE_TRANSACTIONS_COUNT
@@ -282,7 +286,8 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       async (transactionsChunk) => {
         await this.processTransactions(
           transactionsChunk,
-          riskClassificationValues
+          riskClassificationValues,
+          updateProgress
         )
       },
       { mongoBatchSize: 100, processBatchSize: 10 }
@@ -291,19 +296,28 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       transactions.push(transaction)
 
       if (transactions.length === CONCURRENCY) {
-        await this.processTransactions(transactions, riskClassificationValues)
+        await this.processTransactions(
+          transactions,
+          riskClassificationValues,
+          updateProgress
+        )
         transactions = []
       }
     }
 
     if (transactions.length > 0) {
-      await this.processTransactions(transactions, riskClassificationValues)
+      await this.processTransactions(
+        transactions,
+        riskClassificationValues,
+        updateProgress
+      )
     }
   }
 
   private async processTransactions(
     transactions: InternalTransaction[],
-    riskClassificationValues: RiskClassificationScore[]
+    riskClassificationValues: RiskClassificationScore[],
+    updateProgress: (progress: number) => Promise<void>
   ): Promise<void> {
     await pMap(
       transactions,
@@ -333,7 +347,10 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
         if (this.transactionsResult?.[simulatedRiskLevel]) {
           this.transactionsResult[simulatedRiskLevel].simulated++
         }
-        this.progress++
+
+        await this.progressQueue.add(() =>
+          this.updateStatusAndProgress(updateProgress)
+        )
       },
       { concurrency: CONCURRENCY }
     )
@@ -341,24 +358,23 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
 
   private async processUsers(
     users: InternalUser[],
-    riskClassificationValues: RiskClassificationScore[]
-  ): Promise<SimulationRiskFactorsResult[]> {
-    const userRiskScores = await pMap<
-      InternalUser,
-      SimulationRiskFactorsResult
-    >(
+    riskClassificationValues: RiskClassificationScore[],
+    updateProgress: (progress: number) => Promise<void>
+  ) {
+    await pMap(
       users,
       async (user) => {
-        this.progress++
-        return await this.recalculateUserRiskScores(
+        const result = await this.recalculateUserRiskScores(
           user,
           riskClassificationValues
+        )
+        this.usersResultArray.push(result)
+        await this.progressQueue.add(() =>
+          this.updateStatusAndProgress(updateProgress)
         )
       },
       { concurrency: CONCURRENCY }
     )
-
-    return userRiskScores
   }
 
   private async recalculateUserRiskScores(
@@ -406,6 +422,21 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
           riskLevel: simulatedRiskLevel,
         },
       },
+    }
+  }
+
+  protected async updateStatusAndProgress(
+    updateProgress: (progress: number) => Promise<void>
+  ): Promise<void> {
+    this.progress++
+    const onePercentEntities = Math.floor(this.totalEntities * 0.01)
+    const progress = this.progress / this.totalEntities
+    if (
+      onePercentEntities === 0 ||
+      progress === 1 ||
+      this.progress % onePercentEntities === 0
+    ) {
+      await updateProgress(progress)
     }
   }
 }

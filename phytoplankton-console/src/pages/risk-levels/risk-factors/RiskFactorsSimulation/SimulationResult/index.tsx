@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Progress } from 'antd';
+// import { Progress } from 'antd';
+import { isEmpty } from 'lodash';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import s from './styles.module.less';
 import {
@@ -36,14 +37,14 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
-import Spinner from '@/components/library/Spinner';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Progress } from '@/components/Simulation/Progress';
 
 interface Props {
   jobId: string;
 }
 
-const SIMULATION_REFETCH_INTERVAL = 5;
+const SIMULATION_REFETCH_INTERVAL = 10;
 
 export const SimulationResult = (props: Props) => {
   const { jobId } = props;
@@ -114,7 +115,7 @@ export const SimulationResult = (props: Props) => {
         ]}
       />
 
-      {iterations[activeIterationIndex - 1]?.latestStatus?.status === 'SUCCESS' ? (
+      {iterations[activeIterationIndex - 1]?.progress > 0.1 ? (
         <div className={s.footer}>
           <div className={s.footerButtons}>
             <Confirm
@@ -166,14 +167,12 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
   });
-  const isIterationCompleted = (iteration: SimulationRiskFactorsIteration) => {
-    return iteration?.latestStatus?.status === 'SUCCESS';
-  };
+  const showResults = iteration.progress > 0.1;
   const api = useApi();
   const iterationQueryResults = useQuery(
     SIMULATION_JOB_ITERATION_RESULT(iteration?.taskId ?? '', {
       ...params,
-      isIterationCompleted: isIterationCompleted(iteration),
+      progress: iteration.progress,
     }),
     async () => {
       if (iteration?.taskId) {
@@ -258,6 +257,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       scoreType: SimulationRiskFactorsStatisticsRiskTypeEnum,
       riskLevel: RiskLevel,
     ) => {
+      if (isEmpty(iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated'])) {
+        return 0;
+      }
       return (
         (iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated'] ?? [])?.find(
           (item) => item?.riskLevel === riskLevel && item.riskType === scoreType,
@@ -269,9 +271,6 @@ const SimulationResultWidgets = (props: WidgetProps) => {
 
   const getGraphData = useCallback(
     (graphType: SimulationRiskFactorsStatisticsRiskTypeEnum) => {
-      if (!isIterationCompleted(iteration)) {
-        return { graphData: [], max: 0 };
-      }
       let max = 0;
       const graphData: { name: string; label: string; value: number }[] = [];
       RISK_LEVELS.forEach((label) => {
@@ -292,10 +291,11 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       });
       return { graphData, max };
     },
-    [getCount, iteration],
+    [getCount],
   );
 
   const { graphData: krsGraphdata, max: maxKRS } = getGraphData('KRS');
+  const { graphData: arsGraphData, max: maxARS } = getGraphData('ARS');
 
   const deserializeRiskFactors = (
     parameterAttributeRiskValues: ParameterAttributeRiskValues[],
@@ -332,20 +332,41 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     return deserializeRiskFactors(iteration.parameters.parameterAttributeRiskValues);
   }, [iteration.parameters.parameterAttributeRiskValues]);
 
-  return isIterationCompleted(iteration) ? (
+  return showResults ? (
     <div className={s.root}>
       <Card.Root noBorder>
         <Card.Section>
           <span className={s.title}>{iteration.name}</span>
-          <span className={s.description}>{iteration.description}</span>
+          {!!iteration.description && (
+            <span className={s.description}>{iteration.description}</span>
+          )}
         </Card.Section>
       </Card.Root>
-      <Card.Root noBorder>
-        <Card.Section>
-          <span className={s.title}>Users distribution based on KRS</span>
-          <GroupedColumn data={krsGraphdata} max={Math.ceil(maxKRS + maxKRS * 0.2)} />
-        </Card.Section>
-      </Card.Root>
+      {iteration.progress < 1 && (
+        <Progress
+          simulationStartedAt={iteration.createdAt ?? 0}
+          width="FULL"
+          progress={iteration.progress * 100}
+          message="Running the simulation for a random sample of users & generating results for you."
+          status={iteration.latestStatus.status}
+          totalEntities={iteration.totalEntities}
+        />
+      )}
+
+      <div className={s.graphs}>
+        <Card.Root noBorder>
+          <Card.Section>
+            <span className={s.title}>Users distribution based on KRS</span>
+            <GroupedColumn data={krsGraphdata} max={Math.ceil(maxKRS + maxKRS * 0.2)} />
+          </Card.Section>
+        </Card.Root>
+        <Card.Root noBorder>
+          <Card.Section>
+            <span className={s.title}>Transactions distribution based on TRS</span>
+            <GroupedColumn data={arsGraphData} max={Math.ceil(maxARS + maxARS * 0.2)} />
+          </Card.Section>
+        </Card.Root>
+      </div>
       <Card.Root noBorder>
         <Card.Section>
           <span className={s.title}>User's updated KRS risk level</span>
@@ -368,47 +389,19 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       </Card.Root>
     </div>
   ) : (
-    <Loading
-      progress={iteration.progress * 100}
-      message={
-        pathname.includes('simulation-result')
-          ? 'Running the simulation for a random sample of users & generating results for you.'
-          : 'Loading simulation results for you.'
-      }
-      status={iteration.latestStatus.status}
-    />
-  );
-};
-
-export const Loading = ({ message = '', progress = 0, status }) => {
-  const isPending = status === 'PENDING';
-  const isFailed = status === 'FAILED';
-  const progressValue = Number(progress?.toFixed(2) ?? 0);
-
-  return (
     <div className={s.loadingCard}>
-      <div className={s.progressBar}>
-        {!isFailed && !isPending ? (
-          <>
-            <Progress percent={progressValue} status="active" />
-            {message && (
-              <div className={s.loader}>
-                <Spinner size="SMALL" /> {message}
-              </div>
-            )}
-          </>
-        ) : (
-          <div className={s.failed}>
-            {isFailed ? (
-              'Failed to load simulation results'
-            ) : (
-              <>
-                <Spinner size="SMALL" /> <span>Initializing simulation...</span>
-              </>
-            )}
-          </div>
-        )}
-      </div>
+      <Progress
+        simulationStartedAt={iteration.createdAt ?? 0}
+        width="HALF"
+        progress={iteration.progress * 100}
+        message={
+          pathname.includes('simulation-result')
+            ? 'Running the simulation for a random sample of users & generating results for you.'
+            : 'Loading simulation results for you.'
+        }
+        status={iteration.latestStatus.status}
+        totalEntities={iteration.totalEntities}
+      />
     </div>
   );
 };

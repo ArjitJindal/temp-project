@@ -18,6 +18,7 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
+import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
 
 withFeatureHook(['SIMULATOR', 'RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
@@ -173,13 +174,14 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
 
     await jobRunnerHandler(testJob)
 
+    const data: SimulationRiskLevelsJob | null =
+      await simulationTaskRepository.getSimulationJob(jobId)
+
     const results = await simulationResultRepository.getSimulationResults({
       taskId: taskIds[0],
       page: 1,
       pageSize: 10,
     })
-
-    const data = await simulationTaskRepository.getSimulationJob(jobId)
 
     expect(data).toEqual({
       createdAt: expect.any(Number),
@@ -227,6 +229,10 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
           statuses: [
             { status: 'PENDING', timestamp: expect.any(Number) },
             { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
+            { status: 'IN_PROGRESS', timestamp: expect.any(Number) },
             { status: 'SUCCESS', timestamp: expect.any(Number) },
           ],
           name: 'test-simulation-1',
@@ -234,6 +240,7 @@ describe('Simulation (Risk Scoring) Batch Job Runner', () => {
           type: 'RISK_FACTORS',
           createdAt: expect.any(Number),
           createdBy: 'test',
+          totalEntities: 4,
         },
       ],
     })

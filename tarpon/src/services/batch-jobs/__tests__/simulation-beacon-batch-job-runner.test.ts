@@ -19,6 +19,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { SimulationBeaconParameters } from '@/@types/openapi-internal/SimulationBeaconParameters'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { SimulationRiskLevelsJob } from '@/@types/openapi-internal/SimulationRiskLevelsJob'
 
 dynamoDbSetupHook()
 
@@ -209,7 +210,8 @@ describe('Simulation Beacon Batch Job Runner', () => {
 
     await jobRunnerHandler(testJob)
 
-    const simulatedData = await simulationTaskRepository.getSimulationJob(jobId)
+    const simulatedData: SimulationRiskLevelsJob | null =
+      await simulationTaskRepository.getSimulationJob(jobId)
     expect(simulatedData).toBeDefined()
     expect(simulatedData?.iterations[0].statistics).toMatchObject({
       current: {

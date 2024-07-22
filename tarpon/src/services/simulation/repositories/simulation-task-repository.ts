@@ -250,32 +250,21 @@ export class SimulationTaskRepository {
     const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-
-    const job = await collection.findOne({ 'iterations.taskId': taskId })
-    const updatedIteration = job?.iterations?.map((iteration) => {
-      if (iteration.taskId === taskId) {
-        return { ...iteration, statistics }
+    await collection.updateOne(
+      { 'iterations.taskId': taskId },
+      {
+        $set: {
+          'iterations.$.statistics': statistics,
+        },
       }
-      return iteration
-    })
-
-    if (job?.jobId) {
-      await collection.updateOne(
-        { _id: job.jobId as any },
-        {
-          $set: {
-            iterations:
-              (updatedIteration as SimulationRiskLevelsIteration[]) ?? [],
-          },
-        }
-      )
-    }
+    )
   }
 
   public async updateTaskStatus(
     taskId: string,
     status: TaskStatusChangeStatusEnum,
-    progress?: number
+    progress?: number,
+    totalEntities?: number
   ) {
     const db = this.mongoDb.db()
     const collection = db.collection<SimulationAllJobs>(
@@ -285,31 +274,30 @@ export class SimulationTaskRepository {
       status,
       timestamp: Date.now(),
     }
+    const updateTotalEntities = totalEntities
+      ? { 'iterations.$.totalEntities': totalEntities }
+      : {}
     const progressToSave = progress
       ? progress
       : status === 'SUCCESS'
       ? 1
       : undefined
 
-    const job = await collection.findOne({ 'iterations.taskId': taskId })
-    const updatedIteration = job?.iterations?.map((iteration) => {
-      if (iteration.taskId === taskId) {
-        return {
-          ...iteration,
-          latestStatus: newStatus,
-          statuses: [...iteration.statuses, newStatus],
-          ...(progressToSave ? { progress: progressToSave } : undefined),
-        }
+    await collection.updateOne(
+      { 'iterations.taskId': taskId },
+      {
+        $set: {
+          'iterations.$.latestStatus': newStatus,
+          ...(progressToSave
+            ? { 'iterations.$.progress': progressToSave }
+            : {}),
+          ...updateTotalEntities,
+        },
+        $push: {
+          'iterations.$.statuses': newStatus,
+        },
       }
-      return iteration
-    })
-
-    if (job?.jobId) {
-      await collection.updateOne(
-        { _id: job.jobId as any },
-        { $set: { iterations: updatedIteration ?? [] } }
-      )
-    }
+    )
   }
 
   public async getSimulationJob(

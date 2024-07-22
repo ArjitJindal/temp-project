@@ -22,6 +22,9 @@ export class SimulationResultRepository {
   public async saveSimulationResults(
     results: SimulationRiskLevelsResult[] | SimulationRiskFactorsResult[]
   ): Promise<void> {
+    if (results.length === 0) {
+      return
+    }
     const db = this.mongoDb.db()
     const collection = db.collection<
       SimulationRiskLevelsResult | SimulationRiskFactorsResult

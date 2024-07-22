@@ -796,3 +796,38 @@ export const FORENSICS_ENTITY_ID: ColumnDataType<string> = {
     }
   },
 };
+
+export const SIMULATION_STATUS = {
+  render: (value) => {
+    const isSuccess = value?.every((iteration) => iteration.latestStatus.status === 'SUCCESS');
+    const isFailed = value?.some((iteration) => {
+      const now = dayjs();
+      const createdAt = dayjs(iteration.createdAt);
+      const status = iteration.latestStatus.status;
+      return (
+        status === 'FAILED' ||
+        ((status === 'IN_PROGRESS' || status === 'PENDING') && now.diff(createdAt, 'hours') > 24)
+      );
+    });
+    const color = isSuccess ? 'green' : isFailed ? 'red' : 'orange';
+    const statusText = isSuccess ? 'Done' : isFailed ? 'Failed' : 'In Progress';
+    return isSuccess || isFailed ? (
+      <Tag color={color}>{statusText}</Tag>
+    ) : (
+      <div className={s.tags}>
+        {value?.map((iteration, index) => {
+          const status = iteration.latestStatus.status;
+          const progress = Math.trunc(iteration.progress * 100);
+          return (
+            <Tag
+              key={index}
+              color={status === 'SUCCESS' ? 'green' : status === 'FAILED' ? 'red' : 'orange'}
+            >
+              Iteration {index + 1}: {progress}%
+            </Tag>
+          );
+        })}
+      </div>
+    );
+  },
+};

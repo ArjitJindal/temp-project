@@ -11121,6 +11121,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TaskStatusChange'
+        totalEntities:
+          type: number
       required:
         - taskId
         - progress

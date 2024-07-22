@@ -1,7 +1,7 @@
-import { LoadingOutlined } from '@ant-design/icons';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
+import { isEmpty } from 'lodash';
 import GroupedColumn from '../components/Charts';
 import RiskClassificationTable, { parseApiState } from '../RiskClassificationTable';
 import s from './styles.module.less';
@@ -23,7 +23,6 @@ import {
   SIMULATION_JOB,
   SIMULATION_JOB_ITERATION_RESULT,
 } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -32,9 +31,10 @@ import { message } from '@/components/library/Message';
 import { RISK_LEVELS } from '@/utils/risk-levels';
 import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
-import { isSuccess } from '@/utils/asyncResource';
+import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
+import { Progress } from '@/components/Simulation/Progress';
 
 type Props = {
   onClose: (toClose: boolean) => void;
@@ -45,6 +45,8 @@ type Props = {
 type IterationProps = {
   iteration: SimulationRiskLevelsIteration;
 };
+
+const SIMULATION_REFETCH_INTERVAL = 5;
 
 const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
 const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([
@@ -160,6 +162,9 @@ const IterationComponent = (props: IterationProps) => {
       scoreType: SimulationRiskLevelsStatisticsRiskTypeEnum,
       riskLevel: RiskLevel,
     ) => {
+      if (isEmpty(iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated'])) {
+        return 0;
+      }
       return (
         iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated']?.find(
           (item) => item?.riskLevel === riskLevel && item.riskType === scoreType,
@@ -221,6 +226,16 @@ const IterationComponent = (props: IterationProps) => {
   return (
     <div className={s.tabContent}>
       <H4>{iteration?.name}</H4>
+      {iteration.latestStatus.status === 'IN_PROGRESS' && (
+        <Progress
+          simulationStartedAt={iteration.createdAt ?? 0}
+          width="FULL"
+          progress={iteration.progress * 100}
+          message="Running the simulation for a sample of users & generating results for you."
+          status={iteration.latestStatus.status}
+          totalEntities={iteration.totalEntities}
+        />
+      )}
       <P style={{ color: 'rgba(0, 0, 0, 0.85)' }}>{iteration?.description}</P>
       <div className={s.graphsParentContainer}>
         <div className={s.graphsContainer}>
@@ -256,26 +271,29 @@ const IterationComponent = (props: IterationProps) => {
   );
 };
 
-const LoadingWidget = () => {
-  return (
-    <div className={s.tabContentLoading}>
-      <div className={s.loadingSpinner}>
-        <LoadingOutlined className={s.spinner} spin />
-        <P>Running the simulation for a subset of transactions & generating results for you</P>
-      </div>
-    </div>
-  );
-};
-
 export default function RiskClassificationSimulationResults(props: Props) {
   const { onClose, isVisible, result } = props;
   const api = useApi();
+  function isAllIterationsCompleted(iterations: SimulationRiskLevelsIteration[]): boolean {
+    return iterations.every(
+      (iteration) =>
+        iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
+    );
+  }
+
   const jobIdQueryResults = useQuery(
     SIMULATION_JOB(result.jobId),
     () =>
       api.getSimulationTestId({
         jobId: result.jobId,
       }) as Promise<SimulationRiskLevelsJob>,
+    {
+      refetchInterval: (data) =>
+        isAllIterationsCompleted(data?.iterations || [])
+          ? false
+          : SIMULATION_REFETCH_INTERVAL * 1000,
+      enabled: Boolean(result.jobId),
+    },
   );
 
   const [activeTab, setActiveTab] = useState<string>(result.taskIds[0]);
@@ -285,35 +303,6 @@ export default function RiskClassificationSimulationResults(props: Props) {
   useEffect(() => {
     setActiveTab(result.taskIds[0]);
   }, [result.taskIds]);
-
-  const interval = useRef<NodeJS.Timeout | null>(null);
-
-  // TODO: Refactor this
-  useEffect(() => {
-    if (jobIdQueryResults.data.kind === 'SUCCESS') {
-      const status = jobIdQueryResults.data.value.iterations.find(
-        (item) => item.taskId === activeTab,
-      )?.latestStatus?.status;
-      if (status === 'SUCCESS' || status === 'FAILED') {
-        if (interval.current) {
-          clearInterval(interval.current);
-        }
-      } else {
-        interval.current = setInterval(() => {
-          jobIdQueryResults.refetch();
-        }, 10000);
-      }
-    } else {
-      if (interval.current) {
-        clearInterval(interval.current);
-      }
-    }
-    return () => {
-      if (interval.current) {
-        clearInterval(interval.current);
-      }
-    };
-  }, [activeTab, jobIdQueryResults]);
 
   const queryClient = useQueryClient();
 
@@ -355,6 +344,37 @@ export default function RiskClassificationSimulationResults(props: Props) {
     }
   }, [jobIdQueryResults, activeTab]);
 
+  const iterations = useMemo(() => {
+    if (isSuccess(jobIdQueryResults.data)) {
+      return jobIdQueryResults.data.value.iterations ?? [];
+    } else if (isLoading(jobIdQueryResults.data)) {
+      return jobIdQueryResults.data.lastValue?.iterations ?? [];
+    }
+    return [];
+  }, [jobIdQueryResults.data]);
+
+  const items: TabItem[] = iterations.map((iteration) => ({
+    isClosable: false,
+    isDisabled: false,
+    key: iteration.taskId ?? '',
+    children:
+      iteration.progress < 0.1 ? (
+        <div className={s.loader}>
+          <Progress
+            progress={iteration.progress * 100}
+            width="HALF"
+            simulationStartedAt={iteration.createdAt}
+            status={iteration.latestStatus.status}
+            totalEntities={iteration.totalEntities}
+            message="Running simulation on sample of users to generate results"
+          />
+        </div>
+      ) : (
+        <>{iteration.taskId && <IterationComponent iteration={iteration} />}</>
+      ),
+    title: iteration.name,
+  }));
+
   return (
     <Drawer
       title="Simulation results"
@@ -387,43 +407,15 @@ export default function RiskClassificationSimulationResults(props: Props) {
       drawerMaxWidth={'1000px'}
     >
       <div className={s.root}>
-        <AsyncResourceRenderer
-          resource={jobIdQueryResults.data}
-          renderLoading={() => <LoadingWidget />}
-        >
-          {(data) => {
-            const { iterations } = data;
-
-            const items: TabItem[] = iterations.map((iteration) => ({
-              isClosable: false,
-              isDisabled: false,
-              key: iteration.taskId ?? '',
-              children:
-                iteration.latestStatus.status !== 'SUCCESS' ? (
-                  <LoadingWidget />
-                ) : (
-                  <>{iteration.taskId && <IterationComponent iteration={iteration} />}</>
-                ),
-              title: iteration.name,
-            }));
-
-            return (iterations as SimulationRiskLevelsIteration[]).find(
-              (item) => item.taskId === activeTab,
-            )?.latestStatus?.status === 'SUCCESS' ? (
-              <Tabs
-                type="card"
-                activeKey={activeTab}
-                items={items}
-                tabHeight={'100%'}
-                onChange={(key) => {
-                  setActiveTab(key);
-                }}
-              />
-            ) : (
-              <LoadingWidget />
-            );
+        <Tabs
+          type="card"
+          activeKey={activeTab}
+          items={items}
+          tabHeight={'100%'}
+          onChange={(key) => {
+            setActiveTab(key);
           }}
-        </AsyncResourceRenderer>
+        />
       </div>
     </Drawer>
   );

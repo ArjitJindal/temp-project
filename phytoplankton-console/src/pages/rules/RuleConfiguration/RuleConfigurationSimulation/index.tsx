@@ -28,9 +28,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB } from '@/utils/queries/keys';
-import { isSuccess } from '@/utils/asyncResource';
-import * as Card from '@/components/ui/Card';
-import { LoadingCard } from '@/components/ui/Card';
+import { isSuccess, isLoading as isResourceLoading } from '@/utils/asyncResource';
 import Label from '@/components/library/Label';
 import { H4 } from '@/components/ui/Typography';
 import Tooltip from '@/components/library/Tooltip';
@@ -48,10 +46,11 @@ import {
 import StepButtons from '@/components/library/StepButtons';
 import Button from '@/components/library/Button';
 import Tabs from '@/components/library/Tabs';
+import { Progress } from '@/components/Simulation/Progress';
 
 const DUPLICATE_TAB_KEY = 'duplicate';
 const MAX_SIMULATION_ITERATIONS = 3;
-const POLL_STATUS_INTERVAL_SECONDS = 15;
+const POLL_STATUS_INTERVAL_SECONDS = 10;
 const DEFAULT_ITERATION: Omit<SimulationBeaconParameters, 'ruleInstance'> = {
   type: 'BEACON',
   name: 'Iteration 1',
@@ -204,7 +203,7 @@ export function RuleConfigurationSimulation(props: Props) {
         allIterationsCompleted(data?.iterations || [])
           ? false
           : isDemoModeRes
-          ? 8000
+          ? 5000
           : POLL_STATUS_INTERVAL_SECONDS * 1000,
       enabled: Boolean(jobId),
     },
@@ -258,6 +257,14 @@ export function RuleConfigurationSimulation(props: Props) {
       ? jobResult.data?.value.iterations.map((iteration) => iteration.parameters) ?? []
       : newIterations;
   }, [jobId, jobResult.data, newIterations]);
+  const iterationResults = useMemo(() => {
+    if (jobId && isSuccess(jobResult.data)) {
+      return jobResult.data.value.iterations ?? [];
+    } else if (isResourceLoading(jobResult.data)) {
+      return jobResult.data.lastValue?.iterations ?? [];
+    }
+    return [];
+  }, [jobId, jobResult.data]);
   const isLoading = useMemo(() => {
     return Boolean(
       startSimulationMutation.isLoading ||
@@ -310,88 +317,94 @@ export function RuleConfigurationSimulation(props: Props) {
             title: `Iteration ${i + 1}`,
             key: `${i}`,
             isClosable: iterations.length > 1 && !isShowingResults,
-            children: isLoading ? (
-              <LoadingCard loadingMessage="Running the simulation for a subset of transactions & generating results for you." />
-            ) : (
-              <>
-                {jobId && (
-                  <div>
-                    <Label label={iteration.name}>{iteration.description}</Label>
-                  </div>
-                )}
-                {jobId && (
-                  <div className={s.result}>
-                    <Card.Root>
-                      <Card.Section>
-                        {isSuccess(jobResult.data) ? (
-                          <SimulationStatistics iteration={jobResult.data.value.iterations[i]} />
-                        ) : undefined}
-                      </Card.Section>
-                    </Card.Root>
-                    <H4>Changed rule parameters</H4>
-                  </div>
-                )}
-                {v8Mode ? (
-                  <RuleConfigurationFormV8
-                    mode={'CREATE'}
-                    ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormV8Values>>}
-                    rule={rule}
-                    formInitialValues={merge(
-                      ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance),
-                      {
-                        basicDetailsStep: {
-                          simulationIterationName: iteration.name,
-                          simulationIterationDescription: iteration.description,
-                          ...(iteration?.sampling?.filters?.afterTimestamp
-                            ? {
-                                simulationIterationTimeRange: {
-                                  start: iteration.sampling.filters.afterTimestamp,
-                                  end: iteration.sampling.filters.beforeTimestamp,
-                                },
-                              }
-                            : {}),
-                        },
-                      },
-                    )}
-                    readOnly={Boolean(jobId)}
-                    simulationMode={true}
-                    activeStepKey={activeStepKey}
-                    onSubmit={() => {}}
-                    onActiveStepKeyChange={setActiveStepKey}
-                    newRuleId={ruleInstance?.id ?? 'RC'}
+            children:
+              iterationResults.length > 0 && iterationResults[i].progress < 0.1 ? (
+                <div className={s.loadingCard}>
+                  <Progress
+                    simulationStartedAt={iterationResults[i]?.createdAt}
+                    width="HALF"
+                    progress={(iterationResults[i]?.progress ?? 0) * 100}
+                    message="Running the simulation on subset of transactions & generating results for you."
+                    status={iterationResults[i]?.latestStatus?.status ?? 'SUCCESS'}
+                    totalEntities={iterationResults[i]?.totalEntities ?? 0}
                   />
-                ) : (
-                  <RuleConfigurationForm
-                    key={iteration.ruleInstance?.ruleId}
-                    readOnly={Boolean(jobId)}
-                    ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormValues>>}
-                    rule={rule}
-                    formInitialValues={merge(
-                      ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
-                      {
-                        basicDetailsStep: {
-                          simulationIterationName: iteration.name,
-                          simulationIterationDescription: iteration.description,
-                          ...(iteration?.sampling?.filters?.afterTimestamp
-                            ? {
-                                simulationIterationTimeRange: {
-                                  start: iteration.sampling.filters.afterTimestamp,
-                                  end: iteration.sampling.filters.beforeTimestamp,
-                                },
-                              }
-                            : {}),
+                </div>
+              ) : (
+                <>
+                  {jobId && (
+                    <div>
+                      <Label label={iteration.name}>{iteration.description}</Label>
+                    </div>
+                  )}
+                  {jobId && (
+                    <div className={s.result}>
+                      {iterationResults.length > 0 ? (
+                        <SimulationStatistics iteration={iterationResults[i]} />
+                      ) : undefined}
+                      <H4>Changed rule parameters</H4>
+                    </div>
+                  )}
+                  {v8Mode ? (
+                    <RuleConfigurationFormV8
+                      mode={'CREATE'}
+                      ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormV8Values>>}
+                      rule={rule}
+                      formInitialValues={merge(
+                        ruleInstanceToFormValuesV8(isRiskLevelsEnabled, iteration.ruleInstance),
+                        {
+                          basicDetailsStep: {
+                            simulationIterationName: iteration.name,
+                            simulationIterationDescription: iteration.description,
+                            ...(iteration?.sampling?.filters?.afterTimestamp
+                              ? {
+                                  simulationIterationTimeRange: {
+                                    start: iteration.sampling.filters.afterTimestamp,
+                                    end: iteration.sampling.filters.beforeTimestamp,
+                                  },
+                                }
+                              : {}),
+                          },
                         },
-                      },
-                    )}
-                    simulationMode={true}
-                    activeStepKey={activeStepKey}
-                    showValidationError={showValidationError}
-                    onSubmit={() => {}}
-                    onActiveStepKeyChange={setActiveStepKey}
-                  />
-                )}
-              </>
-            ),
+                      )}
+                      readOnly={Boolean(jobId)}
+                      simulationMode={true}
+                      activeStepKey={activeStepKey}
+                      onSubmit={() => {}}
+                      onActiveStepKeyChange={setActiveStepKey}
+                      newRuleId={ruleInstance?.id ?? 'RC'}
+                    />
+                  ) : (
+                    <RuleConfigurationForm
+                      key={iteration.ruleInstance?.ruleId}
+                      readOnly={Boolean(jobId)}
+                      ref={iterationFormRefs[i] as Ref<FormRef<RuleConfigurationFormValues>>}
+                      rule={rule}
+                      formInitialValues={merge(
+                        ruleInstanceToFormValues(isRiskLevelsEnabled, iteration.ruleInstance),
+                        {
+                          basicDetailsStep: {
+                            simulationIterationName: iteration.name,
+                            simulationIterationDescription: iteration.description,
+                            ...(iteration?.sampling?.filters?.afterTimestamp
+                              ? {
+                                  simulationIterationTimeRange: {
+                                    start: iteration.sampling.filters.afterTimestamp,
+                                    end: iteration.sampling.filters.beforeTimestamp,
+                                  },
+                                }
+                              : {}),
+                          },
+                        },
+                      )}
+                      simulationMode={true}
+                      activeStepKey={activeStepKey}
+                      showValidationError={showValidationError}
+                      onSubmit={() => {}}
+                      onActiveStepKeyChange={setActiveStepKey}
+                    />
+                  )}
+                </>
+              ),
           })),
         ].filter(notEmpty)}
       />

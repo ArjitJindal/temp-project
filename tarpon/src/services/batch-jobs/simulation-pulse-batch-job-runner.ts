@@ -1,5 +1,7 @@
 import { countBy, isEmpty } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import pMap from 'p-map'
+import PQueue from 'p-queue'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -18,6 +20,8 @@ import { getUserName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { SimulationTaskRepository } from '@/services/simulation/repositories/simulation-task-repository'
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 type SimulationResult = {
   userResults: Array<Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>>
@@ -33,6 +37,16 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
   riskRepository?: RiskRepository
   transactionRepository?: MongoDbTransactionRepository
   riskScoringService?: RiskScoringService
+  usersSimulated: number = 0
+  userResultsSaved: number = 0
+  simulationResult: SimulationResult = {
+    userResults: [],
+    transactionResults: {
+      current: [],
+      simulated: [],
+    },
+  }
+  progressQueue = new PQueue({ concurrency: 1 })
 
   protected async run(job: SimulationRiskLevelsBatchJob): Promise<void> {
     const { tenantId, parameters, awsCredentials } = job
@@ -57,45 +71,69 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       mongoDb
     )
 
+    const users = await this.usersRepository?.getMongoAllUsers({
+      pageSize: parameters.sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
+    })
+    const totalUsers = users?.total ?? 0
     await simulationTaskRepository.updateTaskStatus(
       parameters.taskId,
-      'IN_PROGRESS'
+      'IN_PROGRESS',
+      0,
+      totalUsers
     )
 
     try {
-      let results: SimulationResult | undefined
+      const updateProgress = async (progress: number) => {
+        const totalUserResults = this.simulationResult.userResults.length
+        const userResultsToSave = this.simulationResult.userResults
+          .slice(this.userResultsSaved, totalUserResults)
+          .map((userResult) => ({
+            taskId: parameters.taskId,
+            type: 'PULSE',
+            ...userResult,
+          }))
+        this.userResultsSaved = totalUserResults
+        await Promise.all([
+          simulationTaskRepository.updateTaskStatus(
+            parameters.taskId,
+            'IN_PROGRESS',
+            progress
+          ),
+          simulationResultRepository.saveSimulationResults(
+            userResultsToSave as SimulationRiskLevelsResult[]
+          ),
+          simulationTaskRepository.updateStatistics<SimulationRiskLevelsStatisticsResult>(
+            parameters.taskId,
+            this.getStatistics(this.simulationResult)
+          ),
+        ])
+      }
       if (
         parameters.parameterAttributeRiskValues &&
         !isEmpty(parameters.parameterAttributeRiskValues)
       ) {
-        results = await this.recalculateRiskScores(
+        await this.recalculateRiskScores(
           parameters.classificationValues,
           parameters.parameterAttributeRiskValues,
+          users?.data ?? [],
+          updateProgress,
           parameters.sampling
         )
       } else if (
         parameters.classificationValues &&
         !isEmpty(parameters.classificationValues)
       ) {
-        results = await this.mapNewRiskLevels(
+        await this.mapNewRiskLevels(
           parameters.classificationValues,
+          users?.data ?? [],
+          updateProgress,
           parameters.sampling
         )
       }
-
-      if (results?.userResults && results?.userResults.length > 0) {
-        await simulationResultRepository.saveSimulationResults(
-          results.userResults.map((userResult) => ({
-            taskId: parameters.taskId,
-            type: 'PULSE',
-            ...userResult,
-          }))
-        )
-        await simulationTaskRepository.updateStatistics<SimulationRiskLevelsStatisticsResult>(
-          parameters.taskId,
-          this.getStatistics(results)
-        )
-      }
+      await simulationTaskRepository.updateTaskStatus(
+        parameters.taskId,
+        'SUCCESS'
+      )
     } catch (e) {
       await simulationTaskRepository.updateTaskStatus(
         parameters.taskId,
@@ -103,11 +141,6 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       )
       throw e
     }
-
-    await simulationTaskRepository.updateTaskStatus(
-      parameters.taskId,
-      'SUCCESS'
-    )
   }
 
   private getRiskTypeStatistics(
@@ -166,193 +199,189 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
 
   private async mapNewRiskLevels(
     newClassificationValues: RiskClassificationScore[],
+    users: (InternalBusinessUser | InternalConsumerUser)[],
+    updateProgress: (progress: number) => Promise<void>,
     sampling?: SimulationRiskLevelsSampling
-  ): Promise<SimulationResult> {
+  ) {
     const currentClassificationValues =
       (await this.riskRepository?.getRiskClassificationValues()) ?? []
-    const users = await this.usersRepository?.getMongoAllUsers({
-      pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
-    })
-    const userResults: Array<
-      Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>
-    > = []
-    const transactionResults = {
-      current: [] as RiskLevel[],
-      simulated: [] as RiskLevel[],
-    }
-    for (const user of users?.data ?? []) {
-      const userTransactions = await this.getUserTransactions(
-        user.userId,
-        sampling
-      )
-      const currentTransactionRiskLevels = userTransactions
-        ?.map(
-          (transaction) =>
-            transaction.arsScore?.arsScore &&
-            getRiskLevelFromScore(
-              currentClassificationValues,
-              transaction.arsScore.arsScore
-            )
+    const totalUsers = users.length
+    await pMap(
+      users,
+      async (user) => {
+        const userTransactions = await this.getUserTransactions(
+          user.userId,
+          sampling
         )
-        .filter(Boolean) as RiskLevel[]
-      const simulatedTransactionRiskLevels = userTransactions
-        ?.map(
-          (transaction) =>
-            transaction.arsScore?.arsScore &&
-            getRiskLevelFromScore(
-              newClassificationValues,
-              transaction.arsScore.arsScore
-            )
+        const currentTransactionRiskLevels = userTransactions
+          ?.map(
+            (transaction) =>
+              transaction.arsScore?.arsScore &&
+              getRiskLevelFromScore(
+                currentClassificationValues,
+                transaction.arsScore.arsScore
+              )
+          )
+          .filter(Boolean) as RiskLevel[]
+        const simulatedTransactionRiskLevels = userTransactions
+          ?.map(
+            (transaction) =>
+              transaction.arsScore?.arsScore &&
+              getRiskLevelFromScore(
+                newClassificationValues,
+                transaction.arsScore.arsScore
+              )
+          )
+          .filter(Boolean) as RiskLevel[]
+        this.simulationResult.transactionResults.current.push(
+          ...currentTransactionRiskLevels
         )
-        .filter(Boolean) as RiskLevel[]
-      transactionResults.current.push(...currentTransactionRiskLevels)
-      transactionResults.simulated.push(...simulatedTransactionRiskLevels)
+        this.simulationResult.transactionResults.simulated.push(
+          ...simulatedTransactionRiskLevels
+        )
 
-      userResults.push({
-        userId: user.userId,
-        userType: user.type,
-        userName: getUserName(user),
-        current: {
-          krs: user.krsScore && {
-            riskScore: user.krsScore?.krsScore,
-            riskLevel: getRiskLevelFromScore(
-              currentClassificationValues,
-              user.krsScore.krsScore
-            ),
+        this.simulationResult.userResults.push({
+          userId: user.userId,
+          userType: user.type,
+          userName: getUserName(user),
+          current: {
+            krs: user.krsScore && {
+              riskScore: user.krsScore?.krsScore,
+              riskLevel: getRiskLevelFromScore(
+                currentClassificationValues,
+                user.krsScore.krsScore
+              ),
+            },
+            drs: user.drsScore && {
+              riskScore: user.drsScore?.drsScore,
+              riskLevel: getRiskLevelFromScore(
+                currentClassificationValues,
+                user.drsScore.drsScore
+              ),
+            },
           },
-          drs: user.drsScore && {
-            riskScore: user.drsScore?.drsScore,
-            riskLevel: getRiskLevelFromScore(
-              currentClassificationValues,
-              user.drsScore.drsScore
-            ),
+          simulated: {
+            krs: user.krsScore && {
+              riskScore: user.krsScore?.krsScore,
+              riskLevel: getRiskLevelFromScore(
+                newClassificationValues,
+                user.krsScore.krsScore
+              ),
+            },
+            drs: user.drsScore && {
+              riskScore: user.drsScore?.drsScore,
+              riskLevel: getRiskLevelFromScore(
+                newClassificationValues,
+                user.drsScore.drsScore
+              ),
+            },
           },
-        },
-        simulated: {
-          krs: user.krsScore && {
-            riskScore: user.krsScore?.krsScore,
-            riskLevel: getRiskLevelFromScore(
-              newClassificationValues,
-              user.krsScore.krsScore
-            ),
-          },
-          drs: user.drsScore && {
-            riskScore: user.drsScore?.drsScore,
-            riskLevel: getRiskLevelFromScore(
-              newClassificationValues,
-              user.drsScore.drsScore
-            ),
-          },
-        },
-      })
-    }
-    return {
-      userResults,
-      transactionResults,
-    }
+        })
+        await this.progressQueue.add(() =>
+          this.updateStatusAndProgress(totalUsers, updateProgress)
+        )
+      },
+      {
+        concurrency: 10,
+      }
+    )
   }
 
   private async recalculateRiskScores(
     classificationValues: RiskClassificationScore[] | undefined,
     parameterAttributeRiskValues: ParameterAttributeRiskValues[],
+    users: (InternalBusinessUser | InternalConsumerUser)[],
+    updateProgress: (progress: number) => Promise<void>,
     sampling?: SimulationRiskLevelsSampling
-  ): Promise<SimulationResult> {
+  ) {
     const currentClassificationValues =
       (await this.riskRepository?.getRiskClassificationValues()) ?? []
     const newClassificationValues = isEmpty(classificationValues)
       ? currentClassificationValues
       : (classificationValues as RiskClassificationScore[])
-    const users = await this.usersRepository?.getMongoAllUsers({
-      pageSize: sampling?.usersCount ?? Number.MAX_SAFE_INTEGER,
-    })
 
-    const userResults: Array<
-      Omit<SimulationRiskLevelsResult, 'taskId' | 'type'>
-    > = []
-    const transactionResults = {
-      current: [] as RiskLevel[],
-      simulated: [] as RiskLevel[],
-    }
-    for (const user of users?.data ?? []) {
-      const { score: userKrsScore } =
-        (await this.riskScoringService?.calculateKrsScore(
-          user,
-          newClassificationValues,
-          parameterAttributeRiskValues
-        )) ?? { score: 0 }
-      const userTransactions = await this.getUserTransactions(
-        user.userId,
-        sampling
-      )
-      let userCurrentDrsScore = userKrsScore
-
-      for (const transaction of userTransactions ?? []) {
-        const { score: arsScore } =
-          (await this.riskScoringService?.simulateArsScore(
-            transaction,
+    await pMap(
+      users,
+      async (user) => {
+        const { score: userKrsScore } =
+          (await this.riskScoringService?.calculateKrsScore(
+            user,
             newClassificationValues,
             parameterAttributeRiskValues
           )) ?? { score: 0 }
-        userCurrentDrsScore =
-          this.riskScoringService?.calculateDrsScore(
-            userCurrentDrsScore,
-            arsScore
-          ) ?? 0
-        if (transaction.arsScore?.arsScore) {
-          transactionResults.current.push(
-            getRiskLevelFromScore(
-              currentClassificationValues,
-              transaction.arsScore.arsScore
-            )
-          )
-          transactionResults.simulated.push(
-            getRiskLevelFromScore(newClassificationValues, arsScore)
-          )
-        }
-      }
+        const userTransactions = await this.getUserTransactions(
+          user.userId,
+          sampling
+        )
+        let userCurrentDrsScore = userKrsScore
 
-      userResults.push({
-        userId: user.userId,
-        userType: user.type,
-        userName: getUserName(user),
-        current: {
-          krs: user.krsScore && {
-            riskScore: user.krsScore?.krsScore,
-            riskLevel: getRiskLevelFromScore(
-              currentClassificationValues,
-              user.krsScore.krsScore
-            ),
-          },
-          drs: user.drsScore && {
-            riskScore: user.drsScore?.drsScore,
-            riskLevel: getRiskLevelFromScore(
-              currentClassificationValues,
-              user.drsScore.drsScore
-            ),
-          },
-        },
-        simulated: {
-          krs: user.krsScore && {
-            riskScore: userKrsScore,
-            riskLevel: getRiskLevelFromScore(
+        for (const transaction of userTransactions ?? []) {
+          const { score: arsScore } =
+            (await this.riskScoringService?.simulateArsScore(
+              transaction,
               newClassificationValues,
-              userKrsScore
-            ),
+              parameterAttributeRiskValues
+            )) ?? { score: 0 }
+          userCurrentDrsScore =
+            this.riskScoringService?.calculateDrsScore(
+              userCurrentDrsScore,
+              arsScore
+            ) ?? 0
+          if (transaction.arsScore?.arsScore) {
+            this.simulationResult.transactionResults.current.push(
+              getRiskLevelFromScore(
+                currentClassificationValues,
+                transaction.arsScore.arsScore
+              )
+            )
+            this.simulationResult.transactionResults.simulated.push(
+              getRiskLevelFromScore(newClassificationValues, arsScore)
+            )
+          }
+        }
+        this.simulationResult.userResults.push({
+          userId: user.userId,
+          userType: user.type,
+          userName: getUserName(user),
+          current: {
+            krs: user.krsScore && {
+              riskScore: user.krsScore?.krsScore,
+              riskLevel: getRiskLevelFromScore(
+                currentClassificationValues,
+                user.krsScore.krsScore
+              ),
+            },
+            drs: user.drsScore && {
+              riskScore: user.drsScore?.drsScore,
+              riskLevel: getRiskLevelFromScore(
+                currentClassificationValues,
+                user.drsScore.drsScore
+              ),
+            },
           },
-          drs: user.drsScore && {
-            riskScore: userCurrentDrsScore,
-            riskLevel: getRiskLevelFromScore(
-              newClassificationValues,
-              userCurrentDrsScore
-            ),
+          simulated: {
+            krs: user.krsScore && {
+              riskScore: userKrsScore,
+              riskLevel: getRiskLevelFromScore(
+                newClassificationValues,
+                userKrsScore
+              ),
+            },
+            drs: user.drsScore && {
+              riskScore: userCurrentDrsScore,
+              riskLevel: getRiskLevelFromScore(
+                newClassificationValues,
+                userCurrentDrsScore
+              ),
+            },
           },
-        },
-      })
-    }
-    return {
-      userResults,
-      transactionResults,
-    }
+        })
+        await this.progressQueue.add(() =>
+          this.updateStatusAndProgress(users.length, updateProgress)
+        )
+      },
+      { concurrency: 10 }
+    )
   }
 
   private async getUserTransactions(
@@ -369,5 +398,20 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       })
     )?.data
     return userTransactions
+  }
+  protected async updateStatusAndProgress(
+    totalUsers: number,
+    updateProgress: (progress: number) => Promise<void>
+  ): Promise<void> {
+    const onePercent = Math.floor(totalUsers / 100)
+    this.usersSimulated++
+    const progress = this.usersSimulated / totalUsers
+    if (
+      onePercent === 0 ||
+      progress === 1 ||
+      this.usersSimulated % onePercent === 0
+    ) {
+      await updateProgress(progress)
+    }
   }
 }

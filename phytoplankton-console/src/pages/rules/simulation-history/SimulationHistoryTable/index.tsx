@@ -10,7 +10,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOBS } from '@/utils/queries/keys';
 import { useUsers } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { DATE, NUMBER } from '@/components/library/Table/standardDataTypes';
+import { DATE, NUMBER, SIMULATION_STATUS } from '@/components/library/Table/standardDataTypes';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { DefaultApiGetSimulationsRequest } from '@/apis/types/ObjectParamAPI';
 import { useRules } from '@/utils/rules';
@@ -132,6 +132,11 @@ export function SimulationHistoryTable() {
             value: (item) => item.iterations.length,
             type: NUMBER,
             sorting: true,
+          }),
+          helper.simple<'iterations'>({
+            title: 'Status',
+            key: 'iterations',
+            type: SIMULATION_STATUS,
           }),
         ])}
         hideFilters={true}
