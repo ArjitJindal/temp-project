@@ -135,7 +135,6 @@ class DatabricksStack extends TerraformStack {
       : this.fetchVpc()
 
     this.awsWorkspace({
-      availabilityZone: `${awsRegion}a`,
       vpcId: vpcId,
       subnetId: Fn.element(subnetIds, 0),
       privateSubnetId: Fn.element(privateSubnetIds, 0),
@@ -143,7 +142,6 @@ class DatabricksStack extends TerraformStack {
   }
 
   private awsWorkspace(vpc?: {
-    availabilityZone: string
     vpcId: string
     subnetId: string
     privateSubnetId: string
@@ -357,6 +355,11 @@ class DatabricksStack extends TerraformStack {
         cidrBlocks: ['0.0.0.0/0'],
         protocol: 'tcp',
       })
+
+      const subnet = new aws.dataAwsSubnet.DataAwsSubnet(this, 'subnet', {
+        id: vpc.subnetId,
+      })
+
       const mongoConnection = new aws.glueConnection.GlueConnection(
         this,
         'mongo-connection',
@@ -372,7 +375,7 @@ class DatabricksStack extends TerraformStack {
           },
           name: 'mongo',
           physicalConnectionRequirements: {
-            availabilityZone: vpc.availabilityZone,
+            availabilityZone: subnet.availabilityZone,
             securityGroupIdList: [sg.id],
             subnetId: vpc.privateSubnetId,
           },
