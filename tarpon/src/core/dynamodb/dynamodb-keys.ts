@@ -181,6 +181,11 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#currency-cache`,
     SortKeyID: '1',
   }),
+  // IP address cache
+  IP_ADDRESS_CACHE: (ipAddress: string) => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#ip#${ipAddress}`,
+    SortKeyID: '',
+  }),
 
   // Attributes: refer to UserAggregationAttributes
   USER_AGGREGATION: (tenantId: string, userId: string) => ({

@@ -41,7 +41,7 @@ export default class IpAddressUnexpectedLocationRule extends TransactionRule<IpA
       return
     }
 
-    const ipInfo = await lookupIpLocation(ipAddress as string)
+    const ipInfo = await lookupIpLocation(ipAddress as string, this.dynamoDb)
 
     if (!ipInfo?.country) {
       return

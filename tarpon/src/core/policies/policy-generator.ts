@@ -28,11 +28,11 @@ export default class PolicyBuilder {
     return this
   }
 
-  dynamoDb(tables: string[]) {
+  dynamoDb() {
     this.statements.push({
       Effect: 'Allow',
       Action: ['dynamodb:*'],
-      Resource: tables.map((table) => `arn:aws:dynamodb:*:*:table/${table}`),
+      Resource: ['arn:aws:dynamodb:*:*:table/*'],
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${this.tenantId}*`],
@@ -48,7 +48,7 @@ export default class PolicyBuilder {
         'dynamodb:Query',
         'dynamodb:ConditionCheckItem',
       ],
-      Resource: tables.map((table) => `arn:aws:dynamodb:*:*:table/${table}`),
+      Resource: ['arn:aws:dynamodb:*:*:table/*'],
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],

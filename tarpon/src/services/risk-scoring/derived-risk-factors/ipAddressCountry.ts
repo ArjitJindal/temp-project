@@ -3,6 +3,7 @@ import { TransactionRiskFactorValueHandler } from '.'
 import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'
 import { lookupIpLocation } from '@/services/rules-engine/utils/geoip'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
   TransactionRiskFactorValueHandler<string | undefined | null>
@@ -23,9 +24,12 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
         return []
       }
 
+      const dynamoDb = getDynamoDbClient()
       const [originIpInfo, destinationIpInfo] = await Promise.all([
-        originIpAddress ? lookupIpLocation(originIpAddress) : null,
-        destinationIpAddress ? lookupIpLocation(destinationIpAddress) : null,
+        originIpAddress ? lookupIpLocation(originIpAddress, dynamoDb) : null,
+        destinationIpAddress
+          ? lookupIpLocation(destinationIpAddress, dynamoDb)
+          : null,
       ])
 
       subsegemt?.close()

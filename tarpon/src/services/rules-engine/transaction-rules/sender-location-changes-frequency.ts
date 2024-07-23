@@ -59,7 +59,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
 
     const ipInfos = await Promise.all(
       Array.from(uniqueIpAddresses).map((ipAddress) =>
-        lookupIpLocation(ipAddress)
+        lookupIpLocation(ipAddress, this.dynamoDb)
       )
     )
 

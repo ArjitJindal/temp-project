@@ -10,7 +10,7 @@ import { traceable } from '../xray'
 
 const DEFAULT_TTL_SECONDS = 2592000 // 30 days
 @traceable
-export class TransientRepository {
+export class TransientRepository<T = unknown> {
   dynamoDb: DynamoDBDocumentClient
   ttlSeconds?: number
 
@@ -73,6 +73,36 @@ export class TransientRepository {
       })
     )
     return Boolean(result.Item)
+  }
+
+  public async add(partitionKeyId: string, sortKeyId: string, item: T) {
+    await this.dynamoDb.send(
+      new PutCommand({
+        TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
+        Item: {
+          PartitionKeyID: partitionKeyId,
+          SortKeyID: sortKeyId || 'default',
+          ...item,
+          ttl: this.getUpdatedTTLAttribute(),
+        },
+      })
+    )
+  }
+
+  public async get(
+    partitionKeyId: string,
+    sortKeyId: string
+  ): Promise<T | undefined> {
+    const result = await this.dynamoDb.send(
+      new GetCommand({
+        TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
+        Key: {
+          PartitionKeyID: partitionKeyId,
+          SortKeyID: sortKeyId || 'default',
+        },
+      })
+    )
+    return result.Item as T
   }
 
   private getUpdatedTTLAttribute() {

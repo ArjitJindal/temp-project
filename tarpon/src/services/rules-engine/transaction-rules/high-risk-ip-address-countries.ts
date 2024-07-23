@@ -36,8 +36,10 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
     }
 
     const [originIpInfo, destinationIpInfo] = await Promise.all([
-      originIpAddress ? lookupIpLocation(originIpAddress) : null,
-      destinationIpAddress ? lookupIpLocation(destinationIpAddress) : null,
+      originIpAddress ? lookupIpLocation(originIpAddress, this.dynamoDb) : null,
+      destinationIpAddress
+        ? lookupIpLocation(destinationIpAddress, this.dynamoDb)
+        : null,
     ])
     logger.info(
       `originIpInfo (${originIpAddress}): ${JSON.stringify(originIpInfo)}`

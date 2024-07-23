@@ -3,6 +3,7 @@ import { capitalize } from 'lodash'
 import { lookupIpLocation } from '../utils/geoip'
 import { TransactionRuleVariable } from './types'
 import { getCountriesOptions } from './utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const getUiDefinition = (
   direction: 'ORIGIN' | 'DESTINATION',
@@ -29,12 +30,17 @@ const createIpVariable = (
     entity: 'TRANSACTION',
     uiDefinition: getUiDefinition(direction, granularity),
     valueType: 'string',
-    load: async (transaction) => {
+    load: async (transaction, context) => {
       const ipAddress =
         direction === 'ORIGIN'
           ? transaction?.originDeviceData?.ipAddress
           : transaction?.destinationDeviceData?.ipAddress
-      const info = ipAddress ? await lookupIpLocation(ipAddress) : undefined
+      const info = ipAddress
+        ? await lookupIpLocation(
+            ipAddress,
+            context?.dynamoDb ?? getDynamoDbClient()
+          )
+        : undefined
       return info?.[granularity.toLowerCase()]
     },
     sourceField:

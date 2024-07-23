@@ -51,11 +51,7 @@ async function getTenantScopeCredentials(
         .s3()
         .secretsManager()
         .athena()
-        .dynamoDb([
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-          StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
-          StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-        ])
+        .dynamoDb()
         .build()
     ),
     DurationSeconds: StackConstants.JWT_AUTHORIZER_CACHE_TTL_SECONDS,
