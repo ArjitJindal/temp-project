@@ -964,6 +964,55 @@ describe('Verify Transaction: V8 engine', () => {
       expect(result2.status).toBe('FLAG')
     })
   })
+  describe('Aggregation variable with user filter', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-3',
+        defaultLogic: { and: [{ '>=': [{ var: 'agg:test-filter' }, 1] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test-filter',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            filtersLogic: {
+              and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'U-1'] }],
+            },
+          },
+        ],
+      },
+    ])
+    setUpUsersHooks(TEST_TENANT_ID, [
+      getTestUser({ userId: 'U-1' }),
+      getTestUser({ userId: 'U-2' }),
+    ])
+    test('Sender User matches the filter (hit)', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          originUserId: 'U-2',
+          transactionId: 'tx-1',
+          destinationUserId: 'U-1',
+        })
+      )
+      expect(result1.status).toBe('ALLOW')
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          originUserId: 'U-1',
+          transactionId: 'tx-2',
+          destinationUserId: 'U-2',
+        })
+      )
+      expect(result2.status).toBe('FLAG')
+    })
+  })
 })
 
 describe('Verify Transaction V8 engine with Update Aggregation', () => {

@@ -22,8 +22,11 @@ import {
   getDirectionalVariableKeys,
   isAggregationVariable,
   isDirectionLessVariable,
+  isReceiverUserVariable,
+  isSenderUserVariable,
 } from '../v8-variables'
 import { JSON_LOGIC_BUILT_IN_OPERATORS, RULE_OPERATORS } from '../v8-operators'
+import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 
 export function isChildVariable(varKey: string) {
   return varKey.length > 0 && !varKey.includes(VARIABLE_NAMESPACE_SEPARATOR)
@@ -237,4 +240,31 @@ export function transformJsonLogicVars(
     }),
     (v) => isNil(v) || isNaN(v)
   )
+}
+
+export function isUserVariable(varKey: string) {
+  return ['USER', 'BUSINESS', 'CONSUMER_USER'].some((prefix) =>
+    varKey.startsWith(prefix)
+  )
+}
+
+export function userFiltersData(
+  aggregationVariable: RuleAggregationVariable
+): Set<string> {
+  const userVariableKeys = getVariableKeysFromLogic(
+    aggregationVariable.filtersLogic
+  ).entityVariableKeys.filter(isUserVariable)
+  const directions = new Set<string>()
+
+  if (userVariableKeys.some(isSenderUserVariable)) {
+    directions.add('sender')
+  }
+  if (userVariableKeys.some(isReceiverUserVariable)) {
+    directions.add('receiver')
+  }
+  if (userVariableKeys.some(isDirectionLessVariable)) {
+    directions.add('sender')
+    directions.add('receiver')
+  }
+  return directions
 }

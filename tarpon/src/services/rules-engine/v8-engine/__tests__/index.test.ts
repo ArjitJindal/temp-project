@@ -8,11 +8,12 @@ import {
   getTestTransactionEvent,
 } from '@/test-utils/transaction-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
-import { getTestUser } from '@/test-utils/user-test-utils'
+import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { LegalDocument } from '@/@types/openapi-public/LegalDocument'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 jest.mock('../../v8-operators/starts-ends-with', () => {
   const actualModule = jest.requireActual('../../v8-operators/starts-ends-with')
@@ -2459,5 +2460,87 @@ describe('V8 aggregator', () => {
       'minute'
     )
     expect(aggData2).toEqual([{ time: '2023-01-01-12-3', value: ['2'] }])
+  })
+})
+
+describe('Aggregation variable with user filter tests', () => {
+  const tenantId = getTestTenantId()
+  setUpUsersHooks(tenantId, [
+    getTestUser({ userId: '1' }),
+    getTestUser({ userId: '2' }),
+    getTestUser({ userId: '3' }),
+  ])
+  test('Should rebuild the aggregation data for aggregation variable having user filters', async () => {
+    const aggregationVariable = {
+      key: 'agg:123',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: { units: 30, granularity: 'day' },
+        end: { units: 0, granularity: 'day' },
+      },
+      filtersLogic: {
+        and: [{ '==': [{ var: 'CONSUMER_USER:userId__BOTH' }, '2'] }],
+      },
+    } as RuleAggregationVariable
+
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new RuleJsonLogicEvaluator(
+      tenantId,
+      dynamoDb
+    )
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-03T12:00:10.000Z').valueOf()
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        timestamp: dayjs('2023-01-01T12:30:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '3',
+        timestamp: dayjs('2023-01-02T12:30:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        timestamp: dayjs('2023-01-02T13:30:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        timestamp: dayjs('2023-01-02T14:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '2',
+        destinationUserId: '1',
+        timestamp: dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+    const userGetterSpy = jest.spyOn(UserRepository.prototype, 'getUser')
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      aggregationVariable,
+      beforeTimestamp + 1,
+      '1',
+      undefined
+    )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserRuleTimeAggregations(
+      '1',
+      aggregationVariable,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'day'
+    )
+    expect(aggData).toEqual([
+      { time: '2023-01-01', value: 1 },
+      { time: '2023-01-02', value: 2 },
+    ])
+    expect(userGetterSpy).toBeCalledTimes(3)
   })
 })

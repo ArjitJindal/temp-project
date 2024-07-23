@@ -89,11 +89,11 @@ export function isAggregationVariable(key: string): boolean {
 const SENDER_VARIABLE_KEY_SUFFIX = '__SENDER'
 const RECEIVER_VARIABLE_KEY_SUFFIX = '__RECEIVER'
 const BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX = '__BOTH'
-export function isSenderUserVariable(variable: RuleVariable) {
-  return variable.key.endsWith(SENDER_VARIABLE_KEY_SUFFIX)
+export function isSenderUserVariable(variableKey: string) {
+  return variableKey.endsWith(SENDER_VARIABLE_KEY_SUFFIX)
 }
-export function isReceiverUserVariable(variable: RuleVariable) {
-  return variable.key.endsWith(RECEIVER_VARIABLE_KEY_SUFFIX)
+export function isReceiverUserVariable(variableKey: string) {
+  return variableKey.endsWith(RECEIVER_VARIABLE_KEY_SUFFIX)
 }
 export function isDirectionLessVariable(variableKey: string) {
   return variableKey.endsWith(BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX)

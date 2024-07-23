@@ -62,6 +62,7 @@ import {
   getVariableKeysFromLogic,
   transformJsonLogic,
   transformJsonLogicVars,
+  userFiltersData,
 } from './utils'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
@@ -85,6 +86,7 @@ import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEntityVariable'
 import { hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { UserRepository } from '@/services/users/repositories/user-repository'
 
 const sqs = getSQSClient()
 
@@ -468,7 +470,7 @@ export class RuleJsonLogicEvaluator {
 
               const user =
                 data.type === 'TRANSACTION'
-                  ? isSenderUserVariable(variable)
+                  ? isSenderUserVariable(variable.key)
                     ? data.senderUser
                     : data.receiverUser
                   : data.user
@@ -533,6 +535,21 @@ export class RuleJsonLogicEvaluator {
       )
     },
     (a, b) => isEqual(a[0], b[0])
+  )
+
+  private userLoader = memoize(
+    async (
+      userId: string | undefined
+    ): Promise<User | Business | undefined> => {
+      if (!userId) {
+        return undefined
+      }
+      const userRepository = new UserRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+      })
+      return await userRepository.getUser(userId)
+    },
+    (userId: string | undefined) => userId ?? ''
   )
 
   private getUserKeyId(
@@ -660,8 +677,11 @@ export class RuleJsonLogicEvaluator {
     )
     const aggregationGranularity =
       this.getAggregationGranularity(aggregationVariable)
-
-    const fieldsToFetch = this.getTransactionFieldsToFetch(aggregationVariable)
+    const userFilterDirections = userFiltersData(aggregationVariable)
+    const fieldsToFetch = this.getTransactionFieldsToFetch(
+      aggregationVariable,
+      userFilterDirections
+    )
     const transactionRepository =
       this.mode === 'DYNAMODB'
         ? new DynamoDbTransactionRepository(this.tenantId, this.dynamoDb)
@@ -717,11 +737,20 @@ export class RuleJsonLogicEvaluator {
       // Filter transactions by filtersLogic
       const targetTransactions: AuxiliaryIndexTransactionWithDirection[] = []
       for (const transaction of transactions) {
+        const senderUser = userFilterDirections.has('sender')
+          ? await this.userLoader(transaction.originUserId)
+          : undefined
+        const receiverUser = userFilterDirections.has('receiver')
+          ? await this.userLoader(transaction.destinationUserId)
+          : undefined
+
         const isTransactionFiltered =
           await this.isDataIncludedInAggregationVariable(aggregationVariable, {
             type: 'TRANSACTION',
             transaction: transaction as TransactionWithRiskDetails,
             transactionEvents: [],
+            senderUser,
+            receiverUser,
           })
         if (isTransactionFiltered) {
           targetTransactions.push(transaction)
@@ -963,7 +992,8 @@ export class RuleJsonLogicEvaluator {
   }
 
   private getTransactionFieldsToFetch(
-    aggregationVariable: RuleAggregationVariable
+    aggregationVariable: RuleAggregationVariable,
+    userFilterDirection: Set<string>
   ): string[] {
     const fieldsToFetch: Set<string> = new Set()
 
@@ -988,6 +1018,13 @@ export class RuleJsonLogicEvaluator {
     }
     if (aggregationVariable.secondaryAggregationFieldKey) {
       addFieldToFetch(aggregationVariable.secondaryAggregationFieldKey)
+    }
+
+    if (userFilterDirection.has('sender')) {
+      fieldsToFetch.add('originUserId')
+    }
+    if (userFilterDirection.has('receiver')) {
+      fieldsToFetch.add('destinationUserId')
     }
     return uniq([
       ...Array.from(fieldsToFetch),
