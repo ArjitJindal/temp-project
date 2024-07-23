@@ -26,7 +26,10 @@ import {
   isSenderUserVariable,
 } from '../v8-variables'
 import { JSON_LOGIC_BUILT_IN_OPERATORS, RULE_OPERATORS } from '../v8-operators'
+import { getTimeRangeByTimeWindows } from '../utils/time-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { RuleAggregationVariableTimeWindow } from '@/@types/openapi-internal/RuleAggregationVariableTimeWindow'
+import dayjs from '@/utils/dayjs'
 
 export function isChildVariable(varKey: string) {
   return varKey.length > 0 && !varKey.includes(VARIABLE_NAMESPACE_SEPARATOR)
@@ -267,4 +270,59 @@ export function userFiltersData(
     directions.add('receiver')
   }
   return directions
+}
+
+const MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY = 3
+export function getAggregationGranularity(
+  timeWindow: RuleAggregationVariableTimeWindow,
+  tenantId: string
+) {
+  const maxHoursToAggregateWithMinuteGranularity =
+    // TODO: to be reverted in FR-5010
+    tenantId === 'QYF2BOXRJI' // Capimoney
+      ? 24
+      : MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
+
+  const { start, end } = timeWindow
+  const rollingBasis = start.rollingBasis || end.rollingBasis || false
+  const granularities = new Set([start.granularity, end.granularity])
+  granularities.delete('now')
+
+  const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
+    Date.now(),
+    start,
+    end
+  )
+  const diffHours = dayjs(beforeTimestamp).diff(dayjs(afterTimestamp), 'hour')
+  if (diffHours <= maxHoursToAggregateWithMinuteGranularity) {
+    return 'minute'
+  }
+  if (granularities.has('hour')) {
+    if (granularities.has('year') || granularities.has('all_time')) {
+      return 'day'
+    }
+    return 'hour'
+  }
+  if (granularities.has('day')) {
+    if (granularities.size === 1) {
+      return rollingBasis ? 'hour' : 'day'
+    }
+    return 'day'
+  }
+  if (rollingBasis) {
+    return 'day'
+  }
+  if (granularities.has('week')) {
+    return 'week'
+  }
+  if (granularities.has('month')) {
+    return 'month'
+  }
+  if (granularities.has('year') || granularities.has('all_time')) {
+    return 'year'
+  }
+  if (granularities.has('fiscal_year')) {
+    return 'month'
+  }
+  return 'day'
 }

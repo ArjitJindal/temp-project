@@ -1,4 +1,9 @@
-import { transformJsonLogic, transformJsonLogicVars } from '../utils'
+import {
+  getAggregationGranularity,
+  transformJsonLogic,
+  transformJsonLogicVars,
+} from '../utils'
+import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 describe('Transform json logic with direction-less entity variables', () => {
   it('no direction-less entity variable', () => {
@@ -496,6 +501,136 @@ describe('Transform var data', () => {
     expect(vars).toEqual({
       v1: 'k1',
       root: { 'a.b.c': [1, 3], 'a.b.d': [2, 4], e: ['a', '10'] },
+    })
+  })
+})
+
+const GRANULARITY_TEST_CASES: Array<{
+  timeWindow: RuleAggregationTimeWindowGranularity[]
+  expectedGranularity: RuleAggregationTimeWindowGranularity[]
+}> = [
+  {
+    timeWindow: ['all_time', 'year'],
+    expectedGranularity: ['year', 'day'],
+  },
+  {
+    timeWindow: ['all_time', 'month'],
+    expectedGranularity: ['month', 'day'],
+  },
+  {
+    timeWindow: ['all_time', 'week'],
+    expectedGranularity: ['week', 'day'],
+  },
+  {
+    timeWindow: ['all_time', 'day'],
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['all_time', 'hour'], // invalid combination
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['year', 'year'],
+    expectedGranularity: ['year', 'day'],
+  },
+  {
+    timeWindow: ['year', 'month'],
+    expectedGranularity: ['month', 'day'],
+  },
+  {
+    timeWindow: ['year', 'week'],
+    expectedGranularity: ['week', 'day'],
+  },
+  {
+    timeWindow: ['year', 'day'],
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['year', 'hour'], // invalid combination
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['month', 'month'],
+    expectedGranularity: ['month', 'day'],
+  },
+  {
+    timeWindow: ['month', 'week'],
+    expectedGranularity: ['week', 'day'],
+  },
+  {
+    timeWindow: ['month', 'day'],
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['month', 'hour'],
+    expectedGranularity: ['hour', 'hour'],
+  },
+  {
+    timeWindow: ['week', 'week'],
+    expectedGranularity: ['week', 'day'],
+  },
+  {
+    timeWindow: ['week', 'day'],
+    expectedGranularity: ['day', 'day'],
+  },
+  {
+    timeWindow: ['week', 'hour'],
+    expectedGranularity: ['hour', 'hour'],
+  },
+  {
+    timeWindow: ['day', 'day'],
+    expectedGranularity: ['day', 'hour'],
+  },
+  {
+    timeWindow: ['day', 'hour'],
+    expectedGranularity: ['hour', 'hour'],
+  },
+  {
+    timeWindow: ['all_time', 'now'],
+    expectedGranularity: ['year', 'day'],
+  },
+  {
+    timeWindow: ['year', 'now'],
+    expectedGranularity: ['year', 'day'],
+  },
+  {
+    timeWindow: ['month', 'now'],
+    expectedGranularity: ['month', 'day'],
+  },
+  {
+    timeWindow: ['week', 'now'],
+    expectedGranularity: ['week', 'day'],
+  },
+  {
+    timeWindow: ['day', 'now'],
+    expectedGranularity: ['day', 'hour'],
+  },
+  {
+    timeWindow: ['hour', 'now'],
+    expectedGranularity: ['hour', 'hour'],
+  },
+]
+
+describe('getAggregationGranularity', () => {
+  GRANULARITY_TEST_CASES.forEach(({ timeWindow, expectedGranularity }) => {
+    it(`returns "${timeWindow}" - ${expectedGranularity}`, () => {
+      const [start, end] = timeWindow
+      const nonRolling = getAggregationGranularity(
+        {
+          start: { units: 5, granularity: start },
+          end: { units: 1, granularity: end },
+        },
+        'default'
+      )
+      expect(nonRolling).toEqual(expectedGranularity[0])
+      const rolling = getAggregationGranularity(
+        {
+          start: { units: 5, granularity: start, rollingBasis: true },
+          end: { units: 1, granularity: end, rollingBasis: true },
+        },
+        'default'
+      )
+      expect(rolling).toEqual(expectedGranularity[1])
     })
   })
 })

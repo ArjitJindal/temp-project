@@ -59,6 +59,7 @@ import {
   getAggVarHash,
 } from './aggregation-repository'
 import {
+  getAggregationGranularity,
   getVariableKeysFromLogic,
   transformJsonLogic,
   transformJsonLogicVars,
@@ -111,7 +112,6 @@ type UserIdentifier = {
 type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
   direction?: 'origin' | 'destination'
 }
-const MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY = 3
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: RuleEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
 
@@ -655,11 +655,29 @@ export class RuleJsonLogicEvaluator {
         beforeTimestamp,
       }
     )
-    await this.aggregationRepository.rebuildUserTimeAggregations(
-      userKeyId,
-      aggregationVariable,
-      aggregationResult
-    )
+    if (aggregationVariable.aggregationGroupByFieldKey) {
+      const groups = Object.values(aggregationResult).flatMap((v) =>
+        Object.keys(v.value as { [group: string]: unknown })
+      )
+      for (const group of groups) {
+        const groupAggregationResult = mapValues(aggregationResult, (v) => ({
+          value: (v.value as { [group: string]: unknown })[group],
+        }))
+        await this.aggregationRepository.rebuildUserTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          groupAggregationResult,
+          group
+        )
+      }
+    } else {
+      await this.aggregationRepository.rebuildUserTimeAggregations(
+        userKeyId,
+        aggregationVariable,
+        aggregationResult,
+        undefined
+      )
+    }
     await this.aggregationRepository.setAggregationVariableReady(
       aggregationVariable,
       userKeyId
@@ -675,8 +693,11 @@ export class RuleJsonLogicEvaluator {
     const aggregator = getRuleVariableAggregator(
       aggregationVariable.aggregationFunc
     )
-    const aggregationGranularity =
-      this.getAggregationGranularity(aggregationVariable)
+
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
     const userFilterDirections = userFiltersData(aggregationVariable)
     const fieldsToFetch = this.getTransactionFieldsToFetch(
       aggregationVariable,
@@ -939,8 +960,10 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.aggregationFunc
     )
 
-    const aggregationGranularity =
-      this.getAggregationGranularity(aggregationVariable)
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
 
     const targetAggregations =
       (await this.aggregationRepository.getUserRuleTimeAggregations(
@@ -948,7 +971,8 @@ export class RuleJsonLogicEvaluator {
         aggregationVariable,
         transaction.timestamp,
         transaction.timestamp + 1,
-        aggregationGranularity
+        aggregationGranularity,
+        newGroupValue
       )) ?? []
     if ((targetAggregations?.length ?? 0) > 1) {
       throw new Error('Should only get one target aggregation')
@@ -958,21 +982,10 @@ export class RuleJsonLogicEvaluator {
         transaction.timestamp,
         aggregationGranularity
       ),
-      value: hasGroups ? {} : aggregator.init(),
+      value: aggregator.init(),
     }
     const newTargetAggregation: AggregationData = {
-      value: hasGroups
-        ? mergeGroups(
-            aggregator,
-            targetAggregation.value as { [key: string]: unknown },
-            {
-              [newGroupValue]: aggregator.reduce(
-                aggregator.init(),
-                newDataValue
-              ),
-            }
-          )
-        : aggregator.reduce(targetAggregation.value, newDataValue),
+      value: aggregator.reduce(targetAggregation.value, newDataValue),
     }
     if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
       await this.aggregationRepository.rebuildUserTimeAggregations(
@@ -980,7 +993,8 @@ export class RuleJsonLogicEvaluator {
         aggregationVariable,
         {
           [targetAggregation.time]: newTargetAggregation,
-        }
+        },
+        newGroupValue
       )
     }
     await this.aggregationRepository.setTransactionApplied(
@@ -1046,8 +1060,10 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.timeWindow.end as TimeWindow
     )
 
-    const aggregationGranularity =
-      this.getAggregationGranularity(aggregationVariable)
+    const aggregationGranularity = getAggregationGranularity(
+      aggregationVariable.timeWindow,
+      this.tenantId
+    )
     const userIdentifier: UserIdentifier =
       data.type === 'TRANSACTION'
         ? {
@@ -1062,6 +1078,20 @@ export class RuleJsonLogicEvaluator {
           }
         : { userId: data.user.userId }
 
+    const aggregator = getRuleVariableAggregator(aggregationFunc)
+    const entityVarDataloader = this.entityVarLoader(data, {
+      baseCurrency: aggregationVariable.baseCurrency,
+      tenantId: this.tenantId,
+      dynamoDb: this.dynamoDb,
+    })
+    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
+      ? ((await entityVarDataloader.load(
+          getEntityVariableLoaderKey({
+            key: aggregationVariable.aggregationGroupByFieldKey,
+            entityKey: aggregationVariable.aggregationGroupByFieldKey,
+          })
+        )) as string)
+      : undefined
     let aggData: Array<{ time: string } & AggregationData> = []
     if (this.mode === 'DYNAMODB' && canAggregate(aggregationVariable)) {
       // If the mode is DYNAMODB, we fetch the pre-built aggregation data
@@ -1082,7 +1112,8 @@ export class RuleJsonLogicEvaluator {
           aggregationVariable,
           afterTimestamp,
           beforeTimestamp,
-          aggregationGranularity
+          aggregationGranularity,
+          newGroupValue
         )) ?? []
     } else {
       // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
@@ -1090,32 +1121,13 @@ export class RuleJsonLogicEvaluator {
         aggregationVariable,
         userIdentifier,
         afterTimestamp,
-        beforeTimestamp
+        beforeTimestamp,
+        newGroupValue
       )
     }
-    const aggregator = getRuleVariableAggregator(aggregationFunc)
-    const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
-    const entityVarDataloader = this.entityVarLoader(data, {
-      baseCurrency: aggregationVariable.baseCurrency,
-      tenantId: this.tenantId,
-      dynamoDb: this.dynamoDb,
-    })
-    const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
-      ? ((await entityVarDataloader.load(
-          getEntityVariableLoaderKey({
-            key: aggregationVariable.aggregationGroupByFieldKey,
-            entityKey: aggregationVariable.aggregationGroupByFieldKey,
-          })
-        )) as string)
-      : undefined
+
     let result = aggData.reduce((acc: unknown, cur: AggregationData) => {
-      const curValue = cur.value
-      return mergeValues(
-        aggregator,
-        acc,
-        (hasGroups ? curValue?.[newGroupValue as string] : cur.value) ??
-          aggregator.init()
-      )
+      return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
     }, aggregator.init())
 
     const newTransactionIsTargetDirection =
@@ -1161,7 +1173,8 @@ export class RuleJsonLogicEvaluator {
       paymentDetails?: PaymentDetails
     },
     afterTimestamp: number,
-    beforeTimestamp: number
+    beforeTimestamp: number,
+    groupValue: string | undefined
   ): Promise<Array<{ time: string } & AggregationData>> {
     const rebuiltAggData = await this.getRebuiltAggregationVariableResult(
       aggregationVariable,
@@ -1176,7 +1189,7 @@ export class RuleJsonLogicEvaluator {
     )
     return Object.entries(rebuiltAggData).map(([time, value]) => ({
       time,
-      ...value,
+      ...(groupValue ? value[groupValue] : value),
     }))
   }
 
@@ -1254,43 +1267,6 @@ export class RuleJsonLogicEvaluator {
             aggregationVariable.aggregationFieldKey
     }
     return aggregationVariable.aggregationFieldKey
-  }
-
-  private getAggregationGranularity(
-    aggregationVariable: RuleAggregationVariable
-  ) {
-    const maxHoursToAggregateWithMinuteGranularity =
-      // TODO: to be reverted in FR-5010
-      this.tenantId === 'QYF2BOXRJI' // Capimoney
-        ? 24
-        : MAX_HOURS_TO_AGGREGATE_WITH_MINUTE_GRANULARITY
-
-    let start = aggregationVariable.timeWindow.start
-    const end = aggregationVariable.timeWindow.end
-
-    // TODO: to be reverted in FR-5010
-    if (start.granularity === 'day' && start.units === 1) {
-      start = { units: 24, granularity: 'hour' }
-    }
-
-    if (end.granularity === 'all_time') {
-      return 'year'
-    }
-    if (start.rollingBasis || end.rollingBasis) {
-      return 'hour'
-    }
-
-    if (end.granularity === 'now') {
-      return start.granularity === 'hour' &&
-        start.units <= maxHoursToAggregateWithMinuteGranularity
-        ? 'minute'
-        : start.granularity
-    }
-    return start.granularity === 'hour' &&
-      start.units - (end.granularity === 'hour' ? end.units : 0) <=
-        maxHoursToAggregateWithMinuteGranularity
-      ? 'minute'
-      : end.granularity
   }
 
   public updatedAggregationVariables: Set<string> = new Set()

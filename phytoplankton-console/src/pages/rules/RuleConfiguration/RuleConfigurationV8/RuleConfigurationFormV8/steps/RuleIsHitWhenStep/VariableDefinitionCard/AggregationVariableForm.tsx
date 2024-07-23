@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
 import { isEqual, lowerCase, round } from 'lodash';
@@ -15,7 +15,6 @@ import {
   CurrencyCode,
   RuleAggregationFunc,
   RuleAggregationTimeWindow,
-  RuleAggregationTimeWindowGranularity,
   RuleAggregationTransactionDirection,
   RuleAggregationType,
   RuleAggregationUserDirection,
@@ -39,13 +38,6 @@ import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-
-type TimeWindowValidationError =
-  | 'MISSING_FROM_OR_TO'
-  | 'TIME_TO_EARLIER_THAN_TIME_FROM'
-  | 'UNSUPPORTED_GRANULARITY';
-
-const NO_AGGREGATION_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = ['second', 'minute'];
 
 function varLabelWithoutNamespace(label: string): string {
   return label.replace(/^.+\s*\/\s*/, '');
@@ -113,6 +105,79 @@ const roundedTimeWindowMinutes = (timeWindow?: RuleAggregationVariableTimeWindow
   }
   return { start, end };
 };
+
+const MAX_AGGREGATION_FROM_YEARS = 5;
+function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
+  if (timeWindow.granularity === 'fiscal_year') {
+    if (!timeWindow.fiscalYear) {
+      throw new Error('Missing fiscal year');
+    }
+    return getFiscalYearStart(now, timeWindow.fiscalYear).subtract(timeWindow.units, 'year');
+  } else if (timeWindow.granularity === 'all_time') {
+    return now.subtract(MAX_AGGREGATION_FROM_YEARS, 'year');
+  } else if (timeWindow.granularity === 'now') {
+    return now;
+  }
+  return now.subtract(timeWindow.units, timeWindow.granularity);
+}
+
+const LESS_THAN_HOUR_GRANULARITY_MAX_HOURS = 1;
+const HOUR_GRANULARITY_MAX_DAYS = 60;
+function validateAggregationTimeWindow(timeWindow: RuleAggregationVariableTimeWindow) {
+  const { start, end } = timeWindow;
+  const now = dayjs();
+  const startTs = getTimestamp(now, start);
+  const endTs = getTimestamp(now, end);
+
+  if (startTs.valueOf() >= endTs.valueOf()) {
+    return (
+      <>
+        <b>Time to</b> should be earlier than <b>Time from</b>
+      </>
+    );
+  }
+  const granularities = new Set([start.granularity, end.granularity]);
+  if (
+    (granularities.has('minute') || granularities.has('second')) &&
+    endTs.diff(startTs, 'hour', true) > LESS_THAN_HOUR_GRANULARITY_MAX_HOURS
+  ) {
+    return (
+      <>
+        For <b>Minute</b> / <b>Second</b> granularity, the total duration cannot exceed{' '}
+        <b>{LESS_THAN_HOUR_GRANULARITY_MAX_HOURS} hour</b>
+      </>
+    );
+  }
+  if (granularities.has('hour') && endTs.diff(startTs, 'day', true) > HOUR_GRANULARITY_MAX_DAYS) {
+    return (
+      <>
+        For <b>Hour</b> granularity, the total duration cannot exceed{' '}
+        <b>{HOUR_GRANULARITY_MAX_DAYS} days</b>
+      </>
+    );
+  }
+
+  if (
+    granularities.has('day') &&
+    start.rollingBasis &&
+    endTs.diff(startTs, 'day', true) > HOUR_GRANULARITY_MAX_DAYS
+  ) {
+    return (
+      <>
+        For <b>Day</b> granularity with rolling basis, the total duration cannot exceed{' '}
+        <b>{HOUR_GRANULARITY_MAX_DAYS} days</b>
+      </>
+    );
+  }
+  if (endTs.diff(startTs, 'year', true) > MAX_AGGREGATION_FROM_YEARS) {
+    return (
+      <>
+        The total duration cannot exceed <b>{MAX_AGGREGATION_FROM_YEARS} years</b>
+      </>
+    );
+  }
+  return null;
+}
 
 export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
   ruleType,
@@ -206,42 +271,8 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     }
     return options;
   }, [entityVariables, formValues.aggregationFieldKey]);
-  const timeWindowValidationError = useMemo<TimeWindowValidationError | undefined>(() => {
-    const { start, end } = formValues.timeWindow;
-    let startTs: Dayjs | undefined;
-    let endTs: Dayjs | undefined;
-    if (start.granularity === 'fiscal_year') {
-      if (start.fiscalYear != null) {
-        startTs = getFiscalYearStart(dayjs(), start.fiscalYear).subtract(start.units, 'year');
-      }
-    } else if (start.granularity === 'all_time' || start.granularity === 'now') {
-      startTs = start.granularity === 'all_time' ? dayjs().subtract(5, 'year') : dayjs(); // start CANNOT be now
-    } else {
-      startTs = dayjs().subtract(start.units, start.granularity);
-    }
-
-    if (end.granularity === 'fiscal_year') {
-      if (end.fiscalYear != null) {
-        endTs = getFiscalYearStart(dayjs(), end.fiscalYear).subtract(end.units, 'year');
-      }
-    } else if (end.granularity === 'now' || end.granularity === 'all_time') {
-      endTs = end.granularity === 'now' ? dayjs() : dayjs(); // end CANNOT be all_time
-    } else {
-      endTs = dayjs().subtract(end.units, end.granularity);
-    }
-    if (!startTs || !endTs) {
-      return 'MISSING_FROM_OR_TO';
-    }
-    if (startTs.valueOf() >= endTs.valueOf()) {
-      return 'TIME_TO_EARLIER_THAN_TIME_FROM';
-    }
-    if (
-      (NO_AGGREGATION_GRANULARITIES.includes(start.granularity) ||
-        NO_AGGREGATION_GRANULARITIES.includes(end.granularity)) &&
-      endTs.diff(startTs, 'minute') > 60
-    ) {
-      return 'UNSUPPORTED_GRANULARITY';
-    }
+  const timeWindowValidationError = useMemo<ReactNode>(() => {
+    return validateAggregationTimeWindow(formValues.timeWindow);
   }, [formValues.timeWindow]);
   const baseCurrencyRequired = useMemo(() => {
     const hasTxAmountInFilters = Boolean(
@@ -476,22 +507,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             />
           </div>
         </PropertyColumns>
-        {timeWindowValidationError && (
-          <Alert type="error">
-            {timeWindowValidationError === 'TIME_TO_EARLIER_THAN_TIME_FROM' ? (
-              <>
-                <b>Time to</b> should be earlier than <b>Time from</b>
-              </>
-            ) : timeWindowValidationError === 'UNSUPPORTED_GRANULARITY' ? (
-              <>
-                For <b>Minute</b> / <b>Second</b> granularity, the total duration cannot exceed{' '}
-                <b>1 hour</b>
-              </>
-            ) : (
-              'Unknown error'
-            )}
-          </Alert>
-        )}
+        {timeWindowValidationError && <Alert type="error">{timeWindowValidationError}</Alert>}
         <div>
           {!formValues.filtersLogic && !showFilters ? (
             <Link to="" onClick={() => setShowFilters(true)}>

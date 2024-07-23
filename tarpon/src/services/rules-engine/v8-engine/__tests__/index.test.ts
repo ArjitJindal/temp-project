@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
-import { createAggregationVariable } from '../test-utils'
 import { AggregationRepository } from '../aggregation-repository'
 import { TransactionRuleData } from '..'
+import { createAggregationVariable } from '../test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   getTestTransaction,
@@ -1643,10 +1643,12 @@ describe('V8 aggregator', () => {
   const getAggVar = (
     aggregationFieldKey: string,
     aggregationFunc: string,
-    granularity: string
+    granularity: string,
+    aggregationGroupByFieldKey?: string
   ) => {
     return {
       aggregationFieldKey,
+      aggregationGroupByFieldKey,
       aggregationFunc,
       timeWindow: {
         start: {
@@ -2460,6 +2462,86 @@ describe('V8 aggregator', () => {
       'minute'
     )
     expect(aggData2).toEqual([{ time: '2023-01-01-12-3', value: ['2'] }])
+  })
+
+  test('Should rebuild the aggregation data for the user - group by', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new RuleJsonLogicEvaluator(
+      tenantId,
+      dynamoDb
+    )
+    const AGG_VARIABLE = getAggVar(
+      'TRANSACTION:transactionId',
+      'COUNT',
+      'day',
+      'TRANSACTION:destinationUserId'
+    )
+    const transactions = [
+      getTestTransaction({
+        originUserId: '0',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-2',
+        timestamp: dayjs('2023-01-01T13:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T14:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-02T12:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-2',
+        timestamp: dayjs('2023-01-02T13:00:00.000Z').valueOf(),
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      '1',
+      undefined
+    )
+
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData1 = await aggregationRepository.getUserRuleTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      'day',
+      'U-1'
+    )
+    expect(aggData1).toEqual([
+      { time: '2023-01-01', value: 2 },
+      { time: '2023-01-02', value: 1 },
+    ])
+    const aggData2 = await aggregationRepository.getUserRuleTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      'day',
+      'U-2'
+    )
+    expect(aggData2).toEqual([
+      { time: '2023-01-01', value: 1 },
+      { time: '2023-01-02', value: 1 },
+    ])
   })
 })
 

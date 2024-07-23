@@ -255,11 +255,15 @@ export const DynamoDbKeys = {
     tenantId: string,
     userKeyId: string,
     version: string,
+    groupValue: string | undefined,
     timeLabel?: string
-  ) => ({
-    PartitionKeyID: `${tenantId}#rule-agg#${USER_ID_PREFIX}${userKeyId}#${version}`,
-    SortKeyID: timeLabel,
-  }),
+  ) => {
+    const groupSuffix = groupValue ? `#${groupValue}` : ''
+    return {
+      PartitionKeyID: `${tenantId}#rule-agg#${USER_ID_PREFIX}${userKeyId}#${version}${groupSuffix}`,
+      SortKeyID: timeLabel,
+    }
+  },
   // Attributes: refer to User / Business
   USER: (tenantId: string, userId?: string) => ({
     PartitionKeyID: `${tenantId}#${USER_PRIMARY_KEY_IDENTIFIER}`,

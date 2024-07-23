@@ -23,7 +23,7 @@ import { generateChecksum } from '@/utils/object'
 import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
 
 export type AggregationData<T = unknown> = {
-  value: T | { [key: string]: T }
+  value: T | { [group: string]: T }
 }
 
 // Increment this version when we need to invalidate all existing aggregations.
@@ -68,7 +68,8 @@ export class AggregationRepository {
     aggregationVariable: RuleAggregationVariable,
     aggregationData: {
       [time: string]: AggregationData
-    }
+    },
+    groupValue: string | undefined
   ) {
     const aggregationDataWithTtl = mapValues(aggregationData, (data) => {
       return {
@@ -82,6 +83,7 @@ export class AggregationRepository {
           this.tenantId,
           userKeyId,
           getAggVarHash(aggregationVariable),
+          groupValue,
           entry[0]
         )
         return {
@@ -106,7 +108,8 @@ export class AggregationRepository {
     aggregationVariable: RuleAggregationVariable,
     afterTimestamp: number,
     beforeTimestamp: number,
-    granularity: RuleAggregationTimeWindowGranularity
+    granularity: RuleAggregationTimeWindowGranularity,
+    groupValue?: string
   ): Promise<Array<{ time: string } & AggregationData<T>> | undefined> {
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
       tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -117,7 +120,8 @@ export class AggregationRepository {
       partitionKey: DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
         this.tenantId,
         userKeyId,
-        getAggVarHash(aggregationVariable)
+        getAggVarHash(aggregationVariable),
+        groupValue
       ).PartitionKeyID,
     })
 
@@ -217,21 +221,25 @@ export class AggregationRepository {
   private getUpdatedTtlAttribute(
     aggregationVariable: RuleAggregationVariable
   ): number {
-    let units = aggregationVariable.timeWindow.end.units
-    let granularity = aggregationVariable.timeWindow.end.granularity
+    let { units, granularity } = aggregationVariable.timeWindow.start
+
+    if (granularity === 'now') {
+      throw new Error('Start time window cannot be "now".')
+    }
 
     if (granularity === 'fiscal_year') {
       granularity = 'year'
     } else if (granularity === 'all_time') {
       granularity = 'year'
       units = 5
-    } else if (granularity === 'now') {
-      granularity = 'day'
     }
     return (
       Math.floor(Date.now() / 1000) +
       duration(units, granularity).asSeconds() +
-      86400 // add 1 day buffer
+      // Add 2 months to the TTL to make sure the data is still available when
+      // the transaction events of a transaction are processed (assuming that the life
+      // cycle of a single transaction shouldn't span across 2 months).
+      duration(2, 'month').asSeconds()
     )
   }
 }
