@@ -158,7 +158,15 @@ function parseColumn(type: string, value?: string): any {
     case 'json':
       return JSON.parse(value)
     case 'row':
-      return transformKeys(parseStruct(value), attributeCasingMap)
+      try {
+        const structValue = value ? parseStruct(value) : null
+        return structValue
+          ? transformKeys(structValue, attributeCasingMap)
+          : null
+      } catch (error) {
+        console.error('Parsing error for value:', value, error)
+        throw error
+      }
     case 'date':
       return new Date(value)
     default:
@@ -170,7 +178,7 @@ function parseColumn(type: string, value?: string): any {
 export function transformKeys(obj: any, casingMap: Map<string, string>): any {
   if (Array.isArray(obj)) {
     return obj.map((item) => transformKeys(item, casingMap))
-  } else if (obj !== null && typeof obj === 'object') {
+  } else if (obj !== null && obj !== undefined && typeof obj === 'object') {
     const newObj: Record<string, any> = {}
     Object.keys(obj).forEach((key) => {
       const newKey = casingMap.get(key.toLowerCase()) || key // Use the new key from map or default to the original key
