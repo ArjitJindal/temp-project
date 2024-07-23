@@ -3540,6 +3540,8 @@ components:
           $ref: '#/components/schemas/ConsumerName'
         cardExpiry:
           $ref: '#/components/schemas/CardExpiry'
+        posDetails:
+          $ref: '#/components/schemas/POSDetails'
         cardLast4Digits:
           type: string
           minLength: 4
@@ -4648,10 +4650,36 @@ components:
           type: number
         year:
           type: number
-      x-examples:
-        example-1:
-          month: 1
-          year: 1990
+    POSDetails:
+      title: POSDetails
+      type: object
+      properties:
+        entryMode:
+          $ref: '#/components/schemas/POSEntryMode'
+    POSEntryMode:
+      title: POSEntryMode
+      type: string
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 79
+        - 80
+        - 81
+        - 82
+        - 85
+        - 90
+        - 91
+        - 95
+        - 97
     TransactionType:
       type: string
       title: TransactionType
