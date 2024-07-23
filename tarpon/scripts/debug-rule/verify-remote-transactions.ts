@@ -10,12 +10,15 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { FEATURES } from '@/@types/openapi-internal-custom/Feature'
 import { RuleService } from '@/services/rules-engine'
 import { apiFetch } from '@/utils/api-fetch'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import dayjs from '@/utils/dayjs'
 
 process.env.ENV = 'local'
 
@@ -24,13 +27,24 @@ const {
   api,
   jwt: rawJwt,
   transactionIds,
-  ruleInstanceIds,
+  ruleInstanceId,
 } = fs.readJSONSync(configPath, 'utf-8')
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from "${api}"`)
 
 const createdUsers = new Set<string>()
 const jwt = rawJwt.replace(/^Bearer\s+/, '')
+
+async function getRemoteSettings() {
+  return (
+    await apiFetch<TenantSettings>(`${api}/console/tenants/settings`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${jwt}`,
+      },
+    })
+  ).result
+}
 
 async function getRemoteRuleInstances(
   ruleInstanceIds: string[]
@@ -57,7 +71,7 @@ async function getRemoteRuleInstances(
 
 async function getRemoteTransaction(transactionId: string) {
   return (
-    await apiFetch<TransactionWithRulesResult>(
+    await apiFetch<InternalTransaction>(
       `${api}/console/transactions/${transactionId}`,
       {
         method: 'GET',
@@ -136,8 +150,7 @@ async function createUserLocally(userId: string) {
   createdUsers.add(userId)
 }
 
-async function verifyTransactionLocally(transactionId: string) {
-  const transaction = await getRemoteTransaction(transactionId)
+async function verifyTransactionLocally(transaction: InternalTransaction) {
   const { originUserId, destinationUserId } = transaction
   if (originUserId) {
     await createUserLocally(originUserId)
@@ -175,6 +188,35 @@ async function verifyTransactionLocally(transactionId: string) {
   ).result
 }
 
+async function verifyTransactioEventLocally(
+  transactionEvent: TransactionEventWithRulesResult
+) {
+  return (
+    await apiFetch<TransactionWithRulesResult>(
+      `http://localhost:3000/events/transaction`,
+      {
+        method: 'POST',
+        headers: {
+          'x-api-key': 'fake',
+          'tenant-id': 'flagright',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          omit(
+            transactionEvent,
+            '_id',
+            'PartitionKeyID',
+            'SortKeyID',
+            'executedRules',
+            'hitRules',
+            'status'
+          )
+        ),
+      }
+    )
+  ).result
+}
+
 async function main() {
   if (transactionIds.length === 0) {
     return
@@ -186,24 +228,57 @@ async function main() {
   const tenantRepo = new TenantRepository('flagright', {
     dynamoDb: getDynamoDbClient(),
   })
-  await tenantRepo.createOrUpdateTenantSettings({
-    features: FEATURES,
-  })
+  const settings = await getRemoteSettings()
+  await tenantRepo.createOrUpdateTenantSettings(settings)
 
-  if (ruleInstanceIds.length > 0) {
-    execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
-    console.info('Recreated TarponRule DynamoDB table')
-    await RuleService.syncRulesLibrary()
-    await createRuleInstancesLocally(ruleInstanceIds)
-  }
+  execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
+  console.info('Recreated TarponRule DynamoDB table')
+  await RuleService.syncRulesLibrary()
+  await createRuleInstancesLocally([ruleInstanceId])
+
+  const transactionsOrEvents: Array<
+    InternalTransaction | TransactionEventWithRulesResult
+  > = []
+  const initialEvents: { [txId: string]: TransactionEventWithRulesResult } = {}
+  await Promise.all(
+    transactionIds.map(async (transactionId) => {
+      const transaction = await getRemoteTransaction(transactionId)
+      initialEvents[transactionId] = transaction
+        .events?.[0] as TransactionEventWithRulesResult
+      transactionsOrEvents.push(...(transaction.events?.slice(1) ?? []))
+      transactionsOrEvents.push(transaction)
+    })
+  )
+  transactionsOrEvents.sort(
+    (a, b) => (a as any).createdAt - (b as any).createdAt
+  )
 
   const results: any[] = []
-  for (let i = 0; i < transactionIds.length; i += 1) {
-    const result = await verifyTransactionLocally(transactionIds[i])
+  for (let i = 0; i < transactionsOrEvents.length; i += 1) {
+    const txOrEvent = transactionsOrEvents[i]
+    const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult)
+      .updatedTransactionAttributes
+    const time = dayjs(txOrEvent.timestamp).toISOString()
+    const removeRuleHit = !!(
+      isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
+    ).hitRules?.find((v) => v.ruleInstanceId === ruleInstanceId)
+    let result: any
+    if (isTxEvent) {
+      const txEvent = txOrEvent as TransactionEventWithRulesResult
+      result = await verifyTransactioEventLocally(txEvent)
+    } else {
+      const tx = txOrEvent as InternalTransaction
+      result = await verifyTransactionLocally(tx)
+    }
     const hit = result?.hitRules?.length > 0
     results.push(result)
+    const entity = isTxEvent
+      ? `tx event ${(
+          txOrEvent as TransactionEventWithRulesResult
+        ).eventId?.slice(-5)} (tx: ${txOrEvent.transactionId.slice(-5)})`
+      : `tx ${txOrEvent.transactionId.slice(-5)}`
     console.info(
-      `${i + 1}. Verified transaction ${transactionIds[i]} (Hit: ${hit})`
+      `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${removeRuleHit} (remote)`
     )
   }
   const outputPath = path.join(

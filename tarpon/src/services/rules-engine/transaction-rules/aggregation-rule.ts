@@ -252,7 +252,10 @@ export abstract class TransactionAggregationRule<
     return (
       Math.floor(Date.now() / 1000) +
       duration(units, granularity).asSeconds() +
-      86400 // add 1 day buffer
+      // Add 2 months to the TTL to make sure the data is still available when
+      // the transaction events of a transaction are processed (assuming that the life
+      // cycle of a single transaction shouldn't span across 2 months).
+      duration(2, 'month').asSeconds()
     )
   }
 
