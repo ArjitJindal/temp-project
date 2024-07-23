@@ -3552,6 +3552,9 @@ components:
         cardAuthenticated:
           type: boolean
           description: Authentication of Card
+        cardTokenized:
+          type: boolean
+          description: Was the card tokenized
         cardPresent:
           type: boolean
           description: Card Present

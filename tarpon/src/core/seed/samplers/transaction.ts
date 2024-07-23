@@ -166,6 +166,7 @@ export function sampleCardDetails(): CardDetails {
     cardBrand: 'VISA',
     cardFunding: 'PREPAID',
     cardAuthenticated: true,
+    cardTokenized: false,
     paymentChannel: 'paymentChannel',
     cardType: 'VIRTUAL',
     merchantDetails: {
