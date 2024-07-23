@@ -571,6 +571,7 @@ export class SanctionsService {
     const { modifiedCount } =
       await this.sanctionsHitsRepository.updateHitsByIds(sanctionsHitIds, {
         status: updates.status,
+        clearingReason: updates.reasons,
       })
     // todo: add audit log record
     return { modifiedCount }

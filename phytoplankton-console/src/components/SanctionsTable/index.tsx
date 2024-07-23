@@ -21,7 +21,7 @@ import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType
 import { humanizeSnakeCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
-import { ID, SANCTIONS_HIT_STATUS, STRING } from '@/components/library/Table/standardDataTypes';
+import { ID, SANCTIONS_HIT_STATUS } from '@/components/library/Table/standardDataTypes';
 import { notEmpty } from '@/utils/array';
 
 export interface TableSearchParams {
@@ -146,7 +146,20 @@ export default function SanctionsTable(props: Props) {
     helper.simple<'clearingReason'>({
       title: 'Clearing reason',
       key: 'clearingReason',
-      type: STRING,
+      type: {
+        defaultWrapMode: 'WRAP',
+        render: (clearing_reasons) => {
+          return (
+            <div>
+              {clearing_reasons?.map((clearingReason: string) => (
+                <Tag key={clearingReason} color="gray">
+                  {humanizeSnakeCase(clearingReason)}
+                </Tag>
+              ))}
+            </div>
+          );
+        },
+      },
     }),
   ]);
 

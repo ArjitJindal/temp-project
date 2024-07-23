@@ -10634,7 +10634,9 @@ components:
         status:
           $ref: '#/components/schemas/SanctionsHitStatus'
         clearingReason:
-          type: string
+          type: array
+          items:
+            type: string
         createdAt:
           type: number
         updatedAt:
