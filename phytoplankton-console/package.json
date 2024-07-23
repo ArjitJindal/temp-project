@@ -80,7 +80,7 @@
     "@rjsf/antd": "^4.2.2",
     "@rjsf/core": "^4.2.2",
     "@sentry/browser": "^7.109.0",
-    "@sentry/integrations": "^7.109.0",
+    "@sentry/integrations": "^7.118.0",
     "@sentry/react": "^7.109.0",
     "@tanstack/react-query": "^4.2.3",
     "@tanstack/react-table": "^8.8.4",
