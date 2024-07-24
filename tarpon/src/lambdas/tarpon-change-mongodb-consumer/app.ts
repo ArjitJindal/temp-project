@@ -126,11 +126,11 @@ async function userHandler(
     omit(newUser, 'riskLevel')
   )
   if (userDetailsChanged && newHitRules?.length) {
+    const timestampBeforeCasesCreation = Date.now()
     const cases = await caseCreationService.handleUser({
       ...savedUser,
       hitRules: newHitRules,
     })
-    const timestampBeforeCasesCreation = Date.now()
     await caseCreationService.handleNewCases(
       tenantId,
       timestampBeforeCasesCreation,
