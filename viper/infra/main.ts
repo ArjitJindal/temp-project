@@ -17,8 +17,8 @@ import { provider as nullProvider } from '@cdktf/provider-null'
 import { EmrCluster } from '@cdktf/provider-aws/lib/emr-cluster'
 import { IamRole } from '@cdktf/provider-aws/lib/iam-role'
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy'
-import * as fs from "fs";
-import * as crypto from "crypto";
+import * as fs from 'fs'
+import * as crypto from 'crypto'
 
 // Toggle this to remove tenants.
 const stage = process.env.STAGE as Stage
@@ -308,11 +308,14 @@ class DatabricksStack extends TerraformStack {
     })
 
     // Calculate SHA-256 hash
-    const pythonPackagePath = path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl')
-    const fileBuffer = fs.readFileSync(pythonPackagePath);
-    const hashSum = crypto.createHash('sha256');
-    hashSum.update(fileBuffer);
-    const packageVersion = hashSum.digest('hex');
+    const pythonPackagePath = path.resolve(
+      __dirname,
+      '../dist/src-0.1.0-py3-none-any.whl'
+    )
+    const fileBuffer = fs.readFileSync(pythonPackagePath)
+    const hashSum = crypto.createHash('sha256')
+    hashSum.update(fileBuffer)
+    const packageVersion = hashSum.digest('hex')
 
     const pythonPackage = new aws.s3BucketObject.S3BucketObject(
       this,
@@ -323,11 +326,9 @@ class DatabricksStack extends TerraformStack {
         source: pythonPackagePath,
         tags: {
           version: packageVersion,
-        }
+        },
       }
     )
-
-
 
     const mongoSecret =
       new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
@@ -620,7 +621,7 @@ sudo python3 -m pip install boto3
     })
 
     new EmrCluster(this, 'my-emr-cluster', {
-      name: 'streaming',
+      name: `streaming-${packageVersion}`,
       releaseLabel: 'emr-7.1.0',
       applications: ['Hadoop', 'Spark', 'Hive'],
       serviceRole: emrServiceRole.name,
@@ -657,7 +658,7 @@ sudo python3 -m pip install boto3
       keepJobFlowAliveWhenNoSteps: true,
       bootstrapAction: [
         {
-          name: `setup-${packageVersion}`,
+          name: `setup`,
           path: `s3://${datalakeBucket.bucket}/${installScript.key}`,
         },
       ],
