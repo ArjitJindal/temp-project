@@ -181,6 +181,10 @@ export class MerchantMonitoringScrapeService {
         throw new Error('No scrapfly api key')
       }
 
+      if (!website || website.trim().length === 0) {
+        throw new Error('No website URL provided')
+      }
+
       const response = await apiFetch<{
         result: { content: string }
       }>(
