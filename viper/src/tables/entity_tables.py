@@ -20,7 +20,7 @@ from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.entity import Entity
 from src.tables.kinesis_tables import KinesisTables
 from src.tables.schema import kinesis_event_schema
-from src.tables.table_service import TableService
+from src.tables.table_service import TableService, schemas_equal
 from src.version_service import VersionService
 
 PARTITION_KEY_ID_PATH = "event.dynamodb.Keys.PartitionKeyID.S"
@@ -76,7 +76,7 @@ class EntityTables:
             f"{entity.table}_backfill"
         ).withColumn("date", to_date(col("approximateArrivalTimestamp")))
 
-        print("Refresh from backfill and kinesis tables")
+        print(f"Refreshing {entity.table} from backfill and kinesis tables")
 
         def write(df: DataFrame, mode: str):
             if entity.enrichment_fn is not None:
@@ -112,7 +112,9 @@ class EntityTables:
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
 
-        self.table_service.prepare_table_for_df(df, f"main.{entity.table}")
+        existing_schema = self.spark.table(f"main.{entity.table}").schema
+        if existing_schema is None or not schemas_equal(existing_schema, df.schema):
+            self.refresh(entity)
 
         matcher_condition = (
             f"s.{entity.id_column} = t.{entity.id_column} and s.tenant = t.tenant"

@@ -142,27 +142,6 @@ class TableService:
             f"optimize {table} where date == current_timestamp() - INTERVAL 1 day"
         )
 
-    def prepare_table_for_df(self, df: DataFrame, table: str):
-        existing_schema = None
-        mode = "append"
-        try:
-            existing_schema = self.spark.table(table).schema
-        except Exception as err:  # pylint: disable=broad-exception-caught
-            print(f"Could not read table {table}")
-            print(err)
-            mode = "overwrite"
-
-        if existing_schema is None or not schemas_equal(existing_schema, df.schema):
-            if mode == "overwrite":
-                print(f"Creating table {table}")
-            else:
-                print(f"Migrating table {table}")
-            df_with_new_schema = self.spark.createDataFrame([], df.schema)
-            df_with_new_schema.write.format("delta").partitionBy(
-                ["tenant", "date"]
-            ).mode(mode).option("mergeSchema", "true").saveAsTable(table)
-
-
 def data_types_equal(type1, type2):
     if type(type1) != type(type2):  # pylint: disable=unidiomatic-typecheck
         return False
