@@ -1,6 +1,7 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
 import { StackConstants } from '@lib/constants'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
+import { SHARED_PARTITION_KEY_PREFIX } from '../dynamodb/dynamodb-keys'
 
 export default class PolicyBuilder {
   tenantId: string
@@ -35,7 +36,10 @@ export default class PolicyBuilder {
       Resource: ['arn:aws:dynamodb:*:*:table/*'],
       Condition: {
         'ForAllValues:StringLike': {
-          'dynamodb:LeadingKeys': [`${this.tenantId}*`],
+          'dynamodb:LeadingKeys': [
+            `${this.tenantId}*`,
+            `${SHARED_PARTITION_KEY_PREFIX}*`,
+          ],
         },
       },
     })

@@ -39,6 +39,7 @@ export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
+export const SHARED_PARTITION_KEY_PREFIX = 'shared'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -183,7 +184,7 @@ export const DynamoDbKeys = {
   }),
   // IP address cache
   IP_ADDRESS_CACHE: (ipAddress: string) => ({
-    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#ip#${ipAddress}`,
+    PartitionKeyID: `${SHARED_PARTITION_KEY_PREFIX}#ip#${ipAddress}`,
     SortKeyID: '',
   }),
 
