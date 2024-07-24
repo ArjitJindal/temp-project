@@ -17,6 +17,8 @@ import { provider as nullProvider } from '@cdktf/provider-null'
 import { EmrCluster } from '@cdktf/provider-aws/lib/emr-cluster'
 import { IamRole } from '@cdktf/provider-aws/lib/iam-role'
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy'
+import * as fs from "fs";
+import * as crypto from "crypto";
 
 // Toggle this to remove tenants.
 const stage = process.env.STAGE as Stage
@@ -305,15 +307,27 @@ class DatabricksStack extends TerraformStack {
       source: path.resolve(__dirname, '../data/currency_rates_backfill.json'),
     })
 
+    // Calculate SHA-256 hash
+    const pythonPackagePath = path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl')
+    const fileBuffer = fs.readFileSync(pythonPackagePath);
+    const hashSum = crypto.createHash('sha256');
+    hashSum.update(fileBuffer);
+    const packageVersion = hashSum.digest('hex');
+
     const pythonPackage = new aws.s3BucketObject.S3BucketObject(
       this,
       'python-package',
       {
         bucket: datalakeBucket.bucket,
         key: 'src-0.1.0-py3-none-any.whl',
-        source: path.resolve(__dirname, '../dist/src-0.1.0-py3-none-any.whl'),
+        source: pythonPackagePath,
+        tags: {
+          version: packageVersion,
+        }
       }
     )
+
+
 
     const mongoSecret =
       new aws.dataAwsSecretsmanagerSecret.DataAwsSecretsmanagerSecret(
@@ -605,7 +619,7 @@ sudo python3 -m pip install boto3
       content: this.templateAwsEmrJobNotebook('stream'),
     })
 
-    const cluster = new EmrCluster(this, 'my-emr-cluster', {
+    new EmrCluster(this, 'my-emr-cluster', {
       name: 'streaming',
       releaseLabel: 'emr-7.1.0',
       applications: ['Hadoop', 'Spark', 'Hive'],
@@ -643,7 +657,7 @@ sudo python3 -m pip install boto3
       keepJobFlowAliveWhenNoSteps: true,
       bootstrapAction: [
         {
-          name: 'pip',
+          name: `setup-${packageVersion}`,
           path: `s3://${datalakeBucket.bucket}/${installScript.key}`,
         },
       ],
@@ -669,28 +683,6 @@ sudo python3 -m pip install boto3
           ],
         },
       ],
-    })
-
-
-    const topic = new aws.dataAwsSnsTopic.DataAwsSnsTopic(this, 'incidents-alarm-topic', {
-      name: 'BetterUptimeCloudWatchTopic',
-    })
-
-    new aws.cloudwatchMetricAlarm.CloudwatchMetricAlarm(this, 'emr-alarm', {
-      namespace: "AWS/ElasticMapReduce",
-      metricName: "AppsRunning",
-      dimensions: {
-        JobFlowId: cluster.id,
-      },
-      period: 60,
-      statistic: "Sum",
-      alarmName: "NoStreamRunning",
-      comparisonOperator: "LessThanThreshold",
-      evaluationPeriods: 1,
-      threshold: 1,
-      alarmActions: [
-        topic.arn
-      ]
     })
 
     jobs.map((job) => {
@@ -889,14 +881,6 @@ sudo python3 -m pip install boto3
             subnet_ids: vpc.get('private_subnets'),
             tags: {
               Name: `${prefix}-sts-vpc-endpoint`,
-            },
-          },
-          'kinesis-streams': {
-            service: 'kinesis-streams',
-            private_dns_enabled: true,
-            subnet_ids: vpc.get('private_subnets'),
-            tags: {
-              Name: `${prefix}-kinesis-vpc-endpoint`,
             },
           },
         },
