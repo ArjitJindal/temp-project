@@ -605,7 +605,7 @@ sudo python3 -m pip install boto3
       content: this.templateAwsEmrJobNotebook('stream'),
     })
 
-    new EmrCluster(this, 'my-emr-cluster', {
+    const cluster = new EmrCluster(this, 'my-emr-cluster', {
       name: 'streaming',
       releaseLabel: 'emr-7.1.0',
       applications: ['Hadoop', 'Spark', 'Hive'],
@@ -669,6 +669,28 @@ sudo python3 -m pip install boto3
           ],
         },
       ],
+    })
+
+
+    const topic = new aws.dataAwsSnsTopic.DataAwsSnsTopic(this, 'incidents-alarm-topic', {
+      name: 'BetterUptimeCloudWatchTopic',
+    })
+
+    new aws.cloudwatchMetricAlarm.CloudwatchMetricAlarm(this, 'emr-alarm', {
+      namespace: "AWS/ElasticMapReduce",
+      metricName: "AppsRunning",
+      dimensions: {
+        JobFlowId: cluster.id,
+      },
+      period: 60,
+      statistic: "Sum",
+      alarmName: "NoStreamRunning",
+      comparisonOperator: "LessThanThreshold",
+      evaluationPeriods: 1,
+      threshold: 1,
+      alarmActions: [
+        topic.arn
+      ]
     })
 
     jobs.map((job) => {
