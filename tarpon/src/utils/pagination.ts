@@ -142,27 +142,24 @@ export async function cursorPaginate<T extends Document>(
   }
 
   // Sort query
-  const find = collection
+  const findCursor = collection
     .find({ $and: findFilters })
-    .sort({ [field]: direction, _id: direction })
-  const prevFind = collection
+    .sort({ [field]: direction })
+  const prevFindCursor = collection
     .find({ $and: prevFindFilters })
-    .sort({ [field]: prevDirection, _id: prevDirection })
-  const lastFind = collection
+    .sort({ [field]: prevDirection })
+  const lastFindCursor = collection
     .find({ $and: lastFindFilters })
-    .sort({ [field]: prevDirection, _id: prevDirection })
+    .sort({ [field]: prevDirection })
 
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
-  const lastFindPromise = lastFind.skip(pageSize).limit(1).toArray()
 
-  // Find prev
-  const prevCursorPromise = getPrevCursor(prevFind, query)
-
-  // Determine next cursor
-  const count = countDocuments(collection, filter)
-  const items = await find.limit(pageSize + 1).toArray()
-  const { hasPrev, prev } = await prevCursorPromise
-  const lastItems = await lastFindPromise
+  const [count, items, { hasPrev, prev }, lastItems] = await Promise.all([
+    countDocuments(collection, filter),
+    findCursor.limit(pageSize + 1).toArray(),
+    getPrevCursor(prevFindCursor, query),
+    lastFindCursor.skip(pageSize).limit(1).toArray(),
+  ])
   const lastItem = lastItems.at(-1)
 
   const last = cursor(lastItem, field)
@@ -188,7 +185,7 @@ export async function cursorPaginate<T extends Document>(
     last,
     hasNext,
     hasPrev,
-    count: await count,
+    count,
     limit: COUNT_QUERY_LIMIT,
     pageSize: query.pageSize,
   }
