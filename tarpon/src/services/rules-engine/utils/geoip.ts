@@ -20,7 +20,7 @@ export async function lookupIpLocation(
 ): Promise<IpLocation> {
   if (
     ip.isPrivate(ipAddress) ||
-    (!ip.isV4Format(ipAddress) && ip.isV6Format(ipAddress))
+    (!ip.isV4Format(ipAddress) && !ip.isV6Format(ipAddress))
   ) {
     return { country: '', continent: '', city: '' }
   }
