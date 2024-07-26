@@ -112,6 +112,8 @@ export type Config = {
     VPC: number
     GUARDDUTY: number
     SECRETS_MANAGER: number
+    EMR: number
+    GLUE: number
   }
   application: {
     DEV_CERTIFICATE_ARN?: string

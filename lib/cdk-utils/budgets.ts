@@ -28,6 +28,8 @@ export type BudgetServiceTypes =
   | 'AmazonCloudWatch'
   | 'CodeBuild'
   | 'AWS CodePipeline'
+  | 'Elastic MapReduce'
+  | 'Glue'
 
 export const createBudget = (
   scope: Construct,

@@ -18,6 +18,8 @@ export const config: Config = {
     KINESIS: 0,
     SECRETS_MANAGER: 0,
     VPC: 0,
+    EMR: 0,
+    GLUE: 0,
   },
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
