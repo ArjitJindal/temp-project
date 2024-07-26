@@ -1,6 +1,5 @@
 import { useCallback, useState } from 'react';
 import { Divider } from 'antd';
-import ProDescriptions from '@ant-design/pro-descriptions';
 import { LoadingOutlined } from '@ant-design/icons';
 import { WebhookConfiguration, WebhookSecrets } from '@/apis';
 import { InputProps } from '@/components/library/Form';
@@ -8,6 +7,7 @@ import { UiSchemaWebhook } from '@/components/library/JsonSchemaEditor/types';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { WebhookDeliveryAttemptsTable } from '@/pages/settings/components/WebhookDeliveryAttemptsTable';
+import Label from '@/components/library/Label';
 
 export interface Props extends InputProps<WebhookConfiguration['_id']> {
   uiSchema?: UiSchemaWebhook;
@@ -35,22 +35,20 @@ export const WebhookInput = (props: Props) => {
   }, [api, value]);
   return (
     <>
-      <ProDescriptions column={1}>
-        {value && (
-          <ProDescriptions.Item label="Signing secret">
-            {secrets ? (
-              <>
-                <div>{secrets.secret}</div>
-                {secrets.expiringSecret && <div>{`${secrets.expiringSecret} (expiring)`}</div>}
-              </>
-            ) : loadingSecret ? (
-              <LoadingOutlined />
-            ) : (
-              <a onClick={handleRevealSecret}>Reveal</a>
-            )}
-          </ProDescriptions.Item>
-        )}
-      </ProDescriptions>
+      {value && (
+        <Label level={2} label={'Signing secret'}>
+          {secrets ? (
+            <>
+              <div>{secrets.secret}</div>
+              {secrets.expiringSecret && <div>{`${secrets.expiringSecret} (expiring)`}</div>}
+            </>
+          ) : loadingSecret ? (
+            <LoadingOutlined />
+          ) : (
+            <a onClick={handleRevealSecret}>Reveal</a>
+          )}
+        </Label>
+      )}
       {value && (
         <>
           <Divider orientation="left" orientationMargin="0">

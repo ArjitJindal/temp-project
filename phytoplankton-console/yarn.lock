@@ -208,72 +208,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@ant-design/pro-descriptions@npm:^1.6.8":
-  version: 1.11.6
-  resolution: "@ant-design/pro-descriptions@npm:1.11.6"
-  dependencies:
-    "@ant-design/pro-field": "npm:1.34.17"
-    "@ant-design/pro-form": "npm:1.69.4"
-    "@ant-design/pro-skeleton": "npm:1.0.9"
-    "@ant-design/pro-utils": "npm:1.42.2"
-    "@babel/runtime": "npm:^7.18.0"
-    rc-util: "npm:^5.0.6"
-    use-json-comparison: "npm:^1.0.5"
-  peerDependencies:
-    antd: ">=4.20.0"
-    react: ">=16.9.0"
-  checksum: 2a9e62fc032ee3077588d7e500b3993e918a4f2e446b915a00d6898abb5a82426a6ab0006cb6ec622e3893b086f3d7635662bfecf2c64c370038cf7e5b70bc1f
-  languageName: node
-  linkType: hard
-
-"@ant-design/pro-field@npm:1.34.17":
-  version: 1.34.17
-  resolution: "@ant-design/pro-field@npm:1.34.17"
-  dependencies:
-    "@ant-design/icons": "npm:^4.2.1"
-    "@ant-design/pro-provider": "npm:1.8.0"
-    "@ant-design/pro-utils": "npm:1.42.2"
-    "@babel/runtime": "npm:^7.18.0"
-    "@chenshuai2144/sketch-color": "npm:^1.0.8"
-    classnames: "npm:^2.2.6"
-    lodash.tonumber: "npm:^4.0.3"
-    moment: "npm:^2.27.0"
-    omit.js: "npm:^2.0.2"
-    rc-util: "npm:^5.4.0"
-    swr: "npm:^1.2.0"
-  peerDependencies:
-    antd: ">=4.20.0"
-    react: ">=16.9.0"
-  checksum: 7727002b4eb1d17c327bc22bd366d35a8769c5c70130b317ba8b94bed0e6788e04a991ed6721ba65c019bf7915217bd8d0cb0ed058bb943e2ce8104003371633
-  languageName: node
-  linkType: hard
-
-"@ant-design/pro-form@npm:1.69.4":
-  version: 1.69.4
-  resolution: "@ant-design/pro-form@npm:1.69.4"
-  dependencies:
-    "@ant-design/icons": "npm:^4.2.1"
-    "@ant-design/pro-field": "npm:1.34.17"
-    "@ant-design/pro-provider": "npm:1.8.0"
-    "@ant-design/pro-utils": "npm:1.42.2"
-    "@babel/runtime": "npm:^7.18.0"
-    "@umijs/use-params": "npm:^1.0.9"
-    classnames: "npm:^2.2.6"
-    lodash: "npm:^4.17.21"
-    omit.js: "npm:^2.0.2"
-    rc-resize-observer: "npm:^1.1.0"
-    rc-util: "npm:^5.0.6"
-    use-json-comparison: "npm:^1.0.5"
-    use-media-antd-query: "npm:^1.1.0"
-  peerDependencies:
-    antd: ">=4.20.0"
-    rc-field-form: ^1.22.0
-    react: ">=16.9.0"
-    react-dom: ">=16.9.0"
-  checksum: 2bc3d1d40d9331af1803d5e8c82496e480a5ff19f15c8475b797bdb3cd339738bd90f0628fa0370b74cdb9a55432f9d3292e41b48b04f0dcf099cc1123fa19d5
-  languageName: node
-  linkType: hard
-
 "@ant-design/pro-layout@npm:^6.15.3":
   version: 6.38.9
   resolution: "@ant-design/pro-layout@npm:6.38.9"
@@ -328,19 +262,6 @@ __metadata:
     antd: ">=4.20.0"
     react: ">=16.9.0"
   checksum: a2f26c10146f89312d2b16ac2098afc14bef56dffce59dbf8c851ab2b5967187e2221ba026587cdcc6d235c8b11c04428602bdd561d279eeda53188183fda84b
-  languageName: node
-  linkType: hard
-
-"@ant-design/pro-skeleton@npm:1.0.9":
-  version: 1.0.9
-  resolution: "@ant-design/pro-skeleton@npm:1.0.9"
-  dependencies:
-    "@babel/runtime": "npm:^7.18.0"
-    use-media-antd-query: "npm:^1.1.0"
-  peerDependencies:
-    antd: ">=4.20.0"
-    react: ">=16.9.0"
-  checksum: 1ac998fa93ab23dad539f7e1cda2810a9c824c68033dbdf60916080a9f67022cc137ca2ea4076df295c8b5b34068d7ff554aa8aedadfe6d476d385f72c572f28
   languageName: node
   linkType: hard
 
@@ -4414,18 +4335,6 @@ __metadata:
   version: 0.2.3
   resolution: "@bcoe/v8-coverage@npm:0.2.3"
   checksum: 6b80ae4cb3db53f486da2dc63b6e190a74c8c3cca16bb2733f234a0b6a9382b09b146488ae08e2b22cf00f6c83e20f3e040a2f7894f05c045c946d6a090b1d52
-  languageName: node
-  linkType: hard
-
-"@chenshuai2144/sketch-color@npm:^1.0.8":
-  version: 1.0.8
-  resolution: "@chenshuai2144/sketch-color@npm:1.0.8"
-  dependencies:
-    reactcss: "npm:^1.2.3"
-    tinycolor2: "npm:^1.4.2"
-  peerDependencies:
-    react: ">=16.12.0"
-  checksum: 9670c9566aced4ceabf268a64f4e0706570041e3699ae154ea754d3342fe030fbfc9a33189317511a4f05281fd054f575d929cda6042233781d28399257716fd
   languageName: node
   linkType: hard
 
@@ -16591,13 +16500,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"lodash.tonumber@npm:^4.0.3":
-  version: 4.0.3
-  resolution: "lodash.tonumber@npm:4.0.3"
-  checksum: ac993b5d1cca7dd22dc7f2dce0b8c7d04665dccddba944240755aba50c4fa9fbbda42e6c5288e0be3a8979f63178ec7d36922cc5aee31555e96ef71d8f999feb
-  languageName: node
-  linkType: hard
-
 "lodash.truncate@npm:^4.4.2":
   version: 4.4.2
   resolution: "lodash.truncate@npm:4.4.2"
@@ -18272,7 +18174,6 @@ __metadata:
     "@ant-design/icons": "npm:^4.5.0"
     "@ant-design/plots": "npm:1.2.5"
     "@ant-design/pro-card": "npm:1.20.13"
-    "@ant-design/pro-descriptions": "npm:^1.6.8"
     "@ant-design/pro-layout": "npm:^6.15.3"
     "@antv/l7-react": "npm:^2.1.9"
     "@auth0/auth0-react": "npm:^1.9.0"
@@ -20223,7 +20124,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"reactcss@npm:^1.2.0, reactcss@npm:^1.2.3":
+"reactcss@npm:^1.2.0":
   version: 1.2.3
   resolution: "reactcss@npm:1.2.3"
   dependencies:
@@ -22321,13 +22222,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tinycolor2@npm:^1.4.2":
-  version: 1.4.2
-  resolution: "tinycolor2@npm:1.4.2"
-  checksum: 822798610a7469d0caf1d202bed2d6836ceae87cfc7fd37012eaa0168a9a8fbd8cf47c572a21d48c612a9a3801b0af820a47b34bd58bbba04254b7fac8351ebd
-  languageName: node
-  linkType: hard
-
 "tinyqueue@npm:^2.0.3":
   version: 2.0.3
   resolution: "tinyqueue@npm:2.0.3"
@@ -23105,7 +22999,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-json-comparison@npm:^1.0.3, use-json-comparison@npm:^1.0.5":
+"use-json-comparison@npm:^1.0.3":
   version: 1.0.6
   resolution: "use-json-comparison@npm:1.0.6"
   peerDependencies:

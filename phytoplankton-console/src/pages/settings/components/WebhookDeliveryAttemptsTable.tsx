@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
-import ProDescriptions from '@ant-design/pro-descriptions';
 import { WebhookDeliveryAttempt } from '@/apis';
 import { useApi } from '@/api';
-import Colors from '@/components/ui/colors';
+import Colors, { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
 import { TableColumn } from '@/components/library/Table/types';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { WEBHOOKS } from '@/utils/queries/keys';
@@ -12,6 +11,7 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import Modal from '@/components/library/Modal';
 import Tag from '@/components/library/Tag';
+import Label from '@/components/library/Label';
 
 interface Props {
   webhookId: string;
@@ -79,7 +79,6 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
   return (
     <>
       <QueryResultsTable<WebhookDeliveryAttempt>
-        // headerTitle={`last ${QUERY_LIMIT} attempts`}
         rowKey="deliveryTaskId"
         columns={columns}
         queryResults={webhookResults}
@@ -90,16 +89,30 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         onCancel={() => setSelectedWebhookDelivery(undefined)}
         hideFooter
       >
-        <ProDescriptions column={1}>
-          <ProDescriptions.Item>Request</ProDescriptions.Item>
-          <ProDescriptions.Item valueType="jsonCode">
-            {JSON.stringify(selectedWebhookDelivery?.request)}
-          </ProDescriptions.Item>
-          <ProDescriptions.Item>Response</ProDescriptions.Item>
-          <ProDescriptions.Item valueType="jsonCode">
-            {JSON.stringify(selectedWebhookDelivery?.response)}
-          </ProDescriptions.Item>
-        </ProDescriptions>
+        <Label label="Request">
+          <pre
+            style={{
+              background: COLORS_V2_GRAY_1,
+              padding: '8px',
+              borderRadius: '8px',
+              maxHeight: '250px',
+            }}
+          >
+            {JSON.stringify(selectedWebhookDelivery?.request, null, 4)}
+          </pre>
+        </Label>
+        <Label label="Response">
+          <pre
+            style={{
+              background: COLORS_V2_GRAY_1,
+              padding: '8px',
+              borderRadius: '8px',
+              maxHeight: '250px',
+            }}
+          >
+            {JSON.stringify(selectedWebhookDelivery?.response, null, 4)}
+          </pre>
+        </Label>
       </Modal>
     </>
   );
