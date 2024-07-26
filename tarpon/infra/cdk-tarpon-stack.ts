@@ -124,7 +124,8 @@ const isDevUserStack = isQaEnv()
 const enableFargateBatchJob = false
 
 // TODO make this equal to !isQaEnv before merge
-const deployKinesisConsumer = !isQaEnv()
+// const deployKinesisConsumer = !isQaEnv()
+const deployKinesisConsumer = true || !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config

@@ -5718,6 +5718,8 @@ components:
       properties:
         entity:
           $ref: '#/components/schemas/SanctionsScreeningEntity'
+        entityType:
+          $ref: '#/components/schemas/SanctionsDetailsEntityType'
         userId:
           type: string
         transactionId:
@@ -5725,6 +5727,10 @@ components:
         ruleInstanceId:
           type: string
         iban:
+          type: string
+        yearOfBirth:
+          type: number
+        searchTerm:
           type: string
     SanctionsScreeningEntity:
       type: string

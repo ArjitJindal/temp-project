@@ -139,10 +139,12 @@ export default function AlertTable(props: Props) {
   const [selectedSanctionHits, setSelectedSanctionHits] = useState<{
     [alertId: string]: {
       id: string;
-      status: SanctionsHitStatus;
+      status?: SanctionsHitStatus;
     }[];
   }>({});
-  const [statusChangeModalVisibility, setStatusChangeModalVisibility] = useState<boolean>(false);
+  const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
+    null,
+  );
 
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
@@ -157,12 +159,12 @@ export default function AlertTable(props: Props) {
   const selectedSanctionHitsIds = useMemo(() => {
     return Object.values(selectedSanctionHits)
       .flatMap((v) => v.map((x) => x.id))
-      .filter(Boolean);
+      .filter(notEmpty);
   }, [selectedSanctionHits]);
   const selectedSanctionHitsStatuses = useMemo(() => {
     return Object.values(selectedSanctionHits)
       .flatMap((v) => v.map((x) => x.status))
-      .filter(Boolean);
+      .filter(notEmpty);
   }, [selectedSanctionHits]);
   const navigate = useNavigate();
   const location = useLocation();
@@ -857,7 +859,7 @@ export default function AlertTable(props: Props) {
           {isAllOpen && (
             <Button
               onClick={() => {
-                setStatusChangeModalVisibility(true);
+                setStatusChangeModalState('CLEARED');
               }}
               isDisabled={isDisabled}
             >
@@ -867,7 +869,7 @@ export default function AlertTable(props: Props) {
           {isAllCleared && (
             <Button
               onClick={() => {
-                setStatusChangeModalVisibility(true);
+                setStatusChangeModalState('OPEN');
               }}
               isDisabled={isDisabled}
             >
@@ -1160,6 +1162,16 @@ export default function AlertTable(props: Props) {
                       [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
                     }));
                   }}
+                  onSanctionsHitsChangeStatus={(sanctionsHitsIds, newStatus) => {
+                    if (alert.alertId != null) {
+                      setSelectedSanctionHits({
+                        [alert.alertId]: sanctionsHitsIds.map((id) => ({
+                          id,
+                        })),
+                      });
+                      setStatusChangeModalState(newStatus);
+                    }
+                  }}
                 />
               )
             : undefined
@@ -1206,11 +1218,11 @@ export default function AlertTable(props: Props) {
       />
       <SanctionsHitStatusChangeModal
         entityIds={selectedSanctionHitsIds}
-        isVisible={statusChangeModalVisibility}
+        isVisible={statusChangeModalState != null}
         onClose={() => {
-          setStatusChangeModalVisibility(false);
+          setStatusChangeModalState(null);
         }}
-        newStatus={selectedSanctionHitsStatuses[0] === 'CLEARED' ? 'OPEN' : 'CLEARED'}
+        newStatus={statusChangeModalState ?? 'CLEARED'}
         updateMutation={adaptMutationVariables(changeStatusMutation, (formValues) => {
           const alertIds = Object.entries(selectedSanctionHits)
             .filter(([_, values]) => values != null && values.length > 0)

@@ -1,6 +1,5 @@
 import React from 'react';
 import s from './index.module.less';
-import { P } from '@/components/ui/Typography';
 
 interface Props {
   title: string;
@@ -11,7 +10,7 @@ export default function Section(props: Props) {
   const { children, title } = props;
   return (
     <div className={s.root}>
-      <P bold>{title}</P>
+      <div className={s.header}>{title}</div>
       {children}
     </div>
   );

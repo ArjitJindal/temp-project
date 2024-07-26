@@ -1,0 +1,56 @@
+@import 'src/components/ui/colors';
+
+.root {
+  background-color: @fr-colors-v2-card-background;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  padding: 12px;
+  gap: 12px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.props {
+  display: grid;
+  grid-template-columns: 1fr min-content 1fr;
+  gap: 4px 32px;
+  align-items: start;
+}
+
+.propName {
+  grid-column: span 3;
+  color: @fr-colors-v2-gray-5;
+}
+
+.propHitValue,
+.propHitMatch,
+.propValue {
+  display: flex;
+  margin-bottom: 4px;
+}
+
+.propHitMatch {
+  justify-content: center;
+}
+
+.propValue {
+  justify-content: flex-end;
+}
+
+.sources {
+  color: @fr-colors-v2-gray-5;
+  margin-top: 8px;
+}
+
+.tooltipIcon {
+  flex-shrink: 0;
+  align-items: center;
+  width: 16px;
+  margin: auto 0;
+  color: @fr-colors-v2-gray-4;
+}

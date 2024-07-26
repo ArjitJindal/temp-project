@@ -6,10 +6,11 @@ interface Props {
   // Alpha-2 code
   isoCode?: string;
   countryName?: string;
+  htmlTitle?: string;
 }
 
 export default function CountryDisplay(props: Props): JSX.Element {
-  const { isoCode, countryName } = props;
+  const { isoCode, countryName, htmlTitle } = props;
   if (!isoCode && !countryName) {
     return <>-</>;
   }
@@ -21,7 +22,7 @@ export default function CountryDisplay(props: Props): JSX.Element {
   }
 
   return (
-    <div className={s.root}>
+    <div className={s.root} title={htmlTitle}>
       {name && <CountryFlag code={code} />}
       <span>{name || code}</span>
     </div>

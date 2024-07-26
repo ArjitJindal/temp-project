@@ -15,6 +15,7 @@ interface Props {
     sanctionsHitsIds: string[],
     status: SanctionsHitStatus,
   ) => void;
+  onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
 export default function ExpandedRowRenderer(props: Props) {
@@ -25,6 +26,7 @@ export default function ExpandedRowRenderer(props: Props) {
     onTransactionSelect,
     onSanctionsHitSelect,
     escalatedTransactionIds,
+    onSanctionsHitsChangeStatus,
   } = props;
 
   if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId) {
@@ -37,6 +39,7 @@ export default function ExpandedRowRenderer(props: Props) {
         selectedTransactionIds={selectedTransactionIds}
         onTransactionSelect={onTransactionSelect}
         escalatedTransactionIds={escalatedTransactionIds}
+        onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
       />
     );
   }

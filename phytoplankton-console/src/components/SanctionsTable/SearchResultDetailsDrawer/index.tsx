@@ -6,7 +6,14 @@ import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
 import { normalizeAmlTypes, ADVERSE_MEDIA, TABS_ORDER } from './helpers';
-import { SanctionsHit, ComplyAdvantageSearchHitDocFields } from '@/apis';
+import SanctionsComparison from './SanctionsComparison';
+import { getComparisonItems } from './SanctionsComparison/helpers';
+import {
+  SanctionsHit,
+  ComplyAdvantageSearchHitDocFields,
+  SanctionsHitStatus,
+  ComplyAdvantageSearchHitDoc,
+} from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
@@ -19,19 +26,21 @@ import FieldValue from '@/components/SanctionsTable/SearchResultDetailsDrawer/Fi
 import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
+import AISummary from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBase/AISummary';
+import CountryDisplay from '@/components/ui/CountryDisplay';
+import Tag from '@/components/library/Tag';
+import { notEmpty } from '@/utils/array';
 
 interface Props {
   hit: SanctionsHit;
   searchedAt?: number;
   onClose: () => void;
+  newStatus?: SanctionsHitStatus;
+  onChangeStatus?: (newStatus: SanctionsHitStatus) => void;
 }
 
 export default function SearchResultDetailsDrawer(props: Props) {
-  const { hit, onClose } = props;
-  const allFields = useMemo(
-    () => hit.caEntity?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
-    [hit.caEntity?.fields],
-  );
+  const { hit, onClose, newStatus, onChangeStatus } = props;
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
   const pdfName = hit.caEntity?.name;
@@ -64,7 +73,12 @@ export default function SearchResultDetailsDrawer(props: Props) {
   );
   return (
     <Drawer
-      title={pdfName ?? ''}
+      title={
+        <div className={s.title}>
+          {pdfName ?? ''}
+          {hit.status === 'OPEN' && <Tag color="purple">Human review</Tag>}
+        </div>
+      }
       isVisible={Boolean(hit)}
       isClickAwayEnabled={true}
       onChangeVisibility={(isShown) => {
@@ -77,19 +91,29 @@ export default function SearchResultDetailsDrawer(props: Props) {
           <Button type="SECONDARY" onClick={onClose}>
             {'Close'}
           </Button>
+        </>
+      }
+      footerRight={
+        <>
           <Button type="PRIMARY" onClick={handleDownloadClick}>
             {okText}
           </Button>
+          {onChangeStatus && newStatus && (
+            <Button type="PRIMARY" onClick={() => onChangeStatus(newStatus)}>
+              {newStatus === 'CLEARED' && 'Clear'}
+              {newStatus === 'OPEN' && 'Re-open'}
+            </Button>
+          )}
         </>
       }
     >
       <div className={s.sections}>
-        <Content {...props} allFields={allFields} />
+        <Content {...props} />
         {isDownloading && (
           <Portal>
             <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none' }}>
               <div ref={setPdfRef}>
-                <Content {...props} allFields={allFields} pdfMode={true} />
+                <Content {...props} pdfMode={true} />
               </div>
             </div>
           </Portal>
@@ -99,64 +123,209 @@ export default function SearchResultDetailsDrawer(props: Props) {
   );
 }
 
-function Content(props: {
-  hit: SanctionsHit;
-  allFields: ComplyAdvantageSearchHitDocFields[];
-  pdfMode?: boolean;
-  searchedAt?: number;
-}) {
-  const { hit, allFields, pdfMode = false, searchedAt } = props;
-  const keyInfoFields = allFields.filter((field) => !field.source);
-  const tabItems = useTabs(hit, allFields, pdfMode);
+function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: number }) {
+  const { hit, pdfMode = false, searchedAt } = props;
+  const comparisonItems = getComparisonItems(hit);
+
+  const nameMatched =
+    hit.caMatchTypesDetails?.some((x) => (x.name_matches?.length ?? 0) > 0) ?? false;
+  const dateMatched =
+    hit.caMatchTypesDetails?.some((x) => (x.secondary_matches?.length ?? 0) > 0) ?? false;
+
   return (
     <>
+      {hit.status === 'OPEN' && <AISummary text={makeStubAiText(hit)} />}
       {searchedAt && (
         <Section title={'Searched at'}>
           {searchedAt ? <TimestampDisplay timestamp={searchedAt} /> : 'N/A'}
         </Section>
       )}
+      {comparisonItems.length > 0 && <SanctionsComparison items={comparisonItems} />}
+      {hit.caEntity && (
+        <CAEntityDetails
+          dateMatched={dateMatched}
+          nameMatched={nameMatched}
+          caEntity={hit.caEntity}
+          pdfMode={pdfMode}
+        />
+      )}
+    </>
+  );
+}
+
+export function CAEntityDetails(props: {
+  nameMatched: boolean;
+  dateMatched: boolean;
+  pdfMode: boolean;
+  caEntity: ComplyAdvantageSearchHitDoc;
+}) {
+  const { nameMatched, dateMatched, caEntity, pdfMode = false } = props;
+  const allFields = useMemo(
+    () => caEntity?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
+    [caEntity?.fields],
+  );
+  const tabItems = useTabs(caEntity, allFields, pdfMode);
+
+  const extractedFields = extractInformationFromFields(allFields, [
+    ...(dateMatched ? [] : ['Date of Birth']),
+    'Gender',
+    'Country',
+  ]);
+
+  return (
+    <>
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
-          <Form.Layout.Label title={'Full name'}>{hit.caEntity?.name}</Form.Layout.Label>
+          {!nameMatched && (
+            <Form.Layout.Label title={'Full name'}>{caEntity?.name}</Form.Layout.Label>
+          )}
           <Form.Layout.Label title={'Entity type'}>
-            {startCase(hit.caEntity?.entity_type)}
+            {startCase(caEntity?.entity_type)}
           </Form.Layout.Label>
           <Form.Layout.Label title={'Aliases'}>
-            {uniq(hit.caEntity?.aka?.map((item) => item.name)).join(', ')}
+            {uniq(caEntity?.aka?.map((item) => item.name)).join(', ')}
           </Form.Layout.Label>
-          {keyInfoFields.map((field) =>
-            field.name ? (
-              <Form.Layout.Label key={field.name} title={field.name}>
-                {field.value}
-              </Form.Layout.Label>
-            ) : (
-              <></>
-            ),
+          {extractedFields.map(({ name, values }) => (
+            <Form.Layout.Label key={name} title={name}>
+              <Values caEntity={caEntity} name={name} values={values} />
+            </Form.Layout.Label>
+          ))}
+          {caEntity?.associates?.length && (
+            <Form.Layout.Label title={'Other associates'}>
+              <div>
+                {caEntity.associates.map(({ association, name }, i) => (
+                  <React.Fragment key={i}>
+                    {i !== 0 && ', '}
+                    <span>
+                      {name} ({association})
+                    </span>
+                  </React.Fragment>
+                ))}
+              </div>
+            </Form.Layout.Label>
           )}
         </div>
       </Section>
-      <div className={s.separator} />
-      <Section title={'Listing'}>
-        {pdfMode ? (
-          tabItems.map((item) => <Tabs key={item.key} items={[item]} />)
-        ) : (
-          <Tabs items={tabItems} />
-        )}
-      </Section>
+      {pdfMode ? (
+        tabItems.map((item) => <Tabs key={item.key} items={[item]} />)
+      ) : (
+        <Tabs items={tabItems} />
+      )}
     </>
+  );
+}
+
+function Values(props: {
+  caEntity: ComplyAdvantageSearchHitDoc;
+  name: string;
+  values: {
+    value: unknown;
+    sources: string[];
+  }[];
+}) {
+  const { caEntity, name, values } = props;
+  if (name === 'Country') {
+    return (
+      <div className={s.countryList}>
+        {values.map(({ value, sources }, i) => (
+          <CountryDisplay
+            key={i}
+            countryName={typeof value === 'string' ? value : undefined}
+            htmlTitle={`Sources: ${sources
+              .map((source) => caEntity?.source_notes?.[source]?.name ?? source)
+              .join(', ')}`}
+          />
+        ))}
+      </div>
+    );
+  }
+  return (
+    <div>
+      {values.map(({ value, sources }, i) => (
+        <React.Fragment key={i}>
+          {i !== 0 && ', '}
+          <span
+            title={`Sources: ${sources
+              .map((source) => caEntity?.source_notes?.[source]?.name ?? source)
+              .join(', ')}`}
+          >
+            {value}
+          </span>
+        </React.Fragment>
+      ))}
+    </div>
   );
 }
 
 /*
   Helpers
  */
-function useTabs(hit: SanctionsHit, allFields: ComplyAdvantageSearchHitDocFields[], pdfMode) {
+
+function extractInformationFromFields(
+  allFields: ComplyAdvantageSearchHitDocFields[],
+  fieldNamesToExtract: string[],
+): {
+  name: string;
+  values: {
+    value: unknown;
+    sources: string[];
+  }[];
+}[] {
+  const groups = groupBy(allFields, 'name');
+  const prepared = Object.entries(groups).map(([name, fields]) => ({
+    name,
+    values: Object.entries(groupBy(fields, 'value')).map(([value, fields]) => ({
+      value,
+      sources: fields.map(({ source }) => source).filter(notEmpty),
+    })),
+  }));
+  return prepared.filter(({ name }) => {
+    return fieldNamesToExtract.includes(name);
+  });
+}
+
+function makeStubAiText(hit: SanctionsHit): string {
+  const hasNameMatches = hit.caMatchTypes.some((x) =>
+    [
+      'name_exact',
+      'aka_exact',
+      'name_fuzzy',
+      'aka_fuzzy',
+      'phonetic_name',
+      'phonetic_aka',
+      'equivalent_name',
+      'equivalent_aka',
+      'unknown',
+      'removed_personal_title',
+      'removed_personal_suffix',
+      'removed_organisation_prefix',
+      'removed_organisation_suffix',
+      'removed_clerical_mark',
+      'name_variations_removal',
+    ].includes(x),
+  );
+  const hasDateMatches = hit.caMatchTypes.some((x) => ['year_of_birth'].includes(x));
+  if (hasNameMatches && hasDateMatches) {
+    return 'Date of birth and name match and hit requires human review';
+  } else if (hasNameMatches) {
+    return 'Name matches and hit requires human review';
+  } else if (hasDateMatches) {
+    return 'Date of birth match and hit requires human review';
+  }
+  return 'Hit requires human review';
+}
+
+function useTabs(
+  caEntity: ComplyAdvantageSearchHitDoc,
+  allFields: ComplyAdvantageSearchHitDocFields[],
+  pdfMode,
+) {
   return useMemo(() => {
     const sourceGroupes: {
       [key: string]: { sourceName: string; fields: ComplyAdvantageSearchHitDocFields[] }[];
     } = {};
-    for (const source of hit.caEntity?.sources || []) {
-      const amlTypes = normalizeAmlTypes(hit.caEntity?.source_notes?.[source]?.aml_types ?? []);
+    for (const source of caEntity?.sources || []) {
+      const amlTypes = normalizeAmlTypes(caEntity?.source_notes?.[source]?.aml_types ?? []);
       for (const amlType of amlTypes) {
         sourceGroupes[amlType] = [
           ...(sourceGroupes[amlType] ?? []),
@@ -180,7 +349,7 @@ function useTabs(hit: SanctionsHit, allFields: ComplyAdvantageSearchHitDocFields
           children: (
             <div className={s.listingItems}>
               {sources.map((source) => {
-                const sourceNote = hit.caEntity?.source_notes?.[source.sourceName];
+                const sourceNote = caEntity?.source_notes?.[source.sourceName];
                 const sourceTitle = sourceNote?.url ? (
                   <a href={sourceNote?.url} target="_blank">
                     {sourceNote?.name}
@@ -199,7 +368,7 @@ function useTabs(hit: SanctionsHit, allFields: ComplyAdvantageSearchHitDocFields
                   >
                     {groupKey === ADVERSE_MEDIA ? (
                       <div className={s.adverseMediaList}>
-                        {hit.caEntity?.media?.map((media) => (
+                        {caEntity?.media?.map((media) => (
                           <div key={media.title}>
                             <P>
                               <a href={media.url} target="_blank" className={s.link}>
@@ -237,5 +406,5 @@ function useTabs(hit: SanctionsHit, allFields: ComplyAdvantageSearchHitDocFields
           ),
         })),
     ];
-  }, [allFields, hit, pdfMode]);
+  }, [allFields, caEntity, pdfMode]);
 }

@@ -5,8 +5,8 @@ import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
 
 interface Props {
-  addToNarrative: boolean | undefined;
-  onChangeAddToNarrative: (value: boolean | undefined) => void;
+  addToNarrative?: boolean | undefined;
+  onChangeAddToNarrative?: (value: boolean | undefined) => void;
   text: string;
 }
 
@@ -19,11 +19,13 @@ export default function AISummary(props: Props) {
           <BrainIcon className={s.brainIcon} />
           AI Summary
         </div>
-        <div>
-          <Label label="Add to narrative" position="RIGHT">
-            <Checkbox value={addToNarrative} onChange={onChangeAddToNarrative} />
-          </Label>
-        </div>
+        {(addToNarrative != null || onChangeAddToNarrative != null) && (
+          <div>
+            <Label label="Add to narrative" position="RIGHT">
+              <Checkbox value={addToNarrative} onChange={onChangeAddToNarrative} />
+            </Label>
+          </div>
+        )}
       </div>
 
       <div>{text}</div>

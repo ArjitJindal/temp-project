@@ -59,7 +59,7 @@ export const sanctionsSearchHit = (
         },
       ],
     },
-    caMatchTypes: ['aka_exact', 'name_phonetic'],
+    caMatchTypes: ['aka_exact', 'phonetic_name'],
   }
 }
 

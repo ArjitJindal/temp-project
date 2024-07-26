@@ -1,5 +1,6 @@
 import { apiFetch, ApiFetchResult } from '@/utils/api-fetch'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
+import { ComplyAdvantageMatchType } from '@/@types/openapi-internal/ComplyAdvantageMatchType'
 import { logger } from '@/core/logger'
 import { ComplyAdvantageSearchResponseContent } from '@/@types/openapi-internal/ComplyAdvantageSearchResponseContent'
 
@@ -73,7 +74,7 @@ export interface ComplyAdvantageEntityKeyInformation {
   grouped_types: {
     type: string
   }[]
-  match_types: string[]
+  match_types: ComplyAdvantageMatchType[]
   sources: string[]
   source_notes: {
     [key: string]: ComplyAdvantageEntitySourceNotesItem | undefined

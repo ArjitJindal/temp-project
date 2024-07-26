@@ -23,6 +23,7 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID, SANCTIONS_HIT_STATUS } from '@/components/library/Table/standardDataTypes';
 import { notEmpty } from '@/utils/array';
+import Id from '@/components/ui/Id';
 
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -45,6 +46,7 @@ interface Props {
   onSelect?: (sanctionHitsIds: string[]) => void;
   searchedAt?: number;
   selectionActions?: SelectionAction<SanctionsHit, TableSearchParams>[];
+  onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
 export default function SanctionsTable(props: Props) {
@@ -60,6 +62,7 @@ export default function SanctionsTable(props: Props) {
     tableRef,
     selectedIds,
     onSelect,
+    onSanctionsHitsChangeStatus,
   } = props;
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsHit>();
@@ -71,16 +74,16 @@ export default function SanctionsTable(props: Props) {
     helper.simple<'sanctionsHitId'>({
       title: 'Hit ID',
       key: 'sanctionsHitId',
-      type: ID,
+      type: {
+        ...ID,
+        render: (value, { item: entity }) => (
+          <Id onClick={() => setSelectedSearchHit(entity)}>{value}</Id>
+        ),
+      },
     }),
     helper.simple<'caEntity.name'>({
       title: 'Name',
       key: 'caEntity.name',
-      type: {
-        render: (name, { item: entity }) => (
-          <div>{<a onClick={() => setSelectedSearchHit(entity)}>{name}</a>}</div>
-        ),
-      },
     }),
     helper.derived<string[]>({
       title: 'Countries',
@@ -248,6 +251,15 @@ export default function SanctionsTable(props: Props) {
           hit={selectedSearchHit}
           searchedAt={searchedAt}
           onClose={() => setSelectedSearchHit(undefined)}
+          newStatus={selectedSearchHit.status === 'CLEARED' ? 'OPEN' : 'CLEARED'}
+          onChangeStatus={
+            onSanctionsHitsChangeStatus
+              ? (newStatus) => {
+                  onSanctionsHitsChangeStatus?.([selectedSearchHit.sanctionsHitId], newStatus);
+                  setSelectedSearchHit(undefined);
+                }
+              : undefined
+          }
         />
       )}
     </>

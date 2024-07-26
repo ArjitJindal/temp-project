@@ -10648,7 +10648,11 @@ components:
         caMatchTypes:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ComplyAdvantageMatchType'
+        caMatchTypesDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
       required:
         - sanctionsHitId
         - searchId
@@ -10664,48 +10668,64 @@ components:
         match_types:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/ComplyAdvantageMatchType'
         match_types_details:
           type: array
           items:
-            type: object
-            properties:
-              aml_types:
-                type: array
-                items:
-                  type: string
-              matching_name:
-                type: string
-              name_matches:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    match_types:
-                      type: array
-                      items:
-                        type: string
-                    query_term:
-                      type: string
-              secondary_matches:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    match_types:
-                      type: array
-                      items:
-                        type: string
-                    query_term:
-                      type: string
-              sources:
-                type: array
-                items:
-                  type: string
+            $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
         score:
           type: number
       required:
         - doc
+    ComplyAdvantageMatchTypeDetails:
+      title: ComplyAdvantageMatchTypeDetails
+      type: object
+      properties:
+        aml_types:
+          type: array
+          items:
+            type: string
+        matching_name:
+          type: string
+        name_matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplyAdvantageNameMatched'
+        secondary_matches:
+          type: array
+          items:
+            $ref: '#/components/schemas/ComplyAdvantageNameMatched'
+        sources:
+          type: array
+          items:
+            type: string
+    ComplyAdvantageNameMatched:
+      type: object
+      properties:
+        match_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - exact_match
+              - edit_distance
+              - phonetic
+              - equivalent_name
+              - word_to_initial
+              - initial_to_word
+              - removed_spaces
+              - word_to_digit
+              - digit_to_word
+              - name_variations_removal
+              - removed_personal_title
+              - removed_personal_suffix
+              - removed_organisation_prefix
+              - removed_organisation_suffix
+              - removed_clerical_mark
+              - fuzzy_birth_year_match
+              - exact_birth_year_match
+        query_term:
+          type: string
     ComplyAdvantageSearchHitDoc:
       type: object
       properties:
@@ -10714,6 +10734,15 @@ components:
           items:
             type: object
             properties:
+              name:
+                type: string
+        associates:
+          type: array
+          items:
+            type: object
+            properties:
+              association:
+                type: string
               name:
                 type: string
         entity_type:
@@ -10826,6 +10855,26 @@ components:
         - BANK_NAMES
         - PRODUCT_TYPES
         - DEVICE_IDENTIFIER
+    ComplyAdvantageMatchType:
+      title: ComplyAdvantageMatchType
+      type: string
+      enum:
+        - name_exact
+        - aka_exact
+        - name_fuzzy
+        - aka_fuzzy
+        - phonetic_name
+        - phonetic_aka
+        - equivalent_name
+        - equivalent_aka
+        - unknown
+        - year_of_birth
+        - removed_personal_title
+        - removed_personal_suffix
+        - removed_organisation_prefix
+        - removed_organisation_suffix
+        - removed_clerical_mark
+        - name_variations_removal
     UsersUniquesField:
       title: UsersUniquesField
       type: string

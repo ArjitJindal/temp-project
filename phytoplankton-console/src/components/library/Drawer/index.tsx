@@ -9,13 +9,13 @@ interface Props {
   isVisible: boolean;
   onChangeVisibility: (isShown: boolean) => void;
   children: React.ReactNode;
-  title: string;
+  title: string | React.ReactNode;
   description?: string;
   footer?: React.ReactNode;
+  footerRight?: React.ReactNode;
   drawerMaxWidth?: string;
   noPadding?: boolean;
   isClickAwayEnabled?: boolean;
-  rightAlignButtonsFooter?: boolean;
   portaled?: boolean;
   position?: 'LEFT' | 'RIGHT';
 }
@@ -28,6 +28,7 @@ export default function Drawer(props: Props) {
     onChangeVisibility,
     children,
     footer,
+    footerRight,
     position = 'RIGHT',
     noPadding = false,
     isClickAwayEnabled = false,
@@ -73,7 +74,10 @@ export default function Drawer(props: Props) {
       >
         <div className={s.header}>
           <div className={s.headerSection}>
-            <div className={s.title} data-cy={`drawer-title-${kebabCase(title)}`}>
+            <div
+              className={s.title}
+              data-cy={`drawer-title-${typeof title === 'string' ? kebabCase(title) : ''}`}
+            >
               {title}
             </div>
             {description && <div className={s.description}>{description}</div>}
@@ -84,12 +88,10 @@ export default function Drawer(props: Props) {
         </div>
 
         {isVisible && <div className={s.children}>{children}</div>}
-        {footer && (
-          <div
-            className={cn(s.footer, props.rightAlignButtonsFooter && s.rightAlignButtonsFooter)}
-            data-cy="drawer-footer"
-          >
-            {footer}
+        {(footer != null || footerRight != null) && (
+          <div className={cn(s.footer)} data-cy="drawer-footer">
+            {footer && <div className={cn(s.footerSection, s.left)}>{footer}</div>}
+            {footerRight && <div className={cn(s.footerSection, s.right)}>{footerRight}</div>}
           </div>
         )}
       </div>

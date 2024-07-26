@@ -104,9 +104,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
             : undefined
           const hitContext = {
             entity: 'USER' as const,
+            entityType: entity.entityType,
             userId: this.user.userId,
             ruleInstanceId: this.ruleInstance.id ?? '',
             isOngoingScreening: this.ongoingScreeningMode,
+            searchTerm: entity.name,
+            yearOfBirth,
           }
           const result = await this.sanctionsService.search(
             {

@@ -61,6 +61,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
     const hitContext = {
       entity: 'USER' as const,
       userId: this.user.userId,
+      entityType: 'CONSUMER_NAME' as const,
       ruleInstanceId: this.ruleInstance.id ?? '',
       isOngoingScreening: this.ongoingScreeningMode,
     }

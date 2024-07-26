@@ -221,8 +221,7 @@ export default function AccountForm(props: Props) {
       drawerMaxWidth={'400px'}
       isVisible={props.isVisibile}
       onChangeVisibility={props.onChangeVisibility}
-      rightAlignButtonsFooter
-      footer={
+      footerRight={
         <>
           <Button
             type="TETRIARY"

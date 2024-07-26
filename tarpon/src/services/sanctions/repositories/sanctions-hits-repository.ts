@@ -58,7 +58,9 @@ export class SanctionsHitsRepository {
     })
   }
 
-  public async *iterateHits(filters: HitsFilters): AsyncIterable<SanctionsHit> {
+  public async *iterateHits(
+    filters: HitsFilters = {}
+  ): AsyncIterable<SanctionsHit> {
     let nextCursor: string | undefined = undefined
     do {
       const nextPage = await this.searchHits({
@@ -103,6 +105,7 @@ export class SanctionsHitsRepository {
         hitContext,
         caEntity: hit.doc,
         caMatchTypes: hit.match_types ?? [],
+        caMatchTypesDetails: hit.match_types_details ?? [],
       })
     )
 

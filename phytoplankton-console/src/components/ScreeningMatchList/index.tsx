@@ -41,6 +41,7 @@ interface Props {
     sanctionsHitsIds: string[],
     statuses: SanctionsHitStatus,
   ) => void;
+  onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
 export default function ScreeningMatchList(props: Props) {
@@ -52,9 +53,10 @@ export default function ScreeningMatchList(props: Props) {
     escalatedTransactionIds,
     selectedTransactionIds,
     onTransactionSelect,
+    onSanctionsHitsChangeStatus,
   } = props;
 
-  const [tableParams, setTableParams] = useState<AllParams<TableSearchParams>>({
+  const [openTableParams, setOpenTableParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
     statuses: ['OPEN'],
   });
@@ -68,18 +70,22 @@ export default function ScreeningMatchList(props: Props) {
   );
   const selectedSanctionsDetailsItem = details.filter((x) => x.searchId === sanctionsDetailsId);
 
-  const hitsQueryResults = useSanctionHitsQuery(selectedSanctionsDetailsItem, tableParams);
+  // Data requests
+  const openHitsQueryResults = useSanctionHitsQuery(selectedSanctionsDetailsItem, openTableParams);
   const clearedHitsQueryResults = useSanctionHitsQuery(
     selectedSanctionsDetailsItem,
     clearedTableParams,
   );
 
-  const hitsCount = getOr(
-    map(hitsQueryResults.data, (x) => x.count),
+  // Requests to count total hits count
+  const openTotalHitsQueryResults = useSanctionHitsQuery(details, openTableParams);
+  const clearedTotalHitsQueryResults = useSanctionHitsQuery(details, clearedTableParams);
+  const openHitsCount = getOr(
+    map(openTotalHitsQueryResults.data, (x) => x.count),
     null,
   );
   const clearedHitsCount = getOr(
-    map(clearedHitsQueryResults.data, (x) => x.count),
+    map(clearedTotalHitsQueryResults.data, (x) => x.count),
     null,
   );
 
@@ -87,7 +93,7 @@ export default function ScreeningMatchList(props: Props) {
     () =>
       [
         {
-          title: 'Human review' + (hitsCount != null ? ` (${hitsCount})` : ''),
+          title: 'Human review' + (openHitsCount != null ? ` (${openHitsCount})` : ''),
           key: MATCH_LIST_TAB_KEY,
           children: (
             <div className={s.selectWithTable}>
@@ -102,18 +108,19 @@ export default function ScreeningMatchList(props: Props) {
               />
               <SanctionsTable
                 tableRef={null}
-                queryResult={hitsQueryResults}
+                queryResult={openHitsQueryResults}
                 isEmbedded={true}
                 selectedIds={selectedSanctionsHitsIds}
                 selection={onSanctionsHitSelect != null}
-                params={tableParams}
-                onChangeParams={setTableParams}
+                params={openTableParams}
+                onChangeParams={setOpenTableParams}
                 onSelect={(sanctionHitsIds) => {
                   if (!alert?.alertId) {
                     return;
                   }
                   onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
                 }}
+                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
               />
             </div>
           ),
@@ -146,6 +153,7 @@ export default function ScreeningMatchList(props: Props) {
                   }
                   onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
                 }}
+                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
               />
             </div>
           ),
@@ -178,17 +186,18 @@ export default function ScreeningMatchList(props: Props) {
           : []),
       ].filter(notEmpty),
     [
+      onSanctionsHitsChangeStatus,
       sanctionsDetailsId,
       details,
-      hitsQueryResults,
+      openHitsQueryResults,
       alert,
-      tableParams,
+      openTableParams,
       clearedTableParams,
       setClearedTableParams,
       clearedHitsQueryResults,
       selectedSanctionsHitsIds,
       onSanctionsHitSelect,
-      hitsCount,
+      openHitsCount,
       clearedHitsCount,
       selectedTransactionIds,
       onTransactionSelect,

@@ -2,6 +2,7 @@ import React from 'react';
 import { describe, expect } from '@jest/globals';
 import { fireEvent, render, screen } from 'testing-library-wrapper';
 import Drawer from '..';
+import s from '../index.module.less';
 
 const props = {
   isVisible: true,
@@ -52,18 +53,17 @@ describe('Drawer Component', () => {
   it('renders Drawer with right-aligned buttons in footer', () => {
     const propsWithRightAlignedFooter = {
       ...props,
-      footer: (
+      footerRight: (
         <div>
           <button>Cancel</button>
           <button>Save</button>
         </div>
       ),
-      rightAlignButtonsFooter: true,
     };
     render(<Drawer {...propsWithRightAlignedFooter} />);
-    const footer = screen.getByTestId('drawer-footer');
-    expect(footer).toHaveClass(
-      'src_components_library_Drawer_index_module_less___rightAlignButtonsFooter',
-    );
+    const footerSections = screen.getAllByClassName(s.footerSection);
+    expect(footerSections).toHaveLength(1);
+    const [footerSection] = footerSections;
+    expect(footerSection).toHaveClass(s.right);
   });
 });

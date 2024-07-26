@@ -104,11 +104,17 @@
   gap: 16px;
   padding: @padding;
   border-top: 1px solid @fr-colors-v2-gray-2;
+  justify-content: space-between;
 }
 
-.rightAlignButtonsFooter {
-  justify-content: flex-end;
-  width: 100%;
+.footerSection {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+
+  &.right {
+    justify-content: flex-end;
+  }
 }
 
 .portaledMenuContainer {

@@ -19,8 +19,6 @@ module.exports = (options = {}, loaderOptions = {}) => ({
 
     build.onLoad({ filter: /.*/, namespace: 'fonts' }, async (args) => {
       const filePath = path.join(rootDir, args.path); // Construct the absolute path based on the root directory
-      console.log('ARGS', args.path);
-      console.log('FILE PATH', filePath);
       const data = await fs.promises.readFile(filePath);
 
       // Determine the destination path in the output directory
