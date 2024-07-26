@@ -5,9 +5,9 @@ import path from 'path'
 import { execSync } from 'child_process'
 import fs from 'fs-extra'
 import { omit } from 'lodash'
+import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleService } from '@/services/rules-engine'
@@ -19,6 +19,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import dayjs from '@/utils/dayjs'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 process.env.ENV = 'local'
 
@@ -27,7 +28,7 @@ const {
   api,
   jwt: rawJwt,
   transactionIds,
-  ruleInstanceId,
+  ruleInstanceIds,
 } = fs.readJSONSync(configPath, 'utf-8')
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from "${api}"`)
@@ -117,14 +118,16 @@ async function getRemoteUser(userId: string) {
 
 async function createRuleInstancesLocally(ruleInstanceIds: string[]) {
   const ruleInstances = await getRemoteRuleInstances(ruleInstanceIds)
-  const ruleInstanceRepository = new RuleInstanceRepository(
-    FLAGRIGHT_TENANT_ID,
-    {
-      dynamoDb: getDynamoDbClient(),
-    }
-  )
+  const dynamoDb = getDynamoDbClient()
   for (const ruleInstance of ruleInstances) {
-    await ruleInstanceRepository.createOrUpdateRuleInstance(ruleInstance)
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.RULE_INSTANCE('flagright', ruleInstance.id),
+        ...ruleInstance,
+      },
+    }
+    await dynamoDb.send(new PutCommand(putItemInput))
   }
   console.info(`Activated ${ruleInstanceIds.length} rule instances`)
 }
@@ -234,7 +237,7 @@ async function main() {
   execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
   console.info('Recreated TarponRule DynamoDB table')
   await RuleService.syncRulesLibrary()
-  await createRuleInstancesLocally([ruleInstanceId])
+  await createRuleInstancesLocally(ruleInstanceIds)
 
   const transactionsOrEvents: Array<
     InternalTransaction | TransactionEventWithRulesResult
@@ -261,11 +264,16 @@ async function main() {
     const time = dayjs(txOrEvent.timestamp).toISOString()
     const removeRuleHit = !!(
       isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
-    ).hitRules?.find((v) => v.ruleInstanceId === ruleInstanceId)
+    ).hitRules?.find((v) => ruleInstanceIds.include(v.ruleInstanceId))
     let result: any
     if (isTxEvent) {
       const txEvent = txOrEvent as TransactionEventWithRulesResult
-      result = await verifyTransactioEventLocally(txEvent)
+      try {
+        result = await verifyTransactioEventLocally(txEvent)
+      } catch (e) {
+        console.error(`[${time}] Failed to verify tx event ${txEvent.eventId}`)
+        continue
+      }
     } else {
       const tx = txOrEvent as InternalTransaction
       result = await verifyTransactionLocally(tx)

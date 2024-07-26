@@ -2508,11 +2508,16 @@ describe('V8 aggregator', () => {
         destinationUserId: 'U-2',
         timestamp: dayjs('2023-01-02T13:00:00.000Z').valueOf(),
       }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-3',
+        timestamp: dayjs('2023-01-03T12:00:00.000Z').valueOf(),
+      }),
     ]
     await bulkVerifyTransactions(tenantId, transactions)
     await ruleJsonLogicEvaluator.rebuildAggregationVariable(
       AGG_VARIABLE,
-      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      dayjs('2023-01-03T15:00:00.000Z').valueOf(),
       '1',
       undefined
     )
@@ -2522,7 +2527,7 @@ describe('V8 aggregator', () => {
       '1',
       AGG_VARIABLE,
       dayjs('2023-01-01T12:00:00.000Z').valueOf(),
-      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      dayjs('2023-01-03T15:00:00.000Z').valueOf(),
       'day',
       'U-1'
     )
@@ -2534,7 +2539,7 @@ describe('V8 aggregator', () => {
       '1',
       AGG_VARIABLE,
       dayjs('2023-01-01T12:00:00.000Z').valueOf(),
-      dayjs('2023-01-02T15:00:00.000Z').valueOf(),
+      dayjs('2023-01-03T15:00:00.000Z').valueOf(),
       'day',
       'U-2'
     )

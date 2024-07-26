@@ -36,7 +36,7 @@
     "deploy:sandbox:asia-1": "ENV=sandbox:asia-1 && cdk deploy sandbox-tarpon --require-approval=never",
     "deploy:sandbox:asia-1:clean": "yarn clear && yarn && yarn build && yarn synth:sandbox:asia-1 && yarn deploy:sandbox:asia-1",
     "deploy:prod:asia-1": "ENV=prod:asia-1 && cdk deploy prod-tarpon  --require-approval=never",
-    "deploy:prod:asia-1:clean": "yarn clear && yanr && yarn build && yarn synth:prod:asia-1 && yarn deploy:prod:asia-1",
+    "deploy:prod:asia-1:clean": "yarn clear && yarn && yarn build && yarn synth:prod:asia-1 && yarn deploy:prod:asia-1",
     "deploy:prod:asia-2": "ENV=prod:asia-2 && cdk deploy prod-tarpon  --require-approval=never",
     "deploy:prod:asia-2:clean": "yarn clear && yarn && yarn build && yarn synth:prod:asia-2 && yarn deploy:prod:asia-2",
     "deploy:prod:eu-1": "ENV=prod:eu-1 && cdk deploy prod-tarpon  --require-approval=never && yarn cdktf:init && cdktf deploy --quiet prod-tarpon --auto-approve",

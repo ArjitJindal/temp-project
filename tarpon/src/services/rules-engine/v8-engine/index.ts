@@ -10,6 +10,7 @@ import {
   memoize,
   mergeWith,
   omit,
+  omitBy,
   uniq,
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -660,9 +661,12 @@ export class RuleJsonLogicEvaluator {
         Object.keys(v.value as { [group: string]: unknown })
       )
       for (const group of groups) {
-        const groupAggregationResult = mapValues(aggregationResult, (v) => ({
-          value: (v.value as { [group: string]: unknown })[group],
-        }))
+        const groupAggregationResult = omitBy(
+          mapValues(aggregationResult, (v) => ({
+            value: (v.value as { [group: string]: unknown })[group],
+          })),
+          (v) => !v.value
+        )
         await this.aggregationRepository.rebuildUserTimeAggregations(
           userKeyId,
           aggregationVariable,

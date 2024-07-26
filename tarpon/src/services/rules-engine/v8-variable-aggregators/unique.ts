@@ -4,15 +4,15 @@ import { RuleVariableAggregator } from './types'
 export const UNIQUE_VALUES: RuleVariableAggregator<string, string[]> = {
   returnValueType: 'array',
   init: () => [],
-  aggregate: (values) => uniq(values),
-  reduce: (aggregation, value) => uniq(aggregation.concat(value)),
+  aggregate: (values) => uniq(values ?? []),
+  reduce: (aggregation, value) => uniq((aggregation ?? []).concat(value)),
   merge: (aggregation1, aggregation2) =>
-    uniq(aggregation1.concat(aggregation2)),
-  compute: (aggregation) => aggregation,
+    uniq((aggregation1 ?? []).concat(aggregation2 ?? [])),
+  compute: (aggregation) => aggregation ?? [],
 }
 
 export const UNIQUE_COUNT: RuleVariableAggregator<string, string[], number> = {
   ...UNIQUE_VALUES,
   returnValueType: 'number',
-  compute: (aggregation) => aggregation.length,
+  compute: (aggregation) => (aggregation ?? []).length,
 }
