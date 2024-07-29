@@ -127,12 +127,14 @@ export const getCreateTableQuery = (
         table.timestampColumn
       }')
       ${table.materializedColumns?.length ? ',' : ''}
-      ${table.materializedColumns?.join(', ')}
+      ${table.materializedColumns?.join(', ') ?? ''}
       ${table.projections?.length ? ',' : ''}
-      ${table.projections?.map(
-        (p) =>
-          `PROJECTION ${p.name} (SELECT id, timestamp, ${materializedColumnNames} ORDER BY ${p.key})`
-      )}
+      ${`${
+        table.projections?.map(
+          (p) =>
+            `PROJECTION ${p.name} (SELECT id, timestamp, ${materializedColumnNames} ORDER BY ${p.key})`
+        ) ?? ''
+      }`}
     ) ENGINE = ReplacingMergeTree()
     ORDER BY id
     PARTITION BY toYYYYMM(toDateTime(timestamp))
