@@ -48,7 +48,9 @@ function assertTableName(
   tableName: string,
   tenantId: string = getContext()?.tenantId as string
 ): TableDefinition {
-  let trimmedTableName = tableName.replace(tenantId, '').replace(/-/g, '_')
+  let trimmedTableName = tableName
+    .replace(/-/g, '_')
+    .replace(tenantId.replace(/-/g, '_'), '')
 
   if (trimmedTableName.startsWith('_')) {
     trimmedTableName = trimmedTableName.slice(1)
@@ -65,10 +67,6 @@ function assertTableName(
   return tableDefinition
 }
 
-export function getSQLTableName(tableName: string) {
-  return tableName.replace(/-/g, '_')
-}
-
 export async function insertToClickhouse(
   tableName: TableName,
   object: object,
@@ -77,7 +75,7 @@ export async function insertToClickhouse(
   const tableDefinition = assertTableName(tableName, tenantId)
   const client = await getClickhouseClient()
   await client.insert({
-    table: tableName,
+    table: sanitizeTableName(tableName),
     values: [
       { id: object[tableDefinition.idColumn], data: JSON.stringify(object) },
     ],
@@ -89,17 +87,13 @@ export async function insertToClickhouse(
 export async function batchInsertToClickhouse(
   table: TableName,
   objects: object[],
-  tenantId?: string
+  tenantId = getContext()?.tenantId as string
 ) {
-  const tableDefinition = ClickHouseTables.find((t) => t.table === table)
-  if (!tableDefinition) {
-    throw new Error(`Table definition not found for table ${table}`)
-  }
-  const tenant = tenantId || getContext()?.tenantId
+  const tableDefinition = assertTableName(table, tenantId)
   await (
     await getClickhouseClient()
   ).insert({
-    table: sanitizeTableName(`${tenant}_${table}`),
+    table: sanitizeTableName(table),
     values: objects.map((object) => ({
       id: object[tableDefinition.idColumn],
       data: JSON.stringify(object),
