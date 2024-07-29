@@ -16,7 +16,9 @@ describe('Add a comment to a case', () => {
 
     // Navigate to case
     cy.intercept('GET', `**/cases**`).as('cases');
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+    );
     cy.wait('@cases', { timeout: 15000 }).then((intercept) => {
       expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
     });
@@ -112,6 +114,9 @@ describe('Add a comment to a case', () => {
             const currentTime = new Date().getTime();
             cy.wrap(currentTime - logEntryTime.getTime()).should('be.lte', 150000);
           });
+        cy.checkNotification([
+          `‘cypress+custom@flagright.com’ added a comment for a case ‘${caseId}’.`,
+        ]);
       });
   });
 });

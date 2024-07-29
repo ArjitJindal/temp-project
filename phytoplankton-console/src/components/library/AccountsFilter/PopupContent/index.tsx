@@ -3,7 +3,7 @@ import { Avatar, List, Typography } from 'antd';
 import cn from 'clsx';
 import s from './style.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
-import { useUsers } from '@/utils/user-utils';
+import { useSortedUsers } from '@/utils/user-utils';
 
 interface Props {
   value: string[];
@@ -15,7 +15,7 @@ const UNASSIGNED = 'Unassigned';
 
 export default function PopupContent(props: Props) {
   const { value, onConfirm } = props;
-  const [users, loading] = useUsers();
+  const [users, loading] = useSortedUsers();
 
   const isSelected = useCallback(
     (user: string) => {
@@ -23,10 +23,7 @@ export default function PopupContent(props: Props) {
         return false;
       }
 
-      const userId =
-        user === UNASSIGNED
-          ? UNASSIGNED
-          : Object.keys(users).find((key) => users[key].name === user);
+      const userId = user === UNASSIGNED ? UNASSIGNED : users.find((u) => u.name === user)?.id;
       if (!userId) {
         return false;
       }
@@ -36,8 +33,8 @@ export default function PopupContent(props: Props) {
     [value, users],
   );
   const options = props?.includeUnassigned
-    ? [UNASSIGNED, ...Object.keys(users).map((key) => users[key].name)]
-    : [...Object.keys(users).map((key) => users[key].name)];
+    ? [UNASSIGNED, ...users.map((u) => u.name)]
+    : [...users.map((u) => u.name)];
   return (
     <div className={s.root}>
       <List
@@ -55,9 +52,7 @@ export default function PopupContent(props: Props) {
                 e.stopPropagation();
                 e.preventDefault();
                 const userId =
-                  user === UNASSIGNED
-                    ? UNASSIGNED
-                    : Object.keys(users).find((key) => users[key].name === user);
+                  user === UNASSIGNED ? UNASSIGNED : users.find((u) => u.name === user)?.id;
 
                 if (!userId) {
                   return;

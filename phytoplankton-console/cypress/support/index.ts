@@ -59,6 +59,7 @@ declare global {
       asertInputDisabled(label: string): Chai.Assertion;
       waitNothingLoading(): Chainable<Element>;
       assertSkeletonLoader(): Chai.Assertion;
+      checkNotification(statement: string[]): Chainable<Element>;
     }
   }
 }

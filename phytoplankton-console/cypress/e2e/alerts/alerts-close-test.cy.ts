@@ -5,16 +5,23 @@ describe('Close Alerts from Table', () => {
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.CASE_REOPEN,
     ...PERMISSIONS.CASE_DETAILS,
+    ...PERMISSIONS.NOTIFICATIONS,
   ];
 
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { NOTIFICATIONS: true },
+    });
   });
 
   it('should close and re-open an alert', () => {
     // Close an alert
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+    );
     cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
+    cy.get('td[data-cy="alertId"]').first().invoke('text').as('alertIdValue');
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');
@@ -32,5 +39,10 @@ describe('Close Alerts from Table', () => {
     cy.caseAlertAction('Re-Open');
     cy.get('button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@alert').its('response.statusCode').should('eq', 200);
+    cy.get('@alertIdValue').then((alertId) => {
+      cy.checkNotification([
+        `‘cypress+custom@flagright.com’ changed status of an alert ‘${alertId}’`,
+      ]);
+    });
   });
 });

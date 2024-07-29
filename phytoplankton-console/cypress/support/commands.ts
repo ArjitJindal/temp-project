@@ -223,12 +223,36 @@ Cypress.Commands.add('toggleFeatures', (features) => {
     }
 
     if (newFeatures.sort().join(',') !== existingFeatures.sort().join(',')) {
+      const hasNotificationFeature = newFeatures.includes('NOTIFICATIONS');
       // Update settings
       cy.apiHandler({
         endpoint: `tenants/settings`,
         method: 'POST',
         body: {
           features: newFeatures,
+          ...(hasNotificationFeature
+            ? {
+                notificationsSubscriptions: {
+                  console: [
+                    'CASE_ASSIGNMENT',
+                    'ALERT_ASSIGNMENT',
+                    'CASE_UNASSIGNMENT',
+                    'ALERT_UNASSIGNMENT',
+                    'CASE_ESCALATION',
+                    'ALERT_ESCALATION',
+                    'ALERT_COMMENT_MENTION',
+                    'CASE_COMMENT_MENTION',
+                    'USER_COMMENT_MENTION',
+                    'CASE_IN_REVIEW',
+                    'ALERT_IN_REVIEW',
+                    'ALERT_COMMENT',
+                    'CASE_COMMENT',
+                    'ALERT_STATUS_UPDATE',
+                    'CASE_STATUS_UPDATE',
+                  ],
+                },
+              }
+            : {}),
         },
       });
       cy.reload();
@@ -344,4 +368,15 @@ Cypress.Commands.add('waitNothingLoading', () => {
 Cypress.Commands.add('assertSkeletonLoader', () => {
   cy.get("[data-cy='skeleton']").should('exist');
   cy.get("[data-cy='skeleton']").should('not.exist');
+});
+
+Cypress.Commands.add('checkNotification', (statements: string[]) => {
+  cy.loginByRole('admin');
+  cy.get('div[data-cy="notifications"]').click();
+  cy.waitNothingLoading();
+  cy.get('div[data-cy="notification-message"]').then(($elements) => {
+    const texts = $elements.map((index, el) => Cypress.$(el).text()).get();
+    const found = statements.every((statement) => texts.includes(statement));
+    expect(found).to.be.true;
+  });
 });

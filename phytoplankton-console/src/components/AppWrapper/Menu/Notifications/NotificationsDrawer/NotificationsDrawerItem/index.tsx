@@ -47,7 +47,7 @@ export default function NotificationsDrawerItem(props: Props) {
     >
       <Avatar size="medium" user={users[notification.triggeredBy]} isLoading={isLoading} />
       <div className={s.content}>
-        <div className={s.message}>
+        <div className={s.message} data-cy={'notification-message'}>
           <NotificationMessage notification={notification} />
         </div>
         <div className={s.time}>

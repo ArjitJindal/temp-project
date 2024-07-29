@@ -18,6 +18,7 @@ interface Props {
   disabledByFeature?: boolean;
   onClick?: () => void;
   isActiveHighlightingEnabled?: boolean;
+  testName?: string;
 }
 
 export default function TopLevelLink(props: Props) {
@@ -33,6 +34,7 @@ export default function TopLevelLink(props: Props) {
     disabledByFeature,
     onClick,
     isActiveHighlightingEnabled = false,
+    testName,
   } = props;
   const branding = getBranding();
   const disabledMessage = disabledByFeature ? (
@@ -58,7 +60,7 @@ export default function TopLevelLink(props: Props) {
 
   const newChildren: React.ReactNode = (
     <>
-      <div className={s.left}>
+      <div className={s.left} data-cy={testName}>
         <div className={s.icon}>{icon}</div>
         <div className={s.title}>{children}</div>
       </div>

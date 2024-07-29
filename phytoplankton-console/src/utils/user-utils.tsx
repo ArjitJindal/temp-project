@@ -166,9 +166,14 @@ export function useAccountsQueryResult(): QueryResult<Account[]> {
 }
 
 export function useUsers(
-  options: { includeRootUsers?: boolean; includeBlockedUsers?: boolean } = {
+  options: {
+    includeRootUsers?: boolean;
+    includeBlockedUsers?: boolean;
+    includeSystemUsers?: boolean;
+  } = {
     includeRootUsers: false,
     includeBlockedUsers: false,
+    includeSystemUsers: true,
   },
 ): [{ [userId: string]: Account }, boolean] {
   const user = useAuth0User();
@@ -176,7 +181,7 @@ export function useUsers(
   const users = getOr(usersQueryResult.data, []);
   const isSuperAdmin = isAtLeast(user, UserRole.ROOT);
 
-  let tempUsers = [...users, ...SYSTEM_USERS];
+  let tempUsers = [...users, ...(options.includeSystemUsers ? SYSTEM_USERS : [])];
 
   if (!options.includeRootUsers && !isSuperAdmin) {
     tempUsers = tempUsers.filter((user) => {
@@ -232,14 +237,18 @@ export function useSortedUsers(
   options: {
     includeRootUsers?: boolean;
     includeBlockedUsers?: boolean;
+    includeSystemUsers?: boolean;
   } = {
     includeRootUsers: false,
     includeBlockedUsers: false,
+    includeSystemUsers: false,
   },
 ): [Account[], boolean] {
   const [users, loading] = useUsers(options);
   return [
-    Object.values(users).sort((accountA, accountB) => accountA.name.localeCompare(accountB.name)),
+    Object.values(users)
+      .sort((accountA, accountB) => accountA.name.localeCompare(accountB.name))
+      .filter((account) => !isSystemUser(account.id)),
     loading,
   ];
 }

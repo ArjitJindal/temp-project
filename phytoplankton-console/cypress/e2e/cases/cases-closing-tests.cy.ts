@@ -6,12 +6,20 @@ describe('Closing and Re-Opening the cases', () => {
     ...PERMISSIONS.CASE_DETAILS,
     ...PERMISSIONS.CASE_REOPEN,
     ...PERMISSIONS.TRANSACTION_OVERVIEW,
+    ...PERMISSIONS.NOTIFICATIONS,
   ];
   beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: {
+        NOTIFICATIONS: true,
+      },
+    });
   });
   it('should close a case', () => {
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+    );
     cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 
     cy.get('a[data-cy="case-id"]')
@@ -41,12 +49,17 @@ describe('Closing and Re-Opening the cases', () => {
         cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).click();
         cy.caseAlertAction('Re-Open');
         cy.get('.ant-modal-footer button').eq(1).click();
+        cy.checkNotification([
+          `‘cypress+custom@flagright.com’ changed status of a case ‘${caseId}’`,
+        ]);
       });
   });
 
   it('testing bulk closing of cases with alerts selected', () => {
     const caseIds: string[] = [];
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+    );
     // Getting the caseId
     cy.get('a[data-cy="case-id"]', { timeout: 20000 })
       .should('exist')
@@ -82,6 +95,12 @@ describe('Closing and Re-Opening the cases', () => {
           expect(caseIds).to.include.members([element.text()]);
         }
       });
+
+    cy.checkNotification(
+      caseIds.map(
+        (caseId) => `‘cypress+custom@flagright.com’ changed status of a case ‘${caseId}’`,
+      ),
+    );
   });
 });
 

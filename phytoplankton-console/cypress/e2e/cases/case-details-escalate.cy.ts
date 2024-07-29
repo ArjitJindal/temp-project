@@ -33,15 +33,6 @@ describe('Escalate a case from case-details', () => {
     cy.wait('@escalate').its('response.statusCode').should('eq', 200);
   };
 
-  it('should escalate a case from case details and send it back', () => {
-    selectCase();
-    escalateCase();
-
-    // Verify navigation to the escalated cases page
-    cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED');
-    cy.get('a[data-cy="case-id"]', { timeout: 15000 }).eq(0).should('exist');
-  });
-
   it('should escalate a case from case details then close it and re-open it', () => {
     selectCase();
     escalateCase();
@@ -61,5 +52,44 @@ describe('Escalate a case from case-details', () => {
     cy.get('[data-cy="update-status-button"]').contains('Re-Open').eq(0).should('exist').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@case').its('response.statusCode').should('eq', 200);
+  });
+
+  it('should escalate a case from case details and send it back', () => {
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+    );
+
+    cy.get('a[data-cy="case-id"]')
+      .eq(0)
+      .invoke('text')
+      .then((caseId) => {
+        cy.get('[data-cy="case-id"]').eq(0).click();
+
+        cy.get('button[data-cy="status-options-button"]').eq(0).click();
+        cy.get('.ant-dropdown-menu-title-content > [data-cy="update-status-button"]')
+          .contains('Send back')
+          .should('exist')
+          .click();
+
+        cy.intercept('PATCH', '**/cases/statusChange').as('case');
+        cy.multiSelect('.ant-modal', 'False positive');
+        cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
+        cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
+        cy.get('.ant-modal-footer button[data-cy="modal-ok"]').click();
+        cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(1).click();
+        cy.wait('@case').its('response.statusCode').should('eq', 200);
+        cy.message(
+          `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
+        ).should('exist');
+        cy.message(
+          `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
+        ).should('not.exist');
+
+        escalateCase();
+
+        cy.checkNotification([
+          `‘cypress+custom@flagright.com’ escalated a case ‘${caseId}’ to you.`,
+        ]);
+      });
   });
 });

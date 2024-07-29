@@ -101,6 +101,7 @@ export default function Menu(props: Props) {
                 onClick={() => {
                   setIsNotificationsDrawerVisible((x) => !x);
                 }}
+                testName="notifications"
               >
                 Notifications
               </TopLevelLink>
