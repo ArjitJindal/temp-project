@@ -278,7 +278,7 @@ export class StreamConsumerBuilder {
     return async (event: KinesisStreamEvent) => {
       for (const update of getDynamoDbUpdates(event)) {
         /**   Store DynamoDB Keys in MongoDB * */
-        if (update.NewImage) {
+        if (update.NewImage && !update.NewImage.ttl) {
           await savePartitionKey(
             update.tenantId,
             update.partitionKeyId,

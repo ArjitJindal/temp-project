@@ -16,6 +16,7 @@ import {
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { canAggregateMinute } from '@flagright/lib/rules-engine'
+import { StackConstants } from '@lib/constants'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
 import { getTimeRangeByTimeWindows } from '../utils/time-utils'
@@ -89,6 +90,7 @@ import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEnti
 import { hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
+import { BatchWriteRequestInternal, batchWrite } from '@/utils/dynamodb'
 
 const sqs = getSQSClient()
 
@@ -656,10 +658,14 @@ export class RuleJsonLogicEvaluator {
         beforeTimestamp,
       }
     )
+    logger.info('Prepared rebuild result')
     if (aggregationVariable.aggregationGroupByFieldKey) {
-      const groups = Object.values(aggregationResult).flatMap((v) =>
-        Object.keys(v.value as { [group: string]: unknown })
+      const groups = uniq(
+        Object.values(aggregationResult).flatMap((v) =>
+          Object.keys(v.value as { [group: string]: unknown })
+        )
       )
+      const writeRequests: BatchWriteRequestInternal[] = []
       for (const group of groups) {
         const groupAggregationResult = omitBy(
           mapValues(aggregationResult, (v) => ({
@@ -667,13 +673,21 @@ export class RuleJsonLogicEvaluator {
           })),
           (v) => !v.value
         )
-        await this.aggregationRepository.rebuildUserTimeAggregations(
-          userKeyId,
-          aggregationVariable,
-          groupAggregationResult,
-          group
-        )
+        const groupWriteRequests =
+          this.aggregationRepository.getUserTimeAggregationsRebuildWriteRequests(
+            userKeyId,
+            aggregationVariable,
+            groupAggregationResult,
+            group
+          )
+        writeRequests.push(...groupWriteRequests)
       }
+      logger.info(`Saving aggregation for ${groups.length} groups`)
+      await batchWrite(
+        this.dynamoDb,
+        writeRequests,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      )
     } else {
       await this.aggregationRepository.rebuildUserTimeAggregations(
         userKeyId,
@@ -743,7 +757,7 @@ export class RuleJsonLogicEvaluator {
     let timeoutReached = false
     const timeout = setTimeout(() => {
       timeoutReached = true
-    }, 14 * 60 * 1000)
+    }, 10 * 60 * 1000)
     let timeAggregatedResult: {
       [time: string]: AggregationData
     } = {}

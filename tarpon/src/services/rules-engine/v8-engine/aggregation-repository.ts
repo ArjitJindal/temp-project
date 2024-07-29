@@ -13,6 +13,7 @@ import { getTransactionStatsTimeGroupLabel } from '../utils/transaction-rule-uti
 import { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
+  BatchWriteRequestInternal,
   batchWrite,
   dynamoDbQueryHelper,
   paginateQuery,
@@ -63,6 +64,39 @@ export class AggregationRepository {
     this.tenantId = tenantId
   }
 
+  public getUserTimeAggregationsRebuildWriteRequests(
+    userKeyId: string,
+    aggregationVariable: RuleAggregationVariable,
+    aggregationData: {
+      [time: string]: AggregationData
+    },
+    groupValue: string | undefined
+  ): BatchWriteRequestInternal[] {
+    const aggregationDataWithTtl = mapValues(aggregationData, (data) => {
+      return {
+        ...data,
+        ttl: this.getUpdatedTtlAttribute(aggregationVariable),
+      }
+    })
+    return Object.entries(aggregationDataWithTtl).map((entry) => {
+      const keys = DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
+        this.tenantId,
+        userKeyId,
+        getAggVarHash(aggregationVariable),
+        groupValue,
+        entry[0]
+      )
+      return {
+        PutRequest: {
+          Item: {
+            ...keys,
+            ...entry[1],
+          },
+        },
+      }
+    })
+  }
+
   public async rebuildUserTimeAggregations(
     userKeyId: string,
     aggregationVariable: RuleAggregationVariable,
@@ -71,30 +105,11 @@ export class AggregationRepository {
     },
     groupValue: string | undefined
   ) {
-    const aggregationDataWithTtl = mapValues(aggregationData, (data) => {
-      return {
-        ...data,
-        ttl: this.getUpdatedTtlAttribute(aggregationVariable),
-      }
-    })
-    const writeRequests = Object.entries(aggregationDataWithTtl).map(
-      (entry) => {
-        const keys = DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
-          this.tenantId,
-          userKeyId,
-          getAggVarHash(aggregationVariable),
-          groupValue,
-          entry[0]
-        )
-        return {
-          PutRequest: {
-            Item: {
-              ...keys,
-              ...entry[1],
-            },
-          },
-        }
-      }
+    const writeRequests = this.getUserTimeAggregationsRebuildWriteRequests(
+      userKeyId,
+      aggregationVariable,
+      aggregationData,
+      groupValue
     )
     await batchWrite(
       this.dynamoDb,
@@ -196,7 +211,7 @@ export class AggregationRepository {
           userKeyId,
           getAggVarHash(aggregationVariable)
         ),
-        ttl: this.getUpdatedTtlAttribute(aggregationVariable),
+        ttl: duration(1, 'year').asSeconds(),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
