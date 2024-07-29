@@ -8,6 +8,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
+  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -55,7 +56,7 @@ async function userHandler(
   if (!newUser || !newUser.userId) {
     return
   }
-  envIs('dev') && void insertToClickhouse('users', newUser)
+  envIs('dev') && void insertToClickhouse(USERS_COLLECTION(tenantId), newUser)
   updateLogMetadata({ userId: newUser.userId })
 
   logger.info(`Processing User`)
@@ -159,7 +160,8 @@ async function userEventHandler(
   if (!userEvent || !userEvent.eventId) {
     return
   }
-  envIs('dev') && void insertToClickhouse('user_events', userEvent)
+  envIs('dev') &&
+    void insertToClickhouse(USER_EVENTS_COLLECTION(tenantId), userEvent)
 
   updateLogMetadata({
     userId: userEvent.userId,
@@ -193,7 +195,10 @@ async function transactionEventHandler(
     return
   }
   envIs('dev') &&
-    void insertToClickhouse('transaction_events', transactionEvent)
+    void insertToClickhouse(
+      TRANSACTION_EVENTS_COLLECTION(tenantId),
+      transactionEvent
+    )
   updateLogMetadata({
     transactionId: transactionEvent.transactionId,
     eventId: transactionEvent.eventId,
