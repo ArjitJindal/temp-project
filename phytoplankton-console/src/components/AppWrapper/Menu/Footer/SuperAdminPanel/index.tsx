@@ -49,7 +49,7 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
   },
   AI_FORENSICS: { title: 'AI Forensics', description: 'Enables AI forensics' },
   GOOGLE_SSO: { title: "Google SSO (Don't Use)", description: 'Enable google log in' },
-  SANCTIONS: { title: 'Sanctions', description: 'Enables sanctions' },
+  SANCTIONS: { title: 'Screening', description: 'Enables screening' },
   FALSE_POSITIVE_CHECK: {
     title: 'False Positive Check',
     description: 'Demo feature for false positive check',

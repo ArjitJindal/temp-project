@@ -62,6 +62,6 @@ export default {
     'Create a risk level parameter to score your customer',
   'menu.risk-levels.risk-algorithms': 'Risk algorithms',
   'menu.risk-levels.risk-algorithms.description': 'Algorithms used to calculate risk scores',
-  'menu.sanctions': 'Sanctions',
+  'menu.sanctions': 'Screening',
   'menu.risk-levels.custom-risk-factors': 'Custom risk factors',
 };

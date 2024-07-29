@@ -25,7 +25,7 @@ function UserDetails(props: Props) {
 
   const tabs = [
     permissions.has('users:user-details:read') && { label: 'Overview', value: 'OVERVIEW' },
-    sanctionsEnabled && { label: 'Sanctions whitelist', value: 'SANCTIONS_WHITELIST' },
+    sanctionsEnabled && { label: 'Screening whitelist', value: 'SANCTIONS_WHITELIST' },
   ].filter(notEmpty);
 
   const [tab, setTab] = useState(tabs[0]?.value);

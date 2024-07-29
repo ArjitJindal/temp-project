@@ -410,8 +410,32 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
+      // Redirect any path starting with /sanctions to /screening
       {
-        path: '/sanctions',
+        path: '/sanctions*',
+        name: 'sanctions-redirect',
+        hideInMenu: true,
+        routes: [
+          {
+            path: '/sanctions',
+            redirect: '/screening',
+          },
+          {
+            path: '/sanctions/:type',
+            redirect: '/screening/:type',
+          },
+          {
+            path: '/sanctions/search/:searchId',
+            redirect: '/screening/search/:searchId',
+          },
+          {
+            path: '/sanctions/activity',
+            redirect: '/screening/activity',
+          },
+        ],
+      },
+      {
+        path: '/screening',
         name: 'sanctions',
         icon: 'sanctions',
         hideChildrenInMenu: true,
@@ -422,19 +446,19 @@ export function useRoutes(): RouteItem[] {
         routes: isSanctionsEnabled
           ? [
               {
-                path: '/sanctions',
+                path: '/screening',
                 redirect:
                   lastActiveSanctionsTab === 'search'
-                    ? '/sanctions/search'
-                    : '/sanctions/search-history',
+                    ? '/screening/search'
+                    : '/screening/search-history',
               },
               {
-                path: '/sanctions/:type',
+                path: '/screening/:type',
                 name: 'sanctions',
                 component: SanctionsPage,
               },
               {
-                path: '/sanctions/search/:searchId',
+                path: '/screening/search/:searchId',
                 component: SanctionsPage,
                 name: 'search-history-item',
               },

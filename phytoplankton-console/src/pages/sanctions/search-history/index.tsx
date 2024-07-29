@@ -26,7 +26,7 @@ type TableSearchParams = CommonParams & {
   searchedBy?: string[];
 };
 
-const sanctionsSearchLink = (searchId: string) => `/sanctions/search/${searchId}`;
+const sanctionsSearchLink = (searchId: string) => `/screening/search/${searchId}`;
 
 export const SanctionsSearchHistoryTable: React.FC = () => {
   const api = useApi();

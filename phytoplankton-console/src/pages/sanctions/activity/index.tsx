@@ -136,7 +136,7 @@ export const SanctionsScreeningActivity = () => {
           render: (name, { item: entity }) => (
             <Row align="middle">
               <Space>
-                <Id to={`/sanctions/search/${entity.searchId}`}>{name}</Id>
+                <Id to={`/screening/search/${entity.searchId}`}>{name}</Id>
                 {entity.isNew ? <b>NEW</b> : null}
               </Space>
             </Row>

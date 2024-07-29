@@ -12,7 +12,7 @@ export const SanctionsSettings = () => {
   const branding = getBranding();
 
   const handleDownload = () => {
-    message.success('Sanctions list download started');
+    message.success('Screening list download started');
     const downloadUrl =
       'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+February+2024.xlsx';
     downloadLink(downloadUrl, 'SanctionsList-February-2024.xlsx');

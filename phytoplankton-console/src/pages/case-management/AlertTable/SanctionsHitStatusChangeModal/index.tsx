@@ -141,11 +141,11 @@ function getReasons(newStatus: SanctionsHitStatus): SanctionsHitReasons[] {
 
 function getTitle(newStatus: SanctionsHitStatus): string {
   if (newStatus === 'OPEN') {
-    return 'Restore sanctions hits';
+    return 'Restore screening hits';
   } else if (newStatus === 'CLEARED') {
-    return 'Clear sanctions hits';
+    return 'Clear screening hits';
   } else if (newStatus === 'ESCALATED') {
-    return 'Escalate sanctions hits';
+    return 'Escalate screening hits';
   }
   return neverReturn(newStatus, `Change status to "${newStatus}"`);
 }

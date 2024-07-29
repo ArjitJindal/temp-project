@@ -83,7 +83,7 @@ export function SanctionsSearchTable(props: Props) {
       onSuccess: (data) => {
         navigate(
           makeUrl(
-            `/sanctions/search/:searchId`,
+            `/screening/search/:searchId`,
             {
               searchId: data.searchId,
             },

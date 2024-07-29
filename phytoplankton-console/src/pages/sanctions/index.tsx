@@ -31,7 +31,7 @@ const SanctionsPage: React.FC = () => {
       <PageTabs
         activeKey={type}
         onChange={(key) => {
-          navigate(`/sanctions/${key}`, { replace: true });
+          navigate(`/screening/${key}`, { replace: true });
         }}
         items={[
           {
