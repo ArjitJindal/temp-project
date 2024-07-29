@@ -29,7 +29,12 @@ const {
   jwt: rawJwt,
   transactionIds,
   ruleInstanceIds,
-} = fs.readJSONSync(configPath, 'utf-8')
+} = fs.readJSONSync(configPath, 'utf-8') as {
+  api: string
+  jwt: string
+  transactionIds: string[]
+  ruleInstanceIds: string[]
+}
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from "${api}"`)
 
@@ -191,7 +196,7 @@ async function verifyTransactionLocally(transaction: InternalTransaction) {
   ).result
 }
 
-async function verifyTransactioEventLocally(
+async function verifyTransactionEventLocally(
   transactionEvent: TransactionEventWithRulesResult
 ) {
   return (
@@ -259,17 +264,16 @@ async function main() {
   const results: any[] = []
   for (let i = 0; i < transactionsOrEvents.length; i += 1) {
     const txOrEvent = transactionsOrEvents[i]
-    const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult)
-      .updatedTransactionAttributes
+    const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult).eventId
     const time = dayjs(txOrEvent.timestamp).toISOString()
-    const removeRuleHit = !!(
+    const remoteRuleHit = !!(
       isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
-    ).hitRules?.find((v) => ruleInstanceIds.include(v.ruleInstanceId))
+    ).hitRules?.find((v) => ruleInstanceIds.includes(v.ruleInstanceId))
     let result: any
     if (isTxEvent) {
       const txEvent = txOrEvent as TransactionEventWithRulesResult
       try {
-        result = await verifyTransactioEventLocally(txEvent)
+        result = await verifyTransactionEventLocally(txEvent)
       } catch (e) {
         console.error(`[${time}] Failed to verify tx event ${txEvent.eventId}`)
         continue
@@ -286,7 +290,7 @@ async function main() {
         ).eventId?.slice(-5)} (tx: ${txOrEvent.transactionId.slice(-5)})`
       : `tx ${txOrEvent.transactionId.slice(-5)}`
     console.info(
-      `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${removeRuleHit} (remote)`
+      `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${remoteRuleHit} (remote)`
     )
   }
   const outputPath = path.join(

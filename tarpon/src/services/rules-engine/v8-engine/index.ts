@@ -1229,7 +1229,7 @@ export class RuleJsonLogicEvaluator {
     // TODO: Optimize loading transaction events
     if (
       data.type === 'TRANSACTION' &&
-      !isEmpty(data.transactionEvents) &&
+      isEmpty(data.transactionEvents) &&
       entityVariableKeys.find((v) =>
         v.startsWith(TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE)
       )
