@@ -58,7 +58,8 @@ export const config: Config = {
       MEMORY_SIZE: 512,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
-      PROVISIONED_CONCURRENCY: 0,
+      PROVISIONED_CONCURRENCY: 1,
+      MEMORY_SIZE: 1024,
     },
     USERS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,

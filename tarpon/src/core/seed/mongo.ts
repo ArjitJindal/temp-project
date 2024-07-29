@@ -1,6 +1,13 @@
 import { MongoClient } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
+import { ClickHouseTables } from '../../utils/clickhouse-definition'
+import {
+  batchInsertToClickhouse,
+  createOrUpdateClickHouseTable,
+  getClickhouseClient,
+  sanitizeTableName,
+} from '../../utils/clickhouse-utils'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
@@ -58,6 +65,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { envIs } from '@/utils/env'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -181,6 +189,25 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
         ])
       }
     }
+  }
+
+  if (envIs('local') || envIs('dev')) {
+    const clickhouseClient = await getClickhouseClient()
+    await Promise.all(
+      ClickHouseTables.map(async (table) => {
+        const clickhouseTable = sanitizeTableName(`${tenantId}-${table.table}`)
+        const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
+        await clickhouseClient.query({ query: checkTableQuery })
+        const mongoTableName = `${tenantId}-${table.table}`
+        const data =
+          collections.find(
+            ([collectionNameFn]) =>
+              collectionNameFn(tenantId) === mongoTableName
+          )?.[1]?.() || []
+        await createOrUpdateClickHouseTable(tenantId, table)
+        await batchInsertToClickhouse(table.table, data as object[], tenantId)
+      })
+    )
   }
 
   logger.info('Refreshing dashboard stats...')

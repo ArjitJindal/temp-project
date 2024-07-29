@@ -25,6 +25,12 @@ export type Secrets = {
     accountId: string
     licenseKey: string
   }
+  clickhouse: {
+    url: string
+    username: string
+    password: string
+    database: string
+  }
 }
 
 export type SecretName = keyof Secrets

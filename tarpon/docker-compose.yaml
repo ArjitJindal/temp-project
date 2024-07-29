@@ -19,3 +19,11 @@ services:
       - ./.local-mongodb-data:/data/db
     ports:
       - 27018:27017
+  clickhouse-server:
+    image: clickhouse/clickhouse-server:latest
+    container_name: local-clickhouse-server
+    ports:
+      - '8123:8123'
+      - '9000:9000'
+    volumes:
+      - ./.local-clickhouse-data:/var/lib/clickhouse-server

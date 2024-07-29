@@ -75,6 +75,8 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { insertToClickhouse } from '@/utils/clickhouse-utils'
+import { envIs } from '@/utils/env'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -140,14 +142,21 @@ export class MongoDbTransactionRepository
       )
     }
 
-    await transactionsCollection.replaceOne(
-      { transactionId: transaction.transactionId },
-      {
-        ...pick(existingTransaction, INTERNAL_ONLY_TRANSACTION_ATTRIBUTES),
-        ...internalTransaction,
-      },
-      { upsert: true }
-    )
+    const payload: InternalTransaction = {
+      ...pick(internalTransaction, INTERNAL_ONLY_TRANSACTION_ATTRIBUTES),
+      ...internalTransaction,
+    }
+
+    await Promise.all([
+      transactionsCollection.replaceOne(
+        { transactionId: transaction.transactionId },
+        payload,
+        { upsert: true }
+      ),
+      envIs('dev') &&
+        insertToClickhouse(TRANSACTIONS_COLLECTION(this.tenantId), payload),
+    ])
+
     return internalTransaction
   }
 

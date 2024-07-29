@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
 import { MongoClient } from 'mongodb'
+import axios from 'axios'
 import { seedMongo } from '@/core/seed/mongo'
 import { seedDynamo } from '@/core/seed/dynamodb'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -38,6 +39,13 @@ async function main() {
   console.info('Closing up dynamo client')
   dynamoClient.destroy()
   console.info('Finished seeding!')
+
+  console.info('Creating Clickhouse tables...')
+
+  // Create Clickhouse database
+  await axios.post(
+    'http://localhost:8123/?query=CREATE%20DATABASE%20IF%20NOT%20EXISTS%20tarpon'
+  )
 }
 
 main()

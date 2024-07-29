@@ -27,6 +27,13 @@ on:
 jobs:
   test:
     runs-on: large
+    services:
+      clickhouse-server:
+        image: clickhouse/clickhouse-server:latest
+        ports:
+          - '8123:8123'
+          - '9000:9000'
+        options: --health-cmd="clickhouse-client --query 'SELECT 1'" --health-interval=10s --health-timeout=5s --health-retries=5
     timeout-minutes: 30
     name: test-tarpon
     steps:

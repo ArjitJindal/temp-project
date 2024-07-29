@@ -101,7 +101,7 @@ export function createFunction(
         LAMBDA_CODE_PATH: LAMBDAS[name].codePath,
         QA_SUBDOMAIN: process.env.QA_SUBDOMAIN as string,
         SEED_TRANSACTIONS_COUNT:
-          context.config.stage === 'dev' ? '500' : '4000',
+          context.config.stage === 'dev' ? '400' : '4000',
       },
     },
     functionName: name,

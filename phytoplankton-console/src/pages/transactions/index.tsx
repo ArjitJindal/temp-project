@@ -10,22 +10,23 @@ import TransactionsTable, {
   transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery } from '@/utils/queries/hooks';
+import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { InternalTransaction } from '@/apis';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const TableList = () => {
   const api = useApi();
   const i18n = useI18n();
   const navigate = useNavigate();
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
-  const [params, setParams] = useState<TransactionsTableParams>({ sort: [], pageSize: 50 });
+  const [params, setParams] = useState<TransactionsTableParams>({ sort: [], pageSize: 20 });
 
   const pushParamsToNavigation = useCallback(
     (params: TransactionsTableParams) => {
@@ -44,19 +45,51 @@ const TableList = () => {
     setParams((prevState: TransactionsTableParams) => ({
       ...prevState,
       ...parsedParams,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
-      from: parsedParams.from,
     }));
   }, [parsedParams]);
 
   const queryResult = useCursorQuery<InternalTransaction>(
     TRANSACTIONS_LIST(parsedParams),
     async ({ from }) => {
+      if (isClickhouseEnabled) {
+        return {
+          count: 0,
+          hasNext: false,
+          items: [],
+          hasPrev: false,
+          last: '',
+          next: '',
+          prev: '',
+          limit: 0,
+        };
+      }
+
       return await api.getTransactionsList({
         start: from || parsedParams.from,
         ...transactionParamsToRequest(parsedParams),
       });
+    },
+  );
+
+  const queryResultOffset = usePaginatedQuery<InternalTransaction>(
+    TRANSACTIONS_LIST({ ...parsedParams, offset: true }),
+    async (paginationParams) => {
+      if (!isClickhouseEnabled) {
+        return {
+          items: [],
+          total: 0,
+        };
+      }
+
+      const data = await api.getTransactionsV2List({
+        ...transactionParamsToRequest(parsedParams),
+        ...paginationParams,
+      });
+
+      return {
+        items: data.items,
+        total: data.count,
+      };
     },
   );
 
@@ -119,10 +152,11 @@ const TableList = () => {
               ),
             },
           ]}
-          queryResult={queryResult}
+          queryResult={isClickhouseEnabled ? queryResultOffset : queryResult}
           params={params}
           onChangeParams={handleChangeParams}
           fitHeight
+          paginationBorder={!isClickhouseEnabled}
           isExpandable
         />
       </PageWrapperContentContainer>

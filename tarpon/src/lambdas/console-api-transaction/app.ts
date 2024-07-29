@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { InternalServerError, BadRequest, NotFound } from 'http-errors'
 import { compact } from 'lodash'
+import { ClickhouseTransactionsRepository } from '../../services/rules-engine/repositories/clickhouse-repository'
 import { TransactionService } from './services/transaction-service'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -16,6 +17,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/services/cases'
+import { getClickhouseClient } from '@/utils/clickhouse-utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -106,13 +108,20 @@ export const transactionsViewHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetTransactionsList(
-      async (context, request) =>
-        await transactionService.getTransactionsList(request, {
-          includeEvents: request.includeEvents,
-          includeUsers: request.includeUsers,
-        })
-    )
+    handlers.registerGetTransactionsList(async (context, request) => {
+      return await transactionService.getTransactionsList(request, {
+        includeEvents: request.includeEvents,
+        includeUsers: request.includeUsers,
+      })
+    })
+
+    handlers.registerGetTransactionsV2List(async (context, request) => {
+      const clickHouseClient = await getClickhouseClient()
+      const clickHouseTransactionsRepository =
+        new ClickhouseTransactionsRepository(tenantId, clickHouseClient)
+
+      return await clickHouseTransactionsRepository.getTransactions(request)
+    })
 
     handlers.registerGetTransactionsStatsByType(async (context, request) => ({
       data: await transactionService.getStatsByType(

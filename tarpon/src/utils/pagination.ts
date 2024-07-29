@@ -9,6 +9,9 @@ import {
   SortDirection,
   WithId,
 } from 'mongodb'
+import { ClickHouseClient } from '@clickhouse/client'
+import { addNewSubsegment } from '@/core/xray'
+import { logger } from '@/core/logger'
 
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -18,6 +21,13 @@ export const COUNT_QUERY_LIMIT = 100000
 export interface PaginationParams {
   pageSize?: PageSize
   page?: number
+}
+
+export interface ClickhousePaginationParams {
+  pageSize?: number
+  sortField?: string
+  page?: number
+  sortOrder?: 'ascend' | 'descend'
 }
 
 export interface OptionalPaginationParams {
@@ -115,7 +125,6 @@ export async function cursorPaginate<T extends Document>(
     if (parsedSortValue === undefined && query.sortOrder === 'ascend') {
       fromOr = { [field]: { $exists: true } }
     }
-
     findFilters = findFilters.concat({
       $or: [
         fromOr,
@@ -196,7 +205,7 @@ async function getPrevCursor<T>(
   query: CursorPaginationParams
 ): Promise<{ prev: string; hasPrev: boolean }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
-  if (!query.fromCursorKey || query.fromCursorKey === '') {
+  if (!query.fromCursorKey) {
     return { hasPrev: false, prev: '' }
   }
   const prevItems = await prevFind.limit(pageSize + 1).toArray()
@@ -207,6 +216,98 @@ async function getPrevCursor<T>(
   }
 
   return { hasPrev: true, prev: cursor(prevItem, query.sortField ?? '_id') }
+}
+
+export async function offsetPaginateClickhouse<T>(
+  client: ClickHouseClient,
+  tableName: string,
+  query: ClickhousePaginationParams,
+  where = '1'
+): Promise<{ items: T[]; count: number }> {
+  const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  // replace . with _ to avoid clickhouse error
+  const sortField = (query.sortField || 'id').replace(/\./g, '_')
+  const sortOrder = query.sortOrder || 'ascend'
+  const page = query.page || 1
+  const offset = (page - 1) * pageSize
+
+  const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
+  const findSql = `SELECT id, data, NULL as count FROM ${tableName} WHERE id IN (SELECT id FROM ${tableName} ${
+    where ? `WHERE ${where}` : ''
+  } ORDER BY ${sortField} ${direction} LIMIT ${pageSize} OFFSET ${offset}) ORDER BY ${sortField} ${direction}`
+
+  const countQuery = `SELECT NULL as id, NULL as data, COUNT(*) as count FROM ${tableName} ${
+    where ? `WHERE ${where}` : ''
+  }`
+
+  const combinedQuery = `WITH query1 AS (${findSql}), query2 AS (${countQuery}) SELECT * from query1 UNION ALL SELECT * from query2`
+
+  const [segment, segment2] = await Promise.all([
+    addNewSubsegment('Query time for clickhouse', 'find'),
+    addNewSubsegment('Query time for clickhouse', 'overall'),
+  ])
+
+  const start = Date.now()
+
+  const result = await client.query({
+    query: combinedQuery,
+    format: 'JSONEachRow',
+  })
+  const end = Date.now()
+
+  const clickHouseSummary = JSON.parse(
+    result.response_headers['x-clickhouse-summary'] as string
+  )
+  const clickhouseQueryExecutionTime = clickHouseSummary['elapsed_ns'] / 1000000
+
+  const queryTimeData = {
+    ...clickHouseSummary,
+    query: combinedQuery,
+    networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
+    clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
+    totalLatency: `${end - start}ms`,
+  }
+
+  logger.info('Query time data', queryTimeData)
+  segment?.addMetadata('Query time data', queryTimeData)
+  segment?.close()
+
+  const data = await result.json<{
+    id?: string
+    data?: string
+    count?: number
+  }>()
+
+  let count = 0
+  const items: T[] = []
+
+  data.forEach((item) => {
+    if (item.count) {
+      count = item.count
+    } else {
+      items.push(JSON.parse(item.data as string))
+    }
+  })
+  const end2 = Date.now()
+
+  const overallStats = {
+    ...clickHouseSummary,
+    query: combinedQuery,
+    overallTime: `${end2 - start}ms`,
+    networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
+    systemLatency: `${end2 - end}ms`,
+    clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
+  }
+
+  segment2?.addMetadata('Overall stats', overallStats)
+  segment2?.close()
+
+  logger.info('Overall stats', overallStats)
+
+  return {
+    items: items as T[],
+    count: count,
+  }
 }
 
 function cursor<T>(item?: WithId<T>, sortField?: string): string {

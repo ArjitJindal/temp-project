@@ -14,6 +14,7 @@ import { getConfig, loadConfigEnv } from './utils/config'
 import { syncListLibrary } from './always-run/sync-list-library'
 import { migrateAllTenants, syncFeatureFlags } from './utils/tenant'
 import { syncAccountsLocally } from './always-run/sync-accounts'
+import { syncClickhouseTables } from './always-run/sync-clickhouse'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { seedDynamo } from '@/core/seed/dynamodb'
@@ -150,6 +151,7 @@ async function main() {
 
 async function syncData() {
   await syncMongoDbIndexes()
+  await syncClickhouseTables()
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()

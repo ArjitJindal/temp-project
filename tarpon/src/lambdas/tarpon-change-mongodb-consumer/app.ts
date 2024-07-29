@@ -31,6 +31,8 @@ import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
+import { insertToClickhouse } from '@/utils/clickhouse-utils'
+import { envIs } from '@/utils/env'
 
 async function transactionHandler(
   tenantId: string,
@@ -53,7 +55,9 @@ async function userHandler(
   if (!newUser || !newUser.userId) {
     return
   }
+  envIs('dev') && void insertToClickhouse('users', newUser)
   updateLogMetadata({ userId: newUser.userId })
+
   logger.info(`Processing User`)
 
   let internalUser = newUser as InternalUser
@@ -155,6 +159,8 @@ async function userEventHandler(
   if (!userEvent || !userEvent.eventId) {
     return
   }
+  envIs('dev') && void insertToClickhouse('user_events', userEvent)
+
   updateLogMetadata({
     userId: userEvent.userId,
     userEventId: userEvent.eventId,
@@ -186,6 +192,8 @@ async function transactionEventHandler(
   if (!transactionEvent || !transactionEvent.eventId) {
     return
   }
+  envIs('dev') &&
+    void insertToClickhouse('transaction_events', transactionEvent)
   updateLogMetadata({
     transactionId: transactionEvent.transactionId,
     eventId: transactionEvent.eventId,

@@ -672,6 +672,165 @@ paths:
       responses:
         '200':
           description: OK
+  /transactions-v2:
+    get:
+      summary: Transaction - List V2
+      tags: []
+      x-flagright:
+        permissions:
+          - transactions:overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsResponseOffsetPaginated'
+      operationId: get-transactions-v2-list
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterIdList
+        - schema:
+            $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterOutStatus
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesExecuted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterRuleInstancesHit
+        - schema:
+            type: string
+          in: query
+          name: transactionType
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCurrencies
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterOriginCountries
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterDestinationCountries
+        - schema:
+            type: string
+          in: query
+          name: filterUserId
+        - schema:
+            type: string
+          in: query
+          name: filterOriginUserId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationUserId
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+          in: query
+          name: filterOriginPaymentMethods
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
+          in: query
+          name: filterDestinationPaymentMethods
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+          in: query
+          name: filterTransactionState
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+          in: query
+          name: filterTransactionTypes
+        - schema:
+            type: string
+          in: query
+          name: filterOriginPaymentMethodId
+        - schema:
+            type: string
+          in: query
+          name: filterDestinationPaymentMethodId
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterProductType
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RuleAction'
+          in: query
+          name: filterStatus
   /transactions:
     get:
       summary: Transaction - List
@@ -7122,6 +7281,20 @@ components:
         - items
         - hasNext
         - hasPrev
+    TransactionsResponseOffsetPaginated:
+      title: TransactionsResponseOffsetPaginated
+      type: object
+      description: ''
+      properties:
+        count:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalTransaction'
+      required:
+        - count
+        - items
     TenantApiKey:
       title: TenantApiKey
       type: object
@@ -9016,6 +9189,7 @@ components:
         - KINESIS_ASYNC
         - FILES_AI_SUMMARY
         - RISK_FACTORS_V8
+        - CLICKHOUSE_ENABLED
       description: ''
     ManagedRoleName:
       type: string

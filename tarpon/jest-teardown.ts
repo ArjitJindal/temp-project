@@ -2,6 +2,7 @@
 import 'tsconfig-paths/register'
 
 import { execSync } from 'child_process'
+import axios from 'axios'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MONGO_TEST_DB_PREFIX } from '@/test-utils/mongo-test-utils'
 
@@ -29,5 +30,10 @@ module.exports = async function () {
     for (const database of databases) {
       await mongodbClient.db(database.name).dropDatabase()
     }
+
+    // Clickhouse clean-up
+    await axios.post(
+      'http://localhost:8123/?query=DROP%20DATABASE%20IF%20EXISTS%20tarpon_test'
+    )
   }
 }

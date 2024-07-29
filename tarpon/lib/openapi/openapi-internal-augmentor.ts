@@ -81,6 +81,8 @@ export const ConsoleApiPathToLambda: any = {
   '/merchant-monitoring/{userId}/update_monitoring_status':
     StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
+  '/transactions-v2':
+    StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/action':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions/stats/by-types':

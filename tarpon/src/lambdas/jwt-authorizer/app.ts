@@ -157,7 +157,7 @@ export const jwtAuthorizer = lambdaAuthorizer()(
     const verifiedEmail =
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/verifiedEmail`]
     const demoMode =
-      envIs('sandbox') &&
+      (envIs('sandbox') || envIs('dev')) &&
       verifiedDecoded[`${AUTH0_CUSTOM_CLAIMS_NAMESPACE}/demoMode`] === true
     const allowTenantDeletion =
       verifiedDecoded[

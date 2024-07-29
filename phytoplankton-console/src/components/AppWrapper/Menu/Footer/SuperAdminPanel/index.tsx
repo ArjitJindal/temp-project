@@ -95,6 +95,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Custom Risk Factors',
     description: 'Enables custom risk factors',
   },
+  CLICKHOUSE_ENABLED: {
+    title: 'Clickhouse Enabled (Experimental Dev Only)',
+    description: 'Enables Clickhouse for data retrieval (Experimental)',
+  },
 };
 
 export default function SuperAdminPanel() {

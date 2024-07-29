@@ -146,6 +146,8 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
       memorySize: this.config.resource.TRANSACTIONS_VIEW_LAMBDA?.MEMORY_SIZE,
+      provisionedConcurrency:
+        this.config.resource.TRANSACTIONS_VIEW_LAMBDA.PROVISIONED_CONCURRENCY,
     })
 
     /* Accounts */
