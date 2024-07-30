@@ -32,7 +32,7 @@ describe('Using Assignment filter and assigning cases', () => {
           })
           .then(() => {
             cy.visit(
-              `/case-management/cases?page=1&pageSize=20&showCases=ALL&caseId=${caseId}&caseStatus=OPEN%2CREOPENED`,
+              `/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseId=${caseId}&caseStatus=OPEN%2CREOPENED`,
             );
             // Find all divs with class "unassigned" and select the first one
             cy.get('tr')
