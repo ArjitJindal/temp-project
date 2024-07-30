@@ -29,7 +29,8 @@ describe('Rule create and delete', () => {
     cy.get('th').contains('Updated at').scrollIntoView().click();
     cy.waitNothingLoading();
 
-    cy.get('button[data-cy="rule-delete-button"]').first().should('exist').click();
+    cy.get('[data-cy="rule-actions-menu"]').first().should('exist').click();
+    cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
 
     cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
     cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();

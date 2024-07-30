@@ -1,11 +1,12 @@
 import { Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate, Link } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
+import RuleActionsMenu from '../components/RuleActionsMenu';
 import s from './style.module.less';
 import { RuleInstance, RuleMode } from '@/apis';
 import { useApi } from '@/api';
@@ -22,7 +23,6 @@ import { GET_RULE_INSTANCES } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getErrorMessage } from '@/utils/lang';
 import { useHasPermissions } from '@/utils/user-utils';
-import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standardDataTypes';
@@ -31,7 +31,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
 import { parseQueryString, makeUrl } from '@/utils/routing';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
-import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 
@@ -90,6 +89,18 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         makeUrl('/rules/my-rules/:id/:mode', {
           id: entity.id,
           mode: 'duplicate',
+        }),
+      );
+    },
+    [navigate],
+  );
+
+  const onPreviewRule = useCallback(
+    (entity) => {
+      navigate(
+        makeUrl('/rules/my-rules/:id/:mode', {
+          id: entity.id,
+          mode: 'read',
         }),
       );
     },
@@ -310,7 +321,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         id: 'actions',
         title: 'Action',
         defaultSticky: 'RIGHT',
-        defaultWidth: 350,
+        defaultWidth: 150,
         enableResizing: false,
         render: (entity) => {
           return props.simulationMode ? (
@@ -325,61 +336,39 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             </Button>
           ) : (
             <div className={s.actionIconsContainer}>
-              <Button
+              <EyeOutlined
+                className={s.actionIcons}
+                onClick={() => {
+                  if (!deleting) {
+                    onPreviewRule(entity);
+                  }
+                }}
+                disabled={deleting}
+                data-cy="rule-preview-button"
+              />
+              <EditOutlined
+                className={s.actionIcons}
                 onClick={() => {
                   if (canWriteRules && !deleting) {
                     onEditRule(entity);
                   }
                 }}
-                icon={<EditOutlined />}
-                size="MEDIUM"
-                type="SECONDARY"
-                isDisabled={!canWriteRules}
-                isLoading={deleting}
-                testName="rule-edit-button"
-              >
-                Edit
-              </Button>
-              <Button
-                type="SECONDARY"
-                size="MEDIUM"
-                onClick={() => {
-                  if (canWriteRules && !deleting && entity.id) {
-                    onDuplicateRule(entity);
-                  }
-                }}
-                icon={<FileCopyLineIcon />}
-                isDisabled={!canWriteRules}
-                isLoading={deleting}
-                testName="rule-duplicate-button"
-              >
-                Duplicate
-              </Button>
-              <Confirm
-                title={`Are you sure you want to delete this ${entity.ruleId} ${entity.id} rule?`}
-                text="Please confirm that you want to delete this rule. This action cannot be undone."
-                onConfirm={() => {
-                  if (canWriteRules && entity.id) {
+                disabled={!canWriteRules || deleting}
+                data-cy="rule-edit-button"
+              />
+              <RuleActionsMenu
+                ruleInstance={entity}
+                onDuplicate={onDuplicateRule}
+                onDelete={(id) => {
+                  if (id && canWriteRules) {
                     setDeleting(true);
-                    handleDeleteRuleInstanceMutation.mutate(entity.id);
+                    handleDeleteRuleInstanceMutation.mutate(id);
                   }
                 }}
                 res={getMutationAsyncResource(handleDeleteRuleInstanceMutation)}
-              >
-                {({ onClick }) => (
-                  <Button
-                    onClick={onClick}
-                    icon={<DeleteOutlined />}
-                    size="SMALL"
-                    type="TETRIARY"
-                    isDisabled={!canWriteRules}
-                    isLoading={deleting}
-                    testName="rule-delete-button"
-                  >
-                    Delete
-                  </Button>
-                )}
-              </Confirm>
+                deleting={deleting}
+                canWriteRules={canWriteRules}
+              />
             </div>
           );
         },
@@ -395,6 +384,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
     deleting,
     handleDeleteRuleInstanceMutation,
     onDuplicateRule,
+    onPreviewRule,
   ]);
   const rulesResult = usePaginatedQuery(
     GET_RULE_INSTANCES({ ruleMode, params }),
