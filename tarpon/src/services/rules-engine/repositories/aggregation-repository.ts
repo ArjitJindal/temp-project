@@ -12,7 +12,7 @@ import {
 
 import { mapValues, omit } from 'lodash'
 import { getTransactionStatsTimeGroupLabel } from '../utils/transaction-rule-utils'
-import dayjs, { duration } from '@/utils/dayjs'
+import { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
@@ -439,16 +439,15 @@ export class AggregationRepository {
   public async getUserRuleTimeAggregations<T>(
     userKeyId: string,
     ruleInstanceId: string,
-    afterTimestamp: number,
-    beforeTimestamp: number,
-    timeLabelFormat: string,
+    afterTimeLabel: string,
+    beforeTimeLabel: string,
     version: string
   ): Promise<Array<T & { hour: string }> | undefined> {
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
       tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       sortKey: {
-        from: dayjs(afterTimestamp).format(timeLabelFormat),
-        to: dayjs(beforeTimestamp - 1).format(timeLabelFormat),
+        from: afterTimeLabel,
+        to: beforeTimeLabel,
       },
       partitionKey: DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
         this.tenantId,

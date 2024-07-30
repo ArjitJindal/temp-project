@@ -17,6 +17,7 @@ import {
   unset,
 } from 'lodash'
 import { JSONPath } from 'jsonpath-plus'
+import { canAggregateMinute } from '@flagright/lib/rules-engine'
 import {
   VARIABLE_NAMESPACE_SEPARATOR,
   getDirectionalVariableKeys,
@@ -322,7 +323,24 @@ export function getAggregationGranularity(
     return 'year'
   }
   if (granularities.has('fiscal_year')) {
-    return 'month'
+    return 'day'
   }
   return 'day'
+}
+
+export function canAggregate(timeWindow: RuleAggregationVariableTimeWindow) {
+  const { units: startUnits, granularity: startGranularity } = timeWindow.start
+  const { units: endUnits, granularity: endGranularity } = timeWindow.end
+  if (startGranularity === 'second' || endGranularity === 'second') {
+    return false
+  }
+  if (startGranularity === 'minute' || endGranularity === 'minute') {
+    return canAggregateMinute(
+      startGranularity,
+      startUnits,
+      endGranularity,
+      endUnits
+    )
+  }
+  return true
 }

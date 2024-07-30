@@ -413,6 +413,7 @@ testAggregationRebuild(
       timeWindow: {
         units: 1,
         granularity: 'day',
+        rollingBasis: true,
       },
       highRiskCountries: ['DE', 'TR', 'PK'],
       checkSender: 'all',

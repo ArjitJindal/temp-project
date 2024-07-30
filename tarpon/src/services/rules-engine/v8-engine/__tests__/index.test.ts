@@ -29,7 +29,9 @@ jest.mock('../../v8-operators/starts-ends-with', () => {
 const { STARTS_WITH_OPERATOR } = require('../../v8-operators/starts-ends-with')
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
-const { RuleJsonLogicEvaluator, canAggregate } = require('..')
+const { RuleJsonLogicEvaluator } = require('..')
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { canAggregate } = require('../utils')
 const bulkVerifyTransactions =
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   require('@/test-utils/rule-test-utils').bulkVerifyTransactions
@@ -1521,7 +1523,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'day' },
       },
     })
-    expect(canAggregate(variable1)).toBe(true)
+    expect(canAggregate(variable1.timeWindow)).toBe(true)
 
     const variable2 = createAggregationVariable({
       timeWindow: {
@@ -1529,7 +1531,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'hour' },
       },
     })
-    expect(canAggregate(variable2)).toBe(true)
+    expect(canAggregate(variable2.timeWindow)).toBe(true)
 
     const variable3 = createAggregationVariable({
       timeWindow: {
@@ -1537,7 +1539,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'now' },
       },
     })
-    expect(canAggregate(variable3)).toBe(true)
+    expect(canAggregate(variable3.timeWindow)).toBe(true)
 
     const variable4 = createAggregationVariable({
       timeWindow: {
@@ -1545,7 +1547,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'now' },
       },
     })
-    expect(canAggregate(variable4)).toBe(true)
+    expect(canAggregate(variable4.timeWindow)).toBe(true)
 
     const variable5 = createAggregationVariable({
       timeWindow: {
@@ -1553,7 +1555,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'now' },
       },
     })
-    expect(canAggregate(variable5)).toBe(false)
+    expect(canAggregate(variable5.timeWindow)).toBe(false)
 
     const variable6 = createAggregationVariable({
       timeWindow: {
@@ -1561,7 +1563,7 @@ describe('Test canAggregate function', () => {
         end: { units: 0, granularity: 'now' },
       },
     })
-    expect(canAggregate(variable6)).toBe(true)
+    expect(canAggregate(variable6.timeWindow)).toBe(true)
 
     const variable7 = createAggregationVariable({
       timeWindow: {
@@ -1569,7 +1571,7 @@ describe('Test canAggregate function', () => {
         end: { units: 10, granularity: 'minute' },
       },
     })
-    expect(canAggregate(variable7)).toBe(true)
+    expect(canAggregate(variable7.timeWindow)).toBe(true)
 
     const variable8 = createAggregationVariable({
       timeWindow: {
@@ -1577,7 +1579,7 @@ describe('Test canAggregate function', () => {
         end: { units: 10, granularity: 'minute' },
       },
     })
-    expect(canAggregate(variable8)).toBe(false)
+    expect(canAggregate(variable8.timeWindow)).toBe(false)
   })
 })
 

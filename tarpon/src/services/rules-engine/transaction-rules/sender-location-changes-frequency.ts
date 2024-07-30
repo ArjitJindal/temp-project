@@ -6,7 +6,7 @@ import { RuleHitResult } from '../rule'
 import { getTimestampRange } from '../utils/time-utils'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { lookupIpLocation } from '../utils/geoip'
@@ -203,12 +203,13 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
   private async getTimeAggregatedResult(
     sendingTransactionsWithCard: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       sendingTransactionsWithCard,
       async (group) => ({
         transactionsCount: group.length,
         ipAddresses: Array.from(this.getUniqueIpAddressses(group)),
-      })
+      }),
+      this.getAggregationGranularity()
     )
   }
 

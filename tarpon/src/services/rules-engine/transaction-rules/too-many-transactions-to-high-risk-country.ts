@@ -1,6 +1,7 @@
 import { JSONSchemaType } from 'ajv'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { COUNTRIES_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
@@ -77,6 +78,27 @@ export default class TooManyTransactionsToHighRiskCountryRule extends Transactio
         transaction.destinationAmountDetails?.country
       ? this.isHighRiskCountry(transaction.destinationAmountDetails?.country)
       : false
+  }
+
+  override async getAggregationData(
+    transactions: AuxiliaryIndexTransaction[]
+  ): Promise<number> {
+    return transactions.length
+  }
+
+  protected merge(
+    aggValue1: number | undefined,
+    aggValue2: number | undefined
+  ): number {
+    return (aggValue1 ?? 0) + (aggValue2 ?? 0)
+  }
+
+  protected reduce(aggValue: number | undefined): number {
+    return aggValue ?? 0
+  }
+
+  protected getInitialAggregationDataValue(): number {
+    return 0
   }
 
   override getNeededTransactionFields(): Array<keyof Transaction> {

@@ -7,6 +7,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -54,7 +55,7 @@ const TEST_PAYMENT_DETAILS_3: IBANDetails = {
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-130 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -251,6 +252,7 @@ ruleVariantsTest({ aggregation: false }, () => {
             granularity: 'second',
           },
           checkSender: 'sending',
+          checkReceiver: 'none',
         } as TransactionsRoundValueVelocityRuleParameters,
       },
     ])
@@ -261,8 +263,8 @@ ruleVariantsTest({ aggregation: false }, () => {
         transactions: [
           getTestTransaction({
             transactionId: '1-1',
-            originUserId: '1',
-            destinationUserId: '2',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             originPaymentDetails: TEST_PAYMENT_DETAILS_1,
@@ -271,8 +273,8 @@ ruleVariantsTest({ aggregation: false }, () => {
           }),
           getTestTransaction({
             transactionId: '1-2',
-            originUserId: '1',
-            destinationUserId: '2',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
             originPaymentDetails: TEST_PAYMENT_DETAILS_1,
@@ -281,8 +283,8 @@ ruleVariantsTest({ aggregation: false }, () => {
           }),
           getTestTransaction({
             transactionId: '1-3',
-            originUserId: '6',
-            destinationUserId: '4',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             originPaymentDetails: TEST_PAYMENT_DETAILS_2,
@@ -291,8 +293,8 @@ ruleVariantsTest({ aggregation: false }, () => {
           }),
           getTestTransaction({
             transactionId: '1-4',
-            originUserId: '1',
-            destinationUserId: '2',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             originPaymentDetails: TEST_PAYMENT_DETAILS_1,
@@ -301,8 +303,8 @@ ruleVariantsTest({ aggregation: false }, () => {
           }),
           getTestTransaction({
             transactionId: '1-5',
-            originUserId: '1',
-            destinationUserId: '4',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             originPaymentDetails: TEST_PAYMENT_DETAILS_2,
@@ -311,8 +313,8 @@ ruleVariantsTest({ aggregation: false }, () => {
           }),
           getTestTransaction({
             transactionId: '1-6',
-            originUserId: '6',
-            destinationUserId: '4',
+            originUserId: undefined,
+            destinationUserId: undefined,
             originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
             originPaymentDetails: TEST_PAYMENT_DETAILS_2,
@@ -332,3 +334,129 @@ ruleVariantsTest({ aggregation: false }, () => {
     })
   })
 })
+
+{
+  const TEST_TENANT_ID = getTestTenantId()
+  testAggregationRebuild(
+    TEST_TENANT_ID,
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-round-value-velocity',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
+        transactionsLimit: 1,
+      } as TransactionsRoundValueVelocityRuleParameters,
+    },
+    [
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '3',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '4',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+        timestamp: dayjs('2000-01-01T02:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '5',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+        timestamp: dayjs('2000-01-01T02:00:00.000Z').valueOf(),
+      }),
+    ],
+    {
+      origin: [
+        { sendingCount: { all: 3 }, hour: '2000010101' },
+        { sendingCount: { all: 1 }, hour: '2000010102' },
+      ],
+      destination: [{ hour: '2000010102', receivingCount: { all: 1 } }],
+    }
+  )
+}
+{
+  const TEST_TENANT_ID = getTestTenantId()
+  testAggregationRebuild(
+    TEST_TENANT_ID,
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'transactions-round-value-velocity',
+      defaultParameters: {
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
+        transactionsLimit: 1,
+        sameAmount: true,
+      } as TransactionsRoundValueVelocityRuleParameters,
+    },
+    [
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '2',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_100,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '3',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_200,
+        timestamp: dayjs('2000-01-01T01:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '4',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_101,
+        timestamp: dayjs('2000-01-01T02:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: '5',
+        originAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+        destinationAmountDetails: TEST_TRANSACTION_AMOUNT_300,
+        timestamp: dayjs('2000-01-01T02:00:00.000Z').valueOf(),
+      }),
+    ],
+    {
+      origin: [
+        { sendingCount: { '100EUR': 2, '200EUR': 1 }, hour: '2000010101' },
+        { sendingCount: { '300EUR': 1 }, hour: '2000010102' },
+      ],
+      destination: [{ receivingCount: { '300EUR': 1 }, hour: '2000010102' }],
+    }
+  )
+}

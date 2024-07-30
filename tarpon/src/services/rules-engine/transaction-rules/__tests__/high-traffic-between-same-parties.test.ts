@@ -18,6 +18,7 @@ const DEFAULT_RULE_PARAMETERS: HighTrafficBetweenSamePartiesParameters = {
   timeWindow: {
     units: 1,
     granularity: 'day',
+    rollingBasis: true,
   },
   transactionsLimit: 1,
 }

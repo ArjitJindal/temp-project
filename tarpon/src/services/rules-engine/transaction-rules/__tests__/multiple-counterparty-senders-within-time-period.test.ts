@@ -315,7 +315,14 @@ testAggregationRebuild(
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'multiple-counterparty-senders-within-time-period',
-    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultParameters: {
+      sendersCount: 2,
+      timeWindow: {
+        units: 30,
+        granularity: 'day',
+        rollingBasis: true,
+      },
+    },
   },
   [
     getTestTransaction({

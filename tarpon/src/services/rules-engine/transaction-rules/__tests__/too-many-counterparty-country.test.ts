@@ -9,12 +9,13 @@ import {
   TransactionRuleTestCase,
   testRuleDescriptionFormatting,
   ruleVariantsTest,
+  testAggregationRebuild,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   describe('R-123 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
@@ -25,7 +26,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           transactionsLimit: 2,
           timeWindow: {
             units: 5,
-            granularity: 'second',
+            granularity: 'hour',
           },
           checkSender: 'all',
           checkReceiver: 'all',
@@ -50,7 +51,7 @@ ruleVariantsTest({ aggregation: false }, () => {
             transactionAmount: 800,
             transactionCurrency: 'AFN',
           },
-          timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+          timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
         }),
         getTestTransaction({
           originAmountDetails: {
@@ -58,7 +59,7 @@ ruleVariantsTest({ aggregation: false }, () => {
             transactionAmount: 800,
             transactionCurrency: 'AFN',
           },
-          timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+          timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
         }),
       ],
       {
@@ -67,7 +68,7 @@ ruleVariantsTest({ aggregation: false }, () => {
       [
         null,
         null,
-        'Sender is sending funds from more than 2 unique country within 5 seconds.',
+        'Sender is sending funds from more than 2 unique country within 5 hours.',
       ]
     )
   })
@@ -82,7 +83,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           transactionsLimit: 2,
           timeWindow: {
             units: 5,
-            granularity: 'second',
+            granularity: 'hour',
           },
           checkSender: 'all',
           checkReceiver: 'all',
@@ -107,7 +108,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-01-01T00:00:01.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             originAmountDetails: {
@@ -115,7 +116,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-01-01T00:00:02.000Z').valueOf(),
+            timestamp: dayjs('2022-01-01T02:00:00.000Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, false],
@@ -137,7 +138,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-02-01T00:00:01.000Z').valueOf(),
+            timestamp: dayjs('2022-02-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             originAmountDetails: {
@@ -145,7 +146,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-02-01T00:00:02.000Z').valueOf(),
+            timestamp: dayjs('2022-02-01T02:00:00.000Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, true],
@@ -167,7 +168,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-03-01T00:00:01.000Z').valueOf(),
+            timestamp: dayjs('2022-03-01T01:00:00.000Z').valueOf(),
           }),
           getTestTransaction({
             originAmountDetails: {
@@ -175,7 +176,7 @@ ruleVariantsTest({ aggregation: false }, () => {
               transactionAmount: 800,
               transactionCurrency: 'GBP',
             },
-            timestamp: dayjs('2022-03-01T00:00:02.000Z').valueOf(),
+            timestamp: dayjs('2022-03-01T02:00:00.000Z').valueOf(),
           }),
         ],
         expectedHits: [false, false, false],
@@ -190,3 +191,68 @@ ruleVariantsTest({ aggregation: false }, () => {
     })
   })
 })
+
+{
+  const TEST_TENANT_ID = getTestTenantId()
+  testAggregationRebuild(
+    TEST_TENANT_ID,
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'too-many-counterparty-country',
+      defaultParameters: {
+        transactionsLimit: 2,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
+        checkSender: 'all',
+        checkReceiver: 'all',
+      },
+    },
+    [
+      getTestTransaction({
+        originAmountDetails: {
+          country: 'GB',
+          transactionAmount: 800,
+          transactionCurrency: 'GBP',
+        },
+        timestamp: dayjs('2022-01-01T00:00:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originAmountDetails: {
+          country: 'GB',
+          transactionAmount: 800,
+          transactionCurrency: 'GBP',
+        },
+        timestamp: dayjs('2022-01-01T00:01:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originAmountDetails: {
+          country: 'DE',
+          transactionAmount: 800,
+          transactionCurrency: 'GBP',
+        },
+        timestamp: dayjs('2022-01-01T00:02:00.000Z').valueOf(),
+      }),
+      getTestTransaction({
+        originAmountDetails: {
+          country: 'FR',
+          transactionAmount: 800,
+          transactionCurrency: 'GBP',
+        },
+        timestamp: dayjs('2022-01-01T01:00:00.000Z').valueOf(),
+      }),
+    ],
+    {
+      origin: [
+        { sendingCount: ['DE', 'GB'], hour: '2022010100' },
+        { sendingCount: ['FR'], hour: '2022010101' },
+      ],
+      destination: [
+        { receivingCount: ['IN'], hour: '2022010100' },
+        { receivingCount: ['IN'], hour: '2022010101' },
+      ],
+    }
+  )
+}

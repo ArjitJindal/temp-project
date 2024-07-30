@@ -4,7 +4,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
@@ -195,11 +195,12 @@ export default class SameUserUsingTooManyPaymentIdentifiersRule extends Transact
   private async getTimeAggregatedResult(
     sendingTransactionsWithCard: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       sendingTransactionsWithCard,
       async (group) => ({
         paymentIdentifiers: Array.from(this.getUniquePaymentIdentifers(group)),
-      })
+      }),
+      this.getAggregationGranularity()
     )
   }
 

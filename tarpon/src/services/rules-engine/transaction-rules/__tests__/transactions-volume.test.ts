@@ -1651,6 +1651,7 @@ testAggregationRebuild(
       timeWindow: {
         units: 1,
         granularity: 'day',
+        rollingBasis: true,
       },
       checkSender: 'all',
       checkReceiver: 'all',

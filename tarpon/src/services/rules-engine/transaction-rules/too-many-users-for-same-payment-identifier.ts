@@ -7,7 +7,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { getTimestampRange } from '../utils/time-utils'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
 import { TransactionAggregationRule } from './aggregation-rule'
@@ -199,11 +199,12 @@ export default class TooManyUsersForSamePaymentIdentifierRule extends Transactio
   private async getTimeAggregatedResult(
     sendingTransactionsWithOriginUserId: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       sendingTransactionsWithOriginUserId,
       async (group) => ({
         userIds: Array.from(this.getUniqueOriginUserIds(group)),
-      })
+      }),
+      this.getAggregationGranularity()
     )
   }
 

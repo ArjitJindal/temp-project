@@ -15,7 +15,6 @@ import {
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
-import { canAggregateMinute } from '@flagright/lib/rules-engine'
 import { StackConstants } from '@lib/constants'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
@@ -61,6 +60,7 @@ import {
   getAggVarHash,
 } from './aggregation-repository'
 import {
+  canAggregate,
   getAggregationGranularity,
   getVariableKeysFromLogic,
   transformJsonLogic,
@@ -117,25 +117,6 @@ type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
 }
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: RuleEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
-
-export function canAggregate(variable: RuleAggregationVariable) {
-  const { units: startUnits, granularity: startGranularity } =
-    variable.timeWindow.start
-  const { units: endUnits, granularity: endGranularity } =
-    variable.timeWindow.end
-  if (startGranularity === 'second' || endGranularity === 'second') {
-    return false
-  }
-  if (startGranularity === 'minute' || endGranularity === 'minute') {
-    return canAggregateMinute(
-      startGranularity,
-      startUnits,
-      endGranularity,
-      endUnits
-    )
-  }
-  return true
-}
 
 export async function sendAggregationTask(
   task: TransactionAggregationTaskEntry
@@ -882,7 +863,10 @@ export class RuleJsonLogicEvaluator {
     data: TransactionRuleData,
     direction: 'origin' | 'destination'
   ) {
-    if (this.mode !== 'DYNAMODB' || !canAggregate(aggregationVariable)) {
+    if (
+      this.mode !== 'DYNAMODB' ||
+      !canAggregate(aggregationVariable.timeWindow)
+    ) {
       return
     }
     const { transaction } = data
@@ -1111,7 +1095,10 @@ export class RuleJsonLogicEvaluator {
         )) as string)
       : undefined
     let aggData: Array<{ time: string } & AggregationData> = []
-    if (this.mode === 'DYNAMODB' && canAggregate(aggregationVariable)) {
+    if (
+      this.mode === 'DYNAMODB' &&
+      canAggregate(aggregationVariable.timeWindow)
+    ) {
       // If the mode is DYNAMODB, we fetch the pre-built aggregation data
       const userKeyId =
         data.type === 'TRANSACTION'

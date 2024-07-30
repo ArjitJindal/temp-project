@@ -13,7 +13,7 @@ import { getTimestampRange, subtractTime } from '../utils/time-utils'
 import { RuleHitResult } from '../rule'
 import {
   groupTransactions,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { TransactionAggregationRule } from './aggregation-rule'
 import dayjs from '@/utils/dayjs'
@@ -185,7 +185,7 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
   private async getTimeAggregatedResult(
     sendingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       sendingTransactions,
       async (group) => {
         return groupTransactions(
@@ -197,7 +197,8 @@ export default class HighTrafficBetweenSameParties extends TransactionAggregatio
             }) || 'Unknown',
           async (group) => group.length
         )
-      }
+      },
+      this.getAggregationGranularity()
     )
   }
 

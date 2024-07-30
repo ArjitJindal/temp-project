@@ -351,13 +351,18 @@ export async function groupTransactionsByGranularity<T>(
   )
 }
 
-export async function groupTransactionsByHour<T>(
+export async function groupTransactionsByTime<T>(
   transactions: AuxiliaryIndexTransaction[],
-  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
+  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
+  timeGranularity: RuleAggregationTimeWindowGranularity
 ): Promise<{ [hourKey: string]: T }> {
   return groupTransactions(
     transactions,
-    (transaction) => dayjs(transaction.timestamp).format('YYYYMMDDHH'),
+    (transaction) =>
+      getTransactionStatsTimeGroupLabelV2(
+        transaction.timestamp as number,
+        timeGranularity
+      ),
     aggregator
   )
 }
@@ -401,6 +406,17 @@ export function getTransactionStatsTimeGroupLabel(
     default:
       return dayjs(timestamp).format('YYYY-MM-DD-HH')
   }
+}
+
+export function getTransactionStatsTimeGroupLabelV2(
+  timestamp: number,
+  timeGranularity: RuleAggregationTimeWindowGranularity
+): string {
+  if (timeGranularity === 'hour') {
+    // For backward compatibility
+    return dayjs(timestamp).format('YYYYMMDDHH')
+  }
+  return getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
 }
 
 const NAME_PREFIXES = [

@@ -27,7 +27,7 @@ import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { RULE_OPERATORS } from './v8-operators'
 import { RULE_FUNCTIONS } from './v8-functions'
-import { getVariableKeysFromLogic } from './v8-engine/utils'
+import { canAggregate, getVariableKeysFromLogic } from './v8-engine/utils'
 import { getTimeRangeByTimeWindows } from './utils/time-utils'
 import { TimeWindow } from './utils/rule-parameter-schemas'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -51,10 +51,7 @@ import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchRespon
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
-import {
-  canAggregate,
-  getJsonLogicEngine,
-} from '@/services/rules-engine/v8-engine'
+import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { notNullish } from '@/utils/array'
 import {
@@ -618,7 +615,7 @@ You have to answer in below format as string. If you don't know any field, just 
       )
       if (
         afterTimestamp >= beforeTimestamp ||
-        (!canAggregate(v) &&
+        (!canAggregate(v.timeWindow) &&
           dayjs(beforeTimestamp).diff(afterTimestamp, 'minute') > 60)
       ) {
         throw new BadRequest('Invalid aggregation time window')

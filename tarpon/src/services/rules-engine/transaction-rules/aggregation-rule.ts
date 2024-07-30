@@ -1,16 +1,16 @@
 import { mapValues } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
+import { canAggregate, getAggregationGranularity } from '../v8-engine/utils'
+import { getTransactionStatsTimeGroupLabelV2 } from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
-import dayjs, { duration } from '@/utils/dayjs'
+import { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { envIs } from '@/utils/env'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
-
-const AGGREGATION_TIME_FORMAT = 'YYYYMMDDHH'
 
 @traceable
 export abstract class TransactionAggregationRule<
@@ -116,7 +116,10 @@ export abstract class TransactionAggregationRule<
 
     const targetHour =
       targetAggregations?.[0]?.hour ||
-      dayjs(this.transaction.timestamp).format(AGGREGATION_TIME_FORMAT)
+      getTransactionStatsTimeGroupLabelV2(
+        this.transaction.timestamp as number,
+        this.getAggregationGranularity()
+      )
     const updatedAggregation = await this.getUpdatedTargetAggregation(
       direction,
       targetAggregations?.[0],
@@ -204,9 +207,14 @@ export abstract class TransactionAggregationRule<
     return this.aggregationRepository.getUserRuleTimeAggregations<A>(
       userKeyId,
       this.ruleInstance.id as string,
-      afterTimestamp,
-      beforeTimestamp,
-      AGGREGATION_TIME_FORMAT,
+      getTransactionStatsTimeGroupLabelV2(
+        afterTimestamp,
+        this.getAggregationGranularity()
+      ),
+      getTransactionStatsTimeGroupLabelV2(
+        beforeTimestamp - 1,
+        this.getAggregationGranularity()
+      ),
       version
     )
   }
@@ -216,9 +224,13 @@ export abstract class TransactionAggregationRule<
     afterTimestamp: number,
     beforeTimestamp: number
   ) {
-    const afterHour = dayjs(afterTimestamp).format(AGGREGATION_TIME_FORMAT)
-    const beforeHour = dayjs(beforeTimestamp - 1).format(
-      AGGREGATION_TIME_FORMAT
+    const afterHour = getTransactionStatsTimeGroupLabelV2(
+      afterTimestamp,
+      this.getAggregationGranularity()
+    )
+    const beforeHour = getTransactionStatsTimeGroupLabelV2(
+      beforeTimestamp - 1,
+      this.getAggregationGranularity()
     )
     const filterAggData = aggData.filter(
       (data) => data.hour >= afterHour && data.hour <= beforeHour
@@ -272,10 +284,24 @@ export abstract class TransactionAggregationRule<
     if (granularity === 'fiscal_year') {
       granularity = 'year'
     }
-    // When testing, we want to make sure aggregation is used if the feature flag is on.
-
     return (
-      duration(units, granularity).asHours() > 12 || process.env.ENV === 'local'
+      canAggregate({
+        start: { units, granularity },
+        end: { units: 1, granularity: 'now' },
+      }) ||
+      // When testing, we want to make sure aggregation is used if the feature flag is on.
+      process.env.ENV === 'local'
+    )
+  }
+
+  public getAggregationGranularity() {
+    const start = this.getMaxTimeWindow()
+    return getAggregationGranularity(
+      {
+        start,
+        end: { units: 1, granularity: 'now' },
+      },
+      this.tenantId
     )
   }
 }

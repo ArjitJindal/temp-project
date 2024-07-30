@@ -1,10 +1,12 @@
 import { getFiscalYearStart } from '@flagright/lib/utils/time'
 import { migrateAllTenants } from '../utils/tenant'
-import { canAggregate } from '@/services/rules-engine/v8-engine'
 import { Tenant } from '@/services/accounts'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getAggregationGranularity } from '@/services/rules-engine/v8-engine/utils'
+import {
+  canAggregate,
+  getAggregationGranularity,
+} from '@/services/rules-engine/v8-engine/utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
 import dayjs, { Dayjs } from '@/utils/dayjs'
@@ -28,7 +30,7 @@ async function migrateTenant(tenant: Tenant) {
     const now = Date.now()
     let shouldRebuild = false
     for (const variable of logicAggregationVariables) {
-      if (!canAggregate(variable)) {
+      if (!canAggregate(variable.timeWindow)) {
         continue
       }
       const oldGranularity = oldGetAggregationGranularity(variable, tenantId)
