@@ -1,5 +1,5 @@
 import { SQSEvent, SQSRecord } from 'aws-lambda'
-import { isEmpty, omit } from 'lodash'
+import { difference, isEmpty, omit, pick } from 'lodash'
 import {
   SendMessageCommand,
   SendMessageCommandInput,
@@ -30,6 +30,12 @@ import { envIs } from '@/utils/env'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+
+export const INTERNAL_ONLY_TX_ATTRIBUTES = difference(
+  InternalTransaction.getAttributeTypeMap().map((v) => v.name),
+  TransactionWithRulesResult.getAttributeTypeMap().map((v) => v.name)
+)
 
 interface TransactionEventTask {
   tenantId: string
@@ -105,7 +111,6 @@ export const transactionHandler = async (
   })
 
   const settings = await tenantSettings(tenantId)
-
   const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
 
   const arsScore = isRiskScoringEnabled
@@ -118,10 +123,16 @@ export const transactionHandler = async (
     )
   }
 
+  const existingTransaction = await transactionsRepo.getTransactionById(
+    transaction.transactionId
+  )
   const [transactionInMongo, ruleInstances, deployingRuleInstances] =
     await Promise.all([
       transactionsRepo.addTransactionToMongo(
-        omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult,
+        {
+          ...pick(existingTransaction, INTERNAL_ONLY_TX_ATTRIBUTES),
+          ...(omit(transaction, DYNAMO_KEYS) as TransactionWithRulesResult),
+        },
         arsScore
       ),
       ruleInstancesRepo.getRuleInstancesByIds(

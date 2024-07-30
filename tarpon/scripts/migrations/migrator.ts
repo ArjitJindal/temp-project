@@ -138,13 +138,14 @@ async function main() {
     // Seed cypress tenant on dev
     if (envIs('dev')) {
       const tenant = 'cypress-tenant'
-      console.info('Seeding DynamoDB...')
-      await seedDynamo(getDynamoDbClient(), tenant)
 
       console.info('Seeding MongoDB...')
       const client = await getMongoDbClient()
       await seedMongo(client, tenant)
       await client.close()
+
+      console.info('Seeding DynamoDB...')
+      await seedDynamo(getDynamoDbClient(), tenant)
     }
   }
 }
@@ -158,7 +159,6 @@ async function syncData() {
   await migrateAllTenants(async (tenant) => {
     await RuleInstanceService.migrateV2RuleInstancesToV8(tenant.id)
   })
-
   if (envIs('local')) {
     await syncAccountsLocally()
   }

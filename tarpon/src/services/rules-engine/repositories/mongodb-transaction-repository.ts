@@ -106,7 +106,7 @@ export class MongoDbTransactionRepository
   }
 
   async addTransactionToMongo(
-    transaction: TransactionWithRulesResult,
+    transaction: InternalTransaction,
     arsScore?: ArsScore
   ): Promise<InternalTransaction> {
     const db = this.mongoDb.db()
