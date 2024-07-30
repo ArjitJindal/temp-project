@@ -34,17 +34,17 @@ import {
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { Tag } from '@/@types/openapi-public/Tag'
 import {
+  DAY_DATE_FORMAT,
+  getMongoDbClient,
+  lookupPipelineStage,
+  paginateCursor,
   paginateFindOptions,
   paginatePipeline,
   prefixRegexMatchFilter,
-  paginateCursor,
-  lookupPipelineStage,
-  getMongoDbClient,
-  DAY_DATE_FORMAT,
 } from '@/utils/mongodb-utils'
 import {
-  TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
+  TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -56,27 +56,26 @@ import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/Trans
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { neverThrow } from '@/utils/lang'
 import {
-  OptionalPagination,
   COUNT_QUERY_LIMIT,
-  OptionalPaginationParams,
   cursorPaginate,
   CursorPaginationResponse,
+  OptionalPagination,
+  OptionalPaginationParams,
 } from '@/utils/pagination'
 import {
   PaymentDetails,
   PaymentMethod,
 } from '@/@types/tranasction/payment-type'
 import {
-  PAYMENT_METHOD_IDENTIFIER_FIELDS,
   getPaymentDetailsIdentifiers,
   getPaymentMethodId,
+  PAYMENT_METHOD_IDENTIFIER_FIELDS,
 } from '@/core/dynamodb/dynamodb-keys'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
-import { envIs } from '@/utils/env'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -153,8 +152,11 @@ export class MongoDbTransactionRepository
         payload,
         { upsert: true }
       ),
-      envIs('dev') &&
-        insertToClickhouse(TRANSACTIONS_COLLECTION(this.tenantId), payload),
+      insertToClickhouse(
+        TRANSACTIONS_COLLECTION(this.tenantId),
+        payload,
+        this.tenantId
+      ),
     ])
 
     return internalTransaction

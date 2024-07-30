@@ -199,13 +199,13 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
         const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
         await clickhouseClient.query({ query: checkTableQuery })
         const mongoTableName = `${tenantId}-${table.table}`
-        const data =
+        const data: any[] =
           collections.find(
             ([collectionNameFn]) =>
               collectionNameFn(tenantId) === mongoTableName
           )?.[1]?.() || []
         await createOrUpdateClickHouseTable(tenantId, table)
-        await batchInsertToClickhouse(table.table, data as object[], tenantId)
+        await batchInsertToClickhouse(clickhouseTable, data, tenantId)
       })
     )
   }

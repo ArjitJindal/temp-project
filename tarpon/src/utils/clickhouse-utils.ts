@@ -37,6 +37,7 @@ export async function getClickhouseClient() {
 
   return client
 }
+
 /**
  *
  * @param tableName {Use functions like TRANSACTIONS_COLLECTION, USERS_COLLECTION, etc.}
@@ -72,6 +73,10 @@ export async function insertToClickhouse(
   object: object,
   tenantId: string = getContext()?.tenantId as string
 ) {
+  if (!envIs('local') || !envIs('dev') || !envIs('test')) {
+    return
+  }
+
   const tableDefinition = assertTableName(tableName, tenantId)
   const client = await getClickhouseClient()
   await client.insert({

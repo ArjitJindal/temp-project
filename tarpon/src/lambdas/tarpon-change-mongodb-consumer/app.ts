@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { pick, omit, isEqual } from 'lodash'
+import { isEqual, omit, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { CaseCreationService } from '../../services/cases/case-creation-service'
 import { sendTransactionEvent } from '../transaction-events-consumer/app'
@@ -8,7 +8,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
-  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -33,7 +32,6 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
-import { envIs } from '@/utils/env'
 
 async function transactionHandler(
   tenantId: string,
@@ -56,7 +54,6 @@ async function userHandler(
   if (!newUser || !newUser.userId) {
     return
   }
-  envIs('dev') && void insertToClickhouse(USERS_COLLECTION(tenantId), newUser)
   updateLogMetadata({ userId: newUser.userId })
 
   logger.info(`Processing User`)
@@ -160,8 +157,6 @@ async function userEventHandler(
   if (!userEvent || !userEvent.eventId) {
     return
   }
-  envIs('dev') &&
-    void insertToClickhouse(USER_EVENTS_COLLECTION(tenantId), userEvent)
 
   updateLogMetadata({
     userId: userEvent.userId,
@@ -175,16 +170,19 @@ async function userEventHandler(
   >(USER_EVENTS_COLLECTION(tenantId))
 
   // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
-  await userEventCollection.replaceOne(
-    { eventId: userEvent.eventId },
-    {
-      ...(omit(userEvent, DYNAMO_KEYS) as
-        | InternalConsumerUserEvent
-        | InternalBusinessUserEvent),
-      createdAt: Date.now(),
-    },
-    { upsert: true }
-  )
+  await Promise.all([
+    userEventCollection.replaceOne(
+      { eventId: userEvent.eventId },
+      {
+        ...(omit(userEvent, DYNAMO_KEYS) as
+          | InternalConsumerUserEvent
+          | InternalBusinessUserEvent),
+        createdAt: Date.now(),
+      },
+      { upsert: true }
+    ),
+    insertToClickhouse(USER_EVENTS_COLLECTION(tenantId), userEvent, tenantId),
+  ])
 }
 
 async function transactionEventHandler(
@@ -194,11 +192,7 @@ async function transactionEventHandler(
   if (!transactionEvent || !transactionEvent.eventId) {
     return
   }
-  envIs('dev') &&
-    void insertToClickhouse(
-      TRANSACTION_EVENTS_COLLECTION(tenantId),
-      transactionEvent
-    )
+
   updateLogMetadata({
     transactionId: transactionEvent.transactionId,
     eventId: transactionEvent.eventId,
@@ -211,14 +205,21 @@ async function transactionEventHandler(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
   )
 
-  await transactionEventCollection.replaceOne(
-    { eventId: transactionEvent.eventId },
-    {
-      ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
-      createdAt: Date.now(),
-    },
-    { upsert: true }
-  )
+  await Promise.all([
+    transactionEventCollection.replaceOne(
+      { eventId: transactionEvent.eventId },
+      {
+        ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
+        createdAt: Date.now(),
+      },
+      { upsert: true }
+    ),
+    insertToClickhouse(
+      TRANSACTION_EVENTS_COLLECTION(tenantId),
+      transactionEvent,
+      tenantId
+    ),
+  ])
 }
 
 const tarponBuilder = new StreamConsumerBuilder(
