@@ -13,10 +13,11 @@ import { AutoFilterProps } from '@/components/library/Filter/types';
 
 interface Props extends InputProps<unknown> {
   filter: AutoFilterProps;
+  readOnly?: boolean;
 }
 
 export function AutoFilter(props: Props): JSX.Element {
-  const { filter, value, onChange } = props;
+  const { filter, value, onChange, readOnly } = props;
 
   const inputRef = useRef<any>(null);
   const allowClear = filter.dataType.allowClear != null ? filter.dataType.allowClear : true;
@@ -29,6 +30,7 @@ export function AutoFilter(props: Props): JSX.Element {
     onChange,
     innerRef: inputRef,
     allowClear,
+    readOnly,
   };
 
   if (filter.dataType.kind === 'dateRange') {

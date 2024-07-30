@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
-import { SanctionsSearchTable } from './search';
+import { SearchResultTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import { SanctionsScreeningActivity } from './activity';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
@@ -39,7 +39,7 @@ const SanctionsPage: React.FC = () => {
             title: 'Search',
             children: (
               <PageWrapperContentContainer>
-                <SanctionsSearchTable searchId={searchId} />
+                <SearchResultTable searchId={searchId} />
               </PageWrapperContentContainer>
             ),
           },

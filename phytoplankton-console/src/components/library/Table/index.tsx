@@ -61,6 +61,7 @@ export interface Props<Item extends object, Params extends object = CommonParams
   hideFilters?: boolean;
   rowHeightMode?: RowHeightMode;
   disableSorting?: boolean;
+  readOnlyFilters?: boolean;
   extraFilters?: ExtraFilterProps<Params>[];
   leftTools?: React.ReactNode;
   extraTools?: ToolRenderer[];
@@ -110,6 +111,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
     disableSorting = false,
     fixedExpandedContainer = false,
     externalHeader = false,
+    readOnlyFilters = false,
     extraHeaderInfo,
     sizingMode = 'SCROLL',
     toolsOptions,
@@ -277,6 +279,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
         cursorPagination={cursor != null}
         totalPages={getPageCount(params, data)}
         leftTools={leftTools}
+        readOnlyFilters={readOnlyFilters}
       />
       <ScrollContainer
         maxHeight={typeof fitHeight === 'number' ? fitHeight : undefined}

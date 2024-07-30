@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import SanctionsHitsTable, { TableSearchParams } from 'src/components/SanctionsHitsTable';
 import s from './index.module.less';
 import {
   SanctionsDetails,
@@ -17,7 +18,6 @@ import { QueryResult } from '@/utils/queries/types';
 import { useApi } from '@/api';
 import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
 import { SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
-import SanctionsTable, { TableSearchParams } from '@/components/SanctionsTable';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
@@ -106,7 +106,7 @@ export default function ScreeningMatchList(props: Props) {
                 onChange={setSanctionsDetailsId}
                 allowClear={false}
               />
-              <SanctionsTable
+              <SanctionsHitsTable
                 tableRef={null}
                 queryResult={openHitsQueryResults}
                 isEmbedded={true}
@@ -139,7 +139,7 @@ export default function ScreeningMatchList(props: Props) {
                 onChange={setSanctionsDetailsId}
                 allowClear={false}
               />
-              <SanctionsTable
+              <SanctionsHitsTable
                 tableRef={null}
                 queryResult={clearedHitsQueryResults}
                 isEmbedded={true}

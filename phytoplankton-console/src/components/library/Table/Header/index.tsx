@@ -34,6 +34,7 @@ interface Props<Item extends object, Params extends object = CommonParams> {
   cursorPagination?: boolean;
   totalPages?: number;
   leftTools?: React.ReactNode;
+  readOnlyFilters?: boolean;
 }
 
 export default function Header<Item extends object, Params extends object = CommonParams>(
@@ -55,6 +56,7 @@ export default function Header<Item extends object, Params extends object = Comm
     cursorPagination,
     totalPages,
     leftTools,
+    readOnlyFilters = false,
   } = props;
 
   const autoFilters = useAutoFilters(props.columns);
@@ -90,6 +92,7 @@ export default function Header<Item extends object, Params extends object = Comm
       <div className={cn(s.root)}>
         {showFilters ? (
           <Filters<Params>
+            readOnly={readOnlyFilters}
             filters={allFilters}
             params={params}
             onChangeParams={(newParams) => {

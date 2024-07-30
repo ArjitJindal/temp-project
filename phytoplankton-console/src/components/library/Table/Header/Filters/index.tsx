@@ -10,12 +10,13 @@ import { FilterProps } from '@/components/library/Filter/types';
 
 interface Props<Params extends object> {
   filters: FilterProps<Params>[];
+  readOnly?: boolean;
   params: Params;
   onChangeParams: (newParams: Params) => void;
 }
 
 export default function Filters<Params extends object>(props: Props<Params>) {
-  const { filters, params, onChangeParams } = props;
+  const { filters, params, onChangeParams, readOnly } = props;
   const [filterClose, setFilterClose] = useState<boolean>(true);
   const [fulfilledFilters, setfulfilledFilters] = useState(['']);
   const pinnedFilters = filters
@@ -24,7 +25,9 @@ export default function Filters<Params extends object>(props: Props<Params>) {
   const persistedSettingsContext = usePersistedSettingsContext();
   const [filtersVisible, setFiltersVisible] = persistedSettingsContext.filtersVisibility;
 
-  const shownFilters = uniq([...pinnedFilters, ...fulfilledFilters, ...filtersVisible]);
+  const shownFilters = readOnly
+    ? uniq([...fulfilledFilters, ...filters.map(({ key }) => key)])
+    : uniq([...pinnedFilters, ...fulfilledFilters, ...filtersVisible]);
 
   const handleResetParams = (keys: string[]) => {
     const newParams = {
@@ -79,18 +82,21 @@ export default function Filters<Params extends object>(props: Props<Params>) {
               key={filter.key}
               filter={filter}
               params={params}
+              readOnly={readOnly}
               onChangeParams={onChangeParams}
               onUpdateFilterClose={onUpdateFilterClose}
             />
           ))}
-        <FilterSelector
-          filters={filters}
-          defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}
-          shownFilters={shownFilters}
-          onToggleFilter={handleToggleFilter}
-          onUpdateFilterClose={onUpdateFilterClose}
-        />
-        {fulfilledFilters.length > 0 && (
+        {!readOnly && (
+          <FilterSelector
+            filters={filters}
+            defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}
+            shownFilters={shownFilters}
+            onToggleFilter={handleToggleFilter}
+            onUpdateFilterClose={onUpdateFilterClose}
+          />
+        )}
+        {fulfilledFilters.length > 0 && !readOnly && (
           <Button type="TEXT" onClick={handleClickReset} size="SMALL">
             Reset
           </Button>

@@ -49,7 +49,7 @@ interface Props {
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
-export default function SanctionsTable(props: Props) {
+export default function SanctionsHitsTable(props: Props) {
   const {
     isEmbedded,
     queryResult,

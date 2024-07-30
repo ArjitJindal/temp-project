@@ -14,6 +14,7 @@ export type ExtraFilterRendererProps<Params extends object | unknown> = {
   params: Params;
   setParams: (cb: (oldState: Params) => Params) => void;
   onUpdateFilterClose?: (status: boolean) => void;
+  readOnly?: boolean;
 };
 export type ExtraFilterRenderer<Params extends object | unknown> = (
   props: ExtraFilterRendererProps<Params>,
