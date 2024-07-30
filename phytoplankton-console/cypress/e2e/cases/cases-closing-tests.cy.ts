@@ -46,7 +46,7 @@ describe('Closing and Re-Opening the cases', () => {
           `/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&caseId=${caseId}&alertStatus=CLOSED`,
         );
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0);
-        cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).click();
+        cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Re-Open');
         cy.get('.ant-modal-footer button').eq(1).click();
         cy.checkNotification([
