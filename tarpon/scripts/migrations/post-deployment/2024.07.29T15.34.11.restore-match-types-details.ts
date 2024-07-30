@@ -64,7 +64,7 @@ async function migrateTenant(tenant: Tenant) {
   for await (const hit of collection.find({
     caMatchTypesDetails: { $eq: undefined },
   })) {
-    if (hit.caEntity.id) {
+    if (hit.caEntity && hit.caEntity.id) {
       const entity = await getEntityById(mongoDb, tenant.id, hit.caEntity.id)
       if (entity != null && entity.match_types_details != null) {
         logger.info(`Migrating hit ${hit.sanctionsHitId} (${++counter})`)
