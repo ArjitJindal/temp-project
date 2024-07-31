@@ -380,3 +380,16 @@ Cypress.Commands.add('checkNotification', (statements: string[]) => {
     expect(found).to.be.true;
   });
 });
+
+Cypress.Commands.add('deleteRuleInstance', (ruleInstanceId: string) => {
+  cy.visit('/rules/my-rules');
+  cy.get('th').contains('Updated at').click({ force: true });
+  cy.get('th').contains('Updated at').click({ force: true });
+  cy.waitNothingLoading();
+  cy.get('[data-cy="rule-actions-menu"]').first().click();
+  cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
+  cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
+  cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
+  cy.message(`Rule deleted`).should('exist');
+  cy.get('td[data-cy="ruleId"]').should('not.contain', ruleInstanceId);
+});

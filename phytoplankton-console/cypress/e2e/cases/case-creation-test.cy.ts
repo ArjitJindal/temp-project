@@ -70,19 +70,7 @@ describe('Case Creation test', () => {
       cy.contains(originUserId).should('exist');
       cy.contains(destinationUserId).should('exist');
 
-      // 3. delete rule
-      deleteRule(ruleInstanceId);
+      cy.deleteRuleInstance(ruleInstanceId);
     });
   });
 });
-function deleteRule(ruleInstanceId: string) {
-  cy.visit('/rules/my-rules');
-  cy.get('th').contains('Updated at').click({ force: true });
-  cy.get('th').contains('Updated at').click({ force: true });
-  cy.waitNothingLoading();
-  cy.get('[data-cy="rule-actions-menu"]').first().should('exist').click({ force: true });
-  cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
-  cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
-  cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
-  cy.message(`Rule deleted`).should('exist');
-}

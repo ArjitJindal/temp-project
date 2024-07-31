@@ -19,25 +19,9 @@ describe('Rule create and delete', () => {
       const ruleInstanceId = interception.response?.body?.id;
       cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
       editRule(ruleInstanceId);
-      deleteRule(ruleInstanceId);
+      cy.deleteRuleInstance(ruleInstanceId);
     });
   });
-  function deleteRule(ruleInstanceId: string) {
-    cy.visit('/rules/my-rules');
-    cy.waitNothingLoading();
-    cy.get('th').contains('Updated at').scrollIntoView().click();
-    cy.get('th').contains('Updated at').scrollIntoView().click();
-    cy.waitNothingLoading();
-
-    cy.get('[data-cy="rule-actions-menu"]').first().should('exist').click();
-    cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
-
-    cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);
-    cy.get('button[data-cy="modal-ok"]').eq(0).should('exist').click();
-    cy.message(`Rule deleted`).should('exist');
-
-    cy.waitNothingLoading();
-  }
 
   function editRule(ruleInstanceId: string) {
     cy.visit('/rules/my-rules');
