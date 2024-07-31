@@ -119,7 +119,7 @@ export const getCreateTableQuery = (
     .join(', ')
 
   return `
-    CREATE TABLE ${tableName} (
+    CREATE TABLE IF NOT EXISTS ${tableName} (
       id String PRIMARY KEY,
       data String,
       timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${
@@ -153,15 +153,11 @@ export async function createOrUpdateClickHouseTable(
   `
 
   let tableExists = false
-  try {
-    const tableExistsResponse: ResponseJSON<{ result: number }> = await (
-      await client.query({ query: checkTableQuery })
-    ).json()
+  const tableExistsResponse: ResponseJSON<{ result: number }> = await (
+    await client.query({ query: checkTableQuery })
+  ).json()
 
-    tableExists = tableExistsResponse.data[0].result === 1
-  } catch (e) {
-    logger.info('Table doesnt exist', e)
-  }
+  tableExists = tableExistsResponse.data[0].result === 1
 
   const materializedColumnNames = table.materializedColumns
     ?.map((col) => col.split(' ')[0])
