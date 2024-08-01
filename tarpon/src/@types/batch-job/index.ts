@@ -1,10 +1,12 @@
 import { Credentials } from 'aws-lambda'
+import { Filter } from 'mongodb'
 import { SimulationRiskLevelsParameters } from '../openapi-internal/SimulationRiskLevelsParameters'
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
 import { RuleAggregationVariable } from '../openapi-internal/RuleAggregationVariable'
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
+import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
@@ -156,6 +158,19 @@ export type TenantDeletionBatchJob = {
   parameters: TenantDeletionBatchJobParameters
 }
 
+/* Reverify transactions */
+export type ReverifyTransactionsBatchJobParameters = {
+  afterTimestamp: number
+  beforeTimestamp: number
+  ruleInstanceIds: string[]
+  extraFilter?: Filter<InternalTransaction>
+}
+export type ReverifyTransactionsBatchJob = {
+  type: 'REVERIFY_TRANSACTIONS'
+  tenantId: string
+  parameters: ReverifyTransactionsBatchJobParameters
+}
+
 export type FilesAISummary = {
   type: 'FILES_AI_SUMMARY'
   tenantId: string
@@ -184,6 +199,7 @@ export type BatchJob =
   | TenantDeletionBatchJob
   | RulePreAggregationBatchJob
   | FilesAISummary
+  | ReverifyTransactionsBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

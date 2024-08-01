@@ -1,6 +1,7 @@
 import { TenantDeletionBatchJobRunner } from './tenant-deletion-batch-job-runner'
 import { SimulationRiskFactorsBatchJobRunner } from './simulation-risk-scoring-batch-job-runner'
 import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-job-runner'
+import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -43,6 +44,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     RULE_PRE_AGGREGATION: (jobId) =>
       new RulePreAggregationBatchJobRunner(jobId),
     FILES_AI_SUMMARY: (jobId) => new FilesAiSummaryBatchJobRunner(jobId),
+    REVERIFY_TRANSACTIONS: (jobId) =>
+      new ReverifyTransactionsBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

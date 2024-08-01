@@ -933,7 +933,7 @@ export class CaseCreationService {
     const result: Case[] = []
     for (const { subject, direction } of hitSubjects) {
       // keep only user related hits
-      const filteredHitRules = params.hitRules.filter((hitRule) => {
+      let filteredHitRules = params.hitRules.filter((hitRule) => {
         if (
           !hitRule.ruleHitMeta?.hitDirections?.some(
             (hitDirection) => hitDirection === direction
@@ -967,19 +967,17 @@ export class CaseCreationService {
 
         return true
       })
+      if (filteredHitRules.length === 0) {
+        continue
+      }
+
       const filteredTransaction = params.transaction
         ? {
             ...params.transaction,
             hitRules: filteredHitRules,
           }
         : undefined
-      const hitRuleInstanceIds = filteredHitRules.map(
-        (rule) => rule.ruleInstanceId
-      )
 
-      if (filteredHitRules.length === 0) {
-        continue
-      }
       if (filteredTransaction) {
         const casesHavingSameTransaction = await this.getCasesBySubject(
           subject,
@@ -988,19 +986,14 @@ export class CaseCreationService {
             filterCaseType: 'SYSTEM',
           }
         )
-        const casesHavingSameTransactionWithSameHitRules =
-          casesHavingSameTransaction.filter((c) => {
-            return hitRuleInstanceIds.every((ruleInstanceId) =>
-              c.alerts?.find(
-                (alert) =>
-                  alert.ruleInstanceId === ruleInstanceId &&
-                  alert.transactionIds?.includes(
-                    filteredTransaction.transactionId
-                  )
-              )
+        filteredHitRules = filteredHitRules.filter((hitRule) => {
+          return casesHavingSameTransaction.every((c) =>
+            c.alerts?.every(
+              (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
             )
-          })
-        if (casesHavingSameTransactionWithSameHitRules.length > 0) {
+          )
+        })
+        if (filteredHitRules.length === 0) {
           continue
         }
       }

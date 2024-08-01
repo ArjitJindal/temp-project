@@ -459,7 +459,8 @@ export function removePrefixFromName(
 export const hydrateTransactionEvents = memoizeOne(
   // NOTE: transactionEvents should already be sorted by timestamp (1st to last)
   (
-    transactionEvents: TransactionEventWithRulesResult[]
+    transactionEvents: TransactionEventWithRulesResult[],
+    asOfTimestamp?: number
   ): Array<{
     transactionEvent: TransactionEventWithRulesResult
     transaction: TransactionWithRiskDetails
@@ -468,7 +469,10 @@ export const hydrateTransactionEvents = memoizeOne(
       transactionEvent: TransactionEventWithRulesResult
       transaction: TransactionWithRiskDetails
     }> = []
-    for (const transactionEvent of transactionEvents) {
+    const filteredTransactionEvents = transactionEvents.filter(
+      (event) => !asOfTimestamp || event.timestamp <= asOfTimestamp
+    )
+    for (const transactionEvent of filteredTransactionEvents) {
       const prevTransactionEvent = last(hydratedTransactionEvents)
       hydratedTransactionEvents.push({
         transactionEvent,
