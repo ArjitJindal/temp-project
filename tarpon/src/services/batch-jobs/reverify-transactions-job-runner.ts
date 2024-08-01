@@ -110,14 +110,7 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
       ...parameters.extraFilter,
     }
     const totalTransactionsCount = await txCollection.countDocuments(filter)
-    const cursor = txCollection.aggregate([
-      {
-        $match: filter,
-      },
-      {
-        $sort: { createdAt: 1 },
-      },
-    ])
+    const cursor = txCollection.find(filter).sort({ createdAt: 1 })
     let processedTransactionCount = 0
 
     for await (const internalTransaction of cursor) {
@@ -137,6 +130,7 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
       // Step 2: For each transaction event, construct the transaction state at that
       // time and verify the transaction and update the transaction event with rules result
       let currentRulesResult: RulesResult = { executedRules: [], hitRules: [] }
+      let updatedEventsCount = 0
       for (const txEventInfo of hydrateTransactionEvents(transactionEvents)) {
         const ruleResults = (
           await Promise.all(
@@ -162,9 +156,7 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
           existingRulesResult
         )
         if (!areRulesResultsEqual(existingRulesResult, newRulesResult)) {
-          logger.info(
-            `Updated transactionevent ${txEventInfo.transactionEvent.eventId}`
-          )
+          updatedEventsCount += 1
           await transactionEventRepository.saveTransactionEvent(
             txEventInfo.transactionEvent,
             newRulesResult
@@ -174,26 +166,27 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
 
       // Step 3: Update the transaction with the latest rules result
       const existingRulesResult = {
-        executedRules: internalTransaction.transactionEvent.executedRules ?? [],
-        hitRules: internalTransaction.transactionEvent.hitRules ?? [],
+        executedRules: internalTransaction.executedRules ?? [],
+        hitRules: internalTransaction.hitRules ?? [],
       }
       const newRulesResult = getNewRulesResult(
         currentRulesResult,
         existingRulesResult
       )
+      let isTransactionUpdated = false
       if (!areRulesResultsEqual(existingRulesResult, newRulesResult)) {
         await transactionRepository.saveTransaction(transaction, newRulesResult)
-        logger.info(`Updated transaction ${transaction.transactionId}`)
+        isTransactionUpdated = true
       }
 
       processedTransactionCount += 1
       logger.info(
-        `Processed transaction ${transaction.transactionId} (${processedTransactionCount} / ${totalTransactionsCount})`
+        `Processed tx ${transaction.transactionId} (tx updated: ${isTransactionUpdated}, events updated: ${updatedEventsCount}) (${processedTransactionCount} / ${totalTransactionsCount})`
       )
 
       if (processedTransactionCount % 100 === 0) {
         await transientRepository.add('re-verify-transactions', progressKey, {
-          timestamp: internalTransaction.createdAt,
+          timestamp: internalTransaction.createdAt ?? 0,
           transactionCount: processedTransactionCount,
         })
       }

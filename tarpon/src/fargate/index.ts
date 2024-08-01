@@ -7,7 +7,12 @@ import { genericJobRunnerHandler } from '@/lambdas/batch-job/app'
 const handler = nodeConsumer()(async () => {
   const jobString = process.env[BATCH_JOB_PAYLOAD_ENV_VAR] as string
   const job = JSON.parse(jobString) as BatchJobWithId
-  await genericJobRunnerHandler(job)
+  try {
+    await genericJobRunnerHandler(job)
+  } catch (e) {
+    logger.error(e)
+    throw e
+  }
 })
 
 void handler()
