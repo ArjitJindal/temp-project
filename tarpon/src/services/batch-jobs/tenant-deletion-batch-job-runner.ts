@@ -47,7 +47,7 @@ import {
   TENANT_DELETION_COLLECTION,
   DYNAMODB_PARTITIONKEYS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
@@ -360,6 +360,9 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async nukeClickhouseTables(tenantId: string) {
+    if (envIsNot('dev')) {
+      return
+    }
     const client = await getClickhouseClient()
     const tablesQuery = await client.query({
       query: `SHOW TABLES LIKE '${tenantId}%'`,
