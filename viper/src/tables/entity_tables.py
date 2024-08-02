@@ -114,7 +114,7 @@ class EntityTables:
 
         existing_schema = self.spark.table(f"main.{entity.table}").schema
         if existing_schema is None or not schemas_equal(existing_schema, df.schema):
-            self.refresh(entity)
+            print("Schema mismatch, exiting stream job. Please run refresh first.")
 
         matcher_condition = (
             f"s.{entity.id_column} = t.{entity.id_column} and s.tenant = t.tenant"

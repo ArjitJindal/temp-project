@@ -319,14 +319,11 @@ class DatabricksStack extends TerraformStack {
 
     const pythonPackage = new aws.s3BucketObject.S3BucketObject(
       this,
-      'python-package',
+      `python-package-${packageVersion}`,
       {
         bucket: datalakeBucket.bucket,
         key: 'src-0.1.0-py3-none-any.whl',
         source: pythonPackagePath,
-        tags: {
-          version: packageVersion,
-        },
       }
     )
 
