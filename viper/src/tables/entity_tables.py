@@ -111,11 +111,6 @@ class EntityTables:
 
     def create_entity_stream(self, df: DataFrame, entity: Entity):
         print(f"Setting up {entity.table} table stream")
-
-        existing_schema = self.spark.table(f"main.{entity.table}").schema
-        if existing_schema is None or not schemas_equal(existing_schema, df.schema):
-            print("Schema mismatch, exiting stream job. Please run refresh first.")
-
         matcher_condition = (
             f"s.{entity.id_column} = t.{entity.id_column} and s.tenant = t.tenant"
         )

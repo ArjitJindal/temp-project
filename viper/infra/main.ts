@@ -645,6 +645,7 @@ sudo python3 -m pip install boto3
     "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
     "spark.delta.logStore.class": "io.delta.storage.S3SingleDriverLogStore",
     "spark.sql.catalogImplementation": "hive",
+    "spark.databricks.delta.schema.autoMerge.enabled": "true",
     "spark.hadoop.hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
     "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
   }
