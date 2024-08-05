@@ -9,8 +9,29 @@ import {
   SWIFTPaymentMethod,
   UPIPaymentMethod,
   WalletPaymentMethod,
+  CardDetails,
+  GenericBankAccountDetails,
+  IBANDetails,
+  ACHDetails,
+  SWIFTDetails,
+  UPIDetails,
+  WalletDetails,
+  MpesaDetails,
+  CheckDetails,
 } from '@/apis';
 import { neverReturn } from '@/utils/lang';
+import { notEmpty } from '@/utils/array';
+
+export type PaymentDetails =
+  | CardDetails
+  | GenericBankAccountDetails
+  | IBANDetails
+  | ACHDetails
+  | SWIFTDetails
+  | UPIDetails
+  | WalletDetails
+  | MpesaDetails
+  | CheckDetails;
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -50,6 +71,30 @@ export function isPaymentMethod(value: unknown): value is PaymentMethod {
       return true;
   }
   return neverReturn(paymentMethod, false);
+}
+
+export function getPaymentDetailsIdString(paymentDetails: PaymentDetails): string {
+  if (paymentDetails.method === 'IBAN') {
+    return paymentDetails.IBAN ?? paymentDetails.name ?? '-';
+  } else if (paymentDetails.method === 'ACH') {
+    return paymentDetails.accountNumber ?? '-';
+  } else if (paymentDetails.method === 'SWIFT') {
+    return [paymentDetails.swiftCode, paymentDetails.accountNumber].filter(notEmpty).join('/');
+  } else if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+    return paymentDetails.accountNumber ?? '-';
+  } else if (paymentDetails.method === 'WALLET') {
+    return paymentDetails.walletId ?? '-';
+  } else if (paymentDetails.method === 'UPI') {
+    return paymentDetails.upiID ?? '-';
+  } else if (paymentDetails.method === 'CARD') {
+    return `XXXX ${paymentDetails.cardLast4Digits ?? '-'}`;
+  } else if (paymentDetails.method === 'MPESA') {
+    return paymentDetails.businessShortCode ?? '-';
+  } else if (paymentDetails.method === 'CHECK') {
+    return paymentDetails.checkIdentifier ?? '-';
+  } else {
+    return neverReturn(paymentDetails, '-');
+  }
 }
 
 export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {

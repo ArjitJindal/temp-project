@@ -16,6 +16,7 @@ export interface Props {
   analyticsName?: string;
   innerRef?: React.RefObject<any>;
   allowClear?: boolean;
+  readOnly?: boolean;
 }
 
 export default function QuickFilterBase(props: Props) {
@@ -30,6 +31,7 @@ export default function QuickFilterBase(props: Props) {
     onClear,
     innerRef,
     allowClear = true,
+    readOnly = false,
   } = props;
 
   const [isOpen, setOpen] = useState(false);
@@ -60,12 +62,16 @@ export default function QuickFilterBase(props: Props) {
         }
         icon={icon}
         analyticsName={analyticsName}
-        onClear={onClear}
-        onClick={() => {
-          onUpdateFilterClose && onUpdateFilterClose(isOpen);
-          setOpen((isOpen) => !isOpen);
-          deferredFocus();
-        }}
+        onClear={!readOnly ? onClear : undefined}
+        onClick={
+          !readOnly
+            ? () => {
+                onUpdateFilterClose && onUpdateFilterClose(isOpen);
+                setOpen((isOpen) => !isOpen);
+                deferredFocus();
+              }
+            : undefined
+        }
       >
         <Popover
           overlayClassName={s.popoverRoot}

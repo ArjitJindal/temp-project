@@ -18,6 +18,7 @@ const DEFAULT_RULE_PARAMETERS: SenderLocationChangesFrequencyRuleParameters = {
   timeWindow: {
     units: 1,
     granularity: 'day',
+    rollingBasis: true,
   },
 }
 

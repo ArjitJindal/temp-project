@@ -60,6 +60,7 @@ declare global {
       waitNothingLoading(): Chainable<Element>;
       assertSkeletonLoader(): Chai.Assertion;
       checkNotification(statement: string[]): Chainable<Element>;
+      deleteRuleInstance(ruleInstanceId: string): Chainable<Element>;
     }
   }
 }

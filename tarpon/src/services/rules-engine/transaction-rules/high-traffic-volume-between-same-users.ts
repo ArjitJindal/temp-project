@@ -4,7 +4,7 @@ import { AuxiliaryIndexTransaction } from '../repositories/transaction-repositor
 import {
   getTransactionsTotalAmount,
   groupTransactions,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
   isTransactionAmountAboveThreshold,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange, subtractTime } from '../utils/time-utils'
@@ -287,7 +287,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
   private async getTimeAggregatedResult(
     sendingTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       sendingTransactions,
       async (group) => {
         return groupTransactions(
@@ -305,7 +305,8 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
               )
             ).transactionAmount
         )
-      }
+      },
+      this.getAggregationGranularity()
     )
   }
 

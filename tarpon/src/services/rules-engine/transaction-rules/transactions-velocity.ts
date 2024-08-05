@@ -14,7 +14,7 @@ import {
 import { RuleHitResultItem } from '../rule'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
@@ -243,17 +243,19 @@ export default class TransactionsVelocityRule extends TransactionAggregationRule
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

@@ -159,7 +159,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
-    logger.info(`Re-create collection: ${collectionNameFn(tenantId)}`)
     const collection = db.collection(collectionNameFn(tenantId) as string)
     const collectionData = data()
     const clonedData = cloneDeep(collectionData)
@@ -167,6 +166,11 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     for await (const dataChunk of chunk(clonedData, 10000)) {
       await collection.insertMany(dataChunk as any[])
     }
+    logger.info(
+      `Re-created collection: ${collectionNameFn(tenantId)} - ${
+        clonedData.length
+      } records`
+    )
   }
 
   logger.info('Update transaction with alertIds')
@@ -199,13 +203,13 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
         const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
         await clickhouseClient.query({ query: checkTableQuery })
         const mongoTableName = `${tenantId}-${table.table}`
-        const data =
+        const data: any[] =
           collections.find(
             ([collectionNameFn]) =>
               collectionNameFn(tenantId) === mongoTableName
           )?.[1]?.() || []
         await createOrUpdateClickHouseTable(tenantId, table)
-        await batchInsertToClickhouse(table.table, data as object[], tenantId)
+        await batchInsertToClickhouse(clickhouseTable, data, tenantId)
       })
     )
   }

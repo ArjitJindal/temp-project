@@ -1,0 +1,36 @@
+@import 'src/components/ui/colors.less';
+
+.actionsMenu {
+  padding: 0 !important;
+}
+
+.actionsMenuItem {
+  --bg-color: @fr-colors-v2-unknown-1;
+
+  position: relative;
+  font-size: 14px !important;
+  height: 30px;
+  vertical-align: top;
+  background: var(--bg-color);
+
+  &.isOdd {
+    --bg-color: white;
+  }
+}
+
+.actionsMenuIcon {
+  height: 16px !important;
+  width: 16px;
+  font-size: 20px !important;
+}
+
+.deleteButton {
+  color: @fr-colors-errorColor;
+}
+.actionIcons {
+  height: 30px;
+  width: 30px;
+  font-size: 20px !important;
+  padding: 5px;
+  color: @fr-colors-v2-gray-8;
+}

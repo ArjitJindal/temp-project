@@ -78,6 +78,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
+import { insertToClickhouse } from '@/utils/clickhouse-utils'
 
 @traceable
 export class UserRepository {
@@ -939,9 +940,12 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >(USERS_COLLECTION(this.tenantId))
 
-    await userCollection.replaceOne({ userId: user.userId }, user, {
-      upsert: true,
-    })
+    await Promise.all([
+      userCollection.replaceOne({ userId: user.userId }, user, {
+        upsert: true,
+      }),
+      insertToClickhouse(USERS_COLLECTION(this.tenantId), user, this.tenantId),
+    ])
     return user as InternalUser
   }
 

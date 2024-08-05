@@ -194,7 +194,14 @@ ruleVariantsTest({ aggregation: true }, () => {
     {
       type: 'TRANSACTION',
       ruleImplementationName: 'same-user-using-too-many-payment-identifiers',
-      defaultParameters: DEFAULT_RULE_PARAMETERS,
+      defaultParameters: {
+        uniquePaymentIdentifiersCountThreshold: 1,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+          rollingBasis: true,
+        },
+      },
     },
     [
       getTestTransaction({

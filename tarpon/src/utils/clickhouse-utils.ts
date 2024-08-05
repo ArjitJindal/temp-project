@@ -37,6 +37,7 @@ export async function getClickhouseClient() {
 
   return client
 }
+
 /**
  *
  * @param tableName {Use functions like TRANSACTIONS_COLLECTION, USERS_COLLECTION, etc.}
@@ -48,7 +49,9 @@ function assertTableName(
   tableName: string,
   tenantId: string = getContext()?.tenantId as string
 ): TableDefinition {
-  let trimmedTableName = tableName.replace(tenantId, '').replace(/-/g, '_')
+  let trimmedTableName = tableName
+    .replace(/-/g, '_')
+    .replace(tenantId.replace(/-/g, '_'), '')
 
   if (trimmedTableName.startsWith('_')) {
     trimmedTableName = trimmedTableName.slice(1)
@@ -65,19 +68,19 @@ function assertTableName(
   return tableDefinition
 }
 
-export function getSQLTableName(tableName: string) {
-  return tableName.replace(/-/g, '_')
-}
-
 export async function insertToClickhouse(
   tableName: TableName,
   object: object,
   tenantId: string = getContext()?.tenantId as string
 ) {
+  if (!envIs('local') || !envIs('dev') || !envIs('test')) {
+    return
+  }
+
   const tableDefinition = assertTableName(tableName, tenantId)
   const client = await getClickhouseClient()
   await client.insert({
-    table: tableName,
+    table: sanitizeTableName(tableName),
     values: [
       { id: object[tableDefinition.idColumn], data: JSON.stringify(object) },
     ],
@@ -89,17 +92,13 @@ export async function insertToClickhouse(
 export async function batchInsertToClickhouse(
   table: TableName,
   objects: object[],
-  tenantId?: string
+  tenantId = getContext()?.tenantId as string
 ) {
-  const tableDefinition = ClickHouseTables.find((t) => t.table === table)
-  if (!tableDefinition) {
-    throw new Error(`Table definition not found for table ${table}`)
-  }
-  const tenant = tenantId || getContext()?.tenantId
+  const tableDefinition = assertTableName(table, tenantId)
   await (
     await getClickhouseClient()
   ).insert({
-    table: sanitizeTableName(`${tenant}_${table}`),
+    table: sanitizeTableName(table),
     values: objects.map((object) => ({
       id: object[tableDefinition.idColumn],
       data: JSON.stringify(object),
@@ -120,7 +119,7 @@ export const getCreateTableQuery = (
     .join(', ')
 
   return `
-    CREATE TABLE ${tableName} (
+    CREATE TABLE IF NOT EXISTS ${tableName} (
       id String PRIMARY KEY,
       data String,
       timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${
@@ -154,15 +153,11 @@ export async function createOrUpdateClickHouseTable(
   `
 
   let tableExists = false
-  try {
-    const tableExistsResponse: ResponseJSON<{ result: number }> = await (
-      await client.query({ query: checkTableQuery })
-    ).json()
+  const tableExistsResponse: ResponseJSON<{ result: number }> = await (
+    await client.query({ query: checkTableQuery })
+  ).json()
 
-    tableExists = tableExistsResponse.data[0].result === 1
-  } catch (e) {
-    logger.info('Table doesnt exist', e)
-  }
+  tableExists = tableExistsResponse.data[0].result === 1
 
   const materializedColumnNames = table.materializedColumns
     ?.map((col) => col.split(' ')[0])

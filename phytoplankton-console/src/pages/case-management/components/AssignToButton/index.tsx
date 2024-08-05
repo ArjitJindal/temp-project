@@ -22,7 +22,7 @@ export default function AssignToButton(props: Props) {
             onSelect(account);
           }}
         >
-          <div className={cn(s.item)}>
+          <div className={cn(s.item)} data-cy="assignment-option">
             <img className={s.userPicture} src={account.picture} alt="User picture" />
             {account.name}
           </div>

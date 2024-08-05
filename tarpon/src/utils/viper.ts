@@ -36,7 +36,10 @@ export async function executeSql<T>(
 ): Promise<T[]> {
   const athena = new Athena({ apiVersion: '2017-05-18' })
 
-  const partitionQueries = partitionedQueries(TABLES, getContext()?.tenantId)
+  const partitionQueries = partitionedQueries(
+    TABLES,
+    getContext()?.tenantId?.toLowerCase()
+  )
   const QueryString = `${partitionQueries} ${replacePlaceholders(
     sql,
     namedParameters

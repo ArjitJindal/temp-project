@@ -1,11 +1,15 @@
 import { JSONSchemaType } from 'ajv'
+import { groupBy, mapValues, mergeWith } from 'lodash'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
 import { MATCH_PAYMENT_METHOD_DETAILS_OPTIONAL_SCHEMA } from '../utils/rule-parameter-schemas'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { traceable } from '@/core/xray'
+
+type AggregationDataValue = { [group: string]: number }
 
 type TransactionsRoundValueVelocityRulePartialParameters = {
   sameAmount?: boolean
@@ -18,7 +22,10 @@ export type TransactionsRoundValueVelocityRuleParameters =
     TransactionsRoundValueVelocityRulePartialParameters
 
 @traceable
-export default class TransactionsRoundValueVelocityRule extends TransactionsPatternVelocityBaseRule<TransactionsRoundValueVelocityRuleParameters> {
+export default class TransactionsRoundValueVelocityRule extends TransactionsPatternVelocityBaseRule<
+  TransactionsRoundValueVelocityRuleParameters,
+  AggregationDataValue
+> {
   public static getSchema(): JSONSchemaType<TransactionsRoundValueVelocityRuleParameters> {
     const baseSchema = TransactionsPatternVelocityBaseRule.getBaseSchema()
     const partialSchema: JSONSchemaType<TransactionsRoundValueVelocityRulePartialParameters> =
@@ -65,20 +72,52 @@ export default class TransactionsRoundValueVelocityRule extends TransactionsPatt
     return amount ? this.isRoundValue(amount) : false
   }
 
+  override async getAggregationData(
+    transactions: AuxiliaryIndexTransaction[]
+  ): Promise<AggregationDataValue> {
+    return mapValues(
+      groupBy(transactions, (t) => this.getTransactionGroupKey(t)),
+      (group) => group.length
+    )
+  }
+
+  protected merge(
+    aggValue1: AggregationDataValue | undefined,
+    aggValue2: AggregationDataValue | undefined
+  ): AggregationDataValue {
+    return mergeWith(
+      aggValue1 ?? {},
+      aggValue2 ?? {},
+      (x: number | undefined, y: number | undefined) => (x ?? 0) + (y ?? 0)
+    )
+  }
+
+  protected reduce(
+    aggValue: AggregationDataValue | undefined,
+    transaction: AuxiliaryIndexTransaction
+  ): number {
+    return aggValue?.[this.getTransactionGroupKey(transaction)] ?? 0
+  }
+
+  protected getInitialAggregationDataValue(): AggregationDataValue {
+    return {}
+  }
+
   override getNeededTransactionFields(): Array<keyof Transaction> {
     return ['originAmountDetails', 'destinationAmountDetails']
   }
 
   override getTransactionGroupKey(
-    transaction: Transaction
-  ): string | undefined {
+    transaction: AuxiliaryIndexTransaction
+  ): string {
     if (this.parameters.sameAmount) {
       return `${transaction.originAmountDetails?.transactionAmount}${transaction.originAmountDetails?.transactionCurrency}`
     }
+    return 'all'
   }
 
   override isAggregationSupported() {
-    return false
+    return true
   }
 
   private isRoundValue(value: number) {

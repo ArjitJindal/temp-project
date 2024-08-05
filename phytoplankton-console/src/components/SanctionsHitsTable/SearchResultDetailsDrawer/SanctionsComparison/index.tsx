@@ -1,7 +1,7 @@
 import React from 'react';
 import s from './index.module.less';
 import { humanizeConstant } from '@/utils/humanize';
-import { SanctionsComparisonTableItem } from '@/components/SanctionsTable/SearchResultDetailsDrawer/SanctionsComparison/types';
+import { SanctionsComparisonTableItem } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison/types';
 import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
@@ -52,4 +52,4 @@ function MatchTag(props: { match: SanctionsComparisonTableItem['match'] }) {
       return <Tag color="orange">{text}</Tag>;
   }
 }
-export { getComparisonItems } from '@/components/SanctionsTable/SearchResultDetailsDrawer/SanctionsComparison/helpers';
+export { getComparisonItems } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison/helpers';

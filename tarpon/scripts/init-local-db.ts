@@ -12,6 +12,11 @@ const DB_NAME = `tarpon`
 const TENANT = process.env.TENANT || 'flagright'
 
 async function main() {
+  console.info('Creating Clickhouse tables...')
+  // Create Clickhouse database
+  await axios.post(
+    'http://localhost:8123/?query=CREATE%20DATABASE%20IF%20NOT%20EXISTS%20tarpon'
+  )
   console.log('Creating Dynamo tables...')
   try {
     execSync('npm run recreate-local-ddb --table=Hammerhead >/dev/null 2>&1')
@@ -39,13 +44,6 @@ async function main() {
   console.info('Closing up dynamo client')
   dynamoClient.destroy()
   console.info('Finished seeding!')
-
-  console.info('Creating Clickhouse tables...')
-
-  // Create Clickhouse database
-  await axios.post(
-    'http://localhost:8123/?query=CREATE%20DATABASE%20IF%20NOT%20EXISTS%20tarpon'
-  )
 }
 
 main()

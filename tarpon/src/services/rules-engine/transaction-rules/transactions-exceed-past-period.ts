@@ -3,7 +3,7 @@ import { mergeWith, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import {
   CHECK_RECEIVER_OPTIONAL_SCHEMA,
@@ -318,11 +318,12 @@ export default class TransactionsExceedPastPeriodRule extends TransactionAggrega
   private async getTimeAggregatedResult(
     transactions: AuxiliaryIndexTransaction[]
   ) {
-    return groupTransactionsByHour<AggregationData>(
+    return groupTransactionsByTime<AggregationData>(
       transactions,
       async (group) => ({
         count: group.length,
-      })
+      }),
+      this.getAggregationGranularity()
     )
   }
 

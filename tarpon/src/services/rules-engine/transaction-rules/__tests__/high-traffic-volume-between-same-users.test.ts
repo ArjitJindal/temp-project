@@ -448,7 +448,14 @@ testAggregationRebuild(
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'high-traffic-volume-between-same-users',
-    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultParameters: {
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+        rollingBasis: true,
+      },
+      transactionVolumeThreshold: { EUR: 250 },
+    },
   },
   [
     getTestTransaction({

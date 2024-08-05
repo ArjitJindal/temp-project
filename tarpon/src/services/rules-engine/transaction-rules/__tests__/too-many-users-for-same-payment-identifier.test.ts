@@ -325,7 +325,14 @@ testAggregationRebuild(
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'too-many-users-for-same-payment-identifier',
-    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultParameters: {
+      uniqueUsersCountThreshold: 1,
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+        rollingBasis: true,
+      },
+    },
   },
   [
     getTestTransaction({

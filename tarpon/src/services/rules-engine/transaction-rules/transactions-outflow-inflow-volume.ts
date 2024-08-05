@@ -15,7 +15,7 @@ import { getTimestampRange } from '../utils/time-utils'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
   getTransactionsTotalAmount,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { compareNumber } from '../utils/rule-schema-utils'
@@ -506,7 +506,7 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => {
           const outflowAmounts = sendingTransactions
@@ -527,9 +527,10 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
             outflowTransactionCount: group.length,
             outflow3dsDoneTransactionCount,
           }
-        }
+        },
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => {
           const inflowAmounts = receivingTransactions
@@ -551,7 +552,8 @@ export default class TransactionsOutflowInflowVolumeRule extends TransactionAggr
             inflowTransactionCount: group.length,
             inflow3dsDoneTransactionCount,
           }
-        }
+        },
+        this.getAggregationGranularity()
       )
     )
   }

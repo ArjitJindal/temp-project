@@ -3,10 +3,10 @@ import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
 import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
 import {
+  BlockPublicAccess,
   Bucket,
   BucketEncryption,
   HttpMethods,
-  BlockPublicAccess,
 } from 'aws-cdk-lib/aws-s3'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
 import {
@@ -84,11 +84,11 @@ import {
   LambdaInvoke,
 } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import {
+  BATCH_JOB_PAYLOAD_ENV_VAR,
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
   FARGATE_BATCH_JOB_RUN_TYPE,
   LAMBDA_BATCH_JOB_RUN_TYPE,
-  BATCH_JOB_PAYLOAD_ENV_VAR,
 } from '@lib/cdk/constants'
 import {
   Cluster,
@@ -125,7 +125,7 @@ const enableFargateBatchJob = false
 
 // TODO make this equal to !isQaEnv before merge
 // const deployKinesisConsumer = !isQaEnv()
-const deployKinesisConsumer = true || !isQaEnv()
+const deployKinesisConsumer = !isQaEnv()
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config

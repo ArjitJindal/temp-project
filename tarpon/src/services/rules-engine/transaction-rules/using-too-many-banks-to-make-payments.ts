@@ -12,7 +12,7 @@ import {
 import { RuleHitResultItem } from '../rule'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { getTimestampRange } from '../utils/time-utils'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
@@ -265,17 +265,19 @@ export default class UsingTooManyBanksToMakePaymentsRule extends TransactionAggr
     direction: 'origin' | 'destination'
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           uniqueBanks: Array.from(this.getUniqueBanks(group, direction)),
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           uniqueBanks: Array.from(this.getUniqueBanks(group, direction)),
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

@@ -1,10 +1,14 @@
 import { JSONSchemaType } from 'ajv'
+import { compact, uniq } from 'lodash'
 import { mergeRuleSchemas } from '../utils/rule-schema-utils'
+import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import TransactionsPatternVelocityBaseRule, {
   TransactionsPatternVelocityRuleParameters,
 } from './transactions-pattern-velocity-base'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { traceable } from '@/core/xray'
+
+type AggregationDataValue = string[]
 
 type TooManyCounterpartyCountryRulePartialParameters = {
   transactionsLimit: number
@@ -14,7 +18,10 @@ export type TooManyCounterpartyCountryRuleParameters =
     TooManyCounterpartyCountryRulePartialParameters
 
 @traceable
-export default class TooManyCounterpartyCountryRule extends TransactionsPatternVelocityBaseRule<TooManyCounterpartyCountryRuleParameters> {
+export default class TooManyCounterpartyCountryRule extends TransactionsPatternVelocityBaseRule<
+  TooManyCounterpartyCountryRuleParameters,
+  AggregationDataValue
+> {
   public static getSchema(): JSONSchemaType<TooManyCounterpartyCountryRuleParameters> {
     const baseSchema = TransactionsPatternVelocityBaseRule.getBaseSchema()
     const partialSchema: JSONSchemaType<TooManyCounterpartyCountryRulePartialParameters> =
@@ -40,33 +47,48 @@ export default class TooManyCounterpartyCountryRule extends TransactionsPatternV
   }
 
   override matchPattern(
-    transaction: Transaction,
-    direction: 'origin' | 'destination',
-    userType: 'sender' | 'receiver',
-    pure: boolean
+    _transaction: Transaction,
+    _direction: 'origin' | 'destination',
+    _userType: 'sender' | 'receiver'
   ): boolean {
-    const country =
-      direction === 'origin'
-        ? transaction.originAmountDetails?.country
-        : transaction.destinationAmountDetails?.country
-
-    if (!country) {
-      return false
-    }
-    if (this.uniqueCountries[userType].has(country)) {
-      return false
-    }
-    if (!pure) {
-      this.uniqueCountries[userType].add(country)
-    }
     return true
+  }
+
+  override async getAggregationData(
+    transactions: AuxiliaryIndexTransaction[],
+    direction: 'origin' | 'destination'
+  ): Promise<AggregationDataValue> {
+    return compact(
+      uniq(
+        transactions.map((transaction) => {
+          return direction === 'origin'
+            ? transaction.originAmountDetails?.country
+            : transaction.destinationAmountDetails?.country
+        })
+      )
+    )
+  }
+
+  protected merge(
+    aggValue1: AggregationDataValue | undefined,
+    aggValue2: AggregationDataValue | undefined
+  ): AggregationDataValue {
+    return uniq(compact([...(aggValue1 ?? []), ...(aggValue2 ?? [])]))
+  }
+
+  protected reduce(aggValue: AggregationDataValue | undefined): number {
+    return uniq(aggValue ?? []).length
+  }
+
+  protected getInitialAggregationDataValue(): AggregationDataValue {
+    return []
   }
 
   override getNeededTransactionFields(): Array<keyof Transaction> {
     return ['originAmountDetails', 'destinationAmountDetails']
   }
   override isAggregationSupported() {
-    return false
+    return true
   }
 
   override isMatchPaymentMethodDetailsEnabled() {

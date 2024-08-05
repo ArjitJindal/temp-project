@@ -200,7 +200,17 @@ testAggregationRebuild(
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'bank-name-change',
-    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultParameters: {
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+        rollingBasis: true,
+      },
+      oldNamesThreshold: 1,
+      initialTransactions: 1,
+      allowedDistancePercentage: 0,
+      ignoreEmptyName: true,
+    },
   },
   [
     getTestTransaction({

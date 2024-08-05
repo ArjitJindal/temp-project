@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import SanctionsHitsTable, { TableSearchParams } from 'src/components/SanctionsHitsTable';
 import s from './index.module.less';
 import {
   SanctionsDetails,
@@ -7,7 +8,7 @@ import {
   SanctionsHitListResponse,
 } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
-import { success, getOr, map } from '@/utils/asyncResource';
+import { getOr, map } from '@/utils/asyncResource';
 import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
 import Comments from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Comments';
 import TransactionsTab from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/TransactionsTab';
@@ -15,9 +16,8 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { notEmpty } from '@/utils/array';
 import { QueryResult } from '@/utils/queries/types';
 import { useApi } from '@/api';
-import { useCursorQuery, CursorPaginatedData } from '@/utils/queries/hooks';
-import { SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
-import SanctionsTable, { TableSearchParams } from '@/components/SanctionsTable';
+import { useCursorQuery, CursorPaginatedData, useQuery } from '@/utils/queries/hooks';
+import { ALERT_ITEM, SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
@@ -55,6 +55,16 @@ export default function ScreeningMatchList(props: Props) {
     onTransactionSelect,
     onSanctionsHitsChangeStatus,
   } = props;
+
+  const api = useApi();
+
+  const alertId = alert?.alertId ?? '';
+  const alertResponse = useQuery(ALERT_ITEM(alertId), async () => {
+    if (!alertId) {
+      throw new Error(`Unable to fetch alert, id is empty`);
+    }
+    return api.getAlert({ alertId });
+  });
 
   const [openTableParams, setOpenTableParams] = useState<AllParams<TableSearchParams>>({
     ...DEFAULT_PARAMS_STATE,
@@ -106,7 +116,7 @@ export default function ScreeningMatchList(props: Props) {
                 onChange={setSanctionsDetailsId}
                 allowClear={false}
               />
-              <SanctionsTable
+              <SanctionsHitsTable
                 tableRef={null}
                 queryResult={openHitsQueryResults}
                 isEmbedded={true}
@@ -139,7 +149,7 @@ export default function ScreeningMatchList(props: Props) {
                 onChange={setSanctionsDetailsId}
                 allowClear={false}
               />
-              <SanctionsTable
+              <SanctionsHitsTable
                 tableRef={null}
                 queryResult={clearedHitsQueryResults}
                 isEmbedded={true}
@@ -168,7 +178,7 @@ export default function ScreeningMatchList(props: Props) {
               {
                 title: 'Comments',
                 key: COMMENTS_TAB_KEY,
-                children: <Comments alertsRes={success(alert)} alertId={alert.alertId} />,
+                children: <Comments alertsRes={alertResponse.data} alertId={alert.alertId} />,
               },
               alert.numberOfTransactionsHit > 0 && {
                 title: 'Transactions details',
@@ -186,19 +196,19 @@ export default function ScreeningMatchList(props: Props) {
           : []),
       ].filter(notEmpty),
     [
-      onSanctionsHitsChangeStatus,
+      openHitsCount,
       sanctionsDetailsId,
       details,
       openHitsQueryResults,
-      alert,
-      openTableParams,
-      clearedTableParams,
-      setClearedTableParams,
-      clearedHitsQueryResults,
       selectedSanctionsHitsIds,
       onSanctionsHitSelect,
-      openHitsCount,
+      openTableParams,
+      onSanctionsHitsChangeStatus,
       clearedHitsCount,
+      clearedHitsQueryResults,
+      clearedTableParams,
+      alert,
+      alertResponse,
       selectedTransactionIds,
       onTransactionSelect,
       escalatedTransactionIds,

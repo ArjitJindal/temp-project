@@ -22,7 +22,7 @@ export default class PolicyBuilder {
       Resource: ['*'],
       Condition: {
         StringEquals: {
-          'athena:queryPartitionValue': `tenant=${this.tenantId}`,
+          'athena:queryPartitionValue': `tenant=${this.tenantId.toLowerCase()}`,
         },
       },
     })

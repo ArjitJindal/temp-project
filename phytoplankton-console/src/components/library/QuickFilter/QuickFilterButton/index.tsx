@@ -18,7 +18,7 @@ export default function QuickFilterButton(props: Props) {
   return (
     <button
       data-cy="rules-filter"
-      className={cn(s.root, isActive && s.isActive)}
+      className={cn(s.root, isActive && s.isActive, onClick != null && s.isClickable)}
       onClick={() => {
         onClick?.();
       }}

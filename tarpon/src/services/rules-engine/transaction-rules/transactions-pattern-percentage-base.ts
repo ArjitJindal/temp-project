@@ -3,7 +3,7 @@ import { mergeWith, sumBy } from 'lodash'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import {
   TimeWindow,
@@ -237,17 +237,19 @@ export default abstract class TransactionsPatternPercentageBaseRule<
     matchedTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         allTransactions,
         async (group) => ({
           all: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         matchedTransactions,
         async (group) => ({
           match: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

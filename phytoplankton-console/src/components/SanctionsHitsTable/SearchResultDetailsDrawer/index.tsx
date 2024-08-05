@@ -22,7 +22,7 @@ import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
 import Tabs from '@/components/library/Tabs';
 import { humanizeAuto } from '@/utils/humanize';
-import FieldValue from '@/components/SanctionsTable/SearchResultDetailsDrawer/FieldValue';
+import FieldValue from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/FieldValue';
 import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';

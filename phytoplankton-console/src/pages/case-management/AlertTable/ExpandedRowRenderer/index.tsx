@@ -32,13 +32,13 @@ export default function ExpandedRowRenderer(props: Props) {
   if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId) {
     return (
       <ScreeningMatchList
-        details={alert.ruleHitMeta?.sanctionsDetails ?? []}
         alert={alert}
-        selectedSanctionsHitsIds={selectedSanctionsHitsIds}
-        onSanctionsHitSelect={onSanctionsHitSelect}
         selectedTransactionIds={selectedTransactionIds}
         onTransactionSelect={onTransactionSelect}
+        details={alert.ruleHitMeta?.sanctionsDetails ?? []}
         escalatedTransactionIds={escalatedTransactionIds}
+        selectedSanctionsHitsIds={selectedSanctionsHitsIds}
+        onSanctionsHitSelect={onSanctionsHitSelect}
         onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
       />
     );

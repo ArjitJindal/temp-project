@@ -15,7 +15,7 @@ import { AuxiliaryIndexTransaction } from '../repositories/transaction-repositor
 import { TransactionAggregationRule } from './aggregation-rule'
 import {
   getTransactionUserPastTransactionsGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import { mergeObjects } from '@/utils/object'
@@ -403,29 +403,33 @@ export default class HighUnsuccessfullStateRateRule extends TransactionAggregati
     receivingTransactionsFiltered: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           allSendingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           allReceivingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactionsFiltered,
         async (group) => ({
           filteredSendingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactionsFiltered,
         async (group) => ({
           filteredReceivingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

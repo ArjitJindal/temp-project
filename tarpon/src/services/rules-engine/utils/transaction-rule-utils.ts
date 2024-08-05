@@ -351,13 +351,18 @@ export async function groupTransactionsByGranularity<T>(
   )
 }
 
-export async function groupTransactionsByHour<T>(
+export async function groupTransactionsByTime<T>(
   transactions: AuxiliaryIndexTransaction[],
-  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>
+  aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
+  timeGranularity: RuleAggregationTimeWindowGranularity
 ): Promise<{ [hourKey: string]: T }> {
   return groupTransactions(
     transactions,
-    (transaction) => dayjs(transaction.timestamp).format('YYYYMMDDHH'),
+    (transaction) =>
+      getTransactionStatsTimeGroupLabelV2(
+        transaction.timestamp as number,
+        timeGranularity
+      ),
     aggregator
   )
 }
@@ -403,6 +408,17 @@ export function getTransactionStatsTimeGroupLabel(
   }
 }
 
+export function getTransactionStatsTimeGroupLabelV2(
+  timestamp: number,
+  timeGranularity: RuleAggregationTimeWindowGranularity
+): string {
+  if (timeGranularity === 'hour') {
+    // For backward compatibility
+    return dayjs(timestamp).format('YYYYMMDDHH')
+  }
+  return getTransactionStatsTimeGroupLabel(timestamp, timeGranularity)
+}
+
 const NAME_PREFIXES = [
   'Mr',
   'Mrs',
@@ -443,7 +459,8 @@ export function removePrefixFromName(
 export const hydrateTransactionEvents = memoizeOne(
   // NOTE: transactionEvents should already be sorted by timestamp (1st to last)
   (
-    transactionEvents: TransactionEventWithRulesResult[]
+    transactionEvents: TransactionEventWithRulesResult[],
+    asOfTimestamp?: number
   ): Array<{
     transactionEvent: TransactionEventWithRulesResult
     transaction: TransactionWithRiskDetails
@@ -452,7 +469,10 @@ export const hydrateTransactionEvents = memoizeOne(
       transactionEvent: TransactionEventWithRulesResult
       transaction: TransactionWithRiskDetails
     }> = []
-    for (const transactionEvent of transactionEvents) {
+    const filteredTransactionEvents = transactionEvents.filter(
+      (event) => !asOfTimestamp || event.timestamp <= asOfTimestamp
+    )
+    for (const transactionEvent of filteredTransactionEvents) {
       const prevTransactionEvent = last(hydratedTransactionEvents)
       hydratedTransactionEvents.push({
         transactionEvent,

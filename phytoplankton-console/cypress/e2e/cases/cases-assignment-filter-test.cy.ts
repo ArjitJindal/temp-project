@@ -32,7 +32,7 @@ describe('Using Assignment filter and assigning cases', () => {
           })
           .then(() => {
             cy.visit(
-              `/case-management/cases?page=1&pageSize=20&showCases=ALL&caseId=${caseId}&caseStatus=OPEN%2CREOPENED`,
+              `/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=OPEN%2CREOPENED`,
             );
             // Find all divs with class "unassigned" and select the first one
             cy.get('tr')
@@ -41,16 +41,15 @@ describe('Using Assignment filter and assigning cases', () => {
               .first()
               .as('trWithUnassignDiv');
 
-            // Check if the inner text is not "Loading"
             cy.get('@trWithUnassignDiv').should('not.contain', 'Loading...');
             cy.intercept('PATCH', '**/cases/assignments').as('case');
-            // Click the first div if it meets the conditions
-            cy.get('@trWithUnassignDiv')
-              .find('.ant-select-selector')
-              .should('exist')
+            cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
+            cy.get('button[data-cy="update-assignment-button"]').click();
+            cy.get('div[data-cy="assignment-option"]')
+              .first()
+              .should('be.visible')
               .click({ force: true });
-            cy.get('.ant-select-item-option').first().should('exist').click();
-            cy.message('Assignees updated successfully').should('exist');
+            cy.message('Assignee updated successfully').should('exist');
             cy.get('@trWithUnassignDiv')
               .find('[data-cy="caseId"] a')
               .should('exist')

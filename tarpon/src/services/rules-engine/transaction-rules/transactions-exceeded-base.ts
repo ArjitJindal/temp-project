@@ -11,7 +11,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { AuxiliaryIndexTransaction } from '../repositories/transaction-repository-interface'
 import { TransactionAggregationRule } from './aggregation-rule'
@@ -675,7 +675,7 @@ export default abstract class TransactionsDeviationBaseRule<
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
@@ -689,9 +689,10 @@ export default abstract class TransactionsDeviationBaseRule<
                   )
                 ).transactionAmount
               : undefined,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
@@ -705,7 +706,8 @@ export default abstract class TransactionsDeviationBaseRule<
                   )
                 ).transactionAmount
               : undefined,
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

@@ -7,7 +7,7 @@ import { TransactionHistoricalFilters } from '../filters'
 import { RuleHitResult } from '../rule'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { getNonUserSenderKeys, getUserSenderKeys } from '../utils'
 import { TransactionAggregationRule } from './aggregation-rule'
@@ -241,14 +241,15 @@ export default abstract class MultipleSendersWithinTimePeriodRuleBase extends Tr
   private async getTimeAggregatedResult(
     senderTransactions: AuxiliaryIndexTransaction[]
   ) {
-    return await groupTransactionsByHour<AggregationData>(
+    return await groupTransactionsByTime<AggregationData>(
       senderTransactions,
       async (group) => {
         const uniqueSenders = this.getUniqueSendersKeys(group)
         return {
           senderKeys: uniqueSenders,
         }
-      }
+      },
+      this.getAggregationGranularity()
     )
   }
 

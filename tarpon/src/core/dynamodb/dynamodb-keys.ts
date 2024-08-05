@@ -106,7 +106,6 @@ export const DynamoDbKeys = {
     const tranasctionTypeKey = getTransactionTypeKey(transactionType)
     const identifiers = getPaymentDetailsIdentifiers(paymentDetails)
     if (!identifiers) {
-      logger.warn(`Payment identifier not found for ${paymentDetails.method}`)
       return null
     }
     if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
@@ -121,7 +120,6 @@ export const DynamoDbKeys = {
         [accountNumber, bankCode ?? bankId].filter(Boolean).join('.')
 
       if (!identifier) {
-        logger.warn('Payment identifier not found')
         return null
       }
       return {

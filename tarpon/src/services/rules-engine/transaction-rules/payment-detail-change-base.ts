@@ -6,7 +6,7 @@ import { RuleHitResultItem } from '../rule'
 import { TransactionHistoricalFilters } from '../filters'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import {
   INITIAL_TRANSACTIONS_OPTIONAL_SCHEMA,
@@ -258,7 +258,7 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => {
           return group.reduce<AggregationData>(
@@ -271,9 +271,10 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
               ),
             initialAggregationData()
           )
-        }
+        },
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => {
           return group.reduce<AggregationData>(
@@ -286,7 +287,8 @@ export default abstract class PaymentDetailChangeRuleBase extends TransactionAgg
               ),
             initialAggregationData()
           )
-        }
+        },
+        this.getAggregationGranularity()
       )
     )
   }

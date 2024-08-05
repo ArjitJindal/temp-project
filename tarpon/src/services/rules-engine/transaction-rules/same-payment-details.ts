@@ -14,7 +14,7 @@ import { AuxiliaryIndexTransaction } from '../repositories/transaction-repositor
 import { TransactionAggregationRule } from './aggregation-rule'
 import {
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
@@ -181,17 +181,19 @@ export default class SamePaymentDetailsRule extends TransactionAggregationRule<
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

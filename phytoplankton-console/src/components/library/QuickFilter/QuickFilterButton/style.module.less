@@ -7,13 +7,13 @@
   gap: 4px;
   background: white;
   border: 1px solid @fr-colors-v2-gray-3;
-  cursor: pointer;
   border-radius: 4px;
   padding: 0 10px;
   position: relative;
   min-height: 28px;
 
-  &:disabled {
+  &:disabled,
+  &:not(.isClickable) {
     pointer-events: none;
   }
 

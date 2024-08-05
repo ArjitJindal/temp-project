@@ -72,6 +72,7 @@ export const jobDecisionHandler = async (
     SIMULATION_RISK_FACTORS: 'FARGATE',
     RULE_PRE_AGGREGATION: 'FARGATE',
     FILES_AI_SUMMARY: 'LAMBDA',
+    REVERIFY_TRANSACTIONS: 'FARGATE',
   }
 
   return {

@@ -162,7 +162,15 @@ testAggregationRebuild(
   {
     type: 'TRANSACTION',
     ruleImplementationName: 'transactions-round-value-percentage',
-    defaultParameters: DEFAULT_RULE_PARAMETERS,
+    defaultParameters: {
+      timeWindow: {
+        units: 1,
+        granularity: 'day',
+        rollingBasis: true,
+      },
+      initialTransactions: 1,
+      patternPercentageLimit: 50,
+    },
   },
   [
     getTestTransaction({

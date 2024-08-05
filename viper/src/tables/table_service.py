@@ -142,6 +142,7 @@ class TableService:
             f"optimize {table} where date == current_timestamp() - INTERVAL 1 day"
         )
 
+
 def data_types_equal(type1, type2):
     if type(type1) != type(type2):  # pylint: disable=unidiomatic-typecheck
         return False

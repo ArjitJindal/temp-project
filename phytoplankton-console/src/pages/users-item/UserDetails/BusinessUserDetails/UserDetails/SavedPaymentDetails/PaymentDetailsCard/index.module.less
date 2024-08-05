@@ -1,0 +1,27 @@
+@import 'src/components/ui/colors.less';
+
+.root {
+  border: 1px solid @fr-colors-purpleGrayTint;
+  border-radius: 4px;
+}
+
+.header,
+.body {
+  padding: 8px;
+}
+
+.header {
+  font-weight: 600;
+  display: grid;
+  grid-template-columns: min-content auto auto;
+  align-items: center;
+  cursor: pointer;
+}
+
+.body {
+  border-top: 1px solid @fr-colors-purpleGrayTint;
+}
+
+.paymentDetailsId {
+  text-align: right;
+}

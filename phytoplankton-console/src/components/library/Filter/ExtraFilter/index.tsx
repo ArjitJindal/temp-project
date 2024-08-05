@@ -5,12 +5,13 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 interface Props<Params> {
   filter: ExtraFilterProps<Params>;
   params: Params;
+  readOnly?: boolean;
   onChangeParams: (newParams: Params) => void;
   onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function ExtraFilter<Params>(props: Props<Params>) {
-  const { filter, params, onChangeParams, onUpdateFilterClose } = props;
+  const { filter, params, readOnly, onChangeParams, onUpdateFilterClose } = props;
   const renderer = filter.renderer ?? { kind: 'string' };
 
   if (typeof renderer === 'function') {
@@ -22,6 +23,7 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
             onChangeParams?.(cb(params));
           },
           onUpdateFilterClose: onUpdateFilterClose,
+          readOnly,
         })}
       </React.Fragment>
     );
@@ -29,6 +31,7 @@ export default function ExtraFilter<Params>(props: Props<Params>) {
 
   return (
     <AutoFilter
+      readOnly={readOnly}
       filter={{ ...filter, kind: 'AUTO', dataType: renderer }}
       value={params?.[filter.key]}
       onChange={(value: unknown) => {

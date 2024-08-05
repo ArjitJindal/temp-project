@@ -12,7 +12,7 @@ import { AuxiliaryIndexTransaction } from '../repositories/transaction-repositor
 import {
   getTransactionsTotalAmount,
   getTransactionUserPastTransactionsByDirectionGenerator,
-  groupTransactionsByHour,
+  groupTransactionsByTime,
   isTransactionAmountAboveThreshold,
   sumTransactionAmountDetails,
 } from '../utils/transaction-rule-utils'
@@ -472,7 +472,7 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
     receivingTransactions: AuxiliaryIndexTransaction[]
   ) {
     return mergeObjects(
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         sendingTransactions,
         async (group) => ({
           sendingCount: group.length,
@@ -491,9 +491,10 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
                 ), // this is about the number of receivers a sender has sent transactions to
               }
             : {}),
-        })
+        }),
+        this.getAggregationGranularity()
       ),
-      await groupTransactionsByHour<AggregationData>(
+      await groupTransactionsByTime<AggregationData>(
         receivingTransactions,
         async (group) => ({
           receivingCount: group.length,
@@ -512,7 +513,8 @@ export default class TransactionsVolumeRule extends TransactionAggregationRule<
                 ),
               }
             : {}), // this is about the number of senders a receiver has received transactions from
-        })
+        }),
+        this.getAggregationGranularity()
       )
     )
   }

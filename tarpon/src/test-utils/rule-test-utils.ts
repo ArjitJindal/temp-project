@@ -579,11 +579,11 @@ export function testAggregationRebuild(
             0,
             Number.MAX_SAFE_INTEGER
           )
-        expect(expectedRebuiltAggregation.origin).toEqual(
-          originAggregation?.map((v) => omit(v, 'ttl'))
+        expect(originAggregation?.map((v) => omit(v, 'ttl'))).toEqual(
+          expectedRebuiltAggregation.origin
         )
-        expect(expectedRebuiltAggregation.destination).toEqual(
-          destinationAggregation?.map((v) => omit(v, 'ttl'))
+        expect(destinationAggregation?.map((v) => omit(v, 'ttl'))).toEqual(
+          expectedRebuiltAggregation.destination
         )
       }
     })
