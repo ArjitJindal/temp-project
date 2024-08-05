@@ -58,6 +58,7 @@ import {
   DAY_DATE_FORMAT,
   MONTH_DATE_FORMAT_JS,
   getMongoDbClientDb,
+  DAY_DATE_FORMAT_JS,
 } from '@/utils/mongodb-utils'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
@@ -258,6 +259,23 @@ export class ApiUsageMetricsService {
     )
 
     logger.info('Published to Google Sheet')
+
+    logger.info('Checking for high sanctions searches count...')
+    dailyValues.find((data) => {
+      if (data.date !== dayjs().format(DAY_DATE_FORMAT_JS)) {
+        return
+      }
+      data.values.forEach((value) => {
+        if (
+          value.metric === SANCTIONS_SEARCHES_COUNT_METRIC &&
+          value.value > 200
+        ) {
+          logger.error(
+            `${value.metric.name} is over 200 on ${data.date} for ${tenantInfo.id}`
+          )
+        }
+      })
+    })
 
     await this.publishToPostHog(tenantInfo, dailyValues, monthlyMetrics)
 
