@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import TextInput, { Props as TextInputProps } from '@/components/library/TextInput';
 import { InputProps } from '@/components/library/Form';
 import { usePrevious } from '@/utils/hooks';
@@ -13,7 +13,16 @@ export interface Props extends Omit<TextInputProps, keyof InputProps<string>>, I
 }
 
 export default function NumberInput(props: Props) {
-  const { value, onChange, onBlur, min, max, step = 1, commitMode = 'ON_CHANGE', ...rest } = props;
+  const {
+    value,
+    onChange,
+    onBlur,
+    min,
+    max = Number.MAX_SAFE_INTEGER,
+    step = 1,
+    commitMode = 'ON_CHANGE',
+    ...rest
+  } = props;
   const textValue =
     value != null
       ? `${value.toLocaleString('en-US', { useGrouping: false, maximumFractionDigits: 20 })}`
