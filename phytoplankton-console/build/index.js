@@ -94,17 +94,16 @@ async function main() {
   });
   await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
 
-  const heapInitNonce = `${crypto.randomBytes(16).toString('hex')}`;
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' https://cdn.heapanalytics.com https://eu-assets.i.posthog.com https://heapanalytics.com 'nonce-${heapInitNonce}' blob:`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://heapanalytics.com`,
+    `script-src 'self' https://eu-assets.i.posthog.com blob:`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
-    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://heapanalytics.com https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
-    `font-src 'self' https://fonts.gstatic.com https://heapanalytics.com`,
+    `connect-src 'self' http://localhost:3002 *.amazonaws.com https://eu.i.posthog.com https://*.flagright.dev https://*.flagright.com https://ipinfo.io https://*.ingest.sentry.io https://fonts.gstatic.com ${WHITE_LABEL_DOMAINS}`,
+    `font-src 'self' https://fonts.gstatic.com`,
     `frame-src 'self' https://*.flagright.com https://*.flagright.dev ${WHITE_LABEL_DOMAINS}`,
-    `img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com https://heapanalytics.com`,
+    `img-src 'self' data: https://s.gravatar.com https://*.wp.com https://cdnjs.cloudflare.com https://platform.slack-edge.com`,
     `manifest-src 'self'`,
     `media-src 'self'`,
     `worker-src blob:`,
@@ -115,7 +114,6 @@ async function main() {
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
-      heapInitNonce: heapInitNonce,
       csp: csp,
       preload: collectModulePreloads(
         `${env.OUTPUT_FOLDER}/${bundleJs}`,

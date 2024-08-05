@@ -10,7 +10,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { getBranding } from '@/utils/branding';
 import { USER_INFO } from '@/utils/queries/keys';
 import { Permission } from '@/apis';
-import { IHeap } from '@/@types/heap';
 import { PageLoading } from '@/components/PageLoading';
 
 const branding = getBranding();
@@ -82,9 +81,6 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
           );
         }
 
-        if (user.name) {
-          ((window as any).heap as IHeap)?.identify(user.name);
-        }
         return <Context.Provider value={{ user: user }}>{props.children}</Context.Provider>;
       }}
     </AsyncResourceRenderer>
