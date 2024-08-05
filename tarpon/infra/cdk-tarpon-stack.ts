@@ -84,11 +84,12 @@ import {
   LambdaInvoke,
 } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import {
-  BATCH_JOB_PAYLOAD_ENV_VAR,
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
   FARGATE_BATCH_JOB_RUN_TYPE,
   LAMBDA_BATCH_JOB_RUN_TYPE,
+  BATCH_JOB_ID_ENV_VAR,
+  BATCH_JOB_TENANT_ID_ENV_VAR,
 } from '@lib/cdk/constants'
 import {
   Cluster,
@@ -882,8 +883,12 @@ export class CdkTarponStack extends cdk.Stack {
               containerDefinition: fargateBatchJobContainer,
               environment: [
                 {
-                  name: BATCH_JOB_PAYLOAD_ENV_VAR,
-                  value: JsonPath.jsonToString(JsonPath.stringAt('$')),
+                  name: BATCH_JOB_ID_ENV_VAR,
+                  value: JsonPath.stringAt('$.jobId'),
+                },
+                {
+                  name: BATCH_JOB_TENANT_ID_ENV_VAR,
+                  value: JsonPath.stringAt('$.tenantId'),
                 },
               ],
               command: ['node', 'index.js'],

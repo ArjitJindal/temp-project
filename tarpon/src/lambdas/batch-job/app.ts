@@ -36,6 +36,7 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     if (!existingJob) {
       await jobRepository.insertJob(job)
     }
+
     await sfnClient.send(
       new StartExecutionCommand({
         stateMachineArn: process.env.BATCH_JOB_STATE_MACHINE_ARN,
@@ -48,7 +49,7 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
 })
 
 export const jobDecisionHandler = async (
-  job: BatchJob
+  job: BatchJobWithId
 ): Promise<{
   [BATCH_JOB_RUN_TYPE_RESULT_KEY]: BatchRunType
   [BATCH_JOB_PAYLOAD_RESULT_KEY]: any
@@ -77,7 +78,15 @@ export const jobDecisionHandler = async (
 
   return {
     [BATCH_JOB_RUN_TYPE_RESULT_KEY]: BATCH_JOB_AND_RUN_TYPE_MAP[job.type],
-    [BATCH_JOB_PAYLOAD_RESULT_KEY]: job,
+    [BATCH_JOB_PAYLOAD_RESULT_KEY]:
+      BATCH_JOB_AND_RUN_TYPE_MAP[job.type] == 'LAMBDA'
+        ? job
+        : {
+            jobId: job.jobId,
+            type: job.type,
+            tenantId: job.tenantId,
+            awsCredentials: job['awsCredentials'],
+          },
   }
 }
 
