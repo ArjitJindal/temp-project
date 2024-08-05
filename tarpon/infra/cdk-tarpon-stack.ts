@@ -748,7 +748,8 @@ export class CdkTarponStack extends cdk.Stack {
     transactionAggregatorAlias.addEventSource(
       new SqsEventSource(transactionAggregationQueue, {
         batchSize: 1,
-        maxConcurrency: 2,
+        maxConcurrency:
+          this.config.resource.TRANSACTION_AGGREGATION_MAX_CONCURRENCY,
       })
     )
 

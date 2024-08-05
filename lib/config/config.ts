@@ -57,6 +57,7 @@ export type Config = {
     TRANSACTION_AGGREGATION_LAMBDA: {
       MEMORY_SIZE?: number
     }
+    TRANSACTION_AGGREGATION_MAX_CONCURRENCY: number
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE?: number
     }
