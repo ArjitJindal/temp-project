@@ -3564,6 +3564,8 @@ components:
           type: string
         cardType:
           $ref: '#/components/schemas/CardType'
+        cardBalance:
+          $ref: '#/components/schemas/Amount'
         merchantDetails:
           $ref: '#/components/schemas/CardMerchantDetails'
         networkProviderRiskScore:
