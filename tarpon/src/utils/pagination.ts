@@ -10,6 +10,7 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
+import { formatTableName } from './clickhouse-utils'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
 
@@ -219,12 +220,17 @@ async function getPrevCursor<T>(
 }
 
 export async function offsetPaginateClickhouse<T>(
+  tenantId: string,
   client: ClickHouseClient,
-  tableName: string,
+  dataTableName: string,
+  queryTableName: string,
   query: ClickhousePaginationParams,
   where = '1'
 ): Promise<{ items: T[]; count: number }> {
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
+  dataTableName = formatTableName(tenantId, dataTableName)
+  queryTableName = formatTableName(tenantId, queryTableName)
+
   // replace . with _ to avoid clickhouse error
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
   const sortOrder = query.sortOrder || 'ascend'
@@ -232,11 +238,11 @@ export async function offsetPaginateClickhouse<T>(
   const offset = (page - 1) * pageSize
 
   const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
-  const findSql = `SELECT id, data, NULL as count FROM ${tableName} WHERE id IN (SELECT id FROM ${tableName} ${
+  const findSql = `SELECT id, data, NULL as count FROM ${dataTableName} WHERE id IN (SELECT id FROM ${queryTableName} ${
     where ? `WHERE ${where}` : ''
-  } ORDER BY ${sortField} ${direction} LIMIT ${pageSize} OFFSET ${offset}) ORDER BY ${sortField} ${direction}`
+  } ORDER BY ${sortField} ${direction} LIMIT ${pageSize} OFFSET ${offset})`
 
-  const countQuery = `SELECT NULL as id, NULL as data, COUNT(*) as count FROM ${tableName} ${
+  const countQuery = `SELECT NULL as id, NULL as data, COUNT(*) as count FROM ${queryTableName} ${
     where ? `WHERE ${where}` : ''
   }`
 

@@ -3,10 +3,9 @@ import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetTransactionsV2ListRequest } from '@/@types/openapi-internal/RequestParameters'
-import { sanitizeTableName } from '@/utils/clickhouse-utils'
-import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse-definition'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -167,8 +166,10 @@ export class ClickhouseTransactionsRepository {
     const whereClause = await this.getTransactionsWhereConditions(params)
 
     const data = await offsetPaginateClickhouse<InternalTransaction>(
+      this.tenantId,
       this.clickhouseClient,
-      sanitizeTableName(TRANSACTIONS_COLLECTION(this.tenantId)),
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
+      CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
       {
         page: params.page,
         pageSize: (params.pageSize || DEFAULT_PAGE_SIZE) as number,

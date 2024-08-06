@@ -52,11 +52,6 @@ const getRiskRepository = async (tenantId = testTenantId) => {
 }
 
 describe('Risk Scoring', () => {
-  beforeAll(async () => {
-    process.env.NODE_ENV = 'development'
-    process.env.ENV = 'local'
-  })
-
   describe('Risk Scoring Tests', () => {
     it('should update inital the risk score of a user', async () => {
       const mongoDb = await getMongoDbClient()
