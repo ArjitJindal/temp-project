@@ -110,7 +110,10 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
       ...parameters.extraFilter,
     }
     const totalTransactionsCount = await txCollection.countDocuments(filter)
-    const cursor = txCollection.find(filter).sort({ createdAt: 1 })
+    const cursor = txCollection
+      .find(filter)
+      .sort({ createdAt: 1 })
+      .addCursorFlag('noCursorTimeout', true)
     let processedTransactionCount = 0
 
     for await (const internalTransaction of cursor) {
