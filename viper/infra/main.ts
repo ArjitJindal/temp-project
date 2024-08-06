@@ -647,7 +647,26 @@ sudo python3 -m pip install boto3
     "spark.sql.catalogImplementation": "hive",
     "spark.databricks.delta.schema.autoMerge.enabled": "true",
     "spark.hadoop.hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
-    "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
+    "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
+    "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
+    "spark.hadoop.fs.s3a.endpoint": "s3.amazonaws.com",
+    "spark.hadoop.fs.s3a.connection.maximum": "100",
+    "spark.hadoop.fs.s3a.connection.timeout": "10000",
+    "spark.hadoop.fs.s3a.connection.establish.timeout": "10000",
+    "spark.hadoop.fs.s3a.attempts.maximum": "15",
+    "spark.hadoop.fs.s3a.retry.limit": "15",
+    "spark.hadoop.fs.s3a.retry.interval": "2000",
+    "spark.hadoop.fs.s3a.paging.maximum": "1000",
+    "spark.hadoop.fs.s3a.multipart.size": "104857600",
+    "spark.hadoop.fs.s3a.multipart.threshold": "1073741824",
+    "spark.hadoop.fs.s3a.multipart.purge.age": "86400",
+    "spark.hadoop.fs.s3a.fast.upload.buffer": "disk",
+    "spark.hadoop.fs.s3a.fast.upload.active.blocks": "4",
+    "spark.hadoop.fs.s3a.fast.upload": "true",
+    "spark.hadoop.fs.s3a.max.total.tasks": "512",
+    "spark.hadoop.fs.s3a.max.task.size": "67108864",
+    "spark.hadoop.fs.s3a.change.detection.mode": "server",
+    "spark.hadoop.fs.s3a.change.detection.source": "etag"
   }
 }
 ]

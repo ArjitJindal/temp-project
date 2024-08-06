@@ -20,7 +20,7 @@ from src.dynamo.deserialize import deserialise_dynamo_udf
 from src.entities.entity import Entity
 from src.tables.kinesis_tables import KinesisTables
 from src.tables.schema import kinesis_event_schema
-from src.tables.table_service import TableService, schemas_equal
+from src.tables.table_service import TableService
 from src.version_service import VersionService
 
 PARTITION_KEY_ID_PATH = "event.dynamodb.Keys.PartitionKeyID.S"
