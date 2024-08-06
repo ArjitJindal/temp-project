@@ -2,8 +2,9 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { ListRepository } from '@/services/list/repositories/list-repository'
 import { ListExisted as List } from '@/@types/openapi-internal/ListExisted'
-import { CursorPaginatedResponse, getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
+import { CursorPaginationResponse } from '@/utils/pagination'
 
 dynamoDbSetupHook()
 
@@ -284,43 +285,86 @@ describe('Verify list repository', () => {
       expect(await listRepo.getListItem(listId, key)).toBeNull()
     }
   })
-  test('Test paginated keys reading', async () => {
+
+  describe('Pagination', () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
 
-    const initialValues = [...new Array(100)].map((_, i) => ({
-      key: `key_${i.toString().padStart(4, '0')}`,
-      metadata: {
-        index: i,
-        payload: [...new Array(100000)].map(() => 'a').join(''),
-      },
-    }))
+    test('One page data, fetch first page', async () => {
+      const ITEMS_COUNT = 20
 
-    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
-      items: initialValues,
+      const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
+        items: [...new Array(ITEMS_COUNT)].map((_, i) => ({
+          key: `key_${(i + 1).toString().padStart(2, '0')}`,
+          metadata: {
+            index: i,
+            payload: `value_${i.toString().padStart(2, '0')}`,
+          },
+        })),
+      })
+
+      const r: CursorPaginationResponse<ListItem> = await listRepo.getListItems(
+        listId
+      )
+      expect(r.next).toEqual('')
+      expect(r.prev).toEqual('')
+      expect(r.hasPrev).toEqual(false)
+      expect(r.hasNext).toEqual(false)
+      expect(r.count).toEqual(ITEMS_COUNT)
     })
 
-    let cursor: any = undefined
-    const readResult: any[] = []
-    do {
-      const r: CursorPaginatedResponse<ListItem> = await listRepo.getListItems(
-        listId,
-        {
-          cursor,
-        }
-      )
-      cursor = r.cursor
-      readResult.push(...r.items)
-    } while (cursor != null)
+    describe('2 pages, second page with 1 item', () => {
+      const ITEMS_COUNT = 21
+      const newList = {
+        items: [...new Array(ITEMS_COUNT)].map((_, i) => ({
+          key: `key_${(i + 1).toString().padStart(2, '0')}`,
+          metadata: {
+            index: i,
+            payload: `value_${i.toString().padStart(2, '0')}`,
+          },
+        })),
+      }
+      test('Fetch first page, last item should be next cursor', async () => {
+        const { listId } = await listRepo.createList(
+          LIST_TYPE,
+          'USER_ID',
+          newList
+        )
 
-    expect(readResult.length).toEqual(initialValues.length)
-    for (let i = 0; i < initialValues.length; i += 1) {
-      const x = initialValues[i]
-      const y = readResult[i]
-      expect(x).toEqual(y)
-    }
+        const r: CursorPaginationResponse<ListItem> =
+          await listRepo.getListItems(listId)
+        expect(r.pageSize).toEqual(20)
+        expect(r.items).toHaveLength(20)
+        expect(r.count).toEqual(ITEMS_COUNT)
+        expect(r.next).toEqual('key_20')
+        expect(r.prev).toEqual('')
+        expect(r.hasNext).toEqual(true)
+        expect(r.hasPrev).toEqual(false)
+      })
+
+      test('Fetch second page', async () => {
+        const { listId } = await listRepo.createList(
+          LIST_TYPE,
+          'USER_ID',
+          newList
+        )
+
+        const r: CursorPaginationResponse<ListItem> =
+          await listRepo.getListItems(listId, {
+            fromCursorKey: 'key_20',
+          })
+        expect(r.items).toHaveLength(1)
+        expect(r.items[0].key).toEqual('key_21')
+        expect(r.next).toEqual('')
+        expect(r.prev).toEqual('')
+        expect(r.hasNext).toEqual(false)
+        expect(r.hasPrev).toEqual(true)
+        expect(r.count).toEqual(ITEMS_COUNT)
+      })
+    })
   })
+
   test('Test counting values', async () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
@@ -361,12 +405,11 @@ async function getAllListItems(listRepo: ListRepository, listId: string) {
   const result: any[] = []
   let nextCursor: any = undefined
   do {
-    const response: CursorPaginatedResponse<ListItem> =
-      await listRepo.getListItems(listId, {
-        cursor: nextCursor,
-      })
-    nextCursor = response.cursor
+    const response = await listRepo.getListItems(listId, {
+      fromCursorKey: nextCursor,
+    })
+    nextCursor = response.next
     result.push(...response.items)
-  } while (nextCursor != null)
+  } while (nextCursor)
   return result
 }

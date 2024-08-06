@@ -15,11 +15,11 @@ async function deleteList(listId: string) {
     for (const item of response.items) {
       await listRepository.deleteListItem(listId, item.key)
     }
-    if (!response.cursor) {
+    if (!response.next) {
       break
     }
     response = await listRepository.getListItems(listId, {
-      cursor: response.cursor,
+      fromCursorKey: response.next,
     })
   }
   await listRepository.deleteList(listId)

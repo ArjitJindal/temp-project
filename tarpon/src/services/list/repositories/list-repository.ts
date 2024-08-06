@@ -14,7 +14,6 @@ import { ListData } from '@/@types/openapi-public/ListData'
 import {
   batchWrite,
   BatchWriteRequestInternal,
-  CursorPaginatedResponse,
   paginateQuery,
   PutRequestInternal,
 } from '@/utils/dynamodb'
@@ -23,6 +22,11 @@ import { neverReturn } from '@/utils/lang'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { traceable } from '@/core/xray'
+import {
+  CursorPaginationParams,
+  CursorPaginationResponse,
+  DEFAULT_PAGE_SIZE,
+} from '@/utils/pagination'
 
 @traceable
 export class ListRepository {
@@ -221,32 +225,58 @@ export class ListRepository {
 
   public async getListItems(
     listId: string,
-    params?: { cursor?: string }
-  ): Promise<CursorPaginatedResponse<ListItem>> {
+    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>
+  ): Promise<CursorPaginationResponse<ListItem>> {
+    const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE
+    const queryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '').PartitionKeyID,
+      },
+      ExclusiveStartKey: params?.fromCursorKey
+        ? DynamoDbKeys.LIST_ITEM(this.tenantId, listId, params?.fromCursorKey)
+        : undefined,
+      Limit: pageSize + 1,
+    }
     const { Items = [], LastEvaluatedKey } = await this.dynamoDb.send(
-      new QueryCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-        KeyConditionExpression: 'PartitionKeyID = :pk',
-        ExpressionAttributeValues: {
-          ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '')
-            .PartitionKeyID,
-        },
-        ExclusiveStartKey: params?.cursor
-          ? DynamoDbKeys.LIST_ITEM(this.tenantId, listId, params?.cursor)
-          : undefined,
-        Limit: 20,
+      new QueryCommand(queryCommandInput)
+    )
+    let prev = ''
+    let hasPrev = false
+    if (params?.fromCursorKey) {
+      const { Items = [] } = await this.dynamoDb.send(
+        new QueryCommand({
+          ...queryCommandInput,
+          ScanIndexForward: false,
+        })
+      )
+      hasPrev = Items.length > 0
+      prev = Items.length === pageSize + 1 ? Items[Items.length - 2].key : ''
+    }
+    const items: ListItem[] = Items.slice(0, pageSize).map(
+      ({ key, metadata }) => ({
+        key,
+        metadata,
       })
     )
-    const items: ListItem[] = Items.map(({ key, metadata }) => ({
-      key,
-      metadata,
-    }))
+    const [nextPageFirstItem] = Items.slice(pageSize)
+    const hasNextPage = nextPageFirstItem != null
+
+    const count = await this.countListValues(listId)
     return {
-      items,
-      cursor:
-        LastEvaluatedKey != null && items.length > 0
+      next:
+        hasNextPage && LastEvaluatedKey != null && items.length > 0
           ? items[items.length - 1].key
-          : undefined,
+          : '',
+      prev: prev,
+      hasNext: hasNextPage,
+      hasPrev,
+      count: count,
+      limit: 10000,
+      last: '',
+      pageSize: pageSize,
+      items,
     }
   }
 

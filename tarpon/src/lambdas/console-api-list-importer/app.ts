@@ -66,17 +66,11 @@ export const listsHandler = lambdaApi()(
     })
 
     handlers.registerGetListItems(async (ctx, request) => {
-      const { listId, page = 1 } = request
-      let response: any = undefined
-      for (let i = 0; i < page; i += 1) {
-        response = await listService.getListItems(listId, {
-          cursor: response?.cursor,
-        })
-        if (response == null) {
-          break
-        }
-      }
-      return response?.items ?? []
+      const { listId, start, pageSize } = request
+      return await listService.getListItems(listId, {
+        fromCursorKey: start,
+        pageSize,
+      })
     })
 
     handlers.registerPostListItem(

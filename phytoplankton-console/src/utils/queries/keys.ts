@@ -33,11 +33,12 @@ export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParamet
 ];
 export const LISTS_OF_TYPE = (type: ListType): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id?: string): QueryKey => ['lists', 'item', id];
-export const LISTS_ITEM_TYPE = (id: string, type: ListType): QueryKey => [
+export const LISTS_ITEM_TYPE = (id: string, type: ListType, params?: AnyParameters): QueryKey => [
   'lists',
   'item',
   id,
   type,
+  params,
 ];
 export const LISTS = (): QueryKey => ['lists'];
 export const USERS_ITEM_TRANSACTIONS_HISTORY = (

@@ -6,7 +6,7 @@ import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { useCursorQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM_TYPE } from '@/utils/queries/keys';
 import { getListSubtypeTitle, Metadata } from '@/pages/lists/helpers';
 import NewValueInput from '@/pages/lists/NewListDrawer/NewValueInput';
@@ -62,7 +62,7 @@ const helper = new ColumnHelper<TableItem>();
 
 export default function ItemsTable(props: Props) {
   const { listHeader } = props;
-  const { listId, listType, size } = listHeader;
+  const { listId, listType } = listHeader;
 
   const api = useApi();
   const [editUserData, setEditUserData] = useState<ExistedTableItemData | null>(null);
@@ -167,10 +167,11 @@ export default function ItemsTable(props: Props) {
   );
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
-  const listResult = usePaginatedQuery(LISTS_ITEM_TYPE(listId, listType), async ({ page }) => {
-    const response = await api.getListItems({ listId, page });
+  const listResult = useCursorQuery(LISTS_ITEM_TYPE(listId, listType, params), async ({ from }) => {
+    const response = await api.getListItems({ listId, start: from, pageSize: params.pageSize });
+
     const data: TableItem[] = [
-      ...response.map(
+      ...response.items.map(
         ({ key, metadata }): TableItem => ({
           rowKey: key,
           type: 'EXISTED',
@@ -188,8 +189,9 @@ export default function ItemsTable(props: Props) {
       },
     ];
     return {
+      ...response,
       items: data,
-      total: size + 1,
+      total: response.count,
     };
   });
 
@@ -378,7 +380,7 @@ export default function ItemsTable(props: Props) {
       onChangeParams={setParams}
       queryResults={listResult}
       fitHeight
-      sizingMode="FULL_WIDTH"
+      sizingMode="SCROLL"
       externalState={externalState}
     />
   );

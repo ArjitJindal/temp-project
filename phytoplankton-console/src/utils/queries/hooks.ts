@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { QueryFunction, QueryKey } from '@tanstack/query-core';
 import {
-  useQueries as useQueriesRQ,
-  useQuery as useQueryRQ,
   useInfiniteQuery as useInfiniteQueryRQ,
   UseInfiniteQueryResult,
+  useQueries as useQueriesRQ,
+  useQuery as useQueryRQ,
 } from '@tanstack/react-query';
 import { UseQueryOptions, UseQueryResult } from '@tanstack/react-query/src/types';
 import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react-query/src/useQueries';
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { failed, loading, success, AsyncResource, init } from '@/utils/asyncResource';
+import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 
@@ -153,8 +153,12 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
     limit: 0,
   });
   const [pageParam, setPageParam] = useState('');
+  const newQueryKey = [
+    ...(Array.isArray(queryKey) ? queryKey : [queryKey]),
+    { pageParam },
+  ] as unknown as TQueryKey;
   const results = useQuery<CursorPaginatedData<TData>, CursorPaginatedData<TData>, TQueryKey>(
-    queryKey,
+    newQueryKey,
     () => {
       const result = queryFn({ from: pageParam });
       result.then((r) => {

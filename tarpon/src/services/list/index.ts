@@ -6,9 +6,12 @@ import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
 import { ListData } from '@/@types/openapi-public/ListData'
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
-import { CursorPaginatedResponse } from '@/utils/dynamodb'
 import { ListItem } from '@/@types/openapi-public/ListItem'
 import { traceable } from '@/core/xray'
+import {
+  CursorPaginationParams,
+  CursorPaginationResponse,
+} from '@/utils/pagination'
 
 @traceable
 export class ListService {
@@ -73,8 +76,8 @@ export class ListService {
 
   public async getListItems(
     listId: string,
-    params?: { cursor?: string }
-  ): Promise<CursorPaginatedResponse<ListItem>> {
+    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>
+  ): Promise<CursorPaginationResponse<ListItem>> {
     return await this.listRepository.getListItems(listId, params)
   }
 }

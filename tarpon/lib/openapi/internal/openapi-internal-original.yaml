@@ -620,8 +620,12 @@ paths:
           - lists:all:read
       parameters:
         - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
             type: number
-          name: page
+          name: pageSize
           in: query
       responses:
         '200':
@@ -629,9 +633,35 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+                type: object
+                properties:
+                  hasPrev:
+                    type: boolean
+                  prev:
+                    type: string
+                  next:
+                    type: string
+                  count:
+                    type: number
+                  limit:
+                    type: number
+                  last:
+                    type: string
+                  hasNext:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+                required:
+                  - hasPrev
+                  - prev
+                  - next
+                  - count
+                  - limit
+                  - last
+                  - hasNext
+                  - items
         '404':
           description: Not found
     post:
