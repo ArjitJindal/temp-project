@@ -93,7 +93,7 @@
     "migration:sync": "yarn _migrator sync",
     "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts",
     "qa:clean": "ENV=local ts-node --transpileOnly scripts/qa-stack-cleanup.ts",
-    "verify-remote-transactions": "ts-node scripts/debug-rule/verify-remote-transactions.ts",
+    "verify-remote-entities": "ts-node scripts/debug-rule/verify-remote-entities.ts",
     "get-qa-api-key": "ts-node --transpileOnly scripts/print-qa-key.ts",
     "get-qa-integration-test-api-key": "ts-node --transpileOnly scripts/print-qa-integration-test-key.ts",
     "cross-tenant-query:dev": "ts-node scripts/cross-tenant-query.ts --env dev",

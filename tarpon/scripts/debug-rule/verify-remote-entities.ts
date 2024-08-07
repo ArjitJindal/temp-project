@@ -20,6 +20,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 process.env.ENV = 'local'
 
@@ -28,15 +29,18 @@ const {
   api,
   jwt: rawJwt,
   transactionIds,
+  userIds,
   ruleInstanceIds,
 } = fs.readJSONSync(configPath, 'utf-8') as {
   api: string
   jwt: string
   transactionIds: string[]
+  userIds: string[]
   ruleInstanceIds: string[]
 }
 console.info(`Using config from "${configPath}"`)
-console.info(`Will get ${transactionIds.length} transactions from "${api}"`)
+console.info(`Will get ${transactionIds.length} transactions from ${api}`)
+console.info(`Will get ${userIds.length} users from ${api}`)
 
 const createdUsers = new Set<string>()
 const jwt = rawJwt.replace(/^Bearer\s+/, '')
@@ -125,6 +129,9 @@ async function createRuleInstancesLocally(ruleInstanceIds: string[]) {
   const ruleInstances = await getRemoteRuleInstances(ruleInstanceIds)
   const dynamoDb = getDynamoDbClient()
   for (const ruleInstance of ruleInstances) {
+    if (ruleInstance.type === 'USER') {
+      ruleInstance.userRuleRunCondition = { entityUpdated: true }
+    }
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
@@ -143,17 +150,22 @@ async function createUserLocally(userId: string) {
   }
   const user = await getRemoteUser(userId)
   if (user) {
-    await apiFetch(`http://localhost:3000/${user.type.toLowerCase()}/users`, {
-      method: 'POST',
-      headers: {
-        'x-api-key': 'fake',
-        'tenant-id': 'flagright',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(
-        omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
-      ),
-    })
+    return (
+      await apiFetch<UserWithRulesResult>(
+        `http://localhost:3000/${user.type.toLowerCase()}/users`,
+        {
+          method: 'POST',
+          headers: {
+            'x-api-key': 'fake',
+            'tenant-id': 'flagright',
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(
+            omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
+          ),
+        }
+      )
+    ).result
   }
   createdUsers.add(userId)
 }
@@ -226,7 +238,7 @@ async function verifyTransactionEventLocally(
 }
 
 async function main() {
-  if (transactionIds.length === 0) {
+  if (transactionIds.length === 0 && userIds.length === 0) {
     return
   }
 
@@ -244,54 +256,71 @@ async function main() {
   await RuleService.syncRulesLibrary()
   await createRuleInstancesLocally(ruleInstanceIds)
 
-  const transactionsOrEvents: Array<
-    InternalTransaction | TransactionEventWithRulesResult
-  > = []
-  const initialEvents: { [txId: string]: TransactionEventWithRulesResult } = {}
-  await Promise.all(
-    transactionIds.map(async (transactionId) => {
-      const transaction = await getRemoteTransaction(transactionId)
-      initialEvents[transactionId] = transaction
-        .events?.[0] as TransactionEventWithRulesResult
-      transactionsOrEvents.push(...(transaction.events?.slice(1) ?? []))
-      transactionsOrEvents.push(transaction)
-    })
-  )
-  transactionsOrEvents.sort(
-    (a, b) => (a as any).createdAt - (b as any).createdAt
-  )
-
   const results: any[] = []
-  for (let i = 0; i < transactionsOrEvents.length; i += 1) {
-    const txOrEvent = transactionsOrEvents[i]
-    const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult).eventId
-    const time = dayjs(txOrEvent.timestamp).toISOString()
-    const remoteRuleHit = !!(
-      isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
-    ).hitRules?.find((v) => ruleInstanceIds.includes(v.ruleInstanceId))
-    let result: any
-    if (isTxEvent) {
-      const txEvent = txOrEvent as TransactionEventWithRulesResult
-      try {
-        result = await verifyTransactionEventLocally(txEvent)
-      } catch (e) {
-        console.error(`[${time}] Failed to verify tx event ${txEvent.eventId}`)
-        continue
-      }
-    } else {
-      const tx = txOrEvent as InternalTransaction
-      result = await verifyTransactionLocally(tx)
-    }
-    const hit = result?.hitRules?.length > 0
-    results.push(result)
-    const entity = isTxEvent
-      ? `tx event ${(
-          txOrEvent as TransactionEventWithRulesResult
-        ).eventId?.slice(-5)} (tx: ${txOrEvent.transactionId.slice(-5)})`
-      : `tx ${txOrEvent.transactionId.slice(-5)}`
-    console.info(
-      `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${remoteRuleHit} (remote)`
+
+  // Users
+  for (const userId of userIds) {
+    const result = await createUserLocally(userId)
+    const hit = Boolean(
+      result?.hitRules?.length && result?.hitRules?.length > 0
     )
+    results.push(result)
+    console.info(`Verified user - Hit: ${hit} (local) `)
+  }
+
+  // Transactions
+  if (transactionIds.length) {
+    const transactionsOrEvents: Array<
+      InternalTransaction | TransactionEventWithRulesResult
+    > = []
+    const initialEvents: { [txId: string]: TransactionEventWithRulesResult } =
+      {}
+    await Promise.all(
+      transactionIds.map(async (transactionId) => {
+        const transaction = await getRemoteTransaction(transactionId)
+        initialEvents[transactionId] = transaction
+          .events?.[0] as TransactionEventWithRulesResult
+        transactionsOrEvents.push(...(transaction.events?.slice(1) ?? []))
+        transactionsOrEvents.push(transaction)
+      })
+    )
+    transactionsOrEvents.sort(
+      (a, b) => (a as any).createdAt - (b as any).createdAt
+    )
+
+    for (let i = 0; i < transactionsOrEvents.length; i += 1) {
+      const txOrEvent = transactionsOrEvents[i]
+      const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult).eventId
+      const time = dayjs(txOrEvent.timestamp).toISOString()
+      const remoteRuleHit = !!(
+        isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
+      ).hitRules?.find((v) => ruleInstanceIds.includes(v.ruleInstanceId))
+      let result: any
+      if (isTxEvent) {
+        const txEvent = txOrEvent as TransactionEventWithRulesResult
+        try {
+          result = await verifyTransactionEventLocally(txEvent)
+        } catch (e) {
+          console.error(
+            `[${time}] Failed to verify tx event ${txEvent.eventId}`
+          )
+          continue
+        }
+      } else {
+        const tx = txOrEvent as InternalTransaction
+        result = await verifyTransactionLocally(tx)
+      }
+      const hit = result?.hitRules?.length > 0
+      results.push(result)
+      const entity = isTxEvent
+        ? `tx event ${(
+            txOrEvent as TransactionEventWithRulesResult
+          ).eventId?.slice(-5)} (tx: ${txOrEvent.transactionId.slice(-5)})`
+        : `tx ${txOrEvent.transactionId.slice(-5)}`
+      console.info(
+        `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${remoteRuleHit} (remote)`
+      )
+    }
   }
   const outputPath = path.join(
     __dirname,

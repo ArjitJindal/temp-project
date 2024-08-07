@@ -76,6 +76,47 @@ describe('Transform json logic with direction-less entity variables', () => {
       ],
     })
   })
+  it('different key and entityKey', () => {
+    const updatedJsonLogic = transformJsonLogic(
+      {
+        and: [
+          {
+            '==': [
+              {
+                var: 'entity:1',
+              },
+              'CONSUMER',
+            ],
+          },
+        ],
+      },
+      [{ key: 'entity:1', entityKey: 'USER:type__BOTH' }]
+    )
+    expect(updatedJsonLogic).toEqual({
+      and: [
+        {
+          or: [
+            {
+              '==': [
+                {
+                  var: 'entity:1__SENDER',
+                },
+                'CONSUMER',
+              ],
+            },
+            {
+              '==': [
+                {
+                  var: 'entity:1__RECEIVER',
+                },
+                'CONSUMER',
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
   it('all direction-less entity variables', () => {
     const updatedJsonLogic = transformJsonLogic({
       and: [

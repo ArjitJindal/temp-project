@@ -108,13 +108,25 @@ export function getDirectionalVariableKeys(directionLessVariableKey: string) {
     const entity = parts[0]
     const part = `${parts[1].charAt(0).toUpperCase()}${parts[1].slice(1)}`
     return [
-      `${entity}${VARIABLE_NAMESPACE_SEPARATOR}origin${part}`,
-      `${entity}${VARIABLE_NAMESPACE_SEPARATOR}destination${part}`,
+      {
+        key: `${entity}${VARIABLE_NAMESPACE_SEPARATOR}origin${part}`,
+        direction: 'SENDER',
+      },
+      {
+        key: `${entity}${VARIABLE_NAMESPACE_SEPARATOR}destination${part}`,
+        direction: 'RECEIVER',
+      },
     ]
   } else {
     return [
-      `${key}${SENDER_VARIABLE_KEY_SUFFIX}`,
-      `${key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
+      {
+        key: `${key}${SENDER_VARIABLE_KEY_SUFFIX}`,
+        direction: 'SENDER',
+      },
+      {
+        key: `${key}${RECEIVER_VARIABLE_KEY_SUFFIX}`,
+        direction: 'RECEIVER',
+      },
     ]
   }
 }
@@ -156,7 +168,6 @@ function userEntityVariableWithDirection(variables: RuleVariable[]) {
     {
       ...variable,
       key: `${variable.key}${BOTH_DIRECTIONS_VARIABLE_KEY_SUFFIX}`,
-      load: async () => null,
     },
   ])
 }

@@ -63,6 +63,97 @@ describe('Entity variable', () => {
     })
   })
 
+  test('executes the json logic - hit (tx directionless - 1)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      {
+        and: [{ '==': [{ var: 'entity:1' }, '100'] }],
+      },
+      {
+        entity: [
+          {
+            key: 'entity:1',
+            entityKey: 'TRANSACTION:amountDetails-transactionAmount__BOTH',
+          },
+        ],
+      },
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({
+          type: 'TRANSFER',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 100,
+          },
+        }),
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: { 'entity:1__SENDER': 200, 'entity:1__RECEIVER': 100 },
+        },
+      ],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+
+  test('executes the json logic - hit (tx directionless - 2)', async () => {
+    const tenantId = 'tenant-id'
+    const dynamoDbClient = getDynamoDbClient()
+    const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
+    const result = await evaluator.evaluate(
+      {
+        and: [
+          {
+            '==': [
+              { var: 'TRANSACTION:amountDetails-transactionAmount__BOTH' },
+              '100',
+            ],
+          },
+        ],
+      },
+      {},
+      { baseCurrency: 'EUR', tenantId },
+      {
+        type: 'TRANSACTION',
+        transaction: getTestTransaction({
+          type: 'TRANSFER',
+          originAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 200,
+          },
+          destinationAmountDetails: {
+            transactionCurrency: 'EUR',
+            transactionAmount: 100,
+          },
+        }),
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {
+            'TRANSACTION:originAmountDetails-transactionAmount': 200,
+            'TRANSACTION:destinationAmountDetails-transactionAmount': 100,
+          },
+        },
+      ],
+      hitDirections: ['ORIGIN', 'DESTINATION'],
+    })
+  })
+
   test('executes the json logic - no hit', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()
@@ -88,8 +179,18 @@ describe('Entity variable', () => {
     const dynamoDbClient = getDynamoDbClient()
     const evaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDbClient)
     const result = await evaluator.evaluate(
-      { and: [{ '==': [{ var: 'CONSUMER_USER:userId__SENDER' }, 'abc'] }] },
-      {},
+      {
+        and: [
+          { '==': [{ var: 'entity:1' }, 'abc'] },
+          { '==': [{ var: 'entity:2' }, 'abc'] },
+        ],
+      },
+      {
+        entity: [
+          { key: 'entity:1', entityKey: 'CONSUMER_USER:userId__SENDER' },
+          { key: 'entity:2', entityKey: 'CONSUMER_USER:userId__BOTH' },
+        ],
+      },
       { tenantId },
       {
         type: 'USER',
@@ -101,7 +202,11 @@ describe('Entity variable', () => {
       vars: [
         {
           direction: 'ORIGIN',
-          value: { 'CONSUMER_USER:userId__SENDER': 'abc' },
+          value: {
+            'entity:1': 'abc',
+            'entity:2__SENDER': 'abc',
+            'entity:2__RECEIVER': 'abc',
+          },
         },
       ],
       hitDirections: ['ORIGIN'],

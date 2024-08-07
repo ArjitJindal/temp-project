@@ -69,8 +69,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   userRepository?: UserRepository
   caseCreationService?: CaseCreationService
 
-  protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
-    const { tenantId } = job
+  public async init(tenantId: string) {
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
 
@@ -96,17 +95,23 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       dynamoDb,
       mongoDb,
     })
+  }
+
+  protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
+    await this.init(job.tenantId)
+    const sequentialUserRuleInstances =
+      await getOngoingScreeningUserRuleInstances(this.tenantId ?? '')
+    const agglomerationUserRules =
+      (await this.ruleInstanceRepository?.getActiveRuleInstances(
+        'USER_ONGOING_SCREENING'
+      )) ?? []
     await Promise.all([
-      this.verifyUsersSequentialMode(),
-      this.verifyUsersAgglomerationMode(),
+      this.verifyUsersSequentialMode(sequentialUserRuleInstances),
+      this.verifyUsersAgglomerationMode(agglomerationUserRules),
     ])
   }
 
-  private async verifyUsersSequentialMode() {
-    const ruleInstances = await getOngoingScreeningUserRuleInstances(
-      this.tenantId ?? ''
-    )
-
+  public async verifyUsersSequentialMode(ruleInstances: RuleInstance[]) {
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Skip.')
       return
@@ -128,11 +133,9 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     }
   }
 
-  private async verifyUsersAgglomerationMode() {
-    const ruleInstances =
-      await this.ruleInstanceRepository?.getActiveRuleInstances(
-        'USER_ONGOING_SCREENING'
-      )
+  private async verifyUsersAgglomerationMode(
+    ruleInstances: readonly RuleInstance[]
+  ) {
     if (!ruleInstances?.length) {
       logger.info('No active ongoing screening user rule (all) found. Skip.')
       return

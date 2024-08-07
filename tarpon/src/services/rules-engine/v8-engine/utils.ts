@@ -31,6 +31,7 @@ import { getTimeRangeByTimeWindows } from '../utils/time-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { RuleAggregationVariableTimeWindow } from '@/@types/openapi-internal/RuleAggregationVariableTimeWindow'
 import dayjs from '@/utils/dayjs'
+import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
 
 export function isChildVariable(varKey: string) {
   return varKey.length > 0 && !varKey.includes(VARIABLE_NAMESPACE_SEPARATOR)
@@ -60,10 +61,27 @@ export function getVariableKeysFromLogic(jsonLogic: object): {
 const OPERATOR_KEYS = new Set(
   JSON_LOGIC_BUILT_IN_OPERATORS.concat(RULE_OPERATORS.map((v) => v.key))
 )
-export function transformJsonLogic(rawJsonLogic: object) {
+export function transformJsonLogic(
+  rawJsonLogic: object,
+  entityVariables: RuleEntityVariableInUse[] = []
+) {
   const { entityVariableKeys } = getVariableKeysFromLogic(rawJsonLogic)
-  const hasDirectionLessEntityVariables = entityVariableKeys.some(
-    isDirectionLessVariable
+  for (const entityVariable of entityVariables) {
+    if (isDirectionLessVariable(entityVariable.entityKey)) {
+      entityVariables.push(
+        ...getDirectionalVariableKeys(entityVariable.entityKey).map((v) => ({
+          ...entityVariable,
+          key: `${entityVariable.key}__${v.direction}`,
+          entityKey: v.key,
+        }))
+      )
+    }
+  }
+
+  const hasDirectionLessEntityVariables = entityVariableKeys.some((v) =>
+    isDirectionLessVariable(
+      entityVariables.find((e) => e.key === v)?.entityKey ?? v
+    )
   )
   if (!hasDirectionLessEntityVariables) {
     return rawJsonLogic
@@ -73,7 +91,9 @@ export function transformJsonLogic(rawJsonLogic: object) {
     if (key !== 'var') {
       return
     }
-    const isDirectionLessVar = isDirectionLessVariable(value)
+    const isDirectionLessVar = isDirectionLessVariable(
+      entityVariables.find((e) => e.key === value)?.entityKey ?? value
+    )
     if (isDirectionLessVar) {
       const nearestOperatorIndex =
         path.length -
@@ -118,10 +138,13 @@ export function transformJsonLogic(rawJsonLogic: object) {
           ]
         }
       */
+      const directionalVariableKeys = isDirectionLessVariable(value)
+        ? getDirectionalVariableKeys(value).map((v) => v.key)
+        : [`${value}__SENDER`, `${value}__RECEIVER`]
       set(
         updatedLogic,
         [...path.slice(0, nearestOperatorIndex), 'or'],
-        getDirectionalVariableKeys(value).map((directionVarKey) =>
+        directionalVariableKeys.map((directionVarKey) =>
           replaceMagicKeyword(leafLogic, value, directionVarKey)
         )
       )
@@ -134,7 +157,7 @@ export function transformJsonLogic(rawJsonLogic: object) {
   )
   // NOTE: Transform one more time if both LHS and RHS are direction-less variables
   return stillHasDirectionLessEntityVariables
-    ? transformJsonLogic(updatedLogic)
+    ? transformJsonLogic(updatedLogic, entityVariables)
     : updatedLogic
 }
 

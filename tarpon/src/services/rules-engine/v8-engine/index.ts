@@ -244,7 +244,7 @@ export class RuleJsonLogicEvaluator {
       ...context,
       dynamoDb: this.dynamoDb,
     })
-    const jsonLogic = transformJsonLogic(rawJsonLogic)
+    const jsonLogic = transformJsonLogic(rawJsonLogic, variables.entity ?? [])
     const { entityVariableKeys, aggVariableKeys } =
       getVariableKeysFromLogic(jsonLogic)
     const entityVarEntries = await Promise.all(
