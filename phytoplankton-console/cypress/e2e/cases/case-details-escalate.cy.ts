@@ -1,3 +1,4 @@
+import { CaseStatus } from '../../../src/apis';
 import { PERMISSIONS } from '../../support/permissions';
 
 describe('Escalate a case from case-details', () => {
@@ -9,11 +10,15 @@ describe('Escalate a case from case-details', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { ADVANCED_WORKFLOWS: true },
+      features: { ADVANCED_WORKFLOWS: true, NOTIFICATIONS: true },
     });
   });
-  const selectCase = () => {
-    cy.visit('/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED');
+  const selectCase = (status: CaseStatus[]) => {
+    cy.visit(
+      `/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=${status.join(
+        '%2C',
+      )}`,
+    );
     cy.get('[data-cy="case-id"]', { timeout: 15000 }).eq(0).invoke('text').as('caseId');
     cy.get('[data-cy="case-id"]').eq(0).click();
   };
@@ -34,11 +39,12 @@ describe('Escalate a case from case-details', () => {
   };
 
   it('should escalate a case from case details then close it and re-open it', () => {
-    selectCase();
+    selectCase(['OPEN', 'REOPENED']);
     escalateCase();
 
     cy.waitNothingLoading();
     // Close the case
+    selectCase(['ESCALATED']);
     cy.get('[data-cy="update-status-button"]').eq(0).should('exist').click();
     cy.intercept('PATCH', '**/cases/statusChange').as('case');
     cy.multiSelect('.ant-modal', 'False positive');
@@ -49,6 +55,8 @@ describe('Escalate a case from case-details', () => {
     cy.wait('@case').its('response.statusCode').should('eq', 200);
 
     // Re-open the case
+
+    selectCase(['CLOSED']);
     cy.get('[data-cy="update-status-button"]').contains('Re-Open').eq(0).should('exist').click();
     cy.get('.ant-modal-footer button[data-cy="modal-ok"]').eq(0).click();
     cy.wait('@case').its('response.statusCode').should('eq', 200);
@@ -84,7 +92,7 @@ describe('Escalate a case from case-details', () => {
         cy.message(
           `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
         ).should('not.exist');
-
+        selectCase(['OPEN', 'REOPENED']);
         escalateCase();
 
         cy.checkNotification([
