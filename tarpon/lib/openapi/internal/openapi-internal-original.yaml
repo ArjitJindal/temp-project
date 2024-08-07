@@ -10237,7 +10237,9 @@ components:
         userId:
           type: string
         reason:
-          type: string
+          type: array
+          items:
+            type: string
         comment:
           type: string
       required:

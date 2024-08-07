@@ -498,7 +498,7 @@ export class SanctionsService {
     caEntities: ComplyAdvantageSearchHitDoc[],
     userId?: string,
     options?: {
-      reason?: string
+      reason?: string[]
       comment?: string
       createdAt?: number
     }

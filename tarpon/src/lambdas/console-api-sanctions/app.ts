@@ -132,7 +132,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
                 [hit.caEntity],
                 hit.hitContext.userId,
                 {
-                  reason: reasonsComment,
+                  reason: updates.reasons,
                   comment: updates.comment,
                 }
               )

@@ -8,7 +8,11 @@ import { useApi } from '@/api';
 import { SANCTIONS_WHITELIST_SEARCH } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { ID, DATE_TIME } from '@/components/library/Table/standardDataTypes';
+import {
+  ID,
+  DATE_TIME,
+  SANCTIONS_CLEAR_REASON,
+} from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { useHasPermissions } from '@/utils/user-utils';
@@ -75,6 +79,7 @@ export default function SanctionsWhitelist(props: Props) {
             helper.simple<'reason'>({
               title: 'Reason',
               key: 'reason',
+              type: SANCTIONS_CLEAR_REASON,
             }),
             helper.simple<'comment'>({
               title: 'Comment',

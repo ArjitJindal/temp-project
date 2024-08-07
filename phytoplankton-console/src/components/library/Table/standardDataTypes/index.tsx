@@ -51,7 +51,7 @@ import { RULE_NATURE_LABELS, RULE_NATURE_OPTIONS } from '@/pages/rules/utils';
 import TextInput from '@/components/library/TextInput';
 import NumberInput from '@/components/library/NumberInput';
 import TextArea from '@/components/library/TextArea';
-import { humanizeAuto, humanizeConstant } from '@/utils/humanize';
+import { humanizeAuto, humanizeConstant, humanizeSnakeCase } from '@/utils/humanize';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, getCaseUrl, makeUrl } from '@/utils/routing';
@@ -329,6 +329,20 @@ export const SANCTIONS_HIT_STATUS: ColumnDataType<ApiSanctionsHitStatus> = {
     })),
     displayMode: 'list',
     mode: 'MULTIPLE',
+  },
+};
+
+export const SANCTIONS_CLEAR_REASON: ColumnDataType<string[]> = {
+  render: (clearing_reasons) => {
+    return (
+      <div className={s.tags}>
+        {clearing_reasons?.map((clearingReason: string) => (
+          <Tag key={clearingReason} color="gray">
+            {humanizeSnakeCase(clearingReason)}
+          </Tag>
+        ))}
+      </div>
+    );
   },
 };
 
