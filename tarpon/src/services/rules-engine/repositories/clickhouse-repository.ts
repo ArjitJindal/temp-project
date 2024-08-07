@@ -1,4 +1,5 @@
 import { ClickHouseClient } from '@clickhouse/client'
+import { chain, maxBy } from 'lodash'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -165,22 +166,56 @@ export class ClickhouseTransactionsRepository {
   ): Promise<TransactionsResponseOffsetPaginated> {
     const whereClause = await this.getTransactionsWhereConditions(params)
 
+    const sortField = params.sortField ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
     const data = await offsetPaginateClickhouse<InternalTransaction>(
       this.tenantId,
       this.clickhouseClient,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
       {
-        page: params.page,
-        pageSize: (params.pageSize || DEFAULT_PAGE_SIZE) as number,
-        sortField: params.sortField ?? 'timestamp',
-        sortOrder: params.sortOrder,
-      },
-      whereClause
+        excludeSortField: sortField === 'timestamp' && sortOrder === 'ascend',
+        bypassNestedQuery:
+          sortField === 'timestamp' && sortOrder === 'ascend' && page <= 20,
+      }
     )
 
+    const uniqueTransactions = chain(data.items)
+      .groupBy('transactionId')
+      .map((group) => maxBy(group, 'updatedAt'))
+      .value() as InternalTransaction[]
+
+    const sortDirection = sortOrder === 'ascend' ? 1 : -1
+    const sortedTransactions = uniqueTransactions.sort(
+      (a, b) => sortDirection * (a[sortField] - b[sortField])
+    )
+
+    const finalTransactions = sortedTransactions.map((transaction) => {
+      delete (transaction as any).executedRules
+      delete (transaction as any).arsScore.components
+      delete (transaction as any).originDeviceData
+      delete (transaction as any).destinationDeviceData
+      const originPaymentDetails = transaction.originPaymentDetails
+      const destinationPaymentDetails = transaction.destinationPaymentDetails
+
+      return {
+        ...transaction,
+        originPaymentDetails: {
+          method: originPaymentDetails?.method,
+        },
+        destinationPaymentDetails: {
+          method: destinationPaymentDetails?.method,
+        },
+      }
+    }) as InternalTransaction[]
+
     return {
-      items: data.items,
+      items: finalTransactions,
       count: data.count,
     }
   }

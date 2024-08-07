@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { InternalServerError, BadRequest, NotFound } from 'http-errors'
+import { BadRequest, InternalServerError, NotFound } from 'http-errors'
 import { compact } from 'lodash'
 import { ClickhouseTransactionsRepository } from '../../services/rules-engine/repositories/clickhouse-repository'
 import { TransactionService } from './services/transaction-service'

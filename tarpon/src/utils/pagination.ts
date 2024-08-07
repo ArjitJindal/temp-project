@@ -225,24 +225,38 @@ export async function offsetPaginateClickhouse<T>(
   dataTableName: string,
   queryTableName: string,
   query: ClickhousePaginationParams,
-  where = '1'
+  where = '1',
+  options?: { excludeSortField?: boolean; bypassNestedQuery?: boolean }
 ): Promise<{ items: T[]; count: number }> {
+  const { excludeSortField = false } = options ?? {}
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   dataTableName = formatTableName(tenantId, dataTableName)
   queryTableName = formatTableName(tenantId, queryTableName)
 
-  // replace . with _ to avoid clickhouse error
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
   const sortOrder = query.sortOrder || 'ascend'
   const page = query.page || 1
   const offset = (page - 1) * pageSize
 
   const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
-  const findSql = `SELECT id, data, NULL as count FROM ${dataTableName} WHERE id IN (SELECT id FROM ${queryTableName} ${
+  let findSql = `SELECT data, NULL as count FROM ${dataTableName} WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where}` : ''
-  } ORDER BY ${sortField} ${direction} LIMIT ${pageSize} OFFSET ${offset})`
+  } ${
+    excludeSortField
+      ? `LIMIT ${pageSize} OFFSET ${offset}`
+      : `ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
+  })
+  `
 
-  const countQuery = `SELECT NULL as id, NULL as data, COUNT(*) as count FROM ${queryTableName} ${
+  if (options?.bypassNestedQuery) {
+    findSql = `SELECT data, NULL as count FROM ${queryTableName} ${
+      where ? `WHERE ${where}` : ''
+    } ${
+      excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`
+    } LIMIT ${pageSize} OFFSET ${offset}`
+  }
+
+  const countQuery = `SELECT NULL as data, COUNT(*) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where}` : ''
   }`
 
@@ -254,6 +268,10 @@ export async function offsetPaginateClickhouse<T>(
   ])
 
   const start = Date.now()
+
+  logger.info('Running query', {
+    query: combinedQuery,
+  })
 
   const result = await client.query({
     query: combinedQuery,
@@ -268,7 +286,6 @@ export async function offsetPaginateClickhouse<T>(
 
   const queryTimeData = {
     ...clickHouseSummary,
-    query: combinedQuery,
     networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
     clickhouseQueryExecutionTime: `${clickhouseQueryExecutionTime}ms`,
     totalLatency: `${end - start}ms`,
@@ -278,27 +295,26 @@ export async function offsetPaginateClickhouse<T>(
   segment?.addMetadata('Query time data', queryTimeData)
   segment?.close()
 
-  const data = await result.json<{
-    id?: string
-    data?: string
-    count?: number
-  }>()
+  const data = result.stream()
 
   let count = 0
   const items: T[] = []
 
-  data.forEach((item) => {
-    if (item.count) {
-      count = item.count
-    } else {
-      items.push(JSON.parse(item.data as string))
+  for await (const rows of data) {
+    for (const row of rows) {
+      const jsonData = row.json() as { data?: string; count?: number }
+      if (jsonData.count) {
+        count = jsonData.count
+      } else {
+        items.push(JSON.parse(jsonData.data as string))
+      }
     }
-  })
+  }
+
   const end2 = Date.now()
 
   const overallStats = {
     ...clickHouseSummary,
-    query: combinedQuery,
     overallTime: `${end2 - start}ms`,
     networkLatency: `${end - start - clickhouseQueryExecutionTime}ms`,
     systemLatency: `${end2 - end}ms`,
