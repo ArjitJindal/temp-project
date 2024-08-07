@@ -4,6 +4,7 @@ import { FLAGRIGHT_SYSTEM_USER, getDisplayedUserInfo } from './user-utils';
 import { humanizeSnakeCase } from './humanize';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
+import { neverReturn } from '@/utils/lang';
 import {
   Account,
   Alert,
@@ -87,6 +88,38 @@ export const getSingleCaseStatusPreviousForInReview = (
   const caseStatus = caseStatuses[0] ?? 'OPEN';
 
   return [caseStatus, isSingleCaseStatus];
+};
+
+export const getNextStatus = (
+  status: CaseStatus | AlertStatus | undefined,
+): CaseStatus | AlertStatus => {
+  if (status == null) {
+    return 'CLOSED';
+  }
+  switch (status) {
+    case 'REOPENED':
+    case 'OPEN':
+    case 'ESCALATED':
+      return 'CLOSED';
+    case 'OPEN_IN_PROGRESS':
+    case 'OPEN_ON_HOLD':
+      return 'OPEN';
+    case 'ESCALATED_IN_PROGRESS':
+    case 'ESCALATED_ON_HOLD':
+      return 'ESCALATED';
+    case 'CLOSED':
+      return 'REOPENED';
+    case 'IN_REVIEW_OPEN':
+      return 'OPEN';
+    case 'IN_REVIEW_CLOSED':
+      return 'CLOSED';
+    case 'IN_REVIEW_REOPENED':
+      return 'REOPENED';
+    case 'IN_REVIEW_ESCALATED':
+      return 'ESCALATED';
+    default:
+      return neverReturn(status, status);
+  }
 };
 
 export const getNextStatusFromInReview = (status: CaseStatus): CaseStatus => {

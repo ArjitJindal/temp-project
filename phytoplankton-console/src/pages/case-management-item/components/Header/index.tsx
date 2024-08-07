@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from 'react-router';
 import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
 import SubHeader from './SubHeader';
 import StatusChangeMenu from './StatusChangeMenu';
@@ -7,12 +8,14 @@ import { Case, CaseStatus, Comment } from '@/apis';
 import { useApi } from '@/api';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import CommentButton from '@/components/CommentButton';
-import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
+import { findLastStatusForInReview, getNextStatus, statusInReview } from '@/utils/case-utils';
 import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
 import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
+import { useBackUrl } from '@/utils/backUrl';
+import { useMutation } from '@/utils/queries/mutations/hooks';
 
 interface Props {
   isLoading: boolean;
@@ -25,6 +28,8 @@ interface Props {
 export default function Header(props: Props) {
   const { isLoading, caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
   const { caseId } = caseItem;
+  const backUrl = useBackUrl();
+  const navigate = useNavigate();
 
   const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
@@ -34,6 +39,20 @@ export default function Header(props: Props) {
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);
   }, [caseItem]);
+
+  const newStatus = getNextStatus(caseItem.caseStatus);
+
+  const handleStatusChangeSuccess = () => {
+    if (newStatus === 'CLOSED') {
+      if (backUrl && backUrl.startsWith('/case-management/cases')) {
+        navigate(backUrl);
+      } else {
+        navigate('/case-management/cases');
+      }
+    } else {
+      onReload();
+    }
+  };
 
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
   const statusChangeMutation = useMutation(
@@ -61,7 +80,7 @@ export default function Header(props: Props) {
         if (caseId != null) {
           await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
         }
-        onReload();
+        handleStatusChangeSuccess();
       },
       onError: () => {
         message.error('Failed to change case status');
@@ -125,7 +144,7 @@ export default function Header(props: Props) {
               <CasesStatusChangeButton
                 caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
-                onSaved={onReload}
+                onSaved={handleStatusChangeSuccess}
                 isDisabled={(caseItem.caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading}
                 statusTransitions={{
                   OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
@@ -136,7 +155,7 @@ export default function Header(props: Props) {
               />,
             ]
           : []),
-        <StatusChangeMenu caseItem={caseItem} onReload={onReload} />,
+        <StatusChangeMenu caseItem={caseItem} onReload={handleStatusChangeSuccess} />,
       ]}
       subHeader={<SubHeader caseItem={caseItem} />}
     />

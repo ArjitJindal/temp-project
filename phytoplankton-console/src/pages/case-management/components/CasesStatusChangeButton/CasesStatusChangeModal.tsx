@@ -24,6 +24,7 @@ export default function CasesStatusChangeModal(props: Props) {
   const [users] = useUsers();
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
+
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);

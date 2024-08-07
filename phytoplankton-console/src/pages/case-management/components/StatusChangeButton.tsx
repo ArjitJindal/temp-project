@@ -5,6 +5,7 @@ import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { humanizeConstant } from '@/utils/humanize';
+import { getNextStatus } from '@/utils/case-utils';
 
 export const statusToOperationName = (
   status: AlertStatus | CaseStatus | 'IN_REVIEW' | 'IN_PROGRESS' | 'ON_HOLD',
@@ -38,36 +39,6 @@ export const statusToOperationName = (
       return 'On hold';
     default:
       return neverReturn(status, humanizeConstant(status));
-  }
-};
-
-const getNextStatus = (status: CaseStatus | AlertStatus | undefined): CaseStatus | AlertStatus => {
-  if (status == null) {
-    return 'CLOSED';
-  }
-  switch (status) {
-    case 'REOPENED':
-    case 'OPEN':
-    case 'ESCALATED':
-      return 'CLOSED';
-    case 'OPEN_IN_PROGRESS':
-    case 'OPEN_ON_HOLD':
-      return 'OPEN';
-    case 'ESCALATED_IN_PROGRESS':
-    case 'ESCALATED_ON_HOLD':
-      return 'ESCALATED';
-    case 'CLOSED':
-      return 'REOPENED';
-    case 'IN_REVIEW_OPEN':
-      return 'OPEN';
-    case 'IN_REVIEW_CLOSED':
-      return 'CLOSED';
-    case 'IN_REVIEW_REOPENED':
-      return 'REOPENED';
-    case 'IN_REVIEW_ESCALATED':
-      return 'ESCALATED';
-    default:
-      return neverReturn(status, status);
   }
 };
 
