@@ -262,6 +262,14 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
+    const userEventQueue = this.createQueue(
+      SQSQueues.USER_EVENT_QUEUE_NAME.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
 
     /*
      * Kinesis Data Streams
@@ -483,6 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TRANSACTION_EVENT_QUEUE_URL: transactionEventQueue.queueUrl,
+        USER_EVENT_QUEUE_URL: userEventQueue.queueUrl,
       },
     }
 
@@ -568,6 +577,7 @@ export class CdkTarponStack extends cdk.Stack {
             requestLoggerQueue.queueArn,
             notificationQueue.queueArn,
             transactionEventQueue.queueArn,
+            userEventQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -1142,6 +1152,17 @@ export class CdkTarponStack extends cdk.Stack {
       )
       transactionEventQueueConsumerAlias.addEventSource(
         new SqsEventSource(transactionEventQueue)
+      )
+
+      const { alias: userEventQueueConsumerAlias } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.USER_EVENT_QUEUE_CONSUMER_FUNCTION_NAME,
+        }
+      )
+      userEventQueueConsumerAlias.addEventSource(
+        new SqsEventSource(userEventQueue)
       )
     }
 

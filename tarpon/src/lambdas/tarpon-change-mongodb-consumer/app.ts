@@ -1,8 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { isEqual, omit, pick } from 'lodash'
+import { omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { CaseCreationService } from '../../services/cases/case-creation-service'
 import { sendTransactionEvent } from '../transaction-events-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -13,25 +12,19 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
-import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { CaseRepository } from '@/services/cases/repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { UserRepository } from '@/services/users/repositories/user-repository'
-import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
-import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
-import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
+import { updateLogMetadata } from '@/core/utils/context'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
-import { INTERNAL_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
-import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
+import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { sendUserEvent } from '@/lambdas/user-events-consumer/app'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
+import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
+import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
 
 async function transactionHandler(
   tenantId: string,
@@ -54,100 +47,11 @@ async function userHandler(
   if (!newUser || !newUser.userId) {
     return
   }
-  updateLogMetadata({ userId: newUser.userId })
-
-  logger.info(`Processing User`)
-
-  let internalUser = newUser as InternalUser
-  const mongoDb = await getMongoDbClient()
-  const dynamoDb = getDynamoDbClient()
-  const casesRepo = new CaseRepository(tenantId, {
-    mongoDb,
-    dynamoDb,
+  await sendUserEvent({
+    tenantId,
+    oldUser,
+    newUser,
   })
-
-  const usersRepo = new UserRepository(tenantId, { mongoDb, dynamoDb })
-
-  const settings = await tenantSettings(tenantId)
-
-  const caseCreationService = new CaseCreationService(tenantId, {
-    mongoDb,
-    dynamoDb,
-  })
-
-  const riskRepository = new RiskRepository(tenantId, { dynamoDb })
-  const isRiskScoringEnabled = settings?.features?.includes('RISK_SCORING')
-
-  const isRiskLevelsEnabled = settings?.features?.includes('RISK_LEVELS')
-
-  const [krsScore, drsScore] = await Promise.all([
-    isRiskScoringEnabled
-      ? riskRepository.getKrsScore(internalUser.userId)
-      : null,
-    isRiskScoringEnabled || isRiskLevelsEnabled
-      ? riskRepository.getDrsScore(internalUser.userId)
-      : null,
-  ])
-
-  if (!krsScore && isRiskScoringEnabled) {
-    logger.warn(
-      `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
-    )
-  }
-
-  internalUser = {
-    ...internalUser,
-    ...(krsScore && { krsScore }),
-    ...(drsScore && { drsScore }),
-  }
-
-  const [_, existingUser] = await Promise.all([
-    drsScore && isRiskScoringEnabled
-      ? usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
-      : null,
-    usersRepo.getUserById(internalUser.userId),
-  ])
-
-  internalUser.createdAt = existingUser?.createdAt ?? Date.now()
-  internalUser.updatedAt = Date.now()
-
-  const savedUser = await usersRepo.saveUserMongo({
-    ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
-    ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
-  })
-
-  const newHitRules = savedUser.hitRules?.filter(
-    (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
-  )
-  // NOTE: This is a workaround to avoid creating redundant cases. In 748200a, we update
-  // user.riskLevel in DynamoDB, but if a case was created for rule A and was closed, updating user.riskLevel
-  // alone will trigger a new case which is unexpected. We only want to create a new case if the user details
-  // have changes (when there're changes, we'll run user rules again).
-  const userDetailsChanged = !isEqual(
-    omit(oldUser, 'riskLevel'),
-    omit(newUser, 'riskLevel')
-  )
-  if (userDetailsChanged && newHitRules?.length) {
-    const timestampBeforeCasesCreation = Date.now()
-    const cases = await caseCreationService.handleUser({
-      ...savedUser,
-      hitRules: newHitRules,
-    })
-    await caseCreationService.handleNewCases(
-      tenantId,
-      timestampBeforeCasesCreation,
-      cases
-    )
-  }
-  await casesRepo.syncCaseUsers(internalUser)
-
-  if (!krsScore && isRiskScoringEnabled && !isDemoTenant(tenantId)) {
-    // Will backfill KRS score for all users without KRS score
-    await sendBatchJobCommand({
-      type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
-      tenantId,
-    })
-  }
 }
 
 async function userEventHandler(
