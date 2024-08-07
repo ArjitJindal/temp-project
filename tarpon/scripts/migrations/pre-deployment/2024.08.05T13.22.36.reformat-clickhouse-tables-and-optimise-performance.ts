@@ -8,8 +8,12 @@ import {
 import { Tenant } from '@/services/accounts'
 import { ClickHouseTables } from '@/utils/clickhouse-definition'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { envIs } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
+  if (!envIs('local') && !envIs('dev')) {
+    return
+  }
   const clickhouseClient = await getClickhouseClient()
   const mongoClient = await getMongoDbClient()
   const db = mongoClient.db()
