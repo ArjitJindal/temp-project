@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Auth0Provider } from '@auth0/auth0-react';
+import { sanitizeComment } from '../markdown/MarkdownEditor/mention-utlis';
 import { UseCase } from '@/pages/storybook/components';
 import Narrative, { NarrativeFormValues } from '@/components/Narrative';
 import { providerConfig } from '@/components/AppWrapper/Providers/AuthProvider';
@@ -17,7 +18,8 @@ export default function (): JSX.Element {
   const [submitted, setSubmitted] = useState<NarrativeFormValues<any> | undefined>();
   const [showErrors, setShowErrors] = useState(false);
   const onSubmit = () => {
-    setSubmitted(values);
+    const sanitizedComment = values.values.comment ? sanitizeComment(values.values.comment) : '';
+    setSubmitted({ ...values, values: { ...values.values, comment: sanitizedComment } });
     setShowErrors(true);
   };
   return (

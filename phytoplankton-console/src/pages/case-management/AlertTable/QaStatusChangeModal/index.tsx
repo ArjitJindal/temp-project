@@ -7,6 +7,7 @@ import Modal from '@/components/library/Modal';
 import Narrative, { FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 interface ConfirmModalProps {
   status: ChecklistStatus;
@@ -66,7 +67,10 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
   const onSubmit = () => {
     setShowError(true);
     if (formState.isValid) {
-      mutation.mutate(formState.values);
+      const sanitizedComment = formState.values.comment
+        ? sanitizeComment(formState.values.comment)
+        : '';
+      mutation.mutate({ ...formState.values, comment: sanitizedComment });
     }
   };
 

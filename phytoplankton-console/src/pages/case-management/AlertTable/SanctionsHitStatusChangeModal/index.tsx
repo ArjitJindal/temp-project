@@ -9,6 +9,7 @@ import { FormRef } from '@/components/library/Form';
 import Label from '@/components/library/Label';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { neverReturn } from '@/utils/lang';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 type FormState = NarrativeFormValues<
   SanctionsHitReasons,
@@ -66,13 +67,17 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       newStatus: SanctionsHitStatus;
     },
   ) => {
-    updateMutation.mutate(formValues, {
-      onSuccess: () => {
-        onClose();
-        formRef.current?.setValues(initialFormState.values);
-        setFormState(initialFormState);
+    const sanitizedComment = formValues.comment ? sanitizeComment(formValues.comment) : '';
+    updateMutation.mutate(
+      { ...formValues, comment: sanitizedComment },
+      {
+        onSuccess: () => {
+          onClose();
+          formRef.current?.setValues(initialFormState.values);
+          setFormState(initialFormState);
+        },
       },
-    });
+    );
   };
 
   return (

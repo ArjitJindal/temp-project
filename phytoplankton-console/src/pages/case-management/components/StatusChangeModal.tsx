@@ -14,6 +14,7 @@ import { useDeepEqualMemo } from '@/utils/hooks';
 import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 
 export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
@@ -192,7 +193,14 @@ export default function StatusChangeModal(props: Props) {
         }}
         okText="Confirm"
         onOk={() => {
-          updateMutation.mutate({ ...formState.values, closeRelatedCase });
+          const sanitizedComment = formState.values.comment
+            ? sanitizeComment(formState.values.comment)
+            : '';
+          updateMutation.mutate({
+            ...formState.values,
+            comment: sanitizedComment,
+            closeRelatedCase,
+          });
         }}
         onCancel={() => {
           setAwaitingConfirmation(false);

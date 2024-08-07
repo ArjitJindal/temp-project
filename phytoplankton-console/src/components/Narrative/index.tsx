@@ -1,9 +1,9 @@
-import React, { Dispatch, SetStateAction } from 'react';
+import React, { Dispatch, SetStateAction, useRef } from 'react';
 import { uniqBy } from 'lodash';
-import { Editor } from '@toast-ui/react-editor';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
 import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
+import MarkdownEditor from '../markdown/MarkdownEditor';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Form, { InputProps, FormRef } from '@/components/library/Form';
@@ -20,6 +20,7 @@ import { CopilotButtonContent } from '@/pages/case-management/components/Copilot
 import Alert from '@/components/library/Alert';
 import Label from '@/components/library/Label';
 import { humanizeAuto } from '@/utils/humanize';
+import { useUsers } from '@/utils/user-utils';
 
 export const OTHER_REASON: CaseReasons = 'Other';
 export const COMMON_REASONS = [OTHER_REASON];
@@ -90,9 +91,13 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     advancedOptionsValidators,
   } = props;
 
-  const editorRef = React.createRef<Editor>();
+  const editorRef = useRef<MarkdownEditor>(null);
   const showCopilot = useFeatureEnabled('NARRATIVE_COPILOT') && isCopilotEnabled;
+
+  const [users] = useUsers();
+
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
+  const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
 
   return (
     <Form<FormValues<R>>
@@ -157,7 +162,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
       {advancedOptions && (
         <ExpandContentButton suffixText={'advanced options'}>{advancedOptions}</ExpandContentButton>
       )}
-      <div className={s.comment}>
+      <div>
         <InputField<FormValues<R>, 'comment'>
           name={'comment'}
           label={'Comment'}
@@ -175,24 +180,28 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                 setTemplateValue={(value) => {
                   if (value) {
                     inputProps?.onChange?.(value);
-                    editorRef.current?.getInstance().setMarkdown(value);
+                    editorRef.current?.editorRef.current?.getInstance().setMarkdown(value);
                   }
                 }}
               />
-              <Editor
-                onChange={() => {
-                  const editorInstance = editorRef.current?.getInstance();
-                  if (editorInstance) {
-                    inputProps.onChange?.(editorInstance.getMarkdown());
-                  }
-                }}
-                ref={editorRef}
-                hideModeSwitch={true}
-                previewStyle="vertical"
-                initialEditType="wysiwyg"
-                usageStatistics={false}
-                placeholder={placeholder}
-              />
+              <div>
+                <MarkdownEditor
+                  ref={editorRef}
+                  initialValue={values.values.comment ? values.values.comment : ''}
+                  onChange={() => {
+                    const editorInstance = editorRef.current?.editorRef.current?.getInstance();
+                    if (editorInstance) {
+                      inputProps.onChange?.(editorInstance.getMarkdown());
+                    }
+                  }}
+                  placeholder={placeholder}
+                  mentionsEnabled={isMentionsEnabled}
+                  mentionsList={Object.keys(users).map((userId) => ({
+                    label: users[userId].email,
+                    id: users[userId].id,
+                  }))}
+                />
+              </div>
             </>
           )}
         </InputField>
@@ -209,7 +218,7 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                 narrative={props.value || ''}
                 setNarrativeValue={(value) => {
                   props.onChange?.(value);
-                  editorRef.current?.getInstance().setMarkdown(value);
+                  editorRef.current?.editorRef.current?.getInstance().setMarkdown(value);
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
                 entityType={entityType}
