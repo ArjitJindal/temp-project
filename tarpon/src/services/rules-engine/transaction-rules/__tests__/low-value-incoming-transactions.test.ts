@@ -9,10 +9,11 @@ import {
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -79,6 +80,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '1-1',
           destinationUserId: '1-2',
+          timestamp: dayjs('2024-01-01').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 6,
@@ -93,6 +95,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '1-1',
           destinationUserId: '1-2',
+          timestamp: dayjs('2024-01-01').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 7,
@@ -148,6 +151,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         transactions: [
           getTestTransaction({
             originUserId: '1-1',
+            timestamp: dayjs('2021-01-01').valueOf(),
             destinationUserId: '1-2',
             originAmountDetails: {
               country: 'DE',
@@ -167,6 +171,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs('2024-01-01').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 7,
@@ -182,8 +187,26 @@ ruleVariantsTest({ aggregation: false }, () => {
               paymentChannel: 'ATM',
             },
           }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+            originPaymentDetails: {
+              method: 'CARD',
+              paymentChannel: 'ATM',
+            },
+          }),
         ],
-        expectedHits: [false, true],
+        expectedHits: [false, true, true],
       },
       {
         name: 'With different paymentchannel - not hit',

@@ -1,13 +1,17 @@
 import { JSONSchemaType } from 'ajv'
 import { uniqBy } from 'lodash'
-import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rule-utils'
 import {
+  checkTransactionAmountBetweenThreshold,
+  getTransactionStatsTimeGroupLabelV2,
+} from '../utils/transaction-rule-utils'
+import {
+  TimeWindow,
   TRANSACTION_AMOUNT_RANGE_SCHEMA,
   TransactionAmountRange,
 } from '../utils/rule-parameter-schemas'
 import { TransactionHistoricalFilters } from '../filters'
-import { RuleHitResult } from '../rule'
-import { TransactionRule } from './rule'
+import { RuleHitResultItem } from '../rule'
+import { TransactionAggregationRule } from './aggregation-rule'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { PaymentDirection } from '@/@types/tranasction/payment-direction'
@@ -19,10 +23,15 @@ export type LowValueTransactionsRuleParameters = {
   lowTransactionCount: number
 }
 
+type AggregationData = {
+  lastNTransactionAmounts: Array<TransactionAmountDetails | undefined>
+}
+
 @traceable
-export default abstract class LowValueTransactionsRule extends TransactionRule<
+export default abstract class LowValueTransactionsRule extends TransactionAggregationRule<
   LowValueTransactionsRuleParameters,
-  TransactionHistoricalFilters
+  TransactionHistoricalFilters,
+  AggregationData
 > {
   public static getSchema(): JSONSchemaType<LowValueTransactionsRuleParameters> {
     return {
@@ -42,113 +51,203 @@ export default abstract class LowValueTransactionsRule extends TransactionRule<
     }
   }
 
+  protected abstract getDirection(): PaymentDirection
+
   private getTransactionUserId(): string | undefined {
-    const direction = this.getDirection()
-    switch (direction) {
-      case 'sending':
-        return this.transaction.originUserId
-      case 'receiving':
-        return this.transaction.destinationUserId
-    }
+    return this.getDirection() === 'sending'
+      ? this.transaction.originUserId
+      : this.transaction.destinationUserId
   }
 
   private getTransactionAmountDetails(
     transaction: Transaction
   ): TransactionAmountDetails | undefined {
-    const direction = this.getDirection()
-    switch (direction) {
-      case 'sending':
-        return transaction.originAmountDetails
-      case 'receiving':
-        return transaction.destinationAmountDetails
-    }
+    return this.getDirection() === 'sending'
+      ? transaction.originAmountDetails
+      : transaction.destinationAmountDetails
   }
-  protected abstract getDirection(): PaymentDirection
 
-  public async computeRule() {
-    const { lowTransactionCount, lowTransactionValues } = this.parameters
+  protected async computeRuleUser(
+    direction: 'origin' | 'destination'
+  ): Promise<RuleHitResultItem | undefined> {
+    if (
+      (direction === 'origin' && this.getDirection() !== 'sending') ||
+      (direction === 'destination' && this.getDirection() !== 'receiving')
+    ) {
+      return
+    }
 
     const userId = this.getTransactionUserId()
-    if (userId) {
-      const lastNTransactionsToCheck = lowTransactionCount - 1
-      const transactions = uniqBy(
-        (
-          (await (this.getDirection() === 'receiving'
-            ? this.transactionRepository.getLastNUserReceivingTransactions(
-                userId,
-                lastNTransactionsToCheck,
-                {
-                  transactionStates: this.filters.transactionStatesHistorical,
-                  transactionTypes: this.filters.transactionTypesHistorical,
-                  transactionAmountRange:
-                    this.filters.transactionAmountRangeHistorical,
-                  destinationPaymentMethods:
-                    this.filters.paymentMethodsHistorical,
-                  destinationCountries:
-                    this.filters.transactionCountriesHistorical,
-                },
-                [
-                  'transactionId',
-                  'originAmountDetails',
-                  'destinationAmountDetails',
-                ]
-              )
-            : this.transactionRepository.getLastNUserSendingTransactions(
-                userId,
-                lastNTransactionsToCheck,
-                {
-                  transactionStates: this.filters.transactionStatesHistorical,
-                  transactionTypes: this.filters.transactionTypesHistorical,
-                  transactionAmountRange:
-                    this.filters.transactionAmountRangeHistorical,
-                  originPaymentMethods: this.filters.paymentMethodsHistorical,
-                  originCountries: this.filters.transactionCountriesHistorical,
-                },
-                [
-                  'transactionId',
-                  'originAmountDetails',
-                  'destinationAmountDetails',
-                ]
-              ))) as Transaction[]
-        ).concat(this.transaction),
-        'transactionId'
-      )
-      if (transactions.length <= lastNTransactionsToCheck) {
-        return undefined
-      }
-
-      const areAllTransactionsLowValue = await everyAsync(
-        transactions,
-        async (transaction) => {
-          const transactionAmountDetails =
-            this.getTransactionAmountDetails(transaction)
-          if (!transactionAmountDetails) {
-            return false
-          }
-          return (
-            (await checkTransactionAmountBetweenThreshold(
-              transactionAmountDetails,
-              lowTransactionValues
-            )) != null
-          )
-        }
-      )
-
-      const hitResult: RuleHitResult = []
-      if (areAllTransactionsLowValue) {
-        hitResult.push({
-          direction:
-            this.getDirection() === 'sending' ? 'ORIGIN' : 'DESTINATION',
-          vars: {
-            ...super.getTransactionVars(
-              this.getDirection() === 'sending' ? 'origin' : 'destination'
-            ),
-            transactionCountDelta:
-              lowTransactionCount - transactions.length + 1,
-          },
-        })
-      }
-      return hitResult
+    if (!userId) {
+      return
     }
+
+    const data = await this.getData(direction)
+    if (!data || data.length <= this.parameters.lowTransactionCount - 1) {
+      return
+    }
+
+    const areAllTransactionsLowValue = await everyAsync(
+      data,
+      async (transactionAmountDetails) =>
+        (await checkTransactionAmountBetweenThreshold(
+          transactionAmountDetails,
+          this.parameters.lowTransactionValues
+        )) != null
+    )
+
+    if (areAllTransactionsLowValue) {
+      return {
+        direction: direction.toUpperCase() as 'ORIGIN' | 'DESTINATION',
+        vars: {
+          ...super.getTransactionVars(direction),
+          transactionCountDelta:
+            this.parameters.lowTransactionCount - data.length + 1,
+        },
+      }
+    }
+  }
+
+  private async getData(
+    direction: 'origin' | 'destination'
+  ): Promise<AggregationData['lastNTransactionAmounts'] | undefined> {
+    const userId = this.getTransactionUserId()
+    if (!userId) {
+      return
+    }
+
+    const userAggregationData = await this.getRuleAggregations<AggregationData>(
+      direction,
+      this.getStaticTimestamp(),
+      this.getStaticTimestamp() + 1
+    )
+
+    if (userAggregationData) {
+      return [
+        ...userAggregationData[0].lastNTransactionAmounts,
+        this.getTransactionAmountDetails(this.transaction),
+      ]
+    }
+
+    if (this.shouldUseRawData()) {
+      const transactions = await this.getRawTransactionsData(direction, userId)
+      transactions.push(this.transaction)
+      const uniqTransactions = uniqBy(transactions, 'transactionId')
+      return uniqTransactions.map(this.getTransactionAmountDetails.bind(this))
+    }
+  }
+
+  private async getRawTransactionsData(
+    direction: 'origin' | 'destination',
+    userId: string
+  ): Promise<Transaction[]> {
+    const lastNTransactionsToCheck = this.parameters.lowTransactionCount - 1
+    const commonOptions = {
+      transactionStates: this.filters.transactionStatesHistorical,
+      transactionTypes: this.filters.transactionTypesHistorical,
+      transactionAmountRange: this.filters.transactionAmountRangeHistorical,
+    }
+    const fields: Array<keyof Transaction> = [
+      'transactionId',
+      'originAmountDetails',
+      'destinationAmountDetails',
+    ]
+
+    return (
+      direction === 'origin'
+        ? this.transactionRepository.getLastNUserSendingTransactions(
+            userId,
+            lastNTransactionsToCheck,
+            {
+              ...commonOptions,
+              originPaymentMethods: this.filters.paymentMethodsHistorical,
+              originCountries: this.filters.transactionCountriesHistorical,
+            },
+            fields
+          )
+        : this.transactionRepository.getLastNUserReceivingTransactions(
+            userId,
+            lastNTransactionsToCheck,
+            {
+              ...commonOptions,
+              destinationPaymentMethods: this.filters.paymentMethodsHistorical,
+              destinationCountries: this.filters.transactionCountriesHistorical,
+            },
+            fields
+          )
+    ) as Promise<Transaction[]>
+  }
+
+  public async computeRule() {
+    return Promise.all([
+      this.computeRuleUser('origin'),
+      this.computeRuleUser('destination'),
+    ])
+  }
+
+  public async rebuildUserAggregation(
+    direction: 'origin' | 'destination'
+  ): Promise<void> {
+    const userId = this.getTransactionUserId()
+    if (!userId) {
+      return
+    }
+
+    const transactions = await this.getRawTransactionsData(direction, userId)
+    const lastNTransactionAmounts = transactions.map(
+      this.getTransactionAmountDetails.bind(this)
+    )
+
+    await this.saveRebuiltRuleAggregations(direction, {
+      [getTransactionStatsTimeGroupLabelV2(this.getStaticTimestamp(), 'day')]:
+        lastNTransactionAmounts,
+    })
+  }
+
+  protected getStaticTimestamp(): number {
+    return 1722952183000
+  }
+
+  public shouldUpdateUserAggregation(
+    direction: 'origin' | 'destination',
+    isTransactionFiltered: boolean
+  ): boolean {
+    return (
+      isTransactionFiltered &&
+      Boolean(this.getTransactionUserId()) &&
+      ((direction === 'origin' && this.getDirection() === 'sending') ||
+        (direction === 'destination' && this.getDirection() === 'receiving'))
+    )
+  }
+
+  protected async getUpdatedTargetAggregation(
+    direction: 'origin' | 'destination',
+    aggregation: AggregationData | undefined,
+    isTransactionFiltered: boolean
+  ): Promise<AggregationData | null> {
+    if (!this.shouldUpdateUserAggregation(direction, isTransactionFiltered)) {
+      return null
+    }
+
+    const aggregationData = aggregation?.lastNTransactionAmounts ?? []
+
+    const transactionAmountDetails = this.getTransactionAmountDetails(
+      this.transaction
+    )
+
+    return {
+      lastNTransactionAmounts: [
+        transactionAmountDetails,
+        ...aggregationData,
+      ].slice(-this.parameters.lowTransactionCount),
+    }
+  }
+
+  protected getMaxTimeWindow(): TimeWindow {
+    return { granularity: 'day', units: 1 }
+  }
+
+  protected getRuleAggregationVersion(): number {
+    return 1
   }
 }

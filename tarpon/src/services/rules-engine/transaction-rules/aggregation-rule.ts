@@ -101,15 +101,21 @@ export abstract class TransactionAggregationRule<
       return
     }
 
+    const staticTimestamp = this.getStaticTimestamp()
+    const timestamp = staticTimestamp ?? this.transaction.timestamp
+
     const targetAggregations = await this.getRuleAggregations<A>(
       direction,
-      this.transaction.timestamp ?? 0,
-      (this.transaction.timestamp ?? 0) + 1
+      timestamp,
+      timestamp + 1
     )
+
     if ((targetAggregations?.length || 0) > 1) {
       throw new Error('Should only get one target aggregation')
     }
+
     const userKeyId = this.getUserKeyId(direction)
+
     if (!userKeyId) {
       return
     }
@@ -117,25 +123,29 @@ export abstract class TransactionAggregationRule<
     const targetHour =
       targetAggregations?.[0]?.hour ||
       getTransactionStatsTimeGroupLabelV2(
-        this.transaction.timestamp as number,
+        timestamp,
         this.getAggregationGranularity()
       )
+
     const updatedAggregation = await this.getUpdatedTargetAggregation(
       direction,
       targetAggregations?.[0],
       isTransactionFiltered
     )
+
     if (!updatedAggregation) {
       return
     }
 
     const ttl = this.getUpdatedTTLAttribute()
+
     await this.aggregationRepository.rebuildUserRuleTimeAggregations(
       userKeyId,
       this.ruleInstance.id as string,
       { [targetHour]: { ...updatedAggregation, ttl } },
       version
     )
+
     await this.aggregationRepository.markTransactionApplied(
       this.ruleInstance.id ?? '',
       direction,
@@ -303,5 +313,9 @@ export abstract class TransactionAggregationRule<
       },
       this.tenantId
     )
+  }
+
+  protected getStaticTimestamp(): number | undefined {
+    return undefined
   }
 }

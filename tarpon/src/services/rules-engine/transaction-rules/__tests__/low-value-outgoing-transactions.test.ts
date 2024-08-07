@@ -12,7 +12,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
