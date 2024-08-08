@@ -53,13 +53,13 @@ import { UserStateDetailsInternal } from '@/@types/openapi-internal/UserStateDet
 import { KYCStatusDetailsInternal } from '@/@types/openapi-internal/KYCStatusDetailsInternal'
 import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
 import { UserAuditLogService } from '@/lambdas/console-api-user/services/user-audit-log-service'
-import { UserStateDetails } from '@/@types/openapi-internal/UserStateDetails'
-import { KYCStatusDetails } from '@/@types/openapi-internal/KYCStatusDetails'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
 import { getParsedCommentBody } from '@/utils/helpers'
+import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
+import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -448,13 +448,13 @@ export class UserService {
     isManual: boolean
   ): Promise<void> {
     const webhookTasks: ThinWebhookDeliveryTask<
-      UserStateDetails | KYCStatusDetails
+      WebhookUserStateDetails | WebhookKYCStatusDetails
     >[] = []
     if (
       newUser.userStateDetails &&
       diff(oldUser.userStateDetails ?? {}, newUser.userStateDetails ?? {})
     ) {
-      const webhookUserStateDetails: UserStateDetails = {
+      const webhookUserStateDetails: WebhookUserStateDetails = {
         ...newUser.userStateDetails,
         userId: newUser.userId,
       }
@@ -470,7 +470,7 @@ export class UserService {
       newUser.kycStatusDetails &&
       diff(oldUser.kycStatusDetails ?? {}, newUser.kycStatusDetails ?? {})
     ) {
-      const webhookKYCStatusDetails: KYCStatusDetails = {
+      const webhookKYCStatusDetails: WebhookKYCStatusDetails = {
         ...newUser.kycStatusDetails,
         userId: newUser.userId,
       }

@@ -12557,6 +12557,28 @@ components:
       required:
         - type
         - day
+    WebhookUserStateDetails:
+      title: WebhookUserStateDetails
+      type: object
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/UserStateDetails
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
+    WebhookKYCStatusDetails:
+      title: WebhookKYCStatusDetails
+      type: object
+      allOf:
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatusDetails
+        - type: object
+          properties:
+            userId:
+              type: string
+          required:
+            - userId
     ChecklistInfo:
       type: object
       title: ChecklistInfo

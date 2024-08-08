@@ -4513,14 +4513,10 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/KYCStatus'
-        userId:
-          type: string
     UserStateDetails:
       title: UserStateDetails
       type: object
       properties:
-        userId:
-          type: string
         reason:
           type: string
         state:
