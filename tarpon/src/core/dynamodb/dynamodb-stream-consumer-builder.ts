@@ -241,8 +241,6 @@ export class StreamConsumerBuilder {
     return async (event: SQSEvent) => {
       for (const sqsRecord of event.Records) {
         const messageMeta: MessageMeta = JSON.parse(sqsRecord.body)
-        logger.info(`Processing message: ${JSON.stringify(messageMeta)}`)
-
         const record = (await this.transientRepository.get(
           `${messageMeta.tenantId}#${messageMeta.entityId}`,
           `${messageMeta.sequenceNumber}`
@@ -330,26 +328,10 @@ export class StreamConsumerBuilder {
       const messageGroupId = update.tenantId
       const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
 
-      logger.info(`Sending to SQS: ${queueUrl}`)
-      logger.info(
-        `Storing in transient repository: ${update.tenantId}#${update.entityId}#${update.sequenceNumber}`
-      )
       await this.transientRepository.add(
         `${update.tenantId}#${update.entityId}`,
         `${update.sequenceNumber}`,
         update.rawRecord
-      )
-      logger.info(
-        `Sending message: ${JSON.stringify({
-          MessageBody: JSON.stringify({
-            tenantId: update.tenantId,
-            entityId: update.entityId,
-            sequenceNumber: update.sequenceNumber,
-          }),
-          QueueUrl: queueUrl,
-          MessageGroupId: messageGroupId,
-          MessageDeduplicationId: messageDeduplicationId,
-        })}`
       )
       const params: SendMessageCommandInput = {
         MessageBody: JSON.stringify({
