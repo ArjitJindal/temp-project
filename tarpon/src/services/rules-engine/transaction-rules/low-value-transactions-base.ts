@@ -153,29 +153,31 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
       'destinationAmountDetails',
     ]
 
-    return (
-      direction === 'origin'
-        ? this.transactionRepository.getLastNUserSendingTransactions(
-            userId,
-            lastNTransactionsToCheck,
-            {
-              ...commonOptions,
-              originPaymentMethods: this.filters.paymentMethodsHistorical,
-              originCountries: this.filters.transactionCountriesHistorical,
-            },
-            fields
-          )
-        : this.transactionRepository.getLastNUserReceivingTransactions(
-            userId,
-            lastNTransactionsToCheck,
-            {
-              ...commonOptions,
-              destinationPaymentMethods: this.filters.paymentMethodsHistorical,
-              destinationCountries: this.filters.transactionCountriesHistorical,
-            },
-            fields
-          )
-    ) as Promise<Transaction[]>
+    const transactions = (await (direction === 'origin'
+      ? this.transactionRepository.getLastNUserSendingTransactions(
+          userId,
+          lastNTransactionsToCheck,
+          {
+            ...commonOptions,
+            originPaymentMethods: this.filters.paymentMethodsHistorical,
+            originCountries: this.filters.transactionCountriesHistorical,
+          },
+          fields
+        )
+      : this.transactionRepository.getLastNUserReceivingTransactions(
+          userId,
+          lastNTransactionsToCheck,
+          {
+            ...commonOptions,
+            destinationPaymentMethods: this.filters.paymentMethodsHistorical,
+            destinationCountries: this.filters.transactionCountriesHistorical,
+          },
+          fields
+        ))) as Transaction[]
+    return transactions.filter(
+      (transaction) =>
+        transaction.transactionId !== this.transaction.transactionId
+    )
   }
 
   public async computeRule() {
@@ -197,15 +199,15 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
     const lastNTransactionAmounts = transactions.map(
       this.getTransactionAmountDetails.bind(this)
     )
-
     await this.saveRebuiltRuleAggregations(direction, {
-      [getTransactionStatsTimeGroupLabelV2(this.getStaticTimestamp(), 'day')]:
+      [getTransactionStatsTimeGroupLabelV2(this.getStaticTimestamp(), 'day')]: {
         lastNTransactionAmounts,
+      },
     })
   }
 
   protected getStaticTimestamp(): number {
-    return 1722952183000
+    return 0
   }
 
   public shouldUpdateUserAggregation(
@@ -239,7 +241,7 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
       lastNTransactionAmounts: [
         transactionAmountDetails,
         ...aggregationData,
-      ].slice(-this.parameters.lowTransactionCount),
+      ].slice(0, this.parameters.lowTransactionCount - 1),
     }
   }
 
@@ -248,6 +250,6 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
   }
 
   protected getRuleAggregationVersion(): number {
-    return 1
+    return 2
   }
 }

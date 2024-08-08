@@ -5,6 +5,7 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
@@ -262,3 +263,69 @@ ruleVariantsTest({ aggregation: true }, () => {
     })
   })
 })
+
+testAggregationRebuild(
+  getTestTenantId(),
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'low-value-incoming-transactions',
+    defaultParameters: {
+      lowTransactionValues: {
+        EUR: {
+          min: 2,
+          max: 10,
+        },
+      },
+      lowTransactionCount: 3,
+    },
+  },
+  [
+    getTestTransaction({
+      timestamp: dayjs('2024-01-01').valueOf(),
+      destinationUserId: '1',
+      destinationAmountDetails: {
+        country: 'DE',
+        transactionAmount: 3,
+        transactionCurrency: 'EUR',
+      },
+    }),
+    getTestTransaction({
+      timestamp: dayjs('2024-01-02').valueOf(),
+      destinationUserId: '1',
+      destinationAmountDetails: {
+        country: 'DE',
+        transactionAmount: 100,
+        transactionCurrency: 'EUR',
+      },
+    }),
+    getTestTransaction({
+      timestamp: dayjs('2024-01-03').valueOf(),
+      destinationUserId: '1',
+      destinationAmountDetails: {
+        country: 'DE',
+        transactionAmount: 5,
+        transactionCurrency: 'EUR',
+      },
+    }),
+  ],
+  {
+    destination: [
+      {
+        lastNTransactionAmounts: [
+          {
+            country: 'DE',
+            transactionAmount: 5,
+            transactionCurrency: 'EUR',
+          },
+          {
+            country: 'DE',
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        ],
+        hour: '1970-01-01',
+      },
+    ],
+    origin: undefined,
+  }
+)

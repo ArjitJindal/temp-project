@@ -5,10 +5,12 @@ import {
   createTransactionRuleTestCase,
   ruleVariantsTest,
   setUpRulesHooks,
+  testAggregationRebuild,
   testRuleDescriptionFormatting,
   TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
@@ -239,3 +241,69 @@ ruleVariantsTest({ aggregation: true }, () => {
     })
   })
 })
+
+testAggregationRebuild(
+  getTestTenantId(),
+  {
+    type: 'TRANSACTION',
+    ruleImplementationName: 'low-value-outgoing-transactions',
+    defaultParameters: {
+      lowTransactionValues: {
+        EUR: {
+          min: 2,
+          max: 10,
+        },
+      },
+      lowTransactionCount: 3,
+    },
+  },
+  [
+    getTestTransaction({
+      timestamp: dayjs('2024-01-01').valueOf(),
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'DE',
+        transactionAmount: 3,
+        transactionCurrency: 'EUR',
+      },
+    }),
+    getTestTransaction({
+      timestamp: dayjs('2024-01-02').valueOf(),
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'DE',
+        transactionAmount: 100,
+        transactionCurrency: 'EUR',
+      },
+    }),
+    getTestTransaction({
+      timestamp: dayjs('2024-01-03').valueOf(),
+      originUserId: '1',
+      originAmountDetails: {
+        country: 'DE',
+        transactionAmount: 5,
+        transactionCurrency: 'EUR',
+      },
+    }),
+  ],
+  {
+    origin: [
+      {
+        lastNTransactionAmounts: [
+          {
+            country: 'DE',
+            transactionAmount: 5,
+            transactionCurrency: 'EUR',
+          },
+          {
+            country: 'DE',
+            transactionAmount: 100,
+            transactionCurrency: 'EUR',
+          },
+        ],
+        hour: '1970-01-01',
+      },
+    ],
+    destination: undefined,
+  }
+)
