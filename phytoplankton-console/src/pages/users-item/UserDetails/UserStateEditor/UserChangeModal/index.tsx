@@ -84,7 +84,6 @@ export default function UserChangeModal(props: Props) {
         throw new Error('User Status Empty');
       }
       const newStateDetails: UserStateDetailsInternal = {
-        userId: user.userId,
         state: userStatus,
         reason: reason === 'Other' && otherReason ? otherReason : reason,
       };
