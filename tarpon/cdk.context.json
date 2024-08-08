@@ -63,5 +63,10 @@
     "ap-southeast-1a",
     "ap-southeast-1b",
     "ap-southeast-1c"
+  ],
+  "availability-zones:account=870721492449:region=eu-west-2": [
+    "eu-west-2a",
+    "eu-west-2b",
+    "eu-west-2c"
   ]
 }

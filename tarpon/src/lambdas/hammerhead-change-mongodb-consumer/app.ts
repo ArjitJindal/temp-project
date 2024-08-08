@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { omit } from 'lodash'
+import { groupBy, omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
@@ -120,12 +120,20 @@ const queueHandler = hammerheadBuilder.buildHandler(
 
 export const hammerheadChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    for (const update of getDynamoDbUpdates(event)) {
-      await hammerheadBuilder.sendDynamoUpdate(
-        update,
-        process.env.HAMMERHEAD_QUEUE_URL ?? ''
-      )
-    }
+    const updates = getDynamoDbUpdates(event)
+    const groups = groupBy(updates, (update) => update.tenantId)
+
+    await Promise.all(
+      Object.entries(groups).map(async (entry) => {
+        const tenantId = entry[0]
+        const tenantUpdates = entry[1]
+        await hammerheadBuilder.sendDynamoUpdate(
+          tenantId,
+          tenantUpdates,
+          process.env.HAMMERHEAD_QUEUE_URL ?? ''
+        )
+      })
+    )
   }
 )
 

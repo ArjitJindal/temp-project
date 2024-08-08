@@ -1,6 +1,6 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, isEmpty, isEqual, omit, pick } from 'lodash'
+import { difference, groupBy, isEmpty, isEqual, omit, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -418,12 +418,20 @@ const tarponSqsRetryHandler = tarponBuilder.buildSqsRetryHandler()
 
 export const tarponChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    for (const update of getDynamoDbUpdates(event)) {
-      await tarponBuilder.sendDynamoUpdate(
-        update,
-        process.env.TARPON_QUEUE_URL ?? ''
-      )
-    }
+    const updates = getDynamoDbUpdates(event)
+    const groups = groupBy(updates, (update) => update.tenantId)
+
+    await Promise.all(
+      Object.entries(groups).map(async (entry) => {
+        const tenantId = entry[0]
+        const tenantUpdates = entry[1]
+        await tarponBuilder.sendDynamoUpdate(
+          tenantId,
+          tenantUpdates,
+          process.env.TARPON_QUEUE_URL ?? ''
+        )
+      })
+    )
   }
 )
 

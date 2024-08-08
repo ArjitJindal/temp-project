@@ -1,8 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
-import {
-  SendMessageCommand,
-  SendMessageCommandInput,
-} from '@aws-sdk/client-sqs'
+import { SendMessageBatchCommand } from '@aws-sdk/client-sqs'
+import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import {
@@ -207,7 +205,12 @@ export class StreamConsumerBuilder {
     if (!update.NewImage) {
       return
     }
-    await this.sendDynamoUpdate(update, this.retrySqsQueue, true)
+    await this.sendDynamoUpdate(
+      update.tenantId,
+      [update],
+      this.retrySqsQueue,
+      true
+    )
     const partitionKeyId = this.getRetryItemKey(update)
     await this.transientRepository.addKey(
       partitionKeyId,
@@ -294,47 +297,79 @@ export class StreamConsumerBuilder {
   }
 
   public async sendDynamoUpdate(
-    update: DynamoDbEntityUpdate,
+    tenantId: string,
+    updates: DynamoDbEntityUpdate[],
     queueUrl: string,
     retry = false
   ) {
-    /**   Store DynamoDB Keys in MongoDB * */
-    if (update.NewImage && !update.NewImage.ttl) {
-      await savePartitionKey(
-        update.tenantId,
-        update.partitionKeyId,
-        this.tableName
-      )
-    }
-    if (!update.type) {
-      return
-    }
-
     await withContext(async () => {
-      await initializeTenantContext(update.tenantId)
+      await initializeTenantContext(tenantId)
       const tenantHasFeatureKinesisAsync = await tenantHasFeature(
-        update.tenantId,
+        tenantId,
         'KINESIS_ASYNC'
       )
+
+      const filteredUpdates = updates.filter(Boolean)
+      await Promise.all(
+        filteredUpdates.map(async (update) => {
+          /**   Store DynamoDB Keys in MongoDB * */
+          if (update.NewImage && !update.NewImage.ttl) {
+            await savePartitionKey(
+              update.tenantId,
+              update.partitionKeyId,
+              this.tableName
+            )
+          }
+        })
+      )
+
       if ((envIs('local', 'test') || !tenantHasFeatureKinesisAsync) && !retry) {
-        await this.processDynamoDbUpdate(update)
-      } else {
-        const messageGroupId = update.tenantId
-        const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
-
-        const payload = JSON.stringify(update)
-        const byteLength = Buffer.byteLength(payload, 'utf8')
-        if (byteLength > 262144) {
-          logger.error(`Payload size exceeds size limit: ${payload}`)
+        for (const update of filteredUpdates) {
+          await this.processDynamoDbUpdate(update)
         }
+        return
+      }
 
-        const params: SendMessageCommandInput = {
-          MessageBody: JSON.stringify(update),
-          QueueUrl: queueUrl,
-          MessageGroupId: messageGroupId,
-          MessageDeduplicationId: messageDeduplicationId,
+      function chunkArray<T>(
+        array: Array<T>,
+        chunkSize: number
+      ): Array<Array<T>> {
+        const chunks: Array<Array<T>> = []
+        for (let i = 0; i < array.length; i += chunkSize) {
+          chunks.push(array.slice(i, i + chunkSize))
         }
-        await sqsClient.send(new SendMessageCommand(params))
+        return chunks
+      }
+
+      const entries = filteredUpdates.map(
+        (update, i): SendMessageBatchRequestEntry => {
+          const messageGroupId = update.tenantId
+          const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
+
+          const payload = JSON.stringify(update)
+          const byteLength = Buffer.byteLength(payload, 'utf8')
+          if (byteLength > 262144) {
+            logger.error(`Payload size exceeds size limit: ${payload}`)
+          }
+
+          return {
+            Id: `${i}`,
+            MessageBody: payload,
+            MessageGroupId: messageGroupId,
+            MessageDeduplicationId: messageDeduplicationId,
+          }
+        }
+      )
+
+      const chunkedEntries = chunkArray(entries, 10)
+
+      for (const chunk of chunkedEntries) {
+        await sqsClient.send(
+          new SendMessageBatchCommand({
+            Entries: chunk,
+            QueueUrl: queueUrl,
+          })
+        )
       }
     })
   }
