@@ -1,9 +1,13 @@
-import { KinesisStreamEvent, KinesisStreamRecord, SQSEvent } from 'aws-lambda'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { KinesisStreamRecord, SQSEvent } from 'aws-lambda'
+import {
+  SendMessageCommand,
+  SendMessageCommandInput,
+} from '@aws-sdk/client-sqs'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import {
   initializeTenantContext,
+  tenantHasFeature,
   updateLogMetadata,
   withContext,
 } from '../utils/context'
@@ -23,8 +27,7 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getSQSClient } from '@/utils/sns-sqs-client'
-
-const sqsClient = getSQSClient()
+import { envIs } from '@/utils/env'
 
 type TransactionHandler = (
   tenantId: string,
@@ -86,6 +89,7 @@ export class StreamConsumerBuilder {
     this.retrySqsQueue = retrySqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
     this.tableName = tableName
+    this.processDynamoDbUpdate = this.processDynamoDbUpdate.bind(this)
   }
 
   public setTransactionHandler(
@@ -205,14 +209,7 @@ export class StreamConsumerBuilder {
     if (!update.rawRecord) {
       return
     }
-    await sqsClient.send(
-      new SendMessageCommand({
-        MessageBody: JSON.stringify(update.rawRecord),
-        QueueUrl: this.retrySqsQueue,
-        MessageGroupId: `${update.tenantId}#${update.entityId}`,
-        MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
-      })
-    )
+    await this.sendDynamoUpdate(update, this.retrySqsQueue, true)
     const partitionKeyId = this.getRetryItemKey(update)
     await this.transientRepository.addKey(
       partitionKeyId,
@@ -240,76 +237,138 @@ export class StreamConsumerBuilder {
     return `${this.name}#${update.tenantId}#${update.entityId}`
   }
 
-  public buildSqsRetryHandler() {
+  public buildHandler(handle: (update: DynamoDbEntityUpdate) => Promise<void>) {
     return async (event: SQSEvent) => {
-      for (const record of event.Records) {
-        const kinesisStreamRecord = JSON.parse(
-          record.body
-        ) as KinesisStreamRecord
+      for (const sqsRecord of event.Records) {
+        const messageMeta: MessageMeta = JSON.parse(sqsRecord.body)
+        logger.info(`Processing message: ${JSON.stringify(messageMeta)}`)
 
+        const record = (await this.transientRepository.get(
+          `${messageMeta.tenantId}#${messageMeta.entityId}`,
+          `${messageMeta.sequenceNumber}`
+        )) as KinesisStreamRecord
         for (const update of getDynamoDbUpdates({
-          Records: [kinesisStreamRecord],
+          Records: [record],
         })) {
-          if (update.type) {
-            await withContext(async () => {
-              await initializeTenantContext(update.tenantId)
-              if (await this.shouldRun(update)) {
-                updateLogMetadata({
-                  entityId: update.entityId,
-                  sequenceNumber: update.sequenceNumber,
-                })
-                try {
-                  await this.handleDynamoDbUpdate(update)
-                  await this.handleUpdateSuccess(update)
-                  logger.info('Retry SUCCESS')
-                } catch (e) {
-                  logger.error((e as Error).message)
-                  throw e
-                }
-              }
+          await handle(update)
+        }
+      }
+    }
+  }
+
+  public buildSqsRetryHandler() {
+    return this.buildHandler(async (update) => {
+      if (update.type) {
+        await withContext(async () => {
+          await initializeTenantContext(update.tenantId)
+          if (await this.shouldRun(update)) {
+            updateLogMetadata({
+              entityId: update.entityId,
+              sequenceNumber: update.sequenceNumber,
             })
+            try {
+              await this.handleDynamoDbUpdate(update)
+              await this.handleUpdateSuccess(update)
+              logger.info('Retry SUCCESS')
+            } catch (e) {
+              logger.error((e as Error).message)
+              throw e
+            }
+          }
+        })
+      }
+    })
+  }
+
+  public async processDynamoDbUpdate(update: DynamoDbEntityUpdate) {
+    /**   Store DynamoDB Keys in MongoDB * */
+    if (update.NewImage && !update.NewImage.ttl) {
+      await savePartitionKey(
+        update.tenantId,
+        update.partitionKeyId,
+        this.tableName
+      )
+    }
+
+    if (update.type) {
+      await withContext(async () => {
+        await initializeTenantContext(update.tenantId)
+        updateLogMetadata({ entityId: update.entityId })
+        if (await this.shouldSendToRetryQueue(update)) {
+          await this.sendToRetryQueue(update)
+          logger.warn(
+            `There're other events for the entity currently being retried. Sent to retry queue.`
+          )
+        } else {
+          try {
+            await this.handleDynamoDbUpdate(update)
+          } catch (e) {
+            await this.sendToRetryQueue(update)
+            logger.error(e)
+            if (e instanceof Error) {
+              logger.error(e.stack)
+            }
+            logger.warn(`Failed to process. Sent to retry queue`)
           }
         }
-      }
+      })
     }
   }
 
-  public buildKinesisStreamHandler() {
-    return async (event: KinesisStreamEvent) => {
-      for (const update of getDynamoDbUpdates(event)) {
-        /**   Store DynamoDB Keys in MongoDB * */
-        if (update.NewImage && !update.NewImage.ttl) {
-          await savePartitionKey(
-            update.tenantId,
-            update.partitionKeyId,
-            this.tableName
-          )
-        }
+  public async sendDynamoUpdate(
+    update: DynamoDbEntityUpdate,
+    queueUrl: string,
+    retry = false
+  ) {
+    const tenantHasFeatureKinesisAsync = await tenantHasFeature(
+      update.tenantId,
+      'KINESIS_ASYNC'
+    )
+    if ((envIs('local', 'test') || !tenantHasFeatureKinesisAsync) && !retry) {
+      await this.processDynamoDbUpdate(update)
+    } else {
+      const messageGroupId = update.tenantId
+      const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
 
-        if (update.type) {
-          await withContext(async () => {
-            await initializeTenantContext(update.tenantId)
-            updateLogMetadata({ entityId: update.entityId })
-            if (await this.shouldSendToRetryQueue(update)) {
-              await this.sendToRetryQueue(update)
-              logger.warn(
-                `There're other events for the entity currently being retried. Sent to retry queue.`
-              )
-            } else {
-              try {
-                await this.handleDynamoDbUpdate(update)
-              } catch (e) {
-                await this.sendToRetryQueue(update)
-                logger.error(e)
-                if (e instanceof Error) {
-                  logger.error(e.stack)
-                }
-                logger.warn(`Failed to process. Sent to retry queue`)
-              }
-            }
-          })
-        }
+      logger.info(`Sending to SQS: ${queueUrl}`)
+      logger.info(
+        `Storing in transient repository: ${update.tenantId}#${update.entityId}#${update.sequenceNumber}`
+      )
+      await this.transientRepository.add(
+        `${update.tenantId}#${update.entityId}`,
+        `${update.sequenceNumber}`,
+        update.rawRecord
+      )
+      logger.info(
+        `Sending message: ${JSON.stringify({
+          MessageBody: JSON.stringify({
+            tenantId: update.tenantId,
+            entityId: update.entityId,
+            sequenceNumber: update.sequenceNumber,
+          }),
+          QueueUrl: queueUrl,
+          MessageGroupId: messageGroupId,
+          MessageDeduplicationId: messageDeduplicationId,
+        })}`
+      )
+      const params: SendMessageCommandInput = {
+        MessageBody: JSON.stringify({
+          tenantId: update.tenantId,
+          entityId: update.entityId,
+          sequenceNumber: update.sequenceNumber,
+        }),
+        QueueUrl: queueUrl,
+        MessageGroupId: messageGroupId,
+        MessageDeduplicationId: messageDeduplicationId,
       }
+      const sqsClient = getSQSClient()
+      await sqsClient.send(new SendMessageCommand(params))
     }
   }
+}
+
+type MessageMeta = {
+  tenantId: string
+  entityId: string
+  sequenceNumber: string
 }

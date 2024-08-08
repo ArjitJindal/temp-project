@@ -254,23 +254,22 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    const transactionEventQueue = this.createQueue(
-      SQSQueues.TRANSACTION_EVENT_QUEUE_NAME.name,
+    const tarponEventQueue = this.createQueue(
+      SQSQueues.TARPON_QUEUE_NAME.name,
       {
         fifo: true,
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
-    const userEventQueue = this.createQueue(
-      SQSQueues.USER_EVENT_QUEUE_NAME.name,
+    const hammerheadQueue = this.createQueue(
+      SQSQueues.HAMMERHEAD_QUEUE_NAME.name,
       {
         fifo: true,
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
-
     /*
      * Kinesis Data Streams
      */
@@ -490,8 +489,8 @@ export class CdkTarponStack extends cdk.Stack {
           tarponChangeCaptureRetryQueue.queueUrl,
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
-        TRANSACTION_EVENT_QUEUE_URL: transactionEventQueue.queueUrl,
-        USER_EVENT_QUEUE_URL: userEventQueue.queueUrl,
+        TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
+        HAMMERHEAD_QUEUE_URL: hammerheadQueue.queueUrl,
       },
     }
 
@@ -576,8 +575,8 @@ export class CdkTarponStack extends cdk.Stack {
             transactionAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
             notificationQueue.queueArn,
-            transactionEventQueue.queueArn,
-            userEventQueue.queueArn,
+            hammerheadQueue.queueArn,
+            tarponEventQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -1134,6 +1133,17 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
         })
 
+      const { alias: hammerheadQueueConsumerAlias } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME,
+        }
+      )
+      hammerheadQueueConsumerAlias.addEventSource(
+        new SqsEventSource(hammerheadQueue)
+      )
+
       this.createKinesisEventSource(
         hammerheadChangeCaptureKinesisConsumerAlias,
         hammerheadStream,
@@ -1143,26 +1153,15 @@ export class CdkTarponStack extends cdk.Stack {
         new SqsEventSource(hammerheadChangeCaptureRetryQueue)
       )
 
-      const { alias: transactionEventQueueConsumerAlias } = createFunction(
+      const { alias: tarponQueueConsumerAlias } = createFunction(
         this,
         lambdaExecutionRole,
         {
-          name: StackConstants.TRANSACTION_EVENT_QUEUE_CONSUMER_FUNCTION_NAME,
+          name: StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME,
         }
       )
-      transactionEventQueueConsumerAlias.addEventSource(
-        new SqsEventSource(transactionEventQueue)
-      )
-
-      const { alias: userEventQueueConsumerAlias } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.USER_EVENT_QUEUE_CONSUMER_FUNCTION_NAME,
-        }
-      )
-      userEventQueueConsumerAlias.addEventSource(
-        new SqsEventSource(userEventQueue)
+      tarponQueueConsumerAlias.addEventSource(
+        new SqsEventSource(tarponEventQueue)
       )
     }
 

@@ -15,6 +15,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
+import { getDynamoDbUpdates } from '@/core/dynamodb/dynamodb-stream-utils'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -112,17 +113,30 @@ const hammerheadBuilder = new StreamConsumerBuilder(
     krsScoreEventHandler(tenantId, newKrsScore)
   )
 
-const hammerheadKinesisHandler = hammerheadBuilder.buildKinesisStreamHandler()
 const hammerheadSqsRetryHandler = hammerheadBuilder.buildSqsRetryHandler()
+const queueHandler = hammerheadBuilder.buildHandler(
+  hammerheadBuilder.processDynamoDbUpdate
+)
 
 export const hammerheadChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    await hammerheadKinesisHandler(event)
+    for (const update of getDynamoDbUpdates(event)) {
+      await hammerheadBuilder.sendDynamoUpdate(
+        update,
+        process.env.HAMMERHEAD_QUEUE_URL ?? ''
+      )
+    }
   }
 )
 
 export const hammerheadChangeMongoDbRetryHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     await hammerheadSqsRetryHandler(event)
+  }
+)
+
+export const hammerheadQueueHandler = lambdaConsumer()(
+  async (event: SQSEvent) => {
+    await queueHandler(event)
   }
 )

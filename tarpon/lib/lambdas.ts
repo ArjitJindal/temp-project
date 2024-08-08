@@ -282,6 +282,12 @@ export const LAMBDAS: {
       expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
       timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
     },
+  [StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'hammerhead-change-mongodb-consumer',
+    handlerName: 'hammerheadQueueHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME]: {
     codePath: 'console-api-sanctions',
     handlerName: 'sanctionsHandler',
@@ -366,15 +372,9 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.TRANSACTION_EVENT_QUEUE_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'transaction-events-consumer',
-    handlerName: 'transactionEventsHandler',
-    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.USER_EVENT_QUEUE_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'user-events-consumer',
-    handlerName: 'userEventsHandler',
+  [StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME]: {
+    codePath: 'tarpon-change-mongodb-consumer',
+    handlerName: 'tarponQueueHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },

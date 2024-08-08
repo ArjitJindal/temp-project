@@ -199,7 +199,6 @@ export function getDynamoDbUpdates(
   return event.Records.map((record) => {
     const payload: KinesisStreamRecordPayload = record.kinesis
     const message: string = Buffer.from(payload.data, 'base64').toString()
-
     const dynamoDBStreamRecord = JSON.parse(message).dynamodb as StreamRecord
     // If the record is a delete, we don't need to process it
     if (!dynamoDBStreamRecord.NewImage) {

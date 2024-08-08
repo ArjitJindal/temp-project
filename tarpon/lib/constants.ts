@@ -272,11 +272,11 @@ export const StackConstants = {
   NOTIFICATIONS_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'NotificationsConsumerFunction'
   ),
-  TRANSACTION_EVENT_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
-    'TransactionEventQueueConsumerFunction'
+  TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'TarponQueueConsumerFunction'
   ),
-  USER_EVENT_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
-    'UserEventQueueConsumerFunction'
+  HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'HammerheadQueueConsumerFunction'
   ),
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
@@ -311,6 +311,12 @@ export const SQSQueues: {
   },
   HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
     name: getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
+  },
+  TARPON_QUEUE_NAME: {
+    name: getResourceName('TarponQueue') + '.fifo',
+  },
+  HAMMERHEAD_QUEUE_NAME: {
+    name: getResourceName('HammerheadQueue') + '.fifo',
   },
   REQUEST_LOGGER_QUEUE_NAME: {
     name: getResourceName('RequestLoggerQueue'),
