@@ -1,6 +1,5 @@
 import {
   KinesisStreamEvent,
-  KinesisStreamRecord,
   KinesisStreamRecordPayload,
   StreamRecord,
 } from 'aws-lambda'
@@ -25,6 +24,7 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DYNAMODB_PARTITIONKEYS_COLLECTION } from '@/utils/mongodb-definitions'
+import { Business } from '@/@types/openapi-internal/Business'
 
 export type DynamoDbEntityType =
   | 'TRANSACTION'
@@ -44,7 +44,6 @@ export type DynamoDbEntityUpdate = {
   sequenceNumber?: string
   NewImage?: { [key: string]: any }
   OldImage?: { [key: string]: any }
-  rawRecord?: KinesisStreamRecord
   partitionKeyId: string
 }
 
@@ -150,12 +149,12 @@ function getDynamoDbEntityMetadata(
 function getDynamoDbEntity(
   dynamoDBStreamRecord: StreamRecord
 ): DynamoDbEntityUpdate | null {
-  const partitionKeyId = dynamoDBStreamRecord.Keys?.PartitionKeyID?.S
-  const tenantId = partitionKeyId?.split('#')[0]
-  const NewImage =
+  const partitionKeyId = dynamoDBStreamRecord.Keys?.PartitionKeyID?.S as string
+  const tenantId = partitionKeyId?.split('#')[0] as string
+  let NewImage =
     dynamoDBStreamRecord.NewImage &&
     unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.NewImage))
-  const OldImage =
+  let OldImage =
     dynamoDBStreamRecord.OldImage &&
     unMarshallDynamoDBStream(JSON.stringify(dynamoDBStreamRecord.OldImage))
   if (!tenantId) {
@@ -167,6 +166,48 @@ function getDynamoDbEntity(
   const metadata =
     getDynamoDbEntityMetadata(partitionKeyId, NewImage) ??
     getDynamoDbEntityMetadata(partitionKeyId, OldImage)
+
+  // Quick fix for b4bpayments
+  if (metadata?.type === 'USER' && tenantId.toLowerCase() === '0789ad73b8') {
+    // b4b only attach `parentUserId` to the user entity. We could rebuild linkedEntities using
+    // parentUserId later.
+    if (OldImage) {
+      const oldUser = OldImage as User | Business
+      if (oldUser.linkedEntities?.childUserIds) {
+        oldUser.linkedEntities.childUserIds = []
+      }
+      OldImage = oldUser
+    }
+    if (NewImage) {
+      const newUser = NewImage as User | Business
+      if (newUser.linkedEntities?.childUserIds) {
+        newUser.linkedEntities.childUserIds = []
+      }
+      NewImage = newUser
+    }
+  }
+
+  if (
+    metadata?.type === 'BUSINESS_USER_EVENT' &&
+    tenantId.toLowerCase() === '0789ad73b8'
+  ) {
+    // b4b only attach `parentUserId` to the user entity. We could rebuild linkedEntities using
+    // parentUserId later.
+    if (OldImage) {
+      const oldUser = OldImage as BusinessUserEvent
+      if (oldUser.updatedBusinessUserAttributes?.linkedEntities) {
+        oldUser.updatedBusinessUserAttributes.linkedEntities.childUserIds = []
+      }
+      OldImage = oldUser
+    }
+    if (NewImage) {
+      const newUser = NewImage as BusinessUserEvent
+      if (newUser.updatedBusinessUserAttributes?.linkedEntities) {
+        newUser.updatedBusinessUserAttributes.linkedEntities.childUserIds = []
+      }
+      NewImage = newUser
+    }
+  }
 
   return {
     tenantId,
@@ -210,7 +251,6 @@ export function getDynamoDbUpdates(
     return (
       entity && {
         ...entity,
-        rawRecord: record,
         sequenceNumber: payload.sequenceNumber,
       }
     )

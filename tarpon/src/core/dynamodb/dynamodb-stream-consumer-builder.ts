@@ -1,4 +1,4 @@
-import { KinesisStreamRecord, SQSEvent } from 'aws-lambda'
+import { SQSEvent } from 'aws-lambda'
 import {
   SendMessageCommand,
   SendMessageCommandInput,
@@ -11,11 +11,7 @@ import {
   updateLogMetadata,
   withContext,
 } from '../utils/context'
-import {
-  DynamoDbEntityUpdate,
-  getDynamoDbUpdates,
-  savePartitionKey,
-} from './dynamodb-stream-utils'
+import { DynamoDbEntityUpdate, savePartitionKey } from './dynamodb-stream-utils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -69,6 +65,8 @@ type RuleInstanceHandler = (
   oldRuleInstance: RuleInstance | undefined,
   newRuleInstance: RuleInstance | undefined
 ) => Promise<void>
+
+const sqsClient = getSQSClient()
 
 export class StreamConsumerBuilder {
   name: string
@@ -206,7 +204,7 @@ export class StreamConsumerBuilder {
   }
 
   private async sendToRetryQueue(update: DynamoDbEntityUpdate) {
-    if (!update.rawRecord) {
+    if (!update.NewImage) {
       return
     }
     await this.sendDynamoUpdate(update, this.retrySqsQueue, true)
@@ -240,16 +238,8 @@ export class StreamConsumerBuilder {
   public buildHandler(handle: (update: DynamoDbEntityUpdate) => Promise<void>) {
     return async (event: SQSEvent) => {
       for (const sqsRecord of event.Records) {
-        const messageMeta: MessageMeta = JSON.parse(sqsRecord.body)
-        const record = (await this.transientRepository.get(
-          `${messageMeta.tenantId}#${messageMeta.entityId}`,
-          `${messageMeta.sequenceNumber}`
-        )) as KinesisStreamRecord
-        for (const update of getDynamoDbUpdates({
-          Records: [record],
-        })) {
-          await handle(update)
-        }
+        const record: DynamoDbEntityUpdate = JSON.parse(sqsRecord.body)
+        await handle(record)
       }
     }
   }
@@ -332,30 +322,20 @@ export class StreamConsumerBuilder {
         const messageGroupId = update.tenantId
         const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
 
-        await this.transientRepository.add(
-          `${update.tenantId}#${update.entityId}`,
-          `${update.sequenceNumber}`,
-          update.rawRecord
-        )
+        const payload = JSON.stringify(update)
+        const byteLength = Buffer.byteLength(payload, 'utf8')
+        if (byteLength > 262144) {
+          logger.error(`Payload size exceeds size limit: ${payload}`)
+        }
+
         const params: SendMessageCommandInput = {
-          MessageBody: JSON.stringify({
-            tenantId: update.tenantId,
-            entityId: update.entityId,
-            sequenceNumber: update.sequenceNumber,
-          }),
+          MessageBody: JSON.stringify(update),
           QueueUrl: queueUrl,
           MessageGroupId: messageGroupId,
           MessageDeduplicationId: messageDeduplicationId,
         }
-        const sqsClient = getSQSClient()
         await sqsClient.send(new SendMessageCommand(params))
       }
     })
   }
-}
-
-type MessageMeta = {
-  tenantId: string
-  entityId: string
-  sequenceNumber: string
 }
