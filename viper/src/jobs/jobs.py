@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 
 from pyspark.sql import SparkSession
 
@@ -93,7 +94,13 @@ class Jobs:
             print(f"\n\n===== Setting up {entity.table} ======")
             self.entity_tables.start_streams(entity)
 
-        self.spark.streams.awaitAnyTermination()
+        # Kill process after 20 minutes
+        time.sleep(60 * 20)
+
+        streaming_query_manager = self.spark.streams
+        active_streams = streaming_query_manager.active
+        for stream in active_streams:
+            stream.stop()
 
     def optimize(self):
         for entity in entities:

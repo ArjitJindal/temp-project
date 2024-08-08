@@ -14,7 +14,6 @@ import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { AWS_ACCOUNTS } from '@flagright/lib/constants'
 import * as path from 'path'
 import { provider as nullProvider } from '@cdktf/provider-null'
-import { EmrCluster } from '@cdktf/provider-aws/lib/emr-cluster'
 import { IamRole } from '@cdktf/provider-aws/lib/iam-role'
 import { IamRolePolicy } from '@cdktf/provider-aws/lib/iam-role-policy'
 import * as fs from 'fs'
@@ -36,6 +35,14 @@ const databricksAccountId = 'e2fae071-88c7-4b3e-90cd-2f4c5ced45a7'
 const awsAccountId = AWS_ACCOUNTS[stage]
 
 const jobs = [
+  {
+    name: 'stream',
+    description: 'Stream data from kinesis.',
+    continuous: false,
+    schedule: 'CRON(0 0 0 * * ?)',
+    compute: 'G.1X',
+    numWorkers: 2,
+  },
   {
     name: 'refresh',
     description: 'Rebuild derived tables from kinesis and mongo data.',
@@ -593,137 +600,6 @@ log4j.appender.console.layout.ConversionPattern=%d{yy/MM/dd HH:mm:ss} %p %c{1}: 
       name: `iam_emr_profile_policy_${awsRegion}`,
       role: emrProfileRole.id,
       policy: emrProfilePolicyDocument.json,
-    })
-
-    const installScript = new aws.s3Object.S3Object(
-      this,
-      `stream-install-script`,
-      {
-        bucket: datalakeBucket.bucket,
-        key: `stream.sh`,
-        content: `
-#!/bin/bash
-aws s3 cp s3://${datalakeBucket.bucket}/${pythonPackage.key} /tmp/${pythonPackage.key} 
-sudo python3 -m pip install /tmp/${pythonPackage.key} --no-dependencies
-sudo python3 -m pip install delta-spark==3.2.0 --no-dependencies
-sudo python3 -m pip install boto3
-`,
-      }
-    )
-
-    const emrScript = new aws.s3Object.S3Object(this, `stream-emr-script`, {
-      bucket: datalakeBucket.bucket,
-      key: `stream.py`,
-      content: this.templateAwsEmrJobNotebook('stream'),
-    })
-
-    const cluster = new EmrCluster(this, 'my-emr-cluster', {
-      name: `streaming-${packageVersion}`,
-      releaseLabel: 'emr-7.1.0',
-      applications: ['Hadoop', 'Spark', 'Hive'],
-      serviceRole: emrServiceRole.name,
-      ec2Attributes: {
-        instanceProfile: emrProfile.arn,
-        subnetId: vpc?.subnetId,
-      },
-      masterInstanceGroup: {
-        instanceType: 'm5.xlarge',
-        instanceCount: 1,
-      },
-      coreInstanceGroup: {
-        instanceType: 'm5.xlarge',
-        instanceCount: 1,
-      },
-      configurations: `
-[
-{
-  "Classification": "spark-defaults",
-  "Properties": {
-    "spark.sql.streaming.stateStore.stateSchemaCheck": "false",
-    "spark.sql.extensions": "io.delta.sql.DeltaSparkSessionExtension",
-    "spark.sql.warehouse.dir": "s3://${datalakeBucket.bucket}/warehouse/",
-    "spark.sql.catalog.spark_catalog": "org.apache.spark.sql.delta.catalog.DeltaCatalog",
-    "spark.delta.logStore.class": "io.delta.storage.S3SingleDriverLogStore",
-    "spark.sql.catalogImplementation": "hive",
-    "spark.databricks.delta.schema.autoMerge.enabled": "true",
-    "spark.hadoop.hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
-    "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory",
-    "spark.hadoop.fs.s3a.impl": "org.apache.hadoop.fs.s3a.S3AFileSystem",
-    "spark.hadoop.fs.s3a.endpoint": "s3.amazonaws.com",
-    "spark.hadoop.fs.s3a.connection.maximum": "50",
-    "spark.hadoop.fs.s3a.connection.timeout": "10000",
-    "spark.hadoop.fs.s3a.connection.establish.timeout": "10000",
-    "spark.hadoop.fs.s3a.attempts.maximum": "15",
-    "spark.hadoop.fs.s3a.retry.limit": "10",
-    "spark.hadoop.fs.s3a.retry.interval": "1000",
-    "spark.hadoop.fs.s3a.paging.maximum": "1000",
-    "spark.hadoop.fs.s3a.multipart.size": "104857600",
-    "spark.hadoop.fs.s3a.multipart.threshold": "1073741824",
-    "spark.hadoop.fs.s3a.multipart.purge.age": "86400",
-    "spark.hadoop.fs.s3a.fast.upload.buffer": "disk",
-    "spark.hadoop.fs.s3a.fast.upload.active.blocks": "2",
-    "spark.hadoop.fs.s3a.fast.upload": "true",
-    "spark.hadoop.fs.s3a.max.total.tasks": "256",
-    "spark.hadoop.fs.s3a.max.task.size": "67108864",
-    "spark.hadoop.fs.s3a.change.detection.mode": "server",
-    "spark.hadoop.fs.s3a.change.detection.source": "etag"
-  }
-}
-]
-`,
-      terminationProtection: false,
-      keepJobFlowAliveWhenNoSteps: true,
-      bootstrapAction: [
-        {
-          name: `setup`,
-          path: `s3://${datalakeBucket.bucket}/${installScript.key}`,
-        },
-      ],
-      logUri: `s3://${datalakeBucket.bucket}/emr-logs/`,
-      step: [
-        {
-          name: 'stream',
-          actionOnFailure: 'CANCEL_AND_WAIT',
-          hadoopJarStep: [
-            {
-              jar: 'command-runner.jar',
-              args: [
-                'spark-submit',
-                '--packages',
-                'io.delta:delta-spark_2.12:3.2.0',
-                '--jars',
-                `s3://${datalakeBucket.bucket}/${mongoJarObject.key}`,
-                `s3://${datalakeBucket.bucket}/${emrScript.key}`,
-                `${datalakeBucket.bucket}`,
-                `${this.tenantIds.join(',')}`,
-              ],
-            },
-          ],
-        },
-      ],
-    })
-
-    const topic = new aws.dataAwsSnsTopic.DataAwsSnsTopic(
-      this,
-      'incidents-alarm-topic',
-      {
-        name: 'BetterUptimeCloudWatchTopic',
-      }
-    )
-
-    new aws.cloudwatchMetricAlarm.CloudwatchMetricAlarm(this, 'emr-alarm', {
-      namespace: 'AWS/ElasticMapReduce',
-      metricName: 'AppsRunning',
-      dimensions: {
-        JobFlowId: cluster.id,
-      },
-      period: 60,
-      statistic: 'Sum',
-      alarmName: 'NoStreamRunning',
-      comparisonOperator: 'LessThanThreshold',
-      evaluationPeriods: 1,
-      threshold: 1,
-      alarmActions: [topic.arn],
     })
 
     jobs.map((job) => {
