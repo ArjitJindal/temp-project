@@ -64,6 +64,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       entityType: 'CONSUMER_NAME' as const,
       ruleInstanceId: this.ruleInstance.id ?? '',
       isOngoingScreening: this.ongoingScreeningMode,
+      searchTerm: name,
     }
     const result = await this.sanctionsService.search(
       {

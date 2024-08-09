@@ -104,6 +104,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
               ruleInstanceId: this.ruleInstance.id ?? '',
               iban: bankInfo.iban,
               isOngoingScreening: this.ongoingScreeningMode,
+              searchTerm: bankName,
             }
             const result = await this.sanctionsService.search(
               {

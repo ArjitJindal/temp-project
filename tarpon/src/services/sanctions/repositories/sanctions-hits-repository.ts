@@ -208,10 +208,16 @@ export class SanctionsHitsRepository {
     hitContext?: SanctionsHitContext
   ): Promise<ComplyAdvantageSearchHit[]> {
     const entityIds = rawHits.map((x) => x.doc?.id).filter(notEmpty)
+    const subject = {
+      userId: hitContext?.userId,
+      entity: hitContext?.entity,
+      entityType: hitContext?.entityType,
+      searchTerm: hitContext?.searchTerm,
+    }
     const whitelistEntities =
       await this.sanctionsWhitelistEntityRepository.getWhitelistEntities(
         entityIds,
-        hitContext?.userId
+        subject
       )
     return rawHits.filter(
       (x) => !whitelistEntities.some((y) => x.doc?.id === y.caEntity.id)

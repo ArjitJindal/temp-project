@@ -120,6 +120,7 @@ export default function ScreeningMatchList(props: Props) {
                 tableRef={null}
                 queryResult={openHitsQueryResults}
                 isEmbedded={true}
+                hideCleaningReason={true}
                 selectedIds={selectedSanctionsHitsIds}
                 selection={onSanctionsHitSelect != null}
                 params={openTableParams}
@@ -175,11 +176,6 @@ export default function ScreeningMatchList(props: Props) {
                 key: CHECKLIST_TAB_KEY,
                 children: <Checklist alert={alert} />,
               },
-              {
-                title: 'Comments',
-                key: COMMENTS_TAB_KEY,
-                children: <Comments alertsRes={alertResponse.data} alertId={alert.alertId} />,
-              },
               alert.numberOfTransactionsHit > 0 && {
                 title: 'Transactions details',
                 key: TRANSACTIONS_TAB_KEY,
@@ -191,6 +187,11 @@ export default function ScreeningMatchList(props: Props) {
                     escalatedTransactionIds={escalatedTransactionIds}
                   />
                 ),
+              },
+              {
+                title: 'Comments',
+                key: COMMENTS_TAB_KEY,
+                children: <Comments alertsRes={alertResponse.data} alertId={alert.alertId} />,
               },
             ]
           : []),

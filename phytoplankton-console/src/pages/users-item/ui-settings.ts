@@ -6,6 +6,10 @@ export const UI_SETTINGS = {
       title: 'User details',
       key: 'user-details-user-details',
     },
+    SANCTIONS_WHITELIST: {
+      title: 'Screening whitelist',
+      key: 'user-details-sanctions-whitelist',
+    },
     LEGAL_DOCUMENTS: {
       title: 'Legal documents',
       key: 'user-details-legal-documents',

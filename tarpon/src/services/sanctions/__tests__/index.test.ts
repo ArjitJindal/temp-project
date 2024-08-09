@@ -127,7 +127,8 @@ describe('Sanctions Service', () => {
         await service.addWhitelistEntities(
           entityList.content.map(
             (v) => convertEntityToHit(v).doc
-          ) as any as ComplyAdvantageSearchHitDoc[]
+          ) as any as ComplyAdvantageSearchHitDoc[],
+          {}
         )
       }
       {
@@ -167,7 +168,9 @@ describe('Sanctions Service', () => {
           entityList.content.map(
             (v) => convertEntityToHit(v).doc
           ) as any as ComplyAdvantageSearchHitDoc[],
-          hitContext1.userId
+          {
+            userId: hitContext1.userId,
+          }
         )
       }
       {

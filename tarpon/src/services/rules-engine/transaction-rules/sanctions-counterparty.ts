@@ -17,6 +17,8 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { formatConsumerName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 export type SanctionsCounterPartyRuleParameters = {
   transactionAmountThreshold?: {
@@ -72,27 +74,29 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     }
 
     if (!this.senderUser && this.transaction.originPaymentDetails) {
-      const sanctionsDeatils = await this.checkCounterPartyTranasction(
-        this.transaction.originPaymentDetails
+      const sanctionsDetails = await this.checkCounterPartyTransaction(
+        this.transaction.originPaymentDetails,
+        this.receiverUser
       )
-      if (sanctionsDeatils.length > 0) {
+      if (sanctionsDetails.length > 0) {
         hitRules.push({
           direction: 'DESTINATION',
           vars: super.getTransactionVars('destination'),
-          sanctionsDetails: uniqBy(sanctionsDeatils, (detail) => detail.name),
+          sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
         })
       }
     }
 
     if (!this.receiverUser && this.transaction.destinationPaymentDetails) {
-      const sanctionsDeatils = await this.checkCounterPartyTranasction(
-        this.transaction.destinationPaymentDetails
+      const sanctionsDetails = await this.checkCounterPartyTransaction(
+        this.transaction.destinationPaymentDetails,
+        this.senderUser
       )
-      if (sanctionsDeatils.length > 0) {
+      if (sanctionsDetails.length > 0) {
         hitRules.push({
           direction: 'ORIGIN',
           vars: super.getTransactionVars('origin'),
-          sanctionsDetails: uniqBy(sanctionsDeatils, (detail) => detail.name),
+          sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
         })
       }
     }
@@ -100,8 +104,9 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
     return hitRules
   }
 
-  private async checkCounterPartyTranasction(
-    paymentDetails: PaymentDetails
+  private async checkCounterPartyTransaction(
+    paymentDetails: PaymentDetails,
+    user: User | Business | undefined
   ): Promise<SanctionsDetails[]> {
     const namesToSearch: Array<{
       name: string
@@ -193,6 +198,9 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
             entity: 'EXTERNAL_USER' as const,
             ruleInstanceId: this.ruleInstance.id ?? '',
             transactionId: this.transaction.transactionId,
+            userId: user?.userId,
+            searchTerm: name,
+            entityType,
           }
           const result = await this.sanctionsService.search(
             {

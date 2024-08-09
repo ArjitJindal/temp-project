@@ -337,14 +337,17 @@ export async function syncIndexes<T>(
   }
 }
 
-export const withTransaction = async (callback: () => Promise<void>) => {
+export const withTransaction = async <T = void>(
+  callback: () => Promise<T>
+): Promise<T> => {
   const mongoDb = await getMongoDbClient()
   const session = mongoDb.startSession()
 
   session.startTransaction()
   try {
-    await callback()
+    const result = await callback()
     await session.commitTransaction()
+    return result
   } catch (error) {
     await session.abortTransaction()
     throw error

@@ -3,7 +3,10 @@ import { BadRequest } from 'http-errors'
 import { isEmpty, round, startCase } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
-import { SanctionsWhitelistEntityRepository } from './repositories/sanctions-whitelist-entity-repository'
+import {
+  SanctionsWhitelistEntityRepository,
+  WhitelistSubject,
+} from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -11,6 +14,8 @@ import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSear
 import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
 import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
+import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
+import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   DefaultApiGetSanctionsScreeningActivityDetailsRequest,
@@ -496,7 +501,7 @@ export class SanctionsService {
 
   public async addWhitelistEntities(
     caEntities: ComplyAdvantageSearchHitDoc[],
-    userId?: string,
+    subject: WhitelistSubject,
     options?: {
       reason?: string[]
       comment?: string
@@ -504,27 +509,18 @@ export class SanctionsService {
     }
   ) {
     await this.initialize()
-    await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
+    return await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
       caEntities,
-      userId,
+      subject,
       options
-    )
-  }
-
-  public async removeWhitelistEntities(
-    caEntityIds: string[],
-    userId?: string
-  ): Promise<void> {
-    await this.initialize()
-    await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
-      caEntityIds,
-      userId
     )
   }
 
   public async searchWhitelistEntities(
     params: {
       filterUserId?: string[]
+      filterEntity?: SanctionsScreeningEntity[]
+      filterEntityType?: SanctionsDetailsEntityType[]
     } & CursorPaginationParams
   ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
     await this.initialize()
@@ -534,13 +530,11 @@ export class SanctionsService {
   }
 
   public async deleteWhitelistRecord(
-    caEntityId: string,
-    userId: string
+    sanctionsWhitelistIds: string[]
   ): Promise<void> {
     await this.initialize()
     await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
-      [caEntityId],
-      userId
+      sanctionsWhitelistIds
     )
   }
 

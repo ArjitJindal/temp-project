@@ -28,6 +28,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
+import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -35,6 +36,7 @@ export default function UserItem() {
 
   const queryClient = useQueryClient();
   const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
@@ -214,6 +216,17 @@ export default function UserItem() {
                 isClosable: false,
                 isDisabled: false,
               },
+              ...(isSanctionsEnabled
+                ? [
+                    {
+                      title: 'Screening whitelist',
+                      key: 'screening-whitelist',
+                      children: <SanctionsWhitelist user={user} />,
+                      isClosable: false,
+                      isDisabled: false,
+                    },
+                  ]
+                : []),
             ].map((item) => ({
               ...item,
               children: (

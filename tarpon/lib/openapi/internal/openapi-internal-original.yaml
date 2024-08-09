@@ -5449,6 +5449,18 @@ paths:
           name: filterUserId
           in: query
         - schema:
+            type: array
+            items:
+              type: string
+          name: filterEntity
+          in: query
+        - schema:
+            type: array
+            items:
+              type: string
+          name: filterEntityType
+          in: query
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -5465,7 +5477,6 @@ paths:
           in: query
           name: sortField
       operationId: search-sanctions-whitelist
-  /sanctions/whitelist/{userId}/{caEntityId}:
     delete:
       summary: Delete whitelist record
       tags: []
@@ -5475,18 +5486,14 @@ paths:
       responses:
         '200':
           description: OK
-      parameters:
-        - schema:
-            type: string
-          name: userId
-          in: path
-          required: true
-        - schema:
-            type: string
-          name: caEntityId
-          in: path
-          required: true
-      operationId: delete-sanctions-whitelist-record
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: array
+              items:
+                type: string
+      operationId: delete-sanctions-whitelist-records
   /webhooks/complyadvantage:
     post:
       summary: Receive webhook events from Comply Advantage
@@ -10304,11 +10311,19 @@ components:
       title: SanctionsWhitelistEntity
       type: object
       properties:
+        sanctionsWhitelistId:
+          type: string
         createdAt:
           type: number
         caEntity:
           $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
         userId:
+          type: string
+        entity:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
+        entityType:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsDetailsEntityType
+        searchTerm:
           type: string
         reason:
           type: array
@@ -10317,6 +10332,7 @@ components:
         comment:
           type: string
       required:
+        - sanctionsWhitelistId
         - createdAt
         - caEntity
     SanctionHitStatusUpdateRequest:

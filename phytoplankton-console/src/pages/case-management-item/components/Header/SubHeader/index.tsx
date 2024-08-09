@@ -280,7 +280,7 @@ function paymentSubjectLabels(caseItem: Case) {
     });
   } else if (paymentDetails.method === 'SWIFT') {
     specialFields.push({
-      label: 'SWITF account number',
+      label: 'SWIFT account number',
       value: paymentDetails.accountNumber,
     });
   } else if (paymentDetails.method === 'MPESA') {

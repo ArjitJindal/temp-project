@@ -1,89 +1,160 @@
-import { MongoClient, Filter } from 'mongodb'
+import { Filter, MongoClient } from 'mongodb'
+import { isNil, omitBy } from 'lodash'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { traceable } from '@/core/xray'
 import {
-  CursorPaginationParams,
   cursorPaginate,
+  CursorPaginationParams,
   CursorPaginationResponse,
 } from '@/utils/pagination'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
+import { CounterRepository } from '@/services/counter/repository'
+import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
+import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
+import { notEmpty } from '@/utils/array'
+
+const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
+
+export type WhitelistSubject = Pick<
+  SanctionsWhitelistEntity,
+  (typeof SUBJECT_FIELDS)[number]
+>
 
 @traceable
 export class SanctionsWhitelistEntityRepository {
   tenantId: string
   mongoDb: MongoClient
+  counterRepository: CounterRepository
 
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.counterRepository = new CounterRepository(this.tenantId, mongoDb)
   }
 
   public async addWhitelistEntities(
     caEntities: ComplyAdvantageSearchHitDoc[],
-    userId?: string,
+    subject: WhitelistSubject,
     options?: {
       reason?: string[]
       comment?: string
       createdAt?: number
     }
-  ): Promise<void> {
+  ): Promise<{
+    newRecords: SanctionsWhitelistEntity[]
+  }> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
 
-    await withTransaction(async () => {
-      await Promise.all(
-        caEntities.map((caEntity) =>
-          collection.replaceOne(
-            { 'caEntity.id': caEntity.id, userId },
-            {
-              caEntity,
-              userId,
-              createdAt: options?.createdAt ?? Date.now(),
-              reason: options?.reason,
-              comment: options?.comment,
-            },
-            { upsert: true }
-          )
+    const ids = await this.counterRepository.getNextCountersAndUpdate(
+      'SanctionsWhitelist',
+      caEntities.length
+    )
+
+    const definedFields = omitBy(subject, isNil)
+
+    const results = await withTransaction(async () => {
+      return await Promise.all(
+        caEntities.map(
+          async (caEntity, i): Promise<SanctionsWhitelistEntity | null> => {
+            const result = await collection.findOneAndReplace(
+              {
+                'caEntity.id': caEntity.id,
+                ...definedFields,
+              },
+              {
+                caEntity,
+                sanctionsWhitelistId: `SW-${ids[i]}`,
+                ...definedFields,
+                createdAt: options?.createdAt ?? Date.now(),
+                reason: options?.reason,
+                comment: options?.comment,
+              },
+              { upsert: true, returnDocument: 'after' }
+            )
+            return result.value
+          }
         )
       )
     })
+    return {
+      newRecords: results.filter(notEmpty),
+    }
   }
 
   public async removeWhitelistEntities(
-    caEntityIds: string[],
-    userId?: string
+    sanctionsWhitelistIds: string[]
   ): Promise<void> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     await collection.deleteMany({
-      'caEntity.id': { $in: caEntityIds },
-      userId,
+      sanctionsWhitelistId: { $in: sanctionsWhitelistIds },
     })
+  }
+
+  public async clear(): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsWhitelistEntity>(
+      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
+    )
+    await collection.deleteMany({})
   }
 
   public async getWhitelistEntities(
     requestEntityIds: string[],
-    userId?: string
+    subject: WhitelistSubject
   ): Promise<SanctionsWhitelistEntity[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     const result = await collection
-      .find({ 'caEntity.id': { $in: requestEntityIds }, userId })
+      .find({
+        'caEntity.id': { $in: requestEntityIds },
+        ...SUBJECT_FIELDS.reduce(
+          (acc, key) => ({
+            ...acc,
+            [key]: subject[key] || { $eq: null },
+          }),
+          {}
+        ),
+      })
       .toArray()
     return result
+  }
+
+  public async matchWhitelistEntities(
+    requestEntityIds: string[],
+    subject: WhitelistSubject
+  ): Promise<boolean> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsWhitelistEntity>(
+      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
+    )
+    const result = await collection.findOne({
+      'caEntity.id': { $in: requestEntityIds },
+      ...SUBJECT_FIELDS.reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: subject[key] || { $eq: null },
+        }),
+        {}
+      ),
+    })
+    return result != null
   }
 
   public async searchWhitelistEntities(
     params: {
       filterUserId?: string[]
+      filterEntity?: SanctionsScreeningEntity[]
+      filterEntityType?: SanctionsDetailsEntityType[]
     } & CursorPaginationParams
   ): Promise<CursorPaginationResponse<SanctionsWhitelistEntity>> {
     const db = this.mongoDb.db()
@@ -93,6 +164,12 @@ export class SanctionsWhitelistEntityRepository {
     const filter: Filter<SanctionsWhitelistEntity> = {}
     if (params.filterUserId) {
       filter.userId = { $in: params.filterUserId }
+    }
+    if (params.filterEntity) {
+      filter.entity = { $in: params.filterEntity }
+    }
+    if (params.filterEntityType) {
+      filter.entityType = { $in: params.filterEntityType }
     }
     return cursorPaginate<SanctionsWhitelistEntity>(collection, filter, {
       ...params,

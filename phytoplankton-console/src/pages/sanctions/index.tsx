@@ -8,6 +8,7 @@ import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapp
 import PageTabs from '@/components/ui/PageTabs';
 import { useI18n } from '@/locales';
 import SegmentedControl from '@/components/library/SegmentedControl';
+import WhitelistTab from '@/pages/sanctions/whitelist';
 
 export type SanctionsType = 'manual' | 'rule';
 
@@ -31,7 +32,7 @@ const SanctionsPage: React.FC = () => {
       <PageTabs
         activeKey={type}
         onChange={(key) => {
-          navigate(`/screening/${key}`, { replace: true });
+          navigate(`/screening/${key}`);
         }}
         items={[
           {
@@ -58,6 +59,15 @@ const SanctionsPage: React.FC = () => {
                 />
                 {activeType === 'rule' && <SanctionsScreeningActivity />}
                 {activeType === 'manual' && <SanctionsSearchHistoryTable />}
+              </PageWrapperContentContainer>
+            ),
+          },
+          {
+            key: 'whitelist',
+            title: 'Whitelist',
+            children: (
+              <PageWrapperContentContainer>
+                <WhitelistTab />
               </PageWrapperContentContainer>
             ),
           },

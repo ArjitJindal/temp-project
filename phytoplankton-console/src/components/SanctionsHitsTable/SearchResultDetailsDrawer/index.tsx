@@ -154,12 +154,12 @@ function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: num
 }
 
 export function CAEntityDetails(props: {
-  nameMatched: boolean;
-  dateMatched: boolean;
-  pdfMode: boolean;
   caEntity: ComplyAdvantageSearchHitDoc;
+  nameMatched?: boolean;
+  dateMatched?: boolean;
+  pdfMode?: boolean;
 }) {
-  const { nameMatched, dateMatched, caEntity, pdfMode = false } = props;
+  const { caEntity, nameMatched = false, dateMatched = false, pdfMode = false } = props;
   const allFields = useMemo(
     () => caEntity?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
     [caEntity?.fields],

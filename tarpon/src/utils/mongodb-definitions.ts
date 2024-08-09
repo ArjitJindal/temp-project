@@ -537,10 +537,13 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [{ 'request.iban': 1, createdAt: 1 }].map((index) => ({ index })),
     },
     [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: {
-      getIndexes: () =>
-        [{ 'caEntity.id': 1, userId: 1 }, { userId: 1 }].map((index) => ({
-          index,
-        })),
+      getIndexes: () => [
+        { index: { sanctionsWhitelistId: -1 }, unique: true },
+        { index: { 'caEntity.id': 1, userId: 1 } },
+        { index: { userId: 1 } },
+        { index: { entity: 1 } },
+        { index: { entityType: 1 } },
+      ],
     },
     [SANCTIONS_SCREENING_DETAILS_COLLECTION(tenantId)]: {
       getIndexes: () => [

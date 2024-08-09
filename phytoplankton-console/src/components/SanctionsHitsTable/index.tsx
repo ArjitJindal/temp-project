@@ -6,11 +6,11 @@ import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
+  SelectionAction,
   TableColumn,
   TableData,
-  ToolRenderer,
-  SelectionAction,
   TableRefType,
+  ToolRenderer,
 } from '@/components/library/Table/types';
 import { SanctionsHit } from '@/apis/models/SanctionsHit';
 import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
@@ -40,6 +40,7 @@ export interface TableSearchParams {
 interface Props {
   tableRef?: React.Ref<TableRefType>;
   isEmbedded?: boolean;
+  hideCleaningReason?: boolean;
   searchIds?: string;
   queryResult: QueryResult<TableData<SanctionsHit>>;
   extraTools?: ToolRenderer[];
@@ -56,6 +57,7 @@ interface Props {
 export default function SanctionsHitsTable(props: Props) {
   const {
     isEmbedded,
+    hideCleaningReason,
     queryResult,
     extraTools,
     params,
@@ -150,11 +152,12 @@ export default function SanctionsHitsTable(props: Props) {
       key: 'status',
       type: SANCTIONS_HIT_STATUS,
     }),
-    helper.simple<'clearingReason'>({
-      title: 'Clearing reason',
-      key: 'clearingReason',
-      type: SANCTIONS_CLEAR_REASON,
-    }),
+    !hideCleaningReason &&
+      helper.simple<'clearingReason'>({
+        title: 'Clearing reason',
+        key: 'clearingReason',
+        type: SANCTIONS_CLEAR_REASON,
+      }),
   ]);
 
   const extraFilters: ExtraFilterProps<TableSearchParams>[] = [

@@ -9,6 +9,7 @@ export type CounterEntity =
   | 'RC'
   | 'SanctionsHit'
   | 'CustomRiskFactor'
+  | 'SanctionsWhitelist'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',
