@@ -85,15 +85,17 @@ export function SearchResultTable(props: Props) {
     {
       enabled: searchEnabled,
       onSuccess: (data) => {
-        navigate(
-          makeUrl(
-            `/screening/search/:searchId`,
-            {
-              searchId: data.searchId,
-            },
-            {},
-          ),
-        );
+        if (data.searchId) {
+          navigate(
+            makeUrl(
+              `/screening/search/:searchId`,
+              {
+                searchId: data.searchId,
+              },
+              {},
+            ),
+          );
+        }
       },
     },
   );
