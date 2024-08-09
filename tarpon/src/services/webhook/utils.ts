@@ -1,5 +1,4 @@
 import { v4 as uuidv4 } from 'uuid'
-import { SendMessageBatchCommand } from '@aws-sdk/client-sqs'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import {
   SecretsManagerWebhookSecrets,
@@ -9,7 +8,7 @@ import { createSecret, deleteSecret, getSecret } from '@/utils/secrets-manager'
 import { WebhookRepository } from '@/services/webhook/repositories/webhook-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 
 export function getWebhookSecretKey(tenantId: string, webhookId: string) {
   return `${tenantId}/webhooks/${webhookId}`
@@ -85,23 +84,10 @@ export async function sendWebhookTasks<T extends object = object>(
     }
   }
 
-  const batchSize = 10
-  const groups: any[] = []
-
-  for (let i = 0; i < entries.length; i += batchSize) {
-    const chunk = entries.slice(i, i + batchSize)
-    groups.push(chunk)
-  }
-
-  await Promise.all(
-    groups.map((entryGroup) => {
-      return sqs.send(
-        new SendMessageBatchCommand({
-          Entries: entryGroup,
-          QueueUrl: process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
-        })
-      )
-    })
+  await bulkSendMessages(
+    sqs,
+    process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
+    entries
   )
 
   if (entries.length > 0) {

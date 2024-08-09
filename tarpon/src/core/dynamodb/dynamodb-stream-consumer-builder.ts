@@ -1,5 +1,4 @@
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { SendMessageBatchCommand } from '@aws-sdk/client-sqs'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
@@ -27,7 +26,7 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
@@ -84,6 +83,7 @@ type RuleInstanceHandler = (
   newRuleInstance: RuleInstance | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
 const sqsClient = getSQSClient()
 
@@ -100,12 +100,20 @@ export class StreamConsumerBuilder {
   drsScoreEventHandler?: DrsScoreEventHandler
   krsScoreEventHandler?: KrsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
+  concurrentGroupBy?: ConcurrentGroupBy
 
   constructor(name: string, fanOutSqsQueue: string, tableName: string) {
     this.name = name
     this.fanOutSqsQueue = fanOutSqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
     this.tableName = tableName
+  }
+
+  public setConcurrentGroupBy(
+    concurrentGroupBy: ConcurrentGroupBy
+  ): StreamConsumerBuilder {
+    this.concurrentGroupBy = concurrentGroupBy
+    return this
   }
 
   public setTransactionHandler(
@@ -154,7 +162,25 @@ export class StreamConsumerBuilder {
     this.ruleInstanceHandler = ruleInstanceHandler
     return this
   }
-  public async handleDynamoDbUpdate(
+
+  private async handleDynamoDbUpdates(
+    updates: DynamoDbEntityUpdate[],
+    dbClients: DbClients
+  ) {
+    const concurrentGroups = groupBy(
+      updates,
+      this.concurrentGroupBy ?? (() => 'sequential-group')
+    )
+    await Promise.all(
+      Object.values(concurrentGroups).map(async (groupUpdates) => {
+        for (const update of groupUpdates) {
+          await this.handleDynamoDbUpdate(update, dbClients)
+        }
+      })
+    )
+  }
+
+  private async handleDynamoDbUpdate(
     update: DynamoDbEntityUpdate,
     dbClients: DbClients
   ) {
@@ -265,9 +291,7 @@ export class StreamConsumerBuilder {
         mongoDb: await getMongoDbClient(),
       }
       await initializeTenantContext(tenantId)
-      for (const update of updates) {
-        await this.handleDynamoDbUpdate(update, dbClients)
-      }
+      await this.handleDynamoDbUpdates(updates, dbClients)
     })
   }
 
@@ -301,21 +325,8 @@ export class StreamConsumerBuilder {
       )
 
       if (envIs('local', 'test') || !tenantHasFeatureKinesisAsync) {
-        for (const update of filteredUpdates) {
-          await this.handleDynamoDbUpdate(update, dbClients)
-        }
+        await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
         return
-      }
-
-      function chunkArray<T>(
-        array: Array<T>,
-        chunkSize: number
-      ): Array<Array<T>> {
-        const chunks: Array<Array<T>> = []
-        for (let i = 0; i < array.length; i += chunkSize) {
-          chunks.push(array.slice(i, i + chunkSize))
-        }
-        return chunks
       }
 
       const entries = filteredUpdates.map(
@@ -337,17 +348,7 @@ export class StreamConsumerBuilder {
           }
         }
       )
-
-      const chunkedEntries = chunkArray(entries, 10)
-
-      for (const chunk of chunkedEntries) {
-        await sqsClient.send(
-          new SendMessageBatchCommand({
-            Entries: chunk,
-            QueueUrl: this.fanOutSqsQueue,
-          })
-        )
-      }
+      await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
     })
   }
 }

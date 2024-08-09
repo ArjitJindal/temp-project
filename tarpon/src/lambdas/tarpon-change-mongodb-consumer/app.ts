@@ -401,6 +401,14 @@ const tarponBuilder = new StreamConsumerBuilder(
   process.env.TARPON_QUEUE_URL ?? '',
   StackConstants.TARPON_DYNAMODB_TABLE_NAME
 )
+  .setConcurrentGroupBy((update) => {
+    // We still process entities sequentially as it involes case creation
+    if (update.type === 'TRANSACTION' || update.type === 'USER') {
+      return 'sequential-group'
+    }
+    // For events, we can process them concurrently
+    return update.entityId ?? ''
+  })
   .setTransactionHandler(
     (tenantId, oldTransaction, newTransaction, dbClients) =>
       transactionHandler(tenantId, newTransaction, dbClients)

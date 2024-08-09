@@ -110,6 +110,7 @@ const hammerheadBuilder = new StreamConsumerBuilder(
   process.env.HAMMERHEAD_QUEUE_URL ?? '',
   StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
 )
+  .setConcurrentGroupBy((update) => update.entityId ?? '')
   .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore, dbClients) =>
     arsScoreEventHandler(tenantId, newArsScore, dbClients)
   )

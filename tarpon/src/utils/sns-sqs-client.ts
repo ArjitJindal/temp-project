@@ -1,6 +1,10 @@
-import { wrap } from 'lodash'
+import { wrap, chunk } from 'lodash'
 import { SNSClient } from '@aws-sdk/client-sns'
-import { SQSClient } from '@aws-sdk/client-sqs'
+import {
+  SendMessageBatchCommand,
+  SendMessageBatchRequestEntry,
+  SQSClient,
+} from '@aws-sdk/client-sqs'
 import { logger } from '@/core/logger'
 
 interface SenderClient {
@@ -48,4 +52,20 @@ export function getSQSClient(): SQSClient {
     return client
   }
   return getRefreshingClient(client)
+}
+
+export async function bulkSendMessages(
+  sqsClient: SQSClient,
+  queueUrl: string,
+  batchRequestEntries: SendMessageBatchRequestEntry[]
+) {
+  // Max batch size is 10. Do not change the value
+  for (const batch of chunk(batchRequestEntries, 10)) {
+    await sqsClient.send(
+      new SendMessageBatchCommand({
+        Entries: batch,
+        QueueUrl: queueUrl,
+      })
+    )
+  }
 }
