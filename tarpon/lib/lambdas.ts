@@ -269,19 +269,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]: {
-    codePath: 'tarpon-change-mongodb-consumer',
-    handlerName: 'tarponChangeMongoDbRetryHandler',
-    expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME]:
-    {
-      codePath: 'hammerhead-change-mongodb-consumer',
-      handlerName: 'hammerheadChangeMongoDbRetryHandler',
-      expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
-      timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-    },
   [StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME]: {
     codePath: 'hammerhead-change-mongodb-consumer',
     handlerName: 'hammerheadQueueHandler',

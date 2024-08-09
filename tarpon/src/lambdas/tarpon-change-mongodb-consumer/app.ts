@@ -1,8 +1,7 @@
 import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { difference, groupBy, isEmpty, isEqual, omit, pick } from 'lodash'
+import { difference, isEmpty, isEqual, omit, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
@@ -11,7 +10,10 @@ import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionW
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { logger } from '@/core/logger'
-import { StreamConsumerBuilder } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
+import {
+  DbClients,
+  StreamConsumerBuilder,
+} from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import {
   tenantHasFeature,
   tenantSettings,
@@ -27,7 +29,6 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
@@ -44,7 +45,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { getDynamoDbUpdates } from '@/core/dynamodb/dynamodb-stream-utils'
+import { envIsNot } from '@/utils/env'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -59,7 +60,8 @@ export const INTERNAL_ONLY_TX_ATTRIBUTES = difference(
 async function userHandler(
   tenantId: string,
   oldUser: BusinessWithRulesResult | UserWithRulesResult | undefined,
-  newUser: BusinessWithRulesResult | UserWithRulesResult | undefined
+  newUser: BusinessWithRulesResult | UserWithRulesResult | undefined,
+  dbClients: DbClients
 ) {
   if (!newUser || !newUser.userId) {
     return
@@ -69,8 +71,7 @@ async function userHandler(
   logger.info(`Processing User`)
 
   let internalUser = newUser as InternalUser
-  const mongoDb = await getMongoDbClient()
-  const dynamoDb = getDynamoDbClient()
+  const { mongoDb, dynamoDb } = dbClients
   const casesRepo = new CaseRepository(tenantId, {
     mongoDb,
     dynamoDb,
@@ -162,7 +163,8 @@ async function userHandler(
 
 export const transactionHandler = async (
   tenantId: string,
-  transaction?: TransactionWithRulesResult
+  transaction: TransactionWithRulesResult | undefined,
+  dbClients: DbClients
 ) => {
   if (!transaction || !transaction.transactionId || isDemoTenant(tenantId)) {
     return
@@ -170,8 +172,7 @@ export const transactionHandler = async (
   updateLogMetadata({ transactionId: transaction.transactionId })
   logger.info(`Processing Transaction`)
 
-  const mongoDb = await getMongoDbClient()
-  const dynamoDb = getDynamoDbClient()
+  const { mongoDb, dynamoDb } = dbClients
 
   const transactionsRepo = new MongoDbTransactionRepository(tenantId, mongoDb)
   const casesRepo = new CaseRepository(tenantId, {
@@ -319,7 +320,8 @@ export const transactionHandler = async (
 
 async function userEventHandler(
   tenantId: string,
-  userEvent: ConsumerUserEvent | BusinessUserEvent | undefined
+  userEvent: ConsumerUserEvent | BusinessUserEvent | undefined,
+  dbClients: DbClients
 ) {
   if (!userEvent || !userEvent.eventId) {
     return
@@ -331,7 +333,7 @@ async function userEventHandler(
   })
   logger.info(`Processing User Event`)
 
-  const db = (await getMongoDbClient()).db()
+  const db = dbClients.mongoDb.db()
   const userEventCollection = db.collection<
     InternalConsumerUserEvent | InternalBusinessUserEvent
   >(USER_EVENTS_COLLECTION(tenantId))
@@ -354,7 +356,8 @@ async function userEventHandler(
 
 async function transactionEventHandler(
   tenantId: string,
-  transactionEvent: TransactionEvent | undefined
+  transactionEvent: TransactionEvent | undefined,
+  dbClients: DbClients
 ) {
   if (!transactionEvent || !transactionEvent.eventId) {
     return
@@ -366,7 +369,7 @@ async function transactionEventHandler(
   })
   logger.info(`Processing Transaction Event`)
 
-  const db = (await getMongoDbClient()).db()
+  const db = dbClients.mongoDb.db()
 
   const transactionEventCollection = db.collection<InternalTransactionEvent>(
     TRANSACTION_EVENTS_COLLECTION(tenantId)
@@ -389,58 +392,41 @@ async function transactionEventHandler(
   ])
 }
 
+if (envIsNot('test') && !process.env.TARPON_QUEUE_URL) {
+  throw new Error('TARPON_QUEUE_URL is not defined')
+}
+
 const tarponBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-tarpon',
-  process.env.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL ?? '',
+  process.env.TARPON_QUEUE_URL ?? '',
   StackConstants.TARPON_DYNAMODB_TABLE_NAME
 )
-  .setTransactionHandler((tenantId, oldTransaction, newTransaction) =>
-    transactionHandler(tenantId, newTransaction)
+  .setTransactionHandler(
+    (tenantId, oldTransaction, newTransaction, dbClients) =>
+      transactionHandler(tenantId, newTransaction, dbClients)
   )
-  .setUserHandler((tenantId, oldUser, newUser) =>
-    userHandler(tenantId, oldUser, newUser)
+  .setUserHandler((tenantId, oldUser, newUser, dbClients) =>
+    userHandler(tenantId, oldUser, newUser, dbClients)
   )
-  .setUserEventHandler((tenantId, oldUserEvent, newUserEvent) =>
-    userEventHandler(tenantId, newUserEvent)
+  .setUserEventHandler((tenantId, oldUserEvent, newUserEvent, dbClients) =>
+    userEventHandler(tenantId, newUserEvent, dbClients)
   )
   .setTransactionEventHandler(
-    (tenantId, oldTransactionEvent, newTransactionEvent) =>
-      transactionEventHandler(tenantId, newTransactionEvent)
+    (tenantId, oldTransactionEvent, newTransactionEvent, dbClients) =>
+      transactionEventHandler(tenantId, newTransactionEvent, dbClients)
   )
 
 // NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding
 // place that updates the entity to make local work
-const queueHandler = tarponBuilder.buildHandler(
-  tarponBuilder.processDynamoDbUpdate
-)
-
-const tarponSqsRetryHandler = tarponBuilder.buildSqsRetryHandler()
+const tarponKinesisHandler = tarponBuilder.buildKinesisStreamHandler()
+const tarponSqsFanOutHandler = tarponBuilder.buildSqsFanOutHandler()
 
 export const tarponChangeMongoDbHandler = lambdaConsumer()(
   async (event: KinesisStreamEvent) => {
-    const updates = getDynamoDbUpdates(event)
-    const groups = groupBy(updates, (update) => update.tenantId)
-
-    await Promise.all(
-      Object.entries(groups).map(async (entry) => {
-        const tenantId = entry[0]
-        const tenantUpdates = entry[1]
-        await tarponBuilder.sendDynamoUpdate(
-          tenantId,
-          tenantUpdates,
-          process.env.TARPON_QUEUE_URL ?? ''
-        )
-      })
-    )
+    await tarponKinesisHandler(event)
   }
 )
 
 export const tarponQueueHandler = lambdaConsumer()(async (event: SQSEvent) => {
-  await queueHandler(event)
+  await tarponSqsFanOutHandler(event)
 })
-
-export const tarponChangeMongoDbRetryHandler = lambdaConsumer()(
-  async (event: SQSEvent) => {
-    await tarponSqsRetryHandler(event)
-  }
-)

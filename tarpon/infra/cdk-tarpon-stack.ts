@@ -218,34 +218,6 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
-    // Kinesis consumer retry queues
-    const tarponChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
-      {
-        fifo: true,
-        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
-        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-      }
-    )
-
-    const webhookTarponChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
-      {
-        fifo: true,
-        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
-        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-      }
-    )
-
-    const hammerheadChangeCaptureRetryQueue = this.createQueue(
-      SQSQueues.HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME.name,
-      {
-        fifo: true,
-        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
-        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-      }
-    )
-
     const requestLoggerQueue = this.createQueue(
       SQSQueues.REQUEST_LOGGER_QUEUE_NAME.name,
       {
@@ -478,15 +450,9 @@ export class CdkTarponStack extends cdk.Stack {
         SHARED_ASSETS_BUCKET: sharedAssetsBucketName,
         WEBHOOK_DELIVERY_QUEUE_URL: webhookDeliveryQueue.queueUrl,
         TRANSACTION_AGGREGATION_QUEUE_URL: transactionAggregationQueue.queueUrl,
-        WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          webhookTarponChangeCaptureRetryQueue.queueUrl,
         COMPLYADVANTAGE_API_KEY: process.env.COMPLYADVANTAGE_API_KEY as string,
         SLACK_ALERT_QUEUE_URL: slackAlertQueue.queueUrl,
-        HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          hammerheadChangeCaptureRetryQueue.queueUrl,
         REQUEST_LOGGER_QUEUE_URL: requestLoggerQueue.queueUrl,
-        TARPON_CHANGE_CAPTURE_RETRY_QUEUE_URL:
-          tarponChangeCaptureRetryQueue.queueUrl,
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
@@ -566,10 +532,7 @@ export class CdkTarponStack extends cdk.Stack {
           actions: ['sqs:*'],
           resources: [
             auditLogQueue.queueArn,
-            tarponChangeCaptureRetryQueue.queueArn,
             batchJobQueue.queueArn,
-            webhookTarponChangeCaptureRetryQueue.queueArn,
-            hammerheadChangeCaptureRetryQueue.queueArn,
             webhookDeliveryQueue.queueArn,
             slackAlertQueue.queueArn,
             transactionAggregationQueue.queueArn,
@@ -1106,18 +1069,10 @@ export class CdkTarponStack extends cdk.Stack {
             this.config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
         }
       )
-      const { alias: tarponChangeCaptureKinesisConsumerRetryAlias } =
-        createFunction(this, lambdaExecutionRole, {
-          name: StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
-        })
-
       this.createKinesisEventSource(
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
         { startingPosition: StartingPosition.TRIM_HORIZON, batchSize: 200 }
-      )
-      tarponChangeCaptureKinesisConsumerRetryAlias.addEventSource(
-        new SqsEventSource(tarponChangeCaptureRetryQueue)
       )
 
       /* Hammerhead Kinesis Change capture consumer */
@@ -1126,11 +1081,6 @@ export class CdkTarponStack extends cdk.Stack {
           name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
           memorySize:
             config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-        })
-
-      const { alias: hammerheadChangeCaptureKinesisConsumerRetryAlias } =
-        createFunction(this, lambdaExecutionRole, {
-          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME,
         })
 
       const { alias: hammerheadQueueConsumerAlias } = createFunction(
@@ -1148,9 +1098,6 @@ export class CdkTarponStack extends cdk.Stack {
         hammerheadChangeCaptureKinesisConsumerAlias,
         hammerheadStream,
         { startingPosition: StartingPosition.TRIM_HORIZON }
-      )
-      hammerheadChangeCaptureKinesisConsumerRetryAlias.addEventSource(
-        new SqsEventSource(hammerheadChangeCaptureRetryQueue)
       )
 
       const { alias: tarponQueueConsumerAlias } = createFunction(

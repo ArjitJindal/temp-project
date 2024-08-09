@@ -148,8 +148,6 @@ export const StackConstants = {
   ),
   TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerFunction'),
-  TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
-    getResourceNameForTarpon('TarponChangeCaptureKinesisConsumerRetryFunction'),
   CONSOLE_API_SLACK_APP_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiSlackAppFunction'
   ),
@@ -208,8 +206,6 @@ export const StackConstants = {
   HAMMERHEAD_DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
-  HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_RETRY_FUNCTION_NAME:
-    getResourceNameForHammerhead('ChangeCaptureKinesisConsumerRetry'),
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskClassificationFunction'
   ),
@@ -303,15 +299,6 @@ export const SQSQueues: {
     name: getResourceName('WebhookDeliveryQueue'),
   },
   BATCH_JOB_QUEUE_NAME: { name: getResourceName('BatchJobQueue') },
-  TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
-    name: getResourceName('TarponChangeCaptureRetryQueue') + '.fifo',
-  },
-  WEBHOOK_TARPON_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
-    name: getResourceName('WebhookTarponChangeCaptureRetryQueue') + '.fifo',
-  },
-  HAMMERHEAD_CHANGE_CAPTURE_RETRY_QUEUE_NAME: {
-    name: getResourceName('HammerheadChangeCaptureRetryQueue') + '.fifo',
-  },
   TARPON_QUEUE_NAME: {
     name: getResourceName('TarponQueue') + '.fifo',
   },

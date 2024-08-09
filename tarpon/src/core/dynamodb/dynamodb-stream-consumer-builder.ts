@@ -1,6 +1,9 @@
-import { SQSEvent } from 'aws-lambda'
+import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { SendMessageBatchCommand } from '@aws-sdk/client-sqs'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { MongoClient } from 'mongodb'
+import { groupBy } from 'lodash'
 import { TransientRepository } from '../repositories/transient-repository'
 import { logger } from '../logger'
 import {
@@ -9,7 +12,11 @@ import {
   updateLogMetadata,
   withContext,
 } from '../utils/context'
-import { DynamoDbEntityUpdate, savePartitionKey } from './dynamodb-stream-utils'
+import {
+  DynamoDbEntityUpdate,
+  getDynamoDbUpdates,
+  savePartitionKey,
+} from './dynamodb-stream-utils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { User } from '@/@types/openapi-public/User'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -22,53 +29,67 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+
+export type DbClients = {
+  dynamoDb: DynamoDBDocumentClient
+  mongoDb: MongoClient
+}
 
 type TransactionHandler = (
   tenantId: string,
   oldTransaction: TransactionWithRulesResult | undefined,
-  newTransaction: TransactionWithRulesResult | undefined
+  newTransaction: TransactionWithRulesResult | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type TransactionEventHandler = (
   tenantId: string,
   oldTransactionEvent: TransactionEvent | undefined,
-  newTransactionEvent: TransactionEvent | undefined
+  newTransactionEvent: TransactionEvent | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type UserHandler = (
   tenantId: string,
   oldUser: User | undefined,
-  newUser: User | undefined
+  newUser: User | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type UserEventHandler = (
   tenantId: string,
   oldUserEvent: ConsumerUserEvent | undefined,
-  newUserEvent: ConsumerUserEvent | undefined
+  newUserEvent: ConsumerUserEvent | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type ArsScoreEventHandler = (
   tenantId: string,
   oldArsValue: ArsScore | undefined,
-  newArsValue: ArsScore | undefined
+  newArsValue: ArsScore | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type DrsScoreEventHandler = (
   tenantId: string,
   oldDrsValue: DrsScore | undefined,
-  newDrsValue: DrsScore | undefined
+  newDrsValue: DrsScore | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type KrsScoreEventHandler = (
   tenantId: string,
   oldKrsValue: KrsScore | undefined,
-  newKrsValue: KrsScore | undefined
+  newKrsValue: KrsScore | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 type RuleInstanceHandler = (
   tenantId: string,
   oldRuleInstance: RuleInstance | undefined,
-  newRuleInstance: RuleInstance | undefined
+  newRuleInstance: RuleInstance | undefined,
+  dbClients: DbClients
 ) => Promise<void>
 
 const sqsClient = getSQSClient()
 
 export class StreamConsumerBuilder {
   name: string
-  retrySqsQueue: string
+  fanOutSqsQueue: string
   transientRepository: TransientRepository
   tableName: string
   transactionHandler?: TransactionHandler
@@ -80,12 +101,11 @@ export class StreamConsumerBuilder {
   krsScoreEventHandler?: KrsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
 
-  constructor(name: string, retrySqsQueue: string, tableName: string) {
+  constructor(name: string, fanOutSqsQueue: string, tableName: string) {
     this.name = name
-    this.retrySqsQueue = retrySqsQueue
+    this.fanOutSqsQueue = fanOutSqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
     this.tableName = tableName
-    this.processDynamoDbUpdate = this.processDynamoDbUpdate.bind(this)
   }
 
   public setTransactionHandler(
@@ -134,12 +154,17 @@ export class StreamConsumerBuilder {
     this.ruleInstanceHandler = ruleInstanceHandler
     return this
   }
-  public async handleDynamoDbUpdate(update: DynamoDbEntityUpdate) {
+  public async handleDynamoDbUpdate(
+    update: DynamoDbEntityUpdate,
+    dbClients: DbClients
+  ) {
+    updateLogMetadata({ entityId: update.entityId })
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
       await this.transactionHandler(
         update.tenantId,
         update.OldImage as TransactionWithRulesResult,
-        update.NewImage as TransactionWithRulesResult
+        update.NewImage as TransactionWithRulesResult,
+        dbClients
       )
     } else if (
       update.type === 'TRANSACTION_EVENT' &&
@@ -148,13 +173,15 @@ export class StreamConsumerBuilder {
       await this.transactionEventHandler(
         update.tenantId,
         update.OldImage as TransactionEvent,
-        update.NewImage as TransactionEvent
+        update.NewImage as TransactionEvent,
+        dbClients
       )
     } else if (update.type === 'USER' && this.userHandler) {
       await this.userHandler(
         update.tenantId,
         update.OldImage as User,
-        update.NewImage as User
+        update.NewImage as User,
+        dbClients
       )
     } else if (
       (update.type === 'CONSUMER_USER_EVENT' ||
@@ -164,145 +191,95 @@ export class StreamConsumerBuilder {
       await this.userEventHandler(
         update.tenantId,
         update.OldImage as ConsumerUserEvent | BusinessUserEvent,
-        update.NewImage as ConsumerUserEvent | BusinessUserEvent
+        update.NewImage as ConsumerUserEvent | BusinessUserEvent,
+        dbClients
       )
     } else if (update.type === 'ARS_VALUE' && this.arsScoreEventHandler) {
       await this.arsScoreEventHandler(
         update.tenantId,
         update.OldImage as ArsScore,
-        update.NewImage as ArsScore
+        update.NewImage as ArsScore,
+        dbClients
       )
     } else if (update.type === 'DRS_VALUE' && this.drsScoreEventHandler) {
       await this.drsScoreEventHandler(
         update.tenantId,
         update.OldImage as DrsScore,
-        update.NewImage as DrsScore
+        update.NewImage as DrsScore,
+        dbClients
       )
     } else if (update.type === 'KRS_VALUE' && this.krsScoreEventHandler) {
       await this.krsScoreEventHandler(
         update.tenantId,
         update.OldImage as KrsScore,
-        update.NewImage as KrsScore
+        update.NewImage as KrsScore,
+        dbClients
       )
     } else if (update.type === 'RULE_INSTANCE' && this.ruleInstanceHandler) {
       await this.ruleInstanceHandler(
         update.tenantId,
         update.OldImage as RuleInstance,
-        update.NewImage as RuleInstance
+        update.NewImage as RuleInstance,
+        dbClients
       )
     }
   }
 
-  private async shouldSendToRetryQueue(
-    update: DynamoDbEntityUpdate
-  ): Promise<boolean> {
-    return this.transientRepository.hasPrimaryKeyId(
-      this.getRetryItemKey(update)
-    )
-  }
-
-  private async sendToRetryQueue(update: DynamoDbEntityUpdate) {
-    if (!update.NewImage) {
-      return
-    }
-    await this.sendDynamoUpdate(
-      update.tenantId,
-      [update],
-      this.retrySqsQueue,
-      true
-    )
-    const partitionKeyId = this.getRetryItemKey(update)
-    await this.transientRepository.addKey(
-      partitionKeyId,
-      update.sequenceNumber as string
-    )
-  }
-
-  private async handleUpdateSuccess(update: DynamoDbEntityUpdate) {
-    const partitionKeyId = this.getRetryItemKey(update)
-    await this.transientRepository.deleteKey(
-      partitionKeyId,
-      update.sequenceNumber as string
-    )
-  }
-
-  private async shouldRun(update: DynamoDbEntityUpdate) {
-    const partitionKeyId = this.getRetryItemKey(update)
-    return await this.transientRepository.hasKey(
-      partitionKeyId,
-      update.sequenceNumber as string
-    )
-  }
-
-  private getRetryItemKey(update: DynamoDbEntityUpdate): string {
-    return `${this.name}#${update.tenantId}#${update.entityId}`
-  }
-
-  public buildHandler(handle: (update: DynamoDbEntityUpdate) => Promise<void>) {
+  public buildSqsFanOutHandler() {
     return async (event: SQSEvent) => {
-      for (const sqsRecord of event.Records) {
-        const record: DynamoDbEntityUpdate = JSON.parse(sqsRecord.body)
-        await handle(record)
-      }
+      const updates = event.Records.map(
+        (record) => JSON.parse(record.body) as DynamoDbEntityUpdate
+      )
+      const groups = groupBy(updates, (update) => update.tenantId)
+      await Promise.all(
+        Object.entries(groups).map(async (entry) => {
+          const tenantId = entry[0]
+          const tenantUpdates = entry[1]
+          await this.handleSqsDynamoUpdates(tenantId, tenantUpdates)
+        })
+      )
     }
   }
 
-  public buildSqsRetryHandler() {
-    return this.buildHandler(async (update) => {
-      if (!update.type) {
-        return
+  public buildKinesisStreamHandler() {
+    return async (event: KinesisStreamEvent) => {
+      const updates = getDynamoDbUpdates(event)
+      const groups = groupBy(updates, (update) => update.tenantId)
+      await Promise.all(
+        Object.entries(groups).map(async (entry) => {
+          const tenantId = entry[0]
+          const tenantUpdates = entry[1]
+          await this.handleKinesisDynamoUpdates(tenantId, tenantUpdates)
+        })
+      )
+    }
+  }
+
+  private async handleSqsDynamoUpdates(
+    tenantId: string,
+    updates: DynamoDbEntityUpdate[]
+  ) {
+    await withContext(async () => {
+      const dbClients: DbClients = {
+        dynamoDb: getDynamoDbClient(),
+        mongoDb: await getMongoDbClient(),
       }
-      await withContext(async () => {
-        await initializeTenantContext(update.tenantId)
-        if (await this.shouldRun(update)) {
-          updateLogMetadata({
-            entityId: update.entityId,
-            sequenceNumber: update.sequenceNumber,
-          })
-          try {
-            await this.handleDynamoDbUpdate(update)
-            await this.handleUpdateSuccess(update)
-            logger.info('Retry SUCCESS')
-          } catch (e) {
-            logger.error((e as Error).message)
-            throw e
-          }
-        }
-      })
+      await initializeTenantContext(tenantId)
+      for (const update of updates) {
+        await this.handleDynamoDbUpdate(update, dbClients)
+      }
     })
   }
 
-  public async processDynamoDbUpdate(update: DynamoDbEntityUpdate) {
-    if (!update.type) {
-      return
-    }
-    updateLogMetadata({ entityId: update.entityId })
-    if (await this.shouldSendToRetryQueue(update)) {
-      await this.sendToRetryQueue(update)
-      logger.warn(
-        `There're other events for the entity currently being retried. Sent to retry queue.`
-      )
-    } else {
-      try {
-        await this.handleDynamoDbUpdate(update)
-      } catch (e) {
-        await this.sendToRetryQueue(update)
-        logger.error(e)
-        if (e instanceof Error) {
-          logger.error(e.stack)
-        }
-        logger.warn(`Failed to process. Sent to retry queue`)
-      }
-    }
-  }
-
-  public async sendDynamoUpdate(
+  private async handleKinesisDynamoUpdates(
     tenantId: string,
-    updates: DynamoDbEntityUpdate[],
-    queueUrl: string,
-    retry = false
+    updates: DynamoDbEntityUpdate[]
   ) {
     await withContext(async () => {
+      const dbClients: DbClients = {
+        dynamoDb: getDynamoDbClient(),
+        mongoDb: await getMongoDbClient(),
+      }
       await initializeTenantContext(tenantId)
       const tenantHasFeatureKinesisAsync = await tenantHasFeature(
         tenantId,
@@ -323,9 +300,9 @@ export class StreamConsumerBuilder {
         })
       )
 
-      if ((envIs('local', 'test') || !tenantHasFeatureKinesisAsync) && !retry) {
+      if (envIs('local', 'test') || !tenantHasFeatureKinesisAsync) {
         for (const update of filteredUpdates) {
-          await this.processDynamoDbUpdate(update)
+          await this.handleDynamoDbUpdate(update, dbClients)
         }
         return
       }
@@ -367,7 +344,7 @@ export class StreamConsumerBuilder {
         await sqsClient.send(
           new SendMessageBatchCommand({
             Entries: chunk,
-            QueueUrl: queueUrl,
+            QueueUrl: this.fanOutSqsQueue,
           })
         )
       }
