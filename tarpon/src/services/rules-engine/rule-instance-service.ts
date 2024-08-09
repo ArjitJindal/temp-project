@@ -157,7 +157,6 @@ export class RuleInstanceService {
     ruleInstance: RuleInstance
   ) {
     const oldRuleInstance = await this.getRuleInstanceById(ruleInstanceId)
-
     const newRuleInstance = await this.createOrUpdateRuleInstance({
       id: ruleInstanceId,
       ...ruleInstance,

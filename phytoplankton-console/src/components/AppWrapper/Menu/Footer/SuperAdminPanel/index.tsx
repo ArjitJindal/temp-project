@@ -99,6 +99,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Clickhouse Enabled (Experimental Dev Only)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
   },
+  MACHINE_LEARNING: {
+    title: 'Machine learning',
+    description: 'Enables machine learning features',
+  },
 };
 
 export default function SuperAdminPanel() {

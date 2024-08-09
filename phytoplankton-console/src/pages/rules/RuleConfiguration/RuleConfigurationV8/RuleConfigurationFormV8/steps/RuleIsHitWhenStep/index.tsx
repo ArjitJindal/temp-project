@@ -8,6 +8,7 @@ import {
   RuleAction,
   RuleAggregationVariable,
   RuleEntityVariableInUse,
+  RuleMachineLearningVariable,
   RuleType,
   TriggersOnHit,
 } from '@/apis';
@@ -22,6 +23,7 @@ export interface RuleIsHitWhenStepFormValues {
   riskLevelRuleLogic?: RiskLevelRuleLogic;
   ruleLogicEntityVariables?: RuleEntityVariableInUse[];
   ruleLogicAggregationVariables?: RuleAggregationVariable[];
+  ruleLogicMlVariables?: RuleMachineLearningVariable[];
   ruleAction?: RuleAction;
   riskLevelRuleActions?: RiskLevelRuleActions;
   triggersOnHit?: TriggersOnHit;
@@ -61,6 +63,9 @@ export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?
     RuleIsHitWhenStepFormValues,
     'ruleLogicEntityVariables'
   >('ruleLogicEntityVariables');
+  const mlVariablesFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'ruleLogicMlVariables'>(
+    'ruleLogicMlVariables',
+  );
   const logicFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'ruleLogic'>('ruleLogic');
   const riskLevelsRuleLogicFieldState = useFieldState<
     RuleIsHitWhenStepFormValues,
@@ -73,7 +78,6 @@ export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?
   const baseCurrencyFieldState = useFieldState<RuleIsHitWhenStepFormValues, 'baseCurrency'>(
     'baseCurrency',
   );
-
   return (
     <div className={s.root}>
       <VariableDefinitionCard
@@ -81,12 +85,16 @@ export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?
         readOnly={props.readOnly}
         entityVariables={entityVariablesFieldState.value}
         aggregationVariables={aggVariablesFieldState.value}
+        mlVariables={mlVariablesFieldState.value}
         onChange={(v) => {
           if (v.aggregationVariables) {
             aggVariablesFieldState.onChange(v.aggregationVariables);
           }
           if (v.entityVariables) {
             entityVariablesFieldState.onChange(v.entityVariables);
+          }
+          if (v.mlVariables) {
+            mlVariablesFieldState.onChange(v.mlVariables);
           }
         }}
       />
@@ -98,6 +106,7 @@ export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?
         riskLevelRuleActionsFieldState={riskLevelRuleActionsFieldState}
         logicFieldState={logicFieldState}
         baseCurrencyFieldState={baseCurrencyFieldState}
+        mlVariableFieldState={mlVariablesFieldState}
       />
     </div>
   );

@@ -25,6 +25,7 @@ interface Props {
   ruleType: RuleType;
   entityVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicEntityVariables']>;
   aggVariablesFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicAggregationVariables']>;
+  mlVariableFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogicMlVariables']>;
   logicFieldState: FieldState<RuleIsHitWhenStepFormValues['ruleLogic']>;
   baseCurrencyFieldState: FieldState<RuleIsHitWhenStepFormValues['baseCurrency']>;
   riskLevelsLogicFieldState: FieldState<RuleIsHitWhenStepFormValues['riskLevelRuleLogic']>;
@@ -40,6 +41,7 @@ export default function DefineLogicCard(props: Props) {
     logicFieldState,
     riskLevelRuleActionsFieldState,
     baseCurrencyFieldState,
+    mlVariableFieldState,
   } = props;
   const settings = useSettings();
   const [currentRiskLevel, setCurrentRiskLevel] = useState<RiskLevel>('VERY_LOW');
@@ -61,6 +63,7 @@ export default function DefineLogicCard(props: Props) {
   const validationError = isRiskLevelsEnabled
     ? riskLevelsLogicFieldState.validationResult
     : logicFieldState.validationResult;
+
   const hasTransactionAmountVariable = useMemo(() => {
     const entityVariablesInUse = entityVariablesFieldState.value ?? [];
     const varKeysInLogic = getAllEntityVariableKeys(jsonLogic);
@@ -69,14 +72,25 @@ export default function DefineLogicCard(props: Props) {
       .map((v) => v.entityKey);
     return Boolean(entityVariableKeys.find(isTransactionAmountVariable));
   }, [entityVariablesFieldState.value, jsonLogic]);
+
   const hasVariables = useMemo(() => {
-    return Boolean(entityVariablesFieldState.value?.length || aggVariablesFieldState.value?.length);
-  }, [aggVariablesFieldState.value?.length, entityVariablesFieldState.value?.length]);
+    return Boolean(
+      entityVariablesFieldState.value?.length ||
+        aggVariablesFieldState.value?.length ||
+        mlVariableFieldState.value?.length,
+    );
+  }, [
+    aggVariablesFieldState.value?.length,
+    entityVariablesFieldState.value?.length,
+    mlVariableFieldState.value?.length,
+  ]);
+
   useEffect(() => {
     if (hasTransactionAmountVariable && !baseCurrencyFieldState.value) {
       baseCurrencyFieldState.onChange(settings.defaultValues?.currency ?? 'USD');
     }
   }, [baseCurrencyFieldState, hasTransactionAmountVariable, settings.defaultValues?.currency]);
+
   const showRuleLogicBuilder = jsonLogic || (addingLogic && hasVariables);
 
   return (
@@ -162,6 +176,7 @@ export default function DefineLogicCard(props: Props) {
                     logicFieldState.onChange(jsonLogic);
                   }
                 }}
+                mlVariables={mlVariableFieldState.value}
               />
             }
             renderThen={

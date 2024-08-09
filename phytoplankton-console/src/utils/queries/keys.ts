@@ -383,3 +383,8 @@ export const CUSTOM_RISK_FACTORS_ITEM = (type: string, id?: string): QueryKey =>
   type,
   `risk-factor-${id}`,
 ];
+
+export const MACHINE_LEARNING_MODELS = (params?: AnyParameters) => [
+  'machine-learning-models',
+  params,
+];

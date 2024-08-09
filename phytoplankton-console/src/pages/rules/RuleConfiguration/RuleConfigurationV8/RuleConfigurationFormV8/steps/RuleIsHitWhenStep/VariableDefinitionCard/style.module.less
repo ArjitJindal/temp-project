@@ -1,3 +1,5 @@
+@import 'src/components/ui/colors';
+
 .timeWindow {
   grid-column: span 2;
 }
@@ -21,4 +23,35 @@
 }
 .editVariableIcon {
   pointer-events: auto;
+}
+
+.tooltip {
+  color: @fr-colors-brandBlue;
+  cursor: pointer;
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+}
+
+.optionLabel {
+  display: flex;
+  gap: 8px;
+}
+
+.tag,
+.tags {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.optionHeader {
+  font-weight: 700;
+}
+
+.optionDescription {
+  font-size: 12px;
+  color: @fr-colors-v2-gray-6;
 }

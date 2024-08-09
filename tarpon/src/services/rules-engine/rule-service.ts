@@ -9,6 +9,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { AsyncLogicEngine } from 'json-logic-engine'
 import { MongoClient } from 'mongodb'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { MachineLearningRepository } from '../machine-learning/machine-learning-repository'
 import {
   RuleChecksForField,
   RuleNature,
@@ -63,6 +64,7 @@ import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { RuleLogicConfig } from '@/@types/openapi-internal/RuleLogicConfig'
 import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
+import { DefaultApiGetRuleMlModelsRequest } from '@/@types/openapi-internal/RequestParameters'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -654,5 +656,10 @@ You have to answer in below format as string. If you don't know any field, just 
         }
       })
     )
+  }
+
+  public async getAllRuleMlModels(params: DefaultApiGetRuleMlModelsRequest) {
+    const machineLearningRepository = new MachineLearningRepository()
+    return machineLearningRepository.getAllMLModels(params)
   }
 }

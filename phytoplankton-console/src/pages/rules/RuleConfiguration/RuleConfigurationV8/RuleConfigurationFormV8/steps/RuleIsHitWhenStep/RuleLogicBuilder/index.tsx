@@ -11,6 +11,7 @@ import {
   RuleAggregationVariable,
   RuleEntityVariableEntityEnum,
   RuleEntityVariableInUse,
+  RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
@@ -21,6 +22,7 @@ interface Props {
   entityVariableTypes: RuleEntityVariableEntityEnum[];
   entityVariablesInUse?: RuleEntityVariableInUse[];
   aggregationVariables: RuleAggregationVariable[] | undefined;
+  mlVariables?: RuleMachineLearningVariable[];
   onChange: (jsonLogic: RuleLogic | undefined) => void;
   configParams?: Partial<LogicBuilderConfig>;
   logicBuilderProps?: Partial<LogicBuilderProps>;
@@ -38,6 +40,7 @@ export function RuleLogicBuilder(props: Props) {
     props.entityVariablesInUse,
     props.aggregationVariables ?? [],
     configParams ?? {},
+    props.mlVariables ?? [],
   );
   const isConfigChanged = useIsChanged(configRes);
   const handleChangeLogic = useCallback(

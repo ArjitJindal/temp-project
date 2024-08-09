@@ -39,6 +39,36 @@ paths:
       operationId: get-rule-logic-config
       description: ''
     parameters: []
+  /rule-ml-models:
+    get:
+      summary: Rule ML Models - List
+      tags: []
+      x-flagright:
+        permissions: null
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleMLModel'
+      operationId: get-rule-ml-models
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: modelId
+        - schema:
+            type: string
+          in: query
+          name: modelName
+        - schema:
+            type: string
+          in: query
+          name: modelType
   /rules:
     get:
       summary: Rules - List
@@ -6572,6 +6602,29 @@ components:
           $ref: '#/components/schemas/RuleLogicConfig'
       required:
         - s3Url
+    RuleMLModel:
+      title: RuleMLModel
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        modelType:
+          type: string
+          enum:
+            - EXPLAINABLE
+            - NON_EXPLAINABLE
+        checksFor:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - description
     RuleLogicConfig:
       title: RuleLogicConfig
       type: object
@@ -6768,6 +6821,20 @@ components:
         - aggregationFieldKey
         - aggregationFunc
         - timeWindow
+    RuleMachineLearningVariable:
+      title: MachineLearningVariable
+      type: object
+      properties:
+        key:
+          type: string
+        name:
+          type: string
+        valueType:
+          type: string
+          enum:
+            - number
+      required:
+        - key
     RuleAggregationTimeWindowGranularity:
       title: RuleAggregationTimeWindowGranularity
       type: string
@@ -7015,6 +7082,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RuleAggregationVariable'
+        logicMachineLearningVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleMachineLearningVariable'
         logicEntityVariables:
           type: array
           items:
@@ -8681,6 +8752,8 @@ components:
                 $ref: '#/components/schemas/NotificationType'
         isAccountSuspended:
           type: boolean
+        isMlEnabled:
+          type: boolean
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object
@@ -9220,6 +9293,7 @@ components:
         - FILES_AI_SUMMARY
         - RISK_FACTORS_V8
         - CLICKHOUSE_ENABLED
+        - MACHINE_LEARNING
       description: ''
     ManagedRoleName:
       type: string

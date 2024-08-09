@@ -74,6 +74,7 @@ function toRuleInstance(item: any): RuleInstance {
     createdBy: item.createdBy,
     mode: item.mode,
     userRuleRunCondition: item.userRuleRunCondition,
+    logicMachineLearningVariables: item.logicMachineLearningVariables,
   }
 }
 

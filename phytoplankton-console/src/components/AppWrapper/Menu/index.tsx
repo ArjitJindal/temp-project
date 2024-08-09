@@ -28,6 +28,7 @@ import { isLeaf, RouteItem, RouteWithPath } from '@/services/routing/types';
 import TopLevelLink from '@/components/AppWrapper/Menu/TopLevelLink';
 import { getBranding } from '@/utils/branding';
 import { CluesoContext } from '@/components/AppWrapper/Providers/CluesoTokenProvider';
+import MlModelsIcon from '@/components/ui/icons/ml-models.react.svg';
 
 const icons = {
   accounts: <AddUsersIcon />,
@@ -44,6 +45,7 @@ const icons = {
   import: <ImportOutlined />,
   sanctions: <GlobeIcon />,
   auditlog: <AuditLogIcon />,
+  'ml-models': <MlModelsIcon />,
 };
 
 const branding = getBranding();

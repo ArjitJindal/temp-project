@@ -14,7 +14,7 @@ export type ModalHeight = 'AUTO' | 'FULL';
 
 interface Props {
   title?: string;
-  subTitle?: string;
+  subTitle?: React.ReactNode;
   icon?: React.ReactNode;
   hideFooter?: boolean;
   hideHeader?: boolean;

@@ -241,6 +241,7 @@ export function ruleInstanceToFormValuesV8(
       baseCurrency: ruleInstance.baseCurrency,
       ruleLogicEntityVariables: ruleInstance.logicEntityVariables,
       ruleLogicAggregationVariables: ruleInstance.logicAggregationVariables ?? [],
+      ruleLogicMlVariables: ruleInstance.logicMachineLearningVariables ?? [],
       ...(isRiskLevelsEnabled
         ? {
             riskLevelRuleLogic:
@@ -411,6 +412,7 @@ export function formValuesToRuleInstanceV8(
     triggersOnHit,
     riskLevelsTriggersOnHit,
     baseCurrency,
+    ruleLogicMlVariables,
   } = ruleIsHitWhenStep;
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
@@ -418,6 +420,7 @@ export function formValuesToRuleInstanceV8(
   if (alertCreationDetailsStep.alertPriority == null || basicDetailsStep.ruleNature == null) {
     throw new Error(`Passed form values are not valid`);
   }
+
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
@@ -451,6 +454,7 @@ export function formValuesToRuleInstanceV8(
     baseCurrency,
     logicEntityVariables: ruleLogicEntityVariables,
     logicAggregationVariables: ruleLogicAggregationVariables,
+    logicMachineLearningVariables: ruleLogicMlVariables,
     ...(isRiskLevelsEnabled
       ? {
           riskLevelLogic: riskLevelRuleLogic

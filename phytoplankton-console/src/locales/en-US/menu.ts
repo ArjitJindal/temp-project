@@ -64,4 +64,5 @@ export default {
   'menu.risk-levels.risk-algorithms.description': 'Algorithms used to calculate risk scores',
   'menu.sanctions': 'Screening',
   'menu.risk-levels.custom-risk-factors': 'Custom risk factors',
+  'menu.ml-models': 'Machine learning',
 };

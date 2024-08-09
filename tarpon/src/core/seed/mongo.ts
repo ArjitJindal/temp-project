@@ -13,6 +13,7 @@ import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
 import { getArsScores } from './data/ars_scores'
 import { getQASamples } from './samplers/qa-samples'
+import { getMlModels } from './data/ml-models'
 import {
   allCollections,
   createMongoDBCollections,
@@ -40,6 +41,7 @@ import {
   ARS_SCORES_COLLECTION,
   ALERTS_QA_SAMPLING_COLLECTION,
   SANCTIONS_HITS_COLLECTION,
+  ML_MODELS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
@@ -88,6 +90,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [NOTIFICATIONS_COLLECTION, () => getNotifications()],
   [ARS_SCORES_COLLECTION, () => getArsScores()],
   [ALERTS_QA_SAMPLING_COLLECTION, () => getQASamples()],
+  [ML_MODELS_COLLECTION, () => getMlModels()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {

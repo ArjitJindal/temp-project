@@ -4,6 +4,7 @@ import { useRuleLogicConfig } from '../helpers';
 import s from './style.module.less';
 import { AggregationVariableForm, FormRuleAggregationVariable } from './AggregationVariableForm';
 import { EntityVariableForm, getNewEntityVariableKey } from './EntityVariableForm';
+import { MlVariableForm } from './MlVariableForm';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -13,12 +14,13 @@ import {
   RuleAggregationVariable,
   RuleEntityVariableEntityEnum,
   RuleEntityVariableInUse,
+  RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import Tag from '@/components/library/Tag';
 import Button from '@/components/library/Button';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import Dropdown from '@/components/library/Dropdown';
 import Tooltip from '@/components/library/Tooltip';
@@ -65,18 +67,21 @@ function augmentAggregationVariables(
   });
 }
 
-type VariableType = 'entity' | 'aggregation';
+type VariableType = 'entity' | 'aggregation' | 'ml';
 type EditingAggVariable = { type: 'aggregation'; variable: FormRuleAggregationVariable };
 type EditingEntityVariable = { type: 'entity'; variable?: RuleEntityVariableInUse; index?: number };
+type EditingMLVariable = { type: 'ml'; variable?: RuleMachineLearningVariable };
 
 interface RuleAggregationVariablesEditorProps {
   ruleType: RuleType;
   readOnly?: boolean;
   entityVariables: RuleEntityVariableInUse[] | undefined;
   aggregationVariables: RuleAggregationVariable[] | undefined;
+  mlVariables?: RuleMachineLearningVariable[];
   onChange: (value: {
     entityVariables?: RuleEntityVariableInUse[];
     aggregationVariables?: RuleAggregationVariable[];
+    mlVariables?: RuleMachineLearningVariable[];
   }) => void;
   entity?: RuleEntityVariableEntityEnum;
 }
@@ -86,19 +91,20 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   readOnly,
   entityVariables,
   aggregationVariables,
+  mlVariables,
   onChange,
   entity,
 }) => {
   const [editingVariable, setEditingVariable] = useState<
-    EditingAggVariable | EditingEntityVariable | undefined
+    EditingAggVariable | EditingEntityVariable | EditingMLVariable | undefined
   >(undefined);
   const settings = useSettings();
   const isNewVariable = useMemo(
     () =>
-      [...(aggregationVariables ?? []), ...(entityVariables ?? [])].find(
+      [...(aggregationVariables ?? []), ...(entityVariables ?? []), ...(mlVariables ?? [])].find(
         (v) => v.key === editingVariable?.variable?.key,
       ) === undefined,
-    [aggregationVariables, editingVariable?.variable?.key, entityVariables],
+    [aggregationVariables, editingVariable?.variable?.key, entityVariables, mlVariables],
   );
   const ruleLogicConfig = useRuleLogicConfig(ruleType);
   const entityVariableDefinitions = useMemo(() => {
@@ -119,9 +125,10 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
         aggregationVariables: augmentAggregationVariables(
           aggregationVariables?.filter((v) => v.key !== varKey) ?? [],
         ),
+        mlVariables: mlVariables?.filter((v) => v.key !== varKey) ?? [],
       });
     },
-    [aggregationVariables, entityVariables, onChange],
+    [aggregationVariables, entityVariables, onChange, mlVariables],
   );
   const handleEdit = useCallback(
     (varKey: string, index?: number) => {
@@ -135,8 +142,12 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
         setEditingVariable({ type: 'aggregation', variable: aggVar });
         return;
       }
+      const mlVar = mlVariables?.find((v) => v.key === varKey);
+      if (mlVar) {
+        setEditingVariable({ type: 'ml', variable: mlVar });
+      }
     },
-    [aggregationVariables, entityVariables],
+    [aggregationVariables, entityVariables, mlVariables],
   );
   const handleDuplicateEntityVar = useCallback(
     (varKey: string, index: number) => {
@@ -190,8 +201,10 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
             },
           },
         });
-      } else {
+      } else if (type === 'entity') {
         setEditingVariable({ type: 'entity' });
+      } else {
+        setEditingVariable({ type: 'ml' });
       }
     },
     [settings.defaultValues?.currency],
@@ -209,6 +222,25 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
       handleCancelEditVariable();
     },
     [editingVariable, entityVariables, handleCancelEditVariable, onChange],
+  );
+
+  const handleUpdateMlVariable = useCallback(
+    (newMlVariable: RuleMachineLearningVariable) => {
+      const newMlVariables = [...(mlVariables ?? [])];
+      if (editingVariable?.variable?.key) {
+        const updatedMlVariableIndex = newMlVariables.findIndex(
+          (v) => v.key === editingVariable.variable?.key,
+        );
+        if (updatedMlVariableIndex >= 0) {
+          newMlVariables.splice(updatedMlVariableIndex, 1, newMlVariable);
+        }
+      } else {
+        newMlVariables.push(newMlVariable);
+      }
+      onChange({ mlVariables: newMlVariables });
+      handleCancelEditVariable();
+    },
+    [mlVariables, handleCancelEditVariable, onChange, editingVariable],
   );
   const handleUpdateAggVariable = useCallback(
     (newAggregationVariable: RuleAggregationVariable) => {
@@ -229,8 +261,10 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     },
     [aggregationVariables, handleCancelEditVariable, onChange],
   );
-  const hasVariables = Boolean(entityVariables?.length || aggregationVariables?.length);
-
+  const hasVariables = Boolean(
+    entityVariables?.length || aggregationVariables?.length || mlVariables?.length,
+  );
+  const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   return (
     <Card.Root>
       <Card.Section>
@@ -245,6 +279,9 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
             options={[
               { value: 'entity', label: 'Entity variable' },
               { value: 'aggregation', label: 'Aggregate variable' },
+              ...(hasMachineLearningFeature && settings?.isMlEnabled
+                ? [{ value: 'ml' as VariableType, label: 'ML variable' }]
+                : []),
             ]}
             onSelect={(option) => handleAddVariable(option.value)}
             placement="bottomLeft"
@@ -329,6 +366,34 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
                   </Tooltip>
                 );
               })}
+            {mlVariables?.map((mlVar, index) => {
+              const name = mlVar.name || 'Unknown';
+
+              return (
+                <Tooltip key={index} title={name}>
+                  <div>
+                    <Tag
+                      key={index}
+                      color="action"
+                      actions={[
+                        {
+                          key: 'edit',
+                          icon: <PencilLineIcon className={s.editVariableIcon} />,
+                          action: () => handleEdit(mlVar.key, index),
+                        },
+                        {
+                          key: 'delete',
+                          icon: <DeleteBinLineIcon />,
+                          action: () => handleDelete(mlVar.key),
+                        },
+                      ]}
+                    >
+                      {name}
+                    </Tag>
+                  </div>
+                </Tooltip>
+              );
+            })}
           </div>
         )}
       </Card.Section>
@@ -355,6 +420,15 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           entityVariables={entityVariableDefinitions}
           readOnly={readOnly}
           onUpdate={handleUpdateAggVariable}
+          onCancel={handleCancelEditVariable}
+        />
+      )}
+      {editingVariable?.type === 'ml' && (
+        <MlVariableForm
+          variable={editingVariable.variable}
+          isNew={isNewVariable}
+          readOnly={readOnly}
+          onUpdate={handleUpdateMlVariable}
           onCancel={handleCancelEditVariable}
         />
       )}

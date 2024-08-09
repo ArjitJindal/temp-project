@@ -12,6 +12,7 @@ import {
   RuleEntityVariableEntityEnum,
   RuleEntityVariableInUse,
   RuleLogicConfig,
+  RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
@@ -98,12 +99,17 @@ export function useLogicBuilderConfig(
   entityVariablesInUse: RuleEntityVariableInUse[] | undefined,
   aggregationVariables: RuleAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
+  mlVariables: RuleMachineLearningVariable[],
 ): AsyncResource<Config> {
   const [result, setResult] = useState<AsyncResource<Config>>(init());
   const ruleLogicConfigResult = useRuleLogicConfig(ruleType);
   const ruleLogicConfigRes = ruleLogicConfigResult.data;
 
-  const variablesChanged = useIsChanged([...aggregationVariables, ...(entityVariablesInUse ?? [])]);
+  const variablesChanged = useIsChanged([
+    ...aggregationVariables,
+    ...mlVariables,
+    ...(entityVariablesInUse ?? []),
+  ]);
   const configResChanged = useIsChanged(ruleLogicConfigRes);
   useEffect(() => {
     if (!(configResChanged || variablesChanged)) {
@@ -123,6 +129,7 @@ export function useLogicBuilderConfig(
           }
           return definition;
         });
+
         const filteredEntityVariables = entityVariablesInUse
           ? compact(
               entityVariablesInUse.map((v) => {
@@ -144,7 +151,22 @@ export function useLogicBuilderConfig(
         const finalEntityVariables = filteredEntityVariables.filter(
           (v) => v.entity != null && entityVariableTypes.includes(v.entity),
         );
-        const variables = finalEntityVariables.concat(aggregationVariablesGrouped);
+        const finalMlVariables = mlVariables.map((v) => {
+          return {
+            key: v.key,
+            valueType: v.valueType ?? 'number',
+            uiDefinition: {
+              label: v.name,
+              type: 'number',
+              valueSources: ['value', 'func'],
+            },
+          };
+        });
+        const variables = finalEntityVariables.concat(
+          aggregationVariablesGrouped,
+          finalMlVariables,
+        );
+
         const types = InitialConfig.types;
         for (const key in types) {
           if (types[key].widgets[key]) {
@@ -231,6 +253,7 @@ export function useLogicBuilderConfig(
             ...Object.fromEntries(variables.map((v) => [v.key, v.uiDefinition])),
           },
         });
+
         return config;
       }),
     );
@@ -243,6 +266,7 @@ export function useLogicBuilderConfig(
     entityVariableTypes,
     configParams,
     entityVariablesInUse,
+    mlVariables,
   ]);
 
   return result;

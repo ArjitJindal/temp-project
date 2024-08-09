@@ -43,6 +43,7 @@ import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/Ri
 import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
 import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
 import RiskFactorItemPage from '@/pages/risk-levels/custom-risk-factors/RiskItem';
+import { MlModelsPage } from '@/pages/ml-models';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -50,6 +51,7 @@ export function useRoutes(): RouteItem[] {
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
   const isCustomRiskFactorsEnabled = useFeatureEnabled('RISK_FACTORS_V8');
+  const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -475,6 +477,18 @@ export function useRoutes(): RouteItem[] {
         associatedFeatures: ['AUDIT_LOGS'],
         component: AuditLogPage,
       },
+      ...(hasMachineLearningFeature
+        ? [
+            {
+              path: '/ml-models',
+              icon: 'ml-models',
+              name: 'ml-models',
+              position: 'top',
+              hideChildrenInMenu: true,
+              component: MlModelsPage,
+            } as RouteItem,
+          ]
+        : []),
       {
         path: '/settings',
         icon: 'settings',
@@ -551,6 +565,7 @@ export function useRoutes(): RouteItem[] {
     hasAuditLogPermission,
     permissions,
     isCustomRiskFactorsEnabled,
+    hasMachineLearningFeature,
   ]);
 }
 

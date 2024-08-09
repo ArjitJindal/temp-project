@@ -263,6 +263,10 @@ export const NOTIFICATIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-notifications`
 }
 
+export const ML_MODELS_COLLECTION = () => {
+  return `flagright-ml-models`
+}
+
 /** Rules Collection */
 export const RULES_COLLECTION = FLAGRIGHT_TENANT_ID + '-rules'
 /** DynamoDB Keys Collection */
