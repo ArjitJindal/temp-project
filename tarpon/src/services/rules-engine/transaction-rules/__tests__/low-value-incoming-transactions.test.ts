@@ -323,7 +323,7 @@ testAggregationRebuild(
             transactionCurrency: 'EUR',
           },
         ],
-        hour: '1970-01-01',
+        hour: '1970',
       },
     ],
     origin: undefined,

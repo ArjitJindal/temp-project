@@ -392,7 +392,7 @@ async function transactionEventHandler(
   ])
 }
 
-if (envIsNot('test') && !process.env.TARPON_QUEUE_URL) {
+if (envIsNot('test', 'local') && !process.env.TARPON_QUEUE_URL) {
   throw new Error('TARPON_QUEUE_URL is not defined')
 }
 

@@ -122,7 +122,7 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
       this.getStaticTimestamp() + 1
     )
 
-    if (userAggregationData) {
+    if (userAggregationData && userAggregationData.length) {
       return [
         ...userAggregationData[0].lastNTransactionAmounts,
         this.getTransactionAmountDetails(this.transaction),
@@ -200,7 +200,10 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
       this.getTransactionAmountDetails.bind(this)
     )
     await this.saveRebuiltRuleAggregations(direction, {
-      [getTransactionStatsTimeGroupLabelV2(this.getStaticTimestamp(), 'day')]: {
+      [getTransactionStatsTimeGroupLabelV2(
+        this.getStaticTimestamp(),
+        this.getMaxTimeWindow().granularity
+      )]: {
         lastNTransactionAmounts,
       },
     })
@@ -246,10 +249,10 @@ export default abstract class LowValueTransactionsRule extends TransactionAggreg
   }
 
   protected getMaxTimeWindow(): TimeWindow {
-    return { granularity: 'day', units: 1 }
+    return { granularity: 'year', units: 1 }
   }
 
   protected getRuleAggregationVersion(): number {
-    return 2
+    return 3
   }
 }

@@ -101,7 +101,7 @@ async function krsScoreEventHandler(
   logger.info(`KRS Score Processed`)
 }
 
-if (envIsNot('test') && !process.env.HAMMERHEAD_QUEUE_URL) {
+if (envIsNot('test', 'local') && !process.env.HAMMERHEAD_QUEUE_URL) {
   throw new Error('HAMMERHEAD_QUEUE_URL is not defined')
 }
 
