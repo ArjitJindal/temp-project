@@ -103,6 +103,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Machine learning',
     description: 'Enables machine learning features',
   },
+  ALERT_SLA: {
+    title: 'Alerts SLA',
+    description: 'Enables Alert SLA',
+  },
 };
 
 export default function SuperAdminPanel() {
