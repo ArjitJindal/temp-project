@@ -5772,6 +5772,123 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReportTypesResponse'
       operationId: get-report-types
+  /tenants/settings/sla:
+    get:
+      summary: Get SLA Policies
+      operationId: get-sla-policies
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPoliciesResponse'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+    post:
+      summary: Create SLA Policy
+      operationId: post-sla-policy
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPolicy'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SLAPolicy'
+        required: true
+  /tenants/settings/sla/{slaId}:
+    get:
+      summary: Get SLA Policy
+      operationId: get-sla-policy
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPolicy'
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: slaId
+          required: true
+    put:
+      summary: Update SLA Policy
+      operationId: put-sla-policy
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPolicy'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SLAPolicy'
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: slaId
+          required: true
+    delete:
+      summary: Delete SLA Policy
+      operationId: delete-sla-policy
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: slaId
+          required: true
+  /tenants/settings/sla/new-sla-id:
+    get:
+      summary: Get new SLA ID
+      operationId: get-new-sla-id
+      x-flagright:
+        permissions:
+          - settings:organisation:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SLAPolicyIdResponse'
+      parameters: []
   /reports/draft:
     get:
       summary: Get a report draft
@@ -7168,6 +7285,10 @@ components:
                 $ref: '#/components/schemas/DerivedStatus'
             alertCreationDirection:
               $ref: '#/components/schemas/AlertCreationDirection'
+            slaPolicies:
+              type: array
+              items:
+                type: string
         checksFor:
           type: array
           items:
@@ -9300,6 +9421,7 @@ components:
         - FILES_AI_SUMMARY
         - RISK_FACTORS_V8
         - CLICKHOUSE_ENABLED
+        - ALERT_SLA
         - MACHINE_LEARNING
       description: ''
     ManagedRoleName:
@@ -9991,6 +10113,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Assignment'
+        slaPolicyDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SLAPolicyDetails'
       required:
         - createdTimestamp
         - ruleInstanceId
@@ -9999,6 +10125,28 @@ components:
         - ruleAction
         - numberOfTransactionsHit
         - priority
+    SLAPolicyDetails:
+      title: SLAPolicyStatusDetails
+      type: object
+      properties:
+        slaPolicyId:
+          type: string
+        policyStatus:
+          $ref: '#/components/schemas/SLAPolicyStatus'
+        elapsedTime:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - slaPolicyId
+        - policyStatus
+    SLAPolicyStatus:
+      title: SLAPolicyStatus
+      type: string
+      enum:
+        - OK
+        - WARNING
+        - BREACHED
     CasesListResponse:
       title: CasesListResponse
       type: object
@@ -13117,6 +13265,149 @@ components:
       required:
         - date
         - alertsCreated
+    SLAPolicy:
+      title: SLAPolicy
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        policyConfiguration:
+          $ref: '#/components/schemas/SLAPolicyConfiguration'
+        createdBy:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - name
+        - policyConfiguration
+        - id
+        - description
+        - createdBy
+    SLAPolicyConfiguration:
+      title: SLAPolicyConfiguration
+      type: object
+      properties:
+        accountRoles:
+          type: array
+          items:
+            type: string
+        SLATime:
+          type: object
+          properties:
+            breachTime:
+              $ref: '#/components/schemas/SLATimeWindow'
+            warningTime:
+              $ref: '#/components/schemas/SLATimeWindow'
+          required:
+            - breachTime
+        workingDays:
+          type: array
+          items:
+            type: string
+            enum:
+              - MON
+              - TUE
+              - WED
+              - THU
+              - FRI
+              - SAT
+              - SUN
+        alertStatusDetails:
+          $ref: '#/components/schemas/PolicyAlertStatusDetails'
+      required:
+        - SLATime
+        - alertStatusDetails
+        - workingDays
+    PolicyAlertStatusDetails:
+      title: PolicyAlertStatusDetails
+      type: object
+      properties:
+        alertStatuses:
+          type: array
+          items:
+            type: string
+            enum:
+              - OPEN
+              - IN_PROGRESS
+              - ON_HOLD
+              - ESCALATED
+              - IN_REVIEW
+              - REOPENED
+        alertStatusesCount:
+          type: array
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                enum:
+                  - OPEN
+                  - IN_PROGRESS
+                  - ON_HOLD
+                  - ESCALATED
+                  - REOPENED
+                  - IN_REVIEW
+              operator:
+                $ref: '#/components/schemas/NumberOperators'
+              count:
+                type: number
+            required:
+              - status
+              - count
+              - operator
+      required:
+        - alertStatuses
+    SLATimeWindow:
+      title: SLATimeWindow
+      type: object
+      properties:
+        units:
+          type: number
+        granularity:
+          type: string
+          enum:
+            - hours
+            - days
+      required:
+        - units
+        - granularity
+    SLAPoliciesResponse:
+      title: SLAPoliciesResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SLAPolicy'
+        total:
+          type: number
+      required:
+        - items
+        - total
+    SLAPolicyIdResponse:
+      title: SLAPolicyIdResponse
+      type: object
+      properties:
+        id:
+          type: string
+      required:
+        - id
+    NumberOperators:
+      title: NumberOperators
+      type: string
+      enum:
+        - EQ
+        - NE
+        - GT
+        - GTE
+        - LT
+        - LTE
   securitySchemes:
     Authorization:
       type: http

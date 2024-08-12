@@ -9,6 +9,7 @@ export type CounterEntity =
   | 'RC'
   | 'SanctionsHit'
   | 'CustomRiskFactor'
+  | 'SLAPolicy'
   | 'SanctionsWhitelist'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
@@ -18,6 +19,7 @@ export const COUNTER_ENTITIES: CounterEntity[] = [
   'Report',
   'RC',
   'CustomRiskFactor',
+  'SLAPolicy',
 ]
 export type EntityCounter = {
   _id?: string

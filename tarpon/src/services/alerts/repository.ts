@@ -531,6 +531,64 @@ export class AlertsRepository {
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
   }
 
+  public async getNonClosedAlerts(): Promise<Alert[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const pipeline = [
+      {
+        $match: {
+          alerts: {
+            $elemMatch: { alertStatus: { $ne: 'CLOSED' } },
+          },
+        },
+      },
+      {
+        $unwind: {
+          path: '$alerts',
+        },
+      },
+      {
+        $match: {
+          $and: [
+            {
+              'alerts.alertStatus': {
+                $exists: true,
+              },
+            },
+            {
+              'alerts.alertStatus': {
+                $ne: 'CLOSED',
+              },
+            },
+          ],
+        },
+      },
+      {
+        $set: {
+          alert: '$alerts',
+        },
+      },
+      {
+        $project: {
+          alert: 1,
+          _id: 0,
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: {
+            $mergeObjects: ['$alert', '$$ROOT'],
+          },
+        },
+      },
+      {
+        $unset: 'alert',
+      },
+    ]
+    const result = await collection.aggregate<Alert>(pipeline).toArray()
+    return result
+  }
+
   public async getAlertsByIds(alertIds: string[]): Promise<Alert[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))

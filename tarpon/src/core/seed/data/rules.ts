@@ -1,4 +1,5 @@
 import { random, cloneDeep, memoize } from 'lodash'
+import { getSLAPolicies } from './sla'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -24,6 +25,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: 'e8c3b853',
       mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       ruleId: 'R-8',
       casePriority: 'P2',
       parameters: {},
@@ -119,6 +123,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         },
       } as TransactionAmountRuleParameters,
       checksFor: ['Transaction amount'],
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       action: 'SUSPEND',
       type: 'TRANSACTION',
       ruleNameAlias: 'Transaction amount too high',
@@ -235,6 +242,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: '2i3nflkd',
       mode: 'LIVE_SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       ruleId: 'R-16',
       casePriority: 'P1',
       parameters: {

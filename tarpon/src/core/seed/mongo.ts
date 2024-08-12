@@ -13,6 +13,7 @@ import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
 import { getArsScores } from './data/ars_scores'
 import { getQASamples } from './samplers/qa-samples'
+import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import {
   allCollections,
@@ -41,6 +42,7 @@ import {
   ARS_SCORES_COLLECTION,
   ALERTS_QA_SAMPLING_COLLECTION,
   SANCTIONS_HITS_COLLECTION,
+  SLA_POLICIES_COLLECTION,
   ML_MODELS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getTransactions } from '@/core/seed/data/transactions'
@@ -68,6 +70,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { envIs } from '@/utils/env'
+import { AlertsSLAService } from '@/services/alerts/alerts-sla-service'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -90,6 +93,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [NOTIFICATIONS_COLLECTION, () => getNotifications()],
   [ARS_SCORES_COLLECTION, () => getArsScores()],
   [ALERTS_QA_SAMPLING_COLLECTION, () => getQASamples()],
+  [SLA_POLICIES_COLLECTION, () => getSLAPolicies()],
   [ML_MODELS_COLLECTION, () => getMlModels()],
 ]
 
@@ -224,4 +228,12 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   await dashboardStatsRepository.refreshAllStats()
   logger.info('Dashboard stats refreshed')
+
+  logger.info('Updating alerts SLA statuses')
+
+  const alertsSLAService = new AlertsSLAService(tenantId, client, auth0Domain)
+
+  await alertsSLAService.calculateAndUpdateSLAStatuses()
+
+  logger.info('Alerts SLA statuses updated')
 }

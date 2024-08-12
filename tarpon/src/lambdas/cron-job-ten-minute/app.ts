@@ -5,11 +5,9 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { CurrencyService } from '@/services/currency'
 
-export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
-  // Hack to ensure we query the currency data for viper.
-  await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
-  const tenantIds = await TenantService.getAllTenantIds()
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
+async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
     const now = dayjs()
     const checkTimeRange = {
@@ -17,7 +15,6 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       startTimestamp: now.subtract(30, 'minute').valueOf(),
       endTimestamp: now.valueOf(),
     }
-
     await Promise.all(
       tenantIds.map(async (id) => {
         return sendBatchJobCommand({
@@ -35,4 +32,38 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
       e
     )
   }
+}
+
+async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
+  const mongoDb = await getMongoDbClient()
+  try {
+    await Promise.all(
+      tenantIds.map(async (id) => {
+        const tenantService = new TenantService(id, { mongoDb })
+        const features = (await tenantService.getTenantSettings()).features
+        if (!features?.includes('ALERT_SLA')) {
+          return
+        }
+        return sendBatchJobCommand({
+          type: 'ALERT_SLA_STATUS_REFRESH',
+          tenantId: id,
+        })
+      })
+    )
+  } catch (e) {
+    logger.error(
+      `Failed to send SLA status calculation batch jobs: ${
+        (e as Error)?.message
+      }`,
+      e
+    )
+  }
+}
+
+export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
+  // Hack to ensure we query the currency data for viper.
+  await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
+  const tenantIds = await TenantService.getAllTenantIds()
+  await handleDashboardRefreshBatchJob(tenantIds)
+  await handleSlaStatusCalculationBatchJob(tenantIds)
 })

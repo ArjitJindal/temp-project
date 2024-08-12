@@ -117,6 +117,12 @@ export type RulePreAggregationBatchJob = {
   metadata?: RulePreAggregationMetadata
 }
 
+/* SLA Status Calculation */
+export type AlertSLAStatusRefreshBatchJob = {
+  type: 'ALERT_SLA_STATUS_REFRESH'
+  tenantId: string
+}
+
 /* Dashboard refresh */
 type DashboardRefreshBatchJobParameters = {
   checkTimeRange: TimeRange
@@ -199,6 +205,7 @@ export type BatchJob =
   | TenantDeletionBatchJob
   | RulePreAggregationBatchJob
   | FilesAISummary
+  | AlertSLAStatusRefreshBatchJob
   | ReverifyTransactionsBatchJob
 
 export type BatchJobWithId = BatchJob & {

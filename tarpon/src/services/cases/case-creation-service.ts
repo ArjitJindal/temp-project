@@ -83,6 +83,7 @@ import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 
 type CaseSubject =
   | {
@@ -575,6 +576,13 @@ export class CaseCreationService {
               ) ?? []
           ),
           assignments: assignee ? [assignee] : [],
+          slaPolicyDetails: ruleInstanceMatch?.alertConfig?.slaPolicies?.map(
+            (id): SLAPolicyDetails => ({
+              slaPolicyId: id,
+              policyStatus: 'OK',
+              elapsedTime: 0,
+            })
+          ),
         }
       })
     )

@@ -242,6 +242,10 @@ export const CHECKLIST_TEMPLATE_COLLECTION = (tenantId: string) => {
   return `${tenantId}-checklist-templates`
 }
 
+export const SLA_POLICIES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sla-policies`
+}
+
 export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-rule-queues`
 }
@@ -562,6 +566,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [{ id: 1 }, { name: 1 }, { description: 1 }, { createdAt: 1 }].map(
           (index) => ({ index })
         ),
+    },
+    [SLA_POLICIES_COLLECTION(tenantId)]: {
+      getIndexes: () =>
+        [{ id: 1 }, { name: 1 }, { createdAt: 1 }].map((index) => ({ index })),
     },
     [METRICS_COLLECTION(tenantId)]: {
       getIndexes: () => [{ name: 1, date: 1 }].map((index) => ({ index })),

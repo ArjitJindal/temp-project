@@ -37,6 +37,7 @@ import {
   getContext,
   tenantSettings,
 } from '@/core/utils/context'
+import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -360,7 +361,37 @@ export const tenantsHandler = lambdaApi()(
       })
       return await tenantService.getTenantsDeletionData(auth0Domain)
     })
+    /* SLA Policies */
+    handlers.registerGetSlaPolicies(async (ctx, request) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      return await slaPolicyService.getSLAPolicies(request)
+    })
 
+    handlers.registerGetSlaPolicy(async (ctx, request) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      const policyId = request.slaId
+      return await slaPolicyService.getSLAPolicyById(policyId)
+    })
+
+    handlers.registerPostSlaPolicy(async (ctx, request) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      return await slaPolicyService.createSLAPolicy(request.SLAPolicy)
+    })
+
+    handlers.registerPutSlaPolicy(async (ctx, request) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      return await slaPolicyService.updateSLAPolicy(request.SLAPolicy)
+    })
+
+    handlers.registerDeleteSlaPolicy(async (ctx, request) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      return await slaPolicyService.deleteSLAPolicy(request.slaId)
+    })
+
+    handlers.registerGetNewSlaId(async (ctx) => {
+      const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
+      return await slaPolicyService.getSLAPolicyId()
+    })
     return await handlers.handle(event)
   }
 )

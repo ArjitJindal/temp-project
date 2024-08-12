@@ -29,6 +29,7 @@ import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/ChecklistDoneStatus'
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { uniqObjects } from '@/utils/object'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 
 let counter = 1
 let alertCounter = 1
@@ -268,6 +269,14 @@ export function sampleAlert(params: {
   const checklistTemplateId = getRuleInstance(
     params.ruleHit.ruleInstanceId
   ).checklistTemplateId
+  const slaPolicyDetails: SLAPolicyDetails[] | undefined = getRuleInstance(
+    params.ruleHit.ruleInstanceId
+  ).alertConfig?.slaPolicies?.map((sla) => ({
+    slaPolicyId: sla,
+    policyStatus: 'OK',
+    elapsedTime: 0,
+  }))
+
   const isFirstPaymentRule = params.ruleHit.ruleId === 'R-1'
   const transactions = params.transactions
   const transactionIds = isFirstPaymentRule
@@ -317,6 +326,7 @@ export function sampleAlert(params: {
     ruleNature: userRules()
       .concat(transactionRules())
       .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,
+    slaPolicyDetails: slaPolicyDetails,
   }
 }
 
