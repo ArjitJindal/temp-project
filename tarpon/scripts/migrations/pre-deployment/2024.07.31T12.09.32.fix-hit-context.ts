@@ -27,7 +27,10 @@ async function migrateTenant(tenant: Tenant) {
     if (userId != null) {
       for (const alert of c.alerts ?? []) {
         for (const details of alert.ruleHitMeta?.sanctionsDetails ?? []) {
-          const allHitIds = details.sanctionHitIds
+          const allHitIds = details.sanctionHitIds ?? []
+          if (allHitIds.length === 0) {
+            continue
+          }
 
           const entityMap = {
             CONSUMER_NAME: 'USER',
