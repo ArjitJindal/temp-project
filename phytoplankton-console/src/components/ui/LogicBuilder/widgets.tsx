@@ -378,7 +378,11 @@ const customFieldWidget: FieldWidget<Config> = {
   valueSrc: 'field',
   formatValue: () => {}, // no need to format value
   factory: (props) => {
-    const options = getFieldOptions(props.config?.fields ?? {}, props.field).filter((item) => {
+    const options = getFieldOptions(
+      props.config?.fields ?? {},
+      props.field,
+      props.fieldDefinition.type,
+    ).filter((item) => {
       const lhsOnly = item.key.endsWith(LHS_ONLY_SYMBOL);
       const rhsOnly = item.key.endsWith(RHS_ONLY_SYMBOL);
       if (!lhsOnly && !rhsOnly && !isAnyInOpreator(props.operator)) {

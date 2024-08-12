@@ -33,8 +33,9 @@ export const omitCountryGroups = (options: (string | number | ListItem)[]) => {
   });
 };
 
-export const getFieldOptions = (fields: object, selectedField) => {
+export const getFieldOptions = (fields: object, selectedField, fieldType?: string) => {
   const fieldOptions = Object.keys(fields)
+    .filter((field) => fields[field].type === fieldType)
     .map((field) => ({
       key: field,
       path: field,
