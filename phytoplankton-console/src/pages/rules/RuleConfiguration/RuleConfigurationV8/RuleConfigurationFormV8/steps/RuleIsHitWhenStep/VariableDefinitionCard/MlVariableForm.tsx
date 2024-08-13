@@ -2,7 +2,7 @@ import React, { useCallback, useState } from 'react';
 import s from './style.module.less';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
-import { RuleMachineLearningVariable } from '@/apis';
+import { RuleMachineLearningVariable, RuleMLModel } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import Select from '@/components/library/Select';
 import Modal from '@/components/library/Modal';
@@ -84,7 +84,7 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
         }
       >
         <AsyncResourceRenderer resource={queryResult.data}>
-          {(models) => {
+          {(models: RuleMLModel[]) => {
             return (
               <Card.Section direction="vertical">
                 <Label label="Variable name" required={{ value: false, showHint: true }}>
@@ -99,28 +99,30 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
                 <Label label="ML model" required={{ value: true, showHint: true }}>
                   <Select
                     portaled
-                    options={models?.map((model) => ({
-                      value: model.id,
-                      label: (
-                        <div className={s.option}>
-                          <div className={s.optionLabel}>
-                            <span className={s.optionHeader}>{model.name}</span>
-                            <div className={s.tags}>
-                              {model.checksFor?.map((check) => {
-                                <Tag color="action">{check}</Tag>;
-                              })}
-                            </div>
-                            <Tag color="blue">
-                              <div className={s.tag}>
-                                <BrainIcon height={12} /> Explainable model
+                    options={models
+                      ?.filter((model) => model.enabled)
+                      .map((model) => ({
+                        value: model.id,
+                        label: (
+                          <div className={s.option}>
+                            <div className={s.optionLabel}>
+                              <span className={s.optionHeader}>{model.name}</span>
+                              <div className={s.tags}>
+                                {model.checksFor?.map((check) => {
+                                  <Tag color="action">{check}</Tag>;
+                                })}
                               </div>
-                            </Tag>
+                              <Tag color="blue">
+                                <div className={s.tag}>
+                                  <BrainIcon height={12} /> Explainable model
+                                </div>
+                              </Tag>
+                            </div>
+                            <span className={s.optionDescription}>{model.description}</span>
                           </div>
-                          <span className={s.optionDescription}>{model.description}</span>
-                        </div>
-                      ),
-                      labelText: model.name,
-                    }))}
+                        ),
+                        labelText: model.name,
+                      }))}
                     value={formValues.modelKey}
                     onChange={(modelKey) => {
                       const selectedModelName = models.find((model) => model.id === modelKey)?.name;

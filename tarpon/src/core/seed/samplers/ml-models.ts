@@ -9,6 +9,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
         'This is a model to detect overall fraud of the payment method',
       modelType: 'EXPLAINABLE',
       checksFor: ['Fraud'],
+      enabled: true,
     },
     {
       id: 'ML-002',
@@ -16,13 +17,15 @@ export const getMlModelsSample = (): RuleMLModel[] => {
       description: 'This is a model to detect overall fraud of the credit card',
       modelType: 'EXPLAINABLE',
       checksFor: ['Credit card fraud'],
+      enabled: true,
     },
     {
       id: 'ML-003',
-      name: 'ML Model - Money laundring',
-      description: 'This is a model to detect money laundring',
+      name: 'ML Model - Money laundering',
+      description: 'This is a model to detect money laundering',
       modelType: 'EXPLAINABLE',
-      checksFor: ['Money laundring'],
+      checksFor: ['Money laundering'],
+      enabled: true,
     },
     {
       id: 'ML-004',
@@ -31,6 +34,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
         'This is a model to detect overall fraud of the payment method',
       modelType: 'NON_EXPLAINABLE',
       checksFor: ['Fraud', 'Credit card fraud'],
+      enabled: true,
     },
   ]
 }

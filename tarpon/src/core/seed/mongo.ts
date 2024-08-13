@@ -164,6 +164,8 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     )
   }
 
+  await db.collection(ML_MODELS_COLLECTION()).deleteMany({})
+
   logger.info('Creating collections')
   for (const [collectionNameFn, data] of collections) {
     const collection = db.collection(collectionNameFn(tenantId) as string)

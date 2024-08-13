@@ -1,4 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { Switch } from 'antd';
 import s from './style.module.less';
 import { useI18n } from '@/locales';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -14,6 +16,7 @@ import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
+import { message } from '@/components/library/Message';
 
 interface TableSearchParams extends CommonParams {
   modelId?: string;
@@ -27,6 +30,7 @@ export const MlModelsPage = () => {
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
   });
+
   const queryResult = usePaginatedQuery(
     MACHINE_LEARNING_MODELS(params),
     async (_paginationParams) => {
@@ -39,6 +43,24 @@ export const MlModelsPage = () => {
         items: result,
         total: result.length,
       };
+    },
+  );
+
+  const updateModelMutation = useMutation(
+    async (mlModel: RuleMLModel) => {
+      return await api.updateRuleMlModelModelId({
+        modelId: mlModel.id,
+        RuleMLModel: mlModel,
+      });
+    },
+    {
+      onSuccess: () => {
+        message.success('Model updated successfully');
+        queryResult.refetch();
+      },
+      onError: (error: Error) => {
+        message.error(`Error: ${error.message}`);
+      },
     },
   );
 
@@ -99,8 +121,27 @@ export const MlModelsPage = () => {
           },
         },
       }),
+      helper.simple<'enabled'>({
+        key: 'enabled',
+        title: 'Enabled',
+        type: {
+          render: (enabled, { item }) => {
+            return (
+              <Switch
+                checked={enabled}
+                onChange={(checked) => {
+                  updateModelMutation.mutate({
+                    ...item,
+                    enabled: checked,
+                  });
+                }}
+              />
+            );
+          },
+        },
+      }),
     ]);
-  }, []);
+  }, [updateModelMutation]);
 
   const actionRef = useRef<TableRefType>(null);
   return (

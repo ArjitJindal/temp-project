@@ -69,6 +69,26 @@ paths:
             type: string
           in: query
           name: modelType
+  /rule-ml-model/{modelId}:
+    parameters:
+      - schema:
+          type: string
+        name: modelId
+        in: path
+        required: true
+    put:
+      summary: Rule ML Model - Update
+      operationId: update-rule-ml-model-modelId
+      x-flagright: null
+      responses:
+        '200':
+          description: OK
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleMLModel'
+        required: true
   /rules:
     get:
       summary: Rules - List
@@ -6745,6 +6765,8 @@ components:
           type: array
           items:
             type: string
+        enabled:
+          type: boolean
       required:
         - id
         - name

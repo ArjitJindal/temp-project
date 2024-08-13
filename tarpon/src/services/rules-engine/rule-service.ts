@@ -64,7 +64,10 @@ import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
 import { RuleLogicConfig } from '@/@types/openapi-internal/RuleLogicConfig'
 import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
-import { DefaultApiGetRuleMlModelsRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetRuleMlModelsRequest,
+  DefaultApiUpdateRuleMlModelModelIdRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
 
@@ -661,5 +664,15 @@ You have to answer in below format as string. If you don't know any field, just 
   public async getAllRuleMlModels(params: DefaultApiGetRuleMlModelsRequest) {
     const machineLearningRepository = new MachineLearningRepository()
     return machineLearningRepository.getAllMLModels(params)
+  }
+
+  public async updateRuleMlModel(
+    params: DefaultApiUpdateRuleMlModelModelIdRequest
+  ) {
+    const machineLearningRepository = new MachineLearningRepository()
+    return machineLearningRepository.updateMLModel(
+      params.modelId,
+      params.RuleMLModel
+    )
   }
 }

@@ -48,4 +48,20 @@ export class MachineLearningRepository {
         }
       : {}
   }
+
+  public async updateMLModel(
+    modelId: string,
+    model: RuleMLModel
+  ): Promise<RuleMLModel> {
+    const db = await getMongoDbClientDb()
+    await db.collection<RuleMLModel>(ML_MODELS_COLLECTION()).updateOne(
+      {
+        id: modelId,
+      },
+      {
+        $set: model,
+      }
+    )
+    return model
+  }
 }

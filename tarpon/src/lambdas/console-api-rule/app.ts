@@ -82,6 +82,10 @@ export const ruleHandler = lambdaApi()(
       return await ruleService.getAllRuleMlModels(request)
     })
 
+    handlers.registerUpdateRuleMlModelModelId(async (ctx, request) => {
+      await ruleService.updateRuleMlModel(request)
+    })
+
     return await handlers.handle(event)
   }
 )
