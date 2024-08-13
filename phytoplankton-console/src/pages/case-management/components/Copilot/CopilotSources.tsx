@@ -1,5 +1,6 @@
 import React from 'react';
 import { startCase } from 'lodash';
+import cn from 'clsx';
 import s from './index.module.less';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -14,7 +15,7 @@ export default function CopilotSources(props: Props) {
   const helper = new ColumnHelper<{ key: string; value: any; secret: boolean }>();
   const { attributes } = props;
   return (
-    <div className={s.table}>
+    <div className={cn(s.table, s.copilotSourcesWrapper)}>
       <Table<{ key: string; value: any; secret: boolean }>
         rowKey={'key'}
         sizingMode="FULL_WIDTH"
