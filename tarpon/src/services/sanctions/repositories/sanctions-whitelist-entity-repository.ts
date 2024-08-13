@@ -108,23 +108,22 @@ export class SanctionsWhitelistEntityRepository {
 
   public async getWhitelistEntities(
     requestEntityIds: string[],
-    subject: WhitelistSubject
+    subject: WhitelistSubject,
+    limit = Number.MAX_SAFE_INTEGER
   ): Promise<SanctionsWhitelistEntity[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
+    const filters = [
+      { 'caEntity.id': { $in: requestEntityIds } },
+      ...SUBJECT_FIELDS.map((key) => ({
+        $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],
+      })),
+    ]
     const result = await collection
-      .find({
-        'caEntity.id': { $in: requestEntityIds },
-        ...SUBJECT_FIELDS.reduce(
-          (acc, key) => ({
-            ...acc,
-            [key]: subject[key] || { $eq: null },
-          }),
-          {}
-        ),
-      })
+      .find({ $and: filters })
+      .limit(limit)
       .toArray()
     return result
   }
@@ -133,21 +132,8 @@ export class SanctionsWhitelistEntityRepository {
     requestEntityIds: string[],
     subject: WhitelistSubject
   ): Promise<boolean> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsWhitelistEntity>(
-      SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
-    )
-    const result = await collection.findOne({
-      'caEntity.id': { $in: requestEntityIds },
-      ...SUBJECT_FIELDS.reduce(
-        (acc, key) => ({
-          ...acc,
-          [key]: subject[key] || { $eq: null },
-        }),
-        {}
-      ),
-    })
-    return result != null
+    const result = await this.getWhitelistEntities(requestEntityIds, subject, 1)
+    return result.length > 0
   }
 
   public async searchWhitelistEntities(
