@@ -6,6 +6,7 @@ import dayjs from '@/utils/dayjs'
 import { CurrencyService } from '@/services/currency'
 
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -36,10 +37,11 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
 
 async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   try {
     await Promise.all(
       tenantIds.map(async (id) => {
-        const tenantService = new TenantService(id, { mongoDb })
+        const tenantService = new TenantService(id, { mongoDb, dynamoDb })
         const features = (await tenantService.getTenantSettings()).features
         if (!features?.includes('ALERT_SLA')) {
           return
