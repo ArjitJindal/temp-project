@@ -75,9 +75,8 @@ export async function bulkSendMessages(
       if (entrySize > MAX_BATCH_SIZE_BYTES) {
         addSentryExtras({ entry })
         logger.error(
-          `Skipping message with size ${entrySize} bytes because it exceeds the maximum batch size of ${MAX_BATCH_SIZE_BYTES} bytes`
+          `Message with size ${entrySize} bytes exceeds the maximum batch size of ${MAX_BATCH_SIZE_BYTES} bytes`
         )
-        return acc
       }
       const currentBatch = last(acc) || []
       const currentBatchSize = sumBy(currentBatch, getEntrySize)
