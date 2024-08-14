@@ -1,4 +1,4 @@
-import { wrap, chunk } from 'lodash'
+import { wrap, reduce, last, sumBy, initial } from 'lodash'
 import { SNSClient } from '@aws-sdk/client-sns'
 import {
   SendMessageBatchCommand,
@@ -6,6 +6,7 @@ import {
   SQSClient,
 } from '@aws-sdk/client-sqs'
 import { logger } from '@/core/logger'
+import { addSentryExtras } from '@/core/utils/context'
 
 interface SenderClient {
   send: (command: any, options: any) => Promise<any>
@@ -59,13 +60,54 @@ export async function bulkSendMessages(
   queueUrl: string,
   batchRequestEntries: SendMessageBatchRequestEntry[]
 ) {
-  // Max batch size is 10. Do not change the value
-  for (const batch of chunk(batchRequestEntries, 10)) {
-    await sqsClient.send(
-      new SendMessageBatchCommand({
-        Entries: batch,
-        QueueUrl: queueUrl,
-      })
+  const MAX_BATCH_SIZE_BYTES = 256 * 1024 // 256KB in bytes
+  const MAX_BATCH_SIZE_COUNT = 10
+
+  // Helper function to calculate the byte size of an entry
+  const getEntrySize = (entry: SendMessageBatchRequestEntry): number =>
+    Buffer.byteLength(JSON.stringify(entry), 'utf8')
+
+  // Group entries into batches that don't exceed MAX_BATCH_SIZE_BYTES and MAX_BATCH_SIZE_COUNT
+  const batches = reduce(
+    batchRequestEntries,
+    (acc, entry) => {
+      const entrySize = getEntrySize(entry)
+      if (entrySize > MAX_BATCH_SIZE_BYTES) {
+        addSentryExtras({ entry })
+        logger.error(
+          `Skipping message with size ${entrySize} bytes because it exceeds the maximum batch size of ${MAX_BATCH_SIZE_BYTES} bytes`
+        )
+        return acc
+      }
+      const currentBatch = last(acc) || []
+      const currentBatchSize = sumBy(currentBatch, getEntrySize)
+
+      // Start a new batch if:
+      // 1. Adding this entry would exceed MAX_BATCH_SIZE_BYTES, or
+      // 2. The current batch already has MAX_BATCH_SIZE_COUNT entries
+      if (
+        currentBatchSize + entrySize > MAX_BATCH_SIZE_BYTES ||
+        currentBatch.length >= MAX_BATCH_SIZE_COUNT
+      ) {
+        return [...acc, [entry]]
+      }
+
+      // Otherwise, add to the current batch
+      return [...initial(acc), [...currentBatch, entry]]
+    },
+    [] as SendMessageBatchRequestEntry[][]
+  )
+
+  const results = await Promise.all(
+    batches.map((batch) =>
+      sqsClient.send(
+        new SendMessageBatchCommand({
+          QueueUrl: queueUrl,
+          Entries: batch,
+        })
+      )
     )
-  }
+  )
+
+  return results
 }
