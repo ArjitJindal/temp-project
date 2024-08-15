@@ -150,6 +150,13 @@ export const HITS_PER_USER_STATS = (dateRange: RangeValue<Dayjs>): QueryKey => [
   'hits-per-user-stats',
   dateRange,
 ];
+
+export const RULES_HIT_STATS = (
+  dateRange: RangeValue<Dayjs>,
+  page?: number,
+  pageSize?: number,
+): QueryKey => ['rules-hit-stats', dateRange, page, pageSize];
+
 export const RULES_UNIVERSAL_SEARCH = (
   search: string,
   params?: AnyParameters,

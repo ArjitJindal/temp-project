@@ -9,6 +9,7 @@ import {
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   getMongoDbClientDb,
+  paginatePipeline,
 } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
@@ -17,9 +18,32 @@ import {
 } from '@/utils/mongodb-definitions'
 
 import { Case } from '@/@types/openapi-internal/Case'
-import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { traceable } from '@/core/xray'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
+
+function getRuleStatsConditions(startDateText: string, endDateText: string) {
+  return [
+    {
+      $match: {
+        date: {
+          $gte: startDateText,
+          $lte: endDateText,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          ruleId: '$ruleId',
+          ruleInstanceId: '$ruleInstanceId',
+        },
+        hitCount: { $sum: '$hitCount' },
+        openAlertsCount: { $sum: '$openAlertsCount' },
+      },
+    },
+  ]
+}
 
 @traceable
 export class RuleHitsStatsDashboardMetric {
@@ -251,8 +275,10 @@ export class RuleHitsStatsDashboardMetric {
   public static async get(
     tenantId: string,
     startTimestamp: number,
-    endTimestamp: number
-  ): Promise<DashboardStatsRulesCountData[]> {
+    endTimestamp: number,
+    pageSize?: number | 'DISABLED',
+    page?: number
+  ): Promise<DashboardStatsRulesCountResponse> {
     const db = await getMongoDbClientDb()
     const collection = db.collection<DashboardStatsRiskLevelDistributionData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
@@ -268,35 +294,26 @@ export class RuleHitsStatsDashboardMetric {
         openAlertsCount: number
       }>(
         [
-          {
-            $match: {
-              date: {
-                $gte: startDateText,
-                $lte: endDateText,
-              },
-            },
-          },
-          {
-            $group: {
-              _id: {
-                ruleId: '$ruleId',
-                ruleInstanceId: '$ruleInstanceId',
-              },
-              hitCount: { $sum: '$hitCount' },
-              openAlertsCount: { $sum: '$openAlertsCount' },
-            },
-          },
+          ...getRuleStatsConditions(startDateText, endDateText),
           { $sort: { hitCount: -1 } },
+          ...paginatePipeline({ page, pageSize }),
         ],
         { allowDiskUse: true }
       )
       .toArray()
-
-    return result.map((x) => ({
-      ruleId: x._id.ruleId,
-      ruleInstanceId: x._id.ruleInstanceId,
-      hitCount: x.hitCount,
-      openAlertsCount: x.openAlertsCount,
-    }))
+    const resultCount = (
+      await collection
+        .aggregate([...getRuleStatsConditions(startDateText, endDateText)])
+        .toArray()
+    ).length
+    return {
+      data: result.map((x) => ({
+        ruleId: x._id.ruleId,
+        ruleInstanceId: x._id.ruleInstanceId,
+        hitCount: x.hitCount,
+        openAlertsCount: x.openAlertsCount,
+      })),
+      total: resultCount,
+    }
   }
 }

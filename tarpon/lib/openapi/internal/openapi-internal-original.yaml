@@ -2387,7 +2387,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/DashboardStatsRulesCount'
+                $ref: '#/components/schemas/DashboardStatsRulesCountResponse'
       operationId: get-dashboard-stats-rule-hit
       description: ''
       parameters:
@@ -2399,6 +2399,14 @@ paths:
             type: number
           in: query
           name: endTimestamp
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
     parameters: []
   /dashboard_stats/users/by_time:
     get:
@@ -8081,24 +8089,17 @@ components:
       type: object
       title: DashboardStatsRulesCount
       properties:
-        data:
-          type: array
-          items:
-            type: object
-            properties:
-              ruleId:
-                type: string
-              ruleInstanceId:
-                type: string
-              hitCount:
-                type: number
-              openAlertsCount:
-                type: number
-            required:
-              - ruleId
-              - hitCount
+        ruleId:
+          type: string
+        ruleInstanceId:
+          type: string
+        hitCount:
+          type: number
+        openAlertsCount:
+          type: number
       required:
-        - data
+        - ruleId
+        - hitCount
     DashboardStatsUsersStats:
       type: object
       title: DashboardStatsUsersStats
@@ -13211,6 +13212,19 @@ components:
         - entityId
         - entityType
         - notificationData
+    DashboardStatsRulesCountResponse:
+      title: DashboardStatsRulesCountResponse
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardStatsRulesCount'
+        total:
+          type: number
+      required:
+        - data
+        - total
     BooleanString:
       title: BooleanString
       type: string

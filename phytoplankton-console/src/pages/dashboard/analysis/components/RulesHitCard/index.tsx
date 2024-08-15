@@ -6,15 +6,15 @@ import pluralize from 'pluralize';
 import { generateAlertsListUrl } from '../HitsPerUserCard/utils';
 import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
-import { DashboardStatsRulesCountData } from '@/apis';
 import { useApi } from '@/api';
 import { getRuleInstanceDisplay, getRuleInstanceDisplayId } from '@/pages/rules/utils';
-import { TableColumn } from '@/components/library/Table/types';
+import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { useRules } from '@/utils/rules';
 import { useQuery } from '@/utils/queries/hooks';
-import { HITS_PER_USER_STATS } from '@/utils/queries/keys';
+import { RULES_HIT_STATS } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
+import { DashboardStatsRulesCount } from '@/apis';
 
 export default function RuleHitCard() {
   const api = useApi();
@@ -23,10 +23,15 @@ export default function RuleHitCard() {
     dayjs().subtract(1, 'week'),
     dayjs(),
   ]);
+  const [paginationParams, setPaginationParams] = useState<CommonParams>({
+    page: 1,
+    pageSize: 10,
+    sort: [],
+  });
   const { rules, ruleInstances } = useRules();
 
-  const helper = new ColumnHelper<DashboardStatsRulesCountData>();
-  const columns: TableColumn<DashboardStatsRulesCountData>[] = helper.list([
+  const helper = new ColumnHelper<DashboardStatsRulesCount>();
+  const columns: TableColumn<DashboardStatsRulesCount>[] = helper.list([
     helper.derived<string>({
       title: 'Rule ID',
       value: (stat) => getRuleInstanceDisplayId(stat.ruleId, stat.ruleInstanceId),
@@ -69,29 +74,36 @@ export default function RuleHitCard() {
     }),
   ]);
 
-  const rulesHitResult = useQuery(HITS_PER_USER_STATS(dateRange), async () => {
-    const [start, end] = dateRange ?? [];
-    const startTimestamp = start?.startOf('day').valueOf();
-    const endTimestamp = end?.endOf('day').valueOf();
+  const rulesHitResult = useQuery(
+    RULES_HIT_STATS(dateRange, paginationParams.page, paginationParams.pageSize),
+    async () => {
+      const [start, end] = dateRange ?? [];
+      const startTimestamp = start?.startOf('day').valueOf();
+      const endTimestamp = end?.endOf('day').valueOf();
 
-    const result = await api.getDashboardStatsRuleHit({
-      startTimestamp,
-      endTimestamp,
-    });
+      const result = await api.getDashboardStatsRuleHit({
+        startTimestamp,
+        endTimestamp,
+        pageSize: paginationParams.pageSize,
+        page: paginationParams.page,
+      });
 
-    return {
-      total: result.data.length,
-      items: result.data,
-    };
-  });
+      return {
+        items: result.data,
+        total: result.total,
+      };
+    },
+  );
 
   return (
-    <QueryResultsTable<DashboardStatsRulesCountData>
-      rowKey="ruleId"
+    <QueryResultsTable<DashboardStatsRulesCount>
+      rowKey="ruleInstanceId"
       columns={columns}
       extraTools={[() => <DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
       queryResults={rulesHitResult}
-      pagination={false}
+      pagination={true}
+      params={paginationParams}
+      onChangeParams={setPaginationParams}
       sizingMode="FULL_WIDTH"
       toolsOptions={{
         setting: false,

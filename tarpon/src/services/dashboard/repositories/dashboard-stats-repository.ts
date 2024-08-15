@@ -12,7 +12,6 @@ import { QaAlertsByChecklistReasonStatsDashboardMetric } from '../../analytics/d
 import { QaAlertsByAssigneeStatsDashboardMetric } from '../../analytics/dashboard-metrics/qa-alerts-by-assignee'
 import { GranularityValuesType, TimeRange } from './types'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
-import { DashboardStatsRulesCountData } from '@/@types/openapi-internal/DashboardStatsRulesCountData'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
@@ -30,6 +29,7 @@ import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardSta
 import { tenantHasFeature } from '@/core/utils/context'
 import { DashboardStatsQaAlertsStatsByChecklistReasonData } from '@/@types/openapi-internal/DashboardStatsQaAlertsStatsByChecklistReasonData'
 import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
+import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
 
 @traceable
 export class DashboardStatsRepository {
@@ -101,12 +101,16 @@ export class DashboardStatsRepository {
   }
   public async getRuleHitCountStats(
     startTimestamp: number,
-    endTimestamp: number
-  ): Promise<DashboardStatsRulesCountData[]> {
+    endTimestamp: number,
+    pageSize?: number | 'DISABLED',
+    page?: number
+  ): Promise<DashboardStatsRulesCountResponse> {
     return RuleHitsStatsDashboardMetric.get(
       this.tenantId,
       startTimestamp,
-      endTimestamp
+      endTimestamp,
+      pageSize,
+      page
     )
   }
 

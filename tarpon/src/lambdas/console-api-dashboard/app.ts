@@ -115,16 +115,19 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardStatsRuleHit(async (ctx, request) => {
-      const { startTimestamp, endTimestamp } = request
+      const { startTimestamp, endTimestamp, pageSize, page } = request
 
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshAlertsStats()
       }
 
       const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
-      return {
-        data: await dashboardStatsRepository.getRuleHitCountStats(start, end),
-      }
+      return await dashboardStatsRepository.getRuleHitCountStats(
+        start,
+        end,
+        pageSize,
+        page
+      )
     })
 
     handlers.registerGetDashboardStatsUsersByTime(async (ctx, request) => {
