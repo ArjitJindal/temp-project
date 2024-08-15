@@ -87,12 +87,8 @@ export async function handleV8PreAggregationTask(
 
   const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
 
-  if (task.entity.type === 'RULE' || task.ruleInstanceId) {
-    const ruleInstanceId =
-      task.entity.type === 'RULE'
-        ? task.entity.ruleInstanceId
-        : task.ruleInstanceId
-
+  if (task.entity.type === 'RULE') {
+    const ruleInstanceId = task.entity.ruleInstanceId
     if (!ruleInstanceId) {
       logger.error(`Rule instance ID is required for pre-aggregation task`)
       return

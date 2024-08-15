@@ -12,6 +12,7 @@ import { CaseRepository } from '../cases/repository'
 import { CurrencyService } from '../currency'
 import { RuleData, RuleJsonLogicEvaluator } from '../rules-engine/v8-engine'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
+import { sendTransactionAggregationTasks } from '../rules-engine/utils'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -839,12 +840,14 @@ export class RiskScoringService {
         })
       )
 
-      await this.riskFactorEvaluateService().handleV8Aggregation(
-        'RISK',
-        aggregationVariables,
-        entity.data,
-        transactionEvents
-      )
+      const messages =
+        await this.riskFactorEvaluateService().handleV8Aggregation(
+          'RISK',
+          aggregationVariables,
+          entity.data,
+          transactionEvents
+        )
+      await sendTransactionAggregationTasks(messages)
     }
 
     return riskScoreComponents

@@ -1,3 +1,4 @@
+import { sortBy } from 'lodash'
 import { BatchJobRepository } from '../repositories/batch-job-repository'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -8,7 +9,6 @@ import {
   RulePreAggregationBatchJob,
 } from '@/@types/batch-job'
 import dayjs from '@/utils/dayjs'
-import * as v8Engine from '@/services/rules-engine/v8-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestRuleInstance } from '@/test-utils/rule-test-utils'
@@ -22,7 +22,7 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getTestV8RiskFactor } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { generateChecksum } from '@/utils/object'
+import * as snsSqsClient from '@/utils/sns-sqs-client'
 
 dynamoDbSetupHook()
 withFeatureHook(['RULES_ENGINE_V8', 'RISK_FACTORS_V8'])
@@ -30,12 +30,8 @@ withLocalChangeHandler()
 
 const dynamoDb = getDynamoDbClient()
 
-const sendAggregationTaskMock = jest.spyOn(v8Engine, 'sendAggregationTask')
-sendAggregationTaskMock.mockImplementation((task) =>
-  Promise.resolve(
-    task.userKeyId ?? generateChecksum((task as any).paymentDetails)
-  )
-)
+const bulkSendMessagesMock = jest.spyOn(snsSqsClient, 'bulkSendMessages')
+bulkSendMessagesMock.mockImplementation(() => Promise.resolve() as any)
 
 async function setUpAggregationVariables(
   tenantId: string,
@@ -83,7 +79,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   const now = dayjs()
 
   beforeEach(() => {
-    sendAggregationTaskMock.mockClear()
+    bulkSendMessagesMock.mockClear()
   })
 
   setUpTransactionsHooks(tenantId, [
@@ -172,17 +168,20 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    expect(sendAggregationTaskMock.mock.calls.map((v) => v[0])).toEqual([
+    expect(
+      bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+        JSON.parse(v.MessageBody as string)
+      )
+    ).toEqual([
       {
-        userKeyId: 'U-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          userId: 'U-1',
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        userId: 'U-1',
+        currentTimestamp: expect.any(Number),
+        jobId: 'test-job-id',
+        entity: {
+          type: 'RULE',
           ruleInstanceId,
         },
       },
@@ -218,63 +217,63 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    const sentTasks = sendAggregationTaskMock.mock.calls.map((v) => v[0])
-    const expectedSentTasks = [
+    expect(
+      sortBy(
+        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+          JSON.parse(v.MessageBody as string)
+        ),
+        'userId'
+      )
+    ).toEqual([
       {
-        userKeyId: 'U-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          userId: 'U-1',
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        userId: 'U-1',
+        currentTimestamp: expect.any(Number),
+        jobId: 'test-job-id',
+        entity: {
+          type: 'RULE',
           ruleInstanceId,
         },
       },
       {
-        userKeyId: 'U-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          userId: 'U-2',
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        userId: 'U-2',
+        currentTimestamp: expect.any(Number),
+        jobId: 'test-job-id',
+        entity: {
+          type: 'RULE',
           ruleInstanceId,
         },
       },
       {
-        userKeyId: 'U-3',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          userId: 'U-3',
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        userId: 'U-3',
+        currentTimestamp: expect.any(Number),
+        jobId: 'test-job-id',
+        entity: {
+          type: 'RULE',
           ruleInstanceId,
         },
       },
       {
-        userKeyId: 'U-4',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          userId: 'U-4',
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        userId: 'U-4',
+        currentTimestamp: expect.any(Number),
+        jobId: 'test-job-id',
+        entity: {
+          type: 'RULE',
           ruleInstanceId,
         },
       },
-    ]
-    expect(sentTasks.length).toBe(expectedSentTasks.length)
-    expect(sentTasks).toEqual(expect.arrayContaining(expectedSentTasks))
+    ])
   })
 
   test('submits pre-aggregation tasks for the payment details in the target time range and direction - 1', async () => {
@@ -306,19 +305,19 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    expect(sendAggregationTaskMock.mock.calls.map((v) => v[0])).toEqual([
+    expect(
+      bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+        JSON.parse(v.MessageBody as string)
+      )
+    ).toEqual([
       {
-        userKeyId: 'cardFingerprint:card-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: { method: 'CARD', cardFingerprint: 'card-1' },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
-        },
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: { method: 'CARD', cardFingerprint: 'card-1' },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
     ])
   })
@@ -352,109 +351,89 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    const sentTasks = sendAggregationTaskMock.mock.calls.map((v) => v[0])
-    const expectedSentTasks = [
+    expect(
+      sortBy(
+        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+          JSON.parse(v.MessageBody as string)
+        ),
+        'paymentDetails.method'
+      )
+    ).toEqual([
       {
-        userKeyId: 'BIC:bic-1#IBAN:iban-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'IBAN',
-            BIC: 'bic-1',
-            IBAN: 'iban-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'card-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'BIC:bic-2#IBAN:iban-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'IBAN',
-            BIC: 'bic-2',
-            IBAN: 'iban-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'card-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'cardFingerprint:card-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'CARD',
-            cardFingerprint: 'card-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'IBAN',
+          BIC: 'bic-1',
+          IBAN: 'iban-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'cardFingerprint:card-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'CARD',
-            cardFingerprint: 'card-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'IBAN',
+          BIC: 'bic-2',
+          IBAN: 'iban-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'walletId:wallet-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'WALLET',
-            walletId: 'wallet-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'WALLET',
+          walletId: 'wallet-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'walletId:wallet-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'WALLET',
-            walletId: 'wallet-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RULE', ruleInstanceId },
-          jobId: 'test-job-id',
-          ruleInstanceId,
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'WALLET',
+          walletId: 'wallet-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RULE', ruleInstanceId },
+        jobId: 'test-job-id',
       },
-    ]
-    expect(sentTasks.length).toBe(expectedSentTasks.length)
-    expect(sentTasks).toEqual(expect.arrayContaining(expectedSentTasks))
+    ])
   })
 
   test('submits pre-aggregation tasks for the users in the target time range and direction - 1 (risk factor)', async () => {
@@ -486,103 +465,89 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       },
     }
     await jobRunnerHandler(testJob)
-    const sentTasks = sendAggregationTaskMock.mock.calls.map((v) => v[0])
-    const expectedSentTasks = [
+    expect(
+      sortBy(
+        bulkSendMessagesMock.mock.calls[0][2].map((v) =>
+          JSON.parse(v.MessageBody as string)
+        ),
+        'paymentDetails.method'
+      )
+    ).toEqual([
       {
-        userKeyId: 'BIC:bic-1#IBAN:iban-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'IBAN',
-            BIC: 'bic-1',
-            IBAN: 'iban-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'card-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'BIC:bic-2#IBAN:iban-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'IBAN',
-            BIC: 'bic-2',
-            IBAN: 'iban-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'CARD',
+          cardFingerprint: 'card-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'cardFingerprint:card-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'CARD',
-            cardFingerprint: 'card-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'IBAN',
+          BIC: 'bic-1',
+          IBAN: 'iban-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'cardFingerprint:card-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'CARD',
-            cardFingerprint: 'card-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'IBAN',
+          BIC: 'bic-2',
+          IBAN: 'iban-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'walletId:wallet-1',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'WALLET',
-            walletId: 'wallet-1',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'WALLET',
+          walletId: 'wallet-1',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
       {
-        userKeyId: 'walletId:wallet-2',
-        payload: {
-          type: 'PRE_AGGREGATION',
-          aggregationVariable: aggregationVariables[0],
-          tenantId,
-          paymentDetails: {
-            method: 'WALLET',
-            walletId: 'wallet-2',
-          },
-          currentTimestamp: expect.any(Number),
-          entity: { type: 'RISK_FACTOR', riskFactorId },
-          jobId: 'test-job-id',
+        type: 'PRE_AGGREGATION',
+        aggregationVariable: aggregationVariables[0],
+        tenantId,
+        paymentDetails: {
+          method: 'WALLET',
+          walletId: 'wallet-2',
         },
+        currentTimestamp: expect.any(Number),
+        entity: { type: 'RISK_FACTOR', riskFactorId },
+        jobId: 'test-job-id',
       },
-    ]
-    expect(sentTasks.length).toBe(expectedSentTasks.length)
-    expect(sentTasks).toEqual(expect.arrayContaining(expectedSentTasks))
+    ])
   })
 
   test('submits unique pre-aggregation tasks (user ID)', async () => {

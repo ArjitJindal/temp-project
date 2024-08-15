@@ -394,7 +394,7 @@ describe('V8, Tests', () => {
     })
   })
 
-  describe('Risk Scoring Service -Aggregation', () => {
+  describe('Risk Scoring Service - Aggregation', () => {
     it('should update inital the risk score of a user', async () => {
       const mongoDb = await getMongoDbClient()
       const riskScoringService = new RiskScoringService(testTenantId, {

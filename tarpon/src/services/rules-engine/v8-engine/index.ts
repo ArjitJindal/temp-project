@@ -2,6 +2,7 @@ import { AsyncLogicEngine } from 'json-logic-engine'
 import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
 import {
+  compact,
   groupBy,
   isEmpty,
   isEqual,
@@ -14,7 +15,6 @@ import {
   uniq,
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { StackConstants } from '@lib/constants'
 import { RULE_FUNCTIONS } from '../v8-functions'
 import { getRuleVariableByKey, isSenderUserVariable } from '../v8-variables'
@@ -73,12 +73,6 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { generateChecksum } from '@/utils/object'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { logger } from '@/core/logger'
-import { envIs } from '@/utils/env'
-import {
-  handleV8PreAggregationTask,
-  handleV8TransactionAggregationTask,
-} from '@/lambdas/transaction-aggregation/app'
-import { getSQSClient } from '@/utils/sns-sqs-client'
 import { RuleHitDirection } from '@/@types/openapi-public/RuleHitDirection'
 import { RuleAggregationType } from '@/@types/openapi-internal/RuleAggregationType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -91,8 +85,7 @@ import { hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { BatchWriteRequestInternal, batchWrite } from '@/utils/dynamodb'
-
-const sqs = getSQSClient()
+import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 
 export type TransactionRuleData = {
   type: 'TRANSACTION'
@@ -118,9 +111,9 @@ type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: RuleEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
 
-export async function sendAggregationTask(
+export function getAggregationTaskMessage(
   task: TransactionAggregationTaskEntry
-): Promise<string> {
+): FifoSqsMessage {
   const payload = task.payload as
     | V8TransactionAggregationTask
     | V8RuleAggregationRebuildTask
@@ -131,22 +124,11 @@ export async function sendAggregationTask(
         : ''
     }`
   )
-  if (envIs('local') || envIs('test')) {
-    if (payload.type === 'TRANSACTION_AGGREGATION') {
-      await handleV8TransactionAggregationTask(payload)
-    } else if (payload.type === 'PRE_AGGREGATION') {
-      await handleV8PreAggregationTask(payload)
-    }
-    return deduplicationId
-  }
-  const command = new SendMessageCommand({
+  return {
     MessageBody: JSON.stringify(payload),
-    QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
     MessageGroupId: generateChecksum(task.userKeyId),
     MessageDeduplicationId: deduplicationId,
-  })
-  await sqs.send(command)
-  return deduplicationId
+  }
 }
 
 export const getJsonLogicEngine = memoizeOne(
@@ -895,8 +877,7 @@ export class RuleJsonLogicEvaluator {
           tenantId: this.tenantId,
         },
       }
-      await sendAggregationTask(task)
-      return
+      return getAggregationTaskMessage(task)
     }
     await this.updateAggregationVariableInternal(
       aggregationVariable,
@@ -1281,12 +1262,18 @@ export class RuleJsonLogicEvaluator {
     logicAggregationVariables: RuleAggregationVariable[],
     transaction: TransactionWithRiskDetails,
     transactionEvents: TransactionEvent[]
-  ) {
+  ): Promise<
+    Array<{
+      MessageBody: string
+      MessageGroupId: string
+      MessageDeduplicationId: string
+    }>
+  > {
     if (
       (!hasFeature('RULES_ENGINE_V8') && type === 'RULES') ||
       (!hasFeature('RISK_FACTORS_V8') && type === 'RISK')
     ) {
-      return
+      return []
     }
 
     const promises =
@@ -1316,6 +1303,6 @@ export class RuleJsonLogicEvaluator {
         ].filter(Boolean)
       }) ?? []
 
-    await Promise.all(promises)
+    return compact(await Promise.all(promises))
   }
 }

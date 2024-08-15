@@ -8,6 +8,12 @@ import {
 import { logger } from '@/core/logger'
 import { addSentryExtras } from '@/core/utils/context'
 
+export type FifoSqsMessage = {
+  MessageBody: string
+  MessageGroupId: string
+  MessageDeduplicationId: string
+}
+
 interface SenderClient {
   send: (command: any, options: any) => Promise<any>
 }
@@ -58,8 +64,16 @@ export function getSQSClient(): SQSClient {
 export async function bulkSendMessages(
   sqsClient: SQSClient,
   queueUrl: string,
-  batchRequestEntries: SendMessageBatchRequestEntry[]
+  rawBatchRequestEntries: Array<Omit<SendMessageBatchRequestEntry, 'Id'>>
 ) {
+  if (rawBatchRequestEntries.length === 0) {
+    return
+  }
+
+  const batchRequestEntries = rawBatchRequestEntries.map((entry, index) => ({
+    Id: `${index}`,
+    ...entry,
+  }))
   const MAX_BATCH_SIZE_BYTES = 256 * 1024 // 256KB in bytes
   const MAX_BATCH_SIZE_COUNT = 10
 

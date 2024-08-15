@@ -16,7 +16,6 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -93,24 +92,21 @@ import {
   isShadowRule,
   isV8RuleInstance,
   runOnV8Engine,
+  sendTransactionAggregationTasks,
 } from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
-import { envIs } from '@/utils/env'
-import { handleTransactionAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { getSQSClient } from '@/utils/sns-sqs-client'
+import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
-
-const sqs = getSQSClient()
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -144,7 +140,6 @@ export type V8RuleAggregationRebuildTask = {
   currentTimestamp: number
   userId?: string
   paymentDetails?: PaymentDetails
-  ruleInstanceId?: string
 }
 
 export type TransactionAggregationTaskEntry = {
@@ -436,7 +431,7 @@ export class RulesEngineService {
     const {
       executedRules,
       hitRules,
-      transactionAggregationTasks,
+      aggregationMessages,
       riskScoreDetails,
       riskScoreComponents,
     } = await this.verifyTransactionInternal(transaction, [
@@ -483,9 +478,7 @@ export class RulesEngineService {
     saveTransactionSegment?.close()
 
     await Promise.all([
-      ...transactionAggregationTasks.map((task) =>
-        this.sendTransactionAggregationTasks(task)
-      ),
+      sendTransactionAggregationTasks(aggregationMessages),
       this.updateGlobalAggregation(savedTransaction, []),
     ])
 
@@ -521,17 +514,13 @@ export class RulesEngineService {
       transactionEvent.updatedTransactionAttributes || {}
     ) as TransactionWithRulesResult
 
-    const {
-      executedRules,
-      hitRules,
-      transactionAggregationTasks,
-      riskScoreDetails,
-    } = await this.verifyTransactionInternal(
-      updatedTransaction,
-      previousTransactionEvents.concat(
-        transactionEvent as TransactionEventWithRulesResult
+    const { executedRules, hitRules, aggregationMessages, riskScoreDetails } =
+      await this.verifyTransactionInternal(
+        updatedTransaction,
+        previousTransactionEvents.concat(
+          transactionEvent as TransactionEventWithRulesResult
+        )
       )
-    )
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -570,9 +559,7 @@ export class RulesEngineService {
       )
     }
     await Promise.all([
-      ...transactionAggregationTasks.map((sqsMessage) =>
-        this.sendTransactionAggregationTasks(sqsMessage)
-      ),
+      sendTransactionAggregationTasks(aggregationMessages),
       updateGlobalAggregationPromise,
     ])
 
@@ -698,7 +685,7 @@ export class RulesEngineService {
   ): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
-    transactionAggregationTasks: TransactionAggregationTaskEntry[]
+    aggregationMessages: FifoSqsMessage[]
     riskScoreDetails?: TransactionRiskScoringResult
     riskScoreComponents?: RiskScoreComponent[]
   }> {
@@ -749,44 +736,48 @@ export class RulesEngineService {
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
     logger.info(`Running rules`)
 
-    const [originalVerifyTransactionResults] = await Promise.all([
-      Promise.all(
-        transactionRuleInstances.map(async (ruleInstance) =>
-          this.verifyTransactionRule({
-            rule: ruleInstance.ruleId
-              ? rulesById[ruleInstance.ruleId]
-              : undefined,
-            ruleInstance,
-            senderUserRiskLevel: await senderUserRiskLevelPromise,
-            transaction: transactionWithRiskDetails,
-            transactionEvents,
-            senderUser,
-            receiverUser,
-            transactionRiskScore: transactionRisk?.score,
-          })
-        )
-      ),
-      // Update aggregation variables in V8 user rules
-      await Promise.all(
-        userRuleInstances.map((ruleInstance) => {
-          const rule = ruleInstance.ruleId
-            ? rulesById[ruleInstance.ruleId]
-            : undefined
-
-          if (!runOnV8Engine(ruleInstance, rule)) {
-            return
-          }
-
-          return this.ruleLogicEvaluator.handleV8Aggregation(
-            'RULES',
-            ruleInstance.logicAggregationVariables ?? [],
-            transaction,
-            transactionEvents
+    const [originalVerifyTransactionResults, userAggregationMessages] =
+      await Promise.all([
+        Promise.all(
+          transactionRuleInstances.map(async (ruleInstance) =>
+            this.verifyTransactionRule({
+              rule: ruleInstance.ruleId
+                ? rulesById[ruleInstance.ruleId]
+                : undefined,
+              ruleInstance,
+              senderUserRiskLevel: await senderUserRiskLevelPromise,
+              transaction: transactionWithRiskDetails,
+              transactionEvents,
+              senderUser,
+              receiverUser,
+              transactionRiskScore: transactionRisk?.score,
+            })
           )
-        })
-      ),
-    ])
+        ),
+        // Update aggregation variables in V8 user rules
+        await Promise.all(
+          userRuleInstances.map((ruleInstance) => {
+            const rule = ruleInstance.ruleId
+              ? rulesById[ruleInstance.ruleId]
+              : undefined
+
+            if (!runOnV8Engine(ruleInstance, rule)) {
+              return []
+            }
+
+            return this.ruleLogicEvaluator.handleV8Aggregation(
+              'RULES',
+              ruleInstance.logicAggregationVariables ?? [],
+              transaction,
+              transactionEvents
+            )
+          })
+        ),
+      ])
     const verifyTransactionResults = compact(originalVerifyTransactionResults)
+    const aggregationMessages = verifyTransactionResults
+      .flatMap((result) => compact(result.aggregationMessages))
+      .concat(userAggregationMessages.flat())
 
     const ruleResults = compact(
       map(verifyTransactionResults, (result) => result.result)
@@ -811,16 +802,12 @@ export class RulesEngineService {
 
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
 
-    const transactionAggregationTasks = verifyTransactionResults.flatMap(
-      (result) => compact(result.transactionAggregationTasks)
-    )
-
     updateStatsSegment?.close()
     this.ruleLogicEvaluator.updatedAggregationVariables.clear()
 
     return {
       ...executedAndHitRulesResult,
-      transactionAggregationTasks,
+      aggregationMessages,
       riskScoreDetails,
       riskScoreComponents: transactionRisk?.components,
     }
@@ -1093,7 +1080,7 @@ export class RulesEngineService {
   }): Promise<
     | {
         result?: ExecutedRulesResult | undefined
-        transactionAggregationTasks?: TransactionAggregationTaskEntry[]
+        aggregationMessages?: FifoSqsMessage[]
       }
     | undefined
   > {
@@ -1119,28 +1106,30 @@ export class RulesEngineService {
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
           logger.info(`Completed rule`)
 
+          let aggregationMessages: FifoSqsMessage[] = []
           if (runOnV8Engine(ruleInstance, options.rule)) {
-            await this.ruleLogicEvaluator.handleV8Aggregation(
-              'RULES',
-              ruleInstance.logicAggregationVariables ?? [],
-              options.transaction,
-              options.transactionEvents
-            )
+            aggregationMessages =
+              await this.ruleLogicEvaluator.handleV8Aggregation(
+                'RULES',
+                ruleInstance.logicAggregationVariables ?? [],
+                options.transaction,
+                options.transactionEvents
+              )
+          } else {
+            aggregationMessages =
+              ruleClassInstance instanceof TransactionAggregationRule
+                ? await this.handleTransactionRuleAggregation(
+                    ruleClassInstance,
+                    isTransactionHistoricalFiltered,
+                    options.transaction,
+                    ruleInstance.id ?? ''
+                  )
+                : []
           }
-
-          const transactionAggregationTasks =
-            ruleClassInstance instanceof TransactionAggregationRule
-              ? await this.handleTransactionRuleAggregation(
-                  ruleClassInstance,
-                  isTransactionHistoricalFiltered,
-                  options.transaction,
-                  ruleInstance.id ?? ''
-                )
-              : []
 
           return {
             result,
-            transactionAggregationTasks,
+            aggregationMessages,
           }
         } catch (e) {
           logger.error(e)
@@ -1162,13 +1151,13 @@ export class RulesEngineService {
     isTransactionHistoricalFiltered: boolean,
     transaction: Transaction,
     ruleInstanceId: string
-  ): Promise<TransactionAggregationTaskEntry[]> {
+  ): Promise<FifoSqsMessage[]> {
     if (!ruleClassInstance.shouldUseAggregation()) {
       return []
     }
 
     const directions = ['origin', 'destination'] as const
-    const transactionAggregationTasks: TransactionAggregationTaskEntry[] = []
+    const aggregationMessages: FifoSqsMessage[] = []
     for (const direction of directions) {
       const shouldUpdateAggregation =
         ruleClassInstance.shouldUpdateUserAggregation(
@@ -1194,15 +1183,18 @@ export class RulesEngineService {
         const userKeyId = ruleClassInstance.getUserKeyId(direction)
         if (userKeyId) {
           if (!(await ruleClassInstance.isRebuilt(direction))) {
-            transactionAggregationTasks.push({
-              userKeyId,
-              payload: {
+            aggregationMessages.push({
+              MessageBody: JSON.stringify({
                 direction,
                 transactionId: transaction.transactionId,
                 ruleInstanceId,
                 tenantId: this.tenantId,
                 isTransactionHistoricalFiltered,
-              },
+              }),
+              MessageGroupId: generateChecksum(userKeyId),
+              MessageDeduplicationId: generateChecksum(
+                `${userKeyId}:${ruleInstanceId}:${transaction.transactionId}`
+              ),
             })
           } else {
             await ruleClassInstance.updateAggregation(
@@ -1213,30 +1205,7 @@ export class RulesEngineService {
         }
       }
     }
-    return transactionAggregationTasks
-  }
-
-  private async sendTransactionAggregationTasks(
-    task: TransactionAggregationTaskEntry
-  ) {
-    const payload = task.payload as TransactionAggregationTask
-    if (envIs('local') || envIs('test')) {
-      await handleTransactionAggregationTask(payload)
-      return
-    }
-
-    const command = new SendMessageCommand({
-      MessageBody: JSON.stringify(task.payload),
-      QueueUrl: process.env.TRANSACTION_AGGREGATION_QUEUE_URL,
-      MessageGroupId: generateChecksum(task.userKeyId),
-      MessageDeduplicationId: generateChecksum(
-        `${task.userKeyId}:${payload.ruleInstanceId}:${payload.transactionId}`
-      ),
-    })
-
-    updateLogMetadata(task)
-    await sqs.send(command)
-    logger.info(`Sent transaction aggregation task to SQS`)
+    return aggregationMessages
   }
 
   private async verifyUserRule(options: {

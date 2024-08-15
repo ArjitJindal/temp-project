@@ -33,7 +33,11 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
+import {
+  filterLiveRules,
+  runOnV8Engine,
+  sendTransactionAggregationTasks,
+} from '@/services/rules-engine/utils'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
@@ -236,7 +240,7 @@ export const transactionHandler = async (
         transaction.transactionId
       )
     await Promise.all(
-      deployingRuleInstances.map((ruleInstance) => {
+      deployingRuleInstances.map(async (ruleInstance) => {
         const rule = ruleInstance.ruleId
           ? getRuleByRuleId(ruleInstance.ruleId)
           : undefined
@@ -245,12 +249,13 @@ export const transactionHandler = async (
           return
         }
 
-        return ruleLogicEvaluator.handleV8Aggregation(
+        const messages = await ruleLogicEvaluator.handleV8Aggregation(
           'RULES',
           ruleInstance.logicAggregationVariables ?? [],
           transaction,
           transactionEvents
         )
+        await sendTransactionAggregationTasks(messages)
       })
     )
   }

@@ -1,4 +1,5 @@
 import createHttpError from 'http-errors'
+import { uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -13,6 +14,12 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
+import {
+  bulkSendMessages,
+  FifoSqsMessage,
+  getSQSClient,
+} from '@/utils/sns-sqs-client'
+import { envIs } from '@/utils/env'
 
 export function getSenderKeys(
   tenantId: string,
@@ -304,4 +311,31 @@ export function filterLiveRules(executions: Partial<Executions>): Executions {
 
 export function isShadowRule(ruleInstance: RuleInstance): boolean {
   return ruleInstance.mode === 'SHADOW_SYNC'
+}
+
+const sqs = getSQSClient()
+export async function sendTransactionAggregationTasks(
+  messages: FifoSqsMessage[]
+) {
+  if (envIs('local', 'test')) {
+    const {
+      handleTransactionAggregationTask,
+      handleV8TransactionAggregationTask,
+    } = await import('@/lambdas/transaction-aggregation/app')
+    for (const message of messages) {
+      const payload = JSON.parse(message.MessageBody)
+      if (payload.type === 'TRANSACTION_AGGREGATION') {
+        await handleV8TransactionAggregationTask(payload)
+      } else {
+        await handleTransactionAggregationTask(payload)
+      }
+    }
+  } else {
+    await bulkSendMessages(
+      sqs,
+      process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
+      uniqBy(messages, 'MessageDeduplicationId')
+    )
+    logger.info(`Sent transaction aggregation tasks to SQS`)
+  }
 }

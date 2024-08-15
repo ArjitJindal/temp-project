@@ -1,10 +1,8 @@
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
-import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { groupBy } from 'lodash'
 import { TransientRepository } from '../repositories/transient-repository'
-import { logger } from '../logger'
 import {
   initializeTenantContext,
   tenantHasFeature,
@@ -329,25 +327,11 @@ export class StreamConsumerBuilder {
         return
       }
 
-      const entries = filteredUpdates.map(
-        (update, i): SendMessageBatchRequestEntry => {
-          const messageGroupId = update.tenantId
-          const messageDeduplicationId = `${update.entityId}-${update.sequenceNumber}`
-
-          const payload = JSON.stringify(update)
-          const byteLength = Buffer.byteLength(payload, 'utf8')
-          if (byteLength > 262144) {
-            logger.error(`Payload size exceeds size limit: ${payload}`)
-          }
-
-          return {
-            Id: `${i}`,
-            MessageBody: payload,
-            MessageGroupId: messageGroupId,
-            MessageDeduplicationId: messageDeduplicationId,
-          }
-        }
-      )
+      const entries = filteredUpdates.map((update) => ({
+        MessageBody: JSON.stringify(update),
+        MessageGroupId: update.tenantId,
+        MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
+      }))
       await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
     })
   }
