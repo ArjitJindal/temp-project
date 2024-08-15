@@ -9,6 +9,7 @@ import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
+import SlaStatus from './SlaStatus';
 import {
   SanctionsHitStatus,
   AlertsAssignmentsUpdateRequest,
@@ -129,6 +130,7 @@ export default function AlertTable(props: Props) {
   } = props;
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
+  const slaEnabled = useFeatureEnabled('ALERT_SLA');
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
   const api = useApi();
@@ -427,6 +429,16 @@ export default function AlertTable(props: Props) {
           key: 'ruleNature',
           type: RULE_NATURE,
         }),
+        ...(slaEnabled
+          ? [
+              helper.display({
+                title: 'SLA status',
+                render: (entity) => {
+                  return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+                },
+              }),
+            ]
+          : []),
         helper.simple<'alertStatus'>({
           title: 'Alert status',
           key: 'alertStatus',
@@ -774,6 +786,7 @@ export default function AlertTable(props: Props) {
     navigate,
     expandedAlertId,
     showClosingReason,
+    slaEnabled,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

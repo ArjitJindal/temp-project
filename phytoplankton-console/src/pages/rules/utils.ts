@@ -175,6 +175,7 @@ export function ruleInstanceToFormValues(
           alertAssignees: ruleInstance.alertConfig?.alertAssignees,
           alertAssigneeRole: ruleInstance.alertConfig?.alertAssigneeRole,
           frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
+          slaPolicies: ruleInstance.alertConfig?.slaPolicies,
           alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
@@ -295,6 +296,7 @@ export function ruleInstanceToFormValuesV8(
       checklistTemplateId: ruleInstance.checklistTemplateId,
       queueId: ruleInstance.queueId,
       frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
+      slaPolicies: ruleInstance.alertConfig?.slaPolicies,
     },
   };
 }
@@ -342,6 +344,7 @@ export function formValuesToRuleInstance(
       alertCreationInterval: basicDetailsStep.alertCreationInterval,
       frozenStatuses: basicDetailsStep.frozenStatuses,
       alertCreatedFor: basicDetailsStep.alertCreatedFor,
+      slaPolicies: basicDetailsStep.slaPolicies,
     },
     ...(isRiskLevelsEnabled
       ? {
@@ -450,6 +453,7 @@ export function formValuesToRuleInstanceV8(
       alertCreatedFor: alertCreationDetailsStep.alertCreatedFor,
       alertCreationDirection: alertCreationDetailsStep.alertCreationDirection,
       frozenStatuses: alertCreationDetailsStep.frozenStatuses,
+      slaPolicies: alertCreationDetailsStep.slaPolicies,
     },
     baseCurrency,
     logicEntityVariables: ruleLogicEntityVariables,

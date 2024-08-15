@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { FrozenStatusesInput } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
 import { RangeValue } from 'rc-picker/es/interface';
 import StepHeader from '../../StepHeader';
+import SlaPolicyInput from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/SlaPolicyInput';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
 import { DerivedStatus, Priority, Rule, RuleLabels, RuleNature } from '@/apis';
@@ -47,6 +48,7 @@ export interface FormValues {
   alertAssignees?: string[];
   alertAssigneeRole?: string;
   alertCreatedFor: AlertCreatedForEnum[];
+  slaPolicies?: string[];
   checksFor: string[];
   frozenStatuses: DerivedStatus[];
 }
@@ -94,7 +96,6 @@ function RuleDetails(props: Props) {
   const [ruleNature, setRuleNature] = useState<RuleNature>(rule.defaultNature);
   const [ruleLabels, setRuleLabels] = useState<RuleLabels[]>(rule.labels);
   const isFalsePositiveCheckEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
-
   useEffect(() => {
     setRuleLabels([]);
   }, [ruleNature]);
@@ -235,6 +236,7 @@ function SimulationIterationDetails() {
 }
 
 function AlertCreationDetails() {
+  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <>
       <StepHeader
@@ -264,6 +266,7 @@ function AlertCreationDetails() {
           )}
         </InputField>
         <FrozenStatusesInput />
+        {isSlaEnabled && <SlaPolicyInput<FormValues> />}
       </PropertyListLayout>
     </>
   );

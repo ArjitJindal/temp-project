@@ -21,6 +21,7 @@ import { NarrativeTemplatesSettings } from './components/NarrativeTemplateSettin
 import { NotificationsSettings } from './components/NotificationSettings';
 import { NarrativeCopilot } from './components/NarrativeCopilot';
 import { FlagrightMLSettings } from './components/FlagtightMLSettings';
+import SlaPolicySettings from './components/SlaPolicySettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -51,6 +52,7 @@ export default function SettingsPage() {
   const i18n = useI18n();
   const [isDemoModeRes] = useDemoMode();
   const isDemoMode = getOr(isDemoModeRes, false);
+  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <PageWrapper title={i18n('menu.settings')}>
       <PageTabs
@@ -77,6 +79,7 @@ export default function SettingsPage() {
                 <NarrativeTemplatesSettings />
                 <ChecklistTemplatesSettings />
                 <RuleQueuesSettings />
+                {isSlaEnabled && <SlaPolicySettings />}
                 <Feature name="NARRATIVE_COPILOT">
                   <AISources />
                 </Feature>

@@ -5,6 +5,7 @@ import { RuleQueueInputField } from './RuleQueueInput';
 import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import { FrozenStatusesInput } from './FrozenStatusInput';
+import SlaPolicyInput from './SlaPolicyInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
 import { AlertCreationDirection, DerivedStatus, Priority, RuleType } from '@/apis';
@@ -12,6 +13,7 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
 import * as Card from '@/components/ui/Card';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface FormValues {
   alertPriority: Priority;
@@ -25,6 +27,7 @@ export interface FormValues {
   queueId?: string;
   checklistTemplateId?: string;
   frozenStatuses: DerivedStatus[];
+  slaPolicies?: string[];
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -39,6 +42,7 @@ export const INITIAL_VALUES: Partial<FormValues> = {
 };
 
 export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) {
+  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <Card.Root>
       <Card.Section>
@@ -130,6 +134,13 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
             </div>
             <Divider className={s.divider} />
             <AlertAssignedToInput />
+            {isSlaEnabled && (
+              <>
+                <Divider className={s.divider} />
+                <SlaPolicyInput<FormValues> />
+                <Divider className={s.divider} />
+              </>
+            )}
             <FrozenStatusesInput />
             <Divider className={s.divider} />
             <RuleQueueInputField<FormValues> label="Alert queue" />
