@@ -5,6 +5,7 @@ import {
   SendMessageBatchRequestEntry,
   SQSClient,
 } from '@aws-sdk/client-sqs'
+import { generateChecksum } from './object'
 import { logger } from '@/core/logger'
 import { addSentryExtras } from '@/core/utils/context'
 
@@ -73,6 +74,9 @@ export async function bulkSendMessages(
   const batchRequestEntries = rawBatchRequestEntries.map((entry, index) => ({
     Id: `${index}`,
     ...entry,
+    MessageDeduplicationId:
+      entry.MessageDeduplicationId &&
+      generateChecksum(entry.MessageDeduplicationId, 10),
   }))
   const MAX_BATCH_SIZE_BYTES = 256 * 1024 // 256KB in bytes
   const MAX_BATCH_SIZE_COUNT = 10

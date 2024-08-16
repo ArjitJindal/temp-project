@@ -640,6 +640,9 @@ export class CdkTarponStack extends cdk.Stack {
     /*  User Event */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
+      provisionedConcurrency:
+        config.resource.USER_LAMBDA.PROVISIONED_CONCURRENCY,
+      memorySize: config.resource.USER_LAMBDA.MEMORY_SIZE,
     })
 
     /* Rule Template (Public) */
