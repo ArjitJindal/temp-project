@@ -4,7 +4,7 @@ import {
   StartQueryExecutionCommandInput,
 } from '@aws-sdk/client-athena'
 import parseStruct from 'athena-struct-parser'
-import { getContext } from '@/core/utils/context'
+import { getContext, updateLogMetadata } from '@/core/utils/context'
 import { ALL_ATTRIBUTES } from '@/@types/openapi-public-custom/all'
 
 /* Provides a map of lower case attribute values to their cased values, for example:
@@ -54,7 +54,9 @@ export async function executeSql<T>(
 
   // The AWS API doesn't have a sync method for executing queries, so we must poll for the result.
   try {
-    // Start the query execution
+    updateLogMetadata({
+      athenaQuery: QueryString,
+    })
     const startQueryExecution = await athena.startQueryExecution(params)
 
     // Wait for the query to complete
