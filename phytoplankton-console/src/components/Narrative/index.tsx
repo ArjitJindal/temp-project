@@ -1,4 +1,4 @@
-import React, { Dispatch, SetStateAction, useRef } from 'react';
+import React, { Dispatch, SetStateAction, useImperativeHandle, useRef } from 'react';
 import { uniqBy } from 'lodash';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
@@ -71,7 +71,11 @@ type NarrativeProps<R> = {
   infoText?: string;
 };
 
-export default function Narrative<R extends string>(props: NarrativeProps<R>) {
+export interface NarrativeRef {
+  reset: () => void;
+}
+
+function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<NarrativeRef>) {
   const {
     formRef,
     possibleReasons,
@@ -98,6 +102,12 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
 
   const isOtherReason = otherReason ? values.values.reasons?.includes(otherReason) : false;
   const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
+
+  useImperativeHandle(ref, () => ({
+    reset: () => {
+      editorRef.current?.reset();
+    },
+  }));
 
   return (
     <Form<FormValues<R>>
@@ -188,11 +198,8 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
                 <MarkdownEditor
                   ref={editorRef}
                   initialValue={values.values.comment ? values.values.comment : ''}
-                  onChange={() => {
-                    const editorInstance = editorRef.current?.editorRef.current?.getInstance();
-                    if (editorInstance) {
-                      inputProps.onChange?.(editorInstance.getMarkdown());
-                    }
+                  onChange={(value) => {
+                    inputProps.onChange?.(value);
                   }}
                   placeholder={placeholder}
                   mentionsEnabled={isMentionsEnabled}
@@ -262,3 +269,5 @@ export default function Narrative<R extends string>(props: NarrativeProps<R>) {
     </Form>
   );
 }
+
+export default React.forwardRef<NarrativeRef, NarrativeProps<any>>(Narrative);

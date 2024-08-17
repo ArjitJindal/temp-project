@@ -6,7 +6,12 @@ import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInterna
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
-import Narrative, { CLOSING_REASONS, COMMON_REASONS, OTHER_REASON } from '@/components/Narrative';
+import Narrative, {
+  CLOSING_REASONS,
+  COMMON_REASONS,
+  OTHER_REASON,
+  NarrativeRef,
+} from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Label from '@/components/library/Label';
@@ -88,6 +93,8 @@ export default function StatusChangeModal(props: Props) {
   const updateRes = getMutationAsyncResource(updateMutation);
   const isFinishedSuccessfully = useFinishedSuccessfully(updateRes);
 
+  const narrativeRef = React.useRef<NarrativeRef>(null);
+
   useEffect(() => {
     if (isFinishedSuccessfully) {
       onClose();
@@ -150,6 +157,7 @@ export default function StatusChangeModal(props: Props) {
         }}
       >
         <Narrative
+          ref={narrativeRef}
           showErrors={showErrors}
           values={formState}
           otherReason={OTHER_REASON}
@@ -201,6 +209,7 @@ export default function StatusChangeModal(props: Props) {
             comment: sanitizedComment,
             closeRelatedCase,
           });
+          narrativeRef?.current?.reset();
         }}
         onCancel={() => {
           setAwaitingConfirmation(false);

@@ -4,7 +4,7 @@ import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
 import { CaseReasons, ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
-import Narrative, { FormValues, OTHER_REASON } from '@/components/Narrative';
+import Narrative, { NarrativeRef, FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
 import { useApi } from '@/api';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
@@ -36,6 +36,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
   );
   const [showError, setShowError] = useState(false);
   const alertsText = pluralize('Alert', alertIds.length);
+  const narrativeRef = React.useRef<NarrativeRef>(null);
   const mutation = useMutation(
     async (values: FormValues<CaseReasons>) => {
       await api.alertsQaStatusChange({
@@ -55,6 +56,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         } else {
           message.success(`${alertsText} marked as QA Pass successfully`);
         }
+        narrativeRef?.current?.reset();
         reload();
         setIsOpen(false);
       },
@@ -107,6 +109,7 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
         writePermissions={['case-management:qa:write']}
       >
         <Narrative
+          ref={narrativeRef}
           values={formState}
           onChange={setFormState}
           entityIds={alertIds}

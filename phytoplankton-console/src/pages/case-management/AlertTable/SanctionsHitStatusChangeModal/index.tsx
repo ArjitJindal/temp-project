@@ -1,6 +1,6 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { SanctionsHitReasons, SanctionsHitStatus } from '@/apis';
-import Narrative, { NarrativeFormValues } from '@/components/Narrative';
+import Narrative, { NarrativeFormValues, NarrativeRef } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
 import { Mutation } from '@/utils/queries/types';
@@ -55,12 +55,14 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
   const [formState, setFormState] = useState<FormState>(initialFormState);
   useEffect(() => {
     if (!isVisible) {
+      narrativeRef?.current?.reset();
       formRef.current?.resetFields(initialFormState.values);
       setFormState(initialFormState);
     }
   }, [isVisible, initialFormState]);
 
   const formRef = useRef<FormRef<FormValues>>(null);
+  const narrativeRef = useRef<NarrativeRef>(null);
 
   const handleConfirm = (
     formValues: FormValues & {
@@ -73,6 +75,7 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       {
         onSuccess: () => {
           onClose();
+          narrativeRef?.current?.reset();
           formRef.current?.setValues(initialFormState.values);
           setFormState(initialFormState);
         },
@@ -97,7 +100,8 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         onClose();
       }}
     >
-      <Narrative<SanctionsHitReasons>
+      <Narrative
+        ref={narrativeRef}
         formRef={formRef}
         showErrors={false}
         values={formState}
