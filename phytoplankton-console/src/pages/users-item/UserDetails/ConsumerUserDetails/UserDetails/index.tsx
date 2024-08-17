@@ -7,6 +7,7 @@ import * as Card from '@/components/ui/Card';
 import { InternalConsumerUser } from '@/apis';
 import SurveyLineIcon from '@/components/ui/icons/Remix/document/survey-line.react.svg';
 import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-line.react.svg';
+import { SavedPaymentDetails } from '@/pages/users-item/UserDetails/SavedPaymentDetails';
 
 interface Props {
   user: InternalConsumerUser;
@@ -38,12 +39,14 @@ export default function UserDetails(props: Props) {
               <Addresses user={user as InternalConsumerUser} />
             </Card.Column>
           </Card.Row>
-          <Card.Row>
-            <Card.Column>
-              <Card.Subtitle title="Bank details" icon={<SurveyLineIcon />} />
-              <BankDetails user={user} />
-            </Card.Column>
-          </Card.Row>
+          <Card.Column>
+            <Card.Subtitle title="Bank details" icon={<SurveyLineIcon />} />
+            <BankDetails user={user} />
+          </Card.Column>
+          <Card.Column>
+            <Card.Subtitle className={s.border} title="Saved payment details" />
+            <SavedPaymentDetails user={user} />
+          </Card.Column>
         </Card.Column>
       </Card.Row>
     </Card.Root>

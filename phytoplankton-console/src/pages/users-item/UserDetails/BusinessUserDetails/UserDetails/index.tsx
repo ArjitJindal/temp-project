@@ -9,7 +9,7 @@ import { InternalBusinessUser } from '@/apis';
 import SurveyLineIcon from '@/components/ui/icons/Remix/document/survey-line.react.svg';
 import CommunityLineIcon from '@/components/ui/icons/Remix/buildings/community-line.react.svg';
 import { BankDetails } from '@/pages/users-item/UserDetails/BusinessUserDetails/UserDetails/BankDetails';
-import { SavedPaymentDetails } from '@/pages/users-item/UserDetails/BusinessUserDetails/UserDetails/SavedPaymentDetails';
+import { SavedPaymentDetails } from '@/pages/users-item/UserDetails/SavedPaymentDetails';
 
 interface Props {
   user: InternalBusinessUser;

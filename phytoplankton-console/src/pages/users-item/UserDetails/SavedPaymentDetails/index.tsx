@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import s from './index.module.less';
-import { InternalBusinessUser } from '@/apis';
+import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Card from '@/components/ui/Card';
-import PaymentDetailsCard from '@/pages/users-item/UserDetails/BusinessUserDetails/UserDetails/SavedPaymentDetails/PaymentDetailsCard';
+import PaymentDetailsCard from '@/pages/users-item/UserDetails/SavedPaymentDetails/PaymentDetailsCard';
 
 interface Props {
-  user: InternalBusinessUser;
+  user: InternalBusinessUser | InternalConsumerUser;
 }
 
 export function SavedPaymentDetails(prop: Props) {
