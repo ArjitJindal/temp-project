@@ -7250,9 +7250,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-sdk@npm:^2.1634.0":
-  version: 2.1652.0
-  resolution: "aws-sdk@npm:2.1652.0"
+"aws-sdk@npm:^2.1664.0":
+  version: 2.1677.0
+  resolution: "aws-sdk@npm:2.1677.0"
   dependencies:
     buffer: "npm:4.9.2"
     events: "npm:1.1.1"
@@ -7264,7 +7264,7 @@ __metadata:
     util: "npm:^0.12.4"
     uuid: "npm:8.0.0"
     xml2js: "npm:0.6.2"
-  checksum: b533f48495242f44b474aafac9700c78dcd7abe1e8719e5857b7c5ac67957d37fe5dba521ecadf86b715c030bc100bb2cef7194d95d840c7e30528dae6315138
+  checksum: 5ca900fa8e0993ecdfd1126a453d2321d06074cb06aadcc22170184c4a6b8896622bc7959c5f45e0ddba389b51034870af64ce2a59c0411266884122b38a88bc
   languageName: node
   linkType: hard
 
@@ -17822,7 +17822,7 @@ __metadata:
     auth0: "npm:^4.4.0"
     aws-cdk: "npm:~2.147.1"
     aws-cdk-lib: "npm:~2.147.1"
-    aws-sdk: "npm:^2.1634.0"
+    aws-sdk: "npm:^2.1664.0"
     aws-sdk-client-mock: "npm:^2.0.1"
     aws-sdk-client-mock-jest: "npm:^2.0.1"
     aws-xray-sdk: "npm:^3.5.0"
