@@ -14,6 +14,7 @@ import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay'
 //types
 import { InternalTransaction } from '@/apis';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 
 interface Props {
   transaction: InternalTransaction;
@@ -43,8 +44,14 @@ export default function SubHeader(props: Props) {
         <Form.Layout.Label title="Reference" className={s.attribute}>
           {transaction.reference ?? '-'}
         </Form.Layout.Label>
+        <Form.Layout.Label title="Tags">
+          <div className={s.tags}>
+            {transaction.tags?.map((tag) => (
+              <KeyValueTag key={tag.key} tag={tag} />
+            ))}
+          </div>
+        </Form.Layout.Label>
       </div>
-
       <Feature name="RISK_SCORING">
         <div className={s.risks}>
           <ActionRiskDisplay transactionId={transaction.transactionId} />
