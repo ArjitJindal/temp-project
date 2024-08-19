@@ -147,8 +147,8 @@ export const WebhookSettings: React.FC = () => {
         tableId="webhooks-table"
         entityName="endpoint"
         entityIdField="_id"
-        readPermissions={['settings:organisation:read']}
-        writePermissions={['settings:organisation:write']}
+        readPermissions={['settings:developers:read']}
+        writePermissions={['settings:developers:write']}
         apiOperations={{
           GET: () => {
             return api.getWebhooks(100).then((value) => {
