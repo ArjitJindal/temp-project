@@ -10,6 +10,7 @@ import Label from '@/components/library/Label';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { neverReturn } from '@/utils/lang';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import { usePrevious } from '@/utils/hooks';
 
 type FormState = NarrativeFormValues<
   SanctionsHitReasons,
@@ -53,13 +54,14 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
   );
 
   const [formState, setFormState] = useState<FormState>(initialFormState);
+  const preNewStatus = usePrevious(newStatus);
   useEffect(() => {
-    if (!isVisible) {
+    if (preNewStatus !== newStatus) {
       narrativeRef?.current?.reset();
       formRef.current?.resetFields(initialFormState.values);
       setFormState(initialFormState);
     }
-  }, [isVisible, initialFormState]);
+  }, [initialFormState, preNewStatus, newStatus]);
 
   const formRef = useRef<FormRef<FormValues>>(null);
   const narrativeRef = useRef<NarrativeRef>(null);
@@ -75,9 +77,6 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       {
         onSuccess: () => {
           onClose();
-          narrativeRef?.current?.reset();
-          formRef.current?.setValues(initialFormState.values);
-          setFormState(initialFormState);
         },
       },
     );

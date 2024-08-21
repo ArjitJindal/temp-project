@@ -144,6 +144,7 @@ export default function AlertTable(props: Props) {
       status?: SanctionsHitStatus;
     }[];
   }>({});
+  const [isStatusChangeModalVisible, setStatusChangeModalVisible] = useState(false);
   const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
     null,
   );
@@ -873,6 +874,7 @@ export default function AlertTable(props: Props) {
             <Button
               onClick={() => {
                 setStatusChangeModalState('CLEARED');
+                setStatusChangeModalVisible(true);
               }}
               isDisabled={isDisabled}
             >
@@ -883,6 +885,7 @@ export default function AlertTable(props: Props) {
             <Button
               onClick={() => {
                 setStatusChangeModalState('OPEN');
+                setStatusChangeModalVisible(true);
               }}
               isDisabled={isDisabled}
             >
@@ -1175,14 +1178,13 @@ export default function AlertTable(props: Props) {
                       [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
                     }));
                   }}
-                  onSanctionsHitsChangeStatus={(sanctionsHitsIds, newStatus) => {
+                  onSanctionsHitsChangeStatus={(sanctionsHitsIds) => {
                     if (alert.alertId != null) {
                       setSelectedSanctionHits({
                         [alert.alertId]: sanctionsHitsIds.map((id) => ({
                           id,
                         })),
                       });
-                      setStatusChangeModalState(newStatus);
                     }
                   }}
                 />
@@ -1231,10 +1233,8 @@ export default function AlertTable(props: Props) {
       />
       <SanctionsHitStatusChangeModal
         entityIds={selectedSanctionHitsIds}
-        isVisible={statusChangeModalState != null}
-        onClose={() => {
-          setStatusChangeModalState(null);
-        }}
+        isVisible={isStatusChangeModalVisible}
+        onClose={() => setStatusChangeModalVisible(false)}
         newStatus={statusChangeModalState ?? 'CLEARED'}
         updateMutation={adaptMutationVariables(changeStatusMutation, (formValues) => {
           const alertIds = Object.entries(selectedSanctionHits)
