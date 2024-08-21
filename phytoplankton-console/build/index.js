@@ -93,11 +93,11 @@ async function main() {
     watch: env.WATCH,
   });
   await fs.writeJson(path.resolve(env.PROJECT_DIR, 'esbuild.json'), buildResult.metafile);
-
+  const randomHash = crypto.randomBytes(16).toString('hex');
   const csp = [
     `default-src 'self'`,
-    `script-src 'self' https://eu-assets.i.posthog.com blob:`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+    `script-src 'self' 'strict-dynamic' https://eu-assets.i.posthog.com blob: 'nonce-${randomHash}'`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com 'nonce-${randomHash}'`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `connect-src 'self'${
