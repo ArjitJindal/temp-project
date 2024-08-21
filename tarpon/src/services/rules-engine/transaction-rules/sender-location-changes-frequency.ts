@@ -9,7 +9,6 @@ import {
   groupTransactionsByTime,
 } from '../utils/transaction-rule-utils'
 import { TIME_WINDOW_SCHEMA, TimeWindow } from '../utils/rule-parameter-schemas'
-import { lookupIpLocation } from '../utils/geoip'
 import { TransactionAggregationRule } from './aggregation-rule'
 import { traceable } from '@/core/xray'
 
@@ -59,7 +58,7 @@ export default class SenderLocationChangesFrequencyRule extends TransactionAggre
 
     const ipInfos = await Promise.all(
       Array.from(uniqueIpAddresses).map((ipAddress) =>
-        lookupIpLocation(ipAddress, this.dynamoDb)
+        this.geoIpService.resolveIpAddress(ipAddress, 'CITY')
       )
     )
 

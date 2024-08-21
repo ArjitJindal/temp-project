@@ -31,6 +31,7 @@ export type Secrets = {
     password: string
     database: string
   }
+  ipGeolocationCreds: { apiKey: string }
 }
 
 export type SecretName = keyof Secrets

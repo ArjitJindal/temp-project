@@ -342,6 +342,7 @@ export default class HighTrafficVolumeBetweenSameUsers extends TransactionAggreg
       {
         sanctionsService: this.sanctionsService,
         ibanService: this.ibanService,
+        geoIpService: this.geoIpService,
       },
       this.mode,
       this.dynamoDb,

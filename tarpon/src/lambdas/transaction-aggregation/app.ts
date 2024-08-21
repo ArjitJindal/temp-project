@@ -37,6 +37,7 @@ import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RulePreAggregationBatchJob } from '@/@types/batch-job'
 import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
+import { GeoIPService } from '@/services/geo-ip'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
@@ -290,6 +291,7 @@ export async function handleTransactionAggregationTask(
     {
       sanctionsService: new SanctionsService(task.tenantId),
       ibanService: new IBANService(task.tenantId),
+      geoIpService: new GeoIPService(task.tenantId),
     },
     mode,
     dynamoDb,

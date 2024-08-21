@@ -20,13 +20,13 @@ const TEST_IP_LOOKUPS = {
   '24.184.45.226': 'AU',
   '14.228.192.0': 'US',
 }
-jest.mock('../../utils/geoip', () => {
-  return {
-    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
-      return { country: TEST_IP_LOOKUPS[ip] }
+jest.mock('@/services/geo-ip', () => ({
+  GeoIPService: jest.fn().mockImplementation(() => ({
+    resolveIpAddress: jest.fn((ip: string) => {
+      return Promise.resolve({ country: TEST_IP_LOOKUPS[ip] })
     }),
-  }
-})
+  })),
+}))
 
 dynamoDbSetupHook()
 

@@ -26,6 +26,7 @@ import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { RiskScoringService } from '../risk-scoring'
 import { SanctionsService } from '../sanctions'
 import { IBANService } from '../iban'
+import { GeoIPService } from '../geo-ip'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -211,6 +212,7 @@ export class RulesEngineService {
   ruleLogicEvaluator: RuleJsonLogicEvaluator
   sanctionsService: SanctionsService
   ibanService: IBANService
+  geoIpService: GeoIPService
 
   constructor(
     tenantId: string,
@@ -252,6 +254,7 @@ export class RulesEngineService {
     )
     this.sanctionsService = new SanctionsService(this.tenantId)
     this.ibanService = new IBANService(this.tenantId)
+    this.geoIpService = new GeoIPService(this.tenantId)
   }
 
   public static async fromEvent(
@@ -942,6 +945,7 @@ export class RulesEngineService {
             {
               sanctionsService: this.sanctionsService,
               ibanService: this.ibanService,
+              geoIpService: this.geoIpService,
             },
             mode,
             this.dynamoDb,

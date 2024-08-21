@@ -15,13 +15,14 @@ const TEST_IP_LOOKUPS = {
   '188.34.130.40': { country: 'DE', city: 'Frankfurt am Main' },
   '95.90.241.171': { country: 'DE', city: 'Berlin' },
 }
-jest.mock('../../utils/geoip', () => {
-  return {
-    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
+
+jest.mock('@/services/geo-ip', () => ({
+  GeoIPService: jest.fn().mockImplementation(() => ({
+    resolveIpAddress: jest.fn((ip: string) => {
       return TEST_IP_LOOKUPS[ip]
     }),
-  }
-})
+  })),
+}))
 const TEST_TENANT_ID = getTestTenantId()
 
 const dynamoDb = getDynamoDbClient()

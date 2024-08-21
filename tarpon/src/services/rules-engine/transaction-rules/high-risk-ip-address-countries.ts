@@ -1,7 +1,6 @@
 import { JSONSchemaType } from 'ajv'
 import { COUNTRIES_SCHEMA } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
-import { lookupIpLocation } from '../utils/geoip'
 import { TransactionRule } from './rule'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { traceable } from '@/core/xray'
@@ -34,11 +33,12 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
     if (!originIpAddress && !destinationIpAddress) {
       return
     }
-
     const [originIpInfo, destinationIpInfo] = await Promise.all([
-      originIpAddress ? lookupIpLocation(originIpAddress, this.dynamoDb) : null,
+      originIpAddress
+        ? this.geoIpService.resolveIpAddress(originIpAddress)
+        : null,
       destinationIpAddress
-        ? lookupIpLocation(destinationIpAddress, this.dynamoDb)
+        ? this.geoIpService.resolveIpAddress(destinationIpAddress)
         : null,
     ])
     logger.info(

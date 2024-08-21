@@ -2,8 +2,8 @@ import { compact } from 'lodash'
 import { TransactionRiskFactorValueHandler } from '.'
 import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'
-import { lookupIpLocation } from '@/services/rules-engine/utils/geoip'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { GeoIPService } from '@/services/geo-ip'
+import { getContext } from '@/core/utils/context'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
   TransactionRiskFactorValueHandler<string | undefined | null>
@@ -23,12 +23,14 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
       if (originIpAddress == null && destinationIpAddress == null) {
         return []
       }
-
-      const dynamoDb = getDynamoDbClient()
+      const context = getContext()
+      const lookupIPLocationService = new GeoIPService(context?.tenantId ?? '')
       const [originIpInfo, destinationIpInfo] = await Promise.all([
-        originIpAddress ? lookupIpLocation(originIpAddress, dynamoDb) : null,
+        originIpAddress
+          ? lookupIPLocationService.resolveIpAddress(originIpAddress)
+          : null,
         destinationIpAddress
-          ? lookupIpLocation(destinationIpAddress, dynamoDb)
+          ? lookupIPLocationService.resolveIpAddress(destinationIpAddress)
           : null,
       ])
 

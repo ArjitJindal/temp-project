@@ -38,6 +38,7 @@ import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationD
 import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
+import { GeoIPService } from '@/services/geo-ip'
 
 const DEFAULT_DESCRIPTION = ''
 
@@ -562,6 +563,7 @@ export function testAggregationRebuild(
           {
             sanctionsService: new SanctionsService(tenantId),
             ibanService: new IBANService(tenantId),
+            geoIpService: new GeoIPService(tenantId),
           },
           'DYNAMODB',
           dynamoDb,

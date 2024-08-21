@@ -1,9 +1,8 @@
 import { FieldOrGroup } from '@react-awesome-query-builder/core'
 import { capitalize } from 'lodash'
-import { lookupIpLocation } from '../utils/geoip'
 import { TransactionRuleVariable } from './types'
 import { getCountriesOptions } from './utils'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { GeoIPService } from '@/services/geo-ip'
 
 const getUiDefinition = (
   direction: 'ORIGIN' | 'DESTINATION',
@@ -31,15 +30,13 @@ const createIpVariable = (
     uiDefinition: getUiDefinition(direction, granularity),
     valueType: 'string',
     load: async (transaction, context) => {
+      const lookupIPLocationService = new GeoIPService(context?.tenantId ?? '')
       const ipAddress =
         direction === 'ORIGIN'
           ? transaction?.originDeviceData?.ipAddress
           : transaction?.destinationDeviceData?.ipAddress
       const info = ipAddress
-        ? await lookupIpLocation(
-            ipAddress,
-            context?.dynamoDb ?? getDynamoDbClient()
-          )
+        ? await lookupIPLocationService.resolveIpAddress(ipAddress, granularity)
         : undefined
       return info?.[granularity.toLowerCase()]
     },

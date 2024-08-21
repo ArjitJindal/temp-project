@@ -18,13 +18,13 @@ const TEST_IP_LOOKUPS = {
   '101.33.10.0': 'DE',
 }
 
-jest.mock('@/services/rules-engine/utils/geoip', () => {
-  return {
-    lookupIpLocation: jest.fn().mockImplementation((ip: string) => {
-      return { country: TEST_IP_LOOKUPS[ip] }
+jest.mock('@/services/geo-ip', () => ({
+  GeoIPService: jest.fn().mockImplementation(() => ({
+    resolveIpAddress: jest.fn((ip: string) => {
+      return Promise.resolve({ country: TEST_IP_LOOKUPS[ip] })
     }),
-  }
-})
+  })),
+}))
 
 const RISK_FACTOR: (
   parameter: ParameterAttributeRiskValuesParameterEnum
