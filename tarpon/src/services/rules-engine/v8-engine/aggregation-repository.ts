@@ -25,6 +25,10 @@ import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/
 
 export type AggregationData<T = unknown> = {
   value: T | { [group: string]: T }
+  entities?: {
+    value: T
+    timestamp?: number
+  }[]
 }
 
 // Increment this version when we need to invalidate all existing aggregations.
@@ -78,23 +82,47 @@ export class AggregationRepository {
         ttl: this.getUpdatedTtlAttribute(aggregationVariable),
       }
     })
-    return Object.entries(aggregationDataWithTtl).map((entry) => {
-      const keys = DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
-        this.tenantId,
-        userKeyId,
-        getAggVarHash(aggregationVariable),
-        groupValue,
-        entry[0]
-      )
-      return {
-        PutRequest: {
-          Item: {
-            ...keys,
-            ...entry[1],
-          },
-        },
-      }
-    })
+    const putRequests = Object.entries(aggregationDataWithTtl)
+      .map((entry) => {
+        const keys = DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
+          this.tenantId,
+          userKeyId,
+          getAggVarHash(aggregationVariable),
+          groupValue,
+          entry[0]
+        )
+        if (entry[1].entities == null || entry[1].entities.length > 0) {
+          return {
+            PutRequest: {
+              Item: {
+                ...keys,
+                ...entry[1],
+              },
+            },
+          }
+        }
+      })
+      .filter(Boolean) as BatchWriteRequestInternal[]
+    const deleteReqests = Object.entries(aggregationDataWithTtl)
+      .map((entry) => {
+        const keys = DynamoDbKeys.V8_RULE_USER_TIME_AGGREGATION(
+          this.tenantId,
+          userKeyId,
+          getAggVarHash(aggregationVariable),
+          groupValue,
+          entry[0]
+        )
+        if (entry[1].entities != null && entry[1].entities.length === 0) {
+          return {
+            DeleteRequest: {
+              Key: keys,
+            },
+          }
+        }
+      })
+      .filter(Boolean) as BatchWriteRequestInternal[]
+
+    return putRequests.concat(deleteReqests)
   }
 
   public async rebuildUserTimeAggregations(
@@ -157,6 +185,7 @@ export class AggregationRepository {
       ? result?.Items?.map((item) => ({
           time: item.SortKeyID,
           value: item.value as T,
+          entities: item.entities,
         }))
       : undefined
   }

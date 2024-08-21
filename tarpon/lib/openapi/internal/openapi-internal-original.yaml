@@ -6981,6 +6981,8 @@ components:
           type: object
         version:
           type: number
+        lastNEntities:
+          type: number
       required:
         - key
         - type

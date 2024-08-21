@@ -3,6 +3,7 @@ import memoizeOne from 'memoize-one'
 import DataLoader from 'dataloader'
 import {
   compact,
+  drop,
   groupBy,
   isEmpty,
   isEqual,
@@ -10,8 +11,10 @@ import {
   mapValues,
   memoize,
   mergeWith,
+  minBy,
   omit,
   omitBy,
+  sortBy,
   uniq,
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
@@ -105,9 +108,10 @@ type UserIdentifier = {
   paymentDetails?: PaymentDetails
 }
 
-type AuxiliaryIndexTransactionWithDirection = AuxiliaryIndexTransaction & {
-  direction?: 'origin' | 'destination'
-}
+export type AuxiliaryIndexTransactionWithDirection =
+  AuxiliaryIndexTransaction & {
+    direction?: 'origin' | 'destination'
+  }
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: RuleEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
 
@@ -257,7 +261,6 @@ export class RuleJsonLogicEvaluator {
     const aggVarData = await Promise.all(
       aggVariables.map(async (aggVariable) => {
         const aggregationVarLoader = this.aggregationVarLoader(data)
-
         return {
           variable: aggVariable,
           ORIGIN:
@@ -632,7 +635,14 @@ export class RuleJsonLogicEvaluator {
       for (const group of groups) {
         const groupAggregationResult = omitBy(
           mapValues(aggregationResult, (v) => ({
-            value: (v.value as { [group: string]: unknown })[group],
+            value: (
+              v.value as { [group: string]: { value: unknown; entities } }
+            )[group]?.value,
+            entities: aggregationVariable.lastNEntities
+              ? (v.value as { [group: string]: { value: unknown; entities } })[
+                  group
+                ]?.entities
+              : undefined,
           })),
           (v) => !v.value
         )
@@ -724,6 +734,8 @@ export class RuleJsonLogicEvaluator {
     let timeAggregatedResult: {
       [time: string]: AggregationData
     } = {}
+    let targetTransactionsCount = 0
+    const entitiesByGroupValue: { [key: string]: number } = {}
     for await (const data of generator) {
       const transactions: AuxiliaryIndexTransactionWithDirection[] = [
         ...data.sendingTransactions.map((tx) => ({
@@ -734,7 +746,7 @@ export class RuleJsonLogicEvaluator {
           ...tx,
           direction: 'destination' as const,
         })),
-      ]
+      ].sort((a, b) => (b.timestamp as number) - (a.timestamp as number))
 
       // Filter transactions by filtersLogic
       const targetTransactions: AuxiliaryIndexTransactionWithDirection[] = []
@@ -755,7 +767,15 @@ export class RuleJsonLogicEvaluator {
             receiverUser,
           })
         if (isTransactionFiltered) {
+          targetTransactionsCount++
           targetTransactions.push(transaction)
+          if (
+            !aggregationVariable.aggregationGroupByFieldKey &&
+            aggregationVariable.lastNEntities &&
+            targetTransactionsCount === aggregationVariable.lastNEntities
+          ) {
+            break
+          }
         }
       }
       // Update aggregation result
@@ -793,24 +813,72 @@ export class RuleJsonLogicEvaluator {
                   hasGroups && txGroupByEntityVariable
                     ? await txGroupByEntityVariable.load(transaction, context)
                     : undefined
+
                 return {
                   value,
-                  groupValue,
+                  groupValue: {
+                    value: groupValue,
+                    entity: {
+                      timestamp: transaction.timestamp,
+                      value,
+                    },
+                  },
+                  ...(!hasGroups
+                    ? {
+                        entity: {
+                          timestamp: transaction.timestamp,
+                          value,
+                        },
+                      }
+                    : {}),
                 }
               }
             )
           )
-          const filteredAggregateValues = aggregateValues.filter((v) => {
-            return v.value && (!hasGroups || v.groupValue)
+          let filteredAggregateValues = [...aggregateValues]
+
+          if (hasGroups) {
+            filteredAggregateValues.sort(
+              (a, b) =>
+                (b.groupValue.entity.timestamp as number) -
+                (a.groupValue.entity.timestamp as number)
+            )
+          }
+
+          filteredAggregateValues = filteredAggregateValues.filter((v) => {
+            if (!hasGroups) {
+              return v.value
+            }
+            if (aggregationVariable.lastNEntities && v?.groupValue?.value) {
+              const val = v.groupValue.value as string
+              entitiesByGroupValue[val] = (entitiesByGroupValue[val] ?? 0) + 1
+              return (
+                v.value &&
+                v.groupValue &&
+                entitiesByGroupValue[val] <= aggregationVariable.lastNEntities
+              )
+            }
+            return v.value && v.groupValue
           })
           const values = filteredAggregateValues.map((v) => v.value)
+          const entities = filteredAggregateValues.map((v) => v.entity)
           return {
             value: hasGroups
               ? mapValues(
-                  groupBy(filteredAggregateValues, (v) => v.groupValue),
-                  (v) => aggregator.aggregate(v.map((v) => v.value))
+                  groupBy(filteredAggregateValues, (v) => v.groupValue.value),
+                  (groupValues) => {
+                    return {
+                      value: aggregator.aggregate(
+                        groupValues.map((v) => v.value)
+                      ),
+                      entities: groupValues.map((v) => v.groupValue.entity),
+                    }
+                  }
                 )
               : aggregator.aggregate(values),
+            ...(aggregationVariable.lastNEntities && !hasGroups
+              ? { entities }
+              : {}),
           }
         },
         aggregationGranularity
@@ -827,10 +895,29 @@ export class RuleJsonLogicEvaluator {
                   b?.value as { [key: string]: unknown }
                 )
               : mergeValues(aggregator, a?.value, b?.value),
+            ...(aggregationVariable.lastNEntities && !hasGroups
+              ? {
+                  entities: (a?.entities ?? []).concat(b?.entities ?? []),
+                }
+              : {}),
           }
         }
       )
-
+      if (
+        !hasGroups &&
+        aggregationVariable.lastNEntities &&
+        targetTransactionsCount === aggregationVariable.lastNEntities
+      ) {
+        break
+      }
+      if (hasGroups && aggregationVariable.lastNEntities) {
+        const flag = Object.entries(entitiesByGroupValue).every(
+          ([_key, value]) => value >= (aggregationVariable.lastNEntities ?? 0)
+        )
+        if (flag) {
+          break
+        }
+      }
       if (timeoutReached) {
         logger.error('Timeout reached while rebuilding aggregation (FR-5225)')
         break
@@ -918,6 +1005,7 @@ export class RuleJsonLogicEvaluator {
         entityKey: aggFieldKey,
       })
     )
+
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
       ? await entityVarDataloader.load({
@@ -947,6 +1035,11 @@ export class RuleJsonLogicEvaluator {
       aggregationVariable.timeWindow,
       this.tenantId
     )
+    let updatedAggregationData:
+      | ({
+          time: string
+        } & AggregationData)
+      | null = null
 
     const targetAggregations =
       (await this.aggregationRepository.getUserRuleTimeAggregations(
@@ -960,15 +1053,63 @@ export class RuleJsonLogicEvaluator {
     if ((targetAggregations?.length ?? 0) > 1) {
       throw new Error('Should only get one target aggregation')
     }
-    const targetAggregation = targetAggregations?.[0] ?? {
+    let targetAggregation = targetAggregations?.[0] ?? {
       time: getTransactionStatsTimeGroupLabel(
         transaction.timestamp,
         aggregationGranularity
       ),
       value: aggregator.init(),
     }
+    if (aggregationVariable.lastNEntities) {
+      const aggregations =
+        await this.aggregationRepository.getUserRuleTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          0,
+          transaction.timestamp + 1,
+          aggregationGranularity,
+          newGroupValue
+        )
+      const entitiesCountInAggregation =
+        aggregations?.reduce(
+          (acc, curr) => (curr?.entities ?? []).length + acc,
+          1
+        ) ?? 1
+      if (entitiesCountInAggregation > aggregationVariable.lastNEntities) {
+        const targetAggregationToUpdate =
+          this.getAggregationWithEarliestTransaction(aggregations)
+        const sortedEntities = sortBy(
+          targetAggregationToUpdate?.entities ?? [],
+          'timestamp'
+        )
+        const targetEntities = drop(sortedEntities, 1)
+        const newUpdatedAggregationData = targetEntities.map(
+          (entity) => entity.value
+        )
+        if (isEqual(targetAggregationToUpdate, targetAggregation)) {
+          targetAggregation = {
+            ...targetAggregation,
+            value: aggregator.aggregate(newUpdatedAggregationData),
+            entities: targetEntities,
+          }
+        } else if (
+          targetAggregationToUpdate &&
+          !isEqual(targetAggregationToUpdate, targetAggregation)
+        ) {
+          updatedAggregationData = {
+            ...targetAggregationToUpdate,
+            value: aggregator.aggregate(newUpdatedAggregationData),
+            entities: targetEntities,
+          }
+        }
+      }
+    }
     const newTargetAggregation: AggregationData = {
       value: aggregator.reduce(targetAggregation.value, newDataValue),
+      entities: (targetAggregation.entities ?? []).concat({
+        timestamp: transaction.timestamp,
+        value: newDataValue,
+      }),
     }
     if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
       await this.aggregationRepository.rebuildUserTimeAggregations(
@@ -976,6 +1117,9 @@ export class RuleJsonLogicEvaluator {
         aggregationVariable,
         {
           [targetAggregation.time]: newTargetAggregation,
+          ...(updatedAggregationData
+            ? { [updatedAggregationData.time]: updatedAggregationData }
+            : {}),
         },
         newGroupValue
       )
@@ -986,6 +1130,19 @@ export class RuleJsonLogicEvaluator {
       transaction.transactionId
     )
     logger.info('Updated aggregation')
+  }
+
+  private getAggregationWithEarliestTransaction(
+    aggregations:
+      | ({
+          time: string
+        } & AggregationData<unknown>)[]
+      | undefined
+  ) {
+    return minBy(
+      aggregations,
+      (obj) => minBy(obj?.entities ?? [], 'timestamp')?.timestamp
+    )
   }
 
   private getTransactionFieldsToFetch(
@@ -1111,7 +1268,12 @@ export class RuleJsonLogicEvaluator {
         newGroupValue
       )
     }
-
+    let aggregationEntitiesCount = aggData.reduce(
+      (acc, cur: AggregationData) => {
+        return acc + (cur.entities?.length ?? 0)
+      },
+      0
+    )
     let result = aggData.reduce((acc: unknown, cur: AggregationData) => {
       return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
     }, aggregator.init())
@@ -1124,6 +1286,7 @@ export class RuleJsonLogicEvaluator {
     if (
       data.type === 'TRANSACTION' &&
       aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' &&
+      aggregationVariable.aggregationFunc !== 'SUM' &&
       newTransactionIsTargetDirection &&
       this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
     ) {
@@ -1146,8 +1309,12 @@ export class RuleJsonLogicEvaluator {
         // NOTE: Merge the incoming transaction/user into the aggregation result
         if (newDataValue) {
           result = aggregator.reduce(result, newDataValue)
+          aggregationEntitiesCount++
         }
       }
+    }
+    if (aggregationEntitiesCount < (aggregationVariable.lastNEntities ?? 0)) {
+      return null
     }
     return aggregator.compute(result)
   }

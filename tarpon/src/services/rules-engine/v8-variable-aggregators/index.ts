@@ -43,10 +43,16 @@ export function mergeGroups(
     cloneDeep(groups1 ?? {}),
     cloneDeep(groups2 ?? {}),
     (groupValue1, groupValue2) => {
-      return aggregator.merge(
-        groupValue1 ?? aggregator.init(),
-        groupValue2 ?? aggregator.init()
-      )
+      return {
+        value: aggregator.merge(
+          groupValue1?.value ?? aggregator.init(),
+          groupValue2?.value ?? aggregator.init()
+        ),
+        entities: [
+          ...(groupValue1?.entities ?? []),
+          ...(groupValue2?.entities ?? []),
+        ],
+      }
     }
   )
 }

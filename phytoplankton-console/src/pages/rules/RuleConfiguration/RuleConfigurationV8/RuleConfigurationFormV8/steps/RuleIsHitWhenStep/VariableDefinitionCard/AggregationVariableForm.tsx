@@ -38,6 +38,8 @@ import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import NumberInput from '@/components/library/NumberInput';
+import Checkbox from '@/components/library/Checkbox';
 
 function varLabelWithoutNamespace(label: string): string {
   return label.replace(/^.+\s*\/\s*/, '');
@@ -495,17 +497,72 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
               />
             </Label>
           )}
-          <div className={s.timeWindow}>
-            <VariableTimeWindow
-              value={formValues.timeWindow}
-              onChange={(newValue) => {
-                newValue = roundedTimeWindowMinutes(newValue);
-                handleUpdateForm({
-                  timeWindow: newValue,
-                });
+          {!formValues.lastNEntities && (
+            <div className={s.timeWindow}>
+              <VariableTimeWindow
+                value={formValues.timeWindow}
+                onChange={(newValue) => {
+                  newValue = roundedTimeWindowMinutes(newValue);
+                  handleUpdateForm({
+                    timeWindow: newValue,
+                  });
+                }}
+              />
+            </div>
+          )}
+          <div className={s.checkBox}>
+            <Checkbox
+              value={!!formValues.lastNEntities}
+              onChange={(val) => {
+                handleUpdateForm(
+                  val
+                    ? {
+                        lastNEntities: 5,
+                        timeWindow: {
+                          start: {
+                            units: 0,
+                            granularity: 'all_time',
+                          },
+                          end: {
+                            units: 0,
+                            granularity: 'now',
+                          },
+                        },
+                      }
+                    : {
+                        lastNEntities: undefined,
+                        timeWindow: {
+                          start: {
+                            units: 1,
+                            granularity: 'day',
+                          },
+                          end: {
+                            units: 0,
+                            granularity: 'now',
+                          },
+                        },
+                      },
+                );
               }}
-            />
+            />{' '}
+            Aggregate the most recent n entities, considering the entire time window from now to all
+            time.
           </div>
+          {formValues.lastNEntities && (
+            <Label
+              label="Entities count"
+              hint="Can aggregate upto last 10 entities."
+              required={{ value: true, showHint: true }}
+            >
+              <NumberInput
+                value={formValues.lastNEntities}
+                onChange={(lastNEntities) => handleUpdateForm({ lastNEntities })}
+                placeholder="Enter number of entities"
+                min={1}
+                max={10}
+              />
+            </Label>
+          )}
         </PropertyColumns>
         {timeWindowValidationError && <Alert type="error">{timeWindowValidationError}</Alert>}
         <div>

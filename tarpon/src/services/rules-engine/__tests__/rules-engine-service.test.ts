@@ -769,7 +769,215 @@ describe('Verify Transaction: V8 engine', () => {
       } as TransactionMonitoringResult)
     })
   })
+  describe('Simple case -  last n transactions', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-1',
+        defaultLogic: { and: [{ '>': [{ var: 'agg:test' }, 100] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test',
+            type: 'PAYMENT_DETAILS_TRANSACTIONS',
+            userDirection: 'SENDER_OR_RECEIVER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'AVG',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            lastNEntities: 3,
+            baseCurrency: 'USD',
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
 
+    test('Basic test', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const timestamp = dayjs().valueOf()
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.executedRules.length).toBe(1)
+      expect(result1.hitRules.length).toBe(0)
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 1,
+        })
+      )
+      expect(result2.executedRules.length).toBe(1)
+      expect(result2.hitRules.length).toBe(0)
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 2,
+        })
+      )
+      expect(result3.executedRules.length).toBe(1)
+      expect(result3.hitRules.length).toBe(0)
+      const result4 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-4',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 200,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 3,
+        })
+      )
+      expect(result4.executedRules.length).toBe(1)
+      expect(result4.hitRules.length).toBe(1)
+    })
+  })
+
+  describe('Simple case check with last transaction -  last n transactions', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-1',
+        defaultLogic: {
+          and: [
+            {
+              '<': [
+                { var: 'agg:testlastn' },
+                { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
+              ],
+            },
+          ],
+        },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:testlastn',
+            type: 'PAYMENT_DETAILS_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'SUM',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            lastNEntities: 1,
+            baseCurrency: 'USD',
+          },
+        ],
+        logicEntityVariables: [
+          {
+            key: 'TRANSACTION:originAmountDetails-transactionAmount',
+            entityKey: 'TRANSACTION:originAmountDetails-transactionAmount',
+          },
+        ],
+        type: 'TRANSACTION',
+        defaultBaseCurrency: 'USD',
+      },
+    ])
+
+    test('Basic test', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const timestamp = dayjs().valueOf()
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 't-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.executedRules.length).toBe(1)
+      expect(result1.hitRules.length).toBe(0)
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 't-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 200,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 1000,
+        })
+      )
+      expect(result2.executedRules.length).toBe(1)
+      expect(result2.hitRules.length).toBe(1)
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 't-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 150,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 2000,
+        })
+      )
+      expect(result3.executedRules.length).toBe(1)
+      expect(result3.hitRules.length).toBe(0)
+      const result4 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 't-4',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 250,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 3000,
+        })
+      )
+      expect(result4.executedRules.length).toBe(1)
+      expect(result4.hitRules.length).toBe(1)
+    })
+  })
   describe('with aggregation group by field', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
