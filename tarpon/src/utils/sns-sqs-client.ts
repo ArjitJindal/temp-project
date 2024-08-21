@@ -115,16 +115,12 @@ export async function bulkSendMessages(
     [] as SendMessageBatchRequestEntry[][]
   )
 
-  const results = await Promise.all(
-    batches.map((batch) =>
-      sqsClient.send(
-        new SendMessageBatchCommand({
-          QueueUrl: queueUrl,
-          Entries: batch,
-        })
-      )
+  for (const batch of batches) {
+    await sqsClient.send(
+      new SendMessageBatchCommand({
+        QueueUrl: queueUrl,
+        Entries: batch,
+      })
     )
-  )
-
-  return results
+  }
 }

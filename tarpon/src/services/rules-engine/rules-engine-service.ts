@@ -480,10 +480,14 @@ export class RulesEngineService {
 
     saveTransactionSegment?.close()
 
-    await Promise.all([
-      sendTransactionAggregationTasks(aggregationMessages),
-      this.updateGlobalAggregation(savedTransaction, []),
-    ])
+    try {
+      await Promise.all([
+        sendTransactionAggregationTasks(aggregationMessages),
+        this.updateGlobalAggregation(savedTransaction, []),
+      ])
+    } catch (e) {
+      logger.error(e)
+    }
 
     return {
       transactionId: savedTransaction.transactionId as string,
