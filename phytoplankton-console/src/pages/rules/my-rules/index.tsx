@@ -346,29 +346,34 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 disabled={deleting}
                 data-cy="rule-preview-button"
               />
-              <EditOutlined
-                className={s.actionIcons}
-                onClick={() => {
-                  if (canWriteRules && !deleting) {
-                    onEditRule(entity);
-                  }
-                }}
-                disabled={!canWriteRules || deleting}
-                data-cy="rule-edit-button"
-              />
-              <RuleActionsMenu
-                ruleInstance={entity}
-                onDuplicate={onDuplicateRule}
-                onDelete={(id) => {
-                  if (id && canWriteRules) {
-                    setDeleting(true);
-                    handleDeleteRuleInstanceMutation.mutate(id);
-                  }
-                }}
-                res={getMutationAsyncResource(handleDeleteRuleInstanceMutation)}
-                deleting={deleting}
-                canWriteRules={canWriteRules}
-              />
+              {canWriteRules && (
+                <EditOutlined
+                  className={s.actionIcons}
+                  onClick={() => {
+                    if (canWriteRules && !deleting) {
+                      onEditRule(entity);
+                    }
+                  }}
+                  disabled={!canWriteRules || deleting}
+                  data-cy="rule-edit-button"
+                  style={{ cursor: !canWriteRules || deleting ? 'not-allowed' : 'pointer' }}
+                />
+              )}
+              {canWriteRules && (
+                <RuleActionsMenu
+                  ruleInstance={entity}
+                  onDuplicate={onDuplicateRule}
+                  onDelete={(id) => {
+                    if (id && canWriteRules) {
+                      setDeleting(true);
+                      handleDeleteRuleInstanceMutation.mutate(id);
+                    }
+                  }}
+                  res={getMutationAsyncResource(handleDeleteRuleInstanceMutation)}
+                  deleting={deleting}
+                  canWriteRules={canWriteRules}
+                />
+              )}
             </div>
           );
         },

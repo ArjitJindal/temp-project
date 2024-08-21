@@ -46,7 +46,10 @@ const RuleActionsMenu: React.FC<RuleActionsMenuProps> = ({
           res={res}
         >
           {({ onClick }) => (
-            <span className={s.deleteButton} onClick={onClick}>
+            <span
+              className={s.deleteButton}
+              onClick={!canWriteRules || deleting ? undefined : onClick}
+            >
               Delete
             </span>
           )}
@@ -63,7 +66,7 @@ const RuleActionsMenu: React.FC<RuleActionsMenuProps> = ({
         <Menu.Item
           key={item.key}
           icon={item.icon}
-          onClick={item.onClick as any}
+          onClick={item.disabled ? undefined : (item.onClick as any)}
           disabled={item.disabled}
           className={cn(s.actionsMenuItem, index % 2 === 1 ? s.isOdd : '')}
           data-cy={item.testName}

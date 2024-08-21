@@ -219,7 +219,7 @@ paths:
       operationId: get-rule
       x-flagright:
         permissions:
-          - rules:my-rules:write
+          - rules:my-rules:read
       responses:
         '200':
           content:
