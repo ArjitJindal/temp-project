@@ -97,7 +97,7 @@ async function main() {
   const csp = [
     `default-src 'self'`,
     `script-src 'self' 'strict-dynamic' https://eu-assets.i.posthog.com blob: 'nonce-${randomHash}'`,
-    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com 'nonce-${randomHash}'`,
+    `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `connect-src 'self'${
