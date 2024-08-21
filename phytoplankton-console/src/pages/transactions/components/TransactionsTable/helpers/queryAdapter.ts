@@ -30,6 +30,9 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       destinationPaymentMethodId: params.destinationPaymentMethodId,
       ruleInstancesHitFilter: params.ruleInstancesHitFilter?.join(',') ?? '',
       productType: params.productType?.join(',') ?? '',
+      'originAmountDetails.country': params['originAmountDetails.country']?.join(',') ?? '',
+      'destinationAmountDetails.country':
+        params['destinationAmountDetails.country']?.join(',') ?? '',
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -60,6 +63,8 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       destinationPaymentMethodId: raw.destinationPaymentMethodId,
       ruleInstancesHitFilter: raw.ruleInstancesHitFilter?.split(','),
       productType: raw.productType?.split(','),
+      'originAmountDetails.country': raw['originAmountDetails.country']?.split(','),
+      'destinationAmountDetails.country': raw['destinationAmountDetails.country']?.split(','),
     };
   },
 };

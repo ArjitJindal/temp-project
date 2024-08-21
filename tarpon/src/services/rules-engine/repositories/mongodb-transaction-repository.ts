@@ -183,6 +183,22 @@ export class MongoDbTransactionRepository
   ): Filter<InternalTransaction> {
     const conditions: Filter<InternalTransaction>[] = additionalFilters
 
+    if (params.filterDestinationCountries) {
+      conditions.push({
+        'destinationAmountDetails.country': {
+          $in: params.filterDestinationCountries,
+        },
+      })
+    }
+
+    if (params.filterOriginCountries) {
+      conditions.push({
+        'originAmountDetails.country': {
+          $in: params.filterOriginCountries,
+        },
+      })
+    }
+
     if (params.alertId) {
       conditions.push({ alertIds: params.alertId })
     }

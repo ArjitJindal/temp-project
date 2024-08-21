@@ -3920,6 +3920,18 @@ paths:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         in: query
         name: filterDestinationCurrencies
+      - schema:
+          type: array
+          items:
+            type: string
+        in: query
+        name: filterOriginCountries
+      - schema:
+          type: array
+          items:
+            type: string
+        in: query
+        name: filterDestinationCountries
     get:
       summary: Alerts - Item - Transaction List
       operationId: get-alert-transaction-list

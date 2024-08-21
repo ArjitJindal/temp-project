@@ -37,6 +37,8 @@ export const CaseTransactionsCard = (props: Props) => {
       api.getCaseTransactions({
         ...tableParams,
         caseId,
+        filterDestinationCountries: tableParams['destinationAmountDetails.country'],
+        filterOriginCountries: tableParams['originAmountDetails.country'],
       }),
   );
 

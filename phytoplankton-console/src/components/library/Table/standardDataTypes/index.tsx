@@ -478,6 +478,15 @@ export const COUNTRY: ColumnDataType<ApiCountryCode> = {
   stringify: (value: ApiCountryCode | undefined) => {
     return value ? COUNTRIES[value] : '';
   },
+  autoFilterDataType: {
+    kind: 'select',
+    mode: 'MULTIPLE',
+    displayMode: 'select',
+    options: Object.entries(COUNTRIES).map(([isoCode, country]) => ({
+      value: isoCode,
+      label: country,
+    })),
+  },
 };
 
 export const TAGS: ColumnDataType<ApiTag[]> = {

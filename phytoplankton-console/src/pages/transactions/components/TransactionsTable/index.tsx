@@ -91,6 +91,8 @@ export interface TransactionsTableParams extends CommonParams {
   transactionStatusFilter?: RuleAction[];
   ruleInstancesHitFilter?: string[];
   productType?: string[];
+  'originAmountDetails.country'?: string[];
+  'destinationAmountDetails.country'?: string[];
 }
 
 export const transactionParamsToRequest = (
@@ -141,6 +143,8 @@ export const transactionParamsToRequest = (
     filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
     filterTransactionStatus: transactionStatusFilter,
     filterProductType: productType,
+    filterDestinationCountries: params['destinationAmountDetails.country'],
+    filterOriginCountries: params['originAmountDetails.country'],
   };
 };
 
@@ -350,6 +354,7 @@ export default function TransactionsTable(props: Props) {
         title: 'Origin country',
         key: 'originAmountDetails.country',
         type: COUNTRY,
+        filtering: true,
       }),
       helper.simple<'destinationUserId'>({
         key: 'destinationUserId',
@@ -398,6 +403,7 @@ export default function TransactionsTable(props: Props) {
         title: 'Destination country',
         key: 'destinationAmountDetails.country',
         type: COUNTRY,
+        filtering: true,
       }),
       helper.simple<'tags'>({
         title: 'Tags',

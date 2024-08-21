@@ -65,6 +65,8 @@ export default function TransactionsTab(props: Props) {
         filterTransactionType: params.type as TransactionType,
         beforeTimestamp: params.timestamp ? dayjs(params.timestamp[1]).valueOf() : undefined,
         afterTimestamp: params.timestamp ? dayjs(params.timestamp[0]).valueOf() : undefined,
+        filterDestinationCountries: params['destinationAmountDetails.country'],
+        filterOriginCountries: params['originAmountDetails.country'],
       });
     },
   );

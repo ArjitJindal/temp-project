@@ -1142,6 +1142,8 @@ export class AlertsService extends CaseAlertsCommonService {
       filterOriginCurrencies: params?.filterOriginCurrencies,
       beforeTimestamp: params?.beforeTimestamp,
       afterTimestamp: params?.afterTimestamp,
+      filterDestinationCountries: params?.filterDestinationCountries,
+      filterOriginCountries: params?.filterOriginCountries,
     })
   }
 

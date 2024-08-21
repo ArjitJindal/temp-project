@@ -939,6 +939,8 @@ export class AlertsRepository {
       filterDestinationCurrencies: params.filterDestinationCurrencies,
       filterOriginPaymentMethods: params.filterOriginPaymentMethods,
       filterDestinationPaymentMethods: params.filterDestinationPaymentMethods,
+      filterDestinationCountries: params.filterDestinationCountries,
+      filterOriginCountries: params.filterOriginCountries,
     })
 
     const riskRepository = new RiskRepository(this.tenantId, {
