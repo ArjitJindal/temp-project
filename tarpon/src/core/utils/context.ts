@@ -14,7 +14,7 @@ import {
 } from '@aws-sdk/client-cloudwatch'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { cloneDeep, isEmpty, isNil, mergeWith, omitBy } from 'lodash'
+import { isEmpty, isNil, mergeWith, omitBy } from 'lodash'
 import { logger, winstonLogger } from '../logger'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import {
@@ -300,11 +300,18 @@ export async function withContext<R>(
   callback: () => Promise<R>,
   context?: Context
 ): Promise<R> {
-  const ctx = cloneDeep(context ?? getContext() ?? {})
+  const finalContext = context ?? getContext() ?? {}
+  const ctx: Context = {
+    ...finalContext,
+    logMetadata: { ...finalContext?.logMetadata }, // type { [key: string]: string | undefined }
+    metricDimensions: { ...finalContext?.metricDimensions }, // type { [key: string]: string | undefined }
+    sentryExtras: { ...finalContext?.sentryExtras },
+  }
   ctx.metrics = {}
   // Reset dynamodb clients from parent, then we won't clean up the dynamodb clients
   // which might still be used.
   ctx.dynamoDbClients = []
+
   const result = await getContextStorage().run(ctx, async () => {
     try {
       return await callback()

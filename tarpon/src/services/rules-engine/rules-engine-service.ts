@@ -361,7 +361,7 @@ export class RulesEngineService {
                 )
 
                 const { action } = this.getUserSpecificParameters(
-                  await this.getUserRiskLevel(user),
+                  await this.getUserRiskLevel(user?.userId),
                   ruleInstance
                 )
 
@@ -585,17 +585,16 @@ export class RulesEngineService {
     transaction: Transaction,
     ruleInstance: RuleInstance
   ): Promise<ExecutedRulesResult> {
-    const { senderUser, receiverUser } = await this.getTransactionUsers(
-      transaction
-    )
     const rule = ruleInstance.ruleId
       ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
       : undefined
     if (!rule && !isV8RuleInstance(ruleInstance)) {
       throw new Error(`Cannot find rule ${ruleInstance.ruleId}`)
     }
-
-    const senderUserRiskLevel = await this.getUserRiskLevel(senderUser)
+    const { senderUser, receiverUser } = await this.getTransactionUsers(
+      transaction
+    )
+    const senderUserRiskLevel = await this.getUserRiskLevel(senderUser?.userId)
     const { result } = await this.verifyRuleIdempotent({
       rule,
       ruleInstance,
@@ -637,7 +636,7 @@ export class RulesEngineService {
   ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
-    const userRiskLevel = await this.getUserRiskLevel(user)
+    const userRiskLevel = await this.getUserRiskLevel(user?.userId)
     const ruleResults = (
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
@@ -697,17 +696,20 @@ export class RulesEngineService {
       'Get Initial Data'
     )
 
-    const { senderUser, receiverUser } = await this.getTransactionUsers(
-      transaction
-    )
-    const senderUserRiskLevelPromise = this.getUserRiskLevel(senderUser)
-
-    const [activeRuleInstances, transactionRisk] = await Promise.all([
+    const [
+      { senderUser, receiverUser },
+      senderUserRiskLevel,
+      activeRuleInstances,
+      transactionRisk,
+    ] = await Promise.all([
+      this.getTransactionUsers(transaction),
+      this.getUserRiskLevel(transaction.originUserId),
       this.ruleInstanceRepository.getActiveRuleInstances(),
       hasFeature('RISK_SCORING')
         ? this.riskScoringService.calculateArsScore(transaction)
         : undefined,
     ])
+
     const transactionRuleInstances = activeRuleInstances.filter(
       (v) => v.type === 'TRANSACTION'
     )
@@ -748,7 +750,7 @@ export class RulesEngineService {
                 ? rulesById[ruleInstance.ruleId]
                 : undefined,
               ruleInstance,
-              senderUserRiskLevel: await senderUserRiskLevelPromise,
+              senderUserRiskLevel,
               transaction: transactionWithRiskDetails,
               transactionEvents,
               senderUser,
@@ -758,7 +760,7 @@ export class RulesEngineService {
           )
         ),
         // Update aggregation variables in V8 user rules
-        await Promise.all(
+        Promise.all(
           userRuleInstances.map((ruleInstance) => {
             const rule = ruleInstance.ruleId
               ? rulesById[ruleInstance.ruleId]
@@ -1368,12 +1370,12 @@ export class RulesEngineService {
   }
 
   private async getUserRiskLevel(
-    user: UserWithRulesResult | BusinessWithRulesResult | undefined
+    userId: string | undefined
   ): Promise<RiskLevel | undefined> {
-    if (!user?.userId || !hasFeature('RISK_LEVELS')) {
+    if (!userId || !hasFeature('RISK_LEVELS')) {
       return undefined
     }
-    const riskItem = await this.riskRepository.getDRSRiskItem(user?.userId)
+    const riskItem = await this.riskRepository.getDRSRiskItem(userId)
     return riskItem?.manualRiskLevel ?? riskItem?.derivedRiskLevel
   }
 
