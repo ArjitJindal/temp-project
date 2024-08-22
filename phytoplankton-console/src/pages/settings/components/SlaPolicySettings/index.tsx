@@ -55,8 +55,10 @@ const defaultValues: FormValues = {
 export function SlaPolicySettings() {
   const api = useApi();
   const [users, loadingUsers] = useUsers();
-  const [params, setParams] =
-    useState<AllParams<DefaultApiGetSlaPoliciesRequest>>(DEFAULT_PARAMS_STATE);
+  const [params, setParams] = useState<AllParams<DefaultApiGetSlaPoliciesRequest>>({
+    ...DEFAULT_PARAMS_STATE,
+    pageSize: 50,
+  });
   const slaPoliciesResult = usePaginatedQuery<SLAPolicy>(
     SLA_POLICY_LIST(params),
     async (paginationParams) => {

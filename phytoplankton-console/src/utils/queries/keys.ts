@@ -266,7 +266,7 @@ export const NARRATIVE_TEMPLATE_ITEM = (id: string): QueryKey => [
   id,
 ];
 
-export const SLA_POLICY_LIST = (params: AnyParameters): QueryKey => ['sla-policy', 'list', params];
+export const SLA_POLICY_LIST = (params?: AnyParameters): QueryKey => ['sla-policy', 'list', params];
 
 export const SLA_POLICY_ID = (policyId: string): QueryKey => ['new-sla-policy-id', policyId];
 

@@ -4200,6 +4200,14 @@ paths:
               $ref: '#/components/schemas/CaseType'
           in: query
           name: filterCaseTypes
+        - schema:
+            type: string
+          in: query
+          name: filterSlaPolicyId
+        - schema:
+            $ref: '#/components/schemas/SLAPolicyStatus'
+          in: query
+          name: filterSlaPolicyStatus
   /alerts/statusChange:
     patch:
       summary: Alerts - Status Change

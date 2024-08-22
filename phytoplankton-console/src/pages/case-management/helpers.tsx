@@ -1,5 +1,6 @@
 import { UserOutlined } from '@ant-design/icons';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
+import SlaFilter from './components/SlaFilter';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
@@ -14,7 +15,13 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { RiskLevelButton } from '@/pages/users/users-list/RiskLevelFilterButton';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import { denseArray } from '@/utils/lang';
-import { CaseReasons, ChecklistStatus, DerivedStatus, PaymentMethod } from '@/apis';
+import {
+  CaseReasons,
+  ChecklistStatus,
+  DerivedStatus,
+  PaymentMethod,
+  SLAPolicyStatus,
+} from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
 import { humanizeConstant, humanizeSnakeCase } from '@/utils/humanize';
@@ -61,6 +68,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: params.ruleQueueIds?.join(','),
       ruleNature: params.ruleNature?.join(','),
       forensicsFor: JSON.stringify(params.forensicsFor),
+      filterSlaPolicyId: params.filterSlaPolicyId ?? '',
+      filterSlaPolicyStatus: params.filterSlaPolicyStatus ?? '',
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -110,6 +119,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: raw.ruleQueueIds?.split(','),
       ruleNature: raw.ruleNature?.split(','),
       forensicsFor: raw.forensicsFor ? JSON.parse(raw.forensicsFor) : undefined,
+      filterSlaPolicyId: raw.filterSlaPolicyId ?? undefined,
+      filterSlaPolicyStatus: (raw.filterSlaPolicyStatus as SLAPolicyStatus) ?? undefined,
     };
   },
 };
@@ -118,6 +129,7 @@ export const useCaseAlertFilters = (
   filterIds?: string[],
 ): ExtraFilterProps<TableSearchParams>[] => {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
+  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
@@ -336,6 +348,23 @@ export const useCaseAlertFilters = (
       },
       showFilterByDefault: true,
       pinFilterToLeft: true,
+    },
+    isSlaEnabled && {
+      title: 'SLA status',
+      key: 'sla',
+      renderer: ({ params, setParams }) => (
+        <SlaFilter
+          slaPolicyId={params.filterSlaPolicyId}
+          slaPolicyStatus={params.filterSlaPolicyStatus}
+          onConfirm={(slaPolicyId, slaPolicyStatus) => {
+            setParams((state) => ({
+              ...state,
+              filterSlaPolicyId: slaPolicyId ?? undefined,
+              filterSlaPolicyStatus: slaPolicyStatus ?? undefined,
+            }));
+          }}
+        />
+      ),
     },
   ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilterProps<TableSearchParams>[];
 };

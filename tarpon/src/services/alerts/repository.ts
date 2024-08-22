@@ -415,6 +415,22 @@ export class AlertsRepository {
       })
     }
 
+    if (params.filterSlaPolicyId) {
+      alertConditions.push({
+        'alerts.slaPolicyDetails': {
+          $elemMatch: { slaPolicyId: params.filterSlaPolicyId },
+        },
+      })
+    }
+
+    if (params.filterSlaPolicyStatus) {
+      alertConditions.push({
+        'alerts.slaPolicyDetails': {
+          $elemMatch: { policyStatus: params.filterSlaPolicyStatus },
+        },
+      })
+    }
+
     alertConditions.push({
       $or: [
         {

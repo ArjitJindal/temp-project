@@ -10,6 +10,7 @@ import {
   DerivedStatus,
   TransactionState,
   UserState,
+  SLAPolicyStatus,
 } from '@/apis';
 import { CommonParams } from '@/components/library/Table/types';
 import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
@@ -52,6 +53,8 @@ export type CommonCaseParams = {
     caseId: string;
   };
   expandedAlertId?: string;
+  filterSlaPolicyId?: string;
+  filterSlaPolicyStatus?: SLAPolicyStatus;
 };
 
 export type TableSearchParams = CommonParams & {

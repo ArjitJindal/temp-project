@@ -813,6 +813,7 @@ export default function AlertTable(props: Props) {
     'destinationMethodFilterId',
     'ruleNature',
     'alertStatus',
+    'sla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
 

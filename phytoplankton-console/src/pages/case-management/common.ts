@@ -105,6 +105,8 @@ export const getAlertsQueryParams = (
     filterRuleNature: ruleNature,
     filterCaseTypes: caseTypesFilter,
     filterRiskLevel: riskLevels,
+    filterSlaPolicyId: params.filterSlaPolicyId,
+    filterSlaPolicyStatus: params.filterSlaPolicyStatus,
     ...defaultApiParams,
   };
   return preparedParams;
