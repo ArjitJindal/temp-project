@@ -1,9 +1,17 @@
 describe('Accounts - CRUD Test', () => {
   beforeEach(() => {
-    cy.loginByRole('admin');
+    cy.loginWithPermissions({
+      permissions: [],
+      loginWithRole: 'admin',
+      settings: {
+        limits: {
+          seats: 10,
+        },
+      },
+    });
   });
 
-  it('perform crud operation on accounts in team management', async () => {
+  it('perform crud operation on accounts in team management', () => {
     cy.visit('/accounts/team');
     const randomNumber = Math.floor(Math.random() * 10000);
     const randomEmail = `test-crud-${randomNumber}@gmail.com`;

@@ -18,6 +18,7 @@ declare global {
         permissions: string[];
         features?: Partial<Record<Feature, boolean>>;
         settings?: TenantSettings;
+        loginWithRole?: 'custom_role' | 'admin';
       }): Chainable<Element>;
       loginByRequest(username: string, password: string): Chainable<Element>;
       multiSelect(preSelector: string, text: string): Chainable<Element>;

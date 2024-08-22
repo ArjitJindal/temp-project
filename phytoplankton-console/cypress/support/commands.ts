@@ -37,16 +37,23 @@ Cypress.Commands.add('loginByRole', (role, sessionSuffix = '') => {
   }
 });
 
-Cypress.Commands.add('loginWithPermissions', ({ permissions, features = {}, settings }) => {
-  cy.loginByRole('super_admin');
-  cy.toggleFeatures(features);
-  if (settings) {
-    cy.addSettings(settings);
-  }
-  cy.setPermissions(permissions).then(() => {
-    cy.loginByRole('custom_role', `${permissions.sort().join('-')}`);
-  });
-});
+Cypress.Commands.add(
+  'loginWithPermissions',
+  ({ permissions, features = {}, settings, loginWithRole = 'custom_role' }) => {
+    cy.loginByRole('super_admin');
+    cy.toggleFeatures(features);
+    if (settings) {
+      cy.addSettings(settings);
+    }
+    if (loginWithRole === 'custom_role') {
+      cy.setPermissions(permissions).then(() => {
+        cy.loginByRole('custom_role', `${permissions.sort().join('-')}`);
+      });
+    } else {
+      cy.loginByRole('admin');
+    }
+  },
+);
 
 Cypress.Commands.add('setPermissions', (permissions) => {
   const roleId = 'rol_BxM56v32qGhImCzc';
