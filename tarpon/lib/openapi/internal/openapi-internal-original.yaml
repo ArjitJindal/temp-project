@@ -6951,6 +6951,8 @@ components:
         - AVG
         - UNIQUE_COUNT
         - UNIQUE_VALUES
+        - MIN
+        - MAX
     RuleAggregationVariable:
       title: AggregationVariable
       type: object

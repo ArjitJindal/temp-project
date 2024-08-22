@@ -260,6 +260,14 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
         { value: 'AVG', label: 'Average' },
         { value: 'SUM', label: 'Sum' },
+        {
+          value: 'MIN',
+          label: 'Min',
+        },
+        {
+          value: 'MAX',
+          label: 'Max',
+        },
       ];
       options.push(...numberValueOptions);
     } else if (entityVariable?.key === 'TRANSACTION:transactionId') {

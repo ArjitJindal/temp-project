@@ -12,6 +12,8 @@ const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
   SUM: 'number',
   UNIQUE_COUNT: 'number',
   UNIQUE_VALUES: 'multiselect',
+  MIN: 'number',
+  MAX: 'number',
 };
 
 export function getAggVarDefinition(

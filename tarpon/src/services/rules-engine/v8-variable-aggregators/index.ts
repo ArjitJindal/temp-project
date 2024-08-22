@@ -4,6 +4,8 @@ import { COUNT } from './count'
 import { SUM } from './sum'
 import { RuleVariableAggregator } from './types'
 import { UNIQUE_VALUES, UNIQUE_COUNT } from './unique'
+import { MIN } from './min'
+import { MAX } from './max'
 import { RuleAggregationFunc } from '@/@types/openapi-internal/RuleAggregationFunc'
 
 export function getRuleVariableAggregator(
@@ -20,6 +22,10 @@ export function getRuleVariableAggregator(
       return UNIQUE_COUNT
     case 'UNIQUE_VALUES':
       return UNIQUE_VALUES
+    case 'MIN':
+      return MIN
+    case 'MAX':
+      return MAX
   }
 }
 
