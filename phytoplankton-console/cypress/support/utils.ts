@@ -103,5 +103,8 @@ export function generateUserRequestBody(userId: string): any {
 }
 
 export function getCleanText(text: string): string {
-  return text.replace(/[-*\n*]/g, '').replace(/\s+/g, '');
+  return text
+    .replace(/^\d+\.\s/gm, '')
+    .replace(/[-*\n*]/g, '')
+    .replace(/\s+/g, '');
 }
