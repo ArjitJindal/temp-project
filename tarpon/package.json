@@ -236,7 +236,7 @@
     "@types/stopword": "^2.0.3",
     "abortcontroller-polyfill": "^1.7.5",
     "adm-zip": "^0.5.15",
-    "ajv": "8.17.1",
+    "ajv": "8.11.0",
     "athena-struct-parser": "^1.1.0",
     "auth0": "^4.4.0",
     "aws-sdk": "^2.1664.0",
