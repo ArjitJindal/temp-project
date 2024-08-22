@@ -75,6 +75,7 @@ export const jobDecisionHandler = async (
     FILES_AI_SUMMARY: 'LAMBDA',
     ALERT_SLA_STATUS_REFRESH: 'LAMBDA',
     REVERIFY_TRANSACTIONS: 'FARGATE',
+    SANCTIONS_DATA_FETCH: 'LAMBDA',
   }
 
   return {

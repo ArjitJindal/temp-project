@@ -18,6 +18,7 @@ import { SimulationRiskLevelsBatchJobRunner } from '@/services/batch-jobs/simula
 import { SyncMongoDbIndexesBatchJobRunner } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
 import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-summary-batch-job-runner'
+import { SanctionsDataFetchBatchJobRunner } from '@/services/batch-jobs/sanctions-data-fetch-job-runner'
 
 type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
@@ -49,6 +50,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new AlertSLAStatusRefreshBatchJobRunner(jobId),
     REVERIFY_TRANSACTIONS: (jobId) =>
       new ReverifyTransactionsBatchJobRunner(jobId),
+    SANCTIONS_DATA_FETCH: (jobId) =>
+      new SanctionsDataFetchBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

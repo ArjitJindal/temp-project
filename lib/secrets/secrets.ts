@@ -31,6 +31,10 @@ export type Secrets = {
     password: string
     database: string
   }
+  dowjones: {
+    username: string
+    password: string
+  }
   ipGeolocationCreds: { apiKey: string }
 }
 

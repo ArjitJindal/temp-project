@@ -56,6 +56,14 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     logger.error(`Failed to delete tenants: ${(e as Error)?.message}`, e)
   }
 
+  await sendBatchJobCommand({
+    type: 'SANCTIONS_DATA_FETCH',
+    tenantId: '',
+    parameters: {
+      from: dayjs().subtract(1, 'day').toISOString(),
+    },
+  })
+
   if (envIs('dev')) {
     await cleanUpStaleQaEnvs()
   }

@@ -177,6 +177,14 @@ export type ReverifyTransactionsBatchJob = {
   parameters: ReverifyTransactionsBatchJobParameters
 }
 
+export type SanctionsDataFetchBatchJob = {
+  type: 'SANCTIONS_DATA_FETCH'
+  tenantId: string
+  parameters: {
+    from: string
+  }
+}
+
 export type FilesAISummary = {
   type: 'FILES_AI_SUMMARY'
   tenantId: string
@@ -207,6 +215,7 @@ export type BatchJob =
   | FilesAISummary
   | AlertSLAStatusRefreshBatchJob
   | ReverifyTransactionsBatchJob
+  | SanctionsDataFetchBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

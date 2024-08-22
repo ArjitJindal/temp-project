@@ -251,6 +251,7 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 }
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
+export const SANCTIONS_COLLECTION = 'sanctions'
 
 /** Collection to log Requests and Responses to GPT */
 export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
@@ -657,6 +658,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         { index: { type: 1, 'latestStatus.timestamp': 1 } },
         { index: { 'latestStatus.timestamp': 1 } },
       ],
+    },
+    [SANCTIONS_COLLECTION]: {
+      getIndexes: () => [],
     },
   }
 }
