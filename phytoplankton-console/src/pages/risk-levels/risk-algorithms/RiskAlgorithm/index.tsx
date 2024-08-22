@@ -228,7 +228,7 @@ const RiskAlgorithmTable: React.FC = () => {
                   <InlineMath math="w_{directorNAT}" /> : Director nationality weight
                 </div>
                 <div className="token-line ">
-                  <InlineMath math="w_{uboNAT}" /> : Ultimate Beneificial Owner (UBO) nationality
+                  <InlineMath math="w_{uboNAT}" /> : Ultimate Beneficial Owner (UBO) nationality
                   weight
                 </div>
                 <div className="token-line ">
