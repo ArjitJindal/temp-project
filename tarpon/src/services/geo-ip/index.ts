@@ -1,4 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import * as ip from 'ip'
 import { GEO_IP_PROVIDERS } from './providers'
 import { IpLocation, IpLookupProvider, ResolutionType } from './types'
 import { logger } from '@/core/logger'
@@ -28,6 +29,9 @@ export class GeoIPService {
     ipAddress: string,
     resolutionType: ResolutionType = 'COUNTRY'
   ): Promise<IpLocation | null> {
+    if (ip.isPrivate(ipAddress)) {
+      return { country: '', continent: '', city: '' }
+    }
     try {
       const cachedResult = await this.getCache(ipAddress)
       if (
