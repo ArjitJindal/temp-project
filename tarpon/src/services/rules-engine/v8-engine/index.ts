@@ -506,6 +506,25 @@ export class RuleJsonLogicEvaluator {
     (a, b) => isEqual(a[0], b[0])
   )
 
+  private isTransactionApplied = memoize(
+    async (
+      aggregationVariable: RuleAggregationVariable,
+      direction: 'origin' | 'destination',
+      transactionId: string
+    ): Promise<boolean> => {
+      if (this.mode !== 'DYNAMODB') {
+        return false
+      }
+      return await this.aggregationRepository.isTransactionApplied(
+        aggregationVariable,
+        direction,
+        transactionId
+      )
+    },
+    (aggregationVariable, direction, transactionId) =>
+      `${getAggVarHash(aggregationVariable)}-${direction}-${transactionId}`
+  )
+
   private userLoader = memoize(
     async (
       userId: string | undefined
@@ -1016,12 +1035,11 @@ export class RuleJsonLogicEvaluator {
     if (!isNewDataFiltered || !newDataValue || (hasGroups && !newGroupValue)) {
       return
     }
-    const shouldSkipUpdateAggregation =
-      await this.aggregationRepository.isTransactionApplied(
-        aggregationVariable,
-        direction,
-        transaction.transactionId
-      )
+    const shouldSkipUpdateAggregation = await this.isTransactionApplied(
+      aggregationVariable,
+      direction,
+      transaction.transactionId
+    )
     if (shouldSkipUpdateAggregation) {
       logger.warn('Skip updating aggregations.')
       return
@@ -1290,12 +1308,16 @@ export class RuleJsonLogicEvaluator {
       newTransactionIsTargetDirection &&
       this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
     ) {
-      const shouldIncludeNewData =
-        await this.isDataIncludedInAggregationVariable(
-          aggregationVariable,
-          data
-        )
-      if (shouldIncludeNewData) {
+      const [shouldIncludeNewData, shouldSkipUpdateAggregation] =
+        await Promise.all([
+          this.isDataIncludedInAggregationVariable(aggregationVariable, data),
+          this.isTransactionApplied(
+            aggregationVariable,
+            direction,
+            data.transaction.transactionId
+          ),
+        ])
+      if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {
         const aggFieldKey = this.getAggregationVarFieldKey(
           aggregationVariable,
           direction
@@ -1470,6 +1492,7 @@ export class RuleJsonLogicEvaluator {
         ].filter(Boolean)
       }) ?? []
 
+    this.isTransactionApplied.cache.clear?.()
     return compact(await Promise.all(promises))
   }
 }

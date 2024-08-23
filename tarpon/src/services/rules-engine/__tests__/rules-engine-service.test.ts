@@ -1351,6 +1351,44 @@ describe('Verify Transaction: V8 engine', () => {
       expect(result2.status).toBe('FLAG')
     })
   })
+  describe("transaction event shouldn't be double counted", () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-4',
+        defaultLogic: { and: [{ '>=': [{ var: 'agg:test' }, 2] }] },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test',
+            type: 'USER_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey: 'TRANSACTION:transactionId',
+            aggregationFunc: 'COUNT',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+          },
+        ],
+      },
+    ])
+    setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: 'U-1' })])
+    test('', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const transaction = getTestTransaction({
+        originUserId: 'U-1',
+      })
+      const result1 = await rulesEngine.verifyTransaction(transaction)
+      expect(result1.status).toBe('ALLOW')
+      const transactionEvent = getTestTransactionEvent({
+        transactionId: transaction.transactionId,
+        transactionState: 'SUCCESSFUL',
+      })
+      const result2 = await rulesEngine.verifyTransactionEvent(transactionEvent)
+      expect(result2.hitRules).toHaveLength(0)
+    })
+  })
 })
 
 describe('Verify Transaction V8 engine with Update Aggregation', () => {
