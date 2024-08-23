@@ -275,6 +275,14 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'SANCTIONS_DATA_FETCH': {
+          await sendBatchJobCommand({
+            type: 'SANCTIONS_DATA_FETCH',
+            tenantId: tenantId,
+            parameters: {},
+          })
+          break
+        }
 
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
