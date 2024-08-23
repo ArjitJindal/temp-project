@@ -1,7 +1,7 @@
 import { StackConstants } from './constants'
 
 const DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS = 15
-const PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS = 7
+const PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS = 6
 const ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS = 885 // 900 seconds is the hard timeout, a lambda should stop gracefully before the hard timeout
 const ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS = 5 * 60
 const KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS = 100
