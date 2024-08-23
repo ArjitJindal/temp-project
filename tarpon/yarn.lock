@@ -7302,6 +7302,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"athena-struct-parser@npm:^1.1.0":
+  version: 1.1.0
+  resolution: "athena-struct-parser@npm:1.1.0"
+  checksum: 35dfa038563368fea64be1bd12822b183d0190db133f239595361b85c7dd709831319299100d5ef07aa617168d0ee2171ca9e6bc6dd5f66841bff7e29a4a5099
+  languageName: node
+  linkType: hard
+
 "atomic-batcher@npm:^1.0.2":
   version: 1.0.2
   resolution: "atomic-batcher@npm:1.0.2"
@@ -18005,6 +18012,7 @@ __metadata:
     abortcontroller-polyfill: "npm:^1.7.5"
     adm-zip: "npm:^0.5.15"
     ajv: "npm:8.11.0"
+    athena-struct-parser: "npm:^1.1.0"
     auth0: "npm:^4.4.0"
     aws-cdk: "npm:~2.147.1"
     aws-cdk-lib: "npm:~2.147.1"
