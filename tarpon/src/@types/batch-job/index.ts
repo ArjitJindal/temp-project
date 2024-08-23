@@ -181,7 +181,7 @@ export type SanctionsDataFetchBatchJob = {
   type: 'SANCTIONS_DATA_FETCH'
   tenantId: string
   parameters: {
-    from: string
+    from?: string
   }
 }
 

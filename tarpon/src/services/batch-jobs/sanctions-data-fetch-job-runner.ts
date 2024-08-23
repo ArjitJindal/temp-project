@@ -8,9 +8,11 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
     const fetchers = await sanctionsDataFetchers()
     const repo = new MongoSanctionsRepository()
-    const today = new Date(job.parameters.from)
+    const runFullLoad = job.parameters.from
+      ? new Date(job.parameters.from).getDay() === 0
+      : true
     for (const fetcher of fetchers) {
-      if (today.getDay() === 0) {
+      if (runFullLoad) {
         await fetcher.fullLoad(repo)
       } else {
         await fetcher.delta(repo, dayjs(job.parameters.from).toDate())

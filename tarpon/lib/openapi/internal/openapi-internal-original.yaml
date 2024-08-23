@@ -7998,6 +7998,7 @@ components:
         - PULSE_USERS_BACKFILL_RISK_SCORE
         - DEMO_MODE_DATA_LOAD
         - TEST_FARGATE
+        - SANCTIONS_DATA_FETCH
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount
