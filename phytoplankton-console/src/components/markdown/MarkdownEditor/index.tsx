@@ -89,13 +89,6 @@ export default class MarkdownEditor extends React.Component<Props> {
     ];
   }
 
-  componentDidMount() {
-    const currentEditor = this.editorRef.current;
-    if (currentEditor) {
-      currentEditor.getRootElement().classList.add(s.root);
-    }
-  }
-
   insertMention = (mentionItem: MentionItem, searchPhrase) => {
     const editor = this.editorRef.current?.getInstance();
     if (editor) {
@@ -158,7 +151,19 @@ export default class MarkdownEditor extends React.Component<Props> {
 
   render() {
     return (
-      <>
+      <div
+        className={s.root}
+        onPasteCapture={(e) => {
+          const clipboardData = e.clipboardData;
+          const html = clipboardData.getData('text/html');
+          const text = clipboardData.getData('text');
+          if (html !== text) {
+            e.preventDefault();
+            e.stopPropagation();
+            window.document.execCommand('insertText', false, text);
+          }
+        }}
+      >
         <Editor
           height={`${this.props.editorHeight ?? 200}px`}
           hideModeSwitch={true}
@@ -194,7 +199,7 @@ export default class MarkdownEditor extends React.Component<Props> {
           usageStatistics={false}
           placeholder={this.props.placeholder}
         />
-      </>
+      </div>
     );
   }
 }
