@@ -62,10 +62,17 @@ export function getSQSClient(): SQSClient {
   return getRefreshingClient(client)
 }
 
+export function sanitizeDeduplicationId(
+  messageDeduplicationId: string
+): string {
+  return generateChecksum(messageDeduplicationId, 10)
+}
+
 export async function bulkSendMessages(
   sqsClient: SQSClient,
   queueUrl: string,
-  rawBatchRequestEntries: Array<Omit<SendMessageBatchRequestEntry, 'Id'>>
+  rawBatchRequestEntries: Array<Omit<SendMessageBatchRequestEntry, 'Id'>>,
+  onBatchSent?: (batch: SendMessageBatchRequestEntry[]) => Promise<void>
 ) {
   if (rawBatchRequestEntries.length === 0) {
     return
@@ -76,7 +83,7 @@ export async function bulkSendMessages(
     ...entry,
     MessageDeduplicationId:
       entry.MessageDeduplicationId &&
-      generateChecksum(entry.MessageDeduplicationId, 10),
+      sanitizeDeduplicationId(entry.MessageDeduplicationId),
   }))
   const MAX_BATCH_SIZE_BYTES = 256 * 1024 // 256KB in bytes
   const MAX_BATCH_SIZE_COUNT = 10
@@ -122,5 +129,6 @@ export async function bulkSendMessages(
         Entries: batch,
       })
     )
+    await onBatchSent?.(batch)
   }
 }

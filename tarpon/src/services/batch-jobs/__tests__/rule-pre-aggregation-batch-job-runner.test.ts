@@ -1,4 +1,7 @@
 import { sortBy } from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
+import { SQSClient } from '@aws-sdk/client-sqs'
+import { mockClient } from 'aws-sdk-client-mock'
 import { BatchJobRepository } from '../repositories/batch-job-repository'
 import { jobRunnerHandler } from '@/lambdas/batch-job/app'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -31,7 +34,6 @@ withLocalChangeHandler()
 const dynamoDb = getDynamoDbClient()
 
 const bulkSendMessagesMock = jest.spyOn(snsSqsClient, 'bulkSendMessages')
-bulkSendMessagesMock.mockImplementation(() => Promise.resolve() as any)
 
 async function setUpAggregationVariables(
   tenantId: string,
@@ -80,6 +82,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
 
   beforeEach(() => {
     bulkSendMessagesMock.mockClear()
+    mockClient(SQSClient)
   })
 
   setUpTransactionsHooks(tenantId, [
@@ -158,8 +161,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -179,7 +183,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         tenantId,
         userId: 'U-1',
         currentTimestamp: expect.any(Number),
-        jobId: 'test-job-id',
+        jobId,
         entity: {
           type: 'RULE',
           ruleInstanceId,
@@ -207,8 +211,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -231,7 +236,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         tenantId,
         userId: 'U-1',
         currentTimestamp: expect.any(Number),
-        jobId: 'test-job-id',
+        jobId,
         entity: {
           type: 'RULE',
           ruleInstanceId,
@@ -243,7 +248,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         tenantId,
         userId: 'U-2',
         currentTimestamp: expect.any(Number),
-        jobId: 'test-job-id',
+        jobId,
         entity: {
           type: 'RULE',
           ruleInstanceId,
@@ -255,7 +260,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         tenantId,
         userId: 'U-3',
         currentTimestamp: expect.any(Number),
-        jobId: 'test-job-id',
+        jobId,
         entity: {
           type: 'RULE',
           ruleInstanceId,
@@ -267,7 +272,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         tenantId,
         userId: 'U-4',
         currentTimestamp: expect.any(Number),
-        jobId: 'test-job-id',
+        jobId,
         entity: {
           type: 'RULE',
           ruleInstanceId,
@@ -295,8 +300,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -317,7 +323,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         paymentDetails: { method: 'CARD', cardFingerprint: 'card-1' },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
     ])
   })
@@ -341,8 +347,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -369,7 +376,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -381,7 +388,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -394,7 +401,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -407,7 +414,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -419,7 +426,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -431,7 +438,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RULE', ruleInstanceId },
-        jobId: 'test-job-id',
+        jobId,
       },
     ])
   })
@@ -455,8 +462,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -483,7 +491,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -495,7 +503,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -508,7 +516,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -521,7 +529,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -533,7 +541,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
       {
         type: 'PRE_AGGREGATION',
@@ -545,7 +553,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
         },
         currentTimestamp: expect.any(Number),
         entity: { type: 'RISK_FACTOR', riskFactorId },
-        jobId: 'test-job-id',
+        jobId,
       },
     ])
   })
@@ -580,8 +588,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id-1',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -627,8 +636,9 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       aggregationVariables
     )
 
+    const jobId = uuidv4()
     const testJob: BatchJobWithId = {
-      jobId: 'test-job-id-1',
+      jobId,
       type: 'RULE_PRE_AGGREGATION',
       tenantId: tenantId,
       parameters: {
@@ -642,5 +652,40 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
       ((await getJob(tenantId, testJob.jobId)) as RulePreAggregationBatchJob)
         .metadata?.tasksCount
     ).toBe(2)
+  })
+
+  test("doesn't submits pre-aggregation tasks if already submitted before", async () => {
+    const aggregationVariables: RuleAggregationVariable[] = [
+      {
+        key: 'agg:test',
+        type: 'USER_TRANSACTIONS',
+        transactionDirection: 'SENDING',
+        aggregationFieldKey: 'TRANSACTION:transactionId',
+        aggregationFunc: 'COUNT',
+        timeWindow: {
+          start: { units: 1, granularity: 'day' },
+          end: { units: 0, granularity: 'day' },
+        },
+      },
+    ]
+    const { ruleInstanceId } = await setUpAggregationVariables(
+      tenantId,
+      aggregationVariables
+    )
+
+    const jobId = uuidv4()
+    const testJob: BatchJobWithId = {
+      jobId,
+      type: 'RULE_PRE_AGGREGATION',
+      tenantId: tenantId,
+      parameters: {
+        entity: { type: 'RULE', ruleInstanceId },
+        aggregationVariables,
+      },
+    }
+    await jobRunnerHandler(testJob)
+    expect(bulkSendMessagesMock.mock.calls[0][2]).toHaveLength(1)
+    await jobRunnerHandler(testJob)
+    expect(bulkSendMessagesMock.mock.calls[1][2]).toHaveLength(0)
   })
 })

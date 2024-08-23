@@ -20,9 +20,12 @@ import {
   bulkSendMessages,
   FifoSqsMessage,
   getSQSClient,
+  sanitizeDeduplicationId,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { handleV8PreAggregationTask } from '@/lambdas/transaction-aggregation/app'
+import { TransientRepository } from '@/core/repositories/transient-repository'
+import { duration } from '@/utils/dayjs'
 
 const sqs = getSQSClient()
 
@@ -79,13 +82,19 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       }
     }
 
-    const metadata: RulePreAggregationMetadata = {
-      tasksCount: 0,
-      completeTasksCount: 0,
+    const existingJob = (await this.jobRepository.getJobById(
+      this.jobId
+    )) as RulePreAggregationBatchJob | null
+    if (!existingJob?.metadata) {
+      // First run
+      const metadata: RulePreAggregationMetadata = {
+        tasksCount: 0,
+        completeTasksCount: 0,
+      }
+      await this.jobRepository.updateJob(this.jobId, {
+        $set: { metadata },
+      })
     }
-    await this.jobRepository.updateJob(this.jobId, {
-      $set: { metadata },
-    })
 
     const messages: FifoSqsMessage[] = []
     for (const aggregationVariable of aggregationVariables) {
@@ -97,17 +106,45 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       messages.push(...varMessages)
     }
     const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
-    await this.incrementTasksCount(dedupMessages.length)
+
+    await this.jobRepository.updateJob(this.jobId, {
+      $set: { 'metadata.tasksCount': dedupMessages.length },
+    })
 
     if (envIs('local')) {
       for (const message of dedupMessages) {
         await handleV8PreAggregationTask(JSON.parse(message.MessageBody))
       }
     } else {
+      const transientRepository = new TransientRepository(
+        dynamoDb,
+        duration(7, 'day').asSeconds()
+      )
+      // Filter the messages that have not been sent yet
+      const messagesNotSentYet: FifoSqsMessage[] = []
+      for (const message of dedupMessages) {
+        if (
+          !(await transientRepository.hasKey(
+            this.jobId,
+            sanitizeDeduplicationId(message.MessageDeduplicationId)
+          ))
+        ) {
+          messagesNotSentYet.push(message)
+        }
+      }
       await bulkSendMessages(
         sqs,
         process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
-        dedupMessages
+        messagesNotSentYet,
+        async (batch) => {
+          // Mark the messages as sent to avoid being sent again on retries
+          for (const message of batch) {
+            await transientRepository.addKey(
+              this.jobId,
+              message.MessageDeduplicationId as string
+            )
+          }
+        }
       )
     }
 
@@ -206,11 +243,5 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     throw new Error(
       `Unsupported aggregation variable type: ${aggregationVariable.type}`
     )
-  }
-
-  private async incrementTasksCount(tasksCount: number) {
-    await this.jobRepository.updateJob(this.jobId, {
-      $inc: { 'metadata.tasksCount': tasksCount },
-    })
   }
 }
