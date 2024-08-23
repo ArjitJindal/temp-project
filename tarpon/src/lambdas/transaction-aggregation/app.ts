@@ -291,7 +291,7 @@ export async function handleTransactionAggregationTask(
     {
       sanctionsService: new SanctionsService(task.tenantId),
       ibanService: new IBANService(task.tenantId),
-      geoIpService: new GeoIPService(task.tenantId),
+      geoIpService: new GeoIPService(task.tenantId, dynamoDb),
     },
     mode,
     dynamoDb,

@@ -254,7 +254,7 @@ export class RulesEngineService {
     )
     this.sanctionsService = new SanctionsService(this.tenantId)
     this.ibanService = new IBANService(this.tenantId)
-    this.geoIpService = new GeoIPService(this.tenantId)
+    this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
 
   public static async fromEvent(

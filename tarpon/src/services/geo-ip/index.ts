@@ -5,7 +5,6 @@ import { IpLocation, IpLookupProvider, ResolutionType } from './types'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { TransientRepository } from '@/core/repositories/transient-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { duration } from '@/utils/dayjs'
 
@@ -15,14 +14,16 @@ const CACHE_EXPIRATION_SECONDS = duration(1, 'month').asSeconds()
 export class GeoIPService {
   tenantId: string
   providers: IpLookupProvider[]
-  dynamodb: DynamoDBDocumentClient = getDynamoDbClient()
+  dynamodb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
     providers = GEO_IP_PROVIDERS.filter((provider) => provider.enabled())
   ) {
     this.tenantId = tenantId
     this.providers = providers
+    this.dynamodb = dynamoDb
   }
 
   public async resolveIpAddress(

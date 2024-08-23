@@ -563,7 +563,7 @@ export function testAggregationRebuild(
           {
             sanctionsService: new SanctionsService(tenantId),
             ibanService: new IBANService(tenantId),
-            geoIpService: new GeoIPService(tenantId),
+            geoIpService: new GeoIPService(tenantId, dynamoDb),
           },
           'DYNAMODB',
           dynamoDb,

@@ -30,7 +30,13 @@ const createIpVariable = (
     uiDefinition: getUiDefinition(direction, granularity),
     valueType: 'string',
     load: async (transaction, context) => {
-      const lookupIPLocationService = new GeoIPService(context?.tenantId ?? '')
+      if (!context) {
+        throw new Error('Missing context')
+      }
+      const lookupIPLocationService = new GeoIPService(
+        context?.tenantId ?? '',
+        context.dynamoDb
+      )
       const ipAddress =
         direction === 'ORIGIN'
           ? transaction?.originDeviceData?.ipAddress

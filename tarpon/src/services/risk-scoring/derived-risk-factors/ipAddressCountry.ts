@@ -4,6 +4,7 @@ import { addNewSubsegment } from '@/core/xray'
 import { getAllIpAddresses } from '@/utils/ipAddress'
 import { GeoIPService } from '@/services/geo-ip'
 import { getContext } from '@/core/utils/context'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
   TransactionRiskFactorValueHandler<string | undefined | null>
@@ -24,7 +25,10 @@ export const ARS_IPADDRESSCOUNTRY_RISK_HANDLERS: Array<
         return []
       }
       const context = getContext()
-      const lookupIPLocationService = new GeoIPService(context?.tenantId ?? '')
+      const lookupIPLocationService = new GeoIPService(
+        context?.tenantId ?? '',
+        getDynamoDbClient()
+      )
       const [originIpInfo, destinationIpInfo] = await Promise.all([
         originIpAddress
           ? lookupIPLocationService.resolveIpAddress(originIpAddress)

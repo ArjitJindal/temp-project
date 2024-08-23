@@ -126,7 +126,8 @@ test('Transaction with ip - city', async () => {
   expect(value3).toBe('Berlin')
 
   const value4 = await TRANSACTION_ORIGIN_IP_CITY_VARIABLE.load(
-    getTestTransaction({})
+    getTestTransaction({}),
+    { tenantId: TEST_TENANT_ID, dynamoDb }
   )
   expect(value4).toBeUndefined()
 })
