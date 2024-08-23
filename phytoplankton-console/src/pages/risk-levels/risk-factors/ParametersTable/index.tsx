@@ -76,7 +76,7 @@ export default function ParametersTable(props: Props) {
   const columnHelper = new ColumnHelper<RiskLevelTableItem>();
   // todo: i18n
   return (
-    <div className={cn(style.root, disablePaddings && style.zeroPadding)}>
+    <div className={cn(style.root, disablePaddings && style.zeroPadding)} data-sentry-allow={true}>
       <Table<RiskLevelTableItem>
         rowKey="parameter"
         columns={columnHelper.list([

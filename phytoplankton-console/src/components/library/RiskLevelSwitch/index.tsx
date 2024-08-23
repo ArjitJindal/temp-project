@@ -13,7 +13,7 @@ export default function RiskLevelSwitch(props: Props): JSX.Element {
   const id = useId('RiskSwitch-');
   const isReadonly = onChange == null;
   return (
-    <div className={cn(s.root, isDisabled && s.isDisabled)}>
+    <div className={cn(s.root, isDisabled && s.isDisabled)} data-sentry-allow={true}>
       {RISK_LEVELS.map((level) => {
         const isCurrent = level === value;
         return (

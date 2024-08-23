@@ -20,7 +20,7 @@ export default function UserPanel(props: Props) {
   const title = `${user.name}` + (user.verifiedEmail ? ` (${user.verifiedEmail})` : '');
 
   return (
-    <div className={cn(s.root, isCollapsed && s.isCollapsed)}>
+    <div className={cn(s.root, isCollapsed && s.isCollapsed)} data-sentry-block={true}>
       <div className={s.section}>
         <Popover
           content={<LogOutButton isCollapsed={true} />}

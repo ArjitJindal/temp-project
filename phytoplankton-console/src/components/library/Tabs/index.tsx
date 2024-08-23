@@ -65,7 +65,7 @@ export default function Tabs(props: Props) {
           <AntTabs.TabPane
             className={s.tab}
             tab={
-              <span className={cn(s.tab_span)}>
+              <span className={cn(s.tab_span)} data-sentry-allow={true}>
                 {Icon && <div className={cn(s.icon)}>{Icon}</div>}
                 <span>{title}</span>
               </span>

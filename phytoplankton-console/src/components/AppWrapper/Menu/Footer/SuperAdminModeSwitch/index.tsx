@@ -30,7 +30,7 @@ export default function SuperAdminModeSwitch(props: Props) {
         }
       }}
     >
-      <div className={cn(s.root, isCollapsed && s.isCollapsed)}>
+      <div className={cn(s.root, isCollapsed && s.isCollapsed)} data-sentry-allow={true}>
         <Button isCollapsed={isCollapsed} context={context} />
       </div>
     </Popover>

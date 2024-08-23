@@ -82,7 +82,7 @@ export default function Menu(props: Props) {
   return (
     <div className={s.root}>
       <Header isCollapsed={isCollapsed} onChangeCollapsed={onChangeCollapsed} />
-      <div className={s.menuLinks}>
+      <div className={s.menuLinks} data-sentry-allow={true}>
         <div className={s.menuGroup}>
           {renderItems(
             'menu',

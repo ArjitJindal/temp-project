@@ -53,7 +53,11 @@ export default function Header(props: Props) {
           <ExpandIcon isExpanded={!isCollapsed} color="BLUE" size="BIG" isInvalid={isInvalid} />
         )}
         {typeof title === 'string' ? (
-          <h3 className={cn(s.title, s[`size-${titleSize}`])} data-cy={testId}>
+          <h3
+            className={cn(s.title, s[`size-${titleSize}`])}
+            data-cy={testId}
+            data-sentry-allow={true}
+          >
             {title}
           </h3>
         ) : (

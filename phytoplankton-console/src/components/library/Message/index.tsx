@@ -96,7 +96,7 @@ function open(
     icon: icon,
     type: antType,
     content: (
-      <div className={s.message}>
+      <div className={s.message} data-sentry-allow={type === 'ERROR'}>
         <div className={s.messageText} data-cy="ant-message-popup">
           {message}
         </div>

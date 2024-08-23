@@ -44,7 +44,11 @@ function Header(props: PageWrapperProps) {
   return (
     <>
       {(title || description || backButton || actionButton) && (
-        <header className={s.head} style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 8 }}>
+        <header
+          className={s.head}
+          style={{ padding: PAGE_WRAPPER_PADDING, paddingBottom: 8 }}
+          data-sentry-allow={true}
+        >
           <Row>
             <Col xs={18}>
               {title && (

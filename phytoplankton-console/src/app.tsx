@@ -28,7 +28,15 @@ interface HttpError {
 Sentry.init({
   dsn: SENTRY_DSN,
   release: process.env.RELEASE,
-  integrations: [new BrowserTracing(), new Debug(), new Sentry.Replay()],
+  integrations: [
+    new BrowserTracing(),
+    new Debug(),
+    new Sentry.Replay({
+      block: ['.sentry-block, [data-sentry-block=true]'],
+      unblock: ['.sentry-unblock, [data-sentry-allow=true], [data-sentry-unblock=true]'],
+      unmask: ['.sentry-unmask, [data-sentry-allow=true], [data-sentry-unmask=true]'],
+    }),
+  ],
   replaysOnErrorSampleRate: 1.0,
   replaysSessionSampleRate: 0.1,
   tracesSampleRate: 0.05,

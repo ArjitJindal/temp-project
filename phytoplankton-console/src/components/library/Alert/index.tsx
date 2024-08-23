@@ -18,6 +18,7 @@ export default function Alert(props: Props) {
     <div
       className={cn(s.root, s[`type-${type}`], s[`size-${size ?? 's'}`])}
       data-cy={`alert-${type}`}
+      data-sentry-allow={type === 'error'}
     >
       <div className={s.body}>
         <div className={s.iconContainer}>

@@ -69,6 +69,7 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
       type={htmlType}
       data-cy={testName}
       data-attr={analyticsName}
+      data-sentry-allow={true}
       {...htmlAttrs}
     >
       {icon && <div className={s.icon}>{icon}</div>}
