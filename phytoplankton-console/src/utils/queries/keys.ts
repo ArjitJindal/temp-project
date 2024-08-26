@@ -275,6 +275,14 @@ export const SLA_POLICY = (policyId: string): QueryKey => ['sla-policy', policyI
 export const DASHBOARD_TEAM_STATS = (params: AnyParameters): QueryKey => [
   'dashboard',
   'team',
+  'performance',
+  params,
+];
+
+export const DASHBOARD_TEAM_SLA_STATS = (params: AnyParameters): QueryKey => [
+  'dashboard',
+  'team',
+  'sla',
   params,
 ];
 

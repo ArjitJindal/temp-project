@@ -30,6 +30,8 @@ import { tenantHasFeature } from '@/core/utils/context'
 import { DashboardStatsQaAlertsStatsByChecklistReasonData } from '@/@types/openapi-internal/DashboardStatsQaAlertsStatsByChecklistReasonData'
 import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
 import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
+import { TeamSLAStatsDashboardMetric } from '@/services/analytics/dashboard-metrics/sla-team-stats'
+import { DashboardStatsTeamSLAItem } from '@/@types/openapi-internal/DashboardStatsTeamSLAItem'
 
 @traceable
 export class DashboardStatsRepository {
@@ -54,6 +56,7 @@ export class DashboardStatsRepository {
       this.refreshTeamStats(timeRange),
       this.refreshQaStats(timeRange),
       this.refreshLatestTeamStats(),
+      this.refreshSLATeamStats(timeRange),
     ])
   }
 
@@ -129,6 +132,16 @@ export class DashboardStatsRepository {
       status,
       accountIds
     )
+  }
+
+  public async getSLATeamStatistics(
+    startTimestamp?: number,
+    endTimestamp?: number
+  ): Promise<DashboardStatsTeamSLAItem[]> {
+    return TeamSLAStatsDashboardMetric.get(this.tenantId, {
+      startTimestamp,
+      endTimestamp,
+    })
   }
 
   public async getUserTimewindowStats(
@@ -224,6 +237,14 @@ export class DashboardStatsRepository {
       timeRange
     )
   }
+
+  public async refreshSLATeamStats(timeRange?: TimeRange) {
+    if (!(await tenantHasFeature(this.tenantId, 'ALERT_SLA'))) {
+      return
+    }
+    await TeamSLAStatsDashboardMetric.refresh(this.tenantId, timeRange)
+  }
+
   public async recalculateQaOverviewStats(timeRange?: TimeRange) {
     await QaOverviewStatsDashboardMetric.refresh(this.tenantId, timeRange)
   }

@@ -2558,6 +2558,33 @@ paths:
           in: query
           name: scope
           required: true
+  /dashboard_stats/team_sla:
+    get:
+      summary: DashboardStats - Team SLA
+      tags: []
+      x-flagright:
+        permissions:
+          - dashboard:download-data:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DashboardStatsTeamSLAItem'
+      operationId: get-dashboard-team-sla-stats
+      description: ''
+      parameters:
+        - schema:
+            type: number
+          in: query
+          name: startTimestamp
+        - schema:
+            type: number
+          in: query
+          name: endTimestamp
   /dashboard_stats/overview:
     get:
       summary: DashboardStats - Overview
@@ -13385,6 +13412,23 @@ components:
         - SLATime
         - alertStatusDetails
         - workingDays
+    DashboardStatsTeamSLAItem:
+      title: DashboardStatsTeamSLAItem
+      type: object
+      properties:
+        accountId:
+          type: string
+        WARNING:
+          type: number
+        BREACHED:
+          type: number
+        OK:
+          type: number
+      required:
+        - accountId
+        - WARNING
+        - BREACHED
+        - OK
     PolicyAlertStatusDetails:
       title: PolicyAlertStatusDetails
       type: object

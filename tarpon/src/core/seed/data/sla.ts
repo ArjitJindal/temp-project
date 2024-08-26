@@ -22,6 +22,10 @@ export const getSLAPolicies = memoize((): SLAPolicy[] => {
             units: 10,
             granularity: 'days',
           },
+          warningTime: {
+            units: 5,
+            granularity: 'days',
+          },
         },
       },
       createdBy: FLAGRIGHT_SYSTEM_USER,
@@ -66,4 +70,8 @@ export const getSLAPolicies = memoize((): SLAPolicy[] => {
       updatedAt: Date.now(),
     },
   ]
+})
+
+export const getSLAPolicyById = memoize((id: string): SLAPolicy | undefined => {
+  return getSLAPolicies().find((policy) => policy.id === id)
 })

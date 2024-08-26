@@ -164,6 +164,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/dashboard_stats/qa/alerts-by-assignee':
     StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
+  '/dashboard_stats/team_sla':
+    StackConstants.CONSOLE_API_DASHBOARD_STATS_FUNCTION_NAME,
   '/slack/oauth_redirect': StackConstants.CONSOLE_API_SLACK_APP_FUNCTION_NAME,
   '/webhooks': StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/webhooks/{webhookId}':

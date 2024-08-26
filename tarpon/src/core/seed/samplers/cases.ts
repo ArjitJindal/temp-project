@@ -4,6 +4,7 @@ import { compile } from 'handlebars'
 import { randomBool } from 'fp-ts/Random'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getCases } from '../data/cases'
+import { getSLAPolicyById } from '../data/sla'
 import { sampleTimestamp } from './timestamp'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -30,6 +31,7 @@ import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/Checkli
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { uniqObjects } from '@/utils/object'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { getSLAStatusFromElapsedTime } from '@/services/alerts/sla/sla-utils'
 
 let counter = 1
 let alertCounter = 1
@@ -271,11 +273,27 @@ export function sampleAlert(params: {
   ).checklistTemplateId
   const slaPolicyDetails: SLAPolicyDetails[] | undefined = getRuleInstance(
     params.ruleHit.ruleInstanceId
-  ).alertConfig?.slaPolicies?.map((sla) => ({
-    slaPolicyId: sla,
-    policyStatus: 'OK',
-    elapsedTime: 0,
-  }))
+  ).alertConfig?.slaPolicies?.map((sla) => {
+    const slaPolicy = getSLAPolicyById(sla)
+    let elapsedTime = 0
+    if (slaPolicy && alertStatus === 'CLOSED') {
+      elapsedTime = dayjs(last(statusChanges)?.timestamp).diff(
+        createdTimestamp,
+        'milliseconds'
+      )
+    }
+    return {
+      slaPolicyId: sla,
+      /* Calculating SLA status for closed alerts her as we don't calculate it in the service  */
+      policyStatus: slaPolicy
+        ? getSLAStatusFromElapsedTime(
+            elapsedTime,
+            slaPolicy.policyConfiguration
+          )
+        : 'OK',
+      elapsedTime,
+    }
+  })
 
   const isFirstPaymentRule = params.ruleHit.ruleId === 'R-1'
   const transactions = params.transactions

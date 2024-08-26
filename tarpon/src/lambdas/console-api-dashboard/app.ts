@@ -322,6 +322,15 @@ export const dashboardStatsHandler = lambdaApi()(
       }
     )
 
+    handlers.registerGetDashboardTeamSlaStats(async (ctx, request) => {
+      const { startTimestamp, endTimestamp } = request
+      if (shouldRefreshAll(event)) {
+        await dashboardStatsRepository.refreshSLATeamStats()
+      }
+
+      const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
+      return await dashboardStatsRepository.getSLATeamStatistics(start, end)
+    })
     return await handlers.handle(event)
   }
 )

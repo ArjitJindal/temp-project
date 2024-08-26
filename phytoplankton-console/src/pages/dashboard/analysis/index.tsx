@@ -25,6 +25,7 @@ import QaOverview from './components/Qa/QaOverview';
 import Overview from './components/Overview';
 import QaAlertStatsByChecklistReason from './components/Qa/QaAlertStatsByChecklistReason';
 import QaAlertsByAssignee from './components/Qa/QaAlertsByAssignee';
+import TeamSLAPerformanceCard from './components/TeamSLAPerformanceCard';
 import PageWrapper from '@/components/PageWrapper';
 import { useFeatures } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useI18n } from '@/locales';
@@ -65,6 +66,7 @@ type KeyValues =
   | 'DISTRIBUTION_BY_CASE_AND_ALERT_STATUS'
   | 'TRANSACTIONS_BREAKDOWN_BY_TRS'
   | 'LATEST_TEAM_OVERVIEW'
+  | 'TEAM_SLA_STATS'
   | 'QA_ALERT_STATS_BY_CHECKLIST_REASON'
   | 'QA_ALERTS_BY_RULE_HITS'
   | 'QA_OVERVIEW'
@@ -94,6 +96,7 @@ const DEFAULT_VALUES = {
   CONSUMER_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   BUSINESS_USERS_DISTRIBUTION_BY_USER_STATUS: true,
   LATEST_TEAM_OVERVIEW: true,
+  TEAM_SLA_STATS: true,
   QA_ALERTS_BY_RULE_HITS: true,
   QA_ALERT_STATS_BY_CHECKLIST_REASON: true,
   QA_OVERVIEW: true,
@@ -306,6 +309,12 @@ const WIDGETS: Widgets = {
         id: 'TEAM_OVERVIEW',
         title: 'Team overview',
         component: TeamPerformanceCard,
+      },
+      {
+        id: 'TEAM_SLA_STATS',
+        title: 'SLA performance for closed alerts by',
+        component: TeamSLAPerformanceCard,
+        requiredFeatures: ['ALERT_SLA'],
       },
     ],
   },

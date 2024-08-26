@@ -113,6 +113,10 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
         logger.info(`Refreshed team stats - ${JSON.stringify(checkTimeRange)}`)
         await dashboardStatsRepository.refreshLatestTeamStats()
         logger.info(`Refreshed latest team stats`)
+        await dashboardStatsRepository.refreshSLATeamStats(checkTimeRange)
+        logger.info(
+          `Refreshed SLA team stats - ${JSON.stringify(checkTimeRange)}`
+        )
       })(),
 
       // Transaction stats
