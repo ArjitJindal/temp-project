@@ -56,22 +56,54 @@ async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
     '[#$2]($1$2)'
   )
   // Add Notion ticket links to release notes
-  releaseNote = (
-    await Promise.all(
-      releaseNote.split('\n').map(async (line) => {
-        const prNumber = line.match(/\[#(\d+)\]/)?.[1]
-        if (!prNumber) {
-          return line
-        }
-        const ticket = await getTicketInfoByPrNumber(prNumber)
-        if (!ticket) {
-          return line
-        }
-        const ticketLink = `[${ticket.ticketId}](${ticket.url})`
-        return `${line} (${ticketLink})`
-      })
-    )
-  ).join('\n')
+
+  const lines: string[] = releaseNote.split('\n')
+  const customerFacingTickets: string[] = []
+  const otherTickets: string[] = []
+  const nonTicketLines: { index: number; line: string }[] = []
+
+  await Promise.all(
+    lines.map(async (line, index) => {
+      const prNumber = line.match(/\[#(\d+)\]/)?.[1]
+      if (!prNumber) {
+        nonTicketLines.push({ index, line })
+        return
+      }
+
+      const ticket = await getTicketInfoByPrNumber(prNumber)
+      if (!ticket) {
+        nonTicketLines.push({ index, line })
+        return
+      }
+
+      const ticketLink = `[${ticket.ticketId}](${ticket.url})`
+      const updatedLine = `${line} (${ticketLink})`
+
+      const page = await getNotionPageByTicketID(ticket.ticketId)
+      const isCustomerFacing = (page.properties['Customer Facing'] as any)
+        ?.checkbox
+      if (isCustomerFacing) {
+        customerFacingTickets.push(updatedLine)
+      } else {
+        otherTickets.push(updatedLine)
+      }
+    })
+  )
+
+  const finalLines: string[] = []
+
+  let ticketIndex = 0
+  const allTickets = [...customerFacingTickets, ...otherTickets]
+
+  for (let i = 0; i < lines.length; i++) {
+    const nonTicketLine = nonTicketLines.find((nt) => nt.index === i)
+    if (nonTicketLine) {
+      finalLines.push(nonTicketLine.line)
+    } else {
+      finalLines.push(allTickets[ticketIndex++])
+    }
+  }
+  releaseNote = finalLines.join('\n')
 
   for (const channel of Object.keys(CHANNELS) as (keyof typeof CHANNELS)[]) {
     const finalText = getFinalText(releaseUrl, releaseNote, channel)
@@ -113,7 +145,7 @@ async function updateNotionTickets() {
 }
 
 async function main() {
-  await updateNotionTickets()
+  // await updateNotionTickets()
   const { releaseUrl, releaseBody } = await createGitHubRelease()
   await notifySlack(releaseUrl, releaseBody)
   console.info(`Release: ${releaseUrl}\n${releaseBody}`)
