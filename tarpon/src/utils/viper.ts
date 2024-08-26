@@ -3,8 +3,8 @@ import {
   GetQueryResultsCommandInput,
   StartQueryExecutionCommandInput,
 } from '@aws-sdk/client-athena'
-import parseStruct from 'athena-struct-parser'
 import { getContext, updateLogMetadata } from '@/core/utils/context'
+import { parseValue } from '@/utils/athena'
 import { ALL_ATTRIBUTES } from '@/@types/openapi-public-custom/all'
 
 /* Provides a map of lower case attribute values to their cased values, for example:
@@ -102,7 +102,8 @@ export async function executeSql<T>(
           obj[columnName] = parseColumn(columnType, cell.VarCharValue)
         }
       })
-      return obj
+
+      return transformKeys(obj, attributeCasingMap)
     })
   } catch (error) {
     console.error('An error occurred:', error)
@@ -147,36 +148,7 @@ function parseColumn(type: string, value?: string): any {
   if (value === null || value === undefined) {
     return null
   }
-  switch (type) {
-    case 'integer':
-    case 'bigint':
-      return parseInt(value, 10)
-    case 'double':
-    case 'float':
-      return parseFloat(value)
-    case 'boolean':
-      return value.toLowerCase() === 'true'
-    case 'struct':
-      return parseStruct(value)
-    case 'array':
-      return JSON.parse(value) // Assuming array is returned as JSON string
-    case 'json':
-      return JSON.parse(value)
-    case 'row':
-      try {
-        const structValue = value ? parseStruct(value) : null
-        return structValue
-          ? transformKeys(structValue, attributeCasingMap)
-          : null
-      } catch (error) {
-        console.error('Parsing error for value:', value, error)
-        throw error
-      }
-    case 'date':
-      return new Date(value)
-    default:
-      return value // For string and other types
-  }
+  return parseValue(value)
 }
 
 // Recursive function to transform object keys to their cased versions from the given map.

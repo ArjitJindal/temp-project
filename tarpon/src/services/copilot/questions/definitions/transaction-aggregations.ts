@@ -47,7 +47,7 @@ export const transactionAggregationQuestion = (
       : transactionPaymentIdentifierQuerySQL(ctx.paymentIdentifier)
 
     const rows = await executeSql<{
-      timestamp: Date
+      timestamp: number
       date: string
       agg: number
     }>(
@@ -90,7 +90,7 @@ ORDER BY
 
     const values = rows.map((row) => {
       return {
-        time: row.timestamp.getTime(),
+        time: row.timestamp,
         value: currency ? ctx.convert(row.agg, currency) : row.agg,
       }
     })
