@@ -10214,7 +10214,6 @@ components:
           type: number
       required:
         - slaPolicyId
-        - policyStatus
     SLAPolicyStatus:
       title: SLAPolicyStatus
       type: string

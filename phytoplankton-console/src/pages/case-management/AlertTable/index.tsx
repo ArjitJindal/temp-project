@@ -9,7 +9,7 @@ import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
-import SlaStatus from './SlaStatus';
+import SlaStatus, { PopoverRef } from './SlaStatus';
 import {
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
@@ -149,6 +149,21 @@ export default function AlertTable(props: Props) {
   const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
     null,
   );
+
+  const slaDetailsRef = useRef<PopoverRef>(null);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      slaDetailsRef.current?.setPopOverVisible(false);
+    };
+
+    window.addEventListener('scroll', handleScroll, true);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true);
+    };
+  }, []);
+
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
 
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
@@ -436,7 +451,9 @@ export default function AlertTable(props: Props) {
               helper.display({
                 title: 'SLA status',
                 render: (entity) => {
-                  return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+                  return (
+                    <SlaStatus ref={slaDetailsRef} slaPolicyDetails={entity.slaPolicyDetails} />
+                  );
                 },
               }),
             ]

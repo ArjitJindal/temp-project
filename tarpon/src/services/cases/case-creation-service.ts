@@ -579,8 +579,6 @@ export class CaseCreationService {
           slaPolicyDetails: ruleInstanceMatch?.alertConfig?.slaPolicies?.map(
             (id): SLAPolicyDetails => ({
               slaPolicyId: id,
-              policyStatus: 'OK',
-              elapsedTime: 0,
             })
           ),
         }

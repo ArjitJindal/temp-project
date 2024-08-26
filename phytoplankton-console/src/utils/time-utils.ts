@@ -24,7 +24,10 @@ export function getDuration(milliseconds: number): Duration {
   };
 }
 
-export function formatDuration(duration: Partial<Duration>): string {
+export function formatDuration(
+  duration: Partial<Duration>,
+  granularitiesCount: number = 3,
+): string {
   const parts = [
     duration?.years ? `${duration.years}${pluralize(' yr', duration.years)}` : '',
     duration?.months ? `${duration.months}${pluralize(' mo', duration.months)}` : '',
@@ -34,5 +37,5 @@ export function formatDuration(duration: Partial<Duration>): string {
     duration?.seconds ? `${duration.seconds}${pluralize(' sec', duration.seconds)}` : '',
   ];
 
-  return parts.filter(Boolean).slice(0, 3).join(' ');
+  return parts.filter(Boolean).slice(0, granularitiesCount).join(' ');
 }

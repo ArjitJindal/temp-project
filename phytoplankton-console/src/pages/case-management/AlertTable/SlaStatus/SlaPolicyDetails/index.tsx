@@ -1,18 +1,20 @@
 import React from 'react';
 import cn from 'clsx';
-import pluralize from 'pluralize';
 import s from './styles.module.less';
 import { SLAPolicyDetails } from '@/apis/models/SLAPolicyDetails';
 import { H5, P } from '@/components/ui/Typography';
 import { humanizeConstant } from '@/utils/humanize';
-import { useQuery } from '@/utils/queries/hooks';
-import { SLA_POLICY } from '@/utils/queries/keys';
-import { useApi } from '@/api';
-import { getOr } from '@/utils/asyncResource';
 import { SLAPolicy } from '@/apis/models/SLAPolicy';
 import { duration } from '@/utils/dayjs';
+import { SLAPolicyStatus } from '@/apis';
+import { formatDuration, getDuration } from '@/utils/time-utils';
+
+export interface SLAPolicyStatusDetails extends SLAPolicyDetails {
+  policyStatus: SLAPolicyStatus;
+}
 interface Props {
-  slaPolicyDetail: SLAPolicyDetails;
+  slaPolicyDetail: SLAPolicyStatusDetails;
+  policy?: SLAPolicy;
 }
 
 export const statusClass = {
@@ -21,25 +23,16 @@ export const statusClass = {
   BREACHED: 'breached',
 };
 
-function getPolicyTime(policy: SLAPolicy, elapsedTime = 0) {
-  const granularity = policy.policyConfiguration.SLATime.breachTime.granularity;
-  const value = policy.policyConfiguration.SLATime.breachTime.units;
-  let time: number;
-  if (granularity === 'hours') {
-    time = Math.floor(Math.abs(value - duration(elapsedTime).asHours()));
-  } else {
-    time = Math.floor(Math.abs(value - duration(elapsedTime).asDays()));
-  }
-  return `${time} ${pluralize(granularity, time)}`;
+function getPolicyTime(policy: SLAPolicy, elapsedTime = 0): string {
+  const { granularity, units: value } = policy.policyConfiguration.SLATime.breachTime;
+  const policyTime = duration(value, granularity).asMilliseconds();
+  const timeDifference = Math.abs(policyTime - elapsedTime);
+  const timeDuration = getDuration(timeDifference);
+  return formatDuration(timeDuration, 2);
 }
 
 function SlaPolicyDetails(props: Props) {
-  const { slaPolicyDetail } = props;
-  const api = useApi();
-  const policyResult = useQuery(SLA_POLICY(slaPolicyDetail.slaPolicyId), async () => {
-    return api.getSlaPolicy({ slaId: slaPolicyDetail.slaPolicyId });
-  });
-  const policy = getOr(policyResult.data, undefined);
+  const { slaPolicyDetail, policy } = props;
   return (
     <>
       <div className={s.row}>
@@ -49,7 +42,9 @@ function SlaPolicyDetails(props: Props) {
         </div>
       </div>
       <div className={s.row}>
-        <H5>{slaPolicyDetail.policyStatus === 'BREACHED' ? 'Exceeded by' : 'Exceeding in'}</H5>
+        <H5 className={s.timeText}>
+          {slaPolicyDetail.policyStatus === 'BREACHED' ? 'Exceeded by  ' : 'Exceeding in  '}
+        </H5>
         <P variant="m" fontWeight="medium">
           {policy ? getPolicyTime(policy, slaPolicyDetail.elapsedTime) : '-'}{' '}
         </P>

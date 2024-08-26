@@ -86,13 +86,15 @@ export class AlertsSLAService {
         )
       }
     })
-    return {
-      elapsedTime: elapsedTime,
-      policyStatus: getSLAStatusFromElapsedTime(
-        elapsedTime,
-        slaPolicy.policyConfiguration
-      ),
-    }
+    return elapsedTime > 0
+      ? {
+          elapsedTime: elapsedTime,
+          policyStatus: getSLAStatusFromElapsedTime(
+            elapsedTime,
+            slaPolicy.policyConfiguration
+          ),
+        }
+      : undefined
   }
 
   public async calculateAndUpdateSLAStatuses() {
