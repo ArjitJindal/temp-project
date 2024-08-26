@@ -145,7 +145,7 @@ async function updateNotionTickets() {
 }
 
 async function main() {
-  // await updateNotionTickets()
+  await updateNotionTickets()
   const { releaseUrl, releaseBody } = await createGitHubRelease()
   await notifySlack(releaseUrl, releaseBody)
   console.info(`Release: ${releaseUrl}\n${releaseBody}`)
