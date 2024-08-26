@@ -34,6 +34,7 @@ import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
+import { envIsNot } from '@/utils/env'
 
 const ACTIVE_STATUS: RuleInstanceStatus = 'ACTIVE'
 const DEPLOYING_STATUS: RuleInstanceStatus = 'DEPLOYING'
@@ -221,7 +222,7 @@ export class RuleInstanceRepository {
   ): Promise<RuleInstance> {
     const ruleId = ruleInstance.ruleId ?? (await this.getNewCustomRuleId(true))
 
-    if (isV2RuleInstance(ruleInstance)) {
+    if (envIsNot('test') && isV2RuleInstance(ruleInstance)) {
       ruleInstance = {
         ...ruleInstance,
         ...this.getV8PropsForV2RuleInstance(ruleInstance),

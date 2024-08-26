@@ -226,6 +226,10 @@ export function runOnV8Engine(
   rule?: Rule
 ): boolean {
   if (hasFeature('RULES_ENGINE_V8')) {
+    if (envIs('test')) {
+      return true
+    }
+
     if (
       hasFeature('RULES_ENGINE_V8_FOR_V2_RULES') &&
       rule?.engineVersion === 'V8'

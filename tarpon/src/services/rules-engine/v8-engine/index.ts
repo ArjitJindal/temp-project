@@ -1303,8 +1303,9 @@ export class RuleJsonLogicEvaluator {
         aggregationVariable.transactionDirection !== 'SENDING')
     if (
       data.type === 'TRANSACTION' &&
-      aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' &&
-      aggregationVariable.aggregationFunc !== 'SUM' &&
+      aggregationVariable.aggregationFunc !== 'UNIQUE_VALUES' && // TODO: To be removed by FR-5416
+      (!aggregationVariable.lastNEntities ||
+        aggregationVariable.aggregationFunc !== 'SUM') && // TODO: To be removed by FR-5416
       newTransactionIsTargetDirection &&
       this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
     ) {
