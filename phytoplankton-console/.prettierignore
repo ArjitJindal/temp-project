@@ -24,3 +24,4 @@ cdk.out
 config/openapi.yaml
 src/apis
 esbuild.json
+src/components/ui/figma-vars.*

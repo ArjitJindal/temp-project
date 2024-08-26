@@ -1,0 +1,44 @@
+{
+  "name": "flagright-figma-vars-plugin",
+  "version": "0.1.0",
+  "files": [
+    "build/main.js",
+    "build/ui.js",
+    "manifest.json"
+  ],
+  "dependencies": {
+    "@create-figma-plugin/ui": "^3.2.0",
+    "@create-figma-plugin/utilities": "^3.2.0",
+    "preact": ">=10"
+  },
+  "devDependencies": {
+    "@create-figma-plugin/build": "^3.2.0",
+    "@create-figma-plugin/tsconfig": "^3.2.0",
+    "@figma/plugin-typings": "1.90.0",
+    "typescript": ">=4"
+  },
+  "scripts": {
+    "prepack": "npm run build",
+    "build": "build-figma-plugin --typecheck --minify",
+    "watch": "build-figma-plugin --typecheck --watch"
+  },
+  "figma-plugin": {
+    "id": "1403317323142953789",
+    "editorType": [
+      "figma"
+    ],
+    "documentAccess": "dynamic-page",
+    "name": "Flagright Figma Vars Plugin",
+    "main": "src/main.ts",
+    "ui": "src/ui.tsx",
+    "networkAccess": {
+      "allowedDomains": [
+        "https://api.github.com"
+      ]
+    },
+    "permissions": [
+      "currentuser"
+    ],
+    "enablePrivatePluginApi": true
+  }
+}

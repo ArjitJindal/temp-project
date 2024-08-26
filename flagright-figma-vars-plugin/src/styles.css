@@ -1,0 +1,19 @@
+#create-figma-plugin {
+    flex-direction: column;
+    display: flex;
+    height: 100%;
+}
+
+.root {
+  padding: var(--space-extra-small);
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.log {
+  background: var(--figma-color-bg-hover);
+  font-family: ui-monospace, monospace, sans-serif;
+  border-radius: var(--border-radius-2);
+  padding: var(--space-extra-small)
+}

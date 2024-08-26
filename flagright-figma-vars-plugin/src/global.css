@@ -1,0 +1,5 @@
+#create-figma-plugin {
+    flex-direction: column;
+    display: flex;
+    height: 100%;
+}
