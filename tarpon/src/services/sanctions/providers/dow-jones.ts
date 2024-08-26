@@ -6,6 +6,7 @@ import { XMLParser } from 'fast-xml-parser'
 import AdmZip from 'adm-zip'
 import {
   Action,
+  Entity,
   SanctionsDataFetcher,
   SanctionsDataProviderName,
   SanctionsRepository,
@@ -39,23 +40,31 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
     return 'dowjones'
   }
 
-  async fullLoad(repo: SanctionsRepository) {
+  async fullLoad(repo: SanctionsRepository, version: string) {
     const filePaths = (await this.getFilePaths()).sort()
     const indexOfLatestFullLoadFile = filePaths
-      .map((str, index) => (str.includes('_f.zip') ? index : -1))
+      .map((str, index) => (str.includes('_f_splits.zip') ? index : -1))
       .filter((index) => index !== -1)
       .pop()
     const filesFromFullLoad = filePaths
       .slice(indexOfLatestFullLoadFile)
-      .filter((fp) => fp.includes('_f.zip') || fp.includes('_d.zip'))
+      .filter((fp) => fp.includes('_f_splits.zip') || fp.includes('_d.zip'))
 
     for (const file of filesFromFullLoad) {
       const outputDir = await this.downloadZip(file)
-      await this.processDirectory(repo, outputDir)
+      const subDir = file.includes('_f_splits.zip')
+        ? `/Factiva_PFA_Feed_XML/${path
+            .basename(outputDir)
+            .toUpperCase()
+            // Hack because the casing is inconsistent here in the given files
+            .replace('SPLITS', 'Splits')}/Person`
+        : ''
+
+      await this.processDirectory(repo, version, outputDir, subDir)
     }
   }
 
-  async delta(repo: SanctionsRepository, from: Date) {
+  async delta(repo: SanctionsRepository, version: string, from: Date) {
     const filePaths = (await this.getFilePaths()).sort()
 
     const filteredFiles = filePaths.filter((fp) => {
@@ -68,7 +77,7 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
 
     for (const file of filteredFiles) {
       const outputDir = await this.downloadZip(file)
-      await this.processDirectory(repo, outputDir)
+      await this.processDirectory(repo, version, outputDir)
     }
   }
   // Function to get the list of file paths
@@ -101,6 +110,7 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
   }
 
   async downloadZip(filePath: string): Promise<string> {
+    logger.info(`Downloading file ${filePath}`)
     const fileResponse = await axios.get(`${apiEndpoint}/${filePath}`, {
       headers: {
         Authorization: this.authHeader,
@@ -111,6 +121,8 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
 
     const zipBuffer = Buffer.from(fileResponse.data)
     const savedFilePath = await this.saveFile(filePath, zipBuffer)
+    logger.info(`Unzipping file ${filePath}`)
+
     const zip = new AdmZip(savedFilePath)
     const outputDir = path.join(
       '/tmp',
@@ -118,54 +130,72 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
       path.basename(savedFilePath, '.zip')
     )
     zip.extractAllTo(outputDir, true)
+    logger.info(`${filePath} extracted`)
     return outputDir
   }
 
-  async processDirectory(repo: SanctionsRepository, outputDir: string) {
-    const personPath = `${outputDir}/Factiva_PFA_Feed_XML/${path
-      .basename(outputDir)
-      .toUpperCase()
-      // Hack because the casing is inconsistent here in the given files
-      .replace('SPLITS', 'Splits')}/Person`
+  async processDirectory(
+    repo: SanctionsRepository,
+    version: string,
+    outputDir: string,
+    rootDir = ''
+  ) {
+    logger.info(`Processing ${outputDir}`)
+    const personPath = `${outputDir}${rootDir}`
     const fps = await this.listFilePaths(personPath)
     for (const fp of fps) {
       const jsonObj = await this.readFile(fp)
-      await this.fileToEntities(repo, jsonObj)
+      await this.fileToEntities(repo, version, jsonObj)
     }
   }
 
-  async fileToEntities(repo: SanctionsRepository, xml: string) {
+  async fileToEntities(
+    repo: SanctionsRepository,
+    version: string,
+    xml: string
+  ) {
     const jsonObj = parser.parse(xml)
-    for (const person of jsonObj.PFA.Person) {
-      let name = person.NameDetails?.Name
-      let otherNames: { FirstName: string; Surname: string }[] = []
-      if (Array.isArray(person.NameDetails?.Name)) {
-        name = person.NameDetails.Name.find(
-          (n) => n['@_NameType'] === 'Primary Name'
-        )
-        otherNames = person.NameDetails.Name.filter(
-          (n) => n['@_NameType'] !== 'Primary Name'
-        ).map((name) => name.NameValue)
-      }
 
-      if (!name) {
-        continue
-      }
-      const nameValue = name.NameValue
-
-      await repo.save(person['@_action'] as Action, this.provider(), {
-        id: person['@_id'],
-        name: {
-          firstName: nameValue.FirstName,
-          surname: nameValue.Surname,
-        },
-        entityType: 'Person',
-        aka: otherNames.map((name) => ({
-          firstName: name.FirstName,
-          surname: name.Surname,
-        })),
-      })
+    let rawEntities = jsonObj.PFA.Person
+    if (!Array.isArray(rawEntities)) {
+      rawEntities = [jsonObj.PFA.Person]
     }
+    const entities = rawEntities
+      .map((person: any): [Action, Entity] | undefined => {
+        let name = person.NameDetails?.Name
+        let otherNames: { FirstName: string; Surname: string }[] = []
+        if (Array.isArray(person.NameDetails?.Name)) {
+          name = person.NameDetails.Name.find(
+            (n) => n['@_NameType'] === 'Primary Name'
+          )
+          otherNames = person.NameDetails.Name.filter(
+            (n) => n['@_NameType'] !== 'Primary Name'
+          ).map((name) => name.NameValue)
+        }
+
+        if (!name) {
+          return
+        }
+        const nameValue = name.NameValue
+
+        return [
+          person['@_action'] as Action,
+          {
+            id: person['@_id'],
+            name: {
+              firstName: nameValue.FirstName,
+              surname: nameValue.Surname,
+            },
+            entityType: 'Person',
+            aka: otherNames.map((name) => ({
+              firstName: name.FirstName,
+              surname: name.Surname,
+            })),
+          },
+        ]
+      })
+      .filter(Boolean)
+    await repo.save(this.provider(), entities, version)
   }
 
   private async listFilePaths(dir: string): Promise<string[]> {

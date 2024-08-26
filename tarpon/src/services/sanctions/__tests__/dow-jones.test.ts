@@ -93,30 +93,42 @@ describe('DowJonesDataFetcher', () => {
         </Person>
       </PFA>`
 
-    await fetcher.fileToEntities(repo, mockXml)
+    await fetcher.fileToEntities(repo, '2024-02', mockXml)
 
-    expect(repo.save).toHaveBeenCalledWith('add', 'dowjones', {
-      id: '12300002',
-      name: {
-        firstName: 'John',
-        surname: 'Smith',
-      },
-      entityType: 'Person',
-      aka: [
-        {
-          firstName: 'John',
-          surname: 'Smyth',
-        },
+    expect(repo.save).toHaveBeenCalledWith(
+      'dowjones',
+      [
+        [
+          'add',
+          {
+            id: '12300002',
+            name: {
+              firstName: 'John',
+              surname: 'Smith',
+            },
+            entityType: 'Person',
+            aka: [
+              {
+                firstName: 'John',
+                surname: 'Smyth',
+              },
+            ],
+          },
+        ],
+        [
+          'update',
+          {
+            id: '12300003',
+            name: {
+              firstName: 'John',
+              surname: 'Smitten',
+            },
+            entityType: 'Person',
+            aka: [],
+          },
+        ],
       ],
-    })
-    expect(repo.save).toHaveBeenCalledWith('update', 'dowjones', {
-      id: '12300003',
-      name: {
-        firstName: 'John',
-        surname: 'Smitten',
-      },
-      entityType: 'Person',
-      aka: [],
-    })
+      '2024-02'
+    )
   })
 })

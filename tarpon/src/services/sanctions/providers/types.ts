@@ -16,16 +16,16 @@ export type Action = 'add' | 'remove' | 'change'
 
 export interface SanctionsRepository {
   save(
-    action: Action,
     provider: SanctionsDataProviderName,
-    entity: Entity
+    entities: [Action, Entity][],
+    version: string
   ): Promise<void>
 }
 
 export interface SanctionsDataFetcher {
   provider(): SanctionsDataProviderName
 
-  fullLoad(repo: SanctionsRepository): Promise<void>
+  fullLoad(repo: SanctionsRepository, version: string): Promise<void>
 
-  delta(repo: SanctionsRepository, from: Date): Promise<void>
+  delta(repo: SanctionsRepository, version: string, from: Date): Promise<void>
 }

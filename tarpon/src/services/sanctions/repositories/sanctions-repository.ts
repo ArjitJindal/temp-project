@@ -9,45 +9,67 @@ import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
   async save(
-    action: Action,
     provider: SanctionsDataProviderName,
-    entity: Entity
+    entities: [Action, Entity][],
+    version: string
   ): Promise<void> {
     const client = await getMongoDbClient()
     const coll = client.db().collection(SANCTIONS_COLLECTION)
 
-    if (action === 'add') {
-      await coll.insertOne({
-        ...entity,
-        provider,
-        createdAt: Date.now(),
-      })
-    }
-    if (action === 'change') {
-      await coll.replaceOne(
-        {
-          id: entity.id,
-          provider,
-          deletedAt: { $exists: false },
-        },
-        {
-          entity,
-          updatedAt: Date.now(),
-        }
-      )
-    }
-    if (action === 'remove') {
-      await coll.replaceOne(
-        {
-          id: entity.id,
-          provider,
-          deletedAt: { $exists: false },
-        },
-        {
-          ...entity,
-          deletedAt: Date.now(),
-        }
-      )
-    }
+    const operations = entities.map(([action, entity]) => {
+      switch (action) {
+        case 'add':
+          return {
+            insertOne: {
+              document: {
+                ...entity,
+                provider,
+                version,
+                createdAt: Date.now(),
+              },
+            },
+          }
+        case 'change':
+          return {
+            updateOne: {
+              filter: {
+                id: entity.id,
+                provider,
+                version,
+                deletedAt: { $exists: false },
+              },
+              update: {
+                $set: {
+                  ...entity,
+                  version,
+                  updatedAt: Date.now(),
+                },
+              },
+            },
+          }
+        case 'remove':
+          return {
+            updateOne: {
+              filter: {
+                id: entity.id,
+                provider,
+                version,
+                deletedAt: { $exists: false },
+              },
+              update: {
+                $set: {
+                  ...entity,
+                  version,
+                  deletedAt: Date.now(),
+                },
+              },
+            },
+          }
+        default:
+          throw new Error(`Unsupported action: ${action}`)
+      }
+    })
+
+    await coll.bulkWrite(operations)
   }
 }
