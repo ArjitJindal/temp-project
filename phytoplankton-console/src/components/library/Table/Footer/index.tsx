@@ -45,10 +45,12 @@ export default function Footer<Item extends object, Params extends object>(
   return (
     <div className={s.tableSelectionFooter} data-cy="table-footer">
       {showSelectionInfo && (
-        <div className={s.selectionInfo}>
+        <div className={s.selectionInfo} data-cy="selection-info">
           {' '}
           <Checkbox value={true} />
-          {pluralize(selectionInfo.entityName, selectionInfo.entityCount, true)} selected{' '}
+          <span data-cy="selection-info-text">
+            {pluralize(selectionInfo.entityName, selectionInfo.entityCount, true)} selected{' '}
+          </span>
           <Tooltip {...tooltipProps}>
             <InformationLineIcon className={s.tooltipIcon} />
           </Tooltip>

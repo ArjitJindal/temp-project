@@ -422,6 +422,9 @@ export function useTanstackTable<
       });
     },
     onRowSelectionChange: (updater) => {
+      if (isEqual(updater, {})) {
+        return;
+      }
       const selectFn = (newState: RowSelectionState) => {
         onSelect &&
           onSelect(

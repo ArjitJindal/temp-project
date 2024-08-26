@@ -11,12 +11,12 @@ import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import SlaStatus from './SlaStatus';
 import {
-  SanctionsHitStatus,
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
   Assignment,
   ChecklistStatus,
   SanctionHitStatusUpdateRequest,
+  SanctionsHitStatus,
 } from '@/apis';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -38,34 +38,34 @@ import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowR
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
-import { useAuth0User, useUsers, useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User, useHasPermissions, useUsers } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { TableSearchParams } from '@/pages/case-management/types';
 import { queryAdapter, useCaseAlertFilters } from '@/pages/case-management/helpers';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
+  ALERT_USER_ID,
   ASSIGNMENTS,
   CASE_STATUS,
-  ALERT_USER_ID,
   CASEID,
   DATE,
   PRIORITY,
-  RULE_NATURE,
   RULE_ACTION_STATUS,
+  RULE_NATURE,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
   canReviewCases,
+  commentsToString,
   findLastStatusForInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
   isOnHoldOrInProgress,
-  statusInProgressOrOnHold,
   statusEscalated,
+  statusInProgressOrOnHold,
   statusInReview,
-  commentsToString,
 } from '@/utils/case-utils';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChangeModal';
@@ -78,7 +78,7 @@ import { denseArray, getErrorMessage } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { SANCTIONS_HITS_ALL, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 
@@ -137,6 +137,7 @@ export default function AlertTable(props: Props) {
   const queryClient = useQueryClient();
   const user = useAuth0User();
   const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedSanctionHits, setSelectedSanctionHits] = useState<{
     [alertId: string]: {
@@ -148,8 +149,8 @@ export default function AlertTable(props: Props) {
   const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
     null,
   );
-
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
+
   const [internalParams, setInternalParams] = useState<AlertTableParams | null>(null);
   const params = useMemo(() => {
     return internalParams ?? externalParams;
@@ -832,6 +833,12 @@ export default function AlertTable(props: Props) {
           .flatMap(([, ids]) => ids),
       ),
     ];
+    if (selectedAlerts.length > 0) {
+      return {
+        entityName: 'alert',
+        entityCount: selectedAlerts.length,
+      };
+    }
     if (selectedTransactions.length > 0) {
       return {
         entityName: 'transaction',
@@ -845,10 +852,34 @@ export default function AlertTable(props: Props) {
       };
     }
     return {
-      entityName: 'alert',
-      entityCount: selectedAlerts.length,
+      entityName: 'item',
+      entityCount: 0,
     };
   };
+
+  const resetSelection = useCallback(
+    (
+      params: {
+        keepAlerts?: boolean;
+        keepTxns?: boolean;
+        keepSanctionHits?: boolean;
+      } = {},
+    ) => {
+      const { keepAlerts = false, keepTxns = false, keepSanctionHits = false } = params;
+      if (!keepAlerts) {
+        setSelectedAlerts([]);
+      }
+      if (!keepTxns) {
+        setSelectedTxns({});
+      }
+      if (!keepSanctionHits) {
+        setSelectedSanctionHits({});
+      }
+    },
+    [],
+  );
+
+  const page = params.page;
   const handleChangeParams = useCallback(
     (params: AlertTableParams) => {
       if (isEmbedded) {
@@ -856,8 +887,11 @@ export default function AlertTable(props: Props) {
       } else if (onChangeParams) {
         onChangeParams(params);
       }
+      if (page !== params.page) {
+        resetSelection();
+      }
     },
-    [isEmbedded, onChangeParams],
+    [page, isEmbedded, onChangeParams, resetSelection],
   );
 
   const selectionActions: SelectionAction<TableAlertItem, AlertTableParams>[] = [
@@ -1145,7 +1179,7 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={internalParams ?? params}
         onChangeParams={handleChangeParams}
-        selectedIds={[...selectedAlerts, ...selectedTransactionIds, ...selectedSanctionHitsIds]}
+        selectedIds={[...selectedAlerts, ...Object.keys(selectedTxns)]}
         extraFilters={filters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
@@ -1159,21 +1193,17 @@ export default function AlertTable(props: Props) {
                   selectedTransactionIds={selectedTxns[alert.alertId ?? ''] ?? []}
                   selectedSanctionsHitsIds={selectedSanctionHitsIds}
                   onTransactionSelect={(alertId, transactionIds) => {
+                    resetSelection({
+                      keepTxns: true,
+                      keepAlerts: selectedAlerts.includes(alertId),
+                    });
                     setSelectedTxns((prevSelectedTxns) => ({
                       ...prevSelectedTxns,
                       [alertId]: [...transactionIds],
                     }));
-                    setSelectedSanctionHits({});
-                    if (transactionIds.length > 0) {
-                      setSelectedAlerts((prevState) => prevState.filter((x) => x !== alertId));
-                      setSelectedSanctionHits({});
-                    }
                   }}
                   onSanctionsHitSelect={(alertId, sanctionsHitsIds, status) => {
-                    if (sanctionsHitsIds.length > 0) {
-                      setSelectedAlerts([]);
-                      setSelectedTxns({});
-                    }
+                    resetSelection({ keepSanctionHits: true });
                     setSelectedSanctionHits((prevState) => ({
                       ...prevState,
                       [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
@@ -1203,11 +1233,8 @@ export default function AlertTable(props: Props) {
           return true;
         }}
         onSelect={(ids) => {
-          setSelectedTxns((prevState) =>
-            ids.reduce((acc, id) => ({ ...acc, [id]: [] }), prevState),
-          );
+          resetSelection({ keepAlerts: true });
           setSelectedAlerts(ids);
-          setSelectedSanctionHits({});
         }}
         toolsOptions={{
           reload: true,

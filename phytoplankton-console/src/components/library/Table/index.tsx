@@ -92,6 +92,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
   props: Props<Item, Params>,
 ) {
   const {
+    tableId,
     innerRef,
     rowKey,
     columns,
@@ -256,6 +257,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
       ? pagination
       : pagination === 'HIDE_FOR_ONE_PAGE' && getPageCount(params, data) > 1;
 
+  const cyId = tableId != null ? `table-${tableId}` : `table`;
+
   return (
     <div className={cn(s.root, s[`sizingMode-${sizingMode}`])} data-test="table">
       <Header<Item, Params>
@@ -291,7 +294,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
           const rows = table.getRowModel().rows;
           return (
             <table
-              data-cy={'table'}
+              data-cy={cyId}
               className={cn(
                 s.table,
                 fitHeight === true && s.fitHeight,
@@ -348,7 +351,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                   })}
               </thead>
               <tbody
-                data-cy={!isLoading(dataRes) ? 'table-body' : ''}
+                data-cy={`${cyId}${!isLoading(dataRes) ? '-body' : ''}`}
                 className={cn(
                   s.tableBody,
                   !showSkeleton && isLoading(dataRes) && s.isLoading,
@@ -387,7 +390,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
 
                       return (
                         <React.Fragment key={row.id}>
-                          <tr id={`row_${row.id}`}>
+                          <tr id={`row_${row.id}`} data-cy={`${cyId}-data-row`}>
                             {visibleCells.map((cell, i) => {
                               const isPinned = cell.column.getIsPinned();
                               let offset = 0;
@@ -457,7 +460,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}
         />
       )}
-      <div data-cy="pagination-wrapper">
+      <div data-cy={`${cyId}-pagination-wrapper`}>
         {!cursor && showPagination && (
           <Pagination
             isDisabled={isLoading(dataRes)}

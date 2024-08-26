@@ -21,7 +21,7 @@ describe('Filter according to case id (optimized)', () => {
         cy.wait('@cases').then((casesInterception) => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
           cy.url().should('include', 'caseId');
-          cy.get('[data-cy="table-body"] [data-cy="caseId"]').each(($caseId) => {
+          cy.get('[data-cy="table-case-table-body"] [data-cy="caseId"]').each(($caseId) => {
             const caseIdText = $caseId.text();
 
             if (caseIdText.startsWith('C')) {
