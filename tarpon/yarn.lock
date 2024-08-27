@@ -5867,15 +5867,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/adm-zip@npm:^0":
-  version: 0.5.5
-  resolution: "@types/adm-zip@npm:0.5.5"
-  dependencies:
-    "@types/node": "npm:*"
-  checksum: 78c5e7472d21eeaf11738c6127e9a774fedf8fd94fdc9a96807930337fadb09ac6d3a264f69d0e15dffb2608d415a97457095e9e50d4c221bd43249d371f33fd
-  languageName: node
-  linkType: hard
-
 "@types/ajv@npm:^1.0.0":
   version: 1.0.0
   resolution: "@types/ajv@npm:1.0.0"
@@ -6815,13 +6806,6 @@ __metadata:
   version: 1.2.2
   resolution: "address@npm:1.2.2"
   checksum: 57d80a0c6ccadc8769ad3aeb130c1599e8aee86a8d25f671216c40df9b8489d6c3ef879bc2752b40d1458aa768f947c2d91e5b2fedfe63cf702c40afdfda9ba9
-  languageName: node
-  linkType: hard
-
-"adm-zip@npm:^0.5.15":
-  version: 0.5.15
-  resolution: "adm-zip@npm:0.5.15"
-  checksum: 279463faa4037be020b3d2bef3852efbee364f3a37378ccc14806cd73e53bd9c45532e6d0ac557606cea3f8c329c5abfd0e1d197471a6aeb4e4ea7c7ad9c03b5
   languageName: node
   linkType: hard
 
@@ -17970,7 +17954,6 @@ __metadata:
     "@slack/webhook": "npm:^6.1.0"
     "@smithy/util-retry": "npm:^2.0.5"
     "@tsconfig/node18": "npm:^18.2.1"
-    "@types/adm-zip": "npm:^0"
     "@types/ajv": "npm:^1.0.0"
     "@types/aws-lambda": "npm:^8.10.89"
     "@types/aws-synthetics-puppeteer": "npm:^3.1.9"
@@ -18003,7 +17986,6 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^6.6.0"
     "@typescript-eslint/parser": "npm:^6.6.0"
     abortcontroller-polyfill: "npm:^1.7.5"
-    adm-zip: "npm:^0.5.15"
     ajv: "npm:8.11.0"
     auth0: "npm:^4.4.0"
     aws-cdk: "npm:~2.147.1"
@@ -18045,7 +18027,7 @@ __metadata:
     file-type: "npm:16.5.4"
     flat: "npm:^5.0.2"
     fp-ts: "npm:^2.11.8"
-    fs-extra: "npm:^10.1.0"
+    fs-extra: "npm:^11.2.0"
     get-port: "npm:^5.1.1"
     google-spreadsheet: "npm:^3.3.0"
     handlebars: "npm:^4.7.7"

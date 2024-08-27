@@ -1,9 +1,11 @@
 import { Buffer } from 'buffer'
 import path from 'path'
-import { promises as fs } from 'fs'
+import fs from 'fs'
+import { promisify } from 'util'
+import { pipeline } from 'stream'
 import axios from 'axios'
 import { XMLParser } from 'fast-xml-parser'
-import AdmZip from 'adm-zip'
+import unzipper from 'unzipper'
 import {
   Action,
   Entity,
@@ -23,6 +25,8 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
 })
+
+const pipelineAsync = promisify(pipeline)
 
 export class DowJonesDataFetcher implements SanctionsDataFetcher {
   authHeader: string
@@ -96,44 +100,39 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
     }
   }
 
-  // Function to save a file to the filesystem
-  async saveFile(filePath: string, data: Buffer): Promise<string> {
-    const outputPath = path.join('/tmp', 'downloaded_files', filePath)
-    await fs.mkdir(path.dirname(outputPath), { recursive: true })
-    await fs.writeFile(outputPath, data)
-    return outputPath
-  }
-
   // Function to read and parse an XML file
   async readFile(filePath: string): Promise<string> {
-    return await fs.readFile(filePath, 'utf8')
+    return await fs.promises.readFile(filePath, 'utf8')
   }
 
   async downloadZip(filePath: string): Promise<string> {
     logger.info(`Downloading file ${filePath}`)
-    const fileResponse = await axios.get(`${apiEndpoint}/${filePath}`, {
+
+    const outputPath = path.join('/tmp', 'downloaded_files', filePath)
+    await fs.promises.mkdir(path.dirname(outputPath), { recursive: true })
+
+    const outputDir = path.join(
+      '/tmp',
+      'unzipped_files',
+      path.basename(outputPath, '.zip')
+    )
+    await fs.promises.mkdir(outputDir, { recursive: true })
+
+    const response = await axios.get(`${apiEndpoint}/${filePath}`, {
       headers: {
         Authorization: this.authHeader,
         'Content-Type': 'application/zip',
       },
-      responseType: 'arraybuffer', // Ensure the response is treated as binary data
+      responseType: 'stream',
     })
 
-    const zipBuffer = Buffer.from(fileResponse.data)
-    const savedFilePath = await this.saveFile(filePath, zipBuffer)
-    logger.info(`Unzipping file ${filePath}`)
+    logger.info(`Streaming and unzipping file ${filePath}`)
+    await pipelineAsync(response.data, unzipper.Extract({ path: outputDir }))
 
-    const zip = new AdmZip(savedFilePath)
-    const outputDir = path.join(
-      '/tmp',
-      'unzipped_files',
-      path.basename(savedFilePath, '.zip')
-    )
-    zip.extractAllTo(outputDir, true)
     logger.info(`${filePath} extracted`)
+
     return outputDir
   }
-
   async processDirectory(
     repo: SanctionsRepository,
     version: string,
@@ -200,12 +199,12 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
 
   private async listFilePaths(dir: string): Promise<string[]> {
     try {
-      const files = await fs.readdir(dir) // Use fs.promises.readdir
+      const files = await fs.promises.readdir(dir)
       const filePaths: string[] = []
 
       for (const file of files) {
         const filePath = path.join(dir, file)
-        const stats = await fs.stat(filePath) // Use fs.promises.stat
+        const stats = await fs.promises.stat(filePath)
 
         if (stats.isFile()) {
           filePaths.push(filePath)
