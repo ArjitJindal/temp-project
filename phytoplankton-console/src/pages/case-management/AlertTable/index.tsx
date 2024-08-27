@@ -1196,7 +1196,7 @@ export default function AlertTable(props: Props) {
         queryResults={queryResults}
         params={internalParams ?? params}
         onChangeParams={handleChangeParams}
-        selectedIds={[...selectedAlerts, ...Object.keys(selectedTxns)]}
+        selectedIds={[...selectedAlerts, ...Object.keys(selectedTxns), ...selectedSanctionHitsIds]}
         extraFilters={filters}
         pagination={isEmbedded ? 'HIDE_FOR_ONE_PAGE' : true}
         selectionInfo={getSelectionInfo()}
