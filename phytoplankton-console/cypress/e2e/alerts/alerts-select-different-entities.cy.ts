@@ -28,7 +28,9 @@ describe('Selection of entities', () => {
   });
 
   it('should be possible to expand alert and select transactions', () => {
-    cy.visit('/case-management/cases?showCases=ALL_ALERTS');
+    cy.visit(
+      '/case-management/cases?showCases=ALL_ALERTS&sort=-numberOfTransactionsHit&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
+    );
     testNoSelection();
     expandRow('alerts-list', 0);
     selectRow('transactions-list', 0);
