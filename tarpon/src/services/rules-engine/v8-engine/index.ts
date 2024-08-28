@@ -34,8 +34,8 @@ import {
   V8TransactionAggregationTask,
 } from '../rules-engine-service'
 import {
-  getTransactionStatsTimeGroupLabel,
   getTransactionsGenerator,
+  getTransactionStatsTimeGroupLabel,
   groupTransactionsByGranularity,
   hydrateTransactionEvents,
 } from '../utils/transaction-rule-utils'
@@ -44,9 +44,9 @@ import {
   BusinessUserRuleVariable,
   CommonUserRuleVariable,
   ConsumerUserRuleVariable,
-  TransactionRuleVariable,
   RuleVariableContext,
   TransactionEventRuleVariable,
+  TransactionRuleVariable,
 } from '../v8-variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../v8-variables/payment-details'
 import {
@@ -84,11 +84,12 @@ import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RuleEntityVariableEntityEnum } from '@/@types/openapi-internal/RuleEntityVariable'
-import { hasFeature } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { BatchWriteRequestInternal, batchWrite } from '@/utils/dynamodb'
+import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
 import { FifoSqsMessage } from '@/utils/sns-sqs-client'
+import { addNewSubsegment } from '@/core/xray'
 
 export type TransactionRuleData = {
   type: 'TRANSACTION'
@@ -226,6 +227,11 @@ export class RuleJsonLogicEvaluator {
     hitDirections: RuleHitDirection[]
     vars: ExecutedRuleVars[]
   }> {
+    const traceNamespace = `${getContext()?.metricDimensions?.ruleInstanceId}`
+    const v8SubSegment = await addNewSubsegment(
+      traceNamespace,
+      'Rule Evaluation'
+    )
     const entityVarDataloader = this.entityVarLoader(data, {
       ...context,
       dynamoDb: this.dynamoDb,
@@ -233,6 +239,10 @@ export class RuleJsonLogicEvaluator {
     const jsonLogic = transformJsonLogic(rawJsonLogic, variables.entity ?? [])
     const { entityVariableKeys, aggVariableKeys } =
       getVariableKeysFromLogic(jsonLogic)
+    const entityVariableSubSegment = await addNewSubsegment(
+      traceNamespace,
+      'Entity Variable Data'
+    )
     const entityVarEntries = await Promise.all(
       entityVariableKeys.map(async (key) => {
         const variable = variables.entity?.find((v) => v.key === key) ?? {
@@ -245,6 +255,7 @@ export class RuleJsonLogicEvaluator {
         ]
       })
     )
+    entityVariableSubSegment?.close()
     const aggVariables = aggVariableKeys
       .map((key) => {
         const aggVariable = variables.agg?.find((v) => v.key === key)
@@ -257,6 +268,10 @@ export class RuleJsonLogicEvaluator {
       .filter(Boolean) as RuleAggregationVariable[]
     const aggHasBothUserDirections = aggVariables.some(
       (v) => !v.userDirection || v.userDirection === 'SENDER_OR_RECEIVER'
+    )
+    const aggVarDataSubSegment = await addNewSubsegment(
+      traceNamespace,
+      'Aggregation Variable Data'
     )
     const aggVarData = await Promise.all(
       aggVariables.map(async (aggVariable) => {
@@ -280,7 +295,8 @@ export class RuleJsonLogicEvaluator {
         }
       })
     )
-    // NOTE: If a aggregation variable has both user directions, we need to evaluate the logic
+    aggVarDataSubSegment?.close()
+    // NOTE: If an aggregation variable has both user directions, we need to evaluate the logic
     // twice, one for each direction
     const directions: RuleHitDirection[] = aggHasBothUserDirections
       ? ['ORIGIN', 'DESTINATION']
@@ -312,6 +328,7 @@ export class RuleJsonLogicEvaluator {
       )
 
       let varValue: { [key: string]: unknown } = {}
+
       try {
         varValue = transformJsonLogicVars(jsonLogic, varData)
       } catch (e) {
@@ -319,7 +336,6 @@ export class RuleJsonLogicEvaluator {
           `Failed to transform json logic vars: ${(e as Error).message}`
         )
       }
-
       vars.push({
         direction,
         value: varValue,
@@ -339,6 +355,8 @@ export class RuleJsonLogicEvaluator {
     }
     const finalHitDirections: RuleHitDirection[] =
       data.type === 'TRANSACTION' ? uniq(hitDirections) : ['ORIGIN']
+
+    v8SubSegment?.close()
     return {
       hit,
       hitDirections: hit ? finalHitDirections : [],

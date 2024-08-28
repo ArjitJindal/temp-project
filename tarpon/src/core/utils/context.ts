@@ -29,7 +29,7 @@ import { Metric } from '@/core/cloudwatch/metrics'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { envIs } from '@/utils/env'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
-import { Timezone, getDefaultTimezone } from '@/utils/dayjs'
+import { getDefaultTimezone, Timezone } from '@/utils/dayjs'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 type LogMetaData = {
