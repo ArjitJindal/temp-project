@@ -1,7 +1,7 @@
 import pluralize from 'pluralize';
 import { PERMISSIONS } from '../../support/permissions';
 
-describe('Close Alerts from Table', () => {
+describe('Selection of entities', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.CASE_REOPEN,
