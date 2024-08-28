@@ -196,10 +196,10 @@ export class ClickhouseTransactionsRepository {
     )
 
     const finalTransactions = sortedTransactions.map((transaction) => {
-      delete (transaction as any).executedRules
-      delete (transaction as any).arsScore.components
-      delete (transaction as any).originDeviceData
-      delete (transaction as any).destinationDeviceData
+      delete (transaction as any)?.executedRules
+      delete (transaction as any)?.arsScore?.components
+      delete (transaction as any)?.originDeviceData
+      delete (transaction as any)?.destinationDeviceData
       const originPaymentDetails = transaction.originPaymentDetails
       const destinationPaymentDetails = transaction.destinationPaymentDetails
 
