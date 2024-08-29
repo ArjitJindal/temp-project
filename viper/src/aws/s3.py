@@ -21,4 +21,4 @@ def checkpoint_dir(path: str):
 
 def file(filepath: str):
     bucket = os.environ["DATALAKE_BUCKET"]
-    return f"s3://{bucket}/{filepath}"
+    return f"s3a://{bucket}/{filepath}"
