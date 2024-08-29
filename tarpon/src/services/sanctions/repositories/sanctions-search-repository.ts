@@ -198,8 +198,8 @@ export class SanctionsSearchRepository {
     return collection.find({ _id: { $in: searchIds } }).toArray()
   }
 
-  public async getSearchResultByCASearchId(
-    caSearchId: number
+  public async getSearchResultByProviderSearchId(
+    providerSearchId: string
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
@@ -207,7 +207,7 @@ export class SanctionsSearchRepository {
     )
     const searches = await collection
       .find({
-        'response.rawComplyAdvantageResponse.content.data.id': caSearchId,
+        providerSearchId,
       })
       .toArray()
     // if (searches.length > 1) {

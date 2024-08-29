@@ -32,8 +32,7 @@ export function mockComplyAdvantageSearch(hit = true) {
         throw new Error(
           `Method "${params?.method}" is not supported for url "${urlStr}" in mock`
         )
-      }
-      if (url.pathname.match(new RegExp('^/searches/.+/details$'))) {
+      } else if (url.pathname.match(new RegExp('^/searches/.+/details$'))) {
         if (params?.method === 'GET') {
           return {
             statusCode: 200,
@@ -53,7 +52,7 @@ export function mockComplyAdvantageSearch(hit = true) {
         // console.log('url', url.pathname)
         // throw new Error(`Method here`)
       } else if (
-        url.pathname.match(new RegExp('^/searches/.*/entities/comply$'))
+        url.pathname.match(new RegExp('^/searches/.+/entities/comply$'))
       ) {
         if (params?.method === 'GET') {
           const page = parseInt(url.searchParams.get('page') ?? '1')

@@ -95,8 +95,8 @@ export const businessSanctionsSearch = (
     },
     response: {
       hitsCount: hits.length,
-      rawComplyAdvantageResponse: {},
       searchId: '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
+      providerSearchId: 'provider-229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
     },
     createdAt: 1683301138980,
   }
@@ -135,8 +135,8 @@ export const consumerSanctionsSearch = (
     },
     response: {
       hitsCount: hits.length,
-      rawComplyAdvantageResponse: {},
       searchId: searchId,
+      providerSearchId: searchId,
     },
     createdAt: 1683301138980,
   }

@@ -41,9 +41,6 @@ describe('Sanctions Service', () => {
       }
       const response = await service.search(request)
       testSearchId = response.searchId
-      expect(
-        response.rawComplyAdvantageResponse?.content?.data?.hits
-      ).toHaveLength(totalMockHitsCount)
       // 1 for creating new search
       // 5 for paginating entities
       // 1 for updating monitoring state

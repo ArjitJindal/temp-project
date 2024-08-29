@@ -691,9 +691,7 @@ export class CaseCreationService {
           await this.sanctionsSearchRepository.getSearchResult(
             sanctionsDetail.searchId
           )
-        const rawHits =
-          searchResult?.response?.rawComplyAdvantageResponse?.content?.data
-            ?.hits ?? []
+        const rawHits = searchResult?.response?.data ?? []
         if (update) {
           const { updatedIds, newIds } =
             await this.sanctionsHitsRepository.mergeHits(
