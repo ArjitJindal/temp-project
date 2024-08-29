@@ -348,22 +348,6 @@ describe('Auto-created entity variables', () => {
     ).toBe(phoneNumbers)
   })
 
-  test('BUSINESS_USER:linkedEntities-childUserIds__SENDER', async () => {
-    const variable = getRuleVariableByKey(
-      'BUSINESS_USER:linkedEntities-childUserIds__SENDER'
-    )
-    const childUserIds = ['U-1', 'U-2']
-    expect(
-      await variable?.load(
-        getTestBusiness({
-          linkedEntities: {
-            childUserIds: childUserIds,
-          },
-        })
-      )
-    ).toBe(childUserIds)
-  })
-
   test('CONSUMER_USER:savedPaymentDetails__SENDER', async () => {
     const variable = getRuleVariableByKey(
       'CONSUMER_USER:savedPaymentDetails__SENDER'

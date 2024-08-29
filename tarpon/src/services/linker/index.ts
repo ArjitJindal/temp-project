@@ -1,5 +1,6 @@
 import { Collection, Filter } from 'mongodb'
 import { uniq, maxBy, max, compact, isEmpty } from 'lodash'
+import { UserRepository } from '../users/repositories/user-repository'
 import { getMongoDbClient, lookupPipelineStage } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,
@@ -334,6 +335,9 @@ export class LinkerService {
     const userCollection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: mongoClient,
+    })
 
     const originAccountNumbersPromise = txnCollection.distinct(
       'originPaymentMethodId',
@@ -459,27 +463,26 @@ export class LinkerService {
         }),
         { userId },
         {
-          'linkedEntities.childUserIds': userId,
-        },
-        {
           'linkedEntities.parentUserId': userId,
         },
       ],
     }
-
-    const users = await userCollection
-      .find(query)
-      .project<UsersProjectedData>({
-        shareHolders: 1,
-        directors: 1,
-        userId: 1,
-        legalEntity: 1,
-        contactDetails: 1,
-        userDetails: 1,
-        type: 1,
-        linkedEntities: 1,
-      })
-      .toArray()
+    const [users, currentUser] = await Promise.all([
+      userCollection
+        .find(query)
+        .project<UsersProjectedData>({
+          shareHolders: 1,
+          directors: 1,
+          userId: 1,
+          legalEntity: 1,
+          contactDetails: 1,
+          userDetails: 1,
+          type: 1,
+          linkedEntities: 1,
+        })
+        .toArray(),
+      userRepository.getMongoUser(userId),
+    ])
 
     const emailLinked = new Map<string, string[]>()
     const addressLinked = new Map<string, string[]>()
@@ -505,16 +508,16 @@ export class LinkerService {
       })
     }
 
-    const currentUser = users.find((u) => u.userId === userId)
+    const childUsers = users.filter(
+      (user) => user.linkedEntities?.parentUserId === userId
+    )
     const link = currentUser?.linkedEntities
-    if (link?.childUserIds) {
-      childrenLinked.set(link.childUserIds.join(', '), [
-        ...link.childUserIds,
-        userId,
-      ])
-    }
     if (link?.parentUserId) {
       parentLinked.set(link.parentUserId, [link.parentUserId, userId])
+    }
+    if (childUsers.length) {
+      const childUserIds = childUsers.map((user) => user.userId)
+      childrenLinked.set(childUserIds.join(', '), [...childUserIds, userId])
     }
 
     // Merge origin and destination payment method links

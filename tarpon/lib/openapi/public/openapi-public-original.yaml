@@ -5755,10 +5755,6 @@ components:
       properties:
         parentUserId:
           type: string
-        childUserIds:
-          type: array
-          items:
-            type: string
     UserWithRulesResult:
       title: UserWithRulesResult
       description: Model for consumer user payload with rules result

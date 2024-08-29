@@ -52,6 +52,7 @@ import {
   TRANSACTION_DESTINATION_IP_COUNTRY_VARIABLE,
   TRANSACTION_ORIGIN_IP_COUNTRY_VARIABLE,
 } from './transaction-ip-info'
+import { USER_CHILD_USER_IDS } from './user-child-user-ids'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -187,6 +188,7 @@ const USER_DERIVED_VARIABLES: Array<
   ConsumerUserRuleVariable | BusinessUserRuleVariable | CommonUserRuleVariable
 > = [
   USER_TYPE,
+  USER_CHILD_USER_IDS,
   CONSUMER_USER_AGE_DAYS,
   CONSUMER_USER_AGE_MONTHS,
   CONSUMER_USER_AGE_YEARS,

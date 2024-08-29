@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { NotFound, BadRequest } from 'http-errors'
-import { omit } from 'lodash'
+import { isEmpty, omit } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskScoringService } from '../risk-scoring'
@@ -142,96 +142,54 @@ export class UserManagementService {
           `Parent user ID : ${parentUserId} passed in linkedEntities does not exist. Please create the entitiy before linking it`
         )
       }
-      let updateParentAttributes
-      if (parentUser.linkedEntities) {
-        updateParentAttributes = {
-          linkedEntities: {
-            ...parentUser.linkedEntities,
-            childUserIds: Array.from(
-              new Set(
-                (parentUser.linkedEntities.childUserIds ?? []).concat(
-                  currentUserId
-                )
-              )
-            ),
-          },
-        }
-      } else {
-        updateParentAttributes = {
-          linkedEntities: {
-            childUserIds: [currentUserId],
-          },
-        }
-      }
-
-      const parentUserEvent = {
-        timestamp: Date.now(),
-        userId: parentUser.userId,
-        reason: `Entity ${currentUserId} linked to it's parent ${parentUser.userId}`,
-      }
-      if (isBusinessUser(parentUser)) {
-        await this.verifyBusinessUserEvent({
-          ...parentUserEvent,
-          updatedBusinessUserAttributes: updateParentAttributes,
-        })
-      } else {
-        await this.verifyConsumerUserEvent({
-          ...parentUserEvent,
-          updatedConsumerUserAttributes: updateParentAttributes,
-        })
-      }
     }
 
-    if (linkedEntities?.childUserIds) {
-      const existingChildUsers = (
-        await Promise.all(
-          linkedEntities.childUserIds.map(async (childUserId: string) => {
-            const childUser = await this.userRepository.getUser<
-              User | Business
-            >(childUserId)
-            if (childUser) {
-              let updateChildAttributes
-              if (childUser.linkedEntities) {
-                updateChildAttributes = {
-                  linkedEntities: {
-                    ...childUser.linkedEntities,
-                    parentUserId: currentUserId,
-                  },
-                }
-              } else {
-                updateChildAttributes = {
-                  linkedEntities: {
-                    parentUserId: currentUserId,
-                  },
-                }
+    // !!DEPRECATED!!: We have removed childUserIds from linkedEntities. The logic below will only be used by
+    // capimoney before they migrate away from childUserIds
+    // TODO: Remove this logic once capimoney migrates away from childUserIds
+    const childUserIds: string[] = (linkedEntities as any)?.childUserIds ?? []
+    if (this.tenantId === 'QYF2BOXRJI' && !isEmpty(childUserIds)) {
+      await Promise.all(
+        childUserIds.map(async (childUserId: string) => {
+          const childUser = await this.userRepository.getUser<User | Business>(
+            childUserId
+          )
+          if (childUser) {
+            let updateChildAttributes
+            if (childUser.linkedEntities) {
+              updateChildAttributes = {
+                linkedEntities: {
+                  ...childUser.linkedEntities,
+                  parentUserId: currentUserId,
+                },
               }
-              const childUserEvent = {
-                timestamp: Date.now(),
-                userId: childUser.userId,
-                reason: `Entity ${currentUserId} linked to it's child ${childUser.userId}`,
+            } else {
+              updateChildAttributes = {
+                linkedEntities: {
+                  parentUserId: currentUserId,
+                },
               }
-              if (isBusinessUser(childUser)) {
-                await this.verifyBusinessUserEvent({
-                  ...childUserEvent,
-                  updatedBusinessUserAttributes: updateChildAttributes,
-                })
-              } else {
-                await this.verifyConsumerUserEvent({
-                  ...childUserEvent,
-                  updatedConsumerUserAttributes: updateChildAttributes,
-                })
-              }
-              return childUser
             }
-          })
-        )
-      ).filter((user: any) => user !== undefined)
-
-      if (existingChildUsers.length < linkedEntities.childUserIds.length) {
-        throw new BadRequest(
-          `Child user IDs passed in linkedEntities does not exist. Please create the entitiy before linking it. Existing Children have been linked`
-        )
-      }
+            const childUserEvent = {
+              timestamp: Date.now(),
+              userId: childUser.userId,
+              reason: `Entity ${currentUserId} linked to it's child ${childUser.userId}`,
+            }
+            if (isBusinessUser(childUser)) {
+              await this.verifyBusinessUserEvent({
+                ...childUserEvent,
+                updatedBusinessUserAttributes: updateChildAttributes,
+              })
+            } else {
+              await this.verifyConsumerUserEvent({
+                ...childUserEvent,
+                updatedConsumerUserAttributes: updateChildAttributes,
+              })
+            }
+            return childUser
+          }
+        })
+      )
     }
   }
 

@@ -330,6 +330,7 @@ export class UserRepository {
       filterShadowHit?: boolean
       filterRuleInstancesHit?: string[]
       filterUserIds?: string[]
+      filterParentUserId?: string
     },
     riskClassificationValues: RiskClassificationScore[],
     isPulseEnabled: boolean,
@@ -350,6 +351,11 @@ export class UserRepository {
         userId: {
           $in: params.filterUserIds,
         },
+      })
+    }
+    if (params.filterParentUserId != null) {
+      filterConditions.push({
+        'linkedEntities.parentUserId': params.filterParentUserId,
       })
     }
 
@@ -510,6 +516,7 @@ export class UserRepository {
       filterRiskLevelLocked?: string
       filterShadowHit?: boolean
       filterRuleInstancesHit?: string[]
+      filterParentUserId?: string
     },
     userType?: UserType
   ): Promise<{
@@ -1153,6 +1160,19 @@ export class UserRepository {
     ])
 
     return users
+  }
+
+  public async getChildUserIds(parentUserId: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const userIds = await collection
+      .find({ 'linkedEntities.parentUserId': parentUserId })
+      .project({ userId: 1 })
+      .map((user) => user.userId)
+      .toArray()
+    return userIds
   }
 
   public async getRuleInstancesTransactionUsersHit(
