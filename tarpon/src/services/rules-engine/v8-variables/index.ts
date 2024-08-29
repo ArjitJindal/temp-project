@@ -60,6 +60,7 @@ import { CurrencyService } from '@/services/currency'
 import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { Amount } from '@/@types/openapi-public/Amount'
 
 const currencyService = new CurrencyService()
 
@@ -232,6 +233,23 @@ function getUiDefinitionType(leafInfo: EntityLeafValueInfo) {
   }
 }
 
+const loadAmount = async (
+  amountDetails: TransactionAmountDetails | undefined,
+  context?: RuleVariableContext
+): Promise<number | undefined> => {
+  if (!amountDetails) {
+    return NaN
+  }
+  if (!context?.baseCurrency) {
+    throw new Error('Missing base currency for transaction amount variable!')
+  }
+  const amount = await currencyService.getTargetCurrencyAmount(
+    amountDetails,
+    context?.baseCurrency ?? 'USD'
+  )
+  return amount.transactionAmount ?? NaN
+}
+
 function updatedTransactionEntityVariables(
   variables: TransactionRuleVariable[]
 ) {
@@ -241,42 +259,50 @@ function updatedTransactionEntityVariables(
   const destinationAmountVariable = variables.find(
     (v) => v.key === DESTINATION_TRANSACTION_AMOUNT_KEY
   )
-  const loadTransactionAmount = async (
-    amountDetails: TransactionAmountDetails | undefined,
-    context?: RuleVariableContext
-  ): Promise<number | undefined> => {
-    if (!amountDetails) {
-      return NaN
-    }
-    if (!context?.baseCurrency) {
-      throw new Error('Missing base currency for transaction amount variable!')
-    }
-    const amount = await currencyService.getTargetCurrencyAmount(
-      amountDetails,
-      context?.baseCurrency ?? 'USD'
-    )
-    return amount.transactionAmount ?? NaN
-  }
+
   if (originAmountVariable) {
     originAmountVariable.load = async (transaction, context) => {
-      return await loadTransactionAmount(
-        transaction?.originAmountDetails,
-        context
-      )
+      return await loadAmount(transaction?.originAmountDetails, context)
     }
   } else {
     logger.error('Cannot find origin amount variable')
   }
+
   if (destinationAmountVariable) {
     destinationAmountVariable.load = async (transaction, context) => {
-      return await loadTransactionAmount(
-        transaction?.destinationAmountDetails,
-        context
-      )
+      return await loadAmount(transaction?.destinationAmountDetails, context)
     }
   } else {
     logger.error('Cannot find destination amount variable')
   }
+
+  updateAmountValueVariables(variables)
+}
+
+function updateAmountValueVariables(variables: RuleVariable[]): void {
+  const amountValueVariables = variables.filter((v) =>
+    v.key.includes('amountValue')
+  )
+
+  amountValueVariables.forEach((v) => {
+    const amountDetailsVariable = v.key.split('.amountValue')[0]
+
+    v.load = async (entity: Transaction | User | Business, context) => {
+      const amountDetails = get(entity, amountDetailsVariable) as
+        | Amount
+        | undefined
+
+      return await loadAmount(
+        amountDetails
+          ? {
+              transactionAmount: amountDetails.amountValue,
+              transactionCurrency: amountDetails.amountCurrency,
+            }
+          : undefined,
+        context
+      )
+    }
+  })
 }
 
 const getTransactionEntityVariables = memoize(
@@ -324,10 +350,12 @@ export const getTransactionRuleEntityVariables = memoize(
       'CONSUMER_USER',
       User
     )
+    updateAmountValueVariables(consumerUserEntityVariables)
     const businessUserEntityVariables = getAutoRuleEntityVariables(
       'BUSINESS_USER',
       Business
     )
+    updateAmountValueVariables(businessUserEntityVariables)
     return Object.fromEntries(
       [
         ...txEntityVariableWithoutDirection(transactionEntityVariables),

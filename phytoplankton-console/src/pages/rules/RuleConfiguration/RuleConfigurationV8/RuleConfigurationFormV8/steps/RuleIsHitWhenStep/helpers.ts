@@ -273,7 +273,7 @@ export function useLogicBuilderConfig(
 }
 
 export function isTransactionAmountVariable(variableKey: string): boolean {
-  return variableKey?.includes('transactionAmount');
+  return variableKey?.includes('transactionAmount') || variableKey?.includes('amountValue');
 }
 
 export function isTransactionOriginVariable(variableKey: string) {
