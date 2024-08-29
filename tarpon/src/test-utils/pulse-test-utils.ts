@@ -220,7 +220,7 @@ export const TEST_TRANSACTION_RISK_PARAMETERS: ParameterAttributeRiskValues[] =
       isDerived: true,
       weight: 1,
       riskEntityType: 'TRANSACTION',
-      defaultValue: DEFAULT_RISK_VALUE,
+      defaultValue: { type: 'RISK_LEVEL', value: 'MEDIUM' },
       riskLevelAssignmentValues: [
         {
           parameterValue: {
