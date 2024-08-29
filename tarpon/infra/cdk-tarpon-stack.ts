@@ -609,7 +609,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transaction and Transaction Event */
     const transactionFunctionProps = {
       provisionedConcurrency:
-        config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+        config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     }
 
@@ -624,11 +624,14 @@ export class CdkTarponStack extends cdk.Stack {
 
     // Configure AutoScaling for Tx Function
     const as = transactionAlias.addAutoScaling({
-      maxCapacity: config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+      minCapacity:
+        config.resource.TRANSACTION_LAMBDA.MIN_PROVISIONED_CONCURRENCY,
+      maxCapacity:
+        config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
     })
     // Configure Target Tracking
     as.scaleOnUtilization({
-      utilizationTarget: 0.7,
+      utilizationTarget: 0.5,
     })
 
     createFunction(this, lambdaExecutionRole, {

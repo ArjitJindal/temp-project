@@ -51,7 +51,8 @@ export type Config = {
       PROVISIONED_CONCURRENCY: number
     }
     TRANSACTION_LAMBDA: {
-      PROVISIONED_CONCURRENCY: number
+      MAX_PROVISIONED_CONCURRENCY: number
+      MIN_PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number
     }
     TRANSACTION_AGGREGATION_LAMBDA: {
