@@ -23,7 +23,6 @@ export async function getNotionPageByTicketID(
   }
   const ticket = await notionClient.databases.query({
     database_id: NOTION_DATABASE_ID,
-    filter_properties: ['gF%5CX'], // 'gF%5CX' is the property ID of 'ID'
     filter: {
       and: [
         {
