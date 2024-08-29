@@ -6,6 +6,7 @@ import { UserRepository } from '../users/repositories/user-repository'
 import { RiskScoringService } from '../risk-scoring'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
+import { mergeRules } from './utils/rule-utils'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
@@ -23,6 +24,21 @@ import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
 import { CaseRepository } from '@/services/cases/repository'
+
+type ConsumerUser = User & { type: 'CONSUMER' }
+type BusinessUser = Business & { type: 'BUSINESS' }
+
+type UserEventType<T extends UserType> = T extends 'CONSUMER'
+  ? ConsumerUserEvent
+  : BusinessUserEvent
+
+type UpdatedAttributesType<T extends UserType> = T extends 'CONSUMER'
+  ? ConsumerUserEvent['updatedConsumerUserAttributes']
+  : BusinessUserEvent['updatedBusinessUserAttributes']
+
+type UserResultType<T extends UserType> = T extends 'CONSUMER'
+  ? UserWithRulesResult
+  : BusinessWithRulesResult
 
 @traceable
 export class UserManagementService {
@@ -87,13 +103,23 @@ export class UserManagementService {
       }
     }
 
-    const monitoringResult = await this.rulesEngineService.verifyUser(
-      userPayload
-    )
+    const { monitoringResult, isAnyAsyncRules } =
+      await this.rulesEngineService.verifyUser(userPayload)
     const userResult = {
       ...userPayload,
       ...monitoringResult,
     }
+
+    const asyncRulesPromises = isAnyAsyncRules
+      ? [
+          this.rulesEngineService.sendAsyncRuleTask({
+            type: 'USER',
+            user: userPayload,
+            tenantId: this.tenantId,
+            userType: type,
+          }),
+        ]
+      : []
 
     if (isConsumerUser) {
       await Promise.all([
@@ -107,6 +133,7 @@ export class UserManagementService {
           'CONSUMER',
           monitoringResult
         ),
+        ...asyncRulesPromises,
       ])
     } else {
       await Promise.all([
@@ -122,6 +149,7 @@ export class UserManagementService {
           'BUSINESS',
           monitoringResult
         ),
+        ...asyncRulesPromises,
       ])
     }
 
@@ -193,136 +221,227 @@ export class UserManagementService {
     }
   }
 
-  public async verifyConsumerUserEvent(
-    userEvent: ConsumerUserEvent,
-    allowUserTypeConversion = false
-  ): Promise<UserWithRulesResult> {
-    let user = await this.userRepository.getConsumerUser(userEvent.userId)
+  private getUpdatedUserAttributes<T extends UserType>(
+    type: T,
+    userEvent: UserEventType<T>
+  ): UpdatedAttributesType<T> {
+    return type === 'CONSUMER'
+      ? (userEvent as ConsumerUserEvent).updatedConsumerUserAttributes
+      : (userEvent as BusinessUserEvent).updatedBusinessUserAttributes
+  }
+
+  private async verifyUserEvent<T extends UserType>(
+    userType: T,
+    userEvent: UserEventType<T>,
+    allowUserTypeConversion: boolean,
+    getUser: (
+      userId: string
+    ) => Promise<(UserResultType<T> & { type: UserType }) | undefined>,
+    saveUser: (user: UserResultType<T>) => Promise<UserResultType<T>>
+  ): Promise<UserResultType<T>> {
+    let user = await getUser(userEvent.userId)
     if (!user) {
       throw new NotFound(
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
       )
     }
-    if (user.type === 'BUSINESS') {
+
+    const oppositeType: UserType =
+      userType === 'CONSUMER' ? 'BUSINESS' : 'CONSUMER'
+    if (user.type === oppositeType) {
       if (!allowUserTypeConversion) {
         throw new BadRequest(
-          `Converting a Business user to a Consumer user is not allowed.`
+          `Converting a ${oppositeType} user to a ${userType} user is not allowed.`
         )
       }
-      user = pickKnownEntityFields(user, UserBase)
+
+      if (
+        userType === 'BUSINESS' &&
+        !(userEvent as BusinessUserEvent).updatedBusinessUserAttributes
+          ?.legalEntity
+      ) {
+        throw new BadRequest(
+          `Converting user ${user.userId} to a Business user. 'legalEntity' is a required field`
+        )
+      }
+
+      user = pickKnownEntityFields(
+        user,
+        userType === 'CONSUMER' ? UserBase : BusinessBase
+      )
     }
 
-    const { userId, updatedConsumerUserAttributes = {} } = userEvent
+    const updatedAttributes: UpdatedAttributesType<T> =
+      this.getUpdatedUserAttributes(userType, userEvent) ?? {}
+
     if (hasFeature('RISK_LEVELS')) {
-      const preDefinedRiskLevel = updatedConsumerUserAttributes.riskLevel
+      const preDefinedRiskLevel = updatedAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
         await this.riskScoringService.handleManualRiskLevel({
-          ...updatedConsumerUserAttributes,
-          userId,
+          ...updatedAttributes,
+          userId: user.userId,
         } as User | Business)
       }
     }
 
-    const updatedConsumerUser: User = mergeEntities(
+    const updatedUser = mergeEntities(
       user,
-      updatedConsumerUserAttributes
-    ) as User
+      updatedAttributes,
+      userType === 'CONSUMER'
+    ) as ConsumerUser | BusinessUser
 
     let riskScoreDetails: UserRiskScoreDetails | undefined
 
     if (hasFeature('RISK_SCORING')) {
       riskScoreDetails =
-        await this.riskScoringService?.calculateAndUpdateKRSAndDRS(
-          updatedConsumerUser
-        )
+        await this.riskScoringService.calculateAndUpdateKRSAndDRS(updatedUser)
     }
 
-    const monitoringResult = await this.rulesEngineService.verifyUser(
-      updatedConsumerUser
-    )
-    const updatedConsumerUserResult: UserWithRulesResult = {
-      ...updatedConsumerUser,
+    const { monitoringResult, isAnyAsyncRules } =
+      await this.rulesEngineService.verifyUser(updatedUser)
+
+    const updatedUserResult = {
+      ...updatedUser,
       ...monitoringResult,
       riskScoreDetails,
     }
 
-    await this.userEventRepository.saveUserEvent(
-      userEvent,
-      'CONSUMER',
-      monitoringResult
-    )
-    await this.userRepository.saveConsumerUser(updatedConsumerUserResult)
-    return omit(updatedConsumerUserResult, 'type')
+    await Promise.all([
+      saveUser(updatedUserResult as UserResultType<T>),
+      this.userEventRepository.saveUserEvent(
+        userEvent,
+        userType,
+        monitoringResult
+      ),
+      isAnyAsyncRules &&
+        this.rulesEngineService.sendAsyncRuleTask({
+          type: 'USER_EVENT',
+          tenantId: this.tenantId,
+          updatedUser,
+          userType,
+          userEventTimestamp: userEvent.timestamp,
+        }),
+    ])
+
+    return omit(updatedUserResult, 'type') as UserResultType<T>
   }
 
   public async verifyBusinessUserEvent(
     userEvent: BusinessUserEvent,
     allowUserTypeConversion = false
   ): Promise<BusinessWithRulesResult> {
-    let user = await this.userRepository.getBusinessUser(userEvent.userId)
-    if (!user) {
-      throw new NotFound(
-        `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
-      )
-    }
-    const updatedBusinessUserAttributes =
-      userEvent.updatedBusinessUserAttributes || {}
-    if (user.type === 'CONSUMER') {
-      if (!allowUserTypeConversion) {
-        throw new BadRequest(
-          `Converting a Consumer user to a Business user is not allowed.`
-        )
-      }
-      if (!updatedBusinessUserAttributes?.legalEntity) {
-        throw new BadRequest(
-          `Converting user ${user.userId} to a Business user. 'legalEntity' is a required field`
-        )
-      }
-      user = pickKnownEntityFields(user, BusinessBase)
-    }
-
-    const { userId } = userEvent
-    if (hasFeature('RISK_LEVELS')) {
-      const preDefinedRiskLevel = updatedBusinessUserAttributes?.riskLevel
-
-      if (preDefinedRiskLevel) {
-        await this.riskScoringService.handleManualRiskLevel({
-          ...updatedBusinessUserAttributes,
-          userId,
-        } as User | Business)
-      }
-    }
-
-    const updatedBusinessUser: Business = mergeEntities(
-      user,
-      userEvent.updatedBusinessUserAttributes || {},
-      false
-    )
-
-    let riskScoreDetails: UserRiskScoreDetails | undefined
-    if (hasFeature('RISK_SCORING')) {
-      riskScoreDetails =
-        await this.riskScoringService.calculateAndUpdateKRSAndDRS(
-          updatedBusinessUser
-        )
-    }
-
-    const monitoringResult = await this.rulesEngineService.verifyUser(
-      updatedBusinessUser
-    )
-    const updatedBusinessUserResult = {
-      ...updatedBusinessUser,
-      ...monitoringResult,
-      riskScoreDetails,
-    }
-
-    await this.userEventRepository.saveUserEvent(
-      userEvent,
+    return this.verifyUserEvent<'BUSINESS'>(
       'BUSINESS',
-      monitoringResult
+      userEvent,
+      allowUserTypeConversion,
+      this.userRepository.getBusinessUser.bind(this.userRepository),
+      this.userRepository.saveBusinessUser.bind(this.userRepository)
+    ) as Promise<BusinessWithRulesResult>
+  }
+
+  public async verifyConsumerUserEvent(
+    userEvent: ConsumerUserEvent,
+    allowUserTypeConversion = false
+  ): Promise<UserWithRulesResult> {
+    return this.verifyUserEvent<'CONSUMER'>(
+      'CONSUMER',
+      userEvent,
+      allowUserTypeConversion,
+      this.userRepository.getConsumerUser.bind(this.userRepository),
+      this.userRepository.saveConsumerUser.bind(this.userRepository)
     )
-    await this.userRepository.saveBusinessUser(updatedBusinessUserResult)
-    return omit(updatedBusinessUserResult, 'type')
+  }
+
+  public async verifyAsyncRulesUser(
+    type: UserType,
+    userPayload: User | Business
+  ): Promise<void> {
+    const userId = userPayload.userId
+
+    const user = await this.userRepository.getUser<
+      UserWithRulesResult | BusinessWithRulesResult
+    >(userId, { consistentRead: true })
+
+    if (!user) {
+      throw new NotFound(`User ${userId} not found`)
+    }
+
+    const { monitoringResult } = await this.rulesEngineService.verifyUser(
+      userPayload,
+      { async: true }
+    )
+
+    const mergedExecutedRules = mergeRules(
+      user.executedRules ?? [],
+      monitoringResult.executedRules ?? []
+    )
+
+    const mergedHitRules = mergeRules(
+      user.hitRules ?? [],
+      monitoringResult.hitRules ?? []
+    )
+
+    await Promise.all([
+      this.userRepository.updateUserWithExecutedRules(
+        userId,
+        mergedExecutedRules,
+        mergedHitRules
+      ),
+      this.userEventRepository.updateUserEventWithRulesResult(
+        userId,
+        type,
+        user.createdTimestamp,
+        monitoringResult
+      ),
+    ])
+  }
+
+  public async verifyAsyncRulesUserEvent(
+    userType: UserType,
+    updatedUser: User | Business,
+    userEventTimestamp: number
+  ): Promise<void> {
+    const userId = updatedUser.userId
+
+    const userEvent = await this.userEventRepository.getUserEvent(
+      userType,
+      userId,
+      userEventTimestamp,
+      { consistentRead: true }
+    )
+
+    if (!userEvent) {
+      throw new NotFound(`User Event ${userId} not found`)
+    }
+
+    const { monitoringResult } = await this.rulesEngineService.verifyUser(
+      updatedUser,
+      { async: true }
+    )
+
+    const mergedExecutedRules = mergeRules(
+      userEvent.executedRules ?? [],
+      monitoringResult.executedRules ?? []
+    )
+
+    const mergedHitRules = mergeRules(
+      userEvent.hitRules ?? [],
+      monitoringResult.hitRules ?? []
+    )
+
+    await Promise.all([
+      this.userEventRepository.updateUserEventWithRulesResult(
+        userId,
+        userType,
+        userEventTimestamp,
+        monitoringResult
+      ),
+      this.userRepository.updateUserWithExecutedRules(
+        userId,
+        mergedExecutedRules,
+        mergedHitRules
+      ),
+    ])
   }
 }

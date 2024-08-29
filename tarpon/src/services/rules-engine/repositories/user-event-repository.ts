@@ -5,6 +5,8 @@ import {
   BatchWriteCommand,
   BatchWriteCommandInput,
   DynamoDBDocumentClient,
+  GetCommand,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -20,6 +22,9 @@ import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 import { pickKnownEntityFields } from '@/utils/object'
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
+import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
+import { ConsumerUserEventWithRulesResult } from '@/@types/openapi-public/ConsumerUserEventWithRulesResult'
+import { BusinessUserEventWithRulesResult } from '@/@types/openapi-public/BusinessUserEventWithRulesResult'
 
 @traceable
 export class UserEventRepository {
@@ -84,6 +89,42 @@ export class UserEventRepository {
       await localTarponChangeCaptureHandler(primaryKey)
     }
     return eventId
+  }
+
+  public async updateUserEventWithRulesResult(
+    userId: string,
+    type: UserType,
+    timestamp: number,
+    rulesResult: UserRulesResult
+  ): Promise<void> {
+    const primaryKey =
+      type === 'CONSUMER'
+        ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId, timestamp)
+        : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId, timestamp)
+
+    const updateCommand = new UpdateCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+      UpdateExpression:
+        'SET #executedRules = :executedRules, #hitRules = :hitRules',
+      ExpressionAttributeNames: {
+        '#executedRules': 'executedRules',
+        '#hitRules': 'hitRules',
+      },
+      ExpressionAttributeValues: {
+        ':executedRules': rulesResult.executedRules,
+        ':hitRules': rulesResult.hitRules,
+      },
+    })
+
+    await this.dynamoDb.send(updateCommand)
+
+    if (runLocalChangeHandler()) {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
   }
 
   public async getMongoUserEvents(
@@ -170,5 +211,33 @@ export class UserEventRepository {
     return result.Items as unknown as ReadonlyArray<
       ConsumerUserEvent | BusinessUserEvent
     >
+  }
+
+  public async getUserEvent(
+    type: UserType,
+    userId: string,
+    timestamp: number,
+    options?: { consistentRead?: boolean }
+  ): Promise<
+    ConsumerUserEventWithRulesResult | BusinessUserEventWithRulesResult | null
+  > {
+    const primaryKey =
+      type === 'CONSUMER'
+        ? DynamoDbKeys.CONSUMER_USER_EVENT(this.tenantId, userId, timestamp)
+        : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId, timestamp)
+
+    const { Item } = await this.dynamoDb.send(
+      new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        Key: primaryKey,
+        ...(options?.consistentRead && { ConsistentRead: true }),
+      })
+    )
+
+    if (!Item) {
+      return null
+    }
+
+    return Item as ConsumerUserEvent | BusinessUserEvent
   }
 }

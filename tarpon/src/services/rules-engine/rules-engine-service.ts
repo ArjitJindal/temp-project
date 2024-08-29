@@ -9,7 +9,7 @@ import {
   keyBy,
   last,
   map,
-  uniqBy,
+  pick,
 } from 'lodash'
 import { MongoClient } from 'mongodb'
 import {
@@ -18,6 +18,7 @@ import {
 } from 'aws-lambda'
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -57,6 +58,7 @@ import {
   UserRuleData,
 } from './v8-engine'
 import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
+import { mergeRules } from './utils/rule-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -102,17 +104,26 @@ import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUs
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { FifoSqsMessage } from '@/utils/sns-sqs-client'
+import { FifoSqsMessage, getSQSClient } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { RuleMode } from '@/@types/openapi-internal/RuleMode'
+import { AsyncRuleRecord, runAsyncRules } from '@/lambdas/async-rule/app'
+import { envIs } from '@/utils/env'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
   rule2: HitRulesDetails
 ) => ((rule1?.ruleId ?? '') > (rule2?.ruleId ?? '') ? 1 : -1)
+
+type RiskScoreDetails = TransactionRiskScoringResult & {
+  components?: RiskScoreComponent[]
+}
+
+const sqsClient = getSQSClient()
 
 export type TransactionAggregationTask = {
   transactionId: string
@@ -183,15 +194,8 @@ export function getExecutedAndHitRulesResult(
   }
 }
 
-function mergeRules<T extends { ruleInstanceId: string }>(
-  existingRulesResult: Array<T>,
-  newRulesResults: Array<T>
-): Array<T> {
-  return uniqBy(
-    (newRulesResults ?? []).concat(existingRulesResult ?? []),
-    (r) => r.ruleInstanceId
-  )
-}
+const SYNC_RULES: RuleMode[] = ['LIVE_SYNC', 'SHADOW_SYNC']
+const ASYNC_RULES: RuleMode[] = ['LIVE_ASYNC', 'SHADOW_ASYNC']
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -423,13 +427,7 @@ export class RulesEngineService {
       }
     }
 
-    const initialTransactionState = transaction.transactionState || 'CREATED'
-    const initialTransactionEvent: TransactionEventWithRulesResult = {
-      transactionId: transaction.transactionId,
-      timestamp: transaction.timestamp,
-      transactionState: initialTransactionState,
-      updatedTransactionAttributes: transaction,
-    }
+    const initialTransactionEvent = this.getInitialTransactionEvent(transaction)
 
     const {
       executedRules,
@@ -437,6 +435,9 @@ export class RulesEngineService {
       aggregationMessages,
       riskScoreDetails,
       riskScoreComponents,
+      senderUser = null,
+      receiverUser = null,
+      isAnyAsyncRules,
     } = await this.verifyTransactionInternal(transaction, [
       initialTransactionEvent,
     ])
@@ -458,7 +459,7 @@ export class RulesEngineService {
 
     const transactionToSave = {
       ...transaction,
-      transactionState: initialTransactionState,
+      transactionState: initialTransactionEvent.transactionState,
     }
 
     await this.transactionEventRepository.saveTransactionEvent(
@@ -484,6 +485,14 @@ export class RulesEngineService {
       await Promise.all([
         sendTransactionAggregationTasks(aggregationMessages),
         this.updateGlobalAggregation(savedTransaction, []),
+        isAnyAsyncRules &&
+          this.sendAsyncRuleTask({
+            tenantId: this.tenantId,
+            type: 'TRANSACTION',
+            transaction: savedTransaction,
+            senderUser,
+            receiverUser,
+          }),
       ])
     } catch (e) {
       logger.error(e)
@@ -521,13 +530,20 @@ export class RulesEngineService {
       transactionEvent.updatedTransactionAttributes || {}
     ) as TransactionWithRulesResult
 
-    const { executedRules, hitRules, aggregationMessages, riskScoreDetails } =
-      await this.verifyTransactionInternal(
-        updatedTransaction,
-        previousTransactionEvents.concat(
-          transactionEvent as TransactionEventWithRulesResult
-        )
+    const {
+      executedRules,
+      hitRules,
+      aggregationMessages,
+      riskScoreDetails,
+      senderUser = null,
+      receiverUser = null,
+      isAnyAsyncRules,
+    } = await this.verifyTransactionInternal(
+      updatedTransaction,
+      previousTransactionEvents.concat(
+        transactionEvent as TransactionEventWithRulesResult
       )
+    )
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -568,6 +584,15 @@ export class RulesEngineService {
     await Promise.all([
       sendTransactionAggregationTasks(aggregationMessages),
       updateGlobalAggregationPromise,
+      isAnyAsyncRules &&
+        this.sendAsyncRuleTask({
+          tenantId: this.tenantId,
+          type: 'TRANSACTION_EVENT',
+          updatedTransaction,
+          senderUser,
+          receiverUser,
+          transactionEventId: eventId,
+        }),
     ])
 
     const updatedTransactionWithoutRulesResult = {
@@ -583,6 +608,27 @@ export class RulesEngineService {
       hitRules,
       riskScoreDetails,
     }
+  }
+
+  public async sendAsyncRuleTask(task: AsyncRuleRecord): Promise<void> {
+    if (envIs('test')) {
+      if (process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
+        await runAsyncRules(task)
+      }
+      return
+    }
+
+    if (envIs('local')) {
+      await runAsyncRules(task)
+      return
+    }
+
+    const message = new SendMessageCommand({
+      MessageBody: JSON.stringify(task),
+      QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+    })
+
+    await sqsClient.send(message)
   }
 
   public async verifyTransactionForSimulation(
@@ -613,14 +659,22 @@ export class RulesEngineService {
 
   public async verifyUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
-    options?: { ongoingScreeningMode?: boolean }
-  ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
+    options?: { ongoingScreeningMode?: boolean; async?: boolean }
+  ): Promise<{
+    monitoringResult:
+      | ConsumerUserMonitoringResult
+      | BusinessUserMonitoringResult
+    isAnyAsyncRules: boolean
+  }> {
+    const { async = false } = options ?? {}
+
     const ruleInstances = (
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
     ).filter(
       (r) =>
-        options?.ongoingScreeningMode ||
-        r.userRuleRunCondition?.entityUpdated !== false
+        (options?.ongoingScreeningMode ||
+          r.userRuleRunCondition?.entityUpdated !== false) &&
+        (async ? ASYNC_RULES : SYNC_RULES).includes(r.mode)
     )
 
     const rules = await this.ruleRepository.getRulesByIds(
@@ -629,7 +683,15 @@ export class RulesEngineService {
         .filter(Boolean) as string[]
     )
 
-    return this.verifyUserByRules(user, ruleInstances, rules, options)
+    return {
+      monitoringResult: await this.verifyUserByRules(
+        user,
+        ruleInstances,
+        rules,
+        options
+      ),
+      isAnyAsyncRules: ruleInstances.some((r) => ASYNC_RULES.includes(r.mode)),
+    }
   }
 
   public async verifyUserByRules(
@@ -685,57 +747,207 @@ export class RulesEngineService {
     return keyBy(rules, 'id')
   }
 
+  private async getTransactionRiskScoreDetails(
+    transaction: Transaction
+  ): Promise<RiskScoreDetails | undefined> {
+    const data = hasFeature('RISK_SCORING')
+      ? await this.riskScoringService.calculateArsScore(transaction)
+      : undefined
+
+    return data
+      ? {
+          trsRiskLevel: data.riskLevel,
+          trsScore: data.score,
+          components: data.components,
+        }
+      : undefined
+  }
+
+  private async verifyAsyncRulesTransactionInternal(
+    transaction: Transaction,
+    transactionEvents: TransactionEvent[],
+    senderUser: User | Business | null,
+    receiverUser: User | Business | null,
+    riskDetails?: TransactionRiskScoringResult
+  ): Promise<void> {
+    const transactionInDb = await this.transactionRepository.getTransactionById(
+      transaction.transactionId,
+      { consistentRead: true }
+    )
+
+    if (!transactionInDb) {
+      throw new NotFound(
+        `Transaction ${transaction.transactionId} not found when verifying async rules`
+      )
+    }
+
+    const relatedData = {
+      transactionRiskDetails: riskDetails,
+      senderUser: senderUser ?? undefined,
+      receiverUser: receiverUser ?? undefined,
+    }
+
+    const data = await this.verifyTransactionInternal(
+      transaction,
+      transactionEvents,
+      relatedData
+    )
+
+    const { executedRules, hitRules, aggregationMessages } = data
+    const mergedExecutedRules = mergeRules(
+      transactionInDb.executedRules,
+      executedRules
+    )
+
+    const mergedHitRules = mergeRules(transactionInDb.hitRules, hitRules)
+
+    const status = getAggregatedRuleStatus(mergedHitRules)
+
+    const transactionEventsSorted = transactionEvents.sort(
+      (a, b) => a.timestamp - b.timestamp
+    )
+
+    await Promise.all([
+      this.transactionRepository.updateTransactionRulesResult(
+        transaction.transactionId,
+        { status, executedRules: mergedExecutedRules, hitRules: mergedHitRules }
+      ),
+      this.transactionEventRepository.updateTransactionEventRulesResult(
+        transaction.transactionId,
+        (last(transactionEventsSorted) as TransactionEvent).timestamp,
+        { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
+      ),
+      sendTransactionAggregationTasks(aggregationMessages),
+    ])
+  }
+
+  public async verifyAsyncRulesTransactionEvent(
+    updatedTransaction: Transaction,
+    transactionEventId: string,
+    senderUser: User | Business | null,
+    receiverUser: User | Business | null
+  ): Promise<void> {
+    const transactionEvents =
+      await this.transactionEventRepository.getTransactionEvents(
+        updatedTransaction.transactionId
+      )
+
+    const transactionEventInDb = transactionEvents.find(
+      (event) => event.eventId === transactionEventId
+    )
+
+    if (!transactionEventInDb) {
+      throw new NotFound(
+        `Transaction Event ${transactionEventId} not found when verifying async rules`
+      )
+    }
+
+    await this.verifyAsyncRulesTransactionInternal(
+      updatedTransaction,
+      transactionEvents,
+      senderUser,
+      receiverUser,
+      transactionEventInDb.riskScoreDetails
+    )
+  }
+
+  public async verifyAsyncRulesTransaction(
+    transaction: Transaction,
+    senderUser: User | Business | null,
+    receiverUser: User | Business | null,
+    riskDetails?: TransactionRiskScoringResult
+  ): Promise<void> {
+    const initialTransactionEvent = this.getInitialTransactionEvent(transaction)
+
+    await this.verifyAsyncRulesTransactionInternal(
+      transaction,
+      [initialTransactionEvent],
+      senderUser,
+      receiverUser,
+      riskDetails
+    )
+  }
+  private getInitialTransactionEvent(
+    transaction: Transaction
+  ): TransactionEventWithRulesResult {
+    const initialTransactionState = transaction.transactionState || 'CREATED'
+
+    const initialTransactionEvent: TransactionEventWithRulesResult = {
+      transactionId: transaction.transactionId,
+      timestamp: transaction.timestamp,
+      transactionState: initialTransactionState,
+      updatedTransactionAttributes: transaction,
+    }
+
+    return initialTransactionEvent
+  }
+
   private async verifyTransactionInternal(
     transaction: Transaction,
-    transactionEvents: TransactionEventWithRulesResult[]
+    transactionEvents: TransactionEventWithRulesResult[],
+    relatedData?: {
+      transactionRiskDetails?: TransactionRiskScoringResult
+      senderUser?: User | Business | undefined
+      receiverUser?: User | Business | undefined
+    }
   ): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
     aggregationMessages: FifoSqsMessage[]
     riskScoreDetails?: TransactionRiskScoringResult
     riskScoreComponents?: RiskScoreComponent[]
+    senderUser: User | Business | undefined
+    receiverUser: User | Business | undefined
+    isAnyAsyncRules?: boolean
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
       'Get Initial Data'
     )
 
+    const userPromise = relatedData
+      ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
+      : this.getTransactionUsers(transaction)
+
+    const riskScoringPromise = relatedData
+      ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
+      : this.getTransactionRiskScoreDetails(transaction)
+
     const [
       { senderUser, receiverUser },
       senderUserRiskLevel,
       activeRuleInstances,
-      transactionRisk,
+      riskScoreDetails,
     ] = await Promise.all([
-      this.getTransactionUsers(transaction),
+      userPromise,
       this.getUserRiskLevel(transaction.originUserId),
       this.ruleInstanceRepository.getActiveRuleInstances(),
-      hasFeature('RISK_SCORING')
-        ? this.riskScoringService.calculateArsScore(transaction)
-        : undefined,
+      riskScoringPromise,
     ])
 
+    const rulesModeToRun = relatedData ? ASYNC_RULES : SYNC_RULES
+
     const transactionRuleInstances = activeRuleInstances.filter(
-      (v) => v.type === 'TRANSACTION'
-    )
-    const userRuleInstances = activeRuleInstances.filter(
-      (v) => v.type === 'USER'
+      (v) => v.type === 'TRANSACTION' && rulesModeToRun.includes(v.mode)
     )
 
-    const riskScoreDetails: TransactionRiskScoringResult | undefined =
-      transactionRisk
-        ? {
-            trsRiskLevel: transactionRisk.riskLevel,
-            trsScore: transactionRisk.score,
-          }
-        : undefined
+    const userRuleInstances = activeRuleInstances.filter(
+      (v) => v.type === 'USER' && rulesModeToRun.includes(v.mode)
+    )
 
     const transactionWithRiskDetails: TransactionWithRiskDetails = {
       ...transaction,
       riskScoreDetails,
     }
+
     const lastTransactionEvent = last(transactionEvents)
+
+    const riskScoreDetailsData = riskScoreDetails
+      ? pick(riskScoreDetails, ['trsScore', 'trsRiskLevel'])
+      : undefined
+
     if (lastTransactionEvent) {
-      lastTransactionEvent.riskScoreDetails = riskScoreDetails
+      lastTransactionEvent.riskScoreDetails = riskScoreDetailsData
     }
 
     const rulesById = await this.getRulesById(transactionRuleInstances)
@@ -759,7 +971,7 @@ export class RulesEngineService {
               transactionEvents,
               senderUser,
               receiverUser,
-              transactionRiskScore: transactionRisk?.score,
+              transactionRiskScore: riskScoreDetails?.trsScore,
             })
           )
         ),
@@ -817,8 +1029,13 @@ export class RulesEngineService {
     return {
       ...executedAndHitRulesResult,
       aggregationMessages,
-      riskScoreDetails,
-      riskScoreComponents: transactionRisk?.components,
+      riskScoreDetails: riskScoreDetailsData,
+      riskScoreComponents: riskScoreDetails?.components,
+      senderUser,
+      receiverUser,
+      isAnyAsyncRules: activeRuleInstances.some((ruleInstance) =>
+        ASYNC_RULES.includes(ruleInstance.mode)
+      ),
     }
   }
 

@@ -7425,6 +7425,8 @@ components:
       enum:
         - LIVE_SYNC
         - SHADOW_SYNC
+        - LIVE_ASYNC
+        - SHADOW_ASYNC
     NewRuleInstanceIdResponse:
       title: NewRuleInstanceIdResponse
       type: object

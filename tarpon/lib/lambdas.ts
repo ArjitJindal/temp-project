@@ -329,6 +329,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME]: {
+    codePath: 'async-rule-runner',
+    handlerName: 'asyncRuleRunnerHandler',
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.CRON_JOB_DAILY]: {
     codePath: 'cron-job-daily',
     handlerName: 'cronJobDailyHandler',

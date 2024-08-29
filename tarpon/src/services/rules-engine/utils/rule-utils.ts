@@ -1,4 +1,4 @@
-import { isEmpty } from 'lodash'
+import { isEmpty, uniqBy } from 'lodash'
 import { Tag } from '@/@types/openapi-public/Tag'
 
 export const tagsRuleFilter = (
@@ -26,4 +26,14 @@ export const tagsRuleFilter = (
   })
 
   return isTagMatched
+}
+
+export function mergeRules<T extends { ruleInstanceId: string }>(
+  existingRulesResult: Array<T>,
+  newRulesResults: Array<T>
+): Array<T> {
+  return uniqBy(
+    (newRulesResults ?? []).concat(existingRulesResult ?? []),
+    (r) => r.ruleInstanceId
+  )
 }

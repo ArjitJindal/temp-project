@@ -172,7 +172,10 @@ export async function bulkVerifyUsers(
   const results: any[] = []
   const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
   for (const user of users) {
-    results.push(await rulesEngine.verifyUser(user, { ongoingScreeningMode }))
+    const { monitoringResult } = await rulesEngine.verifyUser(user, {
+      ongoingScreeningMode,
+    })
+    results.push(monitoringResult)
   }
   return results
 }

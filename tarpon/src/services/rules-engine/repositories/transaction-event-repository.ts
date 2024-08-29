@@ -7,6 +7,7 @@ import {
   DynamoDBDocumentClient,
   QueryCommand,
   QueryCommandInput,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -74,8 +75,45 @@ export class TransactionEventRepository {
     return eventId
   }
 
+  public async updateTransactionEventRulesResult(
+    transactionId: string,
+    timestamp: number,
+    rulesResult: Undefined<TransactionMonitoringResult> = {}
+  ): Promise<void> {
+    // just update the rules result
+    const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
+      this.tenantId,
+      transactionId,
+      timestamp
+    )
+    const updateExpression =
+      'SET executedRules = :executedRules, hitRules = :hitRules, #status = :status'
+    const updateValues = {
+      ':executedRules': rulesResult.executedRules,
+      ':hitRules': rulesResult.hitRules,
+      ':status': rulesResult.status,
+    }
+    const updateParams = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+      UpdateExpression: updateExpression,
+      ExpressionAttributeValues: updateValues,
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
+    }
+    await this.dynamoDb.send(new UpdateCommand(updateParams))
+    if (runLocalChangeHandler()) {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
+  }
+
   public async getTransactionEvents(
-    transactionId: string
+    transactionId: string,
+    options?: { consistentRead?: boolean }
   ): Promise<TransactionEventWithRulesResult[]> {
     const PartitionKeyID = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,
@@ -88,6 +126,7 @@ export class TransactionEventRepository {
       ExpressionAttributeValues: {
         ':PartitionKeyID': PartitionKeyID,
       },
+      ...(options?.consistentRead && { ConsistentRead: true }),
     }
 
     const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))
