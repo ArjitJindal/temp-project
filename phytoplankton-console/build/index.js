@@ -116,6 +116,7 @@ async function main() {
     context: {
       bundleJs: bundleJs,
       bundleCss: bundleCss,
+      cspNonce: randomHash,
       csp: csp,
       preload: collectModulePreloads(
         `${env.OUTPUT_FOLDER}/${bundleJs}`,
