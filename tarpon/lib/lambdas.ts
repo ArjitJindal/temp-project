@@ -330,7 +330,7 @@ export const LAMBDAS: {
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME]: {
-    codePath: 'async-rule-runner',
+    codePath: 'async-rule',
     handlerName: 'asyncRuleRunnerHandler',
     expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,

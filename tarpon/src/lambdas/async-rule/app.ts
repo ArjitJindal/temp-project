@@ -105,11 +105,13 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
   })
 }
 
-export const jobRunnerHandler = lambdaConsumer()(async (event: SQSEvent) => {
-  const { Records } = event
+export const asyncRuleRunnerHandler = lambdaConsumer()(
+  async (event: SQSEvent) => {
+    const { Records } = event
 
-  for await (const record of Records) {
-    const snsMessage = JSON.parse(record.body) as AsyncRuleRecord
-    await runAsyncRules(snsMessage)
+    for await (const record of Records) {
+      const snsMessage = JSON.parse(record.body) as AsyncRuleRecord
+      await runAsyncRules(snsMessage)
+    }
   }
-})
+)
