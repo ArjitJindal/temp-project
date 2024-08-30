@@ -302,33 +302,39 @@ export default function SuperAdminPanel() {
               <Label
                 label={`Tenants recently deleted in last 30 days (${tenantsDeletedRecently.length})`}
               >
-                {tenantsDeletedRecently.map((tenant) => (
-                  <Tag color={'success'}>
-                    {tenant.tenantName} ({tenant.tenantId})
-                  </Tag>
-                ))}
+                <Space direction={'horizontal'} wrap={true}>
+                  {tenantsDeletedRecently.map((tenant) => (
+                    <Tag color={'success'}>
+                      {tenant.tenantName} ({tenant.tenantId})
+                    </Tag>
+                  ))}
+                </Space>
               </Label>
             ) : (
               <></>
             )}
             {tenantsMarkedForDelete?.length ? (
               <Label label={`Tenants marked for delete (${tenantsMarkedForDelete.length})`}>
-                {tenantsMarkedForDelete.map((tenant) => (
-                  <Tag color={'warning'}>
-                    {tenant.tenantName} ({tenant.tenantId})
-                  </Tag>
-                ))}
+                <Space direction={'horizontal'} wrap={true}>
+                  {tenantsMarkedForDelete.map((tenant) => (
+                    <Tag color={'warning'}>
+                      {tenant.tenantName} ({tenant.tenantId})
+                    </Tag>
+                  ))}
+                </Space>
               </Label>
             ) : (
               <></>
             )}
             {tenantsFailedToDelete?.length ? (
               <Label label={`Tenants failed to delete (${tenantsFailedToDelete.length})`}>
-                {tenantsFailedToDelete.map((tenant) => (
-                  <Tag color={'error'}>
-                    {tenant.tenantName} ({tenant.tenantId})
-                  </Tag>
-                ))}
+                <Space direction={'horizontal'} wrap={true}>
+                  {tenantsFailedToDelete.map((tenant) => (
+                    <Tag color={'error'}>
+                      {tenant.tenantName} ({tenant.tenantId})
+                    </Tag>
+                  ))}
+                </Space>
               </Label>
             ) : (
               <></>
