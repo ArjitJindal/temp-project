@@ -9,9 +9,10 @@ import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/confi
 import { envIs } from './env'
 import {
   ClickHouseTables,
+  MaterializedViewDefinition,
+  ProjectionsDefinition,
   TableDefinition,
   TableName,
-  MaterializedViewDefinition,
 } from './clickhouse-definition'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
@@ -43,10 +44,19 @@ export async function getClickhouseClient() {
 
 /**
  *
- * @param tableName {Use functions like TRANSACTIONS_COLLECTION, USERS_COLLECTION, etc.}
- * @param object {The object to insert}
- * @param tenantId {The tenantId to insert the object to}
+ * @param tableName with tenantId
+ * @param projection {The projection to insert the object to}
  */
+
+export const getProjectionName = (
+  tableName: string,
+  projection: ProjectionsDefinition
+) => {
+  const projectionName = projection.name
+  const version = projection.version
+
+  return sanitizeTableName(`${tableName}_${projectionName}_v${version}_proj`)
+}
 
 function assertTableName(
   tableName: string,
@@ -104,8 +114,12 @@ export async function insertToClickhouse(
 
   const tableDefinition = assertTableName(tableName, tenantId)
 
-  if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
-    return
+  if (envIs('test')) {
+    if (!hasFeature('CLICKHOUSE_ENABLED')) {
+      return
+    } else {
+      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
+    }
   }
 
   await clickhouseInsert(
@@ -152,6 +166,19 @@ export const getCreateTableQuery = (
       ${table.materializedColumns?.length ? ',' : ''}
       ${table.materializedColumns?.join(', ') ?? ''}
     ) ENGINE = ${table.engine}
+     ${table.projections?.length ? ',' : ''}
+     ${
+       table.projections?.length
+         ? table.projections
+             ?.map((projection) => {
+               const projectionName = getProjectionName(tableName, projection)
+               const columns = projection.definition.columns.join(', ')
+
+               return `PROJECTION ${projectionName} (SELECT ${columns} ${projection.definition.aggregator} BY ${projection.definition.aggregatorBy})`
+             })
+             .join(', ')
+         : ''
+     }
     ORDER BY ${table.orderBy}
     PRIMARY KEY ${table.primaryKey}
     ${table.partitionBy ? `PARTITION BY ${table.partitionBy}` : ''}
@@ -255,16 +282,11 @@ async function addMissingProjections(
   }
 
   const showTableStatement = await getShowTableStatement(client, tableName)
-  const materializedColumnNames = getMaterializedColumnNames(table)
 
   for (const projection of table.projections) {
-    if (!showTableStatement.includes(`PROJECTION ${projection.name}`)) {
-      await addProjection(
-        client,
-        tableName,
-        projection,
-        materializedColumnNames
-      )
+    const projectionName = getProjectionName(tableName, projection)
+    if (!showTableStatement.includes(`PROJECTION ${projectionName}`)) {
+      await addProjection(client, tableName, projection)
     }
   }
 }
@@ -282,25 +304,20 @@ async function getShowTableStatement(
   return response.data[0].statement
 }
 
-function getMaterializedColumnNames(table: TableDefinition): string {
-  return (
-    table.materializedColumns?.map((col) => col.split(' ')[0]).join(', ') || ''
-  )
-}
-
 async function addProjection(
   client: ClickHouseClient,
   tableName: string,
-  projection: { name: string; key: string },
-  materializedColumnNames: string
+  projection: ProjectionsDefinition
 ): Promise<void> {
+  const columns = projection.definition.columns.join(', ')
+  const projectionName = getProjectionName(tableName, projection)
   const addProjectionQuery = `
-    ALTER TABLE ${tableName} ADD PROJECTION ${projection.name} 
-    (SELECT id, timestamp, ${materializedColumnNames} ORDER BY ${projection.key})
+    ALTER TABLE ${tableName} ADD PROJECTION ${projectionName} 
+    (SELECT ${columns} ${projection.definition.aggregator} BY ${projection.definition.aggregatorBy})
   `
   await client.query({ query: addProjectionQuery })
   await client.query({
-    query: `ALTER TABLE ${tableName} MATERIALIZE PROJECTION ${projection.name}`,
+    query: `ALTER TABLE ${tableName} MATERIALIZE PROJECTION ${projectionName}`,
   })
   logger.info(
     `Added missing projection ${projection.name} to table ${tableName}.`
@@ -311,7 +328,7 @@ export const createMaterializedTableQuery = (
   tenantId: string,
   view: MaterializedViewDefinition
 ) => {
-  const data = `
+  return `
     CREATE TABLE IF NOT EXISTS ${formatTableName(tenantId, view.table)} (
       ${view.columns.join(', ')}
     ) ENGINE = ${view.engine}()
@@ -320,7 +337,6 @@ export const createMaterializedTableQuery = (
     ${view.partitionBy ? `PARTITION BY ${view.partitionBy}` : ''}
     SETTINGS index_granularity = 8192
   `
-  return data
 }
 
 export const createMaterializedViewQuery = (

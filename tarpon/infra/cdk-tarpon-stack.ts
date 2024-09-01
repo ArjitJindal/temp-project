@@ -209,6 +209,15 @@ export class CdkTarponStack extends cdk.Stack {
     auditLogTopic.addSubscription(new SqsSubscription(auditLogQueue))
     auditLogTopic.addSubscription(new SqsSubscription(notificationQueue))
 
+    const asyncRuleQueue = this.createQueue(
+      SQSQueues.ASYNC_RULE_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const batchJobQueue = this.createQueue(
       SQSQueues.BATCH_JOB_QUEUE_NAME.name,
       {
@@ -241,6 +250,7 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
+
     /*
      * Kinesis Data Streams
      */
@@ -456,6 +466,7 @@ export class CdkTarponStack extends cdk.Stack {
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
         HAMMERHEAD_QUEUE_URL: hammerheadQueue.queueUrl,
+        ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
       },
     }
 
@@ -539,6 +550,7 @@ export class CdkTarponStack extends cdk.Stack {
             notificationQueue.queueArn,
             hammerheadQueue.queueArn,
             tarponEventQueue.queueArn,
+            asyncRuleQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -609,7 +621,7 @@ export class CdkTarponStack extends cdk.Stack {
     /* Transaction and Transaction Event */
     const transactionFunctionProps = {
       provisionedConcurrency:
-        config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+        config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
       memorySize: config.resource.TRANSACTION_LAMBDA.MEMORY_SIZE,
     }
 
@@ -624,11 +636,14 @@ export class CdkTarponStack extends cdk.Stack {
 
     // Configure AutoScaling for Tx Function
     const as = transactionAlias.addAutoScaling({
-      maxCapacity: config.resource.TRANSACTION_LAMBDA.PROVISIONED_CONCURRENCY,
+      minCapacity:
+        config.resource.TRANSACTION_LAMBDA.MIN_PROVISIONED_CONCURRENCY,
+      maxCapacity:
+        config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
     })
     // Configure Target Tracking
     as.scaleOnUtilization({
-      utilizationTarget: 0.7,
+      utilizationTarget: 0.5,
     })
 
     createFunction(this, lambdaExecutionRole, {
@@ -707,6 +722,19 @@ export class CdkTarponStack extends cdk.Stack {
 
     webhookDelivererAlias.addEventSource(
       new SqsEventSource(webhookDeliveryQueue, { batchSize: 1 })
+    )
+
+    /* Async Rule */
+    const { alias: asyncRuleAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
+      }
+    )
+
+    asyncRuleAlias.addEventSource(
+      new SqsEventSource(asyncRuleQueue, { batchSize: 10 })
     )
 
     /* Transaction Aggregation */

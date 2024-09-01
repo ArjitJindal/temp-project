@@ -923,6 +923,15 @@ export class RiskScoringService {
             ),
           }))
         )
+        if (derivedValues.length === 0) {
+          matchedRiskLevels = [
+            {
+              value: null,
+              riskValue:
+                parameterAttributeDetails.defaultValue ?? DEFAULT_RISK_VALUE,
+            },
+          ]
+        }
       } else if (parameterAttributeDetails.parameterType == 'VARIABLE') {
         matchedRiskLevels = [
           await getSchemaAttributeRiskLevel(

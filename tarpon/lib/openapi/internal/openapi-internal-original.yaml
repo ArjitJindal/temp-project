@@ -7425,6 +7425,8 @@ components:
       enum:
         - LIVE_SYNC
         - SHADOW_SYNC
+        - LIVE_ASYNC
+        - SHADOW_ASYNC
     NewRuleInstanceIdResponse:
       title: NewRuleInstanceIdResponse
       type: object
@@ -10815,11 +10817,12 @@ components:
             $ref: '#/components/schemas/ComplyAdvantageSearchHit'
         searchId:
           type: string
-        rawComplyAdvantageResponse:
-          $ref: '#/components/schemas/ComplyAdvantageSearchResponse'
+        providerSearchId:
+          type: string
       required:
         - hitsCount
         - searchId
+        - providerSearchId
     SanctionsSearchHistoryResponse:
       title: SanctionsSearchHistoryResponse
       type: object

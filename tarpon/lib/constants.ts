@@ -244,6 +244,9 @@ export const StackConstants = {
   BATCH_JOB_RUNNER_FUNCTION_NAME: getResourceNameForTarpon(
     'BatchJobRunnerFunction'
   ),
+  ASYNC_RULE_RUNNER_FUNCTION_NAME: getResourceNameForTarpon(
+    'AsyncRuleRunnerFunction'
+  ),
   CRON_JOB_DAILY: getResourceNameForTarpon('CronJobDailyFunction'),
   CRON_JOB_TEN_MINUTE: getResourceNameForTarpon('CronJobTenMinuteFunction'),
   REQUEST_LOGGER_FUNCTION_NAME: getResourceNameForTarpon(
@@ -314,6 +317,9 @@ export const SQSQueues: {
   },
   USER_EVENT_QUEUE_NAME: {
     name: getResourceName('UserEventQueue') + '.fifo',
+  },
+  ASYNC_RULE_QUEUE_NAME: {
+    name: getResourceName('AsyncRuleQueue') + '.fifo',
   },
 }
 

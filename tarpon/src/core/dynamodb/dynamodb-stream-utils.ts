@@ -173,15 +173,15 @@ function getDynamoDbEntity(
     // parentUserId later.
     if (OldImage) {
       const oldUser = OldImage as User | Business
-      if (oldUser.linkedEntities?.childUserIds) {
-        oldUser.linkedEntities.childUserIds = []
+      if ((oldUser.linkedEntities as any)?.childUserIds) {
+        ;(oldUser.linkedEntities as any).childUserIds = []
       }
       OldImage = oldUser
     }
     if (NewImage) {
       const newUser = NewImage as User | Business
-      if (newUser.linkedEntities?.childUserIds) {
-        newUser.linkedEntities.childUserIds = []
+      if ((newUser.linkedEntities as any)?.childUserIds) {
+        ;(newUser.linkedEntities as any).childUserIds = []
       }
       NewImage = newUser
     }
@@ -196,14 +196,18 @@ function getDynamoDbEntity(
     if (OldImage) {
       const oldUser = OldImage as BusinessUserEvent
       if (oldUser.updatedBusinessUserAttributes?.linkedEntities) {
-        oldUser.updatedBusinessUserAttributes.linkedEntities.childUserIds = []
+        ;(
+          oldUser.updatedBusinessUserAttributes.linkedEntities as any
+        ).childUserIds = []
       }
       OldImage = oldUser
     }
     if (NewImage) {
       const newUser = NewImage as BusinessUserEvent
       if (newUser.updatedBusinessUserAttributes?.linkedEntities) {
-        newUser.updatedBusinessUserAttributes.linkedEntities.childUserIds = []
+        ;(
+          newUser.updatedBusinessUserAttributes.linkedEntities as any
+        ).childUserIds = []
       }
       NewImage = newUser
     }

@@ -79,6 +79,7 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
+import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 
 @traceable
 export class UserRepository {
@@ -330,6 +331,7 @@ export class UserRepository {
       filterShadowHit?: boolean
       filterRuleInstancesHit?: string[]
       filterUserIds?: string[]
+      filterParentUserId?: string
     },
     riskClassificationValues: RiskClassificationScore[],
     isPulseEnabled: boolean,
@@ -350,6 +352,11 @@ export class UserRepository {
         userId: {
           $in: params.filterUserIds,
         },
+      })
+    }
+    if (params.filterParentUserId != null) {
+      filterConditions.push({
+        'linkedEntities.parentUserId': params.filterParentUserId,
       })
     }
 
@@ -510,6 +517,7 @@ export class UserRepository {
       filterRiskLevelLocked?: string
       filterShadowHit?: boolean
       filterRuleInstancesHit?: string[]
+      filterParentUserId?: string
     },
     userType?: UserType
   ): Promise<{
@@ -804,10 +812,14 @@ export class UserRepository {
     })
   }
 
-  public async getUser<T>(userId: string): Promise<T | undefined> {
+  public async getUser<T>(
+    userId: string,
+    options?: { consistentRead?: boolean }
+  ): Promise<T | undefined> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.USER(this.tenantId, userId),
+      ...(options?.consistentRead && { ConsistentRead: true }),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     if (!result.Item) {
@@ -880,6 +892,35 @@ export class UserRepository {
     user: UserWithRulesResult
   ): Promise<UserWithRulesResult> {
     return (await this.saveUser(user, 'CONSUMER')) as UserWithRulesResult
+  }
+
+  public async updateRulesResultsUser(
+    userId: string,
+    rulesResults: UserRulesResult
+  ): Promise<void> {
+    const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
+    const updateItemInput: UpdateCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+      UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
+      ExpressionAttributeNames: {
+        '#executedRules': 'executedRules',
+        '#hitRules': 'hitRules',
+      },
+      ExpressionAttributeValues: {
+        ':executedRules': rulesResults.executedRules,
+        ':hitRules': rulesResults.hitRules,
+      },
+    }
+
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+
+    if (runLocalChangeHandler()) {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
   }
 
   private sanitizeUserInPlace(user: User | Business) {
@@ -1153,6 +1194,19 @@ export class UserRepository {
     ])
 
     return users
+  }
+
+  public async getChildUserIds(parentUserId: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    const userIds = await collection
+      .find({ 'linkedEntities.parentUserId': parentUserId })
+      .project({ userId: 1 })
+      .map((user) => user.userId)
+      .toArray()
+    return userIds
   }
 
   public async getRuleInstancesTransactionUsersHit(

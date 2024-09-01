@@ -10,9 +10,7 @@ import {
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
-import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
 import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
-import { ComplyAdvantageSearchResponse } from '@/@types/openapi-internal/ComplyAdvantageSearchResponse'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
@@ -21,20 +19,17 @@ import {
   DefaultApiGetSanctionsScreeningActivityDetailsRequest,
   DefaultApiGetSanctionsSearchRequest,
 } from '@/@types/openapi-internal/RequestParameters'
-import { getSecretByName } from '@/utils/secrets-manager'
 import { SanctionsSearchHistoryResponse } from '@/@types/openapi-internal/SanctionsSearchHistoryResponse'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
-import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { getContext, tenantSettings } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
@@ -45,76 +40,18 @@ import {
   CursorPaginationParams,
   CursorPaginationResponse,
 } from '@/utils/pagination'
+import { ComplyAdvantageEntity } from '@/services/sanctions/comply-advantage-api'
 import {
-  ComplyAdvantageApi,
-  ComplyAdvantageEntity,
-} from '@/services/sanctions/comply-advantage-api'
-import { SanctionsHit } from '@/@types/openapi-internal/all'
+  SanctionsHit,
+  SanctionsSearchResponse,
+} from '@/@types/openapi-internal/all'
+import {
+  SanctionsDataProvider,
+  SanctionsProviderResponse,
+} from '@/services/sanctions/providers/types'
+import { ComplyAdvantageDataProvider } from '@/services/sanctions/comply-advantage-data-provider'
 
 const DEFAULT_FUZZINESS = 0.5
-
-function getSearchTypesKey(
-  types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
-) {
-  const searchTypes = types.length ? types : SANCTIONS_SEARCH_TYPES
-  return searchTypes.sort().reverse().join('-')
-}
-
-const SANDBOX_PROFILES = {
-  [getSearchTypesKey(['SANCTIONS'])]: 'b5d54657-4370-45a2-acdd-a40956e02ef4',
-  [getSearchTypesKey(['SANCTIONS', 'PEP'])]:
-    '65032c2f-d579-4ef6-8464-c8fbe9df11bb',
-  [getSearchTypesKey(['SANCTIONS', 'ADVERSE_MEDIA'])]:
-    '12517f27-42d7-4d43-85c4-b28835d284c7',
-  [getSearchTypesKey(['PEP'])]: '9d9036f4-89c5-4e60-880a-3c5aacfbe3ed',
-  [getSearchTypesKey(['PEP', 'ADVERSE_MEDIA'])]:
-    '2fd847d0-a49b-4321-b0d8-6c42fa64c040',
-  [getSearchTypesKey(['ADVERSE_MEDIA'])]:
-    '1e99cb5e-36d2-422b-be1f-0024999b92b7',
-  [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
-    'd563b827-7baa-4a0c-a2ae-7e38e5051cf2',
-}
-const SEARCH_PROFILE_IDS: Record<
-  'prod' | 'sandbox',
-  Record<SanctionsSettingsMarketType, { [key: string]: string }>
-> = {
-  prod: {
-    EMERGING: {
-      [getSearchTypesKey(['SANCTIONS'])]:
-        '01c3b373-c01a-48b2-96f7-3fcf17dd0c91',
-      [getSearchTypesKey(['SANCTIONS', 'PEP'])]:
-        '8b51ca9d-4b45-4de7-bac8-3bebcf6041ab',
-      [getSearchTypesKey(['SANCTIONS', 'ADVERSE_MEDIA'])]:
-        '919d1abb-2add-46c1-b73a-0fbae79aee6d',
-      [getSearchTypesKey(['PEP'])]: 'a9b22101-e5d5-477c-b2c7-2f875ebbd5d8',
-      [getSearchTypesKey(['PEP', 'ADVERSE_MEDIA'])]:
-        'e04c41ad-d3f0-4562-9b51-9d00a8965f16',
-      [getSearchTypesKey(['ADVERSE_MEDIA'])]:
-        '5a67aa5f-4ec8-4a61-af3a-78e3c132a24d',
-      [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
-        '15cb1d65-7f06-4eb3-84f5-f0cb9f1d4c8f',
-    },
-    FIRST_WORLD: {
-      [getSearchTypesKey(['SANCTIONS'])]:
-        '9abd440a-a746-4308-8b9d-219d7093990c',
-      [getSearchTypesKey(['SANCTIONS', 'PEP'])]:
-        '77220fe4-892c-4e13-b57f-379a437ec521',
-      [getSearchTypesKey(['SANCTIONS', 'ADVERSE_MEDIA'])]:
-        '230ede36-a63e-414d-b343-97b2ff375a7c',
-      [getSearchTypesKey(['PEP'])]: '17bdb7e6-1e97-4972-9dfb-56650b1f7d83',
-      [getSearchTypesKey(['PEP', 'ADVERSE_MEDIA'])]:
-        '4f4d18a4-f8b7-457e-a4a1-a9d3e5fa009c',
-      [getSearchTypesKey(['ADVERSE_MEDIA'])]:
-        'f1f5c970-991e-4c68-856b-1f4cfd790968',
-      [getSearchTypesKey(['SANCTIONS', 'PEP', 'ADVERSE_MEDIA'])]:
-        'a8eea736-c654-48a3-97d9-62ea43ef3031',
-    },
-  },
-  sandbox: {
-    EMERGING: SANDBOX_PROFILES,
-    FIRST_WORLD: SANDBOX_PROFILES,
-  },
-}
 
 @traceable
 export class SanctionsService {
@@ -125,9 +62,9 @@ export class SanctionsService {
   sanctionsWhitelistEntityRepository!: SanctionsWhitelistEntityRepository
   sanctionsScreeningDetailsRepository!: SanctionsScreeningDetailsRepository
   counterRepository!: CounterRepository
-  complyAdvantageApi!: ComplyAdvantageApi
   tenantId: string
   initializationPromise: Promise<void> | null = null
+  provider!: SanctionsDataProvider
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
@@ -152,15 +89,7 @@ export class SanctionsService {
       this.tenantId,
       mongoDb
     )
-
-    const settings = await tenantSettings(this.tenantId)
-    this.complyAdvantageSearchProfileId =
-      settings.sanctions?.customSearchProfileId
-    if (!settings.sanctions?.marketType) {
-      logger.error('Tenant market type is not set')
-    }
-    this.complyAdvantageMarketType = settings.sanctions?.marketType
-    this.complyAdvantageApi = new ComplyAdvantageApi(await this.getApiKey())
+    this.provider = await ComplyAdvantageDataProvider.build(this.tenantId)
   }
 
   private async initialize() {
@@ -169,34 +98,27 @@ export class SanctionsService {
     await this.initializationPromise
   }
 
-  private async getApiKey(): Promise<string> {
-    if (process.env.COMPLYADVANTAGE_API_KEY) {
-      return process.env.COMPLYADVANTAGE_API_KEY
-    }
-    return (await getSecretByName('complyAdvantageCreds')).apiKey
-  }
-
-  public async refreshSearch(caSearchId: number): Promise<boolean> {
+  public async refreshSearch(providerSearchId: string): Promise<boolean> {
     await this.initialize()
     const result =
-      await this.sanctionsSearchRepository.getSearchResultByCASearchId(
-        caSearchId
+      await this.sanctionsSearchRepository.getSearchResultByProviderSearchId(
+        providerSearchId
       )
     if (!result) {
       return false
     }
-    const response = await this.fetchFullSearchState(caSearchId)
+    const response = await this.provider.getSearch(providerSearchId)
 
     const newHits = await this.sanctionsHitsRepository.addNewHits(
       result._id,
-      response.content?.data?.hits || [],
+      response.data || [],
       result.hitContext
     )
 
     const parsedResponse = {
       hitsCount: (result.response?.hitsCount ?? 0) + newHits.length,
-      rawComplyAdvantageResponse: result.response?.rawComplyAdvantageResponse,
       searchId: result._id,
+      providerSearchId: response.providerSearchId,
     }
     await this.sanctionsSearchRepository.saveSearchResult({
       request: result.request,
@@ -207,7 +129,7 @@ export class SanctionsService {
     })
 
     logger.info(
-      `Updated monitored search (search ID: ${caSearchId}) for tenant ${this.tenantId}`
+      `Updated monitored search (search ID: ${providerSearchId}) for tenant ${this.tenantId}`
     )
 
     return true
@@ -228,7 +150,12 @@ export class SanctionsService {
       (request.yearOfBirth &&
         (request.yearOfBirth < 1900 || request.yearOfBirth > dayjs().year()))
     ) {
-      return { hitsCount: 0, searchId: 'invalid_search' }
+      return {
+        providerSearchId: 'invalid_search',
+        data: [],
+        hitsCount: 0,
+        searchId: 'invalid_search',
+      }
     }
 
     request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
@@ -237,60 +164,40 @@ export class SanctionsService {
       : SANCTIONS_SEARCH_TYPES
 
     let searchId: string = uuidv4()
+    let providerSearchId: string
     let createdAt: number | undefined = undefined
 
     const existedSearch =
       await this.sanctionsSearchRepository.getSearchResultByParams(request)
-    let rawComplyAdvantageResponse
+    let sanctionsSearchResponse: SanctionsProviderResponse
 
     if (!existedSearch?.response) {
-      const searchProfileId =
-        this.complyAdvantageSearchProfileId ||
-        this.pickSearchProfileId(request.types) ||
-        (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
-      rawComplyAdvantageResponse = await this.complyAdvantageApi.postSearch(
-        searchProfileId,
-        {
-          ...request,
-        }
-      )
-      const caSearchRef = rawComplyAdvantageResponse.content?.data?.ref
-      if (caSearchRef == null) {
-        throw new Error(`Unable to get search ref from CA raw response`)
-      }
-      if (rawComplyAdvantageResponse.content?.data?.hits != null) {
-        const restHits = await this.fetchAllHits(caSearchRef, 2)
-        rawComplyAdvantageResponse = {
-          ...rawComplyAdvantageResponse,
-          content: {
-            ...rawComplyAdvantageResponse.content,
-            data: {
-              ...rawComplyAdvantageResponse.content.data,
-              hits: [
-                ...rawComplyAdvantageResponse.content.data.hits,
-                ...restHits,
-              ],
-            },
-          },
-        }
-      }
+      sanctionsSearchResponse = await this.provider.search({
+        searchTerm: request.searchTerm,
+        fuzziness: request.fuzziness,
+        countryCodes: request.countryCodes,
+        yearOfBirth: request.yearOfBirth,
+        types: request.types,
+      })
+      providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {
       createdAt = existedSearch?.createdAt
       searchId = existedSearch.response.searchId
-      rawComplyAdvantageResponse =
-        existedSearch.response.rawComplyAdvantageResponse
+      providerSearchId = existedSearch.response.providerSearchId
+      sanctionsSearchResponse = existedSearch.response
     }
 
     const filteredHits =
       await this.sanctionsHitsRepository.filterWhitelistedHits(
-        rawComplyAdvantageResponse?.content?.data?.hits ?? [],
+        sanctionsSearchResponse.data ?? [],
         context
       )
 
-    const response = {
-      rawComplyAdvantageResponse,
+    const response: SanctionsSearchResponse = {
       searchId,
+      data: filteredHits,
       hitsCount: filteredHits.length,
+      providerSearchId: providerSearchId,
     }
 
     if (!existedSearch) {
@@ -343,7 +250,7 @@ export class SanctionsService {
   ): Promise<SanctionsHit[]> {
     return this.sanctionsHitsRepository.addHits(
       search.searchId,
-      search?.rawComplyAdvantageResponse?.content?.data?.hits ?? [],
+      search.data ?? [],
       hitContext
     )
   }
@@ -359,56 +266,6 @@ export class SanctionsService {
     return round(fuzziness, 1)
   }
 
-  private async fetchFullSearchState(
-    searchId: number
-  ): Promise<ComplyAdvantageSearchResponse> {
-    const detailsResponse = await this.complyAdvantageApi.getSearchDetails(
-      searchId
-    )
-    const searchRef = detailsResponse.content?.data?.ref
-    if (searchRef == null) {
-      throw new Error(`Unable to find searchRef for in search response`)
-    }
-    return {
-      ...detailsResponse,
-      content: {
-        ...detailsResponse.content,
-        data: {
-          ...detailsResponse.content?.data,
-          hits: [
-            ...(detailsResponse.content?.data?.hits ?? []),
-            ...(await this.fetchAllHits(searchRef, 2)),
-          ],
-        },
-      },
-    }
-  }
-
-  private async fetchAllHits(
-    searchRef: string,
-    startPage: number = 1
-  ): Promise<ComplyAdvantageSearchHit[]> {
-    const hits: ComplyAdvantageSearchHit[] = []
-    if (searchRef != null) {
-      let page = startPage
-      do {
-        const entities = await this.complyAdvantageApi.getSearchEntities(
-          searchRef,
-          {
-            page,
-          }
-        )
-        page++
-        const newHits = entities.content?.map(convertEntityToHit) ?? []
-        hits.push(...newHits)
-        if (newHits.length === 0) {
-          break
-        }
-      } while (page < 100)
-    }
-    return hits
-  }
-
   public async getSearchHistories(
     params: DefaultApiGetSanctionsSearchRequest
   ): Promise<SanctionsSearchHistoryResponse> {
@@ -421,11 +278,7 @@ export class SanctionsService {
     searchId: string
   ): Promise<SanctionsSearchHistory | null> {
     await this.initialize()
-    const result = await this.sanctionsSearchRepository.getSearchResult(
-      searchId
-    )
-
-    return result
+    return await this.sanctionsSearchRepository.getSearchResult(searchId)
   }
 
   public async getSanctionsScreeningStats(timeRange?: {
@@ -447,13 +300,6 @@ export class SanctionsService {
     )
   }
 
-  public async getSearchHistoriesByIds(
-    searchIds: string[]
-  ): Promise<SanctionsSearchHistory[]> {
-    await this.initialize()
-    return this.sanctionsSearchRepository.getSearchResultByIds(searchIds)
-  }
-
   public async updateSearch(
     searchId: string,
     update: SanctionsSearchMonitoring
@@ -464,39 +310,16 @@ export class SanctionsService {
       logger.error(`Cannot find search ${searchId}. Skip updating search.`)
       return
     }
-    const caSearchId =
-      search.response?.rawComplyAdvantageResponse?.content?.data?.id
-    if (caSearchId == null) {
+    const providerSearchId = search.response?.providerSearchId || ''
+    if (providerSearchId == null) {
       throw new Error(`Unable to get search id from response`)
     }
-    await this.complyAdvantageApi.patchMonitors(caSearchId, update)
+    await this.provider.setMonitoring(providerSearchId, update.enabled)
 
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,
       update
     )
-  }
-
-  public async dangerousDeleteComplyAdvantageSearch(
-    caSearchId: number
-  ): Promise<void> {
-    await this.initialize()
-    await this.complyAdvantageApi.deleteSearch(caSearchId)
-  }
-
-  private pickSearchProfileId(types: SanctionsSearchType[] = []) {
-    const profiles =
-      SEARCH_PROFILE_IDS[envIs('prod') ? 'prod' : 'sandbox'][
-        this.complyAdvantageMarketType ?? 'EMERGING'
-      ]
-    const key = getSearchTypesKey(types)
-    const profileId = profiles[key]
-
-    if (!profileId) {
-      logger.error(`Cannot find search profile for types ${types}`)
-    }
-
-    return profileId
   }
 
   public async addWhitelistEntities(
@@ -553,8 +376,7 @@ export class SanctionsService {
     }
 
     await this.initialize()
-    const hits = await this.sanctionsHitsRepository.searchHits(params)
-    return hits
+    return await this.sanctionsHitsRepository.searchHits(params)
   }
 
   public async updateHits(

@@ -1,7 +1,7 @@
 import pluralize from 'pluralize';
 import { PERMISSIONS } from '../../support/permissions';
 
-describe('Close Alerts from Table', () => {
+describe('Selection of entities', () => {
   const REQUIRED_PERMISSIONS = [
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.CASE_REOPEN,
@@ -28,7 +28,9 @@ describe('Close Alerts from Table', () => {
   });
 
   it('should be possible to expand alert and select transactions', () => {
-    cy.visit('/case-management/cases?showCases=ALL_ALERTS');
+    cy.visit(
+      '/case-management/cases?showCases=ALL_ALERTS&sort=-numberOfTransactionsHit&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
+    );
     testNoSelection();
     expandRow('alerts-list', 0);
     selectRow('transactions-list', 0);

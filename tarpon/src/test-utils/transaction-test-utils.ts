@@ -104,3 +104,23 @@ export function setUpTransactionsHooks(
     await Promise.all(cleanUps.map((cleanUp) => cleanUp()))
   })
 }
+
+process.env.__ASYNC_RULES_IN_SYNC_TEST__ = 'false'
+
+export function enableAsyncRulesInTest() {
+  process.env.__ASYNC_RULES_IN_SYNC_TEST__ = 'true'
+}
+
+export function disableAsyncRulesInTest() {
+  process.env.__ASYNC_RULES_IN_SYNC_TEST__ = 'false'
+}
+
+export function withAsyncRulesSync() {
+  beforeAll(() => {
+    enableAsyncRulesInTest()
+  })
+
+  afterAll(() => {
+    disableAsyncRulesInTest()
+  })
+}

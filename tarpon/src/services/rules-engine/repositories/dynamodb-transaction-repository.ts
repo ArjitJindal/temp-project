@@ -9,6 +9,7 @@ import {
   GetCommand,
   GetCommandInput,
   QueryCommandInput,
+  UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import {
   getNonUserReceiverKeys,
@@ -109,6 +110,37 @@ export class DynamoDbTransactionRepository
       await localTarponChangeCaptureHandler(primaryKey)
     }
     return transaction
+  }
+
+  public async updateTransactionRulesResult(
+    transactionId: string,
+    rulesResult: Undefined<TransactionMonitoringResult> = {}
+  ): Promise<void> {
+    const primaryKey = DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
+    const executedRules = rulesResult.executedRules || []
+    const hitRules = rulesResult.hitRules || []
+
+    await this.dynamoDb.send(
+      new UpdateCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        Key: primaryKey,
+        UpdateExpression: `SET executedRules = :executedRules, hitRules = :hitRules, #status = :status`,
+        ExpressionAttributeValues: {
+          ':executedRules': executedRules,
+          ':hitRules': hitRules,
+          ':status': rulesResult.status,
+        },
+        ExpressionAttributeNames: {
+          '#status': 'status',
+        },
+      })
+    )
+    if (runLocalChangeHandler()) {
+      const { localTarponChangeCaptureHandler } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandler(primaryKey)
+    }
   }
 
   public async deleteTransaction(transaction: Transaction): Promise<void> {
@@ -252,11 +284,13 @@ export class DynamoDbTransactionRepository
   }
 
   public async getTransactionById(
-    transactionId: string
+    transactionId: string,
+    options?: { consistentRead?: boolean }
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
+      ...(options?.consistentRead && { ConsistentRead: true }),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 

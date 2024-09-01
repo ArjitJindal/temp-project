@@ -512,7 +512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/TransactionEvent'
+                $ref: '#/components/schemas/TransactionEventWithRulesResult'
               examples:
                 example-1:
                   value:
@@ -1131,7 +1131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ConsumerUserEvent'
+                $ref: '#/components/schemas/ConsumerUserEventWithRulesResult'
         '400':
           description: Bad Request
           headers: {}
@@ -1269,7 +1269,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/BusinessUserEvent'
+                $ref: '#/components/schemas/BusinessUserEventWithRulesResult'
         '400':
           description: Bad Request
           headers: {}
@@ -4143,6 +4143,30 @@ components:
         - transactionState
         - timestamp
         - transactionId
+    UserRulesResult:
+      title: UserRulesResult
+      type: object
+      properties:
+        executedRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/ExecutedRulesResult'
+        hitRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/HitRulesDetails'
+        riskScoreDetails:
+          $ref: '#/components/schemas/UserRiskScoreDetails'
+    ConsumerUserEventWithRulesResult:
+      title: ConsumerUserEventWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/ConsumerUserEvent'
+        - $ref: '#/components/schemas/UserRulesResult'
+    BusinessUserEventWithRulesResult:
+      title: BusinessUserEventWithRulesResult
+      allOf:
+        - $ref: '#/components/schemas/BusinessUserEvent'
+        - $ref: '#/components/schemas/UserRulesResult'
     ConsumerUserEvent:
       description: Model for consumer user-related events
       type: object
@@ -5755,27 +5779,12 @@ components:
       properties:
         parentUserId:
           type: string
-        childUserIds:
-          type: array
-          items:
-            type: string
     UserWithRulesResult:
       title: UserWithRulesResult
       description: Model for consumer user payload with rules result
       allOf:
         - $ref: '#/components/schemas/User'
-        - type: object
-          properties:
-            executedRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/ExecutedRulesResult'
-            hitRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/HitRulesDetails'
-            riskScoreDetails:
-              $ref: '#/components/schemas/UserRiskScoreDetails'
+        - $ref: '#/components/schemas/UserRulesResult'
     UserRiskScoreDetails:
       title: UserRiskScoreDetails
       type: object
@@ -5793,18 +5802,7 @@ components:
       description: Model for business payload with rules result
       allOf:
         - $ref: '#/components/schemas/Business'
-        - type: object
-          properties:
-            executedRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/ExecutedRulesResult'
-            hitRules:
-              type: array
-              items:
-                $ref: '#/components/schemas/HitRulesDetails'
-            riskScoreDetails:
-              $ref: '#/components/schemas/UserRiskScoreDetails'
+        - $ref: '#/components/schemas/UserRulesResult'
     BooleanString:
       title: Boolean string value
       type: string

@@ -1,18 +1,11 @@
 import json
+from datetime import datetime, timedelta
 
 from delta.tables import DeltaTable
 from pyspark.sql import DataFrame, SparkSession, Window
-from pyspark.sql.functions import (
-    col,
-    concat,
-    from_json,
-    from_unixtime,
-    lit,
-    lower,
-    regexp_extract,
-    row_number,
-    to_date,
-)
+from pyspark.sql.functions import col, concat, from_json, from_unixtime, lit, lower
+from pyspark.sql.functions import max as max_fn
+from pyspark.sql.functions import regexp_extract, row_number, to_date
 
 from src.aws.s3 import checkpoint_dir
 from src.aws.secrets import get_secret
@@ -145,8 +138,11 @@ class EntityTables:
                 .whenNotMatchedInsertAll()
                 .execute()
             )
+            if table == "transactions":
+                stop_when_recent_data(micro_batch_output_df)
 
         checkpoint_id = self.version_service.get_pipeline_checkpoint_id()
+
         return (
             df.writeStream.foreachBatch(upsert_to_delta)
             .queryName(entity.table)
@@ -264,3 +260,25 @@ def cdc_transformation(entity: Entity, read_stream: DataFrame) -> DataFrame:
 
     # Ignore remove events
     return final_df.filter(col("event") != "REMOVE")
+
+
+# Define the function to check the condition and stop the stream
+def stop_when_recent_data(batch_df: DataFrame):
+    # Get the current time
+    current_time = datetime.now()
+    # Calculate the time 12 hours ago
+    cutoff_time = current_time - timedelta(hours=12)
+
+    # Check if all data in the current batch falls within the last 12 hours
+    max_timestamp = batch_df.select(max_fn("approximateArrivalTimestamp")).collect()[0][
+        0
+    ]
+
+    if max_timestamp and max_timestamp >= cutoff_time:
+        print(
+            "Stream has processed data within the last 12 hours. Stopping the stream..."
+        )
+
+        active_streams = batch_df.sparkSession.streams.active
+        for stream in active_streams:  # type: ignore
+            stream.stop()

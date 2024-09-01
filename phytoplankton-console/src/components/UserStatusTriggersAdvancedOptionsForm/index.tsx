@@ -58,7 +58,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
           name={'usersToCheck'}
           label={'Users to update'}
           description={
-            'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side status are updated.'
+            'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side state are updated.'
           }
         >
           {(inputProps) => (
@@ -76,7 +76,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
 
       <NestedForm<TriggersOnHit> name={'userStateDetails'}>
         <div className={type === 'RULE' ? s.stateDetails : s.stateDetailsSingle}>
-          <InputField<UserStateDetails, 'state'> name={'state'} label={'Update user status to'}>
+          <InputField<UserStateDetails, 'state'> name={'state'} label={'Update user state to'}>
             {(inputProps) => (
               <Select<UserState>
                 options={USER_STATES.map((state) => ({

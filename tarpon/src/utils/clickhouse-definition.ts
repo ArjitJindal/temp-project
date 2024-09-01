@@ -9,7 +9,6 @@ type BaseTableDefinition = {
   idColumn: string
   timestampColumn: string
   materializedColumns?: string[]
-  projections?: { name: string; key: string }[]
   engine: 'ReplacingMergeTree'
   primaryKey: string
   orderBy: string
@@ -24,8 +23,19 @@ export type MaterializedViewDefinition = Omit<
   columns: string[]
 }
 
+export type ProjectionsDefinition = {
+  name: string
+  version: number
+  definition: {
+    columns: string[]
+    aggregator: 'GROUP'
+    aggregatorBy: string
+  }
+}
+
 export type TableDefinition = BaseTableDefinition & {
   materializedViews?: MaterializedViewDefinition[]
+  projections?: ProjectionsDefinition[]
 }
 
 const enumFields = (

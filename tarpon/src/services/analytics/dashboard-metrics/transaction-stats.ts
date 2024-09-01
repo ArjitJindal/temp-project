@@ -1,4 +1,4 @@
-import { keyBy } from 'lodash'
+import { keyBy, startCase } from 'lodash'
 import { getTimeLabels } from '../../dashboard/utils'
 import {
   GranularityValuesType,
@@ -13,10 +13,10 @@ import {
 import dayjs from '@/utils/dayjs'
 import {
   DAY_DATE_FORMAT_JS,
-  HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT_JS,
   getMongoDbClient,
   getMongoDbClientDb,
+  HOUR_DATE_FORMAT_JS,
+  MONTH_DATE_FORMAT_JS,
 } from '@/utils/mongodb-utils'
 import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_DAILY,
@@ -32,7 +32,13 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-
+import { formatTableName, getClickhouseClient } from '@/utils/clickhouse-utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse-definition'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
+import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
+import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
+import { logger } from '@/core/logger'
+import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
   for (const collection of [
@@ -240,12 +246,129 @@ export class TransactionStatsDashboardMetric {
     )
   }
 
+  public static async getFromClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number,
+    granularity?: GranularityValuesType,
+    returnDataType: 'TOTAL' | 'DATE_RANGE' = 'DATE_RANGE'
+  ): Promise<DashboardStatsTransactionsCountData[]> {
+    const client = await getClickhouseClient()
+    const tableDefinition = CLICKHOUSE_DEFINITIONS.TRANSACTIONS
+    const tableName = formatTableName(tenantId, tableDefinition.tableName)
+
+    const type = granularity?.toLowerCase() ?? 'hour'
+    const timeFormat = type === 'month' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss'
+    const gte = dayjs(startTimestamp).format(timeFormat)
+    const lte = dayjs(endTimestamp).format(timeFormat)
+
+    function buildTimeQuery(): string {
+      return `toStartOf${startCase(type)}(toDateTime(timestamp / 1000))`
+    }
+
+    function buildQueryPart(
+      items: string[],
+      aliasPrefix: string,
+      ...fields: string[]
+    ): string {
+      return items
+        .map(
+          (item) =>
+            fields.map((field) => `COUNTIf(${field} = '${item}')`).join(' + ') +
+            ` as ${aliasPrefix}_${item}`
+        )
+        .join(', ')
+    }
+
+    function buildAggregatorQuery(type: string): string {
+      return `
+    GROUP BY time 
+    ORDER BY time ASC 
+    WITH FILL 
+    FROM toStartOf${startCase(type)}(toDateTime('${gte}')) 
+    TO toStartOf${startCase(
+      type
+    )}(toDateTime('${lte}')) + INTERVAL 1 ${type.toUpperCase()} 
+    STEP INTERVAL 1 ${type.toUpperCase()}
+  `
+    }
+
+    const timeQuery = returnDataType === 'TOTAL' ? "''" : buildTimeQuery()
+
+    const paymentMethods = buildQueryPart(
+      PAYMENT_METHODS,
+      'paymentMethods',
+      'originPaymentMethod',
+      'destinationPaymentMethod'
+    )
+    const transactionTypes = buildQueryPart(
+      TRANSACTION_TYPES,
+      'transactionType',
+      'type'
+    )
+    const ruleActions = buildQueryPart(RULE_ACTIONS, 'status', 'status')
+    const arsRiskLevels = buildQueryPart(
+      RISK_LEVELS,
+      'arsRiskLevel',
+      'arsScore_riskLevel'
+    )
+
+    const dateRangeQuery =
+      returnDataType === 'DATE_RANGE'
+        ? `, ${ruleActions}, ${arsRiskLevels}`
+        : ''
+
+    const aggregatorQuery =
+      returnDataType === 'DATE_RANGE' ? buildAggregatorQuery(type) : ''
+
+    const query = `
+    SELECT ${timeQuery} as time, ${paymentMethods}, ${transactionTypes} ${dateRangeQuery}
+    FROM ${tableName} FINAL
+    WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}')
+    ${aggregatorQuery}
+    SETTINGS output_format_json_quote_64bit_integers = 0
+  `
+
+    logger.info('Running query', { query })
+
+    const queryResult = await client.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const data = await queryResult.json<DashboardStatsTransactionsCountData>()
+
+    if (returnDataType === 'DATE_RANGE') {
+      data.forEach((item) => {
+        item.time = dayjs(item.time).format(
+          type === 'hour'
+            ? HOUR_DATE_FORMAT_JS
+            : type === 'day'
+            ? DAY_DATE_FORMAT_JS
+            : MONTH_DATE_FORMAT_JS
+        )
+      })
+    }
+
+    return data
+  }
+
   public static async get(
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number,
-    granularity?: GranularityValuesType
+    granularity?: GranularityValuesType,
+    type?: 'TOTAL' | 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      return this.getFromClickhouse(
+        tenantId,
+        startTimestamp,
+        endTimestamp,
+        granularity,
+        type
+      )
+    }
     const db = await getMongoDbClientDb()
     let collection
     let timeLabels: string[]

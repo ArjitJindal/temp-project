@@ -48,6 +48,21 @@ describe('Verify User', () => {
           ],
         },
       },
+      {
+        id: 'RC-test-rule-async',
+        type: 'USER',
+        defaultLogic: {
+          and: [
+            {
+              '==': [
+                { var: 'CONSUMER_USER:userDetails-name-firstName__SENDER' },
+                'tester',
+              ],
+            },
+          ],
+        },
+        mode: 'LIVE_ASYNC',
+      },
     ])
     test('Verify consumer user with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
@@ -109,6 +124,92 @@ describe('Verify User', () => {
             ruleId: 'RC-test-rule',
             ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
+          },
+        ],
+        status: 'FLAG',
+      })
+
+      await rulesEngineService.verifyAsyncRulesUser('CONSUMER', user)
+
+      const result2 = await rulesEngineService.userRepository.getConsumerUser(
+        user.userId
+      )
+
+      expect(result2).toEqual({
+        ...user,
+        type: 'CONSUMER',
+        hitRules: [
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleInstanceId: 'RC-test-rule-async',
+            isShadow: false,
+            ruleId: 'RC-test-rule-async',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleInstanceId: 'RC-test-rule',
+            isShadow: false,
+            ruleId: 'RC-test-rule',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+        ],
+        executedRules: [
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleHit: true,
+            ruleInstanceId: 'RC-test-rule-async',
+            vars: [
+              {
+                value: {
+                  'CONSUMER_USER:userDetails-name-firstName__SENDER': 'tester',
+                },
+                direction: 'ORIGIN',
+              },
+            ],
+            isShadow: false,
+            ruleId: 'RC-test-rule-async',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleHit: true,
+            ruleInstanceId: 'RC-test-rule',
+            vars: [
+              {
+                value: {
+                  'CONSUMER_USER:userDetails-name-firstName__SENDER': 'tester',
+                },
+                direction: 'ORIGIN',
+              },
+            ],
+            isShadow: false,
+            ruleId: 'RC-test-rule',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
           },
         ],
         status: 'FLAG',
@@ -214,6 +315,23 @@ describe('Verify User', () => {
           ],
         },
       },
+      {
+        id: 'RC-test-rule-async',
+        type: 'USER',
+        defaultLogic: {
+          and: [
+            {
+              '==': [
+                {
+                  var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER',
+                },
+                'tester',
+              ],
+            },
+          ],
+        },
+        mode: 'LIVE_ASYNC',
+      },
     ])
     test('Verify business user with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
@@ -288,6 +406,7 @@ describe('Verify User', () => {
         dynamoDb,
         mongoDb
       )
+      const eventTimestamp = Date.now()
       const user = getTestBusiness()
       const savedUser = await rulesEngineService.verifyUser(user, 'BUSINESS')
       const result = await rulesEngineService.verifyBusinessUserEvent({
@@ -299,7 +418,7 @@ describe('Verify User', () => {
             },
           },
         },
-        timestamp: Date.now(),
+        timestamp: eventTimestamp,
       })
       expect(result).toEqual({
         ...user,
@@ -357,6 +476,105 @@ describe('Verify User', () => {
           },
         ],
         riskScoreDetails: undefined,
+        status: 'FLAG',
+      })
+
+      await rulesEngineService.verifyAsyncRulesUserEvent(
+        'BUSINESS',
+        result,
+        eventTimestamp
+      )
+
+      const result2 = await rulesEngineService.userRepository.getBusinessUser(
+        user.userId
+      )
+
+      expect(result2).toEqual({
+        ...user,
+        type: 'BUSINESS',
+        legalEntity: {
+          ...user.legalEntity,
+          companyGeneralDetails: {
+            ...user.legalEntity?.companyGeneralDetails,
+            legalName: 'tester',
+          },
+        },
+        hitRules: [
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleInstanceId: 'RC-test-rule-async.1',
+            isShadow: false,
+            ruleId: 'RC-test-rule-async',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleInstanceId: 'RC-test-rule.1',
+            isShadow: false,
+            ruleId: 'RC-test-rule',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+        ],
+        executedRules: [
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleHit: true,
+            ruleInstanceId: 'RC-test-rule-async.1',
+            vars: [
+              {
+                value: {
+                  'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER':
+                    'tester',
+                },
+                direction: 'ORIGIN',
+              },
+            ],
+            isShadow: false,
+            ruleId: 'RC-test-rule-async',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+          {
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            ruleName: 'test rule name',
+            ruleHit: true,
+            ruleInstanceId: 'RC-test-rule.1',
+            vars: [
+              {
+                value: {
+                  'BUSINESS_USER:legalEntity-companyGeneralDetails-legalName__SENDER':
+                    'tester',
+                },
+                direction: 'ORIGIN',
+              },
+            ],
+            isShadow: false,
+            ruleId: 'RC-test-rule',
+            ruleDescription: '',
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN'],
+            },
+            labels: [],
+          },
+        ],
         status: 'FLAG',
       })
     })

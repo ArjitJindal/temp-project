@@ -14,6 +14,7 @@ import { message } from '@/components/library/Message';
 import { AsyncResource, isSuccess } from '@/utils/asyncResource';
 import Spinner from '@/components/library/Spinner';
 import { NotificationListResponse } from '@/apis';
+import { useUsers } from '@/utils/user-utils';
 
 interface Props {
   isVisible: boolean;
@@ -47,7 +48,9 @@ export default function NotificationsDrawer(props: Props) {
   const handleReadAll = () => {
     markAsReadMutation.mutate({});
   };
-
+  const [users, isLoading] = useUsers({
+    includeRootUsers: true,
+  });
   const [isNotificationsLoading, setIsNotificationsLoading] = useState(false);
   const markAsRead = () => {
     refetch();
@@ -148,26 +151,29 @@ export default function NotificationsDrawer(props: Props) {
                   : `You don't have any notifications`}
               </div>
             )}
-            {notifications.map((notification, i) => {
-              if (notifications.length === i + 1) {
+            {!isLoading &&
+              notifications.map((notification, i) => {
+                if (notifications.length === i + 1) {
+                  return (
+                    <NotificationsDrawerItem
+                      key={notification.id}
+                      notification={notification}
+                      markAsReadMutation={markAsReadMutation}
+                      innerRef={ref}
+                      users={users}
+                    />
+                  );
+                }
                 return (
                   <NotificationsDrawerItem
                     key={notification.id}
                     notification={notification}
                     markAsReadMutation={markAsReadMutation}
-                    innerRef={ref}
+                    users={users}
                   />
                 );
-              }
-              return (
-                <NotificationsDrawerItem
-                  key={notification.id}
-                  notification={notification}
-                  markAsReadMutation={markAsReadMutation}
-                />
-              );
-            })}
-            {isNotificationsLoading && <Spinner />}
+              })}
+            {(isNotificationsLoading || isLoading) && <Spinner />}
           </div>
         </div>
       </div>

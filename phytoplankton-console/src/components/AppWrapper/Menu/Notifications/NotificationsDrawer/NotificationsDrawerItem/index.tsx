@@ -3,8 +3,7 @@ import cn from 'clsx';
 import s from './index.module.less';
 import NotificationMessage from './NotificationMessage';
 import Avatar from '@/components/library/Avatar';
-import { Notification as NotificationBase } from '@/apis';
-import { useUsers } from '@/utils/user-utils';
+import { Account, Notification as NotificationBase } from '@/apis';
 import { dayjs, TIME_FORMAT_WITHOUT_SECONDS, duration } from '@/utils/dayjs';
 import { Mutation } from '@/utils/queries/types';
 
@@ -21,16 +20,17 @@ interface Props {
     },
     unknown
   >;
+  users: {
+    [userId: string]: Account;
+  };
 }
 
 export default function NotificationsDrawerItem(props: Props) {
-  const { notification, markAsReadMutation, innerRef } = props;
+  const { notification, markAsReadMutation, innerRef, users } = props;
   const isRead = useMemo(() => {
     return notification.consoleNotificationStatuses?.some((x) => x.status === 'READ') ?? false;
   }, [notification.consoleNotificationStatuses]);
-  const [users, isLoading] = useUsers({
-    includeRootUsers: true,
-  });
+
   function handleReadNotification(notificationId) {
     markAsReadMutation.mutate({ notificationId });
   }
@@ -45,7 +45,7 @@ export default function NotificationsDrawerItem(props: Props) {
       }}
       ref={innerRef}
     >
-      <Avatar size="medium" user={users[notification.triggeredBy]} isLoading={isLoading} />
+      <Avatar size="medium" user={users[notification.triggeredBy]} />
       <div className={s.content}>
         <div className={s.message} data-cy={'notification-message'}>
           <NotificationMessage notification={notification} />

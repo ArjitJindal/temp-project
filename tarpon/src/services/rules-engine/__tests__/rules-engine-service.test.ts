@@ -26,6 +26,7 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import dayjs from '@/utils/dayjs'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
@@ -95,6 +96,148 @@ describe('Verify Transaction', () => {
           },
         ],
       } as TransactionMonitoringResult)
+    })
+  })
+
+  describe('Verify Transaction: executed rules async', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'TEST-R-1',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        mode: 'LIVE_SYNC',
+      },
+      {
+        id: 'TEST-R-2',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        mode: 'LIVE_ASYNC',
+      },
+    ])
+
+    test('returns executed rules', async () => {
+      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const transaction = getTestTransaction({ transactionId: 'dummy' })
+      await rulesEngine.verifyTransaction(transaction)
+      const transactionRepository = new DynamoDbTransactionRepository(
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      const transactionResult = await transactionRepository.getTransactionById(
+        transaction.transactionId as string
+      )
+      expect(transactionResult).toEqual({
+        ...transaction,
+        transactionId: 'dummy',
+        executedRules: [
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+        status: 'FLAG',
+        hitRules: [
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      } as TransactionMonitoringResult)
+
+      // Check if the async rule is executed
+      await rulesEngine.verifyAsyncRulesTransaction(
+        transaction,
+        getTestUser({ userId: transaction.originUserId }),
+        getTestUser({ userId: transaction.destinationUserId })
+      )
+
+      const transactionResult2 = await transactionRepository.getTransactionById(
+        transaction.transactionId as string
+      )
+
+      expect(transactionResult2).toEqual({
+        ...transaction,
+        transactionId: 'dummy',
+        status: 'FLAG',
+        executedRules: [
+          {
+            ruleId: 'TEST-R-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'TEST-R-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      })
     })
   })
 
@@ -321,6 +464,12 @@ describe('Verify Transaction Event', () => {
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
       },
+      {
+        id: 'TEST-R-2',
+        ruleImplementationName: 'tests/test-success-rule',
+        type: 'TRANSACTION',
+        mode: 'LIVE_ASYNC',
+      },
     ])
 
     test('returns executed rules', async () => {
@@ -371,6 +520,125 @@ describe('Verify Transaction Event', () => {
         deviceIdentifier: 'deviceIdentifier',
         ipAddress: 'ipAddress',
       })
+
+      await rulesEngine.verifyAsyncRulesTransactionEvent(
+        latestTransaction as Transaction,
+        transactionEvent.eventId as string,
+        getTestUser({ userId: transaction.originUserId }),
+        getTestUser({ userId: transaction.destinationUserId })
+      )
+
+      const transactionResult = await transactionRepository.getTransactionById(
+        transaction.transactionId as string
+      )
+
+      expect(transactionResult).toEqual({
+        ...latestTransaction,
+        transactionId: 'dummy',
+        status: 'FLAG',
+        executedRules: [
+          {
+            ruleId: 'TEST-R-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            ruleHit: true,
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+        hitRules: [
+          {
+            ruleId: 'TEST-R-2',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+          {
+            ruleId: 'TEST-R-1',
+            ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+            ruleName: 'test rule name',
+            ruleDescription: '',
+            ruleAction: 'FLAG',
+            nature: 'AML',
+            labels: [],
+            isShadow: false,
+            ruleHitMeta: {
+              hitDirections: ['ORIGIN', 'DESTINATION'],
+            },
+          },
+        ],
+      })
+
+      const transactionEventRepository = new TransactionEventRepository(
+        TEST_TENANT_ID,
+        { dynamoDb }
+      )
+
+      const events = await transactionEventRepository.getTransactionEvents(
+        transaction.transactionId as string
+      )
+
+      expect(events.length).toEqual(2)
+
+      const lastEvent = events.find((e) => e.eventId === '1')
+
+      expect(lastEvent?.executedRules).toEqual([
+        {
+          ruleId: 'TEST-R-2',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: '',
+          ruleAction: 'FLAG',
+          ruleHit: true,
+          nature: 'AML',
+          labels: [],
+          isShadow: false,
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN', 'DESTINATION'],
+          },
+        },
+        {
+          ruleId: 'TEST-R-1',
+          ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
+          ruleName: 'test rule name',
+          ruleDescription: '',
+          ruleAction: 'FLAG',
+          ruleHit: true,
+          nature: 'AML',
+          labels: [],
+          isShadow: false,
+          ruleHitMeta: {
+            hitDirections: ['ORIGIN', 'DESTINATION'],
+          },
+        },
+      ])
     })
 
     test("run rules even if the transaction doesn't have updates", async () => {

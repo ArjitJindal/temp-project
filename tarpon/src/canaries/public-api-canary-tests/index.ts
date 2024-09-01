@@ -1404,7 +1404,6 @@ const getTestBusinessUserSuccess = async () => {
           userId: `${businessUserPayload.userId}-1`,
           linkedEntities: {
             parentUserId: `LINKED-${businessUserPayload.userId}-1`,
-            childUserIds: ['B-1', 'B-22', 'B-20'],
           },
         },
         {

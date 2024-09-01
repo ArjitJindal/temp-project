@@ -21,7 +21,7 @@ describe('Close Alerts from Table', () => {
       '/case-management/cases?page=1&pageSize=20&showCases=ALL_ALERTS&alertStatus=OPEN&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
     );
     cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
-    cy.get('td[data-cy="alertId"]').first().invoke('text').as('alertIdValue');
+    cy.get('td[data-cy="alertId"] a[data-cy="alert-id"]').first().invoke('text').as('alertIdValue');
     cy.caseAlertAction('Close');
     cy.intercept('PATCH', '**/alerts/statusChange').as('alert');
     cy.multiSelect('.ant-modal', 'False positive');

@@ -1,3 +1,8 @@
+import {
+  SanctionsSearchResponse,
+  SanctionsSearchType,
+} from '@/@types/openapi-internal/all'
+
 export interface Entity {
   id: string
   name: Name
@@ -10,9 +15,14 @@ interface Name {
   surname: string
 }
 
-export type SanctionsDataProviderName = 'dowjones'
+export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'
 
 export type Action = 'add' | 'remove' | 'change'
+
+export type SanctionsProviderResponse = Omit<
+  SanctionsSearchResponse,
+  'searchId'
+>
 
 export interface SanctionsRepository {
   save(
@@ -28,4 +38,30 @@ export interface SanctionsDataFetcher {
   fullLoad(repo: SanctionsRepository, version: string): Promise<void>
 
   delta(repo: SanctionsRepository, version: string, from: Date): Promise<void>
+}
+
+export type SanctionsProviderSearchRequest = {
+  types: SanctionsSearchType[]
+  searchTerm: string
+  fuzziness?: number
+  countryCodes?: Array<string>
+  yearOfBirth?: number
+}
+
+export interface SanctionsDataProvider {
+  name(): SanctionsDataProviderName
+  search(
+    request: SanctionsProviderSearchRequest
+  ): Promise<SanctionsProviderResponse>
+
+  getSearch(
+    providerSearchId: string | number
+  ): Promise<SanctionsProviderResponse>
+
+  deleteSearch(providerSearchId: string | number): Promise<void>
+
+  setMonitoring(
+    providerSearchId: string | number,
+    monitor: boolean
+  ): Promise<void>
 }

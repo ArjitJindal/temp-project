@@ -111,12 +111,10 @@ export function SearchResultTable(props: Props) {
     let items;
     let refetch;
     if (isSuccess(newSearchQueryResults.data)) {
-      items = newSearchQueryResults.data.value.rawComplyAdvantageResponse?.content?.data?.hits;
+      items = newSearchQueryResults.data.value.data;
       refetch = newSearchQueryResults.refetch;
     } else if (isSuccess(historyItemQueryResults.data)) {
-      items =
-        historyItemQueryResults.data.value.response?.rawComplyAdvantageResponse?.content?.data
-          ?.hits;
+      items = historyItemQueryResults.data.value.response?.data;
       refetch = historyItemQueryResults.refetch;
     }
     const dataRes: AsyncResource<TableData<ComplyAdvantageSearchHit>> =

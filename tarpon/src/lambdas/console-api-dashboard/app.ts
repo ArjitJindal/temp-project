@@ -65,7 +65,8 @@ export const dashboardStatsHandler = lambdaApi()(
       const data = await dashboardStatsRepository.getTransactionCountStats(
         start,
         end,
-        granularity
+        granularity,
+        'DATE_RANGE'
       )
       return { data }
     })
@@ -82,7 +83,8 @@ export const dashboardStatsHandler = lambdaApi()(
         const data = await dashboardStatsRepository.getTransactionCountStats(
           start,
           end,
-          'DAY'
+          'DAY',
+          'TOTAL'
         )
         const result: { [key: string]: number } = {}
         for (const dataItem of data) {

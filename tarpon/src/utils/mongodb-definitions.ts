@@ -397,7 +397,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             ]
           ),
           { 'linkedEntities.parentUserId': 1 },
-          { 'linkedEntities.childUserIds': 1 },
         ].map((index) => ({ index: { ...index, _id: 1 } }))
       },
     },

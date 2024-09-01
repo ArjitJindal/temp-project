@@ -263,14 +263,13 @@ export async function paginateQuery(
   query: QueryCommandInput,
   options?: { skip?: number; limit?: number; pagesLimit?: number }
 ): Promise<QueryCommandOutput> {
-  const ruleInfo = getContext()?.metricDimensions?.ruleId
-    ? ` , ${getContext()?.metricDimensions?.ruleId} (${
-        getContext()?.metricDimensions?.ruleInstanceId
-      })`
-    : undefined
+  const ruleId = getContext()?.metricDimensions?.ruleId
+  const ruleInstanceId = getContext()?.metricDimensions?.ruleInstanceId
+  const ruleInfo = ruleId ? ` , ${ruleId} (${ruleInstanceId})` : undefined
 
   let paginateQuerySegment: any = undefined
-  if (ruleInfo) {
+  // TODO: Remove "!ruleId?.startsWith('RC-')" in FR-5340
+  if (ruleInfo && !ruleId?.startsWith('RC-')) {
     paginateQuerySegment = await addNewSubsegment(
       `DynamoDB${ruleInfo}`,
       'Paginate Query'

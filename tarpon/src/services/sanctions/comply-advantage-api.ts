@@ -200,27 +200,8 @@ export class ComplyAdvantageApi {
     return this.unwrapResult(rawComplyAdvantageResponse)
   }
 
-  async getSearches(): Promise<
-    ComplyAdvantageResponse<{
-      data: ComplyAdvantageSearchItem[]
-    }>
-  > {
-    const rawComplyAdvantageResponse = await apiFetch<
-      ComplyAdvantageResponse<{
-        data: ComplyAdvantageSearchItem[]
-      }>
-    >(`${COMPLY_ADVANTAGE_ROOT_URL}/searches`, {
-      method: 'GET',
-      headers: {
-        Authorization: `Token ${this.apiKey}`,
-      },
-    })
-
-    return this.unwrapResult(rawComplyAdvantageResponse)
-  }
-
   async getSearchDetails(
-    searchId: number
+    searchId: string
   ): Promise<
     ComplyAdvantageResponseSuccess<ComplyAdvantageSearchResponseContent>
   > {
@@ -236,7 +217,7 @@ export class ComplyAdvantageApi {
     return this.unwrapResult(rawComplyAdvantageResponse)
   }
 
-  async deleteSearch(caSearchId: number): Promise<void> {
+  async deleteSearch(caSearchId: string): Promise<void> {
     const response = await apiFetch<ComplyAdvantageResponse<unknown>>(
       `${COMPLY_ADVANTAGE_ROOT_URL}/searches/${caSearchId}`,
       {
@@ -284,7 +265,7 @@ export class ComplyAdvantageApi {
   }
 
   async patchMonitors(
-    caSearchId: number,
+    caSearchId: string,
     update: {
       enabled: boolean
       webhookUrl?: string
