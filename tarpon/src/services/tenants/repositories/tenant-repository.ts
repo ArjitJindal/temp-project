@@ -19,9 +19,18 @@ import { envIs } from '@/utils/env'
 import { getTestEnabledFeatures } from '@/core/utils/context'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import dayjs from '@/utils/dayjs'
+import {
+  createPublicApiInMemoryCache,
+  getInMemoryCacheKey,
+} from '@/utils/memory-cache'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
+
+const tenantSettingsCache = createPublicApiInMemoryCache<TenantSettings>({
+  max: 100,
+  ttlMinutes: 10,
+})
 
 @traceable
 export class TenantRepository {
@@ -45,6 +54,11 @@ export class TenantRepository {
   public async getTenantSettings(
     settingNames?: TenantSettingName[]
   ): Promise<Partial<TenantSettings>> {
+    const cacheKey = getInMemoryCacheKey(this.tenantId, settingNames)
+    if (tenantSettingsCache?.has(cacheKey)) {
+      return tenantSettingsCache?.get(cacheKey) as TenantSettings
+    }
+
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
@@ -67,6 +81,7 @@ export class TenantRepository {
       settings.features = getTestEnabledFeatures()
     }
 
+    tenantSettingsCache?.set(cacheKey, settings)
     return settings
   }
 

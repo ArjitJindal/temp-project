@@ -7,7 +7,7 @@ import {
   PutCommandInput,
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, omit } from 'lodash'
+import { isEmpty, omit, sortBy } from 'lodash'
 import { Filter, MongoClient, WithId } from 'mongodb'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -19,6 +19,15 @@ import { removePunctuation } from '@/utils/regex'
 import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { RuleNature } from '@/@types/openapi-internal/RuleNature'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
+import {
+  createPublicApiInMemoryCache,
+  getInMemoryCacheKey,
+} from '@/utils/memory-cache'
+
+const rulesCache = createPublicApiInMemoryCache<Rule[]>({
+  max: 10,
+  ttlMinutes: 100,
+})
 
 @traceable
 export class RuleRepository {
@@ -213,8 +222,10 @@ export class RuleRepository {
     if (ruleIds.length === 0) {
       return []
     }
-
-    const ruleParams = ruleIds.map((ruleId, index) => [`:rule${index}`, ruleId])
+    const ruleParams = sortBy(ruleIds).map((ruleId, index) => [
+      `:rule${index}`,
+      ruleId,
+    ])
     const ruleKeys = ruleParams.map((params) => params[0])
     return this.getRules({
       FilterExpression: `id IN (${ruleKeys.join(',')})`,
@@ -225,6 +236,11 @@ export class RuleRepository {
   private async getRules(
     query: Partial<QueryCommandInput>
   ): Promise<Array<Rule>> {
+    const cacheKey = getInMemoryCacheKey(query)
+    if (rulesCache?.has(cacheKey)) {
+      return rulesCache?.get(cacheKey) as Rule[]
+    }
+
     const queryInput: QueryCommandInput = {
       ...query,
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
@@ -237,7 +253,7 @@ export class RuleRepository {
     }
 
     const result = await paginateQuery(this.dynamoDb, queryInput)
-    return (
+    const rules =
       result.Items?.map(
         (item) =>
           ({
@@ -248,7 +264,8 @@ export class RuleRepository {
                 : undefined,
           } as Rule)
       ) || []
-    )
+    rulesCache?.set(cacheKey, rules)
+    return rules
   }
 
   async createOrUpdateRule(rule: Rule): Promise<Rule> {

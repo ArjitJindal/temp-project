@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { NotFound } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   compact,
   Dictionary,
@@ -160,6 +160,11 @@ export type TransactionAggregationTaskEntry = {
     | TransactionAggregationTask
     | V8TransactionAggregationTask
     | V8RuleAggregationRebuildTask
+}
+
+type ValidationOptions = {
+  validateOriginUserId?: boolean
+  validateDestinationUserId?: boolean
 }
 
 export function getExecutedAndHitRulesResult(
@@ -408,7 +413,8 @@ export class RulesEngineService {
   }
 
   public async verifyTransaction(
-    transaction: Transaction
+    transaction: Transaction,
+    options?: ValidationOptions
   ): Promise<TransactionMonitoringResult | DuplicateTransactionReturnType> {
     if (transaction.transactionId) {
       const existingTransaction =
@@ -438,9 +444,12 @@ export class RulesEngineService {
       senderUser = null,
       receiverUser = null,
       isAnyAsyncRules,
-    } = await this.verifyTransactionInternal(transaction, [
-      initialTransactionEvent,
-    ])
+    } = await this.verifyTransactionInternal(
+      transaction,
+      [initialTransactionEvent],
+      undefined,
+      options
+    )
 
     const saveTransactionSegment = await addNewSubsegment(
       'Rules Engine',
@@ -889,7 +898,8 @@ export class RulesEngineService {
       transactionRiskDetails?: TransactionRiskScoringResult
       senderUser?: User | Business | undefined
       receiverUser?: User | Business | undefined
-    }
+    },
+    options?: ValidationOptions
   ): Promise<{
     executedRules: ExecutedRulesResult[]
     hitRules: HitRulesDetails[]
@@ -907,7 +917,7 @@ export class RulesEngineService {
 
     const userPromise = relatedData
       ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
-      : this.getTransactionUsers(transaction)
+      : this.getTransactionUsers(transaction, options)
 
     const riskScoringPromise = relatedData
       ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
@@ -1622,7 +1632,10 @@ export class RulesEngineService {
     }
   }
 
-  private async getTransactionUsers(transaction: Transaction): Promise<{
+  private async getTransactionUsers(
+    transaction: Transaction,
+    options?: ValidationOptions
+  ): Promise<{
     senderUser: User | Business | undefined
     receiverUser: User | Business | undefined
   }> {
@@ -1636,6 +1649,25 @@ export class RulesEngineService {
           )
         : undefined,
     ])
+
+    const missingUsers = compact([
+      options?.validateOriginUserId && transaction.originUserId && !senderUser
+        ? `originUserId: ${transaction.originUserId}`
+        : null,
+      options?.validateDestinationUserId &&
+      transaction.destinationUserId &&
+      !receiverUser
+        ? `destinationUserId: ${transaction.destinationUserId}`
+        : null,
+    ])
+    if (missingUsers.length) {
+      const errorMessage =
+        missingUsers.length === 1
+          ? `${missingUsers[0]} does not exist`
+          : `${missingUsers[0]} and ${missingUsers[1]} do not exist`
+      throw new BadRequest(errorMessage)
+    }
+
     return {
       senderUser,
       receiverUser,

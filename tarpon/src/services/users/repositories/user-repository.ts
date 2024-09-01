@@ -9,8 +9,6 @@ import {
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
 import {
-  BatchGetCommand,
-  BatchGetCommandInput,
   DeleteCommand,
   DeleteCommandInput,
   DynamoDBDocumentClient,
@@ -730,36 +728,6 @@ export class UserRepository {
     )
 
     return collection.find({})
-  }
-
-  public async getUsers(userIds: string[]): Promise<(User | Business)[]> {
-    if (userIds.length === 0) {
-      return []
-    }
-    const batchGetItemInput: BatchGetCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
-          Keys: Array.from(new Set(userIds)).map((userId) =>
-            DynamoDbKeys.USER(this.tenantId, userId)
-          ),
-        },
-      },
-    }
-    const result = await this.dynamoDb.send(
-      new BatchGetCommand(batchGetItemInput)
-    )
-    const users =
-      result.Responses?.[StackConstants.TARPON_DYNAMODB_TABLE_NAME] ?? []
-
-    return users.map((user) => {
-      const projectedUser = {
-        ...user,
-      }
-      delete projectedUser.type
-      delete projectedUser.PartitionKeyID
-      delete projectedUser.SortKeyID
-      return projectedUser as unknown as User | Business
-    })
   }
 
   public async getMongoBusinessUser(

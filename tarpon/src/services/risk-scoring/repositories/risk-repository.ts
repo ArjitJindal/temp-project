@@ -347,10 +347,11 @@ export class RiskRepository {
       riskClassificationValues,
       drsScore.drsScore
     )
-    return {
+    const result = {
       ...drsScore,
       derivedRiskLevel,
     }
+    return result
   }
 
   async createOrUpdateManualDRSRiskItem(

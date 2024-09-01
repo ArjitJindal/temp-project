@@ -12,12 +12,8 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import {
-  DefaultApiPostBusinessUserEventRequest,
-  DefaultApiPostConsumerTransactionRequest,
-} from '@/@types/openapi-public/RequestParameters'
+import { DefaultApiPostBusinessUserEventRequest } from '@/@types/openapi-public/RequestParameters'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { UserRepository } from '@/services/users/repositories/user-repository'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
@@ -30,77 +26,6 @@ import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatab
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { filterLiveRules } from '@/services/rules-engine/utils'
-
-type MissingUserIdMap = { field: string; userId: string }
-
-async function getTransactionMissingUsers(
-  transaction: Transaction,
-  tenantId: string,
-  dynamoDb: DynamoDBDocumentClient,
-  validationParams?: Omit<
-    DefaultApiPostConsumerTransactionRequest,
-    'Transaction'
-  >
-): Promise<(MissingUserIdMap | undefined)[]> {
-  const userRepository = new UserRepository(tenantId, { dynamoDb })
-  let userIds: string[] = Array.from(
-    new Set([transaction.originUserId, transaction.destinationUserId])
-  ).filter((id) => id) as string[]
-
-  if (validationParams) {
-    if (
-      validationParams?.validateOriginUserId === 'false' &&
-      validationParams?.validateDestinationUserId === 'false'
-    ) {
-      return []
-    }
-    if (validationParams?.validateOriginUserId === 'false') {
-      userIds = Array.from(new Set([transaction.destinationUserId])).filter(
-        (id) => id
-      ) as string[]
-    } else if (validationParams?.validateDestinationUserId === 'false') {
-      userIds = Array.from(new Set([transaction.originUserId])).filter(
-        (id) => id
-      ) as string[]
-    }
-  }
-
-  if (userIds.length === 0) {
-    return []
-  }
-  const users = await userRepository.getUsers(userIds)
-  const existingUserIds = users.map((user) => user.userId)
-  if (users.length === userIds.length) {
-    return []
-  } else {
-    return userIds
-      .filter((userId) => !existingUserIds.includes(userId))
-      .map((userId) => {
-        if (userId === transaction.originUserId) {
-          return {
-            field: 'originUserId',
-            userId: userId,
-          }
-        } else if (userId === transaction.destinationUserId) {
-          return {
-            field: 'destinationUserId',
-            userId: userId,
-          }
-        }
-      })
-  }
-}
-
-function getMissingUsersMessage(
-  userIds: (MissingUserIdMap | undefined)[]
-): string {
-  switch (userIds.length) {
-    case 2:
-      return `${userIds[0]?.field}: ${userIds[0]?.userId} and ${userIds[1]?.field}: ${userIds[1]?.userId} do not exist`
-    default:
-      return `${userIds[0]?.field}: ${userIds[0]?.userId} does not exist`
-  }
-}
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -171,20 +96,14 @@ export const transactionHandler = lambdaApi()(
         }
       }
 
-      const missingUsers = await getTransactionMissingUsers(
-        transaction,
-        tenantId,
-        dynamoDb,
-        validationParams || undefined
-      )
-      if (missingUsers.length > 0) {
-        throw new BadRequest(getMissingUsersMessage(missingUsers))
-      }
-
       logger.info(`Verifying transaction`)
       validationSegment?.close()
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
-      const result = await rulesEngine.verifyTransaction(transaction)
+      const result = await rulesEngine.verifyTransaction(transaction, {
+        validateOriginUserId: validationParams?.validateOriginUserId === 'true',
+        validateDestinationUserId:
+          validationParams?.validateDestinationUserId === 'true',
+      })
       logger.info(`Completed processing transaction`)
       return {
         ...result,

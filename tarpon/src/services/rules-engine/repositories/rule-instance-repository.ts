@@ -34,7 +34,20 @@ import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
-import { envIsNot } from '@/utils/env'
+import {
+  createPublicApiInMemoryCache,
+  getInMemoryCacheKey,
+} from '@/utils/memory-cache'
+import { envIs, envIsNot } from '@/utils/env'
+
+// NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
+// is activated, it'll be effective after 10 minutes (worst case).
+const activeRuleInstancesCache = envIs('prod')
+  ? createPublicApiInMemoryCache<readonly RuleInstance[]>({
+      max: 10,
+      ttlMinutes: 10,
+    })
+  : null
 
 const ACTIVE_STATUS: RuleInstanceStatus = 'ACTIVE'
 const DEPLOYING_STATUS: RuleInstanceStatus = 'DEPLOYING'
@@ -354,7 +367,17 @@ export class RuleInstanceRepository {
   public async getActiveRuleInstances(
     type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
-    return this.getRuleInstancesByStatus(ACTIVE_STATUS, type)
+    const cacheKey = getInMemoryCacheKey(this.tenantId, type)
+    if (activeRuleInstancesCache?.has(cacheKey)) {
+      return activeRuleInstancesCache.get(cacheKey) as RuleInstance[]
+    }
+
+    const activeRuleInstances = await this.getRuleInstancesByStatus(
+      ACTIVE_STATUS,
+      type
+    )
+    activeRuleInstancesCache?.set(cacheKey, activeRuleInstances)
+    return activeRuleInstances
   }
 
   public async getDeployingRuleInstances(
