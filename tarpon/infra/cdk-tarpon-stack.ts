@@ -212,6 +212,7 @@ export class CdkTarponStack extends cdk.Stack {
     const asyncRuleQueue = this.createQueue(
       SQSQueues.ASYNC_RULE_QUEUE_NAME.name,
       {
+        fifo: true,
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         retentionPeriod: Duration.days(7),
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
