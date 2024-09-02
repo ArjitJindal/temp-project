@@ -69,19 +69,11 @@ export class CdktfTarponStack extends TerraformStack {
         name: config.application.MONGO_ATLAS_PROJECT,
       }
     )
-    const clusters =
-      new atlas.dataMongodbatlasClusters.DataMongodbatlasClusters(
-        this,
-        'tarpon-cluster',
-        {
-          projectId: project.projectId,
-        }
-      )
 
     new atlas.searchIndex.SearchIndex(this, 'sanctions-search-index', {
       name: 'sanctions_search_index',
       projectId: project.projectId,
-      clusterName: clusters.results.get(0).name,
+      clusterName: config.application.MONGO_ATLAS_CLUSTER,
       analyzer: 'lucene.standard',
       collectionName: 'sanctions',
       database: 'tarpon',

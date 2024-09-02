@@ -95,6 +95,7 @@ export const config: Config = {
   },
   application: {
     MONGO_ATLAS_PROJECT: 'Tarpon-Sandbox',
+    MONGO_ATLAS_CLUSTER: 'Sandbox',
     AUTH0_DOMAIN: 'sandbox-flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://sandbox.api.flagright.com/',
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:

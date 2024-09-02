@@ -10,6 +10,7 @@ export const config: Config = {
   env: { account, region },
   application: {
     ...sandboxbaseConfig.application,
+    MONGO_ATLAS_CLUSTER: 'Sandbox-SIN',
     BETTERUPTIME_HOOK_URL:
       'https://uptime.betterstack.com/api/v1/aws-cloudwatch/webhook/8kuHsa8jtTLABtyTSv4Fu77d',
   },

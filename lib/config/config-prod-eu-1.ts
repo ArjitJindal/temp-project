@@ -103,6 +103,7 @@ export const config: Config = {
   },
   application: {
     MONGO_ATLAS_PROJECT: 'Tarpon-Production',
+    MONGO_ATLAS_CLUSTER: 'Prod-FRA',
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.com/',
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:
