@@ -60,7 +60,6 @@ export class CdktfTarponStack extends TerraformStack {
         Fn.jsondecode(secretVersion.secretString),
         'private_key'
       ),
-      region: config.env.region,
     })
 
     const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
