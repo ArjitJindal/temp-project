@@ -39,7 +39,6 @@ import Modal from '@/components/library/Modal';
 import { humanizeAuto } from '@/utils/humanize';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import NumberInput from '@/components/library/NumberInput';
-import Checkbox from '@/components/library/Checkbox';
 
 function varLabelWithoutNamespace(label: string): string {
   return label.replace(/^.+\s*\/\s*/, '');
@@ -76,6 +75,22 @@ const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; 
   { value: 'SENDING_RECEIVING', label: 'Both' },
 ];
 
+const AGGREGATE_TARGET_OPTIONS = [
+  { value: 'TIME', label: 'Time' },
+  { value: 'LAST_N', label: "Last 'N' transactions" },
+];
+
+const BOOLEAN_OPTIONS = [
+  {
+    value: true,
+    label: 'Yes',
+  },
+  {
+    value: false,
+    label: 'No',
+  },
+];
+
 function swapOriginAndDestination(text?: string): string {
   if (!text) {
     return '';
@@ -109,6 +124,7 @@ const roundedTimeWindowMinutes = (timeWindow?: RuleAggregationVariableTimeWindow
 };
 
 const MAX_AGGREGATION_FROM_YEARS = 5;
+const MAX_AGGREGATED_TRANSACTIONS = 10;
 function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
   if (timeWindow.granularity === 'fiscal_year') {
     if (!timeWindow.fiscalYear) {
@@ -192,6 +208,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
+  const [aggregateByLastN, setAggregateByLastN] = useState(!!formValues.lastNEntities);
   const settings = useSettings();
   const aggregateFieldOptions = useMemo(() => {
     return entityVariables
@@ -312,6 +329,16 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       }));
     }
   }, [baseCurrencyRequired, formValues.baseCurrency, settings.defaultValues?.currency]);
+  const lastNEntitiesValidation = useMemo(() => {
+    if (formValues.lastNEntities == null && !aggregateByLastN) {
+      return true;
+    }
+    return (
+      formValues.lastNEntities != null &&
+      formValues.lastNEntities > 0 &&
+      formValues.lastNEntities <= MAX_AGGREGATED_TRANSACTIONS
+    );
+  }, [formValues.lastNEntities, aggregateByLastN]);
   const isValidFormValues = useMemo(() => {
     return (
       formValues.type &&
@@ -319,7 +346,8 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       formValues.aggregationFieldKey &&
       (!baseCurrencyRequired || (baseCurrencyRequired && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
-      !timeWindowValidationError
+      !timeWindowValidationError &&
+      lastNEntitiesValidation
     );
   }, [
     baseCurrencyRequired,
@@ -329,6 +357,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     formValues.transactionDirection,
     formValues.type,
     timeWindowValidationError,
+    lastNEntitiesValidation,
   ]);
   const variableAutoName = useMemo(() => {
     if (isValidFormValues) {
@@ -466,15 +495,16 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
           >
             <Select<RuleAggregationFunc>
               value={formValues.aggregationFunc}
-              onChange={(aggregationFunc) => handleUpdateForm({ aggregationFunc })}
+              onChange={(aggregationFunc) =>
+                handleUpdateForm(
+                  aggregationFunc === 'UNIQUE_VALUES'
+                    ? { aggregationFunc, includeCurrentEntity: false }
+                    : { aggregationFunc },
+                )
+              }
               mode="SINGLE"
               options={aggregateFunctionOptions}
             />
-            {formValues.aggregationFunc === 'UNIQUE_VALUES' && (
-              <Hint isError={false}>
-                {'The current transaction entity value will not be included in the aggregate'}
-              </Hint>
-            )}
           </Label>
           <Label
             label="Group by"
@@ -492,7 +522,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             />
           </Label>
           {/* TODO (v8): Base currency design TBD */}
-          {baseCurrencyRequired && (
+          {baseCurrencyRequired ? (
             <Label label="Base currency" required={{ value: true, showHint: true }}>
               <Select<string>
                 value={formValues.baseCurrency}
@@ -504,24 +534,15 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
                 options={CURRENCIES_SELECT_OPTIONS}
               />
             </Label>
+          ) : (
+            <div>{/* Empty div to manage alignment */}</div>
           )}
-          {!formValues.lastNEntities && (
-            <div className={s.timeWindow}>
-              <VariableTimeWindow
-                value={formValues.timeWindow}
-                onChange={(newValue) => {
-                  newValue = roundedTimeWindowMinutes(newValue);
-                  handleUpdateForm({
-                    timeWindow: newValue,
-                  });
-                }}
-              />
-            </div>
-          )}
-          <div className={s.checkBox}>
-            <Checkbox
-              value={!!formValues.lastNEntities}
-              onChange={(val) => {
+          <Label label={`Aggregate target`} required={{ value: true, showHint: true }}>
+            <SelectionGroup
+              value={aggregateByLastN ? 'LAST_N' : 'TIME'}
+              onChange={(transactionDirection) => {
+                const val = transactionDirection === 'LAST_N';
+                setAggregateByLastN(val);
                 handleUpdateForm(
                   val
                     ? {
@@ -552,22 +573,50 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
                       },
                 );
               }}
-            />{' '}
-            Aggregate the most recent n entities, considering the entire time window from now to all
-            time.
-          </div>
-          {formValues.lastNEntities && (
+              mode={'SINGLE'}
+              options={AGGREGATE_TARGET_OPTIONS}
+              testName="aggregate-target-v8"
+            />
+          </Label>
+
+          <Label label={`Include current transaction`} required={{ value: true, showHint: true }}>
+            <SelectionGroup
+              value={formValues.includeCurrentEntity ?? true}
+              onChange={(includeCurrentEntity) => {
+                handleUpdateForm({
+                  includeCurrentEntity,
+                });
+              }}
+              mode={'SINGLE'}
+              options={BOOLEAN_OPTIONS}
+              testName="aggregate-target-v8"
+            />
+          </Label>
+          {!aggregateByLastN && (
+            <div className={s.timeWindow}>
+              <VariableTimeWindow
+                value={formValues.timeWindow}
+                onChange={(newValue) => {
+                  newValue = roundedTimeWindowMinutes(newValue);
+                  handleUpdateForm({
+                    timeWindow: newValue,
+                  });
+                }}
+              />
+            </div>
+          )}
+          {aggregateByLastN && (
             <Label
-              label="Entities count"
-              hint="Can aggregate upto last 10 entities."
+              label="Transactions count"
+              hint="Can aggregate up to last 10 transactions."
               required={{ value: true, showHint: true }}
             >
               <NumberInput
                 value={formValues.lastNEntities}
                 onChange={(lastNEntities) => handleUpdateForm({ lastNEntities })}
-                placeholder="Enter number of entities"
-                min={1}
-                max={10}
+                placeholder="Enter number of transactions"
+                isError={!lastNEntitiesValidation}
+                max={MAX_AGGREGATED_TRANSACTIONS}
               />
             </Label>
           )}

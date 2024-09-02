@@ -351,6 +351,7 @@ const V8_CONVERSION: Readonly<
       filtersLogic: {
         '!': { var: 'TRANSACTION:originUserId' },
       },
+      includeCurrentEntity: true,
     })
     return {
       logic: {
@@ -547,6 +548,7 @@ const V8_CONVERSION: Readonly<
       filtersLogic: {
         '!=': { var: 'TRANSACTION:originUserId' },
       },
+      includeCurrentEntity: true,
     })
     return {
       logic: {
@@ -666,6 +668,7 @@ const V8_CONVERSION: Readonly<
         },
         aggregationFunc: 'UNIQUE_COUNT',
         baseCurrency: currency as CurrencyCode,
+        includeCurrentEntity: true,
       }
       logicAggregationVariables.push(counterPartyAggVariable)
       conditions.push({

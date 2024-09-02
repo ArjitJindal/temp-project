@@ -700,6 +700,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -740,6 +741,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -785,6 +787,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:456',
@@ -797,6 +800,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -837,6 +841,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -881,6 +886,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -921,6 +927,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -961,6 +968,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -996,6 +1004,7 @@ describe('Aggregation variable', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -1027,6 +1036,7 @@ describe('Aggregation variable', () => {
         start: { units: 30, granularity: 'day' },
         end: { units: 0, granularity: 'day' },
       },
+      includeCurrentEntity: true,
     } as const
     const resultFilteredOut = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
@@ -1101,6 +1111,7 @@ describe('Aggregation variable', () => {
         start: { units: 30, granularity: 'day' },
         end: { units: 0, granularity: 'day' },
       },
+      includeCurrentEntity: true,
     } as const
     const resultFilteredOut = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
@@ -1173,6 +1184,7 @@ describe('Aggregation variable', () => {
       transactionDirection: 'SENDING',
       aggregationFieldKey: 'TRANSACTION:transactionId',
       aggregationFunc: 'COUNT',
+      includeCurrentEntity: true,
     } as const
     const resultNotWithinTimeWindow = await evaluator.evaluate(
       { and: [{ '==': [{ var: 'agg:123' }, 1] }] },
@@ -1255,6 +1267,7 @@ describe('Aggregation variable', () => {
               start: { units: 1, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -1299,6 +1312,7 @@ describe('Aggregation variable', () => {
           start: { units: 30, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const data: TransactionRuleData = {
@@ -1370,6 +1384,7 @@ describe('Aggregation variable', () => {
           start: { units: 30, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const data: TransactionRuleData = {
@@ -1459,6 +1474,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:124',
@@ -1471,6 +1487,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:125',
@@ -1483,6 +1500,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:126',
@@ -1497,6 +1515,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -1524,6 +1543,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:124',
@@ -1536,6 +1556,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
           {
             key: 'agg:126',
@@ -1550,6 +1571,7 @@ describe('Dataloder cache', () => {
               start: { units: 30, granularity: 'day' },
               end: { units: 0, granularity: 'day' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -1585,6 +1607,7 @@ describe('Different aggregate fields for receiving and sending', () => {
               end: { units: 0, granularity: 'day' },
             },
             baseCurrency: 'EUR',
+            includeCurrentEntity: true,
           },
         ],
       },
@@ -2676,6 +2699,7 @@ describe('Aggregation variable with user filter tests', () => {
         start: { units: 30, granularity: 'day' },
         end: { units: 0, granularity: 'day' },
       },
+      includeCurrentEntity: true,
       filtersLogic: {
         and: [{ '==': [{ var: 'CONSUMER_USER:userId__BOTH' }, '2'] }],
       },

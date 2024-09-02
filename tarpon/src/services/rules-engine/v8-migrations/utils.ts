@@ -69,6 +69,7 @@ export function migrateCheckDirectionParameters(props: {
         start: parameters.timeWindow,
         end: { units: 0, granularity: 'now' },
       },
+      includeCurrentEntity: true,
     })
   }
   if (parameters.checkReceiver === 'receiving') {
@@ -89,6 +90,7 @@ export function migrateCheckDirectionParameters(props: {
         start: parameters.timeWindow,
         end: { units: 0, granularity: 'now' },
       },
+      includeCurrentEntity: true,
     })
   }
   if (
@@ -127,6 +129,7 @@ export function migrateCheckDirectionParameters(props: {
         start: parameters.timeWindow,
         end: { units: 0, granularity: 'now' },
       },
+      includeCurrentEntity: true,
     })
   }
   let alertCreationDirection: AlertCreationDirection = 'AUTO'

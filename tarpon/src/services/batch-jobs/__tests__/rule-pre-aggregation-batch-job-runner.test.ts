@@ -154,6 +154,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -204,6 +205,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 3, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -293,6 +295,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -340,6 +343,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 3, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -455,6 +459,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 3, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { riskFactorId } = await setUpAggregationVariablesRiskFactors(
@@ -570,6 +575,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
       {
         key: 'agg:test-2',
@@ -581,6 +587,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -618,6 +625,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'hour' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
       {
         key: 'agg:test-2',
@@ -629,6 +637,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'hour' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(
@@ -666,6 +675,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
           start: { units: 1, granularity: 'day' },
           end: { units: 0, granularity: 'day' },
         },
+        includeCurrentEntity: true,
       },
     ]
     const { ruleInstanceId } = await setUpAggregationVariables(

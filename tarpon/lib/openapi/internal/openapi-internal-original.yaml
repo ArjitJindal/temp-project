@@ -7020,12 +7020,15 @@ components:
           type: number
         lastNEntities:
           type: number
+        includeCurrentEntity:
+          type: boolean
       required:
         - key
         - type
         - aggregationFieldKey
         - aggregationFunc
         - timeWindow
+        - includeCurrentEntity
     RuleMachineLearningVariable:
       title: MachineLearningVariable
       type: object

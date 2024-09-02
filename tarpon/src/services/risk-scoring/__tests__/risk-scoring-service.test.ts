@@ -436,6 +436,7 @@ describe('V8, Tests', () => {
                 granularity: 'now',
               },
             },
+            includeCurrentEntity: true,
           },
         ],
       }

@@ -246,6 +246,8 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     (newAggregationVariable: RuleAggregationVariable) => {
       // Sanitize values
       newAggregationVariable.name = newAggregationVariable.name?.trim();
+      newAggregationVariable.includeCurrentEntity =
+        newAggregationVariable.includeCurrentEntity ?? true;
 
       const newAggregationVariables = [...(aggregationVariables ?? [])];
       const updatedAggVariableIndex = newAggregationVariables.findIndex(

@@ -602,6 +602,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
               units: 0,
             },
           },
+          includeCurrentEntity: true,
         },
       ],
       defaultLogic: {

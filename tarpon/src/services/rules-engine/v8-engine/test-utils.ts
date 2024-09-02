@@ -13,6 +13,7 @@ export function createAggregationVariable(
       start: { units: 1, granularity: 'day' },
       end: { units: 0, granularity: 'day' },
     },
+    includeCurrentEntity: true,
     ...variable,
   } as RuleAggregationVariable
 }

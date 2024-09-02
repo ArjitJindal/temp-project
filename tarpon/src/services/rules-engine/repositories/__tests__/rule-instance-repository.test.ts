@@ -59,6 +59,7 @@ describe('createOrUpdateRuleInstance', () => {
             end: { units: 0, granularity: 'day' },
           },
           version: 1,
+          includeCurrentEntity: true,
         },
       ],
     })
@@ -198,6 +199,7 @@ describe('createOrUpdateRuleInstance', () => {
             {
               ...beforeRuleInstance1.logicAggregationVariables[0],
               aggregationFunc: 'AVG',
+              includeCurrentEntity: true,
             },
           ],
         })
@@ -207,6 +209,7 @@ describe('createOrUpdateRuleInstance', () => {
             {
               ...beforeRuleInstance1.logicAggregationVariables[0],
               aggregationFunc: 'COUNT',
+              includeCurrentEntity: true,
             },
           ],
         })

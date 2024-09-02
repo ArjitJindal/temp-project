@@ -51,6 +51,7 @@ describe('testing v8 key migration', () => {
               start: { units: 1, granularity: 'month' },
               end: { units: 0, granularity: 'month' },
             },
+            includeCurrentEntity: true,
           },
         ],
       },

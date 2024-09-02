@@ -34,6 +34,7 @@ const logicAggregationVariables: Array<RuleAggregationVariable> = [
         granularity: 'now',
       },
     },
+    includeCurrentEntity: true,
   },
 ]
 describe.each<RuleLogicTest>([
