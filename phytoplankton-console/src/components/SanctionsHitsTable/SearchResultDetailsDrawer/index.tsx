@@ -1,22 +1,24 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { startCase, groupBy, uniq } from 'lodash';
+import { groupBy, startCase, uniq } from 'lodash';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
-import { normalizeAmlTypes, ADVERSE_MEDIA, TABS_ORDER } from './helpers';
+import { ADVERSE_MEDIA, normalizeAmlTypes, TABS_ORDER } from './helpers';
 import SanctionsComparison from './SanctionsComparison';
 import { getComparisonItems } from './SanctionsComparison/helpers';
 import {
-  SanctionsHit,
-  ComplyAdvantageSearchHitDocFields,
-  SanctionsHitStatus,
   ComplyAdvantageSearchHitDoc,
+  ComplyAdvantageSearchHitDocFields,
+  SanctionsHit,
+  SanctionsHitStatus,
 } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
+import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
+import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import { message } from '@/components/library/Message';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
@@ -30,20 +32,27 @@ import AISummary from '@/pages/case-management/AlertTable/InvestigativeCoPilotMo
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import Tag from '@/components/library/Tag';
 import { notEmpty } from '@/utils/array';
+import { AsyncResource, getOr, isSuccess } from '@/utils/asyncResource';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
-  hit: SanctionsHit;
+  hitRes: AsyncResource<SanctionsHit | undefined>;
   searchedAt?: number;
   onClose: () => void;
   newStatus?: SanctionsHitStatus;
   onChangeStatus?: (newStatus: SanctionsHitStatus) => void;
+  showNavigation?: boolean;
+  onNext?: () => void;
+  onPrev?: () => void;
 }
 
 export default function SearchResultDetailsDrawer(props: Props) {
-  const { hit, onClose, newStatus, onChangeStatus } = props;
+  const { hitRes, onClose, newStatus, onChangeStatus, showNavigation, onNext, onPrev } = props;
+
+  const hit = getOr(hitRes, undefined);
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
-  const pdfName = hit.caEntity?.name;
+  const pdfName = hit?.caEntity?.name;
   const [isDownloading, setDownloading] = useState<boolean>(false);
   const handleDownloadClick = async () => {
     setDownloading(true);
@@ -76,7 +85,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
       title={
         <div className={s.title}>
           {pdfName ?? ''}
-          {hit.status === 'OPEN' && <Tag color="purple">Human review</Tag>}
+          {hit?.status === 'OPEN' && <Tag color="purple">Human review</Tag>}
         </div>
       }
       isVisible={Boolean(hit)}
@@ -91,15 +100,39 @@ export default function SearchResultDetailsDrawer(props: Props) {
           <Button type="SECONDARY" onClick={onClose}>
             {'Close'}
           </Button>
+          {showNavigation && (
+            <>
+              <Button
+                type="SECONDARY"
+                onClick={onPrev}
+                isDisabled={onPrev == null}
+                icon={<ArrowLeftSLineIcon />}
+              >
+                {'Previous hit'}
+              </Button>
+              <Button
+                type="SECONDARY"
+                onClick={onNext}
+                isDisabled={onNext == null}
+                iconRight={<ArrowRightSLineIcon />}
+              >
+                {'Next hit'}
+              </Button>
+            </>
+          )}
         </>
       }
       footerRight={
         <>
-          <Button type="PRIMARY" onClick={handleDownloadClick}>
+          <Button isDisabled={!isSuccess(hitRes)} type="PRIMARY" onClick={handleDownloadClick}>
             {okText}
           </Button>
           {onChangeStatus && newStatus && (
-            <Button type="PRIMARY" onClick={() => onChangeStatus(newStatus)}>
+            <Button
+              isDisabled={!isSuccess(hitRes)}
+              type="PRIMARY"
+              onClick={() => onChangeStatus(newStatus)}
+            >
               {newStatus === 'CLEARED' && 'Clear'}
               {newStatus === 'OPEN' && 'Re-open'}
             </Button>
@@ -107,18 +140,26 @@ export default function SearchResultDetailsDrawer(props: Props) {
         </>
       }
     >
-      <div className={s.sections}>
-        <Content {...props} />
-        {isDownloading && (
-          <Portal>
-            <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none' }}>
-              <div ref={setPdfRef}>
-                <Content {...props} pdfMode={true} />
-              </div>
+      <AsyncResourceRenderer resource={hitRes}>
+        {(hit) =>
+          hit != null ? (
+            <div className={s.sections}>
+              <Content {...props} hit={hit} />
+              {isDownloading && (
+                <Portal>
+                  <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none' }}>
+                    <div ref={setPdfRef}>
+                      <Content {...props} pdfMode={true} hit={hit} />
+                    </div>
+                  </div>
+                </Portal>
+              )}
             </div>
-          </Portal>
-        )}
-      </div>
+          ) : (
+            <></>
+          )
+        }
+      </AsyncResourceRenderer>
     </Drawer>
   );
 }

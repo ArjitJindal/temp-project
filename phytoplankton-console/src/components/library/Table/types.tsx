@@ -85,6 +85,10 @@ export function isMultiRows<T>(value: TableDataItem<T>): value is TableDataMulti
   return 'spanBy' in result && 'rows' in result;
 }
 
+export function isSingleRow<T>(value: TableDataItem<T>): value is TableDataSimpleItem<T> {
+  return !isMultiRows<T>(value);
+}
+
 /*
   Table item passed to columns with metadata about row
  */
