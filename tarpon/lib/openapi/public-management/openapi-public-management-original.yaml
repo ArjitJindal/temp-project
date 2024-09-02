@@ -13,6 +13,11 @@ info:
     as GitHub, client-side code, and so forth.
 servers:
   - url: https://sandbox.api.flagright.com/management
+    description: Sandbox API server (eu-1)
+    x-fern-server-name: Sandbox API server (eu-1)
+  - url: https://sandbox-asia-1.api.flagright.com/management
+    description: Sandbox API server (asia-1)
+    x-fern-server-name: Sandbox API server (asia-1)
 paths:
   /rules:
     get:
