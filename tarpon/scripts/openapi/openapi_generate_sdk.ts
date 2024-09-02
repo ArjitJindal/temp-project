@@ -95,6 +95,7 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
     `src/@types/openapi-${type}/User.ts`,
     `src/@types/openapi-${type}/UserOptional.ts`,
     `src/@types/openapi-${type}/UserWithRulesResult.ts`,
+    `src/@types/openapi-${type}/UsersSearchResponse.ts`,
   ])
 
   exec(`rm -f src/@types/openapi-${type}/ObjectSerializer.ts`)

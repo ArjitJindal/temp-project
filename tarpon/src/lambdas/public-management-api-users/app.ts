@@ -3,9 +3,11 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import createHttpError from 'http-errors'
 import { CommentRequest } from '@/@types/openapi-public-management/CommentRequest'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { UserService } from '@/services/users'
+import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 
 export const userHandler = lambdaApi()(
   async (
@@ -47,6 +49,18 @@ export const userHandler = lambdaApi()(
       const userId = event.pathParameters?.userId
       const commentId = event.pathParameters?.commentId
       return await userService.deleteUserComment(userId, commentId)
+    } else if (
+      event.httpMethod === 'GET' &&
+      event.resource === '/users/search'
+    ) {
+      const query =
+        event.queryStringParameters as DefaultApiGetUsersSearchRequest
+      const { name, email } = query
+      if (!name && !email) {
+        throw new createHttpError.BadRequest('Please provide a valid query')
+      }
+
+      return await userService.searchUsers(query)
     }
     return 'Unhandled request'
   }

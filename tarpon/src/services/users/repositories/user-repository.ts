@@ -77,6 +77,7 @@ import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassific
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
+import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 
 @traceable
@@ -154,8 +155,8 @@ export class UserRepository {
     const riskClassificationValues = await this.getRiskClassificationValues()
     const query = await this.getMongoUsersQuery(
       params,
-      riskClassificationValues,
       isPulseEnabled,
+      riskClassificationValues,
       userType
     )
 
@@ -329,10 +330,11 @@ export class UserRepository {
       filterShadowHit?: boolean
       filterRuleInstancesHit?: string[]
       filterUserIds?: string[]
+      filterEmail?: string
       filterParentUserId?: string
     },
-    riskClassificationValues: RiskClassificationScore[],
     isPulseEnabled: boolean,
+    riskClassificationValues?: RiskClassificationScore[],
     userType?: UserType | undefined
   ) {
     const filterConditions: Filter<
@@ -429,6 +431,25 @@ export class UserRepository {
       filterConditions.push({ $and: filterNameConditions })
     }
 
+    if (params.filterEmail) {
+      filterConditions.push({
+        $or: [
+          {
+            'contactDetails.emailIds': regexMatchFilter(
+              params.filterEmail,
+              true
+            ),
+          },
+          {
+            'legalEntity.contactDetails.emailIds': regexMatchFilter(
+              params.filterEmail,
+              true
+            ),
+          },
+        ],
+      })
+    }
+
     const queryConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = [
@@ -440,6 +461,7 @@ export class UserRepository {
         ...(userType ? { type: userType } : {}),
         ...(params.filterRiskLevel?.length &&
           isPulseEnabled &&
+          riskClassificationValues &&
           getUsersFilterByRiskLevel(
             params.filterRiskLevel,
             riskClassificationValues
@@ -474,6 +496,38 @@ export class UserRepository {
       )
     }
     return queryConditions
+  }
+
+  public async usersSearchExternal(params: DefaultApiGetUsersSearchRequest) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<
+      InternalConsumerUser | InternalBusinessUser
+    >(USERS_COLLECTION(this.tenantId))
+    const query = await this.getMongoUsersQuery(
+      {
+        filterName: params.name,
+        filterEmail: params.email,
+      },
+      false
+    )
+    const result = await cursorPaginate<
+      InternalConsumerUser | InternalBusinessUser
+    >(
+      collection,
+      { $and: query },
+      {
+        pageSize: params.pageSize ? (params.pageSize as number) : 20,
+        sortField: params.sortBy || 'createdTimestamp',
+        fromCursorKey: params.start,
+        sortOrder:
+          params.sortOrder === 'asc'
+            ? 'ascend'
+            : params.sortOrder === 'desc'
+            ? 'descend'
+            : undefined,
+      }
+    )
+    return result
   }
 
   public async updateMonitoringStatus(
@@ -533,8 +587,8 @@ export class UserRepository {
     const riskClassificationValues = await this.getRiskClassificationValues()
     const queryConditions = await this.getMongoUsersQuery(
       params,
-      riskClassificationValues,
       isPulseEnabled,
+      riskClassificationValues,
       userType
     )
 

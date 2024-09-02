@@ -1076,8 +1076,89 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorMessage'
+  /users/search:
+    get:
+      security:
+        - x-api-key: []
+      summary: Users - Search
+      operationId: get-users-search
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsersSearchResponse'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+      parameters:
+        - schema:
+            type: string
+          name: name
+          in: query
+        - schema:
+            type: string
+          name: email
+          in: query
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          name: pageSize
+          in: query
+        - schema:
+            type: string
+            enum:
+              - asc
+              - desc
+          name: sortOrder
+          in: query
+        - schema:
+            type: string
+            enum:
+              - createdTimestamp
+              - updatedAt
+          name: sortBy
+          in: query
+      description: >
+        ## Users Search
+
+        `GET /users/search` endpoint retrieves a list of users matching the specified search criteria.
 components:
   schemas:
+    UsersSearchResponse:
+      title: UsersSearchResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            oneOf:
+              - $ref: ../public/openapi-public-original.yaml#/components/schemas/User
+              - $ref: ../public/openapi-public-original.yaml#/components/schemas/Business
+        hasNext:
+          type: boolean
+        hasPrev:
+          type: boolean
+        next:
+          type: string
+        prev:
+          type: string
+        count:
+          type: integer
+        pageSize:
+          type: integer
+        last:
+          type: string
     ExternalRequestCaseStatus:
       type: string
       title: ExternalRequestCaseStatus

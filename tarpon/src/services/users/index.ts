@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { isEmpty, isEqual, pick } from 'lodash'
+import { isEmpty, isEqual, omit, pick } from 'lodash'
 import { diff } from 'deep-object-diff'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
@@ -60,6 +60,9 @@ import { CaseRepository } from '@/services/cases/repository'
 import { getParsedCommentBody } from '@/utils/helpers'
 import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
+import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
+import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
+import { pickKnownEntityFields } from '@/utils/object'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -84,6 +87,15 @@ const USER_STATE_DETAILS_PRIORITY: Record<UserState, number> = {
 }
 
 export const API_USER = 'API'
+
+function internalUserToExternalUser(
+  user: InternalBusinessUser | InternalConsumerUser
+): User | Business {
+  if (isBusinessUser(user)) {
+    return pickKnownEntityFields(user, Business)
+  }
+  return pickKnownEntityFields(user, User)
+}
 
 @traceable
 export class UserService {
@@ -920,6 +932,17 @@ export class UserService {
         userId,
         comment
       )
+    }
+  }
+
+  public async searchUsers(
+    params: DefaultApiGetUsersSearchRequest
+  ): Promise<UsersSearchResponse> {
+    const result = await this.userRepository.usersSearchExternal(params)
+    const items = result.items.map((user) => internalUserToExternalUser(user))
+    return {
+      ...omit(result, ['limit']),
+      items,
     }
   }
 

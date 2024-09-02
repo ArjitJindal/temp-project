@@ -41,6 +41,7 @@ export const PublicManagementApiPathToLambda: any = {
     StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
   '/users/{userId}/comments/{commentId}':
     StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
+  '/users/search': StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
