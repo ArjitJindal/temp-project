@@ -7,13 +7,13 @@ import {
 import { getSecretByName } from '@/utils/secrets-manager'
 import { tenantSettings } from '@/core/utils/context'
 import { logger } from '@/core/logger'
-import { ComplyAdvantageApi } from '@/services/sanctions/comply-advantage-api'
+import { ComplyAdvantageApi } from '@/services/sanctions/providers/comply-advantage-api'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { SanctionsSettingsMarketType } from '@/@types/openapi-internal/SanctionsSettingsMarketType'
-import { convertEntityToHit } from '@/services/sanctions/index'
+import { convertEntityToHit } from '@/services/sanctions'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -108,7 +108,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     )
   }
 
-  name(): SanctionsDataProviderName {
+  provider(): SanctionsDataProviderName {
     return 'comply-advantage'
   }
 

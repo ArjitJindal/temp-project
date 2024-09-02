@@ -5,14 +5,9 @@ import {
 
 export interface Entity {
   id: string
-  name: Name
+  name: string
   entityType: string
-  aka: Name[]
-}
-
-interface Name {
-  firstName: string
-  surname: string
+  aka: string[]
 }
 
 export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'
@@ -32,14 +27,6 @@ export interface SanctionsRepository {
   ): Promise<void>
 }
 
-export interface SanctionsDataFetcher {
-  provider(): SanctionsDataProviderName
-
-  fullLoad(repo: SanctionsRepository, version: string): Promise<void>
-
-  delta(repo: SanctionsRepository, version: string, from: Date): Promise<void>
-}
-
 export type SanctionsProviderSearchRequest = {
   types: SanctionsSearchType[]
   searchTerm: string
@@ -49,7 +36,7 @@ export type SanctionsProviderSearchRequest = {
 }
 
 export interface SanctionsDataProvider {
-  name(): SanctionsDataProviderName
+  provider(): SanctionsDataProviderName
   search(
     request: SanctionsProviderSearchRequest
   ): Promise<SanctionsProviderResponse>

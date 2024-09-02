@@ -101,6 +101,7 @@ export const config: Config = {
     CREATE_VPC: false,
   },
   application: {
+    MONGO_ATLAS_PROJECT: 'Tarpon-Production',
     AUTH0_DOMAIN: 'flagright.eu.auth0.com',
     AUTH0_AUDIENCE: 'https://api.flagright.com/',
     COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID:

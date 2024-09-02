@@ -90,6 +90,7 @@ export const config: Config = {
     CREATE_VPC: true,
   },
   application: {
+    MONGO_ATLAS_PROJECT: 'Tarpon-Dev',
     DEV_CERTIFICATE_ARN:
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_CUSTOM_CNAME:

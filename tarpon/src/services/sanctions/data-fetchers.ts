@@ -1,6 +1,6 @@
-import { DowJonesDataFetcher } from '@/services/sanctions/providers/dow-jones'
-import { SanctionsDataFetcher } from '@/services/sanctions/providers/types'
+import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
+import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 
 export async function sanctionsDataFetchers(): Promise<SanctionsDataFetcher[]> {
-  return [await DowJonesDataFetcher.build()]
+  return [await DowJonesProvider.build()]
 }

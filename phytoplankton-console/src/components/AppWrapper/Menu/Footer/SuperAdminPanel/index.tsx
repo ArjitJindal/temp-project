@@ -107,6 +107,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Alerts SLA',
     description: 'Enables Alert SLA',
   },
+  DOW_JONES: {
+    title: 'Dow Jones',
+    description: 'Enables using Dow Jones for sanctions',
+  },
 };
 
 export default function SuperAdminPanel() {

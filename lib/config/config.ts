@@ -118,6 +118,7 @@ export type Config = {
     GLUE: number
   }
   application: {
+    MONGO_ATLAS_PROJECT?: string
     DEV_CERTIFICATE_ARN?: string
     AUTH0_CUSTOM_CNAME?: string
     AUTH0_DOMAIN: string

@@ -9500,6 +9500,7 @@ components:
         - CLICKHOUSE_ENABLED
         - ALERT_SLA
         - MACHINE_LEARNING
+        - DOW_JONES
       description: ''
     ManagedRoleName:
       type: string

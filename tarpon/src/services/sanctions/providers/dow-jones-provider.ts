@@ -9,13 +9,12 @@ import unzipper from 'unzipper'
 import {
   Action,
   Entity,
-  SanctionsDataFetcher,
-  SanctionsDataProviderName,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
+import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -28,20 +27,18 @@ const parser = new XMLParser({
 
 const pipelineAsync = promisify(pipeline)
 
-export class DowJonesDataFetcher implements SanctionsDataFetcher {
+export class DowJonesProvider extends SanctionsDataFetcher {
   authHeader: string
 
   static async build() {
     const dowJones = await getSecretByName('dowjones')
-    return new DowJonesDataFetcher(dowJones.username, dowJones.password)
-  }
-  constructor(username: string, password: string) {
-    this.authHeader =
-      'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
+    return new DowJonesProvider(dowJones.username, dowJones.password)
   }
 
-  provider(): SanctionsDataProviderName {
-    return 'dowjones'
+  constructor(username: string, password: string) {
+    super('dowjones')
+    this.authHeader =
+      'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
   }
 
   async fullLoad(repo: SanctionsRepository, version: string) {
@@ -181,15 +178,9 @@ export class DowJonesDataFetcher implements SanctionsDataFetcher {
           person['@_action'] as Action,
           {
             id: person['@_id'],
-            name: {
-              firstName: nameValue.FirstName,
-              surname: nameValue.Surname,
-            },
+            name: `${nameValue.FirstName} ${nameValue.Surname}`,
             entityType: 'Person',
-            aka: otherNames.map((name) => ({
-              firstName: name.FirstName,
-              surname: name.Surname,
-            })),
+            aka: otherNames.map((name) => `${name.FirstName} ${name.Surname}`),
           },
         ]
       })

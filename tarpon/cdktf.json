@@ -6,7 +6,8 @@
   "terraformProviders": [
     "auth0/auth0@0.43.0",
     "hashicorp/aws@4.53.0",
-    "ClickHouse/clickhouse@0.0.10"
+    "ClickHouse/clickhouse@0.0.10",
+    "mongodb/mongodbatlas@1.18.1"
   ],
   "context": {
     "excludeStackIdFromLogicalIds": "true",

@@ -1,7 +1,8 @@
-import { TerraformStack } from 'cdktf'
+import { Fn, TerraformStack } from 'cdktf'
 import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
 import * as aws from '@cdktf/providers/aws'
+import * as atlas from '@cdktf/providers/mongodbatlas'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
@@ -40,5 +41,66 @@ export class CdktfTarponStack extends TerraformStack {
     auth0TenantConfigs.forEach((auth0TenantConfig) =>
       createAuth0TenantResources(this, config, auth0TenantConfig)
     )
+
+    const secretVersion =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        'atlas-secret',
+        {
+          secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:atlasManagementApi`,
+        }
+      )
+
+    new atlas.provider.MongodbatlasProvider(this, 'atlas-provider', {
+      publicKey: Fn.lookup(
+        Fn.jsondecode(secretVersion.secretString),
+        'public_key'
+      ),
+      privateKey: Fn.lookup(
+        Fn.jsondecode(secretVersion.secretString),
+        'private_key'
+      ),
+    })
+
+    const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
+      this,
+      'tarpon-project',
+      {
+        name: config.application.MONGO_ATLAS_PROJECT,
+      }
+    )
+    const clusters =
+      new atlas.dataMongodbatlasClusters.DataMongodbatlasClusters(
+        this,
+        'tarpon-cluster',
+        {
+          projectId: project.projectId,
+        }
+      )
+
+    new atlas.searchIndex.SearchIndex(this, 'sanctions-search-index', {
+      name: 'sanctions_search_index',
+      projectId: project.projectId,
+      clusterName: clusters.results.get(0).name,
+      analyzer: 'lucene.standard',
+      collectionName: 'sanctions',
+      database: 'tarpon',
+      mappingsFields: `
+{
+  "name": {
+    "type": "string"
+  },
+  "aka": {
+    "type": "document",
+    "fields": {
+      "name": {
+        "type": "string"
+      }
+    }
+  }
+}`,
+      mappingsDynamic: false,
+      searchAnalyzer: 'lucene.standard',
+    })
   }
 }

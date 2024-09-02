@@ -1,17 +1,17 @@
 import axios from 'axios'
-import { DowJonesDataFetcher } from '@/services/sanctions/providers/dow-jones'
+import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { SanctionsRepository } from '@/services/sanctions/providers/types'
 
 jest.mock('axios')
 jest.mock('unzipper')
 jest.mock('fs-extra')
 
-describe('DowJonesDataFetcher', () => {
-  let fetcher: DowJonesDataFetcher
+describe('DowJonesProvider', () => {
+  let fetcher: DowJonesProvider
   let repo: SanctionsRepository
 
   beforeEach(async () => {
-    fetcher = new DowJonesDataFetcher('testuser', 'testpass')
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     repo = {
       save: jest.fn(),
     } as unknown as SanctionsRepository
@@ -75,27 +75,16 @@ describe('DowJonesDataFetcher', () => {
           'add',
           {
             id: '12300002',
-            name: {
-              firstName: 'John',
-              surname: 'Smith',
-            },
+            name: 'John Smith',
             entityType: 'Person',
-            aka: [
-              {
-                firstName: 'John',
-                surname: 'Smyth',
-              },
-            ],
+            aka: ['John Smyth'],
           },
         ],
         [
           'update',
           {
             id: '12300003',
-            name: {
-              firstName: 'John',
-              surname: 'Smitten',
-            },
+            name: 'John Smitten',
             entityType: 'Person',
             aka: [],
           },

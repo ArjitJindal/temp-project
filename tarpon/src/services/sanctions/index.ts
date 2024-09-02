@@ -29,7 +29,7 @@ import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScre
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { getContext } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
@@ -40,7 +40,7 @@ import {
   CursorPaginationParams,
   CursorPaginationResponse,
 } from '@/utils/pagination'
-import { ComplyAdvantageEntity } from '@/services/sanctions/comply-advantage-api'
+import { ComplyAdvantageEntity } from '@/services/sanctions/providers/comply-advantage-api'
 import {
   SanctionsHit,
   SanctionsSearchResponse,
@@ -49,7 +49,8 @@ import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
 } from '@/services/sanctions/providers/types'
-import { ComplyAdvantageDataProvider } from '@/services/sanctions/comply-advantage-data-provider'
+import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
+import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -89,7 +90,11 @@ export class SanctionsService {
       this.tenantId,
       mongoDb
     )
-    this.provider = await ComplyAdvantageDataProvider.build(this.tenantId)
+
+    // TODO drive this from TenantSettings instead.
+    this.provider = hasFeature('DOW_JONES')
+      ? await DowJonesProvider.build()
+      : await ComplyAdvantageDataProvider.build(this.tenantId)
   }
 
   private async initialize() {
