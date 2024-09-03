@@ -11,35 +11,21 @@ async function migrateTenant(tenant: Tenant) {
 
   await sanctionsSearchCollection.updateMany(
     {
-      '$response.rawComplyAdvantageResponse.content.data.created_at': {
+      'response.rawComplyAdvantageResponse.content.data.created_at': {
         $exists: true,
       },
-    }, // Match documents that have the string timestamp field
+    },
     [
       {
         $set: {
-          epochTimestamp: {
+          'response.createdAt': {
             $toLong: {
-              $dateToParts: {
-                date: {
-                  $dateFromString: {
-                    dateString:
-                      '$response.rawComplyAdvantageResponse.content.data.created_at',
-                    format: '%Y-%m-%d %H:%M:%S',
-                  },
-                },
+              $dateFromString: {
+                dateString:
+                  '$response.rawComplyAdvantageResponse.content.data.created_at',
+                format: '%Y-%m-%d %H:%M:%S',
               },
             },
-          },
-        },
-      },
-      {
-        $set: {
-          epochTimestamp: {
-            $add: [
-              { $multiply: ['$response.createdAt', 1000] }, // Convert seconds to milliseconds
-              { $subtract: [0, { $mod: ['$response.createdAt', 1000] }] }, // Handle milliseconds
-            ],
           },
         },
       },
