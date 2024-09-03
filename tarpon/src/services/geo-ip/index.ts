@@ -1,3 +1,4 @@
+import { isIP } from 'node:net'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import * as ip from 'ip'
 import { GEO_IP_PROVIDERS } from './providers'
@@ -30,7 +31,7 @@ export class GeoIPService {
     ipAddress: string,
     resolutionType: ResolutionType = 'COUNTRY'
   ): Promise<IpLocation | null> {
-    if (ip.isPrivate(ipAddress)) {
+    if (ip.isPrivate(ipAddress) || !isIP(ipAddress)) {
       return { country: '', continent: '', city: '' }
     }
     try {
