@@ -6,6 +6,79 @@ jest.mock('axios')
 jest.mock('unzipper')
 jest.mock('fs-extra')
 
+const XmlRecord = `
+<Person id="795164" action="add" date="17-Mar-2023">
+  <Gender>Male</Gender>
+  <ActiveStatus>Inactive</ActiveStatus>
+  <Deceased>Yes</Deceased>
+  <NameDetails>
+    <Name NameType="Primary Name">
+      <NameValue>
+        <FirstName>Somphol</FirstName>
+        <Surname>Keyuraphun</Surname>
+        <OriginalScriptName>สมพล เกยุราพันธุ์</OriginalScriptName>
+      </NameValue>
+    </Name>
+    <Name NameType="Spelling Variation">
+      <NameValue>
+        <FirstName>Somphol</FirstName>
+        <Surname>Keyuraphan</Surname>
+      </NameValue>
+      <NameValue>
+        <FirstName>Somphon</FirstName>
+        <Surname>Keyulaphan</Surname>
+      </NameValue>
+      <NameValue>
+        <FirstName>Sompon</FirstName>
+        <Surname>Keyurapan</Surname>
+      </NameValue>
+    </Name>
+  </NameDetails>
+  <Descriptions>
+    <Description Description1="1" />
+  </Descriptions>
+  <RoleDetail>
+    <Roles RoleType="Primary Occupation">
+      <OccTitle OccCat="3">Deceased</OccTitle>
+    </Roles>
+    <Roles RoleType="Previous Roles">
+      <OccTitle SinceDay="26" SinceMonth="Jan" SinceYear="2008" ToDay="09" ToMonth="May" ToYear="2011" OccCat="3">Member, House of Representatives, Pheu Thai Party (PT), Party List</OccTitle>
+      <OccTitle SinceDay="03" SinceMonth="Jul" SinceYear="2011" ToDay="09" ToMonth="Dec" ToYear="2013" OccCat="3">Member, House of Representatives, Pheu Thai Party (PT), Party List</OccTitle>
+    </Roles>
+  </RoleDetail>
+  <DateDetails>
+    <Date DateType="Date of Birth">
+      <DateValue Day="21" Month="Oct" Year="1937" />
+    </Date>
+    <Date DateType="Deceased Date">
+      <DateValue Day="28" Month="Nov" Year="2014" />
+    </Date>
+    <Date DateType="Inactive as of (PEP)">
+      <DateValue Day="09" Month="Dec" Year="2013" />
+    </Date>
+  </DateDetails>
+  <CountryDetails>
+    <Country CountryType="Citizenship">
+      <CountryValue Code="THAIL" />
+    </Country>
+    <Country CountryType="Resident of">
+      <CountryValue Code="THAIL" />
+    </Country>
+    <Country CountryType="Jurisdiction">
+      <CountryValue Code="THAIL" />
+    </Country>
+  </CountryDetails>
+  <IDNumberTypes>
+    <ID IDType="National ID">
+      <IDValue>3 1005 02209 70 8</IDValue>
+    </ID>
+  </IDNumberTypes>
+  <Images>
+    <Image URL="https://hilight.kapook.com/img_cms2/user/settawoot/z-2_128.jpg" />
+  </Images>
+</Person>
+`
+
 describe('DowJonesProvider', () => {
   let fetcher: DowJonesProvider
   let repo: SanctionsRepository
@@ -87,6 +160,36 @@ describe('DowJonesProvider', () => {
             name: 'John Smitten',
             entityType: 'Person',
             aka: [],
+          },
+        ],
+      ],
+      '2024-02'
+    )
+  })
+
+  it('should parse complex XML and save entity', async () => {
+    const mockXml = `<PFA>${XmlRecord}</PFA>`
+
+    await fetcher.fileToEntities(repo, '2024-02', mockXml)
+
+    expect(repo.save).toHaveBeenCalledWith(
+      'dowjones',
+      [
+        [
+          'add',
+          {
+            id: '795164',
+            name: 'Somphol Keyuraphun',
+            entityType: 'Person',
+            aka: [
+              'Somphol Keyuraphan',
+              'Somphon Keyulaphan',
+              'Sompon Keyurapan',
+            ],
+            reason: '1',
+            registrationNumber: '3 1005 02209 70 8',
+            countryOfResidence: 'THAIL',
+            yearOfBirth: '1937',
           },
         ],
       ],

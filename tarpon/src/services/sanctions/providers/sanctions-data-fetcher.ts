@@ -66,6 +66,44 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             name: entity.name,
             entity_type: entity.entityType,
             aka: entity.aka.map((aka) => ({ name: aka })),
+            fields: [
+              {
+                name: 'Place of birth',
+                value: entity.placeOfBirth,
+              },
+              {
+                name: 'Country of residence',
+                value: entity.countryOfResidence,
+              },
+              {
+                name: 'Reason',
+                value: entity.reason,
+              },
+              {
+                name: 'Original place of birth text',
+                value: entity.originalPlaceOfBirthText,
+              },
+              {
+                name: 'Related URL',
+                value: entity.relatedURL,
+              },
+              {
+                name: 'Function',
+                value: entity.function,
+              },
+              {
+                name: 'Issuing authority',
+                value: entity.issuingAuthority,
+              },
+              {
+                name: 'Registration number',
+                value: entity.registrationNumber,
+              },
+              {
+                name: 'Other information',
+                value: entity.otherInformation,
+              },
+            ],
           },
         })
       ),

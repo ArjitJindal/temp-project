@@ -8,6 +8,18 @@ export interface Entity {
   name: string
   entityType: string
   aka: string[]
+  // TODO convert to ISO country codes
+  countryOfResidence: string
+  yearOfBirth: string
+  function: string
+  issuingAuthority: string
+  originalCountryText: string
+  originalPlaceOfBirthText: string
+  otherInformation: string
+  placeOfBirth: string
+  reason: string
+  registrationNumber: string
+  relatedURL: string
 }
 
 export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'

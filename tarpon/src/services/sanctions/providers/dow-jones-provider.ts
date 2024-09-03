@@ -6,6 +6,7 @@ import { pipeline } from 'stream'
 import axios from 'axios'
 import { XMLParser } from 'fast-xml-parser'
 import unzipper from 'unzipper'
+import { isArray, isPlainObject, isUndefined, transform } from 'lodash'
 import {
   Action,
   Entity,
@@ -23,6 +24,9 @@ const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
 const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
+  isArray: (tagName) => {
+    return ['Name', 'NameValue'].includes(tagName)
+  },
 })
 
 const pipelineAsync = promisify(pipeline)
@@ -156,38 +160,59 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     if (!Array.isArray(rawEntities)) {
       rawEntities = [jsonObj.PFA.Person]
     }
+
     const entities = rawEntities
       .map((person: any): [Action, Entity] | undefined => {
-        let name = person.NameDetails?.Name
-        let otherNames: { FirstName: string; Surname: string }[] = []
-        if (Array.isArray(person.NameDetails?.Name)) {
-          name = person.NameDetails.Name.find(
-            (n) => n['@_NameType'] === 'Primary Name'
-          )
-          otherNames = person.NameDetails.Name.filter(
-            (n) => n['@_NameType'] !== 'Primary Name'
-          ).map((name) => name.NameValue)
-        }
-
+        const names = person.NameDetails?.Name
+        const name = names.find((n) => n['@_NameType'] === 'Primary Name')
         if (!name) {
           return
         }
-        const nameValue = name.NameValue
+        const nameValue = name.NameValue[0]
+        const entity: Entity = {
+          id: person['@_id'],
+          name: `${nameValue.FirstName} ${nameValue.Surname}`,
+          entityType: 'Person',
+          aka: names
+            .filter((n) => n['@_NameType'] !== 'Primary Name')
+            .flatMap((name) => name.NameValue)
+            .map((n) => `${n.FirstName} ${n.Surname}`),
+          // TODO these are not actual ISO country code, fix this
+          countryOfResidence: person.CountryDetails?.Country?.find(
+            (country: any) => country['@_CountryType'] === 'Resident of'
+          )?.CountryValue?.['@_Code'] as string,
+          yearOfBirth: person.DateDetails?.Date?.find(
+            (date: any) => date['@_DateType'] === 'Date of Birth'
+          )?.DateValue['@_Year'] as string,
+          function: person.RoleDetail?.Roles?.RoleType as string,
+          issuingAuthority: person.SanctionsReferences?.Reference?.[
+            '@_IssuingAuthority'
+          ] as string,
+          originalCountryText: person.CountryDetails?.Country?.find(
+            (country: any) =>
+              country['@_CountryType'] === 'Country of Reported Allegation'
+          )?.CountryValue?.['@_Code'] as string,
+          originalPlaceOfBirthText: person.BirthPlace?.Place?.[
+            '@_name'
+          ] as string,
+          otherInformation: person.ProfileNotes as string,
+          placeOfBirth: person.BirthPlace?.Place?.['@_name'] as string,
+          reason: person.Descriptions?.Description?.[
+            '@_Description1'
+          ] as string,
+          registrationNumber: person.IDNumberTypes?.ID?.IDValue as string,
+          relatedURL: person.SourceDescription?.Source?.['@_name'] as string,
+        }
 
         return [
           person['@_action'] as Action,
-          {
-            id: person['@_id'],
-            name: `${nameValue.FirstName} ${nameValue.Surname}`,
-            entityType: 'Person',
-            aka: otherNames.map((name) => `${name.FirstName} ${name.Surname}`),
-          },
+          removeUndefinedFields(entity) as Entity,
         ]
       })
       .filter(Boolean)
+
     await repo.save(this.provider(), entities, version)
   }
-
   private async listFilePaths(dir: string): Promise<string[]> {
     try {
       const files = await fs.promises.readdir(dir)
@@ -207,5 +232,23 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       console.error('Error reading directory:', err)
       return []
     }
+  }
+}
+
+function removeUndefinedFields(obj: any): any {
+  if (isArray(obj)) {
+    // If the object is an array, iterate over the elements
+    return obj.map(removeUndefinedFields)
+  } else if (isPlainObject(obj)) {
+    // If the object is a plain object, iterate over its properties
+    return transform(obj, (result, value, key) => {
+      const cleanedValue = removeUndefinedFields(value)
+      if (!isUndefined(cleanedValue)) {
+        result[key] = cleanedValue
+      }
+    })
+  } else {
+    // If it's not an object or array, return the value directly
+    return obj
   }
 }
