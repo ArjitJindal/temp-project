@@ -163,7 +163,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
     },
     {
       renderComponent: () => (
-        <Widget title="Rule hit rate and False positive rate">
+        <Widget title={isShadowRule ? 'Rule hit rate' : 'Rule hit rate and False positive rate'}>
           <AsyncResourceRenderer resource={analyticsQueryResult.data}>
             {(stats) => {
               const executionStats = stats.executionStats.map((v) => ({
