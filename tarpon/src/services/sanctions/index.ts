@@ -124,6 +124,7 @@ export class SanctionsService {
       hitsCount: (result.response?.hitsCount ?? 0) + newHits.length,
       searchId: result._id,
       providerSearchId: response.providerSearchId,
+      createdAt: 1683301138980,
     }
     await this.sanctionsSearchRepository.saveSearchResult({
       request: result.request,
@@ -160,6 +161,7 @@ export class SanctionsService {
         data: [],
         hitsCount: 0,
         searchId: 'invalid_search',
+        createdAt: 1683301138980,
       }
     }
 
@@ -203,6 +205,7 @@ export class SanctionsService {
       data: filteredHits,
       hitsCount: filteredHits.length,
       providerSearchId: providerSearchId,
+      createdAt: 1683301138980,
     }
 
     if (!existedSearch) {

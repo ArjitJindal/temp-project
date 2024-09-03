@@ -138,10 +138,14 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
       const restHits = await this.fetchAllHits(caSearchRef, 2)
       hits = [...hits, ...restHits]
     }
+    const createdAt = response.content.data?.created_at
     return {
       data: hits,
       hitsCount: hits?.length || 0,
       providerSearchId: caSearchId,
+      createdAt: createdAt
+        ? new Date(createdAt).getTime()
+        : new Date().getTime(),
     }
   }
 
@@ -151,10 +155,14 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     const result = await this.complyAdvantageApi.getSearchDetails(
       providerSearchId
     )
+    const createdAt = result.content?.data?.created_at
     return {
       providerSearchId: `${result.content?.data?.id}`,
       data: result.content?.data?.hits || [],
       hitsCount: result.content?.data?.hits?.length || 0,
+      createdAt: createdAt
+        ? new Date(createdAt).getTime()
+        : new Date().getTime(),
     }
   }
 

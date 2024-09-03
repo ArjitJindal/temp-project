@@ -108,6 +108,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         })
       ),
       providerSearchId: 'PROVIDER-SEARCH-ID',
+      createdAt: new Date().getTime(),
     }
   }
 

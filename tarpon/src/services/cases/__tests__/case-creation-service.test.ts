@@ -80,6 +80,7 @@ jest.mock('@/services/sanctions', () => {
                 hitsCount: rawComplyAdvantageResponse.content.data.hits.length,
                 searchId: 'test-search-id',
                 providerSearchId: 'test-provider-search-id',
+                createdAt: 1683301138980,
               }
             }
           ),

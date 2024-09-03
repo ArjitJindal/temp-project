@@ -10823,10 +10823,13 @@ components:
           type: string
         providerSearchId:
           type: string
+        createdAt:
+          type: number
       required:
         - hitsCount
         - searchId
         - providerSearchId
+        - createdAt
     SanctionsSearchHistoryResponse:
       title: SanctionsSearchHistoryResponse
       type: object

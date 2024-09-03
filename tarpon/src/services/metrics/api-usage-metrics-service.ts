@@ -360,17 +360,15 @@ export class ApiUsageMetricsService {
     const collection = db.collection(
       SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id)
     )
-    const createdAtField =
-      'response.rawComplyAdvantageResponse.content.data.created_at'
-    const CA_TIME_FORMAT = 'YYYY-MM-DD HH:MM:SS'
+    const createdAtField = 'response.createdAt'
     const CA_MONGO_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
     const result = await collection
-      .aggregate<{ _id: string; caSearchIds: string[] }>([
+      .aggregate<{ _id: string; providerSearchIds: string[] }>([
         {
           $match: {
             [createdAtField]: {
-              $gte: dayjs(timeRange.startTimestamp).format(CA_TIME_FORMAT),
-              $lte: dayjs(timeRange.endTimestamp).format(CA_TIME_FORMAT),
+              $gte: dayjs(timeRange.startTimestamp).valueOf(),
+              $lte: dayjs(timeRange.endTimestamp).valueOf(),
             },
           },
         },
@@ -387,15 +385,15 @@ export class ApiUsageMetricsService {
                 },
               },
             },
-            caSearchIds: {
-              $addToSet: '$response.rawComplyAdvantageResponse.content.data.id',
+            providerSearchIds: {
+              $addToSet: '$response.providerSearchId',
             },
           },
         },
       ])
       .toArray()
     return Object.fromEntries(
-      result.map((item) => [item._id, item.caSearchIds.length])
+      result.map((item) => [item._id, item.providerSearchIds.length])
     )
   }
 
