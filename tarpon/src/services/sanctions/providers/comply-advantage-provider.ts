@@ -132,15 +132,16 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     if (response.content?.data?.id == null) {
       throw new Error(`Unable to get search ref from CA raw response`)
     }
-    const caSearchRef = `${response.content?.data?.id}`
-    if (hits != null) {
+    const caSearchId = `${response.content?.data?.id}`
+    const caSearchRef = response.content?.data?.ref
+    if (hits != null && caSearchRef) {
       const restHits = await this.fetchAllHits(caSearchRef, 2)
       hits = [...hits, ...restHits]
     }
     return {
       data: hits,
       hitsCount: hits?.length || 0,
-      providerSearchId: caSearchRef,
+      providerSearchId: caSearchId,
     }
   }
 
