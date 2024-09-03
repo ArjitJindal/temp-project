@@ -77,20 +77,20 @@ export class CdktfTarponStack extends TerraformStack {
       analyzer: 'lucene.standard',
       collectionName: 'sanctions',
       database: 'tarpon',
-      mappingsFields: `
-{
-  "name": {
-    "type": "string"
-  },
-  "aka": {
-    "type": "document",
-    "fields": {
-      "name": {
-        "type": "string"
-      }
-    }
-  }
-}`,
+      mappingsFields: JSON.stringify({
+        name: {
+          type: 'string',
+          analyzer: 'lucene.standard',
+        },
+        aka: {
+          type: 'document',
+          fields: {
+            name: {
+              type: 'string',
+            },
+          },
+        },
+      }),
       mappingsDynamic: false,
       searchAnalyzer: 'lucene.standard',
     })
