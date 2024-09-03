@@ -1226,13 +1226,15 @@ export default function AlertTable(props: Props) {
                       [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
                     }));
                   }}
-                  onSanctionsHitsChangeStatus={(sanctionsHitsIds) => {
+                  onSanctionsHitsChangeStatus={(sanctionsHitsIds, newStatus) => {
                     if (alert.alertId != null) {
                       setSelectedSanctionHits({
                         [alert.alertId]: sanctionsHitsIds.map((id) => ({
                           id,
                         })),
                       });
+                      setStatusChangeModalVisible(true);
+                      setStatusChangeModalState(newStatus);
                     }
                   }}
                 />
