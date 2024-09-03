@@ -238,16 +238,16 @@ const loadAmount = async (
   context?: RuleVariableContext
 ): Promise<number | undefined> => {
   if (!amountDetails) {
-    return NaN
+    return
   }
   if (!context?.baseCurrency) {
-    throw new Error('Missing base currency for transaction amount variable!')
+    logger.error('Missing base currency for transaction amount variable!')
   }
   const amount = await currencyService.getTargetCurrencyAmount(
     amountDetails,
     context?.baseCurrency ?? 'USD'
   )
-  return amount.transactionAmount ?? NaN
+  return amount.transactionAmount
 }
 
 function updatedTransactionEntityVariables(
