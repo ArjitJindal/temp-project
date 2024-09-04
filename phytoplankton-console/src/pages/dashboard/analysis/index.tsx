@@ -430,7 +430,6 @@ function Analysis() {
         onChangeVisibility={(bool) => {
           setDrawerVisible(bool);
         }}
-        isClickAwayEnabled
         drawerMaxWidth="500px"
         footer={
           <div style={{ width: '100%' }}>

@@ -1,9 +1,10 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import cn from 'clsx';
 import { kebabCase } from 'lodash';
 import s from './index.module.less';
 import CrossIcon from './cross.react.svg';
+import ConfirmModal from '@/components/utils/Confirm/ConfirmModal';
 
 interface Props {
   isVisible: boolean;
@@ -15,9 +16,9 @@ interface Props {
   footerRight?: React.ReactNode;
   drawerMaxWidth?: string;
   noPadding?: boolean;
-  isClickAwayEnabled?: boolean;
   portaled?: boolean;
   position?: 'LEFT' | 'RIGHT';
+  hasChanges?: boolean;
 }
 
 export default function Drawer(props: Props) {
@@ -31,12 +32,27 @@ export default function Drawer(props: Props) {
     footerRight,
     position = 'RIGHT',
     noPadding = false,
-    isClickAwayEnabled = false,
     portaled = true,
+    hasChanges = false,
   } = props;
 
+  const [showConfirmation, setShowConfirmation] = useState(false);
+
   const handleClose = () => {
+    if (hasChanges) {
+      setShowConfirmation(true);
+    } else {
+      onChangeVisibility(false);
+    }
+  };
+
+  const handleConfirm = () => {
+    setShowConfirmation(false);
     onChangeVisibility(false);
+  };
+
+  const handleCancel = () => {
+    setShowConfirmation(false);
   };
 
   useEffect(() => {
@@ -50,6 +66,12 @@ export default function Drawer(props: Props) {
 
   const ref = React.useRef<HTMLDivElement>(null);
 
+  const handleClickAway = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!showConfirmation && !ref.current?.contains(e.target as Node)) {
+      handleClose();
+    }
+  };
+
   const result = (
     <div
       className={cn(
@@ -58,11 +80,7 @@ export default function Drawer(props: Props) {
         noPadding && s.noPadding,
         s[`position-${position}`],
       )}
-      onClick={() => {
-        if (isClickAwayEnabled) {
-          handleClose();
-        }
-      }}
+      onClick={handleClickAway}
     >
       <div
         className={s.content}
@@ -86,7 +104,6 @@ export default function Drawer(props: Props) {
             <CrossIcon className={s.icon} onClick={handleClose} data-cy={`drawer-close-button`} />
           </div>
         </div>
-
         {isVisible && <div className={s.children}>{children}</div>}
         {(footer != null || footerRight != null) && (
           <div className={cn(s.footer)} data-cy="drawer-footer">
@@ -95,6 +112,12 @@ export default function Drawer(props: Props) {
           </div>
         )}
       </div>
+      <ConfirmModal
+        isVisible={showConfirmation}
+        onCancel={handleCancel}
+        onConfirm={handleConfirm}
+        text="Are you sure you want to close the drawer? You will lose all unsaved changes."
+      />
     </div>
   );
   return (

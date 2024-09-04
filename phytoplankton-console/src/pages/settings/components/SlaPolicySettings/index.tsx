@@ -11,7 +11,7 @@ import { EmptyEntitiesInfo } from '@/components/library/EmptyDataInfo';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
-import { TableColumn, AllParams } from '@/components/library/Table/types';
+import { AllParams, TableColumn } from '@/components/library/Table/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
@@ -33,6 +33,7 @@ import { FormRef } from '@/components/library/Form';
 import Id from '@/components/ui/Id';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
+import { isEqual } from '@/utils/lang';
 
 const defaultValues: FormValues = {
   id: '',
@@ -69,6 +70,7 @@ export function SlaPolicySettings() {
   const formRef = useRef<FormRef<any>>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const currentUser = useCurrentUser();
+  const [hasChanges, setHasChanges] = useState(false);
   const creationMutation = useMutation(
     async (values: FormValues) => {
       return await api.postSlaPolicy({
@@ -145,6 +147,7 @@ export function SlaPolicySettings() {
         setSelectedSlaPolicy(slaPolicy);
       }
       setIsDrawerVisible(true);
+      setHasChanges(false);
     },
     [slaPoliciesResult],
   );
@@ -252,6 +255,7 @@ export function SlaPolicySettings() {
       }),
     ]);
   }, [deletionMutation, handleOpenForm, users, loadingUsers, handleCopySlaPolicy]);
+  const initialValues = selectedSlaPolicy ?? defaultValues;
   return (
     <SettingsCard title="SLA Policy" description="Define SLA policies for alert investigation">
       <AsyncResourceRenderer resource={slaPoliciesResult.data}>
@@ -301,10 +305,12 @@ export function SlaPolicySettings() {
         onChangeVisibility={(isShown) => {
           if (!isShown) {
             setSelectedSlaPolicy(undefined);
+            setHasChanges(false);
           }
           setIsDrawerVisible(isShown);
         }}
         drawerMaxWidth="1200px"
+        hasChanges={hasChanges}
         footer={
           <div>
             <Button
@@ -319,11 +325,14 @@ export function SlaPolicySettings() {
         }
       >
         <PolicyForm
-          initialValues={selectedSlaPolicy ?? defaultValues}
+          initialValues={initialValues}
           handleCreate={handleCreate}
           handleEdit={handleEdit}
           formRef={formRef}
           mode={selectedSlaPolicy ? 'EDIT' : 'CREATE'}
+          onChange={(formValues) => {
+            setHasChanges(!isEqual(formValues, initialValues));
+          }}
         />
       </Drawer>
     </SettingsCard>

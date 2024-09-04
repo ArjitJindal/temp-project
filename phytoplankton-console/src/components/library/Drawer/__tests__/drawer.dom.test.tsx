@@ -17,14 +17,6 @@ describe('Drawer Component', () => {
     expect(screen.getByText('Test Drawer')).toBeInTheDocument();
   });
 
-  it('closes Drawer on click outside when clickAway is enabled', () => {
-    render(<Drawer {...props} isClickAwayEnabled />);
-    fireEvent.click(document.body);
-    setTimeout(() => {
-      expect(props.onChangeVisibility).toHaveBeenCalledWith(false);
-    }, 0);
-  });
-
   it('closes Drawer on clicking the close button', () => {
     render(<Drawer {...props} />);
     fireEvent.click(screen.getByTestId('drawer-close-button'));
@@ -65,5 +57,35 @@ describe('Drawer Component', () => {
     expect(footerSections).toHaveLength(1);
     const [footerSection] = footerSections;
     expect(footerSection).toHaveClass(s.right);
+  });
+
+  it('shows confirmation dialog when closing Drawer with unsaved changes', () => {
+    const onChangeVisibility = jest.fn();
+    render(<Drawer {...props} hasChanges={true} onChangeVisibility={onChangeVisibility} />);
+
+    fireEvent.click(screen.getByTestId('drawer-close-button'));
+
+    expect(
+      screen.getByText(
+        'Are you sure you want to close the drawer? You will lose all unsaved changes.',
+      ),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByText('No'));
+    expect(onChangeVisibility).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByTestId('drawer-close-button'));
+    fireEvent.click(screen.getByText('Yes'));
+    expect(onChangeVisibility).toHaveBeenCalledWith(false);
+  });
+
+  it('does not show confirmation dialog when closing Drawer without unsaved changes', () => {
+    const onChangeVisibility = jest.fn();
+    render(<Drawer {...props} hasChanges={false} onChangeVisibility={onChangeVisibility} />);
+
+    fireEvent.click(screen.getByTestId('drawer-close-button'));
+
+    expect(screen.queryByText('Are you sure you want to close?')).not.toBeInTheDocument();
+    expect(onChangeVisibility).toHaveBeenCalledWith(false);
   });
 });

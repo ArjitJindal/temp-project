@@ -10,7 +10,7 @@ import { Account, AccountInvitePayload, AccountPatchPayload, AccountRole } from 
 import { useQuery } from '@/utils/queries/hooks';
 import { ROLES_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import { getErrorMessage } from '@/utils/lang';
+import { getErrorMessage, isEqual } from '@/utils/lang';
 import {
   Feature,
   useFeatures,
@@ -26,6 +26,7 @@ import Select from '@/components/library/Select';
 import Drawer from '@/components/library/Drawer';
 import TextInput from '@/components/library/TextInput';
 import Checkbox from '@/components/library/Checkbox';
+import { useIsChanged } from '@/utils/hooks';
 
 interface Props {
   editAccount: Account | null;
@@ -52,6 +53,7 @@ export default function AccountForm(props: Props) {
     return await api.getRoles();
   });
   const branding = getBranding();
+  const features = useFeatures();
 
   const settings = useSettings();
   const maxSeats = settings.limits?.seats;
@@ -61,17 +63,11 @@ export default function AccountForm(props: Props) {
   // todo: i18n
   const isInviteDisabled = useIsInviteDisabled();
 
-  const [values, setValues] = useState<Partial<Account>>(defaultState);
-
-  const features = useFeatures();
-
   const isEscalationsEnabled = useMemo(() => features.includes('ADVANCED_WORKFLOWS'), [features]);
 
-  const [isReviewRequired, setIsReviewRequired] = useState(false);
-
-  useEffect(() => {
+  const defaultValues = useMemo(() => {
     if (editAccount) {
-      setValues({
+      return {
         name: editAccount?.name || '',
         ...(isEscalationsEnabled && {
           isEscalationContact: editAccount?.isEscalationContact || false,
@@ -80,13 +76,27 @@ export default function AccountForm(props: Props) {
         role: editAccount?.role || 'admin',
         email: editAccount?.email || '',
         id: editAccount?.id,
-      });
-      setIsReviewRequired(editAccount?.reviewerId != null);
+      };
     } else {
-      setValues(defaultState);
-      setIsReviewRequired(false);
+      return defaultState;
     }
-  }, [editAccount, isEscalationsEnabled]);
+  }, [isEscalationsEnabled, editAccount]);
+
+  const [values, setValues] = useState<Partial<Account>>(defaultValues);
+
+  const [isReviewRequired, setIsReviewRequired] = useState(false);
+
+  const editAccountChanged = useIsChanged(editAccount);
+  useEffect(() => {
+    if (editAccountChanged) {
+      if (editAccount) {
+        setIsReviewRequired(editAccount?.reviewerId != null);
+      } else {
+        setIsReviewRequired(false);
+      }
+      setValues(defaultValues);
+    }
+  }, [editAccountChanged, editAccount, defaultValues, isEscalationsEnabled]);
 
   const allRequiredFieldsFilled = useMemo(() => {
     return REQUIRED_FIELDS.every((field) => values[field] !== '' && values[field] !== undefined);
@@ -221,6 +231,7 @@ export default function AccountForm(props: Props) {
       drawerMaxWidth={'400px'}
       isVisible={props.isVisibile}
       onChangeVisibility={props.onChangeVisibility}
+      hasChanges={!isEqual(values, defaultValues)}
       footerRight={
         <>
           <Button

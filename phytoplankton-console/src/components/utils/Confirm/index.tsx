@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import s from './style.module.less';
-import Modal from '@/components/library/Modal';
-import { AsyncResource, init, isLoading, useFinishedSuccessfully } from '@/utils/asyncResource';
+import ConfirmModal from './ConfirmModal';
+import { AsyncResource, init, useFinishedSuccessfully } from '@/utils/asyncResource';
 
 export type Confirm = () => void;
 
@@ -20,7 +19,7 @@ export interface Props {
 }
 
 export default function Confirm(props: Props) {
-  const { isDanger, title, text, res, children, onConfirm, onSuccess } = props;
+  const { res, onConfirm, onSuccess, children, ...rest } = props;
   const [isVisible, setIsVisible] = useState(false);
   const isSuccessfull = useFinishedSuccessfully(res ?? init());
   useEffect(() => {
@@ -38,31 +37,25 @@ export default function Confirm(props: Props) {
     }
   }, [res, onConfirm]);
 
-  const handleClick = useCallback(() => {
+  const handleCancel = useCallback(() => {
+    setIsVisible(false);
+  }, []);
+
+  const handleChildrenClick = useCallback(() => {
     setIsVisible(true);
   }, []);
 
   return (
     <>
-      <Modal
-        width="S"
-        title={title ?? 'Confirm action'}
-        isOpen={isVisible}
-        onCancel={() => {
-          setIsVisible(false);
-        }}
-        onOk={handleOk}
-        okProps={{
-          isLoading: res != null && isLoading(res),
-          isDanger,
-        }}
-        okText="Yes"
-        cancelText="No"
-      >
-        <div className={s.text}>{text}</div>
-      </Modal>
+      <ConfirmModal
+        {...rest}
+        res={res}
+        isVisible={isVisible}
+        onConfirm={handleOk}
+        onCancel={handleCancel}
+      />
       {children({
-        onClick: handleClick,
+        onClick: handleChildrenClick,
       })}
     </>
   );

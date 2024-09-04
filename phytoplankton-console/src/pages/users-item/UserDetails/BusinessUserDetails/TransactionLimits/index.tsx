@@ -146,12 +146,29 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
     }
   }, [editMode]);
 
+  const hasChanges = useMemo(() => {
+    return (
+      updatedPaymentMethod !== undefined ||
+      updatedCurrency !== undefined ||
+      Object.keys(updatedTransactionCountLimit).length > 0 ||
+      Object.keys(updatedTransactionAmountLimit).length > 0 ||
+      Object.keys(updatedAverageTransactionAmountLimit).length > 0
+    );
+  }, [
+    updatedPaymentMethod,
+    updatedCurrency,
+    updatedTransactionCountLimit,
+    updatedTransactionAmountLimit,
+    updatedAverageTransactionAmountLimit,
+  ]);
+
   return (
     <Drawer
       title={'Expected transaction limits'}
       drawerMaxWidth="500px"
       isVisible={editMode !== 'NONE'}
       onChangeVisibility={onClose}
+      hasChanges={hasChanges}
       footer={
         <Button type="PRIMARY" isDisabled={!paymentMethod} onClick={handleSave}>
           {editMode === 'EDIT' ? 'Save limit' : 'Add limit'}

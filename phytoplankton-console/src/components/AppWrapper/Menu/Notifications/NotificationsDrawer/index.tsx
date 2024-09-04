@@ -121,7 +121,6 @@ export default function NotificationsDrawer(props: Props) {
       title={'Notifications'}
       portaled={false}
       position="LEFT"
-      isClickAwayEnabled={true}
       drawerMaxWidth="480px"
       noPadding={true}
     >

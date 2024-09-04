@@ -23,10 +23,11 @@ interface Props {
   mode: 'CREATE' | 'EDIT';
   initialValues: FormValues;
   formRef: React.RefObject<FormRef<any>>;
+  onChange?: (values: FormValues) => void;
 }
 
 function PolicyConfigurationForm(props: Props) {
-  const { handleCreate, handleEdit, initialValues, mode } = props;
+  const { handleCreate, handleEdit, initialValues, mode, onChange } = props;
   const api = useApi();
   const queryResult = useQuery<SLAPolicyIdResponse>(
     SLA_POLICY_ID(initialValues.id || 'new'),
@@ -57,6 +58,11 @@ function PolicyConfigurationForm(props: Props) {
           handleCreate(values);
         } else {
           handleEdit(values);
+        }
+      }}
+      onChange={(values) => {
+        if (onChange) {
+          onChange(values.values);
         }
       }}
       alwaysShowErrors={showErrors}

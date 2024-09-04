@@ -17,7 +17,6 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
     <Drawer
       title={hit?.doc?.name ?? ''}
       isVisible={Boolean(hit)}
-      isClickAwayEnabled={true}
       onChangeVisibility={(isShown) => {
         if (!isShown) {
           onClose();

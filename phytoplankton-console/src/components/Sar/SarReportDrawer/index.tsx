@@ -86,6 +86,8 @@ export default function SarReportDrawer(props: Props) {
   const [activeStep, setActiveStep] = useState<string>(steps[0].key);
   const [report, setReport] = useState(props.initialReport);
   const [draft, setDraft] = useState<Report>(props.initialReport);
+  const [hasChanges, setHasChanges] = useState(false);
+
   const submitMutation = useMutation<
     Report,
     unknown,
@@ -110,6 +112,7 @@ export default function SarReportDrawer(props: Props) {
     {
       onSuccess: (r) => {
         setReport(r);
+        setHasChanges(false);
         message.success(
           `Report ${r.id} successfully ${directSumission ? 'submitted' : 'generated'}`,
         );
@@ -145,6 +148,7 @@ export default function SarReportDrawer(props: Props) {
       onSuccess: (r) => {
         setReport(r);
         setDraft(r);
+        setHasChanges(false);
         message.success(`Draft of report saved successfully!`);
       },
       onError: (e) => {
@@ -162,6 +166,7 @@ export default function SarReportDrawer(props: Props) {
         isVisible={props.isVisible}
         onChangeVisibility={props.onChangeVisibility}
         title={'SAR report'}
+        hasChanges={hasChanges}
         footer={
           <div className={s.footer}>
             <StepButtons
@@ -213,8 +218,9 @@ export default function SarReportDrawer(props: Props) {
           formId={formId}
           steps={steps}
           activeStepState={[activeStep, setActiveStep]}
-          onChange={(report) => {
-            setDraft(report);
+          onChange={(updatedReport) => {
+            setDraft(updatedReport);
+            setHasChanges(true);
           }}
           onSubmit={(report: Report) => {
             submitMutation.mutate({

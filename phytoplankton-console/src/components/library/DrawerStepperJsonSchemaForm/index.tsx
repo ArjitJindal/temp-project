@@ -37,6 +37,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
   const { title, description, isVisible, steps, onSubmit, onChange, onChangeVisibility } = props;
   const [activeStepKey, setActiveStepKey] = useState(steps[0].step.key);
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
   const activeStepIndex = steps.findIndex((step) => step.step.key === activeStepKey);
   const getNestedForm = useCallback(() => {
     const parametersSchema = steps.find((step) => step?.step?.key === activeStepKey)?.jsonSchema;
@@ -72,6 +73,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
   useEffect(() => {
     if (prevIsVisible !== isVisible) {
       setActiveStepKey(steps[0].step.key);
+      setHasChanges(false);
     }
   }, [isVisible, prevIsVisible, steps]);
 
@@ -82,6 +84,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
       drawerMaxWidth={props.drawerMaxWidth ?? '500px'}
       title={title}
       description={description}
+      hasChanges={hasChanges}
       footer={
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <StepButtons
@@ -127,6 +130,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
           }
         }}
         onChange={({ values }) => {
+          setHasChanges(true);
           onChange?.(merge({}, ...Object.values(values)) as Entity);
         }}
       >

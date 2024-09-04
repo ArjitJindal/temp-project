@@ -89,7 +89,6 @@ export default function SearchResultDetailsDrawer(props: Props) {
         </div>
       }
       isVisible={Boolean(hit)}
-      isClickAwayEnabled={true}
       onChangeVisibility={(isShown) => {
         if (!isShown) {
           onClose();
