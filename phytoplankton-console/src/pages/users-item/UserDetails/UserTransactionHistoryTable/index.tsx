@@ -34,6 +34,7 @@ import {
 import { makeUrl } from '@/utils/routing';
 import Id from '@/components/ui/Id';
 import { getOr } from '@/utils/asyncResource';
+import { dayjs } from '@/utils/dayjs';
 
 export type DataItem = {
   index: number;
@@ -52,14 +53,19 @@ export type DataItem = {
   transactionState?: TransactionState;
 };
 
+const DEFAULT_TIMESTAMP = [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')];
+
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
 
-  const [params, setParams] = useState<AllParams<DefaultApiGetTransactionsListRequest>>({
+  const [params, setParams] = useState<
+    AllParams<DefaultApiGetTransactionsListRequest> & { timestamp?: string[] }
+  >({
     ...DEFAULT_PARAMS_STATE,
     includeEvents: true,
+    timestamp: DEFAULT_TIMESTAMP.map((x) => x.format()),
   });
 
   const cases = useQuery(
@@ -81,6 +87,7 @@ export function Content(props: { userId: string }) {
       const [sortField, sortOrder] = params.sort[0] ?? [];
 
       const directionFilter = (params ?? {})['direction'] ?? [];
+      const timestamp = (params ?? {})['timestamp'] ?? [];
       const showIncoming = directionFilter.indexOf('incoming') !== -1;
       const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
 
@@ -91,6 +98,8 @@ export function Content(props: { userId: string }) {
         start: from,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
+        afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
+        beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
         includeEvents: true,
       };
 
@@ -189,7 +198,15 @@ export function Content(props: { userId: string }) {
         helper.simple<'timestamp'>({
           title: 'Transaction time',
           key: 'timestamp',
-          type: DATE,
+          type: {
+            ...DATE,
+            autoFilterDataType: {
+              kind: 'dateTimeRange',
+              allowClear: false,
+            },
+          },
+          sorting: true,
+          filtering: true,
         }),
         helper.simple<'status'>({
           key: 'status',
