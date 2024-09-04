@@ -86,9 +86,6 @@ export function useLocalStorageOptionally<Value extends PersistedState = Persist
           if (!isEqual(sortBy(parsedValue.columnOrder), sortBy(defaultValues.columnOrder))) {
             parsedValue.columnOrder = defaultValues.columnOrder;
           }
-          parsedValue.columnOrder = parsedValue.columnOrder.filter(
-            (id: string) => !parsedValue.columnOrderRestrictions.includes(id),
-          );
           return { ...defaultValues, ...parsedValue };
         }
       } catch (e) {
