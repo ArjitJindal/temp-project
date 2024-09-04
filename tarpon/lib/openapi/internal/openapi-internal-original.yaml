@@ -3712,6 +3712,106 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+  /risk-factors:
+    parameters: []
+    post:
+      summary: Risk Factors - POST
+      operationId: post-create-risk-factor
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorsPostRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactor'
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
+    get:
+      summary: Risk factors - GET
+      operationId: get-all-risk-factors
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/RiskEntityType'
+          in: query
+          name: entityType
+          description: Entity type you want to filter on
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RiskFactor'
+  /risk-factors/{riskFactorId}:
+    parameters:
+      - schema:
+          type: string
+        name: riskFactorId
+        in: path
+        required: true
+    put:
+      summary: Risk factor - PUT
+      operationId: put-risk-factors
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RiskFactorsUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactor'
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
+    get:
+      summary: Risk factor - GET
+      operationId: get-risk-factor
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RiskFactor'
+    delete:
+      summary: Risk factors - DELETE
+      operationId: delete-risk-factor
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   /slack/oauth_redirect:
     get:
       summary: Slack OAuth Redirect
@@ -9260,6 +9360,125 @@ components:
         - end
         - startGranularity
         - endGranularity
+    RiskFactorLogic:
+      title: RiskFactorLogic
+      type: object
+      properties:
+        logic:
+          type: object
+        riskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        weight:
+          type: number
+          minimum: 0.01
+          maximum: 1
+      required:
+        - logic
+        - weight
+    RiskLevelRiskFactorLogic:
+      title: RiskLevelRiskFactorLogic
+      type: object
+      properties:
+        VERY_HIGH:
+          $ref: '#/components/schemas/RiskFactorLogic'
+        HIGH:
+          $ref: '#/components/schemas/RiskFactorLogic'
+        MEDIUM:
+          $ref: '#/components/schemas/RiskFactorLogic'
+        LOW:
+          $ref: '#/components/schemas/RiskFactorLogic'
+        VERY_LOW:
+          $ref: '#/components/schemas/RiskFactorLogic'
+    RiskLevelRiskFactorParameters:
+      title: RiskLevelRiskFactorParameters
+      type: object
+      properties:
+        VERY_HIGH:
+          type: object
+        HIGH:
+          type: object
+        MEDIUM:
+          type: object
+        LOW:
+          type: object
+        VERY_LOW:
+          type: object
+    RiskFactorsUpdateRequest:
+      title: RiskFactorsUpdateRequest
+      type: object
+      properties:
+        status:
+          $ref: '#/components/schemas/RuleInstanceStatus'
+        logicAggregationVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleAggregationVariable'
+        logicEntityVariables:
+          type: array
+          items:
+            $ref: '#/components/schemas/RuleEntityVariableInUse'
+        defaultWeight:
+          type: number
+          minimum: 0.01
+          maximum: 1
+        defaultRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        defaultRiskScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        riskLevelLogic:
+          $ref: '#/components/schemas/RiskLevelRiskFactorLogic'
+        name:
+          type: string
+        description:
+          type: string
+        baseCurrency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        parametersSchema:
+          type: object
+        riskLevelParameters:
+          $ref: '#/components/schemas/RiskLevelRiskFactorParameters'
+        type:
+          $ref: '#/components/schemas/RiskEntityType'
+    RiskFactorsPostRequest:
+      title: RiskFactorsPostRequest
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/RiskFactorsUpdateRequest'
+      required:
+        - name
+        - description
+        - status
+        - logicEntityVariables
+        - logicAggregationVariables
+        - defaultWeight
+        - type
+    RiskFactor:
+      title: RiskFactor
+      type: object
+      allOf:
+        - $ref: '#/components/schemas/RiskFactorsPostRequest'
+      properties:
+        id:
+          type: string
+        createdAt:
+          type: number
+        updatedAt:
+          type: number
+      required:
+        - id
+        - name
+        - type
+        - description
+        - status
+        - logicEntityVariables
+        - logicAggregationVariables
+        - defaultWeight
     ParameterAttributeValuesListV8:
       title: ParameterAttributeValuesListV8
       allOf:

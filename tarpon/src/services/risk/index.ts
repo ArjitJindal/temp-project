@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
+import { DEFAULT_RISK_LEVEL, getRiskScoreFromLevel } from '@flagright/lib/utils'
 import { CounterRepository } from '../counter/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { DEFAULT_RISK_VALUE } from '../risk-scoring/utils'
@@ -19,6 +20,9 @@ import { ParameterAttributeValuesV8Request } from '@/@types/openapi-internal/Par
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
 import { ParameterAttributeV8RequestUpdate } from '@/@types/openapi-internal/ParameterAttributeV8RequestUpdate'
+import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
+import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
+import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -253,5 +257,77 @@ export class RiskService {
 
   async getAverageArsScoreForUser(userId: string) {
     return await this.riskRepository.getAverageArsScoreForUser(userId)
+  }
+
+  async getAllRiskFactors(entityType?: RiskEntityType) {
+    return this.riskRepository.getAllRiskFactors(entityType)
+  }
+
+  async createOrUpdateRiskFactor(
+    riskFactor: RiskFactorsUpdateRequest,
+    riskFactorId?: string
+  ): Promise<RiskFactor> {
+    if (!this.mongoDb) {
+      throw new Error('MongoDB connection not available')
+    }
+
+    const currentId = riskFactorId
+    let currentRiskFactor: RiskFactor | null = null
+
+    if (riskFactorId) {
+      currentRiskFactor = await this.riskRepository.getRiskFactor(riskFactorId)
+    }
+
+    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const id: string =
+      currentId ??
+      `RF-${(await counterRepository.getNextCounterAndUpdate('RiskFactor'))
+        .toString()
+        .padStart(3, '0')}`
+
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+
+    const DEFUALT_VALUES: RiskFactorsPostRequest = {
+      defaultRiskLevel: DEFAULT_RISK_LEVEL,
+      defaultRiskScore: getRiskScoreFromLevel(
+        riskClassificationValues,
+        DEFAULT_RISK_LEVEL
+      ),
+      defaultWeight: 1,
+      description: '',
+      status: 'ACTIVE',
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      name: '',
+      type: 'CONSUMER_USER',
+    }
+
+    const now = Date.now()
+
+    const data: RiskFactor = {
+      ...(currentRiskFactor ?? DEFUALT_VALUES),
+      ...riskFactor,
+      id,
+      createdAt: currentRiskFactor?.createdAt ?? now,
+      updatedAt: now,
+    }
+    await this.riskRepository.createOrUpdateRiskFactor(data)
+    // To send the batch job command to rebuild the aggregation variables when updated
+    return data
+  }
+
+  async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
+    const data = await this.riskRepository.getRiskFactor(riskFactorId)
+
+    if (!data) {
+      throw new BadRequest('Invalid request - risk factor not found')
+    }
+
+    return data
+  }
+
+  async deleteRiskFactor(riskFactorId: string) {
+    return this.riskRepository.deleteRiskFactor(riskFactorId)
   }
 }

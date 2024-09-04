@@ -11,6 +11,7 @@ export type CounterEntity =
   | 'CustomRiskFactor'
   | 'SLAPolicy'
   | 'SanctionsWhitelist'
+  | 'RiskFactor'
 
 export const COUNTER_ENTITIES: CounterEntity[] = [
   'Case',

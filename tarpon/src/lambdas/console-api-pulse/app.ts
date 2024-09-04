@@ -79,6 +79,10 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       )
     })
 
+    handlers.registerGetPulseRiskParameters(async (_ctx, _request) => {
+      return await riskService.getAllRiskParameters()
+    })
+
     handlers.registerPostPulseRiskParametersV8(async (ctx, request) => {
       return await riskService.createOrUpdateRiskParameterV8(
         request.ParameterAttributeValuesV8Request
@@ -106,8 +110,32 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       }
     )
 
-    handlers.registerGetPulseRiskParameters(async (_ctx, _request) => {
-      return await riskService.getAllRiskParameters()
+    handlers.registerGetAllRiskFactors(async (_ctx, request) => {
+      return await riskService.getAllRiskFactors(request.entityType)
+    })
+
+    handlers.registerPostCreateRiskFactor(async (_ctx, _request) => {
+      return null
+    })
+
+    handlers.registerGetRiskFactor(async (ctx, request) => {
+      return await riskService.getRiskFactor(request.riskFactorId)
+    })
+
+    handlers.registerDeleteRiskFactor(async (ctx, request) => {
+      return await riskService.deleteRiskFactor(request.riskFactorId)
+    })
+
+    handlers.registerPostCreateRiskFactor(async (ctx, request) => {
+      return await riskService.createOrUpdateRiskFactor(
+        request.RiskFactorsPostRequest
+      )
+    })
+
+    handlers.registerPutRiskFactors(async (ctx, request) => {
+      return await riskService.createOrUpdateRiskFactor(
+        request.RiskFactorsUpdateRequest
+      )
     })
 
     return await handlers.handle(event)

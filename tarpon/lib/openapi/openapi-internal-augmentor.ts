@@ -180,6 +180,10 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-parameters-v8':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/risk-factors':
+    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
+  '/risk-factors/{riskFactorId}':
+    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-assignment':
     StackConstants.CONSOLE_API_MANUAL_USER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/pulse/risk-parameter':

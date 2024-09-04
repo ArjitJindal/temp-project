@@ -47,6 +47,7 @@ import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/Parame
 import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
+import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -835,6 +836,112 @@ export class RiskRepository {
         drsValue.drsScore
       ),
     }))
+  }
+
+  async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
+    logger.info(`Updating risk factor for V8.`)
+
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...riskFactor,
+        ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
+      },
+    }
+
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    logger.info(`Updated risk factor for V8`)
+
+    return riskFactor
+  }
+
+  async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
+    const getInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId),
+    }
+
+    try {
+      const result = await this.dynamoDb.send(new GetCommand(getInput))
+
+      if (!result.Item) {
+        return null
+      }
+
+      return result.Item as RiskFactor
+    } catch (e) {
+      logger.error(e)
+      throw new InternalServerError(
+        `Parameter Risk Item not found for ${riskFactorId}`
+      )
+    }
+  }
+
+  async deleteRiskFactor(riskFactorId: string) {
+    logger.info(`Deleting risk factor.`)
+    const primaryKey = DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId)
+
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: primaryKey,
+    }
+
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    logger.info(`Deleted risk factor.`)
+  }
+
+  async getAllRiskFactors(
+    entityType?: RiskEntityType
+  ): Promise<Array<RiskFactor>> {
+    const keyConditionExpr = 'PartitionKeyID = :pk'
+    const expressionAttributeVals = {
+      ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
+    }
+
+    let filterExpression = ''
+
+    if (entityType) {
+      filterExpression = 'type = :entityType'
+      expressionAttributeVals[':entityType'] = entityType
+    }
+
+    const queryString = RiskFactor.getAttributeTypeMap().reduce((acc, curr) => {
+      if (curr.baseName === 'name') {
+        return acc + '#name' + ','
+      }
+      if (curr.baseName === 'status') {
+        return acc + '#status' + ','
+      }
+      if (curr.baseName === 'type') {
+        return acc + '#type' + ','
+      }
+      return acc + curr.baseName + ','
+    }, '')
+
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      KeyConditionExpression: keyConditionExpr,
+      ExpressionAttributeValues: expressionAttributeVals,
+      ExpressionAttributeNames: {
+        '#name': 'name',
+        '#status': 'status',
+        '#type': 'type',
+      },
+      ProjectionExpression: queryString.slice(0, -1),
+      ...(filterExpression && { FilterExpression: filterExpression }),
+    }
+
+    try {
+      const result = await paginateQuery(this.dynamoDb, queryInput)
+      return result.Items && result.Items.length > 0
+        ? (result.Items.map((item) =>
+            omit(item, ['PartitionKeyID', 'SortKeyID'])
+          ) as RiskFactor[])
+        : []
+    } catch (e) {
+      logger.error(e)
+      return []
+    }
   }
 }
 
