@@ -15,7 +15,7 @@ export const NUMBER_TO_STRING: RuleFunction<string> = {
     },
   },
   run: async ([value]: number[]) => {
-    return value.toString()
+    return value?.toString() ?? ''
   },
 }
 
