@@ -482,12 +482,15 @@ export class RuleInstanceRepository {
         const updateItemInput: UpdateCommandInput = {
           TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
-          UpdateExpression: `SET runCount = runCount + :runCountInc, hitCount = hitCount + :hitCountInc`,
+          UpdateExpression: `SET runCount = if_not_exists(runCount, :defaultRunCount) + :runCountInc, 
+                            hitCount = if_not_exists(hitCount, :defaultHitCount) + :hitCountInc`,
           ExpressionAttributeValues: {
             ':runCountInc': update.runCountStep,
             ':hitCountInc': hitRuleInstanceIdsSet.has(runRuleInstanceId)
               ? update.hitCountStep
               : 0,
+            ':defaultRunCount': 0, // Default value for runCount if it doesn't exist
+            ':defaultHitCount': 0, // Default value for hitCount if it doesn't exist
           },
           ReturnValues: 'UPDATED_NEW',
         }
