@@ -53,7 +53,6 @@ describe('Selection of entities', () => {
 function selectRow(table, number) {
   cy.get(`tr[data-cy="table-${table}-data-row"] input[data-cy="row-table-checkbox"]`)
     .eq(number)
-    .scrollIntoView()
     .click();
 }
 
@@ -62,7 +61,6 @@ function expandRow(table, number) {
     `tr[data-cy="table-${table}-data-row"] *[data-cy="EXPAND_COLUMN_ID"] *[data-cy="expand-icon"]`,
   )
     .eq(number)
-    .scrollIntoView()
     .click();
 }
 
