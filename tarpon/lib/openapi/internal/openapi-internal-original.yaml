@@ -6132,6 +6132,38 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+        - schema:
+            type: string
+          in: query
+          name: filterReportId
+        - schema:
+            type: string
+          in: query
+          name: filterCaseUserId
+        - schema:
+            type: number
+          in: query
+          name: createdAtAfterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: createdAtBeforeTimestamp
+        - schema:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+          in: query
+          name: filterJurisdiction
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterCreatedBy
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/ReportStatus'
+          in: query
+          name: filterStatus
     post:
       summary: Create a new report
       operationId: post-reports

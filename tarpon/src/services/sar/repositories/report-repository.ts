@@ -1,8 +1,8 @@
-import { Document, MongoClient, WithId } from 'mongodb'
+import { Document, Filter, MongoClient, WithId } from 'mongodb'
 
-import { isUndefined, omit, omitBy } from 'lodash'
+import { omit } from 'lodash'
 import { Report } from '@/@types/openapi-internal/Report'
-import { paginatePipeline } from '@/utils/mongodb-utils'
+import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import {
   REPORT_COLLECTION,
   USERS_COLLECTION,
@@ -126,17 +126,63 @@ export class ReportRepository {
     return report ? omit(report, '_id') : null
   }
 
+  private getConditionsFromParams(params: DefaultApiGetReportsRequest) {
+    const conditions: Filter<Report> = []
+    if (params.caseId) {
+      conditions.push({
+        caseId: prefixRegexMatchFilter(params.caseId),
+      })
+    }
+    if (params.filterReportId) {
+      conditions.push({
+        id: prefixRegexMatchFilter(params.filterReportId),
+      })
+    }
+    if (params.filterCaseUserId) {
+      conditions.push({
+        caseUserId: prefixRegexMatchFilter(params.filterCaseUserId),
+      })
+    }
+    if (params.filterJurisdiction) {
+      conditions.push({
+        reportTypeId: prefixRegexMatchFilter(params.filterJurisdiction),
+      })
+    }
+    if (params.filterCreatedBy) {
+      conditions.push({
+        createdById: {
+          $in: params.filterCreatedBy,
+        },
+      })
+    }
+    if (params.createdAtAfterTimestamp && params.createdAtBeforeTimestamp) {
+      conditions.push({
+        createdAt: {
+          $gte: params.createdAtAfterTimestamp,
+          $lte: params.createdAtBeforeTimestamp,
+        },
+      })
+    }
+    if (params.filterStatus) {
+      conditions.push({
+        status: {
+          $in: params.filterStatus,
+        },
+      })
+    }
+    return conditions.length
+      ? {
+          $and: conditions,
+        }
+      : {}
+  }
+
   public async getReports(
     params: DefaultApiGetReportsRequest
   ): Promise<{ total: number; items: Report[] }> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
-    const filter = omitBy(
-      {
-        caseId: params.caseId,
-      },
-      isUndefined
-    )
+    const filter = this.getConditionsFromParams(params)
     const pipeline: Document[] = [
       { $match: filter },
       { $sort: { createdAt: -1 } },
@@ -155,7 +201,7 @@ export class ReportRepository {
       { $unset: ['revisions', 'schema'] },
     ]
     const [total, reports] = await Promise.all([
-      collection.count(filter),
+      collection.count(filter as Filter<Report>),
       collection.aggregate<Report>(pipeline, { allowDiskUse: true }).toArray(),
     ])
     return {
