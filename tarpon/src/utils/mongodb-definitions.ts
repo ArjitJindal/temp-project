@@ -532,9 +532,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () =>
         [
           { createdAt: 1, _id: 1 },
-          { 'response.searchProviderId': 1 },
           { 'request.searchTerm': 1 },
           { 'response.data.doc.types': 1 },
+          { 'response.providerSearchId': 1 },
         ].map((index) => ({ index })),
     },
     [SANCTIONS_HITS_COLLECTION(tenantId)]: {

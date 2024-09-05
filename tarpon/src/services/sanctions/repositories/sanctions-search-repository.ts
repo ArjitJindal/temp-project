@@ -207,7 +207,7 @@ export class SanctionsSearchRepository {
     )
     const searches = await collection
       .find({
-        providerSearchId,
+        'response.providerSearchId': providerSearchId,
       })
       .toArray()
     // if (searches.length > 1) {
