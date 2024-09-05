@@ -273,6 +273,12 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     const options: Array<{ value: RuleAggregationFunc; label: string }> = [];
     const entityVariable = entityVariables.find((v) => v.key === formValues?.aggregationFieldKey);
 
+    const uniqueAggregationOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
+      { value: 'UNIQUE_COUNT', label: 'Unique count' },
+      { value: 'UNIQUE_VALUES', label: 'Unique values' },
+    ];
+    const timestampEntityRegex = /timestamp/gi;
+
     if (entityVariable?.valueType === 'number') {
       const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
         { value: 'AVG', label: 'Average' },
@@ -287,14 +293,16 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         },
       ];
       options.push(...numberValueOptions);
+
+      // Timestamps are high cardinality entities, and we ideally want to
+      // exclude them for unique aggregations
+      if (!timestampEntityRegex.test(entityVariable?.key)) {
+        options.push(...uniqueAggregationOptions);
+      }
     } else if (entityVariable?.key === 'TRANSACTION:transactionId') {
       options.push({ value: 'COUNT', label: 'Count' });
     } else if (entityVariable?.valueType === 'string') {
-      const stringValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
-        { value: 'UNIQUE_COUNT', label: 'Unique count' },
-        { value: 'UNIQUE_VALUES', label: 'Unique values' },
-      ];
-      options.push(...stringValueOptions);
+      options.push(...uniqueAggregationOptions);
     }
     return options;
   }, [entityVariables, formValues.aggregationFieldKey]);

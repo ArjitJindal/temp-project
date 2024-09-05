@@ -1,7 +1,10 @@
 import { uniq } from 'lodash'
 import { RuleVariableAggregator } from './types'
 
-export const UNIQUE_VALUES: RuleVariableAggregator<string, string[]> = {
+export const UNIQUE_VALUES: RuleVariableAggregator<
+  string | number,
+  Array<string | number>
+> = {
   returnValueType: 'array',
   init: () => [],
   aggregate: (values) => uniq(values ?? []),
@@ -11,7 +14,11 @@ export const UNIQUE_VALUES: RuleVariableAggregator<string, string[]> = {
   compute: (aggregation) => aggregation ?? [],
 }
 
-export const UNIQUE_COUNT: RuleVariableAggregator<string, string[], number> = {
+export const UNIQUE_COUNT: RuleVariableAggregator<
+  string | number,
+  Array<string | number>,
+  number
+> = {
   ...UNIQUE_VALUES,
   returnValueType: 'number',
   compute: (aggregation) => (aggregation ?? []).length,
