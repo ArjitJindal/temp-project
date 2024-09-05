@@ -94,5 +94,27 @@ export class CdktfTarponStack extends TerraformStack {
       mappingsDynamic: false,
       searchAnalyzer: 'lucene.standard',
     })
+
+    if (
+      config.application.MONGO_TRIGGERS_APP_ID &&
+      config.application.MONGO_SERVICE_ID
+    ) {
+      new atlas.eventTrigger.EventTrigger(this, 'event-trigger', {
+        name: 'event-trigger',
+        projectId: project.projectId,
+        appId: config.application.MONGO_TRIGGERS_APP_ID,
+        configServiceId: config.application.MONGO_SERVICE_ID,
+        type: 'DATABASE',
+        configDatabase: 'tarpon',
+        eventProcessors: {
+          awsEventbridge: {
+            configAccountId: config.env.account,
+            configRegion: config.env.region,
+          },
+        },
+        configOperationTypes: ['INSERT', 'UPDATE', 'DELETE', 'REPLACE'],
+        configFullDocument: true,
+      })
+    }
   }
 }

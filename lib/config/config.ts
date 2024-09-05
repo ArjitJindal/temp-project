@@ -120,6 +120,9 @@ export type Config = {
   application: {
     MONGO_ATLAS_PROJECT?: string
     MONGO_ATLAS_CLUSTER?: string
+    MONGO_TRIGGERS_APP_ID?: string
+    MONGO_SERVICE_ID?: string
+    MONGO_EVENT_TRIGGER_RULE_ID?: string // We need to first generate the event trigger rule id and then paste it here
     DEV_CERTIFICATE_ARN?: string
     AUTH0_CUSTOM_CNAME?: string
     AUTH0_DOMAIN: string

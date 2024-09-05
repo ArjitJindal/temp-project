@@ -14,6 +14,7 @@
     "clear": "rm -rf ./dist cdk.out",
     "synth": "cdk synth --quiet",
     "cdktf:init": "([ -d \".gen\" ] && echo \"CDKTF already initialised\" || cdktf get --quiet)",
+    "cdktf:deploy:dev": "npm run cdktf:init && cdktf deploy --quiet dev-tarpon --auto-approve",
     "synth:ci": "INFRA_CI=true; ENV=local && cdk synth --quiet local-tarpon && yarn cdktf:init",
     "synth:local": "ENV=local && yarn openapi:augment && cdk synth --quiet local-tarpon && yarn cdktf:init",
     "synth:dev": "ENV=dev && yarn openapi:augment && cdk synth --quiet dev-tarpon && yarn cdktf:init",
