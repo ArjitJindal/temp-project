@@ -2148,19 +2148,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/s3-request-presigner@npm:^3.592.0":
-  version: 3.608.0
-  resolution: "@aws-sdk/s3-request-presigner@npm:3.608.0"
+"@aws-sdk/s3-request-presigner@npm:^3.629.0":
+  version: 3.645.0
+  resolution: "@aws-sdk/s3-request-presigner@npm:3.645.0"
   dependencies:
-    "@aws-sdk/signature-v4-multi-region": "npm:3.598.0"
-    "@aws-sdk/types": "npm:3.598.0"
-    "@aws-sdk/util-format-url": "npm:3.598.0"
-    "@smithy/middleware-endpoint": "npm:^3.0.2"
-    "@smithy/protocol-http": "npm:^4.0.1"
-    "@smithy/smithy-client": "npm:^3.1.2"
-    "@smithy/types": "npm:^3.1.0"
+    "@aws-sdk/signature-v4-multi-region": "npm:3.635.0"
+    "@aws-sdk/types": "npm:3.609.0"
+    "@aws-sdk/util-format-url": "npm:3.609.0"
+    "@smithy/middleware-endpoint": "npm:^3.1.0"
+    "@smithy/protocol-http": "npm:^4.1.0"
+    "@smithy/smithy-client": "npm:^3.2.0"
+    "@smithy/types": "npm:^3.3.0"
     tslib: "npm:^2.6.2"
-  checksum: b5e634cbef2eeada71424c8989fbe83c7ac8f863bb5fb032d5b33ca7422118e5db8b15ad42ee48e6e9b8a2a20d81edf6fcca6a52f336af5db3298e0529432001
+  checksum: d38ade0064e30139afc08bb61e4721dd20d4568c68fda64e53360ae033b44bd24e980ae437db9849ab2e13f9cf058852fc2ae29fd75f5d0d8309533124b5b1f5
   languageName: node
   linkType: hard
 
@@ -2399,6 +2399,18 @@ __metadata:
     "@smithy/types": "npm:^3.1.0"
     tslib: "npm:^2.6.2"
   checksum: 3b2bd5e73bde1280af964fc81fa62df6071dfa76b00f763803a92ff517fc0f83b51f7d64be0d26c7cfe145ea2bd5c810867fb7055a1f3f432a937853663732f7
+  languageName: node
+  linkType: hard
+
+"@aws-sdk/util-format-url@npm:3.609.0":
+  version: 3.609.0
+  resolution: "@aws-sdk/util-format-url@npm:3.609.0"
+  dependencies:
+    "@aws-sdk/types": "npm:3.609.0"
+    "@smithy/querystring-builder": "npm:^3.0.3"
+    "@smithy/types": "npm:^3.3.0"
+    tslib: "npm:^2.6.2"
+  checksum: b903750d8250c2c2f65a4b11629129697ff1ab713576d9716b588e6c737052de085370d3bcd711753624403f955c8041cd3ac4026514a2a803a5d6ec456a1d57
   languageName: node
   linkType: hard
 
@@ -18656,7 +18668,7 @@ __metadata:
     "@aws-sdk/lib-dynamodb": "npm:^3.621.0"
     "@aws-sdk/lib-storage": "npm:3.629.0"
     "@aws-sdk/s3-presigned-post": "npm:^3.592.0"
-    "@aws-sdk/s3-request-presigner": "npm:^3.592.0"
+    "@aws-sdk/s3-request-presigner": "npm:^3.629.0"
     "@aws-sdk/signature-v4-crt": "npm:^3.587.0"
     "@aws-sdk/util-arn-parser": "npm:^3.47.1"
     "@aws-sdk/util-dynamodb": "npm:^3.592.0"
