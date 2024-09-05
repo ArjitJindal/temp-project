@@ -1111,21 +1111,19 @@ export class RuleJsonLogicEvaluator {
           (acc, curr) => (curr?.entities ?? []).length + acc,
           1
         ) ?? 1
-      if (entitiesCountInAggregation > aggregationVariable.lastNEntities) {
-        const targetAggregationToUpdate =
-          this.getAggregationWithEarliestTransaction(aggregations)
-        const sortedEntities = sortBy(
-          targetAggregationToUpdate?.entities ?? [],
-          'timestamp'
-        )
-        const targetEntities = drop(sortedEntities, 1)
-        const newUpdatedAggregationData = targetEntities.map(
-          (entity) => entity.value
-        )
+      if (
+        entitiesCountInAggregation > aggregationVariable.lastNEntities &&
+        aggregations
+      ) {
+        const {
+          newUpdatedAggregationData,
+          targetAggregationToUpdate,
+          targetEntities,
+        } = this.getLastNMinusOneAggregationResult(aggregations) ?? {}
         if (isEqual(targetAggregationToUpdate, targetAggregation)) {
           targetAggregation = {
             ...targetAggregation,
-            value: aggregator.aggregate(newUpdatedAggregationData),
+            value: aggregator.aggregate(newUpdatedAggregationData ?? []),
             entities: targetEntities,
           }
         } else if (
@@ -1134,7 +1132,7 @@ export class RuleJsonLogicEvaluator {
         ) {
           updatedAggregationData = {
             ...targetAggregationToUpdate,
-            value: aggregator.aggregate(newUpdatedAggregationData),
+            value: aggregator.aggregate(newUpdatedAggregationData ?? []),
             entities: targetEntities,
           }
         }
@@ -1224,6 +1222,26 @@ export class RuleJsonLogicEvaluator {
     ])
   }
 
+  private getLastNMinusOneAggregationResult(
+    aggregations: Array<{ time: string } & AggregationData>
+  ) {
+    const targetAggregationToUpdate =
+      this.getAggregationWithEarliestTransaction(aggregations)
+    const sortedEntities = sortBy(
+      targetAggregationToUpdate?.entities ?? [],
+      'timestamp'
+    )
+    const targetEntities = drop(sortedEntities, 1)
+    const newUpdatedAggregationData = targetEntities.map(
+      (entity) => entity.value
+    )
+    return {
+      newUpdatedAggregationData,
+      targetAggregationToUpdate,
+      targetEntities,
+    }
+  }
+
   private async loadAggregationData(
     direction: 'origin' | 'destination',
     aggregationVariable: RuleAggregationVariable,
@@ -1310,10 +1328,21 @@ export class RuleJsonLogicEvaluator {
       },
       0
     )
-    let result = aggData.reduce((acc: unknown, cur: AggregationData) => {
-      return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
-    }, aggregator.init())
-
+    let result = aggregator.init()
+    if (
+      aggregationVariable.lastNEntities &&
+      aggregationEntitiesCount === aggregationVariable.lastNEntities &&
+      aggregationVariable.includeCurrentEntity
+    ) {
+      const aggResult = this.getLastNMinusOneAggregationResult(aggData)
+      result =
+        aggregator.aggregate(aggResult?.newUpdatedAggregationData ?? []) ??
+        aggregator.init()
+    } else {
+      result = aggData.reduce((acc: unknown, cur: AggregationData) => {
+        return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
+      }, aggregator.init())
+    }
     const newTransactionIsTargetDirection =
       (direction === 'origin' &&
         aggregationVariable.transactionDirection !== 'RECEIVING') ||
