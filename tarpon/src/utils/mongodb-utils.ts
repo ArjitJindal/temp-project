@@ -13,7 +13,10 @@ import {
 import { isEqual } from 'lodash'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
-import { getMongoDbIndexDefinitions } from './mongodb-definitions'
+import {
+  getGlobalCollectionIndexes,
+  getMongoDbIndexDefinitions,
+} from './mongodb-definitions'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -265,14 +268,37 @@ export const createMongoDBCollections = async (
   mongoClient: MongoClient,
   tenantId: string
 ) => {
-  const db = mongoClient.db()
   const indexDefinitions = getMongoDbIndexDefinitions(tenantId)
+  await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
+  await new CounterRepository(tenantId, mongoClient).initialize()
+}
+
+export const createGlobalMongoDBCollections = async (
+  mongoClient: MongoClient
+) => {
+  const indexDefinitions = getGlobalCollectionIndexes()
+  await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
+}
+
+const createMongoDBCollectionsInternal = async (
+  mongoClient: MongoClient,
+  indexDefinitions: {
+    [collectionName: string]: {
+      getIndexes: () => Array<{
+        index: {
+          [key: string]: any
+        }
+        unique?: boolean
+      }>
+    }
+  }
+) => {
+  const db = mongoClient.db()
   for (const collectionName in indexDefinitions) {
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
   }
-  await new CounterRepository(tenantId, mongoClient).initialize()
 }
 
 export async function allCollections(tenantId: string, db: Db) {

@@ -256,6 +256,9 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 export const SANCTIONS_COLLECTION = 'sanctions'
+export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions-provider-searches`
+}
 
 /** Collection to log Requests and Responses to GPT */
 export const GPT_REQUESTS_COLLECTION = (tenantId: string) => {
@@ -293,6 +296,11 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
   }
 } {
   return {
+    [SANCTIONS_PROVIDER_SEARCHES_COLLECTION(tenantId)]: {
+      getIndexes: () => {
+        return [{ index: { providerSearchId: 1 } }]
+      },
+    },
     [TRANSACTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => {
         const txnIndexes: Document[] = [
@@ -661,8 +669,26 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         { index: { 'latestStatus.timestamp': 1 } },
       ],
     },
+  }
+}
+
+export const getGlobalCollectionIndexes = (): {
+  [collectionName: string]: {
+    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+  }
+} => {
+  return {
     [SANCTIONS_COLLECTION]: {
-      getIndexes: () => [],
+      getIndexes: () => [
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+            deletedAt: 1,
+          },
+        },
+      ],
     },
   }
 }

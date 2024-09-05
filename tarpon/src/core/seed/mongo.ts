@@ -17,6 +17,7 @@ import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import {
   allCollections,
+  createGlobalMongoDBCollections,
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
@@ -145,6 +146,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   }
 
   await createMongoDBCollections(client, tenantId)
+  await createGlobalMongoDBCollections(client)
 
   logger.info('Setting counters')
   const counterCollection = db.collection<EntityCounter>(

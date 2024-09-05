@@ -4,6 +4,7 @@ import { Tenant } from '@/services/accounts'
 import {
   createMongoDBCollections,
   getMongoDbClient,
+  createGlobalMongoDBCollections,
 } from '@/utils/mongodb-utils'
 
 async function migrateTenant(tenant: Tenant) {
@@ -14,6 +15,8 @@ async function migrateTenant(tenant: Tenant) {
 
 export async function syncMongoDbIndexes() {
   await migrateAllTenants(migrateTenant)
+  const mongodb = await getMongoDbClient()
+  await createGlobalMongoDBCollections(mongodb)
 }
 
 if (require.main === module) {

@@ -20,13 +20,17 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       switch (action) {
         case 'add':
           return {
-            insertOne: {
-              document: {
-                ...entity,
-                provider,
-                version,
-                createdAt: Date.now(),
+            updateOne: {
+              filter: { id: entity.id, version, provider },
+              update: {
+                $setOnInsert: {
+                  ...entity,
+                  provider,
+                  version,
+                  createdAt: Date.now(),
+                },
               },
+              upsert: true,
             },
           }
         case 'change':

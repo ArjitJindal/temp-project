@@ -1,3 +1,5 @@
+import { v4 as uuidv4 } from 'uuid'
+import { Collection } from 'mongodb'
 import {
   Entity,
   SanctionsDataProvider,
@@ -6,9 +8,13 @@ import {
   SanctionsProviderSearchRequest,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  SANCTIONS_COLLECTION,
+  SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
+import { getContext } from '@/core/utils/context'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -52,12 +58,22 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             },
           },
         },
+        {
+          $sort: {
+            score: -1,
+          },
+        },
+        {
+          $limit: 5,
+        },
       ])
       .toArray()
 
-    // TODO implement providerSearchId
     // TODO unify ComplyAdvantageSearchHit and Entity type
-    return {
+
+    const providerSearchId = uuidv4()
+    const result = {
+      providerSearchId,
       hitsCount: results.length,
       data: results.map(
         (entity: Entity): ComplyAdvantageSearchHit => ({
@@ -107,9 +123,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         })
       ),
-      providerSearchId: 'PROVIDER-SEARCH-ID',
       createdAt: new Date().getTime(),
     }
+
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.insertOne(result)
+    return result
   }
 
   provider(): SanctionsDataProviderName {
@@ -117,19 +137,45 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async getSearch(
-    _providerSearchId: string | number
+    providerSearchId: string
   ): Promise<SanctionsProviderResponse> {
-    throw new Error('Method not implemented.')
+    const result = await (
+      await this.getSanctionProviderCollection()
+    ).findOne({
+      providerSearchId: providerSearchId,
+    })
+
+    if (!result) {
+      throw new Error(`Search not found for ${providerSearchId}`)
+    }
+    return result
   }
 
-  async deleteSearch(_providerSearchId: string | number): Promise<void> {
-    throw new Error('Method not implemented.')
+  async deleteSearch(providerSearchId: string): Promise<void> {
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.deleteOne({
+      providerSearchId: providerSearchId,
+    })
   }
 
   async setMonitoring(
-    _providerSearchId: string | number,
+    _providerSearchId: string,
     _monitor: boolean
   ): Promise<void> {
     throw new Error('Method not implemented.')
+  }
+
+  private async getSanctionProviderCollection(): Promise<
+    Collection<SanctionsProviderResponse>
+  > {
+    const client = await getMongoDbClient()
+    const tenantId = getContext()?.tenantId
+    if (!tenantId) {
+      throw new Error('No tenant ID')
+    }
+    return client
+      .db()
+      .collection(SANCTIONS_PROVIDER_SEARCHES_COLLECTION(tenantId))
   }
 }

@@ -53,14 +53,9 @@ export interface SanctionsDataProvider {
     request: SanctionsProviderSearchRequest
   ): Promise<SanctionsProviderResponse>
 
-  getSearch(
-    providerSearchId: string | number
-  ): Promise<SanctionsProviderResponse>
+  getSearch(providerSearchId: string): Promise<SanctionsProviderResponse>
 
-  deleteSearch(providerSearchId: string | number): Promise<void>
+  deleteSearch(providerSearchId: string): Promise<void>
 
-  setMonitoring(
-    providerSearchId: string | number,
-    monitor: boolean
-  ): Promise<void>
+  setMonitoring(providerSearchId: string, monitor: boolean): Promise<void>
 }
