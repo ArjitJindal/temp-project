@@ -107,6 +107,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Alerts SLA',
     description: 'Enables Alert SLA',
   },
+  RISK_SCORING_V8: {
+    title: 'Risk Scoring V8',
+    description: 'Enables risk scoring V8',
+  },
   DOW_JONES: {
     title: 'Dow Jones',
     description: 'Enables using Dow Jones for sanctions',

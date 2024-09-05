@@ -9031,6 +9031,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TransactionStateAlias'
+        riskScoringCraEnabled:
+          type: boolean
+        riskScoringAlgorithm:
+          oneOf:
+            - $ref: '#/components/schemas/FormulaLegacyMovingAvg'
+            - $ref: '#/components/schemas/FormulaSimpleAvg'
+            - $ref: '#/components/schemas/FormulaCustom'
         riskLevelAlias:
           type: array
           items:
@@ -9754,6 +9761,7 @@ components:
         - CLICKHOUSE_ENABLED
         - ALERT_SLA
         - MACHINE_LEARNING
+        - RISK_SCORING_V8
         - DOW_JONES
       description: ''
     ManagedRoleName:
@@ -9803,6 +9811,46 @@ components:
         - name
         - description
         - permissions
+    FormulaLegacyMovingAvg:
+      type: object
+      title: FormulaLegacyMovingAvg
+      properties:
+        type:
+          type: string
+          enum:
+            - FORMULA_LEGACY_MOVING_AVG
+      required:
+        - type
+    FormulaSimpleAvg:
+      type: object
+      title: FormulaSimpleAvg
+      properties:
+        type:
+          type: string
+          enum:
+            - FORMULA_SIMPLE_AVG
+      required:
+        - type
+    FormulaCustom:
+      type: object
+      title: FormulaCustom
+      properties:
+        type:
+          type: string
+          enum:
+            - FORMULA_CUSTOM
+        krsWeight:
+          type: number
+          minimum: 0
+          maximum: 1
+        avgTrsWeight:
+          type: number
+          minimum: 0
+          maximum: 1
+      required:
+        - type
+        - krsWeight
+        - avgTrsWeight
     Permission:
       type: string
       title: Permission

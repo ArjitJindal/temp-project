@@ -48,6 +48,9 @@ import { isDemoTenant } from '@/utils/tenant'
 import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { Feature } from '@/@types/openapi-internal/Feature'
+import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
+import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
+import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -663,6 +666,18 @@ export class TenantService {
       )
     }
     return tenants
+  }
+
+  async getRiskCalculationFormula(): Promise<
+    FormulaSimpleAvg | FormulaLegacyMovingAvg | FormulaCustom | undefined
+  > {
+    const contextRiskCalculationFormula =
+      getContext()?.settings?.riskScoringAlgorithm
+    if (contextRiskCalculationFormula) {
+      return contextRiskCalculationFormula
+    }
+    const tenantSettings = await this.getTenantSettings()
+    return tenantSettings.riskScoringAlgorithm
   }
 
   public async getTenantsDeletionData(auth0Domain: string) {

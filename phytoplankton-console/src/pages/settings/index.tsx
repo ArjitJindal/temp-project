@@ -22,6 +22,8 @@ import { NotificationsSettings } from './components/NotificationSettings';
 import { NarrativeCopilot } from './components/NarrativeCopilot';
 import { FlagrightMLSettings } from './components/FlagtightMLSettings';
 import SlaPolicySettings from './components/SlaPolicySettings';
+import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
+import CraToggleSettings from './components/CraToggleSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -107,6 +109,10 @@ export default function SettingsPage() {
             children: (
               <>
                 {isRiskScoreEnabled ? <RiskAlgorithmsSettings /> : ''}
+                <Feature name="RISK_SCORING_V8">
+                  <CraToggleSettings />
+                  {isRiskScoreEnabled ? <RiskAlgorithmsCra /> : ''}
+                </Feature>
                 <RiskLevelSettings />
               </>
             ),
