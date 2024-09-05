@@ -58,7 +58,7 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
 
   await sendBatchJobCommand({
     type: 'SANCTIONS_DATA_FETCH',
-    tenantId: '',
+    tenantId: 'flagright',
     parameters: {
       from: dayjs().subtract(1, 'day').toISOString(),
     },

@@ -278,7 +278,7 @@ export const tenantsHandler = lambdaApi()(
         case 'SANCTIONS_DATA_FETCH': {
           await sendBatchJobCommand({
             type: 'SANCTIONS_DATA_FETCH',
-            tenantId: tenantId,
+            tenantId: 'flagright',
             parameters: {},
           })
           break
