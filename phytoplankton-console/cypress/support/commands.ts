@@ -307,6 +307,11 @@ Cypress.Commands.add('closeDrawer', () => {
   cy.get('[data-cy="drawer-close-button"]').filter(':visible').first().click();
 });
 
+Cypress.Commands.add('closeDrawerWithConfirmation', () => {
+  cy.closeDrawer();
+  cy.get('button[data-cy="modal-ok"]').filter(':visible').first().click();
+});
+
 Cypress.Commands.add('getInputByLabel', (label, element) => {
   cy.contains(label)
     .parent('div')

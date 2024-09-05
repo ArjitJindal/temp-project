@@ -23,7 +23,7 @@ describe('Accounts - CRUD Test', () => {
     cy.get('.ant-select-selector').click();
     cy.get('.ant-select-item-option-content').contains('Developer').click();
     cy.get('button[data-cy="accounts-invite"]').click();
-    cy.closeDrawer();
+    cy.closeDrawerWithConfirmation();
     cy.wait(`@accounts`, { timeout: 30000 })
       .its('response.statusCode')
       .should('be.oneOf', [200, 304]);
@@ -36,7 +36,7 @@ describe('Accounts - CRUD Test', () => {
     cy.get('.ant-select-item-option-content').contains('Analyst').click();
     cy.get('button[data-cy="accounts-invite"]').click();
     cy.intercept('GET', '**/accounts**').as('update');
-    cy.closeDrawer();
+    cy.closeDrawerWithConfirmation();
     cy.wait(`@update`, { timeout: 30000 })
       .its('response.statusCode')
       .should('be.oneOf', [200, 304]);
