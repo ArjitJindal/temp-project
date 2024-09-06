@@ -103,9 +103,9 @@ const clickhouseInsert = async (
   })
 }
 
-export async function insertToClickhouse(
+export async function insertToClickhouse<T extends object>(
   tableName: TableName,
-  object: object,
+  object: T,
   tenantId: string = getContext()?.tenantId as string
 ) {
   if (!envIs('local') && !envIs('test') && !envIs('dev')) {

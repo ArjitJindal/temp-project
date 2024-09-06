@@ -534,12 +534,7 @@ export class UserRepository {
     userId: string,
     isMonitoringEnabled: boolean
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalBusinessUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateOne({ userId }, { $set: { isMonitoringEnabled } })
+    await this.updateUser(userId, { isMonitoringEnabled })
   }
 
   public async getTotalEnabledOngoingMonitoringUsers(): Promise<number> {
@@ -1174,11 +1169,7 @@ export class UserRepository {
     userId: string,
     krsScore: KrsScore
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-    await collection.updateOne({ userId }, { $set: { krsScore } })
+    await this.updateUser(userId, { krsScore })
   }
 
   public getUsersWithoutKrsScoreCursor(): FindCursor<InternalUser> {
@@ -1412,5 +1403,26 @@ export class UserRepository {
       }
     }
     return result
+  }
+
+  private async updateUser(userId: string, update: Partial<InternalUser>) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+
+    const updatedUser = await collection.findOneAndUpdate(
+      { userId },
+      { $set: update },
+      { returnDocument: 'after' }
+    )
+
+    if (updatedUser.value) {
+      await insertToClickhouse<InternalUser>(
+        USERS_COLLECTION(this.tenantId),
+        updatedUser.value,
+        this.tenantId
+      )
+    }
   }
 }
