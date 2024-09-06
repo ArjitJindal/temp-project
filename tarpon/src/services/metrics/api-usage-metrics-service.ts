@@ -361,7 +361,6 @@ export class ApiUsageMetricsService {
       SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id)
     )
     const createdAtField = 'response.createdAt'
-    const CA_MONGO_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
     const result = await collection
       .aggregate<{ _id: string; providerSearchIds: string[] }>([
         {
@@ -378,10 +377,7 @@ export class ApiUsageMetricsService {
               $dateToString: {
                 format: DAY_DATE_FORMAT,
                 date: {
-                  $dateFromString: {
-                    dateString: `$${createdAtField}`,
-                    format: CA_MONGO_TIME_FORMAT,
-                  },
+                  $toDate: `$${createdAtField}`,
                 },
               },
             },
