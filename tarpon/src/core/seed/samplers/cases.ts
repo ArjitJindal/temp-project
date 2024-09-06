@@ -345,6 +345,7 @@ export function sampleAlert(params: {
       .concat(transactionRules())
       .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,
     slaPolicyDetails: slaPolicyDetails,
+    ruleHitMeta: params.ruleHit.ruleHitMeta,
   }
 }
 

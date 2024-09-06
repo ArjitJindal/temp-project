@@ -1,6 +1,11 @@
 import { memoize, random } from 'lodash'
 import { sampleTransactionRiskScoreComponents } from '../samplers/risk_score_components'
+import {
+  businessSanctionsSearch,
+  consumerSanctionsSearch,
+} from '../raw-data/sanctions-search'
 import { getUsers } from './users'
+import { getSanctions, getSanctionsHits } from './sanctions'
 import {
   samplePaymentDetails,
   sampleTransaction,
@@ -30,6 +35,10 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { envIs } from '@/utils/env'
+import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
+import { User } from '@/@types/openapi-internal/User'
+import { Business } from '@/@types/openapi-internal/Business'
+import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
@@ -59,7 +68,55 @@ const generator = function* (): Generator<InternalTransaction> {
         ? randomTransactionRules()
         : transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
 
+    const transaction = sampleTransaction({})
+    const originUser = getUsers()[i % getUsers().length]
+    const originUserId = originUser.userId
+    const destinationUserId = pickRandom(
+      userTransactionMap.get(originUserId) as string[]
+    )
+    const destinationUser = getUsers().find(
+      (u) => u.userId === destinationUserId
+    ) as User | Business
+
+    const getSanctionsSearch = (user: User | Business): SanctionsDetails => {
+      const isConsumer = isConsumerUser(user)
+      const name = isConsumer
+        ? `${(user as User).userDetails?.name.firstName} ${
+            (user as User).userDetails?.name.middleName
+          } ${(user as User).userDetails?.name.lastName}`.trim()
+        : (user as Business).legalEntity.companyGeneralDetails.legalName
+
+      const data = isConsumer
+        ? consumerSanctionsSearch(name, user.userId)
+        : businessSanctionsSearch(name, user.userId)
+
+      getSanctions().push(data.historyItem)
+      getSanctionsHits().push(...data.hits)
+
+      return {
+        name,
+        searchId: data.historyItem._id,
+        entityType: isConsumer ? 'CONSUMER_NAME' : 'LEGAL_NAME',
+        sanctionHitIds: data.hits.map((hit) => hit.searchId),
+      }
+    }
+
     const randomHitRules = hitRules.map((hitRule) => {
+      if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
+        const sanctionsDetails = [
+          getSanctionsSearch(originUser),
+          getSanctionsSearch(destinationUser),
+        ]
+
+        return {
+          ...hitRule,
+          ruleHitMeta: {
+            ...hitRule.ruleHitMeta,
+            sanctionsDetails,
+          },
+        }
+      }
+
       if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
         const modifiedHitRule = {
           ...hitRule,
@@ -73,13 +130,9 @@ const generator = function* (): Generator<InternalTransaction> {
         }
         return modifiedHitRule
       }
+
       return hitRule
     })
-    const transaction = sampleTransaction({})
-    const originUserId = getUsers()[i % getUsers().length].userId
-    const destinationUserId = pickRandom(
-      userTransactionMap.get(originUserId) as string[]
-    )
 
     const transactionId = `T-${i + 1}`
     const timestamp = sampleTimestamp()
