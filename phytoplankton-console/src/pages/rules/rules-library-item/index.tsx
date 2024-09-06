@@ -56,7 +56,12 @@ function Content(props: { ruleId?: string; rule: Rule | null; mode: Mode }) {
               to: '/rules/rules-library',
             },
             {
-              title: ruleId === 'create' ? 'Create new rule' : 'Configure',
+              title:
+                ruleId === 'create'
+                  ? 'Create new rule'
+                  : isSimulationEnabled
+                  ? 'Simulate'
+                  : 'Configure',
               to: makeUrl(`/rules/rules-library/:id`, { id: ruleId }),
             },
           ]}

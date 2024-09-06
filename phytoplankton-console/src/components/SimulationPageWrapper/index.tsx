@@ -91,6 +91,7 @@ export const SimulationPageWrapper = forwardRef<
                 size="SMALL"
                 value={props.isSimulationModeEnabled}
                 onChange={props.onSimulationModeChange}
+                testId="simulation-toggle"
               />
             )}
           </Label>

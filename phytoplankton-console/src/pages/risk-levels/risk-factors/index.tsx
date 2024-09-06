@@ -34,9 +34,8 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { RISK_FACTORS } from '@/utils/queries/keys';
 
 export default function () {
-  const { type = 'consumer' } = useParams();
-  const [isSimulationMode] = useLocalStorageState('SIMULATION_RISK_FACTORS', false);
-
+  const isSimulationMode = window.localStorage.getItem('SIMULATION_RISK_FACTORS') === 'true';
+  const { type = isSimulationMode ? 'simulation' : 'consumer' } = useParams();
   return (
     <Feature name="RISK_SCORING" fallback={'Not enabled'}>
       <BreadcrumbsSimulationPageWrapper

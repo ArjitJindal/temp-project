@@ -71,7 +71,11 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
           <Breadcrumbs items={props.breadcrumbs} />
           <div className={s.right}>
             {!location.pathname.endsWith('/simulation-history') && isSimulationEnabled && (
-              <Link to={props.simulationHistoryUrl} className={s.history}>
+              <Link
+                to={props.simulationHistoryUrl}
+                className={s.history}
+                data-cy="simulation-history-link"
+              >
                 {' '}
                 <EyeLineIcon className={s.icon} /> View history
               </Link>

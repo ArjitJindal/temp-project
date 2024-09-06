@@ -27,6 +27,7 @@ export default function Breadcrumbs(props: Props) {
               {
                 className: cn(s.link, i === items.length - 1 && s.isLast),
                 to: x.to ?? '',
+                id: 'breadcrumb-link',
               },
               x.title,
             )}
