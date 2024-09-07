@@ -1329,6 +1329,9 @@ components:
           minLength: 1
           type: string
           description: User's country of residence
+        addressType:
+          type: string
+          description: Type of the address (ex - Residential, Postal, etc.)
         tags:
           type: array
           items:
@@ -1555,6 +1558,8 @@ components:
             $ref: '#/components/schemas/LegalDocument'
         contactDetails:
           $ref: '#/components/schemas/ContactDetails'
+        employmentDetails:
+          $ref: '#/components/schemas/EmploymentDetails'
         transactionLimits:
           $ref: '#/components/schemas/TransactionLimits'
         expectedIncome:
@@ -1805,6 +1810,23 @@ components:
         tags:
           - key: customerType
             value: wallet
+    EmploymentDetails:
+      title: EmploymentDetails
+      type: object
+      properties:
+        employmentSector:
+          type: string
+          description: Sector of employment
+        employerName:
+          minLength: 1
+          type: string
+          description: Name of the employer
+        businessIndustry:
+          type: array
+          description: The industry in which the business operates for a business customer
+          items:
+            type: string
+      description: Details of User's employment
     Tag:
       title: Tag
       required:
@@ -2795,12 +2817,17 @@ components:
           type: string
           pattern: ^(\d{4}-\d{2}-\d{2})*$
           description: Date of birth of the user (YYYY-MM-DD)
+        userCategory:
+          type: string
+          description: Internal category of the user
         countryOfResidence:
           $ref: '#/components/schemas/CountryCode'
         countryOfNationality:
           $ref: '#/components/schemas/CountryCode'
         gender:
           $ref: '#/components/schemas/Gender'
+        martialStatus:
+          $ref: '#/components/schemas/MartialStatus'
         placeOfBirth:
           $ref: '#/components/schemas/PlaceOfBirth'
       required:
@@ -5821,6 +5848,16 @@ components:
         - M
         - F
         - NB
+    MartialStatus:
+      title: MartialStatus
+      description: Martial status of the individual
+      type: string
+      enum:
+        - DIVORCED
+        - MARRIED
+        - SINGLE
+        - WIDOWED
+        - NA
     CardBrand:
       title: CardBrand
       description: Brand of Card
