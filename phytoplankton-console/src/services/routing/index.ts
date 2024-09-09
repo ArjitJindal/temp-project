@@ -239,12 +239,22 @@ export function useRoutes(): RouteItem[] {
             redirect: lastActiveRuleTab === 'my-rules' ? '/rules/my-rules' : '/rules/rules-library',
           },
           {
-            path: '/rules/simulation-history',
+            path: '/rules/my-rules/simulation-history',
             name: 'simulation-history',
             component: SimulationHistoryPage,
           },
           {
-            path: '/rules/simulation-history/:id',
+            path: '/rules/my-rules/simulation-history/:id',
+            name: 'simulation-history',
+            component: SimulationHistoryItemPage,
+          },
+          {
+            path: '/rules/rules-library/simulation-history',
+            name: 'simulation-history',
+            component: SimulationHistoryPage,
+          },
+          {
+            path: '/rules/rules-library/simulation-history/:id',
             name: 'simulation-history',
             component: SimulationHistoryItemPage,
           },

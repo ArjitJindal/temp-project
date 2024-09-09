@@ -17,7 +17,7 @@ import { useRules } from '@/utils/rules';
 import { makeUrl } from '@/utils/routing';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 
-export function SimulationHistoryTable() {
+export function SimulationHistoryTable(props: { rulesTab: string }) {
   const api = useApi();
   const { rules } = useRules();
   const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
@@ -59,7 +59,10 @@ export function SimulationHistoryTable() {
                 job ? (
                   <Link
                     style={{ color: COLORS.brandBlue.base }}
-                    to={makeUrl('/rules/simulation-history/:id', { id: job.jobId })}
+                    to={makeUrl(`/rules/:rulesTab/simulation-history/:id`, {
+                      rulesTab: props.rulesTab,
+                      id: job.jobId,
+                    })}
                   >
                     {job.jobId}
                   </Link>

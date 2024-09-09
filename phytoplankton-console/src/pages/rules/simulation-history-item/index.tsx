@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
 import { useShouldUseV8Configuration } from '../utils';
@@ -15,7 +15,9 @@ import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimula
 
 export default function SimulationHistoryItemPage() {
   const { id: jobId } = useParams<'id'>();
+  const location = useLocation();
 
+  const rulesTab = location.pathname.includes('rules-library') ? 'rules-library' : 'my-rules';
   const api = useApi();
   const queryResult = useQuery<SimulationBeaconJob>(
     SIMULATION_JOB(jobId),
@@ -39,6 +41,10 @@ export default function SimulationHistoryItemPage() {
         {
           title: 'Rules',
           to: '/rules',
+        },
+        {
+          title: rulesTab === 'my-rules' ? 'My rules' : 'Library',
+          to: `/rules/${rulesTab}`,
         },
         {
           title: 'Simulations history',

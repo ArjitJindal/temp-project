@@ -1,9 +1,13 @@
 import React from 'react';
 import { SimulationHistoryTable } from 'src/pages/rules/simulation-history/SimulationHistoryTable';
+import { useLocation } from 'react-router';
 import { Authorized } from '@/components/utils/Authorized';
 import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
 
 export default function SimulationHistoryPage() {
+  const location = useLocation();
+
+  const rulesTab = location.pathname.includes('rules-library') ? 'rules-library' : 'my-rules';
   return (
     <BreadcrumbsSimulationPageWrapper
       storageKey="SIMULATION_RULES"
@@ -11,6 +15,10 @@ export default function SimulationHistoryPage() {
         {
           title: 'Rules',
           to: '/rules',
+        },
+        {
+          title: rulesTab === 'my-rules' ? 'My rules' : 'Library',
+          to: `/rules/${rulesTab}`,
         },
         {
           title: 'Simulations history',
@@ -22,7 +30,7 @@ export default function SimulationHistoryPage() {
       simulationDefaultUrl="/rules/my-rules"
     >
       <Authorized required={['simulator:simulations:read']} showForbiddenPage>
-        <SimulationHistoryTable />
+        <SimulationHistoryTable rulesTab={rulesTab} />
       </Authorized>
     </BreadcrumbsSimulationPageWrapper>
   );

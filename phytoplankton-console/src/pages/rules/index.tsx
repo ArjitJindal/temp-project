@@ -36,7 +36,7 @@ const TableList = () => {
           to: '/rules/rules-library',
         },
       ].filter(notEmpty)}
-      simulationHistoryUrl="/rules/simulation-history"
+      simulationHistoryUrl={`/rules/${tab}/simulation-history`}
       nonSimulationDefaultUrl="/rules/my-rules"
       simulationDefaultUrl="/rules/my-rules"
     >
