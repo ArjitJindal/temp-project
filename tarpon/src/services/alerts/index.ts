@@ -161,28 +161,10 @@ export class AlertsService extends CaseAlertsCommonService {
         throw new NotFound(`No alert for ${alertId}`)
       }
 
-      alert.comments = await Promise.all(
-        (alert.comments ?? []).map(async (c) => {
-          if (!c.files) {
-            return c
-          }
-          const files = await Promise.all(
-            (c.files ?? []).map(async (f) => {
-              return {
-                ...f,
-                downloadLink: await this.getDownloadLink(f),
-              }
-            })
-          )
-          return {
-            ...c,
-            files,
-          }
-        })
-      )
+      let auditLogPromise: Promise<void> = Promise.resolve()
 
       if (options?.auditLog) {
-        await this.auditLogService.createAlertAuditLog({
+        auditLogPromise = this.auditLogService.createAlertAuditLog({
           alertId,
           logAction: 'VIEW',
           oldImage: {},
@@ -191,7 +173,27 @@ export class AlertsService extends CaseAlertsCommonService {
         })
       }
 
-      return alert
+      const [_, ...comments] = await Promise.all([
+        auditLogPromise,
+        ...(alert.comments ?? [])
+          .filter((c) => c.deletedAt == null)
+          .map(async (c) => {
+            if (!c.files) {
+              return c
+            }
+            const files = await Promise.all(
+              (c.files ?? []).map(async (f) => {
+                return {
+                  ...f,
+                  downloadLink: await this.getDownloadLink(f),
+                }
+              })
+            )
+            return { ...c, files }
+          }),
+      ])
+
+      return { ...alert, comments }
     } finally {
       caseGetSegment?.close()
     }

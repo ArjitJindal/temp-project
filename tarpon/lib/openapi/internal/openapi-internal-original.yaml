@@ -8683,6 +8683,8 @@ components:
               type: array
               items:
                 type: string
+            deletedAt:
+              type: number
       required:
         - body
     NarrativeType:

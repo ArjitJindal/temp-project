@@ -534,9 +534,7 @@ export class AlertsRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     const result = await collection.findOne(
-      {
-        'alerts.alertId': alertId,
-      },
+      { 'alerts.alertId': alertId },
       { projection: { alerts: 1 } }
     )
 
@@ -795,24 +793,22 @@ export class AlertsRepository {
     const now = Date.now()
 
     await collection.updateOne(
+      { caseId, 'alerts.alertId': alertId },
       {
-        caseId,
-      },
-      {
-        $pull: {
-          'alerts.$[alert].comments': {
-            $or: [{ id: commentId }, { parentId: commentId }],
-          },
-        },
         $set: {
+          'alerts.$[alert].comments.$[comment].deletedAt': now,
           updatedAt: now,
           'alerts.$[alert].updatedAt': now,
         },
       },
       {
         arrayFilters: [
+          { 'alert.alertId': alertId },
           {
-            'alert.alertId': alertId,
+            $or: [
+              { 'comment.id': commentId },
+              { 'comment.parentId': commentId },
+            ],
           },
         ],
       }

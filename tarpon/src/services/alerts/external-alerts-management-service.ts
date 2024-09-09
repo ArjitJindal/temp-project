@@ -525,6 +525,7 @@ export class ExternalAlertManagementService {
   public async deleteAlertComment(alertId: string, commentId: string) {
     await this.alertsInternalService.deleteComment(alertId, commentId)
   }
+
   public async updateAlertStatus(
     updateRequest: AlertStatusChangeRequest,
     alertId: string

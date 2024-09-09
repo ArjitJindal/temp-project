@@ -1011,10 +1011,20 @@ export class CaseRepository {
     await collection.updateOne(
       { caseId },
       {
-        $pull: {
-          comments: { $or: [{ id: commentId }, { parentId: commentId }] },
+        $set: {
+          'comments.$[comment].deletedAt': Date.now(),
+          updatedAt: Date.now(),
         },
-        $set: { updatedAt: Date.now() },
+      },
+      {
+        arrayFilters: [
+          {
+            $or: [
+              { 'comment.id': commentId },
+              { 'comment.parentId': commentId },
+            ],
+          },
+        ],
       }
     )
   }

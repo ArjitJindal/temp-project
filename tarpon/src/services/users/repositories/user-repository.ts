@@ -1121,6 +1121,7 @@ export class UserRepository {
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+
     return collection.findOne<InternalUser>({
       userId,
     })
@@ -1131,14 +1132,23 @@ export class UserRepository {
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
+
     await collection.updateOne(
+      { userId },
       {
-        userId,
+        $set: {
+          'comments.$[comment].deletedAt': Date.now(),
+        },
       },
       {
-        $pull: {
-          comments: { $or: [{ id: commentId }, { parentId: commentId }] },
-        },
+        arrayFilters: [
+          {
+            $or: [
+              { 'comment.id': commentId },
+              { 'comment.parentId': commentId },
+            ],
+          },
+        ],
       }
     )
   }

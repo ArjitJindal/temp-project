@@ -776,14 +776,25 @@ export class CaseService extends CaseAlertsCommonService {
   }
 
   private async getAugmentedCase(caseEntity: Case) {
+    const caseComments = (caseEntity.comments ?? []).filter(
+      (comment) => comment.deletedAt == null
+    )
+
+    const alerts = (caseEntity.alerts ?? []).map((alert) => {
+      const comments = (alert.comments ?? []).filter(
+        (comment) => comment.deletedAt == null
+      )
+      return { ...alert, comments }
+    })
+
     const commentsWithUrl = await Promise.all(
-      (caseEntity.comments ?? []).map(async (comment) => ({
+      caseComments.map(async (comment) => ({
         ...comment,
         files: await this.getUpdatedFiles(comment.files),
       }))
     )
 
-    return { ...caseEntity, comments: commentsWithUrl }
+    return { ...caseEntity, comments: commentsWithUrl, alerts }
   }
 
   public async escalateCase(

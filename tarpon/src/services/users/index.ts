@@ -622,7 +622,7 @@ export class UserService {
   }
 
   public async updateMointoringStatus(userId: string, isEnabled: boolean) {
-    const user = await this.userRepository.getUserById(userId)
+    const user = await this.getUser(userId)
 
     if (!isBusinessUser(user as Business | User)) {
       throw new createError.BadRequest(
@@ -638,27 +638,30 @@ export class UserService {
   }
 
   public async getUser(userId: string): Promise<InternalUser> {
-    const usersListResponse = await this.getUsers({
-      filterId: userId,
-      beforeTimestamp: Number.MAX_SAFE_INTEGER,
-    })
-    if (usersListResponse.items && usersListResponse.items.length > 0) {
-      return usersListResponse.items[0]
+    const user = await this.userRepository.getUserById(userId)
+
+    if (!user) {
+      throw new createError.NotFound(`User ${userId} not found`)
     }
-    throw new NotFound('User not found')
+
+    return {
+      ...user,
+      comments: user.comments?.filter((comment) => comment.deletedAt == null),
+    }
   }
 
   public async getBusinessUser(
     userId: string
   ): Promise<InternalBusinessUser | null> {
-    const user = await this.userRepository.getMongoBusinessUser(userId)
+    const user = await this.getUser(userId)
+
     return user && (await this.getAugmentedUser<InternalBusinessUser>(user))
   }
 
   public async getConsumerUser(
     userId: string
   ): Promise<InternalConsumerUser | null> {
-    const user = await this.userRepository.getMongoConsumerUser(userId)
+    const user = await this.getUser(userId)
     return user && (await this.getAugmentedUser<InternalConsumerUser>(user))
   }
 
@@ -674,13 +677,15 @@ export class UserService {
   private async getAugmentedUser<
     T extends InternalConsumerUser | InternalBusinessUser
   >(user: InternalConsumerUser | InternalBusinessUser) {
-    const commentsWithUrl = await Promise.all(
-      (user.comments ?? []).map(async (comment) => ({
-        ...comment,
-        files: await this.getUpdatedFiles(comment.files),
-      }))
+    const comments = await Promise.all(
+      (user.comments ?? [])
+        .filter((comment) => comment.deletedAt == null)
+        .map(async (comment) => ({
+          ...comment,
+          files: await this.getUpdatedFiles(comment.files),
+        }))
     )
-    return { ...user, comments: commentsWithUrl } as T
+    return { ...user, comments } as T
   }
 
   public async updateUser(
@@ -845,24 +850,20 @@ export class UserService {
   }
 
   public async getUserCommentsExternal(userId: string) {
-    const user = await this.userRepository.getUserById(userId)
+    const user = await this.getUser(userId)
+
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
     }
 
-    const comments = await Promise.all(
-      (user.comments || []).map(async (comment) => ({
-        ...comment,
-        files: await this.getUpdatedFiles(comment.files),
-      }))
+    return ((await this.getAugmentedUser(user)).comments ?? []).map(
+      getExternalComment
     )
-    return comments.map((comment) => {
-      return getExternalComment(comment)
-    })
   }
 
   public async getUserComment(userId: string, commentId: string) {
-    const user = await this.userRepository.getUserById(userId)
+    const user = await this.getUser(userId)
+
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
     }
@@ -884,7 +885,7 @@ export class UserService {
     commentId: string,
     reply: Comment
   ) {
-    const user = await this.userRepository.getUserById(userId)
+    const user = await this.getUser(userId)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
@@ -900,6 +901,7 @@ export class UserService {
       ...reply,
       parentId: commentId,
     })
+
     await this.userAuditLogService.handleAuditLogForAddComment(userId, {
       ...reply,
       body: getParsedCommentBody(reply.body),
@@ -910,7 +912,8 @@ export class UserService {
     }
   }
   public async deleteUserComment(userId: string, commentId: string) {
-    const user = await this.userRepository.getUserById(userId)
+    const user = await this.getUser(userId)
+
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
     }
@@ -920,19 +923,33 @@ export class UserService {
       throw new createError.NotFound(`Comment ${commentId} not found`)
     }
 
+    let deleteObjectsPromise: Promise<any> = Promise.resolve()
+
     if (comment.files && comment.files.length > 0) {
-      await this.s3.deleteObjects({
+      deleteObjectsPromise = this.s3.deleteObjects({
         Bucket: this.documentBucketName,
         Delete: { Objects: comment.files.map((file) => ({ Key: file.s3Key })) },
       })
     }
-    await this.userRepository.deleteUserComment(userId, commentId)
+
+    let deleteCommentPromise: Promise<void> = Promise.resolve()
+
+    deleteCommentPromise = this.userRepository.deleteUserComment(
+      userId,
+      commentId
+    )
+
+    let deleteAuditLogPromise: Promise<void> = Promise.resolve()
     if (comment) {
-      await this.userAuditLogService.handleAuditLogForDeleteComment(
-        userId,
-        comment
-      )
+      deleteAuditLogPromise =
+        this.userAuditLogService.handleAuditLogForDeleteComment(userId, comment)
     }
+
+    await Promise.all([
+      deleteObjectsPromise,
+      deleteCommentPromise,
+      deleteAuditLogPromise,
+    ])
   }
 
   public async searchUsers(
