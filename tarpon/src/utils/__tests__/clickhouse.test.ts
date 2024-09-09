@@ -22,7 +22,8 @@ describe('Clickhouse', () => {
             (
                 id UInt32 PRIMARY KEY,
                 data String,
-                timestamp DateTime 
+                timestamp DateTime,
+                is_deleted UInt8 DEFAULT 0
             )
             ENGINE = ReplacingMergeTree() 
             ORDER BY id
@@ -37,11 +38,13 @@ describe('Clickhouse', () => {
           id: 1,
           data: 'test',
           timestamp: '2021-10-10 10:10:10',
+          is_deleted: 0,
         },
         {
           id: 2,
           data: 'test2',
           timestamp: '2021-10-10 10:10:20',
+          is_deleted: 0,
         },
       ],
       columns: ['id', 'data', 'timestamp'],
@@ -60,11 +63,13 @@ describe('Clickhouse', () => {
         id: 1,
         data: 'test',
         timestamp: '2021-10-10 10:10:10',
+        is_deleted: 0,
       },
       {
         id: 2,
         data: 'test2',
         timestamp: '2021-10-10 10:10:20',
+        is_deleted: 0,
       },
     ])
 
@@ -75,11 +80,13 @@ describe('Clickhouse', () => {
           id: 1,
           data: 'test3',
           timestamp: '2021-10-10 10:10:10',
+          is_deleted: 0,
         },
         {
           id: 2,
           data: 'test4',
           timestamp: '2021-10-10 10:10:40',
+          is_deleted: 0,
         },
       ],
       columns: ['id', 'data', 'timestamp'],
@@ -96,11 +103,13 @@ describe('Clickhouse', () => {
         id: 1,
         data: 'test3',
         timestamp: '2021-10-10 10:10:10',
+        is_deleted: 0,
       },
       {
         id: 2,
         data: 'test4',
         timestamp: '2021-10-10 10:10:40',
+        is_deleted: 0,
       },
     ])
 
@@ -119,7 +128,8 @@ describe('Clickhouse', () => {
             (
                 id UInt32 PRIMARY KEY,
                 data String,
-                timestamp DateTime
+                timestamp DateTime,
+                is_deleted UInt8 DEFAULT 0
             )
             ENGINE = ReplacingMergeTree() 
             ORDER BY (id, timestamp)
@@ -134,6 +144,7 @@ describe('Clickhouse', () => {
           id: 1,
           data: 'test',
           timestamp: '2021-10-10 10:10:10',
+          is_deleted: 0,
         },
         {
           id: 2,
@@ -157,11 +168,13 @@ describe('Clickhouse', () => {
         id: 1,
         data: 'test',
         timestamp: '2021-10-10 10:10:10',
+        is_deleted: 0,
       },
       {
         id: 2,
         data: 'test2',
         timestamp: '2021-10-10 10:10:20',
+        is_deleted: 0,
       },
     ])
 
@@ -172,11 +185,13 @@ describe('Clickhouse', () => {
           id: 1,
           data: 'test3',
           timestamp: '2021-10-10 10:10:10',
+          is_deleted: 0,
         },
         {
           id: 2,
           data: 'test4',
           timestamp: '2021-10-10 10:10:40',
+          is_deleted: 0,
         },
       ],
       columns: ['id', 'data', 'timestamp'],
@@ -193,17 +208,20 @@ describe('Clickhouse', () => {
         id: 2,
         data: 'test2',
         timestamp: '2021-10-10 10:10:20',
+        is_deleted: 0,
       },
       {
         id: 1,
         data: 'test3',
         timestamp: '2021-10-10 10:10:10',
+        is_deleted: 0,
       },
 
       {
         id: 2,
         data: 'test4',
         timestamp: '2021-10-10 10:10:40',
+        is_deleted: 0,
       },
     ])
   })

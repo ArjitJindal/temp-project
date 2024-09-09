@@ -5,7 +5,19 @@ import * as aws from '@cdktf/providers/aws'
 import * as atlas from '@cdktf/providers/mongodbatlas'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
+import { Stage } from '@flagright/lib/constants/deploy'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
+
+const mongoTriggerDisabledTenants: Partial<Record<Stage, string[]>> = {
+  dev: ['cypress', 'flagright-postman', 'flagright-test'],
+}
+
+const enabledCollections = [
+  'transactions',
+  'users',
+  'transaction-events',
+  'user-events',
+]
 
 export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {
@@ -112,8 +124,35 @@ export class CdktfTarponStack extends TerraformStack {
             configRegion: config.env.region,
           },
         },
+        unordered: false,
         configOperationTypes: ['INSERT', 'UPDATE', 'DELETE', 'REPLACE'],
-        configFullDocument: true,
+        configMatch: Fn.jsonencode({
+          $and: [
+            {
+              $and:
+                mongoTriggerDisabledTenants?.[config.stage]?.map((tenant) => ({
+                  'ns.coll': {
+                    $regex: `^(?!${tenant}).*`,
+                  },
+                })) ?? [],
+            },
+            {
+              $or: enabledCollections.map((collection) => ({
+                // ends with the collection name
+                'ns.coll': {
+                  $regex: `.*-${collection}$`,
+                },
+              })),
+            },
+          ],
+        }),
+        configProject: Fn.jsonencode({
+          operationType: 1,
+          ns: 1,
+          _id: 1,
+          documentKey: 1,
+          clusterTime: 1,
+        }),
       })
     }
   }

@@ -1,14 +1,14 @@
 import {
   Alias,
-  FunctionProps,
+  CfnFunction,
+  Code,
   Function as LambdaFunction,
+  FunctionProps,
+  ILayerVersion,
   LayerVersion,
   Runtime,
-  Code,
   Tracing,
-  CfnFunction,
   Version,
-  ILayerVersion,
 } from 'aws-cdk-lib/aws-lambda'
 import { Construct } from 'constructs'
 import { IRole, ServicePrincipal } from 'aws-cdk-lib/aws-iam'

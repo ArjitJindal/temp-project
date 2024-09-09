@@ -27,10 +27,10 @@ import {
 } from 'aws-cdk-lib/aws-apigateway'
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
-
 import { Alias, FunctionProps, StartingPosition } from 'aws-cdk-lib/aws-lambda'
-
-import { Construct } from 'constructs'
+import * as events from 'aws-cdk-lib/aws-events'
+import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
+import { Construct, IConstruct } from 'constructs'
 import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
 import {
   KinesisEventSource,
@@ -48,7 +48,7 @@ import {
 } from 'aws-cdk-lib/aws-ec2'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
-import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
+import * as eventschema from 'aws-cdk-lib/aws-eventschemas'
 import {
   getDeadLetterQueueName,
   getNameForGlobalResource,
@@ -84,12 +84,12 @@ import {
   LambdaInvoke,
 } from 'aws-cdk-lib/aws-stepfunctions-tasks'
 import {
+  BATCH_JOB_ID_ENV_VAR,
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
+  BATCH_JOB_TENANT_ID_ENV_VAR,
   FARGATE_BATCH_JOB_RUN_TYPE,
   LAMBDA_BATCH_JOB_RUN_TYPE,
-  BATCH_JOB_ID_ENV_VAR,
-  BATCH_JOB_TENANT_ID_ENV_VAR,
 } from '@lib/cdk/constants'
 import {
   Cluster,
@@ -123,6 +123,11 @@ const CONSUMER_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
 const MAX_SQS_RECEIVE_COUNT = 1000
 const isDevUserStack = isQaEnv()
 const enableFargateBatchJob = false
+const FEATURE = 'feature'
+
+const FEATURES = {
+  MONGO_DB_CONSUMER: 'mongo-db-consumer',
+}
 
 // TODO make this equal to !isQaEnv before merge
 const deployKinesisConsumer = !isQaEnv()
@@ -131,6 +136,15 @@ export class CdkTarponStack extends cdk.Stack {
   config: Config
   betterUptimeCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
+
+  private addTagsToResource(
+    resource: IConstruct,
+    tags: Record<string, string>
+  ) {
+    Object.entries(tags).forEach(([key, value]) => {
+      cdk.Tags.of(resource).add(key, value)
+    })
+  }
 
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, {
@@ -218,6 +232,19 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
+
+    const mongoDbConsumerQueue = this.createQueue(
+      SQSQueues.MONGO_DB_CONSUMER_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        fifo: true,
+      }
+    )
+
+    this.addTagsToResource(mongoDbConsumerQueue, {
+      [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+    })
 
     const batchJobQueue = this.createQueue(
       SQSQueues.BATCH_JOB_QUEUE_NAME.name,
@@ -468,6 +495,7 @@ export class CdkTarponStack extends cdk.Stack {
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
         HAMMERHEAD_QUEUE_URL: hammerheadQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
+        MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
       },
     }
 
@@ -552,6 +580,7 @@ export class CdkTarponStack extends cdk.Stack {
             hammerheadQueue.queueArn,
             tarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
+            mongoDbConsumerQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -1343,6 +1372,70 @@ export class CdkTarponStack extends cdk.Stack {
               resources: ['*'],
             }),
           ],
+        })
+      )
+    }
+
+    if (
+      this.config.stage === 'dev' &&
+      !isQaEnv() &&
+      this.config.env.account &&
+      this.config.env.region
+    ) {
+      const eventBus = new events.EventBus(this, 'MongoEvent', {
+        eventSourceName:
+          'aws.partner/mongodb.com/stitch.trigger/66d9d1170604e3825f395f1c',
+      })
+
+      this.addTagsToResource(eventBus, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
+
+      const eventRule = new events.Rule(this, 'MongoEventRule', {
+        eventBus,
+        enabled: true,
+        eventPattern: {
+          account: [this.config.env.account],
+          region: [this.config.env.region],
+        },
+        description: 'Trigger for MongoDB Atlas',
+      })
+
+      this.addTagsToResource(eventRule, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
+
+      new eventschema.CfnDiscoverer(this, 'MongoDBTriggerDiscoverer', {
+        sourceArn: eventBus.eventBusArn,
+        tags: [{ key: FEATURE, value: FEATURES.MONGO_DB_CONSUMER }],
+      })
+
+      const { alias: mongoDbConsumerAlias } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.MONGO_DB_TRIGGER_CONSUMER_FUNCTION_NAME,
+        }
+      )
+
+      this.addTagsToResource(mongoDbConsumerAlias, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
+
+      eventRule.addTarget(new LambdaFunctionTarget(mongoDbConsumerAlias))
+
+      const { alias: mongoDbTriggerQueueConsumerAlias } = createFunction(
+        this,
+        lambdaExecutionRole,
+        {
+          name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+        }
+      )
+
+      mongoDbTriggerQueueConsumerAlias.addEventSource(
+        new SqsEventSource(mongoDbConsumerQueue, {
+          batchSize: 100,
+          maxBatchingWindow: Duration.seconds(10),
         })
       )
     }

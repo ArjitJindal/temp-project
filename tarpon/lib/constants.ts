@@ -280,6 +280,12 @@ export const StackConstants = {
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
   ),
+  MONGO_DB_TRIGGER_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'MongoDbChangeCaptureConsumerFunction'
+  ),
+  MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'MongoDbChangeCaptureQueueConsumerFunction'
+  ),
 }
 
 export const SQSQueues: {
@@ -320,6 +326,9 @@ export const SQSQueues: {
   },
   ASYNC_RULE_QUEUE_NAME: {
     name: getResourceName('AsyncRuleQueue') + '.fifo',
+  },
+  MONGO_DB_CONSUMER_QUEUE_NAME: {
+    name: getResourceName('MongoDbConsumerQueue') + '.fifo',
   },
 }
 

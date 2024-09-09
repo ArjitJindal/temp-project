@@ -13,6 +13,7 @@ type BaseTableDefinition = {
   primaryKey: string
   orderBy: string
   partitionBy?: string
+  mongoIdColumn?: boolean
 }
 
 export type MaterializedViewDefinition = Omit<
@@ -33,7 +34,7 @@ export type ProjectionsDefinition = {
   }
 }
 
-export type TableDefinition = BaseTableDefinition & {
+export type ClickhouseTableDefinition = BaseTableDefinition & {
   materializedViews?: MaterializedViewDefinition[]
   projections?: ProjectionsDefinition[]
 }
@@ -83,9 +84,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   USER_EVENTS: {
     tableName: 'user_events',
   },
+  CASES: {
+    tableName: 'cases',
+  },
 }
 
-export const ClickHouseTables: TableDefinition[] = [
+export const ClickHouseTables: ClickhouseTableDefinition[] = [
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
     idColumn: CLICKHOUSE_DEFINITIONS.TRANSACTIONS.definition.idColumn,
@@ -126,6 +130,7 @@ export const ClickHouseTables: TableDefinition[] = [
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
     partitionBy: 'toYYYYMM(toDateTime(timestamp / 1000))',
+    mongoIdColumn: true,
     materializedViews: [
       {
         viewName:
@@ -146,6 +151,7 @@ export const ClickHouseTables: TableDefinition[] = [
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
   },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
@@ -154,6 +160,7 @@ export const ClickHouseTables: TableDefinition[] = [
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
   },
   {
     table: CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
@@ -162,6 +169,16 @@ export const ClickHouseTables: TableDefinition[] = [
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.CASES.tableName,
+    idColumn: 'caseId',
+    timestampColumn: 'createdTimestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
   },
 ] as const
 

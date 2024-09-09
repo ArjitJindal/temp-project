@@ -1166,7 +1166,9 @@ export class UserRepository {
     const user = await this.getUser<
       UserWithRulesResult | BusinessWithRulesResult
     >(userId)
+
     const riskScoringResult = await this.getRiskScoringResult(userId)
+
     if (user && user.riskLevel !== riskScoringResult.craRiskLevel) {
       await this.saveUser(
         { ...user, riskLevel: riskScoringResult.craRiskLevel },

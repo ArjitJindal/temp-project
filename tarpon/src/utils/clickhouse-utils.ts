@@ -6,12 +6,13 @@ import {
   ResponseJSON,
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
+import retry from 'retry'
 import { envIs } from './env'
 import {
   ClickHouseTables,
   MaterializedViewDefinition,
   ProjectionsDefinition,
-  TableDefinition,
+  ClickhouseTableDefinition,
   TableName,
 } from './clickhouse-definition'
 import { getContext, hasFeature } from '@/core/utils/context'
@@ -61,7 +62,7 @@ export const getProjectionName = (
 function assertTableName(
   tableName: string,
   tenantId: string = getContext()?.tenantId as string
-): TableDefinition {
+): ClickhouseTableDefinition {
   let trimmedTableName = tableName
     .replace(/-/g, '_')
     .replace(tenantId.replace(/-/g, '_'), '')
@@ -81,6 +82,14 @@ function assertTableName(
   return tableDefinition
 }
 
+const retryInsert = retry.operation({
+  retries: 3,
+  factor: 2,
+  minTimeout: 1000,
+  maxTimeout: 10000,
+  randomize: true,
+})
+
 const clickhouseInsert = async (
   table: string,
   values: object[],
@@ -91,15 +100,16 @@ const clickhouseInsert = async (
   const CLICKHOUSE_SETTINGS: ClickHouseSettings = {
     wait_for_async_insert: envIs('test', 'local') ? 1 : 0,
     async_insert: envIs('test', 'local') ? 0 : 1,
-    http_retry_initial_backoff_ms: '1000',
   }
 
-  await client.insert({
-    table,
-    values,
-    columns: columns,
-    format: 'JSON',
-    clickhouse_settings: CLICKHOUSE_SETTINGS,
+  return retryInsert.attempt(async () => {
+    await client.insert({
+      table,
+      values,
+      columns: columns,
+      format: 'JSON',
+      clickhouse_settings: CLICKHOUSE_SETTINGS,
+    })
   })
 }
 
@@ -124,8 +134,14 @@ export async function insertToClickhouse<T extends object>(
 
   await clickhouseInsert(
     sanitizeTableName(tableName),
-    [{ id: object[tableDefinition.idColumn], data: JSON.stringify(object) }],
-    ['id', 'data']
+    [
+      {
+        id: object[tableDefinition.idColumn],
+        data: JSON.stringify(object),
+        is_deleted: 0,
+      },
+    ],
+    ['id', 'data', 'is_deleted']
   )
 }
 
@@ -141,8 +157,9 @@ export async function batchInsertToClickhouse(
     objects.map((object) => ({
       id: object[tableDefinition.idColumn],
       data: JSON.stringify(object),
+      is_deleted: 0,
     })),
-    ['id', 'data']
+    ['id', 'data', 'is_deleted']
   )
 }
 
@@ -150,21 +167,27 @@ export function formatTableName(tenantId: string, tableName: string): string {
   return sanitizeTableName(`${tenantId}-${tableName}`)
 }
 
+const getAllColumns = (table: ClickhouseTableDefinition) => [
+  'id String',
+  'data String',
+  `timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${table.timestampColumn}')`,
+  'is_deleted UInt8 DEFAULT 0',
+  ...(table.mongoIdColumn
+    ? ["mongo_id String MATERIALIZED JSONExtractString(data, '_id')"]
+    : []),
+  ...(table.materializedColumns || []),
+]
+
 export const getCreateTableQuery = (
-  table: TableDefinition,
+  table: ClickhouseTableDefinition,
   tenantId: string
 ) => {
   const tableName = formatTableName(tenantId, table.table)
+  const columns = getAllColumns(table)
 
   return `
     CREATE TABLE IF NOT EXISTS ${tableName} (
-      id String,
-      data String,
-      timestamp UInt64 MATERIALIZED JSONExtractUInt(data, '${
-        table.timestampColumn
-      }')
-      ${table.materializedColumns?.length ? ',' : ''}
-      ${table.materializedColumns?.join(', ') ?? ''}
+      ${columns.join(', ')}
     ) ENGINE = ${table.engine}
      ${table.projections?.length ? ',' : ''}
      ${
@@ -188,13 +211,13 @@ export const getCreateTableQuery = (
 
 export async function createOrUpdateClickHouseTable(
   tenantId: string,
-  table: TableDefinition
+  table: ClickhouseTableDefinition
 ) {
   const tableName = formatTableName(tenantId, table.table)
   const client = await getClickhouseClient()
 
   await createTableIfNotExists(client, tableName, table, tenantId)
-  await addMissingMaterializedColumns(client, tableName, table)
+  await addMissingColumns(client, tableName, table)
   await addMissingProjections(client, tableName, table)
   await createMaterializedViews(client, tenantId, table)
 }
@@ -202,7 +225,7 @@ export async function createOrUpdateClickHouseTable(
 async function createTableIfNotExists(
   client: ClickHouseClient,
   tableName: string,
-  table: TableDefinition,
+  table: ClickhouseTableDefinition,
   tenantId: string
 ): Promise<void> {
   const tableExists = await checkTableExists(client, tableName)
@@ -223,21 +246,17 @@ async function checkTableExists(
   return response.data[0].result === 1
 }
 
-async function addMissingMaterializedColumns(
+async function addMissingColumns(
   client: ClickHouseClient,
   tableName: string,
-  table: TableDefinition
+  table: ClickhouseTableDefinition
 ): Promise<void> {
-  if (!table.materializedColumns?.length) {
-    return
-  }
-
   const existingColumns = await getExistingColumns(client, tableName)
-
-  for (const col of table.materializedColumns) {
+  const columns = getAllColumns(table)
+  for (const col of columns) {
     const [colName, colType, expr] = parseColumnDefinition(col)
     if (!existingColumns.find((c) => c.name === colName)) {
-      await addMaterializedColumn(client, tableName, colName, colType, expr)
+      await addColumn(client, tableName, colName, colType, expr)
     }
   }
 }
@@ -256,15 +275,17 @@ function parseColumnDefinition(col: string): [string, string, string] {
   return [colName, colType, expr]
 }
 
-async function addMaterializedColumn(
+async function addColumn(
   client: ClickHouseClient,
   tableName: string,
   colName: string,
   colType: string,
-  expr: string
+  expr?: string
 ): Promise<void> {
   const addColumnQuery = `
-    ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType} MATERIALIZED ${expr}
+    ALTER TABLE ${tableName} ADD COLUMN ${colName} ${colType} ${
+    expr ? 'MATERIALIZED ' + expr : ''
+  }
   `
   await client.query({ query: addColumnQuery })
   logger.info(
@@ -275,7 +296,7 @@ async function addMaterializedColumn(
 async function addMissingProjections(
   client: ClickHouseClient,
   tableName: string,
-  table: TableDefinition
+  table: ClickhouseTableDefinition
 ): Promise<void> {
   if (!table.projections?.length) {
     return
@@ -359,7 +380,7 @@ export const createMaterializedViewQuery = (
 async function createMaterializedViews(
   client: ClickHouseClient,
   tenantId: string,
-  table: TableDefinition
+  table: ClickhouseTableDefinition
 ): Promise<void> {
   if (!table.materializedViews?.length) {
     return

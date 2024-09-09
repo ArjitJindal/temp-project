@@ -2,63 +2,83 @@ import { Document } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
+export const MONGO_TABLE_SUFFIX_MAP = {
+  TRANSACTIONS: 'transactions',
+  USERS: 'users',
+  TRANSACTION_EVENTS: 'transaction-events',
+  USER_EVENTS: 'user-events',
+  CASES: 'cases',
+  API_REQUEST_LOGS: 'api-request-logs',
+  NARRATIVE_TEMPLATES: 'narrative-templates',
+  METRICS: 'metrics',
+  COUNTER: 'counter',
+  ALERTS_QA_SAMPLING: 'alerts-qa-sampling',
+  CRM_ENGAGEMENTS: 'crm-engagements',
+  CRM_NOTES: 'crm-notes',
+  CRM_TASKS: 'crm-tasks',
+  CRM_SUMMARY: 'crm-summary',
+  IMPORT: 'import',
+  METADATA: 'metadata',
+  ACCOUNTS: 'accounts',
+}
+
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-transactions`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS}`
 }
 
 export const API_REQUEST_LOGS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-api-request-logs`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.API_REQUEST_LOGS}`
 }
 
 export const NARRATIVE_TEMPLATE_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-narrative-templates`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.NARRATIVE_TEMPLATES}`
 }
 
 export const CASES_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-cases`
+  return `${tenandId}-${MONGO_TABLE_SUFFIX_MAP.CASES}`
 }
 
 export const METRICS_COLLECTION = (tenandId: string) => {
-  return `${tenandId}-metrics`
+  return `${tenandId}-${MONGO_TABLE_SUFFIX_MAP.METRICS}`
 }
 
 export const COUNTER_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-counter`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.COUNTER}`
 }
 
 export const ALERTS_QA_SAMPLING_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-alerts-qa-sampling`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ALERTS_QA_SAMPLING}`
 }
 
 export const CRM_ENGAGEMENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-crm-engagements`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_ENGAGEMENTS}`
 }
 export const CRM_NOTES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-crm-notes`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_NOTES}`
 }
 
 export const CRM_TASKS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-crm-tasks`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_TASKS}`
 }
 
 export const CRM_SUMMARY_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-crm-summary`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.CRM_SUMMARY}`
 }
 
 export const USERS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-users`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.USERS}`
 }
 
 export const ACCOUNTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-accounts`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ACCOUNTS}`
 }
 
 export const TRANSACTION_EVENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-transaction-events`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS}`
 }
 
 export const USER_EVENTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-user-events`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.USER_EVENTS}`
 }
 
 /**
