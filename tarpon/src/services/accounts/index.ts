@@ -1,9 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequest, Conflict, Forbidden } from 'http-errors'
 import {
-  ManagementClient,
   GetOrganizations200ResponseOneOfInner,
   GetUsers200ResponseOneOfInner,
+  ManagementClient,
 } from 'auth0'
 import { MongoClient } from 'mongodb'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'

@@ -9098,6 +9098,8 @@ components:
           type: boolean
         isMlEnabled:
           type: boolean
+        mfaEnabled:
+          type: boolean
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

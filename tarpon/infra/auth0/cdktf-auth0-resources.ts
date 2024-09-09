@@ -204,6 +204,12 @@ export const createAuth0TenantResources = (
       dependsOn: [resourceServer],
     }
   )
+  // MFA
+  new auth0.guardian.Guardian(
+    context,
+    getTenantResourceId(tenantName, 'guardian'),
+    { provider, otp: true, policy: 'all-applications' }
+  )
 
   /**
    * Branding::Custom Domains

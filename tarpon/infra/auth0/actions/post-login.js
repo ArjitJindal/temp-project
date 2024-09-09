@@ -21,7 +21,7 @@ exports.onExecutePostLogin = async (event, api) => {
     allowedRegions,
   } = app_metadata
   let auth0Domain = ''
-
+  let mfaEnabled = false
   if (event.authorization) {
     try {
       const ManagementClient = require('auth0').ManagementClient
@@ -44,6 +44,13 @@ exports.onExecutePostLogin = async (event, api) => {
           auth0Domain = organization.metadata.auth0Domain
         }
       }
+
+      mfaEnabled = organization.metadata.mfa === 'true'
+
+      if (!mfaEnabled) {
+        api.multifactor.enable('none')
+      }
+
       const roles = event.authorization.roles
       if (roles.length === 1) {
         let role = event.authorization.roles[0]
@@ -75,6 +82,7 @@ exports.onExecutePostLogin = async (event, api) => {
       namespace + '/verifiedEmail',
       email_verified ? email : undefined
     )
+    api.accessToken.setCustomClaim(namespace + '/mfa', mfaEnabled)
     api.accessToken.setCustomClaim(namespace + '/tenantId', tenantId)
     api.accessToken.setCustomClaim(namespace + '/tenantName', tenantName)
     api.accessToken.setCustomClaim(namespace + '/region', region)

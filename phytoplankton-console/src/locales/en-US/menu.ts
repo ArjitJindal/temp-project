@@ -44,6 +44,7 @@ export default {
   'menu.accounts.roles': 'Configure roles',
   'menu.settings': 'Settings',
   'menu.settings.system': 'System config',
+  'menu.settings.security': 'Security',
   'menu.settings.case-management': 'Case management',
   'menu.settings.transactions': 'Transactions',
   'menu.settings.users': 'Users',

@@ -22,6 +22,7 @@ import { NotificationsSettings } from './components/NotificationSettings';
 import { NarrativeCopilot } from './components/NarrativeCopilot';
 import { FlagrightMLSettings } from './components/FlagtightMLSettings';
 import SlaPolicySettings from './components/SlaPolicySettings';
+import { SecuritySettings } from './components/SecuritySettings';
 import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
 import PageWrapper from '@/components/PageWrapper';
@@ -70,6 +71,15 @@ export default function SettingsPage() {
               <>
                 <DefaultValuesSettings />
                 <ProductionAccessControl />
+              </>
+            ),
+          },
+          {
+            title: i18n('menu.settings.security'),
+            key: 'security',
+            children: (
+              <>
+                <SecuritySettings />
               </>
             ),
           },

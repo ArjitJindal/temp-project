@@ -2,14 +2,14 @@ import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   APIGatewayClient,
+  ApiKey,
   ApiStage,
   CreateUsagePlanCommand,
+  GetApiKeyCommand,
   GetRestApisCommand,
+  GetUsageCommand,
   GetUsagePlanKeysCommand,
   ThrottleSettings,
-  GetUsageCommand,
-  GetApiKeyCommand,
-  ApiKey,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
@@ -17,11 +17,11 @@ import createHttpError, { BadRequest } from 'http-errors'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import {
-  USAGE_PLAN_REGEX,
   doesUsagePlanExist,
   getAllUsagePlans,
+  USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
-import { flatten, uniq } from 'lodash'
+import { flatten, isEmpty, uniq } from 'lodash'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
@@ -552,16 +552,27 @@ export class TenantService {
     })
 
     // Update auth0 tenant metadata for the selected tenant setting properties
-    if (
-      !isDemoTenant(this.tenantId) &&
-      newTenantSettings.isProductionAccessEnabled != null
-    ) {
-      const accountsService = await AccountsService.getInstance()
-      await accountsService.updateAuth0TenantMetadata(this.tenantId, {
-        isProductionAccessDisabled: String(
+    if (!isDemoTenant(this.tenantId)) {
+      const updateData: Record<string, string> = {}
+
+      if (newTenantSettings.isProductionAccessEnabled != null) {
+        updateData.isProductionAccessDisabled = String(
           !newTenantSettings.isProductionAccessEnabled
-        ),
-      })
+        )
+      }
+
+      if (newTenantSettings.mfaEnabled != null) {
+        updateData.mfaEnabled = String(newTenantSettings.mfaEnabled)
+      }
+
+      const accountsService = await AccountsService.getInstance()
+
+      if (!isEmpty(updateData)) {
+        await accountsService.updateAuth0TenantMetadata(
+          this.tenantId,
+          updateData
+        )
+      }
     }
 
     await this.featureFlagChangeCapture(
