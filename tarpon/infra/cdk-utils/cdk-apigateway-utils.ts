@@ -112,9 +112,9 @@ export function createApiGateway(
     logGroupName,
     retention: context.config.resource.CLOUD_WATCH.logRetention,
     removalPolicy:
-      context.config.stage === 'dev'
-        ? RemovalPolicy.DESTROY
-        : RemovalPolicy.RETAIN,
+      context.config.stage === 'prod'
+        ? RemovalPolicy.RETAIN
+        : RemovalPolicy.DESTROY,
   })
 
   const restApi = new SpecRestApi(context, apiName, {
@@ -125,7 +125,10 @@ export function createApiGateway(
     apiDefinition,
     deploy: true,
     deployOptions: {
-      loggingLevel: MethodLoggingLevel.INFO,
+      loggingLevel:
+        context.config.stage === 'prod'
+          ? MethodLoggingLevel.INFO
+          : MethodLoggingLevel.ERROR,
       tracingEnabled: true,
       metricsEnabled: true,
       accessLogDestination: new LogGroupLogDestination(apiLogGroup),
