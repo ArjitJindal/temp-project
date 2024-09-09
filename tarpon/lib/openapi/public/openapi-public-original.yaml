@@ -4770,6 +4770,8 @@ components:
         - SOLE_PROPRIETOR
         - PENSIONER
         - COMPANY_OWNER
+        - OTHER
+        - NA
     PEPStatus:
       type: object
       title: PEPStatus
