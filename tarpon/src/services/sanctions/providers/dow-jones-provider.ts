@@ -25,7 +25,7 @@ const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   isArray: (tagName) => {
-    return ['Name', 'NameValue'].includes(tagName)
+    return ['Name', 'NameValue', 'Date', 'Country'].includes(tagName)
   },
 })
 
