@@ -22,6 +22,7 @@ import {
   getClickhouseClient,
   sanitizeTableName,
 } from '@/utils/clickhouse-utils'
+import { generateChecksum } from '@/utils/object'
 
 type ChangeStreamDocument =
   | ChangeStreamInsertDocument
@@ -58,7 +59,7 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
       new SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: JSON.stringify(event),
-        MessageGroupId: tableName,
+        MessageGroupId: generateChecksum(tableName),
       })
     )
   }
