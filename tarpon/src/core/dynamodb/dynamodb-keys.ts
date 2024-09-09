@@ -17,6 +17,7 @@ import { GenericBankAccountDetails } from '@/@types/openapi-public/GenericBankAc
 import { SWIFTDetails } from '@/@types/openapi-public/SWIFTDetails'
 import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
+import { CashDetails } from '@/@types/openapi-public/CashDetails'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
@@ -369,6 +370,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   | Array<keyof SWIFTDetails>
   | Array<keyof MpesaDetails>
   | Array<keyof CheckDetails>
+  | Array<keyof CashDetails>
 > = {
   IBAN: ['BIC', 'IBAN'],
   CARD: ['cardFingerprint'],
@@ -379,6 +381,7 @@ export const PAYMENT_METHOD_IDENTIFIER_FIELDS: Record<
   SWIFT: ['accountNumber', 'swiftCode'],
   MPESA: ['businessShortCode', 'phoneNumber'],
   CHECK: ['checkIdentifier', 'checkNumber'],
+  CASH: ['identifier'],
 }
 
 export function getPaymentMethodId(
@@ -406,6 +409,8 @@ export function getPaymentMethodId(
       return pm.accountNumber
     case 'UPI':
       return pm.upiID
+    case 'CASH':
+      return pm.identifier
   }
 }
 

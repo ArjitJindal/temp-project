@@ -305,6 +305,11 @@ function paymentSubjectLabels(caseItem: Case) {
         .map((x) => x || '-')
         .join('/'),
     });
+  } else if (paymentDetails.method === 'CASH') {
+    specialFields.push({
+      label: 'Cash identifier/number',
+      value: paymentDetails.identifier,
+    });
   } else {
     neverReturn(paymentDetails, '-');
   }

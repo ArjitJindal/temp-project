@@ -98,7 +98,8 @@ export function partyNameByPaymentDetails(
     paymentDetails.method === 'CARD' ||
     paymentDetails.method === 'MPESA' ||
     paymentDetails.method === 'WALLET' ||
-    paymentDetails.method === 'CHECK'
+    paymentDetails.method === 'CHECK' ||
+    paymentDetails.method === 'CASH'
   ) {
     name = undefined
   } else {
@@ -126,7 +127,8 @@ export function organizationClassificationByPaymentDetails(
     type = '2' // 'Depository institution' for banks
   } else if (
     paymentDetails.method === 'MPESA' ||
-    paymentDetails.method === 'WALLET'
+    paymentDetails.method === 'WALLET' ||
+    paymentDetails.method === 'CASH'
   ) {
     type = '4' // MSB (Money Service Business)
   } else {
@@ -209,7 +211,8 @@ export function addressByPaymentDetails(
     paymentDetails.method === 'CHECK' ||
     paymentDetails.method === 'UPI' ||
     paymentDetails.method === 'MPESA' ||
-    paymentDetails.method === 'WALLET'
+    paymentDetails.method === 'WALLET' ||
+    paymentDetails.method === 'CASH'
   ) {
     return undefined
   } else {

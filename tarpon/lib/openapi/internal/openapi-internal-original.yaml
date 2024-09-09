@@ -10187,6 +10187,7 @@ components:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
             destination:
               oneOf:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
@@ -10198,6 +10199,7 @@ components:
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
                 - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+                - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
         paymentMethodId:
           type: string
         caseUsers:

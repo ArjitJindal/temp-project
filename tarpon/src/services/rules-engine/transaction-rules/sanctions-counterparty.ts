@@ -181,6 +181,7 @@ export class SanctionsCounterPartyRule extends TransactionRule<SanctionsCounterP
         }
         break
       case 'MPESA':
+      case 'CASH':
         break
     }
 

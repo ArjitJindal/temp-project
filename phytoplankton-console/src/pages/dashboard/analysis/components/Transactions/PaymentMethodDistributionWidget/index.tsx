@@ -1,6 +1,7 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
+  COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_09,
   COLORS_V2_ANALYTICS_CHARTS_11,
   COLORS_V2_ANALYTICS_CHARTS_15,
@@ -42,6 +43,7 @@ const TREEMAP_COLORS: { [key in PaymentMethod]: string } = {
   SWIFT: COLORS_V2_ANALYTICS_CHARTS_20,
   MPESA: COLORS_V2_ANALYTICS_CHARTS_09,
   CHECK: COLORS_V2_ANALYTICS_CHARTS_11,
+  CASH: COLORS_V2_ANALYTICS_CHARTS_07,
 };
 
 interface Props extends WidgetProps {}

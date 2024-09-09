@@ -8,6 +8,7 @@ import {
 import cn from 'clsx';
 import Tag from '../index';
 import style from './index.module.less';
+import CashLine from '@/components/ui/icons/Remix/finance/copper-coin-line.react.svg';
 import { neverReturn } from '@/utils/lang';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
 
@@ -45,6 +46,9 @@ const PaymentMethodTag: React.FC<Props> = ({ paymentMethod }) => {
   } else if (paymentMethod === 'CHECK') {
     tagColor = 'orange';
     paymentIcon = <FileDoneOutlined />;
+  } else if (paymentMethod === 'CASH') {
+    tagColor = 'orange';
+    paymentIcon = <CashLine />;
   } else {
     tagColor = neverReturn(paymentMethod, 'green');
   }

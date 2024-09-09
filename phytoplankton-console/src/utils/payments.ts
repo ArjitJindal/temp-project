@@ -3,6 +3,7 @@ import {
   ACHPaymentMethod,
   CardPaymentMethod,
   CheckPaymentMethod,
+  CashPaymentMethod,
   GeneralBankAccountPaymentMethod,
   IBANPaymentMethod,
   MpesaPaymentMethod,
@@ -18,6 +19,7 @@ import {
   WalletDetails,
   MpesaDetails,
   CheckDetails,
+  CashDetails,
 } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import { notEmpty } from '@/utils/array';
@@ -31,7 +33,8 @@ export type PaymentDetails =
   | UPIDetails
   | WalletDetails
   | MpesaDetails
-  | CheckDetails;
+  | CheckDetails
+  | CashDetails;
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -42,7 +45,8 @@ export type PaymentMethod =
   | ACHPaymentMethod
   | SWIFTPaymentMethod
   | MpesaPaymentMethod
-  | CheckPaymentMethod;
+  | CheckPaymentMethod
+  | CashPaymentMethod;
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
   'ACH',
@@ -54,6 +58,7 @@ export const PAYMENT_METHODS: PaymentMethod[] = [
   'WALLET',
   'MPESA',
   'CHECK',
+  'CASH',
 ];
 
 export function isPaymentMethod(value: unknown): value is PaymentMethod {
@@ -68,6 +73,7 @@ export function isPaymentMethod(value: unknown): value is PaymentMethod {
     case 'UPI':
     case 'WALLET':
     case 'CHECK':
+    case 'CASH':
       return true;
   }
   return neverReturn(paymentMethod, false);
@@ -92,6 +98,8 @@ export function getPaymentDetailsIdString(paymentDetails: PaymentDetails): strin
     return paymentDetails.businessShortCode ?? '-';
   } else if (paymentDetails.method === 'CHECK') {
     return paymentDetails.checkIdentifier ?? '-';
+  } else if (paymentDetails.method === 'CASH') {
+    return paymentDetails.identifier ?? '-';
   } else {
     return neverReturn(paymentDetails, '-');
   }
@@ -116,6 +124,8 @@ export function getPaymentMethodTitle(paymentMethod: PaymentMethod) {
     return 'Mpesa';
   } else if (paymentMethod === 'CHECK') {
     return 'Check';
+  } else if (paymentMethod === 'CASH') {
+    return 'Cash';
   } else {
     return neverReturn(paymentMethod, humanizeConstant(paymentMethod));
   }

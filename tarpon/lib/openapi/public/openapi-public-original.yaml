@@ -1800,6 +1800,7 @@ components:
               - $ref: '#/components/schemas/UPIDetails'
               - $ref: '#/components/schemas/WalletDetails'
               - $ref: '#/components/schemas/CheckDetails'
+              - $ref: '#/components/schemas/CashDetails'
         tags:
           type: array
           description: Additional information that can be added via tags
@@ -2184,6 +2185,7 @@ components:
             - $ref: '#/components/schemas/UPIDetails'
             - $ref: '#/components/schemas/WalletDetails'
             - $ref: '#/components/schemas/CheckDetails'
+            - $ref: '#/components/schemas/CashDetails'
           description:
             Payment details of the origin. It can be a bank account number,
             wallet ID, card fingerprint etc.
@@ -2198,15 +2200,9 @@ components:
             - $ref: '#/components/schemas/SWIFTDetails'
             - $ref: '#/components/schemas/MpesaDetails'
             - $ref: '#/components/schemas/CheckDetails'
-          example:
-            method: CARD
-            cardFingerprint: 20ac00fed8ef913aefb17cfae1097cce
-            cardIssuedCountry: TR
-            transactionReferenceField: Deposit
-            3dsDone: true
-          description:
-            Payment details of the destination. It can be a bank account
-            number, wallet ID, card fingerprint etc.
+            - $ref: '#/components/schemas/CashDetails'
+        originFundsInfo:
+          $ref: '#/components/schemas/OriginFundsInfo'
         relatedTransactionIds:
           type: array
           description:
@@ -2904,6 +2900,20 @@ components:
       required:
         - amountValue
         - amountCurrency
+    OriginFundsInfo:
+      title: OriginFundsInfo
+      type: object
+      description: Model for origin funds information
+      properties:
+        sourceOfFunds:
+          type: string
+          description: Source of funds for the transaction
+        sourceOfWealth:
+          type: string
+          description: Source of wealth
+      required:
+        - sourceOfFunds
+        - sourceOfWealth
     LegalEntity:
       title: LegalEntity
       type: object
@@ -3659,6 +3669,7 @@ components:
               - $ref: '#/components/schemas/UPIDetails'
               - $ref: '#/components/schemas/WalletDetails'
               - $ref: '#/components/schemas/CheckDetails'
+              - $ref: '#/components/schemas/CashDetails'
         mccDetails:
           $ref: '#/components/schemas/MCCDetails'
         tags:
@@ -4700,6 +4711,12 @@ components:
       description: Classify the method of payment as "CHECK" for CheckDetails
       enum:
         - CHECK
+    CashPaymentMethod:
+      type: string
+      title: CashPaymentMethod
+      description: Classify the method of payment as "CASH" for Details
+      enum:
+        - CASH
     MpesaPaymentMethod:
       type: string
       title: MpesaPaymentMethod
@@ -5127,6 +5144,7 @@ components:
         - SWIFT
         - WALLET
         - CHECK
+        - CASH
     CardMerchantDetails:
       title: CardMerchantDetails
       type: object
@@ -5172,6 +5190,17 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+      required:
+        - method
+    CashDetails:
+      title: CheckDetails
+      type: object
+      properties:
+        method:
+          $ref: '#/components/schemas/CashPaymentMethod'
+        identifier:
+          type: string
+          description: Identifier for the cash transaction
       required:
         - method
     CountryCode:

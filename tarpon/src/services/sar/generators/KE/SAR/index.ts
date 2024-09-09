@@ -14,6 +14,7 @@ import { MpesaDetails } from '@/@types/openapi-public/MpesaDetails'
 import { UPIDetails } from '@/@types/openapi-public/UPIDetails'
 import { WalletDetails } from '@/@types/openapi-public/WalletDetails'
 import { CheckDetails } from '@/@types/openapi-public/CheckDetails'
+import { CashDetails } from '@/@types/openapi-public/CashDetails'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
 import { Address } from '@/@types/openapi-internal/Address'
@@ -160,6 +161,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
       | UPIDetails
       | WalletDetails
       | CheckDetails
+      | CashDetails
       | undefined
   ) {
     if (!u || u?.type === 'CONSUMER') {

@@ -1,21 +1,23 @@
 import { ACHDetails } from '../openapi-public/ACHDetails'
-import { ACHPaymentMethod } from '../openapi-public/ACHPaymentMethod'
 import { CardDetails } from '../openapi-public/CardDetails'
-import { CardPaymentMethod } from '../openapi-public/CardPaymentMethod'
 import { GenericBankAccountDetails } from '../openapi-public/GenericBankAccountDetails'
 import { IBANDetails } from '../openapi-public/IBANDetails'
-import { IBANPaymentMethod } from '../openapi-public/IBANPaymentMethod'
 import { SWIFTDetails } from '../openapi-public/SWIFTDetails'
-import { SWIFTPaymentMethod } from '../openapi-public/SWIFTPaymentMethod'
 import { UPIDetails } from '../openapi-public/UPIDetails'
-import { UPIPaymentMethod } from '../openapi-public/UPIPaymentMethod'
 import { WalletDetails } from '../openapi-public/WalletDetails'
+import { MpesaDetails } from '../openapi-public/MpesaDetails'
+import { CheckDetails } from '../openapi-public/CheckDetails'
+import { CashDetails } from '../openapi-public/CashDetails'
+import { ACHPaymentMethod } from '../openapi-public/ACHPaymentMethod'
+import { CardPaymentMethod } from '../openapi-public/CardPaymentMethod'
+import { GeneralBankAccountPaymentMethod } from '../openapi-public/GeneralBankAccountPaymentMethod'
+import { IBANPaymentMethod } from '../openapi-public/IBANPaymentMethod'
+import { SWIFTPaymentMethod } from '../openapi-public/SWIFTPaymentMethod'
+import { UPIPaymentMethod } from '../openapi-public/UPIPaymentMethod'
 import { WalletPaymentMethod } from '../openapi-public/WalletPaymentMethod'
 import { MpesaPaymentMethod } from '../openapi-public/MpesaPaymentMethod'
 import { CheckPaymentMethod } from '../openapi-public/CheckPaymentMethod'
-import { MpesaDetails } from '../openapi-public/MpesaDetails'
-import { CheckDetails } from '../openapi-public/CheckDetails'
-import { GeneralBankAccountPaymentMethod } from '../openapi-public/GeneralBankAccountPaymentMethod'
+import { CashPaymentMethod } from '../openapi-public/CashPaymentMethod'
 
 export type PaymentDetails =
   | CardDetails
@@ -27,6 +29,7 @@ export type PaymentDetails =
   | WalletDetails
   | MpesaDetails
   | CheckDetails
+  | CashDetails
 
 export type PaymentMethod =
   | CardPaymentMethod
@@ -38,3 +41,4 @@ export type PaymentMethod =
   | WalletPaymentMethod
   | MpesaPaymentMethod
   | CheckPaymentMethod
+  | CashPaymentMethod

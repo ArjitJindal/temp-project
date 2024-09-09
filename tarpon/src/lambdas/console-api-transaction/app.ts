@@ -69,6 +69,7 @@ export const TRANSACTION_EXPORT_HEADERS_SETTINGS: CsvHeaderSettings<InternalTran
     originDeviceData: DEVICE_DATA_FIELDS,
     destinationDeviceData: DEVICE_DATA_FIELDS,
     relatedTransactionIds: 'JSON',
+    originFundsInfo: 'JSON',
     tags: 'JSON',
     executedRules: 'JSON',
     hitRules: 'JSON',

@@ -294,6 +294,7 @@ paths:
                           - MPESA
                           - GENERIC_BANK_ACCOUNT
                           - CHECK
+                          - CASH
                         nullable: true
       operationId: get-rule-filters-schema
       description: >-
@@ -1917,6 +1918,7 @@ components:
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
             - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
       required:
         - type
         - paymentDetails
