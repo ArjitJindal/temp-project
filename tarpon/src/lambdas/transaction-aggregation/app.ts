@@ -206,7 +206,8 @@ export async function handleTransactionAggregationTask(
       async () => {
         const transactionId = task.transactionId
         const transaction = await transactionRepository.getTransactionById(
-          transactionId
+          transactionId,
+          { consistentRead: true }
         )
         if (!transaction) {
           throw new NotFound(`Transaction ${transactionId} not found`)
