@@ -73,6 +73,10 @@ export interface UiSchemaNarrative extends UiSchemaCommon {
   'ui:subtype': 'NARRATIVE';
 }
 
+export interface UiSchemaMarkdown extends UiSchemaCommon {
+  'ui:subtype': 'MARKDOWN';
+}
+
 export interface UiSchemaFincenIndicator extends UiSchemaCommon {
   'ui:subtype': 'FINCEN_INDICATOR';
 }
@@ -126,6 +130,7 @@ export type UiSchema =
   | UiSchemaCurrency
   | UiSchemaPaymentFilters
   | UiSchemaNarrative
+  | UiSchemaMarkdown
   | UiSchemaTransactionTimeRange
   | UiSchemaChecklistsCategoryList
   | UiSchemaFincenIndicator

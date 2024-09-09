@@ -14,7 +14,12 @@ export function NarrativeTemplatesSettings() {
     type: 'object',
     properties: {
       name: { type: 'string', title: 'Name' },
-      description: { type: 'string', title: 'Description' },
+      description: {
+        type: 'string',
+        title: 'Description',
+        'ui:schema': { 'ui:subtype': 'MARKDOWN' },
+        hideCopilotWidget: true,
+      },
     },
     required: ['name', 'description'],
   };

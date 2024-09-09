@@ -21,6 +21,7 @@ import TimeRangeInput from './custom/TimeRangeInput';
 import NarrativeInput from './custom/NarrativeInput';
 import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInput';
 import { WebhookInput } from './custom/WebhookInput';
+import MarkdownInput from './custom/MarkdownInput';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -46,6 +47,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'NARRATIVE') {
     return <NarrativeInput {...props} schema={schema} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'MARKDOWN') {
+    return <MarkdownInput {...props} schema={schema} uiSchema={uiSchema} />;
   }
   if (uiSchema['ui:subtype'] === 'PAYMENT_FILTERS') {
     return <PaymentFiltersInput {...props} uiSchema={uiSchema} />;
