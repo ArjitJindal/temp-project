@@ -328,7 +328,7 @@ export const SQSQueues: {
     name: getResourceName('AsyncRuleQueue') + '.fifo',
   },
   MONGO_DB_CONSUMER_QUEUE_NAME: {
-    name: getResourceName('MongoDbConsumerQueue') + '.fifo',
+    name: getResourceName('MongoDbConsumerQueue'),
   },
 }
 

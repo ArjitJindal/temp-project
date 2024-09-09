@@ -238,7 +238,6 @@ export class CdkTarponStack extends cdk.Stack {
       {
         visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
         retentionPeriod: Duration.days(7),
-        fifo: true,
       }
     )
 
@@ -1434,8 +1433,8 @@ export class CdkTarponStack extends cdk.Stack {
 
       mongoDbTriggerQueueConsumerAlias.addEventSource(
         new SqsEventSource(mongoDbConsumerQueue, {
-          batchSize: 100,
-          maxBatchingWindow: Duration.seconds(10),
+          batchSize: 1000,
+          maxBatchingWindow: Duration.seconds(30),
         })
       )
     }
