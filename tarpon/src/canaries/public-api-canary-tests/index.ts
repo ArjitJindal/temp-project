@@ -16,6 +16,7 @@ import { User } from '@/@types/openapi-internal/User'
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
 import { Business } from '@/@types/openapi-public/Business'
+import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 
 const awsApiGateway = new AWS.APIGateway()
 
@@ -335,7 +336,7 @@ const getTestTransactionSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.validationErrors !==
-              '[instance failed to match exactly one schema (matched 0 out of 9)]'
+              `[instance failed to match exactly one schema (matched 0 out of ${PAYMENT_METHODS.length})]`
             ) {
               reject('Validation error does not match')
             }
@@ -495,7 +496,7 @@ const getTestTransactionSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.validationErrors !==
-              '[instance failed to match exactly one schema (matched 0 out of 9)]'
+              `[instance failed to match exactly one schema (matched 0 out of ${PAYMENT_METHODS.length})]`
             ) {
               reject('Validation error does not match')
             }
