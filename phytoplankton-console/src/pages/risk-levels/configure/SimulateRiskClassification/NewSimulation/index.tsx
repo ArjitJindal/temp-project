@@ -16,7 +16,6 @@ import {
   SimulationStats,
   RiskClassificationScore,
   SimulationRiskLevelsParameters,
-  SimulationRiskLevelsParametersRequest,
 } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
 import * as Card from '@/components/ui/Card';
@@ -111,8 +110,8 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
   >(
     async ({ values, defaultRiskClassification }) =>
       api.postSimulation({
-        SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest:
-          {
+        SimulationPostRequest: {
+          riskLevelsParameters: {
             type: 'PULSE',
             defaultRiskClassifications: defaultRiskClassification,
             parameters: values.map(
@@ -129,7 +128,8 @@ const NewSimulation = forwardRef((props: Props, ref: React.Ref<SimulationRef>) =
                   parameterAttributeRiskValues: [],
                 } as SimulationRiskLevelsParameters),
             ),
-          } as SimulationRiskLevelsParametersRequest,
+          },
+        },
       }),
     {
       onSuccess: (data) => {

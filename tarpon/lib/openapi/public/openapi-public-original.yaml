@@ -317,6 +317,67 @@ paths:
                 $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
+  /batch/transactions:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: verify_transaction
+      security:
+        - x-api-key: []
+      summary: Bulk create transactions
+      operationId: post-batch-transactions
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: validateOriginUserId
+          description:
+            Boolean string whether Flagright should validate if provided
+            originUserId exist. True by default
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          description:
+            Boolean string whether Flagright should validate if provided
+            destinationUserId exist. True by default
+          name: validateDestinationUserId
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
   /events/transaction:
     post:
       x-fern-sdk-group-name: transaction_events
@@ -461,6 +522,54 @@ paths:
                           If a user makes a remittance transaction >= 1800 in EUR - ask
                           for proof of funds
                         ruleAction: BLOCK
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+      x-internal: false
+  /batch/events/transaction:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: create_transaction_events
+      security:
+        - x-api-key: []
+      summary: Batch create transaction events
+      operationId: post-batch-transaction-events
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransactionEventBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
         '400':
           description: Bad Request
           headers: {}
@@ -747,6 +856,53 @@ paths:
                     tags:
                       - key: customKey
                         value: customValue
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+  /batch/consumer/users:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: create_consumer_users
+      security:
+        - x-api-key: []
+      summary: Batch create consumer users
+      operationId: post-batch-consumer-users
+      parameters: []
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
         '400':
           description: Bad Request
           headers: {}
@@ -1084,6 +1240,53 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/UserWithRulesResult'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+      deprecated: false
+      tags: []
+      x-internal: false
+  /batch/events/consumer/user:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: create_consumer_user_events
+      security:
+        - x-api-key: []
+      summary: Batch create consumer user events
+      operationId: post-batch-consumer-user-events
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsumerUserEventBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
         '400':
           description: Bad Request
           headers: {}
@@ -5878,6 +6081,69 @@ components:
         - CREDIT
         - DEBIT
         - PREPAID
+    BatchResponse:
+      title: BatchResponse
+      description: Response from creation of a batch
+      type: object
+      properties:
+        message:
+          type: string
+        batchId:
+          type: string
+        status:
+          type: string
+    ConsumerUserEventBatchRequest:
+      title: ConsumerUserEventBatchRequest
+      description: Batch request to create consumer users
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsumerUserEvent'
+      required:
+        - data
+    TransactionBatchRequest:
+      title: TransactionBatchRequest
+      description: Batch request to create transactions
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Transaction'
+      required:
+        - data
+    TransactionEventBatchRequest:
+      title: TransactionEventBatchRequest
+      description: Batch request to create transaction events
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionEvent'
+      required:
+        - data
+    UserBatchRequest:
+      title: UserBatchRequest
+      description: Batch request to create consumer users
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/User'
+      required:
+        - data
     CardType:
       title: CardType
       description: Type of card

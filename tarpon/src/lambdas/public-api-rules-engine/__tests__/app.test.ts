@@ -224,12 +224,202 @@ describe('Public API - Verify a transaction', () => {
   })
 })
 
+describe('Public API - Batch create transactions', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpUsersHooks(TEST_TENANT_ID, [
+    getTestUser({ userId: '1' }),
+    getTestUser({ userId: '2' }),
+  ])
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'TEST-R-1',
+      ruleImplementationName: 'tests/test-success-rule',
+      type: 'TRANSACTION',
+    },
+    {
+      id: 'TEST-R-2',
+      ruleImplementationName: 'tests/test-success-rule',
+      type: 'TRANSACTION',
+      mode: 'SHADOW_SYNC',
+    },
+  ])
+
+  test("throws if origin user doesn't exist", async () => {
+    const transaction = getTestTransaction({
+      transactionId: 'dummy',
+      originUserId: 'ghost',
+    })
+    const response = await transactionHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/batch/transactions',
+        { batch: 'b1', data: [transaction] },
+        {
+          queryStringParameters: {
+            validateOriginUserId: 'true',
+            validateDestinationUserId: 'false',
+          },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(400)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'BadRequestError',
+      message: 'originUserId: ghost does not exist',
+    })
+  })
+
+  test("throws if destination user doesn't exist", async () => {
+    const transaction = getTestTransaction({
+      transactionId: 'dummy',
+      originUserId: 'ghost1',
+      destinationUserId: 'ghost2',
+    })
+    const response = await transactionHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/batch/transactions',
+        { batchId: 'b1', data: [transaction] },
+        {
+          queryStringParameters: {
+            validateOriginUserId: 'false',
+            validateDestinationUserId: 'true',
+          },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(400)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'BadRequestError',
+      message: 'destinationUserId: ghost2 does not exist',
+    })
+  })
+
+  test("throws if related transactions don't exist", async () => {
+    const transaction = getTestTransaction({
+      transactionId: 'dummy',
+      relatedTransactionIds: ['foo'],
+    })
+    const response = await transactionHandler(
+      getApiGatewayPostEvent(
+        TEST_TENANT_ID,
+        '/batch/transactions',
+        { batchId: 'b1', data: [transaction] },
+        {
+          queryStringParameters: {
+            validateOriginUserId: 'false',
+            validateDestinationUserId: 'false',
+          },
+        }
+      ),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(400)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      error: 'BadRequestError',
+      message: `Transaction with ID(s): foo do not exist.`,
+    })
+  })
+
+  test('throw if transaction exists', async () => {
+    const transaction = getTestTransaction({
+      transactionId: 't-1',
+      originUserId: '1',
+      destinationUserId: '2',
+    })
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
+        batchId: 'b1',
+        data: [transaction],
+      }),
+      null as any,
+      null as any
+    )
+    const response = await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
+        batchId: 'b1',
+        data: [transaction],
+      }),
+      null as any,
+      null as any
+    )
+    // expect(response?.statusCode).toBe(400)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      message: 'Batch transactions processed',
+    })
+  })
+
+  test('accepts transactions', async () => {
+    const relatedTransaction = getTestTransaction({
+      transactionId: 'related-transaction',
+      originUserId: '1',
+      destinationUserId: '2',
+    })
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
+        batchId: 'b1',
+        data: [relatedTransaction],
+      }),
+      null as any,
+      null as any
+    )
+    const transaction = getTestTransaction({
+      transactionId: 'dummy',
+      originUserId: '1',
+      destinationUserId: '2',
+      relatedTransactionIds: ['related-transaction'],
+    })
+    const response = await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
+        batchId: 'b2',
+        data: [transaction],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      message: 'Batch transactions processed',
+    })
+  })
+
+  test('drop unknown fields', async () => {
+    const transaction = getTestTransaction({
+      originUserId: undefined,
+      destinationUserId: undefined,
+    })
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', {
+        ...transaction,
+        foo: 'bar',
+      }),
+      null as any,
+      null as any
+    )
+    const transactionRepository = new DynamoDbTransactionRepository(
+      TEST_TENANT_ID,
+      getDynamoDbClient()
+    )
+    expect(
+      await transactionRepository.getTransactionById(transaction.transactionId)
+    ).not.toMatchObject({
+      foo: 'bar',
+    })
+  })
+})
+
 describe('Public API - Retrieve a Transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
   test('throws if transaction not found', async () => {
     const response = await transactionHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/transactions', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/transactions/{transactionId}', {
         pathParameters: {
           transactionId: 'dummy',
         },
@@ -257,7 +447,7 @@ describe('Public API - Retrieve a Transaction', () => {
       null as any
     )
     const response = await transactionHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/transactions', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/transactions/{transactionId}', {
         pathParameters: {
           transactionId: 'foo',
         },
@@ -312,11 +502,9 @@ describe('Public API - Create a Transaction Event', () => {
       updatedTransactionAttributes: undefined,
     })
     const response = await transactionEventHandler(
-      getApiGatewayPostEvent(
-        TEST_TENANT_ID,
-        '/events/transaction',
-        transactionEvent
-      ),
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/events/transaction', {
+        ...transactionEvent,
+      }),
       null as any,
       null as any
     )

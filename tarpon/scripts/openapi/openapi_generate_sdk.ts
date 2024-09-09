@@ -30,6 +30,7 @@ function removeBadImports(paths: string[]) {
       .readFileSync(path)
       .toString()
       .replace(/import \{ \S+ \| \S+ .*/g, '')
+      .replace(/^.*&amp.*\n?/gm, '')
     fs.writeFileSync(path, newText)
   }
 }
@@ -62,11 +63,9 @@ function buildApi(type: 'public' | 'public-management' | 'internal') {
   )
 
   // Move custom generated code
-  if (type == 'internal') {
-    exec(
-      `mv /tmp/flagright/${type}_openapi_custom/apis/DefaultApi.ts src/@types/openapi-${type}-custom/`
-    )
-  }
+  exec(
+    `mv /tmp/flagright/${type}_openapi_custom/apis/DefaultApi.ts src/@types/openapi-${type}-custom/`
+  )
   exec(
     `mv /tmp/flagright/${type}_openapi_custom/models/* src/@types/openapi-${type}-custom/`
   )

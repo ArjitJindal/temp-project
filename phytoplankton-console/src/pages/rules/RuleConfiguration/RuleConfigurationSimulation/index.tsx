@@ -40,7 +40,6 @@ import {
   SimulationBeaconParameters,
   Rule,
   RuleInstance,
-  SimulationBeaconParametersRequest,
   SimulationBeaconJob,
 } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
@@ -172,12 +171,13 @@ export function RuleConfigurationSimulation(props: Props) {
   >(
     async (iterations) => {
       return api.postSimulation({
-        SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest:
-          {
+        SimulationPostRequest: {
+          beaconParameters: {
             type: 'BEACON',
             parameters: iterations,
             defaultRuleInstance: ruleInstance,
-          } as SimulationBeaconParametersRequest,
+          },
+        },
       });
     },
     {

@@ -5,18 +5,17 @@ import { SimulationBeaconType } from "@/@types/openapi-internal/SimulationBeacon
 import { SimulationRiskLevelsType } from "@/@types/openapi-internal/SimulationRiskLevelsType";
 import { SimulationRiskFactorsType } from "@/@types/openapi-internal/SimulationRiskFactorsType";
 import { Permission } from "@/@types/openapi-internal/Permission";
+import { pickKnownEntityFields } from "@/utils/object";
 import {
-APIGatewayEventLambdaAuthorizerContext,
 APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { JWTAuthorizerResult } from "@/@types/jwt";
 import { Context } from '@/console-api/context'
 import { BadRequest } from "http-errors";
 import { fromGlobalContext } from '@/console-api/context'
 import { getContext } from '@/core/utils/context'
 {{#operations}}
 {{#operation}}
-import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request} from "@/@types/openapi-internal/RequestParameters";
+import {DefaultApi{{#lambda.titlecase}}{{ nickname }}{{/lambda.titlecase}}Request} from "@/@types/openapi-{{api}}/RequestParameters";
 {{/operation}}
 {{/operations}}
 
@@ -39,7 +38,7 @@ export class Handlers {
         }
     {{/operation}}
 {{/operations}}
-        handle(event: APIGatewayProxyWithLambdaAuthorizerEvent<APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>>) {
+        handle<T>(event: APIGatewayProxyWithLambdaAuthorizerEvent<T>) {
             const ctx = fromGlobalContext(getContext())
     {{#operations}}
     {{#operation}}
@@ -73,6 +72,9 @@ export class Handlers {
                                 {{#isNumber}}
                         {{paramName}}: event.queryStringParameters?.{{paramName}} ? parseInt(event.queryStringParameters?.{{paramName}}) : {{#required}}0{{/required}}{{^required}}undefined{{/required}},
                                 {{/isNumber}}
+                                {{#isInteger}}
+                        {{paramName}}: event.queryStringParameters?.{{paramName}} ? parseInt(event.queryStringParameters?.{{paramName}}) : {{#required}}0{{/required}}{{^required}}undefined{{/required}},
+                                {{/isInteger}}
                                 {{#isString}}
                         {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
                                 {{/isString}}
@@ -82,22 +84,24 @@ export class Handlers {
                                 {{^isNumber}}
                                 {{^isString}}
                                 {{^isBoolean}}
+                                {{^isInteger}}
                                 {{^isEnum}}
                         {{paramName}}: event.queryStringParameters?.{{paramName}} as {{{dataType}}},
                                 {{/isEnum}}
+                                {{/isInteger}}
                                 {{/isBoolean}}
                                 {{/isString}}
                                 {{/isNumber}}
                             {{/isArray}}
                         {{/queryParams}}
                         {{#bodyParam}}
-                        {{paramName}}: JSON.parse(event.body) as {{{dataType}}}
+                        {{paramName}}: {{#isArray}}JSON.parse(event.body){{/isArray}}{{^isArray}}pickKnownEntityFields(JSON.parse(event.body) as {{{dataType}}}, {{{dataType}}}){{/isArray}} as {{{dataType}}}
                         {{/bodyParam}}
                     }
                 )
             }
         {{/operation}}
-            throw new BadRequest('Unsupported path')
+            throw new BadRequest('Unhandled request')
 {{/operations}}
     }
 }

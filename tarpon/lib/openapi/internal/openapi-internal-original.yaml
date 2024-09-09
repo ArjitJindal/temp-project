@@ -5701,10 +5701,7 @@ paths:
         content:
           application/json:
             schema:
-              oneOf:
-                - $ref: '#/components/schemas/SimulationRiskLevelsParametersRequest'
-                - $ref: '#/components/schemas/SimulationBeaconParametersRequest'
-                - $ref: '#/components/schemas/SimulationRiskFactorsParametersRequest'
+              $ref: '#/components/schemas/SimulationPostRequest'
         required: true
     get:
       summary: Get simulation tasks
@@ -12475,6 +12472,15 @@ components:
           type: string
       required:
         - region
+    SimulationPostRequest:
+      type: object
+      properties:
+        riskLevelsParameters:
+          $ref: '#/components/schemas/SimulationRiskLevelsParametersRequest'
+        beaconParameters:
+          $ref: '#/components/schemas/SimulationBeaconParametersRequest'
+        riskFactorsParameters:
+          $ref: '#/components/schemas/SimulationRiskFactorsParametersRequest'
     SimulationPostResponse:
       type: object
       properties:

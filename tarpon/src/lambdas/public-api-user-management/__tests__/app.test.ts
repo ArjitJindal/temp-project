@@ -77,12 +77,53 @@ describe('Public API - Create a Consumer User', () => {
   })
 })
 
+describe('Public API - Create a Consumer User Batch', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  test('returns saved user ID', async () => {
+    const consumerUser = getTestUser({ userId: '1' })
+    const response = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/consumer/users', {
+        data: [consumerUser],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      message: 'Batch users processed',
+    })
+  })
+
+  test('returns userId and hint message if user already exists', async () => {
+    const consumerUser = getTestUser({ userId: '2' })
+    await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/consumer/users', {
+        data: [consumerUser],
+      }),
+      null as any,
+      null as any
+    )
+    const response = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/consumer/users', {
+        data: [consumerUser],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      message: 'Some users already exist: 2',
+    })
+  })
+})
+
 describe('Public API - Retrieve a Consumer User', () => {
   const TEST_TENANT_ID = getTestTenantId()
 
   test('throws if user not found', async () => {
     const response = await userHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/consumer/users', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/consumer/users/{userId}', {
         pathParameters: { userId: 'foo' },
       }),
       null as any,
@@ -103,7 +144,7 @@ describe('Public API - Retrieve a Consumer User', () => {
       null as any
     )
     const response = await userHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/consumer/users', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/consumer/users/{userId}', {
         pathParameters: { userId: '1' },
       }),
       null as any,
@@ -179,7 +220,7 @@ describe('Public API - Retrieve a Business User', () => {
 
   test('throws if user not found', async () => {
     const response = await userHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/business/users', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/business/users/{userId}', {
         pathParameters: { userId: 'foo' },
       }),
       null as any,
@@ -200,7 +241,7 @@ describe('Public API - Retrieve a Business User', () => {
       null as any
     )
     const response = await userHandler(
-      getApiGatewayGetEvent(TEST_TENANT_ID, '/business/users', {
+      getApiGatewayGetEvent(TEST_TENANT_ID, '/business/users/{userId}', {
         pathParameters: { userId: '1' },
       }),
       null as any,

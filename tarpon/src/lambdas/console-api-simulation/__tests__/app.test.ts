@@ -7,26 +7,28 @@ import {
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import * as jwt from '@/@types/jwt'
+import { SimulationPostRequest } from '@/@types/openapi-internal/SimulationPostRequest'
 
-const TEST_PARAMETERS: SimulationRiskLevelsParametersRequest = {
-  parameters: [
-    {
-      type: 'PULSE',
-      classificationValues: [],
-      parameterAttributeRiskValues: [],
-      sampling: {
-        usersCount: 100,
+const TEST_PARAMETERS: SimulationPostRequest = {
+  riskLevelsParameters: {
+    parameters: [
+      {
+        type: 'PULSE',
+        classificationValues: [],
+        parameterAttributeRiskValues: [],
+        sampling: {
+          usersCount: 100,
+        },
+        name: 'Test Simulation',
       },
-      name: 'Test Simulation',
-    },
-  ],
-  type: 'PULSE',
-  defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+    ],
+    type: 'PULSE',
+    defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
+  },
 }
 
 withFeatureHook(['SIMULATOR'])
@@ -62,7 +64,7 @@ describe('Consoel API - Simulation', () => {
       parameters: {
         taskId: expect.any(String),
         jobId: expect.any(String),
-        ...TEST_PARAMETERS.parameters[0],
+        ...TEST_PARAMETERS.riskLevelsParameters?.parameters[0],
       },
     })
   })

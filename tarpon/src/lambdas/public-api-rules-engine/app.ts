@@ -5,15 +5,17 @@ import {
 import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { v4 as uuid4 } from 'uuid'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
-import { DefaultApiPostBusinessUserEventRequest } from '@/@types/openapi-public/RequestParameters'
-import { Transaction } from '@/@types/openapi-public/Transaction'
+import {
+  DefaultApiPostBusinessUserEventRequest,
+  DefaultApiPostConsumerTransactionRequest,
+} from '@/@types/openapi-public/RequestParameters'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
@@ -26,6 +28,7 @@ import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatab
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { filterLiveRules } from '@/services/rules-engine/utils'
+import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -61,17 +64,16 @@ export const transactionHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
+    const handlers = new Handlers()
+
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const pathTransactionId = event.pathParameters?.transactionId
 
-    if (event.httpMethod === 'POST' && event.body) {
+    const verifyTransaction = async (
+      request: DefaultApiPostConsumerTransactionRequest
+    ) => {
+      const transaction = request.Transaction
       const validationSegment = await addNewSubsegment('API', 'Validation')
-      const validationParams = event.queryStringParameters
-      const transaction = pickKnownEntityFields(
-        JSON.parse(event.body) as Transaction,
-        Transaction
-      )
       validationSegment?.addAnnotation('tenantId', tenantId)
       validationSegment?.addAnnotation(
         'transactionId',
@@ -100,32 +102,72 @@ export const transactionHandler = lambdaApi()(
       validationSegment?.close()
       const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
       const result = await rulesEngine.verifyTransaction(transaction, {
-        validateOriginUserId: validationParams?.validateOriginUserId === 'true',
+        validateOriginUserId: request?.validateOriginUserId === 'true',
         validateDestinationUserId:
-          validationParams?.validateDestinationUserId === 'true',
+          request?.validateDestinationUserId === 'true',
       })
       logger.info(`Completed processing transaction`)
       return {
         ...result,
         ...filterLiveRules(result),
       }
-    } else if (event.httpMethod === 'GET' && pathTransactionId) {
+    }
+    handlers.registerGetConsumerTransaction(async (_ctx, request) => {
       const transactionRepository = new DynamoDbTransactionRepository(
         tenantId,
         dynamoDb
       )
       const result = await transactionRepository.getTransactionById(
-        pathTransactionId
+        request.transactionId
       )
       if (!result) {
-        throw new NotFound(`Transaction ${pathTransactionId} not found`)
+        throw new NotFound(`Transaction ${request.transactionId} not found`)
       }
       return {
         ...result,
         ...filterLiveRules(result),
       }
-    }
-    throw new Error('Unhandled request')
+    })
+    handlers.registerPostConsumerTransaction(async (_ctx, request) => {
+      return verifyTransaction(request)
+    })
+    handlers.registerPostBatchTransactions(async (ctx, request) => {
+      const transactionRepository = new DynamoDbTransactionRepository(
+        ctx.tenantId,
+        getDynamoDbClient()
+      )
+      const existingTransactions = (
+        await Promise.all(
+          request.TransactionBatchRequest.data.map((transaction) =>
+            transactionRepository.getTransactionById(transaction.transactionId)
+          )
+        )
+      ).filter(Boolean)
+      if (existingTransactions.length > 0) {
+        return {
+          message: `Some transactions already exist: ${existingTransactions.map(
+            (transaction) => transaction?.transactionId
+          )}`,
+        }
+      }
+      const batchId = request.TransactionBatchRequest.batchId || uuid4()
+      logger.info(`Processing batch ${batchId}`)
+      // TODO do this in a queue
+      await Promise.all(
+        request.TransactionBatchRequest.data.map((transaction) =>
+          verifyTransaction({
+            Transaction: transaction,
+            validateOriginUserId: request.validateOriginUserId,
+            validateDestinationUserId: request.validateDestinationUserId,
+          })
+        )
+      )
+      return {
+        batchId,
+        message: 'Batch transactions processed',
+      }
+    })
+    return await handlers.handle(event)
   }
 )
 
@@ -135,19 +177,17 @@ export const transactionEventHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
+    const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
-    const eventId = event.pathParameters?.eventId
     const dynamoDb = getDynamoDbClientByEvent(event)
     const transactionEventRepository = new TransactionEventRepository(
       tenantId,
       { mongoDb: await getMongoDbClient() }
     )
 
-    if (event.httpMethod === 'POST' && event.body) {
-      const transactionEvent = pickKnownEntityFields(
-        JSON.parse(event.body) as TransactionEvent,
-        TransactionEvent
-      )
+    const createTransactionEvent = async (
+      transactionEvent: TransactionEvent
+    ) => {
       transactionEvent.updatedTransactionAttributes =
         transactionEvent.updatedTransactionAttributes &&
         pickKnownEntityFields(
@@ -168,7 +208,26 @@ export const transactionEventHandler = lambdaApi()(
         ...filterLiveRules(result),
       }
     }
-    if (event.httpMethod === 'GET' && eventId) {
+
+    handlers.registerPostTransactionEvent(
+      async (_ctx, { TransactionEvent: transactionEvent }) =>
+        await createTransactionEvent(transactionEvent)
+    )
+    handlers.registerPostBatchTransactionEvents(async (_ctx, request) => {
+      const batchId = request.TransactionEventBatchRequest.batchId || uuid4()
+      logger.info(`Processing batch ${batchId}`)
+      // TODO do this in a queue
+      await Promise.all(
+        request.TransactionEventBatchRequest.data.map((event) =>
+          createTransactionEvent(event)
+        )
+      )
+      return {
+        batchId,
+        message: 'Batch transaction events processed',
+      }
+    })
+    handlers.registerGetTransactionEvent(async (_ctx, { eventId }) => {
       const result = await transactionEventRepository.getMongoTransactionEvent(
         eventId
       )
@@ -176,8 +235,8 @@ export const transactionEventHandler = lambdaApi()(
         throw new NotFound(`Transaction event ${eventId} not found`)
       }
       return result
-    }
-    throw new Error('Unhandled request')
+    })
+    return await handlers.handle(event)
   }
 )
 
@@ -187,8 +246,8 @@ export const userEventsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<Credentials>
     >
   ) => {
+    const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
-    const eventId = event.pathParameters?.eventId
     const dynamoDb = getDynamoDbClientByEvent(event)
     const userEventRepository = new UserEventRepository(tenantId, {
       mongoDb: await getMongoDbClient(),
@@ -199,15 +258,7 @@ export const userEventsHandler = lambdaApi()(
         'BusinessUserEvent'
       >) ?? {}
 
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/events/consumer/user' &&
-      event.body
-    ) {
-      const userEvent = pickKnownEntityFields(
-        JSON.parse(event.body) as ConsumerUserEvent,
-        ConsumerUserEvent
-      )
+    const createUserEvent = async (userEvent: ConsumerUserEvent) => {
       userEvent.updatedConsumerUserAttributes =
         userEvent.updatedConsumerUserAttributes &&
         pickKnownEntityFields(
@@ -244,56 +295,74 @@ export const userEventsHandler = lambdaApi()(
         ...filterLiveRules(result),
       }
     }
-    if (
-      event.httpMethod === 'POST' &&
-      event.resource === '/events/business/user' &&
-      event.body
-    ) {
-      const userEvent = pickKnownEntityFields(
-        JSON.parse(event.body) as BusinessUserEvent,
-        BusinessUserEvent
-      )
-      userEvent.updatedBusinessUserAttributes =
-        userEvent.updatedBusinessUserAttributes &&
-        pickKnownEntityFields(
-          userEvent.updatedBusinessUserAttributes,
-          BusinessOptional
-        )
-      updateLogMetadata({
-        businessUserId: userEvent.userId,
-        eventId: userEvent.eventId,
-      })
-      logger.info(`Processing Business User Event`) // Need to log to show on the logs
 
-      const userManagementService = new UserManagementService(
-        tenantId,
-        dynamoDb,
-        await getMongoDbClient()
-      )
-      const { updatedBusinessUserAttributes } = userEvent
-      if (updatedBusinessUserAttributes?.linkedEntities) {
-        await userManagementService.validateLinkedEntitiesAndEmitEvent(
-          updatedBusinessUserAttributes?.linkedEntities,
-          userEvent.userId
-        )
+    handlers.registerPostUserEvent(
+      async (_ctx, { ConsumerUserEvent: userEvent }) => {
+        return createUserEvent(userEvent)
       }
-      const result = await userManagementService.verifyBusinessUserEvent(
-        userEvent,
-        allowUserTypeConversion === 'true'
+    )
+    handlers.registerPostBatchConsumerUserEvents(async (_ctx, request) => {
+      const batchId = request.ConsumerUserEventBatchRequest.batchId || uuid4()
+      logger.info(`Processing batch ${batchId}`)
+      // TODO do this in a queue
+      await Promise.all(
+        request.ConsumerUserEventBatchRequest.data.map((userEvent) => {
+          return createUserEvent(userEvent)
+        })
       )
-
       return {
-        ...result,
-        ...filterLiveRules(result),
+        batchId,
+        message: 'Batch user events processed',
       }
-    }
-    if (event.httpMethod === 'GET' && eventId) {
+    })
+    handlers.registerPostBusinessUserEvent(
+      async (_ctx, { BusinessUserEvent: userEvent }) => {
+        userEvent.updatedBusinessUserAttributes =
+          userEvent.updatedBusinessUserAttributes &&
+          pickKnownEntityFields(
+            userEvent.updatedBusinessUserAttributes,
+            BusinessOptional
+          )
+        updateLogMetadata({
+          businessUserId: userEvent.userId,
+          eventId: userEvent.eventId,
+        })
+        logger.info(`Processing Business User Event`) // Need to log to show on the logs
+
+        const userManagementService = new UserManagementService(
+          tenantId,
+          dynamoDb,
+          await getMongoDbClient()
+        )
+        const { updatedBusinessUserAttributes } = userEvent
+        if (updatedBusinessUserAttributes?.linkedEntities) {
+          await userManagementService.validateLinkedEntitiesAndEmitEvent(
+            updatedBusinessUserAttributes?.linkedEntities,
+            userEvent.userId
+          )
+        }
+        const result = await userManagementService.verifyBusinessUserEvent(
+          userEvent,
+          allowUserTypeConversion === 'true'
+        )
+
+        return {
+          ...result,
+          ...filterLiveRules(result),
+        }
+      }
+    )
+
+    const getUserEventHandler = async (_ctx, { eventId }) => {
       const result = await userEventRepository.getMongoUserEvent(eventId)
       if (!result) {
         throw new NotFound(`User event ${eventId} not found`)
       }
       return result
     }
-    throw new Error('Unhandled request')
+
+    handlers.registerGetConsumerUserEvent(getUserEventHandler)
+    handlers.registerGetBusinessUserEvent(getUserEventHandler)
+    return await handlers.handle(event)
   }
 )

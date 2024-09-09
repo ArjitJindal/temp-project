@@ -89,8 +89,9 @@ export function RiskFactorsSimulation(props: Props) {
   >(
     async (simulationData) => {
       return api.postSimulation({
-        SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest:
-          simulationData,
+        SimulationPostRequest: {
+          riskFactorsParameters: simulationData,
+        },
       });
     },
     {

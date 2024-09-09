@@ -1,4 +1,4 @@
-import { NotFound } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -26,10 +26,15 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
     )
 
     handlers.registerPostSimulation(async (ctx, request) => {
-      const simulationParameters =
-        request.SimulationRiskLevelsParametersRequest___SimulationBeaconParametersRequest___SimulationRiskFactorsParametersRequest
+      const parameters =
+        request.SimulationPostRequest.beaconParameters ||
+        request.SimulationPostRequest.riskFactorsParameters ||
+        request.SimulationPostRequest.riskLevelsParameters
 
-      return await simulationService.createSimulation(simulationParameters)
+      if (!parameters) {
+        throw new BadRequest('Invalid simulation parameters')
+      }
+      return await simulationService.createSimulation(parameters)
     })
 
     handlers.registerGetSimulationTestId(async (ctx, request) => {
