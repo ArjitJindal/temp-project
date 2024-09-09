@@ -1637,12 +1637,31 @@ export class MongoDbTransactionRepository
     transactionId: string,
     arsScore: ArsScore
   ): Promise<void> {
+    await this.updateTransaction(transactionId, { arsScore })
+  }
+
+  private async updateTransaction(
+    transactionId: string,
+    update: Partial<InternalTransaction>
+  ) {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(this.tenantId)
     )
 
-    await collection.updateOne({ transactionId }, { $set: { arsScore } })
+    const updatedTransaction = await collection.findOneAndUpdate(
+      { transactionId },
+      { $set: update },
+      { returnDocument: 'after' }
+    )
+
+    if (updatedTransaction.value) {
+      await insertToClickhouse<InternalTransaction>(
+        TRANSACTIONS_COLLECTION(this.tenantId),
+        updatedTransaction.value,
+        this.tenantId
+      )
+    }
   }
 
   public sampleTransactionsCursor(
@@ -1656,6 +1675,18 @@ export class MongoDbTransactionRepository
       { $sample: { size: count } },
     ])
   }
+
+  /**
+   * Not inserting into clickhouse because this is a metadata update
+   * We can do something like
+   * SELECT id
+   * FROM transactions
+   * WHERE id IN (
+   *     SELECT arrayJoin(transactionIds)
+   *     FROM alert
+   *     WHERE alertId = 'A-1'
+   * )
+   */
 
   public async updateTransactionAlertIds(
     transactionIds?: string[],
@@ -1678,6 +1709,10 @@ export class MongoDbTransactionRepository
     )
   }
 
+  /**
+   * Same as updateTransactionAlertIds but removing the alertIds
+   * We can do something like above here also
+   */
   public async removeTransactionAlertIds(
     transactionIds?: string[],
     alertIds?: string[]
