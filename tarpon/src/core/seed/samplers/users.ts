@@ -267,7 +267,13 @@ export function sampleConsumerUser() {
       'CONSUMER'
     ),
     createdTimestamp: sampleTimestamp(3600 * 24 * 365 * 1000),
-    tags: [sampleTag()],
+    tags: [
+      {
+        key: 'crmAccountId',
+        value: uuid4(),
+      },
+      sampleTag(),
+    ],
     transactionLimits: sampleExpectedTransactionLimit(),
   }
 
