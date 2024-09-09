@@ -45,16 +45,14 @@ const enumFields = (
   fieldNameTo: string
 ): string => {
   const enumType = enumValues.length <= 16 ? 'Enum8' : 'Enum'
-  const nullableEnumValues = enumValues
-    .map((m, i) => `'${m}' = ${i + 1}`)
-    .concat(`'' = 0`)
-    .join(', ')
+  const nullableEnumValues = enumValues.map((m, i) => `'${m}' = ${i + 1}`)
+  nullableEnumValues.unshift(`'' = 0`)
+  const nullableEnumValuesString = nullableEnumValues.join(', ')
 
-  const type = `${enumType}(${nullableEnumValues})`
-  const jsonExtractType = `${enumType}(${enumValues
-    .map((m, i) => `\\'${m}\\' = ${i + 1}`)
-    .concat(`\\'\\' = 0`)
-    .join(', ')})`
+  const type = `${enumType}(${nullableEnumValuesString})`
+  const jsonExtract = enumValues.map((m, i) => `\\'${m}\\' = ${i + 1}`)
+  jsonExtract.unshift(`\\'\\' = 0`)
+  const jsonExtractType = `${enumType}(${jsonExtract.join(', ')})`
 
   return `${fieldNameTo} ${type} MATERIALIZED JSONExtract(data, '${fieldNameFrom
     .split('.')

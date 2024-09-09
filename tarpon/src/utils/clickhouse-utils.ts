@@ -254,25 +254,52 @@ async function addMissingColumns(
   const existingColumns = await getExistingColumns(client, tableName)
   const columns = getAllColumns(table)
   for (const col of columns) {
-    const [colName, colType, expr] = parseColumnDefinition(col)
-    if (!existingColumns.find((c) => c.name === colName)) {
+    const { colName, colType, expr = '' } = parseColumnDefinition(col)
+    const existingColumn = existingColumns.find((c) => c.name === colName)
+    // remove unnecessare '\n' from colType and only keep a single whitespace
+
+    if (!existingColumn) {
       await addColumn(client, tableName, colName, colType, expr)
+      continue
+    }
+
+    const updatedColType = colType.split('DEFAULT')[0].trim()
+    const existingColType = existingColumn.type
+      .replace(/\s+/g, ' ')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
+      .trim()
+
+    if (existingColType !== updatedColType) {
+      await updateColumn(client, tableName, colName, colType, expr)
     }
   }
 }
 
 async function getExistingColumns(client: ClickHouseClient, tableName: string) {
   const describeTableQuery = `DESCRIBE TABLE ${tableName}`
-  const response: ResponseJSON<{ name: string; default_expression: string }> =
-    await (await client.query({ query: describeTableQuery })).json()
+  const response: ResponseJSON<{
+    name: string
+    default_expression: string
+    type: string
+  }> = await (await client.query({ query: describeTableQuery })).json()
   return response.data
 }
 
-function parseColumnDefinition(col: string): [string, string, string] {
+function parseColumnDefinition(col: string): {
+  colName: string
+  colType: string
+  expr: string
+} {
   const [colName, ...rest] = col.split(' ')
-  const expr = rest.join(' ').split('MATERIALIZED ')[1]
-  const colType = rest.join(' ').split(' MATERIALIZED ')[0]
-  return [colName, colType, expr]
+  const expr = rest.join(' ').split('MATERIALIZED ')[1]?.trim()
+  const colType = rest.join(' ').split(' MATERIALIZED ')[0].trim()
+
+  return {
+    colName,
+    colType,
+    expr,
+  }
 }
 
 async function addColumn(
@@ -291,6 +318,20 @@ async function addColumn(
   logger.info(
     `Added missing materialized column ${colName} to table ${tableName}.`
   )
+}
+
+async function updateColumn(
+  client: ClickHouseClient,
+  tableName: string,
+  colName: string,
+  colType: string,
+  expr?: string
+): Promise<void> {
+  const updateColumnQuery = `ALTER TABLE ${tableName} MODIFY COLUMN ${colName} ${colType} ${
+    expr ? 'MATERIALIZED ' + expr : ''
+  }`
+  logger.info(`Updated materialized column ${colName} in table ${tableName}.`)
+  await client.query({ query: updateColumnQuery })
 }
 
 async function addMissingProjections(

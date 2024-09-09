@@ -1382,8 +1382,7 @@ export class CdkTarponStack extends cdk.Stack {
       this.config.env.region
     ) {
       const eventBus = new events.EventBus(this, 'MongoEvent', {
-        eventSourceName:
-          'aws.partner/mongodb.com/stitch.trigger/66d9d1170604e3825f395f1c',
+        eventSourceName: `aws.partner/mongodb.com/stitch.trigger/${this.config.application.MONGO_EVENT_TRIGGER_RULE_ID}`,
       })
 
       this.addTagsToResource(eventBus, {
@@ -1409,7 +1408,7 @@ export class CdkTarponStack extends cdk.Stack {
         tags: [{ key: FEATURE, value: FEATURES.MONGO_DB_CONSUMER }],
       })
 
-      const { alias: mongoDbConsumerAlias } = createFunction(
+      const { alias: mongoDbConsumerAlias, func } = createFunction(
         this,
         lambdaExecutionRole,
         {
@@ -1421,15 +1420,26 @@ export class CdkTarponStack extends cdk.Stack {
         [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
       })
 
+      this.addTagsToResource(func, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
+
       eventRule.addTarget(new LambdaFunctionTarget(mongoDbConsumerAlias))
 
-      const { alias: mongoDbTriggerQueueConsumerAlias } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
-        }
-      )
+      const {
+        alias: mongoDbTriggerQueueConsumerAlias,
+        func: mongoDbTriggerQueueConsumerFunc,
+      } = createFunction(this, lambdaExecutionRole, {
+        name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+      })
+
+      this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
+
+      this.addTagsToResource(mongoDbTriggerQueueConsumerFunc, {
+        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+      })
 
       mongoDbTriggerQueueConsumerAlias.addEventSource(
         new SqsEventSource(mongoDbConsumerQueue, {

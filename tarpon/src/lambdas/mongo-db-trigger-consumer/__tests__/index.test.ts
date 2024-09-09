@@ -22,38 +22,42 @@ describe('Handle Messages', () => {
     expect(
       handleMessages([
         {
-          _id: new ObjectId('666666666666666666666666'),
-          collectionUUID: new Binary('666666666666666666666666', 4),
-          documentKey: {
+          detail: {
             _id: new ObjectId('666666666666666666666666'),
+            collectionUUID: new Binary('666666666666666666666666', 4),
+            documentKey: {
+              _id: new ObjectId('666666666666666666666666'),
+            },
+            ns: {
+              db: 'tarpon',
+              coll: 'cases',
+            },
+            operationType: 'delete',
+            clusterTime: new Timestamp(new Long(0, 0)),
           },
-          ns: {
-            db: 'tarpon',
-            coll: 'cases',
-          },
-          operationType: 'delete',
-          clusterTime: new Timestamp(new Long(0, 0)),
-        },
+        } as any,
         {
-          _id: new ObjectId('666666666666666666666666'),
-          collectionUUID: new Binary('666666666666666666666666', 4),
-          documentKey: {
+          detail: {
             _id: new ObjectId('666666666666666666666666'),
-          },
-          ns: {
-            db: 'tarpon',
-            coll: 'cases',
-          },
-          operationType: 'update',
-          clusterTime: new Timestamp(new Long(1, 1)),
-          updateDescription: {
-            updatedFields: {
-              $case: {
-                caseId: '123',
+            collectionUUID: new Binary('666666666666666666666666', 4),
+            documentKey: {
+              _id: new ObjectId('666666666666666666666666'),
+            },
+            ns: {
+              db: 'tarpon',
+              coll: 'cases',
+            },
+            operationType: 'update',
+            clusterTime: new Timestamp(new Long(1, 1)),
+            updateDescription: {
+              updatedFields: {
+                $case: {
+                  caseId: '123',
+                },
               },
             },
           },
-        },
+        } as any,
       ])
     ).toMatchObject({
       messagesToReplace: {
@@ -73,18 +77,20 @@ describe('Handle Messages', () => {
     expect(
       handleMessages([
         {
-          _id: new ObjectId('666666666666666666666666'),
-          collectionUUID: new Binary('666666666666666666666666', 4),
-          documentKey: {
+          detail: {
             _id: new ObjectId('666666666666666666666666'),
+            collectionUUID: new Binary('666666666666666666666666', 4),
+            documentKey: {
+              _id: new ObjectId('666666666666666666666666'),
+            },
+            ns: {
+              db: 'tarpon',
+              coll: 'cases',
+            },
+            operationType: 'delete',
+            clusterTime: new Timestamp(new Long(0, 0)),
           },
-          ns: {
-            db: 'tarpon',
-            coll: 'cases',
-          },
-          operationType: 'delete',
-          clusterTime: new Timestamp(new Long(0, 0)),
-        },
+        } as any,
       ])
     ).toMatchObject({
       messagesToDelete: {

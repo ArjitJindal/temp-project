@@ -17,6 +17,7 @@ const enabledCollections = [
   'users',
   'transaction-events',
   'user-events',
+  'cases',
 ]
 
 export class CdktfTarponStack extends TerraformStack {

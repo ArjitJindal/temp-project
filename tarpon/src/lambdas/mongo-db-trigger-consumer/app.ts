@@ -9,7 +9,6 @@ import {
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { memoize } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { logger } from '@/core/logger'
 import {
   CLICKHOUSE_DEFINITIONS,
   ClickhouseTableDefinition,
@@ -22,7 +21,6 @@ import {
   getClickhouseClient,
   sanitizeTableName,
 } from '@/utils/clickhouse-utils'
-import { generateChecksum } from '@/utils/object'
 
 type ChangeStreamDocument =
   | ChangeStreamInsertDocument
@@ -53,13 +51,10 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
       throw new Error('MONGO_DB_CONSUMER_QUEUE_URL is not set')
     }
 
-    const tableName = event.detail.ns.coll
-
     await sqs.send(
       new SendMessageCommand({
         QueueUrl: queueUrl,
         MessageBody: JSON.stringify(event),
-        MessageGroupId: generateChecksum(tableName),
       })
     )
   }
@@ -98,21 +93,21 @@ export const fetchTableDetails = (tableName: string): TableDetails | false => {
   }
 }
 
-export function handleMessages(records: ChangeStreamDocument[]): {
-  messagesToDelete: Record<string, ChangeStreamDeleteDocument>
-  messagesToReplace: Record<string, ChangeStreamReplaceDocument>
-} {
+type SQSMessagesType = EventBridgeEvent<string, ChangeStreamDocument>
+
+export function handleMessages(records: SQSMessagesType[]) {
   const messagesToDelete: Record<string, ChangeStreamDeleteDocument> = {}
   const messagesToReplace: Record<string, ChangeStreamReplaceDocument> = {}
   records.forEach((record) => {
+    const data = record.detail
     const {
       documentKey: { _id },
       clusterTime = 0,
       operationType,
-    } = record
+    } = data
     const key = _id.toString()
     if (operationType === 'delete') {
-      const deleteRecord = record as ChangeStreamDeleteDocument
+      const deleteRecord = data as ChangeStreamDeleteDocument
       if (
         !messagesToReplace[key] ||
         (messagesToReplace[key]?.clusterTime ?? 0) < clusterTime
@@ -127,7 +122,7 @@ export function handleMessages(records: ChangeStreamDocument[]): {
       operationType === 'insert' ||
       operationType === 'update'
     ) {
-      const replaceRecord = record as ChangeStreamReplaceDocument
+      const replaceRecord = data as ChangeStreamReplaceDocument
       if (
         !messagesToDelete[key] ||
         (messagesToDelete[key]?.clusterTime ?? 0) < clusterTime
@@ -196,11 +191,10 @@ async function handleMessagesReplace(
 
 export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
-    logger.info(`Processing ${event.Records.length} messages`)
-
-    const { messagesToReplace, messagesToDelete } = handleMessages(
-      event.Records.map((record) => JSON.parse(record.body))
-    )
+    const events = event.Records.map((record) =>
+      JSON.parse(record.body)
+    ) as SQSMessagesType[]
+    const { messagesToReplace, messagesToDelete } = handleMessages(events)
 
     const mongoClient = await getMongoDbClient()
 
