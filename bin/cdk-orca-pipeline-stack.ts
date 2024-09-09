@@ -57,7 +57,7 @@ export class CdkOrcaPipelineStack extends Stack {
 
     createVpcLogGroup(this, vpc, {
       name: 'codebuild-orca',
-      logRetention: RetentionDays.TWO_MONTHS,
+      logRetention: RetentionDays.ONE_WEEK,
     })
 
     const role = getCodeDeployRole(this, deployConfig)
