@@ -45,10 +45,13 @@ exports.onExecutePostLogin = async (event, api) => {
         }
       }
 
-      mfaEnabled = organization.metadata.mfa === 'true'
+      mfaEnabled = organization.metadata.mfaEnabled === 'true'
 
+      // https://auth0.com/docs/customize/actions/flows-and-triggers/login-flow/api-object
       if (!mfaEnabled) {
         api.multifactor.enable('none')
+      } else {
+        api.multifactor.enable('any', { allowRememberBrowser: false })
       }
 
       const roles = event.authorization.roles
