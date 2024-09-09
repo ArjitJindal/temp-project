@@ -241,7 +241,7 @@ const loadAmount = async (
     return
   }
   if (!context?.baseCurrency) {
-    logger.error('Missing base currency for transaction amount variable!')
+    logger.warn('Missing base currency for transaction amount variable!')
   }
   const amount = await currencyService.getTargetCurrencyAmount(
     amountDetails,
