@@ -381,7 +381,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        entityTypes: ['BANK_NAME'],
+        entityTypes: ['LEGAL_NAME'],
       } as SanctionsBusinessUserRuleParameters,
       action: 'SUSPEND',
       checksFor: ['Entity name'],
@@ -393,7 +393,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          entityTypes: ['BANK_NAME'],
+          entityTypes: ['LEGAL_NAME'],
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
@@ -402,25 +402,25 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          entityTypes: ['LEGAL_NAME'],
         } as SanctionsBusinessUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          entityTypes: ['LEGAL_NAME'],
         } as SanctionsBusinessUserRuleParameters,
         LOW: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          entityTypes: ['LEGAL_NAME'],
         } as SanctionsBusinessUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
+          entityTypes: ['LEGAL_NAME'],
         } as SanctionsBusinessUserRuleParameters,
       },
       riskLevelActions: {
@@ -464,34 +464,24 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          entityTypes: ['BANK_NAME'],
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         } as SanctionsCounterPartyRuleParameters,
         HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
         } as SanctionsCounterPartyRuleParameters,
         MEDIUM: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
         } as SanctionsCounterPartyRuleParameters,
         LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
         } as SanctionsCounterPartyRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-          entityTypes: ['BANK_NAME'],
         } as SanctionsCounterPartyRuleParameters,
       },
       riskLevelActions: {

@@ -1,6 +1,7 @@
 import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { uniq } from 'lodash'
 import { getSanctions, getSanctionsHits } from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
@@ -181,8 +182,10 @@ export function getUserRules(
 ) {
   const hitRules =
     randomFloat() < 0.2
-      ? randomUserRules().filter((r) =>
-          r.ruleName.toLowerCase().includes(type.toLowerCase())
+      ? randomUserRules().filter(
+          (r) =>
+            r.ruleName.toLowerCase().includes(type.toLowerCase()) ||
+            r.ruleName.toLowerCase().includes('bank')
         )
       : []
 
@@ -211,6 +214,7 @@ export function getUserRules(
         name: username,
         searchId: historyItem._id,
         entityType: type === 'CONSUMER' ? entityType : 'LEGAL_NAME',
+        sanctionHitIds: uniq(hits.map((hit) => hit.sanctionsHitId)),
       }
 
       r.ruleHitMeta.sanctionsDetails = [
