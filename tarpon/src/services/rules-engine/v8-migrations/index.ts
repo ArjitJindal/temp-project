@@ -381,6 +381,20 @@ const V8_CONVERSION: Readonly<
         },
       }).logicAggregationVariables
 
+    aggregationVariable.push({
+      key: 'agg:transactionsCount',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection:
+        checkDirection === 'all' ? 'SENDING_RECEIVING' : 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      aggregationFunc: 'COUNT',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+    })
+
     const conditions: any[] = []
 
     const v = aggregationVariable[0]
@@ -388,20 +402,8 @@ const V8_CONVERSION: Readonly<
       '==': [{ var: v.key }, 1],
     })
 
-    const orConditions: any[] = []
-
-    orConditions.push({
-      '!=': [{ var: 'USER:sendingTransactionsCount__SENDER' }, 0],
-    })
-
-    if (checkDirection === 'all') {
-      orConditions.push({
-        '!=': [{ var: 'USER:receivingTransactionsCount__SENDER' }, 0],
-      })
-    }
-
     conditions.push({
-      or: orConditions,
+      '>': [{ var: 'agg:transactionsCount' }, 1],
     })
 
     return {

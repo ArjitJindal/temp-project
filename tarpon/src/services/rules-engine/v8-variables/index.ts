@@ -1,4 +1,4 @@
-import { get, lowerCase, startCase, memoize, groupBy, mapValues } from 'lodash'
+import { get, groupBy, lowerCase, mapValues, memoize, startCase } from 'lodash'
 import { FieldOrGroup, ValueSource } from '@react-awesome-query-builder/core'
 import {
   BusinessUserRuleVariable,
@@ -6,17 +6,17 @@ import {
   ConsumerUserRuleVariable,
   RuleEntityType,
   RuleVariableBase as RuleVariable,
-  TransactionRuleVariable,
   RuleVariableContext,
   TransactionEventRuleVariable,
+  TransactionRuleVariable,
 } from './types'
 import {
-  CONSUMER_USER_CREATION_AGE_DAYS,
-  CONSUMER_USER_CREATION_AGE_MONTHS,
-  CONSUMER_USER_CREATION_AGE_YEARS,
   BUSINESS_USER_CREATION_AGE_DAYS,
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
+  CONSUMER_USER_CREATION_AGE_DAYS,
+  CONSUMER_USER_CREATION_AGE_MONTHS,
+  CONSUMER_USER_CREATION_AGE_YEARS,
 } from './user-creation-age'
 import {
   BUSINESS_USER_AGE_DAYS,
@@ -41,15 +41,11 @@ import {
   TRANSACTION_DESTINATION_PAYMENT_DETAILS_IDENTIFIER,
   TRANSACTION_ORIGIN_PAYMENT_DETAILS_IDENTIFIER,
 } from './payment-details'
-import {
-  SENDING_TRANSACTIONS_COUNT,
-  RECEIVING_TRANSACTIONS_COUNT,
-} from './transactions-count'
 import { TRANSACTION_TRS_SCORE } from './trs-score'
 import {
   TRANSACTION_DESTINATION_IP_CITY_VARIABLE,
-  TRANSACTION_ORIGIN_IP_CITY_VARIABLE,
   TRANSACTION_DESTINATION_IP_COUNTRY_VARIABLE,
+  TRANSACTION_ORIGIN_IP_CITY_VARIABLE,
   TRANSACTION_ORIGIN_IP_COUNTRY_VARIABLE,
 } from './transaction-ip-info'
 import { USER_CHILD_USER_IDS } from './user-child-user-ids'
@@ -202,8 +198,6 @@ const USER_DERIVED_VARIABLES: Array<
   BUSINESS_USER_CREATION_AGE_DAYS,
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
-  SENDING_TRANSACTIONS_COUNT,
-  RECEIVING_TRANSACTIONS_COUNT,
 ]
 
 function isTimestampVariable(key: string): boolean {
