@@ -51,7 +51,18 @@ exports.onExecutePostLogin = async (event, api) => {
       if (!mfaEnabled) {
         api.multifactor.enable('none')
       } else {
-        api.multifactor.enable('any', { allowRememberBrowser: false })
+        /**
+         * --- AUTH0 ACTIONS TEMPLATE https://github.com/auth0/opensource-marketplace/blob/main/templates/require-mfa-once-per-session-POST_LOGIN ---
+         */
+        if (
+          !event.authentication ||
+          !Array.isArray(event.authentication.methods) ||
+          !event.authentication.methods.find((method) => method.name === 'mfa')
+        ) {
+          api.multifactor.enable('any', { allowRememberBrowser: false })
+        } else {
+          api.multifactor.enable('none')
+        }
       }
 
       const roles = event.authorization.roles
