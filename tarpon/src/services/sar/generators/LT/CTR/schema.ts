@@ -682,6 +682,7 @@ export const schema = {
             'ZW',
             'AX',
             'EEA',
+            'XE',
           ],
           'ui:schema': {
             'ui:subtype': 'COUNTRY',
@@ -972,6 +973,7 @@ export const schema = {
             'ZM',
             'ZW',
             'AX',
+            'XE',
             'EEA',
           ],
           'ui:schema': {

@@ -680,6 +680,7 @@ export const schema = {
             'ZM',
             'ZW',
             'AX',
+            'XE',
             'EEA',
           ],
           'ui:schema': {
