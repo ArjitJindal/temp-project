@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { keyBy, uniq } from 'lodash';
 import { COUNTRIES, COUNTRY_ALIASES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
+import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
 import style from './style.module.less';
 import Select, { Option } from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -49,7 +50,6 @@ import NumberInput from '@/components/library/NumberInput';
 import { getOr } from '@/utils/asyncResource';
 import { BOOLEAN_OPTIONS } from '@/utils/booleanOptions';
 import { SOURCE_OF_FUNDSS } from '@/apis/models-custom/SourceOfFunds';
-import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 import Tag from '@/components/library/Tag';
 import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.svg';

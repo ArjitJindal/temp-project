@@ -1,4 +1,5 @@
 import { COUNTRIES } from '@flagright/lib/constants';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RiskScores } from '../Header/HeaderMenu';
 import {
   InternalBusinessUser,
@@ -12,7 +13,6 @@ import {
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import { humanizeAuto } from '@/utils/humanize';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   DEFAULT_RENDERER,

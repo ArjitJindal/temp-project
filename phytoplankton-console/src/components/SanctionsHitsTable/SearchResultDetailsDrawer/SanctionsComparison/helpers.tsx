@@ -1,8 +1,8 @@
 import { uniq } from 'lodash';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { SanctionsComparisonTableItem, SanctionsComparisonTableItemMatch } from './types';
 import { ComplyAdvantageNameMatched, SanctionsHit } from '@/apis';
 import { notEmpty } from '@/utils/array';
-import { humanizeConstant } from '@/utils/humanize';
 
 export function getComparisonItems(hit: SanctionsHit): SanctionsComparisonTableItem[] {
   // Make a single item for every match in every caMatchTypesDetails

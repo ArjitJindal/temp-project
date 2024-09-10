@@ -1,7 +1,7 @@
 import React from 'react';
+import { humanizeCamelCase, humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
-import { humanizeCamelCase, humanizeConstant } from '@/utils/humanize';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import Address from '@/components/ui/Address';
 import {

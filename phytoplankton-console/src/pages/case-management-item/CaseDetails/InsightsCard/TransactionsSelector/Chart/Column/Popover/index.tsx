@@ -1,6 +1,7 @@
 import React from 'react';
 import { Popover as AntPopover } from 'antd';
 import { Currency } from '@flagright/lib/constants';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { DataItem, Series } from '../../types';
 import { TRANSACTION_STATE_COLORS } from '..';
 import s from './styles.module.less';
@@ -13,7 +14,6 @@ import {
   getRuleActionLabel,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   series: Series;

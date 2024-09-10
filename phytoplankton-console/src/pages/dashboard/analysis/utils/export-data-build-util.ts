@@ -1,6 +1,6 @@
 import { orderBy } from 'lodash';
+import { humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import { CsvRow, csvValue, serialize } from '@/utils/csv';
-import { humanizeCamelCase } from '@/utils/humanize';
 
 export interface ExportData {
   [key: string]: string | number | undefined;

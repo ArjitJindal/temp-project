@@ -1,7 +1,7 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Tag from '../index';
 import { KYCStatusDetails } from '@/apis';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   kycStatusDetails: KYCStatusDetails;

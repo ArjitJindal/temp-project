@@ -1,5 +1,5 @@
+import { normalizeCase } from '@flagright/lib/utils/humanize';
 import { InputProps } from '@/components/library/Form';
-import { normalizeCase } from '@/utils/humanize';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
 import DeleteBin7LineIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';

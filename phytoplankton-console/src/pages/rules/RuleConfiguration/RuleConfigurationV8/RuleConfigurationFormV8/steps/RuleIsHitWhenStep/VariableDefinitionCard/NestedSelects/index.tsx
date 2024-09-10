@@ -1,7 +1,7 @@
 import React, { useState, useImperativeHandle, useRef } from 'react';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import Label from '@/components/library/Label';
 import Select, { Option as SelectOption } from '@/components/library/Select';
-import { firstLetterUpper } from '@/utils/humanize';
 
 export type Option = SelectOption<string> & {
   children?: Option[];

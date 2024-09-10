@@ -6,6 +6,7 @@ import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/con
 import { canAggregateMinute } from '@flagright/lib/rules-engine';
 import pluralize from 'pluralize';
 import { getAllValuesByKey } from '@flagright/lib/utils';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RuleLogicBuilder } from '../RuleLogicBuilder';
 import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
 import s from './style.module.less';
@@ -36,7 +37,6 @@ import VariableTimeWindow from '@/pages/rules/RuleConfiguration/RuleConfiguratio
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
-import { humanizeAuto } from '@/utils/humanize';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import NumberInput from '@/components/library/NumberInput';
 

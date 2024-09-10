@@ -1,3 +1,4 @@
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import {
   RuleAggregationVariableTimeWindow,
@@ -7,7 +8,6 @@ import {
 import { InputProps } from '@/components/library/Form';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import { RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS } from '@/apis/models-custom/RuleAggregationTimeWindowGranularity';
 import Checkbox from '@/components/library/Checkbox';

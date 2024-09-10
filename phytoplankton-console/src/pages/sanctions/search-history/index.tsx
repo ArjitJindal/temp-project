@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
+import { humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -14,7 +15,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME } from '@/components/library/Table/standardDataTypes';
 import { SanctionsSearchType } from '@/apis';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
-import { humanizeCamelCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import AccountTag from '@/components/AccountTag';
 import { AccountsFilter } from '@/components/library/AccountsFilter';

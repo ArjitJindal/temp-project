@@ -2,6 +2,7 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import { dayjs, Dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
@@ -20,7 +21,6 @@ import {
 } from '@/components/ui/colors';
 import Donut, { DonutData } from '@/pages/dashboard/analysis/components/charts/Donut';
 import { TransactionType } from '@/apis';
-import { humanizeConstant } from '@/utils/humanize';
 import DatePicker from '@/components/ui/DatePicker';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
 

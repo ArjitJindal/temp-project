@@ -1,12 +1,12 @@
 import React from 'react';
 import { findIndex } from 'lodash';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import OperatorSelect from '../OperatorSelect';
 import s from './styles.module.less';
 import { PolicyAlertStatusDetailsAlertStatusesEnum } from '@/apis/models/PolicyAlertStatusDetails';
 import { PolicyAlertStatusDetailsAlertStatusesCount } from '@/apis/models/PolicyAlertStatusDetailsAlertStatusesCount';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { humanizeSnakeCase } from '@/utils/humanize';
 import { NumberOperators } from '@/apis';
 import { Option } from '@/components/library/Select';
 

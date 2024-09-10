@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import { SLAPolicyDetails } from '@/apis/models/SLAPolicyDetails';
 import { H5, P } from '@/components/ui/Typography';
-import { humanizeConstant } from '@/utils/humanize';
 import { SLAPolicy } from '@/apis/models/SLAPolicy';
 import { duration } from '@/utils/dayjs';
 import { SLAPolicyStatus } from '@/apis';

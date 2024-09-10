@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import ComplyAdvantageHitDetailsDrawer from './ComplyAdvantageHitDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -17,7 +18,6 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
 import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
-import { humanizeSnakeCase } from '@/utils/humanize';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID, STRING } from '@/components/library/Table/standardDataTypes';

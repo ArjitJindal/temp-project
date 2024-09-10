@@ -1,6 +1,7 @@
 import { Typography } from 'antd';
 import { useState } from 'react';
 import { isEmpty, isEqual, startCase, toLower, uniq } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import COLORS from '@/components/ui/colors';
 import { AuditLog } from '@/apis';
 import { flattenObject, getFlattenedObjectHumanReadableKey } from '@/utils/json';
@@ -9,7 +10,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AccountTag from '@/components/AccountTag';
 import Modal from '@/components/library/Modal';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   data: AuditLog;

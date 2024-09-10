@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Tooltip from '../../Tooltip';
 import s from './index.module.less';
 import { CaseStatus, DerivedStatus } from '@/apis';
-import { humanizeConstant } from '@/utils/humanize';
 import { getDerivedStatus, getNextStatusFromInReview, statusInReview } from '@/utils/case-utils';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 import Tag from '@/components/library/Tag';

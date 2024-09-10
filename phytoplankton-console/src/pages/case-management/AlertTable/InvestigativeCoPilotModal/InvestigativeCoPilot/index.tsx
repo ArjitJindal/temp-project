@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import cn from 'clsx';
 import { nanoid } from 'nanoid';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
 import { parseQuestionResponse, QuestionResponse, QuestionResponseSkeleton } from './types';
@@ -32,7 +33,6 @@ import { useElementSize, scrollTo } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
 import { calcVisibleElements } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/helpers';
 import { notEmpty } from '@/utils/array';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   alertId: string;

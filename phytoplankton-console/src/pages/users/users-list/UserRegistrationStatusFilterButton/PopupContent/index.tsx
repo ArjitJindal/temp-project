@@ -1,12 +1,12 @@
 import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
 import { UserRegistrationStatus } from '@/apis';
 import { USER_REGISTRATION_STATUSS } from '@/apis/models-custom/UserRegistrationStatus';
 import COLORS from '@/components/ui/colors';
-import { capitalizeWords } from '@/utils/humanize';
 
 interface Props {
   value: UserRegistrationStatus[];

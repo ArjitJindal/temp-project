@@ -1,10 +1,10 @@
 import { ReactElement } from 'react';
 import { capitalize, has } from 'lodash';
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
+import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { LogItemData } from './LogCard/LogContainer/LogItem';
 import { Account, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
 import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
-import { firstLetterUpper, humanizeAuto } from '@/utils/humanize';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { statusEscalated } from '@/utils/case-utils';
 import { formatDuration, getDuration } from '@/utils/time-utils';

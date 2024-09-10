@@ -23,6 +23,7 @@ import moment from 'moment';
 import { TimePicker } from 'antd';
 import React from 'react';
 import { isArray, isEmpty } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import DatePicker from '../DatePicker';
 import s from './index.module.less';
 import {
@@ -40,7 +41,6 @@ import {
 } from './operators';
 import { FieldInput, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
-import { humanizeAuto } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import Label from '@/components/library/Label';

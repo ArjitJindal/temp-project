@@ -1,11 +1,11 @@
 import React from 'react';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import { InternalBusinessUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
-import { capitalizeWords } from '@/utils/humanize';
 import Tag from '@/components/library/Tag';
 
 export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {

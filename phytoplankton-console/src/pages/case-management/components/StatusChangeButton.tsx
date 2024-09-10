@@ -1,10 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { compact } from 'lodash';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
-import { humanizeConstant } from '@/utils/humanize';
 import { getNextStatus } from '@/utils/case-utils';
 
 export const statusToOperationName = (

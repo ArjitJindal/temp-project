@@ -1,11 +1,11 @@
 import { useState } from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import UserChangeModal from './UserChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser, Comment } from '@/apis';
 import { UserState } from '@/apis/models/UserState';
 import { useHasPermissions } from '@/utils/user-utils';
-import { humanizeConstant } from '@/utils/humanize';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 

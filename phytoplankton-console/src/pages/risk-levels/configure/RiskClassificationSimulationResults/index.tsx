@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
+import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
 import GroupedColumn from '../components/Charts';
 import RiskClassificationTable, { parseApiState } from '../RiskClassificationTable';
 import s from './styles.module.less';
@@ -33,7 +34,6 @@ import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import { Progress } from '@/components/Simulation/Progress';
 
 type Props = {

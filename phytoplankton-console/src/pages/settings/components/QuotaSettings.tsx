@@ -1,10 +1,10 @@
 import { startCase, toLower } from 'lodash';
+import { humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import SettingsCard from '@/components/library/SettingsCard';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { humanizeCamelCase } from '@/utils/humanize';
 import { useQuery } from '@/utils/queries/hooks';
 import { TENANT_USAGE_DATA } from '@/utils/queries/keys';
 

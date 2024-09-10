@@ -1,9 +1,9 @@
 import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import { PAYMENT_METHODS } from '@/utils/payments';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   value: string[];

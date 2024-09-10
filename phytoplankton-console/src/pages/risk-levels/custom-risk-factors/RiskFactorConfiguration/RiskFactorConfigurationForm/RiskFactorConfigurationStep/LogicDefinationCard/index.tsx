@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEqual } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RiskFactorConfigurationStepFormValues } from '..';
 import s from './style.module.less';
 import * as Card from '@/components/ui/Card';
@@ -27,7 +28,6 @@ import Tag from '@/components/library/Tag';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   ruleType: RuleType;

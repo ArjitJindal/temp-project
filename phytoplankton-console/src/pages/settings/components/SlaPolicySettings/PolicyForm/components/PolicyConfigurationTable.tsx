@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { capitalize } from 'lodash';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { FormValues } from '../../utils/utils';
 import s from './styles.module.less';
 import OperatorSelect from './OperatorSelect';
@@ -9,7 +10,6 @@ import Label from '@/components/library/Label';
 import Select, { Option } from '@/components/library/Select';
 import { useRoles } from '@/utils/user-utils';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
-import { humanizeSnakeCase } from '@/utils/humanize';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { useFormContext } from '@/components/library/Form/utils/hooks';

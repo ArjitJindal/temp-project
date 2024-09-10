@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import PaymentApprovalModal from './PaymentApprovalModal';
 import Button from '@/components/library/Button';
 import { RuleAction } from '@/apis';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   ids: string[];

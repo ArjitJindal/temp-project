@@ -1,6 +1,7 @@
 import React, { useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty, toLower } from 'lodash';
+import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useApi } from '@/api';
 import {
   Feature as FeatureName,
@@ -15,7 +16,6 @@ import { SETTINGS } from '@/utils/queries/keys';
 import { usePrevious } from '@/utils/hooks';
 import { isFailed, isSuccess } from '@/utils/asyncResource';
 import { message } from '@/components/library/Message';
-import { capitalizeWords, humanizeConstant } from '@/utils/humanize';
 import ErrorPage from '@/components/ErrorPage';
 import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { PageLoading } from '@/components/PageLoading';

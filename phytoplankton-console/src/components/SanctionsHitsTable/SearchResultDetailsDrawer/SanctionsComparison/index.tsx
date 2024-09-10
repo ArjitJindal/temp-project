@@ -1,6 +1,6 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
-import { humanizeConstant } from '@/utils/humanize';
 import { SanctionsComparisonTableItem } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison/types';
 import Tag from '@/components/library/Tag';
 import Tooltip from '@/components/library/Tooltip';

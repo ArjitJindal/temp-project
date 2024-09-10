@@ -2,6 +2,7 @@ import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 // import { Progress } from 'antd';
 import { isEmpty } from 'lodash';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import s from './styles.module.less';
 import {
@@ -29,7 +30,6 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { makeUrl } from '@/utils/routing';
 import COLORS from '@/components/ui/colors';
-import { capitalizeWords } from '@/utils/humanize';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';

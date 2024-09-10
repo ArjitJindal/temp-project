@@ -1,5 +1,6 @@
 import React from 'react';
 import { COUNTRIES, CURRENCIES } from '@flagright/lib/constants';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import {
   DataType,
   ParameterName,
@@ -10,7 +11,6 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { PaymentMethod, getPaymentMethodTitle } from '@/utils/payments';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
-import { humanizeConstant } from '@/utils/humanize';
 import { ALL_RISK_PARAMETERS } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';

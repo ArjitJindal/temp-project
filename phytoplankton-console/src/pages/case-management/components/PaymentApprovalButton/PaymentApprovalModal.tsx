@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Modal from '../../../../components/library/Modal/index';
 import s from './index.module.less';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -13,7 +14,6 @@ import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import TextArea from '@/components/library/TextArea';
 import Select from '@/components/library/Select';
-import { humanizeConstant } from '@/utils/humanize';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
 
 interface Props {

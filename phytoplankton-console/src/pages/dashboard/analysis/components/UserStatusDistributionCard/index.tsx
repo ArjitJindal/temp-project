@@ -1,4 +1,5 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import Donut, { DonutData } from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
@@ -17,7 +18,6 @@ import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
 import { useUsersQuery } from '@/pages/dashboard/analysis/components/dashboardutils';
-import { capitalizeWords } from '@/utils/humanize';
 import { dayjs } from '@/utils/dayjs';
 import { map, getOr } from '@/utils/asyncResource';
 

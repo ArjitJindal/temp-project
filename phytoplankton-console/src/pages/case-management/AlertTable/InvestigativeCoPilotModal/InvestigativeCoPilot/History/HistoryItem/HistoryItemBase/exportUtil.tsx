@@ -1,6 +1,6 @@
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { QuestionResponse } from '../../../types';
 import { typeAssigner } from '../HistoryItemTable';
-import { humanizeAuto } from '@/utils/humanize';
 import { CsvRow, csvValue, serialize } from '@/utils/csv';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 

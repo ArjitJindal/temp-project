@@ -5,7 +5,7 @@ import {
   humanizeSnakeCase,
   recognizeCase,
   humanizeKebabCase,
-} from '../humanize';
+} from '@flagright/lib/utils/humanize';
 
 describe('humanize', () => {
   test('constant case', () => {

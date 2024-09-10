@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import DetailsModal from './DetailsModal';
 import MainPanel, { MainPanelCustomStyles } from './MainPanel';
 import { ValueItem } from './types';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   icon: React.ReactNode;

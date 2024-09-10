@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { Empty } from 'antd';
 import { useLocalStorageState } from 'ahooks';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import ScopeSelector from '../CaseClosingReasonCard/ScopeSelector';
 import { formatDate } from '../../../utils/date-utils';
 import GranularDatePicker, {
@@ -28,7 +29,6 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_06,
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
-import { humanizeSnakeCase } from '@/utils/humanize';
 
 type statusType = 'OPEN' | 'CLOSED' | 'REOPENED' | 'ON_HOLD' | 'IN_PROGRESS' | 'ESCALATED';
 const statuses: statusType[] = [

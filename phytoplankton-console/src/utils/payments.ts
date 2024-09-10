@@ -1,4 +1,4 @@
-import { humanizeConstant } from './humanize';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import {
   ACHPaymentMethod,
   CardPaymentMethod,

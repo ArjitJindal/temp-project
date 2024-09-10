@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import * as Card from '@/components/ui/Card';
 import { Alert, ChecklistDoneStatus, ChecklistStatus } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
@@ -12,7 +13,6 @@ import { message } from '@/components/library/Message';
 import { TableRefType } from '@/components/library/Table/types';
 import { useQaMode } from '@/utils/qa-mode';
 import Dropdown from '@/components/library/Dropdown';
-import { humanizeConstant } from '@/utils/humanize';
 import { CHECKLIST_STATUSS } from '@/apis/models-custom/ChecklistStatus';
 import { statusInReview } from '@/utils/case-utils';
 import { ALERT_CHECKLIST } from '@/utils/queries/keys';

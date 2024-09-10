@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { groupBy, startCase, uniq } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
@@ -23,7 +24,6 @@ import { message } from '@/components/library/Message';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
 import Tabs from '@/components/library/Tabs';
-import { humanizeAuto } from '@/utils/humanize';
 import FieldValue from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/FieldValue';
 import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';

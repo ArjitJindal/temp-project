@@ -3,6 +3,7 @@ import { Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import React from 'react';
 import { isNil } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
@@ -22,7 +23,6 @@ import { makeUrl } from '@/utils/routing';
 import Money from '@/components/ui/Money';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
-import { humanizeAuto } from '@/utils/humanize';
 
 function getUnknownUserTooltipMessage(userId?: string) {
   return userId

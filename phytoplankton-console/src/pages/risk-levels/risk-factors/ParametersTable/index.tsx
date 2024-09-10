@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import cn from 'clsx';
 import { Button } from 'antd';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import {
   Entity,
   ParameterName,
@@ -24,7 +25,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { LONG_TEXT } from '@/components/library/Table/standardDataTypes';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Tag, { TagColor } from '@/components/library/Tag';
-import { humanizeConstant } from '@/utils/humanize';
 import { RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';
 
 const DEFAULT_PARAMETER_SETTINGS: ParameterSettings = {

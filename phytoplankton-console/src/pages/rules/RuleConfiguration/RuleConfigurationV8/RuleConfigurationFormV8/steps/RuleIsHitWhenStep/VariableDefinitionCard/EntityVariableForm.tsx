@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react'
 import { shortId } from '@flagright/lib/utils';
 import { Link } from 'react-router-dom';
 import { isEqual } from 'lodash';
+import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import {
   isTransactionDestinationVariable,
   isTransactionOriginOrDestinationVariable,
@@ -26,7 +27,6 @@ import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import Select from '@/components/library/Select';
-import { firstLetterUpper } from '@/utils/humanize';
 import { useIsChanged } from '@/utils/hooks';
 import Modal from '@/components/library/Modal';
 import Alert from '@/components/library/Alert';

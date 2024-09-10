@@ -1,4 +1,4 @@
-import { humanizeConstant } from '@/utils/humanize';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 
 import { KYCStatus } from '@/apis';
 

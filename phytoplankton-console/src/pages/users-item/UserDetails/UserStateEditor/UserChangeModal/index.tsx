@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Modal from '@/components/library/Modal';
 import Form, { FormRef } from '@/components/library/Form';
@@ -18,7 +19,6 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
-import { humanizeConstant } from '@/utils/humanize';
 import TextArea from '@/components/library/TextArea';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
 import { KYC_AND_USER_STATUS_CHANGE_REASONS } from '@/apis/models-custom/KYCAndUserStatusChangeReason';

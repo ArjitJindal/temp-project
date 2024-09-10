@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty } from 'lodash';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
@@ -34,7 +35,6 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { humanizeConstant } from '@/utils/humanize';
 import AccountCircleLineIcon from '@/components/ui/icons/Remix/user/account-circle-line.react.svg';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';

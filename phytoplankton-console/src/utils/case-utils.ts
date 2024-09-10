@@ -1,7 +1,7 @@
 import { every, some, uniq, map, intersection } from 'lodash';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { DEFAULT_TIME_FORMAT } from './dayjs';
 import { FLAGRIGHT_SYSTEM_USER, getDisplayedUserInfo } from './user-utils';
-import { humanizeSnakeCase } from './humanize';
 import { CASE_STATUSS } from '@/apis/models-custom/CaseStatus';
 import { dayjs } from '@/utils/dayjs';
 import { neverReturn } from '@/utils/lang';

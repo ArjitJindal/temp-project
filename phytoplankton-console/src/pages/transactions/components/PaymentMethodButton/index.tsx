@@ -1,8 +1,8 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import PopupContent from './PopupContent';
 import BankCardFillIcon from '@/components/ui/icons/Remix/business/bank-card-fill.react.svg';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   direction: 'ORIGIN' | 'DESTINATION';

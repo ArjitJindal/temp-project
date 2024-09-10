@@ -1,6 +1,7 @@
 import { Divider, Input, Space } from 'antd';
 import React, { useMemo, useState } from 'react';
 import { validate } from 'uuid';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import NumberInput from '../../../../library/NumberInput';
 import Label from '../../../../library/Label';
 import { H4 } from '../../../../ui/Typography';
@@ -28,7 +29,6 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
-import { humanizeConstant } from '@/utils/humanize';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';

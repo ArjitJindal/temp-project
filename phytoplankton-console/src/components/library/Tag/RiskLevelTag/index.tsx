@@ -1,9 +1,9 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { RiskLevel } from '@/utils/risk-levels';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { humanizeConstant } from '@/utils/humanize';
 import Tag from '@/components/library/Tag';
 
 interface Props {

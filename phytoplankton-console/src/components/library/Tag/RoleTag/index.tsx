@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import Tag from '../index';
 import s from './index.module.less';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   role: string;

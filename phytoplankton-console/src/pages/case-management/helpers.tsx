@@ -1,4 +1,5 @@
 import { UserOutlined } from '@ant-design/icons';
+import { humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
@@ -24,7 +25,6 @@ import {
 } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 import { CASE_TYPES } from '@/apis/models-custom/CaseType';
-import { humanizeConstant, humanizeSnakeCase } from '@/utils/humanize';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useBusinessIndustries, useRuleQueues } from '@/components/rules/util';

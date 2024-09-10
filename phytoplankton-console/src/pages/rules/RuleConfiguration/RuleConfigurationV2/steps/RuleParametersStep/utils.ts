@@ -1,8 +1,8 @@
 import { lowerCase } from 'lodash';
 import pluralize from 'pluralize';
 import { FieldOrGroup, FieldSettings } from '@react-awesome-query-builder/ui';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RuleAggregationFunc, RuleAggregationVariable, RuleEntityVariable } from '@/apis';
-import { humanizeAuto } from '@/utils/humanize';
 import { RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 // TODO (V8): Move this to backend

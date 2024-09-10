@@ -1,8 +1,8 @@
 import React from 'react';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { AlertStatus, CaseStatus } from '@/apis';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
-import { humanizeSnakeCase } from '@/utils/humanize';
 
 interface Status {
   OPEN: CaseStatus[] | AlertStatus[];

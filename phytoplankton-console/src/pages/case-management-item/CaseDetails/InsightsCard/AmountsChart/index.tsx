@@ -2,6 +2,7 @@ import React from 'react';
 import cn from 'clsx';
 import { sumBy } from 'lodash';
 import { Currency } from '@flagright/lib/constants';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import Legend from '../components/Legend';
 import s from './styles.module.less';
 import Chart from './Chart';
@@ -11,7 +12,6 @@ import { TransactionsStatsByTypesResponseData, TransactionType } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import Money from '@/components/ui/Money';
-import { capitalizeWords } from '@/utils/humanize';
 
 const CHART_COLORS = {
   maximum: COLORS.purpleGray.tint,

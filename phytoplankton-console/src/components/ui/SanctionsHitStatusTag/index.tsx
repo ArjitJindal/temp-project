@@ -1,8 +1,8 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { SanctionsHitStatus as ApiSanctionsHitStatus } from '@/apis';
-import { humanizeConstant } from '@/utils/humanize';
 import Tag from '@/components/library/Tag';
 
 interface Props {

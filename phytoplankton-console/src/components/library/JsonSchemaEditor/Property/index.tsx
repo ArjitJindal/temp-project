@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { ExtendedSchema, PropertyItem } from '../types';
 import { getUiSchema, useOrderedProps } from '../utils';
 import PropertyInput from './PropertyInput';
@@ -7,7 +8,6 @@ import s from './style.module.less';
 import { Props as LabelProps } from '@/components/library/Label';
 import InputField from '@/components/library/Form/InputField';
 import { useJsonSchemaEditorSettings } from '@/components/library/JsonSchemaEditor/settings';
-import { humanizeAuto, humanizeCamelCase, humanizeSnakeCase } from '@/utils/humanize';
 import { useDeepEqualMemo } from '@/utils/hooks';
 import { neverReturn } from '@/utils/lang';
 import { dereferenceType } from '@/components/library/JsonSchemaEditor/schema-utils';

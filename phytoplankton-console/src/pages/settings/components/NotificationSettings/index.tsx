@@ -1,11 +1,11 @@
 import { useState } from 'react';
 import { every, includes } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import { NOTIFICATION_TYPES } from './NotificationsTypes';
 import * as Card from '@/components/ui/Card';
 import { H4, H5 } from '@/components/ui/Typography';
 import Checkbox from '@/components/library/Checkbox';
-import { humanizeAuto } from '@/utils/humanize';
 import Button from '@/components/library/Button';
 import {
   Feature,

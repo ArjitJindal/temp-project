@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useMutation } from '@tanstack/react-query';
+import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import { getRuleInstanceDisplayId, isShadowRule, useUpdateRuleInstance } from '../../utils';
 import { canSimulate } from '../../my-rules';
 import { RuleStatusSwitch } from '../../components/RuleStatusSwitch';
@@ -17,7 +18,6 @@ import DuplicateIcon from '@/components/ui/icons/Remix/document/file-copy-line.r
 import SimulationIcon from '@/components/ui/icons/Remix/media/rhythm-fill.react.svg';
 import * as Form from '@/components/ui/Form';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
-import { humanizeAuto, humanizeConstant } from '@/utils/humanize';
 import { DEFAULT_DATE_TIME_FORMAT, dayjs } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';

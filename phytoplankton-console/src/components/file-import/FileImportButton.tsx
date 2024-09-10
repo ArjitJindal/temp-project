@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react';
 import Dragger from 'antd/es/upload/Dragger';
 import filesize from 'filesize';
 import { last, range } from 'lodash';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { FileInfo, ImportRequestFormatEnum, ImportRequestTypeEnum, Permission } from '@/apis';
@@ -12,7 +13,6 @@ import { sleep } from '@/utils/time-utils';
 import { useAuth0User } from '@/utils/user-utils';
 import { uploadFile } from '@/utils/file-uploader';
 import Modal from '@/components/library/Modal';
-import { humanizeConstant } from '@/utils/humanize';
 
 const EXAMPLE_FILE_URL: Record<ImportRequestTypeEnum, string> = {
   TRANSACTION:

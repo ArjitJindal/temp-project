@@ -1,10 +1,10 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { TableSearchParams } from '../../types';
 import s from './style.module.less';
 import Dropdown, { DropdownOption } from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
-import { humanizeConstant } from '@/utils/humanize';
 import { AllParams } from '@/components/library/Table/types';
 import { RuleAction } from '@/apis';
 

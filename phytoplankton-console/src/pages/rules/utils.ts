@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { getAllValuesByKey } from '@flagright/lib/utils';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { Option } from '@/components/library/SelectionGroup';
 import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/RuleConfigurationForm';
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
@@ -19,7 +20,6 @@ import { RuleInstanceMap, RulesMap } from '@/utils/rules';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { PRIORITYS } from '@/apis/models-custom/Priority';
-import { humanizeConstant } from '@/utils/humanize';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { GET_RULE_INSTANCE, GET_RULE_INSTANCES } from '@/utils/queries/keys';
 

@@ -1,5 +1,6 @@
 import React, { Dispatch, SetStateAction, useImperativeHandle, useRef } from 'react';
 import { uniqBy } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
 import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
@@ -19,7 +20,6 @@ import GenericFormField from '@/components/library/Form/GenericFormField';
 import { CopilotButtonContent } from '@/pages/case-management/components/Copilot/CopilotButtonContent';
 import Alert from '@/components/library/Alert';
 import Label from '@/components/library/Label';
-import { humanizeAuto } from '@/utils/humanize';
 import { useUsers } from '@/utils/user-utils';
 
 export const OTHER_REASON: CaseReasons = 'Other';

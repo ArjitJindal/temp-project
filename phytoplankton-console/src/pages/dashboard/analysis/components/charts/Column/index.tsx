@@ -1,9 +1,9 @@
 import { Column as AntColumn } from '@ant-design/charts';
 import { Annotation } from '@antv/g2plot';
 import { each, groupBy } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
-import { humanizeAuto } from '@/utils/humanize';
 import { AsyncResource, isLoading, getOr } from '@/utils/asyncResource';
 import { COLORS_V2_SKELETON_COLOR, COLORS_V2_GRAY_6 } from '@/components/ui/colors';
 import { makeRandomNumberGenerator } from '@/utils/prng';

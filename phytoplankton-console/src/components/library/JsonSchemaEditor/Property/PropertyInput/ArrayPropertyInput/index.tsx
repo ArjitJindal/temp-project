@@ -1,6 +1,7 @@
 import { useCallback, useContext, useMemo } from 'react';
 import cn from 'clsx';
 import pluralize from 'pluralize';
+import { humanizeAuto, normalizeCase } from '@flagright/lib/utils/humanize';
 import { ExtendedSchema } from '../../../types';
 import PropertyInput from '../index';
 import { CollapsePropertiesLayout } from '../CollapsePropertiesLayout';
@@ -13,7 +14,6 @@ import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { useJsonSchemaEditorContext } from '@/components/library/JsonSchemaEditor/context';
 import { PropertyContext } from '@/components/library/JsonSchemaEditor/Property';
-import { humanizeAuto, normalizeCase } from '@/utils/humanize';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import {
   isArrayFieldValidator,

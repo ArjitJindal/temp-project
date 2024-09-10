@@ -1,9 +1,9 @@
 import React from 'react';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { QuestionResponseProperties } from '../../../types';
 import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
 import * as Card from '@/components/ui/Card';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props {
   item: QuestionResponseProperties;

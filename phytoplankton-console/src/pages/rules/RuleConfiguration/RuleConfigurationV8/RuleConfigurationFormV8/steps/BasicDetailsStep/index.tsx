@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { compact } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import {
@@ -25,7 +26,6 @@ import DatePicker from '@/components/ui/DatePicker';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { USER_RULE_SCHEDULE_UNITS } from '@/apis/models-custom/UserRuleScheduleUnit';
-import { humanizeAuto } from '@/utils/humanize';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 
 export interface BasicDetailsFormValues {

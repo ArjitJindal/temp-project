@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { humanizeStrings } from '@flagright/lib/utils/humanize';
 import { FormValues } from '../index';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -9,7 +10,6 @@ import Button from '@/components/library/Button';
 import { isEqual } from '@/utils/lang';
 import { RiskLevelRuleParameters } from '@/apis/models/RiskLevelRuleParameters';
 import { message } from '@/components/library/Message';
-import { humanizeStrings } from '@/utils/humanize';
 
 interface Props {
   currentRiskLevel: RiskLevel;

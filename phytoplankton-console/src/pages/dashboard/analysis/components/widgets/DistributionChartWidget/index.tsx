@@ -3,6 +3,7 @@ import { MutableRefObject, useCallback, useMemo, useRef, useState } from 'react'
 import { snakeCase } from 'lodash';
 import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
 import Column, { ColumnData } from '../../charts/Column';
 import GranularDatePicker, {
@@ -19,7 +20,6 @@ import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
 import { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
-import { humanizeAuto } from '@/utils/humanize';
 
 interface Props<DataType, ValueType extends string, GroupType extends string> extends WidgetProps {
   groups: Array<{

@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { Mutation } from '@/utils/queries/types';
 import { TableColumn } from '@/components/library/Table/types';
 import {
@@ -16,7 +17,6 @@ import {
   STRING,
 } from '@/components/library/Table/standardDataTypes';
 import Tag from '@/components/library/Tag';
-import { humanizeConstant } from '@/utils/humanize';
 import Confirm from '@/components/utils/Confirm';
 import Button from '@/components/library/Button';
 import DeleteIcon from '@/components/ui/icons/Remix/system/delete-bin-7-line.react.svg';

@@ -1,3 +1,4 @@
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import style from './index.module.less';
 import ArrowUpLineIcon from '@/components/ui/icons/Remix/system/arrow-up-line.react.svg';
 import ArrowRightLineIcon from '@/components/ui/icons/Remix/system/arrow-right-line.react.svg';
@@ -7,7 +8,6 @@ import ArrowLeftRightLineIcon from '@/components/ui/icons/Remix/system/arrow-lef
 
 import { TransactionType } from '@/apis/models/TransactionType';
 import { neverReturn } from '@/utils/lang';
-import { humanizeConstant } from '@/utils/humanize';
 
 interface Props {
   transactionType: TransactionType | undefined;

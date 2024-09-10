@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { humanizeAuto, humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { AIAttribute, AiSourcesResponse } from '@/apis';
 import {
@@ -9,7 +10,6 @@ import { AI_ATTRIBUTE_CATEGORYS } from '@/apis/models-custom/AIAttributeCategory
 import { P } from '@/components/ui/Typography';
 import Checkbox from '@/components/library/Checkbox';
 import Label from '@/components/library/Label';
-import { humanizeAuto, humanizeCamelCase } from '@/utils/humanize';
 import Button from '@/components/library/Button';
 import Tooltip from '@/components/library/Tooltip';
 import { useQuery } from '@/utils/queries/hooks';

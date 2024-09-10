@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import SanctionsHitsTable, { TableSearchParams } from 'src/components/SanctionsHitsTable';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import {
   SanctionsDetails,
@@ -21,7 +22,6 @@ import { ALERT_ITEM, SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
-import { humanizeConstant } from '@/utils/humanize';
 
 const MATCH_LIST_TAB_KEY = 'match_list';
 const CLEARED_MATCH_LIST_TAB_KEY = 'cleared_match_list';

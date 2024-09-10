@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
 import { kebabCase } from 'lodash';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import TransactionsChartWidget from './components/TransactionsChartWidget';
 import PaymentMethodDistributionWidget from './components/Transactions/PaymentMethodDistributionWidget';
 import RuleHitCard from './components/RulesHitCard';
@@ -33,7 +34,6 @@ import Button from '@/components/library/Button';
 import IconSetting from '@/components/ui/icons/Remix/system/settings-2-line.react.svg';
 import Drawer from '@/components/library/Drawer';
 import Checkbox from '@/components/library/Checkbox';
-import { humanizeConstant } from '@/utils/humanize';
 import WidgetGrid from '@/components/library/WidgetGrid';
 import Widget from '@/components/library/Widget';
 import Label from '@/components/library/Label';

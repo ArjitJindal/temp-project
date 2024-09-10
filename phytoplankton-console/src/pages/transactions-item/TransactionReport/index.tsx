@@ -1,13 +1,13 @@
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { DEFAULT_RISK_LEVEL } from '@flagright/lib/utils/risk';
 import { round } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RuleAlertMap } from '..';
 import { InternalTransaction, RiskClassificationScore, TenantSettings } from '@/apis';
 import { getRiskLevelLabel } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TableOptions } from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { ReportItem, getTable, getWidgetTable } from '@/components/DownloadAsPdf/report-utils';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import { humanizeAuto } from '@/utils/humanize';
 
 const getTransactionWidgetsProps = (
   transaction: InternalTransaction,

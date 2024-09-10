@@ -1,11 +1,11 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { UseCase } from '@/pages/storybook/components';
 import NotificationsDrawerItem, {
   Notification,
 } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
 import NotificationsDrawer from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer';
 import Button from '@/components/library/Button';
-import { humanizeConstant } from '@/utils/humanize';
 import Select from '@/components/library/Select';
 import { useUsers } from '@/utils/user-utils';
 import { NotificationType, Account } from '@/apis';

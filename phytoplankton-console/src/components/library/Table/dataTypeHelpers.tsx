@@ -1,7 +1,7 @@
 import React from 'react';
+import { humanizeStrings } from '@flagright/lib/utils/humanize';
 import { ColumnDataType, FullColumnDataType } from './types';
 import { UNKNOWN } from './standardDataTypes';
-import { humanizeStrings } from '@/utils/humanize';
 
 export function array<Value, Item = unknown>(
   sourceType: FullColumnDataType<Value, Item>,

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
@@ -18,7 +19,6 @@ import {
   UserState,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
-import { humanizeConstant } from '@/utils/humanize';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
