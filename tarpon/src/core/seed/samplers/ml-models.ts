@@ -4,9 +4,8 @@ export const getMlModelsSample = (): RuleMLModel[] => {
   return [
     {
       id: 'ML-001',
-      name: 'ML Model - Fraud payment method',
-      description:
-        'This is a model to detect overall fraud of the payment method',
+      name: 'ML Model - Fraud (Generic)',
+      description: 'Model to detect overall fraud across all payment methods',
       modelType: 'EXPLAINABLE',
       checksFor: ['Fraud'],
       enabled: true,
@@ -14,7 +13,7 @@ export const getMlModelsSample = (): RuleMLModel[] => {
     {
       id: 'ML-002',
       name: 'ML Model - Fraud credit card',
-      description: 'This is a model to detect overall fraud of the credit card',
+      description: 'Model to detect overall fraud of the credit card',
       modelType: 'EXPLAINABLE',
       checksFor: ['Credit card fraud'],
       enabled: true,
@@ -22,18 +21,17 @@ export const getMlModelsSample = (): RuleMLModel[] => {
     {
       id: 'ML-003',
       name: 'ML Model - Money laundering',
-      description: 'This is a model to detect money laundering',
+      description: 'Model to detect money laundering',
       modelType: 'EXPLAINABLE',
       checksFor: ['Money laundering'],
       enabled: true,
     },
     {
       id: 'ML-004',
-      name: 'ML Model - multiple fraud payment methods',
-      description:
-        'This is a model to detect overall fraud of the payment method',
+      name: 'ML Model - Bank transfer',
+      description: 'Model to detect overall fraud in Bank transfer',
       modelType: 'NON_EXPLAINABLE',
-      checksFor: ['Fraud', 'Credit card fraud'],
+      checksFor: ['Fraud', 'Bank Fraud'],
       enabled: true,
     },
   ]
