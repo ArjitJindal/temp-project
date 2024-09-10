@@ -23,6 +23,7 @@ import {
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
+import { TransactionsExceedPastPeriodRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-exceed-past-period'
 import { TransactionNewCountryRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-currency'
 import { IpAddressUnexpectedLocationRuleParameters } from '@/services/rules-engine/transaction-rules/ip-address-unexpected-location'
@@ -393,6 +394,7 @@ const V8_CONVERSION: Readonly<
         start: { units: 0, granularity: 'all_time' },
         end: { units: 0, granularity: 'now' },
       },
+      includeCurrentEntity: true,
     })
 
     const conditions: any[] = []
@@ -1093,6 +1095,116 @@ const V8_CONVERSION: Readonly<
       logicAggregationVariables,
       alertCreationDirection: 'ORIGIN',
       baseCurrency,
+    }
+  },
+  'R-131': (params: TransactionsExceedPastPeriodRuleParameters) => {
+    const {
+      multiplierThreshold,
+      checkSender,
+      checkReceiver,
+      initialTransactions,
+      minTransactionsInTimeWindow2,
+      minTransactionsInTimeWindow1,
+      timeWindow2,
+      timeWindow1,
+    } = params
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const allTimeTransactionsCount: RuleAggregationVariable = {
+      key: 'agg:allTimeTransactionsCount',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'COUNT',
+      userDirection: 'SENDER_OR_RECEIVER',
+      transactionDirection: 'SENDING_RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      secondaryAggregationFieldKey: 'TRANSACTION:transactionId',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    }
+
+    const { logicAggregationVariables: period1LogicAggregationVariables } =
+      migrateCheckDirectionParameters({
+        type: 'COUNT',
+        parameters: {
+          timeWindow: timeWindow1,
+          checkSender,
+          checkReceiver,
+        },
+      })
+
+    const { logicAggregationVariables: period2LogicAggregationVariables } =
+      migrateCheckDirectionParameters({
+        type: 'COUNT',
+        parameters: {
+          timeWindow: timeWindow2,
+          checkSender,
+          checkReceiver,
+        },
+      })
+
+    logicAggregationVariables.push(
+      allTimeTransactionsCount,
+      ...period1LogicAggregationVariables,
+      ...period2LogicAggregationVariables
+    )
+
+    const conditions: any[] = []
+
+    if (minTransactionsInTimeWindow1) {
+      conditions.push({
+        or: period1LogicAggregationVariables.map((v) => ({
+          '>=': [{ var: v.key }, minTransactionsInTimeWindow1],
+        })),
+      })
+    }
+
+    if (minTransactionsInTimeWindow2) {
+      conditions.push({
+        or: period2LogicAggregationVariables.map((v, i) => ({
+          '>=': [
+            {
+              '-': [
+                { var: v.key },
+                { var: period1LogicAggregationVariables[i].key },
+              ],
+            },
+            minTransactionsInTimeWindow2,
+          ],
+        })),
+      })
+    }
+
+    if (initialTransactions) {
+      conditions.push({
+        '>=': [{ var: allTimeTransactionsCount.key }, initialTransactions],
+      })
+    }
+
+    conditions.push({
+      or: period1LogicAggregationVariables.map((v, i) => ({
+        '>=': [
+          { var: v.key },
+          {
+            '*': [
+              multiplierThreshold,
+              {
+                '-': [
+                  { var: period2LogicAggregationVariables[i].key },
+                  { var: v.key },
+                ],
+              },
+            ],
+          },
+        ],
+      })),
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'AUTO',
     }
   },
 }

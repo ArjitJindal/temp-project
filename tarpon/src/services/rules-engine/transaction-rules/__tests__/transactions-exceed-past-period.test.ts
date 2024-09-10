@@ -29,7 +29,7 @@ const DEFAULT_RULE_PARAMETERS: TransactionsExceedPastPeriodRuleParameters = {
 }
 
 dynamoDbSetupHook()
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   describe('R-131 description formatting', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [
