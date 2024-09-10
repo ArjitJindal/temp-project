@@ -1,6 +1,5 @@
 import ContactDetails from '../../ContactDetails/index';
 import Addresses from '../../Addresses';
-import { BankDetails } from '../../BusinessUserDetails/UserDetails/BankDetails';
 import UsersInfoCard from './UsersInfoCard';
 import s from './index.module.less';
 import * as Card from '@/components/ui/Card';
@@ -39,10 +38,6 @@ export default function UserDetails(props: Props) {
               <Addresses user={user as InternalConsumerUser} />
             </Card.Column>
           </Card.Row>
-          <Card.Column>
-            <Card.Subtitle title="Bank details" icon={<SurveyLineIcon />} />
-            <BankDetails user={user} />
-          </Card.Column>
           <Card.Column>
             <Card.Subtitle className={s.border} title="Saved payment details" />
             <SavedPaymentDetails user={user} />
