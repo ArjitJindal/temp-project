@@ -3353,19 +3353,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@clickhouse/client-common@npm:1.4.0":
-  version: 1.4.0
-  resolution: "@clickhouse/client-common@npm:1.4.0"
-  checksum: 53f754a738d680f1a52117cc09269aa4a0fc03413efec86d1bf28d0e4ac7127650dfdabc53e796b27f29c4252d171edd477d7da9ef90bfa9415c323677ef1591
+"@clickhouse/client-common@npm:1.5.0":
+  version: 1.5.0
+  resolution: "@clickhouse/client-common@npm:1.5.0"
+  checksum: ae618878d89cc1d08de2b4715a3e320f43f5b2911dddcb78d1b70a10875e2423e5dcc094bc761cdbce399879229995a3e99a7c3e0303b10e337e297484ee9c3e
   languageName: node
   linkType: hard
 
-"@clickhouse/client@npm:^1.4.0":
-  version: 1.4.0
-  resolution: "@clickhouse/client@npm:1.4.0"
+"@clickhouse/client@npm:^1.5.0":
+  version: 1.5.0
+  resolution: "@clickhouse/client@npm:1.5.0"
   dependencies:
-    "@clickhouse/client-common": "npm:1.4.0"
-  checksum: bd09cbbfb56657a208b575f9a65452c8eb85f0bef2a9ba5ac13e10b9277c63af8a18d54fc295b10315911a3597c6eafb9f7f9c2e58c5dbe58b06277f73e99914
+    "@clickhouse/client-common": "npm:1.5.0"
+  checksum: 7900b1f975f66a2a5a2d6a9da31cca051b8261d3414582e160cbea0cb62c15b3f2433bfda6b631f90249dd6f74c570fed012e4d0fde8305cbc18aef174873870
   languageName: node
   linkType: hard
 
@@ -18768,7 +18768,7 @@ __metadata:
     "@aws-sdk/signature-v4-crt": "npm:^3.587.0"
     "@aws-sdk/util-arn-parser": "npm:^3.47.1"
     "@aws-sdk/util-dynamodb": "npm:^3.592.0"
-    "@clickhouse/client": "npm:^1.4.0"
+    "@clickhouse/client": "npm:^1.5.0"
     "@faker-js/faker": "npm:^7.6.0"
     "@fast-csv/format": "npm:^4.3.5"
     "@fast-csv/parse": "npm:^4.3.6"
