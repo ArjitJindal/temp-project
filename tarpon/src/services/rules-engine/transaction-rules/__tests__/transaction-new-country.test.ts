@@ -3,17 +3,18 @@ import { getRuleByRuleId } from '../library'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
-  TransactionRuleTestCase,
-  testRuleDescriptionFormatting,
   ruleVariantsTest,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
+  TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: false, v8: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {
@@ -34,6 +35,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1',
           destinationUserId: 'formatting-1-2',
+          timestamp: dayjs().subtract(6, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -48,6 +50,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1',
           destinationUserId: 'formatting-1-2',
+          timestamp: dayjs().subtract(5, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -62,6 +65,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1',
           destinationUserId: 'formatting-1-2',
+          timestamp: dayjs().subtract(4, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -76,6 +80,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1-2',
           destinationUserId: 'formatting-1-2-2',
+          timestamp: dayjs().subtract(3, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -90,6 +95,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1-2',
           destinationUserId: 'formatting-1-2-2',
+          timestamp: dayjs().subtract(2, 'hour').valueOf(),
           originAmountDetails: {
             country: 'GB',
             transactionAmount: 800,
@@ -104,6 +110,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: 'formatting-1-1-2',
           destinationUserId: 'formatting-1-2-2',
+          timestamp: dayjs().subtract(1, 'hour').valueOf(),
           originAmountDetails: {
             country: 'AF',
             transactionAmount: 800,
@@ -137,6 +144,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '1-1',
           destinationUserId: '1-2',
+          timestamp: dayjs().subtract(3, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -151,6 +159,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '1-1',
           destinationUserId: '1-2',
+          timestamp: dayjs().subtract(2, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -165,6 +174,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '1-1',
           destinationUserId: '1-2',
+          timestamp: dayjs().subtract(1, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -185,6 +195,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '2-1',
           destinationUserId: '2-2',
+          timestamp: dayjs().subtract(3, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -199,6 +210,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '2-1',
           destinationUserId: '2-3',
+          timestamp: dayjs().subtract(2, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -213,6 +225,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '2-1',
           destinationUserId: '2-4',
+          timestamp: dayjs().subtract(1, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -233,6 +246,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '3-2',
           destinationUserId: '3-1',
+          timestamp: dayjs().subtract(3, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -247,6 +261,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '3-3',
           destinationUserId: '3-1',
+          timestamp: dayjs().subtract(2, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -261,6 +276,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '3-4',
           destinationUserId: '3-1',
+          timestamp: dayjs().subtract(1, 'hour').valueOf(),
           originAmountDetails: {
             country: 'GB',
             transactionAmount: 800,
@@ -281,6 +297,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '4-1',
           destinationUserId: '4-2',
+          timestamp: dayjs().subtract(3, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -295,6 +312,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '4-1',
           destinationUserId: '4-3',
+          timestamp: dayjs().subtract(2, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -309,6 +327,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         getTestTransaction({
           originUserId: '4-1',
           destinationUserId: '4-4',
+          timestamp: dayjs().subtract(1, 'hour').valueOf(),
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 800,
@@ -359,6 +378,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(3, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,
@@ -377,6 +397,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(2, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,
@@ -395,6 +416,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(1, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,
@@ -419,6 +441,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(3, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,
@@ -438,6 +461,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(2, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,
@@ -457,6 +481,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: dayjs().subtract(1, 'hour').valueOf(),
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 800,

@@ -34,31 +34,35 @@ export default class TransactionNewCurrencyRule extends TransactionRule<Transact
     } = await this.getData()
 
     const isSenderHit =
+      receiverCurrency &&
       senderTransactionsCount &&
       senderTransactionsCount >= this.parameters.initialTransactions &&
       senderTransactionCurrencies &&
-      receiverCurrency &&
       !senderTransactionCurrencies.has(receiverCurrency)
+
     const isDestinationHit =
+      senderCurrency &&
       receiverTransactionsCount &&
       receiverTransactionsCount >= this.parameters.initialTransactions &&
       receiverTransactionCurrencies &&
-      senderCurrency &&
       !receiverTransactionCurrencies.has(senderCurrency)
 
     const hitResult: RuleHitResult = []
+
     if (isSenderHit) {
       hitResult.push({
         direction: 'ORIGIN',
         vars: super.getTransactionVars('origin'),
       })
     }
+
     if (isDestinationHit) {
       hitResult.push({
         direction: 'DESTINATION',
         vars: super.getTransactionVars('destination'),
       })
     }
+
     return hitResult
   }
 

@@ -23,6 +23,9 @@ import {
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
+import { TransactionNewCountryRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-country'
+import { TransactionNewCurrencyRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-currency'
+import { IpAddressUnexpectedLocationRuleParameters } from '@/services/rules-engine/transaction-rules/ip-address-unexpected-location'
 
 export type RuleMigrationConfig = {
   logic: object
@@ -751,6 +754,345 @@ const V8_CONVERSION: Readonly<
   'R-120': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'AVG', false, params),
   'R-121': (params) => DEVIATION_RULE_MIGRATION('COUNT', 'COUNT', true, params),
   'R-122': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'SUM', true, params),
+  'R-4': (params: TransactionNewCurrencyRuleParameters) => {
+    const { initialTransactions } = params
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+
+    // all sending transactions count
+    logicAggregationVariables.push({
+      key: 'agg:sending',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'COUNT',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      transactionDirection: 'SENDING',
+      includeCurrentEntity: false,
+    })
+
+    // all receiving transactions count
+    logicAggregationVariables.push({
+      key: 'agg:receiving',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'RECEIVER',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'COUNT',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      transactionDirection: 'RECEIVING',
+      includeCurrentEntity: false,
+    })
+
+    // all unique sending currencies
+    logicAggregationVariables.push({
+      key: 'agg:senderCurrencies$2',
+      type: 'USER_TRANSACTIONS',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'UNIQUE_VALUES',
+      aggregationFieldKey:
+        'TRANSACTION:destinationAmountDetails-transactionCurrency',
+      transactionDirection: 'SENDING',
+      userDirection: 'SENDER',
+      filtersLogic: {
+        and: [
+          {
+            '==': [{ var: 'TRANSACTION:transactionState' }, 'SUCCESSFUL'],
+          },
+        ],
+      },
+      includeCurrentEntity: false,
+    })
+
+    // all unique receiving currencies
+    logicAggregationVariables.push({
+      key: 'agg:receiverCurrencies$2',
+      type: 'USER_TRANSACTIONS',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'UNIQUE_VALUES',
+      aggregationFieldKey:
+        'TRANSACTION:originAmountDetails-transactionCurrency',
+      transactionDirection: 'RECEIVING',
+      userDirection: 'RECEIVER',
+      filtersLogic: {
+        and: [
+          {
+            '==': [{ var: 'TRANSACTION:transactionState' }, 'SUCCESSFUL'],
+          },
+        ],
+      },
+      includeCurrentEntity: false,
+    })
+
+    const logic: object = {
+      or: [
+        {
+          and: [
+            {
+              '!=': [
+                {
+                  var: 'TRANSACTION:destinationAmountDetails-transactionCurrency',
+                },
+                null,
+              ],
+            },
+            {
+              '>=': [{ var: 'agg:sending' }, initialTransactions],
+            },
+            {
+              '!': {
+                in: [
+                  {
+                    var: 'TRANSACTION:destinationAmountDetails-transactionCurrency',
+                  },
+                  { var: 'agg:senderCurrencies$2' },
+                ],
+              },
+            },
+          ],
+        },
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:originAmountDetails-transactionCurrency' },
+                null,
+              ],
+            },
+            {
+              '>=': [{ var: 'agg:receiving' }, initialTransactions],
+            },
+            {
+              '!': {
+                in: [
+                  {
+                    var: 'TRANSACTION:originAmountDetails-transactionCurrency',
+                  },
+                  { var: 'agg:receiverCurrencies$2' },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    }
+
+    return {
+      logic: { and: [logic] },
+      logicAggregationVariables,
+    }
+  },
+  'R-3': (params: TransactionNewCountryRuleParameters) => {
+    const { initialTransactions } = params
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+
+    // all sending transactions count
+    logicAggregationVariables.push({
+      key: 'agg:sending',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'COUNT',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      transactionDirection: 'SENDING',
+      includeCurrentEntity: false,
+    })
+
+    // all receiving transactions count
+    logicAggregationVariables.push({
+      key: 'agg:receiving',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'RECEIVER',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'COUNT',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      transactionDirection: 'RECEIVING',
+      includeCurrentEntity: false,
+    })
+
+    // all unique sending countries
+    logicAggregationVariables.push({
+      key: 'agg:senderCountries$2',
+      type: 'USER_TRANSACTIONS',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'UNIQUE_VALUES',
+      aggregationFieldKey: 'TRANSACTION:destinationAmountDetails-country',
+      transactionDirection: 'SENDING',
+      userDirection: 'SENDER',
+      includeCurrentEntity: false,
+      filtersLogic: {
+        and: [
+          {
+            '==': [{ var: 'TRANSACTION:transactionState' }, 'SUCCESSFUL'],
+          },
+        ],
+      },
+    })
+
+    // all unique receiving countries
+    logicAggregationVariables.push({
+      key: 'agg:receiverCountries$2',
+      type: 'USER_TRANSACTIONS',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      aggregationFunc: 'UNIQUE_VALUES',
+      aggregationFieldKey: 'TRANSACTION:originAmountDetails-country',
+      transactionDirection: 'RECEIVING',
+      userDirection: 'RECEIVER',
+      includeCurrentEntity: false,
+      filtersLogic: {
+        and: [
+          {
+            '==': [{ var: 'TRANSACTION:transactionState' }, 'SUCCESSFUL'],
+          },
+        ],
+      },
+    })
+
+    const logic: object = {
+      or: [
+        {
+          and: [
+            {
+              '!=': [
+                { var: 'TRANSACTION:destinationAmountDetails-country' },
+                null,
+              ],
+            },
+            {
+              '>=': [{ var: 'agg:sending' }, initialTransactions],
+            },
+            {
+              '!': {
+                in: [
+                  { var: 'TRANSACTION:destinationAmountDetails-country' },
+                  { var: 'agg:senderCountries$2' },
+                ],
+              },
+            },
+          ],
+        },
+        {
+          and: [
+            {
+              '!=': [{ var: 'TRANSACTION:originAmountDetails-country' }, null],
+            },
+            {
+              '>=': [{ var: 'agg:receiving' }, initialTransactions],
+            },
+            {
+              '!': {
+                in: [
+                  { var: 'TRANSACTION:originAmountDetails-country' },
+                  { var: 'agg:receiverCountries$2' },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    }
+
+    return {
+      logic: { and: [logic] },
+      logicAggregationVariables,
+    }
+  },
+
+  'R-88': (params: IpAddressUnexpectedLocationRuleParameters) => {
+    const { transactionAmountThreshold } = params
+    const logicAggregationVariables: RuleAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:userTransactionsCountries$2',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:originAmountDetails-country',
+      aggregationFunc: 'UNIQUE_VALUES',
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: false,
+    })
+
+    const conditions: any[] = []
+
+    let baseCurrency: CurrencyCode = 'USD'
+
+    if (transactionAmountThreshold) {
+      const [currency, threshold] = Object.entries(
+        transactionAmountThreshold
+      )[0]
+
+      if (threshold != null) {
+        baseCurrency = currency as unknown as CurrencyCode
+
+        conditions.push({
+          '>=': [
+            { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
+            threshold,
+          ],
+        })
+      }
+    }
+
+    conditions.push({
+      '!=': [{ var: 'TRANSACTION:originIpCountry' }, null],
+    })
+
+    conditions.push({
+      '!=': [
+        { var: 'CONSUMER_USER:userDetails-countryOfResidence__SENDER' },
+        { var: 'TRANSACTION:originIpCountry' },
+      ],
+    })
+
+    conditions.push({
+      '!=': [
+        { var: 'CONSUMER_USER:userDetails-countryOfNationality__SENDER' },
+        { var: 'TRANSACTION:originIpCountry' },
+      ],
+    })
+
+    conditions.push({
+      '!': {
+        in: [
+          { var: 'TRANSACTION:originIpCountry' },
+          { var: 'agg:userTransactionsCountries$2' },
+        ],
+      },
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'ORIGIN',
+      baseCurrency,
+    }
+  },
 }
 
 export const V8_MIGRATED_RULES = Object.keys(V8_CONVERSION)

@@ -4,11 +4,11 @@ import dayjs from '@/utils/dayjs'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
-  setUpRulesHooks,
   createTransactionRuleTestCase,
-  TransactionRuleTestCase,
-  testRuleDescriptionFormatting,
   ruleVariantsTest,
+  setUpRulesHooks,
+  testRuleDescriptionFormatting,
+  TransactionRuleTestCase,
 } from '@/test-utils/rule-test-utils'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
@@ -30,7 +30,7 @@ jest.mock('@/services/geo-ip', () => ({
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: false }, () => {
+ruleVariantsTest({ aggregation: false, v8: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
   setUpRulesHooks(TEST_TENANT_ID, [
     {

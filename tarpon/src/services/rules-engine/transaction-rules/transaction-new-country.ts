@@ -38,7 +38,6 @@ export default class TransactionNewCountryRule extends TransactionRule<Transacti
     const hitSender =
       receiverCountry &&
       senderTransactionsCount &&
-      senderTransactionsCount &&
       senderTransactionsCount >= this.parameters.initialTransactions &&
       senderTransactionCountries &&
       !senderTransactionCountries.has(receiverCountry)
