@@ -10053,6 +10053,7 @@ components:
       enum:
         - FALSE_POSITIVE
         - OTHER
+        - TRUE_POSITIVE
     MissingUser:
       title: MissingUser
       type: object

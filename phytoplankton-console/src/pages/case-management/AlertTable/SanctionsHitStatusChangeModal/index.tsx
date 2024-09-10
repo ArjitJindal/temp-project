@@ -140,7 +140,7 @@ function getReasons(newStatus: SanctionsHitStatus): SanctionsHitReasons[] {
   if (newStatus === 'OPEN') {
     return ['OTHER'];
   } else if (newStatus === 'CLEARED') {
-    return ['FALSE_POSITIVE', 'OTHER'];
+    return ['FALSE_POSITIVE', 'TRUE_POSITIVE', 'OTHER'];
   } else if (newStatus === 'ESCALATED') {
     return ['OTHER'];
   }
