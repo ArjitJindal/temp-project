@@ -3039,8 +3039,8 @@ components:
           $ref: '#/components/schemas/CountryCode'
         gender:
           $ref: '#/components/schemas/Gender'
-        martialStatus:
-          $ref: '#/components/schemas/MartialStatus'
+        maritalStatus:
+          $ref: '#/components/schemas/MaritalStatus'
         placeOfBirth:
           $ref: '#/components/schemas/PlaceOfBirth'
       required:
@@ -6082,9 +6082,9 @@ components:
         - M
         - F
         - NB
-    MartialStatus:
-      title: MartialStatus
-      description: Martial status of the individual
+    MaritalStatus:
+      title: MaritalStatus
+      description: Marital status of the individual
       type: string
       enum:
         - DIVORCED
