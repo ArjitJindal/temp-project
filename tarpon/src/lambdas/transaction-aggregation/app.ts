@@ -1,6 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
 import { NotFound } from 'http-errors'
-import { backOff } from 'exponential-backoff'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   TransactionAggregationTask,
@@ -29,7 +28,6 @@ import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
-import { Transaction } from '@/@types/openapi-public/Transaction'
 import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
@@ -200,36 +198,13 @@ export async function handleTransactionAggregationTask(
     dynamoDb,
   })
 
-  let transaction: Transaction | undefined
-  try {
-    transaction = await backOff(
-      async () => {
-        const transactionId = task.transactionId
-        const transaction = await transactionRepository.getTransactionById(
-          transactionId,
-          { consistentRead: true }
-        )
-        if (!transaction) {
-          throw new NotFound(`Transaction ${transactionId} not found`)
-        }
-        return transaction
-      },
-      {
-        jitter: 'full',
-        numOfAttempts: 3,
-        startingDelay: 1000,
-        maxDelay: 5000,
-      }
-    )
-  } catch (e) {
-    if (e instanceof NotFound) {
-      logger.error(
-        `Failed to get transaction ${task.transactionId}: ${e.message}`
-      )
-      return
-    } else {
-      throw e
-    }
+  const transaction = await transactionRepository.getTransactionById(
+    task.transactionId,
+    { consistentRead: true }
+  )
+
+  if (!transaction) {
+    throw new NotFound(`Transaction ${task.transactionId} not found`)
   }
 
   const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
