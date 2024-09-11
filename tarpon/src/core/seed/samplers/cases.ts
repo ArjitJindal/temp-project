@@ -318,11 +318,7 @@ export function sampleAlert(params: {
         : undefined,
     ruleChecklistTemplateId: checklistTemplateId,
     updatedAt: sampleTimestamp(),
-    statusChanges: getStatusChangesObject(
-      alertStatus ?? 'OPEN',
-      getRandomUser().assigneeUserId,
-      true
-    ),
+    statusChanges: statusChanges,
     lastStatusChange: last(statusChanges),
     assignments: getRandomUsers(),
     qaAssignment: getRandomUsers(),
@@ -355,15 +351,31 @@ const getStatusChangesObject = (
   alerts?: boolean
 ): CaseStatusChange[] => {
   const statusChanges: CaseStatusChange[] = []
-  if (caseStatus === 'CLOSED') {
+  if (caseStatus === 'CLOSED' || caseStatus === 'REOPENED') {
+    const time = dayjs().subtract(
+      Math.floor(randomInt(alerts ? 150 : 400)),
+      'minute'
+    )
     statusChanges.push({
-      caseStatus: 'CLOSED',
-      timestamp: dayjs()
+      caseStatus: 'OPEN_IN_PROGRESS',
+      timestamp: time
         .subtract(Math.floor(randomInt(alerts ? 150 : 400)), 'minute')
         .valueOf(),
+      userId,
+    })
+    statusChanges.push({
+      caseStatus: 'CLOSED',
+      timestamp: time.valueOf(),
       reason: randomSubset(CASE_REASONSS),
       userId,
     })
+    if (caseStatus === 'REOPENED') {
+      statusChanges.push({
+        caseStatus: 'REOPENED',
+        timestamp: time.valueOf(),
+        userId,
+      })
+    }
     return statusChanges
   }
 
