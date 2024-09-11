@@ -106,13 +106,15 @@ describe('Verify Transaction', () => {
         id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
-        mode: 'LIVE_SYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       },
       {
         id: 'TEST-R-2',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
-        mode: 'LIVE_ASYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'ASYNC',
       },
     ])
 
@@ -248,7 +250,8 @@ describe('Verify Transaction', () => {
         id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
-        mode: 'SHADOW_SYNC',
+        ruleRunMode: 'SHADOW',
+        ruleExecutionMode: 'SYNC',
       },
     ])
 
@@ -463,12 +466,15 @@ describe('Verify Transaction Event', () => {
         id: 'TEST-R-1',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       },
       {
         id: 'TEST-R-2',
         ruleImplementationName: 'tests/test-success-rule',
         type: 'TRANSACTION',
-        mode: 'LIVE_ASYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'ASYNC',
       },
     ])
 
@@ -824,7 +830,8 @@ describe('Verify Transaction for Simulation', () => {
         nature: 'AML',
         labels: [],
         checksFor: [],
-        mode: 'LIVE_SYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       }
     )
     expect(result).toEqual({

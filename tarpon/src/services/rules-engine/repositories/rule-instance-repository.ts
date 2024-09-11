@@ -29,7 +29,6 @@ import {
   getMongoDbClientDb,
 } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
-import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
@@ -39,6 +38,7 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { envIs, envIsNot } from '@/utils/env'
+import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 
 // NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
 // is activated, it'll be effective after 10 minutes (worst case).
@@ -89,6 +89,8 @@ function toRuleInstance(item: any): RuleInstance {
     mode: item.mode,
     userRuleRunCondition: item.userRuleRunCondition,
     logicMachineLearningVariables: item.logicMachineLearningVariables,
+    ruleExecutionMode: item.ruleExecutionMode,
+    ruleRunMode: item.ruleRunMode,
   }
 }
 
@@ -402,16 +404,22 @@ export class RuleInstanceRepository {
     return type ? ruleInstances.filter((r) => r.type === type) : ruleInstances
   }
 
-  public async getAllRuleInstances(mode?: RuleMode): Promise<RuleInstance[]> {
-    return this.getRuleInstances(
-      mode
-        ? {
-            FilterExpression: '#mode = :mode',
-            ExpressionAttributeValues: { ':mode': mode },
-            ExpressionAttributeNames: { '#mode': 'mode' },
-          }
-        : {}
-    )
+  public async getAllRuleInstances(
+    mode?: RuleRunMode
+  ): Promise<RuleInstance[]> {
+    if (mode) {
+      const filterExpression = '#ruleRunMode = :ruleRunMode'
+      const expressionAttributeValues = { ':ruleRunMode': mode }
+      const expressionAttributeNames = { '#ruleRunMode': 'ruleRunMode' }
+
+      return this.getRuleInstances({
+        FilterExpression: filterExpression,
+        ExpressionAttributeValues: expressionAttributeValues,
+        ExpressionAttributeNames: expressionAttributeNames,
+      })
+    }
+
+    return this.getRuleInstances({})
   }
 
   public async getRuleInstanceById(

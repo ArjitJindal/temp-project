@@ -314,7 +314,21 @@ export function filterLiveRules(executions: Partial<Executions>): Executions {
 }
 
 export function isShadowRule(ruleInstance: RuleInstance): boolean {
-  return ruleInstance.mode === 'SHADOW_SYNC'
+  return (
+    ruleInstance.mode?.includes('SHADOW') ||
+    ruleInstance.ruleRunMode === 'SHADOW'
+  )
+}
+
+export function isAsyncRule(ruleInstance: RuleInstance): boolean {
+  return (
+    ruleInstance.mode?.includes('ASYNC') ||
+    ruleInstance.ruleExecutionMode === 'ASYNC'
+  )
+}
+
+export function isSyncRule(ruleInstance: RuleInstance): boolean {
+  return !isAsyncRule(ruleInstance)
 }
 
 const sqs = getSQSClient()

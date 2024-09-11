@@ -71,7 +71,8 @@ describe('Public API - Verify a transaction', () => {
       id: 'TEST-R-2',
       ruleImplementationName: 'tests/test-success-rule',
       type: 'TRANSACTION',
-      mode: 'SHADOW_SYNC',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
     },
   ])
 
@@ -241,7 +242,8 @@ describe('Public API - Batch create transactions', () => {
       id: 'TEST-R-2',
       ruleImplementationName: 'tests/test-success-rule',
       type: 'TRANSACTION',
-      mode: 'SHADOW_SYNC',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
     },
   ])
 

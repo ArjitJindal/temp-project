@@ -28,7 +28,8 @@ withFeatureHook(['SIMULATOR'])
 const getRuleInstance = (threshold: number, id?: string): RuleInstance => {
   return {
     id,
-    mode: 'LIVE_SYNC',
+    ruleRunMode: 'LIVE',
+    ruleExecutionMode: 'SYNC',
     type: 'TRANSACTION',
     ruleId: 'R-2',
     checksFor: ['Transaction amount'],

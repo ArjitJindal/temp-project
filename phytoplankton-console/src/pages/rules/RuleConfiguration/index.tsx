@@ -1,8 +1,8 @@
 import RuleConfigurationV2, { Props as V2Props } from './RuleConfigurationV2';
 import RuleConfigurationV8, { Props as V8Props } from './RuleConfigurationV8';
 import {
-  RuleConfigurationSimulation,
   Props as SimulationProps,
+  RuleConfigurationSimulation,
 } from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation';
 import { useShouldUseV8Configuration } from '@/pages/rules/utils';
 import { useHasPermissions } from '@/utils/user-utils';
@@ -46,7 +46,8 @@ export default function RuleConfiguration(props: Props) {
           labels: [],
           checksFor: props.rule?.checksFor ?? [],
           type: props.rule?.type ?? 'TRANSACTION',
-          mode: 'LIVE_SYNC',
+          ruleExecutionMode: 'SYNC',
+          ruleRunMode: 'LIVE',
           ...props.ruleInstance,
         }}
       />

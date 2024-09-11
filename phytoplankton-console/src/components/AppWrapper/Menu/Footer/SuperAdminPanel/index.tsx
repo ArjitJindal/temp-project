@@ -115,6 +115,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Dow Jones',
     description: 'Enables using Dow Jones for sanctions',
   },
+  ASYNC_RULES: {
+    title: 'Async Rules',
+    description: 'Enables async rules',
+  },
 };
 
 export default function SuperAdminPanel() {

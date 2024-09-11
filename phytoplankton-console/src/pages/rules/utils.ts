@@ -6,13 +6,13 @@ import { RuleConfigurationFormValues } from '@/pages/rules/RuleConfiguration/Rul
 import { RuleConfigurationFormV8Values } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8';
 import { useApi } from '@/api';
 import {
-  Rule,
   Priority,
+  Rule,
   RuleInstance,
   RuleLabels,
   RuleNature,
-  TriggersOnHit,
   RuleType,
+  TriggersOnHit,
 } from '@/apis';
 import { RuleAction } from '@/apis/models/RuleAction';
 import { removeEmpty } from '@/utils/json';
@@ -177,6 +177,7 @@ export function ruleInstanceToFormValues(
           frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
           slaPolicies: ruleInstance.alertConfig?.slaPolicies,
           alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
+          ruleExecutionMode: ruleInstance.ruleExecutionMode,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isRiskLevelsEnabled
@@ -237,6 +238,7 @@ export function ruleInstanceToFormValuesV8(
       ruleNature: ruleInstance.nature,
       ruleLabels: ruleInstance.labels,
       userRuleRunCondition: ruleInstance.userRuleRunCondition,
+      ruleExecutionMode: ruleInstance.ruleExecutionMode,
     },
     ruleIsHitWhenStep: {
       baseCurrency: ruleInstance.baseCurrency,
@@ -332,6 +334,7 @@ export function formValuesToRuleInstance(
     falsePositiveCheckEnabled: basicDetailsStep.falsePositiveCheckEnabled,
     queueId: basicDetailsStep.queueId,
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
+    ruleExecutionMode: basicDetailsStep.ruleExecutionMode,
     alertConfig: {
       alertAssignees:
         basicDetailsStep.alertAssigneesType == 'EMAIL'
@@ -427,7 +430,6 @@ export function formValuesToRuleInstanceV8(
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,
-    mode: initialRuleInstance.mode,
     type: basicDetailsStep.ruleType ?? 'TRANSACTION',
     ruleNameAlias: basicDetailsStep.ruleName,
     ruleDescriptionAlias: basicDetailsStep.ruleDescription,
@@ -440,6 +442,7 @@ export function formValuesToRuleInstanceV8(
     checklistTemplateId: alertCreationDetailsStep.checklistTemplateId,
     userRuleRunCondition:
       basicDetailsStep.ruleType === 'USER' ? basicDetailsStep.userRuleRunCondition : undefined,
+    ruleExecutionMode: basicDetailsStep.ruleExecutionMode ?? 'SYNC',
     alertConfig: {
       alertAssignees:
         alertCreationDetailsStep.alertAssigneesType == 'EMAIL'
@@ -622,5 +625,5 @@ export const getRuleInstanceDescription = (
 };
 
 export function isShadowRule(ruleInstance: RuleInstance) {
-  return ruleInstance.mode === 'SHADOW_SYNC';
+  return ruleInstance.ruleRunMode === 'SHADOW';
 }

@@ -93,7 +93,8 @@ export async function createRule(
       nature: createdRule.defaultNature,
       labels: createdRule.labels,
       checksFor: createdRule.checksFor,
-      mode: 'LIVE_SYNC',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
       ...ruleInstance,
     })
 
@@ -605,7 +606,8 @@ export function getTestRuleInstance(
     nature: 'AML',
     labels: [],
     checksFor: [],
-    mode: 'LIVE_SYNC',
+    ruleRunMode: 'LIVE',
+    ruleExecutionMode: 'SYNC',
     ...partialRuleInstance,
   }
 }

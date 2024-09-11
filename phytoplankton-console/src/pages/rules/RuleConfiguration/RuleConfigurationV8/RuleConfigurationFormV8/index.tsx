@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ConfigProvider } from 'antd';
 import cn from 'clsx';
+import { useLocalStorageState } from 'ahooks';
 import { Mode } from '..';
 import s from './style.module.less';
 import BasicDetailsStep, {
@@ -8,8 +9,8 @@ import BasicDetailsStep, {
   INITIAL_VALUES as BASIC_DETAILS_STEP_INITIAL_VALUES,
 } from './steps/BasicDetailsStep';
 import RuleIsHitWhenStep, {
-  RuleIsHitWhenStepFormValues,
   INITIAL_VALUES as RULE_IS_HIT_WHEN_STEP_INITIAL_VALUES,
+  RuleIsHitWhenStepFormValues,
 } from './steps/RuleIsHitWhenStep';
 import AlertCreationDetailsStep, {
   FormValues as AlertCreationDetailsStepFormValues,
@@ -84,6 +85,8 @@ function RuleConfigurationFormV8(
       }
     : defaultInitialValues;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
+  const isAsyncRulesEnabled = useFeatureEnabled('ASYNC_RULES');
+  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
 
   const formId = useId(`form-`);
 
@@ -96,6 +99,7 @@ function RuleConfigurationFormV8(
         ruleName: notEmpty,
         ruleDescription: notEmpty,
         ruleNature: notEmpty,
+        ruleExecutionMode: !isAsyncRulesEnabled || isSimulationModeEnabled ? undefined : notEmpty,
       },
       ruleIsHitWhenStep: {
         ruleLogic: isRiskLevelsEnabled ? undefined : notEmpty,
@@ -123,7 +127,12 @@ function RuleConfigurationFormV8(
         },
       },
     };
-  }, [isRiskLevelsEnabled, formState?.alertCreationDetailsStep]);
+  }, [
+    isRiskLevelsEnabled,
+    formState?.alertCreationDetailsStep,
+    isAsyncRulesEnabled,
+    isSimulationModeEnabled,
+  ]);
 
   const STEPS = useMemo(
     () =>
@@ -318,6 +327,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleNature: rule?.defaultNature ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleNature,
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
         ruleType: 'TRANSACTION',
+        ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
       },
       ruleIsHitWhenStep,
       alertCreationDetailsStep: {

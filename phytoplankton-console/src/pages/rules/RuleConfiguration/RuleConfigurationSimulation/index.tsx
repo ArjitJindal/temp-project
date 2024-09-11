@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useCallback, useEffect, Ref } from 'react';
+import React, { Ref, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { cloneDeep, merge } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
 import { usePrevious } from 'ahooks';
@@ -16,11 +16,11 @@ import RuleConfigurationForm, {
 import { FormRef } from '@/components/library/Form';
 import {
   formValuesToRuleInstance,
-  useUpdateRuleInstance,
-  useCreateRuleInstance,
+  formValuesToRuleInstanceV8,
   ruleInstanceToFormValues,
   ruleInstanceToFormValuesV8,
-  formValuesToRuleInstanceV8,
+  useCreateRuleInstance,
+  useUpdateRuleInstance,
 } from '@/pages/rules/utils';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
@@ -28,19 +28,19 @@ import { getErrorMessage } from '@/utils/lang';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_JOB } from '@/utils/queries/keys';
-import { isSuccess, isLoading as isResourceLoading } from '@/utils/asyncResource';
+import { isLoading as isResourceLoading, isSuccess } from '@/utils/asyncResource';
 import Label from '@/components/library/Label';
 import { H4 } from '@/components/ui/Typography';
 import Tooltip from '@/components/library/Tooltip';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import { notEmpty } from '@/utils/array';
 import {
-  SimulationPostResponse,
-  SimulationIteration,
-  SimulationBeaconParameters,
   Rule,
   RuleInstance,
   SimulationBeaconJob,
+  SimulationBeaconParameters,
+  SimulationIteration,
+  SimulationPostResponse,
 } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import Button from '@/components/library/Button';
@@ -114,12 +114,20 @@ export function RuleConfigurationSimulation(props: Props) {
         ruleInstance: iterationFormRefs[i].current
           ? v8Mode
             ? formValuesToRuleInstanceV8(
-                ruleInstance,
+                {
+                  ...iteration.ruleInstance,
+                  ruleRunMode: 'LIVE',
+                  ruleExecutionMode: 'SYNC',
+                },
                 formValues as RuleConfigurationFormV8Values,
                 isRiskLevelsEnabled,
               )
             : formValuesToRuleInstance(
-                ruleInstance,
+                {
+                  ...iteration.ruleInstance,
+                  ruleRunMode: 'LIVE',
+                  ruleExecutionMode: 'SYNC',
+                },
                 formValues as RuleConfigurationFormValues,
                 isRiskLevelsEnabled,
               )

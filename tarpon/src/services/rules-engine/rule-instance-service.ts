@@ -28,7 +28,6 @@ import { getRuleByRuleId } from './transaction-rules/library'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
-import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { RuleInstanceStats } from '@/@types/openapi-internal/RuleInstanceStats'
 import { RuleInstanceExecutionStats } from '@/@types/openapi-internal/RuleInstanceExecutionStats'
 import { DAY_DATE_FORMAT_JS } from '@/utils/mongodb-utils'
@@ -37,6 +36,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { generateChecksum } from '@/utils/object'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
+import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -193,7 +193,7 @@ export class RuleInstanceService {
     return this.ruleInstanceRepository.getActiveRuleInstances(type)
   }
 
-  async getAllRuleInstances(mode?: RuleMode): Promise<RuleInstance[]> {
+  async getAllRuleInstances(mode?: RuleRunMode): Promise<RuleInstance[]> {
     return this.ruleInstanceRepository.getAllRuleInstances(mode)
   }
 

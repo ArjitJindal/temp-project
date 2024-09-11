@@ -44,7 +44,8 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { filterLiveRules } from '@/services/rules-engine/utils'
-import { RuleMode } from '@/@types/openapi-internal/RuleMode'
+import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
+import { RuleExecutionMode } from '@/@types/openapi-internal/RuleExecutionMode'
 import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -217,7 +218,8 @@ describe('Cases (Transaction hit)', () => {
   describe('Env #1 Shadow rules', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setupRules(TEST_TENANT_ID, {
-      mode: 'SHADOW_SYNC',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
     })
 
     setupUsers(TEST_TENANT_ID)
@@ -339,7 +341,8 @@ describe('Cases (Transaction hit)', () => {
         labels: [],
         checksFor: [],
         type: 'TRANSACTION',
-        mode: 'LIVE_SYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       },
       {
         ruleId: 'NEW_RULE_HIT',
@@ -348,7 +351,8 @@ describe('Cases (Transaction hit)', () => {
         labels: [],
         checksFor: [],
         type: 'TRANSACTION',
-        mode: 'LIVE_SYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       },
     ]
 
@@ -1156,7 +1160,8 @@ describe('Screening user rules', () => {
       parameters: {
         hitDirections: ['ORIGIN'],
       },
-      mode: 'LIVE_SYNC',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
       alertConfig: {
         alertCreatedFor: ['PAYMENT_DETAILS'],
       },
@@ -1270,8 +1275,16 @@ describe('Screening user rules', () => {
 
 describe('Cases (User not hit) - Shadow rules', () => {
   const TEST_TENANT_ID = getTestTenantId()
-  setupRules(TEST_TENANT_ID, { mode: 'SHADOW_SYNC', ruleType: 'USER' })
-  setupRules(TEST_TENANT_ID, { mode: 'SHADOW_SYNC', ruleType: 'TRANSACTION' })
+  setupRules(TEST_TENANT_ID, {
+    ruleRunMode: 'SHADOW',
+    ruleExecutionMode: 'SYNC',
+    ruleType: 'USER',
+  })
+  setupRules(TEST_TENANT_ID, {
+    ruleRunMode: 'SHADOW',
+    ruleExecutionMode: 'SYNC',
+    ruleType: 'TRANSACTION',
+  })
   setupUsers(TEST_TENANT_ID)
 
   test('Create a new case for a user rule hit', async () => {
@@ -2133,7 +2146,8 @@ function setupRules(
     hitDirections?: RuleHitDirection[]
     rulesCount?: number
     ruleType?: RuleType
-    mode?: RuleMode
+    ruleRunMode?: RuleRunMode
+    ruleExecutionMode?: RuleExecutionMode
   } = {}
 ) {
   const ruleType = parameters.ruleType ?? 'TRANSACTION'
@@ -2146,7 +2160,8 @@ function setupRules(
         parameters: {
           hitDirections: parameters.hitDirections,
         },
-        mode: parameters.mode ?? 'LIVE_SYNC',
+        ruleRunMode: parameters.ruleRunMode ?? 'LIVE',
+        ruleExecutionMode: parameters.ruleExecutionMode ?? 'SYNC',
       },
     ])
   }

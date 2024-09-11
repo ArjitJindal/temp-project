@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FrozenStatusesInput } from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/FrozenStatusInput';
 import { RangeValue } from 'rc-picker/es/interface';
+import { useLocalStorageState } from 'ahooks';
 import StepHeader from '../../StepHeader';
 import SlaPolicyInput from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/SlaPolicyInput';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
-import { DerivedStatus, Priority, Rule, RuleLabels, RuleNature } from '@/apis';
+import { DerivedStatus, Priority, Rule, RuleExecutionMode, RuleLabels, RuleNature } from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import {
@@ -20,7 +21,7 @@ import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import TextArea from '@/components/library/TextArea';
 import Checkbox from '@/components/library/Checkbox';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RuleQueueInputField } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/RuleQueueInput';
 import CreationIntervalInput, {
   AlertCreationInterval,
@@ -51,6 +52,7 @@ export interface FormValues {
   slaPolicies?: string[];
   checksFor: string[];
   frozenStatuses: DerivedStatus[];
+  ruleExecutionMode: RuleExecutionMode;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -67,6 +69,7 @@ export const INITIAL_VALUES: FormValues = {
   checksFor: [],
   frozenStatuses: [],
   alertCreatedFor: ['USER'],
+  ruleExecutionMode: 'SYNC',
 };
 
 interface Props {
@@ -99,6 +102,7 @@ function RuleDetails(props: Props) {
   useEffect(() => {
     setRuleLabels([]);
   }, [ruleNature]);
+  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
 
   return (
     <>
@@ -138,6 +142,36 @@ function RuleDetails(props: Props) {
             );
           }}
         </InputField>
+        {!isSimulationModeEnabled && (
+          <Feature name="ASYNC_RULES">
+            <InputField<FormValues, 'ruleExecutionMode'>
+              name={'ruleExecutionMode'}
+              label={'Rule execution mode'}
+              labelProps={{ required: true }}
+            >
+              {(inputProps) => (
+                <SelectionGroup<RuleExecutionMode>
+                  mode="SINGLE"
+                  options={[
+                    {
+                      value: 'SYNC',
+                      label: 'Synchronous',
+                      description:
+                        'The rule will run synchronously allowing the rule to be executed in real-time with the transaction',
+                    },
+                    {
+                      value: 'ASYNC',
+                      label: 'Asynchronous',
+                      description:
+                        'The rule will run asynchronously allowing the rule to be executed in the background. This reduces the load on the system and allows for more complex rules to be executed',
+                    },
+                  ]}
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+          </Feature>
+        )}
         <InputField<FormValues, 'ruleLabels'>
           name={'ruleLabels'}
           label={'Rule labels'}

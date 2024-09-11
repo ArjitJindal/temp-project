@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
 import { compact } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { useLocalStorageState } from 'ahooks';
 import s from './style.module.less';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import {
   Rule,
+  RuleExecutionMode,
   RuleLabels,
   RuleNature,
   RuleType,
@@ -27,6 +29,7 @@ import { Dayjs, dayjs } from '@/utils/dayjs';
 import NumberInput from '@/components/library/NumberInput';
 import { USER_RULE_SCHEDULE_UNITS } from '@/apis/models-custom/UserRuleScheduleUnit';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
+import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface BasicDetailsFormValues {
   ruleId: string | undefined;
@@ -35,6 +38,7 @@ export interface BasicDetailsFormValues {
   ruleNature: RuleNature;
   ruleLabels: RuleLabels[];
   ruleType: RuleType;
+  ruleExecutionMode: RuleExecutionMode;
   userRuleRunCondition?: UserRuleRunCondition;
   simulationIterationName?: string;
   simulationIterationDescription?: string;
@@ -47,6 +51,7 @@ export const INITIAL_VALUES: Partial<BasicDetailsFormValues> = {
   ruleNature: undefined,
   ruleLabels: [],
   ruleType: 'TRANSACTION',
+  ruleExecutionMode: 'SYNC',
 };
 const DEFAULT_USER_RULE_SCHEDULE: UserRuleRunConditionSchedule = {
   value: 1,
@@ -73,6 +78,7 @@ export default function BasicDetailsStep(props: Props) {
   const userRuleRunConditionField = useFieldState<BasicDetailsFormValues, 'userRuleRunCondition'>(
     'userRuleRunCondition',
   );
+  const [isSimulationModeEnabled] = useLocalStorageState('SIMULATION_RULES', false);
 
   return (
     <div className={s.root}>
@@ -152,6 +158,36 @@ export default function BasicDetailsStep(props: Props) {
                 />
               )}
             </InputField>
+            {!isSimulationModeEnabled && (
+              <Feature name="ASYNC_RULES">
+                <InputField<BasicDetailsFormValues, 'ruleExecutionMode'>
+                  name={'ruleExecutionMode'}
+                  label={'Rule execution mode'}
+                  labelProps={{ required: true }}
+                >
+                  {(inputProps) => (
+                    <SelectionGroup<RuleExecutionMode>
+                      mode="SINGLE"
+                      options={[
+                        {
+                          value: 'SYNC',
+                          label: 'Synchronous',
+                          description:
+                            'The rule will run synchronously allowing the rule to be executed in real-time with the transaction',
+                        },
+                        {
+                          value: 'ASYNC',
+                          label: 'Asynchronous',
+                          description:
+                            'The rule will run asynchronously allowing the rule to be executed in the background. This reduces the load on the system and allows for more complex rules to be executed',
+                        },
+                      ]}
+                      {...inputProps}
+                    />
+                  )}
+                </InputField>
+              </Feature>
+            )}
             {ruleTypeField.value === 'USER' && (
               <PropertyColumns>
                 <InputField<BasicDetailsFormValues, 'userRuleRunCondition'>

@@ -18,7 +18,7 @@ import DuplicateIcon from '@/components/ui/icons/Remix/document/file-copy-line.r
 import SimulationIcon from '@/components/ui/icons/Remix/media/rhythm-fill.react.svg';
 import * as Form from '@/components/ui/Form';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
-import { DEFAULT_DATE_TIME_FORMAT, dayjs } from '@/utils/dayjs';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { makeUrl } from '@/utils/routing';
 import { useHasPermissions } from '@/utils/user-utils';
@@ -199,7 +199,7 @@ export const RuleInstanceInfo = (props: Props) => {
                   if (canWriteRules && ruleInstance.id) {
                     updateRuleInstanceMutation.mutate({
                       ...ruleInstance,
-                      mode: 'LIVE_SYNC',
+                      ruleRunMode: 'LIVE',
                     });
                   }
                 }}
@@ -242,7 +242,7 @@ export const RuleInstanceInfo = (props: Props) => {
             >
               Duplicate rule
             </Button>
-            {ruleInstance.mode === 'LIVE_SYNC' && (
+            {ruleInstance.ruleRunMode === 'LIVE' && (
               <Confirm
                 title="Change to shadow rule"
                 text="Are you sure you want to change this rule to a shadow rule?"
@@ -250,7 +250,7 @@ export const RuleInstanceInfo = (props: Props) => {
                   if (canWriteRules && ruleInstance.id) {
                     updateRuleInstanceMutation.mutate({
                       ...ruleInstance,
-                      mode: 'SHADOW_SYNC',
+                      ruleRunMode: 'SHADOW',
                     });
                   }
                 }}

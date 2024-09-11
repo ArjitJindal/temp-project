@@ -27,9 +27,9 @@ import SettingsLineIcon from '@/components/ui/icons/Remix/system/settings-3-line
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import {
-  useOrderedProps,
   makeDefaultState,
   makeValidators,
+  useOrderedProps,
 } from '@/components/library/JsonSchemaEditor/utils';
 import User3LineIcon from '@/components/ui/icons/Remix/user/user-3-line.react.svg';
 import EarthLineIcon from '@/components/ui/icons/Remix/map/earth-line.react.svg';
@@ -374,6 +374,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null) {
         checksFor: rule?.checksFor ?? BASIC_DETAILS_STEP_INITIAL_VALUES.checksFor,
         frozenStatuses: BASIC_DETAILS_STEP_INITIAL_VALUES.frozenStatuses,
         alertCreatedFor: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreatedFor,
+        ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
       },
       standardFiltersStep: rule?.defaultFilters ?? STANDARD_FILTERS_STEP_INITIAL_VALUES,
       ruleParametersStep: ruleParametersStep,

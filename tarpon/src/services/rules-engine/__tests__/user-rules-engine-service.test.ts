@@ -61,7 +61,8 @@ describe('Verify User', () => {
             },
           ],
         },
-        mode: 'LIVE_ASYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'ASYNC',
       },
     ])
     test('Verify consumer user with V8 user rule', async () => {
@@ -330,7 +331,8 @@ describe('Verify User', () => {
             },
           ],
         },
-        mode: 'LIVE_ASYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'ASYNC',
       },
     ])
     test('Verify business user with V8 user rule', async () => {

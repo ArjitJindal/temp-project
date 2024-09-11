@@ -7,7 +7,8 @@ export const demoRuleSimulation: SimulationBeaconJob = {
   internal: true,
   type: 'BEACON',
   defaultRuleInstance: {
-    mode: 'LIVE_SYNC',
+    ruleRunMode: 'LIVE',
+    ruleExecutionMode: 'SYNC',
     id: 'a25685ad',
     ruleId: 'R-2',
     casePriority: 'P2',
@@ -78,7 +79,8 @@ export const demoRuleSimulation: SimulationBeaconJob = {
           transactionsCount: 10000,
         },
         ruleInstance: {
-          mode: 'LIVE_SYNC',
+          ruleRunMode: 'LIVE',
+          ruleExecutionMode: 'SYNC',
           id: 'a25685ad',
           ruleId: 'R-2',
           casePriority: 'P2',

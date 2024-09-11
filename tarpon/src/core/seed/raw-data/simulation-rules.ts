@@ -12,7 +12,8 @@ export const getRuleSimulation = (): Array<
     type: 'BEACON',
     defaultRuleInstance: {
       id: '2b9ec5b2',
-      mode: 'LIVE_SYNC',
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
       ruleId: 'R-2',
       checksFor: ['Transaction amount'],
       casePriority: 'P1',
@@ -79,7 +80,8 @@ export const getRuleSimulation = (): Array<
             transactionsCount: 10000,
           },
           ruleInstance: {
-            mode: 'LIVE_SYNC',
+            ruleExecutionMode: 'SYNC',
+            ruleRunMode: 'LIVE',
             id: '2b9ec5b2',
             ruleId: 'R-2',
             checksFor: ['Transaction amount'],
@@ -185,7 +187,8 @@ export const getRuleSimulation = (): Array<
     createdBy: getRandomUser().assigneeUserId,
     type: 'BEACON',
     defaultRuleInstance: {
-      mode: 'LIVE_SYNC',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
       id: '0afc5eba',
       ruleId: 'R-1',
       casePriority: 'P1',
@@ -229,7 +232,8 @@ export const getRuleSimulation = (): Array<
             transactionsCount: 10000,
           },
           ruleInstance: {
-            mode: 'LIVE_SYNC',
+            ruleRunMode: 'LIVE',
+            ruleExecutionMode: 'SYNC',
             id: '0afc5eba',
             ruleId: 'R-1',
             checksFor: ['1st transaction'],
@@ -310,7 +314,8 @@ export const getRuleSimulation = (): Array<
     createdBy: getRandomUser().assigneeUserId,
     type: 'BEACON',
     defaultRuleInstance: {
-      mode: 'LIVE_SYNC',
+      ruleRunMode: 'LIVE',
+      ruleExecutionMode: 'SYNC',
       id: 'a86206ad',
       ruleId: 'R-1',
       checksFor: ['1st transaction'],
@@ -354,7 +359,8 @@ export const getRuleSimulation = (): Array<
             transactionsCount: 10000,
           },
           ruleInstance: {
-            mode: 'LIVE_SYNC',
+            ruleRunMode: 'LIVE',
+            ruleExecutionMode: 'SYNC',
             id: 'a86206ad',
             ruleId: 'R-1',
             checksFor: ['1st transaction'],
@@ -456,7 +462,8 @@ export const getRuleSimulation = (): Array<
             transactionsCount: 10000,
           },
           ruleInstance: {
-            mode: 'LIVE_SYNC',
+            ruleRunMode: 'LIVE',
+            ruleExecutionMode: 'SYNC',
             id: 'a86206ad',
             ruleId: 'R-1',
             checksFor: ['1st transaction'],
@@ -538,7 +545,8 @@ export const getRuleSimulation = (): Array<
             transactionsCount: 10000,
           },
           ruleInstance: {
-            mode: 'LIVE_SYNC',
+            ruleRunMode: 'LIVE',
+            ruleExecutionMode: 'SYNC',
             id: 'a86206ad',
             ruleId: 'R-1',
             checksFor: ['1st transaction'],

@@ -28,6 +28,7 @@ import { RiskScoringService } from '../risk-scoring'
 import { SanctionsService } from '../sanctions'
 import { IBANService } from '../iban'
 import { GeoIPService } from '../geo-ip'
+import { sanitizeDeduplicationId } from '../../utils/sns-sqs-client'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -92,7 +93,9 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { TransactionState } from '@/@types/openapi-public/TransactionState'
 import {
   getAggregatedRuleStatus,
+  isAsyncRule,
   isShadowRule,
+  isSyncRule,
   isV8RuleInstance,
   runOnV8Engine,
   sendTransactionAggregationTasks,
@@ -198,9 +201,6 @@ export function getExecutedAndHitRulesResult(
     status: getAggregatedRuleStatus(hitRules),
   }
 }
-
-const SYNC_RULES: RuleMode[] = ['LIVE_SYNC', 'SHADOW_SYNC']
-const ASYNC_RULES: RuleMode[] = ['LIVE_ASYNC', 'SHADOW_ASYNC']
 
 export type DuplicateTransactionReturnType = TransactionMonitoringResult & {
   message: string
@@ -632,9 +632,28 @@ export class RulesEngineService {
       return
     }
 
+    const messageGroupId = generateChecksum(this.tenantId, 10)
+    let messageDeduplicationId = ''
+
+    if (task.type === 'TRANSACTION') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        task.transaction.transactionId
+      )
+    } else if (task.type === 'TRANSACTION_EVENT') {
+      messageDeduplicationId = sanitizeDeduplicationId(task.transactionEventId)
+    } else if (task.type === 'USER') {
+      messageDeduplicationId = sanitizeDeduplicationId(task.user.userId)
+    } else if (task.type === 'USER_EVENT') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `${task.updatedUser.userId}-${task.userEventTimestamp}`
+      )
+    }
+
     const message = new SendMessageCommand({
       MessageBody: JSON.stringify(task),
       QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+      MessageGroupId: messageGroupId,
+      MessageDeduplicationId: messageDeduplicationId,
     })
 
     await sqsClient.send(message)
@@ -683,7 +702,7 @@ export class RulesEngineService {
       (r) =>
         (options?.ongoingScreeningMode ||
           r.userRuleRunCondition?.entityUpdated !== false) &&
-        (async ? ASYNC_RULES : SYNC_RULES).includes(r.mode)
+        (async ? isAsyncRule(r) : isSyncRule(r))
     )
 
     const rules = await this.ruleRepository.getRulesByIds(
@@ -699,7 +718,7 @@ export class RulesEngineService {
         rules,
         options
       ),
-      isAnyAsyncRules: ruleInstances.some((r) => ASYNC_RULES.includes(r.mode)),
+      isAnyAsyncRules: ruleInstances.some(isAsyncRule),
     }
   }
 
@@ -935,14 +954,39 @@ export class RulesEngineService {
       riskScoringPromise,
     ])
 
-    const rulesModeToRun = relatedData ? ASYNC_RULES : SYNC_RULES
+    const toRunRule = (
+      ruleInstance: RuleInstance,
+      typeToRun: RuleInstance['type']
+    ) => {
+      if (ruleInstance.type !== typeToRun) {
+        return false
+      }
+
+      const ruleMode = ruleInstance.mode as RuleMode
+
+      if (
+        (ruleMode?.includes('SYNC') ||
+          ruleInstance.ruleExecutionMode === 'SYNC') &&
+        relatedData
+      ) {
+        return false
+      } else if (
+        (ruleMode?.includes('ASYNC') ||
+          ruleInstance.ruleExecutionMode === 'ASYNC') &&
+        !relatedData
+      ) {
+        return false
+      }
+
+      return true
+    }
 
     const transactionRuleInstances = activeRuleInstances.filter(
-      (v) => v.type === 'TRANSACTION' && rulesModeToRun.includes(v.mode)
+      (ruleInstance) => toRunRule(ruleInstance, 'TRANSACTION')
     )
 
-    const userRuleInstances = activeRuleInstances.filter(
-      (v) => v.type === 'USER' && rulesModeToRun.includes(v.mode)
+    const userRuleInstances = activeRuleInstances.filter((v) =>
+      toRunRule(v, 'USER')
     )
 
     const transactionWithRiskDetails: TransactionWithRiskDetails = {
@@ -1044,7 +1088,7 @@ export class RulesEngineService {
       senderUser,
       receiverUser,
       isAnyAsyncRules: activeRuleInstances.some((ruleInstance) =>
-        ASYNC_RULES.includes(ruleInstance.mode)
+        isAsyncRule(ruleInstance)
       ),
     }
   }

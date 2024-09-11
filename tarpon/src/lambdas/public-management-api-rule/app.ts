@@ -110,7 +110,8 @@ export const ruleInstanceHandler = lambdaApi()(
       const newRuleInstance: RuleInstance = {
         ...ruleInstance,
         ...ruleInstanceUpdatable,
-        mode: 'LIVE_SYNC',
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       }
       return ruleInstanceService.createRuleInstance(newRuleInstance)
     } else if (
@@ -137,12 +138,13 @@ export const ruleInstanceHandler = lambdaApi()(
       }
       const newRuleInstance = await ruleInstanceService.createRuleInstance({
         ...ruleInstance,
-        mode: 'LIVE_SYNC',
         type: rule.type,
         labels: rule.labels,
         checksFor: rule.checksFor,
         nature: rule.defaultNature,
         casePriority: rule.defaultCasePriority,
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
       })
       return newRuleInstance
     } else if (

@@ -307,7 +307,10 @@ paths:
       operationId: get-rule_instances
       parameters:
         - schema:
-            $ref: '#/components/schemas/RuleMode'
+            type: string
+            enum:
+              - LIVE
+              - SHADOW
           in: query
           name: mode
       x-flagright:
@@ -7510,6 +7513,10 @@ components:
           type: string
         mode:
           $ref: '#/components/schemas/RuleMode'
+        ruleRunMode:
+          $ref: '#/components/schemas/RuleRunMode'
+        ruleExecutionMode:
+          $ref: '#/components/schemas/RuleExecutionMode'
         userRuleRunCondition:
           $ref: '#/components/schemas/UserRuleRunCondition'
       required:
@@ -7518,7 +7525,8 @@ components:
         - labels
         - checksFor
         - type
-        - mode
+        - ruleRunMode
+        - ruleExecutionMode
     UserRuleRunCondition:
       title: UserRuleRunCondition
       type: object
@@ -7559,6 +7567,18 @@ components:
         - SHADOW_SYNC
         - LIVE_ASYNC
         - SHADOW_ASYNC
+    RuleRunMode:
+      title: RuleRunMode
+      type: string
+      enum:
+        - LIVE
+        - SHADOW
+    RuleExecutionMode:
+      title: RuleExecutionMode
+      type: string
+      enum:
+        - SYNC
+        - ASYNC
     NewRuleInstanceIdResponse:
       title: NewRuleInstanceIdResponse
       type: object
@@ -9764,6 +9784,7 @@ components:
         - MACHINE_LEARNING
         - RISK_SCORING_V8
         - DOW_JONES
+        - ASYNC_RULES
       description: ''
     ManagedRoleName:
       type: string

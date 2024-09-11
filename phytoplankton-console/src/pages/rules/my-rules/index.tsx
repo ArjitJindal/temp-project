@@ -2,13 +2,13 @@ import { Tooltip } from 'antd';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined, EyeOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useLocalStorageState } from 'ahooks';
 import { getRuleInstanceDisplayId, useUpdateRuleInstance } from '../utils';
 import { RuleStatusSwitch } from '../components/RuleStatusSwitch';
 import RuleActionsMenu from '../components/RuleActionsMenu';
 import s from './style.module.less';
-import { RuleInstance, RuleMode } from '@/apis';
+import { RuleInstance, RuleRunMode } from '@/apis';
 import { useApi } from '@/api';
 import {
   CommonParams,
@@ -29,16 +29,16 @@ import { BOOLEAN, DATE, ENUM, PRIORITY } from '@/components/library/Table/standa
 import { message } from '@/components/library/Message';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useScrollToFocus } from '@/utils/hooks';
-import { parseQueryString, makeUrl } from '@/utils/routing';
+import { makeUrl, parseQueryString } from '@/utils/routing';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
-const RULES_SEGMENTED_CONTROL_ITEMS: Item<RuleMode>[] = [
-  { value: 'LIVE_SYNC', label: 'Live rules' },
-  { value: 'SHADOW_SYNC', label: 'Shadow rules' },
+const RULES_SEGMENTED_CONTROL_ITEMS: Item<RuleRunMode>[] = [
+  { value: 'LIVE', label: 'Live rules' },
+  { value: 'SHADOW', label: 'Shadow rules' },
 ];
 
 export function canSimulate(ruleInstance: RuleInstance) {
@@ -52,7 +52,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
   const [updatedRuleInstances, setUpdatedRuleInstances] = useState<{ [key: string]: RuleInstance }>(
     {},
   );
-  const [ruleMode, setRuleMode] = useLocalStorageState<RuleMode>('ruleMode', 'LIVE_SYNC');
+  const [ruleMode, setRuleMode] = useLocalStorageState<RuleRunMode>('ruleMode', 'LIVE');
   const actionRef = useRef<TableRefType>(null);
   const reloadTable = useCallback(() => {
     actionRef.current?.reload();
@@ -446,7 +446,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
 
   return (
     <>
-      <SegmentedControl<RuleMode>
+      <SegmentedControl<RuleRunMode>
         active={ruleMode}
         onChange={setRuleMode}
         items={RULES_SEGMENTED_CONTROL_ITEMS}

@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import {
@@ -10,13 +10,13 @@ import {
 import { RuleModeModal } from '../components/RuleModeModal';
 import s from './style.module.less';
 import RuleConfigurationFormV8, {
-  STEPS,
   RuleConfigurationFormV8Values,
+  STEPS,
 } from './RuleConfigurationFormV8';
+import { Rule, RuleInstance, RuleRunMode } from '@/apis';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import Button from '@/components/library/Button';
-import { Rule, RuleInstance, RuleMode } from '@/apis';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
@@ -42,7 +42,7 @@ export default function RuleConfigurationV8(props: Props) {
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<RuleConfigurationFormV8Values>>(null);
-  const [ruleMode, setRuleMode] = useState<RuleMode>('LIVE_SYNC');
+  const [ruleMode, setRuleMode] = useState<RuleRunMode>('LIVE');
   const [isRuleModeModalOpen, setIsRuleModeModalOpen] = useState(false);
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const formInitialValues = ruleInstanceToFormValuesV8(isRiskLevelsEnabled, ruleInstance);
@@ -67,7 +67,8 @@ export default function RuleConfigurationV8(props: Props) {
             {
               ruleId: rule?.id ?? ruleInstance?.ruleId,
               type: rule?.type ?? 'TRANSACTION',
-              mode: ruleMode,
+              ruleExecutionMode: 'SYNC',
+              ruleRunMode: ruleMode,
             } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,

@@ -16,7 +16,7 @@ import RuleConfigurationForm, {
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import Button from '@/components/library/Button';
-import { Rule, RuleInstance, RuleMode } from '@/apis';
+import { Rule, RuleInstance, RuleRunMode } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -40,7 +40,7 @@ export default function RuleConfigurationV2(props: Props) {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const formInitialValues = ruleInstanceToFormValues(isRiskLevelsEnabled, ruleInstance);
   const [isValuesSame, setIsValuesSame] = useState(true);
-  const [ruleMode, setRuleMode] = useState<RuleMode>('LIVE_SYNC');
+  const [ruleMode, setRuleMode] = useState<RuleRunMode>('LIVE');
   const [isRuleModeModalOpen, setIsRuleModeModalOpen] = useState(false);
   const updateRuleInstanceMutation = useUpdateRuleInstance(onRuleInstanceUpdated);
   const createRuleInstanceMutation = useCreateRuleInstance(onRuleInstanceUpdated);
@@ -53,7 +53,12 @@ export default function RuleConfigurationV2(props: Props) {
       } else if ((type === 'CREATE' || type === 'DUPLICATE') && rule) {
         createRuleInstanceMutation.mutate(
           formValuesToRuleInstance(
-            { ruleId: rule.id, type: rule.type, mode: ruleMode } as RuleInstance,
+            {
+              ruleId: rule.id,
+              type: rule.type,
+              ruleRunMode: ruleMode,
+              ruleExecutionMode: 'SYNC',
+            } as RuleInstance,
             formValues,
             isRiskLevelsEnabled,
           ),

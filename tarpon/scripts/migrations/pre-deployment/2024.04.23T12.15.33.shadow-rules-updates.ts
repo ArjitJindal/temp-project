@@ -18,7 +18,11 @@ async function migrateTenant(tenant: Tenant) {
 
   for (const ruleInstance of existingRuleInstances) {
     await ruleInstanceRepository.createOrUpdateRuleInstance(
-      { ...ruleInstance, mode: 'LIVE_SYNC' },
+      {
+        ...ruleInstance,
+        ruleRunMode: 'LIVE',
+        ruleExecutionMode: 'SYNC',
+      },
       ruleInstance.updatedAt
     )
   }
