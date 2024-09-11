@@ -13,6 +13,7 @@ import Home4LineIcon from '@/components/ui/icons/Remix/buildings/home-4-line.rea
 import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-line.react.svg';
 import SuitCaseLineIcon from '@/components/ui/icons/Remix/map/suitcase-line.react.svg';
 import StoreLineIcon from '@/components/ui/icons/Remix/buildings/store-3-line.react.svg';
+import MaritalStatusIcon from '@/components/ui/icons/Remix/user/user-heart-line.react.svg';
 import * as Form from '@/components/ui/Form';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { Tag as ApiTag } from '@/apis/models/Tag';
@@ -48,9 +49,12 @@ export default function UsersInfoCard(props: Props) {
           <CountryDisplay isoCode={user.userDetails?.countryOfResidence} />
         </Form.Layout.Label>
       </div>
-      <div className={s.time}>
+      <div className={s.inner}>
         <Form.Layout.Label icon={<TimerLineIcon />} title={'Created at'}>
           {dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<MaritalStatusIcon />} title={'Marital status'}>
+          {user.userDetails?.maritalStatus ?? '-'}
         </Form.Layout.Label>
       </div>
       <div className={s.placeOfBirth}>
@@ -59,16 +63,25 @@ export default function UsersInfoCard(props: Props) {
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>
-        <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
-          {user.acquisitionChannel ?? '-'}
-        </Form.Layout.Label>
         <Form.Layout.Label icon={<SuitCaseLineIcon />} title={'Occupation'}>
           {user?.occupation ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<SuitCaseLineIcon />} title={'Sector'}>
+          {user?.employmentDetails?.employmentSector ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<SuitCaseLineIcon />} title={'Industry'}>
+          {user?.employmentDetails?.businessIndustry ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<SuitCaseLineIcon />} title={'Employer'}>
+          {user?.employmentDetails?.employerName ?? '-'}
         </Form.Layout.Label>
       </div>
       <div className={s.inner}>
         <Form.Layout.Label icon={<BookmarkLineIcon />} title={'Consumer segment'}>
           {user.userSegment ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label icon={<StoreLineIcon />} title={'Acquisition channel'}>
+          {user.acquisitionChannel ?? '-'}
         </Form.Layout.Label>
       </div>
       {user.reasonForAccountOpening?.length ? (

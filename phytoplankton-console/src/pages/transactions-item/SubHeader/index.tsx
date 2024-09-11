@@ -41,6 +41,12 @@ export default function SubHeader(props: Props) {
         <Form.Layout.Label title="Product Type" className={s.attribute}>
           {transaction.productType ?? '-'}
         </Form.Layout.Label>
+        <Form.Layout.Label title="Source of funds" className={s.attribute}>
+          {transaction.originFundsInfo?.sourceOfFunds ?? '-'}
+        </Form.Layout.Label>
+        <Form.Layout.Label title="Source of wealth" className={s.attribute}>
+          {transaction.originFundsInfo?.sourceOfWealth ?? '-'}
+        </Form.Layout.Label>
         <Form.Layout.Label title="Reference" className={s.attribute}>
           {transaction.reference ?? '-'}
         </Form.Layout.Label>
