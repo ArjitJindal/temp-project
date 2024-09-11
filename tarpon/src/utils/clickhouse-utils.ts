@@ -6,7 +6,7 @@ import {
   ResponseJSON,
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
-import retry from 'retry'
+import { backOff } from 'exponential-backoff'
 import { envIs } from './env'
 import {
   ClickHouseTables,
@@ -82,14 +82,6 @@ function assertTableName(
   return tableDefinition
 }
 
-const retryInsert = retry.operation({
-  retries: 5,
-  factor: 2,
-  minTimeout: 1000,
-  maxTimeout: 10000,
-  randomize: true,
-})
-
 const clickhouseInsert = async (
   table: string,
   values: object[],
@@ -102,19 +94,28 @@ const clickhouseInsert = async (
     async_insert: envIs('test', 'local') ? 0 : 1,
   }
 
-  return retryInsert.attempt(async (i) => {
-    try {
-      await client.insert({
-        table,
-        values,
-        columns: columns,
-        format: 'JSON',
-        clickhouse_settings: CLICKHOUSE_SETTINGS,
-      })
-    } catch (e) {
-      logger.error(`Error inserting into clickhouse, retrying... ${i}`, e)
-      throw e
-    }
+  const insert = async () => {
+    await client.insert({
+      table,
+      values,
+      columns: columns,
+      format: 'JSON',
+      clickhouse_settings: CLICKHOUSE_SETTINGS,
+    })
+  }
+
+  await backOff(insert, {
+    numOfAttempts: 3,
+    maxDelay: 10000,
+    startingDelay: 1000,
+    jitter: 'full',
+    retry(e, attemptNumber) {
+      logger.error(
+        `Error inserting into clickhouse, retrying... ${attemptNumber}, Message: ${e.message}`,
+        e
+      )
+      return true
+    },
   })
 }
 
