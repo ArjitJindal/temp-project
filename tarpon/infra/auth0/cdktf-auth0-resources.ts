@@ -127,13 +127,22 @@ export const createAuth0TenantResources = (
     },
     refreshToken: {
       leeway: 0,
-      idleTokenLifetime: 60 * 60,
-      tokenLifetime: 8 * 60 * 60,
+      idleTokenLifetime: 15 * 60, // 15 minutes (15 minutes of inactivity)
+      tokenLifetime: 60 * 60, // 1 hour (Token expires after 1 hour)
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
     logoUri: tenantConfig.branding.logoUrl,
     initiateLoginUri: tenantConfig.consoleUrl,
+  })
+
+  new auth0.tenant.Tenant(context, getTenantResourceId(tenantName, 'tenant'), {
+    idleSessionLifetime: 0.25, // Session expires after 15 minutes of inactivity
+    sessionLifetime: 24, // Need to login again after 24 hours
+    sessionCookie: {
+      mode: 'persistent',
+    },
+    provider,
   })
 
   /**
@@ -148,8 +157,8 @@ export const createAuth0TenantResources = (
       identifier: config.application.AUTH0_AUDIENCE,
       signingAlg: 'RS256',
       allowOfflineAccess: false,
-      tokenLifetime: 3600,
-      tokenLifetimeForWeb: 3600,
+      tokenLifetime: 15 * 60, // 15 minutes
+      tokenLifetimeForWeb: 15 * 60, // 15 minutes
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',
