@@ -7,6 +7,7 @@ import * as auth0 from '@cdktf/providers/auth0'
 import { Config } from '@flagright/lib/config/config'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { ClientCreateAddonsSamlp } from 'auth0'
+import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
@@ -14,6 +15,8 @@ import { getAuth0Domain } from '@/utils/auth0-utils'
 function getTenantResourceId(tenantName: string, id: string) {
   return `${tenantName}::${id}`
 }
+const DEV_ENV_TOKEN_LIFETIME = 60 * 60 // 1 hour
+const TOKEN_LIFETIME = 15 * 60 // 15 minutes
 
 function getSecrets<T>(
   context: Construct,
@@ -157,8 +160,14 @@ export const createAuth0TenantResources = (
       identifier: config.application.AUTH0_AUDIENCE,
       signingAlg: 'RS256',
       allowOfflineAccess: false,
-      tokenLifetime: 15 * 60, // 15 minutes
-      tokenLifetimeForWeb: 15 * 60, // 15 minutes
+      tokenLifetime:
+        tenantName === Auth0DevTenantConfig.tenantName
+          ? DEV_ENV_TOKEN_LIFETIME
+          : TOKEN_LIFETIME, // 15 minutes
+      tokenLifetimeForWeb:
+        tenantName === Auth0DevTenantConfig.tenantName
+          ? DEV_ENV_TOKEN_LIFETIME
+          : TOKEN_LIFETIME, // 15 minutes
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',
