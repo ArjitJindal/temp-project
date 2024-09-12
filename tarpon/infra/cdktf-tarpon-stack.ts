@@ -3,14 +3,18 @@ import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
 import * as aws from '@cdktf/providers/aws'
 import * as atlas from '@cdktf/providers/mongodbatlas'
+import * as clickhouse from '@cdktf/providers/clickhouse'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { Stage } from '@flagright/lib/constants/deploy'
+import { getClickhouseTenantConfig } from '@lib/configs/clickhouse/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
 
 const mongoTriggerDisabledTenants: Partial<Record<Stage, string[]>> = {
   dev: ['cypress', 'flagright-postman', 'flagright-test'],
 }
+
+const CLICKHOUSE_ORGANIZATION_ID = 'c9ccc4d7-3de9-479b-afd6-247a5ac0494e'
 
 const enabledCollections = [
   'transactions',
@@ -55,7 +59,7 @@ export class CdktfTarponStack extends TerraformStack {
       createAuth0TenantResources(this, config, auth0TenantConfig)
     )
 
-    const secretVersion =
+    const mongoSecret =
       new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
         this,
         'atlas-secret',
@@ -66,11 +70,11 @@ export class CdktfTarponStack extends TerraformStack {
 
     new atlas.provider.MongodbatlasProvider(this, 'atlas-provider', {
       publicKey: Fn.lookup(
-        Fn.jsondecode(secretVersion.secretString),
+        Fn.jsondecode(mongoSecret.secretString),
         'public_key'
       ),
       privateKey: Fn.lookup(
-        Fn.jsondecode(secretVersion.secretString),
+        Fn.jsondecode(mongoSecret.secretString),
         'private_key'
       ),
     })
@@ -155,6 +159,70 @@ export class CdktfTarponStack extends TerraformStack {
           clusterTime: 1,
         }),
       })
+    }
+
+    if (config.region) {
+      const clickhouseTenantConfigs = getClickhouseTenantConfig(
+        config.stage,
+        config.region
+      )
+
+      if (clickhouseTenantConfigs) {
+        const clickhouseSecret =
+          new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+            this,
+            'clickhouse-secret',
+            {
+              secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouseApi`,
+            }
+          )
+
+        const clickhousePassword =
+          new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+            this,
+            'clickhouse-password',
+            {
+              secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
+            }
+          )
+
+        const clickhouseProvider = new clickhouse.provider.ClickhouseProvider(
+          this,
+          'clickhouse-provider',
+          {
+            organizationId: CLICKHOUSE_ORGANIZATION_ID,
+            tokenKey: Fn.lookup(
+              Fn.jsondecode(clickhouseSecret.secretString),
+              'keyId'
+            ),
+            tokenSecret: Fn.lookup(
+              Fn.jsondecode(clickhouseSecret.secretString),
+              'keySecret'
+            ),
+          }
+        )
+
+        new clickhouse.service.Service(this, 'clickhouse-service', {
+          provider: clickhouseProvider,
+          cloudProvider: 'aws',
+          ipAccess: clickhouseTenantConfigs.ipAccess,
+          name: `Flagright ${config.stage} (${config.region as string})`,
+          region: config.env.region as string,
+          tier: clickhouseTenantConfigs.ENVIROMENT.type,
+          password: Fn.lookup(
+            Fn.jsondecode(clickhousePassword.secretString),
+            'password'
+          ),
+          idleScaling: clickhouseTenantConfigs.idleScaling,
+          idleTimeoutMinutes: clickhouseTenantConfigs.idleTimeoutMinutes,
+          ...(clickhouseTenantConfigs.ENVIROMENT.type === 'production' && {
+            minTotalMemoryGb:
+              clickhouseTenantConfigs.ENVIROMENT.minTotalMemoryGb,
+            maxTotalMemoryGb:
+              clickhouseTenantConfigs.ENVIROMENT.maxTotalMemoryGb,
+          }),
+        })
+      }
     }
   }
 }
