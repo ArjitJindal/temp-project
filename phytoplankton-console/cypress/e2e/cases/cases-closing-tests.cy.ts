@@ -7,6 +7,7 @@ describe('Closing and Re-Opening the cases', () => {
     ...PERMISSIONS.CASE_REOPEN,
     ...PERMISSIONS.TRANSACTION_OVERVIEW,
     ...PERMISSIONS.NOTIFICATIONS,
+    ...PERMISSIONS.SANCTIONS,
   ];
   beforeEach(() => {
     cy.loginWithPermissions({

@@ -40,6 +40,7 @@ const SETTINGS_ORGANIZATION: Permission[] = [
   'settings:organisation:read',
   'settings:organisation:write',
 ];
+const SANCTIONS: Permission[] = ['sanctions:search:read'];
 const SETTINGS_DEVELOPER: Permission[] = ['settings:developers:read', 'settings:developers:write'];
 const SIMULATION: Permission[] = ['simulator:simulations:read', 'simulator:simulations:write'];
 const NOTIFICATIONS: Permission[] = ['notifications:all:read'];
@@ -68,4 +69,5 @@ export const PERMISSIONS: {
   SETTINGS_DEVELOPER,
   SIMULATION,
   NOTIFICATIONS,
+  SANCTIONS,
 };
