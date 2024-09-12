@@ -48,6 +48,7 @@ import {
 } from '../consts';
 import { ColumnOrder, PersistedState, usePersistedSettingsContext } from './settings';
 import { ExternalStateContext } from './externalState';
+import s from './index.module.less';
 import Skeleton, { shouldShowSkeleton } from '@/components/library/Skeleton';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 import { UNKNOWN } from '@/components/library/Table/standardDataTypes';
@@ -498,11 +499,11 @@ function makeSimpleColumnCellComponent<
     };
 
     return (
-      <>
+      <div className={s.columnCellComponentContainer}>
         {editContext.isEditing && columnDataType.renderEdit
           ? columnDataType.renderEdit(itemContext)
           : columnDataType.render?.(value, itemContext)}
-      </>
+      </div>
     );
   };
 }
@@ -531,11 +532,11 @@ function makeDerivedColumnCellComponent<Item extends object>(options: {
       external: externalState?.value ?? null,
     };
     return (
-      <>
+      <div className={s.columnCellComponentContainer}>
         {editContext.isEditing && columnDataType.renderEdit
           ? columnDataType.renderEdit(cellContext)
           : columnDataType.render?.(columnValue, cellContext)}
-      </>
+      </div>
     );
   };
 }
@@ -558,13 +559,13 @@ function makeDisplayColumnCellComponent<Item extends object>(options: {
     );
 
     return (
-      <>
+      <div className={s.columnCellComponentContainer}>
         {column.render(props.row.original.content, {
           item: props.row.original.content,
           edit: editContext,
           external: externalState?.value ?? null,
         })}
-      </>
+      </div>
     );
   };
 }
