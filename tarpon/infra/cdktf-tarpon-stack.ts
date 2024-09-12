@@ -161,68 +161,66 @@ export class CdktfTarponStack extends TerraformStack {
       })
     }
 
-    if (config.region) {
-      const clickhouseTenantConfigs = getClickhouseTenantConfig(
-        config.stage,
-        config.region
-      )
+    const region = config.region || 'eu-1'
 
-      if (clickhouseTenantConfigs) {
-        const clickhouseSecret =
-          new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
-            this,
-            'clickhouse-secret',
-            {
-              secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouseApi`,
-            }
-          )
+    const clickhouseTenantConfigs = getClickhouseTenantConfig(
+      config.stage,
+      region
+    )
 
-        const clickhousePassword =
-          new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
-            this,
-            'clickhouse-password',
-            {
-              secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
-            }
-          )
-
-        const clickhouseProvider = new clickhouse.provider.ClickhouseProvider(
+    if (clickhouseTenantConfigs) {
+      const clickhouseSecret =
+        new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
           this,
-          'clickhouse-provider',
+          'clickhouse-secret',
           {
-            organizationId: CLICKHOUSE_ORGANIZATION_ID,
-            tokenKey: Fn.lookup(
-              Fn.jsondecode(clickhouseSecret.secretString),
-              'keyId'
-            ),
-            tokenSecret: Fn.lookup(
-              Fn.jsondecode(clickhouseSecret.secretString),
-              'keySecret'
-            ),
+            secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouseApi`,
           }
         )
 
-        new clickhouse.service.Service(this, 'clickhouse-service', {
-          provider: clickhouseProvider,
-          cloudProvider: 'aws',
-          ipAccess: clickhouseTenantConfigs.ipAccess,
-          name: `Flagright ${config.stage} (${config.region as string})`,
-          region: config.env.region as string,
-          tier: clickhouseTenantConfigs.ENVIROMENT.type,
-          password: Fn.lookup(
-            Fn.jsondecode(clickhousePassword.secretString),
-            'password'
+      const clickhousePassword =
+        new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+          this,
+          'clickhouse-password',
+          {
+            secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
+          }
+        )
+
+      const clickhouseProvider = new clickhouse.provider.ClickhouseProvider(
+        this,
+        'clickhouse-provider',
+        {
+          organizationId: CLICKHOUSE_ORGANIZATION_ID,
+          tokenKey: Fn.lookup(
+            Fn.jsondecode(clickhouseSecret.secretString),
+            'keyId'
           ),
-          idleScaling: clickhouseTenantConfigs.idleScaling,
-          idleTimeoutMinutes: clickhouseTenantConfigs.idleTimeoutMinutes,
-          ...(clickhouseTenantConfigs.ENVIROMENT.type === 'production' && {
-            minTotalMemoryGb:
-              clickhouseTenantConfigs.ENVIROMENT.minTotalMemoryGb,
-            maxTotalMemoryGb:
-              clickhouseTenantConfigs.ENVIROMENT.maxTotalMemoryGb,
-          }),
-        })
-      }
+          tokenSecret: Fn.lookup(
+            Fn.jsondecode(clickhouseSecret.secretString),
+            'keySecret'
+          ),
+        }
+      )
+
+      new clickhouse.service.Service(this, 'clickhouse-service', {
+        provider: clickhouseProvider,
+        cloudProvider: 'aws',
+        ipAccess: clickhouseTenantConfigs.ipAccess,
+        name: `Flagright ${config.stage} (${region})`,
+        region: config.env.region as string,
+        tier: clickhouseTenantConfigs.ENVIROMENT.type,
+        password: Fn.lookup(
+          Fn.jsondecode(clickhousePassword.secretString),
+          'password'
+        ),
+        idleScaling: clickhouseTenantConfigs.idleScaling,
+        idleTimeoutMinutes: clickhouseTenantConfigs.idleTimeoutMinutes,
+        ...(clickhouseTenantConfigs.ENVIROMENT.type === 'production' && {
+          minTotalMemoryGb: clickhouseTenantConfigs.ENVIROMENT.minTotalMemoryGb,
+          maxTotalMemoryGb: clickhouseTenantConfigs.ENVIROMENT.maxTotalMemoryGb,
+        }),
+      })
     }
   }
 }
