@@ -57,6 +57,10 @@ import { logger } from '@/core/logger'
 import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmountDetails'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { Amount } from '@/@types/openapi-public/Amount'
+import { USER_KRS_SCORE } from '@/services/rules-engine/v8-variables/user-krs-score'
+import { USER_CRA_SCORE } from '@/services/rules-engine/v8-variables/user-cra-score'
+import { USER_KRS_LEVEL } from '@/services/rules-engine/v8-variables/user-krs-level'
+import { USER_CRA_LEVEL } from '@/services/rules-engine/v8-variables/user-cra-level'
 
 const currencyService = new CurrencyService()
 
@@ -186,6 +190,10 @@ const USER_DERIVED_VARIABLES: Array<
 > = [
   USER_TYPE,
   USER_CHILD_USER_IDS,
+  USER_KRS_SCORE,
+  USER_CRA_SCORE,
+  USER_KRS_LEVEL,
+  USER_CRA_LEVEL,
   CONSUMER_USER_AGE_DAYS,
   CONSUMER_USER_AGE_MONTHS,
   CONSUMER_USER_AGE_YEARS,
