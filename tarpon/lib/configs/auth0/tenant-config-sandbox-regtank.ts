@@ -23,4 +23,6 @@ export const Auth0SandboxRegtankTenantConfig: Auth0TenantConfig = {
     fromAddress: 'support@regtank.com',
   },
   apiUsageGoogleSheetId: '12ceH3p0RjC4yBVykdl4LNlhym-y7K8D2qhVD0Q4_rgo',
+  sessionTimeoutHours: 6,
+  requireLoginAfterHours: 48,
 }

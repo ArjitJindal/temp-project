@@ -18,4 +18,6 @@ export type Auth0TenantConfig = {
     fromAddress: string
   }
   apiUsageGoogleSheetId?: string
+  sessionTimeoutHours: number
+  requireLoginAfterHours: number
 }

@@ -7,7 +7,6 @@ import * as auth0 from '@cdktf/providers/auth0'
 import { Config } from '@flagright/lib/config/config'
 import { Auth0TenantConfig } from '@lib/configs/auth0/type'
 import { ClientCreateAddonsSamlp } from 'auth0'
-import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
@@ -15,8 +14,6 @@ import { getAuth0Domain } from '@/utils/auth0-utils'
 function getTenantResourceId(tenantName: string, id: string) {
   return `${tenantName}::${id}`
 }
-const DEV_ENV_TOKEN_LIFETIME = 60 * 60 // 1 hour
-const TOKEN_LIFETIME = 15 * 60 // 15 minutes
 
 function getSecrets<T>(
   context: Construct,
@@ -130,8 +127,8 @@ export const createAuth0TenantResources = (
     },
     refreshToken: {
       leeway: 0,
-      idleTokenLifetime: 15 * 60, // 15 minutes (15 minutes of inactivity)
-      tokenLifetime: 60 * 60, // 1 hour (Token expires after 1 hour)
+      idleTokenLifetime: tenantConfig.sessionTimeoutHours * 3600,
+      tokenLifetime: tenantConfig.sessionTimeoutHours * 3600,
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
@@ -140,8 +137,8 @@ export const createAuth0TenantResources = (
   })
 
   new auth0.tenant.Tenant(context, getTenantResourceId(tenantName, 'tenant'), {
-    idleSessionLifetime: 0.25, // Session expires after 15 minutes of inactivity
-    sessionLifetime: 24, // Need to login again after 24 hours
+    idleSessionLifetime: tenantConfig.sessionTimeoutHours,
+    sessionLifetime: tenantConfig.requireLoginAfterHours,
     sessionCookie: {
       mode: 'persistent',
     },
@@ -160,14 +157,8 @@ export const createAuth0TenantResources = (
       identifier: config.application.AUTH0_AUDIENCE,
       signingAlg: 'RS256',
       allowOfflineAccess: false,
-      tokenLifetime:
-        tenantName === Auth0DevTenantConfig.tenantName
-          ? DEV_ENV_TOKEN_LIFETIME
-          : TOKEN_LIFETIME, // 15 minutes
-      tokenLifetimeForWeb:
-        tenantName === Auth0DevTenantConfig.tenantName
-          ? DEV_ENV_TOKEN_LIFETIME
-          : TOKEN_LIFETIME, // 15 minutes
+      tokenLifetime: tenantConfig.sessionTimeoutHours * 60,
+      tokenLifetimeForWeb: tenantConfig.sessionTimeoutHours * 60,
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',

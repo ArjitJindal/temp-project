@@ -21,4 +21,6 @@ export const Auth0ProdTraxionRightTenantConfig: Auth0TenantConfig = {
     fromAddress: 'noreply@traxionright.com',
   },
   apiUsageGoogleSheetId: '1tYmvUYCsbQVYTgqI7rEjW--uycww1prRu-CcERC_hMM',
+  sessionTimeoutHours: 6,
+  requireLoginAfterHours: 48,
 }
