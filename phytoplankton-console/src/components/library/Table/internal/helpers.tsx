@@ -498,11 +498,11 @@ function makeSimpleColumnCellComponent<
     };
 
     return (
-      <>
+      <div>
         {editContext.isEditing && columnDataType.renderEdit
           ? columnDataType.renderEdit(itemContext)
           : columnDataType.render?.(value, itemContext)}
-      </>
+      </div>
     );
   };
 }
@@ -531,11 +531,11 @@ function makeDerivedColumnCellComponent<Item extends object>(options: {
       external: externalState?.value ?? null,
     };
     return (
-      <>
+      <div>
         {editContext.isEditing && columnDataType.renderEdit
           ? columnDataType.renderEdit(cellContext)
           : columnDataType.render?.(columnValue, cellContext)}
-      </>
+      </div>
     );
   };
 }
@@ -558,13 +558,13 @@ function makeDisplayColumnCellComponent<Item extends object>(options: {
     );
 
     return (
-      <>
+      <div>
         {column.render(props.row.original.content, {
           item: props.row.original.content,
           edit: editContext,
           external: externalState?.value ?? null,
         })}
-      </>
+      </div>
     );
   };
 }
