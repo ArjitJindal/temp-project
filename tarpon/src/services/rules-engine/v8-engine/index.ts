@@ -4,9 +4,11 @@ import DataLoader from 'dataloader'
 import {
   compact,
   drop,
+  find,
   groupBy,
   isEmpty,
   isEqual,
+  isUndefined,
   last,
   mapValues,
   memoize,
@@ -14,6 +16,7 @@ import {
   minBy,
   omit,
   omitBy,
+  size,
   sortBy,
   uniq,
 } from 'lodash'
@@ -1077,25 +1080,7 @@ export class RuleJsonLogicEvaluator {
         } & AggregationData)
       | null = null
 
-    const targetAggregations =
-      (await this.aggregationRepository.getUserRuleTimeAggregations(
-        userKeyId,
-        aggregationVariable,
-        transaction.timestamp,
-        transaction.timestamp + 1,
-        aggregationGranularity,
-        newGroupValue
-      )) ?? []
-    if ((targetAggregations?.length ?? 0) > 1) {
-      throw new Error('Should only get one target aggregation')
-    }
-    let targetAggregation = targetAggregations?.[0] ?? {
-      time: getTransactionStatsTimeGroupLabel(
-        transaction.timestamp,
-        aggregationGranularity
-      ),
-      value: aggregator.init(),
-    }
+    let targetAggregation: ({ time: string } & AggregationData) | undefined
     if (aggregationVariable.lastNEntities) {
       const aggregations =
         await this.aggregationRepository.getUserRuleTimeAggregations(
@@ -1119,17 +1104,26 @@ export class RuleJsonLogicEvaluator {
           newUpdatedAggregationData,
           targetAggregationToUpdate,
           targetEntities,
-        } = this.getLastNMinusOneAggregationResult(aggregations) ?? {}
+        } = this.getLastNMinusOneAggregationResult(aggregations)
+        if (isUndefined(targetAggregationToUpdate)) {
+          throw new Error('targetAggregationToUpdate is undefined')
+        }
+
+        const groupLabel = getTransactionStatsTimeGroupLabel(
+          transaction.timestamp,
+          aggregationGranularity
+        )
+        targetAggregation = find(aggregations, (obj) =>
+          isEqual(obj.time, groupLabel)
+        )
+
         if (isEqual(targetAggregationToUpdate, targetAggregation)) {
           targetAggregation = {
-            ...targetAggregation,
+            ...targetAggregationToUpdate,
             value: aggregator.aggregate(newUpdatedAggregationData ?? []),
             entities: targetEntities,
           }
-        } else if (
-          targetAggregationToUpdate &&
-          !isEqual(targetAggregationToUpdate, targetAggregation)
-        ) {
+        } else if (!isEqual(targetAggregationToUpdate, targetAggregation)) {
           updatedAggregationData = {
             ...targetAggregationToUpdate,
             value: aggregator.aggregate(newUpdatedAggregationData ?? []),
@@ -1137,7 +1131,30 @@ export class RuleJsonLogicEvaluator {
           }
         }
       }
+    } else {
+      const targetAggregations =
+        await this.aggregationRepository.getUserRuleTimeAggregations(
+          userKeyId,
+          aggregationVariable,
+          transaction.timestamp,
+          transaction.timestamp + 1,
+          aggregationGranularity,
+          newGroupValue
+        )
+      if (size(targetAggregations) > 1) {
+        throw new Error('Should only get one target aggregation')
+      }
+      targetAggregation = targetAggregations?.[0]
     }
+
+    targetAggregation = targetAggregation ?? {
+      time: getTransactionStatsTimeGroupLabel(
+        transaction.timestamp,
+        aggregationGranularity
+      ),
+      value: aggregator.init(),
+    }
+
     const newTargetAggregation: AggregationData = {
       value: aggregator.reduce(targetAggregation.value, newDataValue),
       entities: (targetAggregation.entities ?? []).concat({
