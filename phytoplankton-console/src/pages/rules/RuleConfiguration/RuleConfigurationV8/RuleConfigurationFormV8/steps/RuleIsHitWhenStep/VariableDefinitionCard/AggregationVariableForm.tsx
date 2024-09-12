@@ -701,6 +701,7 @@ const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
     aggregationFunc,
     timeWindow,
     filtersLogic,
+    lastNEntities,
   } = variableFormValues;
 
   if (
@@ -769,10 +770,16 @@ const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
       {userDirectionLabel}
       {userLabel}
     </b>,
-    'from',
-    <b>{formatTimeWindow(timeWindow.end)}</b>,
-    'to',
-    <b>{formatTimeWindow(timeWindow.start)}</b>,
+    lastNEntities ? (
+      <>
+        for last <b> {lastNEntities} transactions</b>
+      </>
+    ) : (
+      <>
+        from <b>{formatTimeWindow(timeWindow.end)}</b> to{' '}
+        <b>{formatTimeWindow(timeWindow.start)}</b>
+      </>
+    ),
     filtersLogic
       ? `(with ${filtersCount} ${pluralize('filter', filtersCount)} applied)`
       : undefined,
