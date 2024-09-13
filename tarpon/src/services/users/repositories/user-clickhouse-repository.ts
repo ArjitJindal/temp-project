@@ -6,9 +6,9 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse-definition'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
-import { getSortedData } from '@/utils/clickhouse-utils'
+import { getSortedData } from '@/utils/clickhouse/utils'
 
 export class UserClickhouseRepository {
   private tenantId: string

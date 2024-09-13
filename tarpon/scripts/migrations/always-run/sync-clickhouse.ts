@@ -1,5 +1,5 @@
-import { ClickHouseTables } from '../../../src/utils/clickhouse-definition'
-import { createOrUpdateClickHouseTable } from '../../../src/utils/clickhouse-utils'
+import { ClickHouseTables } from '../../../src/utils/clickhouse/definition'
+import { createOrUpdateClickHouseTable } from '../../../src/utils/clickhouse/utils'
 import { migrateAllTenants } from '../utils/tenant'
 import { envIs } from '@/utils/env'
 

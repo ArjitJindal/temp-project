@@ -8,17 +8,22 @@ import {
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
 import { chain, maxBy } from 'lodash'
 import { backOff } from 'exponential-backoff'
-import { envIs } from './env'
+import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { envIs } from '../env'
 import {
   ClickHouseTables,
   MaterializedViewDefinition,
   ProjectionsDefinition,
   ClickhouseTableDefinition,
   TableName,
-} from './clickhouse-definition'
+} from './definition'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
+import {
+  handleMongoConsumerSQSMessage,
+  MongoConsumerSQSMessage,
+} from '@/lambdas/mongo-db-trigger-consumer/app'
 
 let client: ClickHouseClient
 
@@ -158,6 +163,14 @@ export async function batchInsertToClickhouse(
   tenantId = getContext()?.tenantId as string
 ) {
   const tableDefinition = assertTableName(table, tenantId)
+
+  if (envIs('test')) {
+    if (!hasFeature('CLICKHOUSE_ENABLED')) {
+      return
+    } else {
+      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
+    }
+  }
 
   await clickhouseInsert(
     sanitizeTableName(table),
@@ -468,3 +481,21 @@ export function getSortedData<T>({
 
 export const sanitizeTableName = (tableName: string) =>
   tableName.replace(/-/g, '_')
+
+const sqs = new SQS({ region: process.env.AWS_REGION })
+
+export const sendMessageToMongoConsumer = async (
+  message: MongoConsumerSQSMessage
+) => {
+  if (envIs('local') || envIs('test')) {
+    await handleMongoConsumerSQSMessage([message])
+    return
+  }
+
+  await sqs.send(
+    new SendMessageCommand({
+      MessageBody: JSON.stringify(message),
+      QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
+    })
+  )
+}

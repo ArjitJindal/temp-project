@@ -10,7 +10,7 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { formatTableName } from './clickhouse-utils'
+import { formatTableName } from './clickhouse/utils'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
 

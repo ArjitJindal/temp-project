@@ -1,13 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
-import { ClickHouseTables } from '../../utils/clickhouse-definition'
-import {
-  batchInsertToClickhouse,
-  createOrUpdateClickHouseTable,
-  getClickhouseClient,
-  sanitizeTableName,
-} from '../../utils/clickhouse-utils'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
 import { getNotifications } from './data/notifications'
@@ -15,6 +8,13 @@ import { getArsScores } from './data/ars_scores'
 import { getQASamples } from './samplers/qa-samples'
 import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
+import {
+  batchInsertToClickhouse,
+  createOrUpdateClickHouseTable,
+  getClickhouseClient,
+  sanitizeTableName,
+} from '@/utils/clickhouse/utils'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import {
   allCollections,
   createGlobalMongoDBCollections,

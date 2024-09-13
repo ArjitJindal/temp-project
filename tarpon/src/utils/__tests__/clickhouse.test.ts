@@ -1,4 +1,4 @@
-import { getClickhouseClient } from '../clickhouse-utils'
+import { getClickhouseClient } from '../clickhouse/utils'
 
 describe('Clickhouse', () => {
   it('should be able to connect to Clickhouse', async () => {

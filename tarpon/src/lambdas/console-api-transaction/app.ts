@@ -17,7 +17,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/services/cases'
-import { getClickhouseClient } from '@/utils/clickhouse-utils'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string

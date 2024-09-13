@@ -4,9 +4,11 @@ import {
   Collection,
   Db,
   Document,
+  Filter,
   FindCursor,
   FindOptions,
   MongoClient,
+  ObjectId,
   WithId,
 } from 'mongodb'
 
@@ -17,6 +19,7 @@ import {
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
 } from './mongodb-definitions'
+import { sendMessageToMongoConsumer } from './clickhouse/utils'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -401,4 +404,60 @@ export async function processCursorInBatch<T>(
   if (pendingEntities.length > 0) {
     await processBatch(pendingEntities)
   }
+}
+
+export async function internalMongoReplace<T extends Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  filter: Filter<T>,
+  replacement: T
+): Promise<{ _id: ObjectId }> {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  const data = await collection.findOneAndReplace(filter, replacement, {
+    returnDocument: 'after',
+    upsert: true,
+    projection: { _id: 1 },
+  })
+
+  const result = data.value as { _id: ObjectId }
+
+  await sendMessageToMongoConsumer({
+    collectionName,
+    documentKey: {
+      _id: String(result._id),
+    },
+    operationType: 'replace',
+    clusterTime: Date.now(),
+  })
+
+  return result
+}
+
+export async function internalMongoFindAndUpdate<T extends Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  filter: Filter<T>,
+  update: Document,
+  options?: { arrayFilters?: Document[] }
+): Promise<void> {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  const data = await collection.findOneAndUpdate(filter, update, {
+    returnDocument: 'after',
+    upsert: true,
+    projection: { _id: 1 },
+    ...(options?.arrayFilters ? { arrayFilters: options.arrayFilters } : {}),
+  })
+
+  const result = data.value as { _id: ObjectId }
+
+  await sendMessageToMongoConsumer({
+    collectionName,
+    documentKey: {
+      _id: String(result._id),
+    },
+    operationType: 'update',
+    clusterTime: Date.now(),
+  })
 }

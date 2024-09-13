@@ -4,9 +4,9 @@ import {
   createOrUpdateClickHouseTable,
   formatTableName,
   getClickhouseClient,
-} from '@/utils/clickhouse-utils'
+} from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts'
-import { ClickHouseTables } from '@/utils/clickhouse-definition'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { envIs } from '@/utils/env'
 

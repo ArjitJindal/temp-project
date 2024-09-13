@@ -2,12 +2,12 @@ import { syncClickhouseTables } from '../always-run/sync-clickhouse'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ClickHouseTables } from '@/utils/clickhouse-definition'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { envIs } from '@/utils/env'
 import {
   batchInsertToClickhouse,
   sanitizeTableName,
-} from '@/utils/clickhouse-utils'
+} from '@/utils/clickhouse/utils'
 
 async function migrateTenant(tenant: Tenant) {
   if (!envIs('dev')) {

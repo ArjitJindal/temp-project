@@ -22,7 +22,6 @@ import {
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
-import { insertToClickhouse } from '@/utils/clickhouse-utils'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
@@ -50,6 +49,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { envIsNot } from '@/utils/env'
+import { internalMongoReplace } from '@/utils/mongodb-utils'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -336,27 +336,18 @@ async function userEventHandler(
     userId: userEvent.userId,
     userEventId: userEvent.eventId,
   })
-  logger.info(`Processing User Event`)
 
-  const db = dbClients.mongoDb.db()
-  const userEventCollection = db.collection<
-    InternalConsumerUserEvent | InternalBusinessUserEvent
-  >(USER_EVENTS_COLLECTION(tenantId))
-
-  // TODO: Update user status: https://flagright.atlassian.net/browse/FDT-150
-  await Promise.all([
-    userEventCollection.replaceOne(
-      { eventId: userEvent.eventId },
-      {
-        ...(omit(userEvent, DYNAMO_KEYS) as
-          | InternalConsumerUserEvent
-          | InternalBusinessUserEvent),
-        createdAt: Date.now(),
-      },
-      { upsert: true }
-    ),
-    insertToClickhouse(USER_EVENTS_COLLECTION(tenantId), userEvent, tenantId),
-  ])
+  await internalMongoReplace(
+    dbClients.mongoDb,
+    USER_EVENTS_COLLECTION(tenantId),
+    { eventId: userEvent.eventId },
+    {
+      ...(omit(userEvent, DYNAMO_KEYS) as
+        | InternalConsumerUserEvent
+        | InternalBusinessUserEvent),
+      createdAt: Date.now(),
+    }
+  )
 }
 
 async function transactionEventHandler(
@@ -374,27 +365,15 @@ async function transactionEventHandler(
   })
   logger.info(`Processing Transaction Event`)
 
-  const db = dbClients.mongoDb.db()
-
-  const transactionEventCollection = db.collection<InternalTransactionEvent>(
-    TRANSACTION_EVENTS_COLLECTION(tenantId)
+  await internalMongoReplace(
+    dbClients.mongoDb,
+    TRANSACTION_EVENTS_COLLECTION(tenantId),
+    { eventId: transactionEvent.eventId },
+    {
+      ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
+      createdAt: Date.now(),
+    }
   )
-
-  await Promise.all([
-    transactionEventCollection.replaceOne(
-      { eventId: transactionEvent.eventId },
-      {
-        ...(omit(transactionEvent, DYNAMO_KEYS) as InternalTransactionEvent),
-        createdAt: Date.now(),
-      },
-      { upsert: true }
-    ),
-    insertToClickhouse(
-      TRANSACTION_EVENTS_COLLECTION(tenantId),
-      transactionEvent,
-      tenantId
-    ),
-  ])
 }
 
 if (envIsNot('test', 'local') && !process.env.TARPON_QUEUE_URL) {

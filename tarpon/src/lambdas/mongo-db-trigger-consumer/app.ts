@@ -5,22 +5,23 @@ import {
   ChangeStreamReplaceDocument,
   ChangeStreamUpdateDocument,
   MongoClient,
+  ObjectId,
 } from 'mongodb'
 import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
-import { memoize } from 'lodash'
+import { Dictionary, groupBy, memoize } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   CLICKHOUSE_DEFINITIONS,
   ClickhouseTableDefinition,
   ClickHouseTables,
-} from '@/utils/clickhouse-definition'
+} from '@/utils/clickhouse/definition'
 import { MONGO_TABLE_SUFFIX_MAP } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
   sanitizeTableName,
-} from '@/utils/clickhouse-utils'
+} from '@/utils/clickhouse/utils'
 
 type ChangeStreamDocument =
   | ChangeStreamInsertDocument
@@ -31,6 +32,15 @@ type ChangeStreamDocument =
 const sqs = new SQSClient({
   region: process.env.AWS_REGION,
 })
+
+export type MongoConsumerSQSMessage = {
+  collectionName: string
+  operationType: 'insert' | 'update' | 'replace' | 'delete'
+  documentKey: {
+    _id: string
+  }
+  clusterTime: number
+}
 
 const MONGO_SUFFIX_TO_CLICKHOUSE_TABLE_MAP = {
   [MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS]:
@@ -51,10 +61,21 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
       throw new Error('MONGO_DB_CONSUMER_QUEUE_URL is not set')
     }
 
+    const eventData: MongoConsumerSQSMessage = {
+      collectionName: event.source,
+      operationType: event.detail.operationType,
+      documentKey: {
+        _id: event.detail.documentKey._id.toString(),
+      },
+      clusterTime: event.detail?.clusterTime
+        ? event.detail.clusterTime.toNumber()
+        : Date.now(),
+    }
+
     await sqs.send(
       new SendMessageCommand({
         QueueUrl: queueUrl,
-        MessageBody: JSON.stringify(event),
+        MessageBody: JSON.stringify(eventData),
       })
     )
   }
@@ -93,95 +114,106 @@ export const fetchTableDetails = (tableName: string): TableDetails | false => {
   }
 }
 
-type SQSMessagesType = EventBridgeEvent<string, ChangeStreamDocument>
+type SQSMessagesType = MongoConsumerSQSMessage
 
-export function handleMessages(records: SQSMessagesType[]) {
-  const messagesToDelete: Record<string, ChangeStreamDeleteDocument> = {}
-  const messagesToReplace: Record<string, ChangeStreamReplaceDocument> = {}
-  records.forEach((record) => {
-    const data = record.detail
-    const {
-      documentKey: { _id },
-      clusterTime = 0,
-      operationType,
-    } = data
-    const key = _id.toString()
+export function segregateMessages(records: SQSMessagesType[]): {
+  messagesToDelete: Dictionary<SQSMessagesType[]>
+  messagesToReplace: Dictionary<SQSMessagesType[]>
+} {
+  const messagesToDelete: Record<string, MongoConsumerSQSMessage> = {}
+  const messagesToReplace: Record<string, MongoConsumerSQSMessage> = {}
+
+  for (const record of records) {
+    const { operationType, documentKey, clusterTime } = record
+    const { _id } = documentKey
+
     if (operationType === 'delete') {
-      const deleteRecord = data as ChangeStreamDeleteDocument
+      const deleteRecord = record
+
       if (
-        !messagesToReplace[key] ||
-        (messagesToReplace[key]?.clusterTime ?? 0) < clusterTime
+        !messagesToReplace[_id] ||
+        (messagesToReplace[_id]?.clusterTime ?? 0) < clusterTime
       ) {
-        // Remove from messagesToReplace if exists and older
-        delete messagesToReplace[key]
-        // Add to messagesToDelete
-        messagesToDelete[key] = deleteRecord
+        delete messagesToReplace[_id]
+        messagesToDelete[_id] = deleteRecord
       }
-    } else if (
-      operationType === 'replace' ||
-      operationType === 'insert' ||
-      operationType === 'update'
-    ) {
-      const replaceRecord = data as ChangeStreamReplaceDocument
+    } else if (['insert', 'update', 'replace'].includes(operationType)) {
+      const replaceRecord = record
+
       if (
-        !messagesToDelete[key] ||
-        (messagesToDelete[key]?.clusterTime ?? 0) < clusterTime
+        !messagesToDelete[_id] ||
+        (messagesToDelete[_id]?.clusterTime ?? 0) < clusterTime
       ) {
-        // Remove from messagesToDelete if exists and older
-        delete messagesToDelete[key]
-        // Add to messagesToReplace
-        messagesToReplace[key] = replaceRecord
+        delete messagesToDelete[_id]
+        messagesToReplace[_id] = replaceRecord
       }
     }
-  })
+  }
 
-  return { messagesToDelete, messagesToReplace }
+  // group records by collection name
+  const messagesToDeleteArray = groupBy(
+    Object.values(messagesToDelete),
+    'collectionName'
+  )
+  const messagesToReplaceArray = groupBy(
+    Object.values(messagesToReplace),
+    'collectionName'
+  )
+
+  return {
+    messagesToDelete: messagesToDeleteArray,
+    messagesToReplace: messagesToReplaceArray,
+  }
 }
 
 async function handleMessagesDelete(
-  messagesToDelete: Record<string, ChangeStreamDeleteDocument>
-) {
-  return Object.values(messagesToDelete).map(async (doc) => {
-    const tableDetails = fetchTableDetails(doc.ns.coll)
-    if (!tableDetails) {
-      return
-    }
-    // TODO: Handle Customized Delete Logic if Required
-    const clickhouseClient = await getClickhouseClient()
-    const { tenantId, clickhouseTable } = tableDetails
-    const tableName = sanitizeTableName(`${tenantId}-${clickhouseTable.table}`)
-    const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE id = ${doc.documentKey._id}`
-    await clickhouseClient.query({
-      query,
-    })
-  })
-}
-
-async function handleMessagesReplace(
-  mongoClient: MongoClient,
-  messagesToReplace: Record<string, ChangeStreamReplaceDocument>
+  messagesToDelete: Dictionary<MongoConsumerSQSMessage[]>
 ) {
   return Promise.all(
-    Object.keys(messagesToReplace).map(async (tableName) => {
-      const tableDetails = fetchTableDetails(tableName)
+    Object.entries(messagesToDelete).map(async ([collectionName, records]) => {
+      const tableDetails = fetchTableDetails(collectionName)
       if (!tableDetails) {
         return
       }
 
-      const { tenantId, collectionName, clickhouseTable } = tableDetails
+      const { tenantId, clickhouseTable } = tableDetails
+      const tableName = sanitizeTableName(
+        `${tenantId}-${clickhouseTable.table}`
+      )
+
+      const clickhouseClient = await getClickhouseClient()
+
+      const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE mongo_id IN (${records
+        .map((doc) => `'${doc.documentKey._id}'`)
+        .join(', ')})`
+
+      await clickhouseClient.query({
+        query,
+      })
+    })
+  )
+}
+
+async function handleMessagesReplace(
+  mongoClient: MongoClient,
+  messagesToReplace: Dictionary<MongoConsumerSQSMessage[]>
+) {
+  return Promise.all(
+    Object.entries(messagesToReplace).map(async ([collectionName, records]) => {
+      const tableDetails = fetchTableDetails(collectionName)
+      if (!tableDetails) {
+        return
+      }
+
+      const { tenantId, clickhouseTable } = tableDetails
 
       const mongoCollection = mongoClient.db().collection(collectionName)
-      const _ids = Object.values(messagesToReplace).map(
-        (doc) => doc.documentKey._id
-      )
-      const documents = mongoCollection.find({
-        _id: { $in: _ids },
-      })
-
+      const _ids = records.map((doc) => new ObjectId(doc.documentKey._id))
+      const documents = mongoCollection.find({ _id: { $in: _ids } })
       const documentsToReplace = await documents.toArray()
 
       await batchInsertToClickhouse(
-        clickhouseTable.table,
+        sanitizeTableName(`${tenantId}-${clickhouseTable.table}`),
         documentsToReplace,
         tenantId
       )
@@ -193,14 +225,21 @@ export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const events = event.Records.map((record) =>
       JSON.parse(record.body)
-    ) as SQSMessagesType[]
-    const { messagesToReplace, messagesToDelete } = handleMessages(events)
+    ) as MongoConsumerSQSMessage[]
 
-    const mongoClient = await getMongoDbClient()
-
-    await Promise.all([
-      handleMessagesReplace(mongoClient, messagesToReplace),
-      handleMessagesDelete(messagesToDelete),
-    ])
+    await handleMongoConsumerSQSMessage(events)
   }
 )
+
+export const handleMongoConsumerSQSMessage = async (
+  events: MongoConsumerSQSMessage[]
+) => {
+  const { messagesToReplace, messagesToDelete } = segregateMessages(events)
+
+  const mongoClient = await getMongoDbClient()
+
+  await Promise.all([
+    handleMessagesReplace(mongoClient, messagesToReplace),
+    handleMessagesDelete(messagesToDelete),
+  ])
+}

@@ -5,8 +5,8 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { DefaultApiGetTransactionsV2ListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse-definition'
-import { getSortedData } from '@/utils/clickhouse-utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { getSortedData } from '@/utils/clickhouse/utils'
 
 @traceable
 export class ClickhouseTransactionsRepository {

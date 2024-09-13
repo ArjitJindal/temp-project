@@ -5,6 +5,7 @@ import {
   FindCursor,
   WithId,
   AggregationCursor,
+  UpdateFilter,
 } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
@@ -28,6 +29,8 @@ import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   DAY_DATE_FORMAT,
+  internalMongoFindAndUpdate,
+  internalMongoReplace,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
@@ -76,7 +79,6 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResponse'
-import { insertToClickhouse } from '@/utils/clickhouse-utils'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
@@ -99,18 +101,15 @@ export class UserRepository {
     this.tenantId = tenantId
   }
 
-  public updateAISummary(
+  public async updateAISummary(
     userId: string,
     commentId: string,
     fileS3Key: string,
     summary: string
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    return collection.updateOne(
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
       { userId },
       {
         $set: {
@@ -994,17 +993,13 @@ export class UserRepository {
   public async saveUserMongo(
     user: InternalBusinessUser | InternalConsumerUser
   ): Promise<InternalUser> {
-    const db = this.mongoDb.db()
-    const userCollection = db.collection<
-      InternalBusinessUser | InternalConsumerUser
-    >(USERS_COLLECTION(this.tenantId))
+    await internalMongoReplace(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
+      { userId: user.userId },
+      user
+    )
 
-    await Promise.all([
-      userCollection.replaceOne({ userId: user.userId }, user, {
-        upsert: true,
-      }),
-      insertToClickhouse(USERS_COLLECTION(this.tenantId), user, this.tenantId),
-    ])
     return user as InternalUser
   }
 
@@ -1091,17 +1086,14 @@ export class UserRepository {
     userId: string,
     comment: Comment
   ): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
     const commentToSave: Comment = {
       ...comment,
       id: uuidv4(),
       createdAt: comment.createdAt ?? Date.now(),
       updatedAt: comment.updatedAt ?? Date.now(),
     }
-    await collection.updateOne({ userId }, [
+
+    await this.updateComments(userId, [
       {
         $set: {
           comments: {
@@ -1128,29 +1120,29 @@ export class UserRepository {
     })
   }
 
-  public async deleteUserComment(userId: string, commentId: string) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateOne(
+  private async updateComments(
+    userId: string,
+    updatePipeline: UpdateFilter<InternalUser>,
+    arrayFilters?: Document[]
+  ) {
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
       { userId },
-      {
-        $set: {
-          'comments.$[comment].deletedAt': Date.now(),
+      updatePipeline,
+      { arrayFilters }
+    )
+  }
+
+  public async deleteUserComment(userId: string, commentId: string) {
+    await this.updateComments(
+      userId,
+      { $set: { 'comments.$[comment].deletedAt': Date.now() } },
+      [
+        {
+          $or: [{ 'comment.id': commentId }, { 'comment.parentId': commentId }],
         },
-      },
-      {
-        arrayFilters: [
-          {
-            $or: [
-              { 'comment.id': commentId },
-              { 'comment.parentId': commentId },
-            ],
-          },
-        ],
-      }
+      ]
     )
   }
 
@@ -1158,22 +1150,24 @@ export class UserRepository {
     userId: string,
     avgArsScore: AverageArsScore
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
+      { userId },
+      { $set: { avgArsScore } }
     )
-    await collection.updateOne({ userId }, { $set: { avgArsScore } })
   }
 
   public async updateDrsScoreOfUser(
     userId: string,
     drsScore: DrsScore
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
+      { userId },
+      { $set: { drsScore } }
     )
-    await collection.updateOne({ userId }, { $set: { drsScore } })
 
     const user = await this.getUser<
       UserWithRulesResult | BusinessWithRulesResult
@@ -1430,23 +1424,11 @@ export class UserRepository {
   }
 
   private async updateUser(userId: string, update: Partial<InternalUser>) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalUser>(
-      USERS_COLLECTION(this.tenantId)
-    )
-
-    const updatedUser = await collection.findOneAndUpdate(
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
       { userId },
-      { $set: update },
-      { returnDocument: 'after' }
+      { $set: update }
     )
-
-    if (updatedUser.value) {
-      await insertToClickhouse<InternalUser>(
-        USERS_COLLECTION(this.tenantId),
-        updatedUser.value,
-        this.tenantId
-      )
-    }
   }
 }

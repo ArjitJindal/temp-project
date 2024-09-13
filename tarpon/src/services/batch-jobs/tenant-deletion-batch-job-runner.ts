@@ -28,8 +28,8 @@ import {
 import {
   getClickhouseClient,
   sanitizeTableName,
-} from '../../utils/clickhouse-utils'
-import { ClickHouseTables } from '../../utils/clickhouse-definition'
+} from '../../utils/clickhouse/utils'
+import { ClickHouseTables } from '../../utils/clickhouse/definition'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'

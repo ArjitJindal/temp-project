@@ -36,6 +36,8 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import {
   DAY_DATE_FORMAT,
   getMongoDbClient,
+  internalMongoFindAndUpdate,
+  internalMongoReplace,
   lookupPipelineStage,
   paginateCursor,
   paginateFindOptions,
@@ -75,7 +77,6 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
-import { insertToClickhouse } from '@/utils/clickhouse-utils'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -109,11 +110,6 @@ export class MongoDbTransactionRepository
     transaction: InternalTransaction,
     arsScore?: ArsScore
   ): Promise<InternalTransaction> {
-    const db = this.mongoDb.db()
-    const transactionsCollection = db.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-
     const internalTransaction: InternalTransaction = {
       ...transaction,
       originPaymentMethodId: getPaymentMethodId(
@@ -146,18 +142,12 @@ export class MongoDbTransactionRepository
       ...internalTransaction,
     }
 
-    await Promise.all([
-      transactionsCollection.replaceOne(
-        { transactionId: transaction.transactionId },
-        payload,
-        { upsert: true }
-      ),
-      insertToClickhouse(
-        TRANSACTIONS_COLLECTION(this.tenantId),
-        payload,
-        this.tenantId
-      ),
-    ])
+    await internalMongoReplace(
+      this.mongoDb,
+      TRANSACTIONS_COLLECTION(this.tenantId),
+      { transactionId: transaction.transactionId },
+      payload
+    )
 
     return internalTransaction
   }
@@ -1644,24 +1634,12 @@ export class MongoDbTransactionRepository
     transactionId: string,
     update: Partial<InternalTransaction>
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<InternalTransaction>(
-      TRANSACTIONS_COLLECTION(this.tenantId)
-    )
-
-    const updatedTransaction = await collection.findOneAndUpdate(
+    await internalMongoFindAndUpdate(
+      this.mongoDb,
+      TRANSACTIONS_COLLECTION(this.tenantId),
       { transactionId },
-      { $set: update },
-      { returnDocument: 'after' }
+      update
     )
-
-    if (updatedTransaction.value) {
-      await insertToClickhouse<InternalTransaction>(
-        TRANSACTIONS_COLLECTION(this.tenantId),
-        updatedTransaction.value,
-        this.tenantId
-      )
-    }
   }
 
   public sampleTransactionsCursor(

@@ -1375,6 +1375,28 @@ export class CdkTarponStack extends cdk.Stack {
       )
     }
 
+    const {
+      alias: mongoDbTriggerQueueConsumerAlias,
+      func: mongoDbTriggerQueueConsumerFunc,
+    } = createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+    })
+
+    this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
+      [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+    })
+
+    this.addTagsToResource(mongoDbTriggerQueueConsumerFunc, {
+      [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
+    })
+
+    mongoDbTriggerQueueConsumerAlias.addEventSource(
+      new SqsEventSource(mongoDbConsumerQueue, {
+        batchSize: 1000,
+        maxBatchingWindow: Duration.seconds(30),
+      })
+    )
+
     if (
       this.config.stage === 'dev' &&
       !isQaEnv() &&
@@ -1425,28 +1447,6 @@ export class CdkTarponStack extends cdk.Stack {
       })
 
       eventRule.addTarget(new LambdaFunctionTarget(mongoDbConsumerAlias))
-
-      const {
-        alias: mongoDbTriggerQueueConsumerAlias,
-        func: mongoDbTriggerQueueConsumerFunc,
-      } = createFunction(this, lambdaExecutionRole, {
-        name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
-      })
-
-      this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      this.addTagsToResource(mongoDbTriggerQueueConsumerFunc, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      mongoDbTriggerQueueConsumerAlias.addEventSource(
-        new SqsEventSource(mongoDbConsumerQueue, {
-          batchSize: 1000,
-          maxBatchingWindow: Duration.seconds(30),
-        })
-      )
     }
 
     /**
