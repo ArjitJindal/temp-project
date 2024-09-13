@@ -6,6 +6,7 @@ import {
   ResponseJSON,
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
+import { chain, maxBy } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { envIs } from './env'
 import {
@@ -439,6 +440,30 @@ async function createMaterializedViews(
     const matQuery = createMaterializedViewQuery(tenantId, view, table.table)
     await client.query({ query: matQuery })
   }
+}
+
+export function getSortedData<T>({
+  data,
+  sortField,
+  sortOrder,
+  groupByField,
+  groupBySortField,
+}: {
+  data: T[]
+  sortField: string
+  sortOrder: 'ascend' | 'descend'
+  groupByField: string
+  groupBySortField: string
+}): T[] {
+  const items = chain(data)
+    .groupBy(groupByField)
+    .map((group) => maxBy(group, groupBySortField))
+    .value() as T[]
+  const sortDirection = sortOrder === 'ascend' ? 1 : -1
+  const sortedItems = items.sort(
+    (a, b) => sortDirection * (a[sortField] - b[sortField])
+  )
+  return sortedItems
 }
 
 export const sanitizeTableName = (tableName: string) =>

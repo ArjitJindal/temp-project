@@ -37,6 +37,10 @@ export const businessUsersViewHandler = lambdaApi()(
       async (ctx, request) => await userService.getBusinessUsers(request)
     )
 
+    handlers.registerGetBusinessUsersListV2(async (ctx, request) => {
+      return await userService.getBusinessUsersV2(request)
+    })
+
     handlers.registerGetBusinessUsersItem(async (ctx, request) => {
       const user = await userService.getBusinessUser(request.userId)
       if (user == null) {
@@ -74,6 +78,10 @@ export const consumerUsersViewHandler = lambdaApi()(
       async (ctx, request) => await userService.getConsumerUsers(request)
     )
 
+    handlers.registerGetConsumerUsersListV2(async (ctx, request) => {
+      return await userService.getConsumerUsersV2(request)
+    })
+
     handlers.registerGetConsumerUsersItem(async (ctx, request) => {
       const user = await userService.getConsumerUser(request.userId)
       if (user == null) {
@@ -106,6 +114,11 @@ export const allUsersViewHandler = lambdaApi()(
     handlers.registerGetAllUsersList(
       async (ctx, request) => await userService.getUsers(request)
     )
+
+    handlers.registerGetAllUsersListV2(async (ctx, request) => {
+      return await userService.getUsersV2(request)
+    })
+
     handlers.registerGetUsersItem(
       async (ctx, request) => await userService.getUser(request.userId)
     )

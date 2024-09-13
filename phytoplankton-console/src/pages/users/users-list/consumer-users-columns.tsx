@@ -75,7 +75,13 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     helper.simple<'createdTimestamp'>({
       title: 'Created at',
       key: 'createdTimestamp',
-      type: DATE,
+      type: {
+        ...DATE,
+        autoFilterDataType: {
+          kind: 'dateTimeRange',
+          allowClear: false,
+        },
+      },
       sorting: true,
       filtering: true,
     }),

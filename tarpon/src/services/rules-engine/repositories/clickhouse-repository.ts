@@ -1,5 +1,4 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { chain, maxBy } from 'lodash'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -7,6 +6,7 @@ import { DefaultApiGetTransactionsV2ListRequest } from '@/@types/openapi-interna
 import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse-definition'
+import { getSortedData } from '@/utils/clickhouse-utils'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -185,15 +185,13 @@ export class ClickhouseTransactionsRepository {
       }
     )
 
-    const uniqueTransactions = chain(data.items)
-      .groupBy('transactionId')
-      .map((group) => maxBy(group, 'updatedAt'))
-      .value() as InternalTransaction[]
-
-    const sortDirection = sortOrder === 'ascend' ? 1 : -1
-    const sortedTransactions = uniqueTransactions.sort(
-      (a, b) => sortDirection * (a[sortField] - b[sortField])
-    )
+    const sortedTransactions = getSortedData<InternalTransaction>({
+      data: data.items,
+      sortField,
+      sortOrder,
+      groupByField: 'transactionId',
+      groupBySortField: 'updatedAt',
+    })
 
     const finalTransactions = sortedTransactions.map((transaction) => {
       delete (transaction as any)?.executedRules

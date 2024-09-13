@@ -12,19 +12,24 @@ import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { isEmpty, isEqual, omit, pick } from 'lodash'
 import { diff } from 'deep-object-diff'
+import { ClickHouseClient } from '@clickhouse/client'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
+import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import {
   DefaultApiGetAllUsersListRequest,
+  DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListRequest,
+  DefaultApiGetBusinessUsersListV2Request,
   DefaultApiGetConsumerUsersListRequest,
+  DefaultApiGetConsumerUsersListV2Request,
   DefaultApiGetEventsListRequest,
   DefaultApiGetRuleInstancesTransactionUsersHitRequest,
 } from '@/@types/openapi-internal/RequestParameters'
@@ -60,6 +65,10 @@ import { CaseRepository } from '@/services/cases/repository'
 import { getParsedCommentBody } from '@/utils/helpers'
 import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
+import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
+import { ConsumerUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/ConsumerUsersOffsetPaginateListResponse'
+import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
+import { getClickhouseClient } from '@/utils/clickhouse-utils'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
@@ -109,10 +118,14 @@ export class UserService {
   dynamoDb: DynamoDBDocumentClient
   awsCredentials?: LambdaCredentials
   userAuditLogService: UserAuditLogService
-
+  userClickhouseRepository: UserClickhouseRepository
   constructor(
     tenantId: string,
-    connections: { dynamoDb?: DynamoDBDocumentClient; mongoDb?: MongoClient },
+    connections: {
+      dynamoDb?: DynamoDBDocumentClient
+      mongoDb?: MongoClient
+      clickhouseClient?: ClickHouseClient
+    },
     s3?: S3,
     tmpBucketName?: string,
     documentBucketName?: string,
@@ -137,6 +150,11 @@ export class UserService {
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.awsCredentials = awsCredentials
+    this.userClickhouseRepository = new UserClickhouseRepository(
+      tenantId,
+      connections.clickhouseClient,
+      this.dynamoDb
+    )
   }
 
   public static async fromEvent(
@@ -151,9 +169,10 @@ export class UserService {
     const dynamoDb = getDynamoDbClientByEvent(event)
     const lambdaCredentials = getCredentialsFromEvent(event)
 
+    const clickhouseClient = await getClickhouseClient()
     return new UserService(
       tenantId,
-      { mongoDb: client, dynamoDb },
+      { mongoDb: client, dynamoDb, clickhouseClient },
       s3,
       TMP_BUCKET,
       DOCUMENT_BUCKET,
@@ -177,6 +196,34 @@ export class UserService {
       ...result,
       items,
     }
+  }
+
+  public async getBusinessUsersV2(
+    params: DefaultApiGetBusinessUsersListV2Request
+  ): Promise<BusinessUsersOffsetPaginateListResponse> {
+    return this.userClickhouseRepository.getUsersV2<InternalBusinessUser>(
+      params,
+      'BUSINESS'
+    )
+  }
+
+  public async getConsumerUsersV2(
+    params: DefaultApiGetConsumerUsersListV2Request
+  ): Promise<ConsumerUsersOffsetPaginateListResponse> {
+    return this.userClickhouseRepository.getUsersV2<InternalConsumerUser>(
+      params,
+      'CONSUMER'
+    )
+  }
+
+  public async getUsersV2(
+    params: DefaultApiGetAllUsersListV2Request,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<AllUsersOffsetPaginateListResponse> {
+    return this.userClickhouseRepository.getUsersV2<InternalUser>(
+      params,
+      userType
+    )
   }
 
   private getTriggersOnHit(

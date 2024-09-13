@@ -83,10 +83,14 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
     }),
     helper.simple<'createdTimestamp'>({
       title: 'Created at',
-      type: DATE,
       key: 'createdTimestamp',
-      id: 'createdTimestamp',
-      tooltip: 'Date and time when user was created.',
+      type: {
+        ...DATE,
+        autoFilterDataType: {
+          kind: 'dateTimeRange',
+          allowClear: false,
+        },
+      },
       sorting: true,
       filtering: true,
     }),

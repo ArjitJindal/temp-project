@@ -115,15 +115,20 @@ export const ConsoleApiPathToLambda: any = {
 
   '/consumer/users':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
+  '/consumer/users-v2':
+    StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/consumer/users/{userId}':
     StackConstants.CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME,
   '/business/users':
+    StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
+  '/business/users-v2':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/business/users/{userId}':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users/uniques':
     StackConstants.CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME,
   '/users': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/users-v2': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/crm':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/users/{userId}/entity':

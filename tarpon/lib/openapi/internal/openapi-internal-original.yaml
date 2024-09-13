@@ -1741,6 +1741,73 @@ paths:
           in: query
           name: sortOrder
     parameters: []
+  /consumer/users-v2:
+    get:
+      summary: Consumer Users - List V2
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsumerUsersOffsetPaginateListResponse'
+      operationId: get-consumer-users-list-v2
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
   /merchant-monitoring/{userId}/update_monitoring_status:
     post:
       summary: Update Monitoring Status
@@ -1871,6 +1938,73 @@ paths:
           in: query
           name: filterShadowHit
     parameters: []
+  /users-v2:
+    get:
+      summary: All Users - List V2
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllUsersOffsetPaginateListResponse'
+      operationId: get-all-users-list-v2
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
   /users/{userId}/comments:
     parameters:
       - schema:
@@ -2126,6 +2260,79 @@ paths:
           in: query
           name: sortOrder
     parameters: []
+  /business/users-v2:
+    get:
+      summary: Business Users - List V2
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BusinessUsersOffsetPaginateListResponse'
+      operationId: get-business-users-list-v2
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: beforeTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterId
+        - schema:
+            type: string
+          in: query
+          name: filterName
+        - schema:
+            type: string
+          in: query
+          name: filterTagKey
+        - schema:
+            type: string
+          in: query
+          name: filterTagValue
+        - schema:
+            type: array
+            items:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserRegistrationStatus
+          in: query
+          name: filterUserRegistrationStatus
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/RiskLevel'
+          in: query
+          name: filterRiskLevel
+        - schema:
+            type: string
+          in: query
+          name: filterRiskLevelLocked
   /users/{userId}:
     get:
       summary: Users - Item - Get
@@ -8069,6 +8276,19 @@ components:
         - count
         - limit
         - last
+    ConsumerUsersOffsetPaginateListResponse:
+      title: ConsumerUsersOffsetPaginateListResponse
+      type: object
+      properties:
+        count:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalConsumerUser'
+      required:
+        - count
+        - items
     BusinessUsersListResponse:
       title: BusinessUsersListResponse
       type: object
@@ -8100,6 +8320,19 @@ components:
         - count
         - limit
         - last
+    BusinessUsersOffsetPaginateListResponse:
+      title: BusinessUsersOffsetPaginateListResponse
+      type: object
+      properties:
+        count:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalBusinessUser'
+      required:
+        - count
+        - items
     AllUsersListResponse:
       title: AllUsersListResponse
       type: object
@@ -8131,6 +8364,19 @@ components:
         - count
         - limit
         - last
+    AllUsersOffsetPaginateListResponse:
+      title: AllUsersOffsetPaginateListResponse
+      type: object
+      properties:
+        count:
+          type: number
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalUser'
+      required:
+        - count
+        - items
     NotificationListResponse:
       title: NotificationListResponse
       type: object

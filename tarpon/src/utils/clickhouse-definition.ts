@@ -3,6 +3,7 @@ import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
+import { USER_TYPES } from '@/@types/user/user-type'
 
 type BaseTableDefinition = {
   table: string
@@ -146,6 +147,40 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     table: CLICKHOUSE_DEFINITIONS.USERS.tableName,
     idColumn: 'userId',
     timestampColumn: 'createdTimestamp',
+    materializedColumns: [
+      enumFields(USER_TYPES, 'type', 'type'),
+      `username String MATERIALIZED 
+        IF(
+        JSON_VALUE(data, '$.type') = 'CONSUMER', 
+        COALESCE(
+            CONCAT(
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.firstName'), ''),
+                ' ',
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.middleName'), ''),
+                ' ',
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.lastName'), '')
+            ),
+            ''
+        ),
+        JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
+    )`,
+      `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')`,
+      `userRegistrationStatus Nullable(String) MATERIALIZED 
+        CASE
+            WHEN JSON_VALUE(data, '$.type') = 'BUSINESS' THEN 
+                JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.userRegistrationStatus')
+            ELSE NULL
+        END`,
+      `riskLevelLocked Nullable(String) MATERIALIZED 
+      CASE
+          WHEN JSON_VALUE(data, '$.drsScore.isUpdatable') = 'true' THEN 'No'
+          WHEN JSON_VALUE(data, '$.drsScore.isUpdatable') = 'false' THEN 'Yes'
+          ELSE NULL
+      END`,
+      `craRiskLevel Nullable(String) MATERIALIZED JSON_VALUE(data, '$.drsScore.manualRiskLevel')`,
+      `drsScore_drsScore Float32 MATERIALIZED JSON_VALUE(data, '$.drsScore.drsScore')`,
+      `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
+    ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
