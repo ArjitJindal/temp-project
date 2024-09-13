@@ -79,6 +79,7 @@ import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResp
 import { insertToClickhouse } from '@/utils/clickhouse-utils'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
+import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 
 @traceable
 export class UserRepository {
@@ -1151,6 +1152,17 @@ export class UserRepository {
         ],
       }
     )
+  }
+
+  public async updateAvgTrsScoreOfUser(
+    userId: string,
+    avgArsScore: AverageArsScore
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<InternalUser>(
+      USERS_COLLECTION(this.tenantId)
+    )
+    await collection.updateOne({ userId }, { $set: { avgArsScore } })
   }
 
   public async updateDrsScoreOfUser(

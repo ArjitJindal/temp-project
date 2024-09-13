@@ -68,6 +68,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ARS_VALUE_ITEM'
   | 'KRS_VALUE_ITEM'
   | 'DRS_VALUE_ITEM'
+  | 'AVG_ARS_VALUE_ITEM'
   | 'USER_TRANSACTION'
   | 'NON_USER_TRANSACTION'
   | 'BUSINESS_USER_EVENT'

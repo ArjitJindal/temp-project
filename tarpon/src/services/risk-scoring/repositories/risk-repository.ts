@@ -48,6 +48,7 @@ import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/Parame
 import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
 import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
+import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -640,6 +641,44 @@ export class RiskRepository {
       logger.error(e)
       return null
     }
+  }
+
+  async getAverageArsScore(userId: string): Promise<AverageArsScore | null> {
+    const getInput: GetCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getInput))
+    if (!result.Item) {
+      return null
+    }
+
+    return omit(result.Item, ['PartitionKeyID', 'SortKeyID']) as AverageArsScore
+  }
+
+  async updateOrCreateAverageArsScore(
+    userId: string,
+    averageArsScore: AverageArsScore
+  ): Promise<AverageArsScore> {
+    logger.info(`Updating average ARS score for user ${userId}`)
+    const primaryKey = DynamoDbKeys.AVG_ARS_VALUE_ITEM(
+      this.tenantId,
+      userId,
+      '1'
+    )
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...primaryKey,
+        ...averageArsScore,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(primaryKey)
+    }
+
+    return averageArsScore
   }
 
   async getParameterRiskItemsV8(

@@ -30,7 +30,7 @@ function RiskAlgorithmsCra() {
         riskScoringAlgorithm: {
           type: algorithmType,
           krsWeight: localKrsWeight ?? 0.5,
-          avgTrsWeight: Number((1 - (localKrsWeight ?? 0.5)).toFixed(1)),
+          avgArsWeight: Number((1 - (localKrsWeight ?? 0.5)).toFixed(1)),
         },
       });
     } else {

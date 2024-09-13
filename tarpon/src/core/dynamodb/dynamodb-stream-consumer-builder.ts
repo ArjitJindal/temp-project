@@ -27,6 +27,7 @@ import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -75,6 +76,12 @@ type KrsScoreEventHandler = (
   newKrsValue: KrsScore | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type AvgArsScoreEventHandler = (
+  tenantId: string,
+  oldAvgArsValue: AverageArsScore | undefined,
+  newAvgArsValue: AverageArsScore | undefined,
+  dbClients: DbClients
+) => Promise<void>
 type RuleInstanceHandler = (
   tenantId: string,
   oldRuleInstance: RuleInstance | undefined,
@@ -97,6 +104,7 @@ export class StreamConsumerBuilder {
   arsScoreEventHandler?: ArsScoreEventHandler
   drsScoreEventHandler?: DrsScoreEventHandler
   krsScoreEventHandler?: KrsScoreEventHandler
+  avgArsScoreEventHandler?: AvgArsScoreEventHandler
   ruleInstanceHandler?: RuleInstanceHandler
   concurrentGroupBy?: ConcurrentGroupBy
 
@@ -152,6 +160,12 @@ export class StreamConsumerBuilder {
     krsScoreEventHandler: KrsScoreEventHandler
   ): StreamConsumerBuilder {
     this.krsScoreEventHandler = krsScoreEventHandler
+    return this
+  }
+  public setAvgArsScoreEventHandler(
+    avgArsScoreEventHandler: AvgArsScoreEventHandler
+  ): StreamConsumerBuilder {
+    this.avgArsScoreEventHandler = avgArsScoreEventHandler
     return this
   }
   public setRuleInstanceHandler(
@@ -237,6 +251,16 @@ export class StreamConsumerBuilder {
         update.tenantId,
         update.OldImage as KrsScore,
         update.NewImage as KrsScore,
+        dbClients
+      )
+    } else if (
+      update.type === 'AVG_ARS_VALUE' &&
+      this.avgArsScoreEventHandler
+    ) {
+      await this.avgArsScoreEventHandler(
+        update.tenantId,
+        update.OldImage as AverageArsScore,
+        update.NewImage as AverageArsScore,
         dbClients
       )
     } else if (update.type === 'RULE_INSTANCE' && this.ruleInstanceHandler) {

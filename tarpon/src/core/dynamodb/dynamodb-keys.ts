@@ -38,6 +38,7 @@ export const BUSINESS_USER_EVENT_KEY_IDENTIFIER = 'business-user-event#'
 export const TRANSACTION_EVENT_KEY_IDENTIFIER = 'transaction-event#'
 export const KRS_KEY_IDENTIFIER = '#krs-value'
 export const ARS_KEY_IDENTIFIER = '#ars-value'
+export const AVG_ARS_KEY_IDENTIFIER = '#avg-ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 export const SHARED_PARTITION_KEY_PREFIX = 'shared'
@@ -353,6 +354,10 @@ export const DynamoDbKeys = {
     version: string
   ) => ({
     PartitionKeyID: `${tenantId}#${TRANSACTION_ID_PREFIX}${transactionId}${ARS_KEY_IDENTIFIER}`,
+    SortKeyID: version,
+  }),
+  AVG_ARS_VALUE_ITEM: (tenantId: string, userId: string, version: string) => ({
+    PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${AVG_ARS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
 }

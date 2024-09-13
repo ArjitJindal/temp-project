@@ -196,6 +196,7 @@ export const JOBS_COLLECTION = (tenandId: string) => {
 export const KRS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-kyc-risk-values`
 }
+
 export const ARS_SCORES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-action-risk-values`
 }

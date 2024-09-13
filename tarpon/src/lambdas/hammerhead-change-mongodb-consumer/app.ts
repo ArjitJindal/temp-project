@@ -17,6 +17,7 @@ import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { envIsNot } from '@/utils/env'
+import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -101,6 +102,28 @@ async function krsScoreEventHandler(
   logger.info(`KRS Score Processed`)
 }
 
+async function avgArsScoreEventHandler(
+  tenantId: string,
+  newAvgArs: AverageArsScore | undefined,
+  dbClients: DbClients
+) {
+  if (!newAvgArs) {
+    return
+  }
+  logger.info(`Processing AVG ARS Score`)
+  const { mongoDb } = dbClients
+
+  const userRepository = new UserRepository(tenantId, { mongoDb })
+
+  newAvgArs = omit(newAvgArs, DYNAMO_KEYS) as AverageArsScore
+
+  await userRepository.updateAvgTrsScoreOfUser(
+    newAvgArs.userId,
+    omit(newAvgArs)
+  )
+  logger.info(`AVG ARS Score Processed`)
+}
+
 if (envIsNot('test', 'local') && !process.env.HAMMERHEAD_QUEUE_URL) {
   throw new Error('HAMMERHEAD_QUEUE_URL is not defined')
 }
@@ -119,6 +142,9 @@ const hammerheadBuilder = new StreamConsumerBuilder(
   )
   .setKrsScoreEventHandler((tenantId, oldKrsScore, newKrsScore, dbClients) =>
     krsScoreEventHandler(tenantId, newKrsScore, dbClients)
+  )
+  .setAvgArsScoreEventHandler((tenantId, oldAvgArs, newAvgArs, dbClients) =>
+    avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
   )
 
 const hammerheadKinesisHandler = hammerheadBuilder.buildKinesisStreamHandler()

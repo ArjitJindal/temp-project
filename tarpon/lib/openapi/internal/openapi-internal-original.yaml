@@ -8552,6 +8552,8 @@ components:
               $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
+            averageArsScore:
+              $ref: '#/components/schemas/AverageArsScore'
             casesCount:
               type: number
             createdAt:
@@ -8577,6 +8579,8 @@ components:
               $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
+            averageArsScore:
+              $ref: '#/components/schemas/AverageArsScore'
             casesCount:
               type: number
             createdAt:
@@ -9865,14 +9869,14 @@ components:
           type: number
           minimum: 0
           maximum: 1
-        avgTrsWeight:
+        avgArsWeight:
           type: number
           minimum: 0
           maximum: 1
       required:
         - type
         - krsWeight
-        - avgTrsWeight
+        - avgArsWeight
     Permission:
       type: string
       title: Permission
@@ -10357,6 +10361,23 @@ components:
       required:
         - samplingId
         - samplingName
+    AverageArsScore:
+      title: AverageArsScore
+      type: object
+      properties:
+        userId:
+          type: string
+        value:
+          type: number
+        transactionCount:
+          type: number
+        createdAt:
+          type: number
+      required:
+        - value
+        - transactionCount
+        - createdAt
+        - userId
     AlertQASamplingFilters:
       title: AlertQASamplingFilters
       type: object

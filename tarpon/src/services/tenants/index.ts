@@ -596,6 +596,10 @@ export class TenantService {
   }
 
   public async getTenantSettings(): Promise<TenantSettings> {
+    const contextTenantSettings = getContext()?.settings
+    if (contextTenantSettings) {
+      return contextTenantSettings
+    }
     const tenantRepository = new TenantRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })

@@ -15,6 +15,7 @@ import {
   ARS_KEY_IDENTIFIER,
   DRS_KEY_IDENTIFIER,
   RULE_INSTANCE_IDENTIFIER,
+  AVG_ARS_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -36,6 +37,7 @@ export type DynamoDbEntityType =
   | 'KRS_VALUE'
   | 'ARS_VALUE'
   | 'DRS_VALUE'
+  | 'AVG_ARS_VALUE'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -123,6 +125,15 @@ function getDynamoDbEntityMetadata(
     return {
       type: 'ARS_VALUE',
       entityId: `ARS_VALUE:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(AVG_ARS_KEY_IDENTIFIER)) {
+    const entityId = entity.userId
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'AVG_ARS_VALUE',
+      entityId: `AVG_ARS_VALUE:${entityId}`,
     }
   } else if (partitionKeyId.includes(DRS_KEY_IDENTIFIER)) {
     const entityId = entity.userId
