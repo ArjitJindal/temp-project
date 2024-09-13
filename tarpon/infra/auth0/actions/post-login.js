@@ -59,7 +59,7 @@ exports.onExecutePostLogin = async (event, api) => {
           !Array.isArray(event.authentication.methods) ||
           !event.authentication.methods.find((method) => method.name === 'mfa')
         ) {
-          api.multifactor.enable('any', { allowRememberBrowser: false })
+          api.multifactor.enable('any', { allowRememberBrowser: true }) // Make it to False to require MFA every time
         } else {
           api.multifactor.enable('none')
         }

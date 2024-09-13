@@ -128,7 +128,7 @@ export const createAuth0TenantResources = (
     refreshToken: {
       leeway: 0,
       idleTokenLifetime: tenantConfig.sessionTimeoutHours * 3600,
-      tokenLifetime: tenantConfig.sessionTimeoutHours * 3600,
+      tokenLifetime: tenantConfig.requireLoginAfterHours * 3600,
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
