@@ -1,3 +1,5 @@
+import { invert, memoize } from 'lodash'
+import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionState'
@@ -216,3 +218,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
+
+export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
+  [MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS]:
+    CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.USERS]: CLICKHOUSE_DEFINITIONS.USERS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS]:
+    CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.USER_EVENTS]:
+    CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.CASES]: CLICKHOUSE_DEFINITIONS.CASES.tableName,
+}
+
+export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>
+  invert(MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE)
+)

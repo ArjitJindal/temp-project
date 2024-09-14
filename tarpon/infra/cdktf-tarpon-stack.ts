@@ -16,13 +16,7 @@ const mongoTriggerDisabledTenants: Partial<Record<Stage, string[]>> = {
 
 const CLICKHOUSE_ORGANIZATION_ID = 'c9ccc4d7-3de9-479b-afd6-247a5ac0494e'
 
-const enabledCollections = [
-  'transactions',
-  'users',
-  'transaction-events',
-  'user-events',
-  'cases',
-]
+const enabledCollections = ['cases'] // Transactions are Users are already handled
 
 export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {

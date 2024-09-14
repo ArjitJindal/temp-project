@@ -11,11 +11,10 @@ import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { Dictionary, groupBy, memoize } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
-  CLICKHOUSE_DEFINITIONS,
   ClickhouseTableDefinition,
   ClickHouseTables,
+  MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE,
 } from '@/utils/clickhouse/definition'
-import { MONGO_TABLE_SUFFIX_MAP } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   batchInsertToClickhouse,
@@ -42,17 +41,6 @@ export type MongoConsumerSQSMessage = {
   clusterTime: number
 }
 
-const MONGO_SUFFIX_TO_CLICKHOUSE_TABLE_MAP = {
-  [MONGO_TABLE_SUFFIX_MAP.TRANSACTIONS]:
-    CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.USERS]: CLICKHOUSE_DEFINITIONS.USERS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS]:
-    CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.USER_EVENTS]:
-    CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
-  [MONGO_TABLE_SUFFIX_MAP.CASES]: CLICKHOUSE_DEFINITIONS.CASES.tableName,
-}
-
 export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
   async (event: EventBridgeEvent<string, ChangeStreamDocument>) => {
     const queueUrl = process.env.MONGO_DB_CONSUMER_QUEUE_URL
@@ -60,16 +48,24 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
     if (!queueUrl) {
       throw new Error('MONGO_DB_CONSUMER_QUEUE_URL is not set')
     }
+    let timestamp = Date.now()
+
+    if (event.detail.clusterTime) {
+      const { T, I } = event.detail.clusterTime as unknown as {
+        T: number
+        I: number
+      }
+
+      timestamp = Number(`${T}${I}`)
+    }
+
+    const collectionName = event.detail.ns.coll
 
     const eventData: MongoConsumerSQSMessage = {
-      collectionName: event.source,
+      collectionName,
       operationType: event.detail.operationType,
-      documentKey: {
-        _id: event.detail.documentKey._id.toString(),
-      },
-      clusterTime: event.detail?.clusterTime
-        ? event.detail.clusterTime.toNumber()
-        : Date.now(),
+      documentKey: { _id: String(event.detail.documentKey._id) },
+      clusterTime: timestamp,
     }
 
     await sqs.send(
@@ -96,9 +92,9 @@ type TableDetails = {
 }
 
 export const fetchTableDetails = (tableName: string): TableDetails | false => {
-  const tableSuffix = Object.keys(MONGO_SUFFIX_TO_CLICKHOUSE_TABLE_MAP).find(
-    (key) => tableName.endsWith(key)
-  )
+  const tableSuffix = Object.keys(
+    MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE
+  ).find((key) => tableName.endsWith(key))
 
   if (!tableSuffix) {
     return false
@@ -109,7 +105,7 @@ export const fetchTableDetails = (tableName: string): TableDetails | false => {
     tenantId,
     collectionName: tableName,
     clickhouseTable: findClickhouseTableDefinition(
-      MONGO_SUFFIX_TO_CLICKHOUSE_TABLE_MAP[tableSuffix]
+      MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE[tableSuffix]
     ),
   }
 }

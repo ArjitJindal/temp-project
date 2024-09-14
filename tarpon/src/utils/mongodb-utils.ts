@@ -454,9 +454,7 @@ export async function internalMongoFindAndUpdate<T extends Document>(
 
   await sendMessageToMongoConsumer({
     collectionName,
-    documentKey: {
-      _id: String(result._id),
-    },
+    documentKey: { _id: String(result._id) },
     operationType: 'update',
     clusterTime: Date.now(),
   })

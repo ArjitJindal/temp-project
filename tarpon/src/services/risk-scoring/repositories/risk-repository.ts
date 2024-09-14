@@ -806,9 +806,7 @@ export class RiskRepository {
     await arsValuesCollection.replaceOne(
       { transactionId: arsScore.transactionId },
       arsScore,
-      {
-        upsert: true,
-      }
+      { upsert: true }
     )
     return arsScore
   }

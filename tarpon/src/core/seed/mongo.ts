@@ -14,7 +14,10 @@ import {
   getClickhouseClient,
   sanitizeTableName,
 } from '@/utils/clickhouse/utils'
-import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import {
+  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
+  ClickHouseTables,
+} from '@/utils/clickhouse/definition'
 import {
   allCollections,
   createGlobalMongoDBCollections,
@@ -213,12 +216,10 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
         const clickhouseTable = sanitizeTableName(`${tenantId}-${table.table}`)
         const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
         await clickhouseClient.query({ query: checkTableQuery })
-        const mongoTableName = `${tenantId}-${table.table}`
-        const data: any[] =
-          collections.find(
-            ([collectionNameFn]) =>
-              collectionNameFn(tenantId) === mongoTableName
-          )?.[1]?.() || []
+        const mongoTableName = `${tenantId}-${
+          CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
+        }`
+        const data = await db.collection(mongoTableName).find().toArray()
         await createOrUpdateClickHouseTable(tenantId, table)
         await batchInsertToClickhouse(clickhouseTable, data, tenantId)
       })

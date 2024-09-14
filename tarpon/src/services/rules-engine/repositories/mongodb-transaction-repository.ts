@@ -1638,7 +1638,7 @@ export class MongoDbTransactionRepository
       this.mongoDb,
       TRANSACTIONS_COLLECTION(this.tenantId),
       { transactionId },
-      update
+      { $set: update }
     )
   }
 
