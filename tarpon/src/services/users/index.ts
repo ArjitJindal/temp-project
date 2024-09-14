@@ -169,7 +169,10 @@ export class UserService {
     const dynamoDb = getDynamoDbClientByEvent(event)
     const lambdaCredentials = getCredentialsFromEvent(event)
 
-    const clickhouseClient = await getClickhouseClient()
+    const clickhouseClient = hasFeature('CLICKHOUSE_ENABLED')
+      ? await getClickhouseClient()
+      : undefined
+
     return new UserService(
       tenantId,
       { mongoDb: client, dynamoDb, clickhouseClient },

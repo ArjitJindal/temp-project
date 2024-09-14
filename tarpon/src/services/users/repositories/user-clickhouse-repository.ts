@@ -9,6 +9,7 @@ import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
 import { getSortedData } from '@/utils/clickhouse/utils'
+import { envIs } from '@/utils/env'
 
 export class UserClickhouseRepository {
   private tenantId: string
@@ -32,8 +33,16 @@ export class UserClickhouseRepository {
     count: number
   }> {
     if (!this.clickhouseClient) {
-      throw new Error('Clickhouse client is not initialized')
+      if (envIs('dev') || envIs('test') || envIs('local')) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+
+      return {
+        items: [],
+        count: 0,
+      }
     }
+
     const whereClause = await this.buildWhereClause(params, userType)
     const sortField =
       (params.sortField === 'createdTimestamp'

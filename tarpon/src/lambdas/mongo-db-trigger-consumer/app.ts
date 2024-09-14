@@ -21,6 +21,7 @@ import {
   getClickhouseClient,
   sanitizeTableName,
 } from '@/utils/clickhouse/utils'
+import { envIs } from '@/utils/env'
 
 type ChangeStreamDocument =
   | ChangeStreamInsertDocument
@@ -219,6 +220,10 @@ async function handleMessagesReplace(
 
 export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
+    if (!envIs('dev')) {
+      return
+    }
+
     const events = event.Records.map((record) =>
       JSON.parse(record.body)
     ) as MongoConsumerSQSMessage[]
