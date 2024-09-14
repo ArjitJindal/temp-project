@@ -211,7 +211,7 @@ export function RuleConfigurationSimulation(props: Props) {
         allIterationsCompleted(data?.iterations || [])
           ? false
           : isDemoModeRes
-          ? 5000
+          ? 9000
           : POLL_STATUS_INTERVAL_SECONDS * 1000,
       enabled: Boolean(jobId),
     },
