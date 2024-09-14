@@ -2,7 +2,10 @@ import { syncClickhouseTables } from '../always-run/sync-clickhouse'
 import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import {
+  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
+  ClickHouseTables,
+} from '@/utils/clickhouse/definition'
 import { envIs } from '@/utils/env'
 import {
   batchInsertToClickhouse,
@@ -10,14 +13,18 @@ import {
 } from '@/utils/clickhouse/utils'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!envIs('dev')) {
+  if (!envIs('dev') && !envIs('local')) {
     console.log('Skipping migration for tenant', tenant.id)
     return
   }
 
   for (const table of ClickHouseTables) {
     const db = (await getMongoDbClient()).db()
-    const collection = db.collection(`${tenant.id}-${table.table}`)
+    const collectionName = `${tenant.id}-${
+      CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
+    }`
+    console.log('Migrating', collectionName)
+    const collection = db.collection(collectionName)
     const cursor = collection.find()
     const batchSize = 1000
     const batch: any[] = []
