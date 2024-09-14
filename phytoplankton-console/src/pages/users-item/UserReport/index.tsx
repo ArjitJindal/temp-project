@@ -187,7 +187,7 @@ function getPersonDetails(shareHolders: Array<Person>): ReportItem[] {
     const name = shareHolder?.generalDetails?.name;
     return [
       {
-        title: `${index + 1}. ${name.firstName} ${name.middleName ?? ''} ${name.lastName ?? ''}`,
+        title: `${index + 1}. ${name?.firstName} ${name?.middleName ?? ''} ${name?.lastName ?? ''}`,
         value: '',
         id: { rowId: 'item' },
       },
