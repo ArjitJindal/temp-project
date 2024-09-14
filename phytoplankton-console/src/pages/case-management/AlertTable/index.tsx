@@ -7,6 +7,7 @@ import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
+import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import SlaStatus, { PopoverRef } from './SlaStatus';
@@ -59,6 +60,7 @@ import {
   canReviewCases,
   commentsToString,
   findLastStatusForInReview,
+  getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
@@ -81,6 +83,7 @@ import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -136,7 +139,7 @@ export default function AlertTable(props: Props) {
   const api = useApi();
   const queryClient = useQueryClient();
   const user = useAuth0User();
-  const [users] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
 
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedSanctionHits, setSelectedSanctionHits] = useState<{
@@ -317,6 +320,7 @@ export default function AlertTable(props: Props) {
 
   const showClosingReason =
     params.caseStatus?.includes('CLOSED') || params.alertStatus?.includes('CLOSED') || false;
+  const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
 
   const columns = useMemo(() => {
     const mergedColumns = (
@@ -666,6 +670,83 @@ export default function AlertTable(props: Props) {
               }),
             ]
           : []),
+        ...((isInReview
+          ? [
+              helper.simple<'alertStatus'>({
+                title: 'Proposed action',
+                tooltip: 'Proposed action for the case',
+                key: 'alertStatus',
+                type: {
+                  render: (alertStatus) => {
+                    return alertStatus ? (
+                      <>
+                        {
+                          <CaseStatusTag
+                            caseStatus={getNextStatusFromInReview(alertStatus ?? 'OPEN')}
+                            isProposedAction={true}
+                          />
+                        }
+                      </>
+                    ) : (
+                      <>-</>
+                    );
+                  },
+                },
+              }),
+              helper.simple<'lastStatusChangeReasons'>({
+                title: 'Proposed reason',
+                tooltip: 'Reason proposed for closing the case',
+                key: 'lastStatusChangeReasons',
+                type: {
+                  render: (lastStatusChangeReasons) => {
+                    return lastStatusChangeReasons ? (
+                      <>
+                        {lastStatusChangeReasons.reasons.map((closingReason, index) => (
+                          <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
+                        ))}
+                        {lastStatusChangeReasons.otherReason && (
+                          <div>
+                            <span>Other Reasons: </span>
+                            {lastStatusChangeReasons.otherReason}
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>-</>
+                    );
+                  },
+                  stringify: (lastStatusChangeReasons) => {
+                    return [
+                      ...(lastStatusChangeReasons?.reasons ?? []),
+                      lastStatusChangeReasons?.otherReason,
+                    ]
+                      .filter((x) => !!x)
+                      .join('; ');
+                  },
+                },
+              }),
+              helper.simple<'lastStatusChange.userId'>({
+                title: 'Proposed by',
+                key: 'lastStatusChange.userId',
+                type: {
+                  stringify: (value) => {
+                    return `${value === undefined ? '' : users[value]?.name ?? value}`;
+                  },
+                  render: (userId, _) => {
+                    return userId ? (
+                      <ConsoleUserAvatar
+                        userId={userId}
+                        users={users}
+                        loadingUsers={loadingUsers}
+                      />
+                    ) : (
+                      <>-</>
+                    );
+                  },
+                },
+              }),
+            ]
+          : []) as TableColumn<TableAlertItem>[]),
         helper.display({
           title: 'Operations',
           enableResizing: false,
@@ -806,6 +887,8 @@ export default function AlertTable(props: Props) {
     expandedAlertId,
     showClosingReason,
     slaEnabled,
+    isInReview,
+    loadingUsers,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

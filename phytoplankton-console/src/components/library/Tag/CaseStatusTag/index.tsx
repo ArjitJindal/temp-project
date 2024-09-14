@@ -11,12 +11,13 @@ import Tag from '@/components/library/Tag';
 interface Props {
   caseStatus: CaseStatus | DerivedStatus;
   previousStatus?: CaseStatus | DerivedStatus;
+  isProposedAction?: boolean;
 }
 
 export default function CaseStatusTag(props: Props) {
-  const { caseStatus, previousStatus } = props;
+  const { caseStatus, previousStatus, isProposedAction } = props;
 
-  return statusInReview(caseStatus) ? (
+  return statusInReview(caseStatus) && !isProposedAction ? (
     <Tooltip
       title={
         <>

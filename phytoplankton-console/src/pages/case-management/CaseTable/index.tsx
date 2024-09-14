@@ -65,11 +65,13 @@ import {
   statusEscalated,
   statusInReview,
   casesCommentsGenerator,
+  getNextStatusFromInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { useDeepEqualEffect } from '@/utils/hooks';
+import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -87,6 +89,7 @@ export default function CaseTable(props: Props) {
   const user = useAuth0User();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
+  const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
 
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
@@ -300,6 +303,79 @@ export default function CaseTable(props: Props) {
         filtering: true,
         sorting: true,
       }),
+      ...((isInReview
+        ? [
+            helper.simple<'caseStatus'>({
+              title: 'Proposed action',
+              tooltip: 'Proposed action for the case',
+              key: 'caseStatus',
+              type: {
+                render: (caseStatus) => {
+                  return caseStatus ? (
+                    <>
+                      {
+                        <CaseStatusTag
+                          caseStatus={getNextStatusFromInReview(caseStatus ?? 'OPEN')}
+                          isProposedAction={true}
+                        />
+                      }
+                    </>
+                  ) : (
+                    <>-</>
+                  );
+                },
+              },
+            }),
+            helper.simple<'lastStatusChangeReasons'>({
+              title: 'Proposed reason',
+              tooltip: 'Reason proposed for closing the case',
+              key: 'lastStatusChangeReasons',
+              type: {
+                render: (lastStatusChangeReasons) => {
+                  return lastStatusChangeReasons ? (
+                    <>
+                      {lastStatusChangeReasons.reasons.map((closingReason, index) => (
+                        <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
+                      ))}
+                      {lastStatusChangeReasons.otherReason && (
+                        <div>
+                          <span>Other Reasons: </span>
+                          {lastStatusChangeReasons.otherReason}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <>-</>
+                  );
+                },
+                stringify: (lastStatusChangeReasons) => {
+                  return [
+                    ...(lastStatusChangeReasons?.reasons ?? []),
+                    lastStatusChangeReasons?.otherReason,
+                  ]
+                    .filter((x) => !!x)
+                    .join('; ');
+                },
+              },
+            }),
+            helper.simple<'lastStatusChange.userId'>({
+              title: 'Proposed by',
+              key: 'lastStatusChange.userId',
+              type: {
+                stringify: (value) => {
+                  return `${value === undefined ? '' : users[value]?.name ?? value}`;
+                },
+                render: (userId, _) => {
+                  return userId ? (
+                    <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+                  ) : (
+                    <>-</>
+                  );
+                },
+              },
+            }),
+          ]
+        : []) as TableColumn<TableItem>[]),
       helper.display({
         title: 'Operations',
         enableResizing: false,
@@ -444,6 +520,7 @@ export default function CaseTable(props: Props) {
     isRiskLevelsEnabled,
     caseAssignmentUpdateMutation,
     caseReviewAssignmentUpdateMutation,
+    isInReview,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
