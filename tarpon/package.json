@@ -212,7 +212,7 @@
     "@aws-sdk/s3-request-presigner": "^3.629.0",
     "@aws-sdk/signature-v4-crt": "^3.587.0",
     "@aws-sdk/util-arn-parser": "^3.47.1",
-    "@aws-sdk/util-dynamodb": "^3.592.0",
+    "@aws-sdk/util-dynamodb": "^3.635.0",
     "@clickhouse/client": "^1.5.0",
     "@fast-csv/format": "^4.3.5",
     "@fast-csv/parse": "^4.3.6",

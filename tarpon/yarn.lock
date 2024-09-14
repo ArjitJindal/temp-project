@@ -2475,14 +2475,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-sdk/util-dynamodb@npm:^3.592.0":
-  version: 3.606.0
-  resolution: "@aws-sdk/util-dynamodb@npm:3.606.0"
+"@aws-sdk/util-dynamodb@npm:^3.635.0":
+  version: 3.651.1
+  resolution: "@aws-sdk/util-dynamodb@npm:3.651.1"
   dependencies:
     tslib: "npm:^2.6.2"
   peerDependencies:
-    "@aws-sdk/client-dynamodb": ^3.606.0
-  checksum: 87e001e37a8b533ef7f75497eab83597ab32c3824e0f7296a59a513e68c87da605677b5abbaaf52feecfd284acc806e8d908204d4adb2ae31d5bcd9e87b26f12
+    "@aws-sdk/client-dynamodb": ^3.651.1
+  checksum: 73a3ecb717e8fe026b5c1958f515bcbc2f1975c21997498baaf6f839a59df7843e16bccaa5cf1d4c06d89d6c1d66752eed951e105ae815033a25c3ab6c28d90b
   languageName: node
   linkType: hard
 
@@ -18760,7 +18760,7 @@ __metadata:
     "@aws-sdk/s3-request-presigner": "npm:^3.629.0"
     "@aws-sdk/signature-v4-crt": "npm:^3.587.0"
     "@aws-sdk/util-arn-parser": "npm:^3.47.1"
-    "@aws-sdk/util-dynamodb": "npm:^3.592.0"
+    "@aws-sdk/util-dynamodb": "npm:^3.635.0"
     "@clickhouse/client": "npm:^1.5.0"
     "@faker-js/faker": "npm:^7.6.0"
     "@fast-csv/format": "npm:^4.3.5"
