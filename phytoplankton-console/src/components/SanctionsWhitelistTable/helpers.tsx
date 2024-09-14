@@ -179,9 +179,9 @@ export function useColumns(
             ),
           },
         }),
-      helper.simple<'caEntity.name'>({
+      helper.simple<'sanctionsEntity.name'>({
         title: 'Name',
-        key: 'caEntity.name',
+        key: 'sanctionsEntity.name',
         type: {
           ...STRING,
           render: (value, context) => {
@@ -195,7 +195,7 @@ export function useColumns(
       }),
       helper.derived({
         title: 'Entity type',
-        value: (value) => ENTITY_TYPE_ADAPTER.deserializer(value),
+        value: (value) => ENTITY_TYPE_ADAPTER.deserializer(value as SanctionsWhitelistTableParams),
         type: ENUM,
       }),
       helper.simple<'searchTerm'>({

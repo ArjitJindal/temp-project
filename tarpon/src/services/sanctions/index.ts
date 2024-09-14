@@ -11,7 +11,6 @@ import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-sc
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
-import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -24,7 +23,6 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
-import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
@@ -33,15 +31,14 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
-import { SanctionsSettingsMarketType } from '@/@types/openapi-internal/SanctionsSettingsMarketType'
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
 } from '@/utils/pagination'
-import { ComplyAdvantageEntity } from '@/services/sanctions/providers/comply-advantage-api'
 import {
+  SanctionsEntity,
   SanctionsHit,
   SanctionsSearchResponse,
 } from '@/@types/openapi-internal/all'
@@ -56,7 +53,6 @@ const DEFAULT_FUZZINESS = 0.5
 
 @traceable
 export class SanctionsService {
-  complyAdvantageMarketType: SanctionsSettingsMarketType | undefined
   complyAdvantageSearchProfileId: string | undefined
   sanctionsSearchRepository!: SanctionsSearchRepository
   sanctionsHitsRepository!: SanctionsHitsRepository
@@ -331,7 +327,7 @@ export class SanctionsService {
   }
 
   public async addWhitelistEntities(
-    caEntities: ComplyAdvantageSearchHitDoc[],
+    entities: SanctionsEntity[],
     subject: WhitelistSubject,
     options?: {
       reason?: string[]
@@ -341,7 +337,7 @@ export class SanctionsService {
   ) {
     await this.initialize()
     return await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
-      caEntities,
+      entities,
       subject,
       options
     )
@@ -399,33 +395,5 @@ export class SanctionsService {
       })
     // todo: add audit log record
     return { modifiedCount }
-  }
-}
-
-/*
-  Helpers
- */
-export function convertEntityToHit(
-  entity: ComplyAdvantageEntity
-): ComplyAdvantageSearchHit {
-  return {
-    doc: {
-      id: entity.id,
-      aka: entity.key_information?.aka,
-      entity_type: entity.key_information?.entity_type,
-      fields: Object.values(entity.full_listing ?? {}).flatMap((items) =>
-        Object.values(items ?? {}).flatMap((item) => item?.data ?? [])
-      ),
-      keywords: entity.uncategorized?.keywords,
-      last_updated_utc: entity.last_updated_utc
-        ? new Date(entity.last_updated_utc)
-        : undefined,
-      media: entity.uncategorized?.media,
-      name: entity.key_information?.name,
-      source_notes: entity.key_information?.source_notes,
-      sources: entity.key_information?.sources,
-      types: entity.key_information?.types,
-    },
-    match_types: entity.key_information?.match_types,
   }
 }

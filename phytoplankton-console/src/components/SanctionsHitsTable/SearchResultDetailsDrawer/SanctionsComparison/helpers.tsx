@@ -1,41 +1,42 @@
 import { uniq } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { SanctionsComparisonTableItem, SanctionsComparisonTableItemMatch } from './types';
-import { ComplyAdvantageNameMatched, SanctionsHit } from '@/apis';
+import { ComplyAdvantageNameMatched, SanctionsHitContext, SanctionsMatchTypeDetails } from '@/apis';
 import { notEmpty } from '@/utils/array';
 
-export function getComparisonItems(hit: SanctionsHit): SanctionsComparisonTableItem[] {
+export function getComparisonItems(
+  matchTypeDetails: SanctionsMatchTypeDetails[],
+  ctx: SanctionsHitContext,
+): SanctionsComparisonTableItem[] {
   // Make a single item for every match in every caMatchTypesDetails
-  const plainItems = (hit.caMatchTypesDetails ?? []).flatMap(
-    (details): SanctionsComparisonTableItem[] => {
-      const { entity, entityType, searchTerm, yearOfBirth } = hit.hitContext ?? {};
-      const { sources, matching_name, secondary_matches = [], name_matches = [] } = details;
-      let nameTitle = 'Name';
-      if (entity === 'BANK') {
-        nameTitle = 'Bank name';
-      } else if (entityType === 'CONSUMER_NAME') {
-        nameTitle = 'Consumer name';
-      } else if (entityType != null) {
-        nameTitle = `Name (${humanizeConstant(entityType)})`;
-      }
-      return [
-        name_matches.length > 0 && {
-          title: nameTitle,
-          screeningValue: matching_name,
-          kycValue: searchTerm,
-          match: reduceMatched(name_matches),
-          sources: sources ?? [],
-        },
-        secondary_matches.length > 0 && {
-          title: 'Date of birth',
-          screeningValue: secondary_matches.map(({ query_term }) => query_term).join(', '),
-          kycValue: yearOfBirth,
-          match: reduceMatched(secondary_matches),
-          sources: sources ?? [],
-        },
-      ].filter(notEmpty);
-    },
-  );
+  const plainItems = (matchTypeDetails ?? []).flatMap((details): SanctionsComparisonTableItem[] => {
+    const { entity, entityType, searchTerm, yearOfBirth } = ctx ?? {};
+    const { sources, matchingName, secondaryMatches = [], nameMatches = [] } = details;
+    let nameTitle = 'Name';
+    if (entity === 'BANK') {
+      nameTitle = 'Bank name';
+    } else if (entityType === 'CONSUMER_NAME') {
+      nameTitle = 'Consumer name';
+    } else if (entityType != null) {
+      nameTitle = `Name (${humanizeConstant(entityType)})`;
+    }
+    return [
+      nameMatches.length > 0 && {
+        title: nameTitle,
+        screeningValue: matchingName,
+        kycValue: searchTerm,
+        match: reduceMatched(nameMatches),
+        sources: sources ?? [],
+      },
+      secondaryMatches.length > 0 && {
+        title: 'Date of birth',
+        screeningValue: secondaryMatches.map(({ query_term }) => query_term).join(', '),
+        kycValue: yearOfBirth,
+        match: reduceMatched(secondaryMatches),
+        sources: sources ?? [],
+      },
+    ].filter(notEmpty);
+  });
 
   // Group items with the same values, combining sources
   const comparisonItemsGroups: {

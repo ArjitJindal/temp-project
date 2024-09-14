@@ -1,20 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { groupBy, startCase, uniq } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { startCase, uniq } from 'lodash';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
-import { ADVERSE_MEDIA, normalizeAmlTypes, TABS_ORDER } from './helpers';
-import SanctionsComparison from './SanctionsComparison';
-import { getComparisonItems } from './SanctionsComparison/helpers';
-import {
-  ComplyAdvantageSearchHitDoc,
-  ComplyAdvantageSearchHitDocFields,
-  SanctionsHit,
-  SanctionsHitStatus,
-} from '@/apis';
+import { SanctionsEntity, SanctionsHit, SanctionsHitStatus, SanctionsSource } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
@@ -29,11 +20,12 @@ import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AISummary from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBase/AISummary';
-import CountryDisplay from '@/components/ui/CountryDisplay';
 import Tag from '@/components/library/Tag';
-import { notEmpty } from '@/utils/array';
 import { AsyncResource, getOr, isSuccess } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import SanctionsComparison, {
+  getComparisonItems,
+} from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison';
 
 interface Props {
   hitRes: AsyncResource<SanctionsHit | undefined>;
@@ -52,7 +44,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
   const hit = getOr(hitRes, undefined);
 
   const [pdfRef, setPdfRef] = useState<HTMLDivElement | null>(null);
-  const pdfName = hit?.caEntity?.name;
+  const pdfName = hit?.entity?.name;
   const [isDownloading, setDownloading] = useState<boolean>(false);
   const handleDownloadClick = async () => {
     setDownloading(true);
@@ -165,13 +157,10 @@ export default function SearchResultDetailsDrawer(props: Props) {
 
 function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: number }) {
   const { hit, pdfMode = false, searchedAt } = props;
-  const comparisonItems = getComparisonItems(hit);
-
-  const nameMatched =
-    hit.caMatchTypesDetails?.some((x) => (x.name_matches?.length ?? 0) > 0) ?? false;
-  const dateMatched =
-    hit.caMatchTypesDetails?.some((x) => (x.secondary_matches?.length ?? 0) > 0) ?? false;
-
+  const comparisonItems = getComparisonItems(
+    hit.entity.matchTypeDetails || [],
+    hit.hitContext || {},
+  );
   return (
     <>
       {hit.status === 'OPEN' && <AISummary text={makeStubAiText(hit)} />}
@@ -181,59 +170,45 @@ function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: num
         </Section>
       )}
       {comparisonItems.length > 0 && <SanctionsComparison items={comparisonItems} />}
-      {hit.caEntity && (
-        <CAEntityDetails
-          dateMatched={dateMatched}
-          nameMatched={nameMatched}
-          caEntity={hit.caEntity}
-          pdfMode={pdfMode}
-        />
-      )}
+      {hit.entity && <CAEntityDetails entity={hit.entity} pdfMode={pdfMode} />}
     </>
   );
 }
 
-export function CAEntityDetails(props: {
-  caEntity: ComplyAdvantageSearchHitDoc;
-  nameMatched?: boolean;
-  dateMatched?: boolean;
-  pdfMode?: boolean;
-}) {
-  const { caEntity, nameMatched = false, dateMatched = false, pdfMode = false } = props;
-  const allFields = useMemo(
-    () => caEntity?.fields?.sort((a, b) => a.name?.localeCompare(b?.name ?? '') || 0) || [],
-    [caEntity?.fields],
-  );
-  const tabItems = useTabs(caEntity, allFields, pdfMode);
-
-  const extractedFields = extractInformationFromFields(allFields, [
-    ...(dateMatched ? [] : ['Date of Birth']),
-    'Gender',
-    'Country',
-  ]);
+export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: boolean }) {
+  const { entity, pdfMode = false } = props;
+  const tabItems = useTabs(entity, pdfMode);
 
   return (
     <>
       <Section title={'Key information'}>
         <div className={s.keyInformation}>
-          {!nameMatched && (
-            <Form.Layout.Label title={'Full name'}>{caEntity?.name}</Form.Layout.Label>
+          {!entity.nameMatched && (
+            <Form.Layout.Label title={'Full name'}>{entity?.name}</Form.Layout.Label>
           )}
           <Form.Layout.Label title={'Entity type'}>
-            {startCase(caEntity?.entity_type)}
+            {startCase(entity?.entityType)}
           </Form.Layout.Label>
-          <Form.Layout.Label title={'Aliases'}>
-            {uniq(caEntity?.aka?.map((item) => item.name)).join(', ')}
-          </Form.Layout.Label>
-          {extractedFields.map(({ name, values }) => (
-            <Form.Layout.Label key={name} title={name}>
-              <Values caEntity={caEntity} name={name} values={values} />
+          <Form.Layout.Label title={'Aliases'}>{uniq(entity.aka).join(', ')}</Form.Layout.Label>
+          {entity.dateMatched && entity.yearOfBirth && (
+            <Form.Layout.Label key={entity.yearOfBirth} title={'Year of Birth'}>
+              {entity.yearOfBirth}
             </Form.Layout.Label>
-          ))}
-          {caEntity?.associates?.length && (
+          )}
+          {entity.countries && entity.countries.length > 0 && (
+            <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
+              {entity.countries?.join(', ')}
+            </Form.Layout.Label>
+          )}
+          {entity.gender && (
+            <Form.Layout.Label key={entity.gender} title={'Gender'}>
+              {entity.gender}
+            </Form.Layout.Label>
+          )}
+          {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
-                {caEntity.associates.map(({ association, name }, i) => (
+                {entity.associates.map(({ association, name }, i) => (
                   <React.Fragment key={i}>
                     {i !== 0 && ', '}
                     <span>
@@ -255,77 +230,12 @@ export function CAEntityDetails(props: {
   );
 }
 
-function Values(props: {
-  caEntity: ComplyAdvantageSearchHitDoc;
-  name: string;
-  values: {
-    value: unknown;
-    sources: string[];
-  }[];
-}) {
-  const { caEntity, name, values } = props;
-  if (name === 'Country') {
-    return (
-      <div className={s.countryList}>
-        {values.map(({ value, sources }, i) => (
-          <CountryDisplay
-            key={i}
-            countryName={typeof value === 'string' ? value : undefined}
-            htmlTitle={`Sources: ${sources
-              .map((source) => caEntity?.source_notes?.[source]?.name ?? source)
-              .join(', ')}`}
-          />
-        ))}
-      </div>
-    );
-  }
-  return (
-    <div>
-      {values.map(({ value, sources }, i) => (
-        <React.Fragment key={i}>
-          {i !== 0 && ', '}
-          <span
-            title={`Sources: ${sources
-              .map((source) => caEntity?.source_notes?.[source]?.name ?? source)
-              .join(', ')}`}
-          >
-            {value}
-          </span>
-        </React.Fragment>
-      ))}
-    </div>
-  );
-}
-
 /*
   Helpers
  */
 
-function extractInformationFromFields(
-  allFields: ComplyAdvantageSearchHitDocFields[],
-  fieldNamesToExtract: string[],
-): {
-  name: string;
-  values: {
-    value: unknown;
-    sources: string[];
-  }[];
-}[] {
-  const groups = groupBy(allFields, 'name');
-  const prepared = Object.entries(groups).map(([name, fields]) => ({
-    name,
-    values: Object.entries(groupBy(fields, 'value')).map(([value, fields]) => ({
-      value,
-      sources: fields.map(({ source }) => source).filter(notEmpty),
-    })),
-  }));
-  return prepared.filter(({ name }) => {
-    return fieldNamesToExtract.includes(name);
-  });
-}
-
 function makeStubAiText(hit: SanctionsHit): string {
-  const hasNameMatches = hit.caMatchTypes.some((x) =>
+  const hasNameMatches = hit.entity.matchTypes?.some((x) =>
     [
       'name_exact',
       'aka_exact',
@@ -344,7 +254,7 @@ function makeStubAiText(hit: SanctionsHit): string {
       'name_variations_removal',
     ].includes(x),
   );
-  const hasDateMatches = hit.caMatchTypes.some((x) => ['year_of_birth'].includes(x));
+  const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
   if (hasNameMatches && hasDateMatches) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {
@@ -355,60 +265,41 @@ function makeStubAiText(hit: SanctionsHit): string {
   return 'Hit requires human review';
 }
 
-function useTabs(
-  caEntity: ComplyAdvantageSearchHitDoc,
-  allFields: ComplyAdvantageSearchHitDocFields[],
-  pdfMode,
-) {
+function useTabs(entity: SanctionsEntity, pdfMode) {
   return useMemo(() => {
-    const sourceGroupes: {
-      [key: string]: { sourceName: string; fields: ComplyAdvantageSearchHitDocFields[] }[];
-    } = {};
-    for (const source of caEntity?.sources || []) {
-      const amlTypes = normalizeAmlTypes(caEntity?.source_notes?.[source]?.aml_types ?? []);
-      for (const amlType of amlTypes) {
-        sourceGroupes[amlType] = [
-          ...(sourceGroupes[amlType] ?? []),
-          {
-            sourceName: source,
-            fields: allFields?.filter((field) => field.source === source),
-          },
-        ];
-      }
-    }
-    return [
-      ...Object.entries(sourceGroupes)
-        .sort(
-          ([x], [y]) =>
-            (TABS_ORDER.indexOf(x) || Number.MAX_SAFE_INTEGER) -
-            (TABS_ORDER.indexOf(y) || Number.MAX_SAFE_INTEGER),
-        )
-        .map(([groupKey, sources]) => ({
-          key: groupKey,
-          title: `${humanizeAuto(groupKey)} (${sources.length})`,
+    const tabs: { name: string; sources: SanctionsSource[] }[] = [
+      { name: 'Sanctions', sources: entity.sanctionsSources || [] },
+      { name: 'PEP', sources: entity.pepSources || [] },
+      { name: 'Adverse media', sources: entity.mediaSources || [] },
+    ];
+    return tabs
+      .filter((tab) => tab.sources.length > 0)
+      .map((tab) => {
+        return {
+          key: tab.name,
+          title: `${tab.name} (${tab.sources.length})`,
           children: (
             <div className={s.listingItems}>
-              {sources.map((source) => {
-                const sourceNote = caEntity?.source_notes?.[source.sourceName];
-                const sourceTitle = sourceNote?.url ? (
-                  <a href={sourceNote?.url} target="_blank">
-                    {sourceNote?.name}
+              {tab.sources.map((source) => {
+                const sourceTitle = source?.url ? (
+                  <a href={source?.url} target="_blank">
+                    {source?.name}
                   </a>
                 ) : (
-                  sourceNote?.name
+                  source.name
                 );
 
                 return (
                   <ListingCard
-                    key={sourceNote?.name}
-                    countries={uniq(sourceNote.country_codes ?? [])}
-                    title={sourceTitle}
-                    listedTime={[sourceNote?.listing_started_utc, sourceNote?.listing_ended_utc]}
+                    key={source?.name}
+                    countries={source.countryCodes || []}
+                    title={sourceTitle || ''}
+                    listedTime={[source?.createdAt, source?.endedAt]}
                     isExpandedByDefault={pdfMode}
                   >
-                    {groupKey === ADVERSE_MEDIA ? (
+                    {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>
-                        {caEntity?.media?.map((media) => (
+                        {source.media?.map((media) => (
                           <div key={media.title}>
                             <P>
                               <a href={media.url} target="_blank" className={s.link}>
@@ -423,20 +314,18 @@ function useTabs(
                       </div>
                     ) : (
                       <div className={s.fieldGrid}>
-                        {Object.entries(groupBy(source.fields, (x) => x.name)).map(
-                          ([name, fields]) => (
-                            <React.Fragment key={name}>
-                              <Form.Layout.Label title={name ?? '(Unknown field)'} />
-                              <div>
-                                {fields.map((field) => (
-                                  <div key={field.value}>
-                                    <FieldValue field={field} />
-                                  </div>
-                                ))}
-                              </div>
-                            </React.Fragment>
-                          ),
-                        )}
+                        {source.fields?.map((field) => (
+                          <React.Fragment key={field.name}>
+                            <Form.Layout.Label title={field.name ?? '(Unknown field)'} />
+                            <div>
+                              {field.values?.map((value) => (
+                                <div key={value}>
+                                  <FieldValue name={field.name || ''} value={value} />
+                                </div>
+                              ))}
+                            </div>
+                          </React.Fragment>
+                        ))}
                       </div>
                     )}
                   </ListingCard>
@@ -444,7 +333,7 @@ function useTabs(
               })}
             </div>
           ),
-        })),
-    ];
-  }, [allFields, caEntity, pdfMode]);
+        };
+      });
+  }, [entity.mediaSources, entity.pepSources, entity.sanctionsSources, pdfMode]);
 }

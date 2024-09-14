@@ -1,5 +1,15 @@
 import crypto from 'crypto'
-import { pick, merge, mergeWith, isNil, isArray, uniqBy } from 'lodash'
+import {
+  pick,
+  merge,
+  mergeWith,
+  isNil,
+  isArray,
+  uniqBy,
+  isPlainObject,
+  transform,
+  isUndefined,
+} from 'lodash'
 import { stringify } from 'safe-stable-stringify'
 
 export function generateChecksum(obj: any, length = 64) {
@@ -52,4 +62,22 @@ export function pickKnownEntityFields<T>(
 
 export const uniqObjects = <T extends object>(array: T[]): T[] => {
   return uniqBy(array, generateChecksum)
+}
+
+export function removeUndefinedFields(obj: any): any {
+  if (isArray(obj)) {
+    // If the object is an array, iterate over the elements
+    return obj.map(removeUndefinedFields)
+  } else if (isPlainObject(obj)) {
+    // If the object is a plain object, iterate over its properties
+    return transform(obj, (result, value, key) => {
+      const cleanedValue = removeUndefinedFields(value)
+      if (!isUndefined(cleanedValue)) {
+        result[key] = cleanedValue
+      }
+    })
+  } else {
+    // If it's not an object or array, return the value directly
+    return obj
+  }
 }

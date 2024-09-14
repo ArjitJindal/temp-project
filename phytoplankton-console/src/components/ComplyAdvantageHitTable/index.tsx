@@ -21,8 +21,7 @@ import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import { ID, STRING } from '@/components/library/Table/standardDataTypes';
-import { notEmpty } from '@/utils/array';
-import { ComplyAdvantageSearchHit } from '@/apis';
+import { SanctionsEntity } from '@/apis';
 import Id from '@/components/ui/Id';
 
 export interface TableSearchParams {
@@ -37,7 +36,7 @@ interface Props {
   tableRef?: React.Ref<TableRefType>;
   isEmbedded?: boolean;
   searchIds?: string;
-  queryResult: QueryResult<TableData<ComplyAdvantageSearchHit>>;
+  queryResult: QueryResult<TableData<SanctionsEntity>>;
   extraTools?: ToolRenderer[];
   params?: AllParams<TableSearchParams>;
   onChangeParams?: (newParams: AllParams<TableSearchParams>) => void;
@@ -45,7 +44,7 @@ interface Props {
   selectedIds?: string[];
   onSelect?: (sanctionHitsIds: string[]) => void;
   searchedAt?: number;
-  selectionActions?: SelectionAction<ComplyAdvantageSearchHit, TableSearchParams>[];
+  selectionActions?: SelectionAction<SanctionsEntity, TableSearchParams>[];
   readOnly?: boolean;
 }
 
@@ -65,15 +64,15 @@ export default function SanctionsSearchTable(props: Props) {
     readOnly = false,
   } = props;
 
-  const [selectedSearchHit, setSelectedSearchHit] = useState<ComplyAdvantageSearchHit>();
+  const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
 
-  const helper = new ColumnHelper<ComplyAdvantageSearchHit>();
-  const columns: TableColumn<ComplyAdvantageSearchHit>[] = helper.list([
+  const helper = new ColumnHelper<SanctionsEntity>();
+  const columns: TableColumn<SanctionsEntity>[] = helper.list([
     // Data fields
-    helper.simple<'doc.id'>({
+    helper.simple<'id'>({
       title: 'Entity ID',
-      key: 'doc.id',
+      key: 'id',
       type: {
         ...ID,
         render: (value, { item: entity }) => (
@@ -81,20 +80,15 @@ export default function SanctionsSearchTable(props: Props) {
         ),
       },
     }),
-    helper.simple<'doc.name'>({
+    helper.simple<'name'>({
       title: 'Name',
-      key: 'doc.name',
+      key: 'name',
       type: STRING,
     }),
     helper.derived<string[]>({
       title: 'Countries',
-      value: (item: ComplyAdvantageSearchHit): string[] => {
-        return (
-          item?.doc?.fields
-            ?.filter((field) => field.name === 'Country')
-            .map(({ value }) => value)
-            .filter(notEmpty) ?? []
-        );
+      value: (item: SanctionsEntity): string[] => {
+        return item?.countries || [];
       },
       type: {
         defaultWrapMode: 'WRAP',
@@ -110,8 +104,8 @@ export default function SanctionsSearchTable(props: Props) {
     }),
     helper.derived<string[]>({
       title: 'Matched types',
-      value: (entity: ComplyAdvantageSearchHit) => {
-        return entity.doc?.types;
+      value: (entity: SanctionsEntity) => {
+        return entity.types;
       },
       type: {
         defaultWrapMode: 'WRAP',
@@ -131,13 +125,13 @@ export default function SanctionsSearchTable(props: Props) {
     helper.derived<string[]>({
       title: 'Relevance',
       value: (entity) => {
-        return entity.match_types;
+        return entity.matchTypes;
       },
       type: {
         defaultWrapMode: 'WRAP',
-        render: (match_types) => {
+        render: (matchType) => {
           return (
-            <div>{match_types?.map((matchType) => humanizeSnakeCase(matchType)).join(', ')}</div>
+            <div>{matchType?.map((matchType) => humanizeSnakeCase(matchType)).join(', ')}</div>
           );
         },
       },
@@ -197,7 +191,7 @@ export default function SanctionsSearchTable(props: Props) {
 
   return (
     <>
-      <QueryResultsTable<ComplyAdvantageSearchHit, TableSearchParams>
+      <QueryResultsTable<SanctionsEntity, TableSearchParams>
         innerRef={tableRef}
         tableId="sanctions-search-results"
         onSelect={onSelect}
@@ -213,7 +207,7 @@ export default function SanctionsSearchTable(props: Props) {
         queryResults={queryResult}
         params={params}
         onChangeParams={onChangeParams}
-        rowKey="doc.id"
+        rowKey="id"
         columns={columns}
         hideFilters={isEmbedded}
         pagination={'HIDE_FOR_ONE_PAGE'}

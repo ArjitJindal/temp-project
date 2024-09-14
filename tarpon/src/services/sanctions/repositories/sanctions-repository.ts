@@ -1,16 +1,16 @@
 import {
   Action,
-  Entity,
   SanctionsDataProviderName,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
   async save(
     provider: SanctionsDataProviderName,
-    entities: [Action, Entity][],
+    entities: [Action, SanctionsEntity][],
     version: string
   ): Promise<void> {
     const client = await getMongoDbClient()

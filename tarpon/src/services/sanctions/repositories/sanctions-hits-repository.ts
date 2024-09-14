@@ -2,7 +2,6 @@ import { MongoClient, UpdateResult, Filter } from 'mongodb'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
-import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { traceable } from '@/core/xray'
 import { SANCTIONS_HITS_COLLECTION } from '@/utils/mongodb-definitions'
 import { CounterRepository } from '@/services/counter/repository'
@@ -13,6 +12,8 @@ import {
 } from '@/utils/pagination'
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { complyAdvantageDocToEntity } from '@/services/sanctions/providers/comply-advantage-provider'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -52,10 +53,14 @@ export class SanctionsHitsRepository {
     if (params?.filterSearchId) {
       filter.searchId = { $in: params?.filterSearchId }
     }
-    return cursorPaginate<SanctionsHit>(collection, filter, {
+    const results = await cursorPaginate<SanctionsHit>(collection, filter, {
       ...params,
       sortField: params.sortField || 'sanctionsHitId',
     })
+    return {
+      ...results,
+      items: this.backwardsCompatibleResults(results.items),
+    }
   }
 
   public async *iterateHits(
@@ -76,7 +81,7 @@ export class SanctionsHitsRepository {
 
   async addHits(
     searchId: string,
-    rawHits: ComplyAdvantageSearchHit[],
+    rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
   ): Promise<SanctionsHit[]> {
     if (rawHits.length === 0) {
@@ -103,9 +108,13 @@ export class SanctionsHitsRepository {
         createdAt: now,
         updatedAt: now,
         hitContext,
-        caEntity: hit.doc,
-        caMatchTypes: hit.match_types ?? [],
-        caMatchTypesDetails: hit.match_types_details ?? [],
+        entity: hit,
+
+        // TODO remove after release is stable
+        // https://github.com/flagright/orca/pull/4677
+        caEntity: hit.rawResponse?.doc,
+        caMatchTypes: hit.rawResponse?.match_types ?? [],
+        caMatchTypesDetails: hit.rawResponse?.match_types_details ?? [],
       })
     )
 
@@ -113,12 +122,12 @@ export class SanctionsHitsRepository {
       await collection.insertMany(docs)
     }
 
-    return docs
+    return this.backwardsCompatibleResults(docs)
   }
 
   public async addNewHits(
     searchId: string,
-    rawHits: ComplyAdvantageSearchHit[],
+    rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
   ): Promise<SanctionsHit[]> {
     if (rawHits.length === 0) {
@@ -129,9 +138,9 @@ export class SanctionsHitsRepository {
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
 
-    const docIds: (string | undefined)[] = (
+    const entityIds: (string | undefined)[] = (
       await collection
-        .aggregate<{ docId: string | undefined }>([
+        .aggregate<{ entityId: string | undefined }>([
           {
             $match: {
               searchId,
@@ -139,15 +148,15 @@ export class SanctionsHitsRepository {
           },
           {
             $project: {
-              docId: '$caEntity.id',
+              entityId: '$entity.id',
             },
           },
         ])
         .toArray()
-    ).map((x) => x['docId'])
+    ).map((x) => x['entityId'])
 
     const newHits = rawHits.filter((x) => {
-      return x.doc?.id != null && !docIds.includes(x.doc?.id)
+      return x?.id != null && !entityIds.includes(x?.id)
     })
 
     return await this.addHits(searchId, newHits, hitContext)
@@ -158,7 +167,7 @@ export class SanctionsHitsRepository {
    */
   public async mergeHits(
     searchId: string,
-    rawHits: ComplyAdvantageSearchHit[],
+    rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
   ): Promise<{
     updatedIds: string[]
@@ -170,22 +179,22 @@ export class SanctionsHitsRepository {
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
 
-    const docIds = rawHits.map((x) => x.doc.id)
+    const entityIds = rawHits.map((x) => x.id)
     const foundHitsCursor = collection.find({
       searchId: searchId,
-      'caEntity.id': { $in: docIds },
+      'entity.id': { $in: entityIds },
     })
     const updatedIds: string[] = []
-    for await (const { sanctionsHitId, caEntity } of foundHitsCursor) {
-      const newCaEntity = rawHits.find((x) => x.doc.id === caEntity.id)?.doc
-      if (newCaEntity) {
+    for await (const { sanctionsHitId, entity } of foundHitsCursor) {
+      const newEntity = rawHits.find((x) => x.id === entity.id)
+      if (newEntity) {
         const updateResult = await collection.updateOne(
           {
             sanctionsHitId,
           },
           {
             $set: {
-              caEntity: newCaEntity,
+              entity: newEntity,
             },
           }
         )
@@ -204,10 +213,10 @@ export class SanctionsHitsRepository {
   }
 
   async filterWhitelistedHits(
-    rawHits: ComplyAdvantageSearchHit[],
+    rawHits: SanctionsEntity[],
     hitContext?: SanctionsHitContext
-  ): Promise<ComplyAdvantageSearchHit[]> {
-    const entityIds = rawHits.map((x) => x.doc?.id).filter(notEmpty)
+  ): Promise<SanctionsEntity[]> {
+    const entityIds = rawHits.map((x) => x?.id).filter(notEmpty)
     const subject = {
       userId: hitContext?.userId,
       entity: hitContext?.entity,
@@ -220,7 +229,7 @@ export class SanctionsHitsRepository {
         subject
       )
     return rawHits.filter(
-      (x) => !whitelistEntities.some((y) => x.doc?.id === y.caEntity.id)
+      (x) => !whitelistEntities.some((y) => x?.id === y.sanctionsEntity.id)
     )
   }
 
@@ -245,5 +254,20 @@ export class SanctionsHitsRepository {
         $set: updates,
       }
     )
+  }
+
+  // TODO remove this after release.
+  // https://github.com/flagright/orca/pull/4677
+  private backwardsCompatibleResults(results: SanctionsHit[]) {
+    return results.map((result) => {
+      if (!result.entity && result.caEntity) {
+        result.entity = complyAdvantageDocToEntity({
+          doc: result.caEntity,
+          match_types_details: result.caMatchTypesDetails,
+          match_types: result.caMatchTypes,
+        })
+      }
+      return result
+    })
   }
 }

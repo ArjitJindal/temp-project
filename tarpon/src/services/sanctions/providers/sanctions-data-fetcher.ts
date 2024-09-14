@@ -1,7 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Collection } from 'mongodb'
 import {
-  Entity,
   SanctionsDataProvider,
   SanctionsDataProviderName,
   SanctionsProviderResponse,
@@ -13,8 +12,8 @@ import {
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { getContext } from '@/core/utils/context'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -39,7 +38,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const results = await client
       .db()
       .collection(SANCTIONS_COLLECTION)
-      .aggregate<Entity>([
+      .aggregate<SanctionsEntity>([
         {
           $search: {
             index: 'sanctions_search_index',
@@ -69,60 +68,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       ])
       .toArray()
 
-    // TODO unify ComplyAdvantageSearchHit and Entity type
-
     const providerSearchId = uuidv4()
     const result = {
       providerSearchId,
       hitsCount: results.length,
-      data: results.map(
-        (entity: Entity): ComplyAdvantageSearchHit => ({
-          doc: {
-            id: entity.id,
-            name: entity.name,
-            entity_type: entity.entityType,
-            aka: entity.aka.map((aka) => ({ name: aka })),
-            fields: [
-              {
-                name: 'Place of birth',
-                value: entity.placeOfBirth,
-              },
-              {
-                name: 'Country of residence',
-                value: entity.countryOfResidence,
-              },
-              {
-                name: 'Reason',
-                value: entity.reason,
-              },
-              {
-                name: 'Original place of birth text',
-                value: entity.originalPlaceOfBirthText,
-              },
-              {
-                name: 'Related URL',
-                value: entity.relatedURL,
-              },
-              {
-                name: 'Function',
-                value: entity.function,
-              },
-              {
-                name: 'Issuing authority',
-                value: entity.issuingAuthority,
-              },
-              {
-                name: 'Registration number',
-                value: entity.registrationNumber,
-              },
-              {
-                name: 'Other information',
-                value: entity.otherInformation,
-              },
-            ],
-          },
-        })
-      ),
+      data: results,
       createdAt: new Date().getTime(),
     }
 

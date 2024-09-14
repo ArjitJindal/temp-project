@@ -71,7 +71,7 @@ export default function SanctionsWhitelistTable(props: Props) {
         columns={columns}
       />
       <ComplyAdvantageHitDetailsDrawer
-        hit={selectedSearchHit ? { doc: selectedSearchHit.caEntity } : null}
+        hit={selectedSearchHit?.sanctionsEntity ? selectedSearchHit.sanctionsEntity : null}
         onClose={() => setSelectedSearchHit(undefined)}
       />
     </>

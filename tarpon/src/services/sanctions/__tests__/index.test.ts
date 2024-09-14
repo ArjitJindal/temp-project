@@ -1,16 +1,19 @@
-import { SanctionsService, convertEntityToHit } from '..'
+import { SanctionsService } from '..'
 import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
 import { MOCK_SEARCH_1794517025_DATA } from '@/test-utils/resources/mock-ca-search-response'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { mockComplyAdvantageSearch } from '@/test-utils/complyadvantage-test-utils'
-import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
-import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
+import {
+  complyAdvantageDocToEntity,
+  convertComplyAdvantageEntityToHit,
+} from '@/services/sanctions/providers/comply-advantage-provider'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -122,9 +125,9 @@ describe('Sanctions Service', () => {
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
-          entityList.content.map(
-            (v) => convertEntityToHit(v).doc
-          ) as any as ComplyAdvantageSearchHitDoc[],
+          entityList.content.map((ca) =>
+            complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
+          ),
           {}
         )
       }
@@ -162,9 +165,9 @@ describe('Sanctions Service', () => {
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
-          entityList.content.map(
-            (v) => convertEntityToHit(v).doc
-          ) as any as ComplyAdvantageSearchHitDoc[],
+          entityList.content.map((ca) =>
+            complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
+          ),
           {
             userId: hitContext1.userId,
           }
@@ -255,10 +258,7 @@ describe('Sanctions Service', () => {
           [
             {
               ...SAMPLE_HIT_1,
-              doc: {
-                ...SAMPLE_HIT_1.doc,
-                name: 'New name',
-              },
+              name: 'New name',
             },
             SAMPLE_HIT_2,
           ],
@@ -271,7 +271,7 @@ describe('Sanctions Service', () => {
           filterHitIds: [hits[0]?.sanctionsHitId],
         })
         expect(savedHit.count).toEqual(1)
-        expect(savedHit.items[0]?.caEntity.name).toEqual('New name')
+        expect(savedHit.items[0]?.entity.name).toEqual('New name')
       }
     })
   })
@@ -290,60 +290,32 @@ describe('Sanctions Service', () => {
 /*
   Mock data
  */
-const SAMPLE_HIT_1: ComplyAdvantageSearchHit = {
-  doc: {
-    id: 'LIZCQ58HX6MYKMO',
-    last_updated_utc: new Date('2024-06-20T10:09:30Z'),
-    fields: [],
-    types: ['adverse-media'],
-    name: 'Vladimir Putiin',
-    entity_type: 'person',
-    aka: [
-      {
-        name: 'Vladimir Putin',
-      },
-    ],
-    sources: ['company-am'],
-    keywords: [],
-    media: [],
-    source_notes: {
-      'company-am': {
-        aml_types: ['adverse-media', 'adverse-media-v2-other-minor'],
-        country_codes: ['AU', 'CZ'],
-        name: 'company AM',
-      },
+const SAMPLE_HIT_1: SanctionsEntity = {
+  id: 'LIZCQ58HX6MYKMO',
+  updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
+  types: ['adverse-media'],
+  name: 'Vladimir Putiin',
+  entityType: 'person',
+  aka: ['Vladimir Putin'],
+  sanctionsSources: [
+    {
+      name: 'company AM',
+      countryCodes: ['AU', 'CZ'],
     },
-  },
-  match_types: ['aka_exact'],
-  match_types_details: [],
-  score: 1.7,
+  ],
 }
 
-const SAMPLE_HIT_2: ComplyAdvantageSearchHit = {
-  doc: {
-    id: '999999999999999',
-    last_updated_utc: new Date('2024-06-21T10:09:30Z'),
-    fields: [],
-    types: ['adverse-media'],
-    name: 'Genadiy Zuganov',
-    entity_type: 'person',
-    aka: [
-      {
-        name: 'Genadiy Zuganov',
-      },
-    ],
-    sources: ['company-am'],
-    keywords: [],
-    media: [],
-    source_notes: {
-      'company-am': {
-        aml_types: ['adverse-media', 'adverse-media-v2-other-minor'],
-        country_codes: ['AU', 'CZ'],
-        name: 'company AM',
-      },
+const SAMPLE_HIT_2: SanctionsEntity = {
+  id: '999999999999999',
+  updatedAt: new Date('2024-06-21T10:09:30Z').getTime(),
+  types: ['adverse-media'],
+  name: 'Genadiy Zuganov',
+  entityType: 'person',
+  aka: ['Genadiy Zuganov'],
+  sanctionsSources: [
+    {
+      countryCodes: ['AU', 'CZ'],
+      name: 'company AM',
     },
-  },
-  match_types: ['aka_exact'],
-  match_types_details: [],
-  score: 1.5,
+  ],
 }

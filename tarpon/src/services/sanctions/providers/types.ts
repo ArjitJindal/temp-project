@@ -1,26 +1,8 @@
 import {
+  SanctionsEntity,
   SanctionsSearchResponse,
   SanctionsSearchType,
 } from '@/@types/openapi-internal/all'
-
-export interface Entity {
-  id: string
-  name: string
-  entityType: string
-  aka: string[]
-  // TODO convert to ISO country codes
-  countryOfResidence: string
-  yearOfBirth: string
-  function: string
-  issuingAuthority: string
-  originalCountryText: string
-  originalPlaceOfBirthText: string
-  otherInformation: string
-  placeOfBirth: string
-  reason: string
-  registrationNumber: string
-  relatedURL: string
-}
 
 export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'
 
@@ -34,7 +16,7 @@ export type SanctionsProviderResponse = Omit<
 export interface SanctionsRepository {
   save(
     provider: SanctionsDataProviderName,
-    entities: [Action, Entity][],
+    entities: [Action, SanctionsEntity][],
     version: string
   ): Promise<void>
 }

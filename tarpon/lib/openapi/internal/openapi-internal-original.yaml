@@ -11136,6 +11136,10 @@ components:
           type: number
         caEntity:
           $ref: '#/components/schemas/ComplyAdvantageSearchHitDoc'
+        screenEntity:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsScreeningEntity
+        sanctionsEntity:
+          $ref: '#/components/schemas/SanctionsEntity'
         userId:
           type: string
         entity:
@@ -11153,7 +11157,7 @@ components:
       required:
         - sanctionsWhitelistId
         - createdAt
-        - caEntity
+        - sanctionsEntity
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -11409,7 +11413,7 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/ComplyAdvantageSearchHit'
+            $ref: '#/components/schemas/SanctionsEntity'
         searchId:
           type: string
         providerSearchId:
@@ -11772,13 +11776,155 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
+        entity:
+          $ref: '#/components/schemas/SanctionsEntity'
       required:
         - sanctionsHitId
         - searchId
         - createdAt
         - updatedAt
-        - caEntity
-        - caMatchTypes
+        - entity
+    SanctionsSource:
+      title: SanctionsSource
+      type: object
+      properties:
+        countryCodes:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        createdAt:
+          type: number
+        endedAt:
+          type: number
+        name:
+          type: string
+        url:
+          type: string
+        fields:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              values:
+                type: array
+                items:
+                  type: string
+            required:
+              - name
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              snippet:
+                type: string
+              title:
+                type: string
+              url:
+                type: string
+    SanctionsMedia:
+      title: SanctionsMedia
+      type: object
+      properties:
+        date:
+          type: number
+        snippet:
+          type: string
+        title:
+          type: string
+        url:
+          type: string
+    SanctionsAssociate:
+      title: SanctionsAssociate
+      type: object
+      properties:
+        name:
+          type: string
+        association:
+          type: string
+    RawSanctionsResponse: {}
+    SanctionsEntity:
+      title: SanctionsEntity
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        entityType:
+          type: string
+        matchTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsMatchType'
+        types:
+          type: array
+          items:
+            type: string
+        updatedAt:
+          type: number
+        nameMatched:
+          type: boolean
+        dateMatched:
+          type: boolean
+        gender:
+          type: string
+        aka:
+          type: array
+          items:
+            type: string
+        countries:
+          type: array
+          items:
+            type: string
+        yearOfBirth:
+          type: string
+        sanctionsSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        mediaSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        pepSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
+        associates:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsAssociate'
+        matchTypeDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsMatchTypeDetails'
+        rawResponse:
+          $ref: '#/components/schemas/RawSanctionsResponse'
+      required:
+        - id
+        - name
+        - entityType
+    SanctionsField:
+      type: object
+      properties:
+        name:
+          type: string
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsFieldValue'
+      required:
+        - name
+    SanctionsFieldValue:
+      type: object
+      properties:
+        name:
+          type: string
+        title:
+          type: string
     ComplyAdvantageSearchHit:
       type: object
       properties:
@@ -11818,6 +11964,57 @@ components:
           type: array
           items:
             type: string
+    SanctionsMatchTypeDetails:
+      title: SanctionsMatchTypeDetails
+      type: object
+      properties:
+        amlTypes:
+          type: array
+          items:
+            type: string
+        matchingName:
+          type: string
+        nameMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsNameMatched'
+        secondaryMatches:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsNameMatched'
+        sources:
+          type: array
+          items:
+            type: string
+      required:
+        - sources
+    SanctionsNameMatched:
+      type: object
+      properties:
+        match_types:
+          type: array
+          items:
+            type: string
+            enum:
+              - exact_match
+              - edit_distance
+              - phonetic
+              - equivalent_name
+              - word_to_initial
+              - initial_to_word
+              - removed_spaces
+              - word_to_digit
+              - digit_to_word
+              - name_variations_removal
+              - removed_personal_title
+              - removed_personal_suffix
+              - removed_organisation_prefix
+              - removed_organisation_suffix
+              - removed_clerical_mark
+              - fuzzy_birth_year_match
+              - exact_birth_year_match
+        query_term:
+          type: string
     ComplyAdvantageNameMatched:
       type: object
       properties:
@@ -11975,6 +12172,26 @@ components:
         - PRODUCT_TYPES
         - DEVICE_IDENTIFIER
     ComplyAdvantageMatchType:
+      title: ComplyAdvantageMatchType
+      type: string
+      enum:
+        - name_exact
+        - aka_exact
+        - name_fuzzy
+        - aka_fuzzy
+        - phonetic_name
+        - phonetic_aka
+        - equivalent_name
+        - equivalent_aka
+        - unknown
+        - year_of_birth
+        - removed_personal_title
+        - removed_personal_suffix
+        - removed_organisation_prefix
+        - removed_organisation_suffix
+        - removed_clerical_mark
+        - name_variations_removal
+    SanctionsMatchType:
       title: ComplyAdvantageMatchType
       type: string
       enum:

@@ -28,7 +28,6 @@ import {
   SANCTIONS_CLEAR_REASON,
   SANCTIONS_HIT_STATUS,
 } from '@/components/library/Table/standardDataTypes';
-import { notEmpty } from '@/utils/array';
 import Id from '@/components/ui/Id';
 import {
   AsyncResource,
@@ -102,19 +101,14 @@ export default function SanctionsHitsTable(props: Props) {
         ),
       },
     }),
-    helper.simple<'caEntity.name'>({
+    helper.simple<'entity.name'>({
       title: 'Name',
-      key: 'caEntity.name',
+      key: 'entity.name',
     }),
     helper.derived<string[]>({
       title: 'Countries',
       value: (item: SanctionsHit): string[] => {
-        return (
-          item?.caEntity?.fields
-            ?.filter((field) => field.name === 'Countries')
-            .map(({ value }) => value)
-            .filter(notEmpty) ?? []
-        );
+        return item?.entity.countries || [];
       },
       type: {
         defaultWrapMode: 'WRAP',
@@ -131,7 +125,7 @@ export default function SanctionsHitsTable(props: Props) {
     helper.derived<string[]>({
       title: 'Matched types',
       value: (entity: SanctionsHit) => {
-        return entity.caEntity?.types;
+        return entity?.entity.matchTypes;
       },
       type: {
         defaultWrapMode: 'WRAP',
@@ -151,14 +145,12 @@ export default function SanctionsHitsTable(props: Props) {
     helper.derived<string[]>({
       title: 'Relevance',
       value: (entity: SanctionsHit) => {
-        return entity.caMatchTypes;
+        return entity.entity.matchTypes;
       },
       type: {
         defaultWrapMode: 'WRAP',
-        render: (match_types) => {
-          return (
-            <div>{match_types?.map((matchType) => humanizeSnakeCase(matchType)).join(', ')}</div>
-          );
+        render: (matchTypes) => {
+          return <div>{matchTypes?.join(', ')}</div>;
         },
       },
     }),

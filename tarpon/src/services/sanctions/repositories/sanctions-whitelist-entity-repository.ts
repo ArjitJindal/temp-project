@@ -2,7 +2,7 @@ import { Filter, MongoClient } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
-import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { traceable } from '@/core/xray'
 import {
   cursorPaginate,
@@ -14,8 +14,14 @@ import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { notEmpty } from '@/utils/array'
+import { complyAdvantageDocToEntity } from '@/services/sanctions/providers/comply-advantage-provider'
 
-const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
+const SUBJECT_FIELDS = [
+  'userId',
+  'entityType',
+  'searchTerm',
+  'screenEntity',
+] as const
 
 export type WhitelistSubject = Pick<
   SanctionsWhitelistEntity,
@@ -35,7 +41,7 @@ export class SanctionsWhitelistEntityRepository {
   }
 
   public async addWhitelistEntities(
-    caEntities: ComplyAdvantageSearchHitDoc[],
+    entities: SanctionsEntity[],
     subject: WhitelistSubject,
     options?: {
       reason?: string[]
@@ -52,27 +58,30 @@ export class SanctionsWhitelistEntityRepository {
 
     const ids = await this.counterRepository.getNextCountersAndUpdate(
       'SanctionsWhitelist',
-      caEntities.length
+      entities.length
     )
 
     const definedFields = omitBy(subject, isNil)
 
     const results = await withTransaction(async () => {
       return await Promise.all(
-        caEntities.map(
-          async (caEntity, i): Promise<SanctionsWhitelistEntity | null> => {
+        entities.map(
+          async (entity, i): Promise<SanctionsWhitelistEntity | null> => {
             const result = await collection.findOneAndReplace(
               {
-                'caEntity.id': caEntity.id,
+                'sanctionsEntity.id': entity.id,
                 ...definedFields,
               },
               {
-                caEntity,
+                sanctionsEntity: entity,
                 sanctionsWhitelistId: `SW-${ids[i]}`,
                 ...definedFields,
                 createdAt: options?.createdAt ?? Date.now(),
                 reason: options?.reason,
                 comment: options?.comment,
+                // TODO remove after release is stable.
+                // https://github.com/flagright/orca/pull/4677
+                caEntity: entity.rawResponse?.doc,
               },
               { upsert: true, returnDocument: 'after' }
             )
@@ -82,7 +91,7 @@ export class SanctionsWhitelistEntityRepository {
       )
     })
     return {
-      newRecords: results.filter(notEmpty),
+      newRecords: this.backwardsCompatibleResults(results.filter(notEmpty)),
     }
   }
 
@@ -116,7 +125,14 @@ export class SanctionsWhitelistEntityRepository {
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
     )
     const filters = [
-      { 'caEntity.id': { $in: requestEntityIds } },
+      // TODO change this after release.
+      // https://github.com/flagright/orca/pull/4677
+      {
+        $or: [
+          { 'sanctionsEntity.id': { $in: requestEntityIds } },
+          { 'caEntity.id': { $in: requestEntityIds } },
+        ],
+      },
       ...SUBJECT_FIELDS.map((key) => ({
         $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],
       })),
@@ -125,7 +141,7 @@ export class SanctionsWhitelistEntityRepository {
       .find({ $and: filters })
       .limit(limit)
       .toArray()
-    return result
+    return this.backwardsCompatibleResults(result)
   }
 
   public async matchWhitelistEntities(
@@ -152,14 +168,36 @@ export class SanctionsWhitelistEntityRepository {
       filter.userId = { $in: params.filterUserId }
     }
     if (params.filterEntity) {
-      filter.entity = { $in: params.filterEntity }
+      filter.screenEntity = { $in: params.filterEntity }
     }
     if (params.filterEntityType) {
       filter.entityType = { $in: params.filterEntityType }
     }
-    return cursorPaginate<SanctionsWhitelistEntity>(collection, filter, {
-      ...params,
-      sortField: params.sortField || 'createdAt',
+    const results = await cursorPaginate<SanctionsWhitelistEntity>(
+      collection,
+      filter,
+      {
+        ...params,
+        sortField: params.sortField || 'createdAt',
+      }
+    )
+
+    return {
+      ...results,
+      items: this.backwardsCompatibleResults(results.items),
+    }
+  }
+
+  // TODO remove this after release.
+  // https://github.com/flagright/orca/pull/4677
+  private backwardsCompatibleResults(results: SanctionsWhitelistEntity[]) {
+    return results.map((result) => {
+      if (!result.sanctionsEntity && result.caEntity) {
+        result.sanctionsEntity = complyAdvantageDocToEntity({
+          doc: result.caEntity,
+        })
+      }
+      return result
     })
   }
 }

@@ -6,16 +6,16 @@ import { pipeline } from 'stream'
 import axios from 'axios'
 import { XMLParser } from 'fast-xml-parser'
 import unzipper from 'unzipper'
-import { isArray, isPlainObject, isUndefined, transform } from 'lodash'
 import {
   Action,
-  Entity,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { removeUndefinedFields } from '@/utils/object'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -162,14 +162,14 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     }
 
     const entities = rawEntities
-      .map((person: any): [Action, Entity] | undefined => {
+      .map((person: any): [Action, SanctionsEntity] | undefined => {
         const names = person.NameDetails?.Name
         const name = names.find((n) => n['@_NameType'] === 'Primary Name')
         if (!name) {
           return
         }
         const nameValue = name.NameValue[0]
-        const entity: Entity = {
+        const entity: SanctionsEntity = {
           id: person['@_id'],
           name: `${nameValue.FirstName} ${nameValue.Surname}`,
           entityType: 'Person',
@@ -178,35 +178,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             .flatMap((name) => name.NameValue)
             .map((n) => `${n.FirstName} ${n.Surname}`),
           // TODO these are not actual ISO country code, fix this
-          countryOfResidence: person.CountryDetails?.Country?.find(
+          countries: person.CountryDetails?.Country?.filter(
             (country: any) => country['@_CountryType'] === 'Resident of'
-          )?.CountryValue?.['@_Code'] as string,
+          ).map((country) => country.CountryValue?.['@_Code'] as string),
           yearOfBirth: person.DateDetails?.Date?.find(
             (date: any) => date['@_DateType'] === 'Date of Birth'
           )?.DateValue['@_Year'] as string,
-          function: person.RoleDetail?.Roles?.RoleType as string,
-          issuingAuthority: person.SanctionsReferences?.Reference?.[
-            '@_IssuingAuthority'
-          ] as string,
-          originalCountryText: person.CountryDetails?.Country?.find(
-            (country: any) =>
-              country['@_CountryType'] === 'Country of Reported Allegation'
-          )?.CountryValue?.['@_Code'] as string,
-          originalPlaceOfBirthText: person.BirthPlace?.Place?.[
-            '@_name'
-          ] as string,
-          otherInformation: person.ProfileNotes as string,
-          placeOfBirth: person.BirthPlace?.Place?.['@_name'] as string,
-          reason: person.Descriptions?.Description?.[
-            '@_Description1'
-          ] as string,
-          registrationNumber: person.IDNumberTypes?.ID?.IDValue as string,
-          relatedURL: person.SourceDescription?.Source?.['@_name'] as string,
         }
 
         return [
           person['@_action'] as Action,
-          removeUndefinedFields(entity) as Entity,
+          removeUndefinedFields(entity) as SanctionsEntity,
         ]
       })
       .filter(Boolean)
@@ -232,23 +214,5 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       console.error('Error reading directory:', err)
       return []
     }
-  }
-}
-
-function removeUndefinedFields(obj: any): any {
-  if (isArray(obj)) {
-    // If the object is an array, iterate over the elements
-    return obj.map(removeUndefinedFields)
-  } else if (isPlainObject(obj)) {
-    // If the object is a plain object, iterate over its properties
-    return transform(obj, (result, value, key) => {
-      const cleanedValue = removeUndefinedFields(value)
-      if (!isUndefined(cleanedValue)) {
-        result[key] = cleanedValue
-      }
-    })
-  } else {
-    // If it's not an object or array, return the value directly
-    return obj
   }
 }

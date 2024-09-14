@@ -1,11 +1,11 @@
 import React from 'react';
-import { ComplyAdvantageSearchHit } from '@/apis';
+import { SanctionsEntity } from '@/apis';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
 import { CAEntityDetails } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer';
 
 interface Props {
-  hit: ComplyAdvantageSearchHit | null;
+  hit: SanctionsEntity | null;
   searchedAt?: number;
   onClose: () => void;
 }
@@ -15,7 +15,7 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
 
   return (
     <Drawer
-      title={hit?.doc?.name ?? ''}
+      title={hit?.name ?? ''}
       isVisible={Boolean(hit)}
       onChangeVisibility={(isShown) => {
         if (!isShown) {
@@ -30,14 +30,7 @@ export default function ComplyAdvantageHitDetailsDrawer(props: Props) {
         </>
       }
     >
-      {hit && (
-        <CAEntityDetails
-          nameMatched={false}
-          dateMatched={false}
-          pdfMode={false}
-          caEntity={hit.doc}
-        />
-      )}
+      {hit && <CAEntityDetails pdfMode={false} entity={hit} />}
     </Drawer>
   );
 }

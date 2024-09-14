@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ComplyAdvantageHitTable from 'src/components/ComplyAdvantageHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { ComplyAdvantageSearchHit, SanctionsSearchType } from '@/apis';
+import { SanctionsEntity, SanctionsSearchType } from '@/apis';
 import {
   AsyncResource,
   getOr,
@@ -107,7 +107,7 @@ export function SearchResultTable(props: Props) {
       isSuperAdmin(currentUser) &&
       !currentUser.tenantName.toLowerCase().includes('flagright'));
 
-  const newQueryResult: QueryResult<TableData<ComplyAdvantageSearchHit>> = useMemo(() => {
+  const newQueryResult: QueryResult<TableData<SanctionsEntity>> = useMemo(() => {
     let items;
     let refetch;
     if (isSuccess(newSearchQueryResults.data)) {
@@ -117,7 +117,7 @@ export function SearchResultTable(props: Props) {
       items = historyItemQueryResults.data.value.response?.data;
       refetch = historyItemQueryResults.refetch;
     }
-    const dataRes: AsyncResource<TableData<ComplyAdvantageSearchHit>> =
+    const dataRes: AsyncResource<TableData<SanctionsEntity>> =
       items != null
         ? success({
             total: items.length,

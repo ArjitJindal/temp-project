@@ -1,3 +1,4 @@
+import { groupBy } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsDataProviderName,
@@ -7,19 +8,152 @@ import {
 import { getSecretByName } from '@/utils/secrets-manager'
 import { tenantSettings } from '@/core/utils/context'
 import { logger } from '@/core/logger'
-import { ComplyAdvantageApi } from '@/services/sanctions/providers/comply-advantage-api'
+import {
+  ComplyAdvantageApi,
+  ComplyAdvantageEntity,
+} from '@/services/sanctions/providers/comply-advantage-api'
 import { ComplyAdvantageSearchHit } from '@/@types/openapi-internal/ComplyAdvantageSearchHit'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { envIs } from '@/utils/env'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { SanctionsSettingsMarketType } from '@/@types/openapi-internal/SanctionsSettingsMarketType'
-import { convertEntityToHit } from '@/services/sanctions'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
+import { notEmpty } from '@/utils/array'
+import { ComplyAdvantageSearchHitDocFields } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDocFields'
+import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
+import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
+import { removeUndefinedFields } from '@/utils/object'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
 ) {
   const searchTypes = types.length ? types : SANCTIONS_SEARCH_TYPES
   return searchTypes.sort().reverse().join('-')
+}
+
+export function getSources(doc: ComplyAdvantageSearchHitDoc): {
+  mediaSources?: SanctionsSource[]
+  sanctionsSources?: SanctionsSource[]
+  pepSources?: SanctionsSource[]
+} {
+  if (!doc.sources) {
+    return {}
+  }
+
+  // Group sources by categories
+  const groups = doc.sources.reduce<{
+    mediaSources: string[]
+    sanctionsSources: string[]
+    pepSources: string[]
+  }>(
+    (groups, source) => {
+      const amlTypes = (doc.source_notes[source]?.aml_types as string[]) || []
+
+      if (amlTypes.some((type) => type.includes('adverse-media'))) {
+        groups.mediaSources.push(source)
+      }
+
+      if (amlTypes.some((type) => type.includes('pep'))) {
+        groups.pepSources.push(source)
+      }
+
+      if (
+        amlTypes.some(
+          (type) => !type.includes('adverse-media') && !type.includes('pep')
+        )
+      ) {
+        groups.sanctionsSources.push(source)
+      }
+
+      return groups
+    },
+    {
+      mediaSources: [],
+      pepSources: [],
+      sanctionsSources: [],
+    }
+  )
+
+  // Helper function to map sources to required format
+  const mapSource = (source: string, includeMedia = false): SanctionsSource => {
+    const sourceNotes = doc.source_notes[source]
+    const fields = doc.fields?.filter((f) => f.source === source) || []
+    const groupedFields = Object.values(
+      fields.reduce((acc, item) => {
+        if (item.name && item.value) {
+          if (!acc[item.name]) {
+            acc[item.name] = { name: item.name, values: [item.value] }
+          } else {
+            acc[item.name].values.push(item.value)
+          }
+        }
+        return acc
+      }, {} as Record<string, { name: string; values: string[] }>)
+    )
+
+    const base: SanctionsSource = {
+      name: sourceNotes?.name,
+      url: sourceNotes?.url,
+      countryCodes: sourceNotes?.country_codes,
+      fields: groupedFields,
+      createdAt: sourceNotes?.listing_started_utc,
+      endedAt: sourceNotes?.listing_ended_utc,
+    }
+
+    return includeMedia ? { ...base, media: doc.media } : base
+  }
+
+  return {
+    mediaSources: groups.mediaSources.map((source) => mapSource(source, true)),
+    pepSources: groups.pepSources.map((source) => mapSource(source)),
+    sanctionsSources: groups.sanctionsSources.map((source) =>
+      mapSource(source)
+    ),
+  }
+}
+
+export function complyAdvantageDocToEntity(
+  hit: ComplyAdvantageSearchHit
+): SanctionsEntity {
+  const doc = hit.doc
+  const fieldData = extractInformationFromFields(hit.doc.fields ?? [])
+  const sources = getSources(doc)
+  return removeUndefinedFields({
+    id: doc.id as string,
+    name: doc.name as string,
+    countries: fieldData['Country']?.values.map((v) => v.value) ?? [],
+    types: doc.types,
+    matchTypes: hit.match_types,
+    aka: doc.aka?.map((aka) => aka.name).filter(Boolean) as string[],
+    entityType: doc.entity_type as string,
+    updatedAt: doc.last_updated_utc
+      ? new Date(doc.last_updated_utc).getTime()
+      : undefined,
+    yearOfBirth: fieldData['Year of Birth']?.values[0]?.value as string,
+    gender: fieldData['Gender']?.values[0]?.value as string,
+    matchTypeDetails:
+      hit.match_types_details?.map(
+        (mtd): SanctionsMatchTypeDetails => ({
+          nameMatches: mtd.name_matches,
+          secondaryMatches: mtd.secondary_matches,
+          sources: mtd.sources || [],
+          matchingName: mtd.matching_name,
+          amlTypes: mtd.aml_types,
+        })
+      ) || [],
+    nameMatched:
+      hit.match_types_details?.some((x) => (x.name_matches?.length ?? 0) > 0) ??
+      false,
+    dateMatched:
+      hit.match_types_details?.some(
+        (x) => (x.secondary_matches?.length ?? 0) > 0
+      ) ?? false,
+    associates:
+      doc.associates?.map((a) => ({ name: a.name, association: a.name })) ?? [],
+    ...sources,
+    rawResponse: hit,
+  })
 }
 
 const SANDBOX_PROFILES = {
@@ -140,7 +274,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     }
     const createdAt = response.content.data?.created_at
     return {
-      data: hits,
+      data: hits?.map(complyAdvantageDocToEntity) || [],
       hitsCount: hits?.length || 0,
       providerSearchId: caSearchId,
       createdAt: createdAt
@@ -158,7 +292,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     const createdAt = result.content?.data?.created_at
     return {
       providerSearchId: `${result.content?.data?.id}`,
-      data: result.content?.data?.hits || [],
+      data: result.content?.data?.hits?.map(complyAdvantageDocToEntity) || [],
       hitsCount: result.content?.data?.hits?.length || 0,
       createdAt: createdAt
         ? new Date(createdAt).getTime()
@@ -194,7 +328,8 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
           }
         )
         page++
-        const newHits = entities.content?.map(convertEntityToHit) ?? []
+        const newHits =
+          entities.content?.map(convertComplyAdvantageEntityToHit) ?? []
         hits.push(...newHits)
         if (newHits.length === 0) {
           break
@@ -225,4 +360,54 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
 
     return profileId
   }
+}
+
+export function convertComplyAdvantageEntityToHit(
+  entity: ComplyAdvantageEntity
+): ComplyAdvantageSearchHit {
+  return {
+    doc: {
+      id: entity.id,
+      aka: entity.key_information?.aka,
+      entity_type: entity.key_information?.entity_type,
+      fields: Object.values(entity.full_listing ?? {}).flatMap((items) =>
+        Object.values(items ?? {}).flatMap((item) => item?.data ?? [])
+      ),
+      keywords: entity.uncategorized?.keywords,
+      last_updated_utc: entity.last_updated_utc
+        ? new Date(entity.last_updated_utc)
+        : undefined,
+      media: entity.uncategorized?.media,
+      name: entity.key_information?.name,
+      source_notes: entity.key_information?.source_notes,
+      sources: entity.key_information?.sources,
+      types: entity.key_information?.types,
+    },
+    match_types: entity.key_information?.match_types,
+  }
+}
+
+function extractInformationFromFields(
+  allFields: ComplyAdvantageSearchHitDocFields[]
+): {
+  [name: string]: {
+    values: {
+      value: string
+      sources: string[]
+    }[]
+  }
+} {
+  return Object.fromEntries(
+    Object.entries(groupBy(allFields, 'name')).map(([name, fields]) => [
+      name,
+      {
+        values: Object.entries(groupBy(fields, 'value')).map(
+          ([value, fields]) => ({
+            value,
+            sources: fields.map(({ source }) => source).filter(notEmpty),
+          })
+        ),
+      },
+    ])
+  )
 }

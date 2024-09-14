@@ -1,6 +1,7 @@
 import ReactCountryFlag from 'react-country-flag';
-import { COUNTRIES, COUNTRY_NAME_TO_CODE, CountryCode } from '@flagright/lib/constants';
+import { COUNTRIES, COUNTRY_NAME_TO_CODE } from '@flagright/lib/constants';
 import s from './index.module.less';
+import { CountryCode } from '@/apis';
 
 interface Props {
   // Alpha-2 code

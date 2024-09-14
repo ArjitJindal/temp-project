@@ -118,17 +118,13 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
               filterHitIds: sanctionHitIds,
             }
           )) {
-            if (
-              hit.hitContext &&
-              hit.hitContext.userId != null &&
-              hit.caEntity
-            ) {
+            if (hit.hitContext && hit.hitContext.userId != null && hit.entity) {
               const { newRecords } =
                 await sanctionsService.addWhitelistEntities(
-                  [hit.caEntity],
+                  [hit.entity],
                   {
                     userId: hit.hitContext.userId,
-                    entity: hit.hitContext.entity,
+                    screenEntity: hit.hitContext.entity,
                     entityType: hit.hitContext.entityType,
                     searchTerm: hit.hitContext.searchTerm,
                   },
