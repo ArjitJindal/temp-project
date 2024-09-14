@@ -49,6 +49,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { envIsNot } from '@/utils/env'
+import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
@@ -376,6 +377,24 @@ async function transactionEventHandler(
   )
 }
 
+async function ruleStatsHandler(
+  tenantId: string,
+  executedRules: Array<ExecutedRulesResult>,
+  dbClients: DbClients
+) {
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb: dbClients.dynamoDb,
+  })
+  await ruleInstanceRepository.updateRuleInstancesStats([
+    {
+      executedRulesInstanceIds: executedRules.map((r) => r.ruleInstanceId),
+      hitRulesInstanceIds: executedRules
+        .filter((r) => r.ruleHit)
+        .map((r) => r.ruleInstanceId),
+    },
+  ])
+}
+
 if (envIsNot('test', 'local') && !process.env.TARPON_QUEUE_URL) {
   throw new Error('TARPON_QUEUE_URL is not defined')
 }
@@ -406,6 +425,20 @@ const tarponBuilder = new StreamConsumerBuilder(
   .setTransactionEventHandler(
     (tenantId, oldTransactionEvent, newTransactionEvent, dbClients) =>
       transactionEventHandler(tenantId, newTransactionEvent, dbClients)
+  )
+  .setTransactionsHandler((tenantId, newTransactions, dbClients) =>
+    ruleStatsHandler(
+      tenantId,
+      newTransactions.flatMap((t) => t.executedRules),
+      dbClients
+    )
+  )
+  .setUsersHandler((tenantId, newUsers, dbClients) =>
+    ruleStatsHandler(
+      tenantId,
+      newUsers.flatMap((u) => u.executedRules ?? []),
+      dbClients
+    )
   )
 
 // NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding

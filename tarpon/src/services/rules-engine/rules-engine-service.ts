@@ -747,15 +747,6 @@ export class RulesEngineService {
       )
     ).filter(Boolean) as ExecutedRulesResult[]
 
-    // Update rule execution stats
-    const hitRuleInstanceIds = ruleResults
-      .filter((ruleResult) => ruleResult.ruleHit)
-      .map((ruleResults) => ruleResults.ruleInstanceId)
-
-    await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-      ruleInstances.map((ruleInstance) => ruleInstance.id as string),
-      hitRuleInstanceIds
-    )
     const executionResult = getExecutedAndHitRulesResult(ruleResults)
 
     return {
@@ -1060,24 +1051,8 @@ export class RulesEngineService {
 
     runRulesSegment?.close()
 
-    const updateStatsSegment = await addNewSubsegment(
-      'Rules Engine',
-      'Update Rules Stats'
-    )
-
-    // Update rule execution stats
-    const hitRuleInstanceIds = ruleResults
-      .filter((ruleResult) => ruleResult.ruleHit)
-      .map((ruleResults) => ruleResults.ruleInstanceId)
-
-    await this.ruleInstanceRepository.incrementRuleInstanceStatsCount(
-      transactionRuleInstances.map((ruleInstance) => ruleInstance.id as string),
-      hitRuleInstanceIds
-    )
-
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
 
-    updateStatsSegment?.close()
     this.ruleLogicEvaluator.updatedAggregationVariables.clear()
 
     return {

@@ -124,11 +124,12 @@ async function cleanupRuleHitsInternal(values: Props) {
       )
 
       // Update rule stat
-      await ruleInstanceRepository.updateRuleInstanceStatsCount(
-        [ruleInstanceId],
-        [ruleInstanceId],
-        { hitCountStep: -transactions.length, runCountStep: 0 }
-      )
+      await ruleInstanceRepository.updateRuleInstanceStatsCount({
+        [ruleInstanceId]: {
+          hitCountDelta: -transactions.length,
+          runCountDelta: 0,
+        },
+      })
       logger.info(`Updated rule hit count`)
 
       // Updtate migration progress

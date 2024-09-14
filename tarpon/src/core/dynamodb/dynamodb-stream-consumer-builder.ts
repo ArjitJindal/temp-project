@@ -15,7 +15,6 @@ import {
   savePartitionKey,
 } from './dynamodb-stream-utils'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
-import { User } from '@/@types/openapi-public/User'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
@@ -27,11 +26,18 @@ import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
+}
+
+export type RuleStats = {
+  hitRulesInstanceIds?: string[]
+  executedRulesInstanceIds?: string[]
 }
 
 type TransactionHandler = (
@@ -40,6 +46,12 @@ type TransactionHandler = (
   newTransaction: TransactionWithRulesResult | undefined,
   dbClients: DbClients
 ) => Promise<void>
+type TransactionsHandler = (
+  tenantId: string,
+  newTransactions: TransactionWithRulesResult[],
+  dbClients: DbClients
+) => Promise<void>
+
 type TransactionEventHandler = (
   tenantId: string,
   oldTransactionEvent: TransactionEvent | undefined,
@@ -48,8 +60,13 @@ type TransactionEventHandler = (
 ) => Promise<void>
 type UserHandler = (
   tenantId: string,
-  oldUser: User | undefined,
-  newUser: User | undefined,
+  oldUser: UserWithRulesResult | BusinessWithRulesResult | undefined,
+  newUser: UserWithRulesResult | BusinessWithRulesResult | undefined,
+  dbClients: DbClients
+) => Promise<void>
+type UsersHandler = (
+  tenantId: string,
+  newUsers: Array<UserWithRulesResult | BusinessWithRulesResult>,
   dbClients: DbClients
 ) => Promise<void>
 type UserEventHandler = (
@@ -98,8 +115,10 @@ export class StreamConsumerBuilder {
   transientRepository: TransientRepository
   tableName: string
   transactionHandler?: TransactionHandler
+  transactionsHandler?: TransactionsHandler
   transactionEventHandler?: TransactionEventHandler
   userHandler?: UserHandler
+  usersHandler?: UsersHandler
   userEventHandler?: UserEventHandler
   arsScoreEventHandler?: ArsScoreEventHandler
   drsScoreEventHandler?: DrsScoreEventHandler
@@ -113,6 +132,7 @@ export class StreamConsumerBuilder {
     this.fanOutSqsQueue = fanOutSqsQueue
     this.transientRepository = new TransientRepository(getDynamoDbClient())
     this.tableName = tableName
+    this.handleDynamoDbUpdate = this.handleDynamoDbUpdate.bind(this)
   }
 
   public setConcurrentGroupBy(
@@ -128,6 +148,12 @@ export class StreamConsumerBuilder {
     this.transactionHandler = transactionHandler
     return this
   }
+  public setTransactionsHandler(
+    transactionsHandler: TransactionsHandler
+  ): StreamConsumerBuilder {
+    this.transactionsHandler = transactionsHandler
+    return this
+  }
   public setTransactionEventHandler(
     transactionEventHandler: TransactionEventHandler
   ): StreamConsumerBuilder {
@@ -136,6 +162,10 @@ export class StreamConsumerBuilder {
   }
   public setUserHandler(userHandler: UserHandler): StreamConsumerBuilder {
     this.userHandler = userHandler
+    return this
+  }
+  public setUsersHandler(usersHandler: UsersHandler): StreamConsumerBuilder {
+    this.usersHandler = usersHandler
     return this
   }
   public setUserEventHandler(
@@ -188,17 +218,51 @@ export class StreamConsumerBuilder {
         for (const update of groupUpdates) {
           await this.handleDynamoDbUpdate(update, dbClients)
         }
+        await this.handleDynamoDbUpdateGroup(groupUpdates, dbClients)
       })
     )
+  }
+
+  private async handleDynamoDbUpdateGroup(
+    groupUpdates: DynamoDbEntityUpdate[],
+    dbClients: DbClients
+  ) {
+    if (this.transactionsHandler) {
+      const transactionUpdates = groupUpdates.filter(
+        (update) => update.type === 'TRANSACTION'
+      )
+      if (transactionUpdates.length > 0) {
+        const transactions = transactionUpdates.map(
+          (update) => update.NewImage as TransactionWithRulesResult
+        )
+        await this.transactionsHandler(
+          transactionUpdates[0].tenantId,
+          transactions,
+          dbClients
+        )
+      }
+    }
+    if (this.usersHandler) {
+      const userUpdates = groupUpdates.filter(
+        (update) => update.type === 'USER'
+      )
+      if (userUpdates.length > 0) {
+        const users = userUpdates.map(
+          (update) =>
+            update.NewImage as UserWithRulesResult | BusinessWithRulesResult
+        )
+        await this.usersHandler(userUpdates[0].tenantId, users, dbClients)
+      }
+    }
   }
 
   private async handleDynamoDbUpdate(
     update: DynamoDbEntityUpdate,
     dbClients: DbClients
-  ) {
+  ): Promise<any> {
     updateLogMetadata({ entityId: update.entityId })
     if (update.type === 'TRANSACTION' && this.transactionHandler) {
-      await this.transactionHandler(
+      return await this.transactionHandler(
         update.tenantId,
         update.OldImage as TransactionWithRulesResult,
         update.NewImage as TransactionWithRulesResult,
@@ -215,10 +279,10 @@ export class StreamConsumerBuilder {
         dbClients
       )
     } else if (update.type === 'USER' && this.userHandler) {
-      await this.userHandler(
+      return await this.userHandler(
         update.tenantId,
-        update.OldImage as User,
-        update.NewImage as User,
+        update.OldImage as UserWithRulesResult,
+        update.NewImage as UserWithRulesResult,
         dbClients
       )
     } else if (

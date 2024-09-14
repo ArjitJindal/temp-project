@@ -33,6 +33,7 @@ import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
+import { RuleStats } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import {
   createPublicApiInMemoryCache,
   getInMemoryCacheKey,
@@ -469,36 +470,51 @@ export class RuleInstanceRepository {
     runRuleInstanceIds: string[],
     hitRuleInstanceIds: string[]
   ) {
-    await this.updateRuleInstanceStatsCount(
-      runRuleInstanceIds,
-      hitRuleInstanceIds,
+    await this.updateRuleInstancesStats([
       {
-        runCountStep: 1,
-        hitCountStep: 1,
-      }
-    )
+        executedRulesInstanceIds: runRuleInstanceIds,
+        hitRulesInstanceIds: hitRuleInstanceIds,
+      },
+    ])
   }
 
-  public async updateRuleInstanceStatsCount(
-    runRuleInstanceIds: string[],
-    hitRuleInstanceIds: string[],
-    update: { runCountStep: number; hitCountStep: number }
-  ) {
-    const hitRuleInstanceIdsSet = new Set(hitRuleInstanceIds)
+  public async updateRuleInstancesStats(ruleStats: RuleStats[]) {
+    const updates: {
+      [key: string]: {
+        hitCountDelta: number
+        runCountDelta: number
+      }
+    } = {}
+    for (const stat of ruleStats) {
+      stat.executedRulesInstanceIds?.map((id) => {
+        updates[id] = {
+          runCountDelta: (updates[id]?.runCountDelta ?? 0) + 1,
+          hitCountDelta: 0,
+        }
+      })
+      stat.hitRulesInstanceIds?.map((id) => {
+        updates[id].hitCountDelta = updates[id].hitCountDelta + 1
+      })
+    }
+    await this.updateRuleInstanceStatsCount(updates)
+  }
+
+  public async updateRuleInstanceStatsCount(updates: {
+    [key: string]: {
+      hitCountDelta: number
+      runCountDelta: number
+    }
+  }) {
     await Promise.all(
-      runRuleInstanceIds.map((runRuleInstanceId) => {
+      Object.keys(updates).map((runRuleInstanceId) => {
         const updateItemInput: UpdateCommandInput = {
           TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
-          UpdateExpression: `SET runCount = if_not_exists(runCount, :defaultRunCount) + :runCountInc, 
-                            hitCount = if_not_exists(hitCount, :defaultHitCount) + :hitCountInc`,
+          UpdateExpression: `SET runCount = if_not_exists(runCount, :zero) + :runCountInc, hitCount = if_not_exists(hitCount, :zero) + :hitCountInc`,
           ExpressionAttributeValues: {
-            ':runCountInc': update.runCountStep,
-            ':hitCountInc': hitRuleInstanceIdsSet.has(runRuleInstanceId)
-              ? update.hitCountStep
-              : 0,
-            ':defaultRunCount': 0, // Default value for runCount if it doesn't exist
-            ':defaultHitCount': 0, // Default value for hitCount if it doesn't exist
+            ':runCountInc': updates[runRuleInstanceId].runCountDelta,
+            ':hitCountInc': updates[runRuleInstanceId].hitCountDelta,
+            ':zero': 0,
           },
           ReturnValues: 'UPDATED_NEW',
         }
