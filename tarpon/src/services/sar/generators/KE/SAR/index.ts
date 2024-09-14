@@ -220,8 +220,8 @@ export class KenyaSARReportGenerator implements ReportGenerator {
           const email = d.contactDetails?.emailIds?.slice(0, -1)
           return {
             gender: d.generalDetails.gender,
-            first_name: d.generalDetails.name.firstName,
-            last_name: d.generalDetails.name.lastName,
+            first_name: d.generalDetails.name?.firstName,
+            last_name: d.generalDetails.name?.lastName,
             nationality1: d.generalDetails.countryOfNationality,
             residence: d.generalDetails.countryOfResidence,
             birthdate: d.generalDetails.dateOfBirth,

@@ -3,9 +3,9 @@ import { TableHeadersColumnTypeEnum } from '@/@types/openapi-internal/TableHeade
 
 export const personToRow = (person: Person): (string | undefined)[] => {
   return [
-    person.generalDetails.name.firstName,
-    person.generalDetails.name.middleName,
-    person.generalDetails.name.lastName,
+    person.generalDetails?.name?.firstName,
+    person.generalDetails?.name?.middleName,
+    person.generalDetails?.name?.lastName,
     person.generalDetails.countryOfResidence,
     person.generalDetails.countryOfNationality,
     person.generalDetails.dateOfBirth,

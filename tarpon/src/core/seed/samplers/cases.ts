@@ -64,7 +64,7 @@ export function generateNarrative(
   let country: string | undefined
   let websites: string[] | undefined
   if (user.type === 'CONSUMER') {
-    name = `${user.userDetails?.name.firstName} ${user.userDetails?.name.lastName}`
+    name = `${user.userDetails?.name?.firstName} ${user.userDetails?.name?.lastName}`
     country = `${user.userDetails?.countryOfResidence}`
     websites = []
   } else {

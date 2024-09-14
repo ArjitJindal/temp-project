@@ -165,7 +165,7 @@ export class UsSarReportGenerator implements ReportGenerator {
             dayjs(user.userDetails?.dateOfBirth, 'YYYY-MM-DD').toDate()
           ),
           PartyName:
-            user.userDetails != null
+            user.userDetails && user.userDetails.name != null
               ? [partyNameByConsumerName(user.userDetails.name)]
               : undefined,
           FemaleGenderIndicator: indicator(user.userDetails?.gender === 'F'),

@@ -81,9 +81,9 @@ const generator = function* (): Generator<InternalTransaction> {
     const getSanctionsSearch = (user: User | Business): SanctionsDetails => {
       const isConsumer = isConsumerUser(user)
       const name = isConsumer
-        ? `${(user as User).userDetails?.name.firstName} ${
-            (user as User).userDetails?.name.middleName
-          } ${(user as User).userDetails?.name.lastName}`.trim()
+        ? `${(user as User).userDetails?.name?.firstName} ${
+            (user as User).userDetails?.name?.middleName
+          } ${(user as User).userDetails?.name?.lastName}`.trim()
         : (user as Business).legalEntity.companyGeneralDetails.legalName
 
       const data = isConsumer

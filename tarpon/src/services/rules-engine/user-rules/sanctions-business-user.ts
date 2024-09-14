@@ -85,13 +85,13 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
       },
       ...(business.directors?.map((person) => ({
         entityType: 'DIRECTOR' as const,
-        name: formatConsumerName(person.generalDetails.name) || '',
+        name: formatConsumerName(person.generalDetails?.name) || '',
         dateOfBirth: person.generalDetails.dateOfBirth,
       })) ?? []),
       ...(business.shareHolders?.map((person) => ({
         entityType: 'SHAREHOLDER' as const,
-        name: formatConsumerName(person.generalDetails.name) || '',
-        dateOfBirth: person.generalDetails.dateOfBirth,
+        name: formatConsumerName(person.generalDetails?.name) || '',
+        dateOfBirth: person.generalDetails?.dateOfBirth,
       })) ?? []),
     ].filter((entity) => entity.name)
 
