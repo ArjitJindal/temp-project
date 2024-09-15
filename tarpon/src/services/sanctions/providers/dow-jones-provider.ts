@@ -306,7 +306,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           // TODO: Determine how to handle "Relative or Close Associate (RCA)"
           sanctionSearchTypes.push('SANCTIONS')
         }
-        if (['3', '4'].some((val) => descriptions?.includes(val))) {
+        if (['3', '4'].some((val) => descriptionValues?.includes(val))) {
           sanctionSearchTypes.push('SANCTIONS')
         }
 
