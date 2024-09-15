@@ -73,18 +73,11 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     for (const file of filesFromFullLoad) {
       const outputDir = await this.downloadZip(file)
       const isSplit = file.includes('_f_splits.zip')
-      const dir = isSplit
-        ? `/Factiva_PFA_Feed_XML/${path
-            .basename(outputDir)
-            .toUpperCase()
-            // Hack because the casing is inconsistent here in the given files
-            .replace('SPLITS', 'Splits')}`
-        : ''
 
       if (isSplit) {
-        await this.processSplitArchive(repo, version, dir)
+        await this.processSplitArchive(repo, version, outputDir)
       } else {
-        await this.processSingleFile(repo, version, dir)
+        await this.processSingleFile(repo, version, outputDir)
       }
     }
   }
@@ -157,9 +150,20 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   async processSplitArchive(
     repo: SanctionsRepository,
     version: string,
-    outputDir: string
+    rootDir: string
   ) {
-    logger.info(`Processing ${outputDir}`)
+    logger.info(`Processing ${rootDir}`)
+    // Jump down two directories which are something like Factiva_PFA_Feed_XML/PFA2_202408312200_F_Splits
+    const factivaPfaFeedDir = fs
+      .readdirSync(rootDir)
+      .filter((f) => fs.statSync(path.join(rootDir, f)).isDirectory())[0]
+    const pfaSplitsDir = fs
+      .readdirSync(path.join(rootDir, factivaPfaFeedDir))
+      .filter((f) =>
+        fs.statSync(path.join(rootDir, factivaPfaFeedDir, f)).isDirectory()
+      )[0]
+    const outputDir = path.join(rootDir, factivaPfaFeedDir, pfaSplitsDir)
+
     const masterFiles = await this.listFilePaths(`${outputDir}/Masters`)
     const masterContext = masterFiles.reduce<object>((acc, masterFile) => {
       const xml = this.readFile(masterFile)
