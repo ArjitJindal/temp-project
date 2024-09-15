@@ -38,8 +38,10 @@ const parser = new XMLParser({
       'PublicFigure',
       'Associate',
       'Person',
+      'Source',
       'SourceDescription',
       'Description',
+      'Descriptions',
     ].includes(tagName)
   },
 })
@@ -295,17 +297,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         // This is a hardcoded mapping of the description1 to the type of screening.
         const sanctionSearchTypes: SanctionsSearchType[] = []
-        const descriptions = person.Descriptions.Description.map(
+        const descriptions = person.Descriptions.Description?.map(
           (d) => d['@_Description1']
         )
-        if (descriptions.includes('1')) {
+        if (descriptions?.includes('1')) {
           sanctionSearchTypes.push('PEP')
         }
-        if (descriptions.includes('2')) {
+        if (descriptions?.includes('2')) {
           // TODO: Determine how to handle "Relative or Close Associate (RCA)"
           sanctionSearchTypes.push('SANCTIONS')
         }
-        if (['3', '4'].some((val) => descriptions.includes(val))) {
+        if (['3', '4'].some((val) => descriptions?.includes(val))) {
           sanctionSearchTypes.push('SANCTIONS')
         }
 
@@ -333,9 +335,21 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           sanctionsSources: person.SourceDescription?.flatMap(
             (sd) => sd.Source
           ).map((sd): SanctionsSource => {
-            const [name, createdAt, source] = sd['@_name'].split(',')
-            const urlPattern = /https?:\/\/[^\s]+/
-            const urls = source.match(urlPattern)
+            const result = sd['@_name'].split(',')
+
+            if (result.length == 1) {
+              return {
+                name: sd['@_name'],
+              }
+            }
+            const [name, createdAt, source] = result
+            let url: string | undefined
+            if (source) {
+              const urlPattern = /https?:\/\/[^\s]+/
+              const urls = source.match(urlPattern)
+              url = urls ? urls[0] : undefined
+            }
+
             const [day, month, year] = createdAt.split('-')
             const parsedDate = new Date(
               Date.UTC(
@@ -347,7 +361,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             return {
               name,
               createdAt: parsedDate.valueOf(),
-              url: urls[0],
+              url,
             }
           }),
           gender: person.Gender,
