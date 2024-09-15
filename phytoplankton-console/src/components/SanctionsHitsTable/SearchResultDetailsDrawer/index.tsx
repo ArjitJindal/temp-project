@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { startCase, uniq } from 'lodash';
+import { startCase } from 'lodash';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
@@ -189,7 +189,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType)}
           </Form.Layout.Label>
-          <Form.Layout.Label title={'Aliases'}>{uniq(entity.aka).join(', ')}</Form.Layout.Label>
+          {entity.aka && (
+            <Form.Layout.Label title={'Aliases'}>{entity.aka.join(', ')}</Form.Layout.Label>
+          )}
           {entity.dateMatched && entity.yearOfBirth && (
             <Form.Layout.Label key={entity.yearOfBirth} title={'Year of Birth'}>
               {entity.yearOfBirth}
@@ -221,6 +223,16 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
         </div>
       </Section>
+      {entity.freetext && (
+        <Section title={'Profile notes'}>
+          {entity.freetext.split('\n').map((paragraph, index) => (
+            <>
+              {index !== 0 && <br />}
+              {paragraph}
+            </>
+          ))}
+        </Section>
+      )}
       {pdfMode ? (
         tabItems.map((item) => <Tabs key={item.key} items={[item]} />)
       ) : (

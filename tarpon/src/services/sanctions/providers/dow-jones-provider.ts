@@ -8,6 +8,7 @@ import { XMLParser } from 'fast-xml-parser'
 import unzipper from 'unzipper'
 import { uniq } from 'lodash'
 import { decode } from 'html-entities'
+import { COUNTRIES } from '@flagright/lib/constants'
 import {
   Action,
   SanctionsRepository,
@@ -312,8 +313,18 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
-          name: decode(`${nameValue.FirstName} ${nameValue.Surname}`),
+          name: decode(
+            `${nameValue.FirstName} ${nameValue.Surname || ''}`.trim()
+          ),
           entityType: 'Person',
+          matchTypes: descriptions
+            ?.map((d) => {
+              if (!masters.Description2List[d['@_Description2']]) {
+                return
+              }
+              return masters.Description2List[d['@_Description2']]['#text']
+            })
+            .filter(Boolean),
           freetext: person.ProfileNotes,
           sanctionSearchTypes,
           types: descriptions?.map((d) =>
@@ -331,7 +342,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               .filter(Boolean)
               .join(' - ')
           ),
-          sanctionsSources: person.SourceDescription?.flatMap(
+          screeningSources: person.SourceDescription?.flatMap(
             (sd) => sd.Source
           ).map((sd): SanctionsSource => {
             const result = sd['@_name'].split(',')
@@ -347,6 +358,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               const urlPattern = /https?:\/\/[^\s]+/
               const urls = source.match(urlPattern)
               url = urls ? urls[0] : undefined
+              if (url && url.endsWith(')')) {
+                url = url.slice(0, -1)
+              }
             }
 
             const [day, month, year] = createdAt.split('-')
@@ -361,19 +375,23 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               name,
               createdAt: parsedDate.valueOf(),
               url,
+              fields: [],
             }
           }),
           gender: person.Gender,
+          dateMatched: true,
           aka: names
             .filter((n) => n['@_NameType'] !== 'Primary Name')
             .flatMap((name) => name.NameValue)
-            .map((n) => decode(`${n.FirstName} ${n.Surname}`)),
+            .map((n) => decode(`${n.FirstName} ${n.Surname || ''}`.trim())),
           countries: uniq<string>(
             person.CountryDetails?.Country?.map(
               (country) =>
                 DOW_JONES_COUNTRIES[country.CountryValue?.['@_Code'] as string]
             )
-          ).filter(Boolean),
+          )
+            .filter(Boolean)
+            .map((c) => COUNTRIES[c]),
           yearOfBirth: person.DateDetails?.Date?.find(
             (date: any) => date['@_DateType'] === 'Date of Birth'
           )?.DateValue['@_Year'] as string,
