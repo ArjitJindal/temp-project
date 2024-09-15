@@ -237,7 +237,8 @@ export class UserManagementService {
     getUser: (
       userId: string
     ) => Promise<(UserResultType<T> & { type: UserType }) | undefined>,
-    saveUser: (user: UserResultType<T>) => Promise<UserResultType<T>>
+    saveUser: (user: UserResultType<T>) => Promise<UserResultType<T>>,
+    isDrsUpdatable?: boolean
   ): Promise<UserResultType<T>> {
     let user = await getUser(userEvent.userId)
     if (!user) {
@@ -278,10 +279,13 @@ export class UserManagementService {
       const preDefinedRiskLevel = updatedAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
-        await this.riskScoringService.handleManualRiskLevel({
-          ...updatedAttributes,
-          userId: user.userId,
-        } as User | Business)
+        await this.riskScoringService.handleManualRiskLevel(
+          {
+            ...updatedAttributes,
+            userId: user.userId,
+          } as User | Business,
+          isDrsUpdatable
+        )
       }
     }
 
@@ -295,7 +299,10 @@ export class UserManagementService {
 
     if (hasFeature('RISK_SCORING')) {
       riskScoreDetails =
-        await this.riskScoringService.calculateAndUpdateKRSAndDRS(updatedUser)
+        await this.riskScoringService.calculateAndUpdateKRSAndDRS(
+          updatedUser,
+          isDrsUpdatable
+        )
     }
 
     const { monitoringResult, isAnyAsyncRules } =
@@ -329,27 +336,31 @@ export class UserManagementService {
 
   public async verifyBusinessUserEvent(
     userEvent: BusinessUserEvent,
-    allowUserTypeConversion = false
+    allowUserTypeConversion = false,
+    isDrsUpdatable?: boolean
   ): Promise<BusinessWithRulesResult> {
     return this.verifyUserEvent<'BUSINESS'>(
       'BUSINESS',
       userEvent,
       allowUserTypeConversion,
       this.userRepository.getBusinessUser.bind(this.userRepository),
-      this.userRepository.saveBusinessUser.bind(this.userRepository)
+      this.userRepository.saveBusinessUser.bind(this.userRepository),
+      isDrsUpdatable
     ) as Promise<BusinessWithRulesResult>
   }
 
   public async verifyConsumerUserEvent(
     userEvent: ConsumerUserEvent,
-    allowUserTypeConversion = false
+    allowUserTypeConversion = false,
+    isDrsUpdatable?: boolean
   ): Promise<UserWithRulesResult> {
     return this.verifyUserEvent<'CONSUMER'>(
       'CONSUMER',
       userEvent,
       allowUserTypeConversion,
       this.userRepository.getConsumerUser.bind(this.userRepository),
-      this.userRepository.saveConsumerUser.bind(this.userRepository)
+      this.userRepository.saveConsumerUser.bind(this.userRepository),
+      isDrsUpdatable
     )
   }
 

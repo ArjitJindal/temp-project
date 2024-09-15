@@ -243,7 +243,8 @@ export class RiskRepository {
     userId: string,
     drsScore: number,
     transactionId: string,
-    components: RiskScoreComponent[]
+    components: RiskScoreComponent[],
+    isUpdatable?: boolean
   ): Promise<DrsScore> {
     logger.info(
       `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
@@ -252,7 +253,7 @@ export class RiskRepository {
       drsScore,
       transactionId,
       createdAt: Date.now(),
-      isUpdatable: true,
+      isUpdatable: isUpdatable ?? true,
       userId: userId,
       components,
     }

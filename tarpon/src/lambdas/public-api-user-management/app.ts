@@ -51,7 +51,10 @@ export const userHandler = lambdaApi()(
       }
     }
 
-    const createUser = async <T extends User | Business>(userPayload: T) => {
+    const createUser = async <T extends User | Business>(
+      userPayload: T,
+      lockCraRiskLevel
+    ) => {
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
 
@@ -74,8 +77,15 @@ export const userHandler = lambdaApi()(
         mongoDb,
       })
 
+      const isDrsUpdatable = lockCraRiskLevel
+        ? lockCraRiskLevel !== 'true'
+        : true
+
       const { craRiskScore, kycRiskLevel, kycRiskScore, craRiskLevel } =
-        await riskScoringService.runRiskScoresForUser(userPayload)
+        await riskScoringService.runRiskScoresForUser(
+          userPayload,
+          isDrsUpdatable
+        )
 
       const userManagementService = new UserManagementService(
         tenantId,
@@ -121,10 +131,10 @@ export const userHandler = lambdaApi()(
       return user
     })
     handlers.registerPostConsumerUser(async (_ctx, request) => {
-      return createUser(request.User)
+      return createUser(request.User, request.lockCraRiskLevel)
     })
     handlers.registerPostBusinessUser(async (_ctx, request) => {
-      return createUser(request.Business)
+      return createUser(request.Business, request.lockCraRiskLevel)
     })
     handlers.registerPostBatchConsumerUsers(async (_ctx, request) => {
       const batchId = request.UserBatchRequest.batchId || uuid4()

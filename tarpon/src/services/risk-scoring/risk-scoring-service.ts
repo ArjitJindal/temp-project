@@ -329,7 +329,8 @@ export class RiskScoringService {
   }
 
   public async runRiskScoresForUser(
-    userPayload: User | Business
+    userPayload: User | Business,
+    isDrsUpdatable?: boolean
   ): Promise<UserRiskScoreDetails> {
     let krsScore: number | undefined
     let krsRiskLevel: RiskLevel | undefined
@@ -342,7 +343,8 @@ export class RiskScoringService {
 
       if (hasFeature('RISK_SCORING')) {
         const score = await this.updateInitialRiskScores(
-          userPayload as User | Business
+          userPayload as User | Business,
+          isDrsUpdatable
         )
 
         krsScore = craScore = score
@@ -355,7 +357,10 @@ export class RiskScoringService {
       const preDefinedRiskLevel = userPayload.riskLevel
 
       if (preDefinedRiskLevel) {
-        await this.handleManualRiskLevel(userPayload as User | Business)
+        await this.handleManualRiskLevel(
+          userPayload as User | Business,
+          isDrsUpdatable
+        )
 
         craScore = getRiskScoreFromLevel(
           riskClassificationValues,
@@ -406,10 +411,14 @@ export class RiskScoringService {
     }
   }
 
-  public async handleManualRiskLevel(userPayload: User | Business) {
+  public async handleManualRiskLevel(
+    userPayload: User | Business,
+    isDrsUpdatable?: boolean
+  ): Promise<void> {
     await this.riskRepository.createOrUpdateManualDRSRiskItem(
       userPayload.userId,
-      userPayload.riskLevel ?? 'VERY_HIGH'
+      userPayload.riskLevel ?? 'VERY_HIGH',
+      isDrsUpdatable
     )
   }
 
@@ -584,7 +593,10 @@ export class RiskScoringService {
     return mean([currentDrsScore, newArsScore])
   }
 
-  public async updateInitialRiskScores(user: User | Business): Promise<number> {
+  public async updateInitialRiskScores(
+    user: User | Business,
+    isDrsUpdatable?: boolean
+  ): Promise<number> {
     logger.info(`Updating initial risk score for user ${user.userId}`)
 
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
@@ -604,7 +616,8 @@ export class RiskScoringService {
         user.userId,
         score,
         'FIRST_DRS',
-        components
+        components,
+        isDrsUpdatable
       ),
     ])
 
@@ -1025,7 +1038,8 @@ export class RiskScoringService {
   }
 
   public async calculateAndUpdateKRSAndDRS(
-    user: User | Business
+    user: User | Business,
+    isDrsUpdatable?: boolean
   ): Promise<UserRiskScoreDetails> {
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
 
@@ -1052,6 +1066,20 @@ export class RiskScoringService {
     }
 
     if (newKrsScore === oldKrsScore) {
+      // Additional update in case of just locking and unlocking CRA risk level without user details update
+      if (
+        isDrsUpdatable !== undefined &&
+        oldDrs?.isUpdatable !== isDrsUpdatable
+      ) {
+        await this.riskRepository.createOrUpdateDrsScore(
+          user.userId,
+          oldDrs?.drsScore ?? newKrsScore,
+          'USER_UPDATED',
+          components,
+          isDrsUpdatable
+        )
+      }
+
       return newRiskData
     }
     await this.riskRepository.createOrUpdateKrsScore(
@@ -1060,7 +1088,8 @@ export class RiskScoringService {
       components
     )
 
-    if (!oldDrs?.isUpdatable) {
+    if (!oldDrs?.isUpdatable && !isDrsUpdatable) {
+      // To override the DRS score lock
       return newRiskData
     }
 
@@ -1069,7 +1098,8 @@ export class RiskScoringService {
       user.userId,
       newDRSScore,
       'USER_UPDATED',
-      components
+      components,
+      isDrsUpdatable
     )
 
     return {

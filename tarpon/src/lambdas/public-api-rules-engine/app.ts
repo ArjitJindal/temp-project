@@ -12,10 +12,7 @@ import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositor
 import { RulesEngineService } from '@/services/rules-engine'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
-import {
-  DefaultApiPostBusinessUserEventRequest,
-  DefaultApiPostConsumerTransactionRequest,
-} from '@/@types/openapi-public/RequestParameters'
+import { DefaultApiPostConsumerTransactionRequest } from '@/@types/openapi-public/RequestParameters'
 import { updateLogMetadata } from '@/core/utils/context'
 import { logger } from '@/core/logger'
 import { addNewSubsegment } from '@/core/xray'
@@ -252,13 +249,12 @@ export const userEventsHandler = lambdaApi()(
     const userEventRepository = new UserEventRepository(tenantId, {
       mongoDb: await getMongoDbClient(),
     })
-    const { allowUserTypeConversion } =
-      (event.queryStringParameters as Omit<
-        DefaultApiPostBusinessUserEventRequest,
-        'BusinessUserEvent'
-      >) ?? {}
 
-    const createUserEvent = async (userEvent: ConsumerUserEvent) => {
+    const createUserEvent = async (
+      userEvent: ConsumerUserEvent,
+      allowUserTypeConversion?: string,
+      lockCraRiskLevel?: string
+    ) => {
       userEvent.updatedConsumerUserAttributes =
         userEvent.updatedConsumerUserAttributes &&
         pickKnownEntityFields(
@@ -284,10 +280,13 @@ export const userEventsHandler = lambdaApi()(
           userEvent.userId
         )
       }
-
+      const isDrsUpdatable = lockCraRiskLevel
+        ? lockCraRiskLevel !== 'true'
+        : undefined
       const result = await userManagementService.verifyConsumerUserEvent(
         userEvent,
-        allowUserTypeConversion === 'true'
+        allowUserTypeConversion === 'true',
+        isDrsUpdatable
       )
 
       return {
@@ -297,8 +296,19 @@ export const userEventsHandler = lambdaApi()(
     }
 
     handlers.registerPostUserEvent(
-      async (_ctx, { ConsumerUserEvent: userEvent }) => {
-        return createUserEvent(userEvent)
+      async (
+        _ctx,
+        {
+          ConsumerUserEvent: userEvent,
+          allowUserTypeConversion,
+          lockCraRiskLevel,
+        }
+      ) => {
+        return createUserEvent(
+          userEvent,
+          allowUserTypeConversion,
+          lockCraRiskLevel
+        )
       }
     )
     handlers.registerPostBatchConsumerUserEvents(async (_ctx, request) => {
@@ -316,7 +326,14 @@ export const userEventsHandler = lambdaApi()(
       }
     })
     handlers.registerPostBusinessUserEvent(
-      async (_ctx, { BusinessUserEvent: userEvent }) => {
+      async (
+        _ctx,
+        {
+          BusinessUserEvent: userEvent,
+          allowUserTypeConversion,
+          lockCraRiskLevel,
+        }
+      ) => {
         userEvent.updatedBusinessUserAttributes =
           userEvent.updatedBusinessUserAttributes &&
           pickKnownEntityFields(
@@ -341,9 +358,14 @@ export const userEventsHandler = lambdaApi()(
             userEvent.userId
           )
         }
+
+        const isDrsUpdatable = lockCraRiskLevel
+          ? lockCraRiskLevel !== 'true'
+          : undefined
         const result = await userManagementService.verifyBusinessUserEvent(
           userEvent,
-          allowUserTypeConversion === 'true'
+          allowUserTypeConversion === 'true',
+          isDrsUpdatable
         )
 
         return {

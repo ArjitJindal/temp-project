@@ -687,7 +687,14 @@ paths:
 
         * `createdTimestamp` - UNIX timestamp in *milliseconds* for when the User is created in your system
       operationId: post-consumer-user
-      parameters: []
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockCraRiskLevel
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
       requestBody:
         description: ''
         content:
@@ -956,7 +963,14 @@ paths:
 
         * `createdTimestamp` - UNIX timestamp in *milliseconds* for when the User is created in your system
       operationId: post-business-user
-      parameters: []
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockCraRiskLevel
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
       requestBody:
         description: ''
         content:
@@ -1225,6 +1239,13 @@ paths:
             Boolean string whether Flagright should allow a Consumer user event
             to be applied to a Business user with the same user ID. This will
             converts a Business user to a Consumer user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockCraRiskLevel
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
       requestBody:
         description: ''
         content:
@@ -1410,6 +1431,13 @@ paths:
             Boolean string whether Flagright should allow a Business user event
             to be applied to a Consumer user with the same user ID. This will
             converts a Consumer user to a Business user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockCraRiskLevel
+          description:
+            Boolean string whether Flagright should lock the CRA risk level for
+            the user.
       requestBody:
         description: ''
         content:
