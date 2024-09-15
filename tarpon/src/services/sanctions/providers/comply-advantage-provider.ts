@@ -1,4 +1,4 @@
-import { groupBy } from 'lodash'
+import { groupBy, uniq } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsDataProviderName,
@@ -119,12 +119,24 @@ export function complyAdvantageDocToEntity(
   const doc = hit.doc
   const fieldData = extractInformationFromFields(hit.doc.fields ?? [])
   const sources = getSources(doc)
-  return removeUndefinedFields({
+  const sanctionSearchTypes = uniq(
+    hit.match_types?.map((mt): SanctionsSearchType => {
+      if (mt.includes('media')) {
+        return 'ADVERSE_MEDIA'
+      }
+      if (mt.includes('pep')) {
+        return 'PEP'
+      }
+      return 'SANCTIONS'
+    })
+  )
+  const sanctionsEntity: SanctionsEntity = {
     id: doc.id as string,
     name: doc.name as string,
     countries: fieldData['Country']?.values.map((v) => v.value) ?? [],
     types: doc.types,
     matchTypes: hit.match_types,
+    sanctionSearchTypes,
     aka: doc.aka?.map((aka) => aka.name).filter(Boolean) as string[],
     entityType: doc.entity_type as string,
     updatedAt: doc.last_updated_utc
@@ -153,7 +165,8 @@ export function complyAdvantageDocToEntity(
       doc.associates?.map((a) => ({ name: a.name, association: a.name })) ?? [],
     ...sources,
     rawResponse: hit,
-  })
+  }
+  return removeUndefinedFields(sanctionsEntity)
 }
 
 const SANDBOX_PROFILES = {

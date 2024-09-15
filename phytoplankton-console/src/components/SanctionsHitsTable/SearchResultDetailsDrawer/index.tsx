@@ -268,6 +268,7 @@ function makeStubAiText(hit: SanctionsHit): string {
 function useTabs(entity: SanctionsEntity, pdfMode) {
   return useMemo(() => {
     const tabs: { name: string; sources: SanctionsSource[] }[] = [
+      { name: 'Sources', sources: entity.screeningSources || [] },
       { name: 'Sanctions', sources: entity.sanctionsSources || [] },
       { name: 'PEP', sources: entity.pepSources || [] },
       { name: 'Adverse media', sources: entity.mediaSources || [] },
@@ -335,5 +336,11 @@ function useTabs(entity: SanctionsEntity, pdfMode) {
           ),
         };
       });
-  }, [entity.mediaSources, entity.pepSources, entity.sanctionsSources, pdfMode]);
+  }, [
+    entity.screeningSources,
+    entity.mediaSources,
+    entity.pepSources,
+    entity.sanctionsSources,
+    pdfMode,
+  ]);
 }

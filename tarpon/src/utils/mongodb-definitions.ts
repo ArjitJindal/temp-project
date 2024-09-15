@@ -706,6 +706,14 @@ export const getGlobalCollectionIndexes = (): {
             deletedAt: 1,
           },
         },
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+          },
+          unique: true,
+        },
       ],
     },
   }

@@ -14,6 +14,7 @@ import {
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -34,6 +35,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsProviderSearchRequest
   ): Promise<SanctionsProviderResponse> {
     const client = await getMongoDbClient()
+    const match = {}
+
+    if (request.countryCodes) {
+      match['nationality'] = { $in: request.countryCodes }
+    }
+
+    if (request.yearOfBirth) {
+      match['yearOfBirth'] = `${request.yearOfBirth}`
+    }
+
+    if (request.types) {
+      match['sanctionSearchTypes'] = { $in: request.types }
+    }
 
     const results = await client
       .db()
@@ -47,6 +61,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               path: {
                 wildcard: '*',
               },
+              // TODO drive these values from config that the client can set.
+              fuzzy: {
+                maxEdits: 2,
+                prefixLength: 0,
+                maxExpansions: 100,
+              },
             },
           },
         },
@@ -58,21 +78,38 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         },
         {
+          $match: match,
+        },
+        {
           $sort: {
             score: -1,
           },
         },
         {
-          $limit: 5,
+          $limit: 25,
         },
       ])
       .toArray()
 
+    const filteredResults = results.filter((entity) => {
+      const values = [...(entity.aka || []), entity.name]
+      for (const value of values) {
+        const fuzzyMatch =
+          request.fuzziness &&
+          calculateLevenshteinDistancePercentage(request.searchTerm, value) >=
+            request.fuzziness
+        const exactMatch = value === request.searchTerm
+        if (fuzzyMatch || exactMatch) {
+          return true
+        }
+      }
+    })
+
     const providerSearchId = uuidv4()
     const result = {
       providerSearchId,
-      hitsCount: results.length,
-      data: results,
+      hitsCount: filteredResults.length,
+      data: filteredResults,
       createdAt: new Date().getTime(),
     }
 

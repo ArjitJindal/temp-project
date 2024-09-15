@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<PFA>
+    <Description2List>
+        <Description2Name Description2Id="1" Description1Id="3">Sanctions Lists</Description2Name>
+        <Description2Name Description2Id="2" Description1Id="3">Other Official Lists</Description2Name>
+        <Description2Name Description2Id="3" Description1Id="4">Sanctions Lists</Description2Name>
+        <Description2Name Description2Id="4" Description1Id="4">Other Official Lists</Description2Name>
+        <Description2Name Description2Id="6" Description1Id="3">Terror</Description2Name>
+        <Description2Name Description2Id="7" Description1Id="3">Organised Crime</Description2Name>
+        <Description2Name Description2Id="8" Description1Id="3">Financial Crime</Description2Name>
+        <Description2Name Description2Id="9" Description1Id="3">Trafficking</Description2Name>
+        <Description2Name Description2Id="10" Description1Id="3">Corruption</Description2Name>
+        <Description2Name Description2Id="11" Description1Id="3">War Crimes</Description2Name>
+        <Description2Name Description2Id="12" Description1Id="4">Terror</Description2Name>
+        <Description2Name Description2Id="13" Description1Id="4">Organised Crime</Description2Name>
+        <Description2Name Description2Id="14" Description1Id="4">Financial Crime</Description2Name>
+        <Description2Name Description2Id="15" Description1Id="4">Trafficking</Description2Name>
+        <Description2Name Description2Id="16" Description1Id="4">War Crimes</Description2Name>
+        <Description2Name Description2Id="17" Description1Id="4">Corruption</Description2Name>
+        <Description2Name Description2Id="20" Description1Id="1">Additional Domestic Screening Requirement
+        </Description2Name>
+        <Description2Name Description2Id="21" Description1Id="3">Organised Crime Japan</Description2Name>
+        <Description2Name Description2Id="22" Description1Id="4">Organised Crime Japan</Description2Name>
+        <Description2Name Description2Id="23" Description1Id="4">Enhanced Country Risk</Description2Name>
+        <Description2Name Description2Id="24" Description1Id="3">Enhanced Country Risk</Description2Name>
+        <Description2Name Description2Id="25" Description1Id="3">Other Exclusion Lists</Description2Name>
+        <Description2Name Description2Id="26" Description1Id="4">Other Exclusion Lists</Description2Name>
+        <Description2Name Description2Id="31" Description1Id="3">Tax Crime</Description2Name>
+        <Description2Name Description2Id="34" Description1Id="4">Sanctions Control and Ownership</Description2Name>
+        <Description2Name Description2Id="39" Description1Id="3">Child Sexual Exploitation</Description2Name>
+        <Description2Name Description2Id="40" Description1Id="3">Investigations</Description2Name>
+    </Description2List>
+</PFA>

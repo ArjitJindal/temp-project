@@ -11863,6 +11863,10 @@ components:
           type: array
           items:
             type: string
+        sanctionSearchTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchType'
         updatedAt:
           type: number
         nameMatched:
@@ -11881,6 +11885,12 @@ components:
             type: string
         yearOfBirth:
           type: string
+        freetext:
+          type: string
+        screeningSources:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSource'
         sanctionsSources:
           type: array
           items:

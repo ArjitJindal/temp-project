@@ -12483,6 +12483,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"html-entities@npm:^2.5.2":
+  version: 2.5.2
+  resolution: "html-entities@npm:2.5.2"
+  checksum: 4ec12ebdf2d5ba8192c68e1aef3c1e4a4f36b29246a0a88464fe278a54517d0196d3489af46a3145c7ecacb4fc5fd50497be19eb713b810acab3f0efcf36fdc2
+  languageName: node
+  linkType: hard
+
 "html-escaper@npm:^2.0.0":
   version: 2.0.2
   resolution: "html-escaper@npm:2.0.2"
@@ -18857,6 +18864,7 @@ __metadata:
     get-port: "npm:^5.1.1"
     google-spreadsheet: "npm:^3.3.0"
     handlebars: "npm:^4.7.7"
+    html-entities: "npm:^2.5.2"
     html-to-text: "npm:^9.0.5"
     http-errors: "npm:^2.0.0"
     husky: "npm:^8.0.1"

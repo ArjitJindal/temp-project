@@ -19,6 +19,12 @@ export interface SanctionsRepository {
     entities: [Action, SanctionsEntity][],
     version: string
   ): Promise<void>
+
+  saveAssociations(
+    provider: SanctionsDataProviderName,
+    associations: [string, string[]][],
+    version: string
+  ): Promise<void>
 }
 
 export type SanctionsProviderSearchRequest = {

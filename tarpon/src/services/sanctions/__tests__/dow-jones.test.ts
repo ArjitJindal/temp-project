@@ -1,3 +1,4 @@
+import path from 'path'
 import axios from 'axios'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { SanctionsRepository } from '@/services/sanctions/providers/types'
@@ -5,79 +6,6 @@ import { SanctionsRepository } from '@/services/sanctions/providers/types'
 jest.mock('axios')
 jest.mock('unzipper')
 jest.mock('fs-extra')
-
-const XmlRecord = `
-<Person id="795164" action="add" date="17-Mar-2023">
-  <Gender>Male</Gender>
-  <ActiveStatus>Inactive</ActiveStatus>
-  <Deceased>Yes</Deceased>
-  <NameDetails>
-    <Name NameType="Primary Name">
-      <NameValue>
-        <FirstName>Somphol</FirstName>
-        <Surname>Keyuraphun</Surname>
-        <OriginalScriptName>สมพล เกยุราพันธุ์</OriginalScriptName>
-      </NameValue>
-    </Name>
-    <Name NameType="Spelling Variation">
-      <NameValue>
-        <FirstName>Somphol</FirstName>
-        <Surname>Keyuraphan</Surname>
-      </NameValue>
-      <NameValue>
-        <FirstName>Somphon</FirstName>
-        <Surname>Keyulaphan</Surname>
-      </NameValue>
-      <NameValue>
-        <FirstName>Sompon</FirstName>
-        <Surname>Keyurapan</Surname>
-      </NameValue>
-    </Name>
-  </NameDetails>
-  <Descriptions>
-    <Description Description1="1" />
-  </Descriptions>
-  <RoleDetail>
-    <Roles RoleType="Primary Occupation">
-      <OccTitle OccCat="3">Deceased</OccTitle>
-    </Roles>
-    <Roles RoleType="Previous Roles">
-      <OccTitle SinceDay="26" SinceMonth="Jan" SinceYear="2008" ToDay="09" ToMonth="May" ToYear="2011" OccCat="3">Member, House of Representatives, Pheu Thai Party (PT), Party List</OccTitle>
-      <OccTitle SinceDay="03" SinceMonth="Jul" SinceYear="2011" ToDay="09" ToMonth="Dec" ToYear="2013" OccCat="3">Member, House of Representatives, Pheu Thai Party (PT), Party List</OccTitle>
-    </Roles>
-  </RoleDetail>
-  <DateDetails>
-    <Date DateType="Date of Birth">
-      <DateValue Day="21" Month="Oct" Year="1937" />
-    </Date>
-    <Date DateType="Deceased Date">
-      <DateValue Day="28" Month="Nov" Year="2014" />
-    </Date>
-    <Date DateType="Inactive as of (PEP)">
-      <DateValue Day="09" Month="Dec" Year="2013" />
-    </Date>
-  </DateDetails>
-  <CountryDetails>
-    <Country CountryType="Citizenship">
-      <CountryValue Code="THAIL" />
-    </Country>
-    <Country CountryType="Resident of">
-      <CountryValue Code="THAIL" />
-    </Country>
-    <Country CountryType="Jurisdiction">
-      <CountryValue Code="THAIL" />
-    </Country>
-  </CountryDetails>
-  <IDNumberTypes>
-    <ID IDType="National ID">
-      <IDValue>3 1005 02209 70 8</IDValue>
-    </ID>
-  </IDNumberTypes>
-  <Images>
-    <Image URL="https://hilight.kapook.com/img_cms2/user/settawoot/z-2_128.jpg" />
-  </Images>
-</Person>
-`
 
 describe('DowJonesProvider', () => {
   let fetcher: DowJonesProvider
@@ -87,6 +15,7 @@ describe('DowJonesProvider', () => {
     fetcher = new DowJonesProvider('testuser', 'testpass')
     repo = {
       save: jest.fn(),
+      saveAssociations: jest.fn(),
     } as unknown as SanctionsRepository
   })
 
@@ -107,88 +36,219 @@ describe('DowJonesProvider', () => {
       }
     )
   })
-
-  it('should parse XML and save entities to the repository', async () => {
-    const mockXml = `
-      <PFA>
-        <Person id="12300002" action="add">
-          <NameDetails>
-            <Name NameType="Primary Name">
-              <NameValue>
-                <FirstName>John</FirstName>
-                <Surname>Smith</Surname>
-              </NameValue>
-            </Name>
-            <Name NameType="Spelling Variation">
-              <NameValue>
-                <FirstName>John</FirstName>
-                <Surname>Smyth</Surname>
-              </NameValue>
-            </Name>
-          </NameDetails>
-        </Person>
-        <Person id="12300003" action="update">
-          <NameDetails>
-            <Name NameType="Primary Name">
-              <NameValue>
-                <FirstName>John</FirstName>
-                <Surname>Smitten</Surname>
-              </NameValue>
-            </Name>
-          </NameDetails>
-        </Person>
-      </PFA>`
-
-    await fetcher.fileToEntities(repo, '2024-02', mockXml)
-
+  it('should error if countries have changed', async () => {
+    const filePath = path.resolve(
+      __dirname,
+      'data/dowjones_single/PFA2_202409072200_D.xml'
+    )
+    await fetcher.checkCountries(filePath)
+    // No assertion, just checking no error.
+  })
+  it('should process single file archive', async () => {
+    const filePath = path.resolve(__dirname, 'data/dowjones_single')
+    await fetcher.processSingleFile(repo, '2024-02', filePath)
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [
         [
-          'add',
+          'chg',
           {
-            id: '12300002',
-            name: 'John Smith',
+            id: '11756174',
+            name: 'Priyavrat Bhartia',
+            sanctionSearchTypes: ['SANCTIONS'],
             entityType: 'Person',
-            aka: ['John Smyth'],
-          },
-        ],
-        [
-          'update',
-          {
-            id: '12300003',
-            name: 'John Smitten',
-            entityType: 'Person',
+            gender: 'Male',
             aka: [],
+            countries: ['IN'],
+            freetext: `ASSOCIATED ENTITIES INFORMATION:
+Hindustan Media Ventures Limited
+HT Media Limited
+Jubilant Industries Ltd.
+Jubilant Life Sciences Limited
+Psb Trustee Company Private Limited
+Sb Trusteeship Services Private Limited
+Jubilant Enpro Private Limited
+Digicontent Limited
+Bridge School Of Management
+Shobhana Communications Llp
+Burda Druck India Private Limited
+Earthstone Holding (Three) Private Limited
+Priyavrat Computers Llp
+Ht Mobile Solutions Limited
+Htl Computers Service Private Limited
+Hindustan Times Media Limited
+Jubilant Agri & Consumer Products Ltd
+The Hindustan Times Limited
+Jubilant Realty Private Limited
+Ssbpb Investment Holding Private Limited
+Digicontent Ltd
+Jubilant Ingrevia Ltd.
+Jubilant Pharmova Ltd.`,
+            yearOfBirth: '1976',
+            types: ['Relative or Close Associate (RCA)'],
           },
         ],
       ],
       '2024-02'
     )
+    expect(repo.saveAssociations).toHaveBeenCalledWith(
+      'dowjones',
+      [['11756174', ['151775', '790369']]],
+      '2024-02'
+    )
   })
-
-  it('should parse complex XML and save entity', async () => {
-    const mockXml = `<PFA>${XmlRecord}</PFA>`
-
-    await fetcher.fileToEntities(repo, '2024-02', mockXml)
-
+  it('should process split file archive', async () => {
+    const filePath = path.resolve(__dirname, 'data/dowjones_splits')
+    await fetcher.processSplitArchive(repo, '2024-02', filePath)
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [
         [
           'add',
           {
-            id: '795164',
-            name: 'Somphol Keyuraphun',
+            id: '10183',
+            name: 'Ange-Félix Patassé',
             entityType: 'Person',
-            aka: [
-              'Somphol Keyuraphan',
-              'Somphon Keyulaphan',
-              'Sompon Keyurapan',
+            sanctionSearchTypes: ['PEP', 'SANCTIONS'],
+            gender: 'Male',
+            types: [
+              'Politically Exposed Person (PEP)',
+              'Special Interest Person (SIP) - Corruption',
             ],
-            countries: ['THAIL'],
+            aka: [
+              'Ange Félix Patassé',
+              'Ange Felix Patasse',
+              'Ange-Felix Patasse',
+            ],
+            freetext: `PROFILE CREATED: 28-Aug-2006
+UPDATE ADDED: 05-Sep-2006
+UPDATE ADDED: 07-Jun-2022
+Keywords: embezzlement, fraud
+People mentioned: Ange-Felix Patasse
+Profile:
+Ange-Felix Patasse, former president of the Central African Republic, was ordered to stand trial in absentia from August 7 to September 8, 2006, for embezzlement of public funds and fraud. Patasse, who was deposed from office in March 2003 and lived in exile in Togo, was scheduled to be tried alongside four other individuals. 
+
+PROFILE UPDATED: 05-Sep-2006
+On August 30, 2006, the Criminal Court of Bangui sentenced Patasse in absentia to 20 years of hard labour on charges of fraud. He was also ordered to pay a fine of XAF 6m (approx. EUR 9,100) and XAF 7bn (EUR 10.7m) in damages plus interest, and was deprived of his civil rights.
+
+PROFILE UPDATED: 07-jun-2022
+Patasse passed away on April 5, 2011.`,
+            countries: ['CF'],
             yearOfBirth: '1937',
+            sanctionsSources: [
+              {
+                createdAt: 1026518400000,
+                name: 'Associated Press Newswires',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=aprs000020020713dy7d00x13&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1162252800000,
+                name: 'Global Insight Daily Analysis',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020061031e2av0003b&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1156636800000,
+                name: 'All Africa',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060831e28v000ci&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1154908800000,
+                name: 'All Africa',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060807e287000eh&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1154908800000,
+                name: 'Global Insight Daily Analysis',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020060803e2830003h&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1301961600000,
+                name: 'Agence France Presse',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020110405e745006vc&cat=a&ep=ASE)',
+              },
+              {
+                createdAt: 1156809600000,
+                name: 'Agence France Presse',
+                url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020060829e28t003lr&cat=a&ep=ASE)',
+              },
+            ],
           },
+        ],
+        [
+          'add',
+          {
+            id: '10184',
+            name: 'Martin Ziguélé',
+            entityType: 'Person',
+            gender: 'Male',
+            sanctionSearchTypes: ['PEP'],
+            aka: ['Martin Zinguélé', 'Martin Ziguele', 'Martin Zinguele'],
+            countries: ['CF'],
+            yearOfBirth: '1957',
+            types: ['Politically Exposed Person (PEP)'],
+          },
+        ],
+      ],
+      '2024-02'
+    )
+    expect(repo.saveAssociations).toHaveBeenCalledWith(
+      'dowjones',
+      [
+        [
+          '10183',
+          [
+            '10228',
+            '10261',
+            '10374',
+            '10441',
+            '170224',
+            '171089',
+            '212451',
+            '469057',
+            '841803',
+            '841805',
+            '2922781',
+            '4444238',
+            '4444246',
+            '4512176',
+            '4512177',
+            '4542634',
+            '4542640',
+            '12782575',
+            '12782576',
+            '12863222',
+          ],
+        ],
+        [
+          '10184',
+          [
+            '731784',
+            '3414870',
+            '3414873',
+            '3414881',
+            '3414884',
+            '3414885',
+            '3414886',
+            '3414888',
+            '3414889',
+            '3414890',
+            '3414893',
+            '3414896',
+            '3414900',
+            '3414903',
+            '3414905',
+            '3414906',
+            '3414907',
+            '3414909',
+            '3414910',
+            '3414914',
+            '3414915',
+            '3414916',
+            '3414919',
+            '4478578',
+          ],
         ],
       ],
       '2024-02'

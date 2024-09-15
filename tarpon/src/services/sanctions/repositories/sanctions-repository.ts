@@ -76,4 +76,75 @@ export class MongoSanctionsRepository implements SanctionsRepository {
 
     await coll.bulkWrite(operations)
   }
+
+  async saveAssociations(
+    _provider: SanctionsDataProviderName,
+    associations: [string, string[]][],
+    _version: string
+  ) {
+    const client = await getMongoDbClient()
+    const coll = client.db().collection(SANCTIONS_COLLECTION)
+    await coll
+      .aggregate([
+        {
+          // We will unwind the provided associates array into documents
+          $facet: {
+            associateMap: [
+              {
+                $addFields: {
+                  associatesArray: associations,
+                },
+              },
+              {
+                $unwind: '$associatesArray',
+              },
+              {
+                $project: {
+                  id: { $arrayElemAt: ['$associatesArray', 0] },
+                  associateIds: { $arrayElemAt: ['$associatesArray', 1] },
+                  provider: 1, // Include provider from original documents
+                  version: 1, // Include version from original documents
+                },
+              },
+            ],
+          },
+        },
+        {
+          // Unwind the facet output to extract associateMap as individual documents
+          $unwind: '$associateMap',
+        },
+        {
+          // Replace the root document with the contents of associateMap
+          $replaceRoot: { newRoot: '$associateMap' },
+        },
+        {
+          // Lookup all associates in bulk based on associate IDs
+          $lookup: {
+            from: SANCTIONS_COLLECTION,
+            localField: 'associateIds',
+            foreignField: 'id',
+            as: 'associates',
+          },
+        },
+        {
+          // Match the existing documents with the associates' names
+          $project: {
+            _id: 0,
+            id: 1,
+            provider: 1, // Keep provider for matching in $merge
+            version: 1, // Keep version for matching in $merge
+            associates: '$associates.name', // Extract names of the associates
+          },
+        },
+        {
+          $merge: {
+            into: SANCTIONS_COLLECTION,
+            whenMatched: [{ $set: { associates: '$$new.associates' } }],
+            whenNotMatched: 'discard',
+            on: ['provider', 'id', 'version'],
+          },
+        },
+      ])
+      .toArray()
+  }
 }

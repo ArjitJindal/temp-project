@@ -260,6 +260,7 @@
     "fp-ts": "^2.11.8",
     "google-spreadsheet": "^3.3.0",
     "handlebars": "^4.7.7",
+    "html-entities": "^2.5.2",
     "html-to-text": "^9.0.5",
     "http-errors": "^2.0.0",
     "ibankit": "^1.5.0",

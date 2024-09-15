@@ -64,13 +64,13 @@ export const uniqObjects = <T extends object>(array: T[]): T[] => {
   return uniqBy(array, generateChecksum)
 }
 
-export function removeUndefinedFields(obj: any): any {
+export function removeUndefinedFields<T>(obj: T): T {
   if (isArray(obj)) {
     // If the object is an array, iterate over the elements
-    return obj.map(removeUndefinedFields)
+    return obj.map(removeUndefinedFields) as T
   } else if (isPlainObject(obj)) {
     // If the object is a plain object, iterate over its properties
-    return transform(obj, (result, value, key) => {
+    return transform(obj as object, (result, value, key) => {
       const cleanedValue = removeUndefinedFields(value)
       if (!isUndefined(cleanedValue)) {
         result[key] = cleanedValue
