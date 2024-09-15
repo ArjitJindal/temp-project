@@ -297,13 +297,12 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         // This is a hardcoded mapping of the description1 to the type of screening.
         const sanctionSearchTypes: SanctionsSearchType[] = []
-        const descriptions = person.Descriptions.Description?.map(
-          (d) => d['@_Description1']
-        )
-        if (descriptions?.includes('1')) {
+        const descriptions = person.Descriptions?.flatMap((d) => d.Description)
+        const descriptionValues = descriptions.map((d) => d['@_Description1'])
+        if (descriptionValues?.includes('1')) {
           sanctionSearchTypes.push('PEP')
         }
-        if (descriptions?.includes('2')) {
+        if (descriptionValues?.includes('2')) {
           // TODO: Determine how to handle "Relative or Close Associate (RCA)"
           sanctionSearchTypes.push('SANCTIONS')
         }
@@ -317,7 +316,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           entityType: 'Person',
           freetext: person.ProfileNotes,
           sanctionSearchTypes,
-          types: person.Descriptions.Description?.map((d) =>
+          types: descriptions?.map((d) =>
             [
               d['@_Description1']
                 ? masters.Description1List[d['@_Description1']]['#text']
