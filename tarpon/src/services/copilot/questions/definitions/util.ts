@@ -129,6 +129,21 @@ export function matchPeriod(timestampField: string, period: Period) {
   return { [timestampField]: filters }
 }
 
+export function matchPeriodSQL(timestampField: string, period: Period) {
+  if (!period.from && !period.to) {
+    return ''
+  }
+  const filters: string[] = []
+
+  if (period.from) {
+    filters.push(`${timestampField} >= ${period.from}`)
+  }
+  if (period.to) {
+    filters.push(`${timestampField} <= ${period.to}`)
+  }
+  return filters.join(' AND ')
+}
+
 export function sqlPeriod(period: Period) {
   return {
     from: period.from || 0,
@@ -252,6 +267,30 @@ export function casePaymentIdentifierQuery(paymentIdentifier?: PaymentDetails) {
       $and: destinationConditions,
     },
   ]
+}
+
+export function casesPaymentIdentifierQueryClickhouse(
+  paymentIdentifier?: PaymentDetails
+) {
+  if (!paymentIdentifier) {
+    return ''
+  }
+  const keys = PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentIdentifier.method]
+  const originConditions = keys
+    .filter((key) => paymentIdentifier[key])
+    .map((key) => {
+      return `JSONExtractString(paymentDetails, 'originPaymentDetails.${key}') = '${paymentIdentifier[key]}'`
+    })
+    .join(' AND ')
+
+  const destinationConditions = keys
+    .filter((key) => paymentIdentifier[key])
+    .map((key) => {
+      return `JSONExtractString(paymentDetails, 'destinationPaymentDetails.${key}') = '${paymentIdentifier[key]}'`
+    })
+    .join(' AND ')
+
+  return `(${originConditions}) OR (${destinationConditions})`
 }
 
 export function transactionPaymentIdentifierQuerySQL(
