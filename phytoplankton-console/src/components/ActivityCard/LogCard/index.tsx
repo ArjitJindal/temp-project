@@ -8,6 +8,8 @@ import { useQuery } from '@/utils/queries/hooks';
 import { AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { P } from '@/components/ui/Typography';
+import { useUsers } from '@/utils/user-utils';
+import Spinner from '@/components/library/Spinner';
 
 interface Props {
   logQueryRequest: (params: ActivityLogFilterParams) => Promise<LogItemData[]>;
@@ -16,11 +18,15 @@ interface Props {
 
 const LogCard = (props: Props) => {
   const { logQueryRequest, params } = props;
-  const queryResult = useQuery<LogItemData[]>(AUDIT_LOGS_LIST(params), async () => {
-    const logItemData = await logQueryRequest(params);
-    return logItemData;
-  });
-  return (
+  const [_, isLoading] = useUsers();
+  const queryResult = useQuery<LogItemData[]>(
+    AUDIT_LOGS_LIST({ ...params, isLoading }),
+    async () => {
+      const logItemData = await logQueryRequest(params);
+      return logItemData;
+    },
+  );
+  return !isLoading ? (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(logItems) => {
         if (logItems.length === 0) {
@@ -36,6 +42,8 @@ const LogCard = (props: Props) => {
         );
       }}
     </AsyncResourceRenderer>
+  ) : (
+    <Spinner />
   );
 };
 

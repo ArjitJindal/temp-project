@@ -5,7 +5,7 @@ describe('Add a comment to a case', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: REQUIRED_PERMISSIONS,
-      features: { AUDIT_LOGS: true },
+      features: { AUDIT_LOGS: true, NOTIFICATIONS: true },
     });
   });
 
@@ -83,6 +83,7 @@ describe('Add a comment to a case', () => {
       .then((caseId) => {
         cy.visit(`/case-management/case/${caseId}/activity`);
         cy.get('[data-cy="segmented-control-log"]').click();
+        cy.waitNothingLoading();
         cy.get('[data-cv="log-entry-item"]')
           .should('exist')
           .first()
