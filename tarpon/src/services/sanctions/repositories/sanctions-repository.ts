@@ -78,51 +78,52 @@ export class MongoSanctionsRepository implements SanctionsRepository {
   }
 
   async saveAssociations(
-    _provider: SanctionsDataProviderName,
+    provider: SanctionsDataProviderName,
     associations: [string, string[]][],
-    _version: string
+    version: string
   ) {
     const client = await getMongoDbClient()
     const coll = client.db().collection(SANCTIONS_COLLECTION)
     await coll
       .aggregate([
         {
-          // We will unwind the provided associates array into documents
-          $facet: {
-            associateMap: [
-              {
-                $addFields: {
-                  associatesArray: associations,
-                },
-              },
-              {
-                $unwind: '$associatesArray',
-              },
-              {
-                $project: {
-                  id: { $arrayElemAt: ['$associatesArray', 0] },
-                  associateIds: { $arrayElemAt: ['$associatesArray', 1] },
-                  provider: 1, // Include provider from original documents
-                  version: 1, // Include version from original documents
-                },
-              },
-            ],
+          // Unwind the provided associates array into documents
+          $addFields: {
+            associatesArray: associations,
           },
         },
         {
-          // Unwind the facet output to extract associateMap as individual documents
-          $unwind: '$associateMap',
+          $unwind: '$associatesArray',
         },
         {
-          // Replace the root document with the contents of associateMap
-          $replaceRoot: { newRoot: '$associateMap' },
+          $project: {
+            id: { $arrayElemAt: ['$associatesArray', 0] },
+            associateIds: { $arrayElemAt: ['$associatesArray', 1] },
+            provider: 1, // Include provider from original documents
+            version: 1, // Include version from original documents
+          },
         },
         {
           // Lookup all associates in bulk based on associate IDs
           $lookup: {
             from: SANCTIONS_COLLECTION,
-            localField: 'associateIds',
-            foreignField: 'id',
+            let: { associateIds: '$associateIds' },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $in: ['$id', '$$associateIds'] },
+                      { provider }, // Match on provider
+                      { version }, // Match on version
+                    ],
+                  },
+                },
+              },
+              {
+                $project: { name: 1 }, // Only project name of the associates
+              },
+            ],
             as: 'associates',
           },
         },
