@@ -1,8 +1,19 @@
-import { fetchTableDetails, segregateMessages as handleMessages } from '../app'
+import { MongoDbConsumer } from '..'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+
+const getService = async () => {
+  const clickhouseClient = await getClickhouseClient()
+  const mongoDbClient = await getMongoDbClient()
+  return new MongoDbConsumer(mongoDbClient, clickhouseClient)
+}
 
 describe('Fetch Table Details', () => {
-  it('should return correct table details', () => {
-    expect(fetchTableDetails('flagright-cases')).toMatchObject({
+  it('should return correct table details', async () => {
+    const mongoDbConsumerService = await getService()
+    expect(
+      mongoDbConsumerService.fetchTableDetails('flagright-cases')
+    ).toMatchObject({
       tenantId: 'flagright',
       collectionName: 'flagright-cases',
       clickhouseTable: {
@@ -11,15 +22,19 @@ describe('Fetch Table Details', () => {
     })
   })
 
-  it('should return null if the table is not found', () => {
-    expect(fetchTableDetails('flagright-cases123')).toBeFalsy()
+  it('should return null if the table is not found', async () => {
+    const mongoDbConsumerService = await getService()
+    expect(
+      mongoDbConsumerService.fetchTableDetails('flagright-cases123')
+    ).toBeFalsy()
   })
 })
 
 describe('Handle Messages', () => {
-  it('should return correct messages to delete and replace', () => {
+  it('should return correct messages to delete and replace', async () => {
+    const mongoDbConsumerService = await getService()
     expect(
-      handleMessages([
+      mongoDbConsumerService.segregateMessages([
         {
           documentKey: {
             _id: '666666666666666666666666',
@@ -54,9 +69,10 @@ describe('Handle Messages', () => {
     })
   })
 
-  it('should return correct messages to delete and replace', () => {
+  it('should return correct messages to delete and replace', async () => {
+    const mongoDbConsumerService = await getService()
     expect(
-      handleMessages([
+      mongoDbConsumerService.segregateMessages([
         {
           documentKey: {
             _id: '666666666666666666666666',
