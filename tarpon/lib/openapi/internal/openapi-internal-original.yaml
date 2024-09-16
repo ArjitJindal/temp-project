@@ -11883,6 +11883,10 @@ components:
           type: array
           items:
             type: string
+        countryCodes:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
         yearOfBirth:
           type: string
         freetext:

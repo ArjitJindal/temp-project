@@ -38,7 +38,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const match = {}
 
     if (request.countryCodes) {
-      match['nationality'] = { $in: request.countryCodes }
+      match['countryCodes'] = { $in: request.countryCodes }
     }
 
     if (request.yearOfBirth) {

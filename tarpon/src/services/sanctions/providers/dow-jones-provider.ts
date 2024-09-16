@@ -22,6 +22,7 @@ import { removeUndefinedFields } from '@/utils/object'
 import { DOW_JONES_COUNTRIES } from '@/services/sanctions/providers/dow-jones-countries'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -310,6 +311,12 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         if (['3', '4'].some((val) => descriptionValues?.includes(val))) {
           sanctionSearchTypes.push('SANCTIONS')
         }
+        const countries = uniq<string>(
+          person.CountryDetails?.Country?.map(
+            (country) =>
+              DOW_JONES_COUNTRIES[country.CountryValue?.['@_Code'] as string]
+          )
+        ).filter(Boolean)
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
@@ -375,7 +382,14 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               name,
               createdAt: parsedDate.valueOf(),
               url,
-              fields: [],
+              fields: url
+                ? [
+                    {
+                      name: 'URL',
+                      values: [url],
+                    },
+                  ]
+                : [],
             }
           }),
           gender: person.Gender,
@@ -384,14 +398,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             .filter((n) => n['@_NameType'] !== 'Primary Name')
             .flatMap((name) => name.NameValue)
             .map((n) => decode(`${n.FirstName} ${n.Surname || ''}`.trim())),
-          countries: uniq<string>(
-            person.CountryDetails?.Country?.map(
-              (country) =>
-                DOW_JONES_COUNTRIES[country.CountryValue?.['@_Code'] as string]
-            )
-          )
-            .filter(Boolean)
-            .map((c) => COUNTRIES[c]),
+          countries: countries.map((c) => COUNTRIES[c]),
+          countryCodes: countries.map((c) => c as CountryCode),
           yearOfBirth: person.DateDetails?.Date?.find(
             (date: any) => date['@_DateType'] === 'Date of Birth'
           )?.DateValue['@_Year'] as string,
