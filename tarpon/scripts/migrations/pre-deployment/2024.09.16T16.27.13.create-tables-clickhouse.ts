@@ -13,10 +13,17 @@ async function migrateTenant(tenant: Tenant) {
     return
   }
 
-  const databaseExists = await executeClickhouseDefaultClientQuery((client) =>
-    client.query({
-      query: `SHOW DATABASES LIKE '${getClickhouseDbName(tenant.id)}'`,
-    })
+  const databaseExists = await executeClickhouseDefaultClientQuery(
+    async (client) => {
+      const databases = await client.query({
+        query: 'SHOW DATABASES',
+        format: 'JSONEachRow',
+      })
+      const databasesData = await databases.json<{ name: string }>()
+      return databasesData.some(
+        (db) => db.name === getClickhouseDbName(tenant.id)
+      )
+    }
   )
 
   if (!databaseExists) {
