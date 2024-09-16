@@ -189,7 +189,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType)}
           </Form.Layout.Label>
-          {entity.aka && (
+          {entity.aka && entity.aka?.length > 0 && (
             <Form.Layout.Label title={'Aliases'}>{entity.aka.join(', ')}</Form.Layout.Label>
           )}
           {entity.dateMatched && entity.yearOfBirth && (
