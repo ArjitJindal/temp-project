@@ -61,6 +61,7 @@ describe('DowJonesProvider', () => {
             gender: 'Male',
             aka: [],
             countries: ['India'],
+            countryCodes: ['IN'],
             matchTypes: [],
             dateMatched: true,
             freetext: `ASSOCIATED ENTITIES INFORMATION:
@@ -138,6 +139,7 @@ On August 30, 2006, the Criminal Court of Bangui sentenced Patasse in absentia t
 PROFILE UPDATED: 07-jun-2022
 Patasse passed away on April 5, 2011.`,
             countries: ['Central African Republic'],
+            countryCodes: ['CF'],
             yearOfBirth: '1937',
             dateMatched: true,
             matchTypes: ['Corruption'],
@@ -146,43 +148,92 @@ Patasse passed away on April 5, 2011.`,
                 createdAt: 1026518400000,
                 name: 'Associated Press Newswires',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=aprs000020020713dy7d00x13&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=aprs000020020713dy7d00x13&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1162252800000,
                 name: 'Global Insight Daily Analysis',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020061031e2av0003b&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020061031e2av0003b&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1156636800000,
                 name: 'All Africa',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060831e28v000ci&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060831e28v000ci&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1154908800000,
                 name: 'All Africa',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060807e287000eh&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFNWSF0020060807e287000eh&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1154908800000,
                 name: 'Global Insight Daily Analysis',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020060803e2830003h&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=WDAN000020060803e2830003h&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1301961600000,
                 name: 'Agence France Presse',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020110405e745006vc&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020110405e745006vc&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
               {
                 createdAt: 1156809600000,
                 name: 'Agence France Presse',
                 url: 'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020060829e28t003lr&cat=a&ep=ASE',
-                fields: [],
+                fields: [
+                  {
+                    name: 'URL',
+                    values: [
+                      'https://global.factiva.com/redir/default.aspx?P=sa&AN=AFPR000020060829e28t003lr&cat=a&ep=ASE',
+                    ],
+                  },
+                ],
               },
             ],
           },
@@ -199,6 +250,7 @@ Patasse passed away on April 5, 2011.`,
             sanctionSearchTypes: ['PEP'],
             aka: ['Martin Zinguélé', 'Martin Ziguele', 'Martin Zinguele'],
             countries: ['Central African Republic'],
+            countryCodes: ['CF'],
             yearOfBirth: '1957',
             types: ['Politically Exposed Person (PEP)'],
           },
