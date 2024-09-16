@@ -17,9 +17,9 @@ import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
-  RuleEntityVariable,
-  RuleEntityVariableEntityEnum,
-  RuleEntityVariableInUse,
+  LogicEntityVariable,
+  LogicEntityVariableEntityEnum,
+  LogicEntityVariableInUse,
   RuleType,
 } from '@/apis';
 // TODO: Move PropertyColumns to library
@@ -47,14 +47,14 @@ type FormRuleEntityVariable = {
 
 interface EntityVariableFormProps {
   ruleType: RuleType;
-  variable: RuleEntityVariableInUse | undefined;
-  entityVariables: RuleEntityVariable[];
-  entityVariablesInUse: RuleEntityVariableInUse[];
+  variable: LogicEntityVariableInUse | undefined;
+  entityVariables: LogicEntityVariable[];
+  entityVariablesInUse: LogicEntityVariableInUse[];
   isNew: boolean;
   readOnly?: boolean;
-  onUpdate: (newEntityVariable: RuleEntityVariableInUse) => void;
+  onUpdate: (newEntityVariable: LogicEntityVariableInUse) => void;
   onCancel: () => void;
-  entity?: RuleEntityVariableEntityEnum;
+  entity?: LogicEntityVariableEntityEnum;
 }
 
 const TX_ENTITY_TYPE_OPTIONS: Array<{ value: 'TRANSACTION' | 'USER'; label: string }> = [
@@ -85,8 +85,8 @@ export function getNewEntityVariableKey() {
 
 function getInitialFormValues(
   ruleType: RuleType,
-  variable: RuleEntityVariableInUse | undefined,
-  entityVariables: RuleEntityVariable[],
+  variable: LogicEntityVariableInUse | undefined,
+  entityVariables: LogicEntityVariable[],
 ): FormRuleEntityVariable {
   const entityVariable = entityVariables.find((v) => v.key === variable?.entityKey);
   if (!entityVariable) {
@@ -144,8 +144,8 @@ function oppositeVariableKey(variableKey: string): string | undefined {
 }
 
 function getFilterEntityVariableTypes(
-  entityVariable?: RuleEntityVariable,
-): RuleEntityVariableEntityEnum[] {
+  entityVariable?: LogicEntityVariable,
+): LogicEntityVariableEntityEnum[] {
   if (entityVariable?.entity === 'TRANSACTION' || entityVariable?.entity === 'TRANSACTION_EVENT') {
     return ['TRANSACTION', 'TRANSACTION_EVENT'];
   }

@@ -13,15 +13,14 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { isEqual, uniq, isEmpty, uniqBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
-import { getAggVarHash } from '../v8-engine/aggregation-repository'
-import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
 import { isV2RuleInstance } from '../utils'
+import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { paginateQuery } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { traceable } from '@/core/xray'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
 import {
   DAY_DATE_FORMAT,
@@ -40,6 +39,7 @@ import {
 } from '@/utils/memory-cache'
 import { envIs, envIsNot } from '@/utils/env'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
+import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
 
 // NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
 // is activated, it'll be effective after 10 minutes (worst case).
@@ -146,7 +146,7 @@ export class RuleInstanceRepository {
     let migratedData: RuleMigrationConfig | null = null
     let v2RiskLevelLogic: RuleInstance['riskLevelLogic']
     let baseCurrency = ruleInstance.baseCurrency
-    let logicAggregationVariables: RuleAggregationVariable[] = []
+    let logicAggregationVariables: LogicAggregationVariable[] = []
 
     const v2RuleInstance = isV2RuleInstance(ruleInstance)
     if (!v2RuleInstance) {
@@ -307,7 +307,7 @@ export class RuleInstanceRepository {
 
   private async getLogicAggVarsWithUpdatedVersion(
     ruleInstance: RuleInstance
-  ): Promise<RuleAggregationVariable[] | undefined> {
+  ): Promise<LogicAggregationVariable[] | undefined> {
     // Early return if no aggregation variables
     if (
       !ruleInstance.logicAggregationVariables ||

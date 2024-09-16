@@ -14,14 +14,14 @@ import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
   CurrencyCode,
-  RuleAggregationFunc,
-  RuleAggregationTimeWindow,
-  RuleAggregationTransactionDirection,
-  RuleAggregationType,
-  RuleAggregationUserDirection,
-  RuleAggregationVariable,
-  RuleAggregationVariableTimeWindow,
-  RuleEntityVariable,
+  LogicAggregationFunc,
+  LogicAggregationTimeWindow,
+  LogicAggregationTransactionDirection,
+  LogicAggregationType,
+  LogicAggregationUserDirection,
+  LogicAggregationVariable,
+  LogicAggregationVariableTimeWindow,
+  LogicEntityVariable,
   RuleType,
 } from '@/apis';
 import Select from '@/components/library/Select';
@@ -47,33 +47,34 @@ function varLabelWithoutDirection(label: string): string {
   return label.replace(/^(origin|destination)\s*/, '');
 }
 
-export type FormRuleAggregationVariable = Partial<RuleAggregationVariable> & {
-  timeWindow: RuleAggregationVariableTimeWindow;
+export type FormRuleAggregationVariable = Partial<LogicAggregationVariable> & {
+  timeWindow: LogicAggregationVariableTimeWindow;
 };
 interface AggregationVariableFormProps {
   ruleType: RuleType;
   variable: FormRuleAggregationVariable;
   isNew: boolean;
-  entityVariables: RuleEntityVariable[];
+  entityVariables: LogicEntityVariable[];
   readOnly?: boolean;
-  onUpdate: (newAggregationVariable: RuleAggregationVariable) => void;
+  onUpdate: (newAggregationVariable: LogicAggregationVariable) => void;
   onCancel: () => void;
 }
-const TYPE_OPTIONS: Array<{ value: RuleAggregationType; label: string }> = [
+const TYPE_OPTIONS: Array<{ value: LogicAggregationType; label: string }> = [
   { value: 'USER_TRANSACTIONS', label: 'User ID' },
   { value: 'PAYMENT_DETAILS_TRANSACTIONS', label: 'Payment ID' },
 ];
-const USER_DIRECTION_OPTIONS: Array<{ value: RuleAggregationUserDirection; label: string }> = [
+const USER_DIRECTION_OPTIONS: Array<{ value: LogicAggregationUserDirection; label: string }> = [
   { value: 'SENDER', label: 'Sender' },
   { value: 'RECEIVER', label: 'Receiver' },
   { value: 'SENDER_OR_RECEIVER', label: 'Both' },
 ];
 
-const TX_DIRECTION_OPTIONS: Array<{ value: RuleAggregationTransactionDirection; label: string }> = [
-  { value: 'SENDING', label: 'Sending' },
-  { value: 'RECEIVING', label: 'Receiving' },
-  { value: 'SENDING_RECEIVING', label: 'Both' },
-];
+const TX_DIRECTION_OPTIONS: Array<{ value: LogicAggregationTransactionDirection; label: string }> =
+  [
+    { value: 'SENDING', label: 'Sending' },
+    { value: 'RECEIVING', label: 'Receiving' },
+    { value: 'SENDING_RECEIVING', label: 'Both' },
+  ];
 
 const AGGREGATE_TARGET_OPTIONS = [
   { value: 'TIME', label: 'Time' },
@@ -103,7 +104,7 @@ function roundToNearestMultiple(value: number, step: number) {
   return round(value / step) * step;
 }
 
-const roundedTimeWindowMinutes = (timeWindow?: RuleAggregationVariableTimeWindow) => {
+const roundedTimeWindowMinutes = (timeWindow?: LogicAggregationVariableTimeWindow) => {
   if (!timeWindow) {
     return timeWindow;
   }
@@ -125,7 +126,7 @@ const roundedTimeWindowMinutes = (timeWindow?: RuleAggregationVariableTimeWindow
 
 const MAX_AGGREGATION_FROM_YEARS = 5;
 const MAX_AGGREGATED_TRANSACTIONS = 10;
-function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
+function getTimestamp(now: Dayjs, timeWindow: LogicAggregationTimeWindow) {
   if (timeWindow.granularity === 'fiscal_year') {
     if (!timeWindow.fiscalYear) {
       throw new Error('Missing fiscal year');
@@ -141,7 +142,7 @@ function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
 
 const LESS_THAN_HOUR_GRANULARITY_MAX_HOURS = 1;
 const HOUR_GRANULARITY_MAX_DAYS = 60;
-function validateAggregationTimeWindow(timeWindow: RuleAggregationVariableTimeWindow) {
+function validateAggregationTimeWindow(timeWindow: LogicAggregationVariableTimeWindow) {
   const { start, end } = timeWindow;
   const now = dayjs();
   const startTs = getTimestamp(now, start);
@@ -267,20 +268,20 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     }
   }, [formValues.aggregationFieldKey, entityVariables]);
   const aggregateFunctionOptions: Array<{
-    value: RuleAggregationFunc;
+    value: LogicAggregationFunc;
     label: string;
   }> = useMemo(() => {
-    const options: Array<{ value: RuleAggregationFunc; label: string }> = [];
+    const options: Array<{ value: LogicAggregationFunc; label: string }> = [];
     const entityVariable = entityVariables.find((v) => v.key === formValues?.aggregationFieldKey);
 
-    const uniqueAggregationOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
+    const uniqueAggregationOptions: Array<{ value: LogicAggregationFunc; label: string }> = [
       { value: 'UNIQUE_COUNT', label: 'Unique count' },
       { value: 'UNIQUE_VALUES', label: 'Unique values' },
     ];
     const timestampEntityRegex = /timestamp/gi;
 
     if (entityVariable?.valueType === 'number') {
-      const numberValueOptions: Array<{ value: RuleAggregationFunc; label: string }> = [
+      const numberValueOptions: Array<{ value: LogicAggregationFunc; label: string }> = [
         { value: 'AVG', label: 'Average' },
         { value: 'SUM', label: 'Sum' },
         {
@@ -370,7 +371,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
   const variableAutoName = useMemo(() => {
     if (isValidFormValues) {
       const aggVarDefinition = getAggVarDefinition(
-        formValues as RuleAggregationVariable,
+        formValues as LogicAggregationVariable,
         entityVariables,
       );
       return aggVarDefinition.uiDefinition.label;
@@ -392,7 +393,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       width="L"
       hideOk={readOnly}
       onOk={() => {
-        onUpdate(formValues as RuleAggregationVariable);
+        onUpdate(formValues as LogicAggregationVariable);
         setIsOpen(false);
       }}
       okText={isNew ? 'Add' : 'Update'}
@@ -501,7 +502,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
             required={{ value: true, showHint: true }}
             testId="variable-aggregate-function-v8"
           >
-            <Select<RuleAggregationFunc>
+            <Select<LogicAggregationFunc>
               value={formValues.aggregationFunc}
               onChange={(aggregationFunc) =>
                 handleUpdateForm(
@@ -671,10 +672,10 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
 interface AggregationVariableSummaryProps {
   ruleType: RuleType;
   variableFormValues: FormRuleAggregationVariable;
-  entityVariables: RuleEntityVariable[];
+  entityVariables: LogicEntityVariable[];
 }
 
-function formatTimeWindow(timeWindow: RuleAggregationTimeWindow): string {
+function formatTimeWindow(timeWindow: LogicAggregationTimeWindow): string {
   if (timeWindow.granularity === 'all_time') {
     return 'the beginning of time';
   }

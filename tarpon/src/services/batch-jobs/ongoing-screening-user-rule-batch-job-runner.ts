@@ -2,6 +2,7 @@ import pMap from 'p-map'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -82,9 +83,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
+      logicEvaluator,
       mongoDb
     )
     this.caseCreationService = new CaseCreationService(tenantId, {

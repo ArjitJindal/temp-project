@@ -9,6 +9,7 @@ import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const dynamoDb = getDynamoDbClient()
 const TEST_TENANT_ID = getTestTenantId()
@@ -17,10 +18,12 @@ withLocalChangeHandler()
 describe('Verify User', () => {
   test('Verify User without any rules', async () => {
     const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const rulesEngineService = new UserManagementService(
       TEST_TENANT_ID,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
     const user = getTestUser()
     const result = await rulesEngineService.verifyUser(user, 'CONSUMER')
@@ -67,10 +70,12 @@ describe('Verify User', () => {
     ])
     test('Verify consumer user with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
       const rulesEngineService = new UserManagementService(
         TEST_TENANT_ID,
         dynamoDb,
-        mongoDb
+        mongoDb,
+        logicEvaluator
       )
       const user = getTestUser({
         userDetails: {
@@ -219,10 +224,12 @@ describe('Verify User', () => {
 
     test('verify consumer user event with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
       const rulesEngineService = new UserManagementService(
         TEST_TENANT_ID,
         dynamoDb,
-        mongoDb
+        mongoDb,
+        logicEvaluator
       )
       const user = getTestUser({})
       const savedUser = await rulesEngineService.verifyUser(user, 'CONSUMER')
@@ -337,10 +344,12 @@ describe('Verify User', () => {
     ])
     test('Verify business user with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
       const rulesEngineService = new UserManagementService(
         TEST_TENANT_ID,
         dynamoDb,
-        mongoDb
+        mongoDb,
+        logicEvaluator
       )
       const user = getTestBusiness({
         legalEntity: {
@@ -403,10 +412,12 @@ describe('Verify User', () => {
     })
     test('Verify business user event with V8 user rule', async () => {
       const mongoDb = await getMongoDbClient()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
       const rulesEngineService = new UserManagementService(
         TEST_TENANT_ID,
         dynamoDb,
-        mongoDb
+        mongoDb,
+        logicEvaluator
       )
       const eventTimestamp = Date.now()
       const user = getTestBusiness()
@@ -623,11 +634,14 @@ describe('Verify user with V8 rule with aggregation variables', () => {
   ])
   test('Verify consumer user event with V8 user rule with aggregation variables', async () => {
     const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const userRulesEngineService = new UserManagementService(
       TEST_TENANT_ID,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
+
     const user = getTestUser()
     const result1 = await userRulesEngineService.verifyUser(user, 'CONSUMER')
     expect(result1).toEqual({
@@ -666,6 +680,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
     const rulesEngineService = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
+      logicEvaluator,
       mongoDb
     )
     const transaction = getTestTransaction({
@@ -736,10 +751,12 @@ describe('Verify user with V8 rule with aggregation variables', () => {
 
   test('Verify business user event with V8 user rule with aggregation variables', async () => {
     const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const userRulesEngineService = new UserManagementService(
       TEST_TENANT_ID,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
     const user = getTestBusiness()
     const result1 = await userRulesEngineService.verifyUser(user, 'BUSINESS')
@@ -779,6 +796,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
     const rulesEngineService = new RulesEngineService(
       TEST_TENANT_ID,
       dynamoDb,
+      logicEvaluator,
       mongoDb
     )
     const transaction = getTestTransaction({

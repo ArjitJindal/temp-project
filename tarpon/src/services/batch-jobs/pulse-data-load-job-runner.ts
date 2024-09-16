@@ -1,3 +1,4 @@
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { PulseDataLoadBatchJob } from '@/@types/batch-job'
@@ -11,10 +12,15 @@ export class PulseDataLoadJobRunner extends BatchJobRunner {
     const { tenantId, awsCredentials } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
-    const riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      tenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
 
     await riskScoringService.backfillUserRiskScores()
   }

@@ -19,7 +19,7 @@ import {
   getTestTransaction,
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -37,7 +37,7 @@ const bulkSendMessagesMock = jest.spyOn(snsSqsClient, 'bulkSendMessages')
 
 async function setUpAggregationVariables(
   tenantId: string,
-  aggregationVariables: RuleAggregationVariable[]
+  aggregationVariables: LogicAggregationVariable[]
 ): Promise<{ ruleInstanceId: string }> {
   const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
     dynamoDb,
@@ -52,7 +52,7 @@ async function setUpAggregationVariables(
 
 async function setUpAggregationVariablesRiskFactors(
   tenantId: string,
-  aggregationVariables: RuleAggregationVariable[]
+  aggregationVariables: LogicAggregationVariable[]
 ): Promise<{ riskFactorId: string }> {
   const riskRepository = new RiskRepository(tenantId, {
     dynamoDb,
@@ -143,7 +143,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   ])
 
   test('submits pre-aggregation tasks for the users in the target time range and direction - 1', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'USER_TRANSACTIONS',
@@ -194,7 +194,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits pre-aggregation tasks for the users in the target time range and direction - 2', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'USER_TRANSACTIONS',
@@ -284,7 +284,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits pre-aggregation tasks for the payment details in the target time range and direction - 1', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
@@ -332,7 +332,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits pre-aggregation tasks for the payment details in the target time range and direction - 2', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
@@ -448,7 +448,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits pre-aggregation tasks for the users in the target time range and direction - 1 (risk factor)', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
@@ -564,7 +564,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits unique pre-aggregation tasks (user ID)', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'USER_TRANSACTIONS',
@@ -614,7 +614,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test('submits unique pre-aggregation tasks (payment details)', async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'PAYMENT_DETAILS_TRANSACTIONS',
@@ -664,7 +664,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
   })
 
   test("doesn't submits pre-aggregation tasks if already submitted before", async () => {
-    const aggregationVariables: RuleAggregationVariable[] = [
+    const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',
         type: 'USER_TRANSACTIONS',

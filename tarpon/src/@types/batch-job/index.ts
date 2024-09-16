@@ -4,13 +4,13 @@ import { SimulationRiskLevelsParameters } from '../openapi-internal/SimulationRi
 import { SimulationBeaconParameters } from '../openapi-internal/SimulationBeaconParameters'
 import { RuleInstance } from '../openapi-internal/RuleInstance'
 import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRiskFactorsSampling'
-import { RuleAggregationVariable } from '../openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVariable'
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
-import { V8RuleAggregationRebuildTask } from '@/services/rules-engine'
+import { V8LogicAggregationRebuildTask } from '@/services/rules-engine'
 
 /* Simulation (Pulse) */
 export type SimulationRiskLevelsBatchJob = {
@@ -89,9 +89,9 @@ export type GlobalRuleAggregationRebuildBatchJob = {
 
 /* Rule pre-aggregation */
 type RulePreAggregationBatchJobParameters = {
-  entity: V8RuleAggregationRebuildTask['entity']
+  entity: V8LogicAggregationRebuildTask['entity']
   ruleInstanceId?: string
-  aggregationVariables: RuleAggregationVariable[]
+  aggregationVariables: LogicAggregationVariable[]
 }
 export type RulePreAggregationMetadata = {
   tasksCount: number

@@ -1,6 +1,7 @@
 import pMap from 'p-map'
 import PQueue from 'p-queue'
 import { chain, chunk, compact, uniq, uniqBy } from 'lodash'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationBeaconBatchJob } from '@/@types/batch-job'
 import { RulesEngineService } from '@/services/rules-engine'
@@ -39,7 +40,12 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
     const { tenantId, awsCredentials, parameters } = job
     const dynamoDb = getDynamoDbClient(awsCredentials)
     const mongoDb = await getMongoDbClient()
-    const rulesEngineService = new RulesEngineService(tenantId, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const rulesEngineService = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator
+    )
     const simulationRepository = new SimulationTaskRepository(tenantId, mongoDb)
     const caseRepository = new CaseRepository(tenantId, { mongoDb })
     const userRepository = new UserRepository(tenantId, { mongoDb })

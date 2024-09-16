@@ -436,7 +436,7 @@ export class AggregationRepository {
     )
   }
 
-  public async getUserRuleTimeAggregations<T>(
+  public async getUserLogicTimeAggregations<T>(
     userKeyId: string,
     ruleInstanceId: string,
     afterTimeLabel: string,

@@ -37,7 +37,6 @@ import {
   runOnV8Engine,
   sendTransactionAggregationTasks,
 } from '@/services/rules-engine/utils'
-import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -51,6 +50,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { envIsNot } from '@/utils/env'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -189,10 +189,15 @@ export const transactionHandler = async (
     dynamoDb,
   })
 
-  const riskScoringService = new RiskScoringService(tenantId, {
-    dynamoDb,
-    mongoDb,
-  })
+  const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  const riskScoringService = new RiskScoringService(
+    tenantId,
+    {
+      dynamoDb,
+      mongoDb,
+    },
+    logicEvaluator
+  )
 
   const settings = await tenantSettings(tenantId)
   const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
@@ -229,7 +234,7 @@ export const transactionHandler = async (
 
   // Update rule aggregation data for the transactions created when the rule is still deploying
   if (deployingRuleInstances.length > 0) {
-    const ruleLogicEvaluator = new RuleJsonLogicEvaluator(tenantId, dynamoDb)
+    const ruleLogicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const transactionEventRepository = new TransactionEventRepository(
       tenantId,
       {

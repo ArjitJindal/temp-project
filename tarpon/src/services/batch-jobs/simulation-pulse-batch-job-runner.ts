@@ -2,6 +2,7 @@ import { countBy, isEmpty } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import pMap from 'p-map'
 import PQueue from 'p-queue'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationRiskLevelsBatchJob } from '@/@types/batch-job'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -58,9 +59,14 @@ export class SimulationRiskLevelsBatchJobRunner extends BatchJobRunner {
       mongoDb
     )
     this.riskRepository = new RiskRepository(tenantId, { dynamoDb })
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    this.riskScoringService = new RiskScoringService(
+      tenantId,
+      {
+        mongoDb,
+      },
+      logicEvaluator
+    )
 
     const simulationTaskRepository = new SimulationTaskRepository(
       tenantId,

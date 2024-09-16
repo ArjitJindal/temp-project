@@ -1,4 +1,5 @@
 import { isEqual, pick, sortBy } from 'lodash'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -67,7 +68,12 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
 
     const dynamoDb = getDynamoDbClient()
     const mongoDb = (await getMongoDbClient()).db()
-    const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator
+    )
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })

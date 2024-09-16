@@ -15,6 +15,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
@@ -369,10 +370,15 @@ export function createKrsRiskFactorTestCases(
         dynamoDb,
         mongoDb,
       })
-      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      riskScoringService = new RiskScoringService(
+        TEST_TENANT_ID,
+        {
+          dynamoDb,
+          mongoDb,
+        },
+        logicEvaluator
+      )
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )
@@ -421,10 +427,15 @@ export function createArsRiskFactorTestCases(
         dynamoDb,
         mongoDb,
       })
-      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
-        dynamoDb,
-        mongoDb,
-      })
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      riskScoringService = new RiskScoringService(
+        TEST_TENANT_ID,
+        {
+          dynamoDb,
+          mongoDb,
+        },
+        logicEvaluator
+      )
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )

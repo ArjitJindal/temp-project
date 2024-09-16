@@ -4,6 +4,7 @@ import { isEmpty, omit } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskScoringService } from '../risk-scoring'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
@@ -53,7 +54,8 @@ export class UserManagementService {
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
-    mongoDb: MongoClient
+    mongoDb: MongoClient,
+    logicEvaluator: LogicEvaluator
   ) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
@@ -62,21 +64,21 @@ export class UserManagementService {
       dynamoDb,
       mongoDb,
     })
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
-
     this.userEventRepository = new UserEventRepository(tenantId, { dynamoDb })
     this.rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
+      logicEvaluator,
       mongoDb
     )
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    this.riskScoringService = new RiskScoringService(
+      tenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
     this.caseRepository = new CaseRepository(tenantId, {
       dynamoDb,
       mongoDb,

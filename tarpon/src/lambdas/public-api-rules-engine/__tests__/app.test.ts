@@ -48,6 +48,7 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
@@ -1282,10 +1283,15 @@ describe('Risk Scoring Tests', () => {
     await riskRepository.createOrUpdateParameterRiskItem(
       TEST_VARIABLE_RISK_ITEM
     )
-    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
-      dynamoDb,
-      mongoDb: await getMongoDbClient(),
-    })
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      TEST_TENANT_ID,
+      {
+        dynamoDb,
+        mongoDb: await getMongoDbClient(),
+      },
+      logicEvaluator
+    )
     await riskScoringService.updateInitialRiskScores(testUser1)
     const riskScore = await riskRepository.getParameterRiskItem(
       'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
@@ -1389,7 +1395,13 @@ describe('Public API - Verify Transction and Transaction Event', () => {
 
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
-    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb
+    )
 
     await rulesEngine.verifyTransaction(transaction)
 

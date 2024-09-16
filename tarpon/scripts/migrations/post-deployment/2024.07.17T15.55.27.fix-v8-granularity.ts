@@ -3,15 +3,15 @@ import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { LogicAggregationTimeWindow } from '@/@types/openapi-internal/LogicAggregationTimeWindow'
+import dayjs, { Dayjs } from '@/utils/dayjs'
+import { LogicAggregationVariableTimeWindow } from '@/@types/openapi-internal/LogicAggregationVariableTimeWindow'
+import { ruleInstanceAggregationVariablesRebuild } from '@/services/rules-engine/utils'
 import {
   canAggregate,
   getAggregationGranularity,
-} from '@/services/rules-engine/v8-engine/utils'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { RuleAggregationTimeWindow } from '@/@types/openapi-internal/RuleAggregationTimeWindow'
-import dayjs, { Dayjs } from '@/utils/dayjs'
-import { RuleAggregationVariableTimeWindow } from '@/@types/openapi-internal/RuleAggregationVariableTimeWindow'
-import { ruleInstanceAggregationVariablesRebuild } from '@/services/rules-engine/utils'
+} from '@/services/logic-evaluator/engine/utils'
 
 async function migrateTenant(tenant: Tenant) {
   const tenantId = tenant.id
@@ -83,7 +83,7 @@ export const down = async () => {
 }
 
 function oldGetAggregationGranularity(
-  aggregationVariable: RuleAggregationVariable,
+  aggregationVariable: LogicAggregationVariable,
   tenantId: string
 ) {
   const maxHoursToAggregateWithMinuteGranularity =
@@ -121,7 +121,7 @@ function oldGetAggregationGranularity(
 }
 
 // Duplicated logic from phytoplankton
-function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
+function getTimestamp(now: Dayjs, timeWindow: LogicAggregationTimeWindow) {
   if (timeWindow.granularity === 'fiscal_year') {
     if (!timeWindow.fiscalYear) {
       throw new Error('Missing fiscal year')
@@ -139,7 +139,7 @@ function getTimestamp(now: Dayjs, timeWindow: RuleAggregationTimeWindow) {
 }
 // Duplicated logic from phytoplankton
 function validateAggregationTimeWindow(
-  timeWindow: RuleAggregationVariableTimeWindow
+  timeWindow: LogicAggregationVariableTimeWindow
 ) {
   const { start, end } = timeWindow
   const now = dayjs()

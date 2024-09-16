@@ -16,7 +16,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { zipGenerators, staticValueGenerator } from '@/utils/generator'
 import { CurrencyService } from '@/services/currency'
-import { RuleAggregationTimeWindowGranularity } from '@/@types/openapi-internal/RuleAggregationTimeWindowGranularity'
+import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal/LogicAggregationTimeWindowGranularity'
 import { mergeEntities } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 
@@ -338,7 +338,7 @@ export async function* getTransactionUserPastTransactionsGenerator(
 export async function groupTransactionsByGranularity<T>(
   transactions: AuxiliaryIndexTransaction[],
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
-  granularity: RuleAggregationTimeWindowGranularity
+  granularity: LogicAggregationTimeWindowGranularity
 ): Promise<{ [timeKey: string]: T }> {
   return groupTransactions(
     transactions,
@@ -354,7 +354,7 @@ export async function groupTransactionsByGranularity<T>(
 export async function groupTransactionsByTime<T>(
   transactions: AuxiliaryIndexTransaction[],
   aggregator: (transactions: AuxiliaryIndexTransaction[]) => Promise<T>,
-  timeGranularity: RuleAggregationTimeWindowGranularity
+  timeGranularity: LogicAggregationTimeWindowGranularity
 ): Promise<{ [hourKey: string]: T }> {
   return groupTransactions(
     transactions,
@@ -385,7 +385,7 @@ export async function groupTransactions<T>(
 
 export function getTransactionStatsTimeGroupLabel(
   timestamp: number,
-  timeGranularity: RuleAggregationTimeWindowGranularity
+  timeGranularity: LogicAggregationTimeWindowGranularity
 ): string {
   switch (timeGranularity) {
     case 'minute': {
@@ -410,7 +410,7 @@ export function getTransactionStatsTimeGroupLabel(
 
 export function getTransactionStatsTimeGroupLabelV2(
   timestamp: number,
-  timeGranularity: RuleAggregationTimeWindowGranularity
+  timeGranularity: LogicAggregationTimeWindowGranularity
 ): string {
   if (timeGranularity === 'hour') {
     // For backward compatibility

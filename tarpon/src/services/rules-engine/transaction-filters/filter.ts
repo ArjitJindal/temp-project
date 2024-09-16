@@ -1,10 +1,10 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleFilter } from '../filter'
-import { getMigratedV8Config } from '../v8-migrations'
-import { RuleJsonLogicEvaluator } from '../v8-engine'
 import { LegacyFilters } from '../filters'
+import { getMigratedV8Config } from '../v8-migrations'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 export abstract class TransactionRuleFilter<P> extends RuleFilter {
   tenantId: string
@@ -33,7 +33,7 @@ export abstract class TransactionRuleFilter<P> extends RuleFilter {
       this.parameters as LegacyFilters
     )
     return (
-      await new RuleJsonLogicEvaluator('', getDynamoDbClient()).evaluate(
+      await new LogicEvaluator('', getDynamoDbClient()).evaluate(
         migratedFilter?.logic ?? { and: [true] },
         {},
         {

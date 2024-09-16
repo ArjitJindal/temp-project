@@ -47,7 +47,7 @@ import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Toggle from '@/components/library/Toggle';
 import { dayjs } from '@/utils/dayjs';
-import { RuleOperatorType } from '@/apis';
+import { LogicOperatorType } from '@/apis';
 import PropertyInput from '@/components/library/JsonSchemaEditor/Property/PropertyInput';
 import { ExtendedSchema } from '@/components/library/JsonSchemaEditor/types';
 import Tooltip from '@/components/library/Tooltip';
@@ -145,7 +145,7 @@ const customTextWidget: TextWidget<BasicConfig> = {
   type: `text`,
   factory: (props) => {
     const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
-    const operator = props.operator as RuleOperatorType;
+    const operator = props.operator as LogicOperatorType;
 
     // All text-type operators should support multi-values
     const isArrayType =

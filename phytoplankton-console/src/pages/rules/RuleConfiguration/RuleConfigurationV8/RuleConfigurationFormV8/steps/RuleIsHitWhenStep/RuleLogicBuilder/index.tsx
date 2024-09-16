@@ -8,9 +8,9 @@ import { isSuccess } from '@/utils/asyncResource';
 import { usePrevious, useIsChanged } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
-  RuleAggregationVariable,
-  RuleEntityVariableEntityEnum,
-  RuleEntityVariableInUse,
+  LogicAggregationVariable,
+  LogicEntityVariableEntityEnum,
+  LogicEntityVariableInUse,
   RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
@@ -19,9 +19,9 @@ import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/R
 interface Props {
   ruleType: RuleType;
   jsonLogic: RuleLogic | undefined;
-  entityVariableTypes: RuleEntityVariableEntityEnum[];
-  entityVariablesInUse?: RuleEntityVariableInUse[];
-  aggregationVariables: RuleAggregationVariable[] | undefined;
+  entityVariableTypes: LogicEntityVariableEntityEnum[];
+  entityVariablesInUse?: LogicEntityVariableInUse[];
+  aggregationVariables: LogicAggregationVariable[] | undefined;
   mlVariables?: RuleMachineLearningVariable[];
   onChange: (jsonLogic: RuleLogic | undefined) => void;
   configParams?: Partial<LogicBuilderConfig>;

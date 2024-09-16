@@ -6,9 +6,9 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { UserRepository } from '../users/repositories/user-repository'
-import { RuleData } from '../rules-engine/v8-engine'
 import { TenantService } from '../tenants'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
+import { LogicData } from '../logic-evaluator/engine'
 import { RiskRepository } from './repositories/risk-repository'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -43,7 +43,7 @@ export class RiskScoringV8Service {
 
   private async calculateRiskFactorScore(
     /* ToDo: After V8 Rules Engine migrated to Logic Evaluator Update Type */
-    _riskData: RuleData,
+    _riskData: LogicData,
     _riskFactor: RiskFactor[]
   ) {
     /* To be implemented */

@@ -10,6 +10,12 @@ import { AsyncLogicEngine } from 'json-logic-engine'
 import { MongoClient } from 'mongodb'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
 import { MachineLearningRepository } from '../machine-learning/machine-learning-repository'
+import { getLogicVariableByKey } from '../logic-evaluator/variables'
+import { getJsonLogicEngine, LogicEvaluator } from '../logic-evaluator/engine'
+import {
+  canAggregate,
+  getVariableKeysFromLogic,
+} from '../logic-evaluator/engine/utils'
 import {
   RuleChecksForField,
   RuleNature,
@@ -26,9 +32,6 @@ import {
 import { assertValidRiskLevelParameters, isV8Rule } from './utils'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
-import { RULE_OPERATORS } from './v8-operators'
-import { RULE_FUNCTIONS } from './v8-functions'
-import { canAggregate, getVariableKeysFromLogic } from './v8-engine/utils'
 import { getTimeRangeByTimeWindows } from './utils/time-utils'
 import { TimeWindow } from './utils/rule-parameter-schemas'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -52,32 +55,18 @@ import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchRespon
 import { scoreObjects } from '@/utils/search'
 import { logger } from '@/core/logger'
 import { getErrorMessage } from '@/utils/lang'
-import { getJsonLogicEngine } from '@/services/rules-engine/v8-engine'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { notNullish } from '@/utils/array'
-import {
-  getRuleVariableByKey,
-  getTransactionRuleEntityVariables,
-} from '@/services/rules-engine/v8-variables'
 import { getS3Client } from '@/utils/s3'
 import { envIs } from '@/utils/env'
 import dayjs from '@/utils/dayjs'
-import { RuleLogicConfig } from '@/@types/openapi-internal/RuleLogicConfig'
-import { RuleEntityVariableInUse } from '@/@types/openapi-internal/RuleEntityVariableInUse'
 import {
   DefaultApiGetRuleMlModelsRequest,
   DefaultApiUpdateRuleMlModelModelIdRequest,
 } from '@/@types/openapi-internal/RequestParameters'
+import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 
 export const RULE_LOGIC_CONFIG_S3_KEY = 'rule-logic-config.json'
-
-export function getRuleLogicConfig() {
-  return {
-    variables: Object.values(getTransactionRuleEntityVariables()),
-    operators: RULE_OPERATORS,
-    functions: RULE_FUNCTIONS,
-  } as RuleLogicConfig
-}
 
 type AIFilters = {
   ruleTypes?: string[]
@@ -142,12 +131,13 @@ export class RuleService {
 
     if (!envIs('local')) {
       const s3Client = getS3Client()
+      const logicEvaluator = new LogicEvaluator(FLAGRIGHT_TENANT_ID, dynamoDb)
       // Upload v8Config in JSON format to S3 using s3Client
       await s3Client.send(
         new PutObjectCommand({
           Bucket: process.env.SHARED_ASSETS_BUCKET,
           Key: RULE_LOGIC_CONFIG_S3_KEY,
-          Body: JSON.stringify(getRuleLogicConfig()),
+          Body: JSON.stringify(logicEvaluator.getLogicConfig()),
         })
       )
     }
@@ -558,8 +548,8 @@ You have to answer in below format as string. If you don't know any field, just 
   public static async validateRuleLogic(
     ruleLogic: unknown,
     riskLevelRuleLogic?: RuleInstance['riskLevelLogic'],
-    logicAggregationVariables?: Array<RuleAggregationVariable>,
-    logicEntityVariables?: RuleEntityVariableInUse[]
+    logicAggregationVariables?: Array<LogicAggregationVariable>,
+    logicEntityVariables?: LogicEntityVariableInUse[]
   ) {
     if (!isEmpty(riskLevelRuleLogic)) {
       // all keys in riskLevelRuleLogic should be in RISK_LEVELS
@@ -586,7 +576,7 @@ You have to answer in below format as string. If you don't know any field, just 
     const entityVarKeys = logicEntityVariables?.map((x) => x.key) ?? []
     const aggVarKeys = logicAggregationVariables?.map((x) => x.key) ?? []
     logicEntityVariables?.forEach((v) => {
-      if (!getRuleVariableByKey(v.entityKey)) {
+      if (!getLogicVariableByKey(v.entityKey)) {
         throw new BadRequest(`Unknown entity variable '${v}'`)
       }
     })
@@ -600,14 +590,14 @@ You have to answer in below format as string. If you don't know any field, just 
           `Invalid aggregation variable (UNIQUE_VALUES): ${v.key}`
         )
       }
-      if (!getRuleVariableByKey(v.aggregationFieldKey)) {
+      if (!getLogicVariableByKey(v.aggregationFieldKey)) {
         throw new BadRequest(
           `Unknown aggregate field: '${v.aggregationFieldKey}'`
         )
       }
       if (
         v.aggregationGroupByFieldKey &&
-        !getRuleVariableByKey(v.aggregationGroupByFieldKey)
+        !getLogicVariableByKey(v.aggregationGroupByFieldKey)
       ) {
         throw new BadRequest(
           `Unknown aggregate group by field: '${v.aggregationGroupByFieldKey}'`
@@ -638,7 +628,7 @@ You have to answer in below format as string. If you don't know any field, just 
           entityVariableKeys.forEach((entityVar) => {
             if (
               !entityVarKeys.includes(entityVar) &&
-              !getRuleVariableByKey(entityVar)
+              !getLogicVariableByKey(entityVar)
             ) {
               throw new BadRequest(`Unknown entity variable '${entityVar}'`)
             }

@@ -1,15 +1,15 @@
 import { BasicConfig, Config, CoreOperators, Operator } from '@react-awesome-query-builder/ui';
 import { omit } from 'lodash';
-import { RuleOperator, RuleOperatorType } from '@/apis';
+import { LogicOperator, LogicOperatorType } from '@/apis';
 
 export const isCustomOperator = (operatorKey?: string): boolean => {
   return operatorKey?.startsWith('op:') ?? false;
 };
 
 export function getOperatorsByValueType(
-  operators: RuleOperator[],
+  operators: LogicOperator[],
   valueType: string,
-): RuleOperator[] {
+): LogicOperator[] {
   return operators.filter((v) => v.uiDefinition.valueTypes?.includes(valueType));
 }
 
@@ -27,7 +27,7 @@ BUILT_IN_OPERATORS.not_equal.label = '≠';
 BUILT_IN_OPERATORS.greater_or_equal.label = '≥';
 BUILT_IN_OPERATORS.less_or_equal.label = '≤';
 
-export const MULTI_SELECT_LIST_OPERATORS: RuleOperatorType[] = ['op:inlist', 'op:!inlist'];
+export const MULTI_SELECT_LIST_OPERATORS: LogicOperatorType[] = ['op:inlist', 'op:!inlist'];
 export const MULTI_SELECT_BUILTIN_OPERATORS: string[] = ['select_any_in', 'select_not_any_in'];
 export const SELECT_OPERATORS: Array<keyof CoreOperators> = [
   'equal',
@@ -50,7 +50,7 @@ export const JSON_LOGIC_OPERATORS: CoreOperators<Config> = {
   },
 };
 
-export function getOperatorWithParameter(operator: RuleOperator): RuleOperator {
+export function getOperatorWithParameter(operator: LogicOperator): LogicOperator {
   const { key, parameters } = operator;
   const uiDefinition: Operator<Config> = {
     ...operator.uiDefinition,

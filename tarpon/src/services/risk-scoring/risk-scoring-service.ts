@@ -10,9 +10,9 @@ import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { CaseRepository } from '../cases/repository'
 import { CurrencyService } from '../currency'
-import { RuleData, RuleJsonLogicEvaluator } from '../rules-engine/v8-engine'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
 import { sendTransactionAggregationTasks } from '../rules-engine/utils'
+import { LogicEvaluator, LogicData } from '../logic-evaluator/engine'
 import { RiskRepository } from './repositories/risk-repository'
 import {
   DEFAULT_RISK_LEVEL,
@@ -50,7 +50,7 @@ import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetai
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RiskParameterLevelKeyValueV8 } from '@/@types/openapi-internal/RiskParameterLevelKeyValueV8'
 
 interface UserRiskEntity {
@@ -306,13 +306,15 @@ export class RiskScoringService {
   userRepository: UserRepository
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
+  logicEvaluator: LogicEvaluator
 
   constructor(
     tenantId: string,
     connections: {
       dynamoDb?: DynamoDBDocumentClient
       mongoDb?: MongoClient
-    }
+    },
+    logicEvaluator: LogicEvaluator
   ) {
     this.tenantId = tenantId
     this.riskRepository = new RiskRepository(tenantId, {
@@ -326,6 +328,7 @@ export class RiskScoringService {
     this
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+    this.logicEvaluator = logicEvaluator
   }
 
   public async runRiskScoresForUser(
@@ -721,7 +724,7 @@ export class RiskScoringService {
 
   private async evaluateRiskFactors(
     riskFactor: ParameterAttributeRiskValuesV8,
-    evaluationContext: RuleData
+    evaluationContext: LogicData
   ): Promise<RiskScoreComponent> {
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
@@ -733,7 +736,7 @@ export class RiskScoringService {
     )
 
     for (const value of riskAssignmentValues) {
-      const { hit, vars } = await this.riskFactorEvaluateService().evaluate(
+      const { hit, vars } = await this.logicEvaluator.evaluate(
         value.logic,
         {
           agg: riskFactor.logicAggregationVariables,
@@ -792,11 +795,6 @@ export class RiskScoringService {
     }
   }
 
-  private riskFactorEvaluateService = memoize(
-    () => new RuleJsonLogicEvaluator(this.tenantId, this.dynamoDb),
-    () => this.tenantId
-  )
-
   public async getRiskScoreComponentsForCustomRiskFactors(
     entity: RiskEntity
   ): Promise<RiskScoreComponent[]> {
@@ -837,7 +835,7 @@ export class RiskScoringService {
           ),
         ])
 
-      const aggregationVariables: RuleAggregationVariable[] = []
+      const aggregationVariables: LogicAggregationVariable[] = []
 
       riskScoreComponents = await Promise.all(
         customRiskFactors.map((riskFactor) => {
@@ -853,13 +851,12 @@ export class RiskScoringService {
         })
       )
 
-      const messages =
-        await this.riskFactorEvaluateService().handleV8Aggregation(
-          'RISK',
-          aggregationVariables,
-          entity.data,
-          transactionEvents
-        )
+      const messages = await this.logicEvaluator.handleV8Aggregation(
+        'RISK',
+        aggregationVariables,
+        entity.data,
+        transactionEvents
+      )
       await sendTransactionAggregationTasks(messages)
     }
 

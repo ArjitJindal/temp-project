@@ -6,7 +6,6 @@ import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transact
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
 import { RuleInstanceRepository } from '../repositories/rule-instance-repository'
 import { MongoDbTransactionRepository } from '../repositories/mongodb-transaction-repository'
-import { RuleJsonLogicEvaluator } from '../v8-engine'
 import { TransactionAmountRuleParameters } from '../transaction-rules/transaction-amount'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -24,9 +23,10 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
@@ -35,8 +35,14 @@ const dynamoDb = getDynamoDbClient()
 dynamoDbSetupHook()
 withLocalChangeHandler()
 describe('Verify Transaction', () => {
+  const TEST_TENANT_ID = getTestTenantId()
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
-    const rulesEngine = new RulesEngineService(getTestTenantId(), dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const transaction = getTestTransaction({ transactionId: 'dummy' })
     const result = await rulesEngine.verifyTransaction(transaction)
     expect(result).toEqual({
@@ -58,7 +64,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
@@ -119,7 +130,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       await rulesEngine.verifyTransaction(transaction)
       const transactionRepository = new DynamoDbTransactionRepository(
@@ -256,7 +272,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
@@ -313,7 +334,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('rule is not run', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         originUserId: '1',
@@ -358,7 +384,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
@@ -393,7 +424,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('returns executed rules', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: 'dummy' })
       const result1 = await rulesEngine.verifyTransaction(transaction)
       const result2 = await rulesEngine.verifyTransaction(transaction)
@@ -413,7 +449,12 @@ describe('Verify Transaction', () => {
     ])
 
     test('only destination user is hit', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         originUserId: '1',
@@ -483,7 +524,12 @@ describe('Verify Transaction Event', () => {
         TEST_TENANT_ID,
         dynamoDb
       )
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({
         transactionId: 'dummy',
         originDeviceData: {
@@ -652,7 +698,12 @@ describe('Verify Transaction Event', () => {
         TEST_TENANT_ID,
         dynamoDb
       )
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({
         transactionId: 'dummy-2',
       })
@@ -712,7 +763,12 @@ describe('Verify Transaction Event', () => {
           })
           await riskRepository.createOrUpdateManualDRSRiskItem('1', 'HIGH')
 
-          const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+          const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+          const rulesEngine = new RulesEngineService(
+            TEST_TENANT_ID,
+            dynamoDb,
+            logicEvaluator
+          )
           const transaction = getTestTransaction({
             transactionId: '1',
             originUserId: '1',
@@ -759,7 +815,12 @@ describe('Verify Transaction Event', () => {
     })
 
     test('returns normal action without PULSE feature flag', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({ transactionId: '2' })
       const result = await rulesEngine.verifyTransaction(transaction)
       expect(result).toEqual({
@@ -812,9 +873,13 @@ describe('Verify Transaction for Simulation', () => {
       type: 'TRANSACTION',
     },
   ])
-
   test('Returns rule result and no side effects are done', async () => {
-    const rulesEngine = new RulesEngineService(getTestTenantId(), dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const testTransactionId = 'dummy'
     const testRuleInstanceId = 'abc'
     const transaction = getTestTransaction({ transactionId: testTransactionId })
@@ -872,7 +937,12 @@ describe('Verify Transaction for Simulation', () => {
   })
 
   test('Applies manual action to transaction', async () => {
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const transaction = getTestTransaction({ status: 'SUSPEND' })
     const t = await rulesEngine.verifyTransaction(transaction)
     const mongoDb = await getMongoDbClient()
@@ -943,7 +1013,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
           transactionId: 'tx-1',
@@ -1074,7 +1149,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1188,7 +1268,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1293,7 +1378,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1426,7 +1516,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1541,7 +1636,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('Basic test', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const timestamp = dayjs().valueOf()
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
@@ -1782,7 +1882,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
 
     test('', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       await rulesEngine.verifyTransaction(
         getTestTransaction({
           timestamp: dayjs('2020-01-01').valueOf(),
@@ -1837,7 +1942,12 @@ describe('Verify Transaction: V8 engine', () => {
       getTestUser({ userId: 'U-2' }),
     ])
     test('Sender User matches the filter (hit)', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
           originUserId: 'U-2',
@@ -1881,7 +1991,12 @@ describe('Verify Transaction: V8 engine', () => {
     ])
     setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: 'U-1' })])
     test('', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const transaction = getTestTransaction({
         originUserId: 'U-1',
       })
@@ -1900,13 +2015,10 @@ describe('Verify Transaction: V8 engine', () => {
 describe('Verify Transaction V8 engine with Update Aggregation', () => {
   withFeatureHook(['RULES_ENGINE_V8'])
 
-  const mock = jest.spyOn(
-    RuleJsonLogicEvaluator.prototype,
-    'updateAggregationVariable'
-  )
+  const mock = jest.spyOn(LogicEvaluator.prototype, 'updateAggregationVariable')
 
   const TEST_TENANT_ID = getTestTenantId()
-  const aggregationVariables: RuleAggregationVariable = {
+  const aggregationVariables: LogicAggregationVariable = {
     key: 'agg:test',
     type: 'PAYMENT_DETAILS_TRANSACTIONS',
     transactionDirection: 'SENDING',
@@ -1936,7 +2048,12 @@ describe('Verify Transaction V8 engine with Update Aggregation', () => {
 
   test('Checks aggregation variable is updated only once', async () => {
     mock.mockClear()
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
 
     await rulesEngine.verifyTransaction(
       getTestTransaction({
@@ -1980,7 +2097,12 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
   ])
 
   test('executes the json logic - hit for course grained aggregation', async () => {
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const result1 = await rulesEngine.verifyTransaction(
       getTestTransaction({
         transactionId: 'tx-1',
@@ -2171,7 +2293,12 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
     /** This Test would fail if we use incorrectly use course grained aggregation(month) for rolling basis,
      *  as it would use complete previous month */
 
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const result1 = await rulesEngine.verifyTransaction(
       getTestTransaction({
         transactionId: 'tx-1',
@@ -2322,7 +2449,12 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
     ])
 
     test('executes the json logic', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
           transactionId: 'tx-1',
@@ -2438,7 +2570,12 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
     })
 
     test('executes the json logic - not hit', async () => {
-      const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
       const result1 = await rulesEngine.verifyTransaction(
         getTestTransaction({
           transactionId: 'tx-2',
@@ -2507,9 +2644,14 @@ describe('Run v2 rules on v8 engine', () => {
 
     expect(data[0].logic).not.toBeUndefined()
 
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
 
-    const v8Mock = jest.spyOn(RuleJsonLogicEvaluator.prototype, 'evaluate')
+    const v8Mock = jest.spyOn(LogicEvaluator.prototype, 'evaluate')
 
     await rulesEngine.verifyTransaction(
       getTestTransaction({
@@ -2555,7 +2697,12 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
   setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
   test('transactions created duing Deploying should be put to aggregation data', async () => {
-    const rulesEngine = new RulesEngineService(TEST_TENANT_ID, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
     const ruleInstanceRepository = new RuleInstanceRepository(TEST_TENANT_ID, {
       dynamoDb,
     })

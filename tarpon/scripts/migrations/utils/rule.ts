@@ -19,7 +19,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ruleInstanceAggregationVariablesRebuild } from '@/services/rules-engine/utils'
 function isRule(rule: Rule | RuleInstance) {
@@ -567,10 +567,10 @@ export const renameV8Key = async (
   })
 }
 
-export async function bumpRuleAggregationVariablesVersion(
+export async function bumpLogicAggregationVariablesVersion(
   tenantId: string,
   toUpdateCallback: (
-    RuleAggregationVariable: RuleAggregationVariable
+    LogicAggregationVariable: LogicAggregationVariable
   ) => boolean
 ) {
   const dynamoDb = getDynamoDbClient()

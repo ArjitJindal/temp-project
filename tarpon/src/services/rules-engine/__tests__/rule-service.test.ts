@@ -1,12 +1,12 @@
 import { RuleService } from '../rule-service'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 
 type RuleLogicTest = {
   ruleLogic: unknown
   riskLevelRuleLogic: Record<RiskLevel, unknown>
-  logicAggregationVariables?: Array<RuleAggregationVariable>
+  logicAggregationVariables?: Array<LogicAggregationVariable>
   expected: boolean
   name: string
 }
@@ -16,7 +16,7 @@ const ruleLogic = {
     { '==': [{ var: 'agg:fb96ab49-e552-4ea0-a539-55070238b316' }, 1] },
   ],
 }
-const logicAggregationVariables: Array<RuleAggregationVariable> = [
+const logicAggregationVariables: Array<LogicAggregationVariable> = [
   {
     key: 'agg:fb96ab49-e552-4ea0-a539-55070238b316',
     type: 'USER_TRANSACTIONS',

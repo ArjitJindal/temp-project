@@ -1,5 +1,5 @@
 import { Func } from '@react-awesome-query-builder/ui';
-import { RuleFunction } from '@/apis';
+import { LogicFunction } from '@/apis';
 
 type JsonLogicFunc = Func & Required<Pick<Func, 'jsonLogic' | 'jsonLogicImport'>>;
 
@@ -28,7 +28,7 @@ function getArithmeticFunc(label: string, op: string): JsonLogicFunc {
   };
 }
 
-export const JSON_LOGIC_FUNCTIONS: RuleFunction[] = [
+export const JSON_LOGIC_FUNCTIONS: LogicFunction[] = [
   {
     key: 'add',
     group: 'number',

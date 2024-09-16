@@ -8,12 +8,12 @@ import { RULE_LOGIC_CONFIG } from '@/utils/queries/keys';
 import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
 import {
-  RuleAggregationVariable,
-  RuleEntityVariableEntityEnum,
-  RuleEntityVariableInUse,
-  RuleLogicConfig,
+  LogicAggregationVariable,
+  LogicEntityVariableEntityEnum,
+  LogicEntityVariableInUse,
   RuleMachineLearningVariable,
   RuleType,
+  LogicConfig,
 } from '@/apis';
 import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
@@ -31,9 +31,9 @@ export function useRuleLogicConfig(ruleType: RuleType) {
   const api = useApi();
   const settings = useSettings();
 
-  const queryResult = useQuery<RuleLogicConfig>(
+  const queryResult = useQuery<LogicConfig>(
     RULE_LOGIC_CONFIG(),
-    async (): Promise<RuleLogicConfig> => {
+    async (): Promise<LogicConfig> => {
       const response = await api.getRuleLogicConfig();
       if (response.ruleLogicConfig) {
         return response.ruleLogicConfig;
@@ -41,7 +41,7 @@ export function useRuleLogicConfig(ruleType: RuleType) {
 
       const ruleLogicConfig = (await fetch(response.s3Url).then((res) =>
         res.json(),
-      )) as RuleLogicConfig;
+      )) as LogicConfig;
       return ruleLogicConfig;
     },
     { refetchOnMount: false, enabled: v8Enabled },
@@ -95,9 +95,9 @@ export function useRuleLogicConfig(ruleType: RuleType) {
 
 export function useLogicBuilderConfig(
   ruleType: RuleType,
-  entityVariableTypes: RuleEntityVariableEntityEnum[],
-  entityVariablesInUse: RuleEntityVariableInUse[] | undefined,
-  aggregationVariables: RuleAggregationVariable[],
+  entityVariableTypes: LogicEntityVariableEntityEnum[],
+  entityVariablesInUse: LogicEntityVariableInUse[] | undefined,
+  aggregationVariables: LogicAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
   mlVariables: RuleMachineLearningVariable[],
 ): AsyncResource<Config> {

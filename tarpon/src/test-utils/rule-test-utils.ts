@@ -39,6 +39,7 @@ import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
 import { GeoIPService } from '@/services/geo-ip'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const DEFAULT_DESCRIPTION = ''
 
@@ -154,7 +155,8 @@ export async function bulkVerifyTransactions(
   }
 
   const results: any[] = []
-  const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+  const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  const rulesEngine = new RulesEngineService(tenantId, dynamoDb, logicEvaluator)
   for (const transaction of transactions) {
     results.push(await rulesEngine.verifyTransaction(transaction))
   }
@@ -171,7 +173,13 @@ export async function bulkVerifyUsers(
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const results: any[] = []
-  const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+  const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  const rulesEngine = new RulesEngineService(
+    tenantId,
+    dynamoDb,
+    logicEvaluator,
+    mongoDb
+  )
   for (const user of users) {
     const { monitoringResult } = await rulesEngine.verifyUser(user, {
       ongoingScreeningMode,
@@ -359,7 +367,13 @@ export function createAllUserRuleTestCases(
   test(testCase.name, async () => {
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
-    const rulesEngine = new RulesEngineService(tenantId, dynamoDb, mongoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb
+    )
     const userIds = testCase.users.map((user) => user.userId)
     const hits = testCase.expectedHits
 

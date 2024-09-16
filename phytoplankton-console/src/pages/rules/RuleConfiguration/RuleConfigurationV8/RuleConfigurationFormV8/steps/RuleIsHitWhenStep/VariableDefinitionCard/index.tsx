@@ -11,9 +11,9 @@ import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
-  RuleAggregationVariable,
-  RuleEntityVariableEntityEnum,
-  RuleEntityVariableInUse,
+  LogicAggregationVariable,
+  LogicEntityVariableEntityEnum,
+  LogicEntityVariableInUse,
   RuleMachineLearningVariable,
   RuleType,
 } from '@/apis';
@@ -31,8 +31,8 @@ function getNewAggregationVariableKey() {
 }
 
 function augmentAggregationVariables(
-  aggregationVariables: RuleAggregationVariable[],
-): RuleAggregationVariable[] {
+  aggregationVariables: LogicAggregationVariable[],
+): LogicAggregationVariable[] {
   return aggregationVariables.flatMap((v) => {
     if (v.aggregationFunc === 'UNIQUE_VALUES') {
       if (!v.key.endsWith(LHS_ONLY_SYMBOL) && !v.key.endsWith(RHS_ONLY_SYMBOL)) {
@@ -69,21 +69,25 @@ function augmentAggregationVariables(
 
 type VariableType = 'entity' | 'aggregation' | 'ml';
 type EditingAggVariable = { type: 'aggregation'; variable: FormRuleAggregationVariable };
-type EditingEntityVariable = { type: 'entity'; variable?: RuleEntityVariableInUse; index?: number };
+type EditingEntityVariable = {
+  type: 'entity';
+  variable?: LogicEntityVariableInUse;
+  index?: number;
+};
 type EditingMLVariable = { type: 'ml'; variable?: RuleMachineLearningVariable };
 
 interface RuleAggregationVariablesEditorProps {
   ruleType: RuleType;
   readOnly?: boolean;
-  entityVariables: RuleEntityVariableInUse[] | undefined;
-  aggregationVariables: RuleAggregationVariable[] | undefined;
+  entityVariables: LogicEntityVariableInUse[] | undefined;
+  aggregationVariables: LogicAggregationVariable[] | undefined;
   mlVariables?: RuleMachineLearningVariable[];
   onChange: (value: {
-    entityVariables?: RuleEntityVariableInUse[];
-    aggregationVariables?: RuleAggregationVariable[];
+    entityVariables?: LogicEntityVariableInUse[];
+    aggregationVariables?: LogicAggregationVariable[];
     mlVariables?: RuleMachineLearningVariable[];
   }) => void;
-  entity?: RuleEntityVariableEntityEnum;
+  entity?: LogicEntityVariableEntityEnum;
 }
 
 const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
@@ -210,7 +214,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     [settings.defaultValues?.currency],
   );
   const handleUpdateEntityVariable = useCallback(
-    (newEntityVariable: RuleEntityVariableInUse) => {
+    (newEntityVariable: LogicEntityVariableInUse) => {
       const entityVar = editingVariable as EditingEntityVariable;
       const newEntityVariables = [...(entityVariables ?? [])];
       if (entityVar?.index !== undefined) {
@@ -243,7 +247,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     [mlVariables, handleCancelEditVariable, onChange, editingVariable],
   );
   const handleUpdateAggVariable = useCallback(
-    (newAggregationVariable: RuleAggregationVariable) => {
+    (newAggregationVariable: LogicAggregationVariable) => {
       // Sanitize values
       newAggregationVariable.name = newAggregationVariable.name?.trim();
       newAggregationVariable.includeCurrentEntity =

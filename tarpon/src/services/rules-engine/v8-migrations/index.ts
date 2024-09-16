@@ -21,7 +21,7 @@ import {
   migrateCheckDirectionParameters,
 } from './utils'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { TransactionsExceedPastPeriodRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-exceed-past-period'
 import { TransactionNewCountryRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-new-country'
@@ -30,7 +30,7 @@ import { IpAddressUnexpectedLocationRuleParameters } from '@/services/rules-engi
 
 export type RuleMigrationConfig = {
   logic: object
-  logicAggregationVariables: RuleAggregationVariable[]
+  logicAggregationVariables: LogicAggregationVariable[]
   alertCreationDirection?: AlertCreationDirection
   baseCurrency?: CurrencyCode
 }
@@ -164,8 +164,8 @@ const DEVIATION_RULE_MIGRATION = (
     aggFunc,
     baseCurrency,
   })
-  let period1LogicAggregationVariablesCount: RuleAggregationVariable[] = []
-  let period2LogicAggregationVariablesCount: RuleAggregationVariable[] = []
+  let period1LogicAggregationVariablesCount: LogicAggregationVariable[] = []
+  let period2LogicAggregationVariablesCount: LogicAggregationVariable[] = []
   if (!isEmpty(parameters.transactionsNumberThreshold)) {
     const { logicAggregationVariables } = migrateCheckDirectionParameters({
       type: 'COUNT',
@@ -207,10 +207,10 @@ const DEVIATION_RULE_MIGRATION = (
     period1LogicAggregationVariablesCount,
     period2LogicAggregationVariablesCount
   )) {
-    const period1AvgAmountVar = tuple[0] as RuleAggregationVariable
-    const period2AvgAmountVar = tuple[1] as RuleAggregationVariable
-    const period1CountVar = tuple[2] as RuleAggregationVariable
-    const period2CountVar = tuple[3] as RuleAggregationVariable
+    const period1AvgAmountVar = tuple[0] as LogicAggregationVariable
+    const period2AvgAmountVar = tuple[1] as LogicAggregationVariable
+    const period1CountVar = tuple[2] as LogicAggregationVariable
+    const period2CountVar = tuple[3] as LogicAggregationVariable
 
     const period1Var = daily
       ? {
@@ -338,7 +338,7 @@ const V8_CONVERSION: Readonly<
   },
 
   'R-10': (parameters: MultipleSendersWithinTimePeriodRuleParameters) => {
-    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const logicAggregationVariables: LogicAggregationVariable[] = []
     const alertCreationDirection: AlertCreationDirection = 'DESTINATION'
 
     logicAggregationVariables.push({
@@ -368,7 +368,7 @@ const V8_CONVERSION: Readonly<
 
   'R-5': (parameters: FirstActivityAfterLongTimeRuleParameters) => {
     const { dormancyPeriodDays, checkDirection = 'all' } = parameters
-    const aggregationVariable: RuleAggregationVariable[] =
+    const aggregationVariable: LogicAggregationVariable[] =
       migrateCheckDirectionParameters({
         type: 'COUNT',
         parameters: {
@@ -538,7 +538,7 @@ const V8_CONVERSION: Readonly<
   },
 
   'R-9': (parameters: MultipleSendersWithinTimePeriodRuleParameters) => {
-    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const logicAggregationVariables: LogicAggregationVariable[] = []
     const alertCreationDirection: AlertCreationDirection = 'ORIGIN'
 
     logicAggregationVariables.push({
@@ -648,7 +648,7 @@ const V8_CONVERSION: Readonly<
         ...v,
         baseCurrency: currency as CurrencyCode,
       })
-    ) as RuleAggregationVariable[]
+    ) as LogicAggregationVariable[]
     const conditions: any[] = []
     if (
       parameters.transactionsCounterPartiesThreshold
@@ -656,7 +656,7 @@ const V8_CONVERSION: Readonly<
     ) {
       const checkPaymentMethodDetails =
         parameters.transactionsCounterPartiesThreshold.checkPaymentMethodDetails
-      const counterPartyAggVariable: RuleAggregationVariable = {
+      const counterPartyAggVariable: LogicAggregationVariable = {
         key: 'agg:counterparty',
         type: checkPaymentMethodDetails
           ? 'PAYMENT_DETAILS_TRANSACTIONS'
@@ -760,7 +760,7 @@ const V8_CONVERSION: Readonly<
   'R-122': (params) => DEVIATION_RULE_MIGRATION('AMOUNT', 'SUM', true, params),
   'R-4': (params: TransactionNewCurrencyRuleParameters) => {
     const { initialTransactions } = params
-    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const logicAggregationVariables: LogicAggregationVariable[] = []
 
     // all sending transactions count
     logicAggregationVariables.push({
@@ -898,7 +898,7 @@ const V8_CONVERSION: Readonly<
   },
   'R-3': (params: TransactionNewCountryRuleParameters) => {
     const { initialTransactions } = params
-    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const logicAggregationVariables: LogicAggregationVariable[] = []
 
     // all sending transactions count
     logicAggregationVariables.push({
@@ -1026,7 +1026,7 @@ const V8_CONVERSION: Readonly<
 
   'R-88': (params: IpAddressUnexpectedLocationRuleParameters) => {
     const { transactionAmountThreshold } = params
-    const logicAggregationVariables: RuleAggregationVariable[] = []
+    const logicAggregationVariables: LogicAggregationVariable[] = []
 
     logicAggregationVariables.push({
       key: 'agg:userTransactionsCountries$2',
@@ -1108,8 +1108,8 @@ const V8_CONVERSION: Readonly<
       timeWindow2,
       timeWindow1,
     } = params
-    const logicAggregationVariables: RuleAggregationVariable[] = []
-    const allTimeTransactionsCount: RuleAggregationVariable = {
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+    const allTimeTransactionsCount: LogicAggregationVariable = {
       key: 'agg:allTimeTransactionsCount',
       type: 'USER_TRANSACTIONS',
       aggregationFunc: 'COUNT',

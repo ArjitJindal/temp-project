@@ -21,7 +21,7 @@ import { CashDetails } from '@/@types/openapi-public/CashDetails'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
-import { getPaymentDetailsIdentifiersKey } from '@/services/rules-engine/v8-variables/payment-details'
+import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -224,7 +224,7 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#aggregation#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${direction}#${version}#marker`,
     SortKeyID: transactionId,
   }),
-  V8_RULE_USER_TIME_AGGREGATION_TX_MARKER: (
+  V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER: (
     tenantId: string,
     direction: 'origin' | 'destination',
     version: string,
@@ -234,7 +234,7 @@ export const DynamoDbKeys = {
     SortKeyID: '1',
   }),
   // TODO (V8): Improve user key ID format for V8 only
-  V8_RULE_USER_TIME_AGGREGATION_READY_MARKER: (
+  V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER: (
     tenantId: string,
     userKeyId: string,
     version: string
@@ -252,7 +252,7 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userKeyId}#${RULE_INSTANCE_PREFIX}${ruleInstanceId}#${version}`,
     SortKeyID: timeLabel,
   }),
-  V8_RULE_USER_TIME_AGGREGATION: (
+  V8_LOGIC_USER_TIME_AGGREGATION: (
     tenantId: string,
     userKeyId: string,
     version: string,

@@ -7,7 +7,6 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import {
   RULE_LOGIC_CONFIG_S3_KEY,
   RuleService,
-  getRuleLogicConfig,
 } from '@/services/rules-engine/rule-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -17,6 +16,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleInstanceService } from '@/services/rules-engine/rule-instance-service'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { envIs } from '@/utils/env'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 export const ruleHandler = lambdaApi()(
   async (
@@ -36,13 +36,16 @@ export const ruleHandler = lambdaApi()(
       // NOTE: rule logic config is over 10MB which is the max size for API Gateway response,
       // so we need to get it from S3 instead
       const s3 = getS3ClientByEvent(event)
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
       const getObjectCommand = new GetObjectCommand({
         Bucket: process.env.SHARED_ASSETS_BUCKET,
         Key: RULE_LOGIC_CONFIG_S3_KEY,
       })
       return {
         s3Url: envIs('local') ? '' : await getSignedUrl(s3, getObjectCommand),
-        ruleLogicConfig: envIs('local') ? getRuleLogicConfig() : undefined,
+        ruleLogicConfig: envIs('local')
+          ? logicEvaluator.getLogicConfig()
+          : undefined,
       }
     })
 

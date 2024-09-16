@@ -86,9 +86,9 @@ type ExcludedDynamoDbKey = Exclude<
   | 'CACHE_QUESTION_RESULT'
   | 'IP_ADDRESS_CACHE'
   // TO IMPLEMENT
-  | 'V8_RULE_USER_TIME_AGGREGATION'
-  | 'V8_RULE_USER_TIME_AGGREGATION_READY_MARKER'
-  | 'V8_RULE_USER_TIME_AGGREGATION_TX_MARKER'
+  | 'V8_LOGIC_USER_TIME_AGGREGATION'
+  | 'V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER'
+  | 'V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

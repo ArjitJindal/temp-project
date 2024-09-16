@@ -26,6 +26,7 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 
 async function getMissingRelatedTransactions(
@@ -98,7 +99,12 @@ export const transactionHandler = lambdaApi()(
 
       logger.info(`Verifying transaction`)
       validationSegment?.close()
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        tenantId,
+        dynamoDb,
+        logicEvaluator
+      )
       const result = await rulesEngine.verifyTransaction(transaction, {
         validateOriginUserId: request?.validateOriginUserId === 'true',
         validateDestinationUserId:
@@ -193,8 +199,12 @@ export const transactionEventHandler = lambdaApi()(
         eventId: transactionEvent.eventId,
       })
       logger.info(`Processing Transaction Event`) // Need to log to show on the logs
-
-      const rulesEngine = new RulesEngineService(tenantId, dynamoDb)
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        tenantId,
+        dynamoDb,
+        logicEvaluator
+      )
       const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
 
       return {
@@ -272,11 +282,12 @@ export const userEventsHandler = lambdaApi()(
         eventId: userEvent.eventId,
       })
       logger.info(`Processing Consumer User Event`) // Need to log to show on the logs
-
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
-        await getMongoDbClient()
+        await getMongoDbClient(),
+        logicEvaluator
       )
 
       const { updatedConsumerUserAttributes } = userEvent
@@ -373,11 +384,12 @@ export const userEventsHandler = lambdaApi()(
           eventId: userEvent.eventId,
         })
         logger.info(`Processing Business User Event`) // Need to log to show on the logs
-
+        const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
         const userManagementService = new UserManagementService(
           tenantId,
           dynamoDb,
-          await getMongoDbClient()
+          await getMongoDbClient(),
+          logicEvaluator
         )
         const { updatedBusinessUserAttributes } = userEvent
         if (updatedBusinessUserAttributes?.linkedEntities) {

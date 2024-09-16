@@ -6,8 +6,8 @@ import {
   RiskLevelRuleLogic,
   RiskLevelsTriggersOnHit,
   RuleAction,
-  RuleAggregationVariable,
-  RuleEntityVariableInUse,
+  LogicAggregationVariable,
+  LogicEntityVariableInUse,
   RuleMachineLearningVariable,
   RuleType,
   TriggersOnHit,
@@ -21,8 +21,8 @@ export interface RuleIsHitWhenStepFormValues {
   baseCurrency?: CurrencyCode;
   ruleLogic?: RuleLogic;
   riskLevelRuleLogic?: RiskLevelRuleLogic;
-  ruleLogicEntityVariables?: RuleEntityVariableInUse[];
-  ruleLogicAggregationVariables?: RuleAggregationVariable[];
+  ruleLogicEntityVariables?: LogicEntityVariableInUse[];
+  ruleLogicAggregationVariables?: LogicAggregationVariable[];
   ruleLogicMlVariables?: RuleMachineLearningVariable[];
   ruleAction?: RuleAction;
   riskLevelRuleActions?: RiskLevelRuleActions;

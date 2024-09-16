@@ -2,9 +2,9 @@ import { compact, isEmpty, uniq, uniqBy } from 'lodash'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { getAggregationTaskMessage } from '../rules-engine/v8-engine'
-import { getPaymentDetailsIdentifiersKey } from '../rules-engine/v8-variables/payment-details'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
+import { getAggregationTaskMessage } from '../logic-evaluator/engine'
+import { getPaymentDetailsIdentifiersKey } from '../logic-evaluator/variables/payment-details'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import {
@@ -15,7 +15,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
 import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import {
   bulkSendMessages,
   FifoSqsMessage,
@@ -164,7 +164,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private async preAggregateVariable(
     tenantId: string,
     entity: RulePreAggregationBatchJob['parameters']['entity'],
-    aggregationVariable: RuleAggregationVariable
+    aggregationVariable: LogicAggregationVariable
   ): Promise<Array<FifoSqsMessage>> {
     const transactionsRepo = new MongoDbTransactionRepository(
       tenantId,

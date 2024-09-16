@@ -5,9 +5,9 @@ import {
   TransactionTimeRange,
 } from '../utils/rule-parameter-schemas'
 import { PaymentRuleFiltersChildParameters } from '../transaction-filters/payment-filters-base'
-import { RuleAggregationFunc } from '@/@types/openapi-internal/RuleAggregationFunc'
+import { LogicAggregationFunc } from '@/@types/openapi-internal/LogicAggregationFunc'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { generateChecksum } from '@/utils/object'
 
@@ -28,15 +28,15 @@ export function migrateCheckDirectionParameters(props: {
     originMatchPaymentMethodDetails?: boolean
     destinationMatchPaymentMethodDetails?: boolean
   }
-  aggFunc?: RuleAggregationFunc
+  aggFunc?: LogicAggregationFunc
   baseCurrency?: CurrencyCode
 }): {
-  logicAggregationVariables: RuleAggregationVariable[]
+  logicAggregationVariables: LogicAggregationVariable[]
   alertCreationDirection: AlertCreationDirection
 } {
   const { type, parameters, aggFunc, baseCurrency } = props
   const aggKeyHash = generateChecksum(props, 5)
-  let aggregationFunc: RuleAggregationFunc | undefined = aggFunc
+  let aggregationFunc: LogicAggregationFunc | undefined = aggFunc
   if (!aggregationFunc) {
     if (type === 'COUNT') {
       aggregationFunc = 'COUNT'
@@ -51,7 +51,7 @@ export function migrateCheckDirectionParameters(props: {
     aggregationFieldKey = 'TRANSACTION:transactionId'
   }
 
-  const logicAggregationVariables: RuleAggregationVariable[] = []
+  const logicAggregationVariables: LogicAggregationVariable[] = []
   if (parameters.checkSender === 'sending') {
     if (type === 'AMOUNT') {
       aggregationFieldKey = 'TRANSACTION:originAmountDetails-transactionAmount'

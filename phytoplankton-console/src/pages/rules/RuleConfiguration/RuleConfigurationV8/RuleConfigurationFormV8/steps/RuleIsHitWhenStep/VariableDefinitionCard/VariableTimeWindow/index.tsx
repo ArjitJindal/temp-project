@@ -1,32 +1,32 @@
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import {
-  RuleAggregationVariableTimeWindow,
-  RuleAggregationTimeWindow,
-  RuleAggregationTimeWindowGranularity,
+  LogicAggregationVariableTimeWindow,
+  LogicAggregationTimeWindow,
+  LogicAggregationTimeWindowGranularity,
 } from '@/apis';
 import { InputProps } from '@/components/library/Form';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
 import Select from '@/components/library/Select';
-import { RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS } from '@/apis/models-custom/RuleAggregationTimeWindowGranularity';
+import { LOGIC_AGGREGATION_TIME_WINDOW_GRANULARITYS } from '@/apis/models-custom/LogicAggregationTimeWindowGranularity';
 import Checkbox from '@/components/library/Checkbox';
 import { Hint } from '@/components/library/Form/InputField';
 
-interface Props extends InputProps<RuleAggregationVariableTimeWindow> {}
+interface Props extends InputProps<LogicAggregationVariableTimeWindow> {}
 
-export const NO_ROLLING_BASIS_GRANULARITIES: RuleAggregationTimeWindowGranularity[] = [
+export const NO_ROLLING_BASIS_GRANULARITIES: LogicAggregationTimeWindowGranularity[] = [
   'second',
   'minute',
   'hour',
 ];
 
-const DEFAULT_TIME_WINDOW_VALUE: RuleAggregationTimeWindow = {
+const DEFAULT_TIME_WINDOW_VALUE: LogicAggregationTimeWindow = {
   units: 1,
   granularity: 'year',
 };
 
-const DEFAULT_VALUE: RuleAggregationVariableTimeWindow = {
+const DEFAULT_VALUE: LogicAggregationVariableTimeWindow = {
   start: DEFAULT_TIME_WINDOW_VALUE,
   end: DEFAULT_TIME_WINDOW_VALUE,
 };
@@ -36,7 +36,7 @@ const FISCAL_YEAR_OPTIONS = [
   { value: 'indian', label: '1st April - 31st March' },
 ];
 
-const granularityOptions = RULE_AGGREGATION_TIME_WINDOW_GRANULARITYS.map((granularity) => ({
+const granularityOptions = LOGIC_AGGREGATION_TIME_WINDOW_GRANULARITYS.map((granularity) => ({
   label: `${granularity === 'now' ? 'now' : humanizeAuto(granularity)} ${
     granularity === 'now' || granularity === 'all_time' ? '' : 'ago'
   }`,
@@ -168,7 +168,7 @@ export default function VariableTimeWindow(props: Props) {
 }
 
 function UnitGranularityInputs(
-  props: InputProps<RuleAggregationTimeWindow> & {
+  props: InputProps<LogicAggregationTimeWindow> & {
     fiscalYearSelectValue: string | undefined;
     isFrom?: boolean;
   },
@@ -194,7 +194,7 @@ function UnitGranularityInputs(
           }}
         />
       )}
-      <Select<RuleAggregationTimeWindowGranularity>
+      <Select<LogicAggregationTimeWindowGranularity>
         isDisabled={isDisabled}
         value={isDisabled ? undefined : value?.granularity}
         onChange={(newValue) => {

@@ -2,11 +2,11 @@ import { lowerCase } from 'lodash';
 import pluralize from 'pluralize';
 import { FieldOrGroup, FieldSettings } from '@react-awesome-query-builder/ui';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { RuleAggregationFunc, RuleAggregationVariable, RuleEntityVariable } from '@/apis';
+import { LogicAggregationFunc, LogicAggregationVariable, LogicEntityVariable } from '@/apis';
 import { RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
 
 // TODO (V8): Move this to backend
-const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
+const AGG_FUNC_TO_TYPE: Record<LogicAggregationFunc, string> = {
   AVG: 'number',
   COUNT: 'number',
   SUM: 'number',
@@ -17,8 +17,8 @@ const AGG_FUNC_TO_TYPE: Record<RuleAggregationFunc, string> = {
 };
 
 export function getAggVarDefinition(
-  aggVar: RuleAggregationVariable,
-  entityVariables: RuleEntityVariable[],
+  aggVar: LogicAggregationVariable,
+  entityVariables: LogicEntityVariable[],
 ): { key: string; uiDefinition: FieldOrGroup } {
   const entityVariable = entityVariables.find((v) => v.key === aggVar.aggregationFieldKey);
   const { start, end } = aggVar.timeWindow;

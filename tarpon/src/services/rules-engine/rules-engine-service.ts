@@ -29,6 +29,11 @@ import { SanctionsService } from '../sanctions'
 import { IBANService } from '../iban'
 import { GeoIPService } from '../geo-ip'
 import { sanitizeDeduplicationId } from '../../utils/sns-sqs-client'
+import {
+  LogicEvaluator,
+  TransactionLogicData,
+  UserLogicData,
+} from '../logic-evaluator/engine'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -53,11 +58,6 @@ import {
   USER_RULES,
   UserRuleBase,
 } from './user-rules'
-import {
-  RuleJsonLogicEvaluator,
-  TransactionRuleData,
-  UserRuleData,
-} from './v8-engine'
 import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
 import { mergeRules } from './utils/rule-utils'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -106,11 +106,11 @@ import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUs
 import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUserMonitoringResult'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { FifoSqsMessage, getSQSClient } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { ExecutedRuleVars } from '@/@types/openapi-internal/ExecutedRuleVars'
+import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
@@ -138,20 +138,20 @@ export type TransactionAggregationTask = {
 export type V8TransactionAggregationTask = {
   type: 'TRANSACTION_AGGREGATION'
   tenantId: string
-  aggregationVariable: RuleAggregationVariable
+  aggregationVariable: LogicAggregationVariable
   transaction: Transaction
   direction: 'origin' | 'destination'
   filters?: LegacyFilters
   transactionRiskScore?: number
 }
-export type V8RuleAggregationRebuildTask = {
+export type V8LogicAggregationRebuildTask = {
   type: 'PRE_AGGREGATION'
   tenantId: string
   entity:
     | { type: 'RULE'; ruleInstanceId: string }
     | { type: 'RISK_FACTOR'; riskFactorId: string }
   jobId: string
-  aggregationVariable: RuleAggregationVariable
+  aggregationVariable: LogicAggregationVariable
   currentTimestamp: number
   userId?: string
   paymentDetails?: PaymentDetails
@@ -162,7 +162,7 @@ export type TransactionAggregationTaskEntry = {
   payload:
     | TransactionAggregationTask
     | V8TransactionAggregationTask
-    | V8RuleAggregationRebuildTask
+    | V8LogicAggregationRebuildTask
 }
 
 type ValidationOptions = {
@@ -218,7 +218,7 @@ export class RulesEngineService {
   userRepository: UserRepository
   tenantRepository: TenantRepository
   riskScoringService: RiskScoringService
-  ruleLogicEvaluator: RuleJsonLogicEvaluator
+  ruleLogicEvaluator: LogicEvaluator
   sanctionsService: SanctionsService
   ibanService: IBANService
   geoIpService: GeoIPService
@@ -226,10 +226,12 @@ export class RulesEngineService {
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
+    logicEvaluator: LogicEvaluator,
     mongoDb?: MongoClient
   ) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+    this.ruleLogicEvaluator = logicEvaluator
     this.transactionRepository = new DynamoDbTransactionRepository(
       tenantId,
       dynamoDb
@@ -253,13 +255,13 @@ export class RulesEngineService {
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
     })
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
-    this.ruleLogicEvaluator = new RuleJsonLogicEvaluator(
-      this.tenantId,
-      this.dynamoDb
+    this.riskScoringService = new RiskScoringService(
+      tenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
     )
     this.sanctionsService = new SanctionsService(this.tenantId)
     this.ibanService = new IBANService(this.tenantId)
@@ -273,7 +275,8 @@ export class RulesEngineService {
   ): Promise<RulesEngineService> {
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    return new RulesEngineService(tenantId, dynamoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    return new RulesEngineService(tenantId, dynamoDb, logicEvaluator)
   }
 
   public async verifyAllUsersRules(): Promise<
@@ -1128,7 +1131,7 @@ export class RulesEngineService {
     let isOriginUserFiltered = true
     let isDestinationUserFiltered = true
     let ruleResult: RuleHitResult | undefined
-    let vars: ExecutedRuleVars[] | undefined
+    let vars: ExecutedLogicVars[] | undefined
 
     if (runOnV8Engine(ruleInstance, rule) && logic) {
       const data = transactionWithValidUserId
@@ -1139,9 +1142,9 @@ export class RulesEngineService {
             senderUser,
             receiverUser,
             transactionRiskScore,
-          } as TransactionRuleData)
+          } as TransactionLogicData)
         : senderUser
-        ? ({ type: 'USER', user: senderUser } as UserRuleData)
+        ? ({ type: 'USER', user: senderUser } as UserLogicData)
         : null
       if (data) {
         const {

@@ -2801,8 +2801,8 @@ components:
       required:
         - trsScore
         - trsRiskLevel
-    ExecutedRuleVars:
-      title: ExecutedRuleVars
+    ExecutedLogicVars:
+      title: ExecutedLogicVars
       type: object
       properties:
         direction:
@@ -2847,7 +2847,7 @@ components:
         vars:
           type: array
           items:
-            $ref: '#/components/schemas/ExecutedRuleVars'
+            $ref: '#/components/schemas/ExecutedLogicVars'
         labels:
           type: array
           items:

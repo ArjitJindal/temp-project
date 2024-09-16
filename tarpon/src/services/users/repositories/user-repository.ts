@@ -82,6 +82,7 @@ import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResp
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 @traceable
 export class UserRepository {
@@ -695,10 +696,15 @@ export class UserRepository {
   private async getRiskScoringResult(
     userId: string
   ): Promise<UserRiskScoreDetails> {
-    const riskScoringService = new RiskScoringService(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-      mongoDb: this.mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(this.tenantId, this.dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      this.tenantId,
+      {
+        dynamoDb: this.dynamoDb,
+        mongoDb: this.mongoDb,
+      },
+      logicEvaluator
+    )
 
     const [kycRiskScore, craRiskScore, riskClassificationValues] =
       await Promise.all([

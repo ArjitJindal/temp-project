@@ -24,6 +24,7 @@ import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsSc
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 async function migrateTenant(tenant: Tenant) {
   if (tenant.id.includes('-test')) {
@@ -33,7 +34,13 @@ async function migrateTenant(tenant: Tenant) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const db = mongoDb.db()
-  const rulesEngine = new RulesEngineService(tenant.id, dynamoDb, mongoDb)
+  const logicEvaluator = new LogicEvaluator(tenant.id, dynamoDb)
+  const rulesEngine = new RulesEngineService(
+    tenant.id,
+    dynamoDb,
+    logicEvaluator,
+    mongoDb
+  )
 
   const usersRepository = new UserRepository(tenant.id, {
     mongoDb,

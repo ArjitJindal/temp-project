@@ -7085,7 +7085,7 @@ components:
         s3Url:
           type: string
         ruleLogicConfig:
-          $ref: '#/components/schemas/RuleLogicConfig'
+          $ref: '#/components/schemas/LogicConfig'
       required:
         - s3Url
     RuleMLModel:
@@ -7113,28 +7113,28 @@ components:
         - id
         - name
         - description
-    RuleLogicConfig:
-      title: RuleLogicConfig
+    LogicConfig:
+      title: LogicConfig
       type: object
       properties:
         variables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleEntityVariable'
+            $ref: '#/components/schemas/LogicEntityVariable'
         operators:
           type: array
           items:
-            $ref: '#/components/schemas/RuleOperator'
+            $ref: '#/components/schemas/LogicOperator'
         functions:
           type: array
           items:
-            $ref: '#/components/schemas/RuleFunction'
+            $ref: '#/components/schemas/LogicFunction'
       required:
         - variables
         - operators
         - functions
-    RuleEntityVariable:
-      title: RuleEntityVariable
+    LogicEntityVariable:
+      title: LogicEntityVariable
       type: object
       properties:
         key:
@@ -7165,12 +7165,12 @@ components:
       required:
         - key
         - uiDefinition
-    RuleOperator:
-      title: RuleOperator
+    LogicOperator:
+      title: LogicOperator
       type: object
       properties:
         key:
-          $ref: '#/components/schemas/RuleOperatorType'
+          $ref: '#/components/schemas/LogicOperatorType'
         uiDefinition:
           type: object
         parameters:
@@ -7180,8 +7180,8 @@ components:
       required:
         - key
         - uiDefinition
-    RuleOperatorType:
-      title: RuleOperatorType
+    LogicOperatorType:
+      title: LogicOperatorType
       type: string
       enum:
         - op:inlist
@@ -7196,8 +7196,8 @@ components:
         - op:!similartowords
         - op:between_time
         - op:!between_time
-    RuleFunction:
-      title: RuleFunction
+    LogicFunction:
+      title: LogicFunction
       type: object
       properties:
         key:
@@ -7205,20 +7205,20 @@ components:
         uiDefinition:
           type: object
         group:
-          $ref: '#/components/schemas/RuleFunctionGroup'
+          $ref: '#/components/schemas/LogicFunctionGroup'
       required:
         - key
         - uiDefinition
         - group
-    RuleFunctionGroup:
-      title: RuleFunctionGroup
+    LogicFunctionGroup:
+      title: LogicFunctionGroup
       type: string
       enum:
         - datetime
         - number
         - string
-    RuleEntityVariableInUse:
-      title: RuleEntityVariableInUse
+    LogicEntityVariableInUse:
+      title: LogicEntityVariableInUse
       type: object
       properties:
         key:
@@ -7236,28 +7236,28 @@ components:
       required:
         - key
         - entityKey
-    RuleAggregationType:
-      title: RuleAggregationType
+    LogicAggregationType:
+      title: LogicAggregationType
       type: string
       enum:
         - USER_TRANSACTIONS
         - PAYMENT_DETAILS_TRANSACTIONS
-    RuleAggregationTransactionDirection:
-      title: RuleAggregationTransactionDirection
+    LogicAggregationTransactionDirection:
+      title: LogicAggregationTransactionDirection
       type: string
       enum:
         - SENDING
         - RECEIVING
         - SENDING_RECEIVING
-    RuleAggregationUserDirection:
-      title: RuleAggregationUserDirection
+    LogicAggregationUserDirection:
+      title: LogicAggregationUserDirection
       type: string
       enum:
         - SENDER
         - RECEIVER
         - SENDER_OR_RECEIVER
-    RuleAggregationFunc:
-      title: RuleAggregationFunc
+    LogicAggregationFunc:
+      title: LogicAggregationFunc
       type: string
       enum:
         - SUM
@@ -7267,7 +7267,7 @@ components:
         - UNIQUE_VALUES
         - MIN
         - MAX
-    RuleAggregationVariable:
+    LogicAggregationVariable:
       title: AggregationVariable
       type: object
       properties:
@@ -7276,17 +7276,17 @@ components:
         name:
           type: string
         type:
-          $ref: '#/components/schemas/RuleAggregationType'
+          $ref: '#/components/schemas/LogicAggregationType'
         userDirection:
-          $ref: '#/components/schemas/RuleAggregationUserDirection'
+          $ref: '#/components/schemas/LogicAggregationUserDirection'
         transactionDirection:
-          $ref: '#/components/schemas/RuleAggregationTransactionDirection'
+          $ref: '#/components/schemas/LogicAggregationTransactionDirection'
         aggregationFieldKey:
           type: string
         secondaryAggregationFieldKey:
           type: string
         aggregationFunc:
-          $ref: '#/components/schemas/RuleAggregationFunc'
+          $ref: '#/components/schemas/LogicAggregationFunc'
         aggregationGroupByFieldKey:
           type: string
         baseCurrency:
@@ -7295,9 +7295,9 @@ components:
           type: object
           properties:
             start:
-              $ref: '#/components/schemas/RuleAggregationTimeWindow'
+              $ref: '#/components/schemas/LogicAggregationTimeWindow'
             end:
-              $ref: '#/components/schemas/RuleAggregationTimeWindow'
+              $ref: '#/components/schemas/LogicAggregationTimeWindow'
           required:
             - start
             - end
@@ -7330,8 +7330,8 @@ components:
             - number
       required:
         - key
-    RuleAggregationTimeWindowGranularity:
-      title: RuleAggregationTimeWindowGranularity
+    LogicAggregationTimeWindowGranularity:
+      title: LogicAggregationTimeWindowGranularity
       type: string
       enum:
         - all_time
@@ -7344,14 +7344,14 @@ components:
         - month
         - year
         - fiscal_year
-    RuleAggregationTimeWindow:
-      title: RuleAggregationTimeWindow
+    LogicAggregationTimeWindow:
+      title: LogicAggregationTimeWindow
       type: object
       properties:
         units:
           type: number
         granularity:
-          $ref: '#/components/schemas/RuleAggregationTimeWindowGranularity'
+          $ref: '#/components/schemas/LogicAggregationTimeWindowGranularity'
         rollingBasis:
           type: boolean
         fiscalYear:
@@ -7399,7 +7399,7 @@ components:
         defaultLogicAggregationVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleAggregationVariable'
+            $ref: '#/components/schemas/LogicAggregationVariable'
         defaultBaseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         parametersSchema:
@@ -7576,7 +7576,7 @@ components:
         logicAggregationVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleAggregationVariable'
+            $ref: '#/components/schemas/LogicAggregationVariable'
         logicMachineLearningVariables:
           type: array
           items:
@@ -7584,7 +7584,7 @@ components:
         logicEntityVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleEntityVariableInUse'
+            $ref: '#/components/schemas/LogicEntityVariableInUse'
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         parameters:
@@ -9606,11 +9606,11 @@ components:
         logicAggregationVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleAggregationVariable'
+            $ref: '#/components/schemas/LogicAggregationVariable'
         logicEntityVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleEntityVariableInUse'
+            $ref: '#/components/schemas/LogicEntityVariableInUse'
         defaultWeight:
           type: number
           minimum: 0.01
@@ -9710,11 +9710,11 @@ components:
         logicAggregationVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleAggregationVariable'
+            $ref: '#/components/schemas/LogicAggregationVariable'
         logicEntityVariables:
           type: array
           items:
-            $ref: '#/components/schemas/RuleEntityVariableInUse'
+            $ref: '#/components/schemas/LogicEntityVariableInUse'
         defaultWeight:
           type: number
           minimum: 0.01

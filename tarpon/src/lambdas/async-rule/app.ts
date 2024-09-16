@@ -10,6 +10,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { UserType } from '@/@types/user/user-type'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 type AsyncRuleRecordTransaction = {
   type: 'TRANSACTION'
@@ -55,15 +56,18 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
     await initializeTenantContext(record.tenantId)
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const rulesEngineService = new RulesEngineService(
       tenantId,
       dynamoDb,
+      logicEvaluator,
       mongoDb
     )
     const userRulesEngineService = new UserManagementService(
       tenantId,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
     const { type } = record
 

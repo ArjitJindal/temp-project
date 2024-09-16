@@ -3,7 +3,7 @@ import { NotFound } from 'http-errors'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   TransactionAggregationTask,
-  V8RuleAggregationRebuildTask,
+  V8LogicAggregationRebuildTask,
   V8TransactionAggregationTask,
 } from '@/services/rules-engine'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
@@ -28,14 +28,14 @@ import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
-import { RuleJsonLogicEvaluator } from '@/services/rules-engine/v8-engine'
 import { SanctionsService } from '@/services/sanctions'
 import { IBANService } from '@/services/iban'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RulePreAggregationBatchJob } from '@/@types/batch-job'
-import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
 import { GeoIPService } from '@/services/geo-ip'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
@@ -48,7 +48,7 @@ export async function handleV8TransactionAggregationTask(
     type: task.type,
   })
   const dynamoDb = getDynamoDbClient()
-  const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+  const ruleEvaluator = new LogicEvaluator(task.tenantId, dynamoDb)
   await ruleEvaluator.rebuildOrUpdateAggregationVariable(
     task.aggregationVariable,
     {
@@ -61,7 +61,7 @@ export async function handleV8TransactionAggregationTask(
 }
 
 export async function handleV8PreAggregationTask(
-  task: V8RuleAggregationRebuildTask
+  task: V8LogicAggregationRebuildTask
 ) {
   updateLogMetadata({
     aggregationVariableKey: task.aggregationVariable.key,
@@ -84,7 +84,7 @@ export async function handleV8PreAggregationTask(
     mongoDb,
   })
 
-  const ruleEvaluator = new RuleJsonLogicEvaluator(task.tenantId, dynamoDb)
+  const ruleEvaluator = new LogicEvaluator(task.tenantId, dynamoDb)
 
   if (task.entity.type === 'RULE') {
     const ruleInstanceId = task.entity.ruleInstanceId
@@ -324,7 +324,7 @@ export const transactionAggregationHandler = lambdaConsumer()(
             if ((task as V8TransactionAggregationTask).type) {
               const v8Task = task as
                 | V8TransactionAggregationTask
-                | V8RuleAggregationRebuildTask
+                | V8LogicAggregationRebuildTask
               if (v8Task.type === 'TRANSACTION_AGGREGATION') {
                 await handleV8TransactionAggregationTask(v8Task)
               } else if (v8Task.type === 'PRE_AGGREGATION') {

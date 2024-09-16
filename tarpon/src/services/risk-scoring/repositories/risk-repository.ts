@@ -45,10 +45,10 @@ import {
 } from '@/core/utils/context'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
-import { RuleAggregationVariable } from '@/@types/openapi-internal/RuleAggregationVariable'
-import { getAggVarHash } from '@/services/rules-engine/v8-engine/aggregation-repository'
+import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -395,7 +395,7 @@ export class RiskRepository {
 
   private async getLogicAggVarsWithUpdatedVersion(
     parameter: ParameterAttributeRiskValuesV8
-  ): Promise<RuleAggregationVariable[] | undefined> {
+  ): Promise<LogicAggregationVariable[] | undefined> {
     // Early return if no aggregation variables
     if (
       !parameter.logicAggregationVariables ||

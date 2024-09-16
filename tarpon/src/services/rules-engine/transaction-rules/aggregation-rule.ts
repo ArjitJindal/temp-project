@@ -1,13 +1,16 @@
 import { mapValues } from 'lodash'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { TimeWindow } from '../utils/rule-parameter-schemas'
-import { canAggregate, getAggregationGranularity } from '../v8-engine/utils'
 import { getTransactionStatsTimeGroupLabelV2 } from '../utils/transaction-rule-utils'
 import { TransactionRule } from './rule'
 import { duration } from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { envIs } from '@/utils/env'
+import {
+  canAggregate,
+  getAggregationGranularity,
+} from '@/services/logic-evaluator/engine/utils'
 
 // NOTE: Increment this version to invalidate the existing aggregation data of all the rules
 const AGGREGATION_VERSION = '2'
@@ -214,7 +217,7 @@ export abstract class TransactionAggregationRule<
       return
     }
 
-    return this.aggregationRepository.getUserRuleTimeAggregations<A>(
+    return this.aggregationRepository.getUserLogicTimeAggregations<A>(
       userKeyId,
       this.ruleInstance.id as string,
       getTransactionStatsTimeGroupLabelV2(

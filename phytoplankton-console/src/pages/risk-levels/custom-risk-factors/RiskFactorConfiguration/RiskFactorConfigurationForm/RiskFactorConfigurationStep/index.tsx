@@ -4,9 +4,9 @@ import { LogicDefinationCard } from './LogicDefinationCard';
 import {
   CurrencyCode,
   RiskParameterLevelKeyValueV8,
-  RuleAggregationVariable,
-  RuleEntityVariableEntityEnum,
-  RuleEntityVariableInUse,
+  LogicAggregationVariable,
+  LogicEntityVariableEntityEnum,
+  LogicEntityVariableInUse,
   RuleType,
 } from '@/apis';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
@@ -15,14 +15,14 @@ import VariableDefinitionCard from '@/pages/rules/RuleConfiguration/RuleConfigur
 export interface RiskFactorConfigurationStepFormValues {
   baseCurrency?: CurrencyCode;
   riskLevelAssignmentValues?: Array<RiskParameterLevelKeyValueV8>;
-  entityVariables?: RuleEntityVariableInUse[];
-  aggregationVariables?: RuleAggregationVariable[];
+  entityVariables?: LogicEntityVariableInUse[];
+  aggregationVariables?: LogicAggregationVariable[];
 }
 
 interface Props {
   ruleType: RuleType;
   readOnly?: boolean;
-  entity?: RuleEntityVariableEntityEnum;
+  entity?: LogicEntityVariableEntityEnum;
 }
 export default function RiskFactorConfigurationStep(props: Props) {
   const aggVariablesFieldState = useFieldState<

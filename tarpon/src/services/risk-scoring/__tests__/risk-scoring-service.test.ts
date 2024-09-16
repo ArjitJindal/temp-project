@@ -22,6 +22,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const dynamoDb = getDynamoDbClient()
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
@@ -55,10 +56,15 @@ describe('Risk Scoring', () => {
   describe('Risk Scoring Tests', () => {
     it('should update inital the risk score of a user', async () => {
       const mongoDb = await getMongoDbClient()
-      const riskScoringService = new RiskScoringService(testTenantId, {
-        dynamoDb,
-        mongoDb,
-      })
+      const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+      const riskScoringService = new RiskScoringService(
+        testTenantId,
+        {
+          dynamoDb,
+          mongoDb,
+        },
+        logicEvaluator
+      )
       await riskScoringService.updateInitialRiskScores(testUser1)
 
       const getRiskScore = await (
@@ -116,10 +122,15 @@ describe('Risk Scoring', () => {
     ).createOrUpdateParameterRiskItem(TEST_VARIABLE_RISK_ITEM)
 
     const mongoDb = await getMongoDbClient()
-    const riskScoringService = new RiskScoringService(testTenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      testTenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
     await riskScoringService.updateDynamicRiskScores(testTransaction1)
 
     const getRiskScore = await (
@@ -136,10 +147,15 @@ describe('Risk Scoring', () => {
   })
   it('VARIABLE risk factor', async () => {
     const mongoDb = await getMongoDbClient()
-    const riskScoringService = new RiskScoringService(testTenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      testTenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
     const testTransaction = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,
@@ -169,10 +185,15 @@ describe('Risk Scoring', () => {
 
   it('ITERABLE risk factor', async () => {
     const mongoDb = await getMongoDbClient()
-    const riskScoringService = new RiskScoringService(testTenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      testTenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
     const testTransaction = getTestTransaction({
       originUserId: testUser1.userId,
       destinationUserId: testUser2.userId,
@@ -359,10 +380,14 @@ describe('V8, Tests', () => {
     },
   ])(`Risk Scoring Service`, ({ parameter, output, entity }) => {
     test(`getRiskScoreComponentsForCustomRiskFactors - ${entity.type}`, async () => {
-      const riskScoringService = new RiskScoringService(tenantId, {
-        dynamoDb: getDynamoDbClient(),
-        mongoDb: await getMongoDbClient(),
-      })
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      const riskScoringService = new RiskScoringService(
+        tenantId,
+        {
+          dynamoDb,
+        },
+        logicEvaluator
+      )
 
       const riskRepository = await getRiskRepository(tenantId)
 
@@ -397,10 +422,15 @@ describe('V8, Tests', () => {
   describe('Risk Scoring Service - Aggregation', () => {
     it('should update inital the risk score of a user', async () => {
       const mongoDb = await getMongoDbClient()
-      const riskScoringService = new RiskScoringService(testTenantId, {
-        dynamoDb,
-        mongoDb,
-      })
+      const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+      const riskScoringService = new RiskScoringService(
+        testTenantId,
+        {
+          dynamoDb,
+          mongoDb,
+        },
+        logicEvaluator
+      )
       const riskRepository = await getRiskRepository(testTenantId)
 
       const parameter: OptionalParameterAttributeRiskValuesV8 = {
@@ -539,10 +569,15 @@ describe('Risk Scoring Service ARS ', () => {
       })
       test(`checking the ${parameter.parameter}`, async () => {
         const mongoDb = await getMongoDbClient()
-        const riskScoringService = new RiskScoringService(testTenantId, {
-          dynamoDb,
-          mongoDb,
-        })
+        const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+        const riskScoringService = new RiskScoringService(
+          testTenantId,
+          {
+            dynamoDb,
+            mongoDb,
+          },
+          logicEvaluator
+        )
         await (
           await getRiskRepository()
         ).createOrUpdateParameterRiskItem(parameter)
@@ -940,11 +975,15 @@ describe('Risk Scoring Service KRS', () => {
     const dynamoDb = await getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
 
-    const riskScoringService = new RiskScoringService(testTenantId, {
-      dynamoDb,
-      mongoDb,
-    })
-
+    const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      testTenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
     const testUser = getTestUser({
       createdTimestamp: 1685969811000,
       userId: 'test-user-0',
@@ -1027,10 +1066,15 @@ describe('Risk Scoring Service KRS', () => {
     const dynamoDb = await getDynamoDbClient()
     const mongoDb = await getMongoDbClient()
 
-    const riskScoringService = new RiskScoringService(testTenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
+    const riskScoringService = new RiskScoringService(
+      testTenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
 
     const testUser = getTestUser({
       createdTimestamp: 1685969811000,

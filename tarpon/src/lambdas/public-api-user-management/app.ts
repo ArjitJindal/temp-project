@@ -18,6 +18,7 @@ import { UserManagementService } from '@/services/rules-engine/user-rules-engine
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 
 export const userHandler = lambdaApi()(
@@ -72,11 +73,15 @@ export const userHandler = lambdaApi()(
           }),
         }
       }
-
-      const riskScoringService = new RiskScoringService(tenantId, {
-        dynamoDb,
-        mongoDb,
-      })
+      const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      const riskScoringService = new RiskScoringService(
+        tenantId,
+        {
+          dynamoDb,
+          mongoDb,
+        },
+        logicEvaluator
+      )
 
       const isDrsUpdatable = lockCraRiskLevel
         ? lockCraRiskLevel !== 'true'
@@ -91,7 +96,8 @@ export const userHandler = lambdaApi()(
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
-        mongoDb
+        mongoDb,
+        logicEvaluator
       )
 
       const user = await userManagementService.verifyUser(

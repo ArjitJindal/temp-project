@@ -11,6 +11,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { UserOptional } from '@/@types/openapi-internal/UserOptional'
 import { BusinessOptional } from '@/@types/openapi-internal/BusinessOptional'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 dynamoDbSetupHook()
 withLocalChangeHandler()
@@ -130,11 +131,12 @@ describe('Test User Management Service', () => {
       type: 'CONSUMER',
       comments: [{ body: 'Test Comment' }],
     })
-
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const userManagementService = new UserManagementService(
       tenantId,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
 
     const userUpdateableAttributes: UserOptional = {
@@ -221,10 +223,12 @@ describe('Test Business User Management Service', () => {
       comments: [{ body: 'Test Comment' }],
     })
 
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const userManagementService = new UserManagementService(
       tenantId,
       dynamoDb,
-      mongoDb
+      mongoDb,
+      logicEvaluator
     )
 
     const userUpdateableAttributes: BusinessOptional = {

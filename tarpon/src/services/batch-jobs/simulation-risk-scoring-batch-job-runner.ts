@@ -9,6 +9,7 @@ import { UserRepository } from '../users/repositories/user-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { SimulationResultRepository } from '../simulation/repositories/simulation-result-repository'
 import { SimulationTaskRepository } from '../simulation/repositories/simulation-task-repository'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SimulationRiskFactorsBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -71,10 +72,15 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
     const riskRepository = new RiskRepository(tenantId, { dynamoDb, mongoDb })
     this.userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
     this.job = job
-    this.riskScoringService = new RiskScoringService(tenantId, {
-      dynamoDb,
-      mongoDb,
-    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    this.riskScoringService = new RiskScoringService(
+      tenantId,
+      {
+        dynamoDb,
+        mongoDb,
+      },
+      logicEvaluator
+    )
 
     this.transactionRepo = new MongoDbTransactionRepository(
       this.tenantId,
