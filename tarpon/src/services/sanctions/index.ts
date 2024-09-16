@@ -181,6 +181,9 @@ export class SanctionsService {
         countryCodes: request.countryCodes,
         yearOfBirth: request.yearOfBirth,
         types: request.types,
+        documentId: request.documentId,
+        nationality: request.nationality,
+        occupationCode: request.occupationCode,
       })
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {

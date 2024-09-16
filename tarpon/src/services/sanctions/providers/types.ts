@@ -1,4 +1,5 @@
 import {
+  OccupationCode,
   SanctionsEntity,
   SanctionsSearchResponse,
   SanctionsSearchType,
@@ -33,6 +34,9 @@ export type SanctionsProviderSearchRequest = {
   fuzziness?: number
   countryCodes?: Array<string>
   yearOfBirth?: number
+  documentId?: string
+  nationality?: Array<string>
+  occupationCode?: Array<OccupationCode>
 }
 
 export interface SanctionsDataProvider {

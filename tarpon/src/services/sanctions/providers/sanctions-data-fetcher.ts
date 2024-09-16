@@ -49,6 +49,18 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       match['sanctionSearchTypes'] = { $in: request.types }
     }
 
+    if (request.documentId) {
+      match['documents.id'] = { $in: request.documentId }
+    }
+
+    if (request.nationality) {
+      match['nationality'] = { $in: request.nationality }
+    }
+
+    if (request.occupationCode) {
+      match['occupations.occupationCode'] = { $in: request.occupationCode }
+    }
+
     const results = await client
       .db()
       .collection(SANCTIONS_COLLECTION)

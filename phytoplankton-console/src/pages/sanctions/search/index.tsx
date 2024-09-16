@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import ComplyAdvantageHitTable from 'src/components/ComplyAdvantageHitTable';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
-import { SanctionsEntity, SanctionsSearchType } from '@/apis';
+import { OccupationCode, SanctionsEntity, SanctionsSearchType } from '@/apis';
 import {
   AsyncResource,
   getOr,
@@ -29,6 +29,9 @@ interface TableSearchParams {
   countryCodes?: Array<string>;
   yearOfBirth?: number;
   types?: Array<SanctionsSearchType>;
+  nationality?: Array<string>;
+  occupationCode?: Array<OccupationCode>;
+  documentId?: string;
 }
 
 interface Props {
@@ -62,6 +65,9 @@ export function SearchResultTable(props: Props) {
         yearOfBirth: historyItem.request?.yearOfBirth,
         countryCodes: historyItem.request?.countryCodes,
         fuzziness: historyItem.request?.fuzziness,
+        nationality: historyItem.request?.nationality,
+        occupationCode: historyItem.request?.occupationCode,
+        documentId: historyItem.request?.documentId,
       }));
     }
   }, [historyItem]);
@@ -79,6 +85,9 @@ export function SearchResultTable(props: Props) {
           countryCodes: searchParams.countryCodes,
           yearOfBirth: searchParams.yearOfBirth ? searchParams.yearOfBirth : undefined,
           types: searchParams.types,
+          nationality: searchParams.nationality,
+          occupationCode: searchParams.occupationCode,
+          documentId: searchParams.documentId,
         },
       });
     },

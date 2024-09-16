@@ -6,7 +6,7 @@ import { pipeline } from 'stream'
 import axios from 'axios'
 import { XMLParser } from 'fast-xml-parser'
 import unzipper from 'unzipper'
-import { uniq } from 'lodash'
+import { uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import {
@@ -23,6 +23,9 @@ import { DOW_JONES_COUNTRIES } from '@/services/sanctions/providers/dow-jones-co
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
+import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
+import { OCCUPATION_CODES } from '@/@types/openapi-internal-custom/OccupationCode'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -44,6 +47,12 @@ const parser = new XMLParser({
       'SourceDescription',
       'Description',
       'Descriptions',
+      'IDNumberTypes',
+      'IDValue',
+      'ID',
+      'Roles',
+      'RoleDetail',
+      'OccTitle',
     ].includes(tagName)
   },
 })
@@ -176,6 +185,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       return { ...acc, [onlyKey]: this.mapToContextItem(jsonObj.PFA[onlyKey]) }
     }, {})
 
+    this.checkContext(masterContext)
+
     const peopleFiles = await this.listFilePaths(`${outputDir}/Person`)
     for (const peopleFile of peopleFiles) {
       const xml = this.readFile(peopleFile)
@@ -223,6 +234,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           acc[rootKey] = this.mapToContextItem(root)
           return acc
         }, {})
+
+        this.checkContext(contextItems)
         await this.fileToEntities(repo, version, xml, contextItems)
       })
     )
@@ -257,7 +270,27 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       },
       {}
     )
+
     return contextItems
+  }
+
+  private checkContext(ctx: any) {
+    // Integrity checks
+    const missingCountry = Object.keys(ctx.CountryList).filter(
+      (code) => DOW_JONES_COUNTRIES[code] === undefined
+    )
+    if (missingCountry.length > 0) {
+      const message = `You will need to update the DOW_JONES_COUNTRIES enum. These dow jones countries are not up to date: ${missingCountry.join(
+        ', '
+      )}.`
+      logger.error(message)
+    }
+
+    if (ctx.RoleTypeList.length === 26) {
+      logger.error(
+        'The role type list from dow jones has changed, you will need to update the OccuptionRole enum'
+      )
+    }
   }
 
   private async processAssociations(
@@ -317,6 +350,37 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               DOW_JONES_COUNTRIES[country.CountryValue?.['@_Code'] as string]
           )
         ).filter(Boolean)
+        const nationality = person.CountryDetails?.Country?.filter(
+          (c) => c['@_CountryType'] === 'Citizenship'
+        )?.map(
+          (country) =>
+            DOW_JONES_COUNTRIES[country.CountryValue?.['@_Code'] as string]
+        )
+
+        const documents = uniqBy<SanctionsIdDocument>(
+          person.IDNumberTypes?.flatMap((id) =>
+            id.ID?.flatMap((id): SanctionsIdDocument => {
+              return id.IDValue?.map((idValue) => {
+                return {
+                  id: typeof idValue === 'string' ? idValue : idValue['#text'],
+                  name: id['@_IDType'],
+                }
+              })
+            })
+          ),
+          'id'
+        )
+
+        const occupations = person.RoleDetail?.flatMap((rd) =>
+          rd.Roles.filter(
+            (r) => r['@_RoleType'] == 'Primary Occupation'
+          ).flatMap((r) => r.OccTitle)
+        ).map((role): SanctionsOccupation => {
+          return {
+            title: role['#text'],
+            occupationCode: OCCUPATION_CODES[role['@_OccCat']],
+          }
+        })
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
@@ -333,7 +397,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             })
             .filter(Boolean),
           freetext: person.ProfileNotes,
+          documents,
           sanctionSearchTypes,
+          occupations,
           types: descriptions?.map((d) =>
             [
               d['@_Description1']
@@ -399,6 +465,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             .flatMap((name) => name.NameValue)
             .map((n) => decode(`${n.FirstName} ${n.Surname || ''}`.trim())),
           countries: countries.map((c) => COUNTRIES[c]),
+          nationality,
           countryCodes: countries.map((c) => c as CountryCode),
           yearOfBirth: person.DateDetails?.Date?.find(
             (date: any) => date['@_DateType'] === 'Date of Birth'
@@ -423,7 +490,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const filePath = path.join(dir, file)
         const stats = await fs.promises.stat(filePath)
 
-        if (stats.isFile()) {
+        if (stats.isFile() && !path.basename(filePath).startsWith('.')) {
           filePaths.push(filePath)
         }
       }
@@ -432,22 +499,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     } catch (err) {
       console.error('Error reading directory:', err)
       return []
-    }
-  }
-
-  async checkCountries(path: string) {
-    const latestDowJonesCountryFile = this.readFile(path)
-    const jsonObj = parser.parse(latestDowJonesCountryFile)
-    const countries: { '@_code': string; '@_name': string }[] =
-      jsonObj.PFA.CountryList.CountryName
-    const missingCountry = countries
-      .map((c) => c['@_code'])
-      .filter((code) => DOW_JONES_COUNTRIES[code] === undefined)
-    if (missingCountry.length > 0) {
-      const message = `These dow jones countries are not up to date: ${missingCountry.join(
-        ', '
-      )}`
-      throw new Error(message)
     }
   }
 }

@@ -178,7 +178,9 @@ function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: num
 export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: boolean }) {
   const { entity, pdfMode = false } = props;
   const tabItems = useTabs(entity, pdfMode);
-
+  const occupations = entity.occupations
+    ? entity.occupations.map((occ) => occ.title).filter(Boolean)
+    : [];
   return (
     <>
       <Section title={'Key information'}>
@@ -200,6 +202,16 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.countries && entity.countries.length > 0 && (
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
               {entity.countries?.join(', ')}
+            </Form.Layout.Label>
+          )}
+          {entity.nationality && entity.nationality.length > 0 && (
+            <Form.Layout.Label key={entity.nationality?.join(',')} title={'Nationality'}>
+              {entity.nationality?.join(', ')}
+            </Form.Layout.Label>
+          )}
+          {occupations && occupations.length > 0 && (
+            <Form.Layout.Label key={occupations.join(',')} title={'Occupation'}>
+              {occupations.join(', ')}
             </Form.Layout.Label>
           )}
           {entity.gender && (

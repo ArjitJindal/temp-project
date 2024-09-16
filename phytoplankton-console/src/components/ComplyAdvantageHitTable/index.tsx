@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { startCase } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import ComplyAdvantageHitDetailsDrawer from './ComplyAdvantageHitDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -66,6 +66,7 @@ export default function SanctionsSearchTable(props: Props) {
 
   const [selectedSearchHit, setSelectedSearchHit] = useState<SanctionsEntity>();
   const settings = useSettings();
+  const dowJonesEnabled = useFeatureEnabled('DOW_JONES');
 
   const helper = new ColumnHelper<SanctionsEntity>();
   const columns: TableColumn<SanctionsEntity>[] = helper.list([
@@ -176,6 +177,37 @@ export default function SanctionsSearchTable(props: Props) {
       },
     },
   ];
+
+  if (dowJonesEnabled) {
+    extraFilters.push({
+      title: 'Country codes',
+      key: 'countryCodes',
+      renderer: {
+        kind: 'select',
+        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+      },
+    });
+    extraFilters.push({
+      title: 'Nationality',
+      key: 'nationality',
+      renderer: {
+        kind: 'select',
+        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+      },
+    });
+    extraFilters.push({
+      title: 'Document ID',
+      key: 'documentId',
+      renderer: {
+        kind: 'string',
+      },
+    });
+  }
+
   if (!settings.sanctions?.customSearchProfileId) {
     extraFilters.push({
       title: 'Matched type',

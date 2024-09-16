@@ -1,8 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { startCase } from 'lodash';
-import { COUNTRIES } from '@flagright/lib/constants';
-import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { useSettings } from '../AppWrapper/Providers/SettingsProvider';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
@@ -20,8 +17,6 @@ import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { QueryResult } from '@/utils/queries/types';
-import { SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/SanctionsSearchType';
-import { ExtraFilterProps } from '@/components/library/Filter/types';
 import Tag from '@/components/library/Tag';
 import {
   ID,
@@ -42,8 +37,6 @@ export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
   searchTerm?: string;
   fuzziness?: number;
-  countryCodes?: Array<string>;
-  yearOfBirth?: number;
 }
 
 interface Props {
@@ -79,9 +72,6 @@ export default function SanctionsHitsTable(props: Props) {
     onSelect,
     onSanctionsHitsChangeStatus,
   } = props;
-
-  const settings = useSettings();
-
   const [selectedSearchHit, setSelectedSearchHit] = useState<
     AsyncResource<SanctionsHit | undefined>
   >(success(undefined));
@@ -167,57 +157,6 @@ export default function SanctionsHitsTable(props: Props) {
       }),
   ]);
 
-  const extraFilters: ExtraFilterProps<TableSearchParams>[] = [
-    {
-      title: 'Search term',
-      key: 'searchTerm',
-      renderer: {
-        kind: 'string',
-      },
-    },
-    {
-      title: 'Year of birth',
-      key: 'yearOfBirth',
-      renderer: {
-        kind: 'number',
-        min: 1900,
-      },
-    },
-    {
-      title: 'Country codes',
-      key: 'countryCodes',
-      renderer: {
-        kind: 'select',
-        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    },
-    {
-      title: 'Fuzziness',
-      description: '(The default value is 0.5)',
-      key: 'fuzziness',
-      renderer: {
-        kind: 'number',
-        min: 0,
-        max: 1,
-        step: 0.1,
-      },
-    },
-  ];
-  if (!settings.sanctions?.customSearchProfileId) {
-    extraFilters.push({
-      title: 'Matched type',
-      key: 'types',
-      renderer: {
-        kind: 'select',
-        options: SANCTIONS_SEARCH_TYPES.map((v) => ({ value: v, label: humanizeSnakeCase(v) })),
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    });
-  }
-
   return (
     <>
       <QueryResultsTable<SanctionsHit, TableSearchParams>
@@ -232,7 +171,6 @@ export default function SanctionsHitsTable(props: Props) {
         }}
         selectionActions={selectionActions}
         extraTools={extraTools}
-        extraFilters={extraFilters}
         queryResults={queryResult}
         params={params}
         onChangeParams={onChangeParams}

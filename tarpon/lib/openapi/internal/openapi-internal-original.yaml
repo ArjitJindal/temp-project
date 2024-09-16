@@ -11263,6 +11263,16 @@ components:
           type: array
           items:
             type: string
+        nationality:
+          type: array
+          items:
+            type: string
+        documentId:
+          type: string
+        occupationCode:
+          type: array
+          items:
+            $ref: '#/components/schemas/OccupationCode'
         yearOfBirth:
           type: number
         types:
@@ -11714,6 +11724,22 @@ components:
           type: string
         url:
           type: string
+    SanctionsIdDocument:
+      title: SanctionsIdDocument
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+    SanctionsOccupation:
+      title: SanctionsOccupation
+      type: object
+      properties:
+        occupationCode:
+          $ref: '#/components/schemas/OccupationCode'
+        title:
+          type: string
     SanctionsAssociate:
       title: SanctionsAssociate
       type: object
@@ -11722,6 +11748,31 @@ components:
           type: string
         association:
           type: string
+    OccupationCode:
+      title: OccupationCode
+      type: string
+      enum:
+        - heads_and_deputies_state_national_government
+        - national_government_ministers
+        - members_of_the_national_legislature
+        - senior_civil_servants_national_government
+        - senior_civil_servants_regional_government
+        - embassy_consular_staff
+        - senior_members_of_the_armed_forces
+        - senior_members_of_the_secret_services
+        - senior_members_of_the_judiciary
+        - state_corporation_executives
+        - state_agency_officials
+        - heads_and_deputy_heads_regional_government
+        - regional_government_ministers
+        - religious_leaders
+        - political_party_officials
+        - international_organisation_officials
+        - city_mayors
+        - political_pressure_labour_group_officials
+        - other
+        - local_public_officials
+        - international_sporting_organisation_officials
     RawSanctionsResponse: {}
     SanctionsEntity:
       title: SanctionsEntity
@@ -11765,6 +11816,18 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        nationality:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        documents:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsIdDocument'
+        occupations:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsOccupation'
         yearOfBirth:
           type: string
         freetext:

@@ -36,14 +36,6 @@ describe('DowJonesProvider', () => {
       }
     )
   })
-  it('should error if countries have changed', async () => {
-    const filePath = path.resolve(
-      __dirname,
-      'data/dowjones_single/PFA2_202409072200_D.xml'
-    )
-    await fetcher.checkCountries(filePath)
-    // No assertion, just checking no error.
-  })
   it('should process single file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_single')
     await fetcher.processSingleFile(repo, '2024-02', filePath)
@@ -64,6 +56,13 @@ describe('DowJonesProvider', () => {
             countryCodes: ['IN'],
             matchTypes: [],
             dateMatched: true,
+            nationality: ['IN'],
+            documents: [
+              {
+                id: 20603,
+                name: 'Others',
+              },
+            ],
             freetext: `ASSOCIATED ENTITIES INFORMATION:
 Hindustan Media Ventures Limited
 HT Media Limited
@@ -114,8 +113,15 @@ Jubilant Pharmova Ltd.`,
             id: '10183',
             name: 'Ange-Félix Patassé',
             entityType: 'Person',
+            nationality: ['CF'],
             sanctionSearchTypes: ['PEP', 'SANCTIONS'],
             gender: 'Male',
+            occupations: [
+              {
+                occupationCode: 'city_mayors',
+                title: 'Deceased',
+              },
+            ],
             types: [
               'Politically Exposed Person (PEP)',
               'Special Interest Person (SIP) - Corruption',
@@ -140,6 +146,43 @@ PROFILE UPDATED: 07-jun-2022
 Patasse passed away on April 5, 2011.`,
             countries: ['Central African Republic'],
             countryCodes: ['CF'],
+            documents: [
+              {
+                id: 'D00002264',
+                name: 'Passport No.',
+              },
+              {
+                id: 'M4800002143743',
+                name: 'Others',
+              },
+              {
+                id: 'CAR',
+                name: 'OFAC Program ID',
+              },
+              {
+                name: 'OFAC Unique ID',
+              },
+              {
+                id: 'CAF',
+                name: 'EU Sanctions Programme Indicator',
+              },
+              {
+                id: 'CFi.001',
+                name: 'UN Permanent Reference No.',
+              },
+              {
+                id: 'CAF0003',
+                name: 'UK Sanctions List Unique ID',
+              },
+              {
+                id: 'The Central African Republic (Sanctions) (EU Exit) Regulations 2020',
+                name: 'UK Sanctions List Regime',
+              },
+              {
+                id: 'Central African Republic',
+                name: 'HM Treasury Regime',
+              },
+            ],
             yearOfBirth: '1937',
             dateMatched: true,
             matchTypes: ['Corruption'],
@@ -245,6 +288,14 @@ Patasse passed away on April 5, 2011.`,
             name: 'Martin Ziguélé',
             entityType: 'Person',
             gender: 'Male',
+            documents: [],
+            nationality: ['CF'],
+            occupations: [
+              {
+                occupationCode: 'senior_civil_servants_national_government',
+                title: 'Member, National Assembly, MLPC, Bocaranga 3',
+              },
+            ],
             dateMatched: true,
             matchTypes: [],
             sanctionSearchTypes: ['PEP'],
