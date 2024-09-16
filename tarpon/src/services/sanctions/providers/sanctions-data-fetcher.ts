@@ -14,7 +14,6 @@ import {
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -61,6 +60,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       match['occupations.occupationCode'] = { $in: request.occupationCode }
     }
 
+    const maxExpansions = request.fuzziness
+      ? (request.fuzziness / 100) * 500
+      : 0
+    let maxEdits = 0
+    if (request.fuzziness) {
+      maxEdits = request.fuzziness > 50 ? 2 : 1
+    }
     const results = await client
       .db()
       .collection(SANCTIONS_COLLECTION)
@@ -73,11 +79,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
               path: {
                 wildcard: '*',
               },
-              // TODO drive these values from config that the client can set.
               fuzzy: {
-                maxEdits: 2,
+                maxEdits,
+                maxExpansions,
                 prefixLength: 0,
-                maxExpansions: 100,
               },
             },
           },
@@ -97,31 +102,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
             score: -1,
           },
         },
-        {
-          $limit: 25,
-        },
       ])
       .toArray()
-
-    const filteredResults = results.filter((entity) => {
-      const values = [...(entity.aka || []), entity.name]
-      for (const value of values) {
-        const fuzzyMatch =
-          request.fuzziness &&
-          calculateLevenshteinDistancePercentage(request.searchTerm, value) >=
-            request.fuzziness
-        const exactMatch = value === request.searchTerm
-        if (fuzzyMatch || exactMatch) {
-          return true
-        }
-      }
-    })
 
     const providerSearchId = uuidv4()
     const result = {
       providerSearchId,
-      hitsCount: filteredResults.length,
-      data: filteredResults,
+      hitsCount: results.length,
+      data: results,
       createdAt: new Date().getTime(),
     }
 

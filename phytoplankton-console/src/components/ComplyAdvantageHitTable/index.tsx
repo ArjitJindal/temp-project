@@ -156,16 +156,6 @@ export default function SanctionsSearchTable(props: Props) {
       },
     },
     {
-      title: 'Country codes',
-      key: 'countryCodes',
-      renderer: {
-        kind: 'select',
-        options: Object.entries(COUNTRIES).map((entry) => ({ value: entry[0], label: entry[1] })),
-        mode: 'MULTIPLE',
-        displayMode: 'select',
-      },
-    },
-    {
       title: 'Fuzziness',
       description: '(The default value is 0.5)',
       key: 'fuzziness',

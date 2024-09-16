@@ -190,6 +190,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     const peopleFiles = await this.listFilePaths(`${outputDir}/Person`)
     for (const peopleFile of peopleFiles) {
       const xml = this.readFile(peopleFile)
+      logger.info(`Processing ${peopleFiles}`)
       await this.fileToEntities(repo, version, xml, masterContext)
     }
     const associationFiles = await this.listFilePaths(
@@ -198,6 +199,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     for (const associationFile of associationFiles) {
       const xml = this.readFile(associationFile)
       const jsonObj = parser.parse(xml)
+      logger.info(`Processing ${associationFile}`)
       await this.processAssociations(repo, version, jsonObj.PFA)
     }
   }
