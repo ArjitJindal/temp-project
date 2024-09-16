@@ -1,10 +1,9 @@
 import { Document, MongoClient, ObjectId, WithId } from 'mongodb'
 import { Dictionary, groupBy, memoize } from 'lodash'
-import { ClickHouseClient } from '@clickhouse/client'
 import { MongoConsumerSQSMessage } from './app'
 import {
   batchInsertToClickhouse,
-  sanitizeTableName,
+  getClickhouseClient,
 } from '@/utils/clickhouse/utils'
 import { traceable } from '@/core/xray'
 import {
@@ -26,11 +25,9 @@ type TableDetails = {
 @traceable
 export class MongoDbConsumer {
   mongoClient: MongoClient
-  clickhouseClient: ClickHouseClient
 
-  constructor(mongoClient: MongoClient, clickhouseClient: ClickHouseClient) {
+  constructor(mongoClient: MongoClient) {
     this.mongoClient = mongoClient
-    this.clickhouseClient = clickhouseClient
   }
 
   private findClickhouseTableDefinition = memoize(
@@ -87,9 +84,9 @@ export class MongoDbConsumer {
           )
 
           await batchInsertToClickhouse(
-            sanitizeTableName(`${tenantId}-${clickhouseTable.table}`),
-            updatedDocuments,
-            tenantId
+            tenantId,
+            clickhouseTable.table,
+            updatedDocuments
           )
         }
       )
@@ -221,16 +218,15 @@ export class MongoDbConsumer {
             return
           }
 
-          const { tenantId, clickhouseTable } = tableDetails
-          const tableName = sanitizeTableName(
-            `${tenantId}-${clickhouseTable.table}`
-          )
+          const { clickhouseTable, tenantId } = tableDetails
+          const tableName = clickhouseTable.table
 
           const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE mongo_id IN (${records
             .map((doc) => `'${doc.documentKey._id}'`)
             .join(', ')})`
 
-          await this.clickhouseClient.query({
+          const client = await getClickhouseClient(tenantId)
+          await client.query({
             query,
           })
         }

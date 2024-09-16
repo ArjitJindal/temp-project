@@ -7,10 +7,7 @@ import {
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
 import { envIs } from '@/utils/env'
-import {
-  batchInsertToClickhouse,
-  sanitizeTableName,
-} from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
 
 async function migrateTenant(tenant: Tenant) {
   if (!envIs('dev') && !envIs('local')) {
@@ -29,17 +26,17 @@ async function migrateTenant(tenant: Tenant) {
     const batchSize = 1000
     const batch: any[] = []
     let count = 0
-    const clickhouseTable = sanitizeTableName(`${tenant.id}-${table.table}`)
+    const clickhouseTable = table.table
     for await (const doc of cursor) {
       batch.push(doc)
       count++
       if (count % batchSize === 0) {
-        await batchInsertToClickhouse(clickhouseTable, batch, tenant.id)
+        await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
         batch.length = 0 // clear the batch
       }
     }
 
-    await batchInsertToClickhouse(clickhouseTable, batch, tenant.id)
+    await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
   }
 }
 

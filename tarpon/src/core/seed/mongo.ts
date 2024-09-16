@@ -10,9 +10,8 @@ import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import {
   batchInsertToClickhouse,
-  createOrUpdateClickHouseTable,
+  createTenantDatabase,
   getClickhouseClient,
-  sanitizeTableName,
 } from '@/utils/clickhouse/utils'
 import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -211,21 +210,23 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   }
 
   if (envIs('local') || envIs('dev')) {
-    const clickhouseClient = await getClickhouseClient()
-    const mongoConsumerService = new MongoDbConsumer(client, clickhouseClient)
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const mongoConsumerService = new MongoDbConsumer(client)
+    await clickhouseClient.query({
+      query: `DROP DATABASE IF EXISTS ${tenantId}`,
+    })
+    await createTenantDatabase(tenantId)
     await Promise.all(
       ClickHouseTables.map(async (table) => {
-        const clickhouseTable = sanitizeTableName(`${tenantId}-${table.table}`)
-        const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
-        await clickhouseClient.query({ query: checkTableQuery })
+        const clickhouseTable = table.table
         const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
         const mongoCollectionName = `${tenantId}-${mongoTable}`
         const data = await db.collection(mongoCollectionName).find().toArray()
-        const [updatedData] = await Promise.all([
-          mongoConsumerService.updateInsertMessages(mongoTable, data),
-          createOrUpdateClickHouseTable(tenantId, table),
-        ])
-        await batchInsertToClickhouse(clickhouseTable, updatedData, tenantId)
+        const updatedData = await mongoConsumerService.updateInsertMessages(
+          mongoTable,
+          data
+        )
+        await batchInsertToClickhouse(tenantId, clickhouseTable, updatedData)
       })
     )
   }

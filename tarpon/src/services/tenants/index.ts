@@ -262,9 +262,11 @@ export class TenantService {
       limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
       features: tenantData.features ?? [],
       auth0Domain: tenantData.auth0Domain,
-      sanctions: tenantData.sanctionsMarketType
-        ? { marketType: tenantData.sanctionsMarketType }
-        : undefined,
+      ...(tenantData.sanctionsMarketType && {
+        sanctions: tenantData.sanctionsMarketType
+          ? { marketType: tenantData.sanctionsMarketType }
+          : undefined,
+      }),
     }
 
     const dynamoDb = this.dynamoDb
@@ -272,7 +274,7 @@ export class TenantService {
     await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
 
     await sendBatchJobCommand({
-      type: 'SYNC_INDEXES',
+      type: 'SYNC_DATABASES',
       tenantId,
     })
 

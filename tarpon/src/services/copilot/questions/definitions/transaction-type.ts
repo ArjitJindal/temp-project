@@ -14,10 +14,7 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { hasFeature } from '@/core/utils/context'
-import {
-  getClickhouseClient,
-  sanitizeTableName,
-} from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export const TransactionType: BarchartQuestion<Period> = {
@@ -34,16 +31,14 @@ export const TransactionType: BarchartQuestion<Period> = {
     const getClickhouseResults = async (): Promise<
       { type: InternalTransaction['type']; count: number }[]
     > => {
-      const clickhouseClient = await getClickhouseClient()
+      const clickhouseClient = await getClickhouseClient(tenantId)
       const identifierQuery = userId
         ? `originUserId = '${userId}' OR destinationUserId = '${userId}'`
         : casesPaymentIdentifierQueryClickhouse(paymentIdentifier)
 
       const query = `
       SELECT type, count() as count
-      FROM ${sanitizeTableName(
-        `${tenantId}_${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}`
-      )}
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
       WHERE
       ${matchPeriodSQL('timestamp', period)} AND
       ${identifierQuery}

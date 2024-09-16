@@ -10,7 +10,6 @@ import {
   WithId,
 } from 'mongodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { formatTableName } from './clickhouse/utils'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
 
@@ -230,9 +229,6 @@ export async function offsetPaginateClickhouse<T>(
 ): Promise<{ items: T[]; count: number }> {
   const { excludeSortField = false } = options ?? {}
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
-  dataTableName = formatTableName(tenantId, dataTableName)
-  queryTableName = formatTableName(tenantId, queryTableName)
-
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
   const sortOrder = query.sortOrder || 'ascend'
   const page = query.page || 1

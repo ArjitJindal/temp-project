@@ -1,21 +1,21 @@
 import { MongoDbConsumer } from '..'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const getService = async () => {
-  const clickhouseClient = await getClickhouseClient()
   const mongoDbClient = await getMongoDbClient()
-  return new MongoDbConsumer(mongoDbClient, clickhouseClient)
+  return new MongoDbConsumer(mongoDbClient)
 }
 
 describe('Fetch Table Details', () => {
   it('should return correct table details', async () => {
+    const tenantId = getTestTenantId()
     const mongoDbConsumerService = await getService()
     expect(
-      mongoDbConsumerService.fetchTableDetails('flagright-cases')
+      mongoDbConsumerService.fetchTableDetails(`${tenantId}-cases`)
     ).toMatchObject({
-      tenantId: 'flagright',
-      collectionName: 'flagright-cases',
+      tenantId,
+      collectionName: `${tenantId}-cases`,
       clickhouseTable: {
         table: 'cases',
       },
@@ -23,9 +23,10 @@ describe('Fetch Table Details', () => {
   })
 
   it('should return null if the table is not found', async () => {
+    const tenantId = getTestTenantId()
     const mongoDbConsumerService = await getService()
     expect(
-      mongoDbConsumerService.fetchTableDetails('flagright-cases123')
+      mongoDbConsumerService.fetchTableDetails(`${tenantId}-cases-1`)
     ).toBeFalsy()
   })
 })

@@ -127,8 +127,8 @@ export type OngoingMerchantMonitoringBatchJob = {
 }
 
 /* Sync Indexes */
-export type SyncIndexesBatchJob = {
-  type: 'SYNC_INDEXES'
+export type SyncDatabasesBatchJob = {
+  type: 'SYNC_DATABASES'
   tenantId: string
 }
 
@@ -194,7 +194,7 @@ export type BatchJob =
   | GlobalRuleAggregationRebuildBatchJob
   | DashboardRefreshBatchJob
   | OngoingMerchantMonitoringBatchJob
-  | SyncIndexesBatchJob
+  | SyncDatabasesBatchJob
   | TestFargateJob
   | TenantDeletionBatchJob
   | RulePreAggregationBatchJob

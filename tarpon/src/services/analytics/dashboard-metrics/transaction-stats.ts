@@ -32,7 +32,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-import { formatTableName, getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
@@ -253,9 +253,9 @@ export class TransactionStatsDashboardMetric {
     granularity?: GranularityValuesType,
     returnDataType: 'TOTAL' | 'DATE_RANGE' = 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
-    const client = await getClickhouseClient()
+    const client = await getClickhouseClient(tenantId)
     const tableDefinition = CLICKHOUSE_DEFINITIONS.TRANSACTIONS
-    const tableName = formatTableName(tenantId, tableDefinition.tableName)
+    const tableName = tableDefinition.tableName
 
     const type = granularity?.toLowerCase() ?? 'hour'
     const timeFormat = type === 'month' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss'
@@ -323,7 +323,7 @@ export class TransactionStatsDashboardMetric {
 
     const query = `
     SELECT ${timeQuery} as time, ${paymentMethods}, ${transactionTypes} ${dateRangeQuery}
-    FROM ${tableName} FINAL
+    FROM ${tableName}
     WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}')
     ${aggregatorQuery}
     SETTINGS output_format_json_quote_64bit_integers = 0

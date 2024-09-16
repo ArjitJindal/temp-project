@@ -117,7 +117,7 @@ export const transactionsViewHandler = lambdaApi()(
     })
 
     handlers.registerGetTransactionsV2List(async (context, request) => {
-      const clickHouseClient = await getClickhouseClient()
+      const clickHouseClient = await getClickhouseClient(tenantId)
       const clickHouseTransactionsRepository =
         new ClickhouseTransactionsRepository(tenantId, clickHouseClient)
 

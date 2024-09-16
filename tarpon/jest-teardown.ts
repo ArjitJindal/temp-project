@@ -2,9 +2,9 @@
 import 'tsconfig-paths/register'
 
 import { execSync } from 'child_process'
-import axios from 'axios'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { MONGO_TEST_DB_PREFIX } from '@/test-utils/mongo-test-utils'
+import { executeClickhouseDefaultClientQuery } from '@/utils/clickhouse/utils'
 
 module.exports = async function () {
   if (process.env.EXEC_SOURCE !== 'CI') {
@@ -32,8 +32,18 @@ module.exports = async function () {
     }
 
     // Clickhouse clean-up
-    await axios.post(
-      'http://localhost:8123/?query=DROP%20DATABASE%20IF%20EXISTS%20tarpon_test'
-    )
+    await executeClickhouseDefaultClientQuery(async (client) => {
+      const queryResponse = await client.query({
+        query: 'SHOW DATABASES',
+        format: 'JSONEachRow',
+      })
+      const clickhouseDatabases = await queryResponse.json<{ name: string }>()
+
+      for (const database of clickhouseDatabases) {
+        if (database.name.startsWith('tarpon_test')) {
+          await client.query({ query: `DROP DATABASE ${database.name}` })
+        }
+      }
+    })
   }
 }

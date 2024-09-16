@@ -2,7 +2,6 @@ import { migrateAllTenants } from '../utils/tenant'
 import {
   batchInsertToClickhouse,
   createOrUpdateClickHouseTable,
-  formatTableName,
   getClickhouseClient,
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts'
@@ -14,23 +13,16 @@ async function migrateTenant(tenant: Tenant) {
   if (!envIs('local') && !envIs('dev')) {
     return
   }
-  const clickhouseClient = await getClickhouseClient()
+  const clickhouseClient = await getClickhouseClient(tenant.id)
   const mongoClient = await getMongoDbClient()
   const db = mongoClient.db()
   for (const table of ClickHouseTables) {
-    const clickhouseTable = formatTableName(tenant.id, table.table)
+    const clickhouseTable = table.table
     const checkTableQuery = `DROP TABLE IF EXISTS ${clickhouseTable}`
     await clickhouseClient.query({ query: checkTableQuery })
     for (const matView of table.materializedViews ?? []) {
-      const checkMatViewQuery = `DROP VIEW IF EXISTS ${formatTableName(
-        tenant.id,
-        matView.viewName
-      )}`
-      const dropMatViewTableQuery = `DROP TABLE IF EXISTS ${formatTableName(
-        tenant.id,
-        matView.table
-      )}`
-
+      const checkMatViewQuery = `DROP VIEW IF EXISTS ${matView.viewName}`
+      const dropMatViewTableQuery = `DROP TABLE IF EXISTS ${matView.table}`
       await clickhouseClient.query({ query: checkMatViewQuery })
       await clickhouseClient.query({ query: dropMatViewTableQuery })
     }
@@ -46,12 +38,12 @@ async function migrateTenant(tenant: Tenant) {
       batch.push(doc)
       count++
       if (count % batchSize === 0) {
-        await batchInsertToClickhouse(clickhouseTable, batch, tenant.id)
+        await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
         batch.length = 0 // clear the batch
       }
     }
 
-    await batchInsertToClickhouse(clickhouseTable, batch, tenant.id)
+    await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
   }
 }
 

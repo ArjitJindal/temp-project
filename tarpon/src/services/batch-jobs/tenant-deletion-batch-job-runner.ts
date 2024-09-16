@@ -26,10 +26,10 @@ import {
   getUserSenderKeys,
 } from '../rules-engine/utils'
 import {
+  executeClickhouseDefaultClientQuery,
   getClickhouseClient,
-  sanitizeTableName,
+  getClickhouseDbName,
 } from '../../utils/clickhouse/utils'
-import { ClickHouseTables } from '../../utils/clickhouse/definition'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -151,6 +151,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         try {
           await this.dropMongoTables(tenantId)
           await this.nukeClickhouseTables(tenantId)
+          await this.nukeClickhouseTables(`${tenantId}-test`)
         } catch (e) {
           logger.error(`Failed to delete mongo tables - ${e}`)
           await this.addStatusRecord(tenantId, 'FAILED', (e as Error).message)
@@ -368,29 +369,28 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     if (envIsNot('dev')) {
       return
     }
-    const client = await getClickhouseClient()
-    const tablesQuery = await client.query({
-      query: `SHOW TABLES LIKE '${tenantId}%'`,
-      format: 'JSONEachRow',
-    })
-    const tables = (await tablesQuery.json()) as { name: string }[]
-    const clickHouseTables = ClickHouseTables.flatMap((table) => [
-      sanitizeTableName(`${tenantId}-${table.table}`),
-      sanitizeTableName(`${tenantId}-test-${table.table}`),
-    ])
 
-    for (const table of tables) {
-      try {
-        if (clickHouseTables.includes(table.name)) {
-          await client.query({
-            query: `DROP TABLE ${table.name}`,
-          })
-          logger.info(`Dropped table ${table.name}`)
-        }
-      } catch (e) {
-        logger.error(`Failed to drop table ${table.name} - ${e}`)
+    const result = await executeClickhouseDefaultClientQuery(async (client) => {
+      const queryResult = await client.query({
+        query: `SHOW DATABASES`,
+        format: 'JSONEachRow',
+      })
+
+      const databases = await queryResult.json<{ name: string }>()
+
+      if (!databases.some((db) => db.name === getClickhouseDbName(tenantId))) {
+        return false
       }
+    })
+
+    if (!result) {
+      return
     }
+
+    const client = await getClickhouseClient(tenantId)
+    await client.query({
+      query: `DROP DATABASE ${getClickhouseDbName(tenantId)}`,
+    })
   }
 
   private async deleteListDeleted(tenantId: string) {

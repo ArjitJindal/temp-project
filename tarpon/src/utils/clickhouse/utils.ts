@@ -25,28 +25,84 @@ import {
   MongoConsumerSQSMessage,
 } from '@/lambdas/mongo-db-trigger-consumer/app'
 
-let client: ClickHouseClient
+export const getClickhouseDbName = (tenantId: string) => {
+  return sanitizeSqlName(
+    envIs('test') ? `tarpon_test_${tenantId}` : `tarpon_${tenantId}`
+  )
+}
 
-export async function getClickhouseClient() {
+let client: Record<string, ClickHouseClient> = {}
+
+export const closeClickhouseClient = async (tenantId: string) => {
+  if (client[tenantId]) {
+    await client[tenantId].close()
+    delete client[tenantId]
+  }
+}
+
+export const executeClickhouseDefaultClientQuery = async (
+  callback: (client: ClickHouseClient) => Promise<any>
+) => {
   if (envIs('local') || envIs('test')) {
-    client = createClient({
+    const clickHouseClient = createClient({
       url: 'http://localhost:8123',
       username: 'default',
-      database: envIs('test') ? 'tarpon_test' : 'tarpon',
+      database: 'default',
+    })
+    const result = await callback(clickHouseClient)
+    await clickHouseClient.close()
+    return result
+  } else {
+    const config = await getSecret<NodeClickHouseClientConfigOptions>(
+      'clickhouse'
+    )
+    const clickHouseClient = createClient({
+      ...config,
+      database: 'default',
+    })
+    const result = await callback(clickHouseClient)
+    await clickHouseClient.close()
+    return result
+  }
+}
+
+export async function getClickhouseClient(tenantId: string) {
+  if (client[tenantId]) {
+    return client[tenantId]
+  }
+
+  if (envIs('test')) {
+    await executeClickhouseDefaultClientQuery(async (clickHouseClient) => {
+      await clickHouseClient.query({
+        query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
+      })
     })
   }
 
-  if (client) {
-    return client
+  if (envIs('local') || envIs('test')) {
+    const clickHouseClient = createClient({
+      url: 'http://localhost:8123',
+      username: 'default',
+      database: getClickhouseDbName(tenantId),
+    })
+
+    client = { [tenantId]: clickHouseClient }
+
+    return clickHouseClient
   }
 
   const config = await getSecret<NodeClickHouseClientConfigOptions>(
     'clickhouse'
   )
 
-  client = createClient(config)
+  client = {
+    [tenantId]: createClient({
+      ...config,
+      database: getClickhouseDbName(tenantId),
+    }),
+  }
 
-  return client
+  return client[tenantId]
 }
 
 /**
@@ -62,7 +118,7 @@ export const getProjectionName = (
   const projectionName = projection.name
   const version = projection.version
 
-  return sanitizeTableName(`${tableName}_${projectionName}_v${version}_proj`)
+  return sanitizeSqlName(`${tableName}_${projectionName}_v${version}_proj`)
 }
 
 function assertTableName(
@@ -89,11 +145,12 @@ function assertTableName(
 }
 
 const clickhouseInsert = async (
+  tenantId: string,
   table: string,
   values: object[],
   columns: InsertParams['columns']
 ) => {
-  const client = await getClickhouseClient()
+  const client = await getClickhouseClient(tenantId)
 
   const CLICKHOUSE_SETTINGS: ClickHouseSettings = {
     wait_for_async_insert: envIs('test', 'local') ? 1 : 0,
@@ -145,7 +202,8 @@ export async function insertToClickhouse<T extends object>(
   }
 
   await clickhouseInsert(
-    sanitizeTableName(tableName),
+    tenantId,
+    tableName,
     [
       {
         id: object[tableDefinition.idColumn],
@@ -158,9 +216,9 @@ export async function insertToClickhouse<T extends object>(
 }
 
 export async function batchInsertToClickhouse(
+  tenantId: string,
   table: TableName,
-  objects: object[],
-  tenantId = getContext()?.tenantId as string
+  objects: object[]
 ) {
   const tableDefinition = assertTableName(table, tenantId)
 
@@ -173,7 +231,8 @@ export async function batchInsertToClickhouse(
   }
 
   await clickhouseInsert(
-    sanitizeTableName(table),
+    tenantId,
+    sanitizeSqlName(table),
     objects.map((object) => ({
       id: object[tableDefinition.idColumn],
       data: JSON.stringify(object),
@@ -181,10 +240,6 @@ export async function batchInsertToClickhouse(
     })),
     ['id', 'data', 'is_deleted']
   )
-}
-
-export function formatTableName(tenantId: string, tableName: string): string {
-  return sanitizeTableName(`${tenantId}-${tableName}`)
 }
 
 const getAllColumns = (table: ClickhouseTableDefinition) => [
@@ -198,11 +253,8 @@ const getAllColumns = (table: ClickhouseTableDefinition) => [
   ...(table.materializedColumns || []),
 ]
 
-export const getCreateTableQuery = (
-  table: ClickhouseTableDefinition,
-  tenantId: string
-) => {
-  const tableName = formatTableName(tenantId, table.table)
+export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
+  const tableName = table.table
   const columns = getAllColumns(table)
 
   return `
@@ -229,14 +281,35 @@ export const getCreateTableQuery = (
   `
 }
 
+const createDbIfNotExists = async () => {
+  await executeClickhouseDefaultClientQuery(async (client) => {
+    await client.query({
+      query: `CREATE DATABASE IF NOT EXISTS default`,
+    })
+  })
+}
+
+export async function createTenantDatabase(tenantId: string) {
+  await createDbIfNotExists()
+
+  for (const table of ClickHouseTables) {
+    await createOrUpdateClickHouseTable(tenantId, table, {
+      skipDefaultClient: true,
+    })
+  }
+}
+
 export async function createOrUpdateClickHouseTable(
   tenantId: string,
-  table: ClickhouseTableDefinition
+  table: ClickhouseTableDefinition,
+  options?: { skipDefaultClient?: boolean }
 ) {
-  const tableName = formatTableName(tenantId, table.table)
-  const client = await getClickhouseClient()
-
-  await createTableIfNotExists(client, tableName, table, tenantId)
+  const tableName = table.table
+  if (!options?.skipDefaultClient) {
+    await createDbIfNotExists()
+  }
+  const client = await getClickhouseClient(tenantId)
+  await createTableIfNotExists(client, tableName, table)
   await addMissingColumns(client, tableName, table)
   await addMissingProjections(client, tableName, table)
   await createMaterializedViews(client, tenantId, table)
@@ -245,12 +318,11 @@ export async function createOrUpdateClickHouseTable(
 async function createTableIfNotExists(
   client: ClickHouseClient,
   tableName: string,
-  table: ClickhouseTableDefinition,
-  tenantId: string
+  table: ClickhouseTableDefinition
 ): Promise<void> {
   const tableExists = await checkTableExists(client, tableName)
   if (!tableExists) {
-    const createTableQuery = getCreateTableQuery(table, tenantId)
+    const createTableQuery = getCreateTableQuery(table)
     await client.query({ query: createTableQuery })
   }
 }
@@ -407,11 +479,10 @@ async function addProjection(
 }
 
 export const createMaterializedTableQuery = (
-  tenantId: string,
   view: MaterializedViewDefinition
 ) => {
   return `
-    CREATE TABLE IF NOT EXISTS ${formatTableName(tenantId, view.table)} (
+    CREATE TABLE IF NOT EXISTS ${view.table} (
       ${view.columns.join(', ')}
     ) ENGINE = ${view.engine}()
     ORDER BY ${view.orderBy}
@@ -422,18 +493,14 @@ export const createMaterializedTableQuery = (
 }
 
 export const createMaterializedViewQuery = (
-  tenantId: string,
   view: MaterializedViewDefinition,
   tableName: string
 ) => {
   return `
-    CREATE MATERIALIZED VIEW IF NOT EXISTS ${formatTableName(
-      tenantId,
-      view.viewName
-    )} TO ${formatTableName(tenantId, view.table)}
+    CREATE MATERIALIZED VIEW IF NOT EXISTS ${view.viewName} TO ${view.table}
     AS (
       SELECT ${view.columns.map((col) => col.split(' ')[0]).join(', ')}
-      FROM ${formatTableName(tenantId, tableName)}
+      FROM ${tableName}
     )
   `
 }
@@ -448,9 +515,9 @@ async function createMaterializedViews(
   }
 
   for (const view of table.materializedViews) {
-    const createViewQuery = createMaterializedTableQuery(tenantId, view)
+    const createViewQuery = createMaterializedTableQuery(view)
     await client.query({ query: createViewQuery })
-    const matQuery = createMaterializedViewQuery(tenantId, view, table.table)
+    const matQuery = createMaterializedViewQuery(view, table.table)
     await client.query({ query: matQuery })
   }
 }
@@ -479,7 +546,7 @@ export function getSortedData<T>({
   return sortedItems
 }
 
-export const sanitizeTableName = (tableName: string) =>
+export const sanitizeSqlName = (tableName: string) =>
   tableName.replace(/-/g, '_')
 
 const sqs = new SQS({ region: process.env.AWS_REGION })

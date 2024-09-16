@@ -170,7 +170,7 @@ export class UserService {
     const lambdaCredentials = getCredentialsFromEvent(event)
 
     const clickhouseClient = hasFeature('CLICKHOUSE_ENABLED')
-      ? await getClickhouseClient()
+      ? await getClickhouseClient(tenantId)
       : undefined
 
     return new UserService(

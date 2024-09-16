@@ -1,20 +1,27 @@
-import { getClickhouseClient } from '../clickhouse/utils'
+import { getClickhouseClient, getClickhouseDbName } from '../clickhouse/utils'
+import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
 describe('Clickhouse', () => {
   it('should be able to connect to Clickhouse', async () => {
-    const client = await getClickhouseClient()
+    const tenantId = getTestTenantId()
+    const client = await getClickhouseClient(tenantId)
 
     const result = await client.query({
       query: 'SHOW DATABASES',
       format: 'JSONEachRow',
     })
 
-    const data = await result.json()
-    expect(data).toContainEqual({ name: 'tarpon_test' })
+    const data = await result.json<{ name: string }>()
+    const databaseExists = data.some(
+      (db) => db.name === getClickhouseDbName(tenantId)
+    )
+
+    expect(databaseExists).toBe(true)
   })
 
   test('Should Replace Rows in ReplacingMergeTree - single orderby', async () => {
-    const client = await getClickhouseClient()
+    const tenantId = getTestTenantId()
+    const client = await getClickhouseClient(tenantId)
 
     await client.query({
       query: `
@@ -120,7 +127,8 @@ describe('Clickhouse', () => {
   })
 
   test('Should Replace Rows in ReplacingMergeTree - multiple orderby', async () => {
-    const client = await getClickhouseClient()
+    const tenantId = getTestTenantId()
+    const client = await getClickhouseClient(tenantId)
 
     await client.query({
       query: `

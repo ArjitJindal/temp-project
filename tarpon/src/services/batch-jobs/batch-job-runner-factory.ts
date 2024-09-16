@@ -14,7 +14,7 @@ import { OngoingScreeningUserRuleBatchJobRunner } from '@/services/batch-jobs/on
 import { PulseDataLoadJobRunner } from '@/services/batch-jobs/pulse-data-load-job-runner'
 import { SimulationBeaconBatchJobRunner } from '@/services/batch-jobs/simulation-beacon-batch-job-runner'
 import { SimulationRiskLevelsBatchJobRunner } from '@/services/batch-jobs/simulation-pulse-batch-job-runner'
-import { SyncMongoDbIndexesBatchJobRunner } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
+import { SyncDatabases } from '@/services/batch-jobs/sync-mongo-indexes-job-runner'
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
 import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-summary-batch-job-runner'
 import { SanctionsDataFetchBatchJobRunner } from '@/services/batch-jobs/sanctions-data-fetch-job-runner'
@@ -36,7 +36,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     SIMULATION_PULSE: (jobId) => new SimulationRiskLevelsBatchJobRunner(jobId),
     ONGOING_MERCHANT_MONITORING: (jobId) =>
       new OngoingMerchantMonitoringBatchJobRunner(jobId),
-    SYNC_INDEXES: (jobId) => new SyncMongoDbIndexesBatchJobRunner(jobId),
+    SYNC_DATABASES: (jobId) => new SyncDatabases(jobId),
     TEST_FARGATE: (jobId) => new TestFargateBatchJobRunner(jobId),
     TENANT_DELETION: (jobId) => new TenantDeletionBatchJobRunner(jobId),
     SIMULATION_RISK_FACTORS: (jobId) =>

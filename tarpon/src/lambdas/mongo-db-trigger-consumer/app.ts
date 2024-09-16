@@ -9,7 +9,6 @@ import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { MongoDbConsumer } from '.'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { envIs } from '@/utils/env'
 
 type ChangeStreamDocument =
@@ -77,24 +76,16 @@ export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
       JSON.parse(record.body)
     ) as MongoConsumerSQSMessage[]
 
-    const clickhouseClient = await getClickhouseClient()
     const mongoClient = await getMongoDbClient()
 
-    await new MongoDbConsumer(
-      mongoClient,
-      clickhouseClient
-    ).handleMongoConsumerSQSMessage(events)
+    await new MongoDbConsumer(mongoClient).handleMongoConsumerSQSMessage(events)
   }
 )
 
 export async function handleMongoConsumerSQSMessage(
   events: MongoConsumerSQSMessage[]
 ) {
-  const clickhouseClient = await getClickhouseClient()
   const mongoClient = await getMongoDbClient()
 
-  await new MongoDbConsumer(
-    mongoClient,
-    clickhouseClient
-  ).handleMongoConsumerSQSMessage(events)
+  await new MongoDbConsumer(mongoClient).handleMongoConsumerSQSMessage(events)
 }
