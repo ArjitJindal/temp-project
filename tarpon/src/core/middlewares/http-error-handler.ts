@@ -22,7 +22,6 @@ export const httpErrorHandler =
           } as HttpError),
           headers: {
             'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
           },
           statusCode: error.statusCode,
         }
@@ -42,7 +41,6 @@ export const httpErrorHandler =
         }),
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
         },
         statusCode: 500,
       }

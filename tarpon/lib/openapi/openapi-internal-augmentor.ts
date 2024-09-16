@@ -10,7 +10,7 @@ import * as yaml from 'js-yaml'
 import mkdirp from 'mkdirp'
 import { StackConstants } from '../constants'
 import { getAugmentedOpenapi } from './openapi-augmentor-util'
-import { ALLOWED_ORIGINS } from './openapi-internal-constants'
+import { getAllowedOrigins } from './openapi-internal-constants'
 
 // We don't care about region
 const env = (process.env.ENV || 'prod').split(':')[0]
@@ -278,11 +278,7 @@ const openapi = getAugmentedOpenapi(
   {
     iamAuthorizedPaths: ['/apikey'],
     publicPaths: ['/slack/oauth_redirect', '/webhooks/complyadvantage'],
-    allowedOrigins: ['dev', 'local'].includes(env as string)
-      ? ALLOWED_ORIGINS.dev
-      : env === 'sandbox'
-      ? ALLOWED_ORIGINS.sandbox
-      : ALLOWED_ORIGINS.prod,
+    allowedOrigins: getAllowedOrigins(),
   }
 )
 

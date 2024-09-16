@@ -44,3 +44,12 @@ export const ALLOWED_ORIGINS = {
     .filter(notEmpty)
     .map(sanitize),
 }
+
+export function getAllowedOrigins(): string[] {
+  const env = (process.env.ENV || 'prod').split(':')[0]
+  return ['dev', 'local'].includes(env as string)
+    ? ALLOWED_ORIGINS.dev
+    : env === 'sandbox'
+    ? ALLOWED_ORIGINS.sandbox
+    : ALLOWED_ORIGINS.prod
+}

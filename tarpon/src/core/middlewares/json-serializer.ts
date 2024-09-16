@@ -45,7 +45,6 @@ export const jsonSerializer =
       statusCode: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
         ...headers,
       },
       body,

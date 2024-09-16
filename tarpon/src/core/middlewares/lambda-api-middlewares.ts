@@ -12,6 +12,7 @@ import { rbacMiddleware } from '@/core/middlewares/rbac'
 import { xrayMiddleware } from '@/core/middlewares/xray-middleware'
 import { bgProcessingMiddleware } from '@/core/middlewares/bg-processing-middleware'
 import { checkHeaders } from '@/core/middlewares/check-headers'
+import { corsHandler } from '@/core/middlewares/cors-handler'
 
 export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
   registerUnhandledErrorHandler()
@@ -20,6 +21,7 @@ export const lambdaApi = (options?: { requiredFeatures?: Feature[] }) => {
     apiContextProvider(),
     xrayMiddleware(),
     bgProcessingMiddleware(),
+    corsHandler(),
     httpErrorHandler(),
     requestLoggerMiddleware(),
     jsonSerializer(),
