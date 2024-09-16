@@ -11,7 +11,8 @@ import { getMlModels } from './data/ml-models'
 import {
   batchInsertToClickhouse,
   createTenantDatabase,
-  getClickhouseClient,
+  executeClickhouseDefaultClientQuery,
+  getClickhouseDbName,
 } from '@/utils/clickhouse/utils'
 import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -210,10 +211,11 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   }
 
   if (envIs('local') || envIs('dev')) {
-    const clickhouseClient = await getClickhouseClient(tenantId)
     const mongoConsumerService = new MongoDbConsumer(client)
-    await clickhouseClient.query({
-      query: `DROP DATABASE IF EXISTS ${tenantId}`,
+    await executeClickhouseDefaultClientQuery(async (client) => {
+      await client.query({
+        query: `DROP DATABASE IF EXISTS ${getClickhouseDbName(tenantId)}`,
+      })
     })
     await createTenantDatabase(tenantId)
     await Promise.all(

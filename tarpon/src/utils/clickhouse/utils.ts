@@ -281,16 +281,16 @@ export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   `
 }
 
-const createDbIfNotExists = async () => {
+const createDbIfNotExists = async (tenantId: string) => {
   await executeClickhouseDefaultClientQuery(async (client) => {
     await client.query({
-      query: `CREATE DATABASE IF NOT EXISTS default`,
+      query: `CREATE DATABASE IF NOT EXISTS ${getClickhouseDbName(tenantId)}`,
     })
   })
 }
 
 export async function createTenantDatabase(tenantId: string) {
-  await createDbIfNotExists()
+  await createDbIfNotExists(tenantId)
 
   for (const table of ClickHouseTables) {
     await createOrUpdateClickHouseTable(tenantId, table, {
@@ -306,13 +306,13 @@ export async function createOrUpdateClickHouseTable(
 ) {
   const tableName = table.table
   if (!options?.skipDefaultClient) {
-    await createDbIfNotExists()
+    await createDbIfNotExists(tenantId)
   }
   const client = await getClickhouseClient(tenantId)
   await createTableIfNotExists(client, tableName, table)
   await addMissingColumns(client, tableName, table)
   await addMissingProjections(client, tableName, table)
-  await createMaterializedViews(client, tenantId, table)
+  await createMaterializedViews(client, table)
 }
 
 async function createTableIfNotExists(
@@ -507,7 +507,6 @@ export const createMaterializedViewQuery = (
 
 async function createMaterializedViews(
   client: ClickHouseClient,
-  tenantId: string,
   table: ClickhouseTableDefinition
 ): Promise<void> {
   if (!table.materializedViews?.length) {

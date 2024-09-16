@@ -269,7 +269,7 @@ export function casePaymentIdentifierQuery(paymentIdentifier?: PaymentDetails) {
   ]
 }
 
-export function casesPaymentIdentifierQueryClickhouse(
+export function paymentIdentifierQueryClickhouse(
   paymentIdentifier?: PaymentDetails
 ) {
   if (!paymentIdentifier) {
@@ -279,14 +279,14 @@ export function casesPaymentIdentifierQueryClickhouse(
   const originConditions = keys
     .filter((key) => paymentIdentifier[key])
     .map((key) => {
-      return `JSONExtractString(paymentDetails, 'originPaymentDetails.${key}') = '${paymentIdentifier[key]}'`
+      return `originPaymentDetails_${key} = '${paymentIdentifier[key]}'`
     })
     .join(' AND ')
 
   const destinationConditions = keys
     .filter((key) => paymentIdentifier[key])
     .map((key) => {
-      return `JSONExtractString(paymentDetails, 'destinationPaymentDetails.${key}') = '${paymentIdentifier[key]}'`
+      return `destinationPaymentDetails_${key} = '${paymentIdentifier[key]}'`
     })
     .join(' AND ')
 

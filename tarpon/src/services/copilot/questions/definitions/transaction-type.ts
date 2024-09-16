@@ -9,7 +9,7 @@ import {
   Period,
   periodDefaults,
   periodVars,
-  casesPaymentIdentifierQueryClickhouse,
+  paymentIdentifierQueryClickhouse,
   matchPeriodSQL,
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -34,7 +34,7 @@ export const TransactionType: BarchartQuestion<Period> = {
       const clickhouseClient = await getClickhouseClient(tenantId)
       const identifierQuery = userId
         ? `originUserId = '${userId}' OR destinationUserId = '${userId}'`
-        : casesPaymentIdentifierQueryClickhouse(paymentIdentifier)
+        : paymentIdentifierQueryClickhouse(paymentIdentifier)
 
       const query = `
       SELECT type, count() as count

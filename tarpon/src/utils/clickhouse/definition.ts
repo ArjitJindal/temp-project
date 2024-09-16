@@ -1,4 +1,4 @@
-import { invert, memoize } from 'lodash'
+import { invert, memoize, uniq } from 'lodash'
 import { MONGO_TABLE_SUFFIX_MAP } from '../mongodb-definitions'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
@@ -6,6 +6,7 @@ import { TRANSACTION_STATES } from '@/@types/openapi-public-custom/TransactionSt
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { USER_TYPES } from '@/@types/user/user-type'
+import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 
 type BaseTableDefinition = {
   table: string
@@ -61,6 +62,16 @@ const enumFields = (
     .split('.')
     .join("', '")}', '${jsonExtractType}')`
 }
+
+const generatePaymentDetailColumns = (prefix: string) =>
+  uniq(
+    Object.values(PAYMENT_METHOD_IDENTIFIER_FIELDS)
+      .flat()
+      .map(
+        (field) =>
+          `${prefix}PaymentDetails_${field} String MATERIALIZED JSONExtractString(data, '${prefix}PaymentDetails', '${field}')`
+      )
+  )
 
 export const CLICKHOUSE_DEFINITIONS = {
   TRANSACTIONS: {
@@ -126,6 +137,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       enumFields(TRANSACTION_STATES, 'transactionState', 'transactionState'),
       "originPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.originPaymentMethodId')",
       "destinationPaymentMethodId String MATERIALIZED JSON_VALUE(data, '$.destinationPaymentMethodId')",
+      ...generatePaymentDetailColumns('origin'),
+      ...generatePaymentDetailColumns('destination'),
+      "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
+      "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
