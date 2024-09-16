@@ -28,7 +28,7 @@ describe('MongoSanctionsRepository', () => {
     ]
 
     const repo = new MongoSanctionsRepository()
-    await repo.saveAssociations('dowjones', associates, '')
+    await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
 
@@ -55,7 +55,7 @@ describe('MongoSanctionsRepository', () => {
     ]
 
     const repo = new MongoSanctionsRepository()
-    await repo.saveAssociations('dowjones', associates, '')
+    await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
 
@@ -72,7 +72,7 @@ describe('MongoSanctionsRepository', () => {
     const associates: [string, string[]][] = [['1', ['2']]]
 
     const repo = new MongoSanctionsRepository()
-    await repo.saveAssociations('dowjones', associates, '')
+    await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.findOne({ id: '3' })
 
@@ -88,7 +88,7 @@ describe('MongoSanctionsRepository', () => {
     const associates: [string, string[]][] = []
 
     const repo = new MongoSanctionsRepository()
-    await repo.saveAssociations('dowjones', associates, '')
+    await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
 

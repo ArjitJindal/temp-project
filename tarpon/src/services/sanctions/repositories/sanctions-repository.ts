@@ -1,3 +1,4 @@
+import { uniq } from 'lodash'
 import {
   Action,
   SanctionsDataProviderName,
@@ -82,70 +83,47 @@ export class MongoSanctionsRepository implements SanctionsRepository {
     associations: [string, string[]][],
     version: string
   ) {
+    if (associations.length === 0) {
+      return
+    }
     const client = await getMongoDbClient()
     const coll = client.db().collection(SANCTIONS_COLLECTION)
-    await coll
-      .aggregate([
-        {
-          // Unwind the provided associates array into documents
-          $addFields: {
-            associatesArray: associations,
-          },
-        },
-        {
-          $unwind: '$associatesArray',
-        },
-        {
-          $project: {
-            id: { $arrayElemAt: ['$associatesArray', 0] },
-            associateIds: { $arrayElemAt: ['$associatesArray', 1] },
-            provider: 1, // Include provider from original documents
-            version: 1, // Include version from original documents
-          },
-        },
-        {
-          // Lookup all associates in bulk based on associate IDs
-          $lookup: {
-            from: SANCTIONS_COLLECTION,
-            let: { associateIds: '$associateIds' },
-            pipeline: [
-              {
-                $match: {
-                  $expr: {
-                    $and: [
-                      { $in: ['$id', '$$associateIds'] },
-                      { provider }, // Match on provider
-                      { version }, // Match on version
-                    ],
-                  },
-                },
-              },
-              {
-                $project: { name: 1 }, // Only project name of the associates
-              },
-            ],
-            as: 'associates',
-          },
-        },
-        {
-          // Match the existing documents with the associates' names
-          $project: {
-            _id: 0,
-            id: 1,
-            provider: 1, // Keep provider for matching in $merge
-            version: 1, // Keep version for matching in $merge
-            associates: '$associates.name', // Extract names of the associates
-          },
-        },
-        {
-          $merge: {
-            into: SANCTIONS_COLLECTION,
-            whenMatched: [{ $set: { associates: '$$new.associates' } }],
-            whenNotMatched: 'discard',
-            on: ['provider', 'id', 'version'],
-          },
-        },
+
+    const assocationIds = uniq(
+      associations.flatMap(([_, associationIds]) => associationIds)
+    )
+    const associates = await coll
+      .aggregate<{ id: string; name: string }>([
+        { $match: { id: { $in: assocationIds }, provider, version } },
+        { $project: { id: 1, name: 1, provider: 1, version: 1 } },
       ])
       .toArray()
+
+    const associateNameMap = associates.reduce<{ [key: string]: string }>(
+      (acc, { id, name }) => {
+        acc[id] = name
+        return acc
+      },
+      {}
+    )
+
+    await coll.bulkWrite(
+      associations.map(([entityId, associateIds]) => {
+        return {
+          updateOne: {
+            filter: {
+              id: entityId,
+              provider,
+              version,
+            },
+            update: {
+              $set: {
+                associates: associateIds.map((id) => associateNameMap[id]),
+              },
+            },
+          },
+        }
+      })
+    )
   }
 }
