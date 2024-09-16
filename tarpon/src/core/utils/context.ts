@@ -121,7 +121,7 @@ export async function getInitialContext(
         tenantName,
         functionName: lambdaContext?.functionName,
         region: process.env.AWS_REGION,
-        requestId: lambdaContext.awsRequestId,
+        requestId: lambdaContext?.awsRequestId,
         traceId: trace.sampled === '1' ? trace.root : undefined,
       },
       metrics: {},

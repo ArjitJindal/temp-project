@@ -497,58 +497,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllUsersListResponse'
-  /import/users:
-    parameters: []
-    post:
-      summary: Import - Start to Import
-      operationId: post-import-users
-      responses:
-        '200':
-          description: OK
-      x-flagright:
-        permissions:
-          - users:import:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ImportRequest'
-        required: true
-  /import/transactions:
-    parameters: []
-    post:
-      summary: Import - Start to Import
-      operationId: post-import-transactions
-      responses:
-        '200':
-          description: OK
-      x-flagright:
-        permissions:
-          - transactions:import:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ImportRequest'
-        required: true
-  /imports/{importId}:
-    parameters:
-      - schema:
-          type: string
-        name: importId
-        in: path
-        required: true
-    get:
-      summary: Import - Get Import Info
-      tags: []
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/FileImport'
-      operationId: get-import-importId
   /files/getPresignedUrl:
     parameters: []
     get:
@@ -7871,30 +7819,6 @@ components:
         - quotaLimit
         - quotaLeft
         - quotaRenewalRate
-    ImportRequest:
-      title: ImportRequest
-      type: object
-      properties:
-        type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
-            - BUSINESS
-        format:
-          type: string
-          enum:
-            - flagright
-            - custom
-        s3Key:
-          type: string
-        filename:
-          type: string
-      required:
-        - type
-        - format
-        - s3Key
-        - filename
     PresignedUrlResponse:
       title: PresignedUrlResponse
       type: object
@@ -7906,20 +7830,6 @@ components:
       required:
         - presignedUrl
         - s3Key
-    ListImportRequest:
-      title: ListImportRequest
-      type: object
-      properties:
-        listName:
-          type: string
-        indexName:
-          type: string
-        data:
-          type: string
-      required:
-        - listName
-        - indexName
-        - data
     TransactionsResponse:
       title: TransactionsResponse
       type: object
@@ -9101,36 +9011,6 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
         comment:
           $ref: '#/components/schemas/CommentRequest'
-    FileImport:
-      title: FileImport
-      type: object
-      properties:
-        _id:
-          type: string
-        type:
-          type: string
-          enum:
-            - TRANSACTION
-            - USER
-            - BUSINESS
-        s3Key:
-          type: string
-        filename:
-          type: string
-        importedRecords:
-          type: number
-        error:
-          type: string
-        statuses:
-          type: array
-          items:
-            $ref: '#/components/schemas/TaskStatusChange'
-      required:
-        - _id
-        - type
-        - s3Key
-        - filename
-        - statuses
     TaskStatusChange:
       type: object
       title: TaskStatusChange
@@ -10147,7 +10027,6 @@ components:
         - users:user-overview:write
         - users:user-comments:write
         - users:user-details:read
-        - users:import:write
         - dashboard:download-data:read
         - settings:organisation:read
         - settings:organisation:write
@@ -10159,7 +10038,6 @@ components:
         - transactions:overview:write
         - transactions:details:read
         - transactions:export:read
-        - transactions:import:write
         - audit-log:export:read
         - lists:all:read
         - lists:all:write

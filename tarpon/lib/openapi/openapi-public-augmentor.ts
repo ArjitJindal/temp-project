@@ -33,10 +33,12 @@ export const PublicApiPathToLambda: any = {
   '/events/business/user/{eventId}':
     StackConstants.PUBLIC_API_USER_EVENT_FUNCTION_NAME,
   '/batch/transactions': StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
-  '/batch/consumer/users': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
   '/batch/events/transaction':
     StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
+  '/batch/consumer/users': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
   '/batch/events/consumer/user': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+  '/batch/business/users': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
+  '/batch/events/business/user': StackConstants.PUBLIC_API_USER_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

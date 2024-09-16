@@ -103,11 +103,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       jwtAuthorizerBaseRole.roleArn
     )
 
-    /* File Import */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME,
-    })
-
     const { alias: presignedUrlAlias } = createFunction(
       this,
       lambdaExecutionRole,

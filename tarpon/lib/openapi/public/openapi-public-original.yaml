@@ -1192,6 +1192,50 @@ paths:
                 $ref: '#/components/schemas/ApiErrorResponse'
       deprecated: false
       tags: []
+  /batch/business/users:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: create_business_users
+      security:
+        - x-api-key: []
+      summary: Batch create business users
+      operationId: post-batch-business-users
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
   /events/consumer/user:
     post:
       x-fern-sdk-group-name: consumer_user_events
@@ -1477,6 +1521,50 @@ paths:
       deprecated: false
       tags: []
       x-internal: false
+  /batch/events/business/user:
+    post:
+      x-fern-sdk-group-name: batch
+      x-fern-sdk-method-name: create_business_user_events
+      security:
+        - x-api-key: []
+      summary: Batch create business user events
+      operationId: post-batch-business-user-events
+      requestBody:
+        description: ''
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BusinessUserEventBatchRequest'
+        required: true
+      responses:
+        '201':
+          description: Created
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BatchResponse'
+        '400':
+          description: Bad Request
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '401':
+          description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '429':
+          description: Too Many Requests
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
   /events/business/user/{eventId}:
     get:
       x-fern-sdk-group-name: business_user_events
@@ -6162,17 +6250,47 @@ components:
         - CREDIT
         - DEBIT
         - PREPAID
+    BatchResponseStatus:
+      title: BatchResponseStatus
+      description: Status of the batch response
+      type: string
+      enum:
+        - SUCCESS
+        - PARTIAL_FAILURE
+        - FAILURE
+    BatchResponseFailedRecord:
+      title: BatchResponseFailedRecord
+      description: Failed record in a batch response
+      type: object
+      properties:
+        id:
+          type: string
+        reasonCode:
+          type: string
     BatchResponse:
       title: BatchResponse
       description: Response from creation of a batch
       type: object
       properties:
-        message:
-          type: string
+        status:
+          $ref: '#/components/schemas/BatchResponseStatus'
         batchId:
           type: string
-        status:
+        successful:
+          type: number
+        failed:
+          type: number
+        failedRecords:
+          type: array
+          items:
+            $ref: '#/components/schemas/BatchResponseFailedRecord'
+        message:
           type: string
+      required:
+        - status
+        - batchId
+        - successful
+        - failed
     ConsumerUserEventBatchRequest:
       title: ConsumerUserEventBatchRequest
       description: Batch request to create consumer users
@@ -6184,6 +6302,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/ConsumerUserEvent'
+      required:
+        - data
+    BusinessUserEventBatchRequest:
+      title: BusinessUserEventBatchRequest
+      description: Batch request to create business users
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/BusinessUserEvent'
       required:
         - data
     TransactionBatchRequest:
@@ -6223,6 +6354,19 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/User'
+      required:
+        - data
+    BusinessBatchRequest:
+      title: BusinessBatchRequest
+      description: Batch request to create business users
+      type: object
+      properties:
+        batchId:
+          type: string
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Business'
       required:
         - data
     CardType:

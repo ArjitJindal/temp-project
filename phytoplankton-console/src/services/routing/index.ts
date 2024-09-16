@@ -11,10 +11,8 @@ import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-factors';
 import CustomRiskFactorsPage from '@/pages/risk-levels/custom-risk-factors';
 import RiskAlgorithmTable from '@/pages/risk-levels/risk-algorithms';
-import TransactionsFilesPage from '@/pages/import/import-transactions';
 import TransactionsListPage from '@/pages/transactions';
 import TransactionsItemPage from '@/pages/transactions-item';
-import UsersUsersFilesPage from '@/pages/import/import-users';
 import UsersUsersListPage from '@/pages/users/users-list';
 import UsersItemPage from '@/pages/users-item';
 import CreatedListsPage from '@/pages/lists';
@@ -166,11 +164,6 @@ export function useRoutes(): RouteItem[] {
             path: '/transactions/list',
           },
           {
-            name: 'transactions-files',
-            path: '/transactions/files',
-            component: TransactionsFilesPage,
-          },
-          {
             path: '/transactions',
             redirect: '/transactions/list',
           },
@@ -218,11 +211,6 @@ export function useRoutes(): RouteItem[] {
                 component: UsersItemPage,
               },
             ],
-          },
-          {
-            name: 'users-files',
-            path: '/users/users-files',
-            component: UsersUsersFilesPage,
           },
         ],
       },

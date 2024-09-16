@@ -18,6 +18,7 @@ import { UserManagementService } from '@/services/rules-engine/user-rules-engine
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
+import { BatchImportService } from '@/services/batch-import'
 
 export const userHandler = lambdaApi()(
   async (
@@ -136,29 +137,37 @@ export const userHandler = lambdaApi()(
     handlers.registerPostBusinessUser(async (_ctx, request) => {
       return createUser(request.Business, request.lockCraRiskLevel)
     })
-    handlers.registerPostBatchConsumerUsers(async (_ctx, request) => {
+    handlers.registerPostBatchConsumerUsers(async (ctx, request) => {
       const batchId = request.UserBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
-      const existingUsers = (
-        await Promise.all(
-          request.UserBatchRequest.data.map((user) => {
-            return validateUser(user)
-          })
-        )
-      ).filter(Boolean)
-      if (existingUsers.length > 0) {
-        return {
-          message: `Some users already exist: ${existingUsers.map(
-            (user) => user?.userId
-          )}`,
-        }
-      }
-      // TODO do this in a queue
-      await Promise.all(request.UserBatchRequest.data.map(createUser))
-      return {
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importConsumerUsers(
         batchId,
-        message: 'Batch users processed',
+        request.UserBatchRequest.data
+      )
+      try {
+        // TODO do this in a queue
+        await Promise.all(request.UserBatchRequest.data.map(createUser))
+      } catch (error) {
+        logger.error(`Error verifying transactions: ${error}`)
       }
+      return response
+    })
+    handlers.registerPostBatchBusinessUsers(async (ctx, request) => {
+      const batchId = request.BusinessBatchRequest.batchId || uuid4()
+      logger.info(`Processing batch ${batchId}`)
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importBusinessUsers(
+        batchId,
+        request.BusinessBatchRequest.data
+      )
+      return response
     })
     return await handlers.handle(event)
   }

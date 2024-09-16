@@ -12,6 +12,7 @@ import {
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
+  createConsumerUsers,
   getTestBusiness,
   getTestUser,
   setUpUsersHooks,
@@ -232,62 +233,30 @@ describe('Public API - Batch create transactions', () => {
     getTestUser({ userId: '1' }),
     getTestUser({ userId: '2' }),
   ])
-  setUpRulesHooks(TEST_TENANT_ID, [
-    {
-      id: 'TEST-R-1',
-      ruleImplementationName: 'tests/test-success-rule',
-      type: 'TRANSACTION',
-    },
-    {
-      id: 'TEST-R-2',
-      ruleImplementationName: 'tests/test-success-rule',
-      type: 'TRANSACTION',
-      ruleRunMode: 'SHADOW',
-      ruleExecutionMode: 'SYNC',
-    },
-  ])
 
-  test("throws if origin user doesn't exist", async () => {
-    const transaction = getTestTransaction({
-      transactionId: 'dummy',
-      originUserId: 'ghost',
-    })
+  test('successfully import transactions', async () => {
     const response = await transactionHandler(
       getApiGatewayPostEvent(
         TEST_TENANT_ID,
         '/batch/transactions',
-        { batch: 'b1', data: [transaction] },
+        {
+          batchId: 'b1',
+          data: [
+            getTestTransaction({
+              transactionId: 'T-1',
+              originUserId: '1',
+              destinationUserId: '2',
+            }),
+            getTestTransaction({
+              transactionId: 'T-2',
+              originUserId: '1',
+              destinationUserId: '2',
+            }),
+          ],
+        },
         {
           queryStringParameters: {
             validateOriginUserId: 'true',
-            validateDestinationUserId: 'false',
-          },
-        }
-      ),
-      null as any,
-      null as any
-    )
-    expect(response?.statusCode).toBe(400)
-    expect(JSON.parse(response?.body as string)).toMatchObject({
-      error: 'BadRequestError',
-      message: 'originUserId: ghost does not exist',
-    })
-  })
-
-  test("throws if destination user doesn't exist", async () => {
-    const transaction = getTestTransaction({
-      transactionId: 'dummy',
-      originUserId: 'ghost1',
-      destinationUserId: 'ghost2',
-    })
-    const response = await transactionHandler(
-      getApiGatewayPostEvent(
-        TEST_TENANT_ID,
-        '/batch/transactions',
-        { batchId: 'b1', data: [transaction] },
-        {
-          queryStringParameters: {
-            validateOriginUserId: 'false',
             validateDestinationUserId: 'true',
           },
         }
@@ -295,123 +264,62 @@ describe('Public API - Batch create transactions', () => {
       null as any,
       null as any
     )
-    expect(response?.statusCode).toBe(400)
-    expect(JSON.parse(response?.body as string)).toMatchObject({
-      error: 'BadRequestError',
-      message: 'destinationUserId: ghost2 does not exist',
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      batchId: 'b1',
+      failed: 0,
+      successful: 2,
+      status: 'SUCCESS',
     })
   })
 
-  test("throws if related transactions don't exist", async () => {
-    const transaction = getTestTransaction({
-      transactionId: 'dummy',
-      relatedTransactionIds: ['foo'],
-    })
+  test('failed to import transactions', async () => {
     const response = await transactionHandler(
       getApiGatewayPostEvent(
         TEST_TENANT_ID,
         '/batch/transactions',
-        { batchId: 'b1', data: [transaction] },
+        {
+          batchId: 'b1',
+          data: [
+            getTestTransaction({
+              transactionId: 'T-3',
+              originUserId: 'ghost',
+              destinationUserId: 'ghost',
+            }),
+            getTestTransaction({
+              transactionId: 'T-4',
+              originUserId: 'ghost',
+              destinationUserId: 'ghost',
+            }),
+          ],
+        },
         {
           queryStringParameters: {
-            validateOriginUserId: 'false',
-            validateDestinationUserId: 'false',
+            validateOriginUserId: 'true',
+            validateDestinationUserId: 'true',
           },
         }
       ),
       null as any,
       null as any
     )
-    expect(response?.statusCode).toBe(400)
-    expect(JSON.parse(response?.body as string)).toMatchObject({
-      error: 'BadRequestError',
-      message: `Transaction with ID(s): foo do not exist.`,
-    })
-  })
-
-  test('throw if transaction exists', async () => {
-    const transaction = getTestTransaction({
-      transactionId: 't-1',
-      originUserId: '1',
-      destinationUserId: '2',
-    })
-    await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
-        batchId: 'b1',
-        data: [transaction],
-      }),
-      null as any,
-      null as any
-    )
-    const response = await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
-        batchId: 'b1',
-        data: [transaction],
-      }),
-      null as any,
-      null as any
-    )
-    // expect(response?.statusCode).toBe(400)
-    expect(JSON.parse(response?.body as string)).toMatchObject({
-      message: 'Batch transactions processed',
-    })
-  })
-
-  test('accepts transactions', async () => {
-    const relatedTransaction = getTestTransaction({
-      transactionId: 'related-transaction',
-      originUserId: '1',
-      destinationUserId: '2',
-    })
-    await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
-        batchId: 'b1',
-        data: [relatedTransaction],
-      }),
-      null as any,
-      null as any
-    )
-    const transaction = getTestTransaction({
-      transactionId: 'dummy',
-      originUserId: '1',
-      destinationUserId: '2',
-      relatedTransactionIds: ['related-transaction'],
-    })
-    const response = await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
-        batchId: 'b2',
-        data: [transaction],
-      }),
-      null as any,
-      null as any
-    )
     expect(response?.statusCode).toBe(200)
-    expect(JSON.parse(response?.body as string)).toMatchObject({
-      message: 'Batch transactions processed',
-    })
-  })
-
-  test('drop unknown fields', async () => {
-    const transaction = getTestTransaction({
-      originUserId: undefined,
-      destinationUserId: undefined,
-    })
-    await transactionHandler(
-      getApiGatewayPostEvent(TEST_TENANT_ID, '/transactions', {
-        ...transaction,
-        foo: 'bar',
-      }),
-      null as any,
-      null as any
-    )
-    const transactionRepository = new DynamoDbTransactionRepository(
-      TEST_TENANT_ID,
-      getDynamoDbClient()
-    )
-    expect(
-      await transactionRepository.getTransactionById(transaction.transactionId)
-    ).not.toMatchObject({
-      foo: 'bar',
+    expect(JSON.parse(response?.body as string)).toEqual({
+      batchId: 'b1',
+      failed: 2,
+      failedRecords: [
+        {
+          id: 'T-3',
+          reasonCode: 'ORIGIN_USER_ID_NOT_FOUND',
+        },
+        {
+          id: 'T-4',
+          reasonCode: 'ORIGIN_USER_ID_NOT_FOUND',
+        },
+      ],
+      successful: 0,
+      status: 'FAILURE',
+      message: '2 of 2 records failed validation',
     })
   })
 })
@@ -592,6 +500,97 @@ describe('Public API - Create a Transaction Event', () => {
     })
     expect(savedEvent?.updatedTransactionAttributes).not.toMatchObject({
       foo: 'bar',
+    })
+  })
+})
+
+describe('Public API - Batch create transaction events', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  setUpUsersHooks(TEST_TENANT_ID, [
+    getTestUser({ userId: '1' }),
+    getTestUser({ userId: '2' }),
+  ])
+
+  test('successfully import transaction events', async () => {
+    await transactionHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/transactions', {
+        batchId: 'b1',
+        data: [
+          getTestTransaction({
+            transactionId: 'T-1',
+            originUserId: '1',
+            destinationUserId: '2',
+          }),
+          getTestTransaction({
+            transactionId: 'T-2',
+            originUserId: '1',
+            destinationUserId: '2',
+          }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    const response = await transactionEventHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/transaction', {
+        batchId: 'b1',
+        data: [
+          getTestTransactionEvent({
+            transactionId: 'T-1',
+          }),
+          getTestTransactionEvent({
+            transactionId: 'T-2',
+          }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      batchId: 'b1',
+      failed: 0,
+      successful: 2,
+      status: 'SUCCESS',
+    })
+  })
+
+  test('failed to import transaction events', async () => {
+    const response = await transactionEventHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/transaction', {
+        batchId: 'b1',
+        data: [
+          getTestTransactionEvent({
+            eventId: 'E-1',
+            transactionId: 'T-3',
+          }),
+          getTestTransactionEvent({
+            eventId: 'E-2',
+            transactionId: 'T-4',
+          }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      batchId: 'b1',
+      failed: 2,
+      failedRecords: [
+        {
+          id: 'E-1',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+        {
+          id: 'E-2',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+      ],
+      successful: 0,
+      status: 'FAILURE',
+      message: '2 of 2 records failed validation',
     })
   })
 })
@@ -834,6 +833,67 @@ describe('Public API - Create a Consumer User Event', () => {
       (savedEvent as ConsumerUserEvent).updatedConsumerUserAttributes
     ).not.toMatchObject({
       foo: 'bar',
+    })
+  })
+})
+
+describe('Public API - Batch create consumer user events', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  test('successfully import consumer user events', async () => {
+    await createConsumerUsers(TEST_TENANT_ID, [
+      getTestUser({ userId: '1' }),
+      getTestUser({ userId: '2' }),
+    ])
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/consumer/user', {
+        batchId: 'b1',
+        data: [
+          getTestUserEvent({ userId: '1' }),
+          getTestUserEvent({ userId: '2' }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      status: 'SUCCESS',
+      successful: 2,
+      failed: 0,
+      batchId: 'b1',
+    })
+  })
+
+  test('failed to import consumer users', async () => {
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/consumer/user', {
+        batchId: 'b2',
+        data: [
+          getTestUserEvent({ eventId: 'E-1', userId: '3' }),
+          getTestUserEvent({ eventId: 'E-2', userId: '4' }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      status: 'FAILURE',
+      successful: 0,
+      failed: 2,
+      failedRecords: [
+        {
+          id: 'E-1',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+        {
+          id: 'E-2',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+      ],
+      batchId: 'b2',
+      message: '2 of 2 records failed validation',
     })
   })
 })
@@ -1088,6 +1148,67 @@ describe('Public API - Create a Business User Event', () => {
       (savedEvent as BusinessUserEvent).updatedBusinessUserAttributes
     ).not.toMatchObject({
       foo: 'bar',
+    })
+  })
+})
+
+describe('Public API - Batch create business user events', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+
+  test('successfully import business user events', async () => {
+    await createConsumerUsers(TEST_TENANT_ID, [
+      getTestBusiness({ userId: '1' }),
+      getTestBusiness({ userId: '2' }),
+    ])
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/business/user', {
+        batchId: 'b1',
+        data: [
+          getTestBusinessEvent({ userId: '1' }),
+          getTestBusinessEvent({ userId: '2' }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      status: 'SUCCESS',
+      successful: 2,
+      failed: 0,
+      batchId: 'b1',
+    })
+  })
+
+  test('failed to import business users', async () => {
+    const response = await userEventsHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/batch/events/business/user', {
+        batchId: 'b2',
+        data: [
+          getTestBusinessEvent({ eventId: 'E-1', userId: '3' }),
+          getTestBusinessEvent({ eventId: 'E-2', userId: '4' }),
+        ],
+      }),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toEqual({
+      status: 'FAILURE',
+      successful: 0,
+      failed: 2,
+      failedRecords: [
+        {
+          id: 'E-1',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+        {
+          id: 'E-2',
+          reasonCode: 'ID_NOT_FOUND',
+        },
+      ],
+      batchId: 'b2',
+      message: '2 of 2 records failed validation',
     })
   })
 })

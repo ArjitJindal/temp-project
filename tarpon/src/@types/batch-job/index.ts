@@ -7,23 +7,10 @@ import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRis
 import { RuleAggregationVariable } from '../openapi-internal/RuleAggregationVariable'
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
-import { ImportRequest } from '@/@types/openapi-internal/ImportRequest'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
 import { V8RuleAggregationRebuildTask } from '@/services/rules-engine'
-
-/* File Import */
-type FileImportBatchJobParameters = {
-  tenantName: string
-  importRequest: ImportRequest
-}
-export type FileImportBatchJob = {
-  type: 'FILE_IMPORT'
-  tenantId: string
-  parameters: FileImportBatchJobParameters
-  awsCredentials?: Credentials
-}
 
 /* Simulation (Pulse) */
 export type SimulationRiskLevelsBatchJob = {
@@ -197,7 +184,6 @@ export type FilesAISummary = {
 }
 
 export type BatchJob =
-  | FileImportBatchJob
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
   | SimulationBeaconBatchJob

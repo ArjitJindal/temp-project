@@ -8,7 +8,6 @@ import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-m
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { DashboardRefreshBatchJobRunner } from '@/services/batch-jobs/dashboard-refresh-batch-job-runner'
 import { DemoModeDataLoadJobRunner } from '@/services/batch-jobs/demo-mode-data-load-job-runner'
-import { FileImportBatchJobRunner } from '@/services/batch-jobs/file-import-batch-job-runner'
 import { GlobalRuleAggregationRebuildBatchJobRunner } from '@/services/batch-jobs/global-rule-aggregation-rebuild-batch-job-runner'
 import { OngoingMerchantMonitoringBatchJobRunner } from '@/services/batch-jobs/ongoing-merchant-monitoring-batch-job-runner'
 import { OngoingScreeningUserRuleBatchJobRunner } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
@@ -27,7 +26,6 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     DASHBOARD_REFRESH: (jobId) => new DashboardRefreshBatchJobRunner(jobId),
     API_USAGE_METRICS: (jobId) => new ApiUsageMetricsBatchJobRunner(jobId),
     DEMO_MODE_DATA_LOAD: (jobId) => new DemoModeDataLoadJobRunner(jobId),
-    FILE_IMPORT: (jobId) => new FileImportBatchJobRunner(jobId),
     GLOBAL_RULE_AGGREGATION_REBUILD: (jobId) =>
       new GlobalRuleAggregationRebuildBatchJobRunner(jobId),
     ONGOING_SCREENING_USER_RULE: (jobId) =>

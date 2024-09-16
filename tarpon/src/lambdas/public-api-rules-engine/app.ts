@@ -6,7 +6,7 @@ import { NotFound, BadRequest } from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Credentials } from '@aws-sdk/client-sts'
 import { v4 as uuid4 } from 'uuid'
-import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RulesEngineService } from '@/services/rules-engine'
@@ -26,6 +26,7 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
 import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
+import { BatchImportService } from '@/services/batch-import'
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -129,40 +130,36 @@ export const transactionHandler = lambdaApi()(
       return verifyTransaction(request)
     })
     handlers.registerPostBatchTransactions(async (ctx, request) => {
-      const transactionRepository = new DynamoDbTransactionRepository(
-        ctx.tenantId,
-        getDynamoDbClient()
-      )
-      const existingTransactions = (
-        await Promise.all(
-          request.TransactionBatchRequest.data.map((transaction) =>
-            transactionRepository.getTransactionById(transaction.transactionId)
-          )
-        )
-      ).filter(Boolean)
-      if (existingTransactions.length > 0) {
-        return {
-          message: `Some transactions already exist: ${existingTransactions.map(
-            (transaction) => transaction?.transactionId
-          )}`,
-        }
-      }
       const batchId = request.TransactionBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
-      // TODO do this in a queue
-      await Promise.all(
-        request.TransactionBatchRequest.data.map((transaction) =>
-          verifyTransaction({
-            Transaction: transaction,
-            validateOriginUserId: request.validateOriginUserId,
-            validateDestinationUserId: request.validateDestinationUserId,
-          })
-        )
-      )
-      return {
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importTransactions(
         batchId,
-        message: 'Batch transactions processed',
+        request.TransactionBatchRequest.data,
+        {
+          validateOriginUserId: request.validateOriginUserId === 'true',
+          validateDestinationUserId:
+            request.validateDestinationUserId === 'true',
+        }
+      )
+      try {
+        // TODO do this in a queue
+        await Promise.all(
+          request.TransactionBatchRequest.data.map((transaction) =>
+            verifyTransaction({
+              Transaction: transaction,
+              validateOriginUserId: request.validateOriginUserId,
+              validateDestinationUserId: request.validateDestinationUserId,
+            })
+          )
+        )
+      } catch (error) {
+        logger.error(`Error verifying transactions: ${error}`)
       }
+      return response
     })
     return await handlers.handle(event)
   }
@@ -210,19 +207,28 @@ export const transactionEventHandler = lambdaApi()(
       async (_ctx, { TransactionEvent: transactionEvent }) =>
         await createTransactionEvent(transactionEvent)
     )
-    handlers.registerPostBatchTransactionEvents(async (_ctx, request) => {
+    handlers.registerPostBatchTransactionEvents(async (ctx, request) => {
       const batchId = request.TransactionEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
-      // TODO do this in a queue
-      await Promise.all(
-        request.TransactionEventBatchRequest.data.map((event) =>
-          createTransactionEvent(event)
-        )
-      )
-      return {
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importTransactionEvents(
         batchId,
-        message: 'Batch transaction events processed',
+        request.TransactionEventBatchRequest.data
+      )
+      try {
+        // TODO do this in a queue
+        await Promise.all(
+          request.TransactionEventBatchRequest.data.map((event) =>
+            createTransactionEvent(event)
+          )
+        )
+      } catch (error) {
+        logger.error(`Error verifying transactions: ${error}`)
       }
+      return response
     })
     handlers.registerGetTransactionEvent(async (_ctx, { eventId }) => {
       const result = await transactionEventRepository.getMongoTransactionEvent(
@@ -311,19 +317,41 @@ export const userEventsHandler = lambdaApi()(
         )
       }
     )
-    handlers.registerPostBatchConsumerUserEvents(async (_ctx, request) => {
+    handlers.registerPostBatchConsumerUserEvents(async (ctx, request) => {
       const batchId = request.ConsumerUserEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
-      // TODO do this in a queue
-      await Promise.all(
-        request.ConsumerUserEventBatchRequest.data.map((userEvent) => {
-          return createUserEvent(userEvent)
-        })
-      )
-      return {
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importConsumerUserEvents(
         batchId,
-        message: 'Batch user events processed',
+        request.ConsumerUserEventBatchRequest.data
+      )
+      try {
+        // TODO do this in a queue
+        await Promise.all(
+          request.ConsumerUserEventBatchRequest.data.map((userEvent) => {
+            return createUserEvent(userEvent)
+          })
+        )
+      } catch (error) {
+        logger.error(`Error verifying transactions: ${error}`)
       }
+      return response
+    })
+    handlers.registerPostBatchBusinessUserEvents(async (ctx, request) => {
+      const batchId = request.BusinessUserEventBatchRequest.batchId || uuid4()
+      logger.info(`Processing batch ${batchId}`)
+      const batchImportService = new BatchImportService(ctx.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb,
+      })
+      const response = await batchImportService.importBusinessUserEvents(
+        batchId,
+        request.BusinessUserEventBatchRequest.data
+      )
+      return response
     })
     handlers.registerPostBusinessUserEvent(
       async (

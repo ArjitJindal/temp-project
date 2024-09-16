@@ -53,12 +53,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: PUBLIC_API_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CONSOLE_API_FILE_IMPORT_FUNCTION_NAME]: {
-    codePath: 'console-api-file-import',
-    handlerName: 'fileImportHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME]: {
     codePath: 'console-api-file-import',
     handlerName: 'getPresignedUrlHandler',
