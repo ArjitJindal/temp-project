@@ -6,8 +6,12 @@ import {
 } from '@/utils/clickhouse/utils'
 import { Tenant } from '@/services/accounts'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { envIsNot } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
+  if (envIsNot('local') && envIsNot('dev')) {
+    return
+  }
   const clickhouseClient = await getClickhouseClient()
   // drop tables
   for await (const table of ClickHouseTables) {
