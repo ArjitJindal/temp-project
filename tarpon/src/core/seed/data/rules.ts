@@ -182,7 +182,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: 'a25685ad-3',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
-      ruleRunMode: 'LIVE',
+      ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
       casePriority: 'P1',
       parameters: {
