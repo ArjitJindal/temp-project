@@ -6,8 +6,8 @@ import { LogItemData } from './LogCard/LogContainer/LogItem';
 import { Account, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
 import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
-import { statusEscalated } from '@/utils/case-utils';
 import { formatDuration, getDuration } from '@/utils/time-utils';
+import { getDisplayedUserInfo } from '@/utils/user-utils';
 
 export const isActionUpdate = (log: AuditLog): boolean => {
   return log.action === 'UPDATE';
@@ -37,6 +37,11 @@ export const getCreateStatement = (
   const entityId = log.entityId;
   const subtype = extractSubtype(log) as AuditLog['subtype'];
   const assignees = getAssignee(log?.newImage, users) ?? [];
+  const { makerUserName, checkerUserName } = getAssignmentDetails({
+    defaultUserName: userName,
+    users,
+    reviewAssignments: log.newImage?.reviewAssignments ?? [],
+  });
   switch (subtype) {
     case 'COMMENT': {
       let actionStatement: string = '';
@@ -115,18 +120,18 @@ export const getCreateStatement = (
     }
     case 'STATUS_CHANGE': {
       const entityStatus = log?.newImage[`${entityType.toLowerCase()}Status`];
-      if (!entityStatus) {
+      const previousStatus = log.oldImage[`${entityType.toLowerCase()}Status`];
+      if (!entityStatus || (entityStatus !== 'ESCALATED' && previousStatus === entityStatus)) {
         return null;
       }
-
-      if (statusEscalated(entityStatus)) {
-        return handleEscalatedStatus(entityStatus, log, userName, type);
+      if (entityStatus.includes('ESCALATED') && log.action !== 'ESCALATE') {
+        return handleEscalatedStatus(entityStatus, log, makerUserName, checkerUserName, type);
       } else if (entityStatus.includes('REOPENED')) {
-        return handleRepoenedStatus(entityStatus, log, userName);
+        return handleReopenedStatus(entityStatus, log, makerUserName, checkerUserName);
       } else if (entityStatus.includes('CLOSED')) {
-        return handleClosedStatus(entityStatus, log, userName);
+        return handleClosedStatus(entityStatus, log, makerUserName, checkerUserName);
       } else if (entityStatus.includes('OPEN')) {
-        return handleOpenStatus(entityStatus, log, userName);
+        return handleOpenStatus(entityStatus, log, makerUserName, checkerUserName);
       }
       return null;
     }
@@ -214,6 +219,15 @@ export const getCreateStatement = (
   }
 };
 
+function getAssignmentDetails({ defaultUserName, users, reviewAssignments }) {
+  const checkerUserId = reviewAssignments.length ? reviewAssignments[0].assigneeUserId : undefined;
+  const checkerUserName = getDisplayedUserInfo(users[checkerUserId]).name ?? defaultUserName;
+  return {
+    makerUserName: defaultUserName,
+    checkerUserName,
+  };
+}
+
 export const extractSubtype = (log: AuditLog): string | undefined => {
   if (log.subtype) {
     return log.subtype;
@@ -259,179 +273,322 @@ export const clusteredByDate = (logs: LogItemData[]) => {
 export const handleEscalatedStatus = (
   entityStatus: CaseStatus,
   log: AuditLog,
-  userName: string,
+  makerUserName: string,
+  checkerUserName: string,
   type: 'USER' | 'CASE',
 ) => {
   const entityType = log.type === 'ALERT' ? checkIfTransactions(log) : log.type;
   const entityId = entityType === 'TRANSACTION' ? getEscalatedTransactions(log) : [log.entityId];
-  const files = log?.newImage?.files && log?.newImage?.files?.length ? 'with attachments' : '';
+  const files = log?.newImage?.files?.length ? 'with attachments' : '';
+  const previousStatus = log.oldImage?.[`${entityType.toLowerCase()}Status`] || '';
+  const childCase: string = log?.newImage?.alertCaseId;
+
   switch (entityStatus) {
     case 'ESCALATED': {
-      const childCase: string = log?.newImage?.alertCaseId;
       if (entityType === 'CASE' && childCase !== entityId[0]) {
         if (type === 'USER') {
           return null;
         }
-        const alertIds = log?.newImage?.updatedAlertIds ?? [];
+
+        const alertIds = log?.newImage?.updatedAlertIds ?? [entityId];
+        const isReviewDeclined =
+          previousStatus.includes('IN_REVIEW') && previousStatus !== 'IN_REVIEW_ESCALATED';
+        const isReviewApproved = previousStatus === 'IN_REVIEW_ESCALATED';
+        if (isReviewDeclined) {
+          return getReviewLogMessage({
+            approvalStatus: 'declined',
+            userName: checkerUserName,
+            entiyType: entityType,
+            entityId,
+            currentStatus: entityStatus,
+          });
+        }
+        if (isReviewApproved) {
+          return getReviewLogMessage({
+            approvalStatus: 'approved',
+            userName: checkerUserName,
+            entiyType: entityType,
+            entityId,
+            currentStatus: entityStatus,
+          });
+        }
         return (
           <>
-            Alert <b>{alertIds.join(', ')}</b> is escalated{' '}
-            {childCase ? (
+            {firstLetterUpper(entityType.toLowerCase())} <b>{alertIds.join(', ')}</b> is escalated{' '}
+            {childCase && (
               <>
                 to a new child case <b>{childCase}</b>
               </>
-            ) : (
-              ''
             )}{' '}
-            by <b>{userName}</b> {files}
+            by <b>{makerUserName}</b> {files}
           </>
         );
       }
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated{' '}
-          {childCase ? (
+          {childCase && (
             <>
               to a new child case <b>{childCase}</b>
             </>
-          ) : (
-            ''
           )}{' '}
-          by <b>{userName}</b> {files}
+          by <b>{makerUserName}</b> {files}
         </>
       );
     }
+
     case 'IN_REVIEW_ESCALATED': {
+      const showReviewDetails = makerUserName !== checkerUserName;
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated by{' '}
-          <b>{userName}</b>
-          {files} and is in review
+          <b>{makerUserName}</b> {files}
+          {showReviewDetails && (
+            <>
+              {' '}
+              and is in review for <b>{checkerUserName}</b>
+            </>
+          )}
         </>
       );
     }
+
     case 'ESCALATED_IN_PROGRESS': {
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated by{' '}
-          <b>{userName}</b> {files} and is in progress
+          <b>{makerUserName}</b> {files} and is in progress
         </>
       );
     }
+
     case 'ESCALATED_ON_HOLD': {
       return (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated by{' '}
-          <b>{userName}</b> {files} and is on hold
+          <b>{makerUserName}</b> {files} and is on hold
         </>
       );
     }
+
     default:
       return null;
   }
 };
 
-export const handleRepoenedStatus = (entityStatus: CaseStatus, log: AuditLog, userName: string) => {
-  const entityType = log.type;
+export const handleReopenedStatus = (
+  entityStatus: CaseStatus,
+  log: AuditLog,
+  makerUserName: string,
+  checkerUserName: string,
+) => {
+  const entityType = firstLetterUpper(log.type.toLowerCase());
   const entityId = log.entityId;
+  const previousStatus = log.oldImage?.[`${log.type.toLowerCase()}Status`] || '';
+
   switch (entityStatus) {
     case 'REOPENED': {
-      return (
-        <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is reopened by{' '}
-          <b>{userName}</b>
-        </>
-      );
+      const isReviewDeclined =
+        previousStatus.includes('IN_REVIEW') && previousStatus !== 'IN_REVIEW_REOPENED';
+      const isApproved = previousStatus === 'IN_REVIEW_REOPENED';
+
+      if (isReviewDeclined) {
+        return getReviewLogMessage({
+          approvalStatus: 'declined',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else if (isApproved) {
+        return getReviewLogMessage({
+          approvalStatus: 'approved',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else {
+        return (
+          <>
+            {entityType} <b>{entityId}</b> is reopened by <b>{makerUserName}</b>
+          </>
+        );
+      }
     }
+
     case 'IN_REVIEW_REOPENED': {
+      const showReviewDetails = makerUserName !== checkerUserName;
       return (
         <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is reopened by{' '}
-          <b>{userName}</b> and is in review
+          {entityType} <b>{entityId}</b> is reopened by <b>{makerUserName}</b>
+          {showReviewDetails && (
+            <>
+              {' '}
+              and is in review for <b>{checkerUserName}</b>
+            </>
+          )}
         </>
       );
     }
+
     default:
       return null;
   }
 };
 
-export const handleClosedStatus = (entityStatus: CaseStatus, log: AuditLog, userName: string) => {
-  const entityType = log.type;
+export const handleClosedStatus = (
+  entityStatus: CaseStatus,
+  log: AuditLog,
+  makerUserName: string,
+  checkerUserName: string,
+) => {
+  const entityType = firstLetterUpper(log.type.toLowerCase());
   const entityId = log.entityId;
   const investigationTime = log.newImage['investigationTime']
     ? formatDuration(getDuration(log.newImage['investigationTime']))
     : undefined;
-  const files = log?.newImage?.files && log?.newImage?.files?.length ? 'with attachments' : '';
+  const files = log?.newImage?.files?.length ? 'with attachments' : '';
+  const previousStatus = log.oldImage?.[`${log.type.toLowerCase()}Status`] || '';
+
   switch (entityStatus) {
     case 'CLOSED': {
-      return (
-        <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is closed by{' '}
-          <b>{userName}</b>
-          {files}
-          {entityType === 'CASE' && investigationTime !== undefined && (
-            <span>{` (Investigation time: ${investigationTime ?? 0})`}</span>
-          )}
-        </>
-      );
+      const isApproved = previousStatus === 'IN_REVIEW_CLOSED';
+      const isReviewDeclined =
+        previousStatus.includes('IN_REVIEW') && previousStatus !== 'IN_REVIEW_CLOSED';
+
+      if (isReviewDeclined) {
+        return getReviewLogMessage({
+          approvalStatus: 'declined',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else if (isApproved) {
+        return getReviewLogMessage({
+          approvalStatus: 'approved',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else {
+        return (
+          <>
+            {entityType} <b>{entityId}</b> is closed by <b>{makerUserName}</b> {files}
+            {entityType === 'CASE' && investigationTime && (
+              <span>{` (Investigation time: ${investigationTime})`}</span>
+            )}
+          </>
+        );
+      }
     }
+
     case 'IN_REVIEW_CLOSED': {
+      const showReviewDetails = makerUserName !== checkerUserName;
       return (
         <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is closed by{' '}
-          <b>{userName}</b> {files} and is in review{' '}
-          {entityType === 'CASE' && investigationTime !== undefined && (
-            <span>{`(Investigation time: ${investigationTime ?? 0})`}</span>
+          {entityType} <b>{entityId}</b> is closed by <b>{makerUserName}</b> {files}{' '}
+          {showReviewDetails && (
+            <>
+              and is in review for <b>{checkerUserName}</b>
+            </>
+          )}
+          {entityType === 'CASE' && investigationTime && (
+            <span>{` (Investigation time: ${investigationTime})`}</span>
           )}
         </>
       );
     }
+
     default:
       return null;
   }
 };
 
-export const handleOpenStatus = (entityStatus: CaseStatus, log: AuditLog, userName: string) => {
-  const entityType = log.type;
+export const handleOpenStatus = (
+  entityStatus: CaseStatus,
+  log: AuditLog,
+  makerUserName: string,
+  checkerUserName: string,
+) => {
+  const entityType = firstLetterUpper(log.type.toLowerCase());
   const entityId = log.entityId;
-  const files = log?.newImage?.files && log?.newImage?.files?.length ? 'with attachments' : '';
+  const files = log?.newImage?.files?.length ? 'with attachments' : '';
+  const previousStatus = log.oldImage?.[`${log.type.toLowerCase()}Status`] || '';
+
   switch (entityStatus) {
     case 'OPEN': {
-      return (
-        <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is opened by{' '}
-          <b>{userName}</b> {files}
-        </>
-      );
+      const isReviewDeclined =
+        previousStatus.includes('IN_REVIEW') && previousStatus !== 'IN_REVIEW_OPEN';
+      const isReviewAccepted = previousStatus === 'IN_REVIEW_OPEN';
+
+      if (isReviewDeclined) {
+        return getReviewLogMessage({
+          approvalStatus: 'declined',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else if (isReviewAccepted) {
+        return getReviewLogMessage({
+          approvalStatus: 'approved',
+          userName: checkerUserName,
+          entiyType: entityType,
+          entityId,
+          currentStatus: entityStatus,
+        });
+      } else {
+        return (
+          <>
+            {entityType} <b>{entityId}</b> is opened by <b>{makerUserName}</b> {files}
+          </>
+        );
+      }
     }
     case 'IN_REVIEW_OPEN': {
+      const showReviewDetails = makerUserName !== checkerUserName;
       return (
         <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is opened by{' '}
-          <b>{userName}</b> {files} and is in review
+          {entityType} <b>{entityId}</b> is opened by <b>{makerUserName}</b> {files}
+          {showReviewDetails && (
+            <>
+              {' '}
+              and is in review for <b>{checkerUserName}</b>
+            </>
+          )}
         </>
       );
     }
     case 'OPEN_IN_PROGRESS': {
       return (
         <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is opened by{' '}
-          <b>{userName}</b> {files} and is in progress
+          {entityType} <b>{entityId}</b> is opened by <b>{makerUserName}</b> {files} and is in
+          progress
         </>
       );
     }
     case 'OPEN_ON_HOLD': {
       return (
         <>
-          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is opened by{' '}
-          <b>{userName}</b> {files} and is on hold
+          {entityType} <b>{entityId}</b> is opened by <b>{makerUserName}</b> {files} and is on hold
         </>
       );
     }
     default:
       return null;
   }
+};
+
+const getReviewLogMessage = ({ approvalStatus, userName, entiyType, entityId, currentStatus }) => {
+  return (
+    <>
+      Review {approvalStatus} by <b>{userName}</b> on {humanizeAuto(entiyType)} <b>{entityId}</b>{' '}
+      and status is set to {humanizeAuto(currentStatus)}
+    </>
+  );
 };
 
 export const checkIfTransactions = (log: AuditLog) => {
