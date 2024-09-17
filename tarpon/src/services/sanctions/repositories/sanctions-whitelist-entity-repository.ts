@@ -15,13 +15,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { notEmpty } from '@/utils/array'
 
-const SUBJECT_FIELDS = [
-  'userId',
-  'entityType',
-  'searchTerm',
-  'screenEntity',
-  'entity',
-] as const
+const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
 
 export type WhitelistSubject = Pick<
   SanctionsWhitelistEntity,
