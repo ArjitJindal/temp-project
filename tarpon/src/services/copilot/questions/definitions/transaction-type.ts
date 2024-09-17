@@ -38,7 +38,7 @@ export const TransactionType: BarchartQuestion<Period> = {
 
       const query = `
       SELECT type, count() as count
-      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+      FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName} FINAL
       WHERE
       ${matchPeriodSQL('timestamp', period)} AND
       ${identifierQuery}

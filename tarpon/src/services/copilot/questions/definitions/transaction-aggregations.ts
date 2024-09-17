@@ -55,7 +55,7 @@ export const getClickhouseQuery = (
   SELECT
     toDate(${startOf}(toDateTime(timestamp / 1000))) as date,
     round(${aggregationExpression(granularity)}, 2) as agg
-  FROM transactions
+  FROM transactions FINAL
   WHERE 
   (
     (toDateTime(timestamp / 1000) >= fromUnixTimestamp64Milli(${

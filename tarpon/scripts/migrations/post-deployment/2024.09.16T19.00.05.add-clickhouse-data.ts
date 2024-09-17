@@ -8,6 +8,7 @@ import {
 } from '@/utils/clickhouse/definition'
 import { envIs } from '@/utils/env'
 import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
+import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 
 async function migrateTenant(tenant: Tenant) {
   if (!envIs('dev') && !envIs('local')) {
@@ -15,12 +16,11 @@ async function migrateTenant(tenant: Tenant) {
     return
   }
 
+  const mongoClient = await getMongoDbClient()
+  const db = mongoClient.db()
   for (const table of ClickHouseTables) {
-    const db = (await getMongoDbClient()).db()
-    const collectionName = `${tenant.id}-${
-      CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
-    }`
-    console.log('Migrating', collectionName)
+    const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
+    const collectionName = `${tenant.id}-${mongoTable}`
     const collection = db.collection(collectionName)
     const cursor = collection.find()
     const batchSize = 1000
@@ -31,12 +31,22 @@ async function migrateTenant(tenant: Tenant) {
       batch.push(doc)
       count++
       if (count % batchSize === 0) {
-        await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
+        const trasformedData = await new MongoDbConsumer(
+          mongoClient
+        ).updateInsertMessages(mongoTable, batch)
+        await batchInsertToClickhouse(
+          tenant.id,
+          clickhouseTable,
+          trasformedData
+        )
         batch.length = 0 // clear the batch
       }
     }
 
-    await batchInsertToClickhouse(tenant.id, clickhouseTable, batch)
+    const trasformedData = await new MongoDbConsumer(
+      mongoClient
+    ).updateInsertMessages(mongoTable, batch)
+    await batchInsertToClickhouse(tenant.id, clickhouseTable, trasformedData)
   }
 }
 
