@@ -9068,6 +9068,12 @@ components:
           type: array
           items:
             type: string
+        lastLogin:
+          type: number
+        createdAt:
+          type: number
+        lastPasswordReset:
+          type: number
       required:
         - id
         - role

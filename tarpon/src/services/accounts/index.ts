@@ -33,6 +33,7 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs, envIsNot } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import dayjs from '@/utils/dayjs'
 
 // todo: move to config?
 const CONNECTION_NAME = 'Username-Password-Authentication'
@@ -154,7 +155,14 @@ export class AccountsService {
     )
   }
   private static userToAccount(user: GetUsers200ResponseOneOfInner): Account {
-    const { app_metadata, user_id, email } = user
+    const {
+      app_metadata,
+      user_id,
+      email,
+      last_login,
+      created_at,
+      last_password_reset,
+    } = user
     if (user_id == null) {
       throw new Conflict('User id can not be null')
     }
@@ -172,6 +180,9 @@ export class AccountsService {
       blocked: user.blocked ?? false,
       isEscalationContact: app_metadata?.isEscalationContact === true,
       reviewerId: app_metadata?.reviewerId,
+      lastLogin: dayjs(last_login as string).valueOf(),
+      createdAt: dayjs(created_at as string).valueOf(),
+      lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
     }
   }
 

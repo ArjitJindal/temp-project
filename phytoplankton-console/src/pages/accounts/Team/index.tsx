@@ -60,7 +60,12 @@ export default function Team() {
       });
       return {
         ...allAccountsResult,
-        paginate: undefined,
+        paginate: async () => {
+          return {
+            items: filteredAccounts,
+            total: filteredAccounts.length,
+          };
+        },
         data: success({
           items: filteredAccounts,
           success: true,
@@ -140,6 +145,48 @@ export default function Team() {
         },
       },
     }),
+    columnHelper.simple<'lastLogin'>({
+      key: 'lastLogin',
+      title: 'Last login',
+      type: {
+        stringify: (lastLogin) => {
+          if (!lastLogin) {
+            return 'N/A';
+          }
+          return new Date(lastLogin).toLocaleString();
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
+    columnHelper.simple<'createdAt'>({
+      key: 'createdAt',
+      title: 'Created at',
+      type: {
+        stringify: (createdAt) => {
+          if (!createdAt) {
+            return 'N/A';
+          }
+          return new Date(createdAt).toLocaleString();
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
+    columnHelper.simple<'lastPasswordReset'>({
+      key: 'lastPasswordReset',
+      title: 'Last password reset',
+      type: {
+        stringify: (lastPasswordReset) => {
+          if (!lastPasswordReset) {
+            return 'N/A';
+          }
+          return new Date(lastPasswordReset).toLocaleString();
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
     columnHelper.simple<'emailVerified'>({
       key: 'emailVerified',
       title: 'Email verification',
@@ -189,7 +236,17 @@ export default function Team() {
             </div>
           );
         },
+        stringify: (emailVerified) => (emailVerified ? 'Verified' : 'Not verified'),
       },
+    }),
+    columnHelper.simple<'blocked'>({
+      key: 'blocked',
+      title: 'User status',
+      type: {
+        stringify: (blocked) => (blocked ? 'INACTIVE' : 'ACTIVE'),
+      },
+      hideInTable: true,
+      exporting: true,
     }),
   ]);
 
@@ -297,6 +354,11 @@ export default function Team() {
             : []
         }
         queryResults={accountsResult}
+        params={{
+          pageSize: 100,
+          sort: [],
+          pagination: false,
+        }}
         columns={columns}
         pagination={false}
         fitHeight
