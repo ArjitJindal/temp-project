@@ -93,10 +93,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const filteredResults = results.filter((entity) => {
       const values = [...(entity.aka || []), entity.name]
       for (const value of values) {
+        const percentageSimilarity = calculateLevenshteinDistancePercentage(
+          request.searchTerm,
+          value
+        )
         const fuzzyMatch =
-          request.fuzziness &&
-          calculateLevenshteinDistancePercentage(request.searchTerm, value) >=
-            request.fuzziness
+          request.fuzziness && percentageSimilarity <= request.fuzziness * 100
 
         const exactMatch =
           value.toLowerCase() === request.searchTerm.toLowerCase()
