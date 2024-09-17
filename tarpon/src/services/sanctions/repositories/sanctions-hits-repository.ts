@@ -13,7 +13,6 @@ import {
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { complyAdvantageDocToEntity } from '@/services/sanctions/providers/comply-advantage-provider'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -59,7 +58,7 @@ export class SanctionsHitsRepository {
     })
     return {
       ...results,
-      items: this.backwardsCompatibleResults(results.items),
+      items: results.items,
     }
   }
 
@@ -109,12 +108,6 @@ export class SanctionsHitsRepository {
         updatedAt: now,
         hitContext,
         entity: hit,
-
-        // TODO remove after release is stable
-        // https://github.com/flagright/orca/pull/4677
-        caEntity: hit.rawResponse?.doc,
-        caMatchTypes: hit.rawResponse?.match_types ?? [],
-        caMatchTypesDetails: hit.rawResponse?.match_types_details ?? [],
       })
     )
 
@@ -122,7 +115,7 @@ export class SanctionsHitsRepository {
       await collection.insertMany(docs)
     }
 
-    return this.backwardsCompatibleResults(docs)
+    return docs
   }
 
   public async addNewHits(
@@ -254,20 +247,5 @@ export class SanctionsHitsRepository {
         $set: updates,
       }
     )
-  }
-
-  // TODO remove this after release.
-  // https://github.com/flagright/orca/pull/4677
-  private backwardsCompatibleResults(results: SanctionsHit[]) {
-    return results.map((result) => {
-      if (!result.entity && result.caEntity) {
-        result.entity = complyAdvantageDocToEntity({
-          doc: result.caEntity,
-          match_types_details: result.caMatchTypesDetails,
-          match_types: result.caMatchTypes,
-        })
-      }
-      return result
-    })
   }
 }

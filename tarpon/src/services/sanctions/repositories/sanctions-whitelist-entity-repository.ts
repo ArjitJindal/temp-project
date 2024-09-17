@@ -14,7 +14,6 @@ import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { notEmpty } from '@/utils/array'
-import { complyAdvantageDocToEntity } from '@/services/sanctions/providers/comply-advantage-provider'
 
 const SUBJECT_FIELDS = [
   'userId',
@@ -79,9 +78,6 @@ export class SanctionsWhitelistEntityRepository {
                 createdAt: options?.createdAt ?? Date.now(),
                 reason: options?.reason,
                 comment: options?.comment,
-                // TODO remove after release is stable.
-                // https://github.com/flagright/orca/pull/4677
-                caEntity: entity.rawResponse?.doc,
               },
               { upsert: true, returnDocument: 'after' }
             )
@@ -91,7 +87,7 @@ export class SanctionsWhitelistEntityRepository {
       )
     })
     return {
-      newRecords: this.backwardsCompatibleResults(results.filter(notEmpty)),
+      newRecords: results.filter(notEmpty),
     }
   }
 
@@ -137,11 +133,7 @@ export class SanctionsWhitelistEntityRepository {
         $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],
       })),
     ]
-    const result = await collection
-      .find({ $and: filters })
-      .limit(limit)
-      .toArray()
-    return this.backwardsCompatibleResults(result)
+    return collection.find({ $and: filters }).limit(limit).toArray()
   }
 
   public async matchWhitelistEntities(
@@ -184,20 +176,7 @@ export class SanctionsWhitelistEntityRepository {
 
     return {
       ...results,
-      items: this.backwardsCompatibleResults(results.items),
+      items: results.items,
     }
-  }
-
-  // TODO remove this after release.
-  // https://github.com/flagright/orca/pull/4677
-  private backwardsCompatibleResults(results: SanctionsWhitelistEntity[]) {
-    return results.map((result) => {
-      if (!result.sanctionsEntity && result.caEntity) {
-        result.sanctionsEntity = complyAdvantageDocToEntity({
-          doc: result.caEntity,
-        })
-      }
-      return result
-    })
   }
 }
