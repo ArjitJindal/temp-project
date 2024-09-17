@@ -20,6 +20,7 @@ const SUBJECT_FIELDS = [
   'entityType',
   'searchTerm',
   'screenEntity',
+  'entity',
 ] as const
 
 export type WhitelistSubject = Pick<
@@ -160,7 +161,7 @@ export class SanctionsWhitelistEntityRepository {
       filter.userId = { $in: params.filterUserId }
     }
     if (params.filterEntity) {
-      filter.screenEntity = { $in: params.filterEntity }
+      filter.entity = { $in: params.filterEntity }
     }
     if (params.filterEntityType) {
       filter.entityType = { $in: params.filterEntityType }
