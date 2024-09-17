@@ -23,7 +23,7 @@ export const statusClass = {
   BREACHED: 'breached',
 };
 
-function getPolicyTime(policy: SLAPolicy, elapsedTime = 0): string {
+export function getPolicyTime(policy: SLAPolicy, elapsedTime = 0): string {
   const { granularity, units: value } = policy.policyConfiguration.SLATime.breachTime;
   const policyTime = duration(value, granularity).asMilliseconds();
   const timeDifference = Math.abs(policyTime - elapsedTime);

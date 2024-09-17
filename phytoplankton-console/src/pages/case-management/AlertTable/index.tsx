@@ -11,6 +11,7 @@ import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import SlaStatus, { PopoverRef } from './SlaStatus';
+import { getSlaColumnsForExport } from './helpers';
 import {
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
@@ -80,9 +81,10 @@ import { denseArray, getErrorMessage } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL } from '@/utils/queries/keys';
+import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL, SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
+import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
@@ -289,6 +291,15 @@ export default function AlertTable(props: Props) {
     actionRef.current?.reload();
   }, []);
 
+  const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
+    return await api.getSlaPolicies({
+      pageSize: 100,
+    });
+  });
+  const slaPolicies = getOr(slaPoliciesQueryResult.data, {
+    items: [],
+    total: 0,
+  });
   const handleAlertAssignments = useCallback(
     (updateRequest: AlertsAssignmentsUpdateRequest) => {
       const { alertIds, assignments } = updateRequest;
@@ -460,6 +471,7 @@ export default function AlertTable(props: Props) {
                   );
                 },
               }),
+              ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
             ]
           : []),
         helper.simple<'alertStatus'>({
@@ -602,7 +614,22 @@ export default function AlertTable(props: Props) {
             },
           },
         }),
-
+        helper.derived({
+          title: 'Assigned to role',
+          id: '_assigneeRole',
+          value: (item) =>
+            statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
+              ? item.reviewAssignments
+              : item.assignments,
+          type: {
+            ...ASSIGNMENTS,
+            stringify: (value) => {
+              return `${value?.map((x) => users[x.assigneeUserId]?.role ?? '').join(',') ?? ''}`;
+            },
+          },
+          hideInTable: true,
+          exporting: true,
+        }),
         ...(qaMode
           ? [
               helper.simple<'assignments'>({
@@ -887,6 +914,7 @@ export default function AlertTable(props: Props) {
     expandedAlertId,
     showClosingReason,
     slaEnabled,
+    slaPolicies,
     isInReview,
     loadingUsers,
   ]);
