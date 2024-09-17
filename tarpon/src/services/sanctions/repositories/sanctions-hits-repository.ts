@@ -222,7 +222,10 @@ export class SanctionsHitsRepository {
         subject
       )
     return rawHits.filter(
-      (x) => !whitelistEntities.some((y) => x?.id === y.sanctionsEntity.id)
+      (x) =>
+        !whitelistEntities.some(
+          (y) => x?.id === (y.sanctionsEntity?.id || y.caEntity?.id)
+        )
     )
   }
 
