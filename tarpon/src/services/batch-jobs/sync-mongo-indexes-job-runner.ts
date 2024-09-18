@@ -5,6 +5,7 @@ import {
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import { createTenantDatabase } from '@/utils/clickhouse/utils'
+import { envIs } from '@/utils/env'
 
 export class SyncDatabases extends BatchJobRunner {
   protected async run(job: SyncDatabasesBatchJob): Promise<void> {
@@ -12,6 +13,9 @@ export class SyncDatabases extends BatchJobRunner {
     const teanantId = job.tenantId
 
     await createMongoDBCollections(mongoDb, teanantId)
-    await createTenantDatabase(teanantId)
+
+    if (envIs('dev')) {
+      await createTenantDatabase(teanantId)
+    }
   }
 }
