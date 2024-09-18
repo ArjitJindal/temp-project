@@ -6,7 +6,7 @@
   "terraformProviders": [
     "auth0/auth0@0.43.0",
     "hashicorp/aws@4.53.0",
-    "mongodb/mongodbatlas@1.18.1",
+    "mongodb/mongodbatlas@1.19.0",
     "ClickHouse/clickhouse@1.0.0"
   ],
   "context": {

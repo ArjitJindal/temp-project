@@ -71,6 +71,8 @@ export class CdktfTarponStack extends TerraformStack {
         Fn.jsondecode(mongoSecret.secretString),
         'private_key'
       ),
+      baseUrl: 'https://cloud.mongodb.com/',
+      realmBaseUrl: 'https://services.cloud.mongodb.com/',
     })
 
     const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
