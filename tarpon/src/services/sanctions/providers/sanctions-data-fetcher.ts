@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Collection } from 'mongodb'
+import * as Sentry from '@sentry/serverless'
 import {
   SanctionsDataProvider,
   SanctionsDataProviderName,
@@ -151,7 +152,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     _providerSearchId: string,
     _monitor: boolean
   ): Promise<void> {
-    throw new Error('Method not implemented.')
+    if (_monitor) {
+      Sentry.captureMessage('Method not implemented', 'warning')
+    }
   }
 
   private async getSanctionProviderCollection(): Promise<

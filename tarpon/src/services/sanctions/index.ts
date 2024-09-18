@@ -322,7 +322,6 @@ export class SanctionsService {
       throw new Error(`Unable to get search id from response`)
     }
     await this.provider.setMonitoring(providerSearchId, update.enabled)
-
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,
       update
