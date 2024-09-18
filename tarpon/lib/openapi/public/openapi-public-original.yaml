@@ -2798,6 +2798,16 @@ components:
           description: Transaction risk scoring score
         trsRiskLevel:
           $ref: '#/components/schemas/RiskLevel'
+        originUserCraRiskScore:
+          type: number
+          description: Origin user's CRA risk score
+        destinationUserCraRiskScore:
+          type: number
+          description: Destination user's CRA risk score
+        originUserCraRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        destinationUserCraRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
       required:
         - trsScore
         - trsRiskLevel

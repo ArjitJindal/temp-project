@@ -17,6 +17,38 @@ import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
 import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
+export const TEST_CONSUMER_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
+  parameter: 'type',
+  isActive: true,
+  isDerived: true,
+  riskEntityType: 'CONSUMER_USER',
+  riskLevelAssignmentValues: [
+    {
+      parameterValue: {
+        content: {
+          kind: 'MULTIPLE',
+          values: [
+            {
+              kind: 'LITERAL',
+              content: 'CONSUMER',
+            },
+          ],
+        },
+      },
+      riskValue: {
+        type: 'RISK_SCORE',
+        value: 50,
+      },
+    },
+  ],
+  parameterType: 'VARIABLE',
+  weight: 0.5,
+  defaultValue: {
+    type: 'RISK_LEVEL',
+    value: 'VERY_HIGH',
+  },
+}
+
 export const TEST_VARIABLE_RISK_ITEM: ParameterAttributeRiskValues = {
   parameter: 'originAmountDetails.country',
   weight: 1,

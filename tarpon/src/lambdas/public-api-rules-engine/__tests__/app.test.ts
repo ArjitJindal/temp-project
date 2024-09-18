@@ -12,6 +12,7 @@ import {
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import {
+  createConsumerUser,
   createConsumerUsers,
   getTestBusiness,
   getTestUser,
@@ -26,7 +27,10 @@ import {
 import { userHandler } from '@/lambdas/public-api-user-management/app'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { TEST_VARIABLE_RISK_ITEM } from '@/test-utils/pulse-test-utils'
+import {
+  TEST_CONSUMER_USER_RISK_PARAMETER,
+  TEST_VARIABLE_RISK_ITEM,
+} from '@/test-utils/pulse-test-utils'
 import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
@@ -48,6 +52,7 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { RiskService } from '@/services/risk'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
@@ -1382,19 +1387,19 @@ describe('Public API - Verify Transction and Transaction Event', () => {
   const userId1 = uuidv4()
   const userId2 = uuidv4()
 
-  setUpUsersHooks(tenantId, [
-    getTestUser({ userId: userId1 }),
-    getTestUser({ userId: userId2 }),
-  ])
-
   it('should match transaction and transaction event', async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const riskService = new RiskService(tenantId, { dynamoDb, mongoDb })
+    await riskService.createOrUpdateRiskParameter(
+      TEST_CONSUMER_USER_RISK_PARAMETER
+    )
+    await createConsumerUser(tenantId, getTestUser({ userId: userId1 }))
+    await createConsumerUser(tenantId, getTestUser({ userId: userId2 }))
     const transaction = getTestTransaction({
       originUserId: userId1,
       destinationUserId: userId2,
     })
-
-    const dynamoDb = getDynamoDbClient()
-    const mongoDb = await getMongoDbClient()
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     const rulesEngine = new RulesEngineService(
       tenantId,
@@ -1403,8 +1408,21 @@ describe('Public API - Verify Transction and Transaction Event', () => {
       mongoDb
     )
 
-    await rulesEngine.verifyTransaction(transaction)
-
+    const rulesResult = await rulesEngine.verifyTransaction(transaction)
+    expect(rulesResult).toEqual({
+      transactionId: transaction.transactionId,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+      riskScoreDetails: {
+        trsScore: 90,
+        trsRiskLevel: 'VERY_HIGH',
+        originUserCraRiskLevel: 'HIGH',
+        destinationUserCraRiskLevel: 'HIGH',
+        originUserCraRiskScore: 70,
+        destinationUserCraRiskScore: 70,
+      },
+    })
     const dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
       tenantId,
       dynamoDb
@@ -1460,8 +1478,23 @@ describe('Public API - Verify Transction and Transaction Event', () => {
       },
     })
 
-    await rulesEngine.verifyTransactionEvent(transactionEvent)
-
+    const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
+    expect(result).toEqual({
+      eventId: expect.any(String),
+      transaction: expect.objectContaining({
+        transactionId: transaction.transactionId,
+      }),
+      executedRules: [],
+      hitRules: [],
+      riskScoreDetails: {
+        trsScore: 90,
+        trsRiskLevel: 'VERY_HIGH',
+        originUserCraRiskLevel: 'VERY_HIGH',
+        destinationUserCraRiskLevel: 'VERY_HIGH',
+        originUserCraRiskScore: 80,
+        destinationUserCraRiskScore: 80,
+      },
+    })
     const transactionEventRepository = new TransactionEventRepository(
       tenantId,
       { dynamoDb, mongoDb }

@@ -19,6 +19,7 @@ import {
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
 import { SendMessageCommand } from '@aws-sdk/client-sqs'
+import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -116,6 +117,7 @@ import { TransactionEventWithRulesResult } from '@/@types/openapi-public/Transac
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { AsyncRuleRecord, runAsyncRules } from '@/lambdas/async-rule/app'
 import { envIs } from '@/utils/env'
+import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -371,9 +373,11 @@ export class RulesEngineService {
                   ruleInstance.filters as UserFilters,
                   { senderUser: user }
                 )
-
+                const { riskLevel } = await this.getUserRiskLevelAndScore(
+                  user?.userId
+                )
                 const { action } = this.getUserSpecificParameters(
-                  await this.getUserRiskLevel(user?.userId),
+                  riskLevel,
                   ruleInstance
                 )
 
@@ -447,6 +451,7 @@ export class RulesEngineService {
       senderUser = null,
       receiverUser = null,
       isAnyAsyncRules,
+      userRiskScoreDetails,
     } = await this.verifyTransactionInternal(
       transaction,
       [initialTransactionEvent],
@@ -509,13 +514,19 @@ export class RulesEngineService {
     } catch (e) {
       logger.error(e)
     }
-
     return {
       transactionId: savedTransaction.transactionId as string,
       executedRules,
       hitRules,
       status: getAggregatedRuleStatus(hitRules),
-      riskScoreDetails,
+      ...(riskScoreDetails
+        ? {
+            riskScoreDetails: {
+              ...riskScoreDetails,
+              ...userRiskScoreDetails,
+            },
+          }
+        : {}),
     }
   }
 
@@ -550,6 +561,8 @@ export class RulesEngineService {
       senderUser = null,
       receiverUser = null,
       isAnyAsyncRules,
+      userRiskScoreDetails,
+      riskScoreComponents,
     } = await this.verifyTransactionInternal(
       updatedTransaction,
       previousTransactionEvents.concat(
@@ -605,6 +618,15 @@ export class RulesEngineService {
           receiverUser,
           transactionEventId: eventId,
         }),
+      hasFeature('RISK_SCORING') &&
+        riskScoreDetails &&
+        this.riskRepository.createOrUpdateArsScore(
+          transaction.transactionId,
+          riskScoreDetails.trsScore,
+          transaction.originUserId,
+          transaction.destinationUserId,
+          riskScoreComponents
+        ),
     ])
 
     const updatedTransactionWithoutRulesResult = {
@@ -618,7 +640,14 @@ export class RulesEngineService {
       transaction: updatedTransactionWithoutRulesResult,
       executedRules,
       hitRules,
-      riskScoreDetails,
+      ...(riskScoreDetails
+        ? {
+            riskScoreDetails: {
+              ...riskScoreDetails,
+              ...userRiskScoreDetails,
+            },
+          }
+        : {}),
     }
   }
 
@@ -675,7 +704,8 @@ export class RulesEngineService {
     const { senderUser, receiverUser } = await this.getTransactionUsers(
       transaction
     )
-    const senderUserRiskLevel = await this.getUserRiskLevel(senderUser?.userId)
+    const { riskLevel: senderUserRiskLevel } =
+      await this.getUserRiskLevelAndScore(senderUser?.userId)
     const { result } = await this.verifyRuleIdempotent({
       rule,
       ruleInstance,
@@ -733,7 +763,9 @@ export class RulesEngineService {
   ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
-    const userRiskLevel = await this.getUserRiskLevel(user?.userId)
+    const { riskLevel: userRiskLevel } = await this.getUserRiskLevelAndScore(
+      user?.userId
+    )
     const ruleResults = (
       await Promise.all(
         ruleInstances.map(async (ruleInstance) =>
@@ -922,6 +954,12 @@ export class RulesEngineService {
     senderUser: User | Business | undefined
     receiverUser: User | Business | undefined
     isAnyAsyncRules?: boolean
+    userRiskScoreDetails?: {
+      originUserCraRiskLevel?: RiskLevel
+      destinationUserCraRiskLevel?: RiskLevel
+      originUserCraRiskScore?: number
+      destinationUserCraRiskScore?: number
+    }
   }> {
     const getInitialDataSegment = await addNewSubsegment(
       'Rules Engine',
@@ -938,14 +976,23 @@ export class RulesEngineService {
 
     const [
       { senderUser, receiverUser },
-      senderUserRiskLevel,
+      {
+        riskLevel: senderUserRiskLevel,
+        riskScore: senderUserRiskScore,
+        isUpdatable: isSenderUserUpdatable,
+      },
       activeRuleInstances,
       riskScoreDetails,
+      {
+        riskScore: receiverUserRiskScore,
+        isUpdatable: isReceiverUserUpdatable,
+      },
     ] = await Promise.all([
       userPromise,
-      this.getUserRiskLevel(transaction.originUserId),
+      this.getUserRiskLevelAndScore(transaction.originUserId),
       this.ruleInstanceRepository.getActiveRuleInstances(),
       riskScoringPromise,
+      this.getUserRiskLevelAndScore(transaction.destinationUserId),
     ])
 
     const toRunRule = (
@@ -1057,7 +1104,19 @@ export class RulesEngineService {
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
 
     this.ruleLogicEvaluator.updatedAggregationVariables.clear()
-
+    const [originUserRiskDetails, destinationUserRiskDetails] =
+      await Promise.all([
+        this.getUserRiskScoreDetails(
+          riskScoreDetails?.trsScore,
+          senderUserRiskScore,
+          isSenderUserUpdatable
+        ),
+        this.getUserRiskScoreDetails(
+          riskScoreDetails?.trsScore,
+          receiverUserRiskScore,
+          isReceiverUserUpdatable
+        ),
+      ])
     return {
       ...executedAndHitRulesResult,
       aggregationMessages,
@@ -1068,6 +1127,35 @@ export class RulesEngineService {
       isAnyAsyncRules: activeRuleInstances.some((ruleInstance) =>
         isAsyncRule(ruleInstance)
       ),
+      userRiskScoreDetails: {
+        originUserCraRiskLevel: originUserRiskDetails?.craRiskLevel,
+        destinationUserCraRiskLevel: destinationUserRiskDetails?.craRiskLevel,
+        originUserCraRiskScore: originUserRiskDetails?.craRiskScore,
+        destinationUserCraRiskScore: destinationUserRiskDetails?.craRiskScore,
+      },
+    }
+  }
+
+  private async getUserRiskScoreDetails(
+    arsScore?: number,
+    drsScore?: number,
+    isUpdatable?: boolean
+  ): Promise<UserRiskScoreDetails | undefined> {
+    if (arsScore == null || drsScore == null) {
+      return undefined
+    }
+    const newDrsScore = isUpdatable
+      ? this.riskScoringService.calculateDrsScore(drsScore, arsScore)
+      : drsScore
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+    const riskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      newDrsScore
+    )
+    return {
+      craRiskLevel: riskLevel,
+      craRiskScore: newDrsScore,
     }
   }
 
@@ -1622,14 +1710,24 @@ export class RulesEngineService {
     return filteredResult
   }
 
-  private async getUserRiskLevel(
-    userId: string | undefined
-  ): Promise<RiskLevel | undefined> {
+  private async getUserRiskLevelAndScore(userId: string | undefined): Promise<{
+    riskLevel?: RiskLevel
+    riskScore?: number
+    isUpdatable?: boolean
+  }> {
     if (!userId || !hasFeature('RISK_LEVELS')) {
-      return undefined
+      return {
+        riskLevel: undefined,
+        riskScore: undefined,
+        isUpdatable: undefined,
+      }
     }
     const riskItem = await this.riskRepository.getDRSRiskItem(userId)
-    return riskItem?.manualRiskLevel ?? riskItem?.derivedRiskLevel
+    return {
+      riskLevel: riskItem?.manualRiskLevel ?? riskItem?.derivedRiskLevel,
+      riskScore: riskItem?.drsScore,
+      isUpdatable: riskItem?.isUpdatable,
+    }
   }
 
   private getUserSpecificParameters(
