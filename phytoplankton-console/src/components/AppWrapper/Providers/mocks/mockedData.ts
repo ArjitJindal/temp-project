@@ -1,4 +1,6 @@
-export const MOCKED_ACCOUNTS = [
+import { Account } from '@/apis';
+
+export const MOCKED_ACCOUNTS: Account[] = [
   {
     id: 'auth0|64898604e132eace08d03093',
     role: 'root',

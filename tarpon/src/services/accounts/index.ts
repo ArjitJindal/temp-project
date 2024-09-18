@@ -4,6 +4,7 @@ import {
   GetOrganizations200ResponseOneOfInner,
   GetUsers200ResponseOneOfInner,
   ManagementClient,
+  UserUpdate,
 } from 'auth0'
 import { MongoClient } from 'mongodb'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
@@ -146,12 +147,7 @@ export class AccountsService {
 
     await organizationManager.update(
       { id: tenant.orgId },
-      {
-        metadata: {
-          ...organization.metadata,
-          ...updatedMetadata,
-        },
-      }
+      { metadata: { ...organization.metadata, ...updatedMetadata } }
     )
   }
   private static userToAccount(user: GetUsers200ResponseOneOfInner): Account {
@@ -180,6 +176,7 @@ export class AccountsService {
       blocked: user.blocked ?? false,
       isEscalationContact: app_metadata?.isEscalationContact === true,
       reviewerId: app_metadata?.reviewerId,
+      blockedReason: app_metadata?.blockedReason,
       lastLogin: dayjs(last_login as string).valueOf(),
       createdAt: dayjs(created_at as string).valueOf(),
       lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
@@ -194,9 +191,7 @@ export class AccountsService {
     const usersManagement = managementClient.users
     const organizations: GetOrganizations200ResponseOneOfInner[] =
       await auth0AsyncWrapper(() =>
-        usersManagement.getUserOrganizations({
-          id: userId,
-        })
+        usersManagement.getUserOrganizations({ id: userId })
       )
     if (organizations.length > 1) {
       throw new Conflict('User can be a member of only one tenant')
@@ -290,10 +285,8 @@ export class AccountsService {
         if (existingUser[0].blocked) {
           user = await auth0AsyncWrapper(() =>
             userManager.update(
-              {
-                id: existingUser[0].user_id as string,
-              },
-              { blocked: false }
+              { id: existingUser[0].user_id as string },
+              { blocked: false, app_metadata: { isDeleted: false } }
             )
           )
 
@@ -334,9 +327,7 @@ export class AccountsService {
       account = AccountsService.userToAccount(user)
       await organizationManager.addMembers(
         { id: tenant.orgId },
-        {
-          members: [account.id],
-        }
+        { members: [account.id] }
       )
       logger.info(`Added user to orginization ${tenant.orgId}`, {
         email: params.email,
@@ -530,13 +521,12 @@ export class AccountsService {
     // Without it if you try to remove and add member from the same organization,
     // it will be removed but will not be added
     const user = await this.getAccount(userId)
-    await organizationManager.getMembers({
-      id: newTenant.orgId,
-    })
+
     await organizationManager.addMembers(
       { id: newTenant.orgId },
       { members: [userId] }
     )
+
     try {
       await organizationManager.deleteMembers(
         { id: oldTenant.orgId },
@@ -606,6 +596,14 @@ export class AccountsService {
     await Promise.all(promises)
   }
 
+  public async updateAuth0User(accountId: string, data: UserUpdate) {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const userManager = managementClient.users
+    await userManager.update({ id: accountId }, data)
+  }
+
   public async deactivateAccount(
     tenantId: string,
     accountId: string
@@ -625,8 +623,14 @@ export class AccountsService {
     const userRoles = await userManager.getRoles({ id: accountId })
 
     await Promise.all([
-      userManager.update({ id: accountId }, { blocked: true }),
-      this.updateAuth0UserInMongo(tenantId, accountId, { blocked: true }),
+      this.updateAuth0User(accountId, {
+        blocked: true,
+        app_metadata: { isDeleted: true },
+      }),
+      this.updateAuth0UserInMongo(tenantId, accountId, {
+        blocked: true,
+        blockedReason: 'DELETED',
+      }),
       userRoles.data.length &&
         userManager.deleteRoles(
           { id: accountId },
@@ -743,15 +747,8 @@ export class AccountsService {
 
     const updatedUser = await auth0AsyncWrapper(() =>
       userManager.update(
-        {
-          id: accountId,
-        },
-        {
-          user_metadata: {
-            ...user.user_metadata,
-            ...patch,
-          },
-        }
+        { id: accountId },
+        { user_metadata: { ...user.user_metadata, ...patch } }
       )
     )
     return updatedUser.user_metadata ?? {}

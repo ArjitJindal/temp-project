@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
+import { DeleteUser } from '../components/DeleteUser';
 import s from './index.module.less';
 import {
   isAtLeastAdmin,
@@ -14,7 +15,7 @@ import {
 } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
-import { Account, AccountDeletePayload } from '@/apis';
+import { Account } from '@/apis';
 import {
   COLORS_V2_ALERT_CRITICAL,
   COLORS_V2_ALERT_SUCCESS,
@@ -25,15 +26,11 @@ import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PageWrapperContentContainer } from '@/components/PageWrapper';
 import RoleTag, { getRoleTitle } from '@/components/library/Tag/RoleTag';
-import Modal from '@/components/library/Modal';
-import Select from '@/components/library/Select';
 import { P } from '@/components/ui/Typography';
 import { CloseMessage, message } from '@/components/library/Message';
 import CheckCircleOutlined from '@/components/ui/icons/Remix/system/checkbox-circle-line.react.svg';
 import MinusCircleOutlined from '@/components/ui/icons/Remix/system/indeterminate-circle-line.react.svg';
-import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-2-line.react.svg';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import Confirm from '@/components/utils/Confirm';
 import Tag from '@/components/library/Tag';
 import { QueryResult } from '@/utils/queries/types';
 import { getOr, isSuccess, loading, success } from '@/utils/asyncResource';
@@ -54,10 +51,18 @@ export default function Team() {
   const allAccountsResult = useAccountsQueryResult();
   const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
     if (isSuccess(allAccountsResult.data)) {
-      const filteredAccounts = allAccountsResult.data.value.filter((account) => {
-        const role = parseUserRole(account.role);
-        return role !== UserRole.ROOT && role !== UserRole.WHITELABEL_ROOT && !account.blocked;
-      });
+      const filteredAccounts = allAccountsResult.data.value
+        .filter((account) => {
+          const role = parseUserRole(account.role);
+          return (
+            role !== UserRole.ROOT &&
+            role !== UserRole.WHITELABEL_ROOT &&
+            account?.blockedReason !== 'DELETED'
+          );
+        })
+        .sort((a, b) => {
+          return a.blocked.toString().localeCompare(b.blocked.toString());
+        });
       return {
         ...allAccountsResult,
         paginate: async () => {
@@ -79,39 +84,26 @@ export default function Team() {
       data: loading(),
     };
   }, [allAccountsResult]);
-  const deactiveUserMutation = useMutation<
-    unknown,
-    unknown,
-    AccountDeletePayload & { userId: string }
-  >(
-    async (payload: AccountDeletePayload & { userId: string }) => {
-      messageVar = message.loading(`Please wait while we are deleting the user`);
-      return await api.accountsDelete({
-        AccountDeletePayload: {
-          reassignTo: payload.reassignTo,
-        },
-        accountId: payload.userId,
-      });
+
+  const reactivateUserMutation = useMutation<unknown, unknown, { accountId: string }>(
+    async (payload: { accountId: string }) => {
+      messageVar = message.loading(`Please wait while we are reactivating the user`);
+      return await api.accountsReactivate({ accountId: payload.accountId });
     },
     {
       onSuccess: () => {
+        messageVar = message.loading(`Please wait while we are reactivating the user`);
         messageVar?.();
-        message.success(`User deleted successfully`);
+        message.success(`User reactivated successfully`);
         setDeletedUserId(null);
-        setReassignTo(null);
         invalidateUsers();
         refreshTable();
-      },
-      onError: (error) => {
-        messageVar?.();
-        message.error(`Error while deleting the user: ${(error as Error)?.message}`);
       },
     },
   );
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
-  const [reassignTo, setReassignTo] = useState<string | null>(null);
   const [users, loadingUsers] = useUsers({});
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
@@ -120,6 +112,21 @@ export default function Team() {
       title: 'Email',
       sorting: true,
       defaultWidth: 350,
+      type: {
+        render(email, context) {
+          return (
+            <div className={s.email}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {email}
+              </P>
+              {context.item.blocked && <Tag color="red">Blocked</Tag>}
+            </div>
+          );
+        },
+        stringify(value, item) {
+          return `${value}${item.blocked ? ' (Blocked)' : ''}`;
+        },
+      },
     }),
     columnHelper.simple<'role'>({
       key: 'role',
@@ -262,6 +269,32 @@ export default function Team() {
             return null;
           }
 
+          if (item.blocked) {
+            return (
+              <div className={s.buttons}>
+                <Button
+                  testName="accounts-reactivate-button"
+                  type="SECONDARY"
+                  onClick={() => {
+                    reactivateUserMutation.mutate({ accountId: item.id });
+                  }}
+                >
+                  Reactivate
+                </Button>
+                <DeleteUser
+                  item={item}
+                  user={user}
+                  accounts={accounts}
+                  onSuccess={() => {
+                    invalidateUsers();
+                    refreshTable();
+                  }}
+                  isDisabled={(item) => item.id === user.userId}
+                />
+              </div>
+            );
+          }
+
           return (
             <div className={s.buttons}>
               <Button
@@ -276,49 +309,16 @@ export default function Team() {
               >
                 Edit
               </Button>
-              {accounts.length === 1 && user.role === UserRole.ROOT ? (
-                <Confirm
-                  text="This is the only user in the tenant."
-                  title="Are you sure you want to delete this user?"
-                  onConfirm={() => {
-                    deactiveUserMutation.mutate({
-                      userId: item.id,
-                      reassignTo: user.userId, // reassign to self if superuser is the only user
-                    });
-                  }}
-                >
-                  {({ onClick }) => (
-                    <Button
-                      testName="accounts-delete-button"
-                      type="TETRIARY"
-                      onClick={onClick}
-                      isDisabled={item.blocked || item.id === user.userId}
-                      icon={<DeleteOutlined />}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </Confirm>
-              ) : (
-                <Button
-                  testName="accounts-delete-button"
-                  type="TETRIARY"
-                  onClick={() => {
-                    if (accounts.length === 1 && user.role === UserRole.ROOT) {
-                      deactiveUserMutation.mutate({
-                        userId: item.id,
-                        reassignTo: user.userId, // reassign to self if superuser is the only user
-                      });
-                    } else {
-                      setDeletedUserId(item.id);
-                    }
-                  }}
-                  isDisabled={item.blocked || item.id === user.userId}
-                  icon={<DeleteOutlined />}
-                >
-                  Delete
-                </Button>
-              )}
+              <DeleteUser
+                item={item}
+                user={user}
+                accounts={accounts}
+                onSuccess={() => {
+                  invalidateUsers();
+                  refreshTable();
+                }}
+                isDisabled={(item) => item.blocked || item.id === user.userId}
+              />
             </div>
           );
         },
@@ -329,6 +329,7 @@ export default function Team() {
   const accounts = getOr(accountsResult.data, { items: [] }).items.filter(
     (account) => account !== null && account.id !== deletedUserId,
   );
+
   return (
     <PageWrapperContentContainer>
       <QueryResultsTable<Account>
@@ -374,48 +375,6 @@ export default function Team() {
         }}
         key={editAccount?.id ?? 'new'}
       />
-      <Modal
-        isOpen={!!deletedUserId}
-        onCancel={() => {
-          setDeletedUserId(null);
-          setReassignTo(null);
-        }}
-        title="Are you sure you want to delete this user?"
-        hideFooter
-      >
-        <div className={s.deletedModalContent}>
-          <P grey variant="m" style={{ marginBottom: 0 }}>
-            Deleted users will not be able to login to console and perform any relevant actions.
-            Please make sure to re-assign the open cases/alerts of the deleted user to an account.
-          </P>
-          <Select
-            options={accounts.map((account) => ({
-              label: account.email,
-              value: account.id,
-            }))}
-            placeholder="Select an account Email ID"
-            style={{ width: 300 }}
-            mode="SINGLE"
-            onChange={(value) => setReassignTo(value ?? null)}
-            value={reassignTo}
-          />
-          <Button
-            testName="delete-account"
-            type="PRIMARY"
-            isDisabled={!reassignTo}
-            onClick={() => {
-              if (deletedUserId && reassignTo) {
-                deactiveUserMutation.mutate({
-                  userId: deletedUserId,
-                  reassignTo,
-                });
-              }
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      </Modal>
     </PageWrapperContentContainer>
   );
 }

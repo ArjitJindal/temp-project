@@ -3352,6 +3352,24 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+  /accounts/{accountId}/reactivate:
+    parameters:
+      - schema:
+          type: string
+        name: accountId
+        in: path
+        required: true
+    post:
+      summary: Account - Reactivate
+      operationId: accounts-reactivate
+      x-flagright:
+        permissions:
+          - settings:organisation:write
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
   /accounts:
     post:
       summary: Account - Invite
@@ -9074,6 +9092,10 @@ components:
           type: number
         lastPasswordReset:
           type: number
+        blockedReason:
+          type: string
+          enum:
+            - DELETED
       required:
         - id
         - role

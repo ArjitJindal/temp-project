@@ -38,15 +38,9 @@ const getCaseManagementService = async (tenantId: string) => {
   const s3 = getS3ClientByEvent(null as any)
   return new ExternalCaseManagementService(
     tenantId,
-    {
-      mongoDb,
-      dynamoDb,
-    },
+    { mongoDb, dynamoDb },
     s3,
-    {
-      documentBucketName: 'test',
-      tmpBucketName: 'test',
-    }
+    { documentBucketName: 'test', tmpBucketName: 'test' }
   )
 }
 

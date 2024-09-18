@@ -145,6 +145,20 @@ export const createAuth0TenantResources = (
     provider,
   })
 
+  new auth0.attackProtection.AttackProtection(
+    context,
+    getTenantResourceId(tenantName, 'attack-protection'),
+    {
+      bruteForceProtection: {
+        enabled: true,
+        maxAttempts: 3,
+        shields: ['block', 'user_notification'],
+        mode: 'count_per_identifier', // If we want to have per ip we need to change this 'count_per_identifier_and_ip' but it will still block the user
+      },
+      provider,
+    }
+  )
+
   /**
    * Applications::APIs
    */
