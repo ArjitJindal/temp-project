@@ -245,8 +245,21 @@ export class RuleInstanceRepository {
       }
     }
 
-    const ruleInstanceId =
-      ruleInstance.id || (await this.getNewRuleInstanceId(ruleId, true))
+    let ruleInstanceId = ruleInstance.id
+    if (!ruleInstanceId) {
+      ruleInstanceId = await this.getNewRuleInstanceId(ruleId, true)
+      let existingRuleInstance = await this.getRuleInstanceById(ruleInstanceId)
+      // NOTE: For most of the time this is not needed, but if we newly generated ID
+      // is the same as the existing one, we need to generate a new one to avoid overwriting
+      // the existing rule instance.
+      if (existingRuleInstance) {
+        ruleInstanceId = await this.getNewRuleInstanceId(ruleId, true)
+        existingRuleInstance = await this.getRuleInstanceById(ruleInstanceId)
+        if (existingRuleInstance) {
+          throw new Error('Rule instance already exists')
+        }
+      }
+    }
 
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
