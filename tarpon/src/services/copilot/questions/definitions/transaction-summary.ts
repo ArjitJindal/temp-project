@@ -12,9 +12,21 @@ import {
   periodDefaults,
   periodVars,
   sqlPeriod,
+  paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/viper'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { getContext, hasFeature } from '@/core/utils/context'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+
+type TransactionSummary = {
+  count: number
+  min: number
+  max: number
+  total: number
+  avg: number
+}
+
 export const TransactionSummary: PropertiesQuestion<
   Period & { currency: CurrencyCode; direction: Direction }
 > = {
@@ -30,19 +42,48 @@ export const TransactionSummary: PropertiesQuestion<
     { convert, userId, paymentIdentifier },
     { direction, currency, ...period }
   ) => {
-    const userIdKey =
-      direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
-    const condition = userId
-      ? `t.${userIdKey} = :userId`
-      : transactionPaymentIdentifierQuerySQL(paymentIdentifier, direction)
-    const raw = await executeSql<{
-      count: number
-      min: number
-      max: number
-      total: number
-      avg: number
-    }>(
+    let result: TransactionSummary
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      const condition = userId
+        ? `{{ userIdKey }} = '{{ userId }}'`
+        : paymentIdentifierQueryClickhouse(paymentIdentifier, direction)
+
+      const query = `
+      SELECT
+        count(*) as count,
+        min(originAmountDetails_amountInUsd) as min,
+        max(originAmountDetails_amountInUsd) as max,
+        sum(originAmountDetails_amountInUsd) as total,
+        avg(originAmountDetails_amountInUsd) as avg
+      FROM transactions
+      WHERE
+        ${condition}
+        and timestamp between {{ from }} and {{ to }}
       `
+
+      const response = await executeClickhouseQuery<{
+        count: number
+        min: number
+        max: number
+        total: number
+        avg: number
+      }>(getContext()?.tenantId as string, query, {
+        userId,
+        from: period.from?.toString() ?? '',
+        to: period.to?.toString() ?? '',
+        userIdKey:
+          direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId',
+      })
+
+      result = response[0]
+    } else {
+      const userIdKey =
+        direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
+      const condition = userId
+        ? `t.${userIdKey} = :userId`
+        : transactionPaymentIdentifierQuerySQL(paymentIdentifier, direction)
+      const raw = await executeSql<TransactionSummary>(
+        `
     select
       count(*) as count,
       coalesce(min(t.transactionAmountUSD), 0) as min,
@@ -54,9 +95,12 @@ export const TransactionSummary: PropertiesQuestion<
       where ${condition}
         and t.timestamp between :from and :to
     `,
-      { userId, ...sqlPeriod(period), ...paymentIdentifier }
-    )
-    const result = raw[0]
+        { userId, ...sqlPeriod(period), ...paymentIdentifier }
+      )
+
+      result = raw[0]
+    }
+
     return {
       data: [
         {

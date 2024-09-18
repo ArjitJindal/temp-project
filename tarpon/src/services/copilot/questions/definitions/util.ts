@@ -270,7 +270,8 @@ export function casePaymentIdentifierQuery(paymentIdentifier?: PaymentDetails) {
 }
 
 export function paymentIdentifierQueryClickhouse(
-  paymentIdentifier?: PaymentDetails
+  paymentIdentifier?: PaymentDetails,
+  direction?: 'ORIGIN' | 'DESTINATION'
 ) {
   if (!paymentIdentifier) {
     return ''
@@ -289,6 +290,13 @@ export function paymentIdentifierQueryClickhouse(
       return `destinationPaymentDetails_${key} = '${paymentIdentifier[key]}'`
     })
     .join(' AND ')
+
+  if (direction === 'ORIGIN') {
+    return originConditions
+  }
+  if (direction === 'DESTINATION') {
+    return destinationConditions
+  }
 
   return `(${originConditions}) OR (${destinationConditions})`
 }

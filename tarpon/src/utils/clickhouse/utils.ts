@@ -242,6 +242,29 @@ export async function batchInsertToClickhouse(
   )
 }
 
+export const executeClickhouseQuery = async <T extends object>(
+  tenantId: string,
+  query: string,
+  params: Record<string, string>
+): Promise<T[]> => {
+  const client = await getClickhouseClient(tenantId)
+  let formattedQuery = query
+  for (const [key, value] of Object.entries(params)) {
+    formattedQuery = formattedQuery.replace(
+      new RegExp(`{{ ${key} }}`, 'g'),
+      value
+    )
+  }
+
+  const result = await client.query({
+    query: `
+    ${formattedQuery} SETTINGS output_format_json_quote_64bit_integers=0
+    `,
+    format: 'JSONEachRow',
+  })
+  return result.json<T>()
+}
+
 const getAllColumns = (table: ClickhouseTableDefinition) => [
   'id String',
   'data String',
