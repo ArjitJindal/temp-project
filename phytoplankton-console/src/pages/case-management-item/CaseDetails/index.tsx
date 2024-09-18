@@ -10,19 +10,19 @@ import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import {
+  Account,
+  Alert,
+  AuditLog,
   Case,
   Comment as ApiComment,
   InternalBusinessUser,
   InternalConsumerUser,
-  Account,
-  AuditLog,
-  Alert,
   RiskClassificationScore,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
 import { useQueries } from '@/utils/queries/hooks';
-import { ALERT_ITEM_COMMENTS, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
+import { ALERT_ITEM, ALERT_ITEM_COMMENTS, CASES_ITEM } from '@/utils/queries/keys';
 import { all, AsyncResource, getOr, map, success } from '@/utils/asyncResource';
 import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
@@ -34,7 +34,7 @@ import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { useElementSize } from '@/utils/browser';
-import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
+import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import Linking from '@/pages/users-item/UserDetails/Linking';
 import Tooltip from '@/components/library/Tooltip';
@@ -52,10 +52,10 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import {
   getCreateStatement,
-  isActionUpdate,
   isActionCreate,
-  isActionEscalate,
   isActionDelete,
+  isActionEscalate,
+  isActionUpdate,
 } from '@/components/ActivityCard/helpers';
 import { useUsers } from '@/utils/user-utils';
 import Avatar from '@/components/library/Avatar';
@@ -250,7 +250,7 @@ function useTabs(
     isUserSubject && {
       title: 'User details',
       key: 'user-details',
-      children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
+      children: <UserDetails user={user} />,
       isClosable: false,
       isDisabled: false,
     },

@@ -1,53 +1,34 @@
-import { UI_SETTINGS } from '../../ui-settings';
-import PersonsTable from './PersonsTable';
-import UserDetails from './UserDetails';
-import ExpectedTransactionLimits from './TransactionLimits';
+import React, { useState } from 'react';
+import LegalEntityDetails from './LegalEntityDetails';
+import Persons from './PersonsCard';
 import { InternalBusinessUser } from '@/apis';
-import * as Card from '@/components/ui/Card';
+import SegmentedControl from '@/components/library/SegmentedControl';
+
+type Tabs = 'LEGAL_ENTITY' | 'SHAREHOLDERS' | 'DIRECTORS';
 
 interface Props {
   user: InternalBusinessUser;
-  uiSettings: typeof UI_SETTINGS;
-  hideExpectedTransactionLimits?: boolean;
 }
 
 export default function BusinessUserDetails(props: Props) {
-  const { user, uiSettings, hideExpectedTransactionLimits = false } = props;
+  const { user } = props;
+
+  const [activeTab, setActiveTab] = useState<Tabs>('LEGAL_ENTITY');
 
   return (
     <>
-      <Card.Root
-        header={{
-          title: uiSettings.cards.USER_DETAILS.title,
-        }}
-      >
-        <UserDetails user={user} />
-      </Card.Root>
-      {!hideExpectedTransactionLimits && (
-        <Card.Root
-          header={{
-            title: uiSettings.cards.EXPECTED_TRANSACTION_LIMITS.title,
-          }}
-        >
-          <ExpectedTransactionLimits user={user} />
-        </Card.Root>
-      )}
-      <Card.Root
-        header={{
-          title: uiSettings.cards.SHAREHOLDERS.title,
-        }}
-      >
-        <Card.Section>
-          {user.shareHolders && <PersonsTable persons={user.shareHolders} />}
-        </Card.Section>
-      </Card.Root>
-      <Card.Root
-        header={{
-          title: uiSettings.cards.DIRECTORS.title,
-        }}
-      >
-        <Card.Section>{user.directors && <PersonsTable persons={user.directors} />}</Card.Section>
-      </Card.Root>
+      <SegmentedControl<Tabs>
+        active={activeTab}
+        onChange={setActiveTab}
+        items={[
+          { label: 'Legal entity', value: 'LEGAL_ENTITY' },
+          { label: `Shareholders (${user.shareHolders?.length ?? 0})`, value: 'SHAREHOLDERS' },
+          { label: `Directors (${user.directors?.length ?? 0})`, value: 'DIRECTORS' },
+        ]}
+      />
+      {activeTab === 'LEGAL_ENTITY' && <LegalEntityDetails user={user} />}
+      {activeTab === 'SHAREHOLDERS' && <Persons persons={user.shareHolders} />}
+      {activeTab === 'DIRECTORS' && <Persons persons={user.directors} />}
     </>
   );
 }

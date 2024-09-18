@@ -66,6 +66,7 @@ import MarkdownEditor from '@/components/markdown/story';
 import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
 import Skeleton from '@/components/library/Skeleton/story';
 import AiAlertSummary from '@/components/AlertDetailsPage/AiAlertSummary/story';
+import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard/story';
 
 const config: Config = [
   {
@@ -336,6 +337,10 @@ const config: Config = [
     key: 'misc',
     title: 'Miscellaneous',
     components: [
+      {
+        key: '@/pages/users-item/UserDetails/EntityPropertiesCard',
+        story: EntityPropertiesCard,
+      },
       {
         key: '@/components/AppWrapper/Menu/NotificationsDrawer',
         story: NotificationsDrawerList,

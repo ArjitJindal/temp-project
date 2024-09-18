@@ -1,0 +1,18 @@
+@import 'src/components/ui/colors.less';
+
+.navigation {
+  display: flex;
+  gap: 4px;
+  user-select: none;
+}
+
+.navigationButton {
+  width: 24px;
+  cursor: pointer;
+  color: @fr-colors-v2-primary-flagrightBlue;
+
+  &.isDisabled {
+    color: @fr-colors-v2-gray-4;
+    pointer-events: none;
+  }
+}

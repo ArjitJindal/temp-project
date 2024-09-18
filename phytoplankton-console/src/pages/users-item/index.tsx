@@ -1,6 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import ExpectedTransactionLimits from './UserDetails/shared/TransactionLimits';
 import UserDetails from './UserDetails';
 import Header from './Header';
 import s from './index.module.less';
@@ -14,13 +15,11 @@ import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useQuery } from '@/utils/queries/hooks';
-import { UI_SETTINGS } from '@/pages/users-item/ui-settings';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
-import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/BusinessUserDetails/TransactionLimits';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { useElementSize } from '@/utils/browser';
 import AlertsCard from '@/pages/users-item/UserDetails/AlertsCard';
@@ -115,7 +114,7 @@ export default function UserItem() {
               {
                 title: 'User details',
                 key: 'user-details',
-                children: <UserDetails user={user} uiSettings={UI_SETTINGS} />,
+                children: <UserDetails user={user} />,
                 isClosable: false,
                 isDisabled: false,
               },
