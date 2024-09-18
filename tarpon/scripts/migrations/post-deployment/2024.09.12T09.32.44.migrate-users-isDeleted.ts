@@ -7,12 +7,13 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
   const allAccounts = await accountsService.getTenantAccounts(tenant)
   await Promise.all(
-    allAccounts.map((a) =>
-      accountsService.updateAuth0User(a.id, {
-        app_metadata: { blockedReason: 'DELETED' }, // So that we mark current users as deleted
-        blocked: true,
-      })
-    )
+    allAccounts.map(async (a) => {
+      const isBlocked = a.blocked
+
+      if (isBlocked) {
+        await accountsService.deactivateAccount(tenant.id, a.id)
+      }
+    })
   )
 }
 

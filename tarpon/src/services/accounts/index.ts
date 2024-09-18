@@ -625,7 +625,7 @@ export class AccountsService {
     await Promise.all([
       this.updateAuth0User(accountId, {
         blocked: true,
-        app_metadata: { isDeleted: true },
+        app_metadata: { blockedReason: 'DELETED' },
       }),
       this.updateAuth0UserInMongo(tenantId, accountId, {
         blocked: true,
