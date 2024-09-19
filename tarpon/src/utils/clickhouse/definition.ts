@@ -99,6 +99,15 @@ export const CLICKHOUSE_DEFINITIONS = {
   CASES: {
     tableName: 'cases',
   },
+  KRS_SCORE: {
+    tableName: 'krs_score',
+  },
+  DRS_SCORE: {
+    tableName: 'drs_score',
+  },
+  ARS_SCORE: {
+    tableName: 'ars_score',
+  },
 }
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
@@ -236,6 +245,37 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     orderBy: '(timestamp, id)',
     mongoIdColumn: true,
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.KRS_SCORE.tableName,
+    idColumn: 'userId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id, timestamp)',
+    orderBy: '(id, timestamp)',
+    mongoIdColumn: true,
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.DRS_SCORE.tableName,
+    idColumn: 'userId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id, timestamp)',
+    orderBy: '(id, timestamp)',
+    mongoIdColumn: true,
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
+    idColumn: 'transactionId',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id, originUserId, destinationUserId, timestamp)',
+    orderBy: '(id, originUserId, destinationUserId, timestamp)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "originUserId String MATERIALIZED JSON_VALUE(data, '$.originUserId')",
+      "destinationUserId String MATERIALIZED JSON_VALUE(data, '$.destinationUserId')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -249,6 +289,12 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
   [MONGO_TABLE_SUFFIX_MAP.USER_EVENTS]:
     CLICKHOUSE_DEFINITIONS.USER_EVENTS.tableName,
   [MONGO_TABLE_SUFFIX_MAP.CASES]: CLICKHOUSE_DEFINITIONS.CASES.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.KRS_SCORE]:
+    CLICKHOUSE_DEFINITIONS.KRS_SCORE.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.DRS_SCORE]:
+    CLICKHOUSE_DEFINITIONS.DRS_SCORE.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.ARS_SCORE]:
+    CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

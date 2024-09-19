@@ -49,6 +49,8 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
+import { internalMongoReplace } from '@/utils/mongodb-utils'
+import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -765,16 +767,13 @@ export class RiskRepository {
   /* MongoDB operations */
 
   async addKrsValueToMongo(krsScore: KrsScore): Promise<KrsScore> {
-    const db = this.mongoDb.db()
-    const krsValuesCollection = db.collection<KrsScore>(
-      KRS_SCORES_COLLECTION(this.tenantId)
+    await internalMongoReplace(
+      this.mongoDb,
+      KRS_SCORES_COLLECTION(this.tenantId),
+      { userId: krsScore.userId },
+      krsScore
     )
 
-    await krsValuesCollection.replaceOne(
-      { userId: krsScore.userId },
-      krsScore,
-      { upsert: true }
-    )
     return krsScore
   }
 
@@ -799,15 +798,11 @@ export class RiskRepository {
   }
 
   async addArsValueToMongo(arsScore: ArsScore): Promise<ArsScore> {
-    const db = this.mongoDb.db()
-    const arsValuesCollection = db.collection<ArsScore>(
-      ARS_SCORES_COLLECTION(this.tenantId)
-    )
-
-    await arsValuesCollection.replaceOne(
+    await internalMongoReplace(
+      this.mongoDb,
+      ARS_SCORES_COLLECTION(this.tenantId),
       { transactionId: arsScore.transactionId },
-      arsScore,
-      { upsert: true }
+      arsScore
     )
     return arsScore
   }
@@ -847,12 +842,20 @@ export class RiskRepository {
     )
     return await arsValuesCollection.findOne({ transactionId })
   }
+
   async addDrsValueToMongo(drsScore: DrsScore): Promise<DrsScore> {
     const db = this.mongoDb.db()
-    const drsValuesCollection = db.collection<DrsScore>(
-      DRS_SCORES_COLLECTION(this.tenantId)
-    )
-    await drsValuesCollection.insertOne(drsScore)
+    const collectionName = DRS_SCORES_COLLECTION(this.tenantId)
+    const drsValuesCollection = db.collection<DrsScore>(collectionName)
+    const data = await drsValuesCollection.insertOne(drsScore)
+
+    await sendMessageToMongoConsumer({
+      clusterTime: Date.now(),
+      collectionName,
+      documentKey: { _id: data.insertedId.toString() },
+      operationType: 'insert',
+    })
+
     return drsScore
   }
   async getDrsValueFromMongo(userId: string): Promise<DrsScore[]> {

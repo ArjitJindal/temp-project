@@ -20,6 +20,9 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   IMPORT: 'import',
   METADATA: 'metadata',
   ACCOUNTS: 'accounts',
+  KRS_SCORE: 'kyc-risk-values',
+  DRS_SCORE: 'dynamic-risk-values',
+  ARS_SCORE: 'action-risk-values',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
@@ -194,14 +197,14 @@ export const JOBS_COLLECTION = (tenandId: string) => {
 
 // Pulse
 export const KRS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-kyc-risk-values`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.KRS_SCORE}`
 }
 
 export const ARS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-action-risk-values`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ARS_SCORE}`
 }
 export const DRS_SCORES_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-dynamic-risk-values`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.DRS_SCORE}`
 }
 
 export const IMPORT_COLLECTION = (tenantId: string) => {

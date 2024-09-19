@@ -115,6 +115,12 @@ async function main() {
     migrationType === 'PRE_DEPLOYMENT'
       ? 'migrations-pre-deployment'
       : 'migrations-post-deployment'
+
+  if (migrationType === 'PRE_DEPLOYMENT') {
+    // Sync clickhouse tables before handling migrations
+    await syncClickhouseTables()
+  }
+
   const mongodb = await getMongoDbClient()
   const umzug = new Umzug({
     migrations: {
@@ -154,7 +160,6 @@ async function main() {
 
 async function syncData() {
   await syncMongoDbIndexes()
-  await syncClickhouseTables()
   await RuleService.syncRulesLibrary()
   await syncListLibrary()
   await syncFeatureFlags()
