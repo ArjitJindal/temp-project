@@ -16,7 +16,7 @@ type ClickhouseTenantConfig = {
 
 export function getClickhouseTenantConfig(
   stage: Stage,
-  _region: FlagrightRegion
+  region: FlagrightRegion
 ): ClickhouseTenantConfig | undefined {
   switch (stage) {
     case 'dev': {
@@ -30,6 +30,38 @@ export function getClickhouseTenantConfig(
       }
 
       return config
+    }
+
+    case 'sandbox': {
+      if (region === 'asia-1') {
+        const config: ClickhouseTenantConfig = {
+          ENVIROMENT: {
+            type: 'production',
+            minTotalMemoryGb: 24,
+            maxTotalMemoryGb: 24,
+          },
+          idleScaling: true,
+          idleTimeoutMinutes: 10,
+          ipAccess: [
+            {
+              source: '13.251.166.15',
+              description: 'Flagright Asia-1 Sandbox Elastic IP',
+            },
+            {
+              source: '18.143.88.142',
+              description: 'Flagright Asia-1 Sandbox Elastic IP',
+            },
+            {
+              source: '46.137.237.47',
+              description: 'Flagright Asia-1 Sandbox Elastic IP',
+            },
+          ],
+        }
+
+        return config
+      }
+
+      break
     }
 
     default: {
