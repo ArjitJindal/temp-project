@@ -17,10 +17,8 @@ import { syncAccountsLocally } from './always-run/sync-accounts'
 import { syncClickhouseTables } from './always-run/sync-clickhouse'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { seedDynamo } from '@/core/seed/dynamodb'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { seedMongo } from '@/core/seed/mongo'
 import { RuleService } from '@/services/rules-engine'
+import { seedDemoData } from '@/core/seed'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -145,15 +143,7 @@ async function main() {
   if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
     // Seed cypress tenant on dev
     if (envIs('dev')) {
-      const tenant = 'cypress-tenant'
-
-      console.info('Seeding MongoDB...')
-      const client = await getMongoDbClient()
-      await seedMongo(client, tenant)
-      await client.close()
-
-      console.info('Seeding DynamoDB...')
-      await seedDynamo(getDynamoDbClient(), tenant)
+      await seedDemoData('cypress-tenant')
     }
   }
 }

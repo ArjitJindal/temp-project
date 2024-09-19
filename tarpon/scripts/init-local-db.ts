@@ -1,14 +1,10 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
-import { MongoClient } from 'mongodb'
 import axios from 'axios'
-import { seedMongo } from '@/core/seed/mongo'
-import { seedDynamo } from '@/core/seed/dynamodb'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleService } from '@/services/rules-engine'
+import { seedDemoData } from '@/core/seed'
 
 process.env.ENV = process.env.ENV || 'local'
-const DB_NAME = `tarpon`
 const TENANT = process.env.TENANT || 'flagright'
 
 async function main() {
@@ -29,21 +25,8 @@ async function main() {
   } catch (e) {
     console.error(e)
   }
-  console.info('Seeding DynamoDB...')
-  const dynamoClient = getDynamoDbClient()
   await RuleService.syncRulesLibrary()
-  await seedDynamo(dynamoClient, TENANT)
-
-  console.info('Seeding MongoDB...')
-  const client = await MongoClient.connect(
-    `mongodb://localhost:27018/${DB_NAME}`
-  )
-  await seedMongo(client, TENANT)
-  console.info('Closing up mongo client')
-  await client.close()
-  console.info('Closing up dynamo client')
-  dynamoClient.destroy()
-  console.info('Finished seeding!')
+  await seedDemoData(TENANT)
 }
 
 main()

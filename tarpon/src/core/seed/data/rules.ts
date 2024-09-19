@@ -22,7 +22,7 @@ export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
 export const ruleInstances: () => RuleInstance[] = memoize(() => {
   const data = [
     {
-      id: 'e8c3b853',
+      id: 'CK4Nh2',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
@@ -113,7 +113,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: 'a25685ad-2',
+      id: 'YgmGTp',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
       ruleExecutionMode: 'SYNC',
@@ -179,7 +179,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: 'a25685ad-3',
+      id: 'Es4Zmo',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
       ruleRunMode: 'SHADOW',
@@ -242,7 +242,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: '2i3nflkd',
+      id: 'hODvd2',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [pickRandom(getSLAPolicies()).id],
@@ -308,7 +308,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: 'skn2ls',
+      id: 'pLRu4m',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
@@ -377,7 +377,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: '3oi3nlk',
+      id: 'FlWDkd',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
@@ -447,7 +447,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: 'R-169.1',
+      id: '0a1QSr',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
@@ -509,7 +509,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       typologies: [],
     } as RuleInstance,
     {
-      id: 'a45615ad-1',
+      id: 'ZnTte8',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,

@@ -103,6 +103,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
+  logger.info('Seeding MongoDB...')
   const db = client.db()
   const originalTenantId = getNonDemoTenantId(tenantId)
   const tenantRepository = new TenantRepository(originalTenantId, {
@@ -136,7 +137,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
       account.name.endsWith('flagright.com')
   )
 
-  logger.info(`Accounts: ${JSON.stringify(accounts)}`)
+  logger.info(`Accounts: ${JSON.stringify(accounts.map((a) => a.email))}}`)
 
   setAccounts(accounts)
 

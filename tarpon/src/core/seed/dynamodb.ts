@@ -29,6 +29,7 @@ export async function seedDynamo(
   dynamoDb: DynamoDBDocumentClient,
   tenantId: string
 ) {
+  logger.info('Seeding DynamoDB...')
   disableLocalChangeHandler()
 
   const userRepo = new UserRepository(tenantId, {

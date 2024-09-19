@@ -256,7 +256,7 @@ export class RuleInstanceRepository {
         ruleInstanceId = await this.getNewRuleInstanceId(ruleId, true)
         existingRuleInstance = await this.getRuleInstanceById(ruleInstanceId)
         if (existingRuleInstance) {
-          throw new Error('Rule instance already exists')
+          throw new Error(`Rule instance already exists: ${ruleInstanceId}`)
         }
       }
     }
@@ -442,6 +442,7 @@ export class RuleInstanceRepository {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return result.Item ? toRuleInstance(result.Item) : null
