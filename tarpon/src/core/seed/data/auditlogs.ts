@@ -6,6 +6,7 @@ import { transactionRules as rules } from './rules'
 import { auditLogForCaseStatusChange } from './cases'
 import { randomInt } from '@/core/seed/samplers/prng'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { getRandomAccount } from '@/core/seed/samplers/accounts'
 
 const AUDIT_LOG_COUNT = 100
 const generator = function* (): Generator<AuditLog> {
@@ -30,6 +31,7 @@ const generator = function* (): Generator<AuditLog> {
         action: 'VIEW',
         timestamp: Date.now(),
         entityId: userId,
+        user: getRandomAccount(),
       }
     }
     // Case Comment created
@@ -50,6 +52,7 @@ const generator = function* (): Generator<AuditLog> {
             allUsers[randomInt(allUsers.length)]
           ),
         },
+        user: getRandomAccount(),
       }
       // Alert Comment created
       if (i % 3 === 2) {
@@ -68,6 +71,7 @@ const generator = function* (): Generator<AuditLog> {
               allUsers[randomInt(allUsers.length)]
             ),
           },
+          user: getRandomAccount(),
         }
       }
     }

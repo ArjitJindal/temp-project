@@ -29,3 +29,8 @@ export const getRandomUsers = (): Assignment[] | undefined => {
     },
   ]
 }
+
+export const getRandomAccount = (): Account => {
+  const randomAccountIndex = getRandomIntInclusive(0, accounts.length - 1)
+  return accounts[randomAccountIndex]
+}
