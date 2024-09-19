@@ -54,6 +54,7 @@ import {
   PRIORITY,
   RULE_ACTION_STATUS,
   RULE_NATURE,
+  STATUS_CHANGE_PATH,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SarButton as SarButton } from '@/components/Sar';
@@ -481,6 +482,14 @@ export default function AlertTable(props: Props) {
             statusesToShow: CASE_STATUSS,
             reload,
           }),
+        }),
+
+        helper.simple<'statusChanges'>({
+          title: 'Status changes',
+          key: 'statusChanges',
+          type: STATUS_CHANGE_PATH('ALERT'),
+          hideInTable: true,
+          exporting: true,
         }),
         ...(showClosingReason
           ? [

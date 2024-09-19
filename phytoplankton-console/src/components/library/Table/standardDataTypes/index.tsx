@@ -70,6 +70,7 @@ import { Option } from '@/components/library/Select';
 import { formatNumber } from '@/utils/number';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import Tag from '@/components/library/Tag';
+import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -604,6 +605,9 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
       <></>
     );
   },
+  stringify: (value) => {
+    return value ? statusToOperationName(value, true) : '-';
+  },
   autoFilterDataType: {
     kind: 'select',
     options: uniqBy<Option<string>>(
@@ -625,7 +629,24 @@ export const CASE_STATUS = <T extends TableAlertItem | TableItem>(options?: {
     mode: 'SINGLE',
   },
 });
-
+export const STATUS_CHANGE_PATH = (entityType: 'CASE' | 'ALERT') => {
+  return {
+    stringify: (value, entity) => {
+      const currentStatus = entity[`${entityType.toLowerCase()}Status`];
+      const statusChangesPath = [
+        'Open',
+        ...(value?.map((statusChange) =>
+          statusChange.caseStatus ? statusToOperationName(statusChange.caseStatus, true) : '-',
+        ) ?? [
+          ...(currentStatus !== 'OPEN' && currentStatus
+            ? [statusToOperationName(currentStatus, true)]
+            : []),
+        ]),
+      ].join(' -> ');
+      return statusChangesPath;
+    },
+  };
+};
 export const RULE_ACTION_STATUS: ColumnDataType<RuleAction> = {
   render: (ruleAction) => {
     return ruleAction ? <RuleActionStatus ruleAction={ruleAction} /> : <></>;
