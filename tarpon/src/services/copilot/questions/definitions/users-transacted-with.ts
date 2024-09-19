@@ -14,6 +14,16 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { getContext, hasFeature } from '@/core/utils/context'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+
+type Row = {
+  userId: string
+  name: string
+  userType: string
+  count: number
+  sum: number
+}
 
 export const UsersTransactedWith: TableQuestion<
   Period & { currency: CurrencyCode; direction: Direction }
@@ -34,14 +44,73 @@ export const UsersTransactedWith: TableQuestion<
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
     const otherUserIdKey =
       direction === 'ORIGIN' ? 'destinationUserId' : 'originUserId'
-    const { rows, total } = await paginatedSqlQuery<{
-      userId: string
-      name: string
-      userType: string
-      count: number
-      sum: number
-    }>(
+
+    let rows: Row[] = []
+    let total = 0
+
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      const paginationQuery = `
+      SELECT 
+        COUNT(*) AS count
+      FROM transactions 
+      WHERE 
+          ${userIdKey} = '${userId}'
+          AND timestamp between ${period.from} and ${period.to}
+    `
+
+      const clickhouseQuery = `
+      WITH transactions_data AS (
+      SELECT 
+          ${otherUserIdKey} AS userId,
+          COUNT(*) AS count,
+          SUM(originAmountDetails_amountInUsd) AS sum
+      FROM transactions 
+      WHERE 
+          ${userIdKey} = '${userId}'
+          AND timestamp between ${period.from} and ${period.to}
+      GROUP BY ${otherUserIdKey} 
+      ORDER BY 
+          count DESC 
+      LIMIT ${pageSize} 
+      OFFSET ${((page || 1) - 1) * (pageSize || 0)}
+  ), 
+  users_data AS (
+      SELECT 
+          username, 
+          type, 
+          id
+      FROM users 
+      WHERE id IN (SELECT userId FROM transactions_data)
+  ) 
+  SELECT 
+      transactions_data.userId as userId,
+      users_data.username as name, 
+      users_data.type as userType, 
+      transactions_data.count as count,
+      transactions_data.sum as sum
+      FROM transactions_data 
+      LEFT JOIN users_data 
+          ON transactions_data.userId = users_data.id
       `
+
+      const [data, totalData] = await Promise.all([
+        executeClickhouseQuery<Row>(
+          getContext()?.tenantId ?? '',
+          clickhouseQuery,
+          {}
+        ),
+        executeClickhouseQuery<{ count: number }>(
+          getContext()?.tenantId ?? '',
+          paginationQuery,
+          {}
+        ),
+      ])
+
+      rows = data
+      total = totalData[0].count
+    } else {
+      const { rows: data, total: totalData } = await paginatedSqlQuery<Row>(
+        `
 select
   t.${otherUserIdKey} as userId,
   any_value(case when u.type = 'CONSUMER' THEN u.userDetails.name.firstName ELSE u.legalEntity.companyGeneralDetails.legalName END) as name,
@@ -57,13 +126,17 @@ group by
   t.${otherUserIdKey}
 order by
   count desc`,
-      {
-        userId,
-        ...sqlPeriod(period),
-      },
-      page,
-      pageSize
-    )
+        {
+          userId,
+          ...sqlPeriod(period),
+        },
+        page,
+        pageSize
+      )
+
+      rows = data
+      total = totalData
+    }
 
     const items = rows.map((r) => [
       r.userId,
