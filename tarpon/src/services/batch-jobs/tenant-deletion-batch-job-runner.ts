@@ -4,7 +4,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3'
 import { memoize, orderBy } from 'lodash'
-import { DeleteCommand, QueryCommandInput } from '@aws-sdk/lib-dynamodb'
+import { QueryCommandInput } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import {
   getAllUsagePlans,
@@ -34,7 +34,12 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { TenantDeletionBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import { allCollections, getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClient, paginateQueryGenerator } from '@/utils/dynamodb'
+import {
+  dangerouslyDeletePartition,
+  dangerouslyDeletePartitionKey,
+  dangerouslyQueryPaginateDelete,
+  getDynamoDbClient,
+} from '@/utils/dynamodb'
 import { DynamoDbKeyEnum, DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -400,7 +405,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteListItem(tenantId: string, listId: string) {
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       DynamoDbKeys.LIST_ITEM(tenantId, listId).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -418,7 +424,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
     }
 
-    await this.queryPaginateDelete<ListHeader>(
+    await dangerouslyQueryPaginateDelete<ListHeader>(
+      this.dynamoDb(),
       tenantId,
       allListHeadersQueryInput,
       (tenantId, listHeader) => {
@@ -426,32 +433,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       }
     )
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
       'List Header'
     )
-  }
-
-  private async queryPaginateDelete<T>(
-    tenantId: string,
-    queryInput: QueryCommandInput,
-    deleteMethod: (tenantId: string, item: T) => Promise<void>
-  ) {
-    for await (const result of paginateQueryGenerator(
-      this.dynamoDb(),
-      queryInput
-    )) {
-      for (const item of (result.Items || []) as T[]) {
-        try {
-          await deleteMethod(tenantId, item)
-        } catch (e) {
-          logger.error(`Failed to delete item ${item} - ${e}`)
-          throw e
-        }
-      }
-    }
   }
 
   private async deleteRuleInstanceTimeAggregation(tenantId: string) {
@@ -463,12 +451,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
     }
 
-    await this.queryPaginateDelete<RuleInstance>(
+    await dangerouslyQueryPaginateDelete<RuleInstance>(
+      this.dynamoDb(),
       tenantId,
       allRuleInstancesQueryInput,
       async (tenantId, ruleInstance) => {
         // TODO: Delete RULE_USER_TIME_AGGREGATION_MARKER
-        await this.deletePartition(
+        await dangerouslyDeletePartition(
+          this.dynamoDb(),
           tenantId,
           DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
             tenantId,
@@ -485,7 +475,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const tableName = StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
     const partitionKeyId = DynamoDbKeys.RULE_INSTANCE(tenantId).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -497,13 +488,15 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     if (!userId || this.deletedUserAggregationUserIds.has(userId)) {
       return
     }
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       DynamoDbKeys.USER_AGGREGATION(tenantId, userId).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       'user aggregation'
     )
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       DynamoDbKeys.USER_TIME_AGGREGATION(tenantId, userId).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -523,7 +516,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       transactionId
     ).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -539,7 +533,11 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       '1'
     )
 
-    await this.deletePartitionKey(partitionKey, tableName)
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
+      partitionKey,
+      tableName
+    )
   }
 
   private async deleteTransactionIndices(
@@ -579,7 +577,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     ].filter(Boolean) as Array<DynamoDbKey>
 
     for (const key of keysToDelete) {
-      await this.deletePartitionKey(
+      await dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
         key,
         StackConstants.TARPON_DYNAMODB_TABLE_NAME
       )
@@ -588,27 +587,32 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
   private async deleteUser(tenantId: string, user: UserWithRulesResult) {
     await this.deleteUserAggregation(tenantId, user.userId)
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       DynamoDbKeys.BUSINESS_USER_EVENT(tenantId, user.userId).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       'business user event'
     )
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       DynamoDbKeys.CONSUMER_USER_EVENT(tenantId, user.userId).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       'consumer user event'
     )
-    await this.deletePartitionKey(
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
       DynamoDbKeys.DRS_VALUE_ITEM(tenantId, user.userId, '1'),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
-    await this.deletePartitionKey(
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
       DynamoDbKeys.KRS_VALUE_ITEM(tenantId, user.userId, '1'),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
-    await this.deletePartitionKey(
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
       DynamoDbKeys.USER(tenantId, user.userId) as DynamoDbKey,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME
     )
@@ -623,7 +627,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
     }
 
-    await this.queryPaginateDelete<UserWithRulesResult>(
+    await dangerouslyQueryPaginateDelete<UserWithRulesResult>(
+      this.dynamoDb(),
       tenantId,
       usersQueryInput,
       (tenantId, user) => {
@@ -653,7 +658,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       },
     }
 
-    await this.queryPaginateDelete<TransactionWithRulesResult>(
+    await dangerouslyQueryPaginateDelete<TransactionWithRulesResult>(
+      this.dynamoDb(),
       tenantId,
       transactionsQueryInput,
       (tenantId, transaction) => {
@@ -730,7 +736,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const partitionKeyId =
       DynamoDbKeys.RISK_CLASSIFICATION(tenantId).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -743,7 +750,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const partitionKeyId =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(tenantId).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -756,7 +764,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const partitionKeyId =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(tenantId).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -768,7 +777,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
     const partitionKeyId = DynamoDbKeys.RISK_FACTOR(tenantId).PartitionKeyID
 
-    await this.deletePartition(
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
       tenantId,
       partitionKeyId,
       tableName,
@@ -780,40 +790,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
     const partitionKey = DynamoDbKeys.TENANT_SETTINGS(tenantId)
 
-    await this.deletePartitionKey(partitionKey, tableName)
-  }
-
-  private async deletePartitionKey(key: DynamoDbKey, tableName: string) {
-    const deleteCommand = new DeleteCommand({ TableName: tableName, Key: key })
-    await this.dynamoDb().send(deleteCommand)
-  }
-
-  private async deletePartition(
-    tenantId: string,
-    partitionKeyId: string,
-    tableName: string,
-    entityName?: string
-  ) {
-    const queryInput: QueryCommandInput = {
-      TableName: tableName,
-      KeyConditionExpression: 'PartitionKeyID = :pk',
-      ExpressionAttributeValues: {
-        ':pk': partitionKeyId,
-      },
-      ProjectionExpression: 'PartitionKeyID,SortKeyID',
-    }
-
-    await this.queryPaginateDelete<DynamoDbKey>(
-      tenantId,
-      queryInput,
-      async (tenantId, item) => {
-        await this.deletePartitionKey(item, tableName)
-      }
-    )
-    logger.info(
-      `Deleted  ${partitionKeyId}` + (entityName ? ` ${entityName}` : '')
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
+      partitionKey,
+      tableName
     )
   }
+
   private async deleteAuth0Organization(tenantId: string) {
     const mongoDb = await this.mongoDb()
     const accountsService = this.accountsService(this.auth0Domain, mongoDb)
@@ -835,7 +818,12 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     )
     const cursor = collection.find()
     for await (const doc of cursor) {
-      await this.deletePartition(tenantId, doc._id.toString(), doc.TableName)
+      await dangerouslyDeletePartition(
+        this.dynamoDb(),
+        tenantId,
+        doc._id.toString(),
+        doc.TableName
+      )
       await collection.deleteOne({ _id: doc._id })
     }
   }

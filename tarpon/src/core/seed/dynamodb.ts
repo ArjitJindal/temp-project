@@ -1,6 +1,8 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isEmpty, isEqual, pick } from 'lodash'
+import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
+import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUsers } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -22,6 +24,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { isDemoTenant } from '@/utils/tenant'
 import { getArsScores } from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -41,12 +44,12 @@ export async function seedDynamo(
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
 
   logger.info('Clear rule instances')
-  const existingRuleInstances = await ruleRepo.getAllRuleInstances()
-  for (const ruleInstance of existingRuleInstances) {
-    if (ruleInstance.id) {
-      await ruleRepo.deleteRuleInstance(ruleInstance.id)
-    }
-  }
+  await dangerouslyDeletePartition(
+    dynamoDb,
+    tenantId,
+    DynamoDbKeys.RULE_INSTANCE(tenantId).PartitionKeyID,
+    StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
+  )
   logger.info('Create rule instances')
   for (const ruleInstance of ruleInstances()) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)

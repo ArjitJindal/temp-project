@@ -14,7 +14,7 @@ describe('Accounts - CRUD Test', () => {
   it('perform crud operation on accounts in team management', () => {
     cy.visit('/accounts/team');
     const randomNumber = Math.floor(Math.random() * 10000);
-    const randomEmail = `test-crud-${randomNumber}@gmail.com`;
+    const randomEmail = `test-cypress-${randomNumber}@gmail.com`;
 
     //Create a new account
     cy.contains('Invite').click();

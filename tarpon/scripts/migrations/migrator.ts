@@ -19,6 +19,7 @@ import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleService } from '@/services/rules-engine'
 import { seedDemoData } from '@/core/seed'
+import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -144,6 +145,23 @@ async function main() {
     // Seed cypress tenant on dev
     if (envIs('dev')) {
       await seedDemoData('cypress-tenant')
+      await cleanUpCypressTestAuth0Users()
+    }
+  }
+}
+
+async function cleanUpCypressTestAuth0Users() {
+  const managementClient = await getAuth0ManagementClient(
+    'dev-flagright.eu.auth0.com'
+  )
+  const userManager = managementClient.users
+  const users = await userManager.getAll({
+    q: 'email:test-cypress*',
+  })
+  for (const user of users.data) {
+    if (user.email.startsWith('test-cypress')) {
+      await userManager.delete({ id: user.user_id })
+      console.info(`Deleted user: ${user.email}`)
     }
   }
 }

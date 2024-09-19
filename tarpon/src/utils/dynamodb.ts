@@ -488,3 +488,62 @@ export async function cleanUpDynamoDbResources() {
     logger.error(`Failed to clean up dynamodb resources - ${e}`)
   }
 }
+
+type DynamoDbKey = {
+  PartitionKeyID: string
+  SortKeyID: string
+}
+
+export async function dangerouslyDeletePartition(
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string,
+  partitionKeyId: string,
+  tableName: string,
+  entityName?: string
+) {
+  const queryInput: QueryCommandInput = {
+    TableName: tableName,
+    KeyConditionExpression: 'PartitionKeyID = :pk',
+    ExpressionAttributeValues: {
+      ':pk': partitionKeyId,
+    },
+    ProjectionExpression: 'PartitionKeyID,SortKeyID',
+  }
+
+  await dangerouslyQueryPaginateDelete<DynamoDbKey>(
+    dynamoDb,
+    tenantId,
+    queryInput,
+    async (tenantId, item) => {
+      await dangerouslyDeletePartitionKey(dynamoDb, item, tableName)
+    }
+  )
+  logger.info(
+    `Deleted  ${partitionKeyId}` + (entityName ? ` ${entityName}` : '')
+  )
+}
+export async function dangerouslyQueryPaginateDelete<T>(
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string,
+  queryInput: QueryCommandInput,
+  deleteMethod: (tenantId: string, item: T) => Promise<void>
+) {
+  for await (const result of paginateQueryGenerator(dynamoDb, queryInput)) {
+    for (const item of (result.Items || []) as T[]) {
+      try {
+        await deleteMethod(tenantId, item)
+      } catch (e) {
+        logger.error(`Failed to delete item ${item} - ${e}`)
+        throw e
+      }
+    }
+  }
+}
+export async function dangerouslyDeletePartitionKey(
+  dynamoDb: DynamoDBDocumentClient,
+  key: DynamoDbKey,
+  tableName: string
+) {
+  const deleteCommand = new DeleteCommand({ TableName: tableName, Key: key })
+  await dynamoDb.send(deleteCommand)
+}
