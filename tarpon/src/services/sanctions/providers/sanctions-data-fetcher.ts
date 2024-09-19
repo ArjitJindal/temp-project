@@ -83,10 +83,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         },
         {
-          $match: match,
+          $addFields: {
+            searchScore: { $meta: 'searchScore' },
+          },
         },
         {
-          $limit: 10,
+          // A minumum searchScore of 3 was encountered by trial and error
+          // whilst using atlas search console
+          $match: { ...match, searchScore: { $gt: 3 } },
         },
       ])
       .toArray()
