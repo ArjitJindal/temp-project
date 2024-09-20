@@ -1,17 +1,26 @@
+import * as fs from 'fs';
+import * as path from 'node:path';
 import * as cdk from 'aws-cdk-lib';
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib';
 import type { Construct } from 'constructs';
 import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import { Effect } from 'aws-cdk-lib/aws-iam';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53';
 import { BucketProps } from 'aws-cdk-lib/aws-s3/lib/bucket';
+import { S3Origin } from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as cheerio from 'cheerio';
+import { isEmpty, isUndefined } from 'lodash';
 import { userAlias } from './configs/config-dev-user';
 import type { Config } from './configs/config';
 
 export class CdkPhytoplanktonStack extends cdk.Stack {
+  private static readonly EXISTING_CLOUDFRONT_DISTRIBUTION_LOGICAL_ID =
+    'SiteDistributionCFDistribution209CF7F5';
+
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id, { env: config.env });
     const isQaDeployment = process.env.ENV === 'dev:user';
@@ -25,8 +34,6 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
 
     let s3BucketConfig: BucketProps = {
       bucketName: config.SITE_DOMAIN,
-      websiteIndexDocument: 'index.html',
-      websiteErrorDocument: 'index.html',
       publicReadAccess: false,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: config.stage === 'dev' ? RemovalPolicy.DESTROY : RemovalPolicy.RETAIN,
@@ -63,12 +70,21 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
       }),
     );
 
-    const viewerCertificate = cloudfront.ViewerCertificate.fromAcmCertificate(
-      acm.Certificate.fromCertificateArn(this, 'SiteCertificate', config.SITE_CERTIFICATE_ARN),
-      {
-        aliases: [config.SITE_DOMAIN],
-        securityPolicy: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+    // Step 2: Create Origin Access Control (OAC)
+    const oac = new cloudfront.CfnOriginAccessControl(this, 'CloudFrontOAC', {
+      originAccessControlConfig: {
+        name: `${prefix}CloudFrontOAC`,
+        description: 'Origin Access Control for S3',
+        originAccessControlOriginType: 's3',
+        signingBehavior: 'always', // Sign all requests
+        signingProtocol: 'sigv4', // Use SigV4 signing protocol
       },
+    });
+
+    const certificate = acm.Certificate.fromCertificateArn(
+      this,
+      'SiteCertificate',
+      config.SITE_CERTIFICATE_ARN,
     );
 
     const extraBehaviours =
@@ -80,42 +96,79 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           }
         : {};
 
+    const responseHeadersPolicy = this.getCloudFrontResponseHeaderPolicy();
+
     // CloudFront distribution
-    const distribution = new cloudfront.CloudFrontWebDistribution(this, 'SiteDistribution', {
+    const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       priceClass: config.CLOUDFRONT_PRICE_CLASS,
 
-      viewerCertificate,
-      errorConfigurations: [
+      certificate,
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021,
+      domainNames: [config.SITE_DOMAIN],
+
+      errorResponses: [
         {
-          errorCode: 403,
-          errorCachingMinTtl: 0,
-          responseCode: 200,
+          httpStatus: 403,
+          ttl: Duration.seconds(0),
+          responseHttpStatus: 200,
           responsePagePath: '/index.html',
         },
         {
-          errorCode: 404,
-          errorCachingMinTtl: 0,
-          responseCode: 200,
+          httpStatus: 404,
+          ttl: Duration.seconds(0),
+          responseHttpStatus: 200,
           responsePagePath: '/index.html',
         },
       ],
-      originConfigs: [
-        {
-          s3OriginSource: {
-            s3BucketSource: siteBucket,
-            originAccessIdentity: cloudfrontOAI,
-          },
-          behaviors: [
-            {
-              isDefaultBehavior: true,
-              compress: true,
-              allowedMethods: cloudfront.CloudFrontAllowedMethods.GET_HEAD_OPTIONS,
-              ...extraBehaviours,
-            },
-          ],
-        },
-      ],
+      defaultBehavior: {
+        origin: new S3Origin(siteBucket, {
+          connectionAttempts: 3,
+          connectionTimeout: Duration.seconds(10),
+        }),
+        compress: true,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+        responseHeadersPolicy,
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        ...extraBehaviours,
+      },
     });
+
+    if (!isQaDeployment) {
+      // Override the logical ID of the distribution to match the existing one.
+      // Migrating from CloudFrontWebDistribution to Distribution may create a
+      // new distribution with a different logical ID. This is a workaround to
+      // override the logical ID of the distribution to match the existing one.
+      // Ref - https://github.com/aws/aws-cdk/issues/12707
+      (distribution.node.defaultChild as cloudfront.CfnDistribution).overrideLogicalId(
+        CdkPhytoplanktonStack.EXISTING_CLOUDFRONT_DISTRIBUTION_LOGICAL_ID,
+      );
+    }
+
+    siteBucket.addToResourcePolicy(
+      new iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        principals: [new iam.ServicePrincipal('cloudfront.amazonaws.com')],
+        actions: ['s3:GetObject'],
+        resources: [siteBucket.arnForObjects('*')],
+        conditions: {
+          StringEquals: {
+            'AWS:SourceArn': `arn:aws:cloudfront::${this.account}:distribution/${distribution.distributionId}`,
+          },
+        },
+      }),
+    );
+
+    // Disable OAI (Origin Access Identity)
+    const cfnDistribution = distribution.node.defaultChild as cloudfront.CfnDistribution;
+    cfnDistribution.addOverride(
+      'Properties.DistributionConfig.Origins.0.S3OriginConfig.OriginAccessIdentity',
+      '',
+    );
+    // Enable OAC (Origin Access Control)
+    cfnDistribution.addOverride(
+      'Properties.DistributionConfig.Origins.0.OriginAccessControlId',
+      oac.ref,
+    );
 
     // Deploy site contents to S3 bucket
     new s3deploy.BucketDeployment(this, 'DeployWithInvalidation', {
@@ -141,5 +194,54 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         domainName: distribution.distributionDomainName,
       });
     }
+  }
+
+  private getContentSecurityPolicy(): string {
+    const html = fs.readFileSync(path.join(__dirname, '../dist/index.html'));
+    // Load the HTML into Cheerio
+    const $ = cheerio.load(html);
+
+    // Find the Content-Security-Policy meta tag
+    const cspMetaTag = $('meta[http-equiv="Content-Security-Policy"]');
+
+    // Extract the content of the CSP tag
+    const csp = cspMetaTag.attr('content');
+    if (isUndefined(csp) || isEmpty(csp)) {
+      throw new Error('Content-Security-Policy meta tag not found in index.html');
+    }
+
+    return csp;
+  }
+
+  private getCloudFrontResponseHeaderPolicy(): cloudfront.ResponseHeadersPolicy {
+    const csp = this.getContentSecurityPolicy();
+    return new cloudfront.ResponseHeadersPolicy(this, 'HTTPSecurityResponseHeadersPolicy', {
+      securityHeadersBehavior: {
+        contentSecurityPolicy: {
+          // Ideally this policy should've been derived at build time which can make use of nonce(s) generated, but
+          // the easiest way for now
+          contentSecurityPolicy: csp,
+          override: true,
+        },
+        strictTransportSecurity: {
+          accessControlMaxAge: cdk.Duration.days(365 * 2),
+          includeSubdomains: true,
+          preload: true,
+          override: true,
+        },
+        xssProtection: {
+          protection: true,
+          modeBlock: true,
+          override: true,
+        },
+        frameOptions: {
+          frameOption: cloudfront.HeadersFrameOption.DENY,
+          override: true,
+        },
+        contentTypeOptions: {
+          override: true,
+        },
+      },
+    });
   }
 }
