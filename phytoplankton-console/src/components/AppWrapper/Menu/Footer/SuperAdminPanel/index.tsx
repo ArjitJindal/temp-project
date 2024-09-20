@@ -119,6 +119,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Async Rules',
     description: 'Enables async rules',
   },
+  RULES_ENGINE_V8_ASYNC_AGGREGATION: {
+    title: 'Rules Engine V8 Async Aggregation',
+    description: 'Enables Rules Engine V8 Async Aggregation',
+  },
 };
 
 export default function SuperAdminPanel() {
