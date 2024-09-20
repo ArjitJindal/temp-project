@@ -445,6 +445,8 @@ export class CdkTarponStack extends cdk.Stack {
         serverAccessLogsBucket: serverAccessLogBucket,
         serverAccessLogsPrefix: `tarpon/${sharedAssetsBucketName}`,
       })
+
+      this.createMalwareProtectionPlanForS3Bucket(s3TmpBucket)
     } else {
       s3ImportBucket = Bucket.fromBucketName(
         this,
@@ -470,8 +472,6 @@ export class CdkTarponStack extends cdk.Stack {
         sharedAssetsBucketName
       )
     }
-
-    this.createMalwareProtectionPlanForS3Bucket(s3TmpBucket)
 
     /**
      * Lambda Functions
