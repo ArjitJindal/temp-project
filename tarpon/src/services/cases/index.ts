@@ -32,10 +32,7 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Account } from '@/@types/openapi-internal/Account'
 import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
-import {
-  CaseAlertsCommonService,
-  S3Config,
-} from '@/services/case-alerts-common'
+import { CaseAlertsCommonService } from '@/services/case-alerts-common'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -71,6 +68,7 @@ import { Business } from '@/@types/openapi-internal/Business'
 import { traceable } from '@/core/xray'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { S3Config } from '@/services/aws/s3-service'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -652,7 +650,9 @@ export class CaseService extends CaseAlertsCommonService {
       throw new BadRequest('Case id is required')
     }
 
-    const files = await this.copyFiles(comment.files ?? [])
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      comment.files ?? []
+    )
     const mentions = getMentionsFromComments(comment.body)
     const userId = getContext()?.user?.id
 
@@ -727,7 +727,9 @@ export class CaseService extends CaseAlertsCommonService {
   }
 
   private async saveCasesComment(caseIds: string[], comment: Comment) {
-    const files = await this.copyFiles(comment.files ?? [])
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      comment.files ?? []
+    )
 
     const savedComment = await this.caseRepository.saveCasesComment(caseIds, {
       ...comment,

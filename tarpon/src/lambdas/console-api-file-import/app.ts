@@ -1,3 +1,4 @@
+import { extname } from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { PutObjectCommand } from '@aws-sdk/client-s3'
@@ -5,10 +6,16 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import { isEmpty } from 'lodash'
+import { BadRequest } from 'http-errors'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import {
+  ACCEPTED_FILE_EXTENSIONS_SET,
+  MAX_FILE_SIZE_BYTES,
+} from '@/core/constants'
 
 export type GetPresignedUrlConfig = {
   TMP_BUCKET: string
@@ -21,11 +28,34 @@ export const getPresignedUrlHandler = lambdaApi()(
     >
   ) => {
     const { TMP_BUCKET } = process.env as GetPresignedUrlConfig
+
     const s3 = getS3ClientByEvent(event)
 
     const handlers = new Handlers()
 
-    handlers.registerPostGetPresignedUrl(async (ctx) => {
+    handlers.registerPostGetPresignedUrl(async (ctx, request) => {
+      if (isEmpty(request.filename)) {
+        throw new BadRequest('Filename is required')
+      }
+
+      // Accept only specific file extensions
+      const fileExtension = extname(request.filename)
+      if (!ACCEPTED_FILE_EXTENSIONS_SET.has(fileExtension.toLowerCase())) {
+        throw new BadRequest(
+          `File extension "${fileExtension}" is not allowed. Allowed extensions are: ${Array.from(
+            ACCEPTED_FILE_EXTENSIONS_SET
+          ).join(', ')}`
+        )
+      }
+
+      if (request.fileSize > MAX_FILE_SIZE_BYTES) {
+        throw new BadRequest(
+          `File size is too large. Maximum allowed file size is ${
+            MAX_FILE_SIZE_BYTES / 10 ** 6
+          } MB`
+        )
+      }
+
       const s3Key = `${ctx.tenantId}/${uuidv4()}`
       const putObjectCommand = new PutObjectCommand({
         Bucket: TMP_BUCKET,

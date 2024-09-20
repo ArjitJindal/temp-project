@@ -14,7 +14,6 @@ import {
 
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
-import { S3Config } from '../case-alerts-common'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -38,6 +37,7 @@ import { CommentRequest as CommentRequestExternal } from '@/@types/openapi-publi
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { AlertStatusChangeRequest } from '@/@types/openapi-public-management/AlertStatusChangeRequest'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
+import { S3Config } from '@/services/aws/s3-service'
 @traceable
 export class ExternalAlertManagementService {
   private alertsRepository: AlertsRepository

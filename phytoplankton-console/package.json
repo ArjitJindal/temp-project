@@ -101,6 +101,7 @@
     "jszip": "^3.10.1",
     "jwt-decode": "^3.1.2",
     "lodash": "^4.17.11",
+    "mime": "^4.0.4",
     "nanoid": "^4.0.0",
     "pluralize": "^8.0.0",
     "posthog-js": "^1.131.4",

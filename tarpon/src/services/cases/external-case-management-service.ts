@@ -5,7 +5,7 @@ import { compact, isEmpty, omitBy, pick, uniq } from 'lodash'
 import { S3 } from '@aws-sdk/client-s3'
 import { Credentials } from 'aws-lambda'
 import { UserRepository } from '../users/repositories/user-repository'
-import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
+import { CaseAlertsCommonService } from '../case-alerts-common'
 import { API_USER } from '../users'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
@@ -31,6 +31,7 @@ import { Priority } from '@/@types/openapi-public-management/Priority'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { Comment } from '@/@types/openapi-internal/Comment'
+import { S3Config } from '@/services/aws/s3-service'
 
 @traceable
 export class ExternalCaseManagementService extends CaseAlertsCommonService {

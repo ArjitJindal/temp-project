@@ -1,7 +1,14 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 
 // Some modules are published in ESM-format, need to manually un-ignore it from transformation
-const includeEsModules = ['nanoid', 'antd', '@babel/runtime', '@ant-design/icons', 'rc-[a-z]+'];
+const includeEsModules = [
+  'nanoid',
+  'antd',
+  '@babel/runtime',
+  '@ant-design/icons',
+  'rc-[a-z]+',
+  'mime',
+];
 
 process.env.TZ = 'Etc/UTC';
 

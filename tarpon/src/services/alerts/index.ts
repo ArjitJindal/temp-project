@@ -20,7 +20,7 @@ import {
 } from 'aws-lambda'
 import { Credentials as StsCredentials } from '@aws-sdk/client-sts'
 import { uuid4 } from '@sentry/utils'
-import { CaseAlertsCommonService, S3Config } from '../case-alerts-common'
+import { CaseAlertsCommonService } from '../case-alerts-common'
 import { CaseRepository } from '../cases/repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { ChecklistTemplatesService } from '../tenants/checklist-template-service'
@@ -82,6 +82,7 @@ import { AlertsQASampleIds } from '@/@types/openapi-internal/AlertsQASampleIds'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { AlertOpenedDetails } from '@/@types/openapi-public/AlertOpenedDetails'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { S3Config } from '@/services/aws/s3-service'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -623,7 +624,9 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new NotFound(`"${alertId}" alert not found`)
     }
 
-    const files = await this.copyFiles(comment.files || [])
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      comment.files || []
+    )
 
     const userId = externalRequest ? API_USER : getContext()?.user?.id
 
@@ -702,7 +705,9 @@ export class AlertsService extends CaseAlertsCommonService {
     caseIds: string[],
     comment: Comment
   ): Promise<Comment> {
-    const files = await this.copyFiles(comment.files || [])
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      comment.files || []
+    )
 
     const savedComment = await this.alertsRepository.saveAlertsComment(
       alertIds,

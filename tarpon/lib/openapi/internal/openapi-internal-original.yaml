@@ -502,6 +502,17 @@ paths:
     get:
       summary: Files - Get Presigned URL
       operationId: post-getPresignedUrl
+      parameters:
+        - schema:
+            type: string
+          name: filename
+          in: query
+          required: true
+        - schema:
+            type: integer
+          name: fileSize
+          in: query
+          required: true
       responses:
         '200':
           description: OK

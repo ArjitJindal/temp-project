@@ -9,7 +9,7 @@ import { uploadFile } from '@/utils/file-uploader';
 import { useApi } from '@/api';
 import FilesList from '@/components/files/FilesList';
 import { usePrevious } from '@/utils/hooks';
-import { isEqual } from '@/utils/lang';
+import { getErrorMessage, isEqual } from '@/utils/lang';
 import UploadIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.svg';
 
 interface Props extends InputProps<FileInfo[]> {
@@ -57,7 +57,7 @@ export default function FilesDraggerInput(props: Props) {
             setState((prevState) => [...(prevState ?? []), fileInfo]);
             hideMessage();
           } catch (error) {
-            message.fatal('Failed to upload the file', error);
+            message.fatal(`Failed to upload the file: ${getErrorMessage(error)}`, error);
             if (onError) {
               onError(new Error());
             }

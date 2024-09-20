@@ -9,6 +9,7 @@ import {
   HttpMethods,
 } from 'aws-cdk-lib/aws-s3'
 import { LambdaFunction as LambdaFunctionTarget } from 'aws-cdk-lib/aws-events-targets'
+import { CfnMalwareProtectionPlan } from 'aws-cdk-lib/aws-guardduty'
 import {
   ArnPrincipal,
   CompositePrincipal,
@@ -469,6 +470,8 @@ export class CdkTarponStack extends cdk.Stack {
         sharedAssetsBucketName
       )
     }
+
+    this.createMalwareProtectionPlanForS3Bucket(s3TmpBucket)
 
     /**
      * Lambda Functions
@@ -1615,6 +1618,112 @@ export class CdkTarponStack extends cdk.Stack {
       retentionPeriod: options?.retentionPeriod,
     })
     return queue
+  }
+
+  /**
+   *
+   * @description Define the IAM policies and roles for GuardDuty malware protection for S3. Also scan the using
+   * GuardDuty for malware and tag the objects with the result.
+   */
+  private createMalwareProtectionPlanForS3Bucket(bucket: Bucket) {
+    const guardDutyPolicy = new Policy(
+      this,
+      'GuardDutyMalwareProtectionPolicy',
+      {
+        policyName: 'GuardDutyMalwareProtectionPolicy',
+        statements: [
+          new PolicyStatement({
+            sid: 'AllowManagedRuleToSendS3EventsToGuardDuty',
+            effect: Effect.ALLOW,
+            actions: [
+              'events:PutRule',
+              'events:DeleteRule',
+              'events:PutTargets',
+              'events:RemoveTargets',
+            ],
+            resources: [
+              `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
+            ],
+            conditions: {
+              StringLike: {
+                'events:ManagedBy':
+                  'malware-protection-plan.guardduty.amazonaws.com',
+              },
+            },
+          }),
+          new PolicyStatement({
+            sid: 'AllowGuardDutyToMonitorEventBridgeManagedRule',
+            effect: Effect.ALLOW,
+            actions: ['events:DescribeRule', 'events:ListTargetsByRule'],
+            resources: [
+              `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
+            ],
+          }),
+          new PolicyStatement({
+            sid: 'AllowPostScanTag',
+            effect: Effect.ALLOW,
+            actions: [
+              's3:PutObjectTagging',
+              's3:GetObjectTagging',
+              's3:PutObjectVersionTagging',
+              's3:GetObjectVersionTagging',
+            ],
+            resources: [`${bucket.bucketArn}/*`],
+          }),
+          new PolicyStatement({
+            sid: 'AllowEnableS3EventBridgeEvents',
+            effect: Effect.ALLOW,
+            actions: ['s3:PutBucketNotification', 's3:GetBucketNotification'],
+            resources: [bucket.bucketArn],
+          }),
+          new PolicyStatement({
+            sid: 'AllowPutValidationObject',
+            effect: Effect.ALLOW,
+            actions: ['s3:PutObject'],
+            resources: [
+              `${bucket.bucketArn}/malware-protection-resource-validation-object`,
+            ],
+          }),
+          new PolicyStatement({
+            sid: 'AllowCheckBucketOwnership',
+            effect: Effect.ALLOW,
+            actions: ['s3:ListBucket'],
+            resources: [bucket.bucketArn],
+          }),
+          new PolicyStatement({
+            sid: 'AllowMalwareScan',
+            effect: Effect.ALLOW,
+            actions: ['s3:GetObject', 's3:GetObjectVersion'],
+            resources: [`${bucket.bucketArn}/*`],
+          }),
+        ],
+      }
+    )
+
+    // Create a new IAM Role with the provided trust policy
+    const guardDutyRole = new Role(this, 'GuardDutyMalwareProtectionRole', {
+      assumedBy: new ServicePrincipal(
+        'malware-protection-plan.guardduty.amazonaws.com'
+      ),
+      description:
+        'Role for GuardDuty Malware Protection to assume and scan S3 events',
+      roleName: 'GuardDutyMalwareProtectionRole',
+    })
+    guardDutyRole.attachInlinePolicy(guardDutyPolicy)
+
+    new CfnMalwareProtectionPlan(this, 'GuardDutyMalwareProtectionPlan', {
+      actions: {
+        tagging: {
+          status: 'ENABLED',
+        },
+      },
+      protectedResource: {
+        s3Bucket: {
+          bucketName: bucket.bucketName,
+        },
+      },
+      role: guardDutyRole.roleArn,
+    }).node.addDependency(guardDutyRole)
   }
 }
 

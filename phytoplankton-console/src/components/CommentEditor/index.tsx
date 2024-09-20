@@ -14,6 +14,7 @@ import { AsyncResource, isLoading } from '@/utils/asyncResource';
 import { Hint } from '@/components/library/Form/InputField';
 import { uploadFile } from '@/utils/file-uploader';
 import { useUsers } from '@/utils/user-utils';
+import { getErrorMessage } from '@/utils/lang';
 
 export const MAX_COMMENT_LENGTH = 10000;
 
@@ -177,7 +178,7 @@ function CommentEditor(props: Props, ref: React.Ref<CommentEditorRef>) {
               });
               hideMessage();
             } catch (error) {
-              message.fatal('Failed to upload the file', error);
+              message.fatal(`Failed to upload the file: ${getErrorMessage(error)}`, error);
               if (onError) {
                 onError(new Error());
                 removeFile(fileS3Key);

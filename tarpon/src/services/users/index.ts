@@ -2,7 +2,7 @@ import * as createError from 'http-errors'
 import { NotFound } from 'http-errors'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { S3, GetObjectCommand, CopyObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -16,7 +16,7 @@ import { ClickHouseClient } from '@clickhouse/client'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
 import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
-import { ThinWebhookDeliveryTask, sendWebhookTasks } from '../webhook/utils'
+import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
@@ -72,6 +72,7 @@ import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
+import { S3Service } from '@/services/aws/s3-service'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -119,6 +120,7 @@ export class UserService {
   awsCredentials?: LambdaCredentials
   userAuditLogService: UserAuditLogService
   userClickhouseRepository: UserClickhouseRepository
+  private s3Service: S3Service
   constructor(
     tenantId: string,
     connections: {
@@ -147,6 +149,10 @@ export class UserService {
     this.s3 = s3 as S3
     this.tmpBucketName = tmpBucketName as string
     this.documentBucketName = documentBucketName as string
+    this.s3Service = new S3Service(s3 as S3, {
+      documentBucketName: this.documentBucketName,
+      tmpBucketName: this.tmpBucketName,
+    })
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.awsCredentials = awsCredentials
@@ -834,29 +840,9 @@ export class UserService {
     return await this.userRepository.getUniques(params)
   }
   public async saveUserComment(userId: string, comment: Comment) {
-    for (const file of comment.files || []) {
-      const copyObjectCommand = new CopyObjectCommand({
-        CopySource: `${this.tmpBucketName}/${file.s3Key}`,
-        Bucket: this.documentBucketName,
-        Key: file.s3Key,
-      })
-      try {
-        await this.s3.send(copyObjectCommand)
-      } catch (error) {
-        if (
-          (error as any)?.name === 'NoSuchKey' ||
-          (error as any)?.name === 'AccessDenied'
-        ) {
-          throw new createError.BadRequest('Invalid s3Key in files')
-        }
-        throw error
-      }
-    }
-
-    const files = (comment.files || []).map((file) => ({
-      ...file,
-      bucket: this.documentBucketName,
-    }))
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      comment.files ?? []
+    )
 
     const savedComment = await this.userRepository.saveUserComment(userId, {
       ...comment,
