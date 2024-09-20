@@ -286,7 +286,7 @@ export class AccountsService {
           user = await auth0AsyncWrapper(() =>
             userManager.update(
               { id: existingUser[0].user_id as string },
-              { blocked: false, app_metadata: { isDeleted: false } }
+              { blocked: false, app_metadata: { blockedReason: null } }
             )
           )
 

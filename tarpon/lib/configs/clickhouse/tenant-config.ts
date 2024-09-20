@@ -1,5 +1,6 @@
 import { ServiceIpAccess } from '@cdktf/providers/clickhouse/service'
-import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
+import { CONFIG_MAP } from '@flagright/lib/constants/config'
+import { Stage } from '@flagright/lib/constants/deploy'
 
 type ClickhouseTenantConfig = {
   ENVIROMENT:
@@ -11,61 +12,59 @@ type ClickhouseTenantConfig = {
       }
   idleScaling: boolean
   idleTimeoutMinutes: number
+  region: string
   ipAccess: ServiceIpAccess[]
 }
 
 export function getClickhouseTenantConfig(
-  stage: Stage,
-  region: FlagrightRegion
-): ClickhouseTenantConfig | undefined {
+  stage: Stage
+): ClickhouseTenantConfig[] {
   switch (stage) {
     case 'dev': {
-      const config: ClickhouseTenantConfig = {
-        ENVIROMENT: { type: 'development' },
-        idleScaling: true,
-        idleTimeoutMinutes: 10,
-        ipAccess: [
-          { source: '0.0.0.0/0', description: 'Allow all IP addresses' },
-        ],
-      }
-
-      return config
+      return [
+        {
+          ENVIROMENT: { type: 'development' },
+          idleScaling: true,
+          idleTimeoutMinutes: 10,
+          region: CONFIG_MAP[stage]['eu-1'].env.region as string,
+          ipAccess: [
+            { source: '0.0.0.0/0', description: 'Allow all IP addresses' },
+          ],
+        },
+      ]
     }
 
     case 'sandbox': {
-      if (region === 'asia-1') {
-        const config: ClickhouseTenantConfig = {
-          ENVIROMENT: {
-            type: 'production',
-            minTotalMemoryGb: 24,
-            maxTotalMemoryGb: 24,
+      const asia1Config: ClickhouseTenantConfig = {
+        ENVIROMENT: {
+          type: 'production',
+          minTotalMemoryGb: 24,
+          maxTotalMemoryGb: 24,
+        },
+        region: CONFIG_MAP[stage]['asia-1'].env.region as string,
+        idleScaling: true,
+        idleTimeoutMinutes: 10,
+        ipAccess: [
+          {
+            source: '13.251.166.15',
+            description: 'Flagright Asia-1 Sandbox Elastic IP',
           },
-          idleScaling: true,
-          idleTimeoutMinutes: 10,
-          ipAccess: [
-            {
-              source: '13.251.166.15',
-              description: 'Flagright Asia-1 Sandbox Elastic IP',
-            },
-            {
-              source: '18.143.88.142',
-              description: 'Flagright Asia-1 Sandbox Elastic IP',
-            },
-            {
-              source: '46.137.237.47',
-              description: 'Flagright Asia-1 Sandbox Elastic IP',
-            },
-          ],
-        }
-
-        return config
+          {
+            source: '18.143.88.142',
+            description: 'Flagright Asia-1 Sandbox Elastic IP',
+          },
+          {
+            source: '46.137.237.47',
+            description: 'Flagright Asia-1 Sandbox Elastic IP',
+          },
+        ],
       }
 
-      break
+      return [asia1Config]
     }
 
     default: {
-      return undefined
+      return []
     }
   }
 }

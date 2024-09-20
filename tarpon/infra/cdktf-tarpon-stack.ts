@@ -157,14 +157,9 @@ export class CdktfTarponStack extends TerraformStack {
       })
     }
 
-    const region = config.region || 'eu-1'
+    const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)
 
-    const clickhouseTenantConfigs = getClickhouseTenantConfig(
-      config.stage,
-      region
-    )
-
-    if (clickhouseTenantConfigs) {
+    clickhouseTenantConfigs?.forEach((clickhouseTenantConfig) => {
       const clickhouseSecret =
         new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
           this,
@@ -202,21 +197,21 @@ export class CdktfTarponStack extends TerraformStack {
       new clickhouse.service.Service(this, 'clickhouse-service', {
         provider: clickhouseProvider,
         cloudProvider: 'aws',
-        ipAccess: clickhouseTenantConfigs.ipAccess,
-        name: `Flagright ${config.stage} (${region})`,
-        region: config.env.region as string,
-        tier: clickhouseTenantConfigs.ENVIROMENT.type,
+        ipAccess: clickhouseTenantConfig.ipAccess,
+        name: `Flagright ${config.stage} (${clickhouseTenantConfig.region})`,
+        region: clickhouseTenantConfig.region,
+        tier: clickhouseTenantConfig.ENVIROMENT.type,
         password: Fn.lookup(
           Fn.jsondecode(clickhousePassword.secretString),
           'password'
         ),
-        idleScaling: clickhouseTenantConfigs.idleScaling,
-        idleTimeoutMinutes: clickhouseTenantConfigs.idleTimeoutMinutes,
-        ...(clickhouseTenantConfigs.ENVIROMENT.type === 'production' && {
-          minTotalMemoryGb: clickhouseTenantConfigs.ENVIROMENT.minTotalMemoryGb,
-          maxTotalMemoryGb: clickhouseTenantConfigs.ENVIROMENT.maxTotalMemoryGb,
+        idleScaling: clickhouseTenantConfig.idleScaling,
+        idleTimeoutMinutes: clickhouseTenantConfig.idleTimeoutMinutes,
+        ...(clickhouseTenantConfig.ENVIROMENT.type === 'production' && {
+          minTotalMemoryGb: clickhouseTenantConfig.ENVIROMENT.minTotalMemoryGb,
+          maxTotalMemoryGb: clickhouseTenantConfig.ENVIROMENT.maxTotalMemoryGb,
         }),
       })
-    }
+    })
   }
 }
