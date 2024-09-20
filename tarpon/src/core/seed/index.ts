@@ -8,6 +8,4 @@ export async function seedDemoData(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   await seedDynamo(dynamo, tenantId)
   await seedMongo(mongoDb, tenantId)
-  await mongoDb.close()
-  await dynamo.destroy()
 }
