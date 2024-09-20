@@ -11,7 +11,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEqual, uniq, isEmpty, uniqBy } from 'lodash'
+import { uniq, isEmpty, uniqBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { isV2RuleInstance } from '../utils'
 import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
@@ -39,8 +39,11 @@ import {
 } from '@/utils/memory-cache'
 import { envIs, envIsNot } from '@/utils/env'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
-import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
-
+import {
+  AggregationRepository,
+  getAggVarHash,
+} from '@/services/logic-evaluator/engine/aggregation-repository'
+import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 // NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
 // is activated, it'll be effective after 10 minutes (worst case).
 const ruleInstancesCache = envIs('prod')
@@ -99,6 +102,7 @@ function toRuleInstance(item: any): RuleInstance {
 export class RuleInstanceRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
+  aggregationRepository: AggregationRepository
 
   constructor(
     tenantId: string,
@@ -108,6 +112,10 @@ export class RuleInstanceRepository {
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.tenantId = tenantId
+    this.aggregationRepository = new AggregationRepository(
+      tenantId,
+      this.dynamoDb
+    )
   }
 
   public async getNewRuleInstanceId(
@@ -261,6 +269,10 @@ export class RuleInstanceRepository {
       }
     }
 
+    let oldRuleInstance: RuleInstance | null = null
+    if (ruleInstance.id) {
+      oldRuleInstance = await this.getRuleInstanceById(ruleInstance.id)
+    }
     const now = Date.now()
     const newRuleInstance: RuleInstance = {
       ...ruleInstance,
@@ -268,8 +280,11 @@ export class RuleInstanceRepository {
       logic:
         ruleInstance.logic ??
         Object.values(ruleInstance.riskLevelLogic ?? {})[0],
-      logicAggregationVariables: await this.getLogicAggVarsWithUpdatedVersion(
-        ruleInstance
+      logicAggregationVariables: await getLogicAggVarsWithUpdatedVersion(
+        ruleInstance,
+        ruleInstanceId,
+        oldRuleInstance,
+        this.aggregationRepository
       ),
       parameters:
         ruleInstance.parameters ??
@@ -316,60 +331,9 @@ export class RuleInstanceRepository {
       ReturnValues: 'UPDATED_NEW',
     }
     await this.dynamoDb.send(new UpdateCommand(updateItemInput))
-  }
-
-  private async getLogicAggVarsWithUpdatedVersion(
-    ruleInstance: RuleInstance
-  ): Promise<LogicAggregationVariable[] | undefined> {
-    // Early return if no aggregation variables
-    if (
-      !ruleInstance.logicAggregationVariables ||
-      ruleInstance.logicAggregationVariables.length === 0
-    ) {
-      return ruleInstance.logicAggregationVariables
+    if (status === 'INACTIVE') {
+      await this.deleteRuleInstanceFromUsedAggVars(ruleInstanceId)
     }
-
-    const oldRuleInstance = ruleInstance.id
-      ? await this.getRuleInstanceById(ruleInstance.id)
-      : null
-    // Early return if aggregation variables are not changed
-    const isBeingEnabled =
-      (!oldRuleInstance || oldRuleInstance?.status === 'INACTIVE') &&
-      ruleInstance.status === 'ACTIVE'
-    if (
-      ruleInstance.status === 'INACTIVE' ||
-      (!isBeingEnabled &&
-        isEqual(
-          oldRuleInstance?.logicAggregationVariables?.map((v) =>
-            getAggVarHash(v, false)
-          ),
-          ruleInstance.logicAggregationVariables?.map((v) =>
-            getAggVarHash(v, false)
-          )
-        ))
-    ) {
-      return ruleInstance.logicAggregationVariables
-    }
-
-    const activeRuleInstances = await this.getActiveRuleInstances(
-      ruleInstance.type
-    )
-    const activeLogicAggregationVariables = activeRuleInstances.flatMap(
-      (r) => r.logicAggregationVariables ?? []
-    )
-    const newVersion = Date.now()
-    return ruleInstance.logicAggregationVariables.map((aggVar) => {
-      const existingSameAggVar = activeLogicAggregationVariables.find(
-        (v) => getAggVarHash(v, false) === getAggVarHash(aggVar, false)
-      )
-
-      // NOTE: An aggregation variable's version is determined by the timestamp when
-      // it is first created and enabled. This is to ensure that the version is consistent.
-      return {
-        ...aggVar,
-        version: existingSameAggVar?.version ?? newVersion,
-      }
-    })
   }
 
   public async deleteRuleInstance(ruleInstanceId: string): Promise<void> {
@@ -378,6 +342,21 @@ export class RuleInstanceRepository {
       Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, ruleInstanceId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    await this.deleteRuleInstanceFromUsedAggVars(ruleInstanceId)
+  }
+
+  public async deleteRuleInstanceFromUsedAggVars(
+    ruleInstanceId: string
+  ): Promise<void> {
+    const ruleInstance = await this.getRuleInstanceById(ruleInstanceId)
+    if (ruleInstance) {
+      // This is will remove ruleInstance from all old usedAggVars
+      await this.aggregationRepository.updateLogicAggVars(
+        undefined,
+        ruleInstanceId,
+        ruleInstance
+      )
+    }
   }
 
   public async getActiveRuleInstances(

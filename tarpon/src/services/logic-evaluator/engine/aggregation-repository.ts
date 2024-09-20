@@ -1,5 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import {
+  DeleteCommand,
+  DeleteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
@@ -8,7 +10,7 @@ import {
   QueryCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 
-import { mapValues, pick } from 'lodash'
+import { keyBy, mapValues, pick, uniq } from 'lodash'
 import { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
@@ -22,6 +24,9 @@ import { generateChecksum } from '@/utils/object'
 import { getTransactionStatsTimeGroupLabel } from '@/services/rules-engine/utils/transaction-rule-utils'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal/LogicAggregationTimeWindowGranularity'
+import { UsedAggregationVariable } from '@/@types/openapi-internal/UsedAggregationVariable'
+import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
 export type AggregationData<T = unknown> = {
   value: T | { [group: string]: T }
@@ -288,5 +293,137 @@ export class AggregationRepository {
       // cycle of a single transaction shouldn't span across 2 months).
       duration(2, 'month').asSeconds()
     )
+  }
+
+  public async updateLogicAggVars(
+    newEntity: RuleInstance | RiskFactor | undefined,
+    entityId: string,
+    oldEntity?: RuleInstance | RiskFactor
+  ): Promise<LogicAggregationVariable[]> {
+    if (!newEntity && oldEntity !== undefined) {
+      await Promise.all(
+        oldEntity.logicAggregationVariables?.map(async (aggVar) => {
+          await this.removeEntityFromOldAggVar(aggVar, entityId)
+        }) ?? []
+      )
+      return []
+    }
+    const newAggVars = newEntity?.logicAggregationVariables ?? []
+    const oldAggVarMap = keyBy(
+      oldEntity?.logicAggregationVariables ?? [],
+      'key'
+    )
+    return Promise.all(
+      newAggVars.map(async (newAggVar) => {
+        const oldAggVar = oldAggVarMap[newAggVar.key]
+        const updatedVersion = await this.getNewLogicAggVarVersion(
+          newAggVar,
+          entityId,
+          oldAggVar
+        )
+        return { ...newAggVar, version: updatedVersion }
+      })
+    )
+  }
+
+  private async getNewLogicAggVarVersion(
+    aggregationVariable: LogicAggregationVariable,
+    entityId: string,
+    oldAggregationVariable?: LogicAggregationVariable
+  ): Promise<number> {
+    const newVersion = Date.now()
+
+    if (oldAggregationVariable) {
+      if (this.isAggVarUnchanged(oldAggregationVariable, aggregationVariable)) {
+        return oldAggregationVariable.version ?? newVersion
+      }
+      await this.removeEntityFromOldAggVar(oldAggregationVariable, entityId)
+    }
+
+    const usedAggVar = await this.getUsedAggVar(aggregationVariable, newVersion)
+    await this.updateOrCreateUsedAggVar(usedAggVar, [
+      ...(usedAggVar.usedEntityIds || []),
+      entityId,
+    ])
+    return usedAggVar.version
+  }
+
+  private isAggVarUnchanged(
+    oldAggVar: LogicAggregationVariable,
+    newAggVar: LogicAggregationVariable
+  ): boolean {
+    return getAggVarHash(oldAggVar, false) === getAggVarHash(newAggVar, false)
+  }
+
+  private async removeEntityFromOldAggVar(
+    oldAggVar: LogicAggregationVariable,
+    entityId: string
+  ): Promise<void> {
+    const oldAggVarHash = getAggVarHash(oldAggVar, false)
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, oldAggVarHash),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    if (result.Item) {
+      const usedAggVar = result.Item as UsedAggregationVariable
+      const updatedIds =
+        usedAggVar.usedEntityIds?.filter((id) => id !== entityId) ?? []
+      if (updatedIds.length === 0) {
+        await this.deleteUsedAggVar(usedAggVar)
+      } else {
+        await this.updateOrCreateUsedAggVar(usedAggVar, updatedIds)
+      }
+    }
+  }
+
+  private async deleteUsedAggVar(
+    usedAggVar: UsedAggregationVariable
+  ): Promise<void> {
+    const deleteItemInput: DeleteCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.AGGREGATION_VARIABLE(
+        this.tenantId,
+        usedAggVar.aggVarHash
+      ),
+    }
+    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+  }
+
+  public async getUsedAggVar(
+    aggregationVariable: LogicAggregationVariable,
+    newVersion: number
+  ): Promise<UsedAggregationVariable> {
+    const aggVarHash = getAggVarHash(aggregationVariable, false)
+    const getItemInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, aggVarHash),
+    }
+    const result = await this.dynamoDb.send(new GetCommand(getItemInput))
+    return (
+      (result.Item as UsedAggregationVariable) ?? {
+        aggVarHash,
+        version: newVersion,
+        usedEntityIds: [],
+      }
+    )
+  }
+
+  public async updateOrCreateUsedAggVar(
+    usedAggVar: UsedAggregationVariable,
+    updatedIds: string[]
+  ): Promise<void> {
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      Item: {
+        ...DynamoDbKeys.AGGREGATION_VARIABLE(
+          this.tenantId,
+          usedAggVar.aggVarHash
+        ),
+        ...usedAggVar,
+        usedEntityIds: uniq(updatedIds),
+      } as UsedAggregationVariable,
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
   }
 }

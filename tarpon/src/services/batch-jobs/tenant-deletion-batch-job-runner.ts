@@ -351,9 +351,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteTenantSettings.bind(this),
         order: 11,
       },
+      AGGREGATION_VARIABLE: {
+        method: this.deleteAggregationVariables.bind(this),
+        order: 12,
+      },
       SLACK_ALERTS_TIMESTAMP_MARKER: {
         method: this.deleteSlackAlertsMarker.bind(this),
-        order: 12,
+        order: 13,
       },
     }
 
@@ -366,6 +370,20 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     for (const key of dynamoDbKeysToDeleteArray) {
       await key.method(tenantId)
     }
+  }
+
+  private async deleteAggregationVariables(tenantId: string) {
+    const partitionKeyId = DynamoDbKeys.AGGREGATION_VARIABLE(
+      tenantId,
+      ''
+    ).PartitionKeyID
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      partitionKeyId,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      'Aggregation Variable'
+    )
   }
 
   private async deleteListHeaders(tenantId: string) {

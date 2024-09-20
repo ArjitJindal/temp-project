@@ -7334,6 +7334,21 @@ components:
         - aggregationFunc
         - timeWindow
         - includeCurrentEntity
+    UsedAggregationVariable:
+      title: UsedAggregationVariable
+      type: object
+      properties:
+        aggVarHash:
+          type: string
+        version:
+          type: number
+        usedEntityIds:
+          type: array
+          items:
+            type: string
+      required:
+        - aggVarHash
+        - version
     RuleMachineLearningVariable:
       title: MachineLearningVariable
       type: object

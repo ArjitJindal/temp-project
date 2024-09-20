@@ -985,7 +985,11 @@ export class UserRepository {
         ...newUser,
       },
     }
-    await this.dynamoDb.send(new PutCommand(putItemInput))
+    try {
+      await this.dynamoDb.send(new PutCommand(putItemInput))
+    } catch (error) {
+      console.log('Full error:', JSON.stringify(error, null, 2)) // Log full error details
+    }
 
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
