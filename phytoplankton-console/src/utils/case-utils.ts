@@ -126,7 +126,7 @@ export const getNextStatusFromInReview = (status: CaseStatus): CaseStatus => {
   return status.replace('IN_REVIEW_', '') as CaseStatus;
 };
 
-export const isOnHoldOrInProgress = (status: CaseStatus | null | undefined): boolean => {
+export const isOnHoldOrInProgressOrEscalated = (status: CaseStatus | null | undefined): boolean => {
   if (status == null) {
     return false;
   }
@@ -135,6 +135,7 @@ export const isOnHoldOrInProgress = (status: CaseStatus | null | undefined): boo
     'OPEN_ON_HOLD',
     'ESCALATED_IN_PROGRESS',
     'ESCALATED_ON_HOLD',
+    'ESCALATED',
   ].includes(status);
 };
 

@@ -66,7 +66,7 @@ import {
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
-  isOnHoldOrInProgress,
+  isOnHoldOrInProgressOrEscalated,
   statusEscalated,
   statusInProgressOrOnHold,
   statusInReview,
@@ -580,7 +580,7 @@ export default function AlertTable(props: Props) {
               return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
             },
             render: (assignments, { item: entity }) => {
-              const otherStatuses = isOnHoldOrInProgress(entity?.alertStatus);
+              const otherStatuses = isOnHoldOrInProgressOrEscalated(entity?.alertStatus);
               return (
                 <AssigneesDropdown
                   assignments={assignments || []}

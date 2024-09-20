@@ -13,7 +13,11 @@ import DynamicRiskDisplay from '@/pages/users-item/UserDetails/DynamicRiskDispla
 import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
-import { isOnHoldOrInProgress, statusEscalated, statusInReview } from '@/utils/case-utils';
+import {
+  isOnHoldOrInProgressOrEscalated,
+  statusEscalated,
+  statusInReview,
+} from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { getUserLink, getUserName } from '@/utils/api/users';
@@ -42,7 +46,7 @@ export default function SubHeader(props: Props) {
   const isCaseEscalated = statusEscalated(caseItem.caseStatus);
   const isCaseInReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem.caseStatus]);
   const otherStatuses = useMemo(
-    () => isOnHoldOrInProgress(caseItem.caseStatus as CaseStatus),
+    () => isOnHoldOrInProgressOrEscalated(caseItem.caseStatus as CaseStatus),
     [caseItem.caseStatus],
   );
 

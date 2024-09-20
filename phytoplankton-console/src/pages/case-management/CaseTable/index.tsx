@@ -61,7 +61,7 @@ import {
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isInReviewCases,
-  isOnHoldOrInProgress,
+  isOnHoldOrInProgressOrEscalated,
   statusInProgressOrOnHold,
   statusEscalated,
   statusInReview,
@@ -255,7 +255,7 @@ export default function CaseTable(props: Props) {
               statusEscalated(entity.caseStatus) || isStatusInReview
                 ? entity.reviewAssignments
                 : entity.assignments;
-            const otherStatuses = isOnHoldOrInProgress(entity.caseStatus);
+            const otherStatuses = isOnHoldOrInProgressOrEscalated(entity.caseStatus);
             return (
               <AssigneesDropdown
                 assignments={assignments || []}
