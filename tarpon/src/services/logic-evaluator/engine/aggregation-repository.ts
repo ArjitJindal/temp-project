@@ -230,7 +230,8 @@ export class AggregationRepository {
 
   public async setAggregationVariableReady(
     aggregationVariable: LogicAggregationVariable,
-    userKeyId: string
+    userKeyId: string,
+    lastTransactionTimestamp: number
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
@@ -240,6 +241,7 @@ export class AggregationRepository {
           userKeyId,
           getAggVarHash(aggregationVariable)
         ),
+        lastTransactionTimestamp,
         ttl: duration(1, 'year').asSeconds(),
       },
     }
@@ -249,7 +251,7 @@ export class AggregationRepository {
   public async isAggregationVariableReady(
     aggregationVariable: LogicAggregationVariable,
     userKeyId: string
-  ): Promise<boolean> {
+  ): Promise<{ ready: boolean; lastTransactionTimestamp: number }> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
@@ -259,7 +261,8 @@ export class AggregationRepository {
       ),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
-    return Boolean(result.Item)
+    const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
+    return { ready: Boolean(result.Item), lastTransactionTimestamp }
   }
 
   private getUpdatedTtlAttribute(

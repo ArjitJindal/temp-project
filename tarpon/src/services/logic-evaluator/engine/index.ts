@@ -70,17 +70,11 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
-import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 import { addNewSubsegment } from '@/core/xray'
 import {
   AuxiliaryIndexTransaction,
   TransactionWithRiskDetails,
 } from '@/services/rules-engine/repositories/transaction-repository-interface'
-import {
-  TransactionAggregationTaskEntry,
-  V8LogicAggregationRebuildTask,
-  V8TransactionAggregationTask,
-} from '@/services/rules-engine/rules-engine-service'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import {
   getTransactionsGenerator,
@@ -123,26 +117,6 @@ export type AuxiliaryIndexTransactionWithDirection =
   }
 const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
   'TRANSACTION_EVENT'
-
-export function getAggregationTaskMessage(
-  task: TransactionAggregationTaskEntry
-): FifoSqsMessage {
-  const payload = task.payload as
-    | V8TransactionAggregationTask
-    | V8LogicAggregationRebuildTask
-  const deduplicationId = generateChecksum(
-    `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}:${
-      payload.type === 'TRANSACTION_AGGREGATION'
-        ? payload.transaction.transactionId
-        : ''
-    }`
-  )
-  return {
-    MessageBody: JSON.stringify(payload),
-    MessageGroupId: generateChecksum(task.userKeyId),
-    MessageDeduplicationId: deduplicationId,
-  }
-}
 
 export const getJsonLogicEngine = memoizeOne(
   (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
@@ -656,31 +630,33 @@ export class LogicEvaluator {
       return
     }
 
-    const ready = await this.aggregationRepository.isAggregationVariableReady(
-      aggregationVariable,
-      userKeyId
-    )
+    const { ready } =
+      await this.aggregationRepository.isAggregationVariableReady(
+        aggregationVariable,
+        userKeyId
+      )
     if (ready) {
       return
     }
 
     logger.info('Rebuilding aggregation...')
-    const { afterTimestamp, beforeTimestamp } = getTimeRangeByTimeWindows(
+    const { afterTimestamp } = getTimeRangeByTimeWindows(
       currentTimestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
-    const aggregationResult = await this.getRebuiltAggregationVariableResult(
-      aggregationVariable,
-      {
-        userId,
-        paymentDetails,
-      },
-      {
-        afterTimestamp,
-        beforeTimestamp,
-      }
-    )
+    const { result: aggregationResult, lastTransactionTimestamp } =
+      await this.getRebuiltAggregationVariableResult(
+        aggregationVariable,
+        {
+          userId,
+          paymentDetails,
+        },
+        {
+          afterTimestamp,
+          beforeTimestamp: currentTimestamp,
+        }
+      )
     logger.info('Prepared rebuild result')
     if (aggregationVariable.aggregationGroupByFieldKey) {
       const groups = uniq(
@@ -728,7 +704,8 @@ export class LogicEvaluator {
     }
     await this.aggregationRepository.setAggregationVariableReady(
       aggregationVariable,
-      userKeyId
+      userKeyId,
+      lastTransactionTimestamp
     )
     logger.info('Rebuilt aggregation')
   }
@@ -737,7 +714,10 @@ export class LogicEvaluator {
     aggregationVariable: LogicAggregationVariable,
     userIdentifier: UserIdentifier,
     timeRange: { afterTimestamp: number; beforeTimestamp: number }
-  ): Promise<{ [time: string]: AggregationData }> {
+  ): Promise<{
+    result: { [time: string]: AggregationData }
+    lastTransactionTimestamp: number
+  }> {
     const aggregator = getLogicVariableAggregator(
       aggregationVariable.aggregationFunc
     )
@@ -793,6 +773,7 @@ export class LogicEvaluator {
     } = {}
     let targetTransactionsCount = 0
     const entitiesByGroupValue: { [key: string]: number } = {}
+    let lastTransactionTimestamp = 0
     for await (const data of generator) {
       const transactions: AuxiliaryIndexTransactionWithDirection[] = [
         ...data.sendingTransactions.map((tx) => ({
@@ -804,6 +785,13 @@ export class LogicEvaluator {
           direction: 'destination' as const,
         })),
       ].sort((a, b) => (b.timestamp as number) - (a.timestamp as number))
+
+      if (
+        transactions[0]?.timestamp &&
+        transactions?.[0]?.timestamp > lastTransactionTimestamp
+      ) {
+        lastTransactionTimestamp = transactions[0].timestamp
+      }
 
       // Filter transactions by filtersLogic
       const targetTransactions: AuxiliaryIndexTransactionWithDirection[] = []
@@ -981,13 +969,13 @@ export class LogicEvaluator {
       }
     }
     clearTimeout(timeout)
-    return timeAggregatedResult
+    return { result: timeAggregatedResult, lastTransactionTimestamp }
   }
 
   public async updateAggregationVariable(
     aggregationVariable: LogicAggregationVariable,
     data: TransactionLogicData,
-    direction: 'origin' | 'destination'
+    options?: { skipIfNotReady?: boolean }
   ) {
     if (
       this.mode !== 'DYNAMODB' ||
@@ -997,37 +985,42 @@ export class LogicEvaluator {
     }
     const { transaction } = data
 
-    const userKeyId = this.getUserKeyId(
-      transaction,
-      direction,
-      aggregationVariable.type
-    )
-    if (!userKeyId) {
-      return
-    }
+    const directions = compact([
+      aggregationVariable.transactionDirection !== 'RECEIVING'
+        ? 'origin'
+        : undefined,
+      aggregationVariable.transactionDirection !== 'SENDING'
+        ? 'destination'
+        : undefined,
+    ])
 
-    const ready = await this.aggregationRepository.isAggregationVariableReady(
-      aggregationVariable,
-      userKeyId
-    )
-    if (!ready) {
-      const task: TransactionAggregationTaskEntry = {
-        userKeyId,
-        payload: {
-          type: 'TRANSACTION_AGGREGATION',
-          aggregationVariable,
+    await Promise.all(
+      directions.map(async (direction) => {
+        const userKeyId = this.getUserKeyId(
           transaction,
           direction,
-          tenantId: this.tenantId,
-        },
-      }
-      return getAggregationTaskMessage(task)
-    }
-    await this.updateAggregationVariableInternal(
-      aggregationVariable,
-      data,
-      direction,
-      userKeyId
+          aggregationVariable.type
+        )
+        if (!userKeyId) {
+          return
+        }
+        if (options?.skipIfNotReady) {
+          const { ready, lastTransactionTimestamp } =
+            await this.aggregationRepository.isAggregationVariableReady(
+              aggregationVariable,
+              userKeyId
+            )
+          if (!ready || lastTransactionTimestamp >= transaction.timestamp) {
+            return
+          }
+        }
+        await this.updateAggregationVariableInternal(
+          aggregationVariable,
+          data,
+          direction,
+          userKeyId
+        )
+      })
     )
   }
 
@@ -1431,17 +1424,18 @@ export class LogicEvaluator {
     beforeTimestamp: number,
     groupValue: string | undefined
   ): Promise<Array<{ time: string } & AggregationData>> {
-    const rebuiltAggData = await this.getRebuiltAggregationVariableResult(
-      aggregationVariable,
-      {
-        userId: userIdentifier.userId,
-        paymentDetails: userIdentifier.paymentDetails,
-      },
-      {
-        afterTimestamp,
-        beforeTimestamp,
-      }
-    )
+    const { result: rebuiltAggData } =
+      await this.getRebuiltAggregationVariableResult(
+        aggregationVariable,
+        {
+          userId: userIdentifier.userId,
+          paymentDetails: userIdentifier.paymentDetails,
+        },
+        {
+          afterTimestamp,
+          beforeTimestamp,
+        }
+      )
     return Object.entries(rebuiltAggData).map(([time, value]) => ({
       time,
       ...(groupValue ? value[groupValue] : value),
@@ -1531,18 +1525,13 @@ export class LogicEvaluator {
     logicAggregationVariables: LogicAggregationVariable[],
     transaction: TransactionWithRiskDetails,
     transactionEvents: TransactionEvent[]
-  ): Promise<
-    Array<{
-      MessageBody: string
-      MessageGroupId: string
-      MessageDeduplicationId: string
-    }>
-  > {
+  ) {
     if (
       (!hasFeature('RULES_ENGINE_V8') && type === 'RULES') ||
-      (!hasFeature('RISK_FACTORS_V8') && type === 'RISK')
+      (!hasFeature('RISK_FACTORS_V8') && type === 'RISK') ||
+      hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')
     ) {
-      return []
+      return
     }
 
     const promises =
@@ -1553,26 +1542,14 @@ export class LogicEvaluator {
         }
 
         this.updatedAggregationVariables.add(hash)
-
-        return [
-          aggVar.transactionDirection !== 'RECEIVING'
-            ? this.updateAggregationVariable(
-                aggVar,
-                { transaction, transactionEvents, type: 'TRANSACTION' },
-                'origin'
-              )
-            : undefined,
-          aggVar.transactionDirection !== 'SENDING'
-            ? this.updateAggregationVariable(
-                aggVar,
-                { transaction, transactionEvents, type: 'TRANSACTION' },
-                'destination'
-              )
-            : undefined,
-        ].filter(Boolean)
+        return this.updateAggregationVariable(aggVar, {
+          transaction,
+          transactionEvents,
+          type: 'TRANSACTION',
+        })
       }) ?? []
 
+    await Promise.all(promises)
     this.isTransactionApplied.cache.clear?.()
-    return compact(await Promise.all(promises))
   }
 }

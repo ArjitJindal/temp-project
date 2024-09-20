@@ -2,9 +2,13 @@ import { compact, isEmpty, uniq, uniqBy } from 'lodash'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
-import { getAggregationTaskMessage } from '../logic-evaluator/engine'
 import { getPaymentDetailsIdentifiersKey } from '../logic-evaluator/variables/payment-details'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
+import {
+  TransactionAggregationTaskEntry,
+  V8LogicAggregationRebuildTask,
+} from '../rules-engine'
+import { getAggVarHash } from '../logic-evaluator/engine/aggregation-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import {
@@ -26,8 +30,23 @@ import { envIs } from '@/utils/env'
 import { handleV8PreAggregationTask } from '@/lambdas/transaction-aggregation/app'
 import { TransientRepository } from '@/core/repositories/transient-repository'
 import { duration } from '@/utils/dayjs'
+import { generateChecksum } from '@/utils/object'
 
 const sqs = getSQSClient()
+
+function getAggregationTaskMessage(
+  task: TransactionAggregationTaskEntry
+): FifoSqsMessage {
+  const payload = task.payload as V8LogicAggregationRebuildTask
+  const deduplicationId = generateChecksum(
+    `${task.userKeyId}:${getAggVarHash(payload.aggregationVariable)}`
+  )
+  return {
+    MessageBody: JSON.stringify(payload),
+    MessageGroupId: generateChecksum(task.userKeyId),
+    MessageDeduplicationId: deduplicationId,
+  }
+}
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {

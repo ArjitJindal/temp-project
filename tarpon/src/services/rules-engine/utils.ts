@@ -2,6 +2,7 @@ import createHttpError from 'http-errors'
 import { uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
+import { V8TransactionAggregationTask } from './rules-engine-service'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -20,6 +21,7 @@ import {
   getSQSClient,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
+import { generateChecksum } from '@/utils/object'
 
 export function getSenderKeys(
   tenantId: string,
@@ -333,6 +335,8 @@ export function isSyncRule(ruleInstance: RuleInstance): boolean {
 
 const sqs = getSQSClient()
 export async function sendTransactionAggregationTasks(
+  tenantId: string,
+  transaction: Transaction,
   messages: FifoSqsMessage[]
 ) {
   if (envIs('local', 'test')) {
@@ -349,10 +353,24 @@ export async function sendTransactionAggregationTasks(
       }
     }
   } else {
+    const finalMessages = [...messages]
+    if (hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')) {
+      const task: V8TransactionAggregationTask = {
+        type: 'TRANSACTION_AGGREGATION',
+        transaction,
+        tenantId,
+      }
+      finalMessages.push({
+        MessageBody: JSON.stringify(task),
+        MessageGroupId: tenantId,
+        MessageDeduplicationId: generateChecksum(transaction),
+      })
+    }
+
     await bulkSendMessages(
       sqs,
       process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
-      uniqBy(messages, 'MessageDeduplicationId')
+      uniqBy(finalMessages, 'MessageDeduplicationId')
     )
     logger.info(`Sent transaction aggregation tasks to SQS`)
   }

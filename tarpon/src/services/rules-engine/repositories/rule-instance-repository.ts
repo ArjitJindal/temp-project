@@ -34,7 +34,7 @@ import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 import { RuleStats } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import {
-  createPublicApiInMemoryCache,
+  createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { envIs, envIsNot } from '@/utils/env'
@@ -43,8 +43,8 @@ import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-rep
 
 // NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
 // is activated, it'll be effective after 10 minutes (worst case).
-const activeRuleInstancesCache = envIs('prod')
-  ? createPublicApiInMemoryCache<readonly RuleInstance[]>({
+const ruleInstancesCache = envIs('prod')
+  ? createNonConsoleApiInMemoryCache<readonly RuleInstance[]>({
       max: 10,
       ttlMinutes: 10,
     })
@@ -383,17 +383,7 @@ export class RuleInstanceRepository {
   public async getActiveRuleInstances(
     type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
-    const cacheKey = getInMemoryCacheKey(this.tenantId, type)
-    if (activeRuleInstancesCache?.has(cacheKey)) {
-      return activeRuleInstancesCache.get(cacheKey) as RuleInstance[]
-    }
-
-    const activeRuleInstances = await this.getRuleInstancesByStatus(
-      ACTIVE_STATUS,
-      type
-    )
-    activeRuleInstancesCache?.set(cacheKey, activeRuleInstances)
-    return activeRuleInstances
+    return this.getRuleInstancesByStatus(ACTIVE_STATUS, type)
   }
 
   public async getDeployingRuleInstances(
@@ -406,6 +396,11 @@ export class RuleInstanceRepository {
     status: RuleInstanceStatus,
     type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
+    const cacheKey = getInMemoryCacheKey(this.tenantId, status, type)
+    if (ruleInstancesCache?.has(cacheKey)) {
+      return ruleInstancesCache.get(cacheKey) as RuleInstance[]
+    }
+
     const ruleInstances = await this.getRuleInstances({
       FilterExpression: '#status = :status',
       ExpressionAttributeValues: {
@@ -415,7 +410,11 @@ export class RuleInstanceRepository {
         '#status': 'status',
       },
     })
-    return type ? ruleInstances.filter((r) => r.type === type) : ruleInstances
+    const result = type
+      ? ruleInstances.filter((r) => r.type === type)
+      : ruleInstances
+    ruleInstancesCache?.set(cacheKey, result)
+    return result
   }
 
   public async getAllRuleInstances(

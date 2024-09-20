@@ -1,5 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import { NotFound } from 'http-errors'
+import { uniqBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   TransactionAggregationTask,
@@ -36,12 +37,12 @@ import { RulePreAggregationBatchJob } from '@/@types/batch-job'
 import { GeoIPService } from '@/services/geo-ip'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 
 export async function handleV8TransactionAggregationTask(
   task: V8TransactionAggregationTask
 ) {
   updateLogMetadata({
-    aggregationVariableKey: task.aggregationVariable.key,
     tenantId: task.tenantId,
     direction: task.direction,
     transactionId: task.transaction.transactionId,
@@ -49,15 +50,59 @@ export async function handleV8TransactionAggregationTask(
   })
   const dynamoDb = getDynamoDbClient()
   const ruleEvaluator = new LogicEvaluator(task.tenantId, dynamoDb)
-  await ruleEvaluator.rebuildOrUpdateAggregationVariable(
-    task.aggregationVariable,
-    {
-      transaction: task.transaction,
-      transactionEvents: [],
-      type: 'TRANSACTION',
-    },
-    task.direction
-  )
+  if (task.aggregationVariable) {
+    if (!task.direction) {
+      throw new Error('Direction is required')
+    }
+    // Update for a single aggregation variable
+    updateLogMetadata({
+      aggregationVariableKey: task.aggregationVariable.key,
+    })
+    await ruleEvaluator.rebuildOrUpdateAggregationVariable(
+      task.aggregationVariable,
+      {
+        transaction: task.transaction,
+        transactionEvents: [],
+        type: 'TRANSACTION',
+      },
+      task.direction
+    )
+  } else {
+    // Update all aggregation variables by applying the new transaction
+    const ruleInstanceRepo = new RuleInstanceRepository(task.tenantId, {
+      dynamoDb,
+    })
+    const ruleInstances = [
+      ...(await ruleInstanceRepo.getActiveRuleInstances()),
+      ...(await ruleInstanceRepo.getDeployingRuleInstances()),
+    ]
+    const logicAggregationVariables = uniqBy(
+      ruleInstances.flatMap((r) => r.logicAggregationVariables ?? []),
+      getAggVarHash
+    )
+
+    const transactionEventRepository = new TransactionEventRepository(
+      task.tenantId,
+      { dynamoDb }
+    )
+    const transactionEvents =
+      await transactionEventRepository.getTransactionEvents(
+        task.transaction.transactionId
+      )
+    await Promise.all(
+      logicAggregationVariables.map(async (v) => {
+        await ruleEvaluator.updateAggregationVariable(
+          v,
+          {
+            transaction: task.transaction,
+            transactionEvents,
+            type: 'TRANSACTION',
+          },
+          { skipIfNotReady: true }
+        )
+      })
+    )
+  }
 }
 
 export async function handleV8PreAggregationTask(

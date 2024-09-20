@@ -15,6 +15,7 @@ import {
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import {
+  hasFeature,
   tenantHasFeature,
   tenantSettings,
   updateLogMetadata,
@@ -32,11 +33,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { CaseRepository } from '@/services/cases/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RiskScoringService } from '@/services/risk-scoring'
-import {
-  filterLiveRules,
-  runOnV8Engine,
-  sendTransactionAggregationTasks,
-} from '@/services/rules-engine/utils'
+import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -229,7 +226,10 @@ export const transactionHandler = async (
           (rule) => rule.ruleInstanceId
         )
       ),
-      ruleInstancesRepo.getDeployingRuleInstances(),
+      // NOTE: For async aggregation, it's already handled by sendTransactionAggregationTasks
+      hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')
+        ? []
+        : ruleInstancesRepo.getDeployingRuleInstances(),
     ])
 
   // Update rule aggregation data for the transactions created when the rule is still deploying
@@ -255,13 +255,12 @@ export const transactionHandler = async (
           return
         }
 
-        const messages = await ruleLogicEvaluator.handleV8Aggregation(
+        await ruleLogicEvaluator.handleV8Aggregation(
           'RULES',
           ruleInstance.logicAggregationVariables ?? [],
           transaction,
           transactionEvents
         )
-        await sendTransactionAggregationTasks(messages)
       })
     )
   }

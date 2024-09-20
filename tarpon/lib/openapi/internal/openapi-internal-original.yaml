@@ -9932,11 +9932,12 @@ components:
         - SAR
         - QA
         - RULES_ENGINE_V8
-        - NOTIFICATIONS
+        - RISK_FACTORS_V8
         - RULES_ENGINE_V8_FOR_V2_RULES
+        - RULES_ENGINE_V8_ASYNC_AGGREGATION
+        - NOTIFICATIONS
         - KINESIS_ASYNC
         - FILES_AI_SUMMARY
-        - RISK_FACTORS_V8
         - CLICKHOUSE_ENABLED
         - ALERT_SLA
         - MACHINE_LEARNING

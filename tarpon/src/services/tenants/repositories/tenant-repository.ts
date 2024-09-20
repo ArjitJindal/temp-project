@@ -20,14 +20,14 @@ import { getTestEnabledFeatures } from '@/core/utils/context'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import dayjs from '@/utils/dayjs'
 import {
-  createPublicApiInMemoryCache,
+  createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
 
-const tenantSettingsCache = createPublicApiInMemoryCache<TenantSettings>({
+const tenantSettingsCache = createNonConsoleApiInMemoryCache<TenantSettings>({
   max: 100,
   ttlMinutes: 10,
 })

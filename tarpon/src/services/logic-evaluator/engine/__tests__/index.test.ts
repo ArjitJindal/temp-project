@@ -2769,7 +2769,11 @@ describe('V8 aggregator with transaction count', () => {
       undefined,
       3
     )
-    await aggregationRepository.setAggregationVariableReady(AGG_VARIABLE, '1')
+    await aggregationRepository.setAggregationVariableReady(
+      AGG_VARIABLE,
+      '1',
+      beforeTimestamp
+    )
     const transactions = [
       getTestTransaction({
         originUserId: '1',
@@ -2852,7 +2856,11 @@ describe('V8 aggregator with transaction count', () => {
       undefined,
       2
     )
-    await aggregationRepository.setAggregationVariableReady(AGG_VARIABLE, '1')
+    await aggregationRepository.setAggregationVariableReady(
+      AGG_VARIABLE,
+      '1',
+      beforeTimestamp
+    )
     const transactions = [
       getTestTransaction({
         originUserId: '1',
@@ -3116,7 +3124,11 @@ describe('V8 aggregator with transaction count', () => {
       'TRANSACTION:destinationUserId',
       2
     )
-    await aggregationRepository.setAggregationVariableReady(AGG_VARIABLE, '1')
+    await aggregationRepository.setAggregationVariableReady(
+      AGG_VARIABLE,
+      '1',
+      0
+    )
     const transactions = [
       getTestTransaction({
         originUserId: '0',

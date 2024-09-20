@@ -20,11 +20,11 @@ import { RuleSearchFilter } from '@/@types/rule/rule-actions'
 import { RuleNature } from '@/@types/openapi-internal/RuleNature'
 import { RulesSearchResponse } from '@/@types/openapi-internal/RulesSearchResponse'
 import {
-  createPublicApiInMemoryCache,
+  createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 
-const rulesCache = createPublicApiInMemoryCache<Rule[]>({
+const rulesCache = createNonConsoleApiInMemoryCache<Rule[]>({
   max: 10,
   ttlMinutes: 100,
 })

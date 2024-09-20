@@ -140,9 +140,9 @@ export type TransactionAggregationTask = {
 export type V8TransactionAggregationTask = {
   type: 'TRANSACTION_AGGREGATION'
   tenantId: string
-  aggregationVariable: LogicAggregationVariable
+  aggregationVariable?: LogicAggregationVariable
   transaction: Transaction
-  direction: 'origin' | 'destination'
+  direction?: 'origin' | 'destination'
   filters?: LegacyFilters
   transactionRiskScore?: number
 }
@@ -500,7 +500,11 @@ export class RulesEngineService {
 
     try {
       await Promise.all([
-        sendTransactionAggregationTasks(aggregationMessages),
+        sendTransactionAggregationTasks(
+          this.tenantId,
+          transaction,
+          aggregationMessages
+        ),
         this.updateGlobalAggregation(savedTransaction, []),
         isAnyAsyncRules &&
           this.sendAsyncRuleTask({
@@ -607,7 +611,11 @@ export class RulesEngineService {
       )
     }
     await Promise.all([
-      sendTransactionAggregationTasks(aggregationMessages),
+      sendTransactionAggregationTasks(
+        this.tenantId,
+        updatedTransaction,
+        aggregationMessages
+      ),
       updateGlobalAggregationPromise,
       isAnyAsyncRules &&
         this.sendAsyncRuleTask({
@@ -871,7 +879,11 @@ export class RulesEngineService {
         (last(transactionEventsSorted) as TransactionEvent).timestamp,
         { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
       ),
-      sendTransactionAggregationTasks(aggregationMessages),
+      sendTransactionAggregationTasks(
+        this.tenantId,
+        transaction,
+        aggregationMessages
+      ),
     ])
   }
 
@@ -1052,48 +1064,47 @@ export class RulesEngineService {
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
     logger.info(`Running rules`)
 
-    const [originalVerifyTransactionResults, userAggregationMessages] =
-      await Promise.all([
-        Promise.all(
-          transactionRuleInstances.map(async (ruleInstance) =>
-            this.verifyTransactionRule({
-              rule: ruleInstance.ruleId
-                ? rulesById[ruleInstance.ruleId]
-                : undefined,
-              ruleInstance,
-              senderUserRiskLevel,
-              transaction: transactionWithRiskDetails,
-              transactionEvents,
-              senderUser,
-              receiverUser,
-              transactionRiskScore: riskScoreDetails?.trsScore,
-            })
-          )
-        ),
-        // Update aggregation variables in V8 user rules
-        Promise.all(
-          userRuleInstances.map((ruleInstance) => {
-            const rule = ruleInstance.ruleId
+    const [originalVerifyTransactionResults] = await Promise.all([
+      Promise.all(
+        transactionRuleInstances.map(async (ruleInstance) =>
+          this.verifyTransactionRule({
+            rule: ruleInstance.ruleId
               ? rulesById[ruleInstance.ruleId]
-              : undefined
-
-            if (!runOnV8Engine(ruleInstance, rule)) {
-              return []
-            }
-
-            return this.ruleLogicEvaluator.handleV8Aggregation(
-              'RULES',
-              ruleInstance.logicAggregationVariables ?? [],
-              transaction,
-              transactionEvents
-            )
+              : undefined,
+            ruleInstance,
+            senderUserRiskLevel,
+            transaction: transactionWithRiskDetails,
+            transactionEvents,
+            senderUser,
+            receiverUser,
+            transactionRiskScore: riskScoreDetails?.trsScore,
           })
-        ),
-      ])
+        )
+      ),
+      // Update aggregation variables in V8 user rules
+      Promise.all(
+        userRuleInstances.map((ruleInstance) => {
+          const rule = ruleInstance.ruleId
+            ? rulesById[ruleInstance.ruleId]
+            : undefined
+
+          if (!runOnV8Engine(ruleInstance, rule)) {
+            return []
+          }
+
+          return this.ruleLogicEvaluator.handleV8Aggregation(
+            'RULES',
+            ruleInstance.logicAggregationVariables ?? [],
+            transaction,
+            transactionEvents
+          )
+        })
+      ),
+    ])
     const verifyTransactionResults = compact(originalVerifyTransactionResults)
-    const aggregationMessages = verifyTransactionResults
-      .flatMap((result) => compact(result.aggregationMessages))
-      .concat(userAggregationMessages.flat())
+    const aggregationMessages = verifyTransactionResults.flatMap((result) =>
+      compact(result.aggregationMessages)
+    )
 
     const ruleResults = compact(
       map(verifyTransactionResults, (result) => result.result)
@@ -1455,13 +1466,12 @@ export class RulesEngineService {
 
           let aggregationMessages: FifoSqsMessage[] = []
           if (runOnV8Engine(ruleInstance, options.rule)) {
-            aggregationMessages =
-              await this.ruleLogicEvaluator.handleV8Aggregation(
-                'RULES',
-                ruleInstance.logicAggregationVariables ?? [],
-                options.transaction,
-                options.transactionEvents
-              )
+            await this.ruleLogicEvaluator.handleV8Aggregation(
+              'RULES',
+              ruleInstance.logicAggregationVariables ?? [],
+              options.transaction,
+              options.transactionEvents
+            )
           } else {
             aggregationMessages =
               ruleClassInstance instanceof TransactionAggregationRule

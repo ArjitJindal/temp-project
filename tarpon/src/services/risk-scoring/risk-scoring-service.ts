@@ -11,7 +11,6 @@ import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongo
 import { CaseRepository } from '../cases/repository'
 import { CurrencyService } from '../currency'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
-import { sendTransactionAggregationTasks } from '../rules-engine/utils'
 import { LogicEvaluator, LogicData } from '../logic-evaluator/engine'
 import { RiskRepository } from './repositories/risk-repository'
 import {
@@ -851,13 +850,12 @@ export class RiskScoringService {
         })
       )
 
-      const messages = await this.logicEvaluator.handleV8Aggregation(
+      await this.logicEvaluator.handleV8Aggregation(
         'RISK',
         aggregationVariables,
         entity.data,
         transactionEvents
       )
-      await sendTransactionAggregationTasks(messages)
     }
 
     return riskScoreComponents
