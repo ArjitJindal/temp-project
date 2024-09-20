@@ -1265,6 +1265,9 @@ export class CaseCreationService {
 
     if (await this.tenantRepository.getTenantMetadata('SLACK_WEBHOOK')) {
       for (const caseItem of newCases) {
+        if (caseItem.availableAfterTimestamp) {
+          continue
+        }
         logger.info(
           `Sending slack alert SQS message for case ${caseItem.caseId}`
         )

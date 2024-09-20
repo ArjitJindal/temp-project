@@ -360,6 +360,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${AVG_ARS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
+  SLACK_ALERTS_TIMESTAMP_MARKER: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#slack-notifications`,
+    SortKeyID: `marker`,
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

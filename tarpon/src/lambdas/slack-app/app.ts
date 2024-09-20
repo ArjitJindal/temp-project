@@ -9,6 +9,13 @@ import * as ejs from 'ejs'
 import { IncomingWebhook } from '@slack/webhook'
 import { Credentials } from '@aws-sdk/client-sts'
 import { OauthV2AccessResponse } from '@slack/web-api'
+import {
+  GetCommand,
+  GetCommandInput,
+  PutCommand,
+  PutCommandInput,
+} from '@aws-sdk/lib-dynamodb'
+import { StackConstants } from '@lib/constants'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -18,6 +25,9 @@ import { logger } from '@/core/logger'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { CaseRepository } from '@/services/cases/repository'
 import { apiFetch } from '@/utils/api-fetch'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import dayjs from '@/utils/dayjs'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 
 export const slackAppHandler = lambdaApi()(
   async (
@@ -110,8 +120,8 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
         mongoDb,
       })
       const caseItem = await caseRepository.getCaseById(caseId)
-
-      if (caseId) {
+      const availableAfterTimestamp = caseItem?.availableAfterTimestamp
+      if (caseId && !availableAfterTimestamp) {
         const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
         logger.info(
           `Sending case Slack alert: tenant=${tenantId}, caseId=${caseId}`
@@ -140,3 +150,78 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
     }
   }
 })
+
+export async function sendCaseCreatedAlert(tenantId) {
+  const availableAfterTimestamp = dayjs().startOf('day').valueOf()
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
+  const tenantRepository = new TenantRepository(tenantId, {
+    mongoDb,
+    dynamoDb,
+  })
+
+  const slackWebhook = await tenantRepository.getTenantMetadata('SLACK_WEBHOOK')
+
+  if (!slackWebhook) {
+    return
+  }
+  const getItemInput: GetCommandInput = {
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    Key: DynamoDbKeys.SLACK_ALERTS_TIMESTAMP_MARKER(tenantId),
+  }
+  const result = (await dynamoDb.send(new GetCommand(getItemInput))).Item
+  const casesCollection = mongoDb.db().collection(CASES_COLLECTION(tenantId))
+  const alertsSentupto = result?.timestamp ?? availableAfterTimestamp - 1
+  const caseIds = await casesCollection
+    .aggregate([
+      {
+        $match: {
+          availableAfterTimestamp: {
+            $gt: alertsSentupto,
+            $lte: availableAfterTimestamp,
+          },
+        },
+      },
+      {
+        $project: {
+          caseId: 1,
+        },
+      },
+    ])
+    .toArray()
+  if (caseIds.length === 0) {
+    return
+  }
+  const webhook = new IncomingWebhook(slackWebhook.slackWebhookURL)
+  logger.info(`Sending bulk cases Slack alert: tenant=${tenantId}`)
+  await webhook.send({
+    text: 'New cases created',
+    attachments: [
+      {
+        color: '#ffa500', // orange
+        blocks: [
+          {
+            type: 'section',
+            text: {
+              type: 'mrkdwn',
+              text: caseIds
+                .map(
+                  ({ caseId }) =>
+                    `<${process.env.CONSOLE_URI}/case-management/case/${caseId}|${caseId}>\n`
+                )
+                .join(', '),
+            },
+          },
+        ],
+      },
+    ],
+  })
+  const putItemInput: PutCommandInput = {
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    Item: {
+      ...DynamoDbKeys.SLACK_ALERTS_TIMESTAMP_MARKER(tenantId),
+      timestamp: availableAfterTimestamp,
+    },
+  }
+  await dynamoDb.send(new PutCommand(putItemInput))
+}

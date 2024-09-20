@@ -351,6 +351,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteTenantSettings.bind(this),
         order: 11,
       },
+      SLACK_ALERTS_TIMESTAMP_MARKER: {
+        method: this.deleteSlackAlertsMarker.bind(this),
+        order: 12,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -793,6 +797,16 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await dangerouslyDeletePartitionKey(
       this.dynamoDb(),
       partitionKey,
+      tableName
+    )
+  }
+
+  private async deleteSlackAlertsMarker(tenantId: string) {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+
+    await dangerouslyDeletePartitionKey(
+      this.dynamoDb(),
+      DynamoDbKeys.SLACK_ALERTS_TIMESTAMP_MARKER(tenantId),
       tableName
     )
   }
