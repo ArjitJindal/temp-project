@@ -1,8 +1,7 @@
 import {
-  OccupationCode,
   SanctionsEntity,
+  SanctionsSearchRequest,
   SanctionsSearchResponse,
-  SanctionsSearchType,
 } from '@/@types/openapi-internal/all'
 
 export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'
@@ -28,22 +27,9 @@ export interface SanctionsRepository {
   ): Promise<void>
 }
 
-export type SanctionsProviderSearchRequest = {
-  types: SanctionsSearchType[]
-  searchTerm: string
-  fuzziness?: number
-  countryCodes?: Array<string>
-  yearOfBirth?: number
-  documentId?: string
-  nationality?: Array<string>
-  occupationCode?: Array<OccupationCode>
-}
-
 export interface SanctionsDataProvider {
   provider(): SanctionsDataProviderName
-  search(
-    request: SanctionsProviderSearchRequest
-  ): Promise<SanctionsProviderResponse>
+  search(request: SanctionsSearchRequest): Promise<SanctionsProviderResponse>
 
   getSearch(providerSearchId: string): Promise<SanctionsProviderResponse>
 

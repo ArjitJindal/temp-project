@@ -11282,6 +11282,8 @@ components:
           type: boolean
         searchTerm:
           type: string
+        existingProviderId:
+          type: string
         searchProfileId:
           type: string
         fuzziness:
@@ -11337,6 +11339,10 @@ components:
           type: string
         createdAt:
           type: number
+        monitor:
+          type: boolean
+        request:
+          $ref: '#/components/schemas/SanctionsSearchRequest'
       required:
         - hitsCount
         - searchId

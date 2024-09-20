@@ -23,6 +23,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       } else {
         await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
       }
+      await fetcher.updateMonitoredSearches()
     }
   }
 }

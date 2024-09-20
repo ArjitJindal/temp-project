@@ -1,11 +1,9 @@
 import { v4 as uuidv4 } from 'uuid'
 import { Collection } from 'mongodb'
-import * as Sentry from '@sentry/serverless'
 import {
   SanctionsDataProvider,
   SanctionsDataProviderName,
   SanctionsProviderResponse,
-  SanctionsProviderSearchRequest,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import {
@@ -16,6 +14,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -32,8 +31,24 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     from: Date
   ): Promise<void>
 
+  async updateMonitoredSearches() {
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+
+    for await (const monitoredSearch of sanctionsProviderCollection.find({
+      monitor: true,
+    })) {
+      if (monitoredSearch.providerSearchId && monitoredSearch.request) {
+        await this.search({
+          existingProviderId: monitoredSearch.providerSearchId,
+          ...monitoredSearch.request,
+        })
+      }
+    }
+  }
+
   async search(
-    request: SanctionsProviderSearchRequest
+    request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
     const client = await getMongoDbClient()
     const match = {}
@@ -111,7 +126,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     })
 
-    const providerSearchId = uuidv4()
+    const providerSearchId = request.existingProviderId || uuidv4()
     const result = {
       providerSearchId,
       hitsCount: filteredResults.length,
@@ -121,7 +136,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     const sanctionsProviderCollection =
       await this.getSanctionProviderCollection()
-    await sanctionsProviderCollection.insertOne(result)
+    await sanctionsProviderCollection.updateOne({ providerSearchId }, request, {
+      upsert: true,
+    })
     return result
   }
 
@@ -153,12 +170,21 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async setMonitoring(
-    _providerSearchId: string,
-    _monitor: boolean
+    providerSearchId: string,
+    monitor: boolean
   ): Promise<void> {
-    if (_monitor) {
-      Sentry.captureMessage('Method not implemented', 'warning')
-    }
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.updateOne(
+      {
+        providerSearchId,
+      },
+      {
+        $set: {
+          monitor,
+        },
+      }
+    )
   }
 
   private async getSanctionProviderCollection(): Promise<

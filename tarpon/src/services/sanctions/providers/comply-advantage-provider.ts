@@ -3,7 +3,6 @@ import {
   SanctionsDataProvider,
   SanctionsDataProviderName,
   SanctionsProviderResponse,
-  SanctionsProviderSearchRequest,
 } from '@/services/sanctions/providers/types'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { tenantSettings } from '@/core/utils/context'
@@ -24,6 +23,7 @@ import { ComplyAdvantageSearchHitDocFields } from '@/@types/openapi-internal/Com
 import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdvantageSearchHitDoc'
 import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
 import { removeUndefinedFields } from '@/utils/object'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -260,7 +260,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
   }
 
   async search(
-    request: SanctionsProviderSearchRequest
+    request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
     const searchProfileId =
       this.complyAdvantageSearchProfileId ||
@@ -290,6 +290,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
       data: hits?.map(complyAdvantageDocToEntity) || [],
       hitsCount: hits?.length || 0,
       providerSearchId: caSearchId,
+      request,
       createdAt: createdAt
         ? new Date(createdAt).getTime()
         : new Date().getTime(),
@@ -303,6 +304,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
       providerSearchId
     )
     const createdAt = result.content?.data?.created_at
+
     return {
       providerSearchId: `${result.content?.data?.id}`,
       data: result.content?.data?.hits?.map(complyAdvantageDocToEntity) || [],
