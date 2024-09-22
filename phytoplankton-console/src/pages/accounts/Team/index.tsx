@@ -57,7 +57,7 @@ export default function Team() {
           return (
             role !== UserRole.ROOT &&
             role !== UserRole.WHITELABEL_ROOT &&
-            account?.blockedReason !== 'DELETED'
+            (!account.blocked || account.blockedReason !== 'DELETED')
           );
         })
         .sort((a, b) => {

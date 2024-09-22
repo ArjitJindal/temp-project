@@ -9122,6 +9122,7 @@ components:
           type: string
           enum:
             - DELETED
+            - DORMANT
       required:
         - id
         - role
@@ -9306,6 +9307,8 @@ components:
           type: boolean
         mfaEnabled:
           type: boolean
+        accountDormancyAllowedDays:
+          type: number
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object

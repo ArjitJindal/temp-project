@@ -1,13 +1,17 @@
+import { Fragment } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
+import { useHasPermissions } from '@/utils/user-utils';
+import SelectionGroup from '@/components/library/SelectionGroup';
 
 export const SecuritySettings = () => {
   const settings = useSettings();
   const mutateTenantSettings = useUpdateTenantSettings();
+  const isSettingsEnabled = useHasPermissions(['settings:organisation:write']);
   const handleDisable = () => {
     mutateTenantSettings.mutate({ mfaEnabled: false });
   };
@@ -17,15 +21,40 @@ export const SecuritySettings = () => {
   };
 
   return (
-    <SettingsCard
-      title="MFA"
-      description="When enabled, users will be required to use Multi-Factor Authentication to access the platform using any Authenticator app."
-    >
-      <Toggle
-        onChange={!settings.mfaEnabled ? handleEnable : handleDisable}
-        value={settings.mfaEnabled}
-        loading={mutateTenantSettings.isLoading}
-      />
-    </SettingsCard>
+    <Fragment>
+      <SettingsCard
+        title="MFA"
+        description="When enabled, users will be required to use Multi-Factor Authentication to access the platform using any Authenticator app."
+      >
+        <Toggle
+          onChange={!settings.mfaEnabled ? handleEnable : handleDisable}
+          value={settings.mfaEnabled}
+          loading={mutateTenantSettings.isLoading}
+          disabled={!isSettingsEnabled}
+        />
+      </SettingsCard>
+      <SettingsCard
+        title="Account dormancy Period"
+        description="The number of days after which an account will be considered dormant and will be suspended."
+      >
+        <SelectionGroup<number>
+          mode={'SINGLE'}
+          value={settings.accountDormancyAllowedDays}
+          onChange={(value) => mutateTenantSettings.mutate({ accountDormancyAllowedDays: value })}
+          options={[
+            {
+              label: 'No limit',
+              value: 0,
+              description: 'Accounts will not be suspended due to dormancy.',
+            },
+            { label: '45 days', value: 45 },
+            { label: '3 months', value: 90 },
+            { label: '6 months', value: 180 },
+            { label: '1 year', value: 365 },
+          ]}
+          isDisabled={!isSettingsEnabled}
+        />
+      </SettingsCard>
+    </Fragment>
   );
 };

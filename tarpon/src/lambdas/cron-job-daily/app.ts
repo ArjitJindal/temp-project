@@ -9,6 +9,10 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
+import { AccountsService } from '@/services/accounts'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -55,6 +59,12 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
     }
   } catch (e) {
     logger.error(`Failed to delete tenants: ${(e as Error)?.message}`, e)
+  }
+
+  try {
+    await checkDormantUsers(tenantInfos)
+  } catch (e) {
+    logger.error(`Failed to check dormant users: ${(e as Error)?.message}`, e)
   }
 
   await sendBatchJobCommand({
@@ -122,5 +132,38 @@ async function createOngoingScreeningJobs(tenantInfos: TenantInfo[]) {
       type: 'ONGOING_SCREENING_USER_RULE',
       tenantId,
     })
+  }
+}
+
+async function checkDormantUsers(tenantInfos: TenantInfo[]) {
+  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
+  for await (const tenant of tenantInfos) {
+    const accountsService = new AccountsService(
+      { auth0Domain: tenant.auth0Domain },
+      { mongoDb }
+    )
+    const tenantSettings = await new TenantRepository(tenant.tenant.id, {
+      dynamoDb,
+      mongoDb,
+    }).getTenantSettings()
+
+    const accounts = await accountsService.getAllActiveAccounts()
+
+    for await (const account of accounts) {
+      const accountDormancyAllowedDays =
+        tenantSettings?.accountDormancyAllowedDays ?? 0
+      if (account.lastLogin && accountDormancyAllowedDays > 0) {
+        const lastLogin = dayjs(account.lastLogin)
+        const daysSinceLastLogin = dayjs().diff(lastLogin, 'day')
+        if (daysSinceLastLogin > accountDormancyAllowedDays) {
+          await accountsService.blockAccount(
+            tenant.tenant.id,
+            account.id,
+            'DORMANT'
+          )
+        }
+      }
+    }
   }
 }

@@ -176,7 +176,9 @@ export class AccountsService {
       blocked: user.blocked ?? false,
       isEscalationContact: app_metadata?.isEscalationContact === true,
       reviewerId: app_metadata?.reviewerId,
-      blockedReason: app_metadata?.blockedReason,
+      ...(app_metadata?.blockedReason && {
+        blockedReason: app_metadata.blockedReason,
+      }),
       lastLogin: dayjs(last_login as string).valueOf(),
       createdAt: dayjs(created_at as string).valueOf(),
       lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
@@ -587,7 +589,7 @@ export class AccountsService {
 
     promises.push(
       ...[
-        this.deactivateAccount(tenant.id, idToDelete),
+        this.blockAccount(tenant.id, idToDelete, 'DELETED'),
         caseRepository.reassignCases(idToDelete, reassignedTo),
         alertRepository.reassignAlerts(idToDelete, reassignedTo),
       ]
@@ -604,9 +606,10 @@ export class AccountsService {
     await userManager.update({ id: accountId }, data)
   }
 
-  public async deactivateAccount(
+  public async blockAccount(
     tenantId: string,
-    accountId: string
+    accountId: string,
+    blockedReason: Account['blockedReason']
   ): Promise<void> {
     const userTenant = await this.getAccountTenant(accountId)
     const managementClient = await getAuth0ManagementClient(
@@ -625,11 +628,11 @@ export class AccountsService {
     await Promise.all([
       this.updateAuth0User(accountId, {
         blocked: true,
-        app_metadata: { blockedReason: 'DELETED' },
+        app_metadata: { blockedReason },
       }),
       this.updateAuth0UserInMongo(tenantId, accountId, {
         blocked: true,
-        blockedReason: 'DELETED',
+        blockedReason,
       }),
       userRoles.data.length &&
         userManager.deleteRoles(

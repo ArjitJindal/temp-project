@@ -14,7 +14,7 @@ export const up = async () => {
         const isBlocked = a.blocked
 
         if (isBlocked) {
-          await accountsService.deactivateAccount(tenant.id, a.id)
+          await accountsService.blockAccount(tenant.id, a.id, 'DELETED')
         }
       })
     )
