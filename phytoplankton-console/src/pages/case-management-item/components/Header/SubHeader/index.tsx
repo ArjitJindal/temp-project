@@ -51,8 +51,8 @@ export default function SubHeader(props: Props) {
   );
 
   const assignments = useMemo(
-    () => (isCaseEscalated || isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments),
-    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview, isCaseEscalated],
+    () => (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments),
+    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview],
   );
 
   const queryClient = useQueryClient();

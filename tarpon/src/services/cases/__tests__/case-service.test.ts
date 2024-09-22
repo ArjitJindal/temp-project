@@ -2078,7 +2078,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
         { alertId: alertId2, alertStatus: 'CLOSED' },
       ],
-      assignments: [{ assigneeUserId: 'ACCOUNT-3' }],
+      assignments: [{ assigneeUserId: 'ACCOUNT-1' }],
       reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
       lastStatusChange: {
         userId: 'ACCOUNT-3',

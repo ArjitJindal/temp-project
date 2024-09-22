@@ -813,22 +813,40 @@ export class CaseService extends CaseAlertsCommonService {
     }
 
     const existingReviewAssignments = case_.reviewAssignments || []
+    const escalationAssignments = this.getEscalationAssignments(accounts)
 
     const reviewAssignments =
       existingReviewAssignments.length > 0
         ? existingReviewAssignments
-        : this.getEscalationAssignments(accounts)
+        : escalationAssignments
 
     const account = getContext()?.user
+    const currentUserId = account?.id
 
-    if (isEmpty(case_.assignments) && account?.id) {
+    if (isEmpty(case_.assignments) && currentUserId) {
       caseUpdateRequest.assignments = [
-        { assigneeUserId: account.id, timestamp: Date.now() },
+        { assigneeUserId: currentUserId, timestamp: Date.now() },
       ]
 
       await this.caseRepository.updateAssignments(
         [caseId],
         caseUpdateRequest.assignments ?? []
+      )
+    }
+
+    if (
+      escalationAssignments[0]?.assigneeUserId &&
+      case_.caseStatus?.includes('IN_REVIEW')
+    ) {
+      await this.updateAssignments(
+        [caseId],
+        [
+          {
+            assigneeUserId: escalationAssignments[0]?.assigneeUserId,
+            assignedByUserId: currentUserId ?? '',
+            timestamp: Date.now(),
+          },
+        ]
       )
     }
 
