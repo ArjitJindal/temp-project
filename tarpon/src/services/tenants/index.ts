@@ -9,6 +9,7 @@ import {
   GetRestApisCommand,
   GetUsageCommand,
   GetUsagePlanKeysCommand,
+  RestApi,
   ThrottleSettings,
 } from '@aws-sdk/client-api-gateway'
 import { StackConstants } from '@lib/constants'
@@ -312,19 +313,37 @@ export class TenantService {
     }
   }
 
-  async getApiStages(): Promise<ApiStage[] | undefined> {
+  static async getApiStages(): Promise<ApiStage[] | undefined> {
     const apigateway = new APIGatewayClient({
       region,
     })
 
-    const apiGatewayCommand = new GetRestApisCommand({})
+    const apiGateways: RestApi[] = []
+    let position = ''
 
-    const apiGatewaysFiltered = await apigateway.send(apiGatewayCommand)
-    if (!apiGatewaysFiltered?.items?.length) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const apiGatewayCommand = new GetRestApisCommand({
+        limit: 1000,
+        position,
+      })
+
+      const apiGatewaysFiltered = await apigateway.send(apiGatewayCommand)
+
+      apiGateways.push(...(apiGatewaysFiltered?.items ?? []))
+
+      if (!apiGatewaysFiltered.position) {
+        break
+      }
+
+      position = apiGatewaysFiltered.position
+    }
+
+    if (!apiGateways?.length) {
       return undefined
     }
 
-    return apiGatewaysFiltered.items
+    return apiGateways
       .filter((x) => {
         if (
           [
@@ -544,7 +563,7 @@ export class TenantService {
     const createdUsgaePlanCommand = new CreateUsagePlanCommand({
       name: this.getUsagePlanName(tenantId, tenantData.tenantName),
       throttle: throttleSettings,
-      apiStages: await this.getApiStages(),
+      apiStages: await TenantService.getApiStages(),
       description: tenantData.tenantWebsite,
       ...(!process.env.ENV?.startsWith('prod') && {
         quota: { limit: 5000, offset: 0, period: 'MONTH' },
