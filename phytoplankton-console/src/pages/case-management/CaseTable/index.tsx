@@ -544,6 +544,7 @@ export default function CaseTable(props: Props) {
     'ruleQueueIds',
     'ruleNature',
     showAssignedToFilter && 'assignedTo',
+    showAssignedToFilter && 'roleAssignedTo',
     'caseStatus',
   ]);
   const filters = useCaseAlertFilters(filterIds);

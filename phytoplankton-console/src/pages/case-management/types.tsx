@@ -39,6 +39,7 @@ export type CommonCaseParams = {
   riskLevels: RiskLevel[];
   alertId: string;
   assignedTo: string[];
+  roleAssignedTo: string[];
   qaAssignment: string[];
   updatedAt: string[];
   caseTypesFilter: CaseType[];

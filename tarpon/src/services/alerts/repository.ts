@@ -2,7 +2,7 @@ import { Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
-import { compact, difference } from 'lodash'
+import { compact, difference, intersection, isEmpty, isUndefined } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -50,6 +50,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
+import { AccountsService } from '@/services/accounts'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 export const API_USER = 'API'
@@ -369,6 +370,40 @@ export class AlertsRepository {
         },
       })
     }
+
+    if (
+      !isUndefined(params.filterAssignmentsRoles) &&
+      !isEmpty(params.filterAssignmentsRoles)
+    ) {
+      // Since the number of accounts is typically a small number, we can fetch relevant accounts and filter cases by
+      // making use of the `params.filterAssignmentsIds` field.
+      const accountsService = await AccountsService.getInstance()
+      const accountIdsWithRole = await accountsService.getAccountIdsForRoles(
+        this.tenantId,
+        params.filterAssignmentsRoles
+      )
+
+      if (params.filterAssignmentsRoles.includes('Unassigned')) {
+        // Special case to handle unassigned cases
+        accountIdsWithRole.push('Unassigned')
+      }
+
+      if (isEmpty(params.filterAssignmentsIds)) {
+        params.filterAssignmentsIds = accountIdsWithRole
+      } else {
+        params.filterAssignmentsIds = intersection(
+          params.filterAssignmentsIds,
+          accountIdsWithRole
+        )
+      }
+
+      if (isEmpty(params.filterAssignmentsIds)) {
+        // If no accountIds are found for the roles or no intersection is found, search for a dummy value which does
+        // not exist which mimic the behavior of not returning any cases
+        params.filterAssignmentsIds = ['DUMMY']
+      }
+    }
+
     if (
       params.filterAssignmentsIds != null &&
       params.filterAssignmentsIds?.length

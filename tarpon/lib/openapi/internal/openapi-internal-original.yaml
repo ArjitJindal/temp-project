@@ -4295,6 +4295,12 @@ paths:
             items:
               type: string
           in: query
+          name: filterAssignmentsRoles
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
           name: filterQaAssignmentsIds
         - schema:
             type: string
@@ -5064,6 +5070,12 @@ paths:
               type: string
           in: query
           name: filterAssignmentsIds
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterAssignmentsRoles
         - schema:
             type: number
           in: query

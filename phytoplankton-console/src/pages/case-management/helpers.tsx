@@ -1,5 +1,6 @@
 import { UserOutlined } from '@ant-design/icons';
 import { humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { map } from 'lodash';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
@@ -32,6 +33,7 @@ import { RULE_NATURES } from '@/apis/models-custom/RuleNature';
 import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
+import { useRoles } from '@/utils/user-utils';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -60,6 +62,7 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       userStates: params.userStates?.join(','),
       riskLevels: params.riskLevels?.join(','),
       assignedTo: params.assignedTo?.join(','),
+      roleAssignedTo: params.roleAssignedTo?.join(','),
       qaAssignment: params.qaAssignment?.join(','),
       updatedAt: params['updatedAt']?.map((x) => dayjs(x).valueOf()).join(','),
       filterQaStatus: params['filterQaStatus']?.join(','),
@@ -109,6 +112,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       riskLevels: raw.riskLevels?.split(',') as unknown as TableSearchParams['riskLevels'],
       showCases: (showCases as ScopeSelectorValue | undefined) ?? 'ALL',
       assignedTo: raw.assignedTo?.split(',') as unknown as TableSearchParams['assignedTo'],
+      roleAssignedTo: raw.roleAssignedTo?.split(
+        ',',
+      ) as unknown as TableSearchParams['roleAssignedTo'],
       qaAssignment: raw.qaAssignment?.split(',') as unknown as TableSearchParams['qaAssignment'],
       updatedAt: raw?.['updatedAt']?.split(',').map((x) => dayjs(parseInt(x)).format()),
       filterQaStatus: raw?.['filterQaStatus']?.split(',') as ChecklistStatus[] | undefined,
@@ -133,6 +139,11 @@ export const useCaseAlertFilters = (
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
+
+  const [roles] = useRoles();
+  const roleAssignedToOptions = map(roles, 'name');
+  roleAssignedToOptions.unshift('Unassigned');
+
   return denseArray([
     {
       title: 'Case ID',
@@ -242,6 +253,17 @@ export const useCaseAlertFilters = (
           onUpdateFilterClose={onUpdateFilterClose}
         />
       ),
+    },
+    {
+      key: 'roleAssignedTo',
+      title: 'Role assigned to',
+      showFilterByDefault: false,
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: roleAssignedToOptions.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
     },
     {
       key: 'originMethodFilterId',

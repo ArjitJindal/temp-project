@@ -38,6 +38,7 @@ export default function CaseTableWrapper(props: {
       userStates,
       showCases,
       assignedTo,
+      roleAssignedTo,
       updatedAt,
       caseTypesFilter,
       ruleQueueIds,
@@ -76,6 +77,12 @@ export default function CaseTableWrapper(props: {
       filterRuleNature: ruleNature,
       filterAssignmentsIds:
         showCases === 'MY' ? [auth0user.userId] : assignedTo?.length ? assignedTo : undefined,
+      filterAssignmentsRoles:
+        showCases === 'MY'
+          ? [auth0user.userId]
+          : roleAssignedTo?.length
+          ? roleAssignedTo
+          : undefined,
       ...(updatedAt && {
         filterCasesByLastUpdatedStartTimestamp: updatedAt ? dayjs(updatedAt[0]).valueOf() : 0,
         filterCasesByLastUpdatedEndTimestamp: updatedAt

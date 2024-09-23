@@ -947,6 +947,7 @@ export default function AlertTable(props: Props) {
     'riskLevels',
     'ruleQueueIds',
     showAssignedToFilter && 'assignedTo',
+    showAssignedToFilter && 'roleAssignedTo',
     'originMethodFilterId',
     'destinationMethodFilterId',
     'ruleNature',

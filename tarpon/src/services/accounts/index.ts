@@ -899,4 +899,19 @@ export class AccountsService {
 
     return false
   }
+
+  async getAccountIdsForRoles(
+    tenantId: string,
+    roles: string[]
+  ): Promise<string[]> {
+    const db = this.mongoDb.db()
+
+    const accounts = await db
+      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
+      .find({ role: { $in: roles } })
+      .project({ id: 1, _id: 0 })
+      .toArray()
+
+    return accounts.map((account) => account.id)
+  }
 }
