@@ -53,6 +53,21 @@ export const closeClickhouseClient = async (tenantId: string) => {
   }
 }
 
+export const getClickhouseClientConfig =
+  async (): Promise<NodeClickHouseClientConfigOptions> => {
+    const config = await getSecret<NodeClickHouseClientConfigOptions>(
+      'clickhouse'
+    )
+
+    return {
+      ...config,
+      database: 'default',
+      url: useNormalLink()
+        ? config.url?.toString().replace('vpce.', '')
+        : config.url,
+    }
+  }
+
 export const executeClickhouseDefaultClientQuery = async (
   callback: (client: ClickHouseClient) => Promise<any>
 ) => {
@@ -66,13 +81,8 @@ export const executeClickhouseDefaultClientQuery = async (
     await clickHouseClient.close()
     return result
   } else {
-    const config = await getSecret<NodeClickHouseClientConfigOptions>(
-      'clickhouse'
-    )
-    const clickHouseClient = createClient({
-      ...config,
-      database: 'default',
-    })
+    const config = await getClickhouseClientConfig()
+    const clickHouseClient = createClient(config)
     const result = await callback(clickHouseClient)
     await clickHouseClient.close()
     return result
@@ -116,18 +126,10 @@ export async function getClickhouseClient(tenantId: string) {
     return clickHouseClient
   }
 
-  const config = await getSecret<NodeClickHouseClientConfigOptions>(
-    'clickhouse'
-  )
+  const config = await getClickhouseClientConfig()
 
   client = {
-    [tenantId]: createClient({
-      ...config,
-      database: getClickhouseDbName(tenantId),
-      url: useNormalLink()
-        ? config.url?.toString().replace('vpce.', '')
-        : config.url,
-    }),
+    [tenantId]: createClient(config),
   }
 
   return client[tenantId]
