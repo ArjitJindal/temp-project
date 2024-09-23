@@ -360,7 +360,7 @@ export class ApiUsageMetricsService {
     const collection = db.collection(
       SANCTIONS_SEARCHES_COLLECTION(tenantInfo.id)
     )
-    const createdAtField = 'response.createdAt'
+    const createdAtField = 'createdAt'
     const result = await collection
       .aggregate<{ _id: string; providerSearchIds: string[] }>([
         {
