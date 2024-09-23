@@ -66,6 +66,7 @@ export type Question<T extends Variables> =
   | TimeseriesQuestion<T>
   | PropertiesQuestion<T>
   | EmbeddedQuestion<T>
+  | ScreeningComparisonQuestion<T>
 
 export type AggregationQuestion<V extends Variables, D> = QuestionBase<V> & {
   aggregationPipeline: (
@@ -106,6 +107,10 @@ export type PropertiesQuestion<V extends Variables> = {
 
 export type EmbeddedQuestion<V extends Variables> = {
   type: 'EMBEDDED'
+} & QuestionBase<V>
+
+export type ScreeningComparisonQuestion<V extends Variables> = {
+  type: 'SCREENING_COMPARISON'
 } & QuestionBase<V>
 
 export type Investigation = {

@@ -36,6 +36,12 @@ export interface QuestionResponseStackedBarchart extends QuestionResponseBase, A
   questionType: 'STACKED_BARCHART';
 }
 
+export interface QuestionResponseScreeningComparison
+  extends QuestionResponseBase,
+    Api.SanctionsHitComparison {
+  questionType: 'SCREENING_COMPARISON';
+}
+
 export type QuestionResponseSkeleton = {
   questionType: 'SKELETON';
   requestId: string;
@@ -49,7 +55,8 @@ export type QuestionResponse =
   | QuestionResponseStackedBarchart
   | QuestionResponseBarchart
   | QuestionResponseProperties
-  | QuestionResponseEmbedded;
+  | QuestionResponseEmbedded
+  | QuestionResponseScreeningComparison;
 
 export function parseQuestionResponse(responses: Api.GetQuestionsResponse): QuestionResponse[] {
   return (

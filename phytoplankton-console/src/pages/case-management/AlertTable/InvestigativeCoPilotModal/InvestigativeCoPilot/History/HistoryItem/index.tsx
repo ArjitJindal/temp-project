@@ -1,4 +1,4 @@
-import React, { useState, useLayoutEffect, useRef } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
@@ -18,12 +18,13 @@ import HistoryItemEmbedded from '@/pages/case-management/AlertTable/Investigativ
 import { CommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import HistoryItemScreeningComparison from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemScreeningComparison';
 
 interface Props {
   isUnread: boolean;
   alertId: string;
   item: QuestionResponse;
-  observe: (el: Element) => () => void;
+  observe?: (el: Element) => () => void;
 }
 
 export default function HistoryItem(props: Props) {
@@ -34,7 +35,7 @@ export default function HistoryItem(props: Props) {
   const rootRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
     const el = rootRef.current;
-    if (el) {
+    if (el && observe) {
       return observe(el);
     }
   }, [observe]);
@@ -138,6 +139,9 @@ function renderItem(
   }
   if (item.questionType === 'EMBEDDED') {
     return <HistoryItemEmbedded item={item} />;
+  }
+  if (item.questionType === 'SCREENING_COMPARISON') {
+    return <HistoryItemScreeningComparison item={item} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

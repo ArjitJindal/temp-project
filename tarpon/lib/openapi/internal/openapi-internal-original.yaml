@@ -6917,6 +6917,7 @@ components:
         - $ref: '#/components/schemas/StackedBarchart'
         - $ref: '#/components/schemas/Barchart'
         - $ref: '#/components/schemas/Properties'
+        - $ref: '#/components/schemas/SanctionsHitComparison'
     QuestionVariableOption:
       title: QuestionVariableOption
       type: object
@@ -7022,6 +7023,12 @@ components:
                       type: string
                     y:
                       type: number
+    SanctionsHitComparison:
+      title: SanctionsHitComparison
+      type: object
+      properties:
+        sanctionsHit:
+          $ref: '#/components/schemas/SanctionsHit'
     Barchart:
       title: Barchart
       type: object

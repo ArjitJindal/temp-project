@@ -350,6 +350,9 @@ export class QuestionService {
     if (question.type === 'EMBEDDED') {
       return common
     }
+    if (question.type === 'SCREENING_COMPARISON') {
+      throw new Error(`Not supported yet`)
+    }
 
     throw new Error(`Unsupported question type`)
   }

@@ -15,8 +15,15 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
         return Promise.resolve(MOCKED_ACCOUNTS);
       };
     }
+    if (prop === 'getQuestions') {
+      return (): Promise<Account[]> => {
+        return Promise.resolve([]);
+      };
+    }
     throw new Error(
-      `This is a mock Flagright internal API implementation used for storybook. It doesn't support 'getAccounts' function yet. If you need to use it in your story, you can extend mock to support it`,
+      `This is a mock Flagright internal API implementation used for storybook. It doesn't support "${String(
+        prop,
+      )}" function yet. If you need to use it in your story, you can extend mock to support it`,
     );
   },
 });

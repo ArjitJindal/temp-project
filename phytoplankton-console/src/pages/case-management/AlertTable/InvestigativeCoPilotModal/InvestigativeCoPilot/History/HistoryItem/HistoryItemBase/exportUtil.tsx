@@ -3,6 +3,7 @@ import { QuestionResponse } from '../../../types';
 import { typeAssigner } from '../HistoryItemTable';
 import { CsvRow, csvValue, serialize } from '@/utils/csv';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
+import { getComparisonItems } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison';
 
 export const formatData = (item: Partial<QuestionResponse>): string => {
   const result: CsvRow[] = [];
@@ -93,6 +94,31 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
         return [csvValue(key), ...lookUp[key]];
       });
       result.push(...rows);
+      break;
+    }
+    case 'SCREENING_COMPARISON': {
+      const { sanctionsHit } = item;
+      const comparisonItems = getComparisonItems(
+        sanctionsHit?.entity.matchTypeDetails || [],
+        sanctionsHit?.hitContext || {},
+      );
+      const header: CsvRow = [
+        csvValue('title'),
+        csvValue('screeningValue'),
+        csvValue('kycValue'),
+        csvValue('match'),
+        csvValue('sources'),
+      ];
+      result.push(header);
+      for (const comparisonItem of comparisonItems) {
+        result.push([
+          csvValue(comparisonItem.title),
+          csvValue(comparisonItem.screeningValue),
+          csvValue(comparisonItem.kycValue),
+          csvValue(comparisonItem.match),
+          csvValue(comparisonItem.sources),
+        ]);
+      }
       break;
     }
     case 'EMBEDDED':
