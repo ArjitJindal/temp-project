@@ -77,6 +77,7 @@ import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { traceable } from '@/core/xray'
 import { Currency, CurrencyService } from '@/services/currency'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 const INTERNAL_ONLY_TRANSACTION_ATTRIBUTES = difference(
   InternalTransaction.getAttributeTypeMap().map((v) => v.name),
@@ -389,7 +390,7 @@ export class MongoDbTransactionRepository
       })
     }
     if (params.filterTagKey || params.filterTagValue) {
-      const elemCondition: { [attr: string]: Filter<Tag> } = {}
+      const elemCondition: { [attr: string]: Filter<Tag | UserTag> } = {}
       if (params.filterTagKey) {
         elemCondition['key'] = { $in: [params.filterTagKey] }
       }

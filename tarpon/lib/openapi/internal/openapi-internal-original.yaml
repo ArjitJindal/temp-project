@@ -9080,6 +9080,40 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
         comment:
           $ref: '#/components/schemas/CommentRequest'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
+    FileImport:
+      title: FileImport
+      type: object
+      properties:
+        _id:
+          type: string
+        type:
+          type: string
+          enum:
+            - TRANSACTION
+            - USER
+            - BUSINESS
+        s3Key:
+          type: string
+        filename:
+          type: string
+        importedRecords:
+          type: number
+        error:
+          type: string
+        statuses:
+          type: array
+          items:
+            $ref: '#/components/schemas/TaskStatusChange'
+      required:
+        - _id
+        - type
+        - s3Key
+        - filename
+        - statuses
     TaskStatusChange:
       type: object
       title: TaskStatusChange
@@ -9271,6 +9305,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskLevelAlias'
+        consoleTags:
+          type: array
+          items:
+            $ref: '#/components/schemas/ConsoleTag'
+          maxItems: 10
         defaultValues:
           type: object
           properties:
@@ -9334,6 +9373,17 @@ components:
           type: boolean
         accountDormancyAllowedDays:
           type: number
+    ConsoleTag:
+      title: ConsoleTag
+      type: object
+      properties:
+        key:
+          type: string
+        createdAt:
+          type: number
+      required:
+        - key
+        - createdAt
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object
@@ -12384,6 +12434,7 @@ components:
             - REVIEW_ASSIGNMENT
             - API_UPDATE
             - API_CREATION
+            - TAGS_UPDATE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:
@@ -13742,6 +13793,23 @@ components:
       required:
         - type
         - day
+    TenantCustomTag:
+      title: TenantCustomTag
+      type: object
+      properties:
+        key:
+          type: string
+        valueType:
+          type: string
+          enum:
+            - BOOLEAN
+            - STRING
+            - NUMERIC
+        createdAt:
+          type: number
+      required:
+        - key
+        - valueType
     WebhookUserStateDetails:
       title: WebhookUserStateDetails
       type: object

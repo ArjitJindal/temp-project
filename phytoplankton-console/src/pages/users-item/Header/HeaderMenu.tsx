@@ -3,10 +3,18 @@ import { useMemo, useState } from 'react';
 import { ManualCaseCreationButton } from '../ManualCaseCreationButton';
 import { getUserReportTables } from '../UserReport';
 import s from './index.module.less';
+import EditTagsButton from './EditTagsButton';
 import Dropdown from '@/components/library/Dropdown';
 import Button from '@/components/library/Button';
 import Downloadicon from '@/components/ui/icons/Remix/system/download-line.react.svg';
-import { InternalBusinessUser, InternalConsumerUser, RiskLevel, RiskScoreComponent } from '@/apis';
+import {
+  Comment,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  RiskLevel,
+  RiskScoreComponent,
+  UserTag,
+} from '@/apis';
 import DownloadAsPDF from '@/components/DownloadAsPdf/DownloadAsPDF';
 import { message } from '@/components/library/Message';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -32,10 +40,12 @@ export interface RiskScore {
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
+  onNewComment: (comment: Comment) => void;
+  onNewTags: (tags: UserTag[]) => void;
 }
 
 export const HeaderMenu = (props: Props) => {
-  const { user } = props;
+  const { user, onNewComment, onNewTags } = props;
   const userId = user.userId;
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
   const isRiskLevelEnabled = useFeatureEnabled('RISK_LEVELS');
@@ -135,6 +145,17 @@ export const HeaderMenu = (props: Props) => {
         </AsyncResourceRenderer>
       ),
       value: 'USER_REPORT',
+    },
+    {
+      label: (
+        <EditTagsButton
+          user={user}
+          onNewComment={onNewComment}
+          onTagsUpdated={onNewTags}
+          className={s.optionButton}
+        />
+      ),
+      value: 'EDIT_TAGS',
     },
   ];
   return (

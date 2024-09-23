@@ -990,7 +990,6 @@ export class UserRepository {
     } catch (error) {
       console.log('Full error:', JSON.stringify(error, null, 2)) // Log full error details
     }
-
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'

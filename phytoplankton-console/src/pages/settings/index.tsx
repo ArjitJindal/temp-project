@@ -25,6 +25,7 @@ import SlaPolicySettings from './components/SlaPolicySettings';
 import { SecuritySettings } from './components/SecuritySettings';
 import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
+import TagSettings from './components/TagSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -111,7 +112,16 @@ export default function SettingsPage() {
               </>
             ),
           },
-          { title: i18n('menu.settings.users'), key: 'users', children: <KYCUserStatusSettings /> },
+          {
+            title: i18n('menu.settings.users'),
+            key: 'users',
+            children: (
+              <>
+                <KYCUserStatusSettings />
+                <TagSettings />
+              </>
+            ),
+          },
           { title: i18n('menu.settings.rules'), key: 'rules', children: <RuleActionSettings /> },
           {
             title: i18n('menu.settings.risk-scoring'),

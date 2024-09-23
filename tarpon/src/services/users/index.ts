@@ -762,21 +762,46 @@ export class UserService {
     }
 
     const isBusiness = isBusinessUser(user)
+    let updatedUser: User | Business = { ...user }
+    let commentBody = ''
+    let auditLogPromise: Promise<void>
 
-    const updatedUser: User | Business = {
-      ...user,
-      ...this.getUserEventData(
-        user,
-        updateRequest.userStateDetails,
-        updateRequest.kycStatusDetails
-      ),
-      transactionLimits: updateRequest.transactionLimits
-        ? {
-            ...user.transactionLimits,
-            paymentMethodLimits:
-              updateRequest.transactionLimits.paymentMethodLimits,
-          }
-        : undefined,
+    if (updateRequest.tags) {
+      updatedUser = { ...updatedUser, tags: updateRequest.tags }
+      commentBody = 'User API tags updated over the console'
+      auditLogPromise = this.userAuditLogService.handleAuditLogForTagsUpdate(
+        user.userId,
+        updateRequest.tags
+      )
+    } else {
+      updatedUser = {
+        ...updatedUser,
+        ...this.getUserEventData(
+          user,
+          updateRequest.userStateDetails,
+          updateRequest.kycStatusDetails
+        ),
+        transactionLimits: updateRequest.transactionLimits
+          ? {
+              ...user.transactionLimits,
+              paymentMethodLimits:
+                updateRequest.transactionLimits.paymentMethodLimits,
+            }
+          : undefined,
+      }
+      commentBody =
+        this.getKycAndUserUpdateComment({
+          caseId: options?.caseId,
+          kycRuleInstance: options?.kycRuleInstance,
+          kycStatusDetails: updateRequest.kycStatusDetails,
+          userStateDetails: updateRequest.userStateDetails,
+          comment: updateRequest.comment?.body,
+          userStateRuleInstance: options?.userStateRuleInstance,
+        }) ?? ''
+      auditLogPromise = this.userAuditLogService.handleAuditLogForUserUpdate(
+        updateRequest,
+        user.userId
+      )
     }
 
     const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
@@ -791,24 +816,15 @@ export class UserService {
       {
         timestamp: Date.now(),
         userId: user.userId,
-        reason: updateRequest.userStateDetails?.reason,
+        reason: updateRequest.userStateDetails?.reason ?? 'User update',
         updatedConsumerUserAttributes: updateRequest,
       },
       isBusiness ? 'BUSINESS' : 'CONSUMER'
     )
 
-    const commentBody = this.getKycAndUserUpdateComment({
-      caseId: options?.caseId,
-      kycRuleInstance: options?.kycRuleInstance,
-      kycStatusDetails: updateRequest.kycStatusDetails,
-      userStateDetails: updateRequest.userStateDetails,
-      comment: updateRequest.comment?.body,
-      userStateRuleInstance: options?.userStateRuleInstance,
-    })
-
     const [savedComment] = await Promise.all([
       this.userRepository.saveUserComment(user.userId, {
-        body: commentBody ?? '',
+        body: commentBody,
         createdAt: Date.now(),
         userId: options?.bySystem
           ? FLAGRIGHT_SYSTEM_USER
@@ -816,10 +832,7 @@ export class UserService {
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      this.userAuditLogService.handleAuditLogForUserUpdate(
-        updateRequest,
-        user.userId
-      ),
+      auditLogPromise,
       this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
     ])
     return savedComment

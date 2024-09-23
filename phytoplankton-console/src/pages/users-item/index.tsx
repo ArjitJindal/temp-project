@@ -10,7 +10,7 @@ import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
-import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { Comment, InternalBusinessUser, InternalConsumerUser, UserTag } from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -45,6 +45,21 @@ export default function UserItem() {
     }
     return api.getUsersItem({ userId: id });
   });
+
+  const handleNewTags = (tags: UserTag[]) => {
+    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+      USERS_ITEM(id),
+      (user) => {
+        if (user == null) {
+          return user;
+        }
+        return {
+          ...user,
+          tags: tags,
+        };
+      },
+    );
+  };
 
   const handleNewComment = (newComment: Comment) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
@@ -92,6 +107,7 @@ export default function UserItem() {
                 headerStickyElRef={setHeaderStickyElRef}
                 user={user}
                 onNewComment={handleNewComment}
+                onNewTags={handleNewTags}
               />
             </Card.Root>
           }

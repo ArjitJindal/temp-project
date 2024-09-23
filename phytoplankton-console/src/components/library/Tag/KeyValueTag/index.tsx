@@ -1,10 +1,10 @@
 import React from 'react';
 import Tag from '../index';
 import s from './index.module.less';
-import { Tag as ApiTag } from '@/apis';
+import { Tag as ApiTag, UserTag } from '@/apis';
 
 interface Props {
-  tag: ApiTag;
+  tag: ApiTag | UserTag;
 }
 
 export default function KeyValueTag(props: Props) {

@@ -1,7 +1,7 @@
 import React from 'react';
 import SubHeader from './SubHeader';
 import { HeaderMenu } from './HeaderMenu';
-import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { Comment, InternalBusinessUser, InternalConsumerUser, UserTag } from '@/apis';
 import CommentButton from '@/components/CommentButton';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -12,10 +12,11 @@ interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
   user: InternalConsumerUser | InternalBusinessUser;
   onNewComment: (newComment: Comment) => void;
+  onNewTags: (tags: UserTag[]) => void;
 }
 
 export default function Header(props: Props) {
-  const { user, headerStickyElRef, onNewComment } = props;
+  const { user, headerStickyElRef, onNewComment, onNewTags } = props;
   const userId = user.userId;
 
   const api = useApi();
@@ -51,7 +52,7 @@ export default function Header(props: Props) {
           requiredPermissions={['users:user-comments:write']}
         />,
 
-        <HeaderMenu user={user} />,
+        <HeaderMenu onNewTags={onNewTags} onNewComment={onNewComment} user={user} />,
       ]}
       subHeader={<SubHeader onNewComment={onNewComment} user={user} />}
     />

@@ -1,8 +1,9 @@
 import { isEmpty, uniqBy } from 'lodash'
 import { Tag } from '@/@types/openapi-public/Tag'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 export const tagsRuleFilter = (
-  incomingTags: Tag[] | undefined,
+  incomingTags: Tag[] | UserTag[] | undefined,
   filterTag: { [key: string]: string[] } | undefined
 ): boolean => {
   if (isEmpty(filterTag) || !filterTag) {

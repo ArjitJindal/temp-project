@@ -1921,7 +1921,7 @@ components:
           type: array
           description: Additional information that can be added via tags
           items:
-            $ref: '#/components/schemas/Tag'
+            $ref: '#/components/schemas/UserTag'
     ConsumerUserSegment:
       title: ConsumerUserSegment
       type: string
@@ -2147,6 +2147,18 @@ components:
           items:
             type: string
       description: Details of User's employment
+    UserTag:
+      title: UserTag
+      description:
+        Generic key-value pair model to append a custom variable being sent
+        to Flagright API
+      allOf:
+        - $ref: '#/components/schemas/Tag'
+        - type: object
+          properties:
+            isEditable:
+              type: boolean
+              description: Flag to indicate if the tag is editable over the console
     Tag:
       title: Tag
       required:
@@ -3800,7 +3812,7 @@ components:
           type: array
           description: Additional information that can be added via tags
           items:
-            $ref: '#/components/schemas/Tag'
+            $ref: '#/components/schemas/UserTag'
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object

@@ -1,7 +1,7 @@
 import React from 'react';
 import { uniqBy } from 'lodash';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
-import { InternalConsumerUser, Tag as ApiTag } from '@/apis';
+import { InternalConsumerUser, UserTag } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -83,7 +83,7 @@ export default function GeneralDetails(props: Props) {
           label: 'Tags',
           value: (
             <TagList>
-              {user.tags?.map((tag: ApiTag) => (
+              {user.tags?.map((tag: UserTag) => (
                 <KeyValueTag key={tag.key} tag={tag} />
               ))}
             </TagList>

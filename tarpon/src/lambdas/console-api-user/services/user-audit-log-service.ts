@@ -8,6 +8,7 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 @traceable
 export class UserAuditLogService {
@@ -57,6 +58,21 @@ export class UserAuditLogService {
       logMetadata: {
         userType: user?.type,
       },
+    }
+    await publishAuditLog(this.tenantId, auditLog)
+  }
+
+  public async handleAuditLogForTagsUpdate(
+    userId: string,
+    tags: UserTag[]
+  ): Promise<void> {
+    const auditLog: AuditLog = {
+      type: 'USER',
+      action: 'UPDATE',
+      timestamp: Date.now(),
+      newImage: { tags },
+      entityId: userId,
+      subtype: 'TAGS_UPDATE',
     }
     await publishAuditLog(this.tenantId, auditLog)
   }
