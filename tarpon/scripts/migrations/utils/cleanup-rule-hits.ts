@@ -106,7 +106,7 @@ async function cleanupRuleHitsInternal(values: Props) {
             transaction.transactionId
           )
           const updateItemInput: UpdateCommandInput = {
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
             Key: primaryKey,
             UpdateExpression: `set #hitRules = :hitRules, #status = :status`,
             ExpressionAttributeNames: {

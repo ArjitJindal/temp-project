@@ -23,6 +23,7 @@ export const config: Config = {
     EMR: 100,
     GLUE: 30,
   },
+  siloDataTenantIds: [],
   resource: {
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: 1024,

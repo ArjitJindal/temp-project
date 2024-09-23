@@ -12811,6 +12811,8 @@ components:
           type: number
         sanctionsMarketType:
           $ref: '#/components/schemas/SanctionsSettingsMarketType'
+        siloDataMode:
+          type: boolean
       required:
         - tenantName
         - tenantWebsite

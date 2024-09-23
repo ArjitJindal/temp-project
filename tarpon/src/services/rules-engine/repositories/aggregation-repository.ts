@@ -71,7 +71,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Countries`
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :countries`,
       ExpressionAttributeValues: {
@@ -101,7 +101,7 @@ export class AggregationRepository {
       'sendingToCountries',
     ]
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
     }
@@ -125,7 +125,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}Currencies`
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `ADD ${attribute} :currencies`,
       ExpressionAttributeValues: {
@@ -146,7 +146,7 @@ export class AggregationRepository {
       'sendingCurrencies',
     ]
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
     }
@@ -167,7 +167,7 @@ export class AggregationRepository {
   ) {
     const attribute: keyof UserAggregationAttributes = `${direction}TransactionsCount`
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       UpdateExpression: `SET ${attribute} = if_not_exists(${attribute}, :start) + :inc`,
       ExpressionAttributeValues: {
@@ -192,7 +192,7 @@ export class AggregationRepository {
       'sendingTransactionsCount',
     ]
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_AGGREGATION(this.tenantId, userId),
       ProjectionExpression: attributes.join(','),
     }
@@ -246,7 +246,7 @@ export class AggregationRepository {
     await batchWrite(
       this.dynamoDb,
       writeRequests,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     )
   }
 
@@ -335,7 +335,7 @@ export class AggregationRepository {
       duration(1, 'year').asSeconds() +
       duration(7, 'day').asSeconds()
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
@@ -368,7 +368,7 @@ export class AggregationRepository {
       'receivingTransactionsCount',
     ]
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER_TIME_AGGREGATION(
         this.tenantId,
         userId,
@@ -432,7 +432,7 @@ export class AggregationRepository {
     await batchWrite(
       this.dynamoDb,
       writeRequests,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     )
   }
 
@@ -444,7 +444,7 @@ export class AggregationRepository {
     version: string
   ): Promise<Array<T & { hour: string }> | undefined> {
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
-      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       sortKey: {
         from: afterTimeLabel,
         to: beforeTimeLabel,
@@ -485,7 +485,7 @@ export class AggregationRepository {
     version: string
   ): Promise<boolean> {
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.RULE_USER_TIME_AGGREGATION(
@@ -509,7 +509,7 @@ export class AggregationRepository {
     ttl: number
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
           this.tenantId,
@@ -531,7 +531,7 @@ export class AggregationRepository {
     transactionId: string
   ): Promise<boolean> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.RULE_USER_TIME_AGGREGATION_MARKER(
         this.tenantId,
         ruleInstanceId,
@@ -550,7 +550,7 @@ export class AggregationRepository {
     version: string
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
           this.tenantId,
@@ -568,7 +568,7 @@ export class AggregationRepository {
     ruleInstanceId: string
   ): Promise<string | undefined> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.RULE_USER_TIME_AGGREGATION_LATEST_AVAILABLE_VERSION(
         this.tenantId,
         ruleInstanceId,

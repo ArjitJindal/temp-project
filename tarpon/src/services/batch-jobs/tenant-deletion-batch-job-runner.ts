@@ -381,7 +381,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       this.dynamoDb(),
       tenantId,
       partitionKeyId,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'Aggregation Variable'
     )
   }
@@ -431,13 +431,13 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       this.dynamoDb(),
       tenantId,
       DynamoDbKeys.LIST_ITEM(tenantId, listId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'list item'
     )
   }
 
   private async deleteLists(tenantId: string, partitionKeyId: string) {
-    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     const allListHeadersQueryInput: QueryCommandInput = {
       TableName: tableName,
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -486,7 +486,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
             tenantId,
             ruleInstance.id as string
           ).PartitionKeyID,
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
           'Rule Instance Time Aggregation'
         )
       }
@@ -514,14 +514,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       this.dynamoDb(),
       tenantId,
       DynamoDbKeys.USER_AGGREGATION(tenantId, userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'user aggregation'
     )
     await dangerouslyDeletePartition(
       this.dynamoDb(),
       tenantId,
       DynamoDbKeys.USER_TIME_AGGREGATION(tenantId, userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'user aggregation (time)'
     )
 
@@ -532,7 +532,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     tenantId: string,
     transactionId: string
   ) {
-    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId = DynamoDbKeys.TRANSACTION_EVENT(
       tenantId,
       transactionId
@@ -548,7 +548,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteARSScores(tenantId: string, transactionId: string) {
-    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKey = DynamoDbKeys.ARS_VALUE_ITEM(
       tenantId,
       transactionId,
@@ -602,7 +602,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       await dangerouslyDeletePartitionKey(
         this.dynamoDb(),
         key,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
       )
     }
   }
@@ -613,36 +613,36 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       this.dynamoDb(),
       tenantId,
       DynamoDbKeys.BUSINESS_USER_EVENT(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'business user event'
     )
     await dangerouslyDeletePartition(
       this.dynamoDb(),
       tenantId,
       DynamoDbKeys.CONSUMER_USER_EVENT(tenantId, user.userId).PartitionKeyID,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'consumer user event'
     )
     await dangerouslyDeletePartitionKey(
       this.dynamoDb(),
       DynamoDbKeys.DRS_VALUE_ITEM(tenantId, user.userId, '1'),
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     )
     await dangerouslyDeletePartitionKey(
       this.dynamoDb(),
       DynamoDbKeys.KRS_VALUE_ITEM(tenantId, user.userId, '1'),
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     )
     await dangerouslyDeletePartitionKey(
       this.dynamoDb(),
       DynamoDbKeys.USER(tenantId, user.userId) as DynamoDbKey,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     )
   }
 
   private async deleteUsers(tenantId: string) {
     const usersQueryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.USER(tenantId).PartitionKeyID,
@@ -673,7 +673,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
   private async deleteTransactions(tenantId: string) {
     const transactionsQueryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.TRANSACTION(tenantId).PartitionKeyID,
@@ -754,7 +754,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteRiskClassifications(tenantId: string) {
-    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId =
       DynamoDbKeys.RISK_CLASSIFICATION(tenantId).PartitionKeyID
 
@@ -768,7 +768,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteRiskParameters(tenantId: string) {
-    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(tenantId).PartitionKeyID
 
@@ -782,7 +782,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteRiskParametersV8(tenantId: string) {
-    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId =
       DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(tenantId).PartitionKeyID
 
@@ -796,7 +796,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteRiskFactors(tenantId: string) {
-    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKeyId = DynamoDbKeys.RISK_FACTOR(tenantId).PartitionKeyID
 
     await dangerouslyDeletePartition(
@@ -809,7 +809,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteTenantSettings(tenantId: string) {
-    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
     const partitionKey = DynamoDbKeys.TENANT_SETTINGS(tenantId)
 
     await dangerouslyDeletePartitionKey(
@@ -820,7 +820,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteSlackAlertsMarker(tenantId: string) {
-    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
 
     await dangerouslyDeletePartitionKey(
       this.dynamoDb(),

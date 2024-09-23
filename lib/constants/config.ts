@@ -44,7 +44,7 @@ export function getTarponConfig(stage: string, region: string): Config {
   // Ignored as we already throw an exception when not valid, and the typing doesn't compute.
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const cfg = CONFIG_MAP[stage]?.[region]
+  const cfg = CONFIG_MAP[stage ?? 'local']?.[region]
   if (!cfg) {
     throw new Error(`No config found for stage: ${stage} and region: ${region}`)
   }

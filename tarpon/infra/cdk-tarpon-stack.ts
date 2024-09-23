@@ -1,7 +1,7 @@
 import { URL } from 'url'
 import * as cdk from 'aws-cdk-lib'
 import { CfnOutput, Duration, RemovalPolicy } from 'aws-cdk-lib'
-import { AttributeType, Table } from 'aws-cdk-lib/aws-dynamodb'
+import { AttributeType, ITable, Table } from 'aws-cdk-lib/aws-dynamodb'
 import {
   BlockPublicAccess,
   Bucket,
@@ -52,6 +52,7 @@ import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
 import * as eventschema from 'aws-cdk-lib/aws-eventschemas'
 import {
+  DYNAMODB_TABLE_NAMES,
   getDeadLetterQueueName,
   getNameForGlobalResource,
   getResourceNameForTarpon,
@@ -297,24 +298,35 @@ export class CdkTarponStack extends cdk.Stack {
     /**
      * DynamoDB
      */
-    const tarponDynamoDbTable = this.createDynamodbTable(
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    this.createDynamodbTable(
+      DYNAMODB_TABLE_NAMES.TARPON,
       tarponStream,
       true,
       true
     )
-    const tarponRuleDynamoDbTable = this.createDynamodbTable(
-      StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
-    )
-    const hammerheadDynamoDbTable = this.createDynamodbTable(
-      StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-      hammerheadStream
-    )
-    const transientDynamoDbTable = this.createDynamodbTable(
-      StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-      undefined,
-      true
-    )
+    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TARPON_RULE)
+    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.HAMMERHEAD, hammerheadStream)
+    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TRANSIENT, undefined, true)
+
+    const siloTables: ITable[] = []
+
+    for (const tenantId of config.siloDataTenantIds || []) {
+      const tarponSiloDynamoDbTable = this.createDynamodbTable(
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        tarponStream,
+        true,
+        true
+      )
+
+      const tarponSiloRuleDynamoDbTable = this.createDynamodbTable(
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
+        tarponStream,
+        true,
+        true
+      )
+
+      siloTables.push(tarponSiloDynamoDbTable, tarponSiloRuleDynamoDbTable)
+    }
 
     /*
      * MongoDB Atlas DB
@@ -551,13 +563,7 @@ export class CdkTarponStack extends cdk.Stack {
         new PolicyStatement({
           effect: Effect.ALLOW,
           actions: ['dynamodb:*'],
-          resources: [
-            hammerheadDynamoDbTable.tableArn,
-            tarponRuleDynamoDbTable.tableArn,
-            transientDynamoDbTable.tableArn,
-            tarponRuleDynamoDbTable.tableArn,
-            tarponDynamoDbTable.tableArn,
-          ],
+          resources: ['*'],
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,

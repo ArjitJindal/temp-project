@@ -29,6 +29,7 @@ interface FormDetails {
   featureFlags: Feature[];
   demoMode: boolean;
   sanctionsMarketType?: SanctionsSettingsMarketType;
+  siloDataMode: boolean;
 }
 
 const currentEnv = process.env.ENV_NAME;
@@ -61,6 +62,7 @@ export const CreateTenantModal = (props: Props) => {
     demoMode: false,
     auth0DisplayName: '',
     auth0Domain: '',
+    siloDataMode: false,
   });
 
   const api = useApi();
@@ -78,7 +80,7 @@ export const CreateTenantModal = (props: Props) => {
     const auth0DisplayName = formDetails.auth0DisplayName.replaceAll(' ', '');
     const auth0Domain = formDetails.auth0Domain.replaceAll(' ', '');
     const emailsOfAdmins = formDetails.emailsOfAdmins.map((email) => email.replaceAll(' ', ''));
-    const { featureFlags, demoMode, sanctionsMarketType } = formDetails;
+    const { featureFlags, demoMode, sanctionsMarketType, siloDataMode } = formDetails;
 
     if (
       !(tenantName && tenantWebsite && auth0DisplayName && auth0Domain && emailsOfAdmins?.length)
@@ -109,6 +111,7 @@ export const CreateTenantModal = (props: Props) => {
           adminEmails: emailsOfAdmins,
           features: demoMode ? [...featureFlags, 'DEMO_MODE'] : featureFlags,
           sanctionsMarketType,
+          siloDataMode,
         },
       });
 
@@ -176,6 +179,10 @@ export const CreateTenantModal = (props: Props) => {
             title: 'Demo Mode',
           },
         }),
+        siloDataMode: {
+          type: 'boolean',
+          title: 'Silo Data Mode',
+        },
       },
       required: [
         'tenantName',
@@ -216,6 +223,10 @@ export const CreateTenantModal = (props: Props) => {
       },
       demoMode: {
         'ui:help': 'Whether to enable demo mode for the tenant',
+      },
+      siloDataMode: {
+        'ui:help':
+          'Whether to enable silo data mode for the tenant (This will create a new tables of DynamoDB for the tenant)',
       },
     }),
     [],

@@ -916,7 +916,9 @@ describe('Verify Transaction for Simulation', () => {
 
     // Check transaction not saved and aggregation not run
     const dynamoDbData = await dynamoDb.send(
-      new ScanCommand({ TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME })
+      new ScanCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(TEST_TENANT_ID),
+      })
     )
     expect(dynamoDbData.Count).toBe(0)
     const transactionRepository = new MongoDbTransactionRepository(

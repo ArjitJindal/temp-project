@@ -83,7 +83,7 @@ export class DynamoDbTransactionRepository
     const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
     const batchWriteItemParams: BatchWriteCommandInput = {
       RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
           {
             PutRequest: {
               Item: {
@@ -107,7 +107,7 @@ export class DynamoDbTransactionRepository
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
     return transaction
   }
@@ -122,7 +122,7 @@ export class DynamoDbTransactionRepository
 
     await this.dynamoDb.send(
       new UpdateCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: primaryKey,
         UpdateExpression: `SET executedRules = :executedRules, hitRules = :hitRules, #status = :status`,
         ExpressionAttributeValues: {
@@ -139,7 +139,7 @@ export class DynamoDbTransactionRepository
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
   }
 
@@ -152,7 +152,7 @@ export class DynamoDbTransactionRepository
 
     const batchWriteItemParams: BatchWriteCommandInput = {
       RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
           {
             DeleteRequest: {
               Key: primaryKey,
@@ -288,7 +288,7 @@ export class DynamoDbTransactionRepository
     options?: { consistentRead?: boolean }
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ...(options?.consistentRead && { ConsistentRead: true }),
     }
@@ -359,7 +359,7 @@ export class DynamoDbTransactionRepository
     )
     const batchGetItemInput: BatchGetCommandInput = {
       RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: {
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: {
           Keys: Array.from(new Set(transactionIds)).map((transactionId) =>
             DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
           ),
@@ -377,7 +377,7 @@ export class DynamoDbTransactionRepository
     )
     return (
       (result.Responses?.[
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
       ] as Transaction[]) || []
     )
   }
@@ -408,7 +408,7 @@ export class DynamoDbTransactionRepository
       []
     )
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
@@ -488,7 +488,7 @@ export class DynamoDbTransactionRepository
       attributesToFetch
     )
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       FilterExpression: transactionFilterQuery.FilterExpression,
       ExpressionAttributeValues: {
@@ -882,7 +882,7 @@ export class DynamoDbTransactionRepository
     )
 
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
-      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       filterExpression: transactionFilterQuery.FilterExpression,
       expressionAttributeNames: transactionFilterQuery.ExpressionAttributeNames,
       expressionAttributeValues:

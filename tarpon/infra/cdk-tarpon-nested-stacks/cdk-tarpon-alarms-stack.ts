@@ -6,6 +6,7 @@ import { Topic } from 'aws-cdk-lib/aws-sns'
 import { Construct } from 'constructs'
 import { Alarm, ComparisonOperator, Metric } from 'aws-cdk-lib/aws-cloudwatch'
 import {
+  DYNAMODB_TABLE_NAMES,
   getDeadLetterQueueName,
   SQSQueues,
   StackConstants,
@@ -53,12 +54,18 @@ const API_GATEWAY_NAMES = [
   StackConstants.CONSOLE_API_NAME,
 ]
 
-const dynamoTables = [
-  StackConstants.TARPON_DYNAMODB_TABLE_NAME,
-  StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
-  StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
-  StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-]
+const dynamoTables = (config: Config) => {
+  const tables = [...Object.values(DYNAMODB_TABLE_NAMES)]
+  if (config.siloDataTenantIds?.length) {
+    tables.push(
+      ...config.siloDataTenantIds.flatMap((id) => [
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(id),
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(id),
+      ])
+    )
+  }
+  return tables
+}
 
 const KINESIS_STREAM_NAMES = [
   {
@@ -146,7 +153,7 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
         streamDetails.streamName
       )
     }
-    for (const tableName of dynamoTables) {
+    for (const tableName of dynamoTables(this.config)) {
       dynamoTableOperationMetrics.map((metric) => {
         dynamoTableOperations.map((operation) => {
           createDynamoDBAlarm(

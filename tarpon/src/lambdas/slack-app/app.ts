@@ -151,7 +151,7 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
   }
 })
 
-export async function sendCaseCreatedAlert(tenantId) {
+export async function sendCaseCreatedAlert(tenantId: string) {
   const availableAfterTimestamp = dayjs().startOf('day').valueOf()
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
@@ -166,7 +166,7 @@ export async function sendCaseCreatedAlert(tenantId) {
     return
   }
   const getItemInput: GetCommandInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     Key: DynamoDbKeys.SLACK_ALERTS_TIMESTAMP_MARKER(tenantId),
   }
   const result = (await dynamoDb.send(new GetCommand(getItemInput))).Item
@@ -217,7 +217,7 @@ export async function sendCaseCreatedAlert(tenantId) {
     ],
   })
   const putItemInput: PutCommandInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     Item: {
       ...DynamoDbKeys.SLACK_ALERTS_TIMESTAMP_MARKER(tenantId),
       timestamp: availableAfterTimestamp,

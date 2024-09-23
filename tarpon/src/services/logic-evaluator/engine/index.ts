@@ -692,7 +692,7 @@ export class LogicEvaluator {
       await batchWrite(
         this.dynamoDb,
         writeRequests,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
       )
     } else {
       await this.aggregationRepository.rebuildUserTimeAggregations(

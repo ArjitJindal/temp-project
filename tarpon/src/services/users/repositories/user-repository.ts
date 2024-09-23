@@ -840,7 +840,7 @@ export class UserRepository {
     options?: { consistentRead?: boolean }
   ): Promise<T | undefined> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER(this.tenantId, userId),
       ...(options?.consistentRead && { ConsistentRead: true }),
     }
@@ -867,7 +867,7 @@ export class UserRepository {
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
       UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
       ExpressionAttributeNames: {
@@ -899,7 +899,7 @@ export class UserRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
 
     return user as UserWithRulesResult | BusinessWithRulesResult
@@ -923,7 +923,7 @@ export class UserRepository {
   ): Promise<void> {
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
       UpdateExpression: `set #executedRules = :executedRules, #hitRules = :hitRules`,
       ExpressionAttributeNames: {
@@ -942,7 +942,7 @@ export class UserRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
   }
 
@@ -979,7 +979,7 @@ export class UserRepository {
     }
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...newUser,
@@ -995,7 +995,7 @@ export class UserRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
     return newUser
   }
@@ -1015,7 +1015,7 @@ export class UserRepository {
 
   public async deleteUser(userId: string): Promise<void> {
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER(this.tenantId, userId),
     }
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))

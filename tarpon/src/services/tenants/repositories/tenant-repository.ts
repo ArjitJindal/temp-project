@@ -60,7 +60,7 @@ export class TenantRepository {
     }
 
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ProjectionExpression: settingNames?.join(','),
     }
@@ -89,7 +89,7 @@ export class TenantRepository {
     newTenantSettings: Partial<TenantSettings>
   ): Promise<Partial<TenantSettings>> {
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
 
@@ -144,7 +144,7 @@ export class TenantRepository {
     settingNames: TenantSettingName[]
   ): Promise<void> {
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TENANT_SETTINGS(this.tenantId),
       ReturnValues: 'UPDATED_NEW',
       UpdateExpression: `REMOVE ${settingNames.join(',')}`,

@@ -21,6 +21,7 @@ const dynamoDb = getDynamoDbClient()
 
 dynamoDbSetupHook()
 
+const tenantId = 'tenantId'
 describe('paginateQuery', () => {
   beforeAll(async () => {
     // We need enough data to make query response paginated. Currently it'll result in 2 pages
@@ -37,7 +38,7 @@ describe('paginateQuery', () => {
       await dynamoDb.send(
         new BatchWriteCommand({
           RequestItems: {
-            [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: putRequests,
+            [StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)]: putRequests,
           },
         })
       )
@@ -45,7 +46,7 @@ describe('paginateQuery', () => {
   })
   test('Returns all items - paginated', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -60,7 +61,7 @@ describe('paginateQuery', () => {
 
   test('Returns all items - not paginated', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID = :sk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -82,7 +83,7 @@ describe('paginateQuery', () => {
 
   test('Returns all items - with Limit', async () => {
     const result = await paginateQuery(dynamoDb, {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': 'partition',
@@ -100,7 +101,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -125,7 +126,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -150,7 +151,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -169,7 +170,7 @@ describe('paginateQuery', () => {
     const result = await paginateQuery(
       dynamoDb,
       {
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         KeyConditionExpression: 'PartitionKeyID = :pk',
         ExpressionAttributeValues: {
           ':pk': 'partition',
@@ -219,7 +220,13 @@ describe('batchWrite', () => {
         },
       },
     ]
-    await expect(batchWrite(dynamoDb, requests)).resolves.not.toThrow()
+    await expect(
+      batchWrite(
+        dynamoDb,
+        requests,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      )
+    ).resolves.not.toThrow()
   })
 
   test('Throws an error for some other issue', async () => {
@@ -236,6 +243,12 @@ describe('batchWrite', () => {
         },
       },
     ]
-    await expect(batchWrite(dynamoDb, requests)).rejects.toThrow()
+    await expect(
+      batchWrite(
+        dynamoDb,
+        requests,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      )
+    ).rejects.toThrow()
   })
 })

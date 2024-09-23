@@ -19,7 +19,7 @@ async function migrateTenant(tenant: Tenant) {
   for await (const user of cursor) {
     logger.info(`Removing childUserIds from user ${user.userId}`)
     const updateItemInput: UpdateCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenant.id),
       Key: DynamoDbKeys.USER(tenant.id, user.userId),
       UpdateExpression: `REMOVE linkedEntities.childUserIds`,
     }

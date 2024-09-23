@@ -70,14 +70,14 @@ export function createKinesisStreamEvent<T>(
   }
 }
 
-export async function localTarponChangeCaptureHandler(key: {
-  PartitionKeyID: string
-  SortKeyID?: string
-}) {
+export async function localTarponChangeCaptureHandler(
+  tenantId: string,
+  key: { PartitionKeyID: string; SortKeyID?: string }
+) {
   const dynamoDb = getDynamoDbClientByEvent(null as any)
   const entity = await dynamoDb.send(
     new GetCommand({
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       Key: key,
     })
   )
@@ -97,14 +97,14 @@ export async function localTarponChangeCaptureHandler(key: {
   )(kinesisEvent)
 }
 
-export async function localHammerheadChangeCaptureHandler(key: {
-  PartitionKeyID: string
-  SortKeyID?: string
-}) {
+export async function localHammerheadChangeCaptureHandler(
+  tenantId: string,
+  key: { PartitionKeyID: string; SortKeyID?: string }
+) {
   const dynamoDb = getDynamoDbClientByEvent(null as any)
   const entity = await dynamoDb.send(
     new GetCommand({
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
       Key: key,
     })
   )

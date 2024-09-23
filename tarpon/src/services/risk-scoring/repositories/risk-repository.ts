@@ -101,7 +101,7 @@ export class RiskRepository {
 
   async getKrsScore(userId: string): Promise<KrsScore | null> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -144,7 +144,7 @@ export class RiskRepository {
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...newKrsScoreItem,
@@ -153,7 +153,7 @@ export class RiskRepository {
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(primaryKey)
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.info(`Updated KRS score for user ${userId} to ${score}`)
@@ -186,7 +186,7 @@ export class RiskRepository {
     )
 
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...newArsScoreItem,
@@ -195,7 +195,7 @@ export class RiskRepository {
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(primaryKey)
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
     logger.info(
       `Updated ARS score for transaction ${transactionId} to ${score}`
@@ -206,7 +206,7 @@ export class RiskRepository {
   async getArsScore(transactionId: string): Promise<ArsScore | null> {
     try {
       const getItemInput: GetCommandInput = {
-        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1'),
       }
       const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -225,7 +225,7 @@ export class RiskRepository {
   async getDrsScore(userId: string): Promise<DrsScore | null> {
     try {
       const getItemInput: GetCommandInput = {
-        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1'), // will need to query after we implement versioning
       }
       const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -262,7 +262,7 @@ export class RiskRepository {
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...newDrsScoreItem,
@@ -272,7 +272,7 @@ export class RiskRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(primaryKey)
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.info(
@@ -293,7 +293,7 @@ export class RiskRepository {
     }
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
 
       ExpressionAttributeValues: {
@@ -327,7 +327,7 @@ export class RiskRepository {
       updatedAt: now,
     }
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.RISK_CLASSIFICATION(this.tenantId, 'LATEST'), // Version it later
         ...newRiskClassificationValues,
@@ -377,7 +377,7 @@ export class RiskRepository {
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...newDrsRiskValue,
@@ -387,7 +387,7 @@ export class RiskRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
 
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(primaryKey)
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
     logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
@@ -454,7 +454,7 @@ export class RiskRepository {
   ) {
     logger.info(`Updating parameter risk levels.`)
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...parameterRiskLevels,
         ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
@@ -482,7 +482,7 @@ export class RiskRepository {
     }
 
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...riskFactor,
         ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
@@ -502,7 +502,7 @@ export class RiskRepository {
     parameterId: string
   ): Promise<ParameterAttributeRiskValuesV8 | null> {
     const getInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
         this.tenantId,
         parameterId
@@ -533,7 +533,7 @@ export class RiskRepository {
     )
 
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
     }
 
@@ -553,7 +553,7 @@ export class RiskRepository {
     )
 
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
     }
 
@@ -578,7 +578,7 @@ export class RiskRepository {
     }
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: keyConditionExpr,
 
       ExpressionAttributeValues: expressionAttributeVals,
@@ -629,7 +629,7 @@ export class RiskRepository {
     }
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: keyConditionExpr,
       ExpressionAttributeValues: expressionAttributeVals,
     }
@@ -648,7 +648,7 @@ export class RiskRepository {
 
   async getAverageArsScore(userId: string): Promise<AverageArsScore | null> {
     const getInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
     }
     const result = await this.dynamoDb.send(new GetCommand(getInput))
@@ -670,7 +670,7 @@ export class RiskRepository {
       '1'
     )
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...primaryKey,
         ...averageArsScore,
@@ -678,7 +678,7 @@ export class RiskRepository {
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
     if (process.env.NODE_ENV === 'development') {
-      await handleLocalChangeCapture(primaryKey)
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
     return averageArsScore
@@ -713,7 +713,7 @@ export class RiskRepository {
       )
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: keyConditionExpr,
       ExpressionAttributeValues: expressionAttributeVals,
       ExpressionAttributeNames: {
@@ -740,7 +740,7 @@ export class RiskRepository {
     riskEntityType: RiskEntityType
   ): Promise<Array<ParameterAttributeRiskValuesV8>> {
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
@@ -883,7 +883,7 @@ export class RiskRepository {
     logger.info(`Updating risk factor for V8.`)
 
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...riskFactor,
         ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
@@ -898,7 +898,7 @@ export class RiskRepository {
 
   async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
     const getInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId),
     }
 
@@ -923,7 +923,7 @@ export class RiskRepository {
     const primaryKey = DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId)
 
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
     }
 
@@ -960,7 +960,7 @@ export class RiskRepository {
     }, '')
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: keyConditionExpr,
       ExpressionAttributeValues: expressionAttributeVals,
       ExpressionAttributeNames: {
@@ -988,12 +988,12 @@ export class RiskRepository {
 
 /** Kinesis Util */
 
-const handleLocalChangeCapture = async (primaryKey: {
-  PartitionKeyID: string
-  SortKeyID?: string
-}) => {
+const handleLocalChangeCapture = async (
+  tenantId: string,
+  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
+) => {
   const { localHammerheadChangeCaptureHandler } = await import(
     '@/utils/local-dynamodb-change-handler'
   )
-  await localHammerheadChangeCaptureHandler(primaryKey)
+  await localHammerheadChangeCaptureHandler(tenantId, primaryKey)
 }

@@ -9,8 +9,9 @@ import { CurrencyExchangeUSDType } from '.'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
-const TableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+const TableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID)
 
 @traceable
 export class CurrencyRepository {

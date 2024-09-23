@@ -1,4 +1,6 @@
 import { Config } from '@flagright/lib/config/config'
+import { getTarponConfig } from '@flagright/lib/constants/config'
+import { stageAndRegion } from '@flagright/lib/utils'
 
 export function getSuffix(): string {
   let suffix = ''
@@ -37,13 +39,36 @@ export function getNameForGlobalResource(name: string, config: Config) {
   }`
 }
 
+const [stage, region] = stageAndRegion()
+const { siloDataTenantIds } = getTarponConfig(stage, region)
+
+export const DYNAMODB_TABLE_NAMES = {
+  TARPON: 'Tarpon',
+  TARPON_RULE: 'TarponRule',
+  TRANSIENT: 'Transient',
+  HAMMERHEAD: 'Hammerhead',
+}
+
 export const StackConstants = {
   VPC_NAME: 'vpc',
   VPC_SECURITY_GROUP_ID: 'atlas-lambda-sg',
   S3_SERVER_ACCESS_LOGS_BUCKET_NAME: 's3-server-access-logs',
-  TARPON_DYNAMODB_TABLE_NAME: 'Tarpon',
-  TARPON_RULE_DYNAMODB_TABLE_NAME: 'TarponRule',
-  TRANSIENT_DYNAMODB_TABLE_NAME: 'Transient',
+  TARPON_DYNAMODB_TABLE_NAME: (tenantId: string) => {
+    let tableName = DYNAMODB_TABLE_NAMES.TARPON
+    if (siloDataTenantIds?.includes(tenantId)) {
+      tableName = `${tableName}-${tenantId}`
+    }
+    return tableName
+  },
+  HAMMERHEAD_DYNAMODB_TABLE_NAME: (tenantId: string) => {
+    let tableName = DYNAMODB_TABLE_NAMES.HAMMERHEAD
+    if (siloDataTenantIds?.includes(tenantId)) {
+      tableName = `${tableName}-${tenantId}`
+    }
+    return tableName
+  },
+  TARPON_RULE_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TARPON_RULE,
+  TRANSIENT_DYNAMODB_TABLE_NAME: DYNAMODB_TABLE_NAMES.TRANSIENT,
   DYNAMODB_TTL_ATTRIBUTE_NAME: '_ttl',
   MONGO_DB_DATABASE_NAME: 'tarpon',
   MONGO_DB_USERNAME_NAME: 'tarponUser',
@@ -203,7 +228,6 @@ export const StackConstants = {
   CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'ConsoleApiThrottlingCount'
   ),
-  HAMMERHEAD_DYNAMODB_TABLE_NAME: 'Hammerhead',
   HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
     getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(

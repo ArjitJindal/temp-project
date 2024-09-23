@@ -137,7 +137,7 @@ async function deleteTransaction(transaction: Transaction) {
 
 async function deleteTransactions() {
   const transactionsQueryInput: QueryCommandInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.TRANSACTION(tenantId).PartitionKeyID,
@@ -171,7 +171,7 @@ async function deletePartitionKey(
     new DeleteCommand({
       TableName: tableName
         ? tableName
-        : StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       Key: key,
     })
   )
@@ -186,7 +186,7 @@ async function deletePartition(
   const queryInput: QueryCommandInput = {
     TableName: tableName
       ? tableName
-      : StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      : StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': partitionKeyId,
@@ -238,7 +238,7 @@ async function deleteUser(userId: string) {
 
 async function deleteUsers() {
   const queryInput: QueryCommandInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.USER(tenantId).PartitionKeyID,
@@ -287,7 +287,7 @@ async function deleteParameterRiskValues() {
   await deletePartition(
     'provided parameter risk values',
     DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(tenantId).PartitionKeyID,
-    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
   )
 }
 
@@ -295,13 +295,13 @@ async function deleteRiskValue(userId: string) {
   await deletePartitionKey(
     'user risk score',
     DynamoDbKeys.KRS_VALUE_ITEM(tenantId, userId, '1') as DynamoDbKey,
-    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
   )
 }
 
 async function deleteKrsValues() {
   const queryInput: QueryCommandInput = {
-    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
     KeyConditionExpression: 'PartitionKeyID = :pk',
     ExpressionAttributeValues: {
       ':pk': DynamoDbKeys.USER(tenantId).PartitionKeyID,

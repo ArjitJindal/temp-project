@@ -22,6 +22,8 @@ import {
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
 import { flatten, isEmpty, uniq } from 'lodash'
+import { getTarponConfig } from '@flagright/lib/constants/config'
+import { stageAndRegion } from '@flagright/lib/utils'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
@@ -51,6 +53,7 @@ import { Feature } from '@/@types/openapi-internal/Feature'
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
+import { logger } from '@/core/logger'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -190,6 +193,22 @@ export class TenantService {
       throw new BadRequest('Tenant name, website and website are required')
     }
 
+    if (tenantData.siloDataMode) {
+      const [stage, region] = stageAndRegion()
+      const config = getTarponConfig(stage, region)
+      if (!tenantData.tenantId) {
+        throw new BadRequest(
+          `Tenant id is required for silo data mode in ${process.env.ENV} and region ${process.env.REGION}`
+        )
+      }
+
+      if (!config.siloDataTenantIds?.includes(tenantData.tenantId)) {
+        throw new BadRequest(
+          `Tenant id ${tenantData.tenantId} is not enabled for silo data mode in ${process.env.ENV} and region ${process.env.REGION}. Contact engineering to support this tenant.`
+        )
+      }
+    }
+
     const accountsService = new AccountsService(
       { auth0Domain: tenantData.auth0Domain },
       { mongoDb: this.mongoDb }
@@ -258,20 +277,26 @@ export class TenantService {
       )
     }
 
-    const newTenantSettings: TenantSettings = {
-      limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
-      features: tenantData.features ?? [],
-      auth0Domain: tenantData.auth0Domain,
-      ...(tenantData.sanctionsMarketType && {
-        sanctions: tenantData.sanctionsMarketType
-          ? { marketType: tenantData.sanctionsMarketType }
-          : undefined,
-      }),
-    }
+    if (!tenantData.siloDataMode) {
+      const newTenantSettings: TenantSettings = {
+        limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
+        features: tenantData.features ?? [],
+        auth0Domain: tenantData.auth0Domain,
+        ...(tenantData.sanctionsMarketType && {
+          sanctions: tenantData.sanctionsMarketType
+            ? { marketType: tenantData.sanctionsMarketType }
+            : undefined,
+        }),
+      }
 
-    const dynamoDb = this.dynamoDb
-    const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
-    await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+      const dynamoDb = this.dynamoDb
+      const tenantRepository = new TenantRepository(tenantId, { dynamoDb })
+      await tenantRepository.createOrUpdateTenantSettings(newTenantSettings)
+    } else {
+      logger.error(
+        `Tenant ${tenantId} (${tenantData.tenantName}) created with silo data mode in ${process.env.ENV} and region ${process.env.REGION}. Please add the tenant to the cloudformation stack`
+      )
+    }
 
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',

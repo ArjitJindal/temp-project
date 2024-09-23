@@ -22,7 +22,7 @@ async function migrateTenant(tenant: Tenant) {
   }
   const keyConditionExpr = 'PartitionKeyID = :pk'
   const queryInput: QueryCommandInput = {
-    TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME,
+    TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenant.id),
     KeyConditionExpression: keyConditionExpr,
     ExpressionAttributeValues: expressionAttributeVals,
   }

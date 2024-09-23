@@ -50,7 +50,7 @@ export class TransactionEventRepository {
     )
     const batchWriteItemParams: BatchWriteCommandInput = {
       RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
           {
             PutRequest: {
               Item: {
@@ -70,7 +70,7 @@ export class TransactionEventRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
     return eventId
   }
@@ -94,7 +94,7 @@ export class TransactionEventRepository {
       ':status': rulesResult.status,
     }
     const updateParams = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
       UpdateExpression: updateExpression,
       ExpressionAttributeValues: updateValues,
@@ -107,7 +107,7 @@ export class TransactionEventRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
   }
 
@@ -121,7 +121,7 @@ export class TransactionEventRepository {
     ).PartitionKeyID
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
       ExpressionAttributeValues: {
         ':PartitionKeyID': PartitionKeyID,
@@ -143,7 +143,7 @@ export class TransactionEventRepository {
     ).PartitionKeyID
 
     const queryInput: QueryCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :PartitionKeyID',
       ExpressionAttributeValues: {
         ':PartitionKeyID': PartitionKeyID,

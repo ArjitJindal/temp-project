@@ -5,7 +5,6 @@ import {
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
 import { chunk, isNil, omitBy, wrap, omit } from 'lodash'
-import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
   BatchWriteCommand,
@@ -365,7 +364,7 @@ export async function* paginateQueryGenerator(
 export async function batchWrite(
   dynamoDb: DynamoDBDocumentClient,
   requests: BatchWriteRequestInternal[],
-  table: string = StackConstants.TARPON_DYNAMODB_TABLE_NAME
+  table: string
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
     try {

@@ -66,7 +66,7 @@ export class UserEventRepository {
     }
     const batchWriteItemParams: BatchWriteCommandInput = {
       RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME]: [
+        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
           {
             PutRequest: {
               Item: {
@@ -86,7 +86,7 @@ export class UserEventRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
     return eventId
   }
@@ -103,7 +103,7 @@ export class UserEventRepository {
         : DynamoDbKeys.BUSINESS_USER_EVENT(this.tenantId, userId, timestamp)
 
     const updateCommand = new UpdateCommand({
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: primaryKey,
       UpdateExpression:
         'SET #executedRules = :executedRules, #hitRules = :hitRules',
@@ -123,7 +123,7 @@ export class UserEventRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
     }
   }
 
@@ -196,7 +196,7 @@ export class UserEventRepository {
     type: UserType
   ): Promise<ReadonlyArray<ConsumerUserEvent | BusinessUserEvent>> {
     const result = await paginateQuery(this.dynamoDb, {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
         ':pk':
@@ -228,7 +228,7 @@ export class UserEventRepository {
 
     const { Item } = await this.dynamoDb.send(
       new GetCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: primaryKey,
         ...(options?.consistentRead && { ConsistentRead: true }),
       })

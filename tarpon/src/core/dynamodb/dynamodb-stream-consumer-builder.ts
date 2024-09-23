@@ -2,7 +2,6 @@ import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { groupBy } from 'lodash'
-import { TransientRepository } from '../repositories/transient-repository'
 import {
   initializeTenantContext,
   tenantHasFeature,
@@ -112,8 +111,7 @@ const sqsClient = getSQSClient()
 export class StreamConsumerBuilder {
   name: string
   fanOutSqsQueue: string
-  transientRepository: TransientRepository
-  tableName: string
+  getTableName: (tenantId: string) => string
   transactionHandler?: TransactionHandler
   transactionsHandler?: TransactionsHandler
   transactionEventHandler?: TransactionEventHandler
@@ -127,12 +125,15 @@ export class StreamConsumerBuilder {
   ruleInstanceHandler?: RuleInstanceHandler
   concurrentGroupBy?: ConcurrentGroupBy
 
-  constructor(name: string, fanOutSqsQueue: string, tableName: string) {
+  constructor(
+    name: string,
+    fanOutSqsQueue: string,
+    getTableName: (tenantId: string) => string
+  ) {
     this.name = name
     this.fanOutSqsQueue = fanOutSqsQueue
-    this.transientRepository = new TransientRepository(getDynamoDbClient())
-    this.tableName = tableName
     this.handleDynamoDbUpdate = this.handleDynamoDbUpdate.bind(this)
+    this.getTableName = getTableName
   }
 
   public setConcurrentGroupBy(
@@ -385,6 +386,7 @@ export class StreamConsumerBuilder {
     tenantId: string,
     updates: DynamoDbEntityUpdate[]
   ) {
+    const tableName = this.getTableName(tenantId)
     await withContext(async () => {
       const dbClients: DbClients = {
         dynamoDb: getDynamoDbClient(),
@@ -400,11 +402,15 @@ export class StreamConsumerBuilder {
       await Promise.all(
         filteredUpdates.map(async (update) => {
           /**   Store DynamoDB Keys in MongoDB * */
-          if (update.NewImage && !update.NewImage.ttl) {
+          if (
+            update.NewImage &&
+            !update.NewImage.ttl &&
+            !tableName.includes(tenantId) // Stands for Silo Tables
+          ) {
             await savePartitionKey(
               update.tenantId,
               update.partitionKeyId,
-              this.tableName
+              tableName
             )
           }
         })

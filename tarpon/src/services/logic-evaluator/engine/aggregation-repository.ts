@@ -147,7 +147,7 @@ export class AggregationRepository {
     await batchWrite(
       this.dynamoDb,
       writeRequests,
-      StackConstants.TARPON_DYNAMODB_TABLE_NAME
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     )
   }
 
@@ -160,7 +160,7 @@ export class AggregationRepository {
     groupValue?: string
   ): Promise<Array<{ time: string } & AggregationData<T>> | undefined> {
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
-      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       sortKey: {
         from: getTransactionStatsTimeGroupLabel(afterTimestamp, granularity),
         to: getTransactionStatsTimeGroupLabel(beforeTimestamp - 1, granularity),
@@ -201,7 +201,7 @@ export class AggregationRepository {
     transactionId: string
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
           this.tenantId,
@@ -221,7 +221,7 @@ export class AggregationRepository {
     transactionId: string
   ): Promise<boolean> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
         this.tenantId,
         direction,
@@ -239,7 +239,7 @@ export class AggregationRepository {
     lastTransactionTimestamp: number
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
           this.tenantId,
@@ -258,7 +258,7 @@ export class AggregationRepository {
     userKeyId: string
   ): Promise<{ ready: boolean; lastTransactionTimestamp: number }> {
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
         userKeyId,
@@ -361,7 +361,7 @@ export class AggregationRepository {
   ): Promise<void> {
     const oldAggVarHash = getAggVarHash(oldAggVar, false)
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, oldAggVarHash),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -381,7 +381,7 @@ export class AggregationRepository {
     usedAggVar: UsedAggregationVariable
   ): Promise<void> {
     const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(
         this.tenantId,
         usedAggVar.aggVarHash
@@ -396,7 +396,7 @@ export class AggregationRepository {
   ): Promise<UsedAggregationVariable> {
     const aggVarHash = getAggVarHash(aggregationVariable, false)
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, aggVarHash),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
@@ -414,7 +414,7 @@ export class AggregationRepository {
     updatedIds: string[]
   ): Promise<void> {
     const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
         ...DynamoDbKeys.AGGREGATION_VARIABLE(
           this.tenantId,

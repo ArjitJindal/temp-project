@@ -230,7 +230,7 @@ export class QuestionService {
       question.version
     )
     const getItemInput: GetCommandInput = {
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       Key: partitionKeyId,
     }
     const result = await this.dynamoClient.send(new GetCommand(getItemInput))
@@ -241,7 +241,7 @@ export class QuestionService {
     const response = await this.getQuestionResponse(ctx, varObject, question)
     void this.dynamoClient.send(
       new PutCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME,
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         Item: {
           ...partitionKeyId,
           ttl:
