@@ -4,9 +4,18 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { useLocalStorageState } from 'ahooks';
 import StepHeader from '../../StepHeader';
 import SlaPolicyInput from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/SlaPolicyInput';
+import { DefaultAlertStatusInput } from '../../../RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/DefaultAlertStatusInput';
 import s from './style.module.less';
 import Label from '@/components/library/Label';
-import { DerivedStatus, Priority, Rule, RuleExecutionMode, RuleLabels, RuleNature } from '@/apis';
+import {
+  DerivedStatus,
+  Priority,
+  Rule,
+  RuleExecutionMode,
+  RuleLabels,
+  RuleNature,
+  RuleInstanceAlertConfigDefaultAlertStatusEnum,
+} from '@/apis';
 import TextInput from '@/components/library/TextInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import {
@@ -53,6 +62,7 @@ export interface FormValues {
   checksFor: string[];
   frozenStatuses: DerivedStatus[];
   ruleExecutionMode: RuleExecutionMode;
+  defaultAlertStatus?: RuleInstanceAlertConfigDefaultAlertStatusEnum;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -299,6 +309,7 @@ function AlertCreationDetails() {
             />
           )}
         </InputField>
+        <DefaultAlertStatusInput />
         <FrozenStatusesInput />
         {isSlaEnabled && <SlaPolicyInput<FormValues> />}
       </PropertyListLayout>

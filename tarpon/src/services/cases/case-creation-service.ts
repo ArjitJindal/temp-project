@@ -543,7 +543,8 @@ export class CaseCreationService {
           createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
           latestTransactionArrivalTimestamp,
           updatedAt: now,
-          alertStatus: 'OPEN',
+          alertStatus:
+            ruleInstanceMatch?.alertConfig?.defaultAlertStatus ?? 'OPEN',
           ruleId: hitRule.ruleId,
           availableAfterTimestamp: availableAfterTimestamp,
           ruleInstanceId: hitRule.ruleInstanceId,

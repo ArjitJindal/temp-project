@@ -61,10 +61,15 @@ export const getCreateStatement = (
       ) : null;
     }
     case 'CREATION': {
+      const status = log.newImage?.[`${entityType.toLowerCase()}Status`];
+      const isAutomaticStatus = status !== 'OPEN';
+      const displayStatus = status === 'CLOSED' ? 'closed' : 'on hold';
       return (
         <>
-          A new {entityType.toLowerCase()} <b>{entityId}</b> is created by <b>{userName}</b> and is
-          unassigned
+          A new {entityType.toLowerCase()} <b>{entityId}</b> is created by <b>{userName}</b> and
+          {isAutomaticStatus && entityType === 'ALERT'
+            ? ` was set automatically to ${displayStatus}`
+            : ' is unassigned'}
         </>
       );
     }

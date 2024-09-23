@@ -6,9 +6,16 @@ import { AlertInvestigationChecklist } from './AlertInvestigationChecklist';
 import CreationIntervalInput, { AlertCreationInterval } from './CreationIntervalInput';
 import { FrozenStatusesInput } from './FrozenStatusInput';
 import SlaPolicyInput from './SlaPolicyInput';
+import { DefaultAlertStatusInput } from './DefaultAlertStatusInput';
 import { PropertyListLayout } from '@/components/library/JsonSchemaEditor/PropertyList';
 import InputField from '@/components/library/Form/InputField';
-import { AlertCreationDirection, DerivedStatus, Priority, RuleType } from '@/apis';
+import {
+  AlertCreationDirection,
+  DerivedStatus,
+  Priority,
+  RuleType,
+  RuleInstanceAlertConfigDefaultAlertStatusEnum,
+} from '@/apis';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { ALERT_CREATED_FOR, AlertCreatedForEnum, RULE_CASE_PRIORITY } from '@/pages/rules/utils';
 import Select from '@/components/library/Select';
@@ -28,6 +35,7 @@ export interface FormValues {
   checklistTemplateId?: string;
   frozenStatuses: DerivedStatus[];
   slaPolicies?: string[];
+  defaultAlertStatus?: RuleInstanceAlertConfigDefaultAlertStatusEnum;
 }
 
 export const INITIAL_VALUES: Partial<FormValues> = {
@@ -131,6 +139,7 @@ export default function AlertCreationDetailsStep(props: { ruleType: RuleType }) 
                   />
                 )}
               </InputField>
+              <DefaultAlertStatusInput />
             </div>
             <Divider className={s.divider} />
             <AlertAssignedToInput />

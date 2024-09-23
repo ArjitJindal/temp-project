@@ -178,6 +178,7 @@ export function ruleInstanceToFormValues(
           slaPolicies: ruleInstance.alertConfig?.slaPolicies,
           alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
           ruleExecutionMode: ruleInstance.ruleExecutionMode,
+          defaultAlertStatus: ruleInstance.alertConfig?.defaultAlertStatus,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
         ruleParametersStep: isRiskLevelsEnabled
@@ -299,6 +300,7 @@ export function ruleInstanceToFormValuesV8(
       queueId: ruleInstance.queueId,
       frozenStatuses: ruleInstance.alertConfig?.frozenStatuses,
       slaPolicies: ruleInstance.alertConfig?.slaPolicies,
+      defaultAlertStatus: ruleInstance.alertConfig?.defaultAlertStatus,
     },
   };
 }
@@ -348,6 +350,7 @@ export function formValuesToRuleInstance(
       frozenStatuses: basicDetailsStep.frozenStatuses,
       alertCreatedFor: basicDetailsStep.alertCreatedFor,
       slaPolicies: basicDetailsStep.slaPolicies,
+      defaultAlertStatus: basicDetailsStep.defaultAlertStatus,
     },
     ...(isRiskLevelsEnabled
       ? {
@@ -457,6 +460,7 @@ export function formValuesToRuleInstanceV8(
       alertCreationDirection: alertCreationDetailsStep.alertCreationDirection,
       frozenStatuses: alertCreationDetailsStep.frozenStatuses,
       slaPolicies: alertCreationDetailsStep.slaPolicies,
+      defaultAlertStatus: alertCreationDetailsStep.defaultAlertStatus,
     },
     baseCurrency,
     logicEntityVariables: ruleLogicEntityVariables,

@@ -7716,6 +7716,12 @@ components:
               type: array
               items:
                 type: string
+            defaultAlertStatus:
+              type: string
+              enum:
+                - OPEN
+                - OPEN_ON_HOLD
+                - CLOSED
         checksFor:
           type: array
           items:
