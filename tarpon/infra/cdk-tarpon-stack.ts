@@ -16,6 +16,7 @@ import {
   Effect,
   ManagedPolicy,
   Policy,
+  PolicyDocument,
   PolicyStatement,
   Role,
   ServicePrincipal,
@@ -1626,80 +1627,6 @@ export class CdkTarponStack extends cdk.Stack {
    * GuardDuty for malware and tag the objects with the result.
    */
   private createMalwareProtectionPlanForS3Bucket(bucket: Bucket) {
-    const guardDutyPolicy = new Policy(
-      this,
-      'GuardDutyMalwareProtectionPolicy',
-      {
-        policyName: 'GuardDutyMalwareProtectionPolicy',
-        statements: [
-          new PolicyStatement({
-            sid: 'AllowManagedRuleToSendS3EventsToGuardDuty',
-            effect: Effect.ALLOW,
-            actions: [
-              'events:PutRule',
-              'events:DeleteRule',
-              'events:PutTargets',
-              'events:RemoveTargets',
-            ],
-            resources: [
-              `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
-            ],
-            conditions: {
-              StringLike: {
-                'events:ManagedBy':
-                  'malware-protection-plan.guardduty.amazonaws.com',
-              },
-            },
-          }),
-          new PolicyStatement({
-            sid: 'AllowGuardDutyToMonitorEventBridgeManagedRule',
-            effect: Effect.ALLOW,
-            actions: ['events:DescribeRule', 'events:ListTargetsByRule'],
-            resources: [
-              `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
-            ],
-          }),
-          new PolicyStatement({
-            sid: 'AllowPostScanTag',
-            effect: Effect.ALLOW,
-            actions: [
-              's3:PutObjectTagging',
-              's3:GetObjectTagging',
-              's3:PutObjectVersionTagging',
-              's3:GetObjectVersionTagging',
-            ],
-            resources: [`${bucket.bucketArn}/*`],
-          }),
-          new PolicyStatement({
-            sid: 'AllowEnableS3EventBridgeEvents',
-            effect: Effect.ALLOW,
-            actions: ['s3:PutBucketNotification', 's3:GetBucketNotification'],
-            resources: [bucket.bucketArn],
-          }),
-          new PolicyStatement({
-            sid: 'AllowPutValidationObject',
-            effect: Effect.ALLOW,
-            actions: ['s3:PutObject'],
-            resources: [
-              `${bucket.bucketArn}/malware-protection-resource-validation-object`,
-            ],
-          }),
-          new PolicyStatement({
-            sid: 'AllowCheckBucketOwnership',
-            effect: Effect.ALLOW,
-            actions: ['s3:ListBucket'],
-            resources: [bucket.bucketArn],
-          }),
-          new PolicyStatement({
-            sid: 'AllowMalwareScan',
-            effect: Effect.ALLOW,
-            actions: ['s3:GetObject', 's3:GetObjectVersion'],
-            resources: [`${bucket.bucketArn}/*`],
-          }),
-        ],
-      }
-    )
-
     // Create a new IAM Role with the provided trust policy
     const guardDutyRole = new Role(this, 'GuardDutyMalwareProtectionRole', {
       assumedBy: new ServicePrincipal(
@@ -1708,8 +1635,90 @@ export class CdkTarponStack extends cdk.Stack {
       description:
         'Role for GuardDuty Malware Protection to assume and scan S3 events',
       roleName: 'GuardDutyMalwareProtectionRole',
+      inlinePolicies: {
+        GuardDutyMalwareProtectionPolicy: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              sid: 'AllowManagedRuleToSendS3EventsToGuardDuty',
+              effect: Effect.ALLOW,
+              actions: [
+                'events:PutRule',
+                'events:DeleteRule',
+                'events:PutTargets',
+                'events:RemoveTargets',
+              ],
+              resources: [
+                `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
+              ],
+              conditions: {
+                StringLike: {
+                  'events:ManagedBy':
+                    'malware-protection-plan.guardduty.amazonaws.com',
+                },
+              },
+            }),
+            new PolicyStatement({
+              sid: 'AllowGuardDutyToMonitorEventBridgeManagedRule',
+              effect: Effect.ALLOW,
+              actions: ['events:DescribeRule', 'events:ListTargetsByRule'],
+              resources: [
+                `arn:aws:events:${this.config.env.region}:${this.config.env.account}:rule/DO-NOT-DELETE-AmazonGuardDutyMalwareProtectionS3*`,
+              ],
+            }),
+            new PolicyStatement({
+              sid: 'AllowPostScanTag',
+              effect: Effect.ALLOW,
+              actions: [
+                's3:PutObjectTagging',
+                's3:GetObjectTagging',
+                's3:PutObjectVersionTagging',
+                's3:GetObjectVersionTagging',
+              ],
+              resources: [`${bucket.bucketArn}/*`],
+            }),
+            new PolicyStatement({
+              sid: 'AllowEnableS3EventBridgeEvents',
+              effect: Effect.ALLOW,
+              actions: ['s3:PutBucketNotification', 's3:GetBucketNotification'],
+              resources: [bucket.bucketArn],
+            }),
+            new PolicyStatement({
+              sid: 'AllowPutValidationObject',
+              effect: Effect.ALLOW,
+              actions: ['s3:PutObject'],
+              resources: [
+                `${bucket.bucketArn}/malware-protection-resource-validation-object`,
+              ],
+            }),
+            new PolicyStatement({
+              sid: 'AllowCheckBucketOwnership',
+              effect: Effect.ALLOW,
+              actions: ['s3:ListBucket'],
+              resources: [bucket.bucketArn],
+            }),
+            new PolicyStatement({
+              sid: 'AllowMalwareScan',
+              effect: Effect.ALLOW,
+              actions: ['s3:GetObject', 's3:GetObjectVersion'],
+              resources: [`${bucket.bucketArn}/*`],
+            }),
+            new PolicyStatement({
+              sid: 'AllowDecryptForMalwareScan',
+              effect: Effect.ALLOW,
+              actions: ['kms:GenerateDataKey', 'kms:Decrypt'],
+              resources: [
+                `arn:aws:kms:${this.config.env.region}:${this.config.env.account}:key/*`,
+              ],
+              conditions: {
+                StringLike: {
+                  'kms:ViaService': 's3.*.amazonaws.com',
+                },
+              },
+            }),
+          ],
+        }),
+      },
     })
-    guardDutyRole.attachInlinePolicy(guardDutyPolicy)
 
     new CfnMalwareProtectionPlan(this, 'GuardDutyMalwareProtectionPlan', {
       actions: {
@@ -1723,7 +1732,7 @@ export class CdkTarponStack extends cdk.Stack {
         },
       },
       role: guardDutyRole.roleArn,
-    }).node.addDependency(guardDutyRole)
+    })
   }
 }
 
