@@ -14,7 +14,6 @@ export type Config = {
   stage: Stage
   region?: FlagrightRegion
   env: Environment
-  siloDataTenantIds?: string[]
   resource: {
     CLOUD_WATCH: {
       logRetention: RetentionDays

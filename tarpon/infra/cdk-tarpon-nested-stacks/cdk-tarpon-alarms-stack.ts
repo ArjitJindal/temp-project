@@ -15,6 +15,7 @@ import { LAMBDAS } from '@lib/lambdas'
 import { Config } from '@flagright/lib/config/config'
 
 import { CANARIES } from '@lib/canaries'
+import { siloDataTenants } from '@flagright/lib/constants'
 import {
   createAPIGatewayAlarm,
   createDynamoDBAlarm,
@@ -56,9 +57,12 @@ const API_GATEWAY_NAMES = [
 
 const dynamoTables = (config: Config) => {
   const tables = [...Object.values(DYNAMODB_TABLE_NAMES)]
-  if (config.siloDataTenantIds?.length) {
+  const siloTables =
+    siloDataTenants?.[config.stage]?.[config.region ?? 'eu-1'] ?? []
+
+  if (siloTables?.length) {
     tables.push(
-      ...config.siloDataTenantIds.flatMap((id) => [
+      ...siloTables.flatMap((id) => [
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(id),
         StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(id),
       ])

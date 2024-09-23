@@ -22,8 +22,8 @@ import {
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
 import { flatten, isEmpty, uniq } from 'lodash'
-import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils'
+import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
@@ -195,14 +195,15 @@ export class TenantService {
 
     if (tenantData.siloDataMode) {
       const [stage, region] = stageAndRegion()
-      const config = getTarponConfig(stage, region)
       if (!tenantData.tenantId) {
         throw new BadRequest(
           `Tenant id is required for silo data mode in ${process.env.ENV} and region ${process.env.REGION}`
         )
       }
 
-      if (!config.siloDataTenantIds?.includes(tenantData.tenantId)) {
+      const siloDataTenantIds = siloDataTenants?.[stage]?.[region] ?? []
+
+      if (!siloDataTenantIds.includes(tenantData.tenantId)) {
         throw new BadRequest(
           `Tenant id ${tenantData.tenantId} is not enabled for silo data mode in ${process.env.ENV} and region ${process.env.REGION}. Contact engineering to support this tenant.`
         )

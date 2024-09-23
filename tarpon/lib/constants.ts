@@ -1,5 +1,5 @@
 import { Config } from '@flagright/lib/config/config'
-import { getTarponConfig } from '@flagright/lib/constants/config'
+import { siloDataTenants } from '@flagright/lib/constants'
 import { stageAndRegion } from '@flagright/lib/utils'
 
 export function getSuffix(): string {
@@ -39,9 +39,6 @@ export function getNameForGlobalResource(name: string, config: Config) {
   }`
 }
 
-const [stage, region] = stageAndRegion()
-const { siloDataTenantIds } = getTarponConfig(stage, region)
-
 export const DYNAMODB_TABLE_NAMES = {
   TARPON: 'Tarpon',
   TARPON_RULE: 'TarponRule',
@@ -56,14 +53,16 @@ export const StackConstants = {
   S3_SERVER_ACCESS_LOGS_BUCKET_NAME: 's3-server-access-logs',
   TARPON_DYNAMODB_TABLE_NAME: (tenantId: string) => {
     let tableName = DYNAMODB_TABLE_NAMES.TARPON
-    if (siloDataTenantIds?.includes(tenantId)) {
+    const [stage, region] = stageAndRegion()
+    if (siloDataTenants[stage]?.[region]?.includes(tenantId)) {
       tableName = `${tableName}-${tenantId}`
     }
     return tableName
   },
   HAMMERHEAD_DYNAMODB_TABLE_NAME: (tenantId: string) => {
     let tableName = DYNAMODB_TABLE_NAMES.HAMMERHEAD
-    if (siloDataTenantIds?.includes(tenantId)) {
+    const [stage, region] = stageAndRegion()
+    if (siloDataTenants[stage]?.[region]?.includes(tenantId)) {
       tableName = `${tableName}-${tenantId}`
     }
     return tableName

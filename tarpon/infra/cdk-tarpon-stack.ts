@@ -102,6 +102,7 @@ import {
   FargatePlatformVersion,
 } from 'aws-cdk-lib/aws-ecs'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import { siloDataTenants } from '@flagright/lib/constants'
 import { CdkTarponAlarmsStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack'
 import { CdkTarponConsoleLambdaStack } from './cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack'
 import { createApiGateway } from './cdk-utils/cdk-apigateway-utils'
@@ -312,7 +313,9 @@ export class CdkTarponStack extends cdk.Stack {
 
     const siloTables: ITable[] = []
 
-    for (const tenantId of config.siloDataTenantIds || []) {
+    for (const tenantId of siloDataTenants?.[config.stage]?.[
+      config.region ?? 'eu-1'
+    ] || []) {
       const tarponSiloDynamoDbTable = this.createDynamodbTable(
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         tarponStream,
