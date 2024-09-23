@@ -10,7 +10,7 @@ import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
-import SlaStatus, { PopoverRef } from './SlaStatus';
+import SlaStatus from './SlaStatus';
 import { getSlaColumnsForExport } from './helpers';
 import {
   AlertsAssignmentsUpdateRequest,
@@ -155,20 +155,6 @@ export default function AlertTable(props: Props) {
   const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
     null,
   );
-
-  const slaDetailsRef = useRef<PopoverRef>(null);
-
-  useEffect(() => {
-    const handleScroll = () => {
-      slaDetailsRef.current?.setPopOverVisible(false);
-    };
-
-    window.addEventListener('scroll', handleScroll, true);
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll, true);
-    };
-  }, []);
 
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
 
@@ -467,9 +453,7 @@ export default function AlertTable(props: Props) {
               helper.display({
                 title: 'SLA status',
                 render: (entity) => {
-                  return (
-                    <SlaStatus ref={slaDetailsRef} slaPolicyDetails={entity.slaPolicyDetails} />
-                  );
+                  return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
                 },
               }),
               ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),

@@ -10,12 +10,10 @@ import { getOr } from '@/utils/asyncResource';
 interface Props {
   slaPolicyDetail: SLAPolicyStatusDetails;
   index: number;
-  popOverVisible: boolean;
-  setPopOverVisible: (visible: boolean) => void;
 }
 
 function SlaPopover(props: Props) {
-  const { slaPolicyDetail, index, popOverVisible, setPopOverVisible } = props;
+  const { slaPolicyDetail, index } = props;
   const api = useApi();
   const policyResult = useQuery(SLA_POLICY(slaPolicyDetail.slaPolicyId), async () => {
     return api.getSlaPolicy({ slaId: slaPolicyDetail.slaPolicyId });
@@ -26,8 +24,7 @@ function SlaPopover(props: Props) {
       title={`Policy name: ${policy?.name ?? '-'}`}
       content={<SlaPolicyDetails slaPolicyDetail={slaPolicyDetail} policy={policy} />}
       trigger="click"
-      onVisibleChange={(visible) => setPopOverVisible(visible)}
-      visible={popOverVisible}
+      getPopupContainer={(triggerNode: HTMLElement) => triggerNode.parentElement as HTMLElement}
     >
       <div
         key={index}
