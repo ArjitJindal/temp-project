@@ -4,8 +4,10 @@ import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
-import { envIs } from '@/utils/env'
+import {
+  createTenantDatabase,
+  isClickhouseEnabledInRegion,
+} from '@/utils/clickhouse/utils'
 
 export class SyncDatabases extends BatchJobRunner {
   protected async run(job: SyncDatabasesBatchJob): Promise<void> {
@@ -14,7 +16,7 @@ export class SyncDatabases extends BatchJobRunner {
 
     await createMongoDBCollections(mongoDb, teanantId)
 
-    if (envIs('dev')) {
+    if (isClickhouseEnabledInRegion()) {
       await createTenantDatabase(teanantId)
     }
   }

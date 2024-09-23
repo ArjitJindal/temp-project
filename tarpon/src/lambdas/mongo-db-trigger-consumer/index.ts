@@ -1,5 +1,6 @@
 import { Document, MongoClient, ObjectId, WithId } from 'mongodb'
 import { Dictionary, groupBy, memoize } from 'lodash'
+import pMap from 'p-map'
 import { MongoConsumerSQSMessage } from './app'
 import {
   batchInsertToClickhouse,
@@ -14,6 +15,7 @@ import {
 import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
+import { logger } from '@/core/logger'
 
 type TableDetails = {
   tenantId: string
@@ -103,8 +105,9 @@ export class MongoDbConsumer {
       transactionCurrency: 'USD',
     }
 
-    const updatedRecords = await Promise.all(
-      records.map(async (record) => {
+    const updatedRecords = await pMap(
+      records,
+      async (record) => {
         const transaction = record as WithId<Transaction>
         const originAmountDetails = transaction.originAmountDetails
         const destinationAmountDetails = transaction.destinationAmountDetails
@@ -127,6 +130,12 @@ export class MongoDbConsumer {
             : DEFAULT_AMOUNT_DETAILS,
         ])
 
+        logger.info('Updated transaction', {
+          transactionId: transaction.transactionId,
+          originTransactionAmountInUsd,
+          destinationTransactionAmountInUsd,
+        })
+
         return {
           ...transaction,
           originAmountDetails: {
@@ -138,8 +147,13 @@ export class MongoDbConsumer {
             amountInUsd: destinationTransactionAmountInUsd,
           },
         }
-      })
+      },
+      { concurrency: 100 }
     )
+
+    logger.info('Updated transactions', {
+      updatedRecords: updatedRecords.length,
+    })
 
     return updatedRecords
   }

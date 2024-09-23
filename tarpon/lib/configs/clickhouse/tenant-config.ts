@@ -14,6 +14,7 @@ type ClickhouseTenantConfig = {
   idleTimeoutMinutes: number
   region: string
   ipAccess: ServiceIpAccess[]
+  privateEndPointVpcEndpointId?: string
 }
 
 export function getClickhouseTenantConfig(
@@ -46,18 +47,19 @@ export function getClickhouseTenantConfig(
         idleTimeoutMinutes: 10,
         ipAccess: [
           {
-            source: '13.251.166.15',
-            description: 'Flagright Asia-1 Sandbox Elastic IP',
+            source: '3.72.188.71',
+            description: 'Codebuild IP',
           },
           {
-            source: '18.143.88.142',
-            description: 'Flagright Asia-1 Sandbox Elastic IP',
+            source: '18.157.106.33',
+            description: 'Codebuild IP',
           },
           {
-            source: '46.137.237.47',
-            description: 'Flagright Asia-1 Sandbox Elastic IP',
+            source: '18.153.172.163',
+            description: 'Codebuild IP',
           },
         ],
+        privateEndPointVpcEndpointId: 'vpce-0ed74b4d1a90c3a4f',
       }
 
       return [asia1Config]

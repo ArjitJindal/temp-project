@@ -52,6 +52,7 @@ export const DYNAMODB_TABLE_NAMES = {
 export const StackConstants = {
   VPC_NAME: 'vpc',
   VPC_SECURITY_GROUP_ID: 'atlas-lambda-sg',
+  CLICKHOUSE_SECURITY_GROUP_ID: 'clickhouse-sg',
   S3_SERVER_ACCESS_LOGS_BUCKET_NAME: 's3-server-access-logs',
   TARPON_DYNAMODB_TABLE_NAME: (tenantId: string) => {
     let tableName = DYNAMODB_TABLE_NAMES.TARPON

@@ -92,7 +92,7 @@
     "migration:post:create": "MIGRATION_TYPE=POST_DEPLOYMENT ENV=local yarn _migrator create --name $npm_config_name.ts --allow-extension .ts",
     "migration:post:up": "MIGRATION_TYPE=POST_DEPLOYMENT yarn _migrator up",
     "migration:post:down": "MIGRATION_TYPE=POST_DEPLOYMENT yarn _migrator down",
-    "migration:sync": "yarn _migrator sync",
+    "migration:sync": "MIGRATION_TYPE=SYNC yarn _migrator sync",
     "db:export": "ENV=dev ts-node --transpileOnly scripts/export-anon-tenant-data.ts",
     "qa:clean": "ENV=local ts-node --transpileOnly scripts/qa-stack-cleanup.ts",
     "verify-remote-entities": "ts-node scripts/debug-rule/verify-remote-entities.ts",

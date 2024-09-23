@@ -85,6 +85,9 @@ export const config: Config = {
     },
     INSPECTOR_ENABLED: false,
   },
+  clickhouse: {
+    enabled: true,
+  },
   viper: {
     ADMIN_EMAILS: ALL_ENGINEERS,
     CREATE_METASTORE: false,
@@ -115,8 +118,6 @@ export const config: Config = {
     API_USAGE_GOOGLE_SHEET_ID: '1JiK5HTWQVfNXO5XeoGheZTx9TwaHpDTQQUc2uNeH5Uw',
     POSTHOG_API_KEY: 'phc_12mxZXckh9t0LlosLIlraJl5xALKwOc8he1R6Jxwhus',
     POSTHOG_HOST: 'https://eu.i.posthog.com',
-    MONGO_TRIGGERS_APP_ID: '66d9428314abc3549b0db50a',
-    MONGO_SERVICE_ID: '66d9428b14abc3549b0dbfc8',
     MONGO_EVENT_TRIGGER_RULE_ID: '66d9d1170604e3825f395f1c',
   },
 }

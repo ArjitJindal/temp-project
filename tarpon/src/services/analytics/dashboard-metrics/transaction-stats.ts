@@ -32,7 +32,10 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
@@ -360,7 +363,7 @@ export class TransactionStatsDashboardMetric {
     granularity?: GranularityValuesType,
     type?: 'TOTAL' | 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
+    if (isClickhouseEnabled()) {
       return this.getFromClickhouse(
         tenantId,
         startTimestamp,

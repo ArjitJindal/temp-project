@@ -16,8 +16,11 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { executeSql } from '@/utils/viper'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getContext, hasFeature } from '@/core/utils/context'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { getContext } from '@/core/utils/context'
+import {
+  executeClickhouseQuery,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 type TransactionSummary = {
   count: number
@@ -43,7 +46,7 @@ export const TransactionSummary: PropertiesQuestion<
     { direction, currency, ...period }
   ) => {
     let result: TransactionSummary
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
+    if (isClickhouseEnabled()) {
       const condition = userId
         ? `{{ userIdKey }} = '{{ userId }}'`
         : paymentIdentifierQueryClickhouse(paymentIdentifier, direction)

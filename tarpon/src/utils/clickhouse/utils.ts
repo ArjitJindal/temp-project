@@ -25,6 +25,19 @@ import {
   MongoConsumerSQSMessage,
 } from '@/lambdas/mongo-db-trigger-consumer/app'
 
+export const isClickhouseEnabledInRegion = () => {
+  logger.info('Checking if clickhouse is enabled in region', {
+    region: process.env.REGION,
+    env: process.env.ENV,
+  })
+  return (
+    envIs('local') ||
+    envIs('test') ||
+    envIs('dev') ||
+    (envIs('sandbox') && process.env.REGION === 'asia-1')
+  )
+}
+
 export const getClickhouseDbName = (tenantId: string) => {
   return sanitizeSqlName(
     envIs('test') ? `tarpon_test_${tenantId}` : `tarpon_${tenantId}`
@@ -66,6 +79,18 @@ export const executeClickhouseDefaultClientQuery = async (
   }
 }
 
+const useNormalLink = () => {
+  if (envIs('local') || envIs('test') || envIs('dev')) {
+    return true
+  }
+
+  if (process.env.MIGRATION_TYPE) {
+    return true
+  }
+
+  return false
+}
+
 export async function getClickhouseClient(tenantId: string) {
   if (client[tenantId]) {
     return client[tenantId]
@@ -99,6 +124,9 @@ export async function getClickhouseClient(tenantId: string) {
     [tenantId]: createClient({
       ...config,
       database: getClickhouseDbName(tenantId),
+      url: useNormalLink()
+        ? config.url?.toString().replace('vpce.', '')
+        : config.url,
     }),
   }
 
@@ -158,6 +186,9 @@ const clickhouseInsert = async (
   }
 
   const insert = async () => {
+    logger.info('Inserting into clickhouse', {
+      table,
+    })
     await client.insert({
       table,
       values,
@@ -187,14 +218,14 @@ export async function insertToClickhouse<T extends object>(
   object: T,
   tenantId: string = getContext()?.tenantId as string
 ) {
-  if (!envIs('local') && !envIs('test') && !envIs('dev')) {
+  if (!isClickhouseEnabledInRegion()) {
     return
   }
 
   const tableDefinition = assertTableName(tableName, tenantId)
 
   if (envIs('test')) {
-    if (!hasFeature('CLICKHOUSE_ENABLED')) {
+    if (!isClickhouseEnabled()) {
       return
     } else {
       await createOrUpdateClickHouseTable(tenantId, tableDefinition)
@@ -221,15 +252,15 @@ export async function batchInsertToClickhouse(
   objects: object[]
 ) {
   const tableDefinition = assertTableName(table, tenantId)
-
+  logger.info('Starting batch insert to clickhouse')
   if (envIs('test')) {
-    if (!hasFeature('CLICKHOUSE_ENABLED')) {
+    if (!isClickhouseEnabled()) {
       return
     } else {
       await createOrUpdateClickHouseTable(tenantId, tableDefinition)
     }
   }
-
+  logger.info('Clickhouse is enabled, starting batch insert')
   await clickhouseInsert(
     tenantId,
     sanitizeSqlName(table),
@@ -240,6 +271,10 @@ export async function batchInsertToClickhouse(
     })),
     ['id', 'data', 'is_deleted']
   )
+}
+
+export function isClickhouseEnabled() {
+  return hasFeature('CLICKHOUSE_ENABLED') && isClickhouseEnabledInRegion()
 }
 
 export const executeClickhouseQuery = async <T extends object>(

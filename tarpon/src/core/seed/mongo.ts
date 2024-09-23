@@ -1,4 +1,4 @@
-import { MongoClient } from 'mongodb'
+import { Document, MongoClient, WithId } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
@@ -13,6 +13,7 @@ import {
   createTenantDatabase,
   executeClickhouseDefaultClientQuery,
   getClickhouseDbName,
+  isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
@@ -73,7 +74,6 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
-import { envIs } from '@/utils/env'
 import { AlertsSLAService } from '@/services/alerts/alerts-sla-service'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 
@@ -211,7 +211,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     }
   }
 
-  if (envIs('local') || envIs('dev')) {
+  if (isClickhouseEnabledInRegion()) {
     const mongoConsumerService = new MongoDbConsumer(client)
     await executeClickhouseDefaultClientQuery(async (client) => {
       await client.query({
@@ -224,16 +224,35 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
         const clickhouseTable = table.table
         const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
         const mongoCollectionName = `${tenantId}-${mongoTable}`
-        const data = await db.collection(mongoCollectionName).find().toArray()
-        const updatedData = await mongoConsumerService.updateInsertMessages(
-          mongoTable,
-          data
-        )
-        await batchInsertToClickhouse(tenantId, clickhouseTable, updatedData)
+        const data = db.collection(mongoCollectionName).find().batchSize(100)
+        let dataArray: WithId<Document>[] = []
+        for await (const dataChunk of data) {
+          dataArray.push(dataChunk)
+          if (dataArray.length === 100) {
+            const updatedData = await mongoConsumerService.updateInsertMessages(
+              mongoTable,
+              dataArray
+            )
+
+            await batchInsertToClickhouse(
+              tenantId,
+              clickhouseTable,
+              updatedData
+            )
+            dataArray = []
+          }
+        }
+        if (dataArray.length > 0) {
+          const updatedData = await mongoConsumerService.updateInsertMessages(
+            mongoTable,
+            dataArray
+          )
+
+          await batchInsertToClickhouse(tenantId, clickhouseTable, updatedData)
+        }
       })
     )
   }
-
   logger.info('Refreshing dashboard stats...')
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,

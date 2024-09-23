@@ -21,8 +21,11 @@ import { executeSql } from '@/utils/viper'
 import dayjs from '@/utils/dayjs'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { notEmpty } from '@/utils/array'
-import { getContext, hasFeature } from '@/core/utils/context'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getContext } from '@/core/utils/context'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 export const getClickhouseQuery = (
   period: Period,
@@ -103,7 +106,7 @@ export const transactionAggregationQuestion = (
   ) => {
     let values: { time: number; value: number }[] = []
 
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
+    if (isClickhouseEnabled()) {
       values = await getClickhouseData(
         ctx,
         period,

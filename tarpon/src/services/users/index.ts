@@ -68,7 +68,10 @@ import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCSta
 import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
 import { ConsumerUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/ConsumerUsersOffsetPaginateListResponse'
 import { AllUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/AllUsersOffsetPaginateListResponse'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
@@ -175,7 +178,7 @@ export class UserService {
     const dynamoDb = getDynamoDbClientByEvent(event)
     const lambdaCredentials = getCredentialsFromEvent(event)
 
-    const clickhouseClient = hasFeature('CLICKHOUSE_ENABLED')
+    const clickhouseClient = isClickhouseEnabled()
       ? await getClickhouseClient(tenantId)
       : undefined
 

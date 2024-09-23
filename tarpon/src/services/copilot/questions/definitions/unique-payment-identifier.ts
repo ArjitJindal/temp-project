@@ -19,8 +19,11 @@ import {
   paginatedSqlQuery,
 } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getContext, hasFeature } from '@/core/utils/context'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { getContext } from '@/core/utils/context'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 export const UniquePaymentIdentifier: TableQuestion<
   Period & { currency: CurrencyCode; direction: Direction }
@@ -40,7 +43,7 @@ export const UniquePaymentIdentifier: TableQuestion<
     let items: [string, string, number, number][] = []
     let total = 0
     let topPaymentIdentifier = ''
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
+    if (isClickhouseEnabled()) {
       const clickhouseClient = await getClickhouseClient(
         getContext()?.tenantId as string
       )

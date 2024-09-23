@@ -8,8 +8,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
-import { getSortedData } from '@/utils/clickhouse/utils'
-import { envIs } from '@/utils/env'
+import { getSortedData, isClickhouseEnabled } from '@/utils/clickhouse/utils'
 
 export class UserClickhouseRepository {
   private tenantId: string
@@ -33,7 +32,7 @@ export class UserClickhouseRepository {
     count: number
   }> {
     if (!this.clickhouseClient) {
-      if (envIs('dev') || envIs('test') || envIs('local')) {
+      if (isClickhouseEnabled()) {
         throw new Error('Clickhouse client is not initialized')
       }
 

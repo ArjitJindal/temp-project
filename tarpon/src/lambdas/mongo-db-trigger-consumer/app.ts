@@ -9,7 +9,8 @@ import { SendMessageCommand, SQSClient } from '@aws-sdk/client-sqs'
 import { MongoDbConsumer } from '.'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { envIs } from '@/utils/env'
+import { logger } from '@/core/logger'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
 
 type ChangeStreamDocument =
   | ChangeStreamInsertDocument
@@ -48,6 +49,10 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
       timestamp = Number(`${T}${I}`)
     }
 
+    logger.info('MongoDB trigger consumer event', {
+      event,
+    })
+
     const collectionName = event.detail.ns.coll
 
     const eventData: MongoConsumerSQSMessage = {
@@ -68,10 +73,12 @@ export const mongoDbTriggerConsumerHandler = lambdaConsumer()(
 
 export const mongoDbTriggerQueueConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
-    if (!envIs('dev')) {
+    if (!isClickhouseEnabledInRegion()) {
+      logger.info(
+        'Clickhouse is not enabled, skipping MongoDB trigger queue consumer'
+      )
       return
     }
-
     const events = event.Records.map((record) =>
       JSON.parse(record.body)
     ) as MongoConsumerSQSMessage[]

@@ -98,7 +98,7 @@ async function main() {
 
   if (
     migrationType !== 'PRE_DEPLOYMENT' &&
-    migrationType != 'POST_DEPLOYMENT'
+    migrationType !== 'POST_DEPLOYMENT'
   ) {
     throw new Error(`Unknown migration type: ${migrationType}`)
   }
@@ -116,6 +116,7 @@ async function main() {
       : 'migrations-post-deployment'
 
   if (migrationType === 'PRE_DEPLOYMENT') {
+    console.info('Syncing clickhouse tables before handling migrations')
     // Sync clickhouse tables before handling migrations
     await syncClickhouseTables()
   }

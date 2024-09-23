@@ -41,6 +41,8 @@ import {
 } from 'aws-cdk-lib/aws-lambda-event-sources'
 import { SqsSubscription } from 'aws-cdk-lib/aws-sns-subscriptions'
 import {
+  InterfaceVpcEndpoint,
+  InterfaceVpcEndpointService,
   IpAddresses,
   Peer,
   Port,
@@ -333,7 +335,8 @@ export class CdkTarponStack extends cdk.Stack {
      * VPC configuration: https://www.mongodb.com/docs/atlas/security-vpc-peering/
      */
 
-    const { vpc, vpcCidr, securityGroup } = this.createMongoAtlasVpc()
+    const { vpc, vpcCidr, securityGroup, clickhouseSecurityGroup } =
+      this.createMongoAtlasVpc()
 
     /**
      * S3 Buckets
@@ -492,7 +495,7 @@ export class CdkTarponStack extends cdk.Stack {
 
     this.functionProps = {
       securityGroups: this.config.resource.LAMBDA_VPC_ENABLED
-        ? [securityGroup]
+        ? [securityGroup, clickhouseSecurityGroup]
         : undefined,
       vpc: this.config.resource.LAMBDA_VPC_ENABLED ? vpc : undefined,
       environment: {
@@ -1407,8 +1410,19 @@ export class CdkTarponStack extends cdk.Stack {
       })
     )
 
+    if (this.config.clickhouse?.privateEndpoint && vpc) {
+      new InterfaceVpcEndpoint(this, 'clickhouse-endpoint', {
+        vpc,
+        service: new InterfaceVpcEndpointService(
+          this.config.clickhouse?.privateEndpoint.awsPrivateLinkEndpointName
+        ),
+        privateDnsEnabled: true,
+        securityGroups: [clickhouseSecurityGroup, securityGroup],
+      })
+    }
+
     if (
-      this.config.stage === 'dev' &&
+      this.config.clickhouse?.enabled &&
       !isQaEnv() &&
       this.config.env.account &&
       this.config.env.region
@@ -1553,6 +1567,7 @@ export class CdkTarponStack extends cdk.Stack {
         vpc: null,
         vpcCidr: null,
         securityGroup: null,
+        clickhouseSecurityGroup: null,
       } as any
     }
     const IP_ADDRESS_RANGE = '10.0.0.0/21'
@@ -1594,10 +1609,29 @@ export class CdkTarponStack extends cdk.Stack {
     )
     securityGroup.addIngressRule(Peer.ipv4(IP_ADDRESS_RANGE), Port.tcp(27017))
 
+    const clickhouseSecurityGroup = new SecurityGroup(
+      this,
+      StackConstants.CLICKHOUSE_SECURITY_GROUP_ID,
+      {
+        vpc,
+        securityGroupName: StackConstants.CLICKHOUSE_SECURITY_GROUP_ID,
+      }
+    )
+
+    clickhouseSecurityGroup.addIngressRule(
+      Peer.ipv4(IP_ADDRESS_RANGE),
+      Port.tcp(8443)
+    )
+    clickhouseSecurityGroup.addIngressRule(
+      Peer.ipv4(IP_ADDRESS_RANGE),
+      Port.tcp(9440)
+    )
+
     return {
       vpc,
       vpcCidr: IP_ADDRESS_RANGE,
       securityGroup,
+      clickhouseSecurityGroup,
     }
   }
 

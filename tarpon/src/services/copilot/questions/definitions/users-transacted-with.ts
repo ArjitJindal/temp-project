@@ -14,8 +14,11 @@ import {
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
-import { getContext, hasFeature } from '@/core/utils/context'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { getContext } from '@/core/utils/context'
+import {
+  executeClickhouseQuery,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 type Row = {
   userId: string
@@ -48,7 +51,7 @@ export const UsersTransactedWith: TableQuestion<
     let rows: Row[] = []
     let total = 0
 
-    if (hasFeature('CLICKHOUSE_ENABLED')) {
+    if (isClickhouseEnabled()) {
       const paginationQuery = `
       SELECT 
         COUNT(*) AS count

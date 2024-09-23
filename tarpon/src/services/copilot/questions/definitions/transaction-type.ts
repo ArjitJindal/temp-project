@@ -13,8 +13,10 @@ import {
   matchPeriodSQL,
 } from '@/services/copilot/questions/definitions/util'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { hasFeature } from '@/core/utils/context'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 export const TransactionType: BarchartQuestion<Period> = {
@@ -76,7 +78,7 @@ export const TransactionType: BarchartQuestion<Period> = {
         .toArray()
     }
 
-    const data = hasFeature('CLICKHOUSE_ENABLED')
+    const data = isClickhouseEnabled()
       ? await getClickhouseResults()
       : await getMongoResults()
 

@@ -1,16 +1,13 @@
-import { ClickHouseTables } from '../../../src/utils/clickhouse/definition'
-import { createOrUpdateClickHouseTable } from '../../../src/utils/clickhouse/utils'
 import { migrateAllTenants } from '../utils/tenant'
-import { envIs } from '@/utils/env'
+import {
+  createTenantDatabase,
+  isClickhouseEnabledInRegion,
+} from '@/utils/clickhouse/utils'
 
 export async function syncClickhouseTables() {
-  if (envIs('local') || envIs('dev')) {
+  if (isClickhouseEnabledInRegion()) {
     await migrateAllTenants(async (tenant) => {
-      await Promise.all(
-        ClickHouseTables.map((table) =>
-          createOrUpdateClickHouseTable(tenant.id, table)
-        )
-      )
+      await createTenantDatabase(tenant.id)
     })
   }
 }
