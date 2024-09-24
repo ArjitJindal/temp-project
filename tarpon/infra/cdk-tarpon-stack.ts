@@ -117,6 +117,7 @@ import {
 } from './cdk-utils/cdk-fargate-utils'
 import { CdkBudgetStack } from './cdk-tarpon-nested-stacks/cdk-budgets-stack'
 import { envIs, envIsNot } from '@/utils/env'
+import { generateChecksum } from '@/utils/object'
 
 const DEFAULT_SQS_VISIBILITY_TIMEOUT = Duration.seconds(
   DEFAULT_LAMBDA_TIMEOUT_SECONDS * 6
@@ -1670,14 +1671,18 @@ export class CdkTarponStack extends cdk.Stack {
    * GuardDuty for malware and tag the objects with the result.
    */
   private createMalwareProtectionPlanForS3Bucket(bucket: Bucket) {
-    // Create a new IAM Role with the provided trust policy
-    const guardDutyRole = new Role(this, 'GuardDutyMalwareProtectionRole', {
+    const guarddutyRoleName = `GuardDutyMalwareProtectionRole-${generateChecksum(
+      bucket.bucketArn,
+      10
+    )}`
+
+    const guardDutyRole = new Role(this, guarddutyRoleName, {
       assumedBy: new ServicePrincipal(
         'malware-protection-plan.guardduty.amazonaws.com'
       ),
       description:
         'Role for GuardDuty Malware Protection to assume and scan S3 events',
-      roleName: 'GuardDutyMalwareProtectionRole',
+      roleName: guarddutyRoleName,
       inlinePolicies: {
         GuardDutyMalwareProtectionPolicy: new PolicyDocument({
           statements: [
