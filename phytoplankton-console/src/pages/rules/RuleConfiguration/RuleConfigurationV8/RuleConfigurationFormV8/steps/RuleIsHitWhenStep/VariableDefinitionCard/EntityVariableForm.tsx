@@ -1,7 +1,6 @@
-import React, { useCallback, useMemo, useState, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { shortId } from '@flagright/lib/utils';
 import { Link } from 'react-router-dom';
-import { isEqual } from 'lodash';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import {
   isTransactionDestinationVariable,
@@ -11,8 +10,8 @@ import {
   isUserSenderOrReceiverVariable,
   isUserSenderVariable,
 } from '../helpers';
-import { RuleLogicBuilder } from '../RuleLogicBuilder';
-import NestedSelects, { RefType, Option as NestedSelectsOption } from './NestedSelects';
+import NestedSelects, { Option as NestedSelectsOption, RefType } from './NestedSelects';
+import VariableFilters from './VariableFilters';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
@@ -83,7 +82,7 @@ export function getNewEntityVariableKey() {
   return `entity:${shortId()}`;
 }
 
-function getInitialFormValues(
+export function getInitialFormValues(
   ruleType: RuleType,
   variable: LogicEntityVariableInUse | undefined,
   entityVariables: LogicEntityVariable[],
@@ -371,6 +370,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             mode="SINGLE"
             options={allVariableOptions}
             testId="variable-search-v8"
+            isDisabled={readOnly}
           />
           <Label label="Variable name" required={{ value: false, showHint: true }}>
             <TextInput
@@ -379,6 +379,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
               placeholder={entityVariable?.uiDefinition.label || 'Custom variable name'}
               allowClear
               testName="variable-name-v8"
+              isDisabled={readOnly}
             />
           </Label>
           <PropertyColumns>
@@ -391,6 +392,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                   ruleType === 'TRANSACTION' ? TX_ENTITY_TYPE_OPTIONS : USER_ENTITY_TYPE_OPTIONS
                 }
                 testName="variable-type-v8"
+                isDisabled={readOnly}
               />
             </Label>
             {formValues.type === 'TRANSACTION' && (
@@ -401,6 +403,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                   mode={'SINGLE'}
                   options={TX_DIRECTION_OPTIONS}
                   testName="variable-tx-direction-v8"
+                  isDisabled={readOnly}
                 />
               </Label>
             )}
@@ -414,6 +417,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                       mode={'SINGLE'}
                       options={USER_TYPE_OPTIONS}
                       testName="variable-user-type-v8"
+                      isDisabled={readOnly}
                     />
                   </Label>
                 )}
@@ -430,6 +434,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                       isEntityUser ? opt.value === entity : true,
                     )}
                     testName="variable-user-nature-v8"
+                    isDisabled={readOnly}
                   />
                 </Label>
               </>
@@ -442,13 +447,14 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 options={variableOptions}
                 value={formValues.entityVariableKey}
                 onChange={(entityVariableKey) => handleUpdateForm({ entityVariableKey })}
+                isDisabled={readOnly}
               />
             )}
           </PropertyColumns>
           {/* TODO: suppport user event filters */}
           {entityVariable && formValues.type === 'TRANSACTION' && (
             <div>
-              {!formValues.filtersLogic && !showFilters ? (
+              {!formValues.filtersLogic && !showFilters && !readOnly ? (
                 <Link to="" onClick={() => setShowFilters(true)}>
                   Add filters
                 </Link>
@@ -459,17 +465,11 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                     {formValues.type.toLowerCase()} event to find the first match based on your
                     filters
                   </Alert>
-                  <RuleLogicBuilder
-                    ruleType={ruleType}
+                  <VariableFilters
                     entityVariableTypes={getFilterEntityVariableTypes(entityVariable)}
-                    jsonLogic={formValues.filtersLogic}
-                    // NOTE: Only entity variables are allowed for entity variable filters
-                    aggregationVariables={[]}
-                    onChange={(jsonLogic) => {
-                      if (!isEqual(jsonLogic, formValues.filtersLogic)) {
-                        handleUpdateForm({ filtersLogic: jsonLogic });
-                      }
-                    }}
+                    readOnly={readOnly}
+                    formValuesState={[formValues, setFormValues]}
+                    ruleType={ruleType}
                   />
                 </Label>
               )}

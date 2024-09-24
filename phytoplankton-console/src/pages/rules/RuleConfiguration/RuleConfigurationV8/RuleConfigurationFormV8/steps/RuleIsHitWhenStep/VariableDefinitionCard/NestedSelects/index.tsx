@@ -1,4 +1,4 @@
-import React, { useState, useImperativeHandle, useRef } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 import { firstLetterUpper } from '@flagright/lib/utils/humanize';
 import Label from '@/components/library/Label';
 import Select, { Option as SelectOption } from '@/components/library/Select';
@@ -17,6 +17,7 @@ export interface Props {
   label: React.ReactNode;
   options: Option[];
   testId?: string;
+  isDisabled?: boolean;
 }
 
 // Check if current key is in current option or it's children has current option
@@ -28,7 +29,7 @@ const calcLocalValue = (value: string | undefined, options: Option[]) => {
 };
 
 function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
-  const { value, onChange, label, options, testId } = props;
+  const { value, onChange, label, options, testId, isDisabled } = props;
 
   const [localValue, setLocalValue] = useState<string | undefined>(() => {
     return calcLocalValue(value, options);
@@ -69,6 +70,7 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
           options={options}
           testId={testId}
           placeholder={'Select an option'}
+          isDisabled={isDisabled}
         />
       </Label>
       {selectedOption && (selectedOption?.children?.length ?? 0) !== 0 && (

@@ -2,9 +2,10 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { shortId } from '@flagright/lib/utils';
 import { useRuleLogicConfig } from '../helpers';
 import s from './style.module.less';
-import { AggregationVariableForm, FormRuleAggregationVariable } from './AggregationVariableForm';
+import { AggregationVariableForm } from './AggregationVariableForm';
 import { EntityVariableForm, getNewEntityVariableKey } from './EntityVariableForm';
 import { MlVariableForm } from './MlVariableForm';
+import { FormRuleAggregationVariable } from './helpers';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
@@ -443,3 +444,5 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
 };
 
 export default VariableDefinitionCard;
+export { formatTimeWindow } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/helpers';
+export { varLabelWithoutDirection } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/helpers';

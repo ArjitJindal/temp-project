@@ -1,10 +1,11 @@
-import { BasicConfig, CoreOperators, Config, Empty } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Empty } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import { isEmpty } from 'lodash';
 import s from './index.module.less';
 import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS } from './operators';
-import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import ViewModeTags from './ViewModeTags';
+import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
 import Select, { Option } from '@/components/library/Select';
 import Label, { Props as LabelProps } from '@/components/library/Label';
@@ -12,16 +13,22 @@ import Dropdown from '@/components/library/Dropdown';
 import ArrowDownSLineIcon from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 import DeleteOutlined from '@/components/ui/icons/Remix/system/delete-bin-6-line.react.svg';
 import Button from '@/components/library/Button';
+import { TagColor } from '@/components/library/Tag';
+import VariableInfoPopover from '@/components/ui/LogicBuilder/VariableInfoPopover';
 
 const InitialConfig = BasicConfig;
 
 export const LHS_ONLY_SYMBOL = '$1';
 export const RHS_ONLY_SYMBOL = '$2';
 
-export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'> & {
-  operators: Omit<CoreOperators<Config>, 'multiselect_not_contains' | 'multiselect_contains'>;
-} {
+export function makeConfig(params: LogicBuilderConfig): QueryBuilderConfig {
+  const variableColors: { [variableName: string]: TagColor | undefined } = Object.keys(
+    params.fields,
+  ).reduce((acc, x) => ({ ...acc, [x]: x.startsWith('agg:') ? 'action' : 'gray' }), {});
+
   const {
+    mode = 'EDIT',
+    onClickVariable,
     fields,
     enableNesting = true,
     enableReorder = true,
@@ -33,6 +40,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
     ...JSON_LOGIC_OPERATORS,
     ...params.operators,
   };
+  const isViewMode = mode === 'VIEW';
   return {
     ...InitialConfig,
     widgets: customWidgets,
@@ -48,9 +56,16 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
     fields: fields,
     settings: {
       ...InitialConfig.settings,
+      mode,
+      variableColors,
+      onClickVariable,
+      immutableGroupsMode: isViewMode,
+      immutableFieldsMode: isViewMode,
+      immutableOpsMode: isViewMode,
+      immutableValuesMode: isViewMode,
       removeEmptyGroupsOnLoad: false,
       removeIncompleteRulesOnLoad: false,
-      showLabels: !hideLabels,
+      showLabels: !hideLabels && !isViewMode,
       fieldSources: ['field', 'func'],
       valueSourcesInfo: {
         ...InitialConfig.settings.valueSourcesInfo,
@@ -70,7 +85,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
       addGroupLabel: addGroupLabel,
       addSubRuleLabel: 'Add sub condition',
       groupActionsPosition: 'bottomLeft',
-      canReorder: enableReorder,
+      canReorder: !isViewMode && enableReorder,
       showErrorMessage: true,
       renderValueSources: (props) => {
         if (isOperatorParameterField(props)) {
@@ -119,7 +134,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
           >
             <div className={cn(s.selectedConjunction, disabled && s.isDisabled)}>
               {props.selectedConjunction ?? options[0]?.label ?? '-'}
-              <ArrowDownSLineIcon className={s.arrowIcon} />
+              {!props.readonly && <ArrowDownSLineIcon className={s.arrowIcon} />}
             </div>
           </Dropdown>
         );
@@ -133,10 +148,31 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
           }
           return lhsOnly;
         });
+        const options = filteredItems.map((x) => ({ label: x.label, value: x.path }));
+        const selectedKey = props.selectedKey;
+        if (isViewMode) {
+          const option = options.find((x) => x.value === selectedKey);
+
+          return (
+            <VariableInfoPopover
+              onClick={
+                onClickVariable != null && selectedKey != null
+                  ? () => {
+                      onClickVariable?.(selectedKey);
+                    }
+                  : undefined
+              }
+            >
+              <ViewModeTags color={selectedKey ? variableColors[selectedKey] : undefined}>
+                {option?.label ?? selectedKey}
+              </ViewModeTags>
+            </VariableInfoPopover>
+          );
+        }
         return (
           <FieldInput
-            options={filteredItems.map((x) => ({ label: x.label, value: x.path }))}
-            value={props.selectedKey}
+            options={options}
+            value={selectedKey}
             onChange={(path) => {
               const item = props.items.find((x) => x.path === path);
               if (item?.path) {
@@ -156,6 +192,14 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
         const options = isLHSSelectType
           ? props.items.filter((item) => SELECT_OPERATORS.includes(item.key))
           : props.items;
+        const finalOptions = options.map((x) => ({ label: x.label, value: x.key }));
+        if (isViewMode) {
+          return (
+            <ViewModeTags>
+              {finalOptions.find((x) => x.value === props.selectedKey)?.label ?? props.selectedKey}
+            </ViewModeTags>
+          );
+        }
         return (
           <OptionalLabel
             label={'Operator'}
@@ -167,7 +211,7 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
               dropdownMatchWidth={false}
               portaled={true}
               allowClear={false}
-              options={options.map((x) => ({ label: x.label, value: x.key }))}
+              options={finalOptions}
               value={props.selectedKey}
               onChange={(key) => {
                 const item = options.find((x) => x.key === key);
@@ -181,6 +225,13 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
         );
       },
       renderFunc: (props) => {
+        const options = props.items.map((x) => ({ label: x.label, value: x.key }));
+        const value = props.selectedKey;
+
+        if (isViewMode) {
+          return <ViewModeTags>{options.find((x) => x.value === value)?.label}</ViewModeTags>;
+        }
+
         return (
           <Label label={'Function'} testId="logic-function">
             <Select
@@ -188,8 +239,8 @@ export function makeConfig(params: LogicBuilderConfig): Omit<Config, 'operators'
               dropdownMatchWidth={true}
               portaled={true}
               allowClear={false}
-              options={props.items.map((x) => ({ label: x.label, value: x.key }))}
-              value={props.selectedKey}
+              options={options}
+              value={value}
               onChange={(key) => {
                 const item = props.items.find((x) => x.key === key);
                 if (item && item.path) {
@@ -255,3 +306,7 @@ export const FieldInput = (props: FieldInputProps) => {
     </OptionalLabel>
   );
 };
+
+export function isViewMode(config: QueryBuilderConfig): boolean {
+  return config.settings.mode === 'VIEW';
+}

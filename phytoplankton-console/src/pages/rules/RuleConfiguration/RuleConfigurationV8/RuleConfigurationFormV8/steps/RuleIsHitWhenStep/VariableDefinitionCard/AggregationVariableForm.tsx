@@ -1,15 +1,14 @@
 import React, { ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { getFiscalYearStart } from '@flagright/lib/utils/time';
-import { isEqual, lowerCase, round } from 'lodash';
+import { round } from 'lodash';
 import { CURRENCIES_SELECT_OPTIONS, MINUTE_GROUP_SIZE } from '@flagright/lib/constants';
 import { canAggregateMinute } from '@flagright/lib/rules-engine';
-import pluralize from 'pluralize';
 import { getAllValuesByKey } from '@flagright/lib/utils';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { RuleLogicBuilder } from '../RuleLogicBuilder';
+import VariableFilters from 'src/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/VariableFilters';
 import { isTransactionAmountVariable, isTransactionOriginOrDestinationVariable } from '../helpers';
 import s from './style.module.less';
+import AggregationVariableSummary from './AggregationVariableSummary';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
@@ -39,17 +38,13 @@ import { Hint } from '@/components/library/Form/InputField';
 import Modal from '@/components/library/Modal';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import NumberInput from '@/components/library/NumberInput';
+import {
+  FormRuleAggregationVariable,
+  varLabelWithoutNamespace,
+} from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard/helpers';
+import { StatePair } from '@/utils/state';
+import { useIsChanged } from '@/utils/hooks';
 
-function varLabelWithoutNamespace(label: string): string {
-  return label.replace(/^.+\s*\/\s*/, '');
-}
-function varLabelWithoutDirection(label: string): string {
-  return label.replace(/^(origin|destination)\s*/, '');
-}
-
-export type FormRuleAggregationVariable = Partial<LogicAggregationVariable> & {
-  timeWindow: LogicAggregationVariableTimeWindow;
-};
 interface AggregationVariableFormProps {
   ruleType: RuleType;
   variable: FormRuleAggregationVariable;
@@ -198,17 +193,24 @@ function validateAggregationTimeWindow(timeWindow: LogicAggregationVariableTimeW
   return null;
 }
 
-export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = ({
+export const AggregationVariableFormContent: React.FC<
+  Pick<AggregationVariableFormProps, 'ruleType' | 'entityVariables' | 'readOnly'> & {
+    onValidFormValues?: (isValidFormValues: boolean) => void;
+    formValuesState: StatePair<FormRuleAggregationVariable>;
+    hideFilters?: boolean;
+    hideSummary?: boolean;
+  }
+> = ({
+  onValidFormValues,
+  formValuesState,
   ruleType,
-  variable,
   entityVariables,
-  isNew,
   readOnly,
-  onUpdate,
-  onCancel,
+  hideFilters = false,
+  hideSummary = false,
 }) => {
   const [showFilters, setShowFilters] = useState(false);
-  const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
+  const [formValues, setFormValues] = formValuesState;
   const [aggregateByLastN, setAggregateByLastN] = useState(!!formValues.lastNEntities);
   const settings = useSettings();
   const aggregateFieldOptions = useMemo(() => {
@@ -337,7 +339,12 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
         baseCurrency: settings.defaultValues?.currency ?? 'USD',
       }));
     }
-  }, [baseCurrencyRequired, formValues.baseCurrency, settings.defaultValues?.currency]);
+  }, [
+    setFormValues,
+    baseCurrencyRequired,
+    formValues.baseCurrency,
+    settings.defaultValues?.currency,
+  ]);
   const lastNEntitiesValidation = useMemo(() => {
     if (formValues.lastNEntities == null && !aggregateByLastN) {
       return true;
@@ -349,7 +356,7 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     );
   }, [formValues.lastNEntities, aggregateByLastN]);
   const isValidFormValues = useMemo(() => {
-    return (
+    return !!(
       formValues.type &&
       formValues.transactionDirection &&
       formValues.aggregationFieldKey &&
@@ -368,6 +375,14 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     timeWindowValidationError,
     lastNEntitiesValidation,
   ]);
+
+  const isValidChanged = useIsChanged(isValidFormValues);
+  useEffect(() => {
+    if (isValidChanged) {
+      onValidFormValues?.(isValidFormValues);
+    }
+  }, [isValidFormValues, isValidChanged, onValidFormValues]);
+
   const variableAutoName = useMemo(() => {
     if (isValidFormValues) {
       const aggVarDefinition = getAggVarDefinition(
@@ -378,10 +393,308 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
     }
     return 'Auto-generated if left empty';
   }, [entityVariables, formValues, isValidFormValues]);
-  const handleUpdateForm = useCallback((newValues: Partial<FormRuleAggregationVariable>) => {
-    setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
-  }, []);
+  const handleUpdateForm = useCallback(
+    (newValues: Partial<FormRuleAggregationVariable>) => {
+      setFormValues((prevValues) => ({ ...prevValues, ...newValues }));
+    },
+    [setFormValues],
+  );
+
+  return (
+    <>
+      {!readOnly && (
+        <Label label="Variable name" required={{ value: false, showHint: !readOnly }}>
+          <TextInput
+            value={formValues.name}
+            onChange={(name) => handleUpdateForm({ name })}
+            placeholder={variableAutoName}
+            allowClear
+            testName="variable-name-v8"
+            isDisabled={readOnly}
+          />
+        </Label>
+      )}
+      <PropertyColumns>
+        <Label label="Variable type" required={{ value: true, showHint: !readOnly }}>
+          <SelectionGroup
+            value={'TRANSACTION'}
+            mode={'SINGLE'}
+            options={[{ value: 'TRANSACTION', label: 'Transaction' }]}
+            isDisabled={readOnly}
+          />
+        </Label>
+        {ruleType === 'TRANSACTION' && (
+          <Label label="Check transactions for" required={{ value: true, showHint: !readOnly }}>
+            <SelectionGroup
+              value={formValues.type}
+              onChange={(type) => handleUpdateForm({ type })}
+              mode={'SINGLE'}
+              options={TYPE_OPTIONS}
+              testName="variable-type-v8"
+              isDisabled={readOnly}
+            />
+          </Label>
+        )}
+        {ruleType === 'TRANSACTION' && (
+          <Label
+            label={`Check for sender / receiver`}
+            required={{ value: true, showHint: !readOnly }}
+          >
+            <SelectionGroup
+              value={formValues.userDirection ?? 'SENDER_OR_RECEIVER'}
+              onChange={(userDirection) => handleUpdateForm({ userDirection })}
+              mode={'SINGLE'}
+              options={USER_DIRECTION_OPTIONS}
+              testName="variable-user-direction-v8"
+              isDisabled={readOnly}
+            />
+          </Label>
+        )}
+        <Label
+          label={`Check for ${
+            formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
+          }'s past transaction direction`}
+          required={{ value: true, showHint: !readOnly }}
+        >
+          <SelectionGroup
+            value={formValues.transactionDirection ?? 'SENDING_RECEIVING'}
+            onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
+            mode={'SINGLE'}
+            options={TX_DIRECTION_OPTIONS}
+            testName="variable-tx-direction-v8"
+            isDisabled={readOnly}
+          />
+        </Label>
+        <>
+          <Label
+            label={
+              formValues.transactionDirection === 'SENDING_RECEIVING'
+                ? 'Sending aggregate Field'
+                : 'Aggregate field'
+            }
+            required={{ value: true, showHint: !readOnly }}
+            testId="variable-aggregate-field-v8"
+          >
+            <Select<string>
+              value={formValues.aggregationFieldKey}
+              onChange={(aggregationFieldKey) =>
+                handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
+              }
+              mode="SINGLE"
+              options={aggregateFieldOptions}
+              isDisabled={readOnly}
+            />
+          </Label>
+          {formValues.transactionDirection === 'SENDING_RECEIVING' && (
+            <Label
+              label="Receiving aggregate Field"
+              required={{ value: true, showHint: !readOnly }}
+              testId="variable-aggregate-field-v8"
+            >
+              <Select<string>
+                isDisabled={!formValues.aggregationFieldKey || readOnly}
+                value={formValues.secondaryAggregationFieldKey ?? formValues.aggregationFieldKey}
+                onChange={(secondaryAggregationFieldKey) =>
+                  handleUpdateForm({ secondaryAggregationFieldKey, aggregationFunc: undefined })
+                }
+                mode="SINGLE"
+                options={secondaryAggregationKeyOptions}
+              />
+              {!formValues.aggregationFieldKey && (
+                <Hint isError={false}>Select sending key first</Hint>
+              )}
+            </Label>
+          )}
+        </>
+        <Label
+          label="Aggregate function"
+          required={{ value: true, showHint: !readOnly }}
+          testId="variable-aggregate-function-v8"
+        >
+          <Select<LogicAggregationFunc>
+            isDisabled={readOnly}
+            value={formValues.aggregationFunc}
+            onChange={(aggregationFunc) =>
+              handleUpdateForm(
+                aggregationFunc === 'UNIQUE_VALUES'
+                  ? { aggregationFunc, includeCurrentEntity: false }
+                  : { aggregationFunc },
+              )
+            }
+            mode="SINGLE"
+            options={aggregateFunctionOptions}
+          />
+        </Label>
+        <Label
+          label="Group by"
+          hint="Group by a field to get the aggregate value for each unique value of this field. For example, If you group by 'transaction type' with 'Count' as the aggregate function, you will get the count of transactions for each unique transaction type."
+          testId="variable-aggregate-groupby-field-v8"
+          required={{ value: false, showHint: !readOnly }}
+        >
+          <Select<string>
+            value={formValues.aggregationGroupByFieldKey}
+            onChange={(aggregationGroupByFieldKey) =>
+              handleUpdateForm({ aggregationGroupByFieldKey })
+            }
+            mode="SINGLE"
+            options={aggregateGroupByFieldOptions}
+            isDisabled={readOnly}
+          />
+        </Label>
+        {/* TODO (v8): Base currency design TBD */}
+        {baseCurrencyRequired ? (
+          <Label label="Base currency" required={{ value: true, showHint: !readOnly }}>
+            <Select<string>
+              value={formValues.baseCurrency}
+              onChange={(baseCurrency) =>
+                handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
+              }
+              mode="SINGLE"
+              placeholder="Select base currency"
+              options={CURRENCIES_SELECT_OPTIONS}
+              isDisabled={readOnly}
+            />
+          </Label>
+        ) : (
+          <div>{/* Empty div to manage alignment */}</div>
+        )}
+        <Label label={`Aggregate target`} required={{ value: true, showHint: !readOnly }}>
+          <SelectionGroup
+            isDisabled={readOnly}
+            value={aggregateByLastN ? 'LAST_N' : 'TIME'}
+            onChange={(transactionDirection) => {
+              const val = transactionDirection === 'LAST_N';
+              setAggregateByLastN(val);
+              handleUpdateForm(
+                val
+                  ? {
+                      lastNEntities: 5,
+                      timeWindow: {
+                        start: {
+                          units: 0,
+                          granularity: 'all_time',
+                        },
+                        end: {
+                          units: 0,
+                          granularity: 'now',
+                        },
+                      },
+                    }
+                  : {
+                      lastNEntities: undefined,
+                      timeWindow: {
+                        start: {
+                          units: 1,
+                          granularity: 'day',
+                        },
+                        end: {
+                          units: 0,
+                          granularity: 'now',
+                        },
+                      },
+                    },
+              );
+            }}
+            mode={'SINGLE'}
+            options={AGGREGATE_TARGET_OPTIONS}
+            testName="aggregate-target-v8"
+          />
+        </Label>
+
+        <Label
+          label={`Include current transaction`}
+          required={{ value: true, showHint: !readOnly }}
+        >
+          <SelectionGroup
+            value={formValues.includeCurrentEntity ?? true}
+            onChange={(includeCurrentEntity) => {
+              handleUpdateForm({
+                includeCurrentEntity,
+              });
+            }}
+            mode={'SINGLE'}
+            options={BOOLEAN_OPTIONS}
+            testName="aggregate-target-v8"
+            isDisabled={readOnly}
+          />
+        </Label>
+        {!aggregateByLastN && (
+          <div className={s.timeWindow}>
+            <VariableTimeWindow
+              isDisabled={readOnly}
+              value={formValues.timeWindow}
+              onChange={(newValue) => {
+                newValue = roundedTimeWindowMinutes(newValue);
+                handleUpdateForm({
+                  timeWindow: newValue,
+                });
+              }}
+            />
+          </div>
+        )}
+        {aggregateByLastN && (
+          <Label
+            label="Transactions count"
+            hint="Can aggregate up to last 10 transactions."
+            required={{ value: true, showHint: !readOnly }}
+          >
+            <NumberInput
+              isDisabled={readOnly}
+              value={formValues.lastNEntities}
+              onChange={(lastNEntities) => handleUpdateForm({ lastNEntities })}
+              placeholder="Enter number of transactions"
+              isError={!lastNEntitiesValidation}
+              max={MAX_AGGREGATED_TRANSACTIONS}
+            />
+          </Label>
+        )}
+      </PropertyColumns>
+      {timeWindowValidationError && <Alert type="error">{timeWindowValidationError}</Alert>}
+      {!hideFilters && (
+        <div>
+          {!formValues.filtersLogic && !showFilters && !readOnly ? (
+            <Link to="" onClick={() => setShowFilters(true)}>
+              Add filters
+            </Link>
+          ) : (
+            <Label label="Filters">
+              <VariableFilters
+                entityVariableTypes={[
+                  'TRANSACTION',
+                  'TRANSACTION_EVENT',
+                  'BUSINESS_USER',
+                  'CONSUMER_USER',
+                  'USER',
+                ]}
+                formValuesState={[formValues, setFormValues]}
+                ruleType={ruleType}
+                readOnly={readOnly}
+              />
+            </Label>
+          )}
+        </div>
+      )}
+      {!hideSummary && (
+        <Alert type="info" size="m">
+          Variable summary
+          <br />
+          <AggregationVariableSummary
+            ruleType={ruleType}
+            variableFormValues={formValues}
+            entityVariables={entityVariables}
+          />
+        </Alert>
+      )}
+    </>
+  );
+};
+
+export const AggregationVariableForm = (props: AggregationVariableFormProps) => {
   const [isOpen, setIsOpen] = useState(true);
+  const { isNew, readOnly, variable, onCancel, onUpdate } = props;
+  const [formValues, setFormValues] = useState<FormRuleAggregationVariable>(variable);
+
+  const [isValidFormValues, setIsValidFormValues] = useState(false);
   return (
     <Modal
       title="Aggregation variable"
@@ -404,395 +717,12 @@ export const AggregationVariableForm: React.FC<AggregationVariableFormProps> = (
       average, count, maximum, or minimum"
     >
       <Card.Section direction="vertical">
-        <Label label="Variable name" required={{ value: false, showHint: true }}>
-          <TextInput
-            value={formValues.name}
-            onChange={(name) => handleUpdateForm({ name })}
-            placeholder={variableAutoName}
-            allowClear
-            testName="variable-name-v8"
-          />
-        </Label>
-        <PropertyColumns>
-          <Label label="Variable type" required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={'TRANSACTION'}
-              mode={'SINGLE'}
-              options={[{ value: 'TRANSACTION', label: 'Transaction' }]}
-            />
-          </Label>
-          {ruleType === 'TRANSACTION' && (
-            <Label label="Check transactions for" required={{ value: true, showHint: true }}>
-              <SelectionGroup
-                value={formValues.type}
-                onChange={(type) => handleUpdateForm({ type })}
-                mode={'SINGLE'}
-                options={TYPE_OPTIONS}
-                testName="variable-type-v8"
-              />
-            </Label>
-          )}
-          {ruleType === 'TRANSACTION' && (
-            <Label label={`Check for sender / receiver`} required={{ value: true, showHint: true }}>
-              <SelectionGroup
-                value={formValues.userDirection ?? 'SENDER_OR_RECEIVER'}
-                onChange={(userDirection) => handleUpdateForm({ userDirection })}
-                mode={'SINGLE'}
-                options={USER_DIRECTION_OPTIONS}
-                testName="variable-user-direction-v8"
-              />
-            </Label>
-          )}
-          <Label
-            label={`Check for ${
-              formValues.type === 'USER_TRANSACTIONS' ? 'user' : 'Payment ID'
-            }'s past transaction direction`}
-            required={{ value: true, showHint: true }}
-          >
-            <SelectionGroup
-              value={formValues.transactionDirection ?? 'SENDING_RECEIVING'}
-              onChange={(transactionDirection) => handleUpdateForm({ transactionDirection })}
-              mode={'SINGLE'}
-              options={TX_DIRECTION_OPTIONS}
-              testName="variable-tx-direction-v8"
-            />
-          </Label>
-          <>
-            <Label
-              label={
-                formValues.transactionDirection === 'SENDING_RECEIVING'
-                  ? 'Sending aggregate Field'
-                  : 'Aggregate field'
-              }
-              required={{ value: true, showHint: true }}
-              testId="variable-aggregate-field-v8"
-            >
-              <Select<string>
-                value={formValues.aggregationFieldKey}
-                onChange={(aggregationFieldKey) =>
-                  handleUpdateForm({ aggregationFieldKey, aggregationFunc: undefined })
-                }
-                mode="SINGLE"
-                options={aggregateFieldOptions}
-              />
-            </Label>
-            {formValues.transactionDirection === 'SENDING_RECEIVING' && (
-              <Label
-                label="Receiving aggregate Field"
-                required={{ value: true, showHint: true }}
-                testId="variable-aggregate-field-v8"
-              >
-                <Select<string>
-                  isDisabled={!formValues.aggregationFieldKey}
-                  value={formValues.secondaryAggregationFieldKey ?? formValues.aggregationFieldKey}
-                  onChange={(secondaryAggregationFieldKey) =>
-                    handleUpdateForm({ secondaryAggregationFieldKey, aggregationFunc: undefined })
-                  }
-                  mode="SINGLE"
-                  options={secondaryAggregationKeyOptions}
-                />
-                {!formValues.aggregationFieldKey && (
-                  <Hint isError={false}>Select sending key first</Hint>
-                )}
-              </Label>
-            )}
-          </>
-          <Label
-            label="Aggregate function"
-            required={{ value: true, showHint: true }}
-            testId="variable-aggregate-function-v8"
-          >
-            <Select<LogicAggregationFunc>
-              value={formValues.aggregationFunc}
-              onChange={(aggregationFunc) =>
-                handleUpdateForm(
-                  aggregationFunc === 'UNIQUE_VALUES'
-                    ? { aggregationFunc, includeCurrentEntity: false }
-                    : { aggregationFunc },
-                )
-              }
-              mode="SINGLE"
-              options={aggregateFunctionOptions}
-            />
-          </Label>
-          <Label
-            label="Group by"
-            hint="Group by a field to get the aggregate value for each unique value of this field. For example, If you group by 'transaction type' with 'Count' as the aggregate function, you will get the count of transactions for each unique transaction type."
-            testId="variable-aggregate-groupby-field-v8"
-            required={{ value: false, showHint: true }}
-          >
-            <Select<string>
-              value={formValues.aggregationGroupByFieldKey}
-              onChange={(aggregationGroupByFieldKey) =>
-                handleUpdateForm({ aggregationGroupByFieldKey })
-              }
-              mode="SINGLE"
-              options={aggregateGroupByFieldOptions}
-            />
-          </Label>
-          {/* TODO (v8): Base currency design TBD */}
-          {baseCurrencyRequired ? (
-            <Label label="Base currency" required={{ value: true, showHint: true }}>
-              <Select<string>
-                value={formValues.baseCurrency}
-                onChange={(baseCurrency) =>
-                  handleUpdateForm({ baseCurrency: baseCurrency as CurrencyCode })
-                }
-                mode="SINGLE"
-                placeholder="Select base currency"
-                options={CURRENCIES_SELECT_OPTIONS}
-              />
-            </Label>
-          ) : (
-            <div>{/* Empty div to manage alignment */}</div>
-          )}
-          <Label label={`Aggregate target`} required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={aggregateByLastN ? 'LAST_N' : 'TIME'}
-              onChange={(transactionDirection) => {
-                const val = transactionDirection === 'LAST_N';
-                setAggregateByLastN(val);
-                handleUpdateForm(
-                  val
-                    ? {
-                        lastNEntities: 5,
-                        timeWindow: {
-                          start: {
-                            units: 0,
-                            granularity: 'all_time',
-                          },
-                          end: {
-                            units: 0,
-                            granularity: 'now',
-                          },
-                        },
-                      }
-                    : {
-                        lastNEntities: undefined,
-                        timeWindow: {
-                          start: {
-                            units: 1,
-                            granularity: 'day',
-                          },
-                          end: {
-                            units: 0,
-                            granularity: 'now',
-                          },
-                        },
-                      },
-                );
-              }}
-              mode={'SINGLE'}
-              options={AGGREGATE_TARGET_OPTIONS}
-              testName="aggregate-target-v8"
-            />
-          </Label>
-
-          <Label label={`Include current transaction`} required={{ value: true, showHint: true }}>
-            <SelectionGroup
-              value={formValues.includeCurrentEntity ?? true}
-              onChange={(includeCurrentEntity) => {
-                handleUpdateForm({
-                  includeCurrentEntity,
-                });
-              }}
-              mode={'SINGLE'}
-              options={BOOLEAN_OPTIONS}
-              testName="aggregate-target-v8"
-            />
-          </Label>
-          {!aggregateByLastN && (
-            <div className={s.timeWindow}>
-              <VariableTimeWindow
-                value={formValues.timeWindow}
-                onChange={(newValue) => {
-                  newValue = roundedTimeWindowMinutes(newValue);
-                  handleUpdateForm({
-                    timeWindow: newValue,
-                  });
-                }}
-              />
-            </div>
-          )}
-          {aggregateByLastN && (
-            <Label
-              label="Transactions count"
-              hint="Can aggregate up to last 10 transactions."
-              required={{ value: true, showHint: true }}
-            >
-              <NumberInput
-                value={formValues.lastNEntities}
-                onChange={(lastNEntities) => handleUpdateForm({ lastNEntities })}
-                placeholder="Enter number of transactions"
-                isError={!lastNEntitiesValidation}
-                max={MAX_AGGREGATED_TRANSACTIONS}
-              />
-            </Label>
-          )}
-        </PropertyColumns>
-        {timeWindowValidationError && <Alert type="error">{timeWindowValidationError}</Alert>}
-        <div>
-          {!formValues.filtersLogic && !showFilters ? (
-            <Link to="" onClick={() => setShowFilters(true)}>
-              Add filters
-            </Link>
-          ) : (
-            <Label label="Filters">
-              <RuleLogicBuilder
-                ruleType={ruleType}
-                entityVariableTypes={[
-                  'TRANSACTION',
-                  'TRANSACTION_EVENT',
-                  'BUSINESS_USER',
-                  'CONSUMER_USER',
-                  'USER',
-                ]}
-                jsonLogic={formValues.filtersLogic}
-                // NOTE: Only entity variables are allowed for aggregation variable filters
-                aggregationVariables={[]}
-                onChange={(jsonLogic) => {
-                  if (!isEqual(jsonLogic, formValues.filtersLogic)) {
-                    handleUpdateForm({ filtersLogic: jsonLogic });
-                  }
-                }}
-              />
-            </Label>
-          )}
-        </div>
-        <AggregationVariableSummary
-          ruleType={ruleType}
-          variableFormValues={formValues}
-          entityVariables={entityVariables}
+        <AggregationVariableFormContent
+          {...props}
+          formValuesState={[formValues, setFormValues]}
+          onValidFormValues={setIsValidFormValues}
         />
       </Card.Section>
     </Modal>
-  );
-};
-
-interface AggregationVariableSummaryProps {
-  ruleType: RuleType;
-  variableFormValues: FormRuleAggregationVariable;
-  entityVariables: LogicEntityVariable[];
-}
-
-function formatTimeWindow(timeWindow: LogicAggregationTimeWindow): string {
-  if (timeWindow.granularity === 'all_time') {
-    return 'the beginning of time';
-  }
-  if (timeWindow.granularity === 'now' || timeWindow.units === 0) {
-    return 'now';
-  }
-  return `${timeWindow.units} ${pluralize(
-    lowerCase(humanizeAuto(timeWindow.granularity)),
-    timeWindow.units,
-  )} ago`;
-}
-
-const AggregationVariableSummary: React.FC<AggregationVariableSummaryProps> = ({
-  ruleType,
-  variableFormValues,
-  entityVariables,
-}) => {
-  const {
-    type,
-    userDirection,
-    transactionDirection,
-    aggregationFieldKey,
-    aggregationGroupByFieldKey,
-    aggregationFunc,
-    timeWindow,
-    filtersLogic,
-    lastNEntities,
-  } = variableFormValues;
-
-  if (
-    !type ||
-    !userDirection ||
-    !transactionDirection ||
-    !aggregationFieldKey ||
-    !aggregationFunc ||
-    !timeWindow
-  ) {
-    return (
-      <Alert type="info" size="m">
-        Variable summary
-        <br />
-        N/A
-      </Alert>
-    );
-  }
-  const aggFuncLabel = humanizeAuto(aggregationFunc);
-  const aggregationFieldVariable = entityVariables.find((v) => v.key === aggregationFieldKey);
-  const aggregationGroupByFieldVariable = aggregationGroupByFieldKey
-    ? entityVariables.find((v) => v.key === aggregationGroupByFieldKey)
-    : undefined;
-  let aggFieldLabel =
-    aggregationFunc === 'COUNT'
-      ? undefined
-      : pluralize(
-          lowerCase(varLabelWithoutNamespace(aggregationFieldVariable?.uiDefinition.label)),
-        );
-  if (aggFieldLabel && transactionDirection === 'SENDING_RECEIVING') {
-    aggFieldLabel = varLabelWithoutDirection(aggFieldLabel);
-  }
-  const aggGroupByFieldLabel =
-    aggregationGroupByFieldVariable &&
-    lowerCase(varLabelWithoutNamespace(aggregationGroupByFieldVariable.uiDefinition.label));
-  const txDirectionLabel =
-    transactionDirection === 'SENDING'
-      ? 'sending'
-      : transactionDirection === 'RECEIVING'
-      ? 'receiving'
-      : 'sending or receiving';
-  const userDirectionLabel =
-    ruleType === 'TRANSACTION'
-      ? userDirection === 'SENDER'
-        ? 'sender '
-        : userDirection === 'RECEIVER'
-        ? 'receiver '
-        : 'sender or receiver '
-      : '';
-  const userLabel = type === 'USER_TRANSACTIONS' ? 'user' : 'payment ID';
-  const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
-
-  const textComponents = [
-    <b>{aggFuncLabel}</b>,
-    'of',
-    aggFieldLabel ? <b>{aggFieldLabel}</b> : undefined,
-    aggFieldLabel ? 'in' : undefined,
-    <b>{txDirectionLabel} transactions</b>,
-    aggGroupByFieldLabel ? (
-      <span>
-        (with the same <b>{aggGroupByFieldLabel}</b>)
-      </span>
-    ) : undefined,
-    'by a',
-    <b>
-      {userDirectionLabel}
-      {userLabel}
-    </b>,
-    lastNEntities ? (
-      <>
-        for last <b> {lastNEntities} transactions</b>
-      </>
-    ) : (
-      <>
-        from <b>{formatTimeWindow(timeWindow.end)}</b> to{' '}
-        <b>{formatTimeWindow(timeWindow.start)}</b>
-      </>
-    ),
-    filtersLogic
-      ? `(with ${filtersCount} ${pluralize('filter', filtersCount)} applied)`
-      : undefined,
-  ].filter(Boolean);
-
-  return (
-    <Alert type="info" size="m">
-      Variable summary
-      <br />
-      {textComponents.map((v, i) => (
-        <span key={i}>{v} </span>
-      ))}
-    </Alert>
   );
 };

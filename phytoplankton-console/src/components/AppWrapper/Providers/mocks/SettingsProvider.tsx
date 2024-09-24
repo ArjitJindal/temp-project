@@ -9,7 +9,7 @@ export default function SettingsProviderMock_(props: Props) {
   return (
     <SettingsContext.Provider
       value={{
-        features: [],
+        features: ['RULES_ENGINE_V8'],
         settings: {},
         reloadSettings: () => {},
       }}

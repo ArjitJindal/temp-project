@@ -1,5 +1,5 @@
-import { Config, BasicConfig } from '@react-awesome-query-builder/ui';
-import { useState, useEffect, useMemo } from 'react';
+import { BasicConfig } from '@react-awesome-query-builder/ui';
+import { useEffect, useMemo, useState } from 'react';
 import { compact } from 'lodash';
 import { AsyncResource, init, isSuccess, map } from '@/utils/asyncResource';
 import { useApi } from '@/api';
@@ -15,11 +15,11 @@ import {
   RuleType,
   LogicConfig,
 } from '@/apis';
-import { LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
 import {
-  getOperatorWithParameter,
   getOperatorsByValueType,
+  getOperatorWithParameter,
 } from '@/components/ui/LogicBuilder/operators';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { JSON_LOGIC_FUNCTIONS } from '@/components/ui/LogicBuilder/functions';
@@ -95,13 +95,13 @@ export function useRuleLogicConfig(ruleType: RuleType) {
 
 export function useLogicBuilderConfig(
   ruleType: RuleType,
-  entityVariableTypes: LogicEntityVariableEntityEnum[],
+  entityVariableTypes: LogicEntityVariableEntityEnum[] | undefined,
   entityVariablesInUse: LogicEntityVariableInUse[] | undefined,
   aggregationVariables: LogicAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
   mlVariables: RuleMachineLearningVariable[],
-): AsyncResource<Config> {
-  const [result, setResult] = useState<AsyncResource<Config>>(init());
+): AsyncResource<QueryBuilderConfig> {
+  const [result, setResult] = useState<AsyncResource<QueryBuilderConfig>>(init());
   const ruleLogicConfigResult = useRuleLogicConfig(ruleType);
   const ruleLogicConfigRes = ruleLogicConfigResult.data;
 
@@ -116,7 +116,7 @@ export function useLogicBuilderConfig(
       return;
     }
     setResult(
-      map(ruleLogicConfigRes, (ruleLogicConfig): Config => {
+      map(ruleLogicConfigRes, (ruleLogicConfig): QueryBuilderConfig => {
         const {
           variables: entityVariables = [],
           functions = [],
@@ -149,7 +149,9 @@ export function useLogicBuilderConfig(
             )
           : entityVariables;
         const finalEntityVariables = filteredEntityVariables.filter(
-          (v) => v.entity != null && entityVariableTypes.includes(v.entity),
+          (v) =>
+            v.entity != null &&
+            (entityVariableTypes == null || entityVariableTypes.includes(v.entity)),
         );
         const finalMlVariables = mlVariables.map((v) => {
           return {

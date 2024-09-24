@@ -1,11 +1,15 @@
-import { useState, useEffect, useCallback } from 'react';
-import { Config, Utils as QbUtils } from '@react-awesome-query-builder/ui';
+import { useCallback, useEffect, useState } from 'react';
+import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import { isEqual } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
-import { LogicBuilderValue, LogicBuilderConfig } from '@/components/ui/LogicBuilder/types';
+import {
+  LogicBuilderConfig,
+  LogicBuilderValue,
+  QueryBuilderConfig,
+} from '@/components/ui/LogicBuilder/types';
 import { isSuccess } from '@/utils/asyncResource';
-import { usePrevious, useIsChanged } from '@/utils/hooks';
+import { useIsChanged, usePrevious } from '@/utils/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import {
   LogicAggregationVariable,
@@ -19,7 +23,7 @@ import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/R
 interface Props {
   ruleType: RuleType;
   jsonLogic: RuleLogic | undefined;
-  entityVariableTypes: LogicEntityVariableEntityEnum[];
+  entityVariableTypes?: LogicEntityVariableEntityEnum[];
   entityVariablesInUse?: LogicEntityVariableInUse[];
   aggregationVariables: LogicAggregationVariable[] | undefined;
   mlVariables?: RuleMachineLearningVariable[];
@@ -27,7 +31,7 @@ interface Props {
   configParams?: Partial<LogicBuilderConfig>;
   logicBuilderProps?: Partial<LogicBuilderProps>;
 }
-type State = { tree: LogicBuilderValue; config: Config } | null;
+type State = { tree: LogicBuilderValue; config: QueryBuilderConfig } | null;
 
 export function RuleLogicBuilder(props: Props) {
   const { logicBuilderProps, configParams, ruleType } = props;
@@ -42,6 +46,7 @@ export function RuleLogicBuilder(props: Props) {
     configParams ?? {},
     props.mlVariables ?? [],
   );
+
   const isConfigChanged = useIsChanged(configRes);
   const handleChangeLogic = useCallback(
     (newState: State) => {
@@ -96,7 +101,7 @@ export function RuleLogicBuilder(props: Props) {
   }, [prevAggregationVariables, props.aggregationVariables]);
 
   const onChange = useCallback(
-    (immutableTree: LogicBuilderValue, config: Config) => {
+    (immutableTree: LogicBuilderValue, config: QueryBuilderConfig) => {
       setState((prevState) => {
         const newState = {
           ...prevState,

@@ -3,6 +3,66 @@
 @border-color: @fr-colors-v2-gray-2;
 
 .root {
+  &.mode-VIEW {
+    :global {
+      .rule {
+        background: transparent;
+        padding: 0;
+      }
+      .rule--body {
+        display: flex;
+        justify-content: flex-start;
+      }
+      .rule--operator {
+        flex: unset;
+        margin: 0;
+      }
+      .rule--header {
+        display: none;
+      }
+      .rule--field {
+        max-width: unset;
+        min-width: unset;
+        width: unset;
+      }
+      .rule--func--wrapper {
+        display: contents;
+      }
+      .rule--field-wrapper {
+        align-items: center;
+      }
+      .rule--func {
+        min-width: unset;
+        margin-bottom: 0;
+      }
+      .widget--widget {
+        margin-bottom: 0;
+      }
+      .rule--func--args {
+        display: contents;
+      }
+      .rule--func--bracket-before,
+      .rule--func--bracket-after {
+        display: inline-block;
+        margin-bottom: 0;
+        height: 100%;
+        align-self: center;
+      }
+      .rule--func--arg-sep {
+        display: inline-block;
+        font-weight: bold;
+        margin-top: 0;
+        margin-bottom: 0;
+        align-self: flex-end;
+      }
+      .group--conjunctions {
+        font-size: 12px;
+        padding: 0 4px;
+        height: 18px;
+      }
+    }
+  }
+
   &.hideConjunctions {
     :global {
       .group--header {
@@ -204,17 +264,19 @@
         }
       }
     }
+    .rule--func--wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
     .rule--func--bracket-before {
-      margin-bottom: 11px;
+      display: none;
     }
     .rule--func--bracket-after {
-      margin-bottom: 11px;
-      margin-left: 10px;
+      display: none;
     }
     .rule--func--arg-sep {
-      margin-bottom: 5px;
-      margin-left: 5px;
-      font-weight: bold;
+      display: none;
     }
   }
 }

@@ -49,7 +49,7 @@ const FISCAL_YEAR_MAPPING: { [type: string]: { startMonth: number; startDay: num
 };
 
 export default function VariableTimeWindow(props: Props) {
-  const { value = DEFAULT_VALUE, onChange } = props;
+  const { value = DEFAULT_VALUE, onChange, isDisabled } = props;
   const start = value?.start;
   const end = value?.end;
   const isFiscalYear =
@@ -68,8 +68,9 @@ export default function VariableTimeWindow(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.timeInputs}>
-        <Label label={'Time from'} required={{ value: true, showHint: true }}>
+        <Label label={'Time from'} required={{ value: true, showHint: !isDisabled }}>
           <UnitGranularityInputs
+            isDisabled={isDisabled}
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={end}
             isFrom
@@ -83,8 +84,9 @@ export default function VariableTimeWindow(props: Props) {
             }}
           />
         </Label>
-        <Label label={'Time to'} required={{ value: true, showHint: true }}>
+        <Label label={'Time to'} required={{ value: true, showHint: !isDisabled }}>
           <UnitGranularityInputs
+            isDisabled={isDisabled}
             fiscalYearSelectValue={fiscalYearSelectValue}
             value={start}
             onChange={(newValue) => {
@@ -106,6 +108,7 @@ export default function VariableTimeWindow(props: Props) {
       {isFiscalYear && (
         <Label label={'Fiscal year'} level={2}>
           <Select
+            isDisabled={isDisabled}
             value={fiscalYearSelectValue ?? 'default'}
             onChange={(newValue) => {
               if (newValue != null) {
@@ -140,6 +143,7 @@ export default function VariableTimeWindow(props: Props) {
         !NO_ROLLING_BASIS_GRANULARITIES.includes(end.granularity) && (
           <Label label={'Rolling basis'} level={2} position="RIGHT">
             <Checkbox
+              isDisabled={isDisabled}
               value={
                 start?.rollingBasis !== end?.rollingBasis
                   ? undefined

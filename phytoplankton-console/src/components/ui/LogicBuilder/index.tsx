@@ -1,16 +1,10 @@
-import {
-  Query,
-  Builder,
-  BuilderProps,
-  Config,
-  Utils as QbUtils,
-} from '@react-awesome-query-builder/ui';
+import { Builder, BuilderProps, Query, Utils as QbUtils } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import React, { useEffect } from 'react';
 import cn from 'clsx';
 import { Operators } from '@react-awesome-query-builder/core';
 import s from './index.module.less';
-import { LogicBuilderValue } from './types';
+import { LogicBuilderValue, QueryBuilderConfig } from './types';
 
 const guid1 = QbUtils.uuid();
 const guid2 = QbUtils.uuid();
@@ -43,9 +37,9 @@ const renderBuilder = (props: BuilderProps) => (
 export interface Props {
   hideConjunctions?: boolean;
   operators?: Operators;
-  config: Config;
+  config: QueryBuilderConfig;
   value?: LogicBuilderValue;
-  onChange?: (newValue: LogicBuilderValue, config: Config) => void;
+  onChange?: (newValue: LogicBuilderValue, config: QueryBuilderConfig) => void;
 }
 
 export default function LogicBuilder(props: Props) {
@@ -63,8 +57,10 @@ export default function LogicBuilder(props: Props) {
     };
   }, []);
 
+  const mode = config.settings.mode ?? 'EDIT';
+
   return (
-    <div className={cn(s.root, hideConjunctions && s.hideConjunctions)}>
+    <div className={cn(s.root, hideConjunctions && s.hideConjunctions, s[`mode-${mode}`])}>
       <Query {...config} value={value} onChange={onChange} renderBuilder={renderBuilder} />
     </div>
   );
