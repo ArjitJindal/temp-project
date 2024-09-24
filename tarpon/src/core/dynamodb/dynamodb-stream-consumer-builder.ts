@@ -421,11 +421,13 @@ export class StreamConsumerBuilder {
         return
       }
 
-      const entries = filteredUpdates.map((update) => ({
-        MessageBody: JSON.stringify(update),
-        MessageGroupId: update.tenantId,
-        MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
-      }))
+      const entries = filteredUpdates
+        .filter((update) => update.type && !update.NewImage?.ttl)
+        .map((update) => ({
+          MessageBody: JSON.stringify(update),
+          MessageGroupId: update.tenantId,
+          MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
+        }))
       await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
     })
   }
