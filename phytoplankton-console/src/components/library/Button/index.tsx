@@ -24,10 +24,13 @@ export interface ButtonProps {
   testName?: string;
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
+  isLogout?: boolean;
   isDanger?: boolean;
 }
 
-function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
+interface BaseButtonProps extends Omit<ButtonProps, 'requiredPermissions'> {}
+
+const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, ref) => {
   const {
     type = 'PRIMARY',
     htmlType = 'button',
@@ -42,11 +45,10 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
     testName,
     className,
     iconRight,
-    requiredPermissions = [],
     isDanger = false,
     analyticsName,
   } = props;
-  const hasUserPermissions = useHasPermissions(requiredPermissions);
+
   const handleClick = () => {
     if (onClick) {
       onClick();
@@ -65,7 +67,7 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
         className,
       )}
       onClick={handleClick}
-      disabled={isDisabled || isLoading || !hasUserPermissions}
+      disabled={isDisabled || isLoading}
       type={htmlType}
       data-cy={testName}
       data-attr={analyticsName}
@@ -77,11 +79,16 @@ function Button(props: ButtonProps, ref: React.Ref<HTMLButtonElement>) {
       {iconRight && <div className={s.icon}>{iconRight}</div>}
     </button>
   );
-}
+});
 
-const component: React.FunctionComponent<
-  ButtonProps & {
-    ref?: React.Ref<HTMLButtonElement>;
-  }
-> = React.forwardRef<HTMLButtonElement>(Button);
-export default component;
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>((props, ref) => {
+  const { requiredPermissions = [], ...baseProps } = props;
+  const hasUserPermissions = useHasPermissions(requiredPermissions);
+
+  return (
+    <BaseButton {...baseProps} isDisabled={baseProps.isDisabled || !hasUserPermissions} ref={ref} />
+  );
+});
+
+export { BaseButton };
+export default Button;

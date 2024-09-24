@@ -78,11 +78,7 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.security'),
             key: 'security',
-            children: (
-              <>
-                <SecuritySettings />
-              </>
-            ),
+            children: <SecuritySettings />,
           },
           {
             title: i18n('menu.settings.case-management'),

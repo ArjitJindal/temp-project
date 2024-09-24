@@ -9371,6 +9371,8 @@ components:
           type: boolean
         mfaEnabled:
           type: boolean
+        passwordResetDays:
+          type: number
         accountDormancyAllowedDays:
           type: number
     ConsoleTag:

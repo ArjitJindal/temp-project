@@ -279,6 +279,10 @@ export const createAuth0TenantResources = (
           name: 'auth0',
           version: '2.42.0',
         },
+        {
+          name: 'axios',
+          version: '1.7.2',
+        },
       ],
     }
   )

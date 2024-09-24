@@ -612,6 +612,12 @@ export class TenantService {
         updateData.mfaEnabled = String(newTenantSettings.mfaEnabled)
       }
 
+      if (newTenantSettings.passwordResetDays != null) {
+        updateData.passwordResetDays = String(
+          newTenantSettings.passwordResetDays
+        )
+      }
+
       const accountsService = await AccountsService.getInstance()
 
       if (!isEmpty(updateData)) {

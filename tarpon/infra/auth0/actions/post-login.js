@@ -22,6 +22,8 @@ exports.onExecutePostLogin = async (event, api) => {
   } = app_metadata
   let auth0Domain = ''
   let mfaEnabled = false
+  let passwordResetDays = 0
+  const lastPasswordReset = event.user.last_password_reset
   if (event.authorization) {
     try {
       const ManagementClient = require('auth0').ManagementClient
@@ -30,6 +32,7 @@ exports.onExecutePostLogin = async (event, api) => {
         clientId: event.secrets.clientId,
         clientSecret: event.secrets.clientSecret,
       })
+
       const [organization] = await management.users.getUserOrganizations({
         id: user_id,
       })
@@ -42,6 +45,30 @@ exports.onExecutePostLogin = async (event, api) => {
           apiAudience = organization.metadata.apiAudience
           tenantId = organization.metadata.tenantId ?? tenantId
           auth0Domain = organization.metadata.auth0Domain
+          passwordResetDays = Number(organization.metadata.passwordResetDays)
+        }
+      }
+
+      if (lastPasswordReset && passwordResetDays > 0 && auth0Domain) {
+        const lastPasswordResetDate = new Date(lastPasswordReset)
+        const currentDate = new Date()
+        const daysSinceLastPasswordReset = Math.floor(
+          (currentDate - lastPasswordResetDate) / (1000 * 60 * 60 * 24)
+        )
+        if (daysSinceLastPasswordReset > passwordResetDays) {
+          // UNABLE TO USE auth0 because of outdated package and node 16 will update in followup PR
+          const axios = require('axios').default
+          await axios.post(
+            'https://' +
+              organization.metadata.auth0Domain +
+              '/dbconnections/change_password',
+            {
+              email: email,
+              connection: 'Username-Password-Authentication',
+              client_id: event.secrets.clientId,
+            }
+          )
+          api.access.deny('PASSWORD_EXPIRED')
         }
       }
 

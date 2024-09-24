@@ -1,7 +1,6 @@
 import React from 'react';
 import { Button } from 'antd';
 import jwtDecode from 'jwt-decode';
-import { Link } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import ErrorPage from '@/components/ErrorPage';
 import { Context, FlagrightAuth0User, NAMESPACE } from '@/utils/user-utils';
@@ -15,7 +14,7 @@ import { PageLoading } from '@/components/PageLoading';
 const branding = getBranding();
 
 export default function FlagrightUserProvider(props: { children: React.ReactNode }) {
-  const { getAccessTokenSilently } = useAuth0();
+  const { getAccessTokenSilently, logout } = useAuth0();
 
   const { data: userRes } = useQuery<FlagrightAuth0User | 'ORPHAN'>(
     USER_INFO('access_token'),
@@ -74,9 +73,7 @@ export default function FlagrightUserProvider(props: { children: React.ReactNode
           return (
             <ErrorPage title={'User Not Provisioned'}>
               <p>{branding.notProvisionedWarning}</p>
-              <Link to={'/logout'}>
-                <Button>Log out</Button>
-              </Link>
+              <Button onClick={() => logout({ returnTo: window.location.origin })}>Log out</Button>
             </ErrorPage>
           );
         }

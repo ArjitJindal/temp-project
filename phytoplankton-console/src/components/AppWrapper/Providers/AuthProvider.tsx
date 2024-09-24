@@ -1,5 +1,6 @@
 import React from 'react';
 import { Auth0Provider, withAuthenticationRequired } from '@auth0/auth0-react';
+import { Auth0ErrorWrapper } from './Auth0ErrorWrapper';
 import { getBranding } from '@/utils/branding';
 import { PageLoading } from '@/components/PageLoading';
 
@@ -20,12 +21,15 @@ export const providerConfig = Object.freeze({
 
 const AuthProvider: React.FC = ({ children }) => {
   const env = process.env.ENV_NAME;
+
   return (
     <Auth0Provider
       {...providerConfig}
       cacheLocation={env === 'dev' || env === 'local' ? 'localstorage' : 'memory'} // Work around for cypress tests to work
     >
-      <AuthenticationRequiredWrapper>{children}</AuthenticationRequiredWrapper>
+      <Auth0ErrorWrapper>
+        <AuthenticationRequiredWrapper>{children}</AuthenticationRequiredWrapper>
+      </Auth0ErrorWrapper>
     </Auth0Provider>
   );
 };
