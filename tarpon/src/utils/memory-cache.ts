@@ -19,7 +19,6 @@ export function createNonConsoleApiInMemoryCache<V extends object>(options: {
   return new LRUCache<string, V>({
     max: options.max,
     ttl: options.ttlMinutes * 60 * 1000,
-    updateAgeOnGet: true,
   })
 }
 
