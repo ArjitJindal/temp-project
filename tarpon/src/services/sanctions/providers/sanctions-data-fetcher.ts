@@ -136,9 +136,13 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     const sanctionsProviderCollection =
       await this.getSanctionProviderCollection()
-    await sanctionsProviderCollection.updateOne({ providerSearchId }, request, {
-      upsert: true,
-    })
+    await sanctionsProviderCollection.updateOne(
+      { providerSearchId },
+      { $set: request },
+      {
+        upsert: true,
+      }
+    )
     return result
   }
 
