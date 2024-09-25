@@ -9,11 +9,12 @@ interface Props {
   title: string;
   extraControls?: React.ReactNode;
   items?: Item[];
+  columns?: number;
   children?: React.ReactNode;
 }
 
 export default function EntityPropertiesCard(props: Props) {
-  const { title, extraControls, items, children } = props;
+  const { title, extraControls, items, columns = 1, children } = props;
   return (
     <div className={s.root}>
       <div className={s.header}>
@@ -21,7 +22,7 @@ export default function EntityPropertiesCard(props: Props) {
         {extraControls}
       </div>
       {items && (
-        <div className={s.items}>
+        <div className={s.items} style={{ gridTemplateColumns: `repeat(${columns * 2}, auto)` }}>
           {items.map(({ label, value }) => (
             <>
               <div className={s.itemLabel}>{label}</div>

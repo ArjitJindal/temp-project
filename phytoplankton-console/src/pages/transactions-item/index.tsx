@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import SubHeader from './SubHeader';
 import SenderReceiverDetails from './SenderReceiverDetails';
 import { getTransactionReportTables } from './TransactionReport';
+import s from './index.module.less';
 import PageWrapper from '@/components/PageWrapper';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -34,6 +35,7 @@ import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import TransactionTags from '@/pages/transactions-item/TransactionTags';
 
 export type RuleAlertMap = Map<string, { alertId: string; caseId: string }>;
 
@@ -199,7 +201,12 @@ export default function TransactionsItem() {
               {
                 title: 'Transaction details',
                 key: 'transaction-details',
-                children: <SenderReceiverDetails transaction={transaction} />,
+                children: (
+                  <div className={s.transactionDetails}>
+                    <SenderReceiverDetails transaction={transaction} />
+                    <TransactionTags transaction={transaction} />
+                  </div>
+                ),
                 isClosable: false,
                 isDisabled: false,
               },

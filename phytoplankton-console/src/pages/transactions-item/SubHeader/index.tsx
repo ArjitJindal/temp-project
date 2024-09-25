@@ -1,20 +1,14 @@
 import React from 'react';
 
-//css
 import s from './index.module.less';
-
-//components
 import ActionRiskDisplay from '@/components/ui/ActionRiskDisplay';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import * as Form from '@/components/ui/Form';
 import TransactionState from '@/components/ui/TransactionStateDisplay';
 import { RuleActionStatus } from '@/components/ui/RuleActionStatus';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
-
-//types
 import { InternalTransaction } from '@/apis';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 
 interface Props {
   transaction: InternalTransaction;
@@ -49,13 +43,6 @@ export default function SubHeader(props: Props) {
         </Form.Layout.Label>
         <Form.Layout.Label title="Reference" className={s.attribute}>
           {transaction.reference ?? '-'}
-        </Form.Layout.Label>
-        <Form.Layout.Label title="Tags">
-          <div className={s.tags}>
-            {transaction.tags?.map((tag) => (
-              <KeyValueTag key={tag.key} tag={tag} />
-            ))}
-          </div>
         </Form.Layout.Label>
       </div>
       <Feature name="RISK_SCORING">
