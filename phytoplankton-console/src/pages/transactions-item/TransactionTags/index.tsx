@@ -13,10 +13,11 @@ export default function TransactionTags(props: Props) {
     <EntityInfoGrid.Root>
       <EntityInfoGrid.Cell>
         <EntityPropertiesCard
-          title={'Tags'}
+          title={`Tags (${transaction.tags?.length ?? 0})`}
           items={
             transaction.tags?.map((tag: ApiTag) => ({ label: tag.key, value: tag.value })) ?? []
           }
+          columns={2}
         />
       </EntityInfoGrid.Cell>
     </EntityInfoGrid.Root>
