@@ -1,6 +1,7 @@
 import React from 'react';
 import { uniqBy } from 'lodash';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
+import styles from './index.module.less';
 import { InternalConsumerUser, UserTag } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
@@ -9,7 +10,6 @@ import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
-
 interface Props {
   user: InternalConsumerUser;
 }
@@ -92,11 +92,14 @@ export default function GeneralDetails(props: Props) {
         {
           label: 'PEP Status',
           value: uniqBy(
-            user.pepStatus?.filter((pep) => pep.isPepHit),
+            user.pepStatus?.filter((pep) => pep.isPepHit != null),
             'pepCountry',
-          )
-            .map((pep) => pep.pepCountry)
-            .map((pepCountry) => <CountryDisplay key={pepCountry} isoCode={pepCountry} />),
+          ).map((pepCountry) => (
+            <div className={styles.pepStatus}>
+              <CountryDisplay key={pepCountry.pepCountry} isoCode={pepCountry.pepCountry} />
+              <div>{pepCountry.isPepHit ? '(Yes)' : '(No)'}</div>
+            </div>
+          )),
         },
       ]}
     />

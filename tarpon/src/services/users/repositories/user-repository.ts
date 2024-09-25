@@ -333,6 +333,7 @@ export class UserRepository {
       filterUserIds?: string[]
       filterEmail?: string
       filterParentUserId?: string
+      filterIsPepHit?: string
     },
     isPulseEnabled: boolean,
     riskClassificationValues?: RiskClassificationScore[],
@@ -374,6 +375,13 @@ export class UserRepository {
         'legalEntity.companyGeneralDetails.userRegistrationStatus': {
           $in: params.filterUserRegistrationStatus,
         },
+      })
+    }
+
+    if (params.filterIsPepHit != null) {
+      const isPepHit = params.filterIsPepHit === 'true' ? true : false
+      filterConditions.push({
+        'pepStatus.isPepHit': isPepHit,
       })
     }
 

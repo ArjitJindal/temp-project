@@ -1699,6 +1699,10 @@ paths:
             $ref: '#/components/schemas/SortOrder'
           in: query
           name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: filterIsPepHit
     parameters: []
   /consumer/users-v2:
     get:
@@ -1767,6 +1771,10 @@ paths:
             type: string
           in: query
           name: filterRiskLevelLocked
+        - schema:
+            type: string
+          in: query
+          name: filterIsPepHit
   /merchant-monitoring/{userId}/update_monitoring_status:
     post:
       summary: Update Monitoring Status

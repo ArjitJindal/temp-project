@@ -3,6 +3,7 @@ import { ClickHouseClient } from '@clickhouse/client'
 import {
   DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListV2Request,
+  DefaultApiGetConsumerUsersListV2Request,
 } from '@/@types/openapi-internal/RequestParameters'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
@@ -83,7 +84,9 @@ export class UserClickhouseRepository {
   }
 
   private async buildWhereClause(
-    params: DefaultApiGetBusinessUsersListV2Request,
+    params: DefaultApiGetAllUsersListV2Request &
+      DefaultApiGetConsumerUsersListV2Request &
+      DefaultApiGetBusinessUsersListV2Request,
     userType?: 'BUSINESS' | 'CONSUMER'
   ): Promise<string> {
     const riskRepository = new RiskRepository(this.tenantId, {
@@ -103,6 +106,12 @@ export class UserClickhouseRepository {
     if (userType) {
       whereClauses.push(`type = '${userType}'`)
     }
+
+    if (params.filterIsPepHit != null) {
+      const isPepHit = params.filterIsPepHit === 'true' ? true : false
+      whereClauses.push(`isPepHit = ${isPepHit}`)
+    }
+
     if (params.filterName) {
       whereClauses.push(`username LIKE '%${params.filterName}%'`)
     }

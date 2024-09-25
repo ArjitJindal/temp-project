@@ -19,6 +19,7 @@ import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface UserSearchParams extends CommonParams {
+  isPepHit?: 'true' | 'false';
   riskLevels?: RiskLevel[];
   userId?: string;
   tagKey?: string;
@@ -140,6 +141,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterTagValue: params.tagValue,
         filterRiskLevel: params.riskLevels,
         filterRiskLevelLocked: params.riskLevelLocked,
+        filterIsPepHit: params.isPepHit,
       };
       const response =
         type === 'business'
@@ -148,7 +150,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
               filterUserRegistrationStatus: params.userRegistrationStatus,
             })
           : type === 'consumer'
-          ? await api.getConsumerUsersListV2({ ...queryObj })
+          ? await api.getConsumerUsersListV2({ ...queryObj, filterIsPepHit: params.isPepHit })
           : await api.getAllUsersListV2({ ...queryObj });
       return {
         total: response.count,

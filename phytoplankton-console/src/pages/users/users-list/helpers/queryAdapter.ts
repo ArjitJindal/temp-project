@@ -19,6 +19,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       tagValue: params.tagValue,
       userRegistrationStatus: params.userRegistrationStatus?.join(',') ?? '',
       riskLevelLocked: params.riskLevelLocked,
+      isPepHit: params.isPepHit,
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -35,6 +36,7 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         ? (raw.userRegistrationStatus.split(',') as UserRegistrationStatus[])
         : undefined,
       riskLevelLocked: raw.riskLevelLocked as 'true' | 'false' | undefined,
+      isPepHit: raw.isPepHit as 'true' | 'false' | undefined,
     };
   },
 };

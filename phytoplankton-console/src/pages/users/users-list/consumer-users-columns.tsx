@@ -67,6 +67,14 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       title: 'User state',
       key: 'userStateDetails.state',
     }),
+    helper.simple<'pepStatus'>({
+      title: 'PEP status',
+      key: 'pepStatus',
+      type: {
+        render: (pepStatus) => <>{pepStatus?.some((status) => status.isPepHit) ? 'Yes' : 'No'}</>,
+      },
+      filtering: false,
+    }),
     helper.simple<'tags'>({
       title: 'Tags',
       key: 'tags',

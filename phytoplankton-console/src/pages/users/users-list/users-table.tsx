@@ -105,6 +105,14 @@ const extraFilters = (
     });
   }
 
+  if (list === 'consumer') {
+    extraFilters.push({
+      key: 'isPepHit',
+      title: 'Is PEP hit',
+      renderer: BOOLEAN.autoFilterDataType,
+    });
+  }
+
   return extraFilters;
 };
 

@@ -59,6 +59,7 @@ import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/User
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
+import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
 
 export function sampleUserState(): UserState {
   return pickRandom(USER_STATES)
@@ -175,6 +176,13 @@ const legalDocument = (name: ConsumerName): LegalDocument => {
   }
 }
 
+const randomPepStatus = (): PEPStatus => {
+  return {
+    isPepHit: Math.random() < 0.5,
+    pepCountry: pickRandom(COUNTRY_CODES),
+  }
+}
+
 export function getUserRules(
   userId: string,
   username: string,
@@ -259,6 +267,7 @@ export function sampleConsumerUser() {
       countryOfNationality,
       name,
     },
+    pepStatus: [randomPepStatus()],
     executedRules: userRules().map((rule) => {
       return {
         ...rule,
