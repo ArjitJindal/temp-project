@@ -12,6 +12,7 @@ import FlagrightUserProviderMock from './mocks/FlagrightUserProvider';
 import { BrowserSupportProvider } from './BrowserSupportProvider';
 import { SuperAdminModeProvider } from './SuperAdminModeProvider';
 import { PostHogProviderWrapper } from './PostHogProvider';
+import SessionTimeoutProvider from './SessionTimeoutDetector';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 
@@ -40,6 +41,7 @@ const AllProviders = withProviders(
   FlagrightUserProvider,
   ApiProvider,
   SettingsProvider,
+  SessionTimeoutProvider,
   PostHogProviderWrapper,
   BrowserSupportProvider,
   SideBarProvider,

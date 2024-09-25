@@ -1,0 +1,48 @@
+import React, { useCallback, useEffect, createContext, useContext } from 'react';
+import { useIdleTimer } from 'react-idle-timer';
+import { useAuth0 } from '@auth0/auth0-react';
+import { useSettings } from './SettingsProvider';
+
+interface SessionTimeoutContextType {
+  reset: () => void;
+}
+
+const SessionTimeoutContext = createContext<SessionTimeoutContextType | undefined>(undefined);
+
+export const useSessionTimeout = () => {
+  const context = useContext(SessionTimeoutContext);
+  if (!context) {
+    throw new Error('useSessionTimeout must be used within a SessionTimeoutProvider');
+  }
+  return context;
+};
+
+export const SessionTimeoutProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}): JSX.Element => {
+  const settings = useSettings();
+  const { logout } = useAuth0();
+
+  const handleOnIdle = useCallback(() => {
+    logout({
+      returnTo: window.location.origin,
+    });
+  }, [logout]);
+
+  const { reset } = useIdleTimer({
+    timeout: (settings.sessionTimeoutMinutes ?? 60) * 60 * 1000, // Convert minutes to milliseconds
+    onIdle: handleOnIdle,
+    debounce: 500,
+  });
+
+  useEffect(() => {
+    // Reset the timer when the timeout setting changes
+    reset();
+  }, [settings.sessionTimeoutMinutes, reset]);
+
+  return (
+    <SessionTimeoutContext.Provider value={{ reset }}>{children}</SessionTimeoutContext.Provider>
+  );
+};
+
+export default SessionTimeoutProvider;

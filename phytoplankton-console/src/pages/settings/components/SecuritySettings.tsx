@@ -80,6 +80,23 @@ export const SecuritySettings = () => {
           isDisabled={!isSettingsEnabled}
         />
       </SettingsCard>
+      <SettingsCard
+        title="Session Timeout"
+        description="The number of minutes after which a user's session will timeout if they are inactive."
+      >
+        <SelectionGroup<number>
+          mode={'SINGLE'}
+          value={settings.sessionTimeoutMinutes}
+          onChange={(value) => mutateTenantSettings.mutate({ sessionTimeoutMinutes: value })}
+          options={[
+            { label: '15 minutes', value: 15 },
+            { label: '30 minutes', value: 30 },
+            { label: '45 minutes', value: 45 },
+            { label: '1 hour', value: 60 },
+          ]}
+          isDisabled={!isSettingsEnabled}
+        />
+      </SettingsCard>
     </Fragment>
   );
 };

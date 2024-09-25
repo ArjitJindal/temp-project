@@ -9383,6 +9383,8 @@ components:
           type: number
         accountDormancyAllowedDays:
           type: number
+        sessionTimeoutMinutes:
+          type: number
     ConsoleTag:
       title: ConsoleTag
       type: object

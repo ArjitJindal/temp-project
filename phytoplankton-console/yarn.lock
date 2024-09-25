@@ -17338,6 +17338,7 @@ __metadata:
     react-device-detect: "npm:^2.2.2"
     react-dom: "npm:18.0.0"
     react-helmet: "npm:^6.1.0"
+    react-idle-timer: "npm:^5.7.2"
     react-intersection-observer: "npm:^9.8.1"
     react-katex: "npm:^3.0.1"
     react-resizable: "npm:^3.0.4"
@@ -18849,6 +18850,16 @@ __metadata:
   peerDependencies:
     react: ">=16.3.0"
   checksum: 1d2831d9c3b4f5c91f020076aeb6502437a4788077d0c438421e466eb9633d5dc2aacedf7b779a970b807d61cf87793c5ff76ee3190a185d71c90b5cfb367e96
+  languageName: node
+  linkType: hard
+
+"react-idle-timer@npm:^5.7.2":
+  version: 5.7.2
+  resolution: "react-idle-timer@npm:5.7.2"
+  peerDependencies:
+    react: ">=16"
+    react-dom: ">=16"
+  checksum: ccb02df074e59009df875b331a224e8ee2e407400e8a47c21eb55d08f67315eadb993b2f50c9065f38a1e08043431c5d14ceee682bc3f262a9c7bcd7d672ef43
   languageName: node
   linkType: hard
 
