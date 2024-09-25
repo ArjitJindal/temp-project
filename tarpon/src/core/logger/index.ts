@@ -53,7 +53,7 @@ winstonLogger.error = wrap(
         })
       })
     }
-    return func(error, { ...extra, ...getContext()?.logMetadata })
+    return func(error.message, { ...extra, ...getContext()?.logMetadata })
   }
 ) as LeveledLogMethod
 

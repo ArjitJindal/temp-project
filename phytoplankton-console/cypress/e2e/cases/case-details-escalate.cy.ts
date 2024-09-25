@@ -64,7 +64,7 @@ describe('Escalate a case from case-details', () => {
 
   it('should escalate a case from case details and send it back', () => {
     cy.visit(
-      '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+      '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
 
     cy.get('a[data-cy="case-id"]')

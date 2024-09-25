@@ -19,7 +19,7 @@ describe('Closing and Re-Opening the cases', () => {
   });
   it('should close a case', () => {
     cy.visit(
-      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
     cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
 
@@ -59,7 +59,7 @@ describe('Closing and Re-Opening the cases', () => {
   it('testing bulk closing of cases with alerts selected', () => {
     const caseIds: string[] = [];
     cy.visit(
-      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
     // Getting the caseId
     cy.get('a[data-cy="case-id"]', { timeout: 20000 })

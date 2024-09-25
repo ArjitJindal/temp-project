@@ -1,5 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { InternalServerError } from 'http-errors'
 import { uniqBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
@@ -249,7 +249,9 @@ export async function handleTransactionAggregationTask(
   )
 
   if (!transaction) {
-    throw new NotFound(`Transaction ${task.transactionId} not found`)
+    throw new InternalServerError(
+      `Transaction ${task.transactionId} not found!`
+    )
   }
 
   const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(

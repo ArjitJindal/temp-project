@@ -17,7 +17,7 @@ describe('Add a comment to a case', () => {
     // Navigate to case
     cy.intercept('GET', `**/cases**`).as('cases');
     cy.visit(
-      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C65a4e55cf94948e374ce8d6e',
+      '/case-management/cases?page=1&pageSize=20&showCases=ALL&caseStatus=OPEN%2CREOPENED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
     cy.wait('@cases', { timeout: 15000 }).then((intercept) => {
       expect(intercept.response?.statusCode).to.be.oneOf([200, 304]);
