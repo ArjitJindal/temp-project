@@ -679,22 +679,27 @@ export class CdkTarponStack extends cdk.Stack {
         ...transactionFunctionProps,
       }
     )
+    const { alias: transactionEventAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
+        ...transactionFunctionProps,
+      }
+    )
 
     // Configure AutoScaling for Tx Function
-    const as = transactionAlias.addAutoScaling({
+    const txAutoScaling = {
       minCapacity:
         config.resource.TRANSACTION_LAMBDA.MIN_PROVISIONED_CONCURRENCY,
       maxCapacity:
         config.resource.TRANSACTION_LAMBDA.MAX_PROVISIONED_CONCURRENCY,
-    })
-    // Configure Target Tracking
-    as.scaleOnUtilization({
+    }
+    transactionAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
       utilizationTarget: 0.5,
     })
-
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
-      ...transactionFunctionProps,
+    transactionEventAlias.addAutoScaling(txAutoScaling).scaleOnUtilization({
+      utilizationTarget: 0.5,
     })
 
     /*  User Event */
