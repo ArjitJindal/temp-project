@@ -148,7 +148,9 @@ async function checkDormantUsers(tenantInfos: TenantInfo[]) {
       mongoDb,
     }).getTenantSettings()
 
-    const accounts = await accountsService.getAllActiveAccounts()
+    const accounts = (
+      await accountsService.getTenantAccounts(tenant.tenant)
+    ).filter((account) => !account.blocked)
 
     for await (const account of accounts) {
       const accountDormancyAllowedDays =
