@@ -928,9 +928,19 @@ export class RulesEngineService {
         { consistentRead: true }
       )
 
+    logger.info(`Transaction ID: ${updatedTransaction.transactionId}`)
+    logger.info(`Transaction Events: ${transactionEvents}`, {
+      transactionEvents,
+    })
+    logger.info(`Transaction Event ID: ${transactionEventId}`)
+
     const transactionEventInDb = transactionEvents.find(
       (event) => event.eventId === transactionEventId
     )
+
+    logger.info(`Transaction Event in DB: ${transactionEventInDb}`, {
+      transactionEventInDb,
+    })
 
     if (!transactionEventInDb) {
       throw new NotFound(

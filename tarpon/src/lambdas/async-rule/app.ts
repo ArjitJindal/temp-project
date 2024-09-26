@@ -11,6 +11,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { UserType } from '@/@types/user/user-type'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { logger } from '@/core/logger'
 
 type AsyncRuleRecordTransaction = {
   type: 'TRANSACTION'
@@ -114,8 +115,9 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
     const { Records } = event
 
     for await (const record of Records) {
-      const snsMessage = JSON.parse(record.body) as AsyncRuleRecord
-      await runAsyncRules(snsMessage)
+      const sqsMessage = JSON.parse(record.body) as AsyncRuleRecord
+      logger.info(`SQS Message: ${sqsMessage}`, { sqsMessage })
+      await runAsyncRules(sqsMessage)
     }
   }
 )
