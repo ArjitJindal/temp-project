@@ -341,7 +341,10 @@ export class UserManagementService {
         this.rulesEngineService.sendAsyncRuleTask({
           type: 'USER_EVENT',
           tenantId: this.tenantId,
-          updatedUser,
+          updatedUser: omit<User | Business>(updatedUserResult, [
+            'executedRules',
+            'hitRules',
+          ]) as User | Business,
           userType,
           userEventTimestamp: userEvent.timestamp,
         }),

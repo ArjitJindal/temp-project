@@ -38,6 +38,10 @@ export type Config = {
     CRON_JOB_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    ASYNC_RULES_LAMBDA?: {
+      MEMORY_SIZE?: number
+      PROVISIONED_CONCURRENCY?: number
+    }
     // Also used in sandbox for initial setup
     API_KEY_GENERATOR_LAMBDA?: {
       MEMORY_SIZE: number

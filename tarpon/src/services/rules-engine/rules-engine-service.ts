@@ -9,6 +9,7 @@ import {
   keyBy,
   last,
   map,
+  omit,
   pick,
 } from 'lodash'
 import { MongoClient } from 'mongodb'
@@ -520,9 +521,18 @@ export class RulesEngineService {
           this.sendAsyncRuleTask({
             tenantId: this.tenantId,
             type: 'TRANSACTION',
-            transaction: savedTransaction,
-            senderUser,
-            receiverUser,
+            transaction: omit<Transaction>(savedTransaction, [
+              'executedRules',
+              'hitRules',
+            ]) as Transaction,
+            senderUser: omit<User>(senderUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business | null,
+            receiverUser: omit<User>(receiverUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business | null,
           }),
       ])
     } catch (e) {
@@ -631,9 +641,18 @@ export class RulesEngineService {
         this.sendAsyncRuleTask({
           tenantId: this.tenantId,
           type: 'TRANSACTION_EVENT',
-          updatedTransaction,
-          senderUser,
-          receiverUser,
+          updatedTransaction: omit<Transaction>(updatedTransaction, [
+            'executedRules',
+            'hitRules',
+          ]) as Transaction,
+          senderUser: omit<User>(senderUser, ['executedRules', 'hitRules']) as
+            | User
+            | Business
+            | null,
+          receiverUser: omit<User>(receiverUser, [
+            'executedRules',
+            'hitRules',
+          ]) as User | Business | null,
           transactionEventId: eventId,
         }),
       hasFeature('RISK_SCORING') &&
@@ -905,7 +924,8 @@ export class RulesEngineService {
   ): Promise<void> {
     const transactionEvents =
       await this.transactionEventRepository.getTransactionEvents(
-        updatedTransaction.transactionId
+        updatedTransaction.transactionId,
+        { consistentRead: true }
       )
 
     const transactionEventInDb = transactionEvents.find(
