@@ -335,7 +335,7 @@ export class TenantService {
     })
 
     const apiGateways: RestApi[] = []
-    let position = ''
+    let position: string | undefined
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
