@@ -1,14 +1,13 @@
 import React from 'react';
 import s from './index.module.less';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
-import { InternalBusinessUser, UserTag } from '@/apis';
+import { InternalBusinessUser } from '@/apis';
 import CheckMark from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Tag from '@/components/library/Tag';
-import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import TagList from '@/components/library/Tag/TagList';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
@@ -129,16 +128,6 @@ export default function GeneralDetailsCard(props: Props) {
               },
             ]
           : []),
-        {
-          label: 'Tags',
-          value: (
-            <TagList>
-              {user.tags?.map((tag: UserTag) => (
-                <KeyValueTag key={tag.key} tag={tag} />
-              ))}
-            </TagList>
-          ),
-        },
       ]}
     />
   );

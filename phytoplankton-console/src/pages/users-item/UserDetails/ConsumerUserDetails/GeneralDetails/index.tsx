@@ -1,18 +1,25 @@
 import React from 'react';
 import { uniqBy } from 'lodash';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import styles from './index.module.less';
-import { InternalConsumerUser, UserTag } from '@/apis';
+import { InternalConsumerUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
-import KeyValueTag from '@/components/library/Tag/KeyValueTag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
+import Money from '@/components/ui/Money';
 interface Props {
   user: InternalConsumerUser;
 }
+
+const GENDER_MAP = {
+  M: 'Male',
+  F: 'Female',
+  NB: 'Non-binary',
+};
 
 export default function GeneralDetails(props: Props) {
   const { user } = props;
@@ -44,6 +51,10 @@ export default function GeneralDetails(props: Props) {
           value: <GenericConstantTag>{user.userDetails?.maritalStatus}</GenericConstantTag>,
         },
         {
+          label: 'Gender',
+          value: user.userDetails?.gender ? GENDER_MAP[user.userDetails?.gender] : '-',
+        },
+        {
           label: 'Place of birth',
           value: user.userDetails?.placeOfBirth ? <PlaceOfBirth user={user} /> : '-',
         },
@@ -53,9 +64,25 @@ export default function GeneralDetails(props: Props) {
           value: <GenericConstantTag>{user.userSegment}</GenericConstantTag>,
         },
         {
+          label: 'User category',
+          value: user.userDetails?.userCategory ?? '-',
+        },
+        {
           label: 'Acquisition channel',
           value: <GenericConstantTag>{user.acquisitionChannel}</GenericConstantTag>,
         },
+        {
+          label: 'Employment status',
+          value: user.employmentStatus ?? '-',
+        },
+        ...(user.expectedIncome
+          ? Object.entries(user.expectedIncome)
+              .filter(([_key, value]) => value != null)
+              .map(([key, value]) => ({
+                label: humanizeAuto(key),
+                value: value ? <Money amount={value} /> : '-',
+              }))
+          : []),
         { label: 'Sector', value: user?.employmentDetails?.employmentSector },
         { label: 'Industry', value: user?.employmentDetails?.businessIndustry },
         { label: 'Employer', value: user?.employmentDetails?.employerName },
@@ -75,16 +102,6 @@ export default function GeneralDetails(props: Props) {
             <TagList>
               {user.sourceOfFunds?.map((source) => (
                 <Tag key={source}>{source}</Tag>
-              ))}
-            </TagList>
-          ),
-        },
-        {
-          label: 'Tags',
-          value: (
-            <TagList>
-              {user.tags?.map((tag: UserTag) => (
-                <KeyValueTag key={tag.key} tag={tag} />
               ))}
             </TagList>
           ),

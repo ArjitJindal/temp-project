@@ -2,7 +2,13 @@ import React from 'react';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { ContactDetails as ApiContactDetails } from '@/apis';
 import { callRender } from '@/components/library/Table/dataTypeHelpers';
-import { EMAIL, EXTERNAL_LINK, FAX, PHONE } from '@/components/library/Table/standardDataTypes';
+import {
+  ADDRESS,
+  EMAIL,
+  EXTERNAL_LINK,
+  FAX,
+  PHONE,
+} from '@/components/library/Table/standardDataTypes';
 
 interface Props {
   contactDetails?: ApiContactDetails;
@@ -37,6 +43,12 @@ export default function ContactDetails(props: Props) {
           label: 'Website',
           value: contactDetails?.websites?.length && (
             <div>{contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x))}</div>
+          ),
+        },
+        {
+          label: 'Address',
+          value: contactDetails?.addresses?.length && (
+            <div>{contactDetails?.addresses?.map((x) => callRender(ADDRESS, x))}</div>
           ),
         },
       ]}
