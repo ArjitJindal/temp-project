@@ -81,6 +81,22 @@ export class TenantService {
     this.tenantId = tenantId
   }
 
+  private async algorithmChangeCapture(
+    oldAlgorithm: string | undefined,
+    newAlgorithm: string | undefined
+  ) {
+    if (
+      oldAlgorithm === 'FORMULA_LEGACY_MOVING_AVG' &&
+      (newAlgorithm === 'FORMULA_SIMPLE_AVG' ||
+        newAlgorithm === 'FORMULA_CUSTOM')
+    ) {
+      await sendBatchJobCommand({
+        type: 'BACKFILL_AVERAGE_TRS',
+        tenantId: this.tenantId,
+      })
+    }
+  }
+
   private async featureFlagChangeCapture(
     oldFeatures: Feature[],
     newFeatures: Feature[]
@@ -627,6 +643,11 @@ export class TenantService {
         )
       }
     }
+
+    await this.algorithmChangeCapture(
+      existingTenantSettings?.riskScoringAlgorithm?.type,
+      newTenantSettings.riskScoringAlgorithm?.type
+    )
 
     await this.featureFlagChangeCapture(
       existingTenantSettings?.features ?? [],

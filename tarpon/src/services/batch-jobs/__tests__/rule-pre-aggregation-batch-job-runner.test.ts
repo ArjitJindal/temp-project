@@ -23,12 +23,12 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { getTestV8RiskFactor } from '@/test-utils/pulse-test-utils'
+import { getTestRiskFactor } from '@/test-utils/pulse-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import * as snsSqsClient from '@/utils/sns-sqs-client'
 
 dynamoDbSetupHook()
-withFeatureHook(['RULES_ENGINE_V8', 'RISK_FACTORS_V8'])
+withFeatureHook(['RULES_ENGINE_V8', 'RISK_SCORING_V8'])
 withLocalChangeHandler()
 
 const dynamoDb = getDynamoDbClient()
@@ -57,11 +57,11 @@ async function setUpAggregationVariablesRiskFactors(
   const riskRepository = new RiskRepository(tenantId, {
     dynamoDb,
   })
-  const riskFactor = getTestV8RiskFactor({
+  const riskFactor = getTestRiskFactor({
     logicAggregationVariables: aggregationVariables,
     id: 'risk-factor-id',
   })
-  await riskRepository.createOrUpdateParameterRiskItemV8(riskFactor)
+  await riskRepository.createOrUpdateRiskFactor(riskFactor)
 
   return { riskFactorId: riskFactor.id }
 }

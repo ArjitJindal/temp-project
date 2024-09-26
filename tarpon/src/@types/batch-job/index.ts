@@ -183,6 +183,12 @@ export type FilesAISummary = {
   awsCredentials?: Credentials
 }
 
+/*  Backfill average TRS score  */
+export type BackFillAvgTrs = {
+  type: 'BACKFILL_AVERAGE_TRS'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -202,6 +208,7 @@ export type BatchJob =
   | AlertSLAStatusRefreshBatchJob
   | ReverifyTransactionsBatchJob
   | SanctionsDataFetchBatchJob
+  | BackFillAvgTrs
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

@@ -14,7 +14,7 @@ import { getOr } from '@/utils/asyncResource';
 export interface BasicDetailsFormValues {
   name: string;
   description: string;
-  defaultRiskLevel: RiskLevel | number;
+  defaultRiskValue: RiskLevel | number;
   defaultWeight: number;
 }
 
@@ -42,8 +42,8 @@ export const BasicDetailsStep = () => {
                 <TextInput {...inputProps} placeholder={'Enter risk factor description'} />
               )}
             </InputField>
-            <InputField<BasicDetailsFormValues, 'defaultRiskLevel'>
-              name={'defaultRiskLevel'}
+            <InputField<BasicDetailsFormValues, 'defaultRiskValue'>
+              name={'defaultRiskValue'}
               label={'Default risk level'}
               labelProps={{ required: { showHint: true, value: true } }}
               description="Add a default risk level to consider for this risk factor if no risk factor value is defined during configuration."

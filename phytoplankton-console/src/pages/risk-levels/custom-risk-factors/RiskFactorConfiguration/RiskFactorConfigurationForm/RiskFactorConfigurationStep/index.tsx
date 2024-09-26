@@ -1,20 +1,20 @@
 import React from 'react';
 import s from './style.module.less';
-import { LogicDefinationCard } from './LogicDefinationCard';
+import { LogicDefinitionCard } from './LogicDefinitionCard';
 import {
   CurrencyCode,
-  RiskParameterLevelKeyValueV8,
   LogicAggregationVariable,
   LogicEntityVariableEntityEnum,
   LogicEntityVariableInUse,
   RuleType,
+  RiskLevelRiskFactorLogic,
 } from '@/apis';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import VariableDefinitionCard from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
 
 export interface RiskFactorConfigurationStepFormValues {
   baseCurrency?: CurrencyCode;
-  riskLevelAssignmentValues?: Array<RiskParameterLevelKeyValueV8>;
+  riskLevelLogic?: RiskLevelRiskFactorLogic;
   entityVariables?: LogicEntityVariableInUse[];
   aggregationVariables?: LogicAggregationVariable[];
 }
@@ -33,10 +33,9 @@ export default function RiskFactorConfigurationStep(props: Props) {
     RiskFactorConfigurationStepFormValues,
     'entityVariables'
   >('entityVariables');
-  const riskLevelAssignmentValues = useFieldState<
-    RiskFactorConfigurationStepFormValues,
-    'riskLevelAssignmentValues'
-  >('riskLevelAssignmentValues');
+  const riskLevelLogic = useFieldState<RiskFactorConfigurationStepFormValues, 'riskLevelLogic'>(
+    'riskLevelLogic',
+  );
 
   const baseCurrencyFieldState = useFieldState<
     RiskFactorConfigurationStepFormValues,
@@ -59,11 +58,11 @@ export default function RiskFactorConfigurationStep(props: Props) {
         }}
         entity={props.entity}
       />
-      <LogicDefinationCard
+      <LogicDefinitionCard
         ruleType={props.ruleType}
         entityVariablesFieldState={entityVariablesFieldState}
         aggVariablesFieldState={aggVariablesFieldState}
-        riskLevelAssignmentValues={riskLevelAssignmentValues}
+        riskLevelLogic={riskLevelLogic}
         baseCurrencyFieldState={baseCurrencyFieldState}
       />
     </div>

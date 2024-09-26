@@ -1,6 +1,5 @@
 import { FindCursor, MongoClient, WithId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
-
 import { InternalServerError } from 'http-errors'
 import {
   DeleteCommand,
@@ -11,8 +10,10 @@ import {
   PutCommand,
   PutCommandInput,
   QueryCommandInput,
+  UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, isEqual, omit } from 'lodash'
+import { isEmpty, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -43,12 +44,12 @@ import {
   getContext,
   updateTenantRiskClassificationValues,
 } from '@/core/utils/context'
-import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
-import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
-import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
-import { getAggVarHash } from '@/services/logic-evaluator/engine/aggregation-repository'
+import { AggregationRepository } from '@/services/logic-evaluator/engine/aggregation-repository'
+import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
+import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
+import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 
@@ -86,7 +87,7 @@ export class RiskRepository {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
-
+  aggregationRepository: AggregationRepository
   constructor(
     tenantId: string,
     connections: {
@@ -97,6 +98,10 @@ export class RiskRepository {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+    this.aggregationRepository = new AggregationRepository(
+      tenantId,
+      this.dynamoDb
+    )
   }
 
   async getKrsScore(userId: string): Promise<KrsScore | null> {
@@ -132,7 +137,8 @@ export class RiskRepository {
   async createOrUpdateKrsScore(
     userId: string,
     score: number,
-    components?: RiskScoreComponent[]
+    components?: RiskScoreComponent[],
+    factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<KrsScore> {
     logger.info(`Updating KRS score for user ${userId} to ${score}`)
     const newKrsScoreItem: KrsScore = {
@@ -140,6 +146,7 @@ export class RiskRepository {
       createdAt: Date.now(),
       userId: userId,
       components,
+      factorScoreDetails,
     }
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -165,7 +172,8 @@ export class RiskRepository {
     score: number,
     originUserId?: string,
     destinationUserId?: string,
-    components?: RiskScoreComponent[]
+    components?: RiskScoreComponent[],
+    factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<ArsScore> {
     logger.info(
       `Updating ARS score for transaction ${transactionId} to ${score}`
@@ -177,6 +185,7 @@ export class RiskRepository {
       destinationUserId,
       transactionId,
       components,
+      factorScoreDetails,
     }
 
     const primaryKey = DynamoDbKeys.ARS_VALUE_ITEM(
@@ -246,7 +255,8 @@ export class RiskRepository {
     drsScore: number,
     transactionId: string,
     components: RiskScoreComponent[],
-    isUpdatable?: boolean
+    isUpdatable?: boolean,
+    factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<DrsScore> {
     logger.info(
       `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
@@ -258,6 +268,7 @@ export class RiskRepository {
       isUpdatable: isUpdatable ?? true,
       userId: userId,
       components,
+      factorScoreDetails,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -395,60 +406,6 @@ export class RiskRepository {
     return newDrsRiskValue
   }
 
-  private async getLogicAggVarsWithUpdatedVersion(
-    parameter: ParameterAttributeRiskValuesV8
-  ): Promise<LogicAggregationVariable[] | undefined> {
-    // Early return if no aggregation variables
-    if (
-      !parameter.logicAggregationVariables ||
-      parameter.logicAggregationVariables.length === 0
-    ) {
-      return parameter.logicAggregationVariables
-    }
-
-    const oldRiskFactor = parameter.id
-      ? await this.getParameterRiskItemV8(parameter.id)
-      : null
-    // Early return if aggregation variables are not changed
-    const isBeingEnabled =
-      (!oldRiskFactor || !oldRiskFactor.isActive) && parameter.isActive === true
-
-    if (
-      !parameter.isActive ||
-      (!isBeingEnabled &&
-        isEqual(
-          oldRiskFactor?.logicAggregationVariables?.map((v) =>
-            getAggVarHash(v, false)
-          ),
-          parameter.logicAggregationVariables?.map((v) =>
-            getAggVarHash(v, false)
-          )
-        ))
-    ) {
-      return parameter.logicAggregationVariables
-    }
-    const activeRiskFactors = await this.getActiveParameterRiskItemsV8(
-      parameter.riskEntityType
-    )
-
-    const activeLogicAggregationVariables = activeRiskFactors.flatMap(
-      (r) => r.logicAggregationVariables ?? []
-    )
-    const newVersion = Date.now()
-    return parameter.logicAggregationVariables.map((aggVar) => {
-      const existingSameAggVar = activeLogicAggregationVariables.find(
-        (v) => getAggVarHash(v, false) === getAggVarHash(aggVar, false)
-      )
-
-      // NOTE: An aggregation variable's version is determined by the timestamp when
-      // it is first created and enabled. This is to ensure that the version is consistent.
-      return {
-        ...aggVar,
-        version: existingSameAggVar?.version ?? newVersion,
-      }
-    })
-  }
-
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
@@ -468,77 +425,6 @@ export class RiskRepository {
     await this.dynamoDb.send(new PutCommand(putItemInput))
     logger.info(`Updated parameter risk levels.`)
     return parameterRiskLevels
-  }
-
-  async createOrUpdateParameterRiskItemV8(
-    parameter: ParameterAttributeRiskValuesV8
-  ) {
-    logger.info(`Updating parameter risk levels for V8.`)
-
-    const riskFactor: ParameterAttributeRiskValuesV8 = {
-      ...parameter,
-      logicAggregationVariables:
-        (await this.getLogicAggVarsWithUpdatedVersion(parameter)) ?? [],
-    }
-
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Item: {
-        ...riskFactor,
-        ...DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
-          this.tenantId,
-          parameter.id
-        ),
-      },
-    }
-
-    await this.dynamoDb.send(new PutCommand(putItemInput))
-    logger.info(`Updated parameter risk levels.`)
-
-    return riskFactor
-  }
-
-  async getParameterRiskItemV8(
-    parameterId: string
-  ): Promise<ParameterAttributeRiskValuesV8 | null> {
-    const getInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
-        this.tenantId,
-        parameterId
-      ),
-    }
-
-    try {
-      const result = await this.dynamoDb.send(new GetCommand(getInput))
-
-      if (!result.Item) {
-        return null
-      }
-
-      return result.Item as ParameterAttributeRiskValuesV8
-    } catch (e) {
-      logger.error(e)
-      throw new InternalServerError(
-        `Parameter Risk Item not found for ${parameterId}`
-      )
-    }
-  }
-
-  async deleteParameterRiskItemV8(parameterId: string) {
-    logger.info(`Deleting parameter risk item.`)
-    const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(
-      this.tenantId,
-      parameterId
-    )
-
-    const deleteItemInput: DeleteCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: primaryKey,
-    }
-
-    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
-    logger.info(`Deleted parameter risk item.`)
   }
 
   async deleteParameterRiskItem(
@@ -684,84 +570,24 @@ export class RiskRepository {
     return averageArsScore
   }
 
-  async getParameterRiskItemsV8(
-    entityType?: RiskEntityType
-  ): Promise<Array<ParameterAttributeValuesListV8>> {
-    const keyConditionExpr = 'PartitionKeyID = :pk'
-    const expressionAttributeVals = {
-      ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
-        .PartitionKeyID,
-    }
-
-    let filterExpression = ''
-
-    if (entityType) {
-      filterExpression = 'riskEntityType = :entityType'
-      expressionAttributeVals[':entityType'] = entityType
-    }
-
-    const queryString =
-      ParameterAttributeValuesListV8.getAttributeTypeMap().reduce(
-        (acc, curr) => {
-          if (curr.baseName === 'name') {
-            return acc + '#name' + ','
-          }
-
-          return acc + curr.baseName + ','
-        },
-        ''
-      )
-
-    const queryInput: QueryCommandInput = {
+  async getAvgArsReadyMarker(): Promise<boolean> {
+    const getInput: GetCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: keyConditionExpr,
-      ExpressionAttributeValues: expressionAttributeVals,
-      ExpressionAttributeNames: {
-        '#name': 'name',
-      },
-      ProjectionExpression: queryString.slice(0, -1),
-      ...(filterExpression && { FilterExpression: filterExpression }),
+      Key: DynamoDbKeys.AVG_ARS_READY_MARKER(this.tenantId),
     }
-
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0
-        ? (result.Items.map((item) =>
-            omit(item, ['PartitionKeyID', 'SortKeyID'])
-          ) as ParameterAttributeValuesListV8[])
-        : []
-    } catch (e) {
-      logger.error(e)
-      return []
-    }
+    const result = await this.dynamoDb.send(new GetCommand(getInput))
+    return result.Item?.isReady ?? false
   }
 
-  async getActiveParameterRiskItemsV8(
-    riskEntityType: RiskEntityType
-  ): Promise<Array<ParameterAttributeRiskValuesV8>> {
-    const queryInput: QueryCommandInput = {
+  async setAvgArsReadyMarker(isReady: boolean): Promise<void> {
+    const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: 'PartitionKeyID = :pk',
-      ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS_V8(this.tenantId)
-          .PartitionKeyID,
-        ':isActive': true,
-        ':entityType': riskEntityType,
+      Item: {
+        ...DynamoDbKeys.AVG_ARS_READY_MARKER(this.tenantId),
+        isReady: isReady,
       },
-      FilterExpression: 'isActive = :isActive AND riskEntityType = :entityType',
     }
-
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0
-        ? (result.Items.map((item) =>
-            omit(item, ['PartitionKeyID', 'SortKeyID'])
-          ) as ParameterAttributeRiskValuesV8[])
-        : []
-    } catch (e) {
-      logger.error(e)
-      return []
-    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
   }
 
   /* MongoDB operations */
@@ -882,10 +708,24 @@ export class RiskRepository {
   async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
     logger.info(`Updating risk factor for V8.`)
 
+    const now = Date.now()
+    const oldRiskFactor = await this.getRiskFactor(riskFactor.id)
+    const newRiskFactor: RiskFactor = {
+      ...riskFactor,
+      logicAggregationVariables:
+        (await getLogicAggVarsWithUpdatedVersion(
+          riskFactor,
+          riskFactor.id,
+          oldRiskFactor,
+          this.aggregationRepository
+        )) ?? [],
+      updatedAt: now,
+      createdAt: oldRiskFactor?.createdAt ?? now,
+    }
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
-        ...riskFactor,
+        ...newRiskFactor,
         ...DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactor.id),
       },
     }
@@ -894,6 +734,39 @@ export class RiskRepository {
     logger.info(`Updated risk factor for V8`)
 
     return riskFactor
+  }
+
+  async updateRiskFactorStatus(
+    riskFactorId: string,
+    status: RuleInstanceStatus
+  ): Promise<void> {
+    const updateItemInput: UpdateCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId),
+      UpdateExpression: `SET #status = :status`,
+      ExpressionAttributeValues: {
+        ':status': status,
+      },
+      ExpressionAttributeNames: {
+        '#status': 'status',
+      },
+      ReturnValues: 'UPDATED_NEW',
+    }
+    await this.dynamoDb.send(new UpdateCommand(updateItemInput))
+    if (status === 'INACTIVE') {
+      await this.removeRiskFactorFromUsedAggVar(riskFactorId)
+    }
+  }
+
+  async removeRiskFactorFromUsedAggVar(riskFactorId: string) {
+    const factor = await this.getRiskFactor(riskFactorId)
+    if (factor) {
+      await this.aggregationRepository.updateLogicAggVars(
+        undefined,
+        riskFactorId,
+        factor
+      )
+    }
   }
 
   async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
@@ -929,46 +802,33 @@ export class RiskRepository {
 
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
     logger.info(`Deleted risk factor.`)
+    await this.removeRiskFactorFromUsedAggVar(riskFactorId)
   }
 
   async getAllRiskFactors(
     entityType?: RiskEntityType
   ): Promise<Array<RiskFactor>> {
     const keyConditionExpr = 'PartitionKeyID = :pk'
-    const expressionAttributeVals = {
+    const expressionAttributeVals: Record<string, any> = {
       ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
     }
 
+    const expressionAttributeNames: Record<string, string> = {}
     let filterExpression = ''
 
     if (entityType) {
-      filterExpression = 'type = :entityType'
+      filterExpression = '#type = :entityType'
       expressionAttributeVals[':entityType'] = entityType
+      expressionAttributeNames['#type'] = 'type'
     }
-
-    const queryString = RiskFactor.getAttributeTypeMap().reduce((acc, curr) => {
-      if (curr.baseName === 'name') {
-        return acc + '#name' + ','
-      }
-      if (curr.baseName === 'status') {
-        return acc + '#status' + ','
-      }
-      if (curr.baseName === 'type') {
-        return acc + '#type' + ','
-      }
-      return acc + curr.baseName + ','
-    }, '')
 
     const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: keyConditionExpr,
       ExpressionAttributeValues: expressionAttributeVals,
-      ExpressionAttributeNames: {
-        '#name': 'name',
-        '#status': 'status',
-        '#type': 'type',
-      },
-      ProjectionExpression: queryString.slice(0, -1),
+      ...(Object.keys(expressionAttributeNames).length > 0 && {
+        ExpressionAttributeNames: expressionAttributeNames,
+      }),
       ...(filterExpression && { FilterExpression: filterExpression }),
     }
 

@@ -310,7 +310,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             const ruleInstance = updatedRuleInstances[entity.id] || entity;
             return (
               <RuleStatusSwitch
-                ruleInstance={ruleInstance}
+                entity={ruleInstance}
+                type="RULE"
                 onToggle={(checked) => handleActivationChange(ruleInstance, checked)}
               />
             );

@@ -11,6 +11,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 export function getTestUser(
   user: Partial<User | InternalUser> = {}
@@ -134,21 +135,32 @@ export async function createUsersForTransactions(
 
 export async function createConsumerUser(
   testTenantId: string,
-  user: User | InternalUser
+  user: User | InternalUser,
+  calculateRiskScores: boolean = true,
+  useV8RiskScoring: boolean = false
 ) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
   const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
-  const riskScoringService = new RiskScoringService(
-    testTenantId,
-    {
-      dynamoDb,
-      mongoDb,
-    },
-    logicEvaluator
-  )
-  await riskScoringService.updateInitialRiskScores(user)
+  const riskScoringService = useV8RiskScoring
+    ? new RiskScoringV8Service(testTenantId, logicEvaluator, {
+        dynamoDb,
+        mongoDb,
+      })
+    : new RiskScoringService(testTenantId, {
+        dynamoDb,
+        mongoDb,
+      })
+  if (calculateRiskScores) {
+    if (useV8RiskScoring) {
+      await (riskScoringService as RiskScoringV8Service).handleUserUpdate(user)
+    } else {
+      await (riskScoringService as RiskScoringService).updateInitialRiskScores(
+        user
+      )
+    }
+  }
   const createdUser = await userRepository.saveConsumerUser(user)
   await userRepository.saveUserMongo(createdUser as InternalUser)
   return async () => {
@@ -166,20 +178,21 @@ export async function createBusinessUsers(
   }
 }
 
-export async function createBusinessUser(testTenantId: string, user: Business) {
+export async function createBusinessUser(
+  testTenantId: string,
+  user: Business,
+  calculateRiskScores: boolean = true
+) {
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const userRepository = new UserRepository(testTenantId, { dynamoDb, mongoDb })
-  const logicEvaluator = new LogicEvaluator(testTenantId, dynamoDb)
-  const riskScoringService = new RiskScoringService(
-    testTenantId,
-    {
-      dynamoDb,
-      mongoDb,
-    },
-    logicEvaluator
-  )
-  await riskScoringService.updateInitialRiskScores(user)
+  const riskScoringService = new RiskScoringService(testTenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+  if (calculateRiskScores) {
+    await riskScoringService.updateInitialRiskScores(user)
+  }
   const createdUser = await userRepository.saveBusinessUser(user)
 
   await userRepository.saveUserMongo(createdUser as InternalUser)
@@ -191,7 +204,8 @@ export async function createBusinessUser(testTenantId: string, user: Business) {
 
 export function setUpUsersHooks(
   tenantId: string,
-  users: Array<User | Business>
+  users: Array<User | Business>,
+  calculateRiskScores: boolean = true
 ) {
   const cleanups: Array<() => void> = [
     async () => {
@@ -203,8 +217,16 @@ export function setUpUsersHooks(
     for (const user of users) {
       cleanups.push(
         isConsumerUser(user)
-          ? await createConsumerUser(tenantId, user as User)
-          : await createBusinessUser(tenantId, user as Business)
+          ? await createConsumerUser(
+              tenantId,
+              user as User,
+              calculateRiskScores
+            )
+          : await createBusinessUser(
+              tenantId,
+              user as Business,
+              calculateRiskScores
+            )
       )
     }
   })

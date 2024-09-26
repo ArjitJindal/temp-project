@@ -144,7 +144,8 @@ export const RuleInstanceInfo = (props: Props) => {
             <div className={s.description}>{ruleInstance.ruleDescriptionAlias}</div>
           </div>
           <RuleStatusSwitch
-            ruleInstance={ruleInstance}
+            entity={ruleInstance}
+            type="RULE"
             onToggle={(checked) => handleActivationChange(ruleInstance, checked)}
           />
         </Card.Section>

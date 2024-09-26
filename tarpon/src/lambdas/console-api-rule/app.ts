@@ -32,8 +32,8 @@ export const ruleHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetRuleLogicConfig(async () => {
-      // NOTE: rule logic config is over 10MB which is the max size for API Gateway response,
+    handlers.registerGetLogicConfig(async () => {
+      // NOTE: logic config is over 10MB which is the max size for API Gateway response,
       // so we need to get it from S3 instead
       const s3 = getS3ClientByEvent(event)
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
@@ -43,7 +43,7 @@ export const ruleHandler = lambdaApi()(
       })
       return {
         s3Url: envIs('local') ? '' : await getSignedUrl(s3, getObjectCommand),
-        ruleLogicConfig: envIs('local')
+        logicConfig: envIs('local')
           ? logicEvaluator.getLogicConfig()
           : undefined,
       }

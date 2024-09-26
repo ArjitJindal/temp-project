@@ -75,6 +75,7 @@ export const jobDecisionHandler = async (
     ALERT_SLA_STATUS_REFRESH: 'LAMBDA',
     REVERIFY_TRANSACTIONS: 'FARGATE',
     SANCTIONS_DATA_FETCH: 'FARGATE',
+    BACKFILL_AVERAGE_TRS: 'LAMBDA', // Verify if FARGATE is needed
   }
 
   return {

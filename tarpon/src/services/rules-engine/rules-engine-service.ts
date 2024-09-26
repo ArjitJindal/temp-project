@@ -35,6 +35,7 @@ import {
   TransactionLogicData,
   UserLogicData,
 } from '../logic-evaluator/engine'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { DynamoDbTransactionRepository } from './repositories/dynamodb-transaction-repository'
 import { TransactionEventRepository } from './repositories/transaction-event-repository'
 import { RuleRepository } from './repositories/rule-repository'
@@ -220,6 +221,7 @@ export class RulesEngineService {
   userRepository: UserRepository
   tenantRepository: TenantRepository
   riskScoringService: RiskScoringService
+  riskScoringV8Service: RiskScoringV8Service
   ruleLogicEvaluator: LogicEvaluator
   sanctionsService: SanctionsService
   ibanService: IBANService
@@ -257,13 +259,17 @@ export class RulesEngineService {
     this.tenantRepository = new TenantRepository(tenantId, {
       dynamoDb,
     })
-    this.riskScoringService = new RiskScoringService(
+    this.riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    this.riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
+      logicEvaluator,
       {
-        dynamoDb,
         mongoDb,
-      },
-      logicEvaluator
+        dynamoDb,
+      }
     )
     this.sanctionsService = new SanctionsService(this.tenantId)
     this.ibanService = new IBANService(this.tenantId)
@@ -464,7 +470,11 @@ export class RulesEngineService {
       'Save Transaction/Event'
     )
 
-    if (hasFeature('RISK_SCORING') && riskScoreDetails) {
+    if (
+      !hasFeature('RISK_SCORING_V8') &&
+      hasFeature('RISK_SCORING') &&
+      riskScoreDetails
+    ) {
       await this.riskRepository.createOrUpdateArsScore(
         transaction.transactionId,
         riskScoreDetails.trsScore,
@@ -977,15 +987,16 @@ export class RulesEngineService {
       'Rules Engine',
       'Get Initial Data'
     )
+    const isV8RiskScoring = hasFeature('RISK_SCORING_V8')
 
     const userPromise = relatedData
       ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
       : this.getTransactionUsers(transaction, options)
-
-    const riskScoringPromise = relatedData
+    const riskScoringPromise = isV8RiskScoring
+      ? Promise.resolve(undefined)
+      : relatedData
       ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
       : this.getTransactionRiskScoreDetails(transaction)
-
     const [
       { senderUser, receiverUser },
       {
@@ -993,8 +1004,8 @@ export class RulesEngineService {
         riskScore: senderUserRiskScore,
         isUpdatable: isSenderUserUpdatable,
       },
-      activeRuleInstances,
       riskScoreDetails,
+      activeRuleInstances,
       {
         riskScore: receiverUserRiskScore,
         isUpdatable: isReceiverUserUpdatable,
@@ -1002,10 +1013,18 @@ export class RulesEngineService {
     ] = await Promise.all([
       userPromise,
       this.getUserRiskLevelAndScore(transaction.originUserId),
-      this.ruleInstanceRepository.getActiveRuleInstances(),
       riskScoringPromise,
+      this.ruleInstanceRepository.getActiveRuleInstances(),
       this.getUserRiskLevelAndScore(transaction.destinationUserId),
     ])
+    const newRiskScoreDetails = isV8RiskScoring
+      ? await this.riskScoringV8Service.handleTransaction(
+          transaction,
+          transactionEvents,
+          senderUser,
+          receiverUser
+        )
+      : riskScoreDetails
 
     const toRunRule = (
       ruleInstance: RuleInstance,
@@ -1049,8 +1068,8 @@ export class RulesEngineService {
 
     const lastTransactionEvent = last(transactionEvents)
 
-    const riskScoreDetailsData = riskScoreDetails
-      ? pick(riskScoreDetails, ['trsScore', 'trsRiskLevel'])
+    const riskScoreDetailsData = newRiskScoreDetails
+      ? pick(newRiskScoreDetails, ['trsScore', 'trsRiskLevel'])
       : undefined
 
     if (lastTransactionEvent) {
@@ -1115,35 +1134,59 @@ export class RulesEngineService {
     const executedAndHitRulesResult = getExecutedAndHitRulesResult(ruleResults)
 
     this.ruleLogicEvaluator.updatedAggregationVariables.clear()
-    const [originUserRiskDetails, destinationUserRiskDetails] =
-      await Promise.all([
-        this.getUserRiskScoreDetails(
-          riskScoreDetails?.trsScore,
-          senderUserRiskScore,
-          isSenderUserUpdatable
-        ),
-        this.getUserRiskScoreDetails(
-          riskScoreDetails?.trsScore,
-          receiverUserRiskScore,
-          isReceiverUserUpdatable
-        ),
-      ])
+    let userRiskScoreDetails:
+      | {
+          originUserCraRiskLevel?: RiskLevel
+          destinationUserCraRiskLevel?: RiskLevel
+          originUserCraRiskScore?: number
+          destinationUserCraRiskScore?: number
+        }
+      | undefined
+
+    if (isV8RiskScoring) {
+      userRiskScoreDetails = {
+        originUserCraRiskLevel: newRiskScoreDetails?.originUserCraRiskLevel,
+        destinationUserCraRiskLevel:
+          newRiskScoreDetails?.destinationUserCraRiskLevel,
+        originUserCraRiskScore: newRiskScoreDetails?.originUserCraRiskScore,
+        destinationUserCraRiskScore:
+          newRiskScoreDetails?.destinationUserCraRiskScore,
+      }
+    } else {
+      const [originUserRiskDetails, destinationUserRiskDetails] =
+        await Promise.all([
+          this.getUserRiskScoreDetails(
+            riskScoreDetails?.trsScore,
+            senderUserRiskScore,
+            isSenderUserUpdatable
+          ),
+          this.getUserRiskScoreDetails(
+            riskScoreDetails?.trsScore,
+            receiverUserRiskScore,
+            isReceiverUserUpdatable
+          ),
+        ])
+      userRiskScoreDetails = {
+        originUserCraRiskLevel: originUserRiskDetails?.craRiskLevel,
+        destinationUserCraRiskLevel: destinationUserRiskDetails?.craRiskLevel,
+        originUserCraRiskScore: originUserRiskDetails?.craRiskScore,
+        destinationUserCraRiskScore: destinationUserRiskDetails?.craRiskScore,
+      }
+    }
+
     return {
       ...executedAndHitRulesResult,
       aggregationMessages,
       riskScoreDetails: riskScoreDetailsData,
-      riskScoreComponents: riskScoreDetails?.components,
+      riskScoreComponents: isV8RiskScoring
+        ? (newRiskScoreDetails as RiskScoreDetails)?.components
+        : undefined,
       senderUser,
       receiverUser,
       isAnyAsyncRules: activeRuleInstances.some((ruleInstance) =>
         isAsyncRule(ruleInstance)
       ),
-      userRiskScoreDetails: {
-        originUserCraRiskLevel: originUserRiskDetails?.craRiskLevel,
-        destinationUserCraRiskLevel: destinationUserRiskDetails?.craRiskLevel,
-        originUserCraRiskScore: originUserRiskDetails?.craRiskScore,
-        destinationUserCraRiskScore: destinationUserRiskDetails?.craRiskScore,
-      },
+      userRiskScoreDetails: userRiskScoreDetails,
     }
   }
 

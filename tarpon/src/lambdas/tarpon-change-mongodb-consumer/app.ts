@@ -16,7 +16,6 @@ import {
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import {
   hasFeature,
-  tenantHasFeature,
   tenantSettings,
   updateLogMetadata,
 } from '@/core/utils/context'
@@ -48,6 +47,8 @@ import { envIsNot } from '@/utils/env'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RiskService } from '@/services/risk'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -115,7 +116,7 @@ async function userHandler(
   }
 
   const [_, existingUser] = await Promise.all([
-    drsScore && isRiskScoringEnabled
+    drsScore
       ? usersRepo.updateDrsScoreOfUser(internalUser.userId, drsScore)
       : null,
     usersRepo.getUserById(internalUser.userId),
@@ -187,23 +188,19 @@ export const transactionHandler = async (
   })
 
   const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-  const riskScoringService = new RiskScoringService(
-    tenantId,
-    {
-      dynamoDb,
-      mongoDb,
-    },
-    logicEvaluator
-  )
+  const riskScoringService = new RiskScoringService(tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
 
   const settings = await tenantSettings(tenantId)
-  const isRiskScoringEnabled = await tenantHasFeature(tenantId, 'RISK_SCORING')
-
+  const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
+  const v8RiskScoringEnabled = settings.features?.includes('RISK_SCORING_V8')
   const arsScore = isRiskScoringEnabled
     ? await riskScoringService.getArsScore(transaction.transactionId)
     : undefined
 
-  if (isRiskScoringEnabled && !arsScore) {
+  if (v8RiskScoringEnabled && !arsScore) {
     logger.error(
       `ARS score not found for transaction ${transaction.transactionId} for tenant ${tenantId}: Recalculating Async`
     )
@@ -231,10 +228,20 @@ export const transactionHandler = async (
         ? []
         : ruleInstancesRepo.getDeployingRuleInstances(),
     ])
+  const riskService = new RiskService(tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+  const deployingFactors = v8RiskScoringEnabled
+    ? hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')
+      ? []
+      : (await riskService.getAllRiskFactors()).filter(
+          (factor) => factor.status === 'DEPLOYING'
+        )
+    : []
 
   // Update rule aggregation data for the transactions created when the rule is still deploying
-  if (deployingRuleInstances.length > 0) {
-    const ruleLogicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  if (deployingRuleInstances.length > 0 || deployingFactors.length > 0) {
     const transactionEventRepository = new TransactionEventRepository(
       tenantId,
       {
@@ -245,8 +252,8 @@ export const transactionHandler = async (
       await transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       )
-    await Promise.all(
-      deployingRuleInstances.map(async (ruleInstance) => {
+    await Promise.all([
+      ...deployingRuleInstances.map(async (ruleInstance) => {
         const rule = ruleInstance.ruleId
           ? getRuleByRuleId(ruleInstance.ruleId)
           : undefined
@@ -254,15 +261,22 @@ export const transactionHandler = async (
         if (!runOnV8Engine(ruleInstance, rule)) {
           return
         }
-
-        await ruleLogicEvaluator.handleV8Aggregation(
+        await logicEvaluator.handleV8Aggregation(
           'RULES',
           ruleInstance.logicAggregationVariables ?? [],
           transaction,
           transactionEvents
         )
-      })
-    )
+      }),
+      ...deployingFactors.map(async (factor) => {
+        await logicEvaluator.handleV8Aggregation(
+          'RISK',
+          factor.logicAggregationVariables ?? [],
+          transaction,
+          transactionEvents
+        )
+      }),
+    ])
   }
 
   const caseCreationService = new CaseCreationService(tenantId, {
@@ -304,21 +318,46 @@ export const transactionHandler = async (
   }
 
   // We don't need to use `tenantHasSetting` because we already have settings from above and we can just check for the feature
-  if (settings?.features?.includes('RISK_SCORING')) {
-    logger.info(`Calculating ARS & DRS`)
+  if (isRiskScoringEnabled) {
+    if (v8RiskScoringEnabled) {
+      const riskScoringV8Service = new RiskScoringV8Service(
+        tenantId,
+        logicEvaluator,
+        {
+          dynamoDb,
+          mongoDb,
+        }
+      )
+      const [originDrsScore, destinationDrsScore] = await Promise.all([
+        ORIGIN?.type === 'USER'
+          ? riskScoringV8Service.getDrsScore(ORIGIN.user.userId)
+          : Promise.resolve(undefined),
+        DESTINATION?.type === 'USER'
+          ? riskScoringV8Service.getDrsScore(DESTINATION.user.userId)
+          : Promise.resolve(undefined),
+      ])
+      await casesRepo.updateDynamicRiskScores(
+        transaction.transactionId,
+        originDrsScore?.drsScore,
+        destinationDrsScore?.drsScore
+      )
+      logger.info(`DRS Updated in Cases`)
+    } else {
+      logger.info(`Calculating ARS & DRS`)
 
-    const { originDrsScore, destinationDrsScore } =
-      await riskScoringService.updateDynamicRiskScores(transaction, !arsScore)
+      const { originDrsScore, destinationDrsScore } =
+        await riskScoringService.updateDynamicRiskScores(transaction, !arsScore)
 
-    logger.info(`Calculation of ARS & DRS Completed`)
+      logger.info(`Calculation of ARS & DRS Completed`)
 
-    await casesRepo.updateDynamicRiskScores(
-      transaction.transactionId,
-      originDrsScore,
-      destinationDrsScore
-    )
+      await casesRepo.updateDynamicRiskScores(
+        transaction.transactionId,
+        originDrsScore,
+        destinationDrsScore
+      )
 
-    logger.info(`DRS Updated in Cases`)
+      logger.info(`DRS Updated in Cases`)
+    }
   }
 
   await caseCreationService.handleNewCases(

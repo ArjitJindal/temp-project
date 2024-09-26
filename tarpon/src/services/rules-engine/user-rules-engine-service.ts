@@ -5,6 +5,7 @@ import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskScoringService } from '../risk-scoring'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
@@ -49,6 +50,7 @@ export class UserManagementService {
   userRepository: UserRepository
   userEventRepository: UserEventRepository
   riskScoringService: RiskScoringService
+  riskScoringV8Service: RiskScoringV8Service
   caseRepository: CaseRepository
 
   constructor(
@@ -71,13 +73,17 @@ export class UserManagementService {
       logicEvaluator,
       mongoDb
     )
-    this.riskScoringService = new RiskScoringService(
+    this.riskScoringService = new RiskScoringService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    this.riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
+      logicEvaluator,
       {
         dynamoDb,
         mongoDb,
-      },
-      logicEvaluator
+      }
     )
     this.caseRepository = new CaseRepository(tenantId, {
       dynamoDb,
@@ -277,7 +283,7 @@ export class UserManagementService {
     const updatedAttributes: UpdatedAttributesType<T> =
       this.getUpdatedUserAttributes(userType, userEvent) ?? {}
 
-    if (hasFeature('RISK_LEVELS')) {
+    if (hasFeature('RISK_LEVELS') && !hasFeature('RISK_SCORING_V8')) {
       const preDefinedRiskLevel = updatedAttributes?.riskLevel
 
       if (preDefinedRiskLevel) {
@@ -306,12 +312,20 @@ export class UserManagementService {
           isDrsUpdatable
         )
     }
+    if (hasFeature('RISK_SCORING_V8')) {
+      riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate(
+        updatedUser,
+        updatedAttributes.riskLevel,
+        isDrsUpdatable
+      )
+    }
 
     const { monitoringResult, isAnyAsyncRules } =
       await this.rulesEngineService.verifyUser(updatedUser)
 
     const updatedUserResult = {
       ...updatedUser,
+      riskLevel: riskScoreDetails?.craRiskLevel,
       ...monitoringResult,
       riskScoreDetails,
     }

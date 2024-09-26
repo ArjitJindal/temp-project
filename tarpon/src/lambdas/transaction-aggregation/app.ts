@@ -191,13 +191,13 @@ export async function handleV8PreAggregationTask(
       )
     }
   } else if (task.entity.type === 'RISK_FACTOR') {
-    const riskFactor = await riskRepository.getParameterRiskItemV8(
+    const riskFactor = await riskRepository.getRiskFactor(
       task.entity.riskFactorId
     )
 
     const noRiskFactorAggregateConditions = !!(
       !riskFactor ||
-      !riskFactor.isActive ||
+      !(riskFactor.status === 'ACTIVE') ||
       !riskFactor.logicAggregationVariables?.find(
         (v) => getAggVarHash(v) === getAggVarHash(task.aggregationVariable)
       )

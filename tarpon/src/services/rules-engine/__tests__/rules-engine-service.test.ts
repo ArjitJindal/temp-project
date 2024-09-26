@@ -1,6 +1,7 @@
 import { ScanCommand } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { omit } from 'lodash'
+import { v4 as uuidv4 } from 'uuid'
 import { RulesEngineService } from '..'
 import { DynamoDbTransactionRepository } from '../repositories/dynamodb-transaction-repository'
 import { RiskRepository } from '../../risk-scoring/repositories/risk-repository'
@@ -17,7 +18,11 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
 import { withContext } from '@/core/utils/context'
-import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
+import {
+  createConsumerUser,
+  getTestUser,
+  setUpUsersHooks,
+} from '@/test-utils/user-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
@@ -27,6 +32,11 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import dayjs from '@/utils/dayjs'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import {
+  getTestRiskFactor,
+  setUpRiskFactorsHook,
+} from '@/test-utils/pulse-test-utils'
+import { TenantService } from '@/services/tenants'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
@@ -2698,7 +2708,7 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
   ])
   setUpUsersHooks(TEST_TENANT_ID, [getTestUser({ userId: '1' })])
 
-  test('transactions created duing Deploying should be put to aggregation data', async () => {
+  test('transactions created during Deploying should be put to aggregation data', async () => {
     const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
     const rulesEngine = new RulesEngineService(
       TEST_TENANT_ID,
@@ -2775,5 +2785,384 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
         },
       ],
     } as TransactionMonitoringResult)
+  })
+})
+
+describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
+  withFeatureHook(['RISK_SCORING_V8', 'RISK_SCORING', 'RISK_LEVELS'])
+  const tenantId = getTestTenantId()
+  const userId1 = uuidv4()
+  const userId2 = uuidv4()
+  setUpRiskFactorsHook(tenantId, [
+    getTestRiskFactor({
+      id: 'RF1',
+      riskLevelLogic: {
+        VERY_LOW: {
+          logic: {
+            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
+          },
+          riskLevel: 'VERY_LOW',
+          riskScore: 10,
+          weight: 1,
+        },
+        LOW: {
+          logic: {
+            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
+          },
+          riskLevel: 'LOW',
+          riskScore: 30,
+          weight: 1,
+        },
+        MEDIUM: {
+          logic: {
+            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'REFUND'] }],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        HIGH: {
+          logic: {
+            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'WITHDRAWAL'] }],
+          },
+          riskLevel: 'HIGH',
+          riskScore: 70,
+          weight: 1,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [{ '==': [{ var: 'TRANSACTION:type' }, 'EXTERNAL_PAYMENT'] }],
+          },
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+          weight: 1,
+        },
+      },
+    }),
+    getTestRiskFactor({
+      id: 'RF2',
+      type: 'CONSUMER_USER',
+      riskLevelLogic: {
+        MEDIUM: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        HIGH: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'FAILED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'HIGH',
+          riskScore: 70,
+          weight: 1,
+        },
+      },
+    }),
+    getTestRiskFactor({
+      id: 'RF3',
+      riskLevelLogic: {
+        LOW: {
+          logic: {
+            and: [
+              { '==': [{ var: 'TRANSACTION:transactionState' }, 'REFUNDED'] },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'LOW',
+          riskScore: 30,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [
+              { '==': [{ var: 'TRANSACTION:transactionState' }, 'CREATED'] },
+            ],
+          },
+          weight: 1,
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+        },
+      },
+    }),
+  ])
+
+  it('should match transaction and transaction event', async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const tenantService = new TenantService(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    await tenantService.createOrUpdateTenantSettings({
+      riskScoringCraEnabled: true,
+      riskScoringAlgorithm: {
+        type: 'FORMULA_SIMPLE_AVG',
+      },
+    })
+
+    await createConsumerUser(
+      tenantId,
+      getTestUser({
+        userId: userId1,
+        kycStatusDetails: {
+          status: 'FAILED',
+        },
+      }),
+      true,
+      true
+    )
+    await createConsumerUser(
+      tenantId,
+      getTestUser({
+        userId: userId2,
+        kycStatusDetails: {
+          status: 'CANCELLED',
+        },
+      }),
+      true,
+      true
+    )
+    const transaction = getTestTransaction({
+      originUserId: userId1,
+      destinationUserId: userId2,
+      type: 'EXTERNAL_PAYMENT',
+      transactionState: 'CREATED',
+    })
+    const rulesEngine = new RulesEngineService(
+      tenantId,
+      dynamoDb,
+      logicEvaluator,
+      mongoDb
+    )
+
+    const rulesResult = await rulesEngine.verifyTransaction(transaction)
+    expect(rulesResult).toEqual({
+      transactionId: transaction.transactionId,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+      riskScoreDetails: {
+        trsScore: 90,
+        trsRiskLevel: 'VERY_HIGH',
+        originUserCraRiskLevel: 'VERY_HIGH',
+        destinationUserCraRiskLevel: 'HIGH',
+        originUserCraRiskScore: 80,
+        destinationUserCraRiskScore: 70,
+      },
+    })
+    const dynamoDbTransactionRepository = new DynamoDbTransactionRepository(
+      tenantId,
+      dynamoDb
+    )
+
+    const transactionResult =
+      await dynamoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    expect(transactionResult).toEqual({
+      ...transaction,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+      riskScoreDetails: {
+        trsRiskLevel: 'VERY_HIGH',
+        trsScore: 90,
+      },
+    })
+
+    const mongoDbTransactionRepository = new MongoDbTransactionRepository(
+      tenantId,
+      mongoDb
+    )
+
+    const mongoTransactionResult =
+      await mongoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    expect(mongoTransactionResult).toMatchObject({
+      ...transaction,
+      executedRules: [],
+      hitRules: [],
+      status: 'ALLOW',
+    })
+
+    const transactionEvent = getTestTransactionEvent({
+      transactionId: transaction.transactionId,
+      transactionState: 'REFUNDED',
+      eventDescription: 'Refunded',
+      timestamp: Date.now(),
+      updatedTransactionAttributes: {
+        productType: 'test',
+        originPaymentDetails: {
+          method: 'ACH',
+        },
+        destinationAmountDetails: {
+          transactionAmount: 1000000,
+          transactionCurrency: 'INR',
+        },
+      },
+    })
+
+    const result = await rulesEngine.verifyTransactionEvent(transactionEvent)
+    expect(result).toEqual({
+      eventId: expect.any(String),
+      transaction: expect.objectContaining({
+        transactionId: transaction.transactionId,
+      }),
+      executedRules: [],
+      hitRules: [],
+      riskScoreDetails: {
+        trsScore: 60,
+        trsRiskLevel: 'HIGH',
+        originUserCraRiskLevel: 'HIGH',
+        destinationUserCraRiskLevel: 'MEDIUM',
+        originUserCraRiskScore: 65,
+        destinationUserCraRiskScore: 55,
+      },
+    })
+    const transactionEventRepository = new TransactionEventRepository(
+      tenantId,
+      { dynamoDb, mongoDb }
+    )
+
+    const transactionEvents =
+      await transactionEventRepository.getTransactionEvents(
+        transaction.transactionId
+      )
+
+    expect(transactionEvents).toMatchObject([
+      {
+        updatedTransactionAttributes: {
+          destinationAmountDetails: {
+            country: 'IN',
+            transactionCurrency: 'INR',
+            transactionAmount: 68351.34,
+          },
+          originUserId: userId1,
+          originAmountDetails: {
+            country: 'DE',
+            transactionCurrency: 'EUR',
+            transactionAmount: 800,
+          },
+          destinationPaymentDetails: {
+            cardIssuedCountry: 'IN',
+            '3dsDone': true,
+            method: 'CARD',
+            transactionReferenceField: 'DEPOSIT',
+          },
+          transactionState: 'CREATED',
+          transactionId: transaction.transactionId,
+          destinationUserId: userId2,
+          originPaymentDetails: {
+            cardIssuedCountry: 'US',
+            '3dsDone': true,
+            method: 'CARD',
+            transactionReferenceField: 'DEPOSIT',
+          },
+          promotionCodeUsed: true,
+          timestamp: expect.any(Number),
+        },
+        hitRules: [],
+        executedRules: [],
+        transactionState: 'CREATED',
+        transactionId: transaction.transactionId,
+        timestamp: expect.any(Number),
+      },
+      {
+        updatedTransactionAttributes: {
+          destinationAmountDetails: {
+            transactionCurrency: 'INR',
+            transactionAmount: 1000000,
+          },
+          productType: 'test',
+          originPaymentDetails: {
+            method: 'ACH',
+          },
+        },
+        hitRules: [],
+        executedRules: [],
+        eventDescription: 'Refunded',
+        transactionState: 'REFUNDED',
+        transactionId: transaction.transactionId,
+        timestamp: expect.any(Number),
+      },
+    ])
+
+    const mongoTransactionAfterEvent =
+      await mongoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    const toMatchObject = {
+      originAmountDetails: {
+        country: 'DE',
+        transactionCurrency: 'EUR',
+        transactionAmount: 800,
+      },
+      destinationPaymentDetails: {
+        cardIssuedCountry: 'IN',
+        cardFingerprint: expect.any(String),
+        '3dsDone': true,
+        method: 'CARD',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      transactionId: transaction.transactionId,
+      destinationAmountDetails: {
+        country: 'IN',
+        transactionCurrency: 'INR',
+        transactionAmount: 1000000,
+      },
+      hitRules: [],
+      originUserId: userId1,
+      executedRules: [],
+      transactionState: 'REFUNDED',
+      destinationUserId: userId2,
+      originPaymentDetails: {
+        cardIssuedCountry: 'US',
+        cardFingerprint: expect.any(String),
+        '3dsDone': true,
+        method: 'ACH',
+        transactionReferenceField: 'DEPOSIT',
+      },
+      productType: 'test',
+      promotionCodeUsed: true,
+      timestamp: expect.any(Number),
+      status: 'ALLOW',
+      originPaymentMethodId: null,
+      destinationPaymentMethodId: expect.any(String),
+      createdAt: expect.any(Number),
+    }
+
+    expect(mongoTransactionAfterEvent).toMatchObject(toMatchObject)
+
+    const dynamoDbTransactionAfterEvent =
+      await dynamoDbTransactionRepository.getTransactionById(
+        transaction.transactionId
+      )
+
+    delete toMatchObject.createdAt
+    delete toMatchObject.destinationPaymentMethodId
+    delete (toMatchObject as any).originPaymentMethodId
+
+    expect(dynamoDbTransactionAfterEvent).toMatchObject(toMatchObject)
   })
 })

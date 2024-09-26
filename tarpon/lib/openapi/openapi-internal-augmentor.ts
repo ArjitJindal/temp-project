@@ -54,7 +54,7 @@ export const ConsoleApiPathToLambda: any = {
   '/roles': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/roles/{roleId}': StackConstants.CONSOLE_API_ROLE_FUNCTION_NAME,
   '/apikey': StackConstants.CONSOLE_API_API_KEY_GENERATOR_FUNCTION_NAME,
-  '/rule-logic-config': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
+  '/logic-config': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule-ml-models': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rule-ml-model/{modelId}': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
   '/rules-search': StackConstants.CONSOLE_API_RULE_FUNCTION_NAME,
@@ -180,10 +180,6 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/pulse/risk-classification':
     StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
-  '/pulse/{riskParameterId}/risk-parameters-v8':
-    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
-  '/pulse/risk-parameters-v8':
-    StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/risk-factors':
     StackConstants.CONSOLE_API_PARAMETER_RISK_ASSIGNMENT_FUNCTION_NAME,
   '/risk-factors/{riskFactorId}':

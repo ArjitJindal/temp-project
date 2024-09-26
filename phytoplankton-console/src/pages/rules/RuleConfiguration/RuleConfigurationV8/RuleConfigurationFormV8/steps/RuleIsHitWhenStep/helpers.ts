@@ -34,9 +34,9 @@ export function useRuleLogicConfig(ruleType: RuleType) {
   const queryResult = useQuery<LogicConfig>(
     RULE_LOGIC_CONFIG(),
     async (): Promise<LogicConfig> => {
-      const response = await api.getRuleLogicConfig();
-      if (response.ruleLogicConfig) {
-        return response.ruleLogicConfig;
+      const response = await api.getLogicConfig();
+      if (response.logicConfig) {
+        return response.logicConfig;
       }
 
       const ruleLogicConfig = (await fetch(response.s3Url).then((res) =>

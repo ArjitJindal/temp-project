@@ -1,6 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
-import { Switch } from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import s from './style.module.less';
@@ -16,7 +15,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { ParameterAttributeValuesListV8 } from '@/apis';
+import { RiskFactor, RuleInstanceStatus } from '@/apis';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { map } from '@/utils/queries/types';
@@ -26,39 +25,38 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Id from '@/components/ui/Id';
+import { RuleStatusSwitch } from '@/pages/rules/components/RuleStatusSwitch';
 
 export default function () {
   const { type = 'consumer' } = useParams();
   return (
-    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <Feature name="RISK_FACTORS_V8" fallback={'Not enabled'}>
-        <PageWrapper
-          header={
-            <Breadcrumbs
-              items={[
-                {
-                  title: 'Custom Risk Factors',
-                  to: '/risk-levels/custom-risk-factors',
-                },
-                type === 'consumer' && {
-                  title: 'Consumer',
-                  to: '/risk-levels/custom-risk-factors/consumer',
-                },
-                type === 'business' && {
-                  title: 'Business',
-                  to: '/risk-levels/custom-risk-factors/business',
-                },
-                type === 'transaction' && {
-                  title: 'Transaction',
-                  to: '/risk-levels/custom-risk-factors/transaction',
-                },
-              ].filter(notEmpty)}
-            />
-          }
-        >
-          <CustomRiskFactors type={type} />
-        </PageWrapper>
-      </Feature>
+    <Feature name="RISK_SCORING_V8" fallback={'Not enabled'}>
+      <PageWrapper
+        header={
+          <Breadcrumbs
+            items={[
+              {
+                title: 'Risk Factors',
+                to: '/risk-levels/risk-factors',
+              },
+              type === 'consumer' && {
+                title: 'Consumer',
+                to: '/risk-levels/risk-factors/consumer',
+              },
+              type === 'business' && {
+                title: 'Business',
+                to: '/risk-levels/risk-factors/business',
+              },
+              type === 'transaction' && {
+                title: 'Transaction',
+                to: '/risk-levels/risk-factors/transaction',
+              },
+            ].filter(notEmpty)}
+          />
+        }
+      >
+        <CustomRiskFactors type={type} />
+      </PageWrapper>
     </Feature>
   );
 }
@@ -71,10 +69,11 @@ const CustomRiskFactors = (props: Props) => {
   const [selectedSection, setSelectedSection] = useState<ScopeSelectorValue>(
     type as ScopeSelectorValue,
   );
+  const [updatedRiskFactor, setUpdatedRiskFactor] = useState<{ [key: string]: RiskFactor }>({});
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const navigate = useNavigate();
   useEffect(() => {
-    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: selectedSection }), {
+    navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: selectedSection }), {
       replace: true,
     });
   }, [selectedSection, navigate]);
@@ -82,15 +81,39 @@ const CustomRiskFactors = (props: Props) => {
   const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
     const entityType =
       type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION';
-    return await api.getPulseRiskParametersV8({
+    return await api.getAllRiskFactors({
       entityType: entityType,
     });
   });
   const queryClient = useQueryClient();
+  const handleActivationChangeMutation = useMutation<
+    RiskFactor,
+    Error,
+    { id: string; status: RuleInstanceStatus }
+  >(
+    async ({ id, status }) => {
+      return await api.putRiskFactors({
+        riskFactorId: id,
+        RiskFactorsUpdateRequest: {
+          status: status,
+        },
+      });
+    },
+    {
+      onSuccess: async (data) => {
+        await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
+        setUpdatedRiskFactor((prev) => ({ ...prev, [data.id]: data }));
+        message.success(`Risk factor updated`);
+      },
+      onError: async (err) => {
+        message.fatal(`Unable to update the risk factor - Some parameters are missing`, err);
+      },
+    },
+  );
   const deleteRiskFactorMutation = useMutation<void, Error, string>(
-    async (riskParameterId) => {
-      return api.deletePulseRiskParametersV8({
-        riskParameterId,
+    async (riskFactorId) => {
+      return api.deleteRiskFactor({
+        riskFactorId,
       });
     },
     {
@@ -104,8 +127,8 @@ const CustomRiskFactors = (props: Props) => {
     },
   );
   const actionRef = useRef<TableRefType>(null);
-  const columnHelper = new ColumnHelper<ParameterAttributeValuesListV8>();
-  const columns: TableColumn<ParameterAttributeValuesListV8>[] = columnHelper.list([
+  const columnHelper = new ColumnHelper<RiskFactor>();
+  const columns: TableColumn<RiskFactor>[] = columnHelper.list([
     columnHelper.simple<'id'>({
       title: 'Risk factor ID',
       key: 'id',
@@ -113,7 +136,7 @@ const CustomRiskFactors = (props: Props) => {
         render: (id) => {
           return (
             <Id
-              to={makeUrl(`/risk-levels/custom-risk-factors/:type/:id/read`, {
+              to={makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
                 type: selectedSection,
                 id,
               })}
@@ -141,29 +164,28 @@ const CustomRiskFactors = (props: Props) => {
       type: DATE_TIME,
     }),
     columnHelper.derived<boolean>({
-      id: 'isActive',
+      id: 'enabled',
       title: 'Enabled',
-      value: (entity) => entity.isActive,
       defaultSticky: 'RIGHT',
-      defaultWidth: 80,
+      value: (row) => row.status === 'ACTIVE',
+      defaultWidth: 70,
       type: {
         ...BOOLEAN,
         render: (_, { item: entity }) => {
           if (!entity.id) {
             return <></>;
           }
+          const riskFactor = updatedRiskFactor[entity.id] || entity;
           return (
-            <Switch
-              checked={entity.isActive}
-              onChange={async (checked) => {
-                await api.putPulseRiskParametersV8({
-                  riskParameterId: entity.id,
-                  ParameterAttributeV8RequestUpdate: {
-                    isActive: checked,
-                  },
-                });
-                actionRef.current?.reload();
-              }}
+            <RuleStatusSwitch
+              entity={riskFactor}
+              type="RISK_FACTOR"
+              onToggle={(checked) =>
+                handleActivationChangeMutation.mutate({
+                  id: entity.id,
+                  status: checked ? 'ACTIVE' : 'INACTIVE',
+                })
+              }
             />
           );
         },
@@ -181,7 +203,7 @@ const CustomRiskFactors = (props: Props) => {
             <Button
               onClick={() => {
                 navigate(
-                  makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
+                  makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
                     type: selectedSection,
                     id: entity.id,
                   }),
@@ -247,7 +269,7 @@ const CustomRiskFactors = (props: Props) => {
             type="SECONDARY"
             onClick={() => {
               navigate(
-                makeUrl(`/risk-levels/custom-risk-factors/:type/create`, { type: selectedSection }),
+                makeUrl(`/risk-levels/risk-factors/:type/create`, { type: selectedSection }),
                 { replace: true },
               );
             }}
@@ -255,7 +277,7 @@ const CustomRiskFactors = (props: Props) => {
             Create risk factor
           </Button>
         </div>
-        <QueryResultsTable<ParameterAttributeValuesListV8>
+        <QueryResultsTable<RiskFactor>
           rowKey="id"
           tableId={`custom-risk-factors-${type}`}
           innerRef={actionRef}

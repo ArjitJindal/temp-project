@@ -45,10 +45,10 @@ import { MlModelsPage } from '@/pages/ml-models';
 
 export function useRoutes(): RouteItem[] {
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const isRiskScoringV8Enabled = useFeatureEnabled('RISK_SCORING_V8');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
-  const isCustomRiskFactorsEnabled = useFeatureEnabled('RISK_FACTORS_V8');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
@@ -288,7 +288,7 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isRiskScoringEnabled && {
+      (isRiskScoringEnabled || isRiskScoringV8Enabled) && {
         path: '/risk-levels',
         icon: 'risk-scoring',
         name: 'risk-levels',
@@ -307,13 +307,13 @@ export function useRoutes(): RouteItem[] {
           {
             name: 'risk-factors',
             path: '/risk-levels/risk-factors/',
-            component: RiskLevelPage,
+            component: isRiskScoringV8Enabled ? CustomRiskFactorsPage : RiskLevelPage,
             permissions: ['risk-scoring:risk-factors:read'],
           },
           {
             name: 'risk-factors',
             path: '/risk-levels/risk-factors/:type',
-            component: RiskLevelPage,
+            component: isRiskScoringV8Enabled ? CustomRiskFactorsPage : RiskLevelPage,
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'],
           },
@@ -338,37 +338,6 @@ export function useRoutes(): RouteItem[] {
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'],
           },
-          ...(isCustomRiskFactorsEnabled
-            ? [
-                {
-                  name: 'custom-risk-factors',
-                  path: '/risk-levels/custom-risk-factors',
-                  component: CustomRiskFactorsPage,
-                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                },
-                {
-                  name: 'custom-risk-factors',
-                  path: '/risk-levels/custom-risk-factors/:type',
-                  component: CustomRiskFactorsPage,
-                  hideInMenu: true,
-                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                },
-                {
-                  name: 'custom-risk-factors',
-                  path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
-                  component: RiskFactorItemPage,
-                  hideInMenu: true,
-                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                },
-                {
-                  name: 'custom-risk-factors',
-                  path: '/risk-levels/custom-risk-factors/:type/:mode',
-                  component: RiskFactorItemPage,
-                  hideInMenu: true,
-                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
-                },
-              ]
-            : []),
           {
             name: 'configure',
             path: '/risk-levels/configure',
@@ -381,6 +350,24 @@ export function useRoutes(): RouteItem[] {
             component: RiskAlgorithmTable,
             permissions: ['risk-scoring:risk-algorithms:read'],
           },
+          ...(isRiskScoringV8Enabled
+            ? [
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/:type/:id/:mode',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+                {
+                  name: 'risk-factors',
+                  path: '/risk-levels/risk-factors/:type/:mode',
+                  component: RiskFactorItemPage,
+                  hideInMenu: true,
+                  permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                },
+              ]
+            : []),
         ],
       },
       {
@@ -562,8 +549,8 @@ export function useRoutes(): RouteItem[] {
     isAtLeastAdminUser,
     hasAuditLogPermission,
     permissions,
-    isCustomRiskFactorsEnabled,
     hasMachineLearningFeature,
+    isRiskScoringV8Enabled,
   ]);
 }
 

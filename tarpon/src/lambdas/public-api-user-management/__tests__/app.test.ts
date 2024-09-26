@@ -10,6 +10,12 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import {
+  getTestRiskFactor,
+  setUpRiskFactorsHook,
+} from '@/test-utils/pulse-test-utils'
+import { TenantService } from '@/services/tenants'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 dynamoDbSetupHook()
 withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
@@ -339,6 +345,210 @@ describe('Public API - Retrieve a Business User', () => {
     expect(JSON.parse(response?.body as string)).toMatchObject({
       ...business,
       riskScoreDetails,
+    })
+  })
+})
+
+describe('Public API - Create a consumer user with risk scoring V8', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const tenantService = new TenantService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
+    await tenantService.createOrUpdateTenantSettings({
+      riskScoringAlgorithm: {
+        type: 'FORMULA_SIMPLE_AVG',
+      },
+      riskScoringCraEnabled: true,
+    })
+  })
+  withFeatureHook(['RISK_SCORING_V8'])
+  setUpRiskFactorsHook(TEST_TENANT_ID, [
+    getTestRiskFactor({
+      id: 'RF1',
+      type: 'CONSUMER_USER',
+      riskLevelLogic: {
+        MEDIUM: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'FAILED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+          weight: 1,
+        },
+      },
+    }),
+  ])
+  test('returns saved user ID', async () => {
+    const consumerUser1 = getTestUser({
+      userId: '1',
+      kycStatusDetails: {
+        status: 'CANCELLED',
+      },
+    })
+    const response = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser1),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      userId: '1',
+      riskScoreDetails: {
+        kycRiskLevel: 'MEDIUM',
+        kycRiskScore: 50,
+        craRiskLevel: 'MEDIUM',
+        craRiskScore: 50,
+      },
+    })
+
+    const consumerUser2 = getTestUser({
+      userId: '2',
+      kycStatusDetails: {
+        status: 'FAILED',
+      },
+    })
+    const response2 = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/consumer/users', consumerUser2),
+      null as any,
+      null as any
+    )
+    expect(response2?.statusCode).toBe(200)
+    expect(JSON.parse(response2?.body as string)).toMatchObject({
+      userId: '2',
+      riskScoreDetails: {
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+      },
+    })
+  })
+})
+
+describe('Public API - Create a business user with risk scoring V8', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const tenantService = new TenantService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
+    await tenantService.createOrUpdateTenantSettings({
+      riskScoringAlgorithm: {
+        type: 'FORMULA_SIMPLE_AVG',
+      },
+      riskScoringCraEnabled: true,
+    })
+  })
+  withFeatureHook(['RISK_SCORING_V8'])
+  setUpRiskFactorsHook(TEST_TENANT_ID, [
+    getTestRiskFactor({
+      id: 'RF1',
+      type: 'BUSINESS',
+      riskLevelLogic: {
+        MEDIUM: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'BUSINESS_USER:kycStatusDetails-status__SENDER' },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'BUSINESS_USER:kycStatusDetails-status__SENDER' },
+                  'FAILED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+          weight: 1,
+        },
+      },
+    }),
+  ])
+  test('returns saved user ID', async () => {
+    const businessUser1 = getTestBusiness({
+      userId: '1',
+      kycStatusDetails: {
+        status: 'CANCELLED',
+      },
+    })
+    const response = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', businessUser1),
+      null as any,
+      null as any
+    )
+    expect(response?.statusCode).toBe(200)
+    expect(JSON.parse(response?.body as string)).toMatchObject({
+      userId: '1',
+      riskScoreDetails: {
+        kycRiskLevel: 'MEDIUM',
+        kycRiskScore: 50,
+        craRiskLevel: 'MEDIUM',
+        craRiskScore: 50,
+      },
+    })
+
+    const businessUser2 = getTestBusiness({
+      userId: '2',
+      kycStatusDetails: {
+        status: 'FAILED',
+      },
+    })
+    const response2 = await userHandler(
+      getApiGatewayPostEvent(TEST_TENANT_ID, '/business/users', businessUser2),
+      null as any,
+      null as any
+    )
+    expect(response2?.statusCode).toBe(200)
+    expect(JSON.parse(response2?.body as string)).toMatchObject({
+      userId: '2',
+      riskScoreDetails: {
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+      },
     })
   })
 })

@@ -10,6 +10,18 @@ import { setUpRulesHooks } from '@/test-utils/rule-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { TenantService } from '@/services/tenants'
+import {
+  getTestRiskFactor,
+  setUpRiskFactorsHook,
+} from '@/test-utils/pulse-test-utils'
+import {
+  getTestBusinessEvent,
+  getTestUserEvent,
+} from '@/test-utils/user-event-test-utils'
+import { pickKnownEntityFields } from '@/utils/object'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
 
 const dynamoDb = getDynamoDbClient()
 const TEST_TENANT_ID = getTestTenantId()
@@ -862,6 +874,217 @@ describe('Verify user with V8 rule with aggregation variables', () => {
           ruleName: 'test rule name',
         },
       ],
+    })
+  })
+})
+
+describe('Create a consumer user event with risk scoring V8', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const tenantService = new TenantService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
+    await tenantService.createOrUpdateTenantSettings({
+      riskScoringAlgorithm: {
+        type: 'FORMULA_SIMPLE_AVG',
+      },
+      riskScoringCraEnabled: true,
+    })
+  })
+  withFeatureHook(['RISK_SCORING_V8', 'RISK_LEVELS'])
+  setUpRiskFactorsHook(TEST_TENANT_ID, [
+    getTestRiskFactor({
+      id: 'RF1',
+      type: 'CONSUMER_USER',
+      riskLevelLogic: {
+        MEDIUM: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                  'FAILED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+          weight: 1,
+        },
+      },
+    }),
+  ])
+  test('returns updated user', async () => {
+    const consumerUser = getTestUser({
+      userId: 'foo',
+      kycStatusDetails: { status: 'CANCELLED' },
+    })
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const userManagementService = new UserManagementService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      mongoDb,
+      new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    )
+    const creationResponse = await userManagementService.verifyUser(
+      consumerUser,
+      'CONSUMER'
+    )
+    const user = creationResponse
+    expect(user).toMatchObject({
+      userId: 'foo',
+    })
+    const userEvent = getTestUserEvent({
+      eventId: '1',
+      userId: 'foo',
+      updatedConsumerUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+        kycStatusDetails: { status: 'FAILED' },
+      },
+    })
+    const response = await userManagementService.verifyConsumerUserEvent(
+      userEvent
+    )
+    expect(response).toEqual({
+      ...pickKnownEntityFields(consumerUser, User),
+      kycStatusDetails: { status: 'FAILED' },
+      riskLevel: 'VERY_HIGH',
+      tags: [{ key: 'key', value: 'value' }],
+      status: 'ALLOW',
+      executedRules: [],
+      hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
+    })
+  })
+})
+
+describe('Create a business user event with risk scoring V8', () => {
+  const TEST_TENANT_ID = getTestTenantId()
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const tenantService = new TenantService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb,
+    })
+    await tenantService.createOrUpdateTenantSettings({
+      riskScoringAlgorithm: {
+        type: 'FORMULA_SIMPLE_AVG',
+      },
+      riskScoringCraEnabled: true,
+    })
+  })
+  withFeatureHook(['RISK_SCORING_V8'])
+  setUpRiskFactorsHook(TEST_TENANT_ID, [
+    getTestRiskFactor({
+      id: 'RF1',
+      type: 'BUSINESS',
+      riskLevelLogic: {
+        MEDIUM: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'BUSINESS_USER:kycStatusDetails-status__SENDER' },
+                  'CANCELLED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'MEDIUM',
+          riskScore: 50,
+          weight: 1,
+        },
+        VERY_HIGH: {
+          logic: {
+            and: [
+              {
+                '==': [
+                  { var: 'BUSINESS_USER:kycStatusDetails-status__SENDER' },
+                  'FAILED',
+                ],
+              },
+            ],
+          },
+          riskLevel: 'VERY_HIGH',
+          riskScore: 90,
+          weight: 1,
+        },
+      },
+    }),
+  ])
+  test('returns saved user ID', async () => {
+    const businessUser1 = getTestBusiness({
+      userId: '1',
+      kycStatusDetails: {
+        status: 'CANCELLED',
+      },
+    })
+    const mongoDb = await getMongoDbClient()
+    const userManagementService = new UserManagementService(
+      TEST_TENANT_ID,
+      getDynamoDbClient(),
+      mongoDb,
+      new LogicEvaluator(TEST_TENANT_ID, getDynamoDbClient())
+    )
+    const creationResponse = await userManagementService.verifyUser(
+      businessUser1,
+      'BUSINESS'
+    )
+    const user = creationResponse
+    expect(user).toMatchObject({
+      userId: '1',
+    })
+    const userEvent = getTestBusinessEvent({
+      eventId: '1',
+      userId: user.userId,
+      updatedBusinessUserAttributes: {
+        tags: [{ key: 'key', value: 'value' }],
+        kycStatusDetails: { status: 'FAILED' },
+      },
+    })
+    const response = await userManagementService.verifyBusinessUserEvent(
+      userEvent
+    )
+    expect(response).toEqual({
+      ...pickKnownEntityFields(businessUser1, Business),
+      kycStatusDetails: { status: 'FAILED' },
+      riskLevel: 'VERY_HIGH',
+      tags: [{ key: 'key', value: 'value' }],
+      status: 'ALLOW',
+      executedRules: [],
+      hitRules: [],
+      riskScoreDetails: {
+        craRiskLevel: 'VERY_HIGH',
+        craRiskScore: 90,
+        kycRiskLevel: 'VERY_HIGH',
+        kycRiskScore: 90,
+      },
     })
   })
 })

@@ -60,7 +60,7 @@ function RiskFactorConfigurationForm(
       basicDetailsStep: {
         name: '',
         description: '',
-        defaultRiskLevel: 'VERY_LOW' as RiskLevel,
+        defaultRiskValue: 'HIGH' as RiskLevel,
         defaultWeight: 0.5,
       },
       riskFactorConfigurationStep: {},
@@ -76,11 +76,11 @@ function RiskFactorConfigurationForm(
       basicDetailsStep: {
         name: notEmpty,
         description: notEmpty,
-        defaultRiskLevel: notEmpty,
+        defaultRiskValue: notEmpty,
         defaultWeight: notEmpty,
       },
       riskFactorConfigurationStep: {
-        riskLevelAssignmentValues: notEmpty,
+        riskLevelLogic: notEmpty,
       },
     };
   }, []);

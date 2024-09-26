@@ -5,17 +5,20 @@ import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Provider
 import { useId } from '@/utils/hooks';
 import { InputProps } from '@/components/library/Form';
 
-interface Props extends InputProps<RiskLevel> {}
+interface Props extends InputProps<RiskLevel> {
+  disabledLevels?: RiskLevel[];
+}
 
 export default function RiskLevelSwitch(props: Props): JSX.Element {
-  const { value, onChange, isDisabled } = props;
+  const { value, onChange, isDisabled: componentIsDisabled, disabledLevels } = props;
   const settings = useSettings();
   const id = useId('RiskSwitch-');
   const isReadonly = onChange == null;
   return (
-    <div className={cn(s.root, isDisabled && s.isDisabled)} data-sentry-allow={true}>
+    <div className={cn(s.root, componentIsDisabled && s.isDisabled)} data-sentry-allow={true}>
       {RISK_LEVELS.map((level) => {
         const isCurrent = level === value;
+        const isDisabled = disabledLevels?.includes(level) ?? componentIsDisabled;
         return (
           <label
             data-cy={`risk-level-${level}`}

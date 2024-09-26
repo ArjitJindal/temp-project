@@ -1,13 +1,12 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
-import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
 import { isEqual } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { RiskFactorConfigurationStepFormValues } from '..';
 import s from './style.module.less';
 import * as Card from '@/components/ui/Card';
 import Button from '@/components/library/Button';
-import { CurrencyCode, RiskParameterLevelKeyValueV8, RuleType } from '@/apis';
+import { CurrencyCode, RiskFactorLogic, RiskLevel, RuleType } from '@/apis';
 import { FieldState } from '@/components/library/Form/utils/hooks';
 import Label from '@/components/library/Label';
 import Modal from '@/components/library/Modal';
@@ -25,35 +24,80 @@ import { getOr } from '@/utils/asyncResource';
 import Slider from '@/components/library/Slider';
 import Tooltip from '@/components/library/Tooltip';
 import Tag from '@/components/library/Tag';
-import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
+import {
+  getSelectedRiskLevel,
+  getSelectedRiskScore,
+} from '@/pages/risk-levels/custom-risk-factors/utils';
 
 interface Props {
   ruleType: RuleType;
   entityVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['entityVariables']>;
   aggVariablesFieldState: FieldState<RiskFactorConfigurationStepFormValues['aggregationVariables']>;
-  riskLevelAssignmentValues: FieldState<
-    RiskFactorConfigurationStepFormValues['riskLevelAssignmentValues']
-  >;
+  riskLevelLogic: FieldState<RiskFactorConfigurationStepFormValues['riskLevelLogic']>;
   baseCurrencyFieldState: FieldState<RiskFactorConfigurationStepFormValues['baseCurrency']>;
 }
 
-export const LogicDefinationCard = (props: Props) => {
+export interface LevelLogic {
+  logic: any;
+  riskLevel?: RiskLevel;
+  riskScore?: number;
+  weight: number;
+}
+
+function convertToLevelLogic(logic: RiskFactorLogic | undefined): LevelLogic | undefined {
+  if (!logic) {
+    return undefined;
+  }
+  return {
+    logic: logic.logic,
+    riskLevel: logic.riskLevel,
+    riskScore: logic.riskScore,
+    weight: logic.weight,
+  };
+}
+
+function convertToRiskFactorLogic(logic: LevelLogic): RiskFactorLogic | undefined {
+  if (!logic.riskLevel || !logic.riskScore) {
+    return undefined;
+  }
+  return {
+    logic: logic.logic,
+    riskScore: logic.riskScore,
+    riskLevel: logic.riskLevel,
+    weight: logic.weight,
+  };
+}
+
+const isRiskLevelUnique = (
+  riskLevel: RiskLevel | undefined,
+  selectedLogicLevel: RiskLevel | undefined,
+  riskLevelLogic: FieldState<RiskFactorConfigurationStepFormValues['riskLevelLogic']>,
+): boolean => {
+  if (!riskLevel) {
+    return false;
+  }
+  return !Object.keys(riskLevelLogic.value ?? {})
+    .filter((val) => val !== selectedLogicLevel)
+    .includes(riskLevel);
+};
+
+export const LogicDefinitionCard = (props: Props) => {
   const {
     entityVariablesFieldState,
     aggVariablesFieldState,
-    riskLevelAssignmentValues,
+    riskLevelLogic,
     baseCurrencyFieldState,
     ruleType,
   } = props;
   const [isOpen, setIsOpen] = useState(false);
 
   const settings = useSettings();
-  const [selectedLogicIndex, setSelectedLogicIndex] = useState<number | undefined>();
+  const [selectedLogicLevel, setSelectedLogicLevel] = useState<RiskLevel | undefined>();
   const [currentRiskLevelAssignmentValues, setCurrentRiskLevelAssignmentValues] = useState<
-    RiskParameterLevelKeyValueV8 | undefined
-  >(selectedLogicIndex != null ? riskLevelAssignmentValues.value?.[selectedLogicIndex] : undefined);
+    LevelLogic | undefined
+  >(undefined);
 
   const hasTransactionAmountVariable = useMemo(() => {
     const entityVariablesInUse = entityVariablesFieldState.value ?? [];
@@ -70,112 +114,84 @@ export const LogicDefinationCard = (props: Props) => {
   useEffect(() => {
     const entityVariablesInUse = entityVariablesFieldState.value ?? [];
     const aggVarsInUse = aggVariablesFieldState.value ?? [];
-    const riskConfigs = riskLevelAssignmentValues.value ?? [];
-    const filteredRiskConfigs = riskConfigs.filter((config) => {
-      const varKeysInLogic = getAllEntityVariableKeys(config.logic ?? {});
-      const aggVarKeysInLogic = getAllAggVariableKeys(config.logic ?? {});
-      const entityVariableKeys = entityVariablesInUse
-        .filter((v) => varKeysInLogic.includes(v.key))
-        .map((v) => v.entityKey);
-      const aggVariableKeys = aggVarsInUse
-        .filter((v) => aggVarKeysInLogic.includes(v.key))
-        .map((v) => v.key);
-      return entityVariableKeys.length > 0 || aggVariableKeys.length > 0;
-    });
-    if (!isEqual(riskConfigs, filteredRiskConfigs)) {
-      riskLevelAssignmentValues.onChange(filteredRiskConfigs);
+    const riskConfigs = Object.entries(riskLevelLogic.value ?? {}).reduce(
+      (acc, [level, config]) => {
+        const varKeysInLogic = getAllEntityVariableKeys(config?.logic ?? {});
+        const aggVarKeysInLogic = getAllAggVariableKeys(config?.logic ?? {});
+
+        const hasEntityVariables = entityVariablesInUse.some((v) => varKeysInLogic.includes(v.key));
+        const hasAggVariables = aggVarsInUse.some((v) => aggVarKeysInLogic.includes(v.key));
+
+        if (hasEntityVariables || hasAggVariables) {
+          acc[level] = config;
+        }
+
+        return acc;
+      },
+      {} as Record<RiskLevel, RiskFactorLogic>,
+    );
+    if (!isEqual(riskConfigs, riskLevelLogic.value)) {
+      riskLevelLogic.onChange(riskConfigs);
     }
-  }, [entityVariablesFieldState.value, riskLevelAssignmentValues, aggVariablesFieldState.value]);
+  }, [
+    entityVariablesFieldState.value,
+    riskLevelLogic.value,
+    aggVariablesFieldState.value,
+    riskLevelLogic,
+  ]);
   useEffect(() => {
     if (hasTransactionAmountVariable && !baseCurrencyFieldState.value) {
       baseCurrencyFieldState.onChange(settings.defaultValues?.currency ?? 'USD');
     }
-  }, [baseCurrencyFieldState, hasTransactionAmountVariable, settings.defaultValues?.currency]);
+  }, [
+    baseCurrencyFieldState,
+    hasTransactionAmountVariable,
+    settings.defaultValues?.currency,
+    riskLevelLogic,
+  ]);
 
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
-  const getSelectedRiskLevel = useCallback(
-    (x) => {
-      if (!x) {
-        return x;
-      }
-      if (x.type === 'RISK_LEVEL') {
-        return x.value;
-      }
-      return getRiskLevelFromScore(riskClassificationValues, x.value);
-    },
-    [riskClassificationValues],
-  );
-  const getSelectedRiskScore = useCallback(
-    (x) => {
-      if (!x) {
-        return x;
-      }
-      if (x.type === 'RISK_SCORE') {
-        return x.value;
-      }
-      return getRiskScoreFromLevel(riskClassificationValues, x.value);
-    },
-    [riskClassificationValues],
-  );
 
-  const handleEdit = useCallback(
-    (index: number) => {
-      setSelectedLogicIndex(index);
-      setCurrentRiskLevelAssignmentValues(riskLevelAssignmentValues.value?.[index]);
-      setIsOpen(true);
-    },
-    [
-      setCurrentRiskLevelAssignmentValues,
-      riskLevelAssignmentValues.value,
-      setSelectedLogicIndex,
-      setIsOpen,
-    ],
-  );
-
-  const handleDelete = useCallback(
-    (index: number) => {
-      riskLevelAssignmentValues.onChange(
-        riskLevelAssignmentValues.value?.filter((_, i) => i !== index),
-      );
-    },
-    [riskLevelAssignmentValues],
-  );
-
-  const handleDuplicateEntityVar = useCallback(
-    (index: number) => {
-      if (riskLevelAssignmentValues.value?.[index]) {
-        riskLevelAssignmentValues.onChange([
-          ...(riskLevelAssignmentValues.value ?? []),
-          riskLevelAssignmentValues.value?.[index],
-        ]);
-      }
-    },
-    [riskLevelAssignmentValues],
-  );
-
-  const handleSave = useCallback(() => {
-    if (currentRiskLevelAssignmentValues) {
-      if (
-        selectedLogicIndex != null &&
-        selectedLogicIndex < (riskLevelAssignmentValues?.value?.length ?? 0)
-      ) {
-        riskLevelAssignmentValues.onChange(
-          riskLevelAssignmentValues.value?.map((val, i) =>
-            i === selectedLogicIndex ? currentRiskLevelAssignmentValues : val,
-          ),
-        );
-      } else {
-        riskLevelAssignmentValues.onChange([
-          ...(riskLevelAssignmentValues.value ?? []),
-          currentRiskLevelAssignmentValues,
-        ]);
-      }
-    }
+  const resetModalState = () => {
     setIsOpen(false);
     setCurrentRiskLevelAssignmentValues(undefined);
-    setSelectedLogicIndex(undefined);
-  }, [currentRiskLevelAssignmentValues, selectedLogicIndex, riskLevelAssignmentValues]);
+    setSelectedLogicLevel(undefined);
+  };
+
+  const handleEdit = (riskLevel: RiskLevel) => {
+    const logicToEdit = convertToLevelLogic(riskLevelLogic.value?.[riskLevel]);
+    setSelectedLogicLevel(riskLevel);
+    setCurrentRiskLevelAssignmentValues(logicToEdit);
+    setIsOpen(true);
+  };
+
+  const handleDelete = (riskLevel: RiskLevel) => {
+    const updatedLogic = { ...riskLevelLogic.value };
+    delete updatedLogic[riskLevel];
+    riskLevelLogic.onChange(updatedLogic);
+  };
+
+  const handleSave = () => {
+    if (currentRiskLevelAssignmentValues) {
+      const riskFactorLogic = convertToRiskFactorLogic(currentRiskLevelAssignmentValues);
+      if (!riskFactorLogic) {
+        return;
+      }
+      riskLevelLogic.onChange({
+        ...riskLevelLogic.value,
+        [riskFactorLogic.riskLevel]: riskFactorLogic,
+      });
+    }
+    resetModalState();
+  };
+
+  const handleAddLogic = () => {
+    setIsOpen(true);
+    setSelectedLogicLevel(undefined);
+    setCurrentRiskLevelAssignmentValues(undefined);
+  };
+
   return (
     <div>
       <Card.Root>
@@ -189,39 +205,31 @@ export const LogicDefinationCard = (props: Props) => {
             <Button
               testName="add-variable-v8"
               isLoading={false}
-              onClick={() => {
-                setIsOpen(true);
-                setSelectedLogicIndex(riskLevelAssignmentValues?.value?.length ?? 0);
-              }}
+              onClick={handleAddLogic}
               isDisabled={!hasVariables}
             >
               Add logic
             </Button>
           </div>
           <div className={s.parameters}>
-            {riskLevelAssignmentValues?.value?.map((val, i) => {
-              const name = humanizeAuto(getSelectedRiskLevel(val.riskValue));
+            {Object.keys(riskLevelLogic?.value ?? {}).map((level, i) => {
+              const name = humanizeAuto(level);
               return (
                 <Tooltip key={i} title={`Configuration (${name})`}>
                   <div>
                     <Tag
-                      key={i}
+                      key={level}
                       color="action"
                       actions={[
                         {
                           key: 'edit',
                           icon: <PencilLineIcon className={s.editVariableIcon} />,
-                          action: () => handleEdit(i),
-                        },
-                        {
-                          key: 'copy',
-                          icon: <FileCopyLineIcon />,
-                          action: () => handleDuplicateEntityVar(i),
+                          action: () => handleEdit(level as RiskLevel),
                         },
                         {
                           key: 'delete',
                           icon: <DeleteBinLineIcon />,
-                          action: () => handleDelete(i),
+                          action: () => handleDelete(level as RiskLevel),
                         },
                       ]}
                     >
@@ -238,14 +246,11 @@ export const LogicDefinationCard = (props: Props) => {
         width="L"
         title="Logic definition"
         isOpen={isOpen}
-        onCancel={() => {
-          setIsOpen(false);
-          setCurrentRiskLevelAssignmentValues(undefined);
-        }}
+        onCancel={resetModalState}
         onOk={handleSave}
         okText={'Save'}
         okProps={{
-          isDisabled: ['logic', 'riskValue', 'weight'].some(
+          isDisabled: ['logic', 'riskLevel', 'riskScore', 'weight'].some(
             (x) => !currentRiskLevelAssignmentValues?.[x],
           ),
         }}
@@ -284,10 +289,13 @@ export const LogicDefinationCard = (props: Props) => {
                 jsonLogic={currentRiskLevelAssignmentValues?.logic}
                 aggregationVariables={aggVariablesFieldState.value ?? []}
                 onChange={(jsonLogic: RuleLogic | undefined) => {
-                  setCurrentRiskLevelAssignmentValues({
-                    ...(currentRiskLevelAssignmentValues ?? {}),
-                    logic: jsonLogic,
-                  } as RiskParameterLevelKeyValueV8);
+                  setCurrentRiskLevelAssignmentValues(
+                    (prev) =>
+                      ({
+                        ...(prev ?? {}),
+                        logic: jsonLogic,
+                      } as LevelLogic),
+                  );
                 }}
               />
             }
@@ -296,16 +304,25 @@ export const LogicDefinationCard = (props: Props) => {
                 <div className={s.riskLevelInfo}>
                   <Label label={'Risk level'} required={true}>
                     <RiskLevelSwitch
-                      value={getSelectedRiskLevel(currentRiskLevelAssignmentValues?.riskValue)}
+                      disabledLevels={
+                        Object.keys(riskLevelLogic.value ?? {}).filter(
+                          (val) => val !== selectedLogicLevel,
+                        ) as RiskLevel[]
+                      }
+                      value={currentRiskLevelAssignmentValues?.riskLevel}
                       onChange={(riskLevel) => {
                         if (riskLevel) {
-                          setCurrentRiskLevelAssignmentValues({
-                            ...(currentRiskLevelAssignmentValues ?? {}),
-                            riskValue: {
-                              type: 'RISK_LEVEL',
-                              value: riskLevel,
-                            },
-                          } as RiskParameterLevelKeyValueV8);
+                          setCurrentRiskLevelAssignmentValues(
+                            (prevValues) =>
+                              ({
+                                ...prevValues,
+                                riskLevel,
+                                riskScore: getSelectedRiskScore(
+                                  riskLevel,
+                                  riskClassificationValues,
+                                ),
+                              } as LevelLogic),
+                          );
                         }
                       }}
                     />
@@ -314,15 +331,28 @@ export const LogicDefinationCard = (props: Props) => {
                     <NumberInput
                       min={0}
                       max={100}
-                      value={getSelectedRiskScore(currentRiskLevelAssignmentValues?.riskValue)}
-                      onChange={(x) => {
-                        setCurrentRiskLevelAssignmentValues({
-                          ...(currentRiskLevelAssignmentValues ?? {}),
-                          riskValue: {
-                            type: 'RISK_SCORE',
-                            value: x,
-                          },
-                        } as RiskParameterLevelKeyValueV8);
+                      value={currentRiskLevelAssignmentValues?.riskScore}
+                      onChange={(riskScore) => {
+                        const riskLevel = getSelectedRiskLevel(riskScore, riskClassificationValues);
+                        if (isRiskLevelUnique(riskLevel, selectedLogicLevel, riskLevelLogic)) {
+                          setCurrentRiskLevelAssignmentValues(
+                            (prevValues) =>
+                              ({
+                                ...prevValues,
+                                riskScore,
+                                riskLevel: riskLevel,
+                              } as LevelLogic),
+                          );
+                        } else {
+                          setCurrentRiskLevelAssignmentValues(
+                            (prevValues) =>
+                              ({
+                                ...prevValues,
+                                riskScore: undefined,
+                                riskLevel: undefined,
+                              } as LevelLogic),
+                          );
+                        }
                       }}
                     />
                   </Label>
@@ -334,7 +364,7 @@ export const LogicDefinationCard = (props: Props) => {
                       setCurrentRiskLevelAssignmentValues({
                         ...(currentRiskLevelAssignmentValues ?? {}),
                         weight: val,
-                      } as RiskParameterLevelKeyValueV8);
+                      } as LevelLogic);
                     }}
                     mode="SINGLE"
                     min={0.01}

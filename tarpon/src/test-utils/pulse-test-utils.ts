@@ -14,8 +14,7 @@ import { RiskScoringService } from '@/services/risk-scoring'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
-import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
-import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 
 export const TEST_CONSUMER_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
   parameter: 'type',
@@ -402,15 +401,10 @@ export function createKrsRiskFactorTestCases(
         dynamoDb,
         mongoDb,
       })
-      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
-      riskScoringService = new RiskScoringService(
-        TEST_TENANT_ID,
-        {
-          dynamoDb,
-          mongoDb,
-        },
-        logicEvaluator
-      )
+      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+        dynamoDb,
+        mongoDb,
+      })
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )
@@ -459,15 +453,10 @@ export function createArsRiskFactorTestCases(
         dynamoDb,
         mongoDb,
       })
-      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
-      riskScoringService = new RiskScoringService(
-        TEST_TENANT_ID,
-        {
-          dynamoDb,
-          mongoDb,
-        },
-        logicEvaluator
-      )
+      riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+        dynamoDb,
+        mongoDb,
+      })
       await riskRepository.createOrUpdateRiskClassificationConfig(
         riskClassificationValues
       )
@@ -496,21 +485,46 @@ export function createArsRiskFactorTestCases(
   })
 }
 
-export const getTestV8RiskFactor = (
-  parameter: Partial<ParameterAttributeRiskValuesV8>
-): ParameterAttributeRiskValuesV8 => ({
-  baseCurrency: 'USD',
-  createdAt: Date.now(),
-  defaultValue: DEFAULT_RISK_VALUE,
+export function setUpRiskFactorsHook(
+  tenantId: string,
+  riskFactors: RiskFactor[]
+) {
+  const cleanups: Array<() => void> = [
+    async () => {
+      return
+    },
+  ]
+  beforeAll(async () => {
+    const dynamoDb = getDynamoDbClient()
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb,
+    })
+    for (const riskFactor of riskFactors) {
+      await riskRepository.createOrUpdateRiskFactor(riskFactor)
+      cleanups.push(async () => {
+        await riskRepository.deleteRiskFactor(riskFactor.id)
+      })
+    }
+  })
+
+  afterAll(async () => {
+    await Promise.all(cleanups.map((cleanup) => cleanup()))
+  })
+}
+
+export const getTestRiskFactor = (
+  riskFactor: Partial<RiskFactor>
+): RiskFactor => ({
+  id: uniqueId('RF'),
+  status: 'ACTIVE',
   defaultWeight: 1,
-  description: 'test',
-  id: uniqueId(),
-  isActive: true,
+  name: 'Test Risk Factor',
+  description: 'Test factor',
+  type: 'TRANSACTION',
   logicAggregationVariables: [],
   logicEntityVariables: [],
-  name: 'test',
-  riskEntityType: 'TRANSACTION',
-  riskLevelAssignmentValues: [],
-  updatedAt: Date.now(),
-  ...parameter,
+  defaultRiskScore: 75,
+  defaultRiskLevel: 'HIGH',
+  riskLevelLogic: {},
+  ...riskFactor,
 })

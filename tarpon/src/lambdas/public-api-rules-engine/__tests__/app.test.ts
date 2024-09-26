@@ -766,6 +766,7 @@ describe('Public API - Create a Consumer User Event', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      riskLevel: 'VERY_HIGH',
       riskScoreDetails: {
         craRiskLevel: 'VERY_HIGH',
         craRiskScore: 90,
@@ -1081,6 +1082,7 @@ describe('Public API - Create a Business User Event', () => {
       executedRules: [],
       hitRules: [],
       status: 'ALLOW',
+      riskLevel: 'VERY_HIGH',
       riskScoreDetails: {
         craRiskLevel: 'VERY_HIGH',
         craRiskScore: 90,
@@ -1288,15 +1290,10 @@ describe('Risk Scoring Tests', () => {
     await riskRepository.createOrUpdateParameterRiskItem(
       TEST_VARIABLE_RISK_ITEM
     )
-    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
-    const riskScoringService = new RiskScoringService(
-      TEST_TENANT_ID,
-      {
-        dynamoDb,
-        mongoDb: await getMongoDbClient(),
-      },
-      logicEvaluator
-    )
+    const riskScoringService = new RiskScoringService(TEST_TENANT_ID, {
+      dynamoDb,
+      mongoDb: await getMongoDbClient(),
+    })
     await riskScoringService.updateInitialRiskScores(testUser1)
     const riskScore = await riskRepository.getParameterRiskItem(
       'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
@@ -1382,11 +1379,10 @@ describe('Risk Scoring Tests', () => {
   })
 })
 
-describe('Public API - Verify Transction and Transaction Event', () => {
+describe('Public API - Verify Transction and Transaction Event with V2 Risk scoring', () => {
   const tenantId = getTestTenantId()
   const userId1 = uuidv4()
   const userId2 = uuidv4()
-
   it('should match transaction and transaction event', async () => {
     const dynamoDb = getDynamoDbClient()
     const mongoDb = await getMongoDbClient()

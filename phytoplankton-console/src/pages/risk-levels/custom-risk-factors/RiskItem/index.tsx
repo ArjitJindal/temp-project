@@ -13,51 +13,49 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 export default function () {
   const { type = 'consumer', mode = 'read', id } = useParams();
   return (
-    <Feature name="RISK_SCORING" fallback={'Not enabled'}>
-      <Feature name="RISK_FACTORS_V8" fallback={'Not enabled'}>
-        <PageWrapper
-          header={
-            <Breadcrumbs
-              items={[
-                {
-                  title: 'Custom Risk Factors',
-                  to: '/risk-levels/custom-risk-factors',
-                },
-                type === 'consumer' && {
-                  title: 'Consumer',
-                  to: '/risk-levels/custom-risk-factors/consumer',
-                },
-                type === 'business' && {
-                  title: 'Business',
-                  to: '/risk-levels/custom-risk-factors/business',
-                },
-                type === 'transaction' && {
-                  title: 'Transaction',
-                  to: '/risk-levels/custom-risk-factors/transaction',
-                },
-                mode === 'create' && {
-                  title: 'Create',
-                  to: makeUrl(`/risk-levels/custom-risk-factors/:type/:mode`, { type, mode }),
-                },
+    <Feature name="RISK_SCORING_V8" fallback={'Not enabled'}>
+      <PageWrapper
+        header={
+          <Breadcrumbs
+            items={[
+              {
+                title: 'Risk Factors',
+                to: '/risk-levels/risk-factors',
+              },
+              type === 'consumer' && {
+                title: 'Consumer',
+                to: '/risk-levels/risk-factors/consumer',
+              },
+              type === 'business' && {
+                title: 'Business',
+                to: '/risk-levels/risk-factors/business',
+              },
+              type === 'transaction' && {
+                title: 'Transaction',
+                to: '/risk-levels/risk-factors/transaction',
+              },
+              mode === 'create' && {
+                title: 'Create',
+                to: makeUrl(`/risk-levels/risk-factors/:type/:mode`, { type, mode }),
+              },
+              id && {
+                title: id,
+              },
+              (mode === 'read' || mode === 'edit') &&
                 id && {
-                  title: id,
+                  title: mode === 'read' ? 'View' : 'Edit',
+                  to: makeUrl(`/risk-levels/risk-factors/:type/:id/:mode`, {
+                    type,
+                    id,
+                    mode,
+                  }),
                 },
-                (mode === 'read' || mode === 'edit') &&
-                  id && {
-                    title: mode === 'read' ? 'View' : 'Edit',
-                    to: makeUrl(`/risk-levels/custom-risk-factors/:type/:id/:mode`, {
-                      type,
-                      id,
-                      mode,
-                    }),
-                  },
-              ].filter(notEmpty)}
-            />
-          }
-        >
-          <RiskItem type={type} mode={mode} id={id} />
-        </PageWrapper>
-      </Feature>
+            ].filter(notEmpty)}
+          />
+        }
+      >
+        <RiskItem type={type} mode={mode} id={id} />
+      </PageWrapper>
     </Feature>
   );
 }
@@ -73,7 +71,7 @@ const RiskItem = (props: Props) => {
   const api = useApi();
   const queryResult = useQuery(CUSTOM_RISK_FACTORS_ITEM(type, id), async () => {
     if (id) {
-      return await api.getPulseRiskParameterIdRiskParametersV8({ riskParameterId: id });
+      return await api.getRiskFactor({ riskFactorId: id });
     }
     return null;
   });

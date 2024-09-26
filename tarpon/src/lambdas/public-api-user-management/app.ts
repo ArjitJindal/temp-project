@@ -12,7 +12,7 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { updateLogMetadata } from '@/core/utils/context'
+import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
@@ -20,6 +20,7 @@ import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 export const userHandler = lambdaApi()(
   async (
@@ -55,7 +56,7 @@ export const userHandler = lambdaApi()(
 
     const createUser = async <T extends User | Business>(
       userPayload: T,
-      lockCraRiskLevel
+      lockCraRiskLevel?: string
     ) => {
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
@@ -74,24 +75,32 @@ export const userHandler = lambdaApi()(
         }
       }
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-      const riskScoringService = new RiskScoringService(
-        tenantId,
-        {
-          dynamoDb,
-          mongoDb,
-        },
-        logicEvaluator
-      )
+      const isV8RiskScoringEnabled = hasFeature('RISK_SCORING_V8')
 
       const isDrsUpdatable = lockCraRiskLevel
         ? lockCraRiskLevel !== 'true'
         : true
 
+      const riskScoringService = isV8RiskScoringEnabled
+        ? new RiskScoringV8Service(tenantId, logicEvaluator, {
+            dynamoDb,
+            mongoDb,
+          })
+        : new RiskScoringService(tenantId, { dynamoDb, mongoDb })
+
+      let riskScoreResult
+      if (isV8RiskScoringEnabled) {
+        riskScoreResult = await (
+          riskScoringService as RiskScoringV8Service
+        ).handleUserUpdate(userPayload, userPayload.riskLevel, isDrsUpdatable)
+      } else {
+        riskScoreResult = await (
+          riskScoringService as RiskScoringService
+        ).runRiskScoresForUser(userPayload, isDrsUpdatable)
+      }
+
       const { craRiskScore, kycRiskLevel, kycRiskScore, craRiskLevel } =
-        await riskScoringService.runRiskScoresForUser(
-          userPayload,
-          isDrsUpdatable
-        )
+        riskScoreResult
 
       const userManagementService = new UserManagementService(
         tenantId,
@@ -156,7 +165,9 @@ export const userHandler = lambdaApi()(
       )
       try {
         // TODO do this in a queue
-        await Promise.all(request.UserBatchRequest.data.map(createUser))
+        await Promise.all(
+          request.UserBatchRequest.data.map((user) => createUser(user))
+        )
       } catch (error) {
         logger.error(`Error verifying transactions: ${error}`)
       }

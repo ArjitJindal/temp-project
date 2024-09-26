@@ -3,6 +3,7 @@ import { SimulationRiskFactorsBatchJobRunner } from './simulation-risk-scoring-b
 import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-job-runner'
 import { AlertSLAStatusRefreshBatchJobRunner } from './alert-sla-status-refresh-batch-job-runner'
 import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-runner'
+import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -50,6 +51,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new ReverifyTransactionsBatchJobRunner(jobId),
     SANCTIONS_DATA_FETCH: (jobId) =>
       new SanctionsDataFetchBatchJobRunner(jobId),
+    BACKFILL_AVERAGE_TRS: (jobId) => new BackfillAvgTrsRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

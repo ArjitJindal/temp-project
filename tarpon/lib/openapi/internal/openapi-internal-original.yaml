@@ -25,9 +25,9 @@ paths:
           name: usagePlanId
           description: AWS Gateway usage plan ID
       description: Generate a new Tarpon API key for a tenant
-  /rule-logic-config:
+  /logic-config:
     get:
-      summary: Rule logic config - Get
+      summary: logic config - Get
       tags: []
       responses:
         '200':
@@ -35,8 +35,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RuleLogicConfigResponse'
-      operationId: get-rule-logic-config
+                $ref: '#/components/schemas/LogicConfigResponse'
+      operationId: get-logic-config
       description: ''
     parameters: []
   /rule-ml-models:
@@ -3807,106 +3807,6 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/ParameterAttributeRiskValues'
-  /pulse/risk-parameters-v8:
-    parameters: []
-    post:
-      summary: Parameters Risk Level - POST
-      operationId: post-pulse-risk-parameters-v8
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
-        '403':
-          description: Not enough privileges
-      parameters: []
-      description: ''
-    get:
-      summary: Parameters Risk Level - GET
-      operationId: get-pulse-risk-parameters-v8
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
-      parameters:
-        - schema:
-            $ref: '#/components/schemas/RiskEntityType'
-          in: query
-          name: entityType
-          description: Entity type you want to filter on
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/ParameterAttributeValuesListV8'
-  /pulse/{riskParameterId}/risk-parameters-v8:
-    parameters:
-      - schema:
-          type: string
-        name: riskParameterId
-        in: path
-        required: true
-    put:
-      summary: Parameters Risk Level - PUT
-      operationId: put-pulse-risk-parameters-v8
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ParameterAttributeV8RequestUpdate'
-        required: true
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
-        '403':
-          description: Not enough privileges
-      parameters: []
-      description: ''
-    get:
-      summary: Parameters Risk Level - GET
-      operationId: get-pulse-risk-parameter-id-risk-parameters-v8
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ParameterAttributeRiskValuesV8'
-    delete:
-      summary: Parameters Risk Level - DELETE
-      operationId: delete-pulse-risk-parameters-v8
-      x-flagright:
-        permissions:
-          - risk-scoring:risk-factors:write
-      responses:
-        '200':
-          description: OK
-        '403':
-          description: Not enough privileges
   /risk-factors:
     parameters: []
     post:
@@ -7080,6 +6980,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskScoreComponent'
+        factorScoreDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactorScoreDetails'
       required:
         - createdAt
         - krsScore
@@ -7104,6 +7008,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskScoreComponent'
+        factorScoreDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactorScoreDetails'
       required:
         - createdAt
         - arsScore
@@ -7130,17 +7038,21 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskScoreComponent'
+        factorScoreDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactorScoreDetails'
       required:
         - createdAt
         - drsScore
         - isUpdatable
-    RuleLogicConfigResponse:
-      title: RuleLogicConfigResponse
+    LogicConfigResponse:
+      title: LogicConfigResponse
       type: object
       properties:
         s3Url:
           type: string
-        ruleLogicConfig:
+        logicConfig:
           $ref: '#/components/schemas/LogicConfig'
       required:
         - s3Url
@@ -9561,22 +9473,6 @@ components:
       required:
         - parameterValue
         - riskValue
-    RiskParameterLevelKeyValueV8:
-      type: object
-      title: RiskParameterLevelKeyValues
-      properties:
-        logic:
-          type: object
-        riskValue:
-          oneOf:
-            - $ref: '#/components/schemas/RiskScoreValueLevel'
-            - $ref: '#/components/schemas/RiskScoreValueScore'
-        weight:
-          type: number
-      required:
-        - logic
-        - riskValue
-        - weight
     RiskParameterValue:
       type: object
       properties:
@@ -9713,6 +9609,8 @@ components:
       required:
         - logic
         - weight
+        - riskLevel
+        - riskScore
     RiskLevelRiskFactorLogic:
       title: RiskLevelRiskFactorLogic
       type: object
@@ -9813,104 +9711,46 @@ components:
         - logicEntityVariables
         - logicAggregationVariables
         - defaultWeight
-    ParameterAttributeValuesListV8:
-      title: ParameterAttributeValuesListV8
-      allOf:
-        - $ref: '#/components/schemas/ParameterAttibutesValuesDerivedV8'
-        - type: object
-          properties:
-            isActive:
-              type: boolean
-            defaultWeight:
-              type: number
-              minimum: 0.01
-              maximum: 1
-            defaultValue:
-              oneOf:
-                - $ref: '#/components/schemas/RiskScoreValueLevel'
-                - $ref: '#/components/schemas/RiskScoreValueScore'
-            name:
-              type: string
-            riskEntityType:
-              $ref: '#/components/schemas/RiskEntityType'
-            description:
-              type: string
-      required:
-        - isActive
-        - logicAggregationVariables
-        - logicEntityVariables
-        - defaultWeight
-        - defaultValue
-        - name
-        - riskEntityType
-        - riskLevelAssignmentValues
-        - description
-    ParameterAttributeV8RequestUpdate:
-      title: ParameterAttributeV8RequestUpdate
+    RiskFactorScoreDetails:
+      title: RiskFactorScoreDetails
       type: object
       properties:
-        isActive:
-          type: boolean
-        logicAggregationVariables:
+        riskFactorId:
+          type: string
+        vars:
           type: array
           items:
-            $ref: '#/components/schemas/LogicAggregationVariable'
-        logicEntityVariables:
-          type: array
-          items:
-            $ref: '#/components/schemas/LogicEntityVariableInUse'
-        defaultWeight:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/ExecutedLogicVars
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        score:
+          type: number
+        weight:
           type: number
           minimum: 0.01
           maximum: 1
-        defaultValue:
-          oneOf:
-            - $ref: '#/components/schemas/RiskScoreValueLevel'
-            - $ref: '#/components/schemas/RiskScoreValueScore'
-        name:
-          type: string
-        riskEntityType:
-          $ref: '#/components/schemas/RiskEntityType'
-        riskLevelAssignmentValues:
+        hit:
+          type: boolean
+      required:
+        - riskFactorId
+        - vars
+        - riskLevel
+        - score
+        - weight
+        - hit
+    RiskFactorsResult:
+      title: RiskFactorsResult
+      type: object
+      properties:
+        scoreDetails:
           type: array
           items:
-            $ref: '#/components/schemas/RiskParameterLevelKeyValueV8'
-        description:
-          type: string
-        baseCurrency:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
-    ParameterAttributeValuesV8Request:
-      title: ParameterAttributeValuesV8
-      allOf:
-        - $ref: '#/components/schemas/ParameterAttributeV8RequestUpdate'
-      required:
-        - isActive
-        - logicAggregationVariables
-        - logicEntityVariables
-        - defaultWeight
-        - defaultValue
-        - name
-        - riskEntityType
-        - riskLevelAssignmentValues
-        - description
-    ParameterAttibutesValuesDerivedV8:
-      title: ParameterAttibutesValuesDerivedV8
-      properties:
-        id:
-          type: string
-        createdAt:
-          type: number
-        updatedAt:
+            $ref: '#/components/schemas/RiskFactorScoreDetails'
+        score:
           type: number
       required:
-        - id
-        - createdAt
-        - updatedAt
-    ParameterAttributeRiskValuesV8:
-      title: ParameterAttributeRiskValuesV8
-      allOf:
-        - $ref: '#/components/schemas/ParameterAttributeValuesV8Request'
-        - $ref: '#/components/schemas/ParameterAttibutesValuesDerivedV8'
+        - scoreDetails
+        - score
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object
@@ -10048,7 +9888,6 @@ components:
         - SAR
         - QA
         - RULES_ENGINE_V8
-        - RISK_FACTORS_V8
         - RULES_ENGINE_V8_FOR_V2_RULES
         - RULES_ENGINE_V8_ASYNC_AGGREGATION
         - NOTIFICATIONS

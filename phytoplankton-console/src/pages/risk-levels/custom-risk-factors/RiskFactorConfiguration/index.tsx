@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
-import { getSelectedRiskScore } from '../utils';
+import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
 import s from './style.module.less';
 import RiskFactorConfigurationForm, {
   RiskFactorConfigurationFormValues,
@@ -14,12 +14,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import { useApi } from '@/api';
-import {
-  ParameterAttributeRiskValuesV8,
-  ParameterAttributeValuesV8Request,
-  RiskClassificationScore,
-  RiskLevel,
-} from '@/apis';
+import { RiskClassificationScore, RiskFactor, RiskFactorsPostRequest } from '@/apis';
 import { message } from '@/components/library/Message';
 import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
@@ -30,7 +25,7 @@ interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
   mode: 'CREATE' | 'EDIT' | 'READ';
   id?: string;
-  riskItem?: ParameterAttributeRiskValuesV8;
+  riskItem?: RiskFactor;
 }
 
 export const RiskFactorConfiguration = (props: Props) => {
@@ -45,19 +40,18 @@ export const RiskFactorConfiguration = (props: Props) => {
   const isMutable = useMemo(() => ['CREATE', 'EDIT'].includes(mode), [mode]);
   const api = useApi();
   const queryClient = useQueryClient();
-  const formInitialValues = riskItem ? deserializaRiskItem(riskItem) : undefined;
+  const formInitialValues = riskItem ? deserializeRiskItem(riskItem) : undefined;
   const updateRiskFactorMutation = useMutation(
     async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
-      if (!riskItem) {
+      if (!riskItem || !id) {
         throw new Error('Risk item is missing');
       }
-      return api.putPulseRiskParametersV8({
-        riskParameterId: riskItem?.id,
-        ParameterAttributeV8RequestUpdate: serializeRiskItem(
-          riskFactorFormValues,
-          riskItemType,
-          riskClassificationValues,
-        ),
+      return api.putRiskFactors({
+        riskFactorId: id,
+        RiskFactorsUpdateRequest: {
+          ...serializeRiskItem(riskFactorFormValues, riskItemType, riskClassificationValues),
+          status: riskItem.status,
+        },
       });
     },
     {
@@ -73,8 +67,8 @@ export const RiskFactorConfiguration = (props: Props) => {
   );
   const createRiskFactorMutation = useMutation(
     async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
-      return api.postPulseRiskParametersV8({
-        ParameterAttributeValuesV8Request: serializeRiskItem(
+      return api.postCreateRiskFactor({
+        RiskFactorsPostRequest: serializeRiskItem(
           riskFactorFormValues,
           riskItemType,
           riskClassificationValues,
@@ -100,7 +94,7 @@ export const RiskFactorConfiguration = (props: Props) => {
     }
   };
   const navigateToRiskFactors = () => {
-    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: riskItemType }));
+    navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: riskItemType }));
   };
   return (
     <>
@@ -190,7 +184,7 @@ export const RiskFactorConfiguration = (props: Props) => {
             type="SECONDARY"
             onClick={() => {
               navigate(
-                makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
+                makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
                   type: riskItemType,
                   id,
                 }),
@@ -207,21 +201,19 @@ export const RiskFactorConfiguration = (props: Props) => {
   );
 };
 
-function deserializaRiskItem(
-  riskItem: ParameterAttributeRiskValuesV8,
-): RiskFactorConfigurationFormValues {
+function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormValues {
   return {
     basicDetailsStep: {
       name: riskItem.name,
       description: riskItem.description,
       defaultWeight: riskItem.defaultWeight,
-      defaultRiskLevel: riskItem.defaultValue?.value as RiskLevel,
+      defaultRiskValue: riskItem.defaultRiskScore ?? 'HIGH',
     },
     riskFactorConfigurationStep: {
       baseCurrency: riskItem.baseCurrency,
       aggregationVariables: riskItem.logicAggregationVariables,
+      riskLevelLogic: riskItem.riskLevelLogic,
       entityVariables: riskItem.logicEntityVariables,
-      riskLevelAssignmentValues: riskItem.riskLevelAssignmentValues,
     },
   };
 }
@@ -230,27 +222,25 @@ function serializeRiskItem(
   riskFactorFormValues: RiskFactorConfigurationFormValues,
   type: 'consumer' | 'business' | 'transaction',
   riskClassificationValues: RiskClassificationScore[],
-): ParameterAttributeValuesV8Request {
-  const riskValue = getSelectedRiskScore(
-    riskFactorFormValues.basicDetailsStep.defaultRiskLevel,
-    riskClassificationValues,
-  );
+): RiskFactorsPostRequest {
   return {
-    name: riskFactorFormValues.basicDetailsStep.name,
-    description: riskFactorFormValues.basicDetailsStep.description,
-    isActive: true,
+    name: riskFactorFormValues.basicDetailsStep.name ?? '',
+    description: riskFactorFormValues.basicDetailsStep.description ?? '',
+    status: 'ACTIVE',
     defaultWeight: riskFactorFormValues.basicDetailsStep.defaultWeight ?? 1,
     baseCurrency: riskFactorFormValues.riskFactorConfigurationStep.baseCurrency,
+    defaultRiskScore: getSelectedRiskScore(
+      riskFactorFormValues.basicDetailsStep.defaultRiskValue,
+      riskClassificationValues,
+    ),
+    defaultRiskLevel: getSelectedRiskLevel(
+      riskFactorFormValues.basicDetailsStep.defaultRiskValue,
+      riskClassificationValues,
+    ),
+    riskLevelLogic: riskFactorFormValues.riskFactorConfigurationStep.riskLevelLogic ?? {},
     logicAggregationVariables:
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
-    defaultValue: {
-      type: 'RISK_SCORE',
-      value: riskValue,
-    },
-    riskEntityType:
-      type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
-    riskLevelAssignmentValues:
-      riskFactorFormValues.riskFactorConfigurationStep.riskLevelAssignmentValues ?? [],
+    type: type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
   };
 }

@@ -91,11 +91,9 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
       const { riskFactorId } = entity
 
-      const riskFactor = await riskRepository.getParameterRiskItemV8(
-        riskFactorId
-      )
+      const riskFactor = await riskRepository.getRiskFactor(riskFactorId)
 
-      if (!(riskFactor && hasFeature('RISK_FACTORS_V8'))) {
+      if (!(riskFactor && hasFeature('RISK_SCORING_V8'))) {
         logger.warn(`Risk factor ${riskFactorId} not found. Skipping job.`)
         return
       }

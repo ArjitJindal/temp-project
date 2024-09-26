@@ -4,9 +4,8 @@ import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
 import { DEFAULT_RISK_LEVEL, getRiskScoreFromLevel } from '@flagright/lib/utils'
 import { CounterRepository } from '../counter/repository'
-import { sendBatchJobCommand } from '../batch-jobs/batch-job'
-import { DEFAULT_RISK_VALUE } from '../risk-scoring/utils'
 import { PulseAuditLogService } from './pulse-audit-log'
+import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import {
@@ -16,10 +15,6 @@ import {
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { traceable } from '@/core/xray'
-import { ParameterAttributeValuesV8Request } from '@/@types/openapi-internal/ParameterAttributeValuesV8Request'
-import { ParameterAttributeRiskValuesV8 } from '@/@types/openapi-internal/ParameterAttributeRiskValuesV8'
-import { ParameterAttributeValuesListV8 } from '@/@types/openapi-internal/ParameterAttributeValuesListV8'
-import { ParameterAttributeV8RequestUpdate } from '@/@types/openapi-internal/ParameterAttributeV8RequestUpdate'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
@@ -98,99 +93,6 @@ export class RiskService {
       parameter as ParameterAttributeRiskValuesParameterEnum,
       entityType
     )
-  }
-
-  async getParameterRiskItemsV8(
-    entityType?: RiskEntityType
-  ): Promise<Array<ParameterAttributeValuesListV8>> {
-    return this.riskRepository.getParameterRiskItemsV8(entityType)
-  }
-
-  async createOrUpdateRiskParameterV8(
-    parameter: ParameterAttributeV8RequestUpdate,
-    riskParameterId?: string
-  ): Promise<ParameterAttributeRiskValuesV8> {
-    if (!this.mongoDb) {
-      throw new Error('MongoDB connection not available')
-    }
-
-    const currentId = riskParameterId
-    let currentParameter: ParameterAttributeRiskValuesV8 | null = null
-
-    if (riskParameterId) {
-      currentParameter = await this.riskRepository.getParameterRiskItemV8(
-        riskParameterId
-      )
-    }
-
-    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
-    const id: string =
-      currentId ??
-      `CRF-${(
-        await counterRepository.getNextCounterAndUpdate('CustomRiskFactor')
-      )
-        .toString()
-        .padStart(3, '0')}`
-
-    const DEFUALT_VALUES: ParameterAttributeValuesV8Request = {
-      defaultValue: DEFAULT_RISK_VALUE,
-      defaultWeight: 1,
-      description: '',
-      isActive: true,
-      logicAggregationVariables: [],
-      logicEntityVariables: [],
-      name: '',
-      riskEntityType: 'CONSUMER_USER',
-      riskLevelAssignmentValues: [],
-    }
-
-    const now = Date.now()
-
-    const data: ParameterAttributeRiskValuesV8 = {
-      ...(currentParameter ?? DEFUALT_VALUES),
-      ...parameter,
-      id,
-      createdAt: currentParameter?.createdAt ?? now,
-      updatedAt: now,
-    }
-
-    const updatedParmeter =
-      await this.riskRepository.createOrUpdateParameterRiskItemV8(data)
-
-    const aggVarsToRebuild =
-      updatedParmeter.logicAggregationVariables.filter(
-        (aggVar) => aggVar.version && aggVar.version >= now
-      ) ?? []
-
-    await sendBatchJobCommand({
-      type: 'RULE_PRE_AGGREGATION',
-      parameters: {
-        aggregationVariables: aggVarsToRebuild,
-        entity: {
-          type: 'RISK_FACTOR',
-          riskFactorId: id,
-        },
-      },
-      tenantId: this.tenantId,
-    })
-
-    return data
-  }
-
-  async getRiskParameterV8(
-    parameterId: string
-  ): Promise<ParameterAttributeRiskValuesV8> {
-    const data = await this.riskRepository.getParameterRiskItemV8(parameterId)
-
-    if (!data) {
-      throw new BadRequest('Invalid request - parameter not found')
-    }
-
-    return data
-  }
-
-  async deleteRiskParameterV8(parameterId: string) {
-    return this.riskRepository.deleteParameterRiskItemV8(parameterId)
   }
 
   async getAllRiskParameters(): Promise<ParameterAttributeRiskValues[]> {
@@ -313,7 +215,12 @@ export class RiskService {
       updatedAt: now,
     }
     await this.riskRepository.createOrUpdateRiskFactor(data)
-    // To send the batch job command to rebuild the aggregation variables when updated
+    await riskFactorAggregationVariablesRebuild(
+      data,
+      now,
+      this.tenantId,
+      this.riskRepository
+    )
     return data
   }
 

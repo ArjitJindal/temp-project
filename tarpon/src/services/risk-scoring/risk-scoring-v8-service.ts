@@ -1,15 +1,16 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { mean, memoize } from 'lodash'
+import { mean } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
-import { UserRepository } from '../users/repositories/user-repository'
-import { TenantService } from '../tenants'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
-import { LogicData } from '../logic-evaluator/engine'
+import { LogicData, LogicEvaluator } from '../logic-evaluator/engine'
+import { TenantRepository } from '../tenants/repositories/tenant-repository'
+import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { RiskRepository } from './repositories/risk-repository'
+import { riskLevelPrecendence } from './utils'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
@@ -22,32 +23,150 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
+import { RiskFactorsResult } from '@/@types/openapi-internal/RiskFactorsResult'
+import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
+import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { logger } from '@/core/logger'
+import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
+import { getContext } from '@/core/utils/context'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
-const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
-const DEFAULT_RISK_SCORE = 75
+const DEFAULT_RISK_LEVEL = 'HIGH' // Values to be confirmed
+const DEFAULT_RISK_SCORE = 75 // Values to be confirmed
 
 @traceable
 export class RiskScoringV8Service {
   private riskRepository: RiskRepository
-  private userRepository: UserRepository
-  private tenantService: TenantService
-  /* ToDo:  Common Logic Evaluator to be passed thought the constructor in FR-5482 */
+  private tenantRepository: TenantRepository
+  private logicEvaluator: LogicEvaluator
+  private tenantId: string
+  private mongoDb: MongoClient | undefined
   constructor(
     tenantId: string,
-    connections: { mongoDb: MongoClient; dynamoDb?: DynamoDBDocumentClient }
+    logicEvaluator: LogicEvaluator,
+    connections: { mongoDb?: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.riskRepository = new RiskRepository(tenantId, connections)
-    this.userRepository = new UserRepository(tenantId, connections)
-    this.tenantService = new TenantService(tenantId, connections)
+    this.tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb: connections.dynamoDb,
+    })
+    this.logicEvaluator = logicEvaluator
+    this.tenantId = tenantId
+    this.mongoDb = connections.mongoDb
   }
 
-  private async calculateRiskFactorScore(
-    /* ToDo: After V8 Rules Engine migrated to Logic Evaluator Update Type */
-    _riskData: LogicData,
-    _riskFactor: RiskFactor[]
-  ) {
-    /* To be implemented */
-    return 0
+  private async getMongo() {
+    if (!this.mongoDb) {
+      this.mongoDb = await getMongoDbClient()
+    }
+    return this.mongoDb
+  }
+
+  private async calculateRiskFactorsScore(
+    riskData: LogicData,
+    riskFactor: RiskFactor[]
+  ): Promise<{
+    riskFactorsResult: RiskFactorsResult
+  }> {
+    const result = await Promise.all(
+      riskFactor.map(async (factor): Promise<RiskFactorScoreDetails> => {
+        const levels = Object.keys(factor.riskLevelLogic ?? {}) as RiskLevel[]
+        levels.sort((a, b) => riskLevelPrecendence[a] - riskLevelPrecendence[b])
+        let result: RiskFactorScoreDetails | undefined
+        for (const level of levels) {
+          const levelDetails = factor.riskLevelLogic?.[level] as RiskFactorLogic
+          const logic = levelDetails.logic
+          const { hit, vars } = await this.logicEvaluator.evaluate(
+            logic,
+            {
+              agg: factor.logicAggregationVariables,
+              entity: factor.logicEntityVariables,
+            },
+            {
+              tenantId: this.tenantId,
+              baseCurrency: factor.baseCurrency ?? 'USD', // ToDo: Check if this is correct
+            },
+            riskData
+          )
+          if (hit) {
+            result = {
+              riskFactorId: factor.id,
+              vars: vars,
+              riskLevel: levelDetails.riskLevel,
+              score: levelDetails.riskScore,
+              hit: true,
+              weight: levelDetails.weight,
+            }
+            break
+          }
+        }
+        // Handle Aggregation for Transaction factors
+        if (riskData.type === 'TRANSACTION') {
+          await this.logicEvaluator.handleV8Aggregation(
+            'RISK',
+            factor.logicAggregationVariables ?? [],
+            riskData.transaction,
+            riskData.transactionEvents
+          )
+        }
+        return (
+          result ?? {
+            riskFactorId: factor.id,
+            vars: [],
+            riskLevel: factor.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+            score: factor.defaultRiskScore ?? DEFAULT_RISK_SCORE,
+            hit: false,
+            weight: factor.defaultWeight ?? 0,
+          }
+        )
+      })
+    )
+    if (!result || result.length === 0) {
+      return {
+        riskFactorsResult: {
+          scoreDetails: [],
+          score: DEFAULT_RISK_SCORE,
+        },
+      }
+    }
+    // Handle Aggregation for User factors
+    if (riskData.type === 'TRANSACTION') {
+      const userFactors = await this.getActiveRiskFactors('CONSUMER_USER')
+      const businessFactors = await this.getActiveRiskFactors('BUSINESS')
+      const allUserFactors = userFactors.concat(businessFactors)
+      await Promise.all(
+        allUserFactors.map(async (factor) => {
+          await this.logicEvaluator.handleV8Aggregation(
+            'RISK',
+            factor.logicAggregationVariables ?? [],
+            riskData.transaction,
+            riskData.transactionEvents
+          )
+        })
+      )
+    }
+    const score = this.calculateWeightedSumScore(result)
+    return {
+      riskFactorsResult: {
+        scoreDetails: result,
+        score: score,
+      },
+    }
+  }
+
+  private calculateWeightedSumScore(scores: RiskFactorScoreDetails[]): number {
+    const { weightedSum, totalWeight } = scores.reduce(
+      (acc, { score, weight }) => ({
+        weightedSum: acc.weightedSum + score * weight,
+        totalWeight: acc.totalWeight + weight,
+      }),
+      { weightedSum: 0, totalWeight: 0 }
+    )
+
+    return totalWeight === 0 ? 0 : weightedSum / totalWeight
   }
 
   public async getActiveRiskFactors(type: RiskEntityType) {
@@ -55,48 +174,86 @@ export class RiskScoringV8Service {
     return factors.filter((factor) => factor.status === 'ACTIVE')
   }
 
-  public async handleTransaction(transaction: Transaction) {
-    const { originUser, destinationUser } = await this.getUsersFromTransaction(
-      transaction
-    )
+  public async handleTransaction(
+    transaction: Transaction,
+    transactionEvents: TransactionEvent[],
+    senderUser?: User | Business,
+    receiverUser?: User | Business
+  ): Promise<TransactionRiskScoringResult> {
+    const { originUser, destinationUser } = {
+      originUser: senderUser,
+      destinationUser: receiverUser,
+    }
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
     const riskFactors = await this.getActiveRiskFactors('TRANSACTION')
 
-    const arsScore = await this.calculateAndUpdateArs(
+    const arsScore = await this.calculateArs(
       transaction,
+      transactionEvents,
       riskFactors,
       originUser,
       destinationUser
     )
     const [originAvgArs, destinationAvgArs] = await Promise.all([
-      this.updateAverageArs(arsScore, originUser?.userId),
-      this.updateAverageArs(arsScore, destinationUser?.userId),
+      this.updateAverageArs(
+        arsScore.score,
+        originUser?.userId,
+        transaction.transactionId,
+        transactionEvents.length > 1
+      ),
+      this.updateAverageArs(
+        arsScore.score,
+        destinationUser?.userId,
+        transaction.transactionId,
+        transactionEvents.length > 1
+      ),
     ])
+    await this.createOrUpdateArsScore(
+      transaction,
+      arsScore,
+      originUser,
+      destinationUser
+    )
 
+    const { riskScoringCraEnabled = true } = await this.getTenantSettings()
+    if (riskScoringCraEnabled === false) {
+      return {
+        trsScore: arsScore.score,
+        trsRiskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          arsScore.score
+        ),
+      }
+    }
     const [originDrsScore, destinationDrsScore] = await Promise.all([
       this.updateDrsForTransaction(
         originUser?.userId,
-        arsScore,
+        arsScore.score,
+        arsScore.scoreDetails,
         originAvgArs,
         transaction.transactionId
       ),
       this.updateDrsForTransaction(
         destinationUser?.userId,
-        arsScore,
+        arsScore.score,
+        arsScore.scoreDetails,
         destinationAvgArs,
         transaction.transactionId
       ),
     ])
     return {
-      arsScore,
-      arsRiskLevel: getRiskLevelFromScore(riskClassificationValues, arsScore),
-      originUserCraScore: originDrsScore ?? DEFAULT_RISK_SCORE,
+      trsScore: arsScore.score,
+      trsRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        arsScore.score
+      ),
+      originUserCraRiskScore: originDrsScore ?? DEFAULT_RISK_SCORE,
       originUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
         originDrsScore
       ),
-      destinationUserCraScore: destinationDrsScore ?? DEFAULT_RISK_SCORE,
+      destinationUserCraRiskScore: destinationDrsScore ?? DEFAULT_RISK_SCORE,
       destinationUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
         destinationDrsScore
@@ -104,7 +261,10 @@ export class RiskScoringV8Service {
     }
   }
 
-  private getRiskLevelOrDefault(riskClassificationValues, score) {
+  private getRiskLevelOrDefault(
+    riskClassificationValues: Array<RiskClassificationScore>,
+    score?: number
+  ) {
     return score
       ? getRiskLevelFromScore(riskClassificationValues, score)
       : DEFAULT_RISK_LEVEL
@@ -113,6 +273,7 @@ export class RiskScoringV8Service {
   public async updateDrsForTransaction(
     userId: string | undefined,
     arsScore: number,
+    factorScoreDetails: RiskFactorScoreDetails[] | undefined,
     avgArsScore: number | null,
     transactionId: string
   ) {
@@ -123,12 +284,12 @@ export class RiskScoringV8Service {
     if (oldDrsScore?.isUpdatable === false) {
       return oldDrsScore.drsScore
     }
-    const { riskScoringCraEnabled, riskScoringAlgorithm } =
-      await this.tenantService.getTenantSettings()
-    if (!riskScoringCraEnabled || !riskScoringAlgorithm) {
+    const { riskScoringAlgorithm } = await this.getTenantSettings()
+    if (!riskScoringAlgorithm) {
+      logger.error('No risk scoring algorithm configured')
       return
     }
-    const krsScore = await this.getKrsScore(userId)
+    const krsScore = await this.getKrsScoreValue(userId)
     const newDrsScore = this.calculateNewDrsScore({
       algorithm: riskScoringAlgorithm,
       oldDrsScore: oldDrsScore?.drsScore,
@@ -137,7 +298,12 @@ export class RiskScoringV8Service {
       arsScore: arsScore,
     })
 
-    await this.updateDrsScore(userId, newDrsScore, transactionId)
+    await this.updateDrsScore(
+      userId,
+      newDrsScore,
+      transactionId,
+      factorScoreDetails
+    )
     return newDrsScore
   }
 
@@ -168,56 +334,74 @@ export class RiskScoringV8Service {
 
     const { krsWeight = 0.5, avgArsWeight = 0.5 } =
       algorithm.type === 'FORMULA_CUSTOM' ? algorithm : {}
+    const totalWeight =
+      (krsScore ? krsWeight : 0) + (avgArsScore ? avgArsWeight : 0)
     return (
-      krsWeight * (krsScore ?? 0) +
-      avgArsWeight * (avgArsScore ?? arsScore ?? 0)
+      (krsWeight * (krsScore ?? 0) +
+        avgArsWeight * (avgArsScore ?? arsScore ?? 0)) /
+      (totalWeight === 0 ? 1 : totalWeight) // To avoid division by zero
     )
   }
 
   public async updateDrsScore(
     userId: string,
     drsScore: number,
-    transactionId: string
+    transactionId: string,
+    factorScoreDetails?: RiskFactorScoreDetails[],
+    isUpdatable?: boolean
   ) {
-    /* ToDo: To take care of components */
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
       drsScore,
       transactionId,
-      []
+      [],
+      isUpdatable ?? true,
+      factorScoreDetails
     )
   }
 
-  public async calculateAndUpdateArs(
+  private async calculateArs(
     transaction: Transaction,
+    transactionEvents: TransactionEvent[],
     riskFactors: RiskFactor[],
     originUser?: User | Business,
     destinationUser?: User | Business
   ) {
-    const arsScore = await this.calculateRiskFactorScore(
-      {
-        transaction,
-        senderUser: originUser,
-        receiverUser: destinationUser,
-        // ToDo: Add more data related to TransactionEvents to be passed to the risk engine
-        transactionEvents: [],
-        type: 'TRANSACTION',
-      },
-      riskFactors
-    )
+    const { riskFactorsResult: arsScore } =
+      await this.calculateRiskFactorsScore(
+        {
+          transaction,
+          senderUser: originUser,
+          receiverUser: destinationUser,
+          transactionEvents: transactionEvents,
+          type: 'TRANSACTION',
+        },
+        riskFactors
+      )
+    return arsScore
+  }
+
+  private async createOrUpdateArsScore(
+    transaction: Transaction,
+    arsScore: RiskFactorsResult,
+    originUser?: User | Business,
+    destinationUser?: User | Business
+  ) {
     await this.riskRepository.createOrUpdateArsScore(
       transaction.transactionId,
-      arsScore,
+      arsScore.score,
       originUser?.userId,
-      destinationUser?.userId
-      /* TODO: Think about the components for V8 Risk Scoring  */
+      destinationUser?.userId,
+      [],
+      arsScore.scoreDetails
     )
-    return arsScore
   }
 
   public async updateAverageArs(
     newArsScore: number,
-    userId?: string
+    userId: string | undefined,
+    transactionId: string,
+    isEvent?: boolean
   ): Promise<number | null> {
     if (!userId) {
       return null
@@ -232,56 +416,90 @@ export class RiskScoringV8Service {
       })
       return newArsScore
     }
-    const existingScore = averageArsScore.value
+    const existingAvgScore = averageArsScore.value
     const transactionCount = averageArsScore?.transactionCount
-    const updatedArsScore =
-      (existingScore * transactionCount + newArsScore) / (transactionCount + 1)
+    let updatedArsScore: number | undefined
+    /* To avoid adding average ars score for every transaction event */
+    if (isEvent) {
+      const existingArsScore = await this.getArsScore(transactionId)
+      updatedArsScore =
+        (existingAvgScore * transactionCount -
+          (existingArsScore?.arsScore || 0) +
+          newArsScore) /
+        transactionCount
+    } else {
+      updatedArsScore =
+        (existingAvgScore * transactionCount + newArsScore) /
+        (transactionCount + 1)
+    }
     await this.riskRepository.updateOrCreateAverageArsScore(userId, {
       userId,
       value: updatedArsScore,
-      transactionCount: transactionCount + 1,
+      transactionCount: isEvent ? transactionCount : transactionCount + 1,
       createdAt: Date.now(),
     })
     return updatedArsScore
   }
 
   public async handleUserUpdate(
-    user: User | Business
+    user: User | Business,
+    manualRiskLevel?: RiskLevel,
+    isDrsUpdatable?: boolean
   ): Promise<UserRiskScoreDetails> {
     const userId = user.userId
-    const krsScore = await this.getKrsScore(userId)
+    const krsScore = await this.getKrsScoreValue(userId)
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
     const riskFactors = await this.getActiveRiskFactors(
       isConsumerUser(user) ? 'CONSUMER_USER' : 'BUSINESS'
     )
 
-    const newKrsScore = await this.calculateRiskFactorScore(
-      { user, type: 'USER' },
-      riskFactors
+    const { riskFactorsResult: newKrsScore } =
+      await this.calculateRiskFactorsScore({ user, type: 'USER' }, riskFactors)
+    await this.riskRepository.createOrUpdateKrsScore(
+      userId,
+      newKrsScore.score,
+      [],
+      newKrsScore.scoreDetails
     )
-    await this.riskRepository.createOrUpdateKrsScore(userId, newKrsScore)
 
-    let craRiskScore: number | undefined = newKrsScore
-    if (!krsScore) {
-      await this.updateDrsScore(userId, newKrsScore, 'FIRST_DRS')
-    } else {
-      craRiskScore = await this.updateDrsForUserChange(userId, newKrsScore)
+    const { riskScoringCraEnabled = true } = await this.getTenantSettings()
+
+    let craRiskScore: number | undefined = newKrsScore.score
+    if (riskScoringCraEnabled) {
+      if (!krsScore) {
+        await this.updateDrsScore(
+          userId,
+          newKrsScore.score,
+          'FIRST_DRS',
+          newKrsScore.scoreDetails,
+          isDrsUpdatable
+        )
+      } else {
+        craRiskScore = await this.updateDrsForUserChange(
+          userId,
+          newKrsScore.score,
+          newKrsScore.scoreDetails,
+          isDrsUpdatable
+        )
+      }
     }
-
-    if (user.riskLevel) {
+    if (manualRiskLevel) {
+      const manualDrsScore = await this.handleManualRiskLevelUpdate(
+        { ...user, riskLevel: manualRiskLevel },
+        isDrsUpdatable
+      )
       craRiskScore = getRiskScoreFromLevel(
         riskClassificationValues,
-        user.riskLevel
+        manualDrsScore.manualRiskLevel ?? DEFAULT_RISK_LEVEL
       )
-      await this.handleManualRiskLevelUpdate(user)
     }
 
     return this.formatUserRiskScores(
       riskClassificationValues,
-      newKrsScore,
+      newKrsScore.score,
       craRiskScore,
-      user.riskLevel
+      riskScoringCraEnabled
     )
   }
 
@@ -289,8 +507,17 @@ export class RiskScoringV8Service {
     riskClassificationValues: RiskClassificationScore[],
     kycRiskScore: number,
     craRiskScore: number | undefined,
-    userRiskLevel: string | undefined
+    craEnabled: boolean
   ) {
+    if (craEnabled === false) {
+      return {
+        kycRiskScore,
+        kycRiskLevel: getRiskLevelFromScore(
+          riskClassificationValues,
+          kycRiskScore
+        ),
+      }
+    }
     return {
       kycRiskScore,
       kycRiskLevel: getRiskLevelFromScore(
@@ -298,41 +525,94 @@ export class RiskScoringV8Service {
         kycRiskScore
       ),
       craRiskScore: craRiskScore ?? DEFAULT_RISK_SCORE,
-      craRiskLevel:
-        (userRiskLevel as RiskLevel) ??
-        getRiskLevelFromScore(
-          riskClassificationValues,
-          craRiskScore ?? DEFAULT_RISK_SCORE
-        ),
+      craRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        craRiskScore ?? DEFAULT_RISK_SCORE
+      ),
     }
   }
 
-  public async updateDrsForUserChange(userId: string, krsScore: number) {
+  public async updateDrsForUserChange(
+    userId: string,
+    krsScore: number,
+    factorScoreDetails?: RiskFactorScoreDetails[],
+    isUpdatable?: boolean
+  ) {
     const oldDrsScore = await this.getDrsScore(userId)
-    if (oldDrsScore?.isUpdatable === false) {
+    if (oldDrsScore?.isUpdatable === false && !isUpdatable) {
       return oldDrsScore.drsScore
     }
-    const { riskScoringCraEnabled, riskScoringAlgorithm } =
-      await this.tenantService.getTenantSettings()
-    if (!riskScoringCraEnabled || !riskScoringAlgorithm) {
-      return
-    }
+    const avgArsScore = await this.riskRepository.getAverageArsScore(userId)
+    const { riskScoringAlgorithm } = await this.getTenantSettings()
     const newDrsScore = this.calculateNewDrsScore({
-      algorithm: riskScoringAlgorithm,
+      algorithm: riskScoringAlgorithm ?? { type: 'FORMULA_SIMPLE_AVG' },
       oldDrsScore: oldDrsScore?.drsScore,
       krsScore: krsScore,
-      avgArsScore: null,
+      avgArsScore: avgArsScore?.value ?? null,
       arsScore: undefined,
       userEvent: true,
     })
-    await this.updateDrsScore(userId, newDrsScore, 'USER_UPDATE')
+    await this.updateDrsScore(
+      userId,
+      newDrsScore,
+      'USER_UPDATE',
+      factorScoreDetails,
+      isUpdatable
+    )
     return newDrsScore
   }
 
-  public async handleManualRiskLevelUpdate(user: User | Business) {
-    await this.riskRepository.createOrUpdateManualDRSRiskItem(
+  public async backFillAvgTrs(): Promise<void> {
+    const mongoDb = await this.getMongo()
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      mongoDb
+    )
+    await this.riskRepository.setAvgArsReadyMarker(false)
+    const transactionsCursor = transactionsRepo.getTransactionsCursor({})
+    /* To parallelize this, we need locks on the critical section where we get transaction count as without them the avg score will not be correct */
+    for await (const transaction of transactionsCursor) {
+      const arsScore = await this.getArsScore(transaction.transactionId)
+      if (arsScore) {
+        await Promise.all([
+          this.updateAverageArs(
+            arsScore.arsScore,
+            transaction.originUser?.userId,
+            transaction.transactionId,
+            false
+          ),
+          this.updateAverageArs(
+            arsScore.arsScore,
+            transaction.destinationUser?.userId,
+            transaction.transactionId,
+            false
+          ),
+        ])
+      }
+    }
+    await this.riskRepository.setAvgArsReadyMarker(true)
+  }
+
+  private async getTenantSettings(): Promise<TenantSettings> {
+    const settings = getContext()?.settings
+    if (!settings) {
+      return this.tenantRepository.getTenantSettings()
+    }
+    return settings
+  }
+
+  public async handleManualRiskLevelUpdate(
+    user: User | Business,
+    isUpdatable?: boolean
+  ) {
+    const drsScore = await this.getDrsScore(user.userId)
+    if (drsScore?.isUpdatable === false && !isUpdatable) {
+      return drsScore
+    }
+    return await this.riskRepository.createOrUpdateManualDRSRiskItem(
       user.userId,
-      user.riskLevel ?? 'VERY_HIGH'
+      user.riskLevel ?? 'VERY_HIGH',
+      isUpdatable
     )
   }
 
@@ -344,7 +624,7 @@ export class RiskScoringV8Service {
     return drsScore
   }
 
-  public async getKrsScore(userId: string) {
+  public async getKrsScoreValue(userId: string) {
     const krsScore = await this.riskRepository.getKrsScore(userId)
     if (!krsScore) {
       return null
@@ -352,27 +632,16 @@ export class RiskScoringV8Service {
     return krsScore.krsScore
   }
 
-  getUsersFromTransaction = memoize(
-    async (transaction: Transaction) => {
-      const getUser = async (
-        userId: string | undefined
-      ): Promise<User | Business | undefined> => {
-        if (!userId) {
-          return undefined
-        }
-        return await this.userRepository.getUser<User | Business>(userId)
-      }
+  public async getKrsScore(userId: string) {
+    const krsScore = await this.riskRepository.getKrsScore(userId)
+    if (!krsScore) {
+      return null
+    }
+    return krsScore
+  }
 
-      const [originUser, destinationUser] = await Promise.all([
-        getUser(transaction.originUserId),
-        getUser(transaction.destinationUserId),
-      ])
-
-      return {
-        originUser,
-        destinationUser,
-      }
-    },
-    (transaction) => transaction.transactionId
-  )
+  public async getArsScore(transactionId: string): Promise<ArsScore | null> {
+    const arsScore = await this.riskRepository.getArsScore(transactionId)
+    return arsScore
+  }
 }
