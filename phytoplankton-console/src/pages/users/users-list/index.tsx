@@ -84,6 +84,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       tagValue,
       sort,
       riskLevelLocked,
+      isPepHit,
     } = params;
 
     const queryObj = {
@@ -99,6 +100,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       }),
       sortField: sort[0]?.[0] ?? 'createdTimestamp',
       sortOrder: sort[0]?.[1] ?? 'descend',
+      filterIsPepHit: isPepHit,
       filterRiskLevelLocked: riskLevelLocked,
     };
 
