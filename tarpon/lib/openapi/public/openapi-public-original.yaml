@@ -584,6 +584,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiErrorResponse'
+        '409':
+          description: Conflict
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
@@ -1319,6 +1326,13 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiErrorResponse'
+        '409':
+          description: Conflict
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
         '429':
           description: Too Many Requests
           headers: {}
@@ -1506,6 +1520,13 @@ paths:
                 $ref: '#/components/schemas/ApiErrorResponse'
         '401':
           description: Unauthorized
+          headers: {}
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '409':
+          description: Conflict
           headers: {}
           content:
             application/json:

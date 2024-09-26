@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { BadRequest, NotFound } from 'http-errors'
+import { BadRequest, NotFound, Conflict } from 'http-errors'
 import {
   compact,
   Dictionary,
@@ -565,10 +565,22 @@ export class RulesEngineService {
         `Transaction ${transactionEvent.transactionId} not found`
       )
     }
+
     const previousTransactionEvents =
       await this.transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       )
+
+    const sameTimestampEvents = previousTransactionEvents.filter(
+      (event) => event.timestamp === transactionEvent.timestamp
+    )
+
+    if (sameTimestampEvents.length > 1) {
+      throw new Conflict(
+        `Transaction event with same timestamp and transactionId already exists`
+      )
+    }
+
     const updatedTransaction = mergeEntities(
       {
         ...transaction,
