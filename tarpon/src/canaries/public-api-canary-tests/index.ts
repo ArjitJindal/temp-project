@@ -789,7 +789,7 @@ const getTestBusinessUserSuccess = async () => {
   }
 
   const businessEventPayload: BusinessUserEvent = {
-    timestamp: Date.now(),
+    timestamp: Date.now() + 2,
     userId: businessUserPayload.userId,
     updatedBusinessUserAttributes: {
       riskLevel: 'HIGH',
