@@ -106,8 +106,11 @@ export const transactionHandler = lambdaApi()(
         logicEvaluator
       )
       const result = await rulesEngine.verifyTransaction(transaction, {
-        validateOriginUserId: request?.validateOriginUserId === 'true',
+        validateOriginUserId:
+          !request?.validateOriginUserId ||
+          request?.validateOriginUserId === 'true',
         validateDestinationUserId:
+          !request?.validateDestinationUserId ||
           request?.validateDestinationUserId === 'true',
       })
       logger.info(`Completed processing transaction`)
@@ -146,8 +149,11 @@ export const transactionHandler = lambdaApi()(
         batchId,
         request.TransactionBatchRequest.data,
         {
-          validateOriginUserId: request.validateOriginUserId === 'true',
+          validateOriginUserId:
+            !request.validateOriginUserId ||
+            request.validateOriginUserId === 'true',
           validateDestinationUserId:
+            !request.validateDestinationUserId ||
             request.validateDestinationUserId === 'true',
         }
       )
