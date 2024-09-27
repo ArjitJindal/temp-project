@@ -74,6 +74,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
   '/lists': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/lists/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/lists/{listId}/import-csv': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/lists/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/lists/{listId}/items/{key}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/merchant-monitoring/summary':

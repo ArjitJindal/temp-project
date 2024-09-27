@@ -8,6 +8,8 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { ListType } from '@/@types/openapi-internal/ListType'
 import { ListService } from '@/services/list'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
 
 export const listsHandler = lambdaApi()(
   async (
@@ -18,7 +20,13 @@ export const listsHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const listService = new ListService(tenantId, { dynamoDb })
+    const s3 = getS3ClientByEvent(event)
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+
+    const listService = new ListService(tenantId, { dynamoDb }, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
 
     const handlers = new Handlers()
 
@@ -82,6 +90,13 @@ export const listsHandler = lambdaApi()(
       async (ctx, request) =>
         await listService.deleteListItem(request.listId, request.key)
     )
+
+    handlers.registerListImportCsv(async (ctx, request) => {
+      return await listService.importFromCSV(
+        request.listId,
+        request.InlineObject.file
+      )
+    })
 
     return await handlers.handle(event)
   }

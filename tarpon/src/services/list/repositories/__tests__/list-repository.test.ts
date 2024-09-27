@@ -285,6 +285,68 @@ describe('Verify list repository', () => {
       expect(await listRepo.getListItem(listId, key)).toBeNull()
     }
   })
+  test('Check batch write API', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
+
+    const {
+      header: { listId },
+    } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
+      items: [],
+    })
+
+    // Make sure empty list is empty
+    {
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(0)
+    }
+
+    // Try to write item and read it, should be the same
+    {
+      const listItems = [
+        { key: 'aaa', metadata: { f1: 42 } },
+        { key: 'bbb', metadata: { f1: 43 } },
+        { key: 'ccc', metadata: { f1: 44 } },
+      ]
+      await listRepo.setListItems(listId, listItems)
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(3)
+      expect(await listRepo.getListItem(listId, listItems[0].key)).toEqual(
+        listItems[0]
+      )
+      expect(await listRepo.getListItem(listId, listItems[1].key)).toEqual(
+        listItems[1]
+      )
+      expect(await listRepo.getListItem(listId, listItems[2].key)).toEqual(
+        listItems[2]
+      )
+    }
+  })
+  test('Write 100 items', async () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
+
+    const {
+      header: { listId },
+    } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
+      items: [],
+    })
+
+    // Make sure empty list is empty
+    {
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(0)
+    }
+
+    // Try to write item and read it, should be the same
+    {
+      const data = [...new Array(100)].map((_, i) => ({
+        key: 'key#' + i,
+        metadata: { reason: 'Test reason #' + i },
+      }))
+      await listRepo.setListItems(listId, data)
+      expect((await listRepo.getListHeader(listId))?.size).toEqual(100)
+    }
+  })
 
   describe('Pagination', () => {
     const TEST_TENANT_ID = getTestTenantId()

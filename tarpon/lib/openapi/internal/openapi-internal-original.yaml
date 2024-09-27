@@ -616,6 +616,38 @@ paths:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
         '404':
           description: Not found
+  /lists/{listId}/import-csv:
+    parameters:
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    post:
+      summary: Lists - Import CSV
+      tags: []
+      operationId: list-import-csv
+      x-flagright:
+        permissions:
+          - lists:all:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file:
+                  $ref: '#/components/schemas/FileInfo'
+              required:
+                - file
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListImportResponse'
   /lists/{listId}/items:
     parameters:
       - schema:
@@ -14320,6 +14352,30 @@ components:
         - GTE
         - LT
         - LTE
+    ListImportResponse:
+      title: ListImportResponse
+      type: object
+      properties:
+        totalRows:
+          type: number
+        successRows:
+          type: number
+        failedRows:
+          type: array
+          items:
+            type: object
+            properties:
+              lineNumber:
+                type: number
+              reason:
+                type: string
+            required:
+              - lineNumber
+              - reason
+      required:
+        - totalRows
+        - successRows
+        - failedRows
   securitySchemes:
     Authorization:
       type: http

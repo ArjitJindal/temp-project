@@ -81,7 +81,7 @@ export function P(
       grey?: boolean;
     },
 ) {
-  const { className, bold, variant, fontWeight, ...rest } = props;
+  const { className, bold, variant, fontWeight, grey, ...rest } = props;
   return (
     <p
       {...rest}
@@ -91,9 +91,8 @@ export function P(
         s[`variant-${variant}`],
         s[`font-${fontWeight}`],
         className,
-        props.grey && s.grey,
+        grey && s.grey,
       )}
-      style={props.style}
     >
       {props.children}
     </p>

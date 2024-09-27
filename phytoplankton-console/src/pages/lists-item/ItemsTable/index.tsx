@@ -46,6 +46,7 @@ export type UserListTableRef = React.Ref<{
 
 interface Props {
   listHeader: ListHeader;
+  onImportCsv: () => void;
 }
 
 type ExternalState = {
@@ -61,7 +62,7 @@ type ExternalState = {
 const helper = new ColumnHelper<TableItem>();
 
 export default function ItemsTable(props: Props) {
-  const { listHeader } = props;
+  const { listHeader, onImportCsv } = props;
   const { listId, listType } = listHeader;
 
   const api = useApi();
@@ -371,17 +372,20 @@ export default function ItemsTable(props: Props) {
   }, [isAddUserLoading, isEditUserValid, isNewUserValid, listHeader.subtype]);
 
   return (
-    <QueryResultsTable<TableItem, CommonParams>
-      tableId="list-items-table"
-      rowKey="rowKey"
-      innerRef={tableRef}
-      columns={columns}
-      params={params}
-      onChangeParams={setParams}
-      queryResults={listResult}
-      fitHeight
-      sizingMode="SCROLL"
-      externalState={externalState}
-    />
+    <>
+      <QueryResultsTable<TableItem, CommonParams>
+        leftTools={<Button onClick={onImportCsv}>Import CSV...</Button>}
+        tableId="list-items-table"
+        rowKey="rowKey"
+        innerRef={tableRef}
+        columns={columns}
+        params={params}
+        onChangeParams={setParams}
+        queryResults={listResult}
+        fitHeight
+        sizingMode="SCROLL"
+        externalState={externalState}
+      />
+    </>
   );
 }

@@ -1,5 +1,6 @@
 import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
+import React, { useState } from 'react';
 import s from './index.module.less';
 import ItemsTable from './ItemsTable';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
@@ -16,6 +17,7 @@ import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.sv
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 import { useQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM } from '@/utils/queries/keys';
+import ImportCsvModal from '@/pages/lists-item/ImportCsvModal';
 
 export default function CreatedLists() {
   const params = useParams<'id' | 'type'>();
@@ -34,6 +36,8 @@ export default function CreatedLists() {
     return list;
   });
 
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+
   return (
     <>
       <PageWrapper
@@ -44,35 +48,47 @@ export default function CreatedLists() {
       >
         <Card.Root className={s.root}>
           <AsyncResourceRenderer resource={listHeaderRes.data}>
-            {(listHeader) => {
-              return (
-                <>
-                  <Card.Section className={s.header} direction="horizontal" spacing="double">
-                    <Form.Layout.Label title="List ID">
-                      <div className={s.listId}>{listHeader.listId}</div>
-                    </Form.Layout.Label>
-                    <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
-                      {listType === 'BLACKLIST' ? 'Blacklist' : 'Whitelist'}
-                    </Form.Layout.Label>
-                    <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
-                      {listHeader.metadata?.name}
-                    </Form.Layout.Label>
-                    <Form.Layout.Label icon={<PulseLineIcon />} title="List description">
-                      {listHeader.metadata?.description}
-                    </Form.Layout.Label>
-                    <Form.Layout.Label icon={<TimeLineIcon />} title="Created at">
-                      {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
-                    </Form.Layout.Label>
-                  </Card.Section>
-                  <Card.Section>
-                    <ItemsTable listHeader={listHeader} />
-                  </Card.Section>
-                </>
-              );
-            }}
+            {(listHeader) => (
+              <>
+                <Card.Section className={s.header} direction="horizontal" spacing="double">
+                  <Form.Layout.Label title="List ID">
+                    <div className={s.listId}>{listHeader.listId}</div>
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<UnorderedListOutlined />} title="List type">
+                    {listType === 'BLACKLIST' ? 'Blacklist' : 'Whitelist'}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<FontSizeIcon />} title="List name">
+                    {listHeader.metadata?.name}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<PulseLineIcon />} title="List description">
+                    {listHeader.metadata?.description}
+                  </Form.Layout.Label>
+                  <Form.Layout.Label icon={<TimeLineIcon />} title="Created at">
+                    {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
+                  </Form.Layout.Label>
+                </Card.Section>
+                <Card.Section>
+                  <ItemsTable
+                    listHeader={listHeader}
+                    onImportCsv={() => {
+                      setIsImportModalOpen(true);
+                    }}
+                  />
+                </Card.Section>
+              </>
+            )}
           </AsyncResourceRenderer>
         </Card.Root>
       </PageWrapper>
+      {listId && (
+        <ImportCsvModal
+          listId={listId}
+          isOpen={isImportModalOpen}
+          onClose={() => {
+            setIsImportModalOpen(false);
+          }}
+        />
+      )}
     </>
   );
 }
