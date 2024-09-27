@@ -25,7 +25,7 @@ export interface ExtraFilterProps<Params extends object | unknown> extends BaseF
   renderer: ExtraFilterRenderer<Params> | AutoFilterDataType | undefined;
 }
 
-type WithAllowClear<T> = T & { allowClear?: boolean };
+type WithAllowClear<T> = T & { allowClear?: boolean; clearNotAllowedReason?: string };
 
 export type AutoFilterDataType =
   | WithAllowClear<{ kind: 'string' }>

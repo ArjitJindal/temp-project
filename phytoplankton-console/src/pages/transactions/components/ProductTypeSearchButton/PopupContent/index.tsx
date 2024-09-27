@@ -48,7 +48,9 @@ export default function PopupContent(props: Props) {
         >
           Confirm
         </Button>
-        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={onCancel} type={'SECONDARY'}>
+          Cancel
+        </Button>
       </div>
     </div>
   );

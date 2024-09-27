@@ -24,7 +24,9 @@ export default function QuickFilterButton(props: Props) {
       }}
     >
       {icon && <div className={s.icon}>{icon}</div>}
-      <div className={s.title}>{buttonText}</div>
+      <div className={s.title} title={typeof buttonText === 'string' ? buttonText : undefined}>
+        {buttonText}
+      </div>
       {onClear && (
         <CloseLineIcon
           className={s.clearIcon}

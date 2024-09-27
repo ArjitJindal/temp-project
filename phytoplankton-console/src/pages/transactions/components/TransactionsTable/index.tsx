@@ -279,6 +279,7 @@ export default function TransactionsTable(props: Props) {
           autoFilterDataType: {
             kind: 'dateTimeRange',
             allowClear: false,
+            clearNotAllowedReason: 'You must select an interval to view transactions',
           },
         },
         sorting: true,

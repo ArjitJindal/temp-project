@@ -66,6 +66,7 @@ import MarkdownEditor from '@/components/markdown/story';
 import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
 import InvestigativeCoPilot from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/story';
 import Skeleton from '@/components/library/Skeleton/story';
+import DateRangePicker from '@/components/library/DateRangePicker/story';
 import AiAlertSummary from '@/components/AlertDetailsPage/AiAlertSummary/story';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard/story';
 
@@ -268,6 +269,10 @@ const config: Config = [
     key: 'to-add',
     title: 'To add to library',
     components: [
+      {
+        key: 'DateRangePicker',
+        story: DateRangePicker,
+      },
       {
         key: 'Avatar',
         story: Avatar,

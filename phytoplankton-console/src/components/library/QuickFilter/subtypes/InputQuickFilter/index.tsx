@@ -2,13 +2,16 @@ import React, { useCallback, useMemo, useState } from 'react';
 import { debounce } from 'lodash';
 import QuickFilter from '../..';
 import { InputProps } from '@/components/library/Form';
-import { Props as QuickFilterProps } from '@/components/library/QuickFilter/QuickFilterBase';
+import {
+  ChildrenProps as QuickFilterChildrenProps,
+  Props as QuickFilterProps,
+} from '@/components/library/QuickFilter/QuickFilterBase';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { joinReactNodes } from '@/utils/react';
 
 interface Props<Value> extends QuickFilterProps, InputProps<Value> {
   debounce?: boolean;
-  inputComponent: React.FunctionComponent<InputProps<Value>>;
+  inputComponent: React.FunctionComponent<InputProps<Value> & QuickFilterChildrenProps>;
   extraInputProps?: { [key: string]: unknown };
   innerRef?: React.RefObject<any>;
 }
@@ -61,12 +64,15 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
       allowClear={allowClear}
       {...rest}
     >
-      <InputComponent
-        value={state}
-        onChange={handleChange}
-        allowClear={allowClear}
-        {...extraInputProps}
-      />
+      {(quickFilterChildrenProps) => (
+        <InputComponent
+          value={state}
+          onChange={handleChange}
+          allowClear={allowClear}
+          {...extraInputProps}
+          {...quickFilterChildrenProps}
+        />
+      )}
     </QuickFilter>
   );
 }

@@ -12,6 +12,7 @@ import durationPlugin, {
 import localizedFormat from 'dayjs/plugin/localizedFormat'
 import weekday from 'dayjs/plugin/weekday'
 import localeData from 'dayjs/plugin/localeData'
+import customParseFormat from 'dayjs/plugin/customParseFormat'
 
 dayjsLib.extend(utc)
 dayjsLib.extend(durationPlugin)
@@ -21,6 +22,7 @@ dayjsLib.extend(localizedFormat)
 dayjsLib.extend(relativeTime)
 dayjsLib.extend(weekday)
 dayjsLib.extend(localeData)
+dayjsLib.extend(customParseFormat)
 
 export {
   dayjsLib as default,

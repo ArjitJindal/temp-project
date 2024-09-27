@@ -3,6 +3,11 @@ import { Popover } from 'antd';
 import s from './style.module.less';
 import QuickFilterButton from '@/components/library/QuickFilter/QuickFilterButton';
 
+export type ChildrenProps = {
+  isOpen: boolean;
+  setOpen: (isOpen: boolean) => void;
+};
+
 export interface Props {
   title: string;
   description?: React.ReactNode;
@@ -10,12 +15,11 @@ export interface Props {
   icon?: React.ReactNode;
   onClear?: () => void;
   onUpdateFilterClose?: (status: boolean) => void;
-  children?:
-    | React.ReactNode
-    | ((props: { isOpen: boolean; setOpen: (isOpen: boolean) => void }) => React.ReactNode);
+  children?: React.ReactNode | ((props: ChildrenProps) => React.ReactNode);
   analyticsName?: string;
   innerRef?: React.RefObject<any>;
   allowClear?: boolean;
+  clearNotAllowedReason?: string;
   readOnly?: boolean;
 }
 
