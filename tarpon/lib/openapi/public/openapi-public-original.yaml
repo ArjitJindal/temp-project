@@ -1922,6 +1922,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PEPStatus'
+        lastTransactionTimestamp:
+          type: number
+          description: Timestamp of the last successful transaction of the user
+          minimum: 1262300400000
+          maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         savedPaymentDetails:
@@ -3809,6 +3814,11 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/PaymentMethod'
+        lastTransactionTimestamp:
+          type: number
+          description: Timestamp of the last successful transaction of the user
+          minimum: 1262300400000
+          maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         acquisitionChannel:
