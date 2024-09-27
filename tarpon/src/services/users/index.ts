@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { isEmpty, isEqual, omit, pick } from 'lodash'
+import { isEmpty, isEqual, omit } from 'lodash'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -18,7 +18,8 @@ import { isBusinessUser } from '../rules-engine/utils/user-rule-utils'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
-import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
+import { UserManagementService } from '../rules-engine/user-rules-engine-service'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -123,6 +124,7 @@ export class UserService {
   awsCredentials?: LambdaCredentials
   userAuditLogService: UserAuditLogService
   userClickhouseRepository: UserClickhouseRepository
+  userManagementService: UserManagementService
   private s3Service: S3Service
   constructor(
     tenantId: string,
@@ -163,6 +165,13 @@ export class UserService {
       tenantId,
       connections.clickhouseClient,
       this.dynamoDb
+    )
+    const logicEvaluator = new LogicEvaluator(tenantId, this.dynamoDb)
+    this.userManagementService = new UserManagementService(
+      tenantId,
+      this.dynamoDb,
+      this.mongoDb,
+      logicEvaluator
     )
   }
 
@@ -804,23 +813,22 @@ export class UserService {
       )
     }
 
-    const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
-
+    /* To reverify new user event */
     if (isBusiness) {
-      await this.userRepository.saveBusinessUser(userToUpdate as Business)
-    } else {
-      await this.userRepository.saveConsumerUser(userToUpdate as User)
-    }
-
-    await this.userEventRepository.saveUserEvent(
-      {
+      await this.userManagementService.verifyBusinessUserEvent({
         timestamp: Date.now(),
         userId: user.userId,
         reason: updateRequest.userStateDetails?.reason ?? 'User update',
-        updatedConsumerUserAttributes: updateRequest,
-      },
-      isBusiness ? 'BUSINESS' : 'CONSUMER'
-    )
+        updatedBusinessUserAttributes: omit(updateRequest, ['comment']),
+      })
+    } else {
+      await this.userManagementService.verifyConsumerUserEvent({
+        timestamp: Date.now(),
+        userId: user.userId,
+        reason: updateRequest.userStateDetails?.reason ?? 'User update',
+        updatedConsumerUserAttributes: omit(updateRequest, ['comment']),
+      })
+    }
 
     const [savedComment] = await Promise.all([
       this.userRepository.saveUserComment(user.userId, {

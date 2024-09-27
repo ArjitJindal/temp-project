@@ -26,7 +26,7 @@ import {
   DeleteRequest,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
-import { StandardRetryStrategy } from '@smithy/middleware-retry'
+import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { getCredentialsFromEvent } from './credentials'
 import { addNewSubsegment } from '@/core/xray'
 import {
@@ -175,12 +175,13 @@ export function getDynamoDbRawClient(
     endpoint: isLocal
       ? process.env.DYNAMODB_URI || 'http://localhost:8000'
       : undefined,
-    retryStrategy: new StandardRetryStrategy(async () => 15, {
-      delayDecider: (delayBase: number, attempt: number) =>
-        // NOTE: Exponential backoff with max delay as 1s
-        // 100ms -> 200ms -> 400ms -> 800ms -> 1000ms -> 2000ms -> 2000ms
-        Math.min(2000, delayBase * 2 ** attempt),
-    }),
+    retryStrategy: new ConfiguredRetryStrategy(
+      async () => 15,
+      // NOTE: Exponential backoff with max delay as 2s
+      // delayBase = 100ms
+      // 100ms -> 200ms -> 400ms -> 800ms -> 1000ms -> 2000ms -> 2000ms
+      (attempt) => Math.min(2000, 100 * 2 ** attempt)
+    ),
   })
 
   const context = getContext()
