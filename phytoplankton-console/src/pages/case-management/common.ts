@@ -65,7 +65,9 @@ export const getAlertsQueryParams = (
       showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
     filterAssignmentsRoles:
       showCases === 'MY_ALERTS'
-        ? [user.userId]
+        ? user.role
+          ? [user.role]
+          : []
         : roleAssignedTo?.length
         ? roleAssignedTo
         : undefined,

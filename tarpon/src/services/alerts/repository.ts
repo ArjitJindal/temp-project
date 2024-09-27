@@ -2,7 +2,7 @@ import { Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
-import { compact, difference, intersection, isEmpty, isUndefined } from 'lodash'
+import { compact, difference, intersection, isEmpty } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -372,7 +372,7 @@ export class AlertsRepository {
     }
 
     if (
-      !isUndefined(params.filterAssignmentsRoles) &&
+      params.filterAssignmentsRoles &&
       !isEmpty(params.filterAssignmentsRoles)
     ) {
       // Since the number of accounts is typically a small number, we can fetch relevant accounts and filter cases by
