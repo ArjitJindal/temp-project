@@ -1383,6 +1383,10 @@ components:
         - User Terminated
         - Internal referral
         - External referral
+        - Confirmed fraud
+        - Confirmed genuine
+        - Suspected fraud
+        - True positive
     RuleInstanceUpdatable:
       title: RuleInstanceUpdatable
       type: object

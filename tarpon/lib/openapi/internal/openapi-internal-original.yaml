@@ -10180,6 +10180,10 @@ components:
         - User Terminated
         - Internal referral
         - External referral
+        - Confirmed fraud
+        - Confirmed genuine
+        - Suspected fraud
+        - True positive
     SanctionsHitReasons:
       type: string
       title: SanctionsHitReasons

@@ -5,8 +5,12 @@ import { exportDataForTreemaps } from '@/pages/dashboard/analysis/utils/export-d
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_02,
+  COLORS_V2_ANALYTICS_CHARTS_03,
   COLORS_V2_ANALYTICS_CHARTS_04,
+  COLORS_V2_ANALYTICS_CHARTS_05,
+  COLORS_V2_ANALYTICS_CHARTS_06,
   COLORS_V2_ANALYTICS_CHARTS_07,
+  COLORS_V2_ANALYTICS_CHARTS_08,
   COLORS_V2_ANALYTICS_CHARTS_10,
   COLORS_V2_ANALYTICS_CHARTS_11,
   COLORS_V2_ANALYTICS_CHARTS_12,
@@ -50,7 +54,11 @@ type ClosingReasons =
   | 'Anti-money laundering'
   | 'Terrorist financing'
   | 'Internal referral'
-  | 'External referral';
+  | 'External referral'
+  | 'Confirmed fraud'
+  | 'Confirmed genuine'
+  | 'Suspected fraud'
+  | 'True positive';
 
 const TREEMAP_COLORS: { [key in ClosingReasons]: string } = {
   ['False positive']: COLORS_V2_ANALYTICS_CHARTS_23,
@@ -69,6 +77,10 @@ const TREEMAP_COLORS: { [key in ClosingReasons]: string } = {
   ['Terrorist financing']: COLORS_V2_ANALYTICS_CHARTS_04,
   ['Internal referral']: COLORS_V2_ANALYTICS_CHARTS_25,
   ['External referral']: COLORS_V2_ANALYTICS_CHARTS_02,
+  ['Confirmed fraud']: COLORS_V2_ANALYTICS_CHARTS_03,
+  ['Confirmed genuine']: COLORS_V2_ANALYTICS_CHARTS_05,
+  ['Suspected fraud']: COLORS_V2_ANALYTICS_CHARTS_06,
+  ['True positive']: COLORS_V2_ANALYTICS_CHARTS_08,
 };
 
 interface Props extends WidgetProps {}

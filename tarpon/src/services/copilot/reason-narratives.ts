@@ -76,4 +76,24 @@ export const reasonNarratives: { reason: CaseReasons; narrative: string }[] = [
     narrative:
       'Customer activity was alerted on [caseGenerationDate] due to [ruleHitNames] rule(s).  The reason for referral was [Why is the case externally referred]. Customer activity is unusual therefore it was referred for review by the compliance department.',
   },
+  {
+    reason: 'Confirmed fraud',
+    narrative:
+      'Customer activity was alerted on [caseGenerationDate] due to [ruleHitNames] rule(s). Transactions from [caseGenerationDate] to [Case closure date] were analyzed totaling [totalTransactionAmount]. Upon review, the activity was confirmed to be fraudulent due to [details of fraudulent activity]. The customer was informed, and appropriate actions were taken, including account closure and reporting to the relevant authorities.',
+  },
+  {
+    reason: 'Confirmed genuine',
+    narrative:
+      'Customer activity was alerted on [caseGenerationDate] due to [ruleHitNames] rule(s). After thorough analysis of transactions from [caseGenerationDate] to [Case closure date], and reviewing the customer’s explanation and supporting documentation, the activity was confirmed to be legitimate. No further action was required, and the case was closed.',
+  },
+  {
+    reason: 'Suspected fraud',
+    narrative:
+      'Customer activity was alerted on [caseGenerationDate] due to [ruleHitNames] rule(s). After reviewing transactions and supporting documentation from [caseGenerationDate] to [Case closure date], the activity raised concerns of potential fraudulent behavior. However, more evidence is required to confirm fraud. As a precaution, the case has been flagged for further investigation and monitoring.',
+  },
+  {
+    reason: 'True positive',
+    narrative:
+      'Customer activity was alerted on [caseGenerationDate] due to [ruleHitNames] rule(s). Transactions between [caseGenerationDate] and [Case closure date] were reviewed, and it was determined that the alert was a true positive. The customer’s activity was found to match patterns associated with [specific risk type]. As a result, the case was escalated for appropriate action by the compliance department.',
+  },
 ]

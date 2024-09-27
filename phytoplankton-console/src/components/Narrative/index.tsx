@@ -36,6 +36,10 @@ export const CLOSING_REASONS: CaseReasons[] = [
   'User Blacklisted',
   'User Terminated',
   'Escalated',
+  'Confirmed fraud',
+  'Confirmed genuine',
+  'Suspected fraud',
+  'True positive',
 ];
 
 export type EntityType = NarrativeType;
