@@ -9,16 +9,36 @@ describe('MongoSanctionsRepository', () => {
     // Connect to an in-memory or test MongoDB instance
     const mongoDb = await getMongoDbClient()
     collection = mongoDb.db().collection(SANCTIONS_COLLECTION)
-    await collection.createIndex(
-      { provider: 1, id: 1, version: 1 }, // Define the fields for the index
-      { unique: true } // Enforce uniqueness
+    // create collection if it doesn't exist
+    const listCollections = await mongoDb.db().listCollections().toArray()
+    if (
+      !listCollections.find(
+        (collection) => collection.name === SANCTIONS_COLLECTION
+      )
+    ) {
+      await mongoDb.db().createCollection(SANCTIONS_COLLECTION)
+    }
+    // create index if it doesn't exist
+    const indexExists = await collection.indexExists(
+      'provider_1_id_1_version_1'
     )
+
+    if (!indexExists) {
+      await collection.createIndex(
+        { provider: 1, id: 1, version: 1 }, // Define the fields for the index
+        { unique: true } // Enforce uniqueness
+      )
+    }
     // Seed the database with test data
     await collection.insertMany([
       { provider: 'dowjones', version: '24-08', id: '1', name: 'Tim' },
       { provider: 'dowjones', version: '24-08', id: '2', name: 'Bob' },
       { provider: 'dowjones', version: '24-08', id: '3', name: 'Sam' },
     ])
+  })
+
+  afterAll(async () => {
+    await collection.drop()
   })
 
   it('should update associates field with correct names', async () => {
