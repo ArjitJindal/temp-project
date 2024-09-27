@@ -161,7 +161,7 @@ const getTestTransactionSuccess = async () => {
 
   const transactionEventPayload: TransactionEvent = {
     transactionId: transactionPayload.transactionId,
-    timestamp: Date.now(),
+    timestamp: Date.now() + 1000,
     transactionState: 'REFUNDED',
     updatedTransactionAttributes: {
       originPaymentDetails: {
@@ -789,7 +789,7 @@ const getTestBusinessUserSuccess = async () => {
   }
 
   const businessEventPayload: BusinessUserEvent = {
-    timestamp: Date.now() + 2,
+    timestamp: Date.now() + 1000,
     userId: businessUserPayload.userId,
     updatedBusinessUserAttributes: {
       riskLevel: 'HIGH',
@@ -1471,7 +1471,7 @@ const getTestCustomerUserSuccess = async () => {
 
   const consumerEventPayload: ConsumerUserEvent = {
     userId: consumerUserPayload.userId,
-    timestamp: Date.now(),
+    timestamp: Date.now() + 1000,
     updatedConsumerUserAttributes: {
       riskLevel: 'HIGH',
       kycStatusDetails: {
