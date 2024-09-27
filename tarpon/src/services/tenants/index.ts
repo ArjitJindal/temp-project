@@ -219,6 +219,9 @@ export class TenantService {
       }
 
       const siloDataTenantIds = siloDataTenants?.[stage]?.[region] ?? []
+      logger.info(
+        `Silo data tenant ids: ${siloDataTenantIds}, tenant id: ${tenantData.tenantId}, env: ${stage}, region: ${region}`
+      )
 
       if (!siloDataTenantIds.includes(tenantData.tenantId)) {
         throw new BadRequest(

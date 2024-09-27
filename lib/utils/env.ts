@@ -1,5 +1,10 @@
 export function stageAndRegion() {
-  const [stage, region = 'eu-1'] = process.env.ENV?.split(':') || []
+  let [stage, region] = process.env.ENV?.split(':') || [] // eslint-disable-line prefer-const
+
+  if (!region) {
+    region = process.env.REGION || 'eu-1'
+  }
+
   // NOTE: QA env is 'dev:user'
   if (stage === 'dev') {
     return [stage, 'eu-1']
