@@ -2,6 +2,7 @@ import React, { useMemo, useRef, useState } from 'react';
 import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import s from './index.module.less';
 import {
@@ -35,17 +36,13 @@ import Tag from '@/components/library/Tag';
 import { QueryResult } from '@/utils/queries/types';
 import { getOr, isSuccess, loading, success } from '@/utils/asyncResource';
 import { PaginatedData } from '@/utils/queries/hooks';
+import Toggle from '@/components/library/Toggle';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const api = useApi();
   const [deletedUserId, setDeletedUserId] = useState<string | null>(null);
-  function refreshTable() {
-    if (actionRef.current) {
-      actionRef.current?.reload();
-    }
-  }
   const invalidateUsers = useInvalidateUsers().invalidate;
   let messageVar: CloseMessage | null = null;
   const allAccountsResult = useAccountsQueryResult();
@@ -85,19 +82,34 @@ export default function Team() {
     };
   }, [allAccountsResult]);
 
-  const reactivateUserMutation = useMutation<unknown, unknown, { accountId: string }>(
-    async (payload: { accountId: string }) => {
-      messageVar = message.loading(`Please wait while we are reactivating the user`);
-      return await api.accountsReactivate({ accountId: payload.accountId });
+  const deactivateUserMutation = useMutation<
+    unknown,
+    unknown,
+    { accountId: string; deactivate: boolean }
+  >(
+    async (payload: { accountId: string; deactivate: boolean }) => {
+      messageVar = message.loading(
+        `Please wait while we are ${payload.deactivate ? 'deactivating' : 'reactivating'} the user`,
+      );
+      return await api.accountsDeactivate({
+        accountId: payload.accountId,
+        InlineObject: {
+          deactivate: payload.deactivate,
+        },
+      });
     },
     {
-      onSuccess: () => {
-        messageVar = message.loading(`Please wait while we are reactivating the user`);
+      onSuccess: (_, { deactivate }) => {
         messageVar?.();
-        message.success(`User reactivated successfully`);
-        setDeletedUserId(null);
+        message.success(`User ${deactivate ? 'deactivated' : 'reactivated'} successfully`);
+        accountsResult.refetch();
         invalidateUsers();
-        refreshTable();
+      },
+      onError: (error, { deactivate }) => {
+        messageVar?.();
+        message.error(
+          `Failed to ${deactivate ? 'deactivate' : 'reactivate'} user: ${(error as Error).message}`,
+        );
       },
     },
   );
@@ -119,7 +131,9 @@ export default function Team() {
               <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
                 {email}
               </P>
-              {context.item.blocked && <Tag color="red">Blocked</Tag>}
+              {context.item.blocked && (
+                <Tag color="red">{humanizeConstant(context.item.blockedReason ?? '')}</Tag>
+              )}
             </div>
           );
         },
@@ -260,6 +274,23 @@ export default function Team() {
   if (isAtLeastAdmin(user)) {
     columns.push(
       columnHelper.display({
+        title: 'Status',
+        render: (item) => {
+          return (
+            <Toggle
+              value={!item.blocked}
+              onChange={(checked) => {
+                deactivateUserMutation.mutate({
+                  accountId: item.id,
+                  deactivate: !checked,
+                });
+              }}
+              disabled={item.id === user.userId}
+            />
+          );
+        },
+      }),
+      columnHelper.display({
         title: 'Actions',
         enableResizing: false,
         defaultWidth: 350,
@@ -267,32 +298,6 @@ export default function Team() {
           // Do not let people edit themselves or roots.
           if (item.role == 'root') {
             return null;
-          }
-
-          if (item.blocked) {
-            return (
-              <div className={s.buttons}>
-                <Button
-                  testName="accounts-reactivate-button"
-                  type="SECONDARY"
-                  onClick={() => {
-                    reactivateUserMutation.mutate({ accountId: item.id });
-                  }}
-                >
-                  Reactivate
-                </Button>
-                <DeleteUser
-                  item={item}
-                  user={user}
-                  accounts={accounts}
-                  onSuccess={() => {
-                    invalidateUsers();
-                    refreshTable();
-                  }}
-                  isDisabled={(item) => item.id === user.userId}
-                />
-              </div>
-            );
           }
 
           return (
@@ -315,8 +320,9 @@ export default function Team() {
                 accounts={accounts}
                 onSuccess={() => {
                   invalidateUsers();
-                  refreshTable();
+                  accountsResult.refetch();
                 }}
+                setDeletedUserId={setDeletedUserId}
                 isDisabled={(item) => item.blocked || item.id === user.userId}
               />
             </div>
@@ -371,7 +377,7 @@ export default function Team() {
         onChangeVisibility={setIsInviteVisible}
         onSuccess={() => {
           setIsInviteVisible(false);
-          refreshTable();
+          accountsResult.refetch();
         }}
         key={editAccount?.id ?? 'new'}
       />

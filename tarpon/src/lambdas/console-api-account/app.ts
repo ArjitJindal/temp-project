@@ -95,6 +95,16 @@ export const accountsHandler = lambdaApi()(
           request.AccountSettings
         )
     )
+
+    handlers.registerAccountsDeactivate(async (ctx, request) => {
+      assertCurrentUserRole('admin')
+      return await accountsService.deactivateUser(
+        ctx.tenantId,
+        request.accountId,
+        request.InlineObject.deactivate
+      )
+    })
+
     handlers.registerGetCluesoAuthToken(async () => {
       const cluesoSecret = await getSecretByName('clueso')
       const payload = {}

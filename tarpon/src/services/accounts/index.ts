@@ -757,6 +757,23 @@ export class AccountsService {
     return updatedUser.user_metadata ?? {}
   }
 
+  async deactivateUser(
+    tenantId: string,
+    accountId: string,
+    deactivate: boolean
+  ) {
+    await Promise.all([
+      this.updateAuth0User(accountId, {
+        blocked: deactivate,
+        app_metadata: { blockedReason: deactivate ? 'DEACTIVATED' : null },
+      }),
+      this.updateAuth0UserInMongo(tenantId, accountId, {
+        blocked: deactivate,
+        blockedReason: deactivate ? 'DEACTIVATED' : undefined,
+      }),
+    ])
+  }
+
   async createAuth0Organization(
     tenantData: TenantCreationRequest,
     tenantId: string

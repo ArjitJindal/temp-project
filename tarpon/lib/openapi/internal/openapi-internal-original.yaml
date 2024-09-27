@@ -3371,7 +3371,7 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
-  /accounts/{accountId}/reactivate:
+  /accounts/{accountId}/deactivate:
     parameters:
       - schema:
           type: string
@@ -3379,8 +3379,8 @@ paths:
         in: path
         required: true
     post:
-      summary: Account - Reactivate
-      operationId: accounts-reactivate
+      summary: Account - Deactivate
+      operationId: accounts-deactivate
       x-flagright:
         permissions:
           - settings:organisation:write
@@ -3389,6 +3389,17 @@ paths:
           description: OK
         '403':
           description: Not enough privileges
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                deactivate:
+                  type: boolean
+              required:
+                - deactivate
+        required: true
   /accounts:
     post:
       summary: Account - Invite
@@ -9102,6 +9113,7 @@ components:
           enum:
             - DELETED
             - DORMANT
+            - DEACTIVATED
       required:
         - id
         - role

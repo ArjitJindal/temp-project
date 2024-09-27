@@ -17,10 +17,11 @@ interface DeleteUserProps {
   accounts: Account[];
   onSuccess: () => void;
   isDisabled: (item: Account) => boolean;
+  setDeletedUserId: (id: string) => void;
 }
 
 export function DeleteUser(props: DeleteUserProps) {
-  const { isDisabled, item, user, accounts, onSuccess } = props;
+  const { isDisabled, item, user, accounts, onSuccess, setDeletedUserId } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [reassignTo, setReassignTo] = useState<string | null>(null);
   const api = useApi();
@@ -42,12 +43,13 @@ export function DeleteUser(props: DeleteUserProps) {
       });
     },
     {
-      onSuccess: () => {
+      onSuccess: (_, { userId }) => {
         messageVar?.();
         message.success(`User deleted successfully`);
         setIsModalVisible(false);
         setReassignTo(null);
         onSuccess();
+        setDeletedUserId(userId);
       },
       onError: (error) => {
         messageVar?.();
