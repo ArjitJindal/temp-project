@@ -74,7 +74,9 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
 
     if (type === 'TRANSACTION') {
       const { transaction, senderUser, receiverUser, riskDetails } = record
-
+      logger.info(
+        `Running async rule for transaction ${transaction.transactionId} for tenant ${tenantId}`
+      )
       await rulesEngineService.verifyAsyncRulesTransaction(
         transaction,
         senderUser,
@@ -89,6 +91,10 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
         transactionEventId,
       } = record
 
+      logger.info(
+        `Running async rule for transaction event ${transactionEventId} for tenant ${tenantId}`
+      )
+
       await rulesEngineService.verifyAsyncRulesTransactionEvent(
         updatedTransaction,
         transactionEventId,
@@ -96,11 +102,17 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
         receiverUser
       )
     } else if (type === 'USER') {
+      logger.info(
+        `Running async rule for user ${record.user.userId} for tenant ${tenantId}`
+      )
       await userRulesEngineService.verifyAsyncRulesUser(
         record.userType,
         record.user
       )
     } else if (type === 'USER_EVENT') {
+      logger.info(
+        `Running async rule for user event ${record.userEventTimestamp} for tenant ${tenantId}`
+      )
       await userRulesEngineService.verifyAsyncRulesUserEvent(
         record.userType,
         record.updatedUser,
@@ -116,7 +128,7 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
 
     for await (const record of Records) {
       const sqsMessage = JSON.parse(record.body) as AsyncRuleRecord
-      logger.info(`SQS Message: ${sqsMessage}`, { sqsMessage })
+      logger.info(`Running async rule for ${sqsMessage.tenantId}`)
       await runAsyncRules(sqsMessage)
     }
   }
