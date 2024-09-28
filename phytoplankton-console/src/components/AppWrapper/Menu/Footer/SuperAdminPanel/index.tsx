@@ -119,6 +119,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Rules Engine V8 Async Aggregation',
     description: 'Enables Rules Engine V8 Async Aggregation',
   },
+  PNB: {
+    title: 'PNB',
+    description: 'Enables PNB specific features',
+  },
 };
 
 export default function SuperAdminPanel() {

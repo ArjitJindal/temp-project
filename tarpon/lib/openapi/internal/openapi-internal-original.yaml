@@ -9958,6 +9958,7 @@ components:
         - RISK_SCORING_V8
         - DOW_JONES
         - ASYNC_RULES
+        - PNB
       description: ''
     ManagedRoleName:
       type: string

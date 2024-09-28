@@ -1,0 +1,45 @@
+import { humanizeCamelCase } from '@flagright/lib/utils/humanize'
+import { TransactionLogicVariable } from './types'
+
+export const PNB_TAGS_KEYS = [
+  'agentCode',
+  'branchCode',
+  'destinationFundId',
+  'policyNumber',
+  'thirdPartyInvestment',
+  'refTypeDescription',
+  'thirdPartyICNumber',
+  'guardianICNumber',
+  'destinationproductType',
+  'sourceSystem',
+  'originatingSystem',
+  'originProductType',
+  'originFundId',
+]
+
+const getVariable = (key: string): TransactionLogicVariable => ({
+  key: `tags-${key}`,
+  entity: 'TRANSACTION',
+  valueType: 'string',
+  uiDefinition: {
+    label: `Tags - ${humanizeCamelCase(key)}`,
+    type: 'text',
+  },
+  load: async (transaction) => {
+    if (!transaction) {
+      return null
+    }
+    const tags = transaction.tags
+    if (!tags) {
+      return null
+    }
+
+    const tag = tags.find((tag) => tag.key === key)
+
+    return tag?.value
+  },
+  sourceField: 'tags',
+  requiredFeatures: ['PNB'],
+})
+
+export const PNB_TAGS_KEYS_VARIABLES = PNB_TAGS_KEYS.map(getVariable)
