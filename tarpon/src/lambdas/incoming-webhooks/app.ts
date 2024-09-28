@@ -13,6 +13,8 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { updateLogMetadata } from '@/core/utils/context'
+import { AccountsService } from '@/services/accounts'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -81,6 +83,98 @@ export const webhooksHandler = lambdaApi()(
         )
       }
       return
+    })
+
+    /**
+     * Auth0 webhook IPs
+     */
+
+    const AUTH0_ALLOWED_IPS = [
+      '18.197.9.11',
+      '18.198.229.148',
+      '3.125.185.137',
+      '3.65.249.224',
+      '3.67.233.131',
+      '3.68.125.137',
+      '3.72.27.152',
+      '3.74.90.247',
+      '34.246.118.27',
+      '35.157.198.116',
+      '35.157.221.52',
+      '52.17.111.199',
+      '52.19.3.147',
+      '52.208.95.174',
+      '52.210.121.45',
+      '52.210.122.50',
+      '52.28.184.187',
+      '52.30.153.34',
+      '52.57.230.214',
+      '54.228.204.106',
+      '54.228.86.224',
+      '54.73.137.216',
+      '54.75.208.179',
+      '54.76.184.103',
+    ]
+
+    handlers.registerPostWebhookAuth0(async (ctx, request) => {
+      const webhookEvent = request.Auth0WebhookEvent
+      if (!webhookEvent.logs) {
+        logger.error(`Received unhandled Auth0 webhook event: ${event.body}`)
+        return
+      }
+      // check if bearer contains `somerandomstrig`
+      const bearerToken = event.headers['Authorization'] || ''
+      const token = bearerToken.split(' ')[1]
+
+      if (token !== 'somerandomstring') {
+        logger.error(`Invalid bearer token: ${token}`)
+        throw new Forbidden('Invalid bearer token')
+      }
+
+      const isIpAllowed = AUTH0_ALLOWED_IPS.includes(sourceIp)
+
+      if (!isIpAllowed) {
+        logger.error(`IP ${sourceIp} is not authorized to make this request`)
+        throw new Forbidden(
+          `IP ${sourceIp} is not authorized to make this request`
+        )
+      }
+
+      const mongoDb = await getMongoDbClient()
+
+      for (const log of webhookEvent.logs) {
+        logger.info(`Received Auth0 webhook event: ${JSON.stringify(log)}`, {
+          log,
+        })
+        if (!log.data?.tenant_name || !log.data?.user_name) {
+          logger.error(
+            `Received unhandled Auth0 webhook event for unknown tenant or user: ${log.data?.tenant_name} ${log.data?.user_name}`
+          )
+          continue
+        }
+
+        if (log.data.type !== 'limit_wc') {
+          logger.info(`Skipping non-limit_wc webhook event: ${log.data.type}`)
+          continue
+        }
+
+        const accountsService = new AccountsService(
+          { auth0Domain: `${log.data.tenant_name}.eu.auth0.com` },
+          { mongoDb }
+        )
+        const account = await accountsService.getAccountByEmail(
+          log.data.user_name
+        )
+        logger.info(`Account: ${account}`, { account })
+        if (!account) {
+          logger.error(
+            `Received unhandled Auth0 webhook event for unknown account: ${log.data.user_name}`
+          )
+          continue
+        }
+
+        await accountsService.blockAccountBruteForce(account)
+      }
     })
 
     return await handlers.handle(event)

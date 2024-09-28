@@ -235,6 +235,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
   '/webhooks/complyadvantage':
     StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+  '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
@@ -276,7 +277,11 @@ const openapi = getAugmentedOpenapi(
   'JWT',
   {
     iamAuthorizedPaths: ['/apikey'],
-    publicPaths: ['/slack/oauth_redirect', '/webhooks/complyadvantage'],
+    publicPaths: [
+      '/slack/oauth_redirect',
+      '/webhooks/complyadvantage',
+      '/webhooks/auth0',
+    ],
     allowedOrigins: getAllowedOrigins(),
   }
 )

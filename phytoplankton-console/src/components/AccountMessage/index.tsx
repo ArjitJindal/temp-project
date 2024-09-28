@@ -25,9 +25,9 @@ export const AccountMessage: React.FC<AccountMessageProps> = ({ title, message }
         <P bold>{title}</P>
       </div>
       <P className={s.message} variant="m">
-        {message} Please contact{' '}
-        <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you have any
-        questions.
+        {message} <br />
+        If you still need help, please contact{' '}
+        <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a>
       </P>
       <BaseButton
         onClick={() => logout({ returnTo: window.location.origin })}

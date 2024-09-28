@@ -14,7 +14,11 @@ export const Auth0ErrorWrapper = ({ children }: { children: JSX.Element }) => {
   return error && errorMessage ? (
     <AccountMessage
       title={humanizeConstant(errorMessage)}
-      message="An email has already been sent to you to reset your password."
+      message={
+        errorMessage.includes('PASSWORD_EXPIRED')
+          ? 'Your password has expired. Please reset your password using the link in the email we sent you.'
+          : 'Please contact a system administrator to unlock your account.'
+      }
     />
   ) : (
     children

@@ -152,8 +152,12 @@ export const createAuth0TenantResources = (
       bruteForceProtection: {
         enabled: true,
         maxAttempts: 3,
-        shields: ['block', 'user_notification'],
+        shields: ['block'], // Can only unblock from console
         mode: 'count_per_identifier', // If we want to have per ip we need to change this 'count_per_identifier_and_ip' but it will still block the user
+      },
+      suspiciousIpThrottling: {
+        enabled: true,
+        shields: ['block', 'admin_notification'],
       },
       provider,
     }
@@ -458,4 +462,33 @@ export const createAuth0TenantResources = (
       }
     )
   }
+
+  const webhookUrl =
+    config.stage === 'dev'
+      ? 'https://api.flagright.dev'
+      : config.stage === 'sandbox'
+      ? 'https://sandbox.api.flagright.com'
+      : 'https://eu-1.api.flagright.com'
+
+  new auth0.logStream.LogStream(
+    context,
+    getTenantResourceId(tenantName, 'log-stream'),
+    {
+      provider,
+      name: 'Log Stream',
+      type: 'http',
+      filters: [
+        {
+          type: 'category',
+          name: 'system.notification',
+        },
+      ],
+      sink: {
+        httpEndpoint: webhookUrl + '/console/webhooks/auth0',
+        httpContentType: 'application/json',
+        httpContentFormat: 'JSONOBJECT',
+        httpAuthorization: 'Bearer ' + 'somerandomstring', // Just a random string to make sure the webhook is authorized we are already checking the ip address
+      },
+    }
+  )
 }

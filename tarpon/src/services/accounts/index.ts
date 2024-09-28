@@ -931,4 +931,48 @@ export class AccountsService {
 
     return accounts.map((account) => account.id)
   }
+
+  async getAccountByEmail(email: string): Promise<Account | null> {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const userManager = managementClient.users
+    const users = await auth0AsyncWrapper(() =>
+      userManager.getAll({
+        q: `email:(${email})`,
+        per_page: 1,
+      })
+    )
+
+    return users.map(AccountsService.userToAccount)[0] ?? null
+  }
+
+  async blockAccountBruteForce(account: Account) {
+    // DONT'T DO ANY MONGO UPDATES HERE.
+    // THIS IS CALLED FROM AN AUTH0 WEBHOOK, AND WE ONLY TRIGGER IT FROM EU-1
+    // SINCE ALL LOGINS ARE IN EU-1
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const accountId = account.id
+
+    if (account.blocked) {
+      logger.info(
+        `Account ${accountId} is already blocked because of ${account.blockedReason}. Skipping blocking again.`
+      )
+    }
+
+    const userBlocksManager = managementClient.userBlocks
+    await Promise.all([
+      ...(!account.blocked
+        ? [
+            this.updateAuth0User(accountId, {
+              blocked: true,
+              app_metadata: { blockedReason: 'BRUTE_FORCE' },
+            }),
+          ]
+        : []),
+      userBlocksManager.delete({ id: accountId }),
+    ])
+  }
 }
