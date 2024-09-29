@@ -248,15 +248,14 @@ function useSanctionHitsQuery(
   params: AllParams<TableSearchParams>,
 ): QueryResult<CursorPaginatedData<SanctionsHit>> {
   const api = useApi();
-  const sanctionHitIds = sanctionDetails.flatMap(({ sanctionHitIds }) => sanctionHitIds ?? []);
   const filters = {
-    filterHitIds: sanctionHitIds,
+    filterSearchId: sanctionDetails.map(({ searchId }) => searchId),
     filterStatus: params.statuses ?? ['OPEN' as const],
   };
   return useCursorQuery(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
     async (paginationParams): Promise<SanctionsHitListResponse> => {
-      if (filters.filterHitIds.length === 0) {
+      if (filters.filterSearchId.length === 0) {
         return {
           items: [],
           next: '',

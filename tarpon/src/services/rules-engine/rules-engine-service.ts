@@ -777,10 +777,9 @@ export class RulesEngineService {
     isAnyAsyncRules: boolean
   }> {
     const { async = false } = options ?? {}
-
-    const ruleInstances = (
+    const ruleInstances =
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
-    ).filter(
+    const targetRuleInstances = ruleInstances.filter(
       (r) =>
         (options?.ongoingScreeningMode ||
           r.userRuleRunCondition?.entityUpdated !== false) &&
@@ -788,7 +787,7 @@ export class RulesEngineService {
     )
 
     const rules = await this.ruleRepository.getRulesByIds(
-      ruleInstances
+      targetRuleInstances
         .map((ruleInstance) => ruleInstance.ruleId)
         .filter(Boolean) as string[]
     )
@@ -796,7 +795,7 @@ export class RulesEngineService {
     return {
       monitoringResult: await this.verifyUserByRules(
         user,
-        ruleInstances,
+        targetRuleInstances,
         rules,
         options
       ),
