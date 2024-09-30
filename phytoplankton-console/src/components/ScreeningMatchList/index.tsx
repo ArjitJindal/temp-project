@@ -1,12 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import SanctionsHitsTable, { TableSearchParams } from 'src/components/SanctionsHitsTable';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
-import s from './index.module.less';
 import {
   SanctionsDetails,
   SanctionsHit,
-  SanctionsHitStatus,
   SanctionsHitListResponse,
+  SanctionsHitStatus,
 } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { getOr, map } from '@/utils/asyncResource';
@@ -17,7 +16,7 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { notEmpty } from '@/utils/array';
 import { QueryResult } from '@/utils/queries/types';
 import { useApi } from '@/api';
-import { useCursorQuery, CursorPaginatedData, useQuery } from '@/utils/queries/hooks';
+import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM, SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -87,15 +86,12 @@ export default function ScreeningMatchList(props: Props) {
     clearedTableParams,
   );
 
-  // Requests to count total hits count
-  const openTotalHitsQueryResults = useSanctionHitsQuery(details, openTableParams);
-  const clearedTotalHitsQueryResults = useSanctionHitsQuery(details, clearedTableParams);
   const openHitsCount = getOr(
-    map(openTotalHitsQueryResults.data, (x) => x.count),
+    map(openHitsQueryResults.data, (x) => x.count),
     null,
   );
   const clearedHitsCount = getOr(
-    map(clearedTotalHitsQueryResults.data, (x) => x.count),
+    map(clearedHitsQueryResults.data, (x) => x.count),
     null,
   );
 
@@ -106,67 +102,43 @@ export default function ScreeningMatchList(props: Props) {
           title: 'Human review' + (openHitsCount != null ? ` (${openHitsCount})` : ''),
           key: MATCH_LIST_TAB_KEY,
           children: (
-            <div className={s.selectWithTable}>
-              <Select
-                value={sanctionsDetailsId}
-                options={details.map((detailsItem) => ({
-                  label: getOptionName(detailsItem),
-                  value: detailsItem.searchId,
-                }))}
-                onChange={setSanctionsDetailsId}
-                allowClear={false}
-              />
-              <SanctionsHitsTable
-                tableRef={null}
-                queryResult={openHitsQueryResults}
-                isEmbedded={true}
-                hideCleaningReason={true}
-                selectedIds={selectedSanctionsHitsIds}
-                selection={onSanctionsHitSelect != null}
-                params={openTableParams}
-                onChangeParams={setOpenTableParams}
-                onSelect={(sanctionHitsIds) => {
-                  if (!alert?.alertId) {
-                    return;
-                  }
-                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
-                }}
-                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-              />
-            </div>
+            <SanctionsHitsTable
+              tableRef={null}
+              queryResult={openHitsQueryResults}
+              hideCleaningReason={true}
+              selectedIds={selectedSanctionsHitsIds}
+              selection={onSanctionsHitSelect != null}
+              params={openTableParams}
+              onChangeParams={setOpenTableParams}
+              onSelect={(sanctionHitsIds) => {
+                if (!alert?.alertId) {
+                  return;
+                }
+                onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
+              }}
+              onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+            />
           ),
         },
         {
           title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
           key: CLEARED_MATCH_LIST_TAB_KEY,
           children: (
-            <div className={s.selectWithTable}>
-              <Select
-                value={sanctionsDetailsId}
-                options={details.map((detailsItem) => ({
-                  label: getOptionName(detailsItem),
-                  value: detailsItem.searchId,
-                }))}
-                onChange={setSanctionsDetailsId}
-                allowClear={false}
-              />
-              <SanctionsHitsTable
-                tableRef={null}
-                queryResult={clearedHitsQueryResults}
-                isEmbedded={true}
-                selection={onSanctionsHitSelect != null}
-                params={clearedTableParams}
-                onChangeParams={setClearedTableParams}
-                selectedIds={selectedSanctionsHitsIds}
-                onSelect={(sanctionHitsIds) => {
-                  if (!alert?.alertId) {
-                    return;
-                  }
-                  onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
-                }}
-                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-              />
-            </div>
+            <SanctionsHitsTable
+              tableRef={null}
+              queryResult={clearedHitsQueryResults}
+              selection={onSanctionsHitSelect != null}
+              params={clearedTableParams}
+              onChangeParams={setClearedTableParams}
+              selectedIds={selectedSanctionsHitsIds}
+              onSelect={(sanctionHitsIds) => {
+                if (!alert?.alertId) {
+                  return;
+                }
+                onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
+              }}
+              onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+            />
           ),
         },
         ...(alert != null && alert.alertId != null
@@ -198,8 +170,6 @@ export default function ScreeningMatchList(props: Props) {
       ].filter(notEmpty),
     [
       openHitsCount,
-      sanctionsDetailsId,
-      details,
       openHitsQueryResults,
       selectedSanctionsHitsIds,
       onSanctionsHitSelect,
@@ -224,6 +194,18 @@ export default function ScreeningMatchList(props: Props) {
         type="line"
         items={tabs}
         activeKey={tabs.some((x) => x.key === activeTabKey) ? activeTabKey : tabs[0].key}
+        tabBarExtraContent={
+          <Select
+            value={sanctionsDetailsId}
+            isDisabled={details.length < 2}
+            options={details.map((detailsItem) => ({
+              label: getOptionName(detailsItem),
+              value: detailsItem.searchId,
+            }))}
+            onChange={setSanctionsDetailsId}
+            allowClear={false}
+          />
+        }
         onChange={(key) => {
           setActiveTabKey(key);
           if (!alert?.alertId) {

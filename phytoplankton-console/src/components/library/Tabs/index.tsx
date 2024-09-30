@@ -10,6 +10,7 @@ export interface TabItem {
   children?: React.ReactNode;
   isClosable?: boolean;
   isDisabled?: boolean;
+  showBadge?: boolean;
   Icon?: React.ReactNode;
   captureEvents?: boolean;
 }
@@ -21,6 +22,7 @@ export interface Props
   tabHeight?: string | number;
   size?: 'large' | 'middle' | 'small';
   tabBarGutter?: number;
+  tabBarExtraContent?: React.ReactNode;
   onEdit?: (action: 'add' | 'remove', key?: string) => void;
   onChange?: (key?: any) => void;
   eventData?: Record<string, any>;
@@ -31,6 +33,7 @@ export default function Tabs(props: Props) {
     items,
     addIcon,
     tabBarGutter,
+    tabBarExtraContent,
     onEdit,
     onChange,
     activeKey,
@@ -58,15 +61,17 @@ export default function Tabs(props: Props) {
           ? (key, action) => onEdit(action, typeof key === 'string' ? key : undefined)
           : undefined
       }
+      tabBarExtraContent={tabBarExtraContent}
     >
       {items.map((item: TabItem) => {
-        const { title, key, children, isClosable, isDisabled, Icon } = item;
+        const { title, key, children, isClosable, isDisabled, Icon, showBadge } = item;
         return (
           <AntTabs.TabPane
             className={s.tab}
             tab={
               <span className={cn(s.tab_span)} data-sentry-allow={true}>
                 {Icon && <div className={cn(s.icon)}>{Icon}</div>}
+                {showBadge && <div className={cn(s.badge)} />}
                 <span>{title}</span>
               </span>
             }

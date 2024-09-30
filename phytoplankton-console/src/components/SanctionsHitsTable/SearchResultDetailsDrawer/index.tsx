@@ -14,7 +14,7 @@ import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-
 import { message } from '@/components/library/Message';
 import Drawer from '@/components/library/Drawer';
 import Button from '@/components/library/Button';
-import Tabs from '@/components/library/Tabs';
+import Tabs, { TabItem } from '@/components/library/Tabs';
 import FieldValue from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/FieldValue';
 import { P } from '@/components/ui/Typography';
 import Portal from '@/components/library/Portal';
@@ -289,13 +289,24 @@ function makeStubAiText(hit: SanctionsHit): string {
   return 'Hit requires human review';
 }
 
-function useTabs(entity: SanctionsEntity, pdfMode) {
+// todo: delete when have information in sanction hit
+const TMP_TABS_HAS_UPDATES = false;
+
+function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
   return useMemo(() => {
-    const tabs: { name: string; sources: SanctionsSource[] }[] = [
-      { name: 'Sources', sources: entity.screeningSources || [] },
-      { name: 'Sanctions', sources: entity.sanctionsSources || [] },
-      { name: 'PEP', sources: entity.pepSources || [] },
-      { name: 'Adverse media', sources: entity.mediaSources || [] },
+    const tabs: { name: string; hasUpdates: boolean; sources: SanctionsSource[] }[] = [
+      { name: 'Sources', hasUpdates: TMP_TABS_HAS_UPDATES, sources: entity.screeningSources || [] },
+      {
+        name: 'Sanctions',
+        hasUpdates: TMP_TABS_HAS_UPDATES,
+        sources: entity.sanctionsSources || [],
+      },
+      { name: 'PEP', hasUpdates: TMP_TABS_HAS_UPDATES, sources: entity.pepSources || [] },
+      {
+        name: 'Adverse media',
+        hasUpdates: TMP_TABS_HAS_UPDATES,
+        sources: entity.mediaSources || [],
+      },
     ];
     return tabs
       .filter((tab) => tab.sources.length > 0)
@@ -303,6 +314,7 @@ function useTabs(entity: SanctionsEntity, pdfMode) {
         return {
           key: tab.name,
           title: `${tab.name} (${tab.sources.length})`,
+          showBadge: tab.hasUpdates,
           children: (
             <div className={s.listingItems}>
               {tab.sources.map((source) => {
@@ -321,6 +333,7 @@ function useTabs(entity: SanctionsEntity, pdfMode) {
                     title={sourceTitle || ''}
                     listedTime={[source?.createdAt, source?.endedAt]}
                     isExpandedByDefault={pdfMode}
+                    hasUpdates={TMP_TABS_HAS_UPDATES}
                   >
                     {tab.name === 'Adverse media' ? (
                       <div className={s.adverseMediaList}>

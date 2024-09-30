@@ -7,6 +7,7 @@ import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
 import { CountryCode } from '@/apis';
+import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 
 interface Props {
   title: string | JSX.Element;
@@ -14,10 +15,11 @@ interface Props {
   listedTime: [number | undefined, number | undefined];
   isExpandedByDefault?: boolean;
   children: React.ReactNode;
+  hasUpdates: boolean;
 }
 
 export default function ListingCard(props: Props) {
-  const { listedTime, title, countries, children, isExpandedByDefault = false } = props;
+  const { listedTime, title, countries, children, isExpandedByDefault = false, hasUpdates } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = listedTime.filter(notEmpty);
   return (
@@ -40,6 +42,7 @@ export default function ListingCard(props: Props) {
             </div>
           )}
           {title}
+          {hasUpdates && <UpdatedTag />}
         </div>
         {nonEmptyTime.length > 0 && (
           <Small className={s.listedTime}>

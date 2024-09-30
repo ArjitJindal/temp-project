@@ -1,4 +1,5 @@
-import React, { useState, useRef, useMemo, useEffect } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import pluralize from 'pluralize';
 import { SanctionsHitReasons, SanctionsHitStatus } from '@/apis';
 import Narrative, { NarrativeFormValues, NarrativeRef } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
@@ -7,7 +8,6 @@ import { Mutation } from '@/utils/queries/types';
 import { isLoading } from '@/utils/asyncResource';
 import { FormRef } from '@/components/library/Form';
 import Label from '@/components/library/Label';
-import GenericFormField from '@/components/library/Form/GenericFormField';
 import { neverReturn } from '@/utils/lang';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { usePrevious } from '@/utils/hooks';
@@ -91,6 +91,27 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         isDisabled: !formState.isValid,
       }}
       width="S"
+      footerExtra={
+        <>
+          {newStatus === 'CLEARED' && (
+            <Label
+              label={`Whitelist selected ${pluralize('hit', entityIds.length)}`}
+              position="RIGHT"
+              level={2}
+            >
+              <Checkbox
+                value={formState.values.whitelistHits}
+                onChange={(newValue) => {
+                  formRef?.current?.setValues({
+                    ...formState.values,
+                    whitelistHits: newValue,
+                  });
+                }}
+              />
+            </Label>
+          )}
+        </>
+      }
       okText="Confirm"
       onOk={() => {
         formRef.current?.submit();
@@ -109,19 +130,6 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         entityIds={entityIds || []}
         placeholder={`Write a narrative explaining the hit status changes reason and findings, if any.`}
         possibleReasons={possibleReasons}
-        extraFields={
-          <>
-            {newStatus === 'CLEARED' && (
-              <GenericFormField<FormValues, 'whitelistHits'> name="whitelistHits">
-                {(props) => (
-                  <Label label={'Whitelist the selected hits'} position="RIGHT" level={2}>
-                    <Checkbox {...props} />
-                  </Label>
-                )}
-              </GenericFormField>
-            )}
-          </>
-        }
         onSubmit={(values) => {
           handleConfirm({
             ...values,

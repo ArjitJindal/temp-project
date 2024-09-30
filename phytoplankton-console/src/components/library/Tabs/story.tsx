@@ -156,6 +156,27 @@ export default function (): JSX.Element {
           </div>
         </div>
       </UseCase>
+      <UseCase title={'Tabs with indicator'}>
+        <div>
+          <div style={{ display: 'block' }}>
+            <Component
+              size="large"
+              type="line"
+              items={[
+                { title: 'Iteration 1', children: 'Content of Tab 1', key: '1' },
+                {
+                  title: 'Iteration 2 (with badge)',
+                  showBadge: true,
+                  children: 'Content of Tab 2',
+                  key: '2',
+                },
+                { title: 'Iteration 3', children: 'Content of Tab 3', key: '3' },
+              ]}
+              onEdit={(action, key) => onEdit(action, key)}
+            />
+          </div>
+        </div>
+      </UseCase>
     </>
   );
 }

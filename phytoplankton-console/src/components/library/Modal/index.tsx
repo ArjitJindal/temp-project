@@ -33,6 +33,7 @@ interface Props {
   writePermissions?: Permission[];
   hideOk?: boolean;
   maskClosable?: boolean;
+  footerExtra?: React.ReactNode;
 }
 
 const WIDTH: { [K in ModalWidth]: number | string } = {
@@ -64,6 +65,7 @@ export default function Modal(props: Props) {
     writePermissions = [],
     hideOk = false,
     maskClosable = true,
+    footerExtra,
   } = props;
 
   const [activeTab, setActiveTab] = useState<string>(tabs[0]?.key);
@@ -114,23 +116,26 @@ export default function Modal(props: Props) {
         hideFooter ? (
           false
         ) : (
-          <>
-            <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
-              {cancelText ?? 'Cancel'}
-            </Button>
-            {!hideOk && (
-              <Button
-                type="PRIMARY"
-                htmlType="button"
-                onClick={onOk}
-                {...okProps}
-                testName={`modal-ok`}
-                requiredPermissions={writePermissions}
-              >
-                {okText ?? 'OK'}
+          <div className={s.footer}>
+            {footerExtra && <div className={s.footerSection}>{footerExtra}</div>}
+            <div className={s.footerSection}>
+              <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
+                {cancelText ?? 'Cancel'}
               </Button>
-            )}
-          </>
+              {!hideOk && (
+                <Button
+                  type="PRIMARY"
+                  htmlType="button"
+                  onClick={onOk}
+                  {...okProps}
+                  testName={`modal-ok`}
+                  requiredPermissions={writePermissions}
+                >
+                  {okText ?? 'OK'}
+                </Button>
+              )}
+            </div>
+          </div>
         )
       }
       width={WIDTH[width]}

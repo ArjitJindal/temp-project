@@ -1,4 +1,5 @@
 @import 'src/components/ui/colors';
+
 .root {
   flex: 1;
   &.line {
@@ -14,6 +15,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  position: relative;
 }
 
 .tab_icon {
@@ -24,4 +26,14 @@
   width: 16px;
   line-height: 16px;
   margin-right: 4px;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: -12px;
+  width: 8px;
+  height: 8px;
+  background: @figma-vars--analytics-charts20;
+  border-radius: 50%;
 }

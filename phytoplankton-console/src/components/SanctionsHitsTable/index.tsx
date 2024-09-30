@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { startCase } from 'lodash';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
+import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
@@ -32,6 +33,7 @@ import {
   success,
   useFinishedSuccessfully,
 } from '@/utils/asyncResource';
+import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -41,7 +43,6 @@ export interface TableSearchParams {
 
 interface Props {
   tableRef?: React.Ref<TableRefType>;
-  isEmbedded?: boolean;
   hideCleaningReason?: boolean;
   searchIds?: string;
   queryResult: QueryResult<TableData<SanctionsHit>>;
@@ -56,9 +57,11 @@ interface Props {
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
+// todo: delete when have information in sanction hit
+const TMP_IS_UPDATED = false;
+
 export default function SanctionsHitsTable(props: Props) {
   const {
-    isEmbedded,
     hideCleaningReason,
     queryResult,
     extraTools,
@@ -87,7 +90,10 @@ export default function SanctionsHitsTable(props: Props) {
       type: {
         ...ID,
         render: (value, { item: entity }) => (
-          <Id onClick={() => setSelectedSearchHit(success(entity))}>{value}</Id>
+          <div className={s.idWrapper}>
+            <Id onClick={() => setSelectedSearchHit(success(entity))}>{value}</Id>
+            {TMP_IS_UPDATED && <UpdatedTag />}
+          </div>
         ),
       },
     }),
@@ -176,13 +182,11 @@ export default function SanctionsHitsTable(props: Props) {
         onChangeParams={onChangeParams}
         rowKey="sanctionsHitId"
         columns={columns}
-        hideFilters={isEmbedded}
+        hideFilters={true}
         pagination={'HIDE_FOR_ONE_PAGE'}
-        externalHeader={isEmbedded}
-        toolsOptions={{
-          reload: false,
-        }}
-        fitHeight={isEmbedded ? 300 : true}
+        externalHeader={false}
+        toolsOptions={false}
+        fitHeight={300}
         cursor={queryResult.cursor}
       />
       {selectedSearchHit && (
