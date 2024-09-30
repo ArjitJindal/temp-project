@@ -64,14 +64,24 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
     if (listIds) {
       const listRepo = new ListRepository(this.tenantId, this.dynamoDb)
       const result = await Promise.all(
-        listIds.flatMap((listId) =>
-          inputUserIds.map(async (userId) => ({
-            listId,
-            userId,
-            match: await listRepo.match(listId, userId, 'EXACT'),
-          }))
-        )
-      )
+        listIds.map(async (listId) => {
+          const listHeader = await listRepo.getListHeader(listId)
+          if (!listHeader?.metadata?.status) {
+            return inputUserIds.map((userId) => ({
+              listId,
+              userId,
+              match: false,
+            }))
+          }
+          return Promise.all(
+            inputUserIds.map(async (userId) => ({
+              listId,
+              userId,
+              match: await listRepo.match(listHeader, userId, 'EXACT'),
+            }))
+          )
+        })
+      ).then((results) => results.flat())
       const match = result.find((item) => item.match)
       if (match) {
         logger.info(`Found user ${match.userId} in list ${match.listId}`)

@@ -87,6 +87,18 @@ export class ListRepository {
     )
   }
 
+  public async clearListItems(listId: string) {
+    const header = await this.getListHeader(listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
+    const updatedHeader: ListHeader = {
+      ...header,
+      version: (header.version ?? 0) + 1,
+    }
+    await this.refreshListHeader(updatedHeader)
+  }
+
   public async getListHeaders(
     listType: ListType | null = null
   ): Promise<ListHeader[]> {
@@ -144,7 +156,7 @@ export class ListRepository {
   private async refreshListHeader(listHeader: ListHeader): Promise<void> {
     await this.updateListHeader({
       ...listHeader,
-      size: await this.countListValues(listHeader.listId),
+      size: await this.countListValues(listHeader.listId, listHeader.version),
     })
   }
 
@@ -159,7 +171,7 @@ export class ListRepository {
     const { Item } = await this.dynamoDb.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
+        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, header.version, key),
       })
     )
     if (Item == null) {
@@ -181,7 +193,12 @@ export class ListRepository {
       const putRequests = nextChunk.map((listItem) => ({
         PutRequest: {
           Item: {
-            ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, listItem.key),
+            ...DynamoDbKeys.LIST_ITEM(
+              this.tenantId,
+              listId,
+              header.version,
+              listItem.key
+            ),
             ...listItem,
           },
         },
@@ -206,7 +223,7 @@ export class ListRepository {
     await this.dynamoDb.send(
       new DeleteCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, key),
+        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, header.version, key),
       })
     )
     await this.refreshListHeader(header)
@@ -223,7 +240,12 @@ export class ListRepository {
       map[item.key] = {
         PutRequest: {
           Item: {
-            ...DynamoDbKeys.LIST_ITEM(this.tenantId, listId, item.key),
+            ...DynamoDbKeys.LIST_ITEM(
+              this.tenantId,
+              listId,
+              header.version,
+              item.key
+            ),
             ...item,
           },
         } as PutRequestInternal,
@@ -242,15 +264,25 @@ export class ListRepository {
     listId: string,
     params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>
   ): Promise<CursorPaginationResponse<ListItem>> {
+    const header = await this.getListHeader(listId)
+    if (header == null) {
+      throw new Error(`List doesn't exist`)
+    }
     const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE
     const queryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '').PartitionKeyID,
+        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, header.version)
+          .PartitionKeyID,
       },
       ExclusiveStartKey: params?.fromCursorKey
-        ? DynamoDbKeys.LIST_ITEM(this.tenantId, listId, params?.fromCursorKey)
+        ? DynamoDbKeys.LIST_ITEM(
+            this.tenantId,
+            listId,
+            header.version,
+            params?.fromCursorKey
+          )
         : undefined,
       Limit: pageSize + 1,
     }
@@ -278,7 +310,7 @@ export class ListRepository {
     const [nextPageFirstItem] = Items.slice(pageSize)
     const hasNextPage = nextPageFirstItem != null
 
-    const count = await this.countListValues(listId)
+    const count = await this.countListValues(listId, header.version)
     return {
       next:
         hasNextPage && LastEvaluatedKey != null && items.length > 0
@@ -295,24 +327,29 @@ export class ListRepository {
     }
   }
 
-  public async countListValues(listId: string): Promise<number> {
+  public async countListValues(
+    listId: string,
+    version?: number
+  ): Promise<number> {
     const { Count } = await paginateQuery(this.dynamoDb, {
       Select: 'COUNT',
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, '').PartitionKeyID,
+        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, version)
+          .PartitionKeyID,
       },
     })
     return Count ?? 0
   }
 
   public async match(
-    listId: string,
+    listHeader: ListHeader,
     value: string,
     method: 'EXACT' | 'PREFIX'
   ): Promise<boolean> {
-    const key = DynamoDbKeys.LIST_ITEM(this.tenantId, listId, value)
+    const { listId, version } = listHeader
+    const key = DynamoDbKeys.LIST_ITEM(this.tenantId, listId, version, value)
 
     let KeyConditionExpression: string
     if (method === 'EXACT') {

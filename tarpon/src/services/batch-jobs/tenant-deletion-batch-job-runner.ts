@@ -428,11 +428,15 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await this.deleteLists(tenantId, partitionKeyId)
   }
 
-  private async deleteListItem(tenantId: string, listId: string) {
+  private async deleteListItem(
+    tenantId: string,
+    listId: string,
+    version: number
+  ) {
     await dangerouslyDeletePartition(
       this.dynamoDb(),
       tenantId,
-      DynamoDbKeys.LIST_ITEM(tenantId, listId).PartitionKeyID,
+      DynamoDbKeys.LIST_ITEM(tenantId, listId, version).PartitionKeyID,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'list item'
     )
@@ -453,7 +457,11 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       tenantId,
       allListHeadersQueryInput,
       (tenantId, listHeader) => {
-        return this.deleteListItem(tenantId, listHeader.listId as string)
+        return this.deleteListItem(
+          tenantId,
+          listHeader.listId as string,
+          listHeader.version as number
+        )
       }
     )
 

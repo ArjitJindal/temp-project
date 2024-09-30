@@ -1,5 +1,6 @@
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Input } from 'antd';
+import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
 import { ListHeader } from '@/apis';
 import { useApi } from '@/api';
@@ -46,6 +47,7 @@ export type UserListTableRef = React.Ref<{
 
 interface Props {
   listHeader: ListHeader;
+  clearListMutation: UseMutationResult<unknown, unknown, void, unknown>;
   onImportCsv: () => void;
 }
 
@@ -62,7 +64,7 @@ type ExternalState = {
 const helper = new ColumnHelper<TableItem>();
 
 export default function ItemsTable(props: Props) {
-  const { listHeader, onImportCsv } = props;
+  const { listHeader, clearListMutation, onImportCsv } = props;
   const { listId, listType } = listHeader;
 
   const api = useApi();
@@ -385,6 +387,17 @@ export default function ItemsTable(props: Props) {
         fitHeight
         sizingMode="SCROLL"
         externalState={externalState}
+        extraTools={[
+          () => (
+            <Button
+              type="TETRIARY"
+              onClick={() => clearListMutation.mutate()}
+              isDisabled={clearListMutation.isLoading}
+            >
+              Clear list
+            </Button>
+          ),
+        ]}
       />
     </>
   );

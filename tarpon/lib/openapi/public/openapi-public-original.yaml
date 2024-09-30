@@ -5294,6 +5294,8 @@ components:
           type: number
         size:
           type: number
+        version:
+          type: number
       required:
         - listId
         - listType

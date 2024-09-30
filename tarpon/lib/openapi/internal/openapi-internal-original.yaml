@@ -655,6 +655,25 @@ paths:
         name: listId
         in: path
         required: true
+    delete:
+      summary: Lists - Clear list items
+      operationId: clear-list-items
+      x-flagright:
+        permissions:
+          - lists:all:read
+      responses:
+        '200':
+          description: List cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: List cleared successfully
+        '404':
+          description: List not found
     get:
       summary: Lists - Items
       tags: []

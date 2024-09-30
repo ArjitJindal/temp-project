@@ -27,7 +27,7 @@ export const MATCH_LIST_OPERATOR: TextLogicOperator = {
         if (!listHeader?.metadata?.status) {
           return false
         }
-        return listRepo.match(listId, value, 'EXACT')
+        return listRepo.match(listHeader, value, 'EXACT')
       })
     )
     return result.some(Boolean)

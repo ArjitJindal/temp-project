@@ -54,6 +54,11 @@ export const listsHandler = lambdaApi()(
       async (ctx, request) => await listService.deleteList(request.listId)
     )
 
+    handlers.registerClearListItems(async (ctx, request) => {
+      await listService.clearListItems(request.listId)
+      return null
+    })
+
     handlers.registerPatchList(async (ctx, request) => {
       const listId = request.listId
       const body = request.ListData

@@ -71,6 +71,10 @@ export class ListService {
     return await this.listRepository.deleteList(listId)
   }
 
+  public async clearListItems(listId: string): Promise<void> {
+    return await this.listRepository.clearListItems(listId)
+  }
+
   public async getListHeaders(
     listType: ListType | null = null
   ): Promise<ListHeader[]> {

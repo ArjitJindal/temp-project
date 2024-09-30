@@ -450,16 +450,16 @@ describe('Verify list repository', () => {
     const TEST_TENANT_ID = getTestTenantId()
     const dynamoDb = getDynamoDbClient()
     const listRepo = new ListRepository(TEST_TENANT_ID, dynamoDb)
-    const { listId } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
+    const { header } = await listRepo.createList(LIST_TYPE, 'USER_ID', {
       items: [{ key: 'aaabbb' }, { key: 'ccc' }, { key: 'aaaccc' }],
     })
-    expect(await listRepo.match(listId, 'aaabbb', 'EXACT')).toEqual(true)
-    expect(await listRepo.match(listId, 'aaab', 'PREFIX')).toEqual(true)
-    expect(await listRepo.match(listId, 'aaa', 'EXACT')).toEqual(false)
-    expect(await listRepo.match(listId, 'aaa', 'PREFIX')).toEqual(true)
-    expect(await listRepo.match(listId, 'aaabbbb', 'EXACT')).toEqual(false)
-    expect(await listRepo.match(listId, 'bbb', 'PREFIX')).toEqual(false)
-    expect(await listRepo.match(listId, 'ddd', 'EXACT')).toEqual(false)
+    expect(await listRepo.match(header, 'aaabbb', 'EXACT')).toEqual(true)
+    expect(await listRepo.match(header, 'aaab', 'PREFIX')).toEqual(true)
+    expect(await listRepo.match(header, 'aaa', 'EXACT')).toEqual(false)
+    expect(await listRepo.match(header, 'aaa', 'PREFIX')).toEqual(true)
+    expect(await listRepo.match(header, 'aaabbbb', 'EXACT')).toEqual(false)
+    expect(await listRepo.match(header, 'bbb', 'PREFIX')).toEqual(false)
+    expect(await listRepo.match(header, 'ddd', 'EXACT')).toEqual(false)
   })
 })
 

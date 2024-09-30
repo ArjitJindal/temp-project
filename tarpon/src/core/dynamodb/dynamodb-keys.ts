@@ -295,8 +295,15 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#deleted#lists`,
     SortKeyID: `${listId}`,
   }),
-  LIST_ITEM: (tenantId: string, listId: string, key?: string) => ({
-    PartitionKeyID: `${tenantId}#list-item#${listId}`,
+  LIST_ITEM: (
+    tenantId: string,
+    listId: string,
+    version: number | undefined,
+    key?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#list-item#${listId}${
+      version ? `#v${version}` : ''
+    }`,
     SortKeyID: key,
   }),
   TENANT_SETTINGS: (tenantId: string) => ({

@@ -1,5 +1,6 @@
 import { useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
 import s from './index.module.less';
 import ItemsTable from './ItemsTable';
@@ -17,6 +18,8 @@ import TimeLineIcon from '@/components/ui/icons/Remix/system/timer-line.react.sv
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 import { useQuery } from '@/utils/queries/hooks';
 import { LISTS_ITEM } from '@/utils/queries/keys';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
 import ImportCsvModal from '@/pages/lists-item/ImportCsvModal';
 
 export default function CreatedLists() {
@@ -35,6 +38,27 @@ export default function CreatedLists() {
     });
     return list;
   });
+  const queryClient = useQueryClient();
+  const clearListMutation = useMutation(
+    LISTS_ITEM(listId),
+    async () => {
+      if (!listId) {
+        throw new Error('List ID is required');
+      }
+      await api.clearListItems({
+        listId,
+      });
+      await queryClient.invalidateQueries(LISTS_ITEM(listId));
+    },
+    {
+      onSuccess: () => {
+        message.success('List items successfully cleared!');
+      },
+      onError: (error) => {
+        message.fatal(`Unable to clear list items! ${getErrorMessage(error)}`, error);
+      },
+    },
+  );
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
@@ -73,6 +97,7 @@ export default function CreatedLists() {
                     onImportCsv={() => {
                       setIsImportModalOpen(true);
                     }}
+                    clearListMutation={clearListMutation}
                   />
                 </Card.Section>
               </>
