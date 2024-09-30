@@ -1209,9 +1209,8 @@ export class RulesEngineService {
       ...executedAndHitRulesResult,
       aggregationMessages,
       riskScoreDetails: riskScoreDetailsData,
-      riskScoreComponents: isV8RiskScoring
-        ? (newRiskScoreDetails as RiskScoreDetails)?.components
-        : undefined,
+      riskScoreComponents: (newRiskScoreDetails as RiskScoreDetails)
+        ?.components,
       senderUser,
       receiverUser,
       isAnyAsyncRules: activeRuleInstances.some((ruleInstance) =>
