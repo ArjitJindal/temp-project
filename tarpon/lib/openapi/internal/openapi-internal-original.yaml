@@ -7700,6 +7700,7 @@ components:
               type: array
               items:
                 type: string
+              maxItems: 3
             defaultAlertStatus:
               type: string
               enum:
@@ -12139,7 +12140,6 @@ components:
         data:
           oneOf:
             - $ref: '#/components/schemas/ComplyAdvantageMonitoredSearchUpdated'
-
     Auth0WebhookEvent:
       title: Auth0WebhookEvent
       type: object
@@ -12164,44 +12164,49 @@ components:
             client_id:
               type: string
               description: Unique identifier for the client
-              example: 'uUFYLezaTSqQjj9052jiInDAaarI3f92'
+              example: uUFYLezaTSqQjj9052jiInDAaarI3f92
             client_name:
               type: string
               description: Name of the client
-              example: 'Flagright Console (Dev)'
+              example: Flagright Console (Dev)
             connection:
               type: string
               description: Type of authentication connection
-              example: 'Username-Password-Authentication'
+              example: Username-Password-Authentication
             connection_id:
               type: string
               description: ID of the authentication connection
-              example: 'con_oHIF5vjJvkZbUxvl'
+              example: con_oHIF5vjJvkZbUxvl
             date:
               type: string
               format: date-time
               description: Date and time of the login attempt
-              example: '2024-09-26T11:04:45.462Z'
+              example: 2024-09-26T11:04:45.462Z
             description:
               type: string
               description: Description of the log event
-              example: 'User (aman@flagright.com) attempted 3 consecutive logins unsuccessfully. Brute force protection is enabled for this connection, further attempts are blocked from this IP address for this user.'
+              example: User (aman@flagright.com) attempted 3 consecutive logins
+                unsuccessfully. Brute force protection is enabled for this
+                connection, further attempts are blocked from this IP address
+                for this user.
             hostname:
               type: string
               description: Hostname of the application where the login attempt occurred
-              example: 'login.console.flagright.dev'
+              example: login.console.flagright.dev
             ip:
               type: string
               description: IP address of the user attempting to login
-              example: '150.129.62.238'
+              example: 150.129.62.238
             type:
               type: string
               description: Type of the log event
-              example: 'limit_wc'
+              example: limit_wc
             user_agent:
               type: string
               description: User agent string of the browser used for the login attempt
-              example: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
+              example:
+                Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36
+                (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36
             user_id:
               type: string
               description: ID of the user, if available
@@ -12209,11 +12214,11 @@ components:
             user_name:
               type: string
               description: Username of the person attempting to login
-              example: 'aman@flagright.com'
+              example: aman@flagright.com
             tenant_name:
               type: string
               description: Tenant name where the login attempt happened
-              example: 'dev-flagright'
+              example: dev-flagright
     ComplyAdvantageMonitoredSearchUpdated:
       title: ComplyAdvantageMonitoredSearchUpdated
       type: object

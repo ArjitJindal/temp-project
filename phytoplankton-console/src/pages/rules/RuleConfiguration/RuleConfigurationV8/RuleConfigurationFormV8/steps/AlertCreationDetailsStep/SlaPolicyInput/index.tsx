@@ -23,10 +23,8 @@ function SlaPolicyInput<FormValues extends { slaPolicies?: string[] }>() {
             isLoading={isLoading(slaPoliciesData)}
             {...inputProps}
             onChange={(value) => {
-              if ((value?.length ?? 0) > 3) {
-                inputProps.onChange?.(value?.slice(0, 3));
-              }
-              inputProps.onChange?.(value);
+              const limitedValue = value?.slice(0, 3);
+              inputProps.onChange?.(limitedValue);
             }}
           />
         );
