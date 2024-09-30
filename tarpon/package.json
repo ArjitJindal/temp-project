@@ -202,7 +202,7 @@
     "@aws-sdk/client-dynamodb": "^3.624.0",
     "@aws-sdk/client-s3": "^3.627.0",
     "@aws-sdk/client-secrets-manager": "^3.592.0",
-    "@aws-sdk/client-sfn": "^3.592.0",
+    "@aws-sdk/client-sfn": "^3.645.0",
     "@aws-sdk/client-sns": "^3.592.0",
     "@aws-sdk/client-sqs": "^3.592.0",
     "@aws-sdk/client-sts": "^3.592.0",
