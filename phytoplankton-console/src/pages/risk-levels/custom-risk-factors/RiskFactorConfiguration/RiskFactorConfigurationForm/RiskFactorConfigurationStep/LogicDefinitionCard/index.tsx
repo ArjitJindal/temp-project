@@ -16,7 +16,7 @@ import Select from '@/components/library/Select';
 import IfThen from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/DefineLogicCard/IfThen';
 import { RuleLogicBuilder } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/RuleLogicBuilder';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import NumberInput from '@/components/library/NumberInput';
 import RiskLevelSwitch from '@/components/library/RiskLevelSwitch';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
@@ -98,6 +98,7 @@ export const LogicDefinitionCard = (props: Props) => {
   const [currentRiskLevelAssignmentValues, setCurrentRiskLevelAssignmentValues] = useState<
     LevelLogic | undefined
   >(undefined);
+  const riskLevelLabel = useRiskLevelLabel;
 
   const hasTransactionAmountVariable = useMemo(() => {
     const entityVariablesInUse = entityVariablesFieldState.value ?? [];
@@ -233,7 +234,7 @@ export const LogicDefinitionCard = (props: Props) => {
                         },
                       ]}
                     >
-                      Configuration ({name})
+                      Configuration ({riskLevelLabel(level as RiskLevel)})
                     </Tag>
                   </div>
                 </Tooltip>
