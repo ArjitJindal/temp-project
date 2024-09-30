@@ -1,4 +1,4 @@
-import { Fragment } from 'react';
+import { Fragment, useCallback } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useSettings,
@@ -21,6 +21,16 @@ export const SecuritySettings = () => {
     mutateTenantSettings.mutate({ mfaEnabled: true });
   };
 
+  const isLoading = useCallback(
+    (variable) => {
+      return (
+        mutateTenantSettings.isLoading &&
+        Boolean(Object.keys(mutateTenantSettings.variables ?? {}).find((key) => key === variable))
+      );
+    },
+    [mutateTenantSettings.variables, mutateTenantSettings.isLoading],
+  );
+
   return (
     <Fragment>
       <SettingsCard
@@ -30,7 +40,7 @@ export const SecuritySettings = () => {
         <Toggle
           onChange={!settings.mfaEnabled ? handleEnable : handleDisable}
           value={settings.mfaEnabled}
-          loading={mutateTenantSettings.isLoading}
+          loading={mutateTenantSettings.isLoading || isLoading('mfaEnabled')}
           isDisabled={!permissions}
         />
       </SettingsCard>
@@ -44,8 +54,9 @@ export const SecuritySettings = () => {
           onChange={(value) => {
             mutateTenantSettings.mutate({ passwordResetDays: value });
           }}
+          isLoading={mutateTenantSettings.isLoading}
           options={[
-            { label: 'No limit', value: 0, description: 'Password will never expire' },
+            { label: 'No limit', value: 0, tooltip: 'Password will never expire' },
             { label: '30 days', value: 30 },
             { label: '45 days', value: 45 },
             { label: '2 months', value: 60 },
@@ -53,23 +64,24 @@ export const SecuritySettings = () => {
             { label: '6 months', value: 180 },
             { label: '1 year', value: 365 },
           ]}
-          isDisabled={!isSettingsEnabled}
+          isDisabled={!isSettingsEnabled || isLoading('passwordResetDays')}
         />
       </SettingsCard>
 
       <SettingsCard
-        title="Account dormancy Period"
-        description="The number of days after which an account will be considered dormant and will be suspended."
+        title="Account dormancy period"
+        description="The account will be suspended if no activity is detected for the selected number of days."
       >
         <SelectionGroup<number>
           mode={'SINGLE'}
           value={settings.accountDormancyAllowedDays}
           onChange={(value) => mutateTenantSettings.mutate({ accountDormancyAllowedDays: value })}
+          isLoading={mutateTenantSettings.isLoading}
           options={[
             {
               label: 'No limit',
               value: 0,
-              description: 'Accounts will not be suspended due to dormancy.',
+              tooltip: 'Accounts will not be suspended due to dormancy.',
             },
             { label: '45 days', value: 45 },
             { label: '2 months', value: 60 },
@@ -77,7 +89,7 @@ export const SecuritySettings = () => {
             { label: '6 months', value: 180 },
             { label: '1 year', value: 365 },
           ]}
-          isDisabled={!isSettingsEnabled}
+          isDisabled={!isSettingsEnabled || isLoading('accountDormancyAllowedDays')}
         />
       </SettingsCard>
       <SettingsCard

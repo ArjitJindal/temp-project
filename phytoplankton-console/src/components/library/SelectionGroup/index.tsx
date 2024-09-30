@@ -1,5 +1,6 @@
 import React from 'react';
 import cn from 'clsx';
+import Tooltip from '../Tooltip';
 import s from './style.module.less';
 import Checkbox from '@/components/library/Checkbox';
 import Radio from '@/components/library/Radio';
@@ -12,6 +13,7 @@ export interface Option<Value extends SelectionGroupValueType = SelectionGroupVa
   label: string;
   description?: string;
   isDisabled?: boolean;
+  tooltip?: string;
 }
 
 interface CommonProps<Value extends SelectionGroupValueType> {
@@ -51,46 +53,48 @@ export default function SelectionGroup<
       {options.map((option) => {
         const isActive = values.includes(option.value);
         return (
-          <label
-            key={String(option.value)}
-            className={cn(
-              s.option,
-              isActive && s.isActive,
-              (isDisabled || option.isDisabled) && s.isDisabled,
-            )}
-            style={optionFixedWidth ? { width: optionFixedWidth, maxWidth: 'unset' } : undefined}
-          >
-            <div className={s.top}>
-              {isSingle ? (
-                <Radio
-                  isDisabled={isDisabled || option.isDisabled}
-                  value={JSON.stringify(option.value) === JSON.stringify(props.value)}
-                  onChange={(newValue) => {
-                    if (isSingle && newValue) {
-                      props.onChange?.(option.value);
-                    }
-                  }}
-                  testName={testName}
-                />
-              ) : (
-                <Checkbox
-                  isDisabled={isDisabled || option.isDisabled}
-                  value={isActive}
-                  onChange={(checked) => {
-                    if (!isSingle) {
-                      props.onChange?.([
-                        ...(props.value ?? []).filter((x) => x !== option.value),
-                        ...(checked ? [option.value] : []),
-                      ]);
-                    }
-                  }}
-                  testName={testName}
-                />
+          <Tooltip title={option.tooltip}>
+            <label
+              key={String(option.value)}
+              className={cn(
+                s.option,
+                isActive && s.isActive,
+                (isDisabled || option.isDisabled) && s.isDisabled,
               )}
-              <div className={s.label}>{option.label}</div>
-            </div>
-            {option.description && <div className={s.description}>{option.description}</div>}
-          </label>
+              style={optionFixedWidth ? { width: optionFixedWidth, maxWidth: 'unset' } : undefined}
+            >
+              <div className={s.top}>
+                {isSingle ? (
+                  <Radio
+                    isDisabled={isDisabled || option.isDisabled}
+                    value={JSON.stringify(option.value) === JSON.stringify(props.value)}
+                    onChange={(newValue) => {
+                      if (isSingle && newValue) {
+                        props.onChange?.(option.value);
+                      }
+                    }}
+                    testName={testName}
+                  />
+                ) : (
+                  <Checkbox
+                    isDisabled={isDisabled || option.isDisabled}
+                    value={isActive}
+                    onChange={(checked) => {
+                      if (!isSingle) {
+                        props.onChange?.([
+                          ...(props.value ?? []).filter((x) => x !== option.value),
+                          ...(checked ? [option.value] : []),
+                        ]);
+                      }
+                    }}
+                    testName={testName}
+                  />
+                )}
+                <div className={s.label}>{option.label}</div>
+              </div>
+              {option.description && <div className={s.description}>{option.description}</div>}
+            </label>
+          </Tooltip>
         );
       })}
     </div>
