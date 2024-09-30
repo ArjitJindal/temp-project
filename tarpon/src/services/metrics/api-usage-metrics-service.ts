@@ -314,7 +314,7 @@ export class ApiUsageMetricsService {
     )
     return {
       ...dailyValues,
-      [dayjs().format(MONTH_DATE_FORMAT_JS)]: allInstances.length,
+      [dayjs().format(DAY_DATE_FORMAT_JS)]: allInstances.length,
     }
   }
 
