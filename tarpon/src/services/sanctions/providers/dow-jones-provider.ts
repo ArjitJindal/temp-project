@@ -9,6 +9,7 @@ import unzipper from 'unzipper'
 import { uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
+import * as Sentry from '@sentry/node'
 import {
   Action,
   SanctionsRepository,
@@ -181,7 +182,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     for (const file of filesFromFullLoad) {
       const outputDir = await this.downloadZip(file)
       const isSplit = file.includes('_f_splits.zip')
-
       if (isSplit) {
         await this.processSplitArchive(repo, version, outputDir)
       } else {
@@ -307,7 +307,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     logger.info(`Processing ${filepath}`)
     const peopleFiles = await this.listFilePaths(filepath)
     if (peopleFiles.length == 0) {
-      logger.error('No files found in the directory')
+      Sentry.captureMessage('No files found in the directory', 'warning')
       return
     }
     await Promise.all(
