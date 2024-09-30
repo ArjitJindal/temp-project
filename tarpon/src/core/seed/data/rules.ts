@@ -252,7 +252,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-16',
       casePriority: 'P1',
       parameters: {
-        fuzziness: 20,
+        fuzzinessRange: {
+          lowerBound: 20,
+          upperBound: 20,
+        },
         ongoingScreening: false,
         screeningTypes: ['PEP'],
       } as SanctionsConsumerUserRuleParameters,
@@ -264,27 +267,42 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
-          fuzziness: 20,
+          fuzzinessRange: {
+            lowerBound: 20,
+            upperBound: 20,
+          },
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         HIGH: {
-          fuzziness: 20,
+          fuzzinessRange: {
+            lowerBound: 20,
+            upperBound: 20,
+          },
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         MEDIUM: {
-          fuzziness: 20,
+          fuzzinessRange: {
+            lowerBound: 20,
+            upperBound: 20,
+          },
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         LOW: {
-          fuzziness: 20,
+          fuzzinessRange: {
+            lowerBound: 20,
+            upperBound: 20,
+          },
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         VERY_LOW: {
-          fuzziness: 20,
+          fuzzinessRange: {
+            lowerBound: 20,
+            upperBound: 20,
+          },
           ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,

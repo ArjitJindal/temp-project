@@ -184,6 +184,8 @@ export class SanctionsService {
         documentId: request.documentId,
         nationality: request.nationality,
         occupationCode: request.occupationCode,
+        fuzzinessRange: request.fuzzinessRange,
+        PEPRank: request.PEPRank,
       })
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {

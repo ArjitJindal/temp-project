@@ -26,6 +26,15 @@ export interface UiSchemaParamsAgeRange extends UiSchemaParamsShared {
   defaultGranularity?: 'day' | 'month' | 'year'
 }
 
+export interface UiSchemaNumberRange extends UiSchemaParamsShared {
+  subtype: 'NUMBER_RANGE'
+  minimum: number
+  maximum: number
+  multipleOf?: number
+  startExclusive?: boolean
+  endExclusive?: boolean
+}
+
 export interface UiSchemaGeneric<Type> extends UiSchemaParamsShared {
   subtype?: string
   order?: (keyof Type)[]
@@ -39,6 +48,7 @@ export type UiSchemaParams<Type> =
   | UiSchemaParamsAgeRange
   | UiSchemaGeneric<Type>
   | UiSchemaRequiredFeatures
+  | UiSchemaNumberRange
 
 export function uiSchema<T extends object>(
   ...args: (UiSchemaParams<T> | undefined)[]

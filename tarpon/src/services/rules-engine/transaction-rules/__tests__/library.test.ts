@@ -155,6 +155,8 @@ describe('', () => {
     )
     const originLibraryPath = '../.library'
     originLibrary = keyBy((await import(originLibraryPath)).RULES_LIBRARY, 'id')
+    //Breaking change: to be removed after the migration
+    delete originLibrary['R-16']
   })
 
   describe.each(RULES_LIBRARY)(

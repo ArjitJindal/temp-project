@@ -25,10 +25,104 @@ import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchTy
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
-import { OCCUPATION_CODES } from '@/@types/openapi-internal-custom/OccupationCode'
+import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { OccupationCode } from '@/@types/openapi-internal/OccupationCode'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
+
+const PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE: Record<
+  string,
+  {
+    rank: PepRank
+    occupationCode: OccupationCode
+  }
+> = {
+  16: {
+    rank: 'LEVEL_1',
+    occupationCode: 'political_party_officials',
+  },
+  1: {
+    rank: 'LEVEL_1',
+    occupationCode: 'heads_and_deputies_state_national_government',
+  },
+  2: {
+    rank: 'LEVEL_1',
+    occupationCode: 'national_government_ministers',
+  },
+  3: {
+    rank: 'LEVEL_1',
+    occupationCode: 'members_of_the_national_legislature',
+  },
+  4: {
+    rank: 'LEVEL_1',
+    occupationCode: 'senior_civil_servants_national_government',
+  },
+  5: {
+    rank: 'LEVEL_1',
+    occupationCode: 'senior_civil_servants_regional_government',
+  },
+  7: {
+    rank: 'LEVEL_1',
+    occupationCode: 'senior_members_of_the_armed_forces',
+  },
+  9: {
+    rank: 'LEVEL_1',
+    occupationCode: 'senior_members_of_the_secret_services',
+  },
+  10: {
+    rank: 'LEVEL_1',
+    occupationCode: 'senior_members_of_the_judiciary',
+  },
+  18: {
+    rank: 'LEVEL_1',
+    occupationCode: 'city_mayors',
+  },
+  22: {
+    rank: 'LEVEL_1',
+    occupationCode: 'local_public_officials',
+  },
+  12: {
+    rank: 'LEVEL_1',
+    occupationCode: 'state_agency_officials',
+  },
+  13: {
+    rank: 'LEVEL_1',
+    occupationCode: 'heads_and_deputy_heads_regional_government',
+  },
+  14: {
+    rank: 'LEVEL_1',
+    occupationCode: 'regional_government_ministers',
+  },
+  11: {
+    rank: 'LEVEL_2',
+    occupationCode: 'state_corporation_executives',
+  },
+  6: {
+    rank: 'LEVEL_2',
+    occupationCode: 'embassy_consular_staff',
+  },
+  15: {
+    rank: 'LEVEL_2',
+    occupationCode: 'religious_leaders',
+  },
+  17: {
+    rank: 'LEVEL_2',
+    occupationCode: 'international_organisation_officials',
+  },
+  19: {
+    rank: 'LEVEL_2',
+    occupationCode: 'political_pressure_labour_group_officials',
+  },
+  26: {
+    rank: 'LEVEL_2',
+    occupationCode: 'international_sporting_organisation_officials',
+  },
+  20: {
+    rank: 'LEVEL_3',
+    occupationCode: 'other',
+  },
+}
 
 // Define the XML parser
 const parser = new XMLParser({
@@ -53,6 +147,7 @@ const parser = new XMLParser({
       'Roles',
       'RoleDetail',
       'OccTitle',
+      'SanctionsReferences',
     ].includes(tagName)
   },
 })
@@ -325,6 +420,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     const people = jsonObj.PFA.Person ?? jsonObj.PFA.Records.Person
     const entities = people
       .map((person: any): [Action, SanctionsEntity] | undefined => {
+        const sanctionsReferences = person.SanctionsReferences?.filter(
+          (sr) => !sr['@_toDay']
+        ) // Dow Jones uses this field to mark when a person is no longer under sanctions, they dont delete records
         const names = person.NameDetails?.Name
         const name = names.find((n) => n['@_NameType'] === 'Primary Name')
         if (!name) {
@@ -343,7 +441,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           // TODO: Determine how to handle "Relative or Close Associate (RCA)"
           sanctionSearchTypes.push('SANCTIONS')
         }
-        if (['3', '4'].some((val) => descriptionValues?.includes(val))) {
+        if (
+          ['3', '4'].some((val) => descriptionValues?.includes(val)) &&
+          (!sanctionsReferences || sanctionsReferences.length > 0)
+        ) {
           sanctionSearchTypes.push('SANCTIONS')
         }
         const countries = uniq<string>(
@@ -374,20 +475,35 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         )
 
         const occupations = person.RoleDetail?.flatMap((rd) =>
-          rd.Roles.filter(
-            (r) => r['@_RoleType'] == 'Primary Occupation'
-          ).flatMap((r) => r.OccTitle)
+          rd.Roles.filter((r) => r['@_RoleType'] != 'Previous Roles').flatMap(
+            (r) => r.OccTitle
+          )
         ).map((role): SanctionsOccupation => {
           return {
             title: role['#text'],
-            occupationCode: OCCUPATION_CODES[role['@_OccCat']],
+            occupationCode:
+              PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE[role['@_OccCat']]
+                ?.occupationCode,
+            rank: PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE[role['@_OccCat']]
+              ?.rank,
           }
         })
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
           name: decode(
-            `${nameValue.FirstName} ${nameValue.Surname || ''}`.trim()
+            Object.entries(nameValue)
+              .reduce((acc, [key, val]) => {
+                if (
+                  val &&
+                  typeof val === 'string' &&
+                  key !== 'OriginalScriptName'
+                ) {
+                  return `${acc} ${val}`.trim()
+                }
+                return acc
+              }, '')
+              .trim()
           ),
           entityType: 'Person',
           matchTypes: descriptions
@@ -465,7 +581,25 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           aka: names
             .filter((n) => n['@_NameType'] !== 'Primary Name')
             .flatMap((name) => name.NameValue)
-            .map((n) => decode(`${n.FirstName} ${n.Surname || ''}`.trim())),
+            .map((n) => {
+              const name = Object.entries(n)
+                .reduce((acc, [key, val]) => {
+                  if (
+                    val &&
+                    typeof val === 'string' &&
+                    key !== 'OriginalScriptName'
+                  ) {
+                    return `${acc} ${val}`.trim()
+                  }
+                  return acc
+                }, '')
+                .trim()
+              if (name.length > 0) {
+                return decode(name)
+              }
+              return undefined
+            })
+            .filter(Boolean),
           countries: countries.map((c) => COUNTRIES[c]),
           nationality,
           countryCodes: countries.map((c) => c as CountryCode),

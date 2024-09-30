@@ -77,7 +77,10 @@ describe('Batch Job Sanctions Screening Rule', () => {
       id: 'R-16',
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
-        fuzziness: 0.5,
+        fuzzinessRange: {
+          lowerBound: 50,
+          upperBound: 50,
+        },
         ongoingScreening: true,
       } as SanctionsConsumerUserRuleParameters,
     },
@@ -251,7 +254,10 @@ describe('Batch Job Sanctions Screening Rule Ongoing Screening is Off', () => {
       id: 'R-16',
       defaultParameters: {
         screeningTypes: ['SANCTIONS'],
-        fuzziness: 0.5,
+        fuzzinessRange: {
+          lowerBound: 50,
+          upperBound: 50,
+        },
         ongoingScreening: false,
       } as SanctionsConsumerUserRuleParameters,
     },

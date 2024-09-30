@@ -22,6 +22,7 @@ import NarrativeInput from './custom/NarrativeInput';
 import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInput';
 import { WebhookInput } from './custom/WebhookInput';
 import MarkdownInput from './custom/MarkdownInput';
+import { NumberRangeInput } from './custom/NumberRangeInput';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -105,6 +106,9 @@ export default function PropertyInput(props: Props) {
   if (uiSchema['ui:subtype'] === 'WHITELIST') {
     const listType = uiSchema['ui:subtype'];
     return <ListSelect {...props} listType={listType} />;
+  }
+  if (uiSchema['ui:subtype'] === 'NUMBER_RANGE') {
+    return <NumberRangeInput {...props} uiSchema={uiSchema} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

@@ -46,7 +46,23 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
   }
-
+  private getFuzzinessEvaluationResult(
+    request: SanctionsSearchRequest,
+    percentageSimilarity: number
+  ): boolean {
+    if (
+      request.fuzzinessRange?.lowerBound &&
+      request.fuzzinessRange?.upperBound
+    ) {
+      const { lowerBound, upperBound } = request.fuzzinessRange
+      return (
+        percentageSimilarity >= lowerBound && percentageSimilarity <= upperBound
+      )
+    }
+    return request.fuzziness
+      ? percentageSimilarity <= request.fuzziness * 100
+      : false
+  }
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
@@ -70,11 +86,17 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.nationality) {
-      match['nationality'] = { $in: request.nationality }
+      match['nationality'] = {
+        $or: [{ $in: request.nationality }, { $eq: null }],
+      }
     }
 
     if (request.occupationCode) {
       match['occupations.occupationCode'] = { $in: request.occupationCode }
+    }
+
+    if (request.PEPRank) {
+      match['occupations.rank'] = request.PEPRank
     }
 
     const results = await client
@@ -117,8 +139,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           request.searchTerm,
           value
         )
-        const fuzzyMatch =
-          request.fuzziness && percentageSimilarity <= request.fuzziness * 100
+        const fuzzyMatch = this.getFuzzinessEvaluationResult(
+          request,
+          percentageSimilarity
+        )
 
         const exactMatch =
           value.toLowerCase() === request.searchTerm.toLowerCase()

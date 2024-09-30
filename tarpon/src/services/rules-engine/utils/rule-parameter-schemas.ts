@@ -1,5 +1,10 @@
 import { lowerCase, startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
+import {
+  PEP_RANK_VALUES,
+  SANCTIONS_SCREENING_VALUES,
+} from '../user-rules/sanctions-consumer-user'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import {
@@ -828,6 +833,32 @@ export const FUZZINESS_SCHEMA = PERCENT_SCHEMA({
   multipleOf: 10,
 })
 
+export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
+  ({
+    type: 'object',
+    title: options?.title || 'Fuzziness range',
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'NUMBER_RANGE',
+      minimum: 0,
+      maximum: 100,
+      multipleOf: 5,
+      startExclusive: false,
+      endExclusive: false,
+    }),
+    description: options?.description,
+    properties: {
+      lowerBound: {
+        type: 'number',
+        title: 'Minimum',
+      },
+      upperBound: {
+        type: 'number',
+        title: 'Maximum',
+      },
+    },
+    required: [],
+  } as const)
+
 export const SANCTIONS_SCREENING_TYPES_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema),
@@ -852,6 +883,39 @@ export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
   ({
     ...SANCTIONS_SCREENING_TYPES_SCHEMA(options),
     nullable: true,
+  } as const)
+
+export const SANCTIONS_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['DOW_JONES'],
+    }),
+    type: 'array',
+    title: options?.title || 'Screening values',
+    description: options?.description,
+    items: {
+      type: 'string',
+      enum: SANCTIONS_SCREENING_VALUES,
+      enumNames: SANCTIONS_SCREENING_VALUES.map((type) => humanizeAuto(type)),
+    },
+    uniqueItems: true,
+    nullable: true,
+  } as const)
+
+export const PEP_RANK_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      requiredFeatures: ['DOW_JONES'],
+    }),
+    type: 'string',
+    enum: PEP_RANK_VALUES,
+    title: options?.title || 'PEP rank',
+    description:
+      options?.description ??
+      'Select the PEP rank to be used for the screening',
+    nullable: true,
+    uniqueItems: true,
+    enumNames: PEP_RANK_VALUES.map((rank) => humanizeAuto(rank)),
   } as const)
 
 export const ENABLE_ONGOING_SCREENING_SCHEMA = (options?: SchemaOptions) =>

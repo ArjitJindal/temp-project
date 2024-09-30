@@ -11319,7 +11319,9 @@ components:
           items:
             type: string
         documentId:
-          type: string
+          type: array
+          items:
+            type: string
         occupationCode:
           type: array
           items:
@@ -11334,8 +11336,24 @@ components:
           $ref: '#/components/schemas/SanctionsSearchMonitoring'
         apiSearchRequest:
           type: object
+        fuzzinessRange:
+          type: object
+          properties:
+            lowerBound:
+              type: number
+            upperBound:
+              type: number
+        PEPRank:
+          $ref: '#/components/schemas/PepRank'
       required:
         - searchTerm
+    PepRank:
+      title: PepRank
+      type: string
+      enum:
+        - LEVEL_1
+        - LEVEL_2
+        - LEVEL_3
     SanctionsSearchType:
       title: SanctionsSearchType
       type: string
@@ -11795,6 +11813,8 @@ components:
           $ref: '#/components/schemas/OccupationCode'
         title:
           type: string
+        rank:
+          $ref: '#/components/schemas/PepRank'
     SanctionsAssociate:
       title: SanctionsAssociate
       type: object

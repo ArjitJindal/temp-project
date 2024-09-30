@@ -37,6 +37,13 @@ export interface UiSchemaAgeRange extends UiSchemaCommon {
   'ui:defaultGranularity': 'day' | 'month' | 'year';
 }
 
+export interface UiSchemaNumberRange extends UiSchemaCommon {
+  'ui:subtype': 'NUMBER_RANGE';
+  'ui:minimum': number;
+  'ui:maximum': number;
+  'ui:multipleOf'?: number;
+}
+
 export interface UiSchemaTransactionAmountRange extends UiSchemaCommon {
   'ui:subtype': 'TRANSACTION_AMOUNT_RANGE';
 }
@@ -141,8 +148,8 @@ export type UiSchema =
   | UiSchemaElectronicAddress
   | UiSchemaFincenGender
   | UiSchemaWebhook
-  | UiSchemaList;
-
+  | UiSchemaList
+  | UiSchemaNumberRange;
 export interface ExtendedSchema extends JSONSchema4 {
   'ui:schema'?: UiSchema;
   items?: ExtendedSchema;

@@ -118,7 +118,8 @@ Jubilant Pharmova Ltd.`,
             gender: 'Male',
             occupations: [
               {
-                occupationCode: 'city_mayors',
+                occupationCode: 'political_party_officials',
+                rank: 'LEVEL_1',
                 title: 'Deceased',
               },
             ],
@@ -292,8 +293,15 @@ Patasse passed away on April 5, 2011.`,
             nationality: ['CF'],
             occupations: [
               {
-                occupationCode: 'senior_civil_servants_national_government',
+                occupationCode: 'members_of_the_national_legislature',
+                rank: 'LEVEL_1',
                 title: 'Member, National Assembly, MLPC, Bocaranga 3',
+              },
+              {
+                occupationCode: 'political_party_officials',
+                rank: 'LEVEL_1',
+                title:
+                  "President, Central African People's Liberation Movement (MLPC)",
               },
             ],
             dateMatched: true,

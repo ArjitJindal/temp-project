@@ -67,7 +67,7 @@ export function SearchResultTable(props: Props) {
         fuzziness: historyItem.request?.fuzziness,
         nationality: historyItem.request?.nationality,
         occupationCode: historyItem.request?.occupationCode,
-        documentId: historyItem.request?.documentId,
+        documentId: historyItem.request?.documentId?.[0],
       }));
     }
   }, [historyItem]);
@@ -87,7 +87,7 @@ export function SearchResultTable(props: Props) {
           types: searchParams.types,
           nationality: searchParams.nationality,
           occupationCode: searchParams.occupationCode,
-          documentId: searchParams.documentId,
+          documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
         },
       });
     },
