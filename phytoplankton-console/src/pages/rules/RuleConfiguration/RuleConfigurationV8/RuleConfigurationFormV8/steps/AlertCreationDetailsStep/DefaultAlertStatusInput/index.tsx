@@ -2,6 +2,7 @@ import { FormValues } from '..';
 import InputField from '@/components/library/Form/InputField';
 import Select from '@/components/library/Select';
 import { RuleInstanceAlertConfigDefaultAlertStatusEnum } from '@/apis';
+import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 
 const DEFAULT_ALERT_STATUS_OPTIONS: RuleInstanceAlertConfigDefaultAlertStatusEnum[] = [
   'CLOSED',
@@ -32,7 +33,7 @@ export const DefaultAlertStatusInput = () => {
             }
           }}
           options={DEFAULT_ALERT_STATUS_OPTIONS.map((status) => ({
-            label: status,
+            label: statusToOperationName(status, true),
             value: status,
             isDefault: status === 'OPEN',
           }))}
