@@ -316,21 +316,21 @@ export class CdkTarponStack extends cdk.Stack {
     for (const tenantId of siloDataTenants?.[config.stage]?.[
       config.region ?? 'eu-1'
     ] || []) {
-      const tarponSiloDynamoDbTable = this.createDynamodbTable(
+      const siloTarponTable = this.createDynamodbTable(
         StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
         tarponStream,
         true,
         true
       )
 
-      const tarponSiloRuleDynamoDbTable = this.createDynamodbTable(
+      const siloHammerheadTable = this.createDynamodbTable(
         StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
-        tarponStream,
+        hammerheadStream,
         true,
         true
       )
 
-      siloTables.push(tarponSiloDynamoDbTable, tarponSiloRuleDynamoDbTable)
+      siloTables.push(siloTarponTable, siloHammerheadTable)
     }
 
     /*
