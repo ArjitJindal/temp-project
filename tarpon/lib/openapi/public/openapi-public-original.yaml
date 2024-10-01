@@ -1783,7 +1783,7 @@ components:
         createdTimestamp:
           type: number
           description: Timestamp when userId is created
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
       required:
         - userId
@@ -1879,7 +1879,7 @@ components:
         activatedTimestamp:
           type: number
           description: Timestamp when user was activated
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         userDetails:
           $ref: '#/components/schemas/UserDetails'
@@ -1925,7 +1925,7 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
@@ -2411,7 +2411,7 @@ components:
         timestamp:
           type: number
           description: Timestamp of when transaction took place
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         originUserId:
           type: string
@@ -3075,9 +3075,6 @@ components:
         sourceOfWealth:
           type: string
           description: Source of wealth
-      required:
-        - sourceOfFunds
-        - sourceOfWealth
     LegalEntity:
       title: LegalEntity
       type: object
@@ -3540,7 +3537,7 @@ components:
         createdTimestamp:
           type: number
           description: Timestamp when the user was created
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         legalEntity:
           $ref: '#/components/schemas/LegalEntity'
@@ -3786,7 +3783,7 @@ components:
         activatedTimestamp:
           type: number
           description: Timestamp when the user was activated
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         userStateDetails:
           $ref: '#/components/schemas/UserStateDetails'
@@ -3817,7 +3814,7 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
@@ -4532,7 +4529,7 @@ components:
         timestamp:
           type: number
           description: Timestamp of the event
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         transactionId:
           type: string
@@ -4584,7 +4581,7 @@ components:
       type: object
       x-examples:
         example-1:
-          timestamp: 1262300400000
+          timestamp: 315529200000
           userId: string
           userStateDetails:
             reason: string
@@ -4638,7 +4635,7 @@ components:
         timestamp:
           type: number
           description: Timestamp of the event
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         userId:
           type: string
@@ -4663,7 +4660,7 @@ components:
       type: object
       x-examples:
         example-1:
-          timestamp: 1262300400000
+          timestamp: 315529200000
           userId: string
           userStateDetails:
             reason: string
@@ -4717,7 +4714,7 @@ components:
         timestamp:
           type: number
           description: Timestamp of the event
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         userId:
           type: string
@@ -4759,7 +4756,7 @@ components:
         timestamp:
           type: number
           description: Timestamp of the event
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         caseStatusReason:
           type: string
@@ -5150,7 +5147,7 @@ components:
           description:
             Time at which the event was created. Measured in ms since the Unix
             epoch.
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
       required:
         - id
@@ -5352,7 +5349,7 @@ components:
           $ref: '#/components/schemas/CheckDeliveryStatus'
         etaTimestamp:
           type: number
-          minimum: 1262300400000
+          minimum: 315529200000
           maximum: 4133890801000
         shippingAddress:
           $ref: '#/components/schemas/Address'
