@@ -12,6 +12,7 @@ import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import SlaStatus from './SlaStatus';
 import { getSlaColumnsForExport } from './helpers';
+import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import {
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
@@ -404,6 +405,8 @@ export default function AlertTable(props: Props) {
           key: 'createdTimestamp',
           showFilterByDefault: true,
           sorting: true,
+          filtering: true,
+          icon: <CalendarLineIcon />,
           type: DATE,
         }),
         helper.simple<'age'>({
