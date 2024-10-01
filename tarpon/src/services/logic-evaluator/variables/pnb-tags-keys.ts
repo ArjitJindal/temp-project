@@ -10,7 +10,7 @@ export const PNB_TAGS_KEYS = [
   'refTypeDescription',
   'thirdPartyICNumber',
   'guardianICNumber',
-  'destinationproductType',
+  'destinationProductType',
   'sourceSystem',
   'originatingSystem',
   'originProductType',

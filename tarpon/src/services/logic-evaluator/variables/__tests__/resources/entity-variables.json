@@ -307,7 +307,7 @@
   "TRANSACTION:tags-refTypeDescription",
   "TRANSACTION:tags-thirdPartyICNumber",
   "TRANSACTION:tags-guardianICNumber",
-  "TRANSACTION:tags-destinationproductType",
+  "TRANSACTION:tags-destinationProductType",
   "TRANSACTION:tags-sourceSystem",
   "TRANSACTION:tags-originatingSystem",
   "TRANSACTION:tags-originProductType",
