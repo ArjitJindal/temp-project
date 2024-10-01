@@ -310,7 +310,7 @@ const getTestTransactionSuccess = async () => {
           dataCallback: (_, data, reject) => {
             if (
               data.validationErrors !==
-              '[numeric instance is lower than the required minimum (minimum: 1262300400000, found: 1)]'
+              '[numeric instance is lower than the required minimum (minimum: 315529200000, found: 1)]'
             ) {
               reject('Validation error does not match')
             }
