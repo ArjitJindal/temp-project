@@ -1,4 +1,4 @@
-import { Document, Filter } from 'mongodb'
+import { Db, Document, Filter } from 'mongodb'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { getAffectedInterval } from '../../dashboard/utils'
 import {
@@ -7,6 +7,7 @@ import {
   getMongoDbClientDb,
 } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
+import { AccountsService } from '@/services/accounts'
 
 export function withUpdatedAt(
   pipeline: Document[],
@@ -258,4 +259,26 @@ export function getAttributeSumStatsDerivedPipeline(
       },
     },
   ]
+}
+
+export const updateRoles = async (db: Db, collectionName: string) => {
+  const accountsService = await AccountsService.getInstance()
+  const collection = db.collection(collectionName)
+  const accounts = await collection.distinct('accountId')
+
+  for (const accountId of accounts) {
+    try {
+      const account = await accountsService.getAccount(accountId)
+      await collection.updateOne(
+        { accountId },
+        { $set: { role: account.role } },
+        { upsert: true }
+      )
+    } catch (error) {
+      console.error(
+        `Failed to fetch or update role for account ${accountId}:`,
+        error
+      )
+    }
+  }
 }

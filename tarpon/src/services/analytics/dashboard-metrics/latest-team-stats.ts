@@ -1,5 +1,5 @@
 import { difference } from 'lodash'
-import { withUpdatedAt } from './utils'
+import { updateRoles, withUpdatedAt } from './utils'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
@@ -422,6 +422,9 @@ export class LatestTeamStatsDashboardMetric {
           .next()
       }
     }
+
+    await updateRoles(db, alertAggregationCollection)
+    await updateRoles(db, caseAggregationCollection)
   }
 
   public static async get(

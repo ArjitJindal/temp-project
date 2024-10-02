@@ -8867,6 +8867,8 @@ components:
           type: number
         inProgress:
           type: number
+        role:
+          type: string
       required:
         - accountId
         - assignedTo
@@ -8887,6 +8889,8 @@ components:
           type: number
         inReview:
           type: number
+        role:
+          type: string
       required:
         - accountId
     CommentRequest:

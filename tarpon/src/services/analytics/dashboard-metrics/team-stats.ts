@@ -1,6 +1,6 @@
 import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
-import { cleanUpStaleData, withUpdatedAt } from './utils'
+import { cleanUpStaleData, updateRoles, withUpdatedAt } from './utils'
 import dayjs from '@/utils/dayjs'
 import {
   HOUR_DATE_FORMAT,
@@ -880,6 +880,9 @@ export class TeamStatsDashboardMetric {
         'HOUR'
       ),
     ])
+
+    await updateRoles(db, alertAggregationCollection)
+    await updateRoles(db, caseAggregationCollection)
   }
 
   public static async get(

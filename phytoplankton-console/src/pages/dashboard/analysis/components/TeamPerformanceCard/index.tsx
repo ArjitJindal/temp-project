@@ -4,6 +4,8 @@ import { useLocalStorageState } from 'ahooks';
 import s from './index.module.less';
 import AccountsStatisticsTable from './AccountsStatisticsTable';
 import LatestOverviewTable from './LatestTeamOverview';
+import CompositeLatestTeamOverview from './CompositeLatestTeamOverview';
+import CompositeAccountsStatisticsTable from './ComopsiteAccountStatisticsTable';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
@@ -21,6 +23,7 @@ import {
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Select from '@/components/library/Select';
+import Button from '@/components/library/Button';
 
 interface Params extends TableCommonParams {
   scope: 'CASES' | 'ALERTS';
@@ -86,6 +89,8 @@ export default function TeamPerformanceCard(props: WidgetProps) {
     },
   );
 
+  const [showAggregatedView, setShowAggregatedView] = useState(false);
+
   return (
     <Widget
       extraControls={[
@@ -103,6 +108,13 @@ export default function TeamPerformanceCard(props: WidgetProps) {
           ]}
           style={{ width: 120 }}
         />,
+        <Button
+          key="toggleView"
+          onClick={() => setShowAggregatedView(!showAggregatedView)}
+          type={showAggregatedView ? 'SECONDARY' : 'PRIMARY'}
+        >
+          {showAggregatedView ? 'Show Individual' : 'Show Aggregated'}
+        </Button>,
       ]}
       {...props}
     >
@@ -133,7 +145,16 @@ export default function TeamPerformanceCard(props: WidgetProps) {
         )}
       </div>
       {type === 'daterange' ? (
-        <AccountsStatisticsTable queryResult={dateRangeQueryResult} scope={params.scope} />
+        showAggregatedView ? (
+          <CompositeAccountsStatisticsTable
+            queryResult={dateRangeQueryResult}
+            scope={params.scope}
+          />
+        ) : (
+          <AccountsStatisticsTable queryResult={dateRangeQueryResult} scope={params.scope} />
+        )
+      ) : showAggregatedView ? (
+        <CompositeLatestTeamOverview queryResult={latestQueryResut} />
       ) : (
         <LatestOverviewTable queryResult={latestQueryResut} />
       )}
