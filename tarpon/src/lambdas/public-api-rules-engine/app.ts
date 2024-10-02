@@ -353,7 +353,7 @@ export const userEventsHandler = lambdaApi()(
           })
         )
       } catch (error) {
-        logger.error(`Error verifying transactions: ${error}`)
+        logger.error(`Error verifying users: ${error}`)
       }
       return response
     })

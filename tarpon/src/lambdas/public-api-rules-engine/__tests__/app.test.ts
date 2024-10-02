@@ -586,11 +586,11 @@ describe('Public API - Batch create transaction events', () => {
       failed: 2,
       failedRecords: [
         {
-          id: 'E-1',
+          id: 'T-3',
           reasonCode: 'ID_NOT_FOUND',
         },
         {
-          id: 'E-2',
+          id: 'T-4',
           reasonCode: 'ID_NOT_FOUND',
         },
       ],
@@ -891,11 +891,11 @@ describe('Public API - Batch create consumer user events', () => {
       failed: 2,
       failedRecords: [
         {
-          id: 'E-1',
+          id: '3',
           reasonCode: 'ID_NOT_FOUND',
         },
         {
-          id: 'E-2',
+          id: '4',
           reasonCode: 'ID_NOT_FOUND',
         },
       ],
@@ -1207,11 +1207,11 @@ describe('Public API - Batch create business user events', () => {
       failed: 2,
       failedRecords: [
         {
-          id: 'E-1',
+          id: '3',
           reasonCode: 'ID_NOT_FOUND',
         },
         {
-          id: 'E-2',
+          id: '4',
           reasonCode: 'ID_NOT_FOUND',
         },
       ],

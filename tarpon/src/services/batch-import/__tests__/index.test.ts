@@ -187,7 +187,7 @@ describe('BatchImportService', () => {
         failed: 1,
         failedRecords: [
           {
-            id: 'E-1',
+            id: 'T-unknown',
             reasonCode: 'ID_NOT_FOUND',
           },
         ],
@@ -215,11 +215,11 @@ describe('BatchImportService', () => {
         failed: 2,
         failedRecords: [
           {
-            id: 'E-1',
+            id: 'T-unknown',
             reasonCode: 'ID_NOT_FOUND',
           },
           {
-            id: 'E-2',
+            id: 'T-unknown',
             reasonCode: 'ID_NOT_FOUND',
           },
         ],
@@ -320,7 +320,7 @@ describe('BatchImportService', () => {
         failed: 1,
         failedRecords: [
           {
-            id: 'E-2',
+            id: 'U-4',
             reasonCode: 'ID_NOT_FOUND',
           },
         ],
@@ -348,7 +348,7 @@ describe('BatchImportService', () => {
         failed: 2,
         failedRecords: [
           {
-            id: 'E-1',
+            id: 'U-unknown-1',
             reasonCode: 'ID_NOT_FOUND',
           },
           {
@@ -453,7 +453,7 @@ describe('BatchImportService', () => {
         failed: 1,
         failedRecords: [
           {
-            id: 'E-2',
+            id: 'U-4',
             reasonCode: 'ID_NOT_FOUND',
           },
         ],
@@ -481,7 +481,7 @@ describe('BatchImportService', () => {
         failed: 2,
         failedRecords: [
           {
-            id: 'E-1',
+            id: 'U-unknown-1',
             reasonCode: 'ID_NOT_FOUND',
           },
           {
