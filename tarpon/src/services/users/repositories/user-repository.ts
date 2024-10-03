@@ -861,6 +861,12 @@ export class UserRepository {
     delete user.SortKeyID
     delete user.createdAt
 
+    if (this.tenantId.toLowerCase() === '0789ad73b8') {
+      if (user.linkedEntities) {
+        ;(user.linkedEntities as any).childUserIds = undefined
+      }
+    }
+
     return user as T
   }
 
@@ -981,6 +987,12 @@ export class UserRepository {
       userId,
       type,
     }
+    if (this.tenantId.toLowerCase() === '0789ad73b8') {
+      if (newUser.linkedEntities) {
+        ;(newUser.linkedEntities as any).childUserIds = undefined
+      }
+    }
+
     const primaryKey = DynamoDbKeys.USER(this.tenantId, userId)
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),

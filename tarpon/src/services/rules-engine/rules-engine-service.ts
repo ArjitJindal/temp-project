@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { BadRequest, NotFound, Conflict } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   compact,
   Dictionary,
@@ -243,6 +243,7 @@ export class RulesEngineService {
     )
     this.transactionEventRepository = new TransactionEventRepository(tenantId, {
       dynamoDb,
+      mongoDb,
     })
     this.ruleRepository = new RuleRepository(tenantId, {
       dynamoDb,
@@ -570,16 +571,6 @@ export class RulesEngineService {
       await this.transactionEventRepository.getTransactionEvents(
         transaction.transactionId
       )
-
-    const sameTimestampEvents = previousTransactionEvents.filter(
-      (event) => event.timestamp === transactionEvent.timestamp
-    )
-
-    if (sameTimestampEvents.length > 1) {
-      throw new Conflict(
-        `Transaction event with same timestamp and transactionId already exists`
-      )
-    }
 
     const updatedTransaction = mergeEntities(
       {
@@ -933,11 +924,23 @@ export class RulesEngineService {
     senderUser: User | Business | null,
     receiverUser: User | Business | null
   ): Promise<void> {
-    const transactionEvents =
-      await this.transactionEventRepository.getTransactionEvents(
-        updatedTransaction.transactionId,
-        { consistentRead: true }
-      )
+    let transactionEvents: TransactionEventWithRulesResult[] = []
+    if (this.tenantId.toLowerCase() === '0789ad73b8') {
+      const events =
+        await this.transactionEventRepository.getMongoTransactionEvents([
+          updatedTransaction.transactionId,
+        ])
+      transactionEvents = events.get(
+        updatedTransaction.transactionId
+      ) as TransactionEventWithRulesResult[]
+      transactionEvents.sort((a, b) => a.timestamp - b.timestamp)
+    } else {
+      transactionEvents =
+        await this.transactionEventRepository.getTransactionEvents(
+          updatedTransaction.transactionId,
+          { consistentRead: true }
+        )
+    }
 
     const transactionEventInDb = transactionEvents.find(
       (event) => event.eventId === transactionEventId

@@ -49,6 +49,21 @@ export class UserEventRepository {
     userType: UserType,
     rulesResult?: ConsumerUserMonitoringResult | BusinessUserMonitoringResult
   ): Promise<string> {
+    if (this.tenantId.toLowerCase() === '0789ad73b8') {
+      const consumerUserEvent = userEvent as ConsumerUserEvent
+      if (consumerUserEvent.updatedConsumerUserAttributes?.linkedEntities) {
+        ;(
+          consumerUserEvent.updatedConsumerUserAttributes.linkedEntities as any
+        ).childUserIds = undefined
+      }
+      const businessUserEvent = userEvent as BusinessUserEvent
+      if (businessUserEvent.updatedBusinessUserAttributes?.linkedEntities) {
+        ;(
+          businessUserEvent.updatedBusinessUserAttributes.linkedEntities as any
+        ).childUserIds = undefined
+      }
+    }
+
     const eventId = userEvent.eventId || uuidv4()
     let primaryKey
     if (userType == 'CONSUMER') {

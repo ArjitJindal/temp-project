@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { NotFound, BadRequest, Conflict } from 'http-errors'
+import { NotFound, BadRequest } from 'http-errors'
 import { isEmpty, omit } from 'lodash'
 import { MongoClient } from 'mongodb'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -252,18 +252,6 @@ export class UserManagementService {
     if (!user) {
       throw new NotFound(
         `User ${userEvent.userId} not found. Please create the user ${userEvent.userId}`
-      )
-    }
-
-    const existingUserEvent = await this.userEventRepository.getUserEvent(
-      userType,
-      userEvent.userId,
-      userEvent.timestamp
-    )
-
-    if (existingUserEvent) {
-      throw new Conflict(
-        `User event with same timestamp and userId already exists`
       )
     }
 
