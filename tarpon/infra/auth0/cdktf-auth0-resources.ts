@@ -70,7 +70,10 @@ export const createAuth0TenantResources = (
     }
   )
 
-  const callbacks = tenantConfig.allowedCallbackUrls
+  const callbacks = tenantConfig.allowedCallbackUrls.flatMap((callbackUrl) => [
+    callbackUrl,
+    `${callbackUrl}/post-login`,
+  ])
   let samlp: ClientCreateAddonsSamlp | undefined
   if (tenantName == 'flagright') {
     // The ordering here matters as auth0 implicitly selects the first application callback as the callback for the SAMLP addon.

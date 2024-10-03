@@ -28,7 +28,6 @@ interface BrandingSettings {
   apiDocsLinks: {
     webhooks?: string;
   };
-  redirectPath?: string;
   faviconUrl: string;
   systemAvatarUrl?: string;
 }

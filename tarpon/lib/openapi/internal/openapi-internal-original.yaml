@@ -3085,6 +3085,8 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TenantSettings'
+        '401':
+          description: Unauthorized
     parameters: []
     post:
       summary: Tenant - POST Settings
@@ -6816,6 +6818,13 @@ paths:
       responses:
         '200':
           description: OK
+  /post-login:
+    get:
+      summary: Post login
+      operationId: get-post-login
+      responses:
+        '200':
+          description: OK
 components:
   schemas:
     QuestionAutocompleteResponse:
@@ -9379,6 +9388,8 @@ components:
         accountDormancyAllowedDays:
           type: number
         sessionTimeoutMinutes:
+          type: number
+        maxActiveSessions:
           type: number
     ConsoleTag:
       title: ConsoleTag

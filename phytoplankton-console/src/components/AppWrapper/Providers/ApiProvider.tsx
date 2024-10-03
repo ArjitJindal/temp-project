@@ -1,5 +1,6 @@
-import React, { useContext, useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 import { message } from '@/components/library/Message';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 import { useAuth0User } from '@/utils/user-utils';
@@ -42,19 +43,39 @@ interface Props {
   children: React.ReactNode;
 }
 
+function useFingerprint() {
+  const [fingerprint, setFingerprint] = useState<string | undefined>();
+  useEffect(() => {
+    FingerprintJS.load()
+      .then((fp) => fp.get())
+      .then((v) => setFingerprint(v.visitorId));
+  }, []);
+  return fingerprint;
+}
+
 export default function ApiProvider(props: Props) {
   const auth = useAuth();
   const user = useAuth0User();
+  const fingerprint = useFingerprint();
   const api = useMemo(() => {
     const apiUrl = API_BASE_PATH || user.tenantConsoleApiUrl || '';
     const apiConfig: Configuration = {
       baseServer: new ServerConfiguration(apiUrl, {}),
       httpApi: new IsomorphicFetchHttpLibrary(),
-      middleware: [new PromiseMiddlewareWrapper(new AuthorizationMiddleware(auth))],
+      middleware: [
+        new PromiseMiddlewareWrapper(new AuthorizationMiddleware(auth)),
+        new PromiseMiddlewareWrapper({
+          pre: async (context: RequestContext) => {
+            context.setHeaderParam('x-fingerprint', fingerprint ?? '');
+            return context;
+          },
+          post: async (context: ResponseContext) => context,
+        }),
+      ],
       authMethods: { Authorization: auth },
     };
     return new FlagrightApi(apiConfig);
-  }, [user, auth]);
+  }, [user, auth, fingerprint]);
 
   return (
     <ApiContext.Provider
@@ -62,7 +83,7 @@ export default function ApiProvider(props: Props) {
         api,
       }}
     >
-      {props.children}
+      {fingerprint && props.children}
     </ApiContext.Provider>
   );
 }

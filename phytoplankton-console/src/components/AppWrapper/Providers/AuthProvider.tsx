@@ -16,7 +16,7 @@ export const providerConfig = Object.freeze({
   clientId: branding.auth0ClientId,
   scope: 'openid profile email',
   audience: AUTH0_AUDIENCE ?? undefined,
-  redirectUri: `${window.location.origin}${branding.redirectPath || ''}`,
+  redirectUri: `${window.location.origin}/post-login`,
 });
 
 const AuthProvider: React.FC = ({ children }) => {

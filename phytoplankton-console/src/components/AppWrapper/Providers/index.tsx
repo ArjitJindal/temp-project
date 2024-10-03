@@ -13,6 +13,7 @@ import { BrowserSupportProvider } from './BrowserSupportProvider';
 import { SuperAdminModeProvider } from './SuperAdminModeProvider';
 import { PostHogProviderWrapper } from './PostHogProvider';
 import SessionTimeoutProvider from './SessionTimeoutDetector';
+import ActiveSessionProvider from './ActiveSessionsProvider';
 import CluesoTokenProvider from '@/components/AppWrapper/Providers/CluesoTokenProvider';
 import ApiProvider from '@/components/AppWrapper/Providers/ApiProvider';
 
@@ -40,6 +41,7 @@ const AllProviders = withProviders(
   QueryClientProvider,
   FlagrightUserProvider,
   ApiProvider,
+  ActiveSessionProvider,
   SettingsProvider,
   SessionTimeoutProvider,
   PostHogProviderWrapper,

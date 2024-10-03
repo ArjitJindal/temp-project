@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import createHttpError from 'http-errors'
 import jwt from 'jsonwebtoken'
-import { AccountsService } from '../../services/accounts'
+import { AccountsService } from '@/services/accounts'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   assertCurrentUserRole,
@@ -14,6 +14,7 @@ import {
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getSecretByName } from '@/utils/secrets-manager'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -21,11 +22,28 @@ export const accountsHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { userId, auth0Domain } = event.requestContext.authorizer
+    const { userId, auth0Domain, tenantId } = event.requestContext.authorizer
     const mongoDb = await getMongoDbClient()
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+    const accountsService = new AccountsService(
+      { auth0Domain },
+      { mongoDb, dynamoDb: getDynamoDbClient() }
+    )
     const organization = await accountsService.getAccountTenant(userId)
     const handlers = new Handlers()
+
+    handlers.registerGetPostLogin(async () => {
+      const userIp = event.headers['X-Forwarded-For']
+        ? event.headers['X-Forwarded-For'].split(',')[0]
+        : event.requestContext.identity.sourceIp
+      const userAgent =
+        event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
+      const deviceFingerprint = event.headers['x-fingerprint'] || 'unknown'
+      await accountsService.refreshActiveSessions(tenantId, userId, {
+        userIp,
+        userAgent,
+        deviceFingerprint,
+      })
+    })
 
     handlers.registerMe(async () => await accountsService.getAccount(userId))
 

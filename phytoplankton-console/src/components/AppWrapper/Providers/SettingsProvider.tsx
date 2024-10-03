@@ -2,6 +2,7 @@ import React, { useContext, useMemo } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { isEmpty, toLower } from 'lodash';
 import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
+import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from '@/api';
 import {
   Feature as FeatureName,
@@ -10,6 +11,7 @@ import {
   TransactionState,
   RiskLevel,
   ManagedRoleName,
+  ApiException,
 } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { SETTINGS } from '@/utils/queries/keys';
@@ -33,11 +35,20 @@ export default function SettingsProvider(props: { children: React.ReactNode }) {
   const globalFeatures = FEATURES_ENABLED as FeatureName[];
   const api = useApi();
   const role = useAccountRole();
+  const { logout } = useAuth0();
 
-  const queryResults = useQuery(
-    SETTINGS(),
-    (): Promise<TenantSettings> => api.getTenantsSettings(),
-  );
+  const queryResults = useQuery(SETTINGS(), async (): Promise<TenantSettings> => {
+    try {
+      return await api.getTenantsSettings();
+    } catch (e) {
+      if ((e as ApiException<unknown>).httpMessage === 'Unauthorized') {
+        logout({
+          returnTo: window.location.origin,
+        });
+      }
+      throw e;
+    }
+  });
 
   const previousQueryResults = usePrevious(queryResults);
 

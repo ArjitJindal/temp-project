@@ -22,6 +22,7 @@ import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
+import { generateChecksum } from '@/utils/object'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -378,6 +379,18 @@ export const DynamoDbKeys = {
   AVG_ARS_READY_MARKER: (tenantId: string) => ({
     PartitionKeyID: `${tenantId}#avg-ars-ready`,
     SortKeyID: '1',
+  }),
+  ACTIVE_SESSIONS: (
+    tenantId: string,
+    userId: string,
+    deviceInfo?: {
+      userAgent: string
+      userIp: string
+      deviceFingerprint: string
+    }
+  ) => ({
+    PartitionKeyID: `${tenantId}#activesessions#${userId}`,
+    SortKeyID: generateChecksum(deviceInfo, 5),
   }),
 }
 

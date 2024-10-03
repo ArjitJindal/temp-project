@@ -96,6 +96,7 @@ type ExcludedDynamoDbKey = Exclude<
   | 'V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER'
   | 'AVG_ARS_VALUE_ITEM'
   | 'AVG_ARS_READY_MARKER'
+  | 'ACTIVE_SESSIONS'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable

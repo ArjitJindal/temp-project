@@ -50,7 +50,7 @@ export const SecuritySettings = () => {
       >
         <SelectionGroup<number>
           mode={'SINGLE'}
-          value={settings.passwordResetDays}
+          value={settings.passwordResetDays ?? 0}
           onChange={(value) => {
             mutateTenantSettings.mutate({ passwordResetDays: value });
           }}
@@ -74,7 +74,7 @@ export const SecuritySettings = () => {
       >
         <SelectionGroup<number>
           mode={'SINGLE'}
-          value={settings.accountDormancyAllowedDays}
+          value={settings.accountDormancyAllowedDays ?? 0}
           onChange={(value) => mutateTenantSettings.mutate({ accountDormancyAllowedDays: value })}
           isLoading={mutateTenantSettings.isLoading}
           options={[
@@ -107,6 +107,26 @@ export const SecuritySettings = () => {
             { label: '1 hour', value: 60 },
           ]}
           isDisabled={!isSettingsEnabled}
+        />
+      </SettingsCard>
+      <SettingsCard
+        title="Max concurrent sessions"
+        description="The maximum number of concurrent sessions a user can have."
+      >
+        <SelectionGroup<number>
+          mode={'SINGLE'}
+          value={settings.maxActiveSessions ?? 0}
+          onChange={(value) => {
+            mutateTenantSettings.mutate({ maxActiveSessions: value });
+          }}
+          isLoading={mutateTenantSettings.isLoading}
+          options={[
+            { label: 'No limit', value: 0 },
+            { label: '1', value: 1 },
+            { label: '2', value: 2 },
+            { label: '3', value: 3 },
+          ]}
+          isDisabled={!isSettingsEnabled || isLoading('maxActiveSessions')}
         />
       </SettingsCard>
     </Fragment>
