@@ -268,10 +268,17 @@ export const updateRoles = async (db: Db, collectionName: string) => {
 
   for (const accountId of accounts) {
     try {
-      const account = await accountsService.getAccount(accountId)
+      let role: string
+      if (accountId.startsWith('auth0')) {
+        const account = await accountsService.getAccount(accountId)
+        role = account.role
+      } else {
+        role = 'other'
+      }
+
       await collection.updateOne(
         { accountId },
-        { $set: { role: account.role } },
+        { $set: { role } },
         { upsert: true }
       )
     } catch (error) {
