@@ -57,6 +57,7 @@ export const SecuritySettings = () => {
           isLoading={mutateTenantSettings.isLoading}
           options={[
             { label: 'No limit', value: 0, tooltip: 'Password will never expire' },
+            { label: '1 day', value: 1 }, // Just for Testing
             { label: '30 days', value: 30 },
             { label: '45 days', value: 45 },
             { label: '2 months', value: 60 },
@@ -83,6 +84,7 @@ export const SecuritySettings = () => {
               value: 0,
               tooltip: 'Accounts will not be suspended due to dormancy.',
             },
+            { label: '1 day', value: 1 }, // Just for Testing
             { label: '45 days', value: 45 },
             { label: '2 months', value: 60 },
             { label: '3 months', value: 90 },
