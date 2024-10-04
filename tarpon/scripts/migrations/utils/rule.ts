@@ -98,7 +98,7 @@ async function renameRuleParameterPrivate(
       ? (rule as Rule).defaultParameters
       : (rule as RuleInstance).parameters
     const targetParameter = get(parameters, oldParameterPath)
-    if (targetParameter) {
+    if (targetParameter != null) {
       set(
         parameters,
         newParameterPath,
@@ -114,7 +114,7 @@ async function renameRuleParameterPrivate(
         (riskParameters as any)?.[risk],
         oldParameterPath
       )
-      if (targetParameter) {
+      if (targetParameter != null) {
         set(
           (riskParameters as any)?.[risk],
           newParameterPath,
@@ -197,7 +197,7 @@ async function deleteUnusedRuleParameterPrivate(
 
     for (const parameterPath of parameterPaths) {
       const targetParameter = get(parameters, parameterPath)
-      if (targetParameter) {
+      if (targetParameter != null) {
         unset(parameters, parameterPath)
         shouldSave = true
       }
@@ -211,7 +211,7 @@ async function deleteUnusedRuleParameterPrivate(
           (riskParameters as any)?.[risk],
           parameterPath
         )
-        if (targetParameter) {
+        if (targetParameter != null) {
           unset((riskParameters as any)?.[risk], parameterPath)
           shouldSave = true
         }
