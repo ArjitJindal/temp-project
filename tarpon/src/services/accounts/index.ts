@@ -81,7 +81,6 @@ type ActiveSession = {
   SortKeyID: string
   userId: string
   userAgent: string
-  userIp: string
   deviceFingerprint: string
   createdAt: number
 }
@@ -473,7 +472,7 @@ export class AccountsService {
   async refreshActiveSessions(
     tenantId: string,
     userId: string,
-    deviceInfo: { userIp: string; userAgent: string; deviceFingerprint: string }
+    deviceInfo: { userAgent: string; deviceFingerprint: string }
   ): Promise<void> {
     if (!this.dynamoDb) {
       throw new Error('DynamoDB client is not initialized')
@@ -521,7 +520,7 @@ export class AccountsService {
   async validateActiveSession(
     tenantId: string,
     userId: string,
-    deviceInfo: { userIp: string; userAgent: string; deviceFingerprint: string }
+    deviceInfo: { userAgent: string; deviceFingerprint: string }
   ): Promise<void> {
     if (!this.dynamoDb) {
       throw new Error('DynamoDB client is not initialized')

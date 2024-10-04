@@ -25,7 +25,6 @@ describe('AccountsService', () => {
       await withContext(
         async () => {
           await accountsService.refreshActiveSessions(tenantId, userId, {
-            userIp: '127.0.0.1',
             userAgent: 'test-agent',
             deviceFingerprint: 'test-fingerprint',
           })
@@ -35,7 +34,6 @@ describe('AccountsService', () => {
           )
           expect(activeSessions1.length).toBe(1)
           await accountsService.refreshActiveSessions(tenantId, userId, {
-            userIp: '127.0.0.1',
             userAgent: 'test-agent-2',
             deviceFingerprint: 'test-fingerprint-2',
           })
@@ -45,7 +43,6 @@ describe('AccountsService', () => {
           )
           expect(activeSessions2.length).toBe(2)
           await accountsService.refreshActiveSessions(tenantId, userId, {
-            userIp: '127.0.0.1',
             userAgent: 'test-agent-3',
             deviceFingerprint: 'test-fingerprint-3',
           })
@@ -68,7 +65,6 @@ describe('AccountsService', () => {
       const tenantId = 'tenant1'
       const userId = 'user1'
       const deviceInfo = {
-        userIp: '127.0.0.1',
         userAgent: 'test-agent',
         deviceFingerprint: 'test-fingerprint',
       }
@@ -91,7 +87,6 @@ describe('AccountsService', () => {
       const tenantId = 'tenant1'
       const userId = 'user1'
       const deviceInfo = {
-        userIp: '127.0.0.1',
         userAgent: 'test-agent',
         deviceFingerprint: 'test-fingerprint',
       }
@@ -105,7 +100,6 @@ describe('AccountsService', () => {
           )
           await expect(
             accountsService.validateActiveSession(tenantId, userId, {
-              userIp: deviceInfo.userIp,
               userAgent: 'test-agent-new',
               deviceFingerprint: 'test-fingerprint-new',
             })
@@ -119,7 +113,6 @@ describe('AccountsService', () => {
         async () => {
           await expect(
             accountsService.validateActiveSession('tenant1', 'user1', {
-              userIp: '127.0.0.1',
               userAgent: 'test-agent',
               deviceFingerprint: 'test-fingerprint',
             })

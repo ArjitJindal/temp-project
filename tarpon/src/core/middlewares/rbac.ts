@@ -60,9 +60,6 @@ export const rbacMiddleware =
         event.requestContext.authorizer.tenantId,
         event.requestContext.authorizer.userId,
         {
-          userIp: event.headers['X-Forwarded-For']
-            ? event.headers['X-Forwarded-For'].split(',')[0]
-            : event.requestContext.identity.sourceIp,
           userAgent:
             event.headers['User-Agent'] ||
             event.headers['user-agent'] ||

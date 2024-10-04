@@ -385,7 +385,6 @@ export const DynamoDbKeys = {
     userId: string,
     deviceInfo?: {
       userAgent: string
-      userIp: string
       deviceFingerprint: string
     }
   ) => ({

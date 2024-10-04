@@ -32,14 +32,10 @@ export const accountsHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetPostLogin(async () => {
-      const userIp = event.headers['X-Forwarded-For']
-        ? event.headers['X-Forwarded-For'].split(',')[0]
-        : event.requestContext.identity.sourceIp
       const userAgent =
         event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
       const deviceFingerprint = event.headers['x-fingerprint'] || 'unknown'
       await accountsService.refreshActiveSessions(tenantId, userId, {
-        userIp,
         userAgent,
         deviceFingerprint,
       })
