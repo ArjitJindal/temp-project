@@ -29,10 +29,13 @@ export const SessionTimeoutProvider: React.FC<{ children: React.ReactNode }> = (
     });
   }, [logout]);
 
+  const disabled = !settings.sessionTimeoutMinutes || settings.sessionTimeoutMinutes === 0;
   const { reset } = useIdleTimer({
-    timeout: (settings.sessionTimeoutMinutes ?? 60) * 60 * 1000, // Convert minutes to milliseconds
+    timeout: disabled ? undefined : (settings.sessionTimeoutMinutes ?? 60) * 60 * 1000,
     onIdle: handleOnIdle,
     debounce: 500,
+    crossTab: true,
+    disabled,
   });
 
   useEffect(() => {

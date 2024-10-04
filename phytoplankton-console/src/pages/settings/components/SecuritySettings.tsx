@@ -31,6 +31,17 @@ export const SecuritySettings = () => {
     [mutateTenantSettings.variables, mutateTenantSettings.isLoading],
   );
 
+  const handleSessionTimeoutChange = (value: number | undefined) => {
+    mutateTenantSettings.mutate(
+      { sessionTimeoutMinutes: value },
+      {
+        onSuccess: () => {
+          window.location.reload();
+        },
+      },
+    );
+  };
+
   return (
     <Fragment>
       <SettingsCard
@@ -95,18 +106,21 @@ export const SecuritySettings = () => {
         />
       </SettingsCard>
       <SettingsCard
-        title="Session Timeout"
-        description="The number of minutes after which a user's session will timeout if they are inactive."
+        title="Session timeout"
+        description="The time period after which a user's session will timeout if they are inactive."
       >
         <SelectionGroup<number>
           mode={'SINGLE'}
           value={settings.sessionTimeoutMinutes}
-          onChange={(value) => mutateTenantSettings.mutate({ sessionTimeoutMinutes: value })}
+          onChange={(value) => handleSessionTimeoutChange(value)}
           options={[
+            { label: 'Default', value: 0 },
             { label: '15 minutes', value: 15 },
             { label: '30 minutes', value: 30 },
             { label: '45 minutes', value: 45 },
             { label: '1 hour', value: 60 },
+            { label: '24 hours', value: 1440 },
+            { label: '48 hours', value: 2880 },
           ]}
           isDisabled={!isSettingsEnabled}
         />

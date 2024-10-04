@@ -27,6 +27,4 @@ export const Auth0DevTenantConfig: Auth0TenantConfig = {
     credentialsAwsSecretName: 'auth0EmailProviderCreds',
     fromAddress: 'support@flagright.com',
   },
-  sessionTimeoutHours: 1,
-  requireLoginAfterHours: 48,
 }

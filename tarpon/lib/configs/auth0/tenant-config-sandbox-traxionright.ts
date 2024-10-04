@@ -21,6 +21,4 @@ export const Auth0SandboxTraxionRightTenantConfig: Auth0TenantConfig = {
     fromAddress: 'noreply@traxionright.com',
   },
   apiUsageGoogleSheetId: '1qlCOVIJkvJbZVV7w2s3sICll2gDjJip17pRvKSSTFlw',
-  sessionTimeoutHours: 1,
-  requireLoginAfterHours: 48,
 }

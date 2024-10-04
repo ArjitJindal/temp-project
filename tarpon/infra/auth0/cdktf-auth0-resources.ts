@@ -11,6 +11,8 @@ import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
 
+const SESSION_TIMEOUT_HOURS = 48
+
 function getTenantResourceId(tenantName: string, id: string) {
   return `${tenantName}::${id}`
 }
@@ -130,8 +132,8 @@ export const createAuth0TenantResources = (
     },
     refreshToken: {
       leeway: 0,
-      idleTokenLifetime: tenantConfig.sessionTimeoutHours * 3600,
-      tokenLifetime: tenantConfig.requireLoginAfterHours * 3600,
+      idleTokenLifetime: SESSION_TIMEOUT_HOURS * 3600,
+      tokenLifetime: SESSION_TIMEOUT_HOURS * 3600,
       rotationType: 'rotating',
       expirationType: 'expiring',
     },
@@ -140,8 +142,8 @@ export const createAuth0TenantResources = (
   })
 
   new auth0.tenant.Tenant(context, getTenantResourceId(tenantName, 'tenant'), {
-    idleSessionLifetime: tenantConfig.sessionTimeoutHours,
-    sessionLifetime: tenantConfig.requireLoginAfterHours,
+    idleSessionLifetime: SESSION_TIMEOUT_HOURS,
+    sessionLifetime: SESSION_TIMEOUT_HOURS,
     sessionCookie: {
       mode: 'persistent',
     },
@@ -178,8 +180,8 @@ export const createAuth0TenantResources = (
       identifier: config.application.AUTH0_AUDIENCE,
       signingAlg: 'RS256',
       allowOfflineAccess: false,
-      tokenLifetime: tenantConfig.sessionTimeoutHours * 60 * 60,
-      tokenLifetimeForWeb: tenantConfig.sessionTimeoutHours * 60 * 60,
+      tokenLifetime: SESSION_TIMEOUT_HOURS * 60 * 60,
+      tokenLifetimeForWeb: SESSION_TIMEOUT_HOURS * 60 * 60,
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',
