@@ -130,6 +130,7 @@ export class ListService {
     let successRows = 0
     const failedRows: ListImportResponse['failedRows'] = []
     let batch: ListItem[] = []
+    const uniqueItems = new Set<string>()
     for await (const line of rl) {
       try {
         const parsedRow: string[] = await new Promise((resolve, reject) => {
@@ -147,13 +148,15 @@ export class ListService {
         const [key, reason] = parsedRow
         const item = {
           key,
-          metadata: reason
-            ? {
-                reason,
-              }
-            : undefined,
+          metadata: reason ? { reason } : undefined,
         }
+
+        if (uniqueItems.has(key)) {
+          continue
+        }
+        uniqueItems.add(key)
         batch.push(item)
+
         if (batch.length === BATCH_SIZE) {
           await this.setListItems(listId, batch)
           batch = []
