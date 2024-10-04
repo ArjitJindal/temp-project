@@ -10,6 +10,7 @@ import { getToken } from '@/lambdas/jwt-authorizer/app'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getFullTenantId } from '@/utils/tenant'
+import { envIsNot } from '@/utils/env'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials>
@@ -26,6 +27,10 @@ export const localDev =
     context: any,
     callback: any
   ): Promise<APIGatewayProxyResult> => {
+    if (envIsNot('local')) {
+      return handler(event, context, callback)
+    }
+
     const authorizer = event.requestContext.authorizer || {}
     event.requestContext.identity = {
       sourceIp: '127.0.0.1',
@@ -39,7 +44,7 @@ export const localDev =
         auth0Domain: 'dev-flagright.eu.auth0.com',
         ...authorizer,
       }
-    } else if (process.env.ENV === 'local') {
+    } else {
       if (
         event.headers?.['authorization'] ||
         event.headers?.['Authorization']

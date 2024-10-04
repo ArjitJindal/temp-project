@@ -1,7 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
-import { message } from '@/components/library/Message';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 import { useAuth0User } from '@/utils/user-utils';
 import {
@@ -89,7 +88,7 @@ export default function ApiProvider(props: Props) {
 }
 
 export function useAuth(): SecurityAuthentication {
-  const { getAccessTokenSilently, getAccessTokenWithPopup } = useAuth0();
+  const { getAccessTokenSilently, logout } = useAuth0();
   return useMemo(() => {
     const audience = AUTH0_AUDIENCE;
     return new AuthorizationAuthentication({
@@ -101,19 +100,14 @@ export function useAuth(): SecurityAuthentication {
             audience,
           });
         } catch (silentAuthError) {
-          try {
-            token = await getAccessTokenWithPopup({
-              scope: 'openid profile email',
-              audience,
-            });
-          } catch (popupAuthError) {
-            message.error('Failed to authenticate user');
-          }
+          logout({
+            returnTo: window.location.origin,
+          });
         }
         return token;
       },
     });
-  }, [getAccessTokenSilently, getAccessTokenWithPopup]);
+  }, [getAccessTokenSilently, logout]);
 }
 
 export function useApiFromContext(): FlagrightApi {
