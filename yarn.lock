@@ -1708,9 +1708,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.157.0":
-  version: 2.157.0
-  resolution: "aws-cdk@npm:2.157.0"
+"aws-cdk@npm:~2.158.0":
+  version: 2.158.0
+  resolution: "aws-cdk@npm:2.158.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -1718,7 +1718,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 84eeb66a5c2de71f5189673eb0c55a8c6aba595ce8cdc8b0e712bd2207bd83b0ea66dc14eec75407a63e26bac1ab2dc71006c250439e9ac4db619d3120122a84
+  checksum: 7ec07f45b5a671d32d40a2cc0c63fddd1767cd74d525d764709184bcd36bc7d58b5df95e46c96f11e9621b858561599c8f7671f1a36b058cce3288b7af8e5cf4
   languageName: node
   linkType: hard
 
@@ -3336,7 +3336,7 @@ __metadata:
     "@slack/web-api": "npm:^7.3.2"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.7"
-    aws-cdk: "npm:~2.157.0"
+    aws-cdk: "npm:~2.158.0"
     aws-cdk-lib: "npm:~2.157.0"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"
