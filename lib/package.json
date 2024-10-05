@@ -13,7 +13,7 @@
   "dependencies": {
     "@aws-sdk/client-api-gateway": "^3.637.0",
     "@types/fast-levenshtein": "^0.0.4",
-    "aws-cdk-lib": "~2.157.0",
+    "aws-cdk-lib": "~2.158.0",
     "constructs": "^10.3.0",
     "dayjs": "^1.11.12",
     "fast-levenshtein": "^3.0.0",
