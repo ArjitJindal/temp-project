@@ -329,7 +329,7 @@ const WIDGETS: Widgets = {
       },
       {
         id: 'QA_ALERTS_BY_ASSIGNEE',
-        title: 'QA’d alerts overview by assignee',
+        title: 'QA’d alerts overview by alerts assignee',
         component: QaAlertsByAssignee,
         requiredFeatures: ['QA'],
       },
