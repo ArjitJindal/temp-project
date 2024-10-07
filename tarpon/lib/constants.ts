@@ -126,6 +126,9 @@ export const StackConstants = {
   PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiRuleInstanceFunction'
   ),
+  PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME: getResourceNameForTarpon(
+    'PublicManagementApiListsFunction'
+  ),
   PUBLIC_MANAGEMENT_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'PublicManagementApiCaseFunction'
   ),

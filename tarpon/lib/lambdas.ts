@@ -77,6 +77,12 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
+  [StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME]: {
+    codePath: 'public-management-api-lists',
+    handlerName: 'listsHandler',
+    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
+  },
   [StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME]: {
     codePath: 'public-management-api-rule',
     handlerName: 'ruleInstanceHandler',

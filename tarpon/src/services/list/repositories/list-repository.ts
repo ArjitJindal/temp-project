@@ -9,6 +9,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { chunk } from 'lodash'
+import createHttpError from 'http-errors'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
 import { ListHeader } from '@/@types/openapi-public/ListHeader'
@@ -90,7 +91,7 @@ export class ListRepository {
   public async clearListItems(listId: string) {
     const header = await this.getListHeader(listId)
     if (header == null) {
-      throw new Error(`List doesn't exist`)
+      throw new createHttpError.NotFound(`List ${listId} not found`)
     }
     const updatedHeader: ListHeader = {
       ...header,

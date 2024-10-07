@@ -2,6 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
+import httpsErrors from 'http-errors'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -46,9 +47,14 @@ export const listsHandler = lambdaApi()(
         )
     )
 
-    handlers.registerGetList(
-      async (ctx, request) => await listService.getListHeader(request.listId)
-    )
+    handlers.registerGetList(async (ctx, request) => {
+      const list = await listService.getListHeader(request.listId)
+
+      if (list == null) {
+        throw new httpsErrors.NotFound(`List not found: ${request.listId}`)
+      }
+      return list
+    })
 
     handlers.registerDeleteList(
       async (ctx, request) => await listService.deleteList(request.listId)
@@ -64,7 +70,7 @@ export const listsHandler = lambdaApi()(
       const body = request.ListData
       const list = await listService.getListHeader(listId)
       if (list == null) {
-        return null
+        throw new httpsErrors.NotFound(`List not found: ${listId}`)
       }
       if (body.metadata != null) {
         await listService.updateListHeader({

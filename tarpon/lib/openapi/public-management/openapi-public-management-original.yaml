@@ -1130,8 +1130,166 @@ paths:
         ## Users Search
 
         `GET /users/search` endpoint retrieves a list of users matching the specified search criteria.
+  /lists:
+    post:
+      security:
+        - x-api-key: []
+      summary: Create or update a list
+      description: POST /lists endpoint creates updates or clears a list.
+      operationId: post-lists
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListUpdateRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListResponse'
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '404':
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '409':
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
 components:
   schemas:
+    List:
+      title: List
+      type: object
+      properties:
+        listId:
+          type: string
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+          enum:
+            - USER_ID
+        data:
+          $ref: '#/components/schemas/ListData'
+      required:
+        - listId
+        - listType
+        - subtype
+        - data
+    ListAppendRequest:
+      title: ListAppendRequest
+      type: object
+      properties:
+        data:
+          $ref: '#/components/schemas/ListData'
+        operation:
+          type: string
+          enum:
+            - APPEND
+        listId:
+          type: string
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+          enum:
+            - USER_ID
+      required:
+        - data
+        - operation
+        - listId
+        - listType
+        - subtype
+    ListClearRequest:
+      title: ListClearRequest
+      type: object
+      properties:
+        listId:
+          type: string
+        operation:
+          type: string
+          enum:
+            - CLEAR
+      required:
+        - listId
+        - operation
+    ListUpdateRequest:
+      title: ListUpdateRequest
+      oneOf:
+        - $ref: '#/components/schemas/ListAppendRequest'
+        - $ref: '#/components/schemas/ListClearRequest'
+    ListData:
+      title: ListData
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListDataItems'
+      required:
+        - items
+    ListDataItems:
+      title: ListDataItems
+      type: object
+      properties:
+        key:
+          type: string
+      required:
+        - key
+    ListResponse:
+      title: ListResponse
+      type: object
+      properties:
+        status:
+          type: string
+          enum:
+            - SUCCESS
+            - FAILURE
+        message:
+          type: string
+        listId:
+          type: string
+      required:
+        - status
+        - message
+        - listId
     UsersSearchResponse:
       title: UsersSearchResponse
       type: object

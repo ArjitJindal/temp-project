@@ -714,6 +714,11 @@ export class CdkTarponStack extends cdk.Stack {
       name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_FUNCTION_NAME,
     })
 
+    /* Lists Function (Public) */
+    createFunction(this, lambdaExecutionRole, {
+      name: StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME,
+    })
+
     /* Rule Instance (Public) */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.PUBLIC_MANAGEMENT_API_RULE_INSTANCE_FUNCTION_NAME,

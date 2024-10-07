@@ -1,9 +1,13 @@
 import readline from 'node:readline'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { NotFound } from 'http-errors'
 import * as csvParse from '@fast-csv/parse'
 import { S3 } from '@aws-sdk/client-s3'
-import { Credentials } from 'aws-lambda'
+import { Credentials as STSCredentials } from '@aws-sdk/client-sts'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials,
+} from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
@@ -21,6 +25,9 @@ import { S3Config } from '@/services/aws/s3-service'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { getErrorMessage } from '@/utils/lang'
 import { ListImportResponse } from '@/@types/openapi-internal/ListImportResponse'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { CaseConfig } from '@/lambdas/console-api-case/app'
 
 @traceable
 export class ListService {
@@ -41,6 +48,23 @@ export class ListService {
     this.awsCredentials = awsCredentials
     this.listRepository = new ListRepository(tenantId, connections.dynamoDb)
   }
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<STSCredentials>
+    >
+  ) {
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const s3 = getS3ClientByEvent(event)
+    const { principalId: tenantId } = event.requestContext.authorizer
+
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    return new ListService(tenantId, { dynamoDb }, s3, {
+      documentBucketName: DOCUMENT_BUCKET,
+      tmpBucketName: TMP_BUCKET,
+    })
+  }
+
   public async createList(
     listType: ListType,
     subtype: ListSubtype,
@@ -82,11 +106,7 @@ export class ListService {
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {
-    const list = await this.listRepository.getListHeader(listId)
-    if (list === null) {
-      throw new NotFound(`List not found: ${listId}`)
-    }
-    return list
+    return await this.listRepository.getListHeader(listId)
   }
 
   public async updateListHeader(list: ListHeader): Promise<void> {
