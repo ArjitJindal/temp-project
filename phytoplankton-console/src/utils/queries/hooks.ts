@@ -160,15 +160,14 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
   const results = useQuery<CursorPaginatedData<TData>, CursorPaginatedData<TData>, TQueryKey>(
     newQueryKey,
     () => {
-      const result = queryFn({ from: pageParam });
-      result.then((r) => {
-        setPageParams(r);
-      });
-      return result;
+      return queryFn({ from: pageParam });
     },
     {
       ...options,
       cacheTime: 0,
+      onSuccess: (r) => {
+        setPageParams(r);
+      },
     },
   );
   const fetchPreviousPage = () => {

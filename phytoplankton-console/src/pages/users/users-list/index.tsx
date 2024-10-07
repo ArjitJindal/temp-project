@@ -15,7 +15,6 @@ import { CommonParams } from '@/components/library/Table/types';
 import { USERS } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export interface UserSearchParams extends CommonParams {
@@ -55,69 +54,70 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     setParams((prevState: UserSearchParams) => ({
       ...prevState,
       ...parsedParams,
-      sort: parsedParams.sort ?? [],
-      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
-      from: parsedParams.from,
-      page: parsedParams.page,
     }));
   }, [parsedParams]);
 
-  const queryResults = useCursorQuery<InternalUser>(USERS(type, params), async ({ from }) => {
-    if (isClickhouseEnabled) {
-      return {
-        items: [],
-        next: '',
-        prev: '',
-        last: '',
-        hasNext: false,
-        hasPrev: false,
-        count: 0,
-        limit: 100000,
+  const queryResults = useCursorQuery<InternalUser>(
+    USERS(type, { ...params, isClickhouseEnabled }),
+    async ({ from }) => {
+      if (isClickhouseEnabled) {
+        return {
+          items: [],
+          next: '',
+          prev: '',
+          last: '',
+          hasNext: false,
+          hasPrev: false,
+          count: 0,
+          limit: 100000,
+        };
+      }
+      const {
+        userId,
+        createdTimestamp,
+        riskLevels,
+        pageSize,
+        tagKey,
+        tagValue,
+        sort,
+        riskLevelLocked,
+        isPepHit,
+      } = params;
+
+      const queryObj = {
+        pageSize,
+        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
+        filterId: userId,
+        filterTagKey: tagKey,
+        filterTagValue: tagValue,
+        filterRiskLevel: riskLevels,
+        ...(type === 'business' && {
+          filterUserRegistrationStatus: params.userRegistrationStatus,
+        }),
+        sortField: sort[0]?.[0] ?? 'createdTimestamp',
+        sortOrder: sort[0]?.[1] ?? 'descend',
+        filterIsPepHit: isPepHit,
+        filterRiskLevelLocked: riskLevelLocked,
       };
-    }
-    const {
-      userId,
-      createdTimestamp,
-      riskLevels,
-      pageSize,
-      tagKey,
-      tagValue,
-      sort,
-      riskLevelLocked,
-      isPepHit,
-    } = params;
 
-    const queryObj = {
-      pageSize,
-      afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-      beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-      filterId: userId,
-      filterTagKey: tagKey,
-      filterTagValue: tagValue,
-      filterRiskLevel: riskLevels,
-      ...(type === 'business' && {
-        filterUserRegistrationStatus: params.userRegistrationStatus,
-      }),
-      sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'descend',
-      filterIsPepHit: isPepHit,
-      filterRiskLevelLocked: riskLevelLocked,
-    };
+      const queryParam = {
+        start: from || params.from,
+        ...queryObj,
+      };
+      const response =
+        type === 'business'
+          ? await api.getBusinessUsersList(queryParam)
+          : type === 'consumer'
+          ? await api.getConsumerUsersList(queryParam)
+          : await api.getAllUsersList(queryParam);
 
-    const response =
-      type === 'business'
-        ? await api.getBusinessUsersList({
-            start: from || parsedParams.from,
-            ...queryObj,
-          })
-        : type === 'consumer'
-        ? await api.getConsumerUsersList({ start: from || parsedParams.from, ...queryObj })
-        : await api.getAllUsersList({ start: from || parsedParams.from, ...queryObj });
-    return {
-      ...response,
-      items: response.items as InternalUser[],
-    };
-  });
+      return {
+        ...response,
+        items: response.items as InternalUser[],
+      };
+    },
+  );
 
   const offsetPaginateQueryResult = usePaginatedQuery<InternalUser>(
     USERS(type, params),
@@ -160,6 +160,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       };
     },
   );
+
   return (
     <PageWrapperContentContainer>
       <UsersTable
