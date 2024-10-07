@@ -3,7 +3,6 @@ const path = require('path')
 const esbuild = require('esbuild')
 const fs = require('fs-extra')
 const builtinModules = require('builtin-modules')
-const _ = require('lodash')
 
 // These are transitive dependencies of our dependencies, which for some reasons
 // are not specified in dependencies or specified in devDependencies and are
@@ -68,12 +67,12 @@ async function main() {
     return `src/fargate/index.ts`
   })
 
-  const allEntries = [...canaryEntries, ...fargateEntries, ...lambdaEntries]
-
   console.time('Bundle time')
-  const BUILD_CHUNKS = 2
 
-  for (const chunkEntries of _.chunk(allEntries, BUILD_CHUNKS)) {
+  for (const chunkEntries of [
+    [...canaryEntries, ...lambdaEntries.slice(0, lambdaEntries.length / 2)],
+    [...fargateEntries, ...lambdaEntries.slice(lambdaEntries.length / 2)],
+  ]) {
     const bundleResults = await esbuild.build({
       platform: 'node',
       entryPoints: chunkEntries,
