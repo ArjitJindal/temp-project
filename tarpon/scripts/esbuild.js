@@ -3,6 +3,7 @@ const path = require('path')
 const esbuild = require('esbuild')
 const fs = require('fs-extra')
 const builtinModules = require('builtin-modules')
+const _ = require('lodash')
 
 // These are transitive dependencies of our dependencies, which for some reasons
 // are not specified in dependencies or specified in devDependencies and are
@@ -70,22 +71,29 @@ async function main() {
   const allEntries = [...canaryEntries, ...fargateEntries, ...lambdaEntries]
 
   console.time('Bundle time')
-  const bundleResults = await esbuild.build({
-    platform: 'node',
-    entryPoints: allEntries,
-    bundle: true,
-    outdir: OUT_DIR,
-    target: 'node18.17.1',
-    format: 'cjs',
-    minify: true,
-    metafile: true,
-    logLevel: 'warning',
-    sourcemap: 'external',
-    minifyIdentifiers: false,
-    external: ['aws-sdk', ...builtinModules, ...IGNORED],
-    loader: { '.node': 'file' },
-    keepNames: true,
-  })
+  const BUILD_CHUNKS = 2
+
+  for (const chunkEntries of _.chunk(allEntries, BUILD_CHUNKS)) {
+    const bundleResults = await esbuild.build({
+      platform: 'node',
+      entryPoints: chunkEntries,
+      bundle: true,
+      outdir: OUT_DIR,
+      target: 'node18.17.1',
+      format: 'cjs',
+      minify: true,
+      metafile: true,
+      logLevel: 'warning',
+      sourcemap: 'external',
+      minifyIdentifiers: false,
+      external: ['aws-sdk', ...builtinModules, ...IGNORED],
+      loader: { '.node': 'file' },
+      keepNames: true,
+    })
+    for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
+      console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
+    }
+  }
 
   console.log('Generated bundles:')
   console.timeEnd('Bundle time')
@@ -102,14 +110,6 @@ async function main() {
       dest: 'lambdas/console-api-sar/bin',
     },
   ])
-
-  for (const [file, info] of Object.entries(bundleResults.metafile.outputs)) {
-    console.log(`  ${file}: ${info.bytes.toLocaleString('en-US')} bytes`)
-  }
-  await fs.writeFile(
-    path.join(OUT_DIR, 'meta.json'),
-    JSON.stringify(bundleResults.metafile)
-  )
 
   const canaries = fs.readdirSync(`${ROOT_DIR}/dist/canaries`)
   // We need to move canaries to a subfolder as per the requirements of synthetics
