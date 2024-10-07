@@ -132,7 +132,7 @@ export const createAuth0TenantResources = (
     },
     refreshToken: {
       leeway: 0,
-      idleTokenLifetime: SESSION_TIMEOUT_HOURS * 3600,
+      idleTokenLifetime: SESSION_TIMEOUT_HOURS * 3600 - 1,
       tokenLifetime: SESSION_TIMEOUT_HOURS * 3600,
       rotationType: 'rotating',
       expirationType: 'expiring',
@@ -142,7 +142,7 @@ export const createAuth0TenantResources = (
   })
 
   new auth0.tenant.Tenant(context, getTenantResourceId(tenantName, 'tenant'), {
-    idleSessionLifetime: SESSION_TIMEOUT_HOURS,
+    idleSessionLifetime: SESSION_TIMEOUT_HOURS - 1,
     sessionLifetime: SESSION_TIMEOUT_HOURS,
     sessionCookie: {
       mode: 'persistent',
@@ -181,7 +181,7 @@ export const createAuth0TenantResources = (
       signingAlg: 'RS256',
       allowOfflineAccess: false,
       tokenLifetime: SESSION_TIMEOUT_HOURS * 60 * 60,
-      tokenLifetimeForWeb: SESSION_TIMEOUT_HOURS * 60 * 60,
+      tokenLifetimeForWeb: 24 * 60 * 60, // max allowed value: 86400
       skipConsentForVerifiableFirstPartyClients: true,
       enforcePolicies: true,
       tokenDialect: 'access_token_authz',
