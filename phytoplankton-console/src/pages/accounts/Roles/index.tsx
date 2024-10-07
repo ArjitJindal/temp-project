@@ -3,6 +3,7 @@ import { startCase } from 'lodash';
 import { Card } from 'antd';
 import { LockFilled } from '@ant-design/icons';
 import s from './index.module.less';
+import { exportRolesDetails } from './utils';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { AccountRole } from '@/apis';
@@ -12,6 +13,7 @@ import VerticalMenu from '@/components/library/VerticalMenu';
 import RoleForm from '@/pages/accounts/Roles/RoleForm';
 import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
 import Button from '@/components/library/Button';
+import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 
 export default function Roles() {
   const api = useApi();
@@ -38,15 +40,26 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
       <VerticalMenu
         testId="roles-menu"
         additionalMenuTop={
-          <Button
-            type="TETRIARY"
-            size="MEDIUM"
-            style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
-            onClick={() => setIsCreateRoleForm(true)}
-            requiredPermissions={['settings:organisation:write']}
-          >
-            + Create role
-          </Button>
+          <div>
+            <Button
+              type="TETRIARY"
+              size="MEDIUM"
+              style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
+              onClick={() => setIsCreateRoleForm(true)}
+              requiredPermissions={['settings:organisation:write']}
+            >
+              + Create role
+            </Button>
+            <Button
+              type="TETRIARY"
+              size="MEDIUM"
+              style={{ width: '100%', position: 'relative', marginBottom: '1rem' }}
+              onClick={() => exportRolesDetails(roles)}
+              requiredPermissions={['settings:organisation:write']}
+            >
+              <DownloadLineIcon height={12} /> Download
+            </Button>
+          </div>
         }
         items={roles.map((r) => ({
           key: r.id,

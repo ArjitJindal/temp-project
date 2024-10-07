@@ -177,24 +177,20 @@ export class RoleService {
       (r) => r.name && r.name.match(/^[0-9a-z-_]+:.+$/i)
     )
 
-    return validRoles.map((role) => {
-      if (role.name == undefined) {
-        throw new Error('Role name cannot be null')
-      }
+    return await Promise.all(
+      validRoles.map((role) => {
+        if (role.name == undefined) {
+          throw new Error('Role name cannot be null')
+        }
 
-      const roleId = role.id
+        const roleId = role.id
+        if (!roleId) {
+          throw new Error('Role ID cannot be null')
+        }
 
-      if (!roleId) {
-        throw new Error('Role ID cannot be null')
-      }
-
-      return {
-        id: roleId,
-        name: getRoleDisplayName(role.name) || 'No name.',
-        description: !role.description ? 'No description.' : role.description,
-        permissions: [],
-      }
-    })
+        return this.getRole(roleId)
+      })
+    )
   }
 
   private async updateRolePermissions(

@@ -1,6 +1,8 @@
-import { Permission } from '@/apis';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { AccountRole, Permission } from '@/apis';
 import { PermissionRow } from '@/pages/accounts/Roles/types';
 import { PERMISSIONS } from '@/apis/models-custom/Permission';
+import { download } from '@/utils/browser';
 
 /** Initialises the following structure:
  *  case-management:case-overview:read
@@ -72,4 +74,19 @@ export function permissionsToRows(permissions: Set<Permission>): PermissionRow[]
             })),
         })),
     }));
+}
+
+export function exportRolesDetails(roles: AccountRole[]) {
+  const exportDataRows: string[] = [];
+  exportDataRows.push(',' + roles.map((r) => r.name).join(','));
+  PERMISSIONS.forEach((p) => {
+    const row = [p.split(':').map(humanizeAuto).join('->')];
+    roles.forEach((r) => {
+      const rolePermissions = r.permissions;
+      row.push(rolePermissions.includes(p) ? 'Yes' : 'No');
+    });
+    exportDataRows.push(row.join(','));
+  });
+  const csvContent = exportDataRows.join('\n');
+  download('roles-details.csv', csvContent);
 }

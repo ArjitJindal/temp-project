@@ -26,7 +26,6 @@ interface Props {
 
 export default function PermissionTable(props: Props) {
   const { items, onChange, tableRef, onExpandedChange } = props;
-
   return (
     <div className={s.rolePermissionTable}>
       <Table<PermissionRow>
