@@ -77,6 +77,7 @@ import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-managem
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
 import { S3Service } from '@/services/aws/s3-service'
+import { UserTagsUpdate } from '@/@types/openapi-public/UserTagsUpdate'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -774,9 +775,27 @@ export class UserService {
     let updatedUser: User | Business = { ...user }
     let commentBody = ''
     let auditLogPromise: Promise<void>
-
+    const webhookTasks: ThinWebhookDeliveryTask<UserTagsUpdate>[] = []
     if (updateRequest.tags) {
       updatedUser = { ...updatedUser, tags: updateRequest.tags }
+
+      // tags that are in updateRequest.tags but not in user.tags or whose values are updated from user.tags to updateRequest.tags
+      const newOrUpdatedTags = updateRequest.tags.filter((newTag) => {
+        const oldTag = user.tags?.find((oldTag) => oldTag.key === newTag.key)
+        return !oldTag || oldTag.value !== newTag.value
+      })
+
+      if (newOrUpdatedTags.length) {
+        webhookTasks.push({
+          event: 'USER_TAGS_UPDATED',
+          payload: {
+            userId: user.userId,
+            tags: newOrUpdatedTags,
+          },
+          triggeredBy: 'MANUAL',
+        })
+      }
+
       commentBody = 'User API tags updated over the console'
       auditLogPromise = this.userAuditLogService.handleAuditLogForTagsUpdate(
         user.userId,
@@ -842,6 +861,7 @@ export class UserService {
       }),
       auditLogPromise,
       this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
+      sendWebhookTasks(this.userRepository.tenantId, webhookTasks),
     ])
     return savedComment
   }

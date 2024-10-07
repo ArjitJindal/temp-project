@@ -4954,6 +4954,16 @@ components:
           type: string
         status:
           $ref: '#/components/schemas/KYCStatus'
+    UserTagsUpdate:
+      title: UserTagsUpdate
+      type: object
+      properties:
+        userId:
+          type: string
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserTag'
     UserStateDetails:
       title: UserStateDetails
       type: object
@@ -5170,6 +5180,7 @@ components:
                 - $ref: '#/components/schemas/AlertOpenedDetails'
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
+                - $ref: '#/components/schemas/UserTagsUpdate'
           required:
             - type
             - data
@@ -5184,6 +5195,7 @@ components:
         - KYC_STATUS_UPDATED
         - CASE_OPENED
         - ALERT_OPENED
+        - USER_TAGS_UPDATED
     ListType:
       type: string
       enum:
