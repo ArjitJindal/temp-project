@@ -27,6 +27,7 @@ import { dayjs, Dayjs } from '@/utils/dayjs';
 import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAdminModeProvider';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
+import TagList from '@/components/library/Tag/TagList';
 
 export default function AuditLogTable() {
   const api = useApi();
@@ -137,12 +138,12 @@ export default function AuditLogTable() {
       type: {
         render: (value) => {
           return (
-            <>
+            <TagList>
               <Typography.Text data-cy="auditlog-primary">{value?.entityType}</Typography.Text>
               <Typography.Text data-cy="auditlog-secondary" type={'secondary'}>
                 {value?.entityId}
               </Typography.Text>
-            </>
+            </TagList>
           );
         },
         stringify: (item) => {
