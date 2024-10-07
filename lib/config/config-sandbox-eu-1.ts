@@ -80,7 +80,7 @@ export const config: Config = {
       PROVISIONED_CONCURRENCY: 2,
     },
     BATCH_JOB_LAMBDA: {
-      MEMORY_SIZE: 1024,
+      MEMORY_SIZE: 2048,
     },
     CRON_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
