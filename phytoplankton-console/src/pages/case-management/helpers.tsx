@@ -256,7 +256,7 @@ export const useCaseAlertFilters = (
     },
     {
       key: 'roleAssignedTo',
-      title: 'Role assigned to',
+      title: 'Assignee role',
       showFilterByDefault: false,
       renderer: {
         kind: 'select',
