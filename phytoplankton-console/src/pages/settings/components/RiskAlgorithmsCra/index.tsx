@@ -52,7 +52,7 @@ function RiskAlgorithmsCra() {
             {
               label: 'Current',
               value: 'FORMULA_LEGACY_MOVING_AVG',
-              description: 'Moving average between KRS and avg TRS',
+              description: 'Moving average between KRS and latest TRS',
             },
             {
               label: 'Default',
