@@ -163,7 +163,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
             userCommentBody += `. ${whitelistUpdateComment}`
           }
           if (updates?.comment) {
-            userCommentBody += `\n\nComment: {updates.comment}`
+            userCommentBody += `\n\nComment: ${updates.comment}`
           }
           const userService = await userServicePromise
           await userService.saveUserComment(userId, {
