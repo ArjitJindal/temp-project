@@ -184,8 +184,9 @@ function Table<Item extends object, Params extends object = CommonParams>(
   });
 
   const handleResetSelection = useCallback(() => {
+    onSelect?.([]);
     table.resetRowSelection();
-  }, [table]);
+  }, [onSelect, table]);
 
   const isDataResChanged = useIsChanged(dataRes.kind);
   useEffect(() => {

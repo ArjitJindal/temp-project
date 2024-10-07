@@ -718,6 +718,7 @@ export default function CaseTable(props: Props) {
           );
         },
       ]}
+      selectedIds={selectedCases}
       onSelect={(ids) => setSelectedCases(ids)}
       rowKey="caseId"
       columns={columns}
