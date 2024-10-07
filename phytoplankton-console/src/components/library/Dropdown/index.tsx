@@ -79,7 +79,7 @@ export default function Dropdown<T extends string | number = string>(props: Prop
       style={{ minWidth }}
     >
       <AntDropdown overlay={menu} trigger={['click']} placement={placement} disabled={disabled}>
-        <div className={cn(s.dropdown)}>
+        <div className={cn(s.dropdown, disabled && s.isDisabled)}>
           {children}
           {arrow === 'FILLED' && <ArrowDownFilled className={cn(s.arrow)} />}
           {arrow === 'LINE' && <ArrowDownLine className={cn(s.arrow)} />}

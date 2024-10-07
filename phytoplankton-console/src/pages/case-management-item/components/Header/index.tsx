@@ -155,7 +155,11 @@ export default function Header(props: Props) {
               />,
             ]
           : []),
-        <StatusChangeMenu caseItem={caseItem} onReload={handleStatusChangeSuccess} />,
+        <StatusChangeMenu
+          isDisabled={isLoading}
+          caseItem={caseItem}
+          onReload={handleStatusChangeSuccess}
+        />,
       ]}
       subHeader={<SubHeader caseItem={caseItem} />}
     />

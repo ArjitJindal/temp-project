@@ -20,19 +20,25 @@ import { useAuth0User } from '@/utils/user-utils';
 
 interface Props {
   caseItem: Case;
+  isDisabled: boolean;
   onReload: () => void;
 }
 
 const StatusChangeMenu = (props: Props) => {
-  const { caseItem, onReload } = props;
-  const options = useOptions({ caseItem, onReload });
+  const { isDisabled } = props;
+  const options = useOptions(props);
   if (options.length === 0) {
     return <></>;
   }
   return (
     <div>
-      <Dropdown options={options} optionClassName={s.option}>
-        <Button type="TETRIARY" testName="status-options-button" className={s.button}>
+      <Dropdown options={options} optionClassName={s.option} disabled={isDisabled}>
+        <Button
+          type="TETRIARY"
+          testName="status-options-button"
+          className={s.button}
+          isDisabled={isDisabled}
+        >
           <MoreOutlined />
         </Button>
       </Dropdown>
