@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { startCase } from 'lodash';
 import { useMutation } from '@tanstack/react-query';
+import { isValidEmail } from '@flagright/lib/utils/regex';
 import s from './styles.module.less';
 import { useIsInviteDisabled } from './utils';
 import { CloseMessage, message } from '@/components/library/Message';
@@ -127,7 +128,11 @@ export default function AccountForm(props: Props) {
         hide?.();
         return;
       }
-
+      if (!payload.email || !isValidEmail(payload.email)) {
+        message.error('Invalid email format');
+        hide?.();
+        return;
+      }
       return await api.accountsInvite({
         AccountInvitePayload: payload,
       });
