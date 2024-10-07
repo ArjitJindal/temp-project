@@ -92,7 +92,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
             {'Close'}
           </Button>
           {showNavigation && (
-            <>
+            <div className={s.footerNavigation}>
               <Button
                 type="SECONDARY"
                 onClick={onPrev}
@@ -109,7 +109,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
               >
                 {'Next hit'}
               </Button>
-            </>
+            </div>
           )}
         </>
       }
