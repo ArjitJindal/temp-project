@@ -262,6 +262,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     /* Sanctions */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
+      memorySize: this.config.resource.SANCTIONS_LAMBDA?.MEMORY_SIZE ?? 1024,
     })
     /* Risk Classification function */
     createFunction(this, lambdaExecutionRole, {

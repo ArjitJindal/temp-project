@@ -35,6 +35,9 @@ export type Config = {
     BATCH_JOB_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    SANCTIONS_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     CRON_JOB_LAMBDA?: {
       MEMORY_SIZE?: number
     }
