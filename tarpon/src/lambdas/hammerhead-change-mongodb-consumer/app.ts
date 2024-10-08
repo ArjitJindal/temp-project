@@ -2,6 +2,7 @@ import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { omit } from 'lodash'
 import { StackConstants } from '@lib/constants'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import {
@@ -18,6 +19,7 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { envIsNot } from '@/utils/env'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { sendWebhookTasks } from '@/services/webhook/utils'
 
 async function arsScoreEventHandler(
   tenantId: string,
@@ -52,24 +54,53 @@ async function arsScoreEventHandler(
 
 async function drsScoreEventHandler(
   tenantId: string,
-  drsScore: DrsScore | undefined,
+  oldDrsScore: DrsScore | undefined,
+  newDrsScore: DrsScore | undefined,
   dbClients: DbClients
 ) {
-  if (!drsScore) {
+  if (!newDrsScore) {
     return
   }
   logger.info(`Processing DRS Score`)
   const { mongoDb, dynamoDb } = dbClients
 
-  const riskRepository = new RiskRepository(tenantId, { mongoDb })
+  const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
 
-  drsScore = omit(drsScore, DYNAMO_KEYS) as DrsScore
+  newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
+
+  if (newDrsScore.triggeredBy !== 'PUBLIC_API') {
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
+
+    const oldRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      oldDrsScore?.drsScore ?? null
+    )
+
+    const newRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      newDrsScore.drsScore
+    )
+    if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
+      await sendWebhookTasks(tenantId, [
+        {
+          event: 'CRA_RISK_LEVEL_UPDATED',
+          payload: {
+            riskLevel: newRiskLevel,
+            userId: newDrsScore.userId,
+          },
+          triggeredBy:
+            newDrsScore.triggeredBy === 'CONSOLE' ? 'MANUAL' : 'SYSTEM',
+        },
+      ])
+    }
+  }
 
   await Promise.all([
-    riskRepository.addDrsValueToMongo(drsScore),
-    drsScore.userId
-      ? userRepository.updateDrsScoreOfUser(drsScore.userId, drsScore)
+    riskRepository.addDrsValueToMongo(newDrsScore),
+    newDrsScore.userId
+      ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
       : undefined,
   ])
 
@@ -138,7 +169,7 @@ const hammerheadBuilder = new StreamConsumerBuilder(
     arsScoreEventHandler(tenantId, newArsScore, dbClients)
   )
   .setDrsScoreEventHandler((tenantId, oldDrsScore, newDrsScore, dbClients) =>
-    drsScoreEventHandler(tenantId, newDrsScore, dbClients)
+    drsScoreEventHandler(tenantId, oldDrsScore, newDrsScore, dbClients)
   )
   .setKrsScoreEventHandler((tenantId, oldKrsScore, newKrsScore, dbClients) =>
     krsScoreEventHandler(tenantId, newKrsScore, dbClients)

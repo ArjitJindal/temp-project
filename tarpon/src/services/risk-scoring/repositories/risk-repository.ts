@@ -52,6 +52,18 @@ import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
+import { getTriggerSource } from '@/utils/lambda'
+import {
+  createNonConsoleApiInMemoryCache,
+  getInMemoryCacheKey,
+} from '@/utils/memory-cache'
+
+const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
+  RiskClassificationScore[]
+>({
+  max: 100,
+  ttlMinutes: 10,
+})
 
 export const DEFAULT_CLASSIFICATION_SETTINGS: RiskClassificationScore[] = [
   {
@@ -269,6 +281,7 @@ export class RiskRepository {
       userId: userId,
       components,
       factorScoreDetails,
+      triggeredBy: getTriggerSource(),
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -303,6 +316,17 @@ export class RiskRepository {
       return contextRiskClassificationValues
     }
 
+    const cacheKey = getInMemoryCacheKey(
+      this.tenantId,
+      'risk-classification-values'
+    )
+
+    if (riskClassificationValuesCache?.has(cacheKey)) {
+      return riskClassificationValuesCache.get(
+        cacheKey
+      ) as RiskClassificationScore[]
+    }
+
     const queryInput: QueryCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
@@ -320,6 +344,10 @@ export class RiskRepository {
           : DEFAULT_CLASSIFICATION_SETTINGS
 
       updateTenantRiskClassificationValues(riskClassificationValues)
+
+      if (riskClassificationValuesCache) {
+        riskClassificationValuesCache.set(cacheKey, riskClassificationValues)
+      }
 
       return riskClassificationValues
     } catch (e) {
@@ -385,6 +413,7 @@ export class RiskRepository {
       drsScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
       userId,
       transactionId: 'MANUAL_UPDATE',
+      triggeredBy: getTriggerSource(),
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
     const putItemInput: PutCommandInput = {

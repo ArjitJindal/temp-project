@@ -5163,6 +5163,14 @@ components:
         - id
         - triggeredBy
         - createdTimestamp
+    CRARiskLevelUpdatedDetails:
+      title: CRARiskLevelUpdatedDetails
+      type: object
+      properties:
+        riskLevel:
+          type: string
+        userId:
+          type: string
     WebhookEvent:
       title: WebhookEvent
       allOf:
@@ -5181,6 +5189,7 @@ components:
                 - $ref: '#/components/schemas/TransactionStatusDetails'
                 - $ref: '#/components/schemas/KYCStatusDetails'
                 - $ref: '#/components/schemas/UserTagsUpdate'
+                - $ref: '#/components/schemas/CRARiskLevelUpdatedDetails'
           required:
             - type
             - data
@@ -5196,6 +5205,7 @@ components:
         - CASE_OPENED
         - ALERT_OPENED
         - USER_TAGS_UPDATED
+        - CRA_RISK_LEVEL_UPDATED
     ListType:
       type: string
       enum:

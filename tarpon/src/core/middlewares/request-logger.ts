@@ -85,6 +85,9 @@ async function logRequest(
       traceId: getContext()?.logMetadata?.traceId,
     }
 
+    const path = event.path
+    process.env.SOURCE = path
+
     const sqsMessage = new SendMessageCommand({
       QueueUrl: process.env.REQUEST_LOGGER_QUEUE_URL as string,
       MessageBody: JSON.stringify(data),
