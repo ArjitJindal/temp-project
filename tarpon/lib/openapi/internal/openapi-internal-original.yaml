@@ -7348,6 +7348,10 @@ components:
           $ref: '#/components/schemas/LogicAggregationFunc'
         aggregationGroupByFieldKey:
           type: string
+        aggregationFilterFieldKey:
+          type: string
+        aggregationFilterFieldValue:
+          type: string
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
         timeWindow:

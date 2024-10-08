@@ -8,7 +8,7 @@ describe('SUM', () => {
     expect(SUM.aggregate([1, 2, 3])).toEqual(6)
   })
   test('reduce', async () => {
-    expect(SUM.reduce(3, 2)).toEqual(5)
+    expect(SUM.reduce(3, [2])).toEqual(5)
   })
   test('merge', async () => {
     expect(SUM.merge(1, 2)).toEqual(3)

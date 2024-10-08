@@ -8,7 +8,7 @@ describe('MIN', () => {
     expect(MIN.aggregate([1, 2, 3])).toEqual(1)
   })
   test('reduce', async () => {
-    expect(MIN.reduce(3, 2)).toEqual(2)
+    expect(MIN.reduce(3, [2])).toEqual(2)
   })
   test('merge', async () => {
     expect(MIN.merge(1, 2)).toEqual(1)

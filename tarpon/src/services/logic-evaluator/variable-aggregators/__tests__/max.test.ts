@@ -8,7 +8,7 @@ describe('MAX', () => {
     expect(MAX.aggregate([1, 2, 3])).toEqual(3)
   })
   test('reduce', async () => {
-    expect(MAX.reduce(3, 2)).toEqual(3)
+    expect(MAX.reduce(3, [2])).toEqual(3)
   })
   test('merge', async () => {
     expect(MAX.merge(1, 2)).toEqual(2)

@@ -222,6 +222,25 @@ export const AggregationVariableFormContent: React.FC<
         label: varLabelWithoutNamespace(v.uiDefinition.label),
       }));
   }, [entityVariables]);
+  const arrayOfObjectsVars = useMemo(() => {
+    return entityVariables
+      .filter(
+        (v) =>
+          v.entity === 'TRANSACTION' &&
+          !isTransactionOriginOrDestinationVariable(v.key) &&
+          v.uiDefinition.type === '!group',
+      )
+      .map((v) => ({
+        key: v.key,
+        options: Object.entries(v?.uiDefinition.subfields)
+          .map(([key, value]: [string, any]) => ({
+            value: key,
+            label: value.label,
+          }))
+          .filter((x) => !(v.key.endsWith('tags') && x.value === 'value')),
+      }));
+  }, [entityVariables]);
+
   const aggregateGroupByFieldOptions = useMemo(() => {
     return entityVariables
       .filter(
@@ -281,6 +300,7 @@ export const AggregationVariableFormContent: React.FC<
       { value: 'UNIQUE_VALUES', label: 'Unique values' },
     ];
     const timestampEntityRegex = /timestamp/gi;
+    const tagsVariableRegex = /tags$/;
 
     if (entityVariable?.valueType === 'number') {
       const numberValueOptions: Array<{ value: LogicAggregationFunc; label: string }> = [
@@ -305,6 +325,8 @@ export const AggregationVariableFormContent: React.FC<
     } else if (entityVariable?.key === 'TRANSACTION:transactionId') {
       options.push({ value: 'COUNT', label: 'Count' });
     } else if (entityVariable?.valueType === 'string') {
+      options.push(...uniqueAggregationOptions);
+    } else if (tagsVariableRegex.test(entityVariable?.key ?? '')) {
       options.push(...uniqueAggregationOptions);
     }
     return options;
@@ -332,6 +354,10 @@ export const AggregationVariableFormContent: React.FC<
     formValues.aggregationGroupByFieldKey,
   ]);
 
+  const selectedArrayOfObjectsVar = useMemo(() => {
+    return arrayOfObjectsVars.find((v) => v.key === formValues.aggregationFieldKey);
+  }, [arrayOfObjectsVars, formValues.aggregationFieldKey]);
+
   useEffect(() => {
     if (baseCurrencyRequired && !formValues.baseCurrency) {
       setFormValues((prevValues) => ({
@@ -355,6 +381,21 @@ export const AggregationVariableFormContent: React.FC<
       formValues.lastNEntities <= MAX_AGGREGATED_TRANSACTIONS
     );
   }, [formValues.lastNEntities, aggregateByLastN]);
+  const arrayOfObjectsVarFilterFieldValidation = useMemo(() => {
+    if (selectedArrayOfObjectsVar) {
+      if (selectedArrayOfObjectsVar.key.endsWith('tags')) {
+        return Boolean(
+          formValues.aggregationFilterFieldKey && formValues.aggregationFilterFieldValue,
+        );
+      }
+      return Boolean(formValues.aggregationFilterFieldKey);
+    }
+    return true;
+  }, [
+    selectedArrayOfObjectsVar,
+    formValues.aggregationFilterFieldKey,
+    formValues.aggregationFilterFieldValue,
+  ]);
   const isValidFormValues = useMemo(() => {
     return !!(
       formValues.type &&
@@ -363,7 +404,8 @@ export const AggregationVariableFormContent: React.FC<
       (!baseCurrencyRequired || (baseCurrencyRequired && formValues.baseCurrency)) &&
       formValues.aggregationFunc &&
       !timeWindowValidationError &&
-      lastNEntitiesValidation
+      lastNEntitiesValidation &&
+      arrayOfObjectsVarFilterFieldValidation
     );
   }, [
     baseCurrencyRequired,
@@ -374,6 +416,7 @@ export const AggregationVariableFormContent: React.FC<
     formValues.type,
     timeWindowValidationError,
     lastNEntitiesValidation,
+    arrayOfObjectsVarFilterFieldValidation,
   ]);
 
   const isValidChanged = useIsChanged(isValidFormValues);
@@ -525,6 +568,28 @@ export const AggregationVariableFormContent: React.FC<
             options={aggregateFunctionOptions}
           />
         </Label>
+        {selectedArrayOfObjectsVar && (
+          <Label label="Filter key" required={{ value: true, showHint: true }}>
+            <Select<string>
+              value={formValues.aggregationFilterFieldKey}
+              onChange={(aggregationFilterFieldKey) =>
+                handleUpdateForm({ aggregationFilterFieldKey })
+              }
+              mode="SINGLE"
+              options={selectedArrayOfObjectsVar?.options}
+            />
+          </Label>
+        )}
+        {selectedArrayOfObjectsVar && selectedArrayOfObjectsVar.key.endsWith('tags') && (
+          <Label label="Filter value" required={{ value: true, showHint: true }}>
+            <TextInput
+              value={formValues.aggregationFilterFieldValue}
+              onChange={(aggregationFilterFieldValue) =>
+                handleUpdateForm({ aggregationFilterFieldValue })
+              }
+            />
+          </Label>
+        )}
         <Label
           label="Group by"
           hint="Group by a field to get the aggregate value for each unique value of this field. For example, If you group by 'transaction type' with 'Count' as the aggregate function, you will get the count of transactions for each unique transaction type."
@@ -556,8 +621,10 @@ export const AggregationVariableFormContent: React.FC<
             />
           </Label>
         ) : (
-          <div>{/* Empty div to manage alignment */}</div>
+          <></>
         )}
+      </PropertyColumns>
+      <PropertyColumns>
         <Label label={`Aggregate target`} required={{ value: true, showHint: !readOnly }}>
           <SelectionGroup
             isDisabled={readOnly}

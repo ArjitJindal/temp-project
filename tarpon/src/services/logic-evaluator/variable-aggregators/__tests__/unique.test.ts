@@ -12,8 +12,8 @@ describe('UNIQUE_VALUES', () => {
     ])
   })
   test('reduce', async () => {
-    expect(UNIQUE_VALUES.reduce(['a', 'b'], 'b')).toEqual(['a', 'b'])
-    expect(UNIQUE_VALUES.reduce(['a', 'b'], 'c')).toEqual(['a', 'b', 'c'])
+    expect(UNIQUE_VALUES.reduce(['a', 'b'], ['b'])).toEqual(['a', 'b'])
+    expect(UNIQUE_VALUES.reduce(['a', 'b'], ['c'])).toEqual(['a', 'b', 'c'])
   })
   test('merge', async () => {
     expect(UNIQUE_VALUES.merge(['a', 'b'], ['b', 'c'])).toEqual(['a', 'b', 'c'])
@@ -37,8 +37,8 @@ describe('UNIQUE_VALUES: numeric values', () => {
     expect(UNIQUE_VALUES.aggregate([1, 1, 2, 2, 3])).toEqual([1, 2, 3])
   })
   test('reduce', async () => {
-    expect(UNIQUE_VALUES.reduce([1, 2], 2)).toEqual([1, 2])
-    expect(UNIQUE_VALUES.reduce([1, 2], 3)).toEqual([1, 2, 3])
+    expect(UNIQUE_VALUES.reduce([1, 2], [2])).toEqual([1, 2])
+    expect(UNIQUE_VALUES.reduce([1, 2], [3])).toEqual([1, 2, 3])
   })
   test('merge', async () => {
     expect(UNIQUE_VALUES.merge([1, 2], [2, 3])).toEqual([1, 2, 3])

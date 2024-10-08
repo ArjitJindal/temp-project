@@ -47,6 +47,8 @@ const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof LogicAggregationVariable> = [
   'timeWindow',
   'filtersLogic',
   'baseCurrency',
+  'aggregationFilterFieldKey',
+  'aggregationFilterFieldValue',
 ]
 
 export function getAggVarHash(

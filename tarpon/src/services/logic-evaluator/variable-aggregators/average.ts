@@ -11,7 +11,7 @@ export const AVG: LogicVariableAggregator<
   aggregate: (values) => ({ count: values.length, value: sum(values) }),
   reduce: (aggregation, value) => ({
     count: aggregation.count + 1,
-    value: aggregation.value + value,
+    value: aggregation.value + sum(value),
   }),
   merge: (aggregation1, aggregation2) => ({
     count: aggregation1.count + aggregation2.count,

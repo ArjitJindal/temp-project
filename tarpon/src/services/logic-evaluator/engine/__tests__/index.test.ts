@@ -3211,3 +3211,227 @@ describe('V8 aggregator with transaction count', () => {
     })
   })
 })
+
+describe('V8 aggregator for array of objects', () => {
+  test('Should update the aggregation data for tags', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const AGG_VARIABLE: LogicAggregationVariable = {
+      aggregationFieldKey: 'TRANSACTION:tags',
+      aggregationFunc: 'UNIQUE_VALUES',
+      timeWindow: {
+        start: {
+          granularity: 'day',
+          units: 4,
+        },
+        end: {
+          granularity: 'now',
+          units: 0,
+        },
+      },
+      key: 'agg:1',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      version: dayjs().valueOf(),
+      includeCurrentEntity: true,
+      aggregationFilterFieldValue: 'tag-1',
+      aggregationFilterFieldKey: 'key',
+    }
+    await aggregationRepository.setAggregationVariableReady(
+      AGG_VARIABLE,
+      '1',
+      0
+    )
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1a',
+          },
+          {
+            key: 'tag-2',
+            value: 'value-2',
+          },
+        ],
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1b',
+          },
+          {
+            key: 'tag-3',
+            value: 'value-3',
+          },
+        ],
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1b',
+          },
+          {
+            key: 'tag-2',
+            value: 'value-2',
+          },
+          {
+            key: 'tag-4',
+            value: 'value-4',
+          },
+        ],
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+    for (const transaction of transactions) {
+      await ruleJsonLogicEvaluator.updateAggregationVariable(
+        AGG_VARIABLE,
+        {
+          transaction,
+          type: 'TRANSACTION',
+        },
+        'origin'
+      )
+    }
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+      dayjs('2023-01-03T15:00:00.000Z').valueOf(),
+      'day'
+    )
+    expect(aggData).toEqual([
+      {
+        time: '2023-01-01',
+        value: expect.arrayContaining(['value-1a', 'value-1b']),
+        entities: expect.any(Array),
+      },
+    ])
+  })
+  test('Should rebuild the aggregation data for tags', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const ruleJsonLogicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const AGG_VARIABLE: LogicAggregationVariable = {
+      aggregationFieldKey: 'TRANSACTION:tags',
+      aggregationFunc: 'UNIQUE_VALUES',
+      timeWindow: {
+        start: {
+          granularity: 'day',
+          units: 4,
+        },
+        end: { granularity: 'now', units: 0 },
+      },
+      key: 'agg:1',
+      type: 'USER_TRANSACTIONS',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      version: 1,
+      includeCurrentEntity: true,
+      aggregationFilterFieldValue: 'tag-1',
+      aggregationFilterFieldKey: 'key',
+    }
+
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1a',
+          },
+          {
+            key: 'tag-2',
+            value: 'value-2',
+          },
+        ],
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1b',
+          },
+          {
+            key: 'tag-3',
+            value: 'value-3',
+          },
+        ],
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-1',
+            value: 'value-1b',
+          },
+          {
+            key: 'tag-2',
+            value: 'value-2',
+          },
+          {
+            key: 'tag-4',
+            value: 'value-4',
+          },
+        ],
+      }),
+      getTestTransaction({
+        originUserId: '1',
+        destinationUserId: 'U-1',
+        timestamp: dayjs('2023-01-01T12:00:00.000Z').valueOf(),
+        tags: [
+          {
+            key: 'tag-2',
+            value: 'value-2',
+          },
+          {
+            key: 'tag-4',
+            value: 'value-4',
+          },
+        ],
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+    await ruleJsonLogicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      dayjs('2023-01-01T15:00:00.000Z').valueOf() + 1000,
+      '1',
+      undefined
+    )
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+      dayjs('2023-01-01T15:00:00.000Z').valueOf(),
+      'day'
+    )
+    expect(aggData).toEqual([
+      {
+        time: '2023-01-01',
+        value: expect.arrayContaining(['value-1b', 'value-1a']),
+      },
+    ])
+  })
+})

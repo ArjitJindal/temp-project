@@ -8,7 +8,7 @@ export const UNIQUE_VALUES: LogicVariableAggregator<
   returnValueType: 'array',
   init: () => [],
   aggregate: (values) => uniq(values ?? []),
-  reduce: (aggregation, value) => uniq((aggregation ?? []).concat(value)),
+  reduce: (aggregation, value) => uniq((aggregation ?? []).concat(...value)),
   merge: (aggregation1, aggregation2) =>
     uniq((aggregation1 ?? []).concat(aggregation2 ?? [])),
   compute: (aggregation) => aggregation ?? [],

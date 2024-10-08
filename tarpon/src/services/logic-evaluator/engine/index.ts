@@ -92,6 +92,7 @@ import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggrega
 import { LogicAggregationType } from '@/@types/openapi-internal/LogicAggregationType'
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
+import { Tag } from '@/@types/openapi-public/Tag'
 
 export type TransactionLogicData = {
   type: 'TRANSACTION'
@@ -853,7 +854,19 @@ export class LogicEvaluator {
                   transaction.direction === 'origin'
                     ? sendingTxEntityVariable
                     : receivingTxEntityVariable
-                const value = await entityVariable?.load(transaction, context)
+                let value = await entityVariable?.load(transaction, context)
+                if (
+                  aggregationVariable.aggregationFilterFieldKey &&
+                  aggregationVariable.aggregationFilterFieldValue
+                ) {
+                  value = (value as { [key: string]: unknown }[])
+                    .filter(
+                      (v) =>
+                        v.key ===
+                        aggregationVariable.aggregationFilterFieldValue
+                    )
+                    ?.map((v) => v.value)
+                }
                 const groupValue =
                   hasGroups && txGroupByEntityVariable
                     ? await txGroupByEntityVariable.load(transaction, context)
@@ -905,7 +918,7 @@ export class LogicEvaluator {
             }
             return v.value && v.groupValue
           })
-          const values = filteredAggregateValues.map((v) => v.value)
+          const values = filteredAggregateValues.flatMap((v) => v.value)
           const entities = filteredAggregateValues.map((v) => v.entity)
           return {
             value: hasGroups
@@ -1045,17 +1058,11 @@ export class LogicEvaluator {
       tenantId: this.tenantId,
       dynamoDb: this.dynamoDb,
     })
-    const aggFieldKey = this.getAggregationVarFieldKey(
+    const newDataValue = await this.getNewDataValueForAggregation(
       aggregationVariable,
+      entityVarDataloader,
       direction
     )
-    const newDataValue = await entityVarDataloader.load(
-      getEntityVariableLoaderKey({
-        key: aggFieldKey,
-        entityKey: aggFieldKey,
-      })
-    )
-
     const hasGroups = Boolean(aggregationVariable.aggregationGroupByFieldKey)
     const newGroupValue = aggregationVariable.aggregationGroupByFieldKey
       ? await entityVarDataloader.load({
@@ -1091,6 +1098,7 @@ export class LogicEvaluator {
       | null = null
 
     let targetAggregation: ({ time: string } & AggregationData) | undefined
+
     if (aggregationVariable.lastNEntities) {
       const aggregations =
         await this.aggregationRepository.getUserLogicTimeAggregations(
@@ -1106,6 +1114,13 @@ export class LogicEvaluator {
           (acc, curr) => (curr?.entities ?? []).length + acc,
           1
         ) ?? 1
+      const groupLabel = getTransactionStatsTimeGroupLabel(
+        transaction.timestamp,
+        aggregationGranularity
+      )
+      targetAggregation = find(aggregations, (obj) =>
+        isEqual(obj.time, groupLabel)
+      )
       if (
         entitiesCountInAggregation > aggregationVariable.lastNEntities &&
         aggregations
@@ -1115,18 +1130,10 @@ export class LogicEvaluator {
           targetAggregationToUpdate,
           targetEntities,
         } = this.getLastNMinusOneAggregationResult(aggregations)
+
         if (isUndefined(targetAggregationToUpdate)) {
           throw new Error('targetAggregationToUpdate is undefined')
         }
-
-        const groupLabel = getTransactionStatsTimeGroupLabel(
-          transaction.timestamp,
-          aggregationGranularity
-        )
-        targetAggregation = find(aggregations, (obj) =>
-          isEqual(obj.time, groupLabel)
-        )
-
         if (isEqual(targetAggregationToUpdate, targetAggregation)) {
           targetAggregation = {
             ...targetAggregationToUpdate,
@@ -1191,6 +1198,42 @@ export class LogicEvaluator {
       transaction.transactionId
     )
     logger.info('Updated aggregation')
+  }
+
+  private async getNewDataValueForAggregation(
+    aggregationVariable: LogicAggregationVariable,
+    entityVarDataloader: DataLoader<
+      Omit<LogicEntityVariableInUse, 'name'>,
+      any,
+      string
+    >,
+    direction: 'origin' | 'destination'
+  ) {
+    const { aggregationFilterFieldValue, aggregationFilterFieldKey } =
+      aggregationVariable
+    const aggFieldKey = this.getAggregationVarFieldKey(
+      aggregationVariable,
+      direction
+    )
+    const newDataValue = await entityVarDataloader.load(
+      getEntityVariableLoaderKey({
+        key: aggFieldKey,
+        entityKey: aggFieldKey,
+      })
+    )
+    if (newDataValue == null) {
+      return newDataValue
+    }
+    if (!aggregationFilterFieldKey) {
+      return [newDataValue]
+    }
+    if (aggregationFilterFieldValue) {
+      const tagValue = newDataValue
+        .filter((v: Tag) => v.key === aggregationFilterFieldValue)
+        .map((v: Tag) => v.value)
+      return tagValue
+    }
+    return [newDataValue]
   }
 
   private getAggregationWithEarliestTransaction(
@@ -1259,13 +1302,20 @@ export class LogicEvaluator {
       'timestamp'
     )
     const targetEntities = drop(sortedEntities, 1)
-    const newUpdatedAggregationData = targetEntities.map(
+    const newUpdatedAggregationData = targetEntities.flatMap(
       (entity) => entity.value
     )
+    const newValuesToAggregate = [
+      ...targetEntities.flatMap((e) => e.value),
+      ...aggregations
+        .filter((obj) => obj.time !== targetAggregationToUpdate?.time)
+        .flatMap((obj) => obj.entities?.flatMap((e) => e.value) ?? []),
+    ]
     return {
       newUpdatedAggregationData,
       targetAggregationToUpdate,
       targetEntities,
+      newValuesToAggregate,
     }
   }
 
@@ -1363,7 +1413,7 @@ export class LogicEvaluator {
     ) {
       const aggResult = this.getLastNMinusOneAggregationResult(aggData)
       result =
-        aggregator.aggregate(aggResult?.newUpdatedAggregationData ?? []) ??
+        aggregator.aggregate(aggResult?.newValuesToAggregate ?? []) ??
         aggregator.init()
     } else {
       result = aggData.reduce((acc: unknown, cur: AggregationData) => {
@@ -1391,15 +1441,10 @@ export class LogicEvaluator {
           ),
         ])
       if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {
-        const aggFieldKey = this.getAggregationVarFieldKey(
+        const newDataValue = await this.getNewDataValueForAggregation(
           aggregationVariable,
+          entityVarDataloader,
           direction
-        )
-        const newDataValue = await entityVarDataloader.load(
-          getEntityVariableLoaderKey({
-            key: aggFieldKey,
-            entityKey: aggFieldKey,
-          })
         )
         // NOTE: Merge the incoming transaction/user into the aggregation result
         if (newDataValue) {

@@ -8,7 +8,7 @@ describe('AVG', () => {
     expect(AVG.aggregate([1, 2, 3])).toEqual({ count: 3, value: 6 })
   })
   test('reduce', async () => {
-    expect(AVG.reduce({ count: 2, value: 3 }, 10)).toEqual({
+    expect(AVG.reduce({ count: 2, value: 3 }, [10])).toEqual({
       count: 3,
       value: 13,
     })
