@@ -84,6 +84,88 @@ describe('Sanctions Service', () => {
       })
     })
 
+    describe('Getting existed searches', () => {
+      test('It should hit the cache when searching with fuzinessRange and it is not defined in original search', async () => {
+        const service = new SanctionsService(TEST_TENANT_ID)
+        const request1: SanctionsSearchRequest = {
+          searchTerm: 'Putin',
+          fuzziness: 0.5,
+          countryCodes: ['DE', 'FR'],
+          yearOfBirth: 1992,
+          types: ['SANCTIONS', 'PEP'],
+          monitoring: { enabled: true },
+        }
+        const response1 = await service.search(request1)
+        const searchId1 = response1.searchId
+
+        const request2: SanctionsSearchRequest = {
+          ...request1,
+          fuzzinessRange: {
+            lowerBound: 42,
+            upperBound: 100,
+          },
+        }
+        const response2 = await service.search(request2)
+        const searchId2 = response2.searchId
+        expect(searchId1).toEqual(searchId2)
+      })
+      test('It should hit the cache when searching with fuzzinessRange and it is matched in original search', async () => {
+        const service = new SanctionsService(TEST_TENANT_ID)
+        const request1: SanctionsSearchRequest = {
+          searchTerm: 'Putin 2',
+          fuzzinessRange: {
+            lowerBound: 42,
+            upperBound: 100,
+          },
+          countryCodes: ['DE', 'FR'],
+          yearOfBirth: 1992,
+          types: ['SANCTIONS', 'PEP'],
+          monitoring: { enabled: true },
+        }
+        const response1 = await service.search(request1)
+        const searchId1 = response1.searchId
+
+        const request2: SanctionsSearchRequest = {
+          ...request1,
+          fuzzinessRange: {
+            lowerBound: 42,
+            upperBound: 100,
+          },
+        }
+        const response2 = await service.search(request2)
+        const searchId2 = response2.searchId
+        expect(searchId1).toEqual(searchId2)
+      })
+
+      test('It should not hit the cache when searching with fuzzinessRange and it is not matching in original search', async () => {
+        const service = new SanctionsService(TEST_TENANT_ID)
+        const request1: SanctionsSearchRequest = {
+          searchTerm: 'Putin 3',
+          fuzzinessRange: {
+            lowerBound: 42,
+            upperBound: 100,
+          },
+          countryCodes: ['DE', 'FR'],
+          yearOfBirth: 1992,
+          types: ['SANCTIONS', 'PEP'],
+          monitoring: { enabled: true },
+        }
+        const response1 = await service.search(request1)
+        const searchId1 = response1.searchId
+
+        const request2: SanctionsSearchRequest = {
+          ...request1,
+          fuzzinessRange: {
+            lowerBound: 12,
+            upperBound: 72,
+          },
+        }
+        const response2 = await service.search(request2)
+        const searchId2 = response2.searchId
+        expect(searchId1).not.toEqual(searchId2)
+      })
+    })
+
     test('Skip searching CA on cache hit', async () => {
       const service = new SanctionsService(TEST_TENANT_ID)
       const mongoDb = await getMongoDbClient()

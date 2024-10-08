@@ -80,6 +80,7 @@ export class SanctionsSearchRepository {
       _id,
       monitoring: _monitoring,
       monitored: _monitored,
+      fuzzinessRange,
       ...params
     } = request
 
@@ -97,6 +98,19 @@ export class SanctionsSearchRepository {
         ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
         : []),
     ]
+
+    if (fuzzinessRange != null) {
+      filters.push({
+        $or: [
+          {
+            'request.fuzzinessRange': { $eq: null },
+          },
+          {
+            'request.fuzzinessRange': fuzzinessRange,
+          },
+        ],
+      })
+    }
 
     return await collection.findOne({
       $and: filters,
