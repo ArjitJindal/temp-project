@@ -55,6 +55,7 @@ describe('Core logic', () => {
     {
       id: 'R-16',
       defaultParameters: {
+        fuzziness: 50,
         screeningTypes: ['SANCTIONS'],
         fuzzinessRange: {
           lowerBound: 50,
@@ -114,6 +115,7 @@ describe('Skip if ongoing screening mode if on but ongoingScreening is false', (
     {
       id: 'R-16',
       defaultParameters: {
+        fuzziness: 50,
         screeningTypes: ['SANCTIONS'],
         fuzzinessRange: {
           lowerBound: 50,

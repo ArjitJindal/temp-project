@@ -7,6 +7,9 @@ import {
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
+import { PepRank } from '@/@types/openapi-internal/PepRank'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
   async save(
@@ -93,19 +96,42 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       associations.flatMap(([_, associationIds]) => associationIds)
     )
     const associates = await coll
-      .aggregate<{ id: string; name: string }>([
+      .aggregate<{
+        id: string
+        name: string
+        occupations: SanctionsOccupation[]
+        sanctionSearchTypes: SanctionsSearchType[]
+      }>([
         { $match: { id: { $in: assocationIds }, provider, version } },
-        { $project: { id: 1, name: 1, provider: 1, version: 1 } },
+        {
+          $project: {
+            id: 1,
+            name: 1,
+            provider: 1,
+            version: 1,
+            occupations: 1,
+            sanctionSearchTypes: 1,
+          },
+        },
       ])
       .toArray()
 
-    const associateNameMap = associates.reduce<{ [key: string]: string }>(
-      (acc, { id, name }) => {
-        acc[id] = name
-        return acc
-      },
-      {}
-    )
+    const associateNameMap = associates.reduce<{
+      [key: string]: {
+        name: string
+        ranks?: PepRank[]
+        sanctionSearchTypes: SanctionsSearchType[]
+      }
+    }>((acc, { id, name, occupations, sanctionSearchTypes }) => {
+      acc[id] = {
+        name,
+        ranks: occupations
+          ?.map((occupation) => occupation.rank)
+          .filter((rank): rank is PepRank => rank != null),
+        sanctionSearchTypes,
+      }
+      return acc
+    }, {})
 
     await coll.bulkWrite(
       associations.map(([entityId, associateIds]) => {

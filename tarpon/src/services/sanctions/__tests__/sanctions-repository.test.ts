@@ -51,14 +51,22 @@ describe('MongoSanctionsRepository', () => {
     await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
-
     expect(result).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: '1', name: 'Tim', associates: ['Bob'] }),
+        expect.objectContaining({
+          id: '1',
+          name: 'Tim',
+          associates: expect.arrayContaining([
+            expect.objectContaining({ name: 'Bob' }),
+          ]),
+        }),
         expect.objectContaining({
           id: '2',
           name: 'Bob',
-          associates: expect.arrayContaining(['Sam', 'Tim']),
+          associates: expect.arrayContaining([
+            expect.objectContaining({ name: 'Tim' }),
+            expect.objectContaining({ name: 'Sam' }),
+          ]),
         }),
         expect.objectContaining({
           id: '3',

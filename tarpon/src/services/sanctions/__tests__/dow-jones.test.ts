@@ -48,7 +48,7 @@ describe('DowJonesProvider', () => {
           {
             id: '11756174',
             name: 'Priyavrat Bhartia',
-            sanctionSearchTypes: ['SANCTIONS'],
+            sanctionSearchTypes: [], // RCAs are not sanctions
             entityType: 'Person',
             gender: 'Male',
             aka: [],
@@ -114,7 +114,7 @@ Jubilant Pharmova Ltd.`,
             name: 'Ange-Félix Patassé',
             entityType: 'Person',
             nationality: ['CF'],
-            sanctionSearchTypes: ['PEP', 'SANCTIONS'],
+            sanctionSearchTypes: ['PEP', 'ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
             gender: 'Male',
             occupations: [
               {

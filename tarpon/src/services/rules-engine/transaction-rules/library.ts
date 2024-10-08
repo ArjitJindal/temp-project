@@ -64,6 +64,7 @@ import { SamePaymentDetailsParameters } from '@/services/rules-engine/transactio
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
+import { DowJonesConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/dowjones-consumer-user'
 
 export enum RuleChecksForField {
   FirstTransaction = '1st transaction',
@@ -1800,10 +1801,7 @@ const _RULES_LIBRARY: Array<
   },
   () => {
     const defaultParameters: SanctionsConsumerUserRuleParameters = {
-      fuzzinessRange: {
-        lowerBound: 20,
-        upperBound: 50,
-      },
+      fuzziness: 20,
       ongoingScreening: false,
       screeningTypes: [],
     }
@@ -1828,6 +1826,42 @@ const _RULES_LIBRARY: Array<
       defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A consumer user can be checked for sanctions/PEP/AM match.',
+    }
+  },
+  () => {
+    const defaultParameters: DowJonesConsumerUserRuleParameters = {
+      fuzzinessRange: {
+        upperBound: 20,
+        lowerBound: 20,
+      },
+      ongoingScreening: false,
+      screeningTypes: [],
+    }
+
+    return {
+      id: 'R-18',
+      name: 'Screening consumer users with Dow Jones',
+      type: 'USER',
+      description:
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
+      descriptionTemplate:
+        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'dowjones-consumer-user',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.Username,
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.UsersYearOfBirth,
+      ],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS', 'DOW_JONES'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:

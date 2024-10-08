@@ -11867,6 +11867,14 @@ components:
           type: string
         association:
           type: string
+        sanctionsSearchTypes:
+          type: array
+          items:
+            $ref: '#/components/schemas/SanctionsSearchType'
+        ranks:
+          type: array
+          items:
+            $ref: '#/components/schemas/PepRank'
     OccupationCode:
       title: OccupationCode
       type: string

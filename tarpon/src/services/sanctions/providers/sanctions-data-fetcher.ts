@@ -78,7 +78,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.types) {
-      match['sanctionSearchTypes'] = { $in: request.types }
+      match['$or'] = [
+        { sanctionSearchTypes: { $in: request.types } },
+        {
+          'associates.sanctionSearchTypes': {
+            $in: request.types,
+          },
+        },
+      ]
     }
 
     if (request.documentId) {
@@ -96,7 +103,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     if (request.PEPRank) {
-      match['occupations.rank'] = request.PEPRank
+      match['$or'] = [
+        { ranks: { $in: request.PEPRank } },
+        { 'associates.ranks': { $in: request.PEPRank } },
+      ]
     }
 
     const results = await client

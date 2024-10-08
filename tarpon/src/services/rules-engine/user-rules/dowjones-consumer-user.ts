@@ -1,8 +1,11 @@
 import { JSONSchemaType } from 'ajv'
+
 import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
-  PERCENT_SCHEMA,
+  FUZZINESS_RANGE_SCHEMA,
+  SANCTIONS_SCREENING_VALUES_SCHEMA,
+  PEP_RANK_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -11,36 +14,56 @@ import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
+import { PepRank } from '@/@types/openapi-internal/PepRank'
 
-export type SanctionsConsumerUserRuleParameters = {
+type ScreeningValues = 'NRIC' | 'NATIONALITY'
+export type DowJonesConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
-  fuzziness: number
+  fuzzinessRange: {
+    lowerBound: number
+    upperBound: number
+  }
   ongoingScreening: boolean
+  screeningValues?: ScreeningValues[]
+  PEPRank?: PepRank
 }
 
-export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsumerUserRuleParameters> {
-  public static getSchema(): JSONSchemaType<SanctionsConsumerUserRuleParameters> {
+export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerUserRuleParameters> {
+  public static getSchema(): JSONSchemaType<DowJonesConsumerUserRuleParameters> {
     return {
       type: 'object',
       properties: {
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: PERCENT_SCHEMA({
-          title: 'Fuzziness',
+        fuzzinessRange: FUZZINESS_RANGE_SCHEMA({
+          uiSchema: {
+            requiredFeatures: ['DOW_JONES'],
+          },
+          title: 'Fuzziness range',
           description:
             'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/ phonetics',
-          multipleOf: 10,
         }),
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
         }),
+        screeningValues: SANCTIONS_SCREENING_VALUES_SCHEMA({
+          description:
+            'Select the screening attributes to be used for the screening',
+        }),
+        PEPRank: PEP_RANK_SCHEMA({}),
       },
-      required: ['fuzziness'],
+      required: ['fuzzinessRange'],
     }
   }
 
   public async computeRule() {
-    const { fuzziness, screeningTypes, ongoingScreening } = this.parameters
+    const {
+      fuzzinessRange,
+      screeningTypes,
+      ongoingScreening,
+      screeningValues,
+      PEPRank,
+    } = this.parameters
     const user = this.user as User
     if (
       !isConsumerUser(this.user) ||
@@ -73,8 +96,18 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         searchTerm: name,
         yearOfBirth,
         types: screeningTypes,
-        fuzziness,
+        fuzzinessRange,
         monitoring: { enabled: ongoingScreening },
+        PEPRank,
+        ...(screeningValues?.includes('NRIC')
+          ? {
+              documentId: user.legalDocuments?.map((doc) => doc.documentNumber),
+            }
+          : {}),
+        ...(screeningValues?.includes('NATIONALITY') &&
+        user.userDetails.countryOfNationality
+          ? { nationality: [user.userDetails.countryOfNationality] }
+          : {}),
       },
       hitContext
     )

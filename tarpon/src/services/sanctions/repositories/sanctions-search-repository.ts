@@ -11,8 +11,8 @@ import { DefaultApiGetSanctionsSearchRequest } from '@/@types/openapi-internal/R
 import { cursorPaginate } from '@/utils/pagination'
 import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSearchMonitoring'
 import dayjs from '@/utils/dayjs'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { traceable } from '@/core/xray'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -123,7 +123,7 @@ export class SanctionsSearchRepository {
     if (params.types && params.types.length > 0) {
       conditions.push({
         $or: params.types.map((type) => ({
-          'response.data.doc.types': prefixRegexMatchFilter(
+          'response.data.types': prefixRegexMatchFilter(
             toComplyAdvantageType(type)
           ),
         })),

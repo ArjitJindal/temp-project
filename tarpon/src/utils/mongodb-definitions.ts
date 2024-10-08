@@ -554,7 +554,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [
           { createdAt: 1, _id: 1 },
           { 'request.searchTerm': 1 },
-          { 'response.data.doc.types': 1 },
+          { 'response.data.types': 1 },
           { 'response.providerSearchId': 1 },
         ].map((index) => ({ index })),
     },

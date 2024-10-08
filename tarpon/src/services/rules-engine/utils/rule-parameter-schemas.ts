@@ -1,10 +1,6 @@
 import { lowerCase, startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import {
-  PEP_RANK_VALUES,
-  SANCTIONS_SCREENING_VALUES,
-} from '../user-rules/sanctions-consumer-user'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import {
@@ -21,6 +17,7 @@ import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/Consume
 import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
+import { PepRank } from '@/@types/openapi-internal/PepRank'
 
 type SchemaOptions = {
   title?: string
@@ -817,6 +814,7 @@ export const PERCENT_SCHEMA = (options: PercentSchemaOptions) => {
     minimum: minimum ?? 0,
     multipleOf,
     maximum: maximum === 'NO_MAXIMUM' ? undefined : maximum ?? 100,
+    ...uiSchema(options?.uiSchema),
   } as const
 }
 
@@ -841,7 +839,7 @@ export const FUZZINESS_RANGE_SCHEMA = (options?: AgeRangeSchemaOptions) =>
       subtype: 'NUMBER_RANGE',
       minimum: 0,
       maximum: 100,
-      multipleOf: 5,
+      multipleOf: 1,
       startExclusive: false,
       endExclusive: false,
     }),
@@ -885,6 +883,8 @@ export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
+const SANCTIONS_SCREENING_VALUES = ['NRIC', 'NATIONALITY']
+const PEP_RANK_VALUES: PepRank[] = ['LEVEL_1', 'LEVEL_2', 'LEVEL_3']
 export const SANCTIONS_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {

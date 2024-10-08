@@ -9,7 +9,6 @@ import unzipper from 'unzipper'
 import { uniq, uniqBy } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
-import * as Sentry from '@sentry/node'
 import {
   Action,
   SanctionsRepository,
@@ -22,12 +21,12 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { removeUndefinedFields } from '@/utils/object'
 import { DOW_JONES_COUNTRIES } from '@/services/sanctions/providers/dow-jones-countries'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { SanctionsIdDocument } from '@/@types/openapi-internal/SanctionsIdDocument'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { OccupationCode } from '@/@types/openapi-internal/OccupationCode'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -307,7 +306,6 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     logger.info(`Processing ${filepath}`)
     const peopleFiles = await this.listFilePaths(filepath)
     if (peopleFiles.length == 0) {
-      Sentry.captureMessage('No files found in the directory', 'warning')
       return
     }
     await Promise.all(
@@ -434,18 +432,42 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const sanctionSearchTypes: SanctionsSearchType[] = []
         const descriptions = person.Descriptions?.flatMap((d) => d.Description)
         const descriptionValues = descriptions.map((d) => d['@_Description1'])
+
+        const description2Values = descriptions.map((d) => d['@_Description2'])
         if (descriptionValues?.includes('1')) {
           sanctionSearchTypes.push('PEP')
         }
-        if (descriptionValues?.includes('2')) {
-          // TODO: Determine how to handle "Relative or Close Associate (RCA)"
-          sanctionSearchTypes.push('SANCTIONS')
+        if (descriptionValues?.includes('3')) {
+          if (
+            ['1', '2', '11', '25'].some((val) =>
+              description2Values?.includes(val)
+            ) &&
+            (!sanctionsReferences || sanctionsReferences.length > 0)
+          ) {
+            sanctionSearchTypes.push('SANCTIONS')
+          }
+          if (
+            ['7', '8', '9', '10', '31', '39', '21', '40'].some((val) =>
+              description2Values?.includes(val)
+            )
+          ) {
+            sanctionSearchTypes.push('ADVERSE_MEDIA')
+          }
         }
-        if (
-          ['3', '4'].some((val) => descriptionValues?.includes(val)) &&
-          (!sanctionsReferences || sanctionsReferences.length > 0)
-        ) {
-          sanctionSearchTypes.push('SANCTIONS')
+        if (descriptionValues?.includes('4')) {
+          if (
+            ['3', '4'].some((val) => description2Values?.includes(val)) &&
+            (!sanctionsReferences || sanctionsReferences.length > 0)
+          ) {
+            sanctionSearchTypes.push('SANCTIONS')
+          }
+          if (
+            ['12', '13', '14', '15', '17', '22'].some((val) =>
+              description2Values?.includes(val)
+            )
+          ) {
+            sanctionSearchTypes.push('ADVERSE_MEDIA')
+          }
         }
         const countries = uniq<string>(
           person.CountryDetails?.Country?.map(
