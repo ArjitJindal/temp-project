@@ -61,7 +61,6 @@ export class MongoDbConsumer {
   }
 
   async handleMessagesReplace(
-    mongoClient: MongoClient,
     messagesToReplace: Dictionary<MongoConsumerSQSMessage[]>
   ) {
     return Promise.all(
@@ -75,7 +74,9 @@ export class MongoDbConsumer {
           const { tenantId, clickhouseTable, mongoCollectionName } =
             tableDetails
 
-          const mongoCollection = mongoClient.db().collection(collectionName)
+          const mongoCollection = this.mongoClient
+            .db()
+            .collection(collectionName)
           const _ids = records.map((doc) => new ObjectId(doc.documentKey._id))
           const documents = mongoCollection.find({ _id: { $in: _ids } })
           const documentsToReplace = await documents.toArray()
@@ -253,7 +254,7 @@ export class MongoDbConsumer {
       this.segregateMessages(events)
 
     await Promise.all([
-      this.handleMessagesReplace(this.mongoClient, messagesToReplace),
+      this.handleMessagesReplace(messagesToReplace),
       this.handleMessagesDelete(messagesToDelete),
     ])
   }

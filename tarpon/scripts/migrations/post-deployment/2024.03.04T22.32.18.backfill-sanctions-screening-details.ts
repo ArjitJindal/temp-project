@@ -5,7 +5,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
-} from '../utils/migration-progress'
+} from '@/utils/migration-progress'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'

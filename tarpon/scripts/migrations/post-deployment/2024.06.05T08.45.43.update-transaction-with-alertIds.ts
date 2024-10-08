@@ -3,7 +3,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
-} from '../utils/migration-progress'
+} from '@/utils/migration-progress'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Tenant } from '@/services/accounts'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'

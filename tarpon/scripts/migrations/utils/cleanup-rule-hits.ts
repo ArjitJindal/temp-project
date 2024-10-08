@@ -5,7 +5,7 @@ import { Collection } from 'mongodb'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
-} from './migration-progress'
+} from '@/utils/migration-progress'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'

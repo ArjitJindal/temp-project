@@ -269,7 +269,12 @@ export function publishMetric(
 }
 
 export async function publishContextMetrics(context: Context | undefined) {
-  if (envIs('local') || envIs('test') || !context) {
+  if (
+    envIs('local') ||
+    envIs('test') ||
+    !context ||
+    process.env.CUSTOM_METRICS === 'false'
+  ) {
     return
   }
 

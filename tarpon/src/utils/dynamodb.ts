@@ -27,6 +27,7 @@ import {
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
+import { NodeHttpHandler } from '@smithy/node-http-handler'
 import { getCredentialsFromEvent } from './credentials'
 import { addNewSubsegment } from '@/core/xray'
 import {
@@ -182,6 +183,10 @@ export function getDynamoDbRawClient(
       // 100ms -> 200ms -> 400ms -> 800ms -> 1000ms -> 2000ms -> 2000ms
       (attempt) => Math.min(2000, 100 * 2 ** attempt)
     ),
+    requestHandler: new NodeHttpHandler({
+      httpAgent: { maxSockets: 1000 },
+      httpsAgent: { maxSockets: 1000 },
+    }),
   })
 
   const context = getContext()

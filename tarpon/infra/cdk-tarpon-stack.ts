@@ -347,11 +347,7 @@ export class CdkTarponStack extends cdk.Stack {
      * logical bucket name.
      */
 
-    let s3ImportBucket
-    let s3DocumentBucket
     let s3TmpBucket
-    let s3demoModeBucket
-    let s3SharedAssetsBucket
 
     const s3BucketCors = [
       {
@@ -401,7 +397,7 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
 
-      s3ImportBucket = new Bucket(this, importBucketName, {
+      new Bucket(this, importBucketName, {
         bucketName: importBucketName,
         cors: s3BucketCors,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -413,7 +409,7 @@ export class CdkTarponStack extends cdk.Stack {
         serverAccessLogsPrefix: `tarpon/${importBucketName}`,
       })
 
-      s3DocumentBucket = new Bucket(this, documentBucketName, {
+      new Bucket(this, documentBucketName, {
         bucketName: documentBucketName,
         cors: s3BucketCors,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -443,7 +439,7 @@ export class CdkTarponStack extends cdk.Stack {
         serverAccessLogsPrefix: `tarpon/${tmpBucketName}`,
       })
 
-      s3demoModeBucket = new Bucket(this, s3demoModeBucketName, {
+      new Bucket(this, s3demoModeBucketName, {
         bucketName: s3demoModeBucketName,
         cors: s3BucketCors,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -454,7 +450,7 @@ export class CdkTarponStack extends cdk.Stack {
         serverAccessLogsPrefix: `tarpon/${s3demoModeBucketName}`,
       })
 
-      s3SharedAssetsBucket = new Bucket(this, sharedAssetsBucketName, {
+      new Bucket(this, sharedAssetsBucketName, {
         bucketName: sharedAssetsBucketName,
         cors: s3BucketCors,
         blockPublicAccess: BlockPublicAccess.BLOCK_ALL,
@@ -467,25 +463,11 @@ export class CdkTarponStack extends cdk.Stack {
 
       this.createMalwareProtectionPlanForS3Bucket(s3TmpBucket)
     } else {
-      s3ImportBucket = Bucket.fromBucketName(
-        this,
-        importBucketName,
-        importBucketName
-      )
-      s3DocumentBucket = Bucket.fromBucketName(
-        this,
-        documentBucketName,
-        documentBucketName
-      )
-
+      Bucket.fromBucketName(this, importBucketName, importBucketName)
+      Bucket.fromBucketName(this, documentBucketName, documentBucketName)
       s3TmpBucket = Bucket.fromBucketName(this, tmpBucketName, tmpBucketName)
-
-      s3demoModeBucket = Bucket.fromBucketName(
-        this,
-        s3demoModeBucketName,
-        s3demoModeBucketName
-      )
-      s3SharedAssetsBucket = Bucket.fromBucketName(
+      Bucket.fromBucketName(this, s3demoModeBucketName, s3demoModeBucketName)
+      Bucket.fromBucketName(
         this,
         sharedAssetsBucketName,
         sharedAssetsBucketName
@@ -612,16 +594,7 @@ export class CdkTarponStack extends cdk.Stack {
             's3:PutObject',
             's3:PutObjectAcl',
           ],
-          resources: [
-            s3ImportBucket.bucketArn,
-            s3DocumentBucket.bucketArn,
-            s3TmpBucket.bucketArn,
-            s3demoModeBucket.bucketArn,
-            s3SharedAssetsBucket.bucketArn,
-            `arn:aws:s3:::flagright-datalake-${config.stage}-${
-              config.region || 'eu-1'
-            }-bucket`,
-          ],
+          resources: ['*'],
         }),
         new PolicyStatement({
           effect: Effect.ALLOW,
@@ -874,18 +847,6 @@ export class CdkTarponStack extends cdk.Stack {
           config.resource.BATCH_JOB_LAMBDA?.MEMORY_SIZE ??
           config.resource.LAMBDA_DEFAULT.MEMORY_SIZE,
       }
-    )
-
-    jobRunnerAlias.role?.attachInlinePolicy(
-      new Policy(this, getResourceNameForTarpon('BatchJobRunnerPolicy'), {
-        statements: [
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: ['s3:GetObject*'],
-            resources: [`${s3DocumentBucket.bucketArn}/*`],
-          }),
-        ],
-      })
     )
 
     let ecsBatchJobTask: Chain | null = null

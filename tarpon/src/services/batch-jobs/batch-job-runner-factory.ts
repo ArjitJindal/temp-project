@@ -4,6 +4,8 @@ import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-j
 import { AlertSLAStatusRefreshBatchJobRunner } from './alert-sla-status-refresh-batch-job-runner'
 import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-runner'
 import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
+import { PnbBackfillEntitiesBatchJobRunner } from './pnb-backfill-entities-fargate-batch-job'
+import { PnbBackfillTransactionsBatchJobRunner } from './pnb-backfill-transactions-fargate-batch-job'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -52,6 +54,10 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     SANCTIONS_DATA_FETCH: (jobId) =>
       new SanctionsDataFetchBatchJobRunner(jobId),
     BACKFILL_AVERAGE_TRS: (jobId) => new BackfillAvgTrsRunner(jobId),
+    PNB_BACKFILL_ENTITIES: (jobId) =>
+      new PnbBackfillEntitiesBatchJobRunner(jobId),
+    PNB_BACKFILL_TRANSACTIONS: (jobId) =>
+      new PnbBackfillTransactionsBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

@@ -4,7 +4,7 @@ import { RuleHitsStatsDashboardMetric } from '../../../src/services/analytics/da
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
-} from '../utils/migration-progress'
+} from '@/utils/migration-progress'
 import { Tenant } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
 import { DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY } from '@/utils/mongodb-definitions'

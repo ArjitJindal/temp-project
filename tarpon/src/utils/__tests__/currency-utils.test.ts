@@ -2,7 +2,6 @@ import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from '.
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CurrencyService } from '@/services/currency'
 import * as ApiFetch from '@/utils/api-fetch'
-import * as DynamoDb from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -20,7 +19,6 @@ describe('Test Currency Utils', () => {
   test('Test CDN is called', async () => {
     jest.spyOn(CurrencyService.prototype, 'getExchangeData').mockRestore()
     const mockCDNGet = jest.spyOn(ApiFetch, 'apiFetch')
-    const mockDynamoDbGet = jest.spyOn(DynamoDb, 'getDynamoDbClient')
 
     mockCDNGet.mockResolvedValue(
       Promise.resolve({
@@ -40,11 +38,9 @@ describe('Test Currency Utils', () => {
       parseFloat(MOCKED_CURRENCY_EXCHANGE_RATES.data.rates.INR) /
         parseFloat(MOCKED_CURRENCY_EXCHANGE_RATES.data.rates.EUR)
     )
-    expect(mockDynamoDbGet).toHaveBeenCalledTimes(2)
 
     // Cache is present, CDN is not called
     mockCDNGet.mockClear()
-    mockDynamoDbGet.mockClear()
     const exchangeRate2 = await currencyService.getCurrencyExchangeRate(
       'EUR',
       'INR'
@@ -52,11 +48,9 @@ describe('Test Currency Utils', () => {
 
     expect(mockCDNGet).toHaveBeenCalledTimes(0)
     expect(exchangeRate2).toEqual(exchangeRate)
-    expect(mockDynamoDbGet).toHaveBeenCalledTimes(0)
 
     // Clear In-Memory Cache and Check CDN is not called
     mockCDNGet.mockClear()
-    mockDynamoDbGet.mockClear()
 
     currencyService.resetLocalCache()
 
@@ -67,7 +61,6 @@ describe('Test Currency Utils', () => {
 
     expect(mockCDNGet).toHaveBeenCalledTimes(0)
     expect(exchangeRate3).toEqual(exchangeRate)
-    expect(mockDynamoDbGet).toHaveBeenCalledTimes(1)
 
     mockCDNGet.mockRestore()
 
@@ -75,7 +68,6 @@ describe('Test Currency Utils', () => {
     const mockCDNGet2 = jest.spyOn(ApiFetch, 'apiFetch')
     await currencyService.expireCache()
 
-    mockDynamoDbGet.mockClear()
     currencyService.resetLocalCache()
 
     mockCDNGet2.mockRejectedValue(
@@ -89,6 +81,5 @@ describe('Test Currency Utils', () => {
 
     expect(mockCDNGet2).toHaveBeenCalledTimes(1)
     expect(exchangeRate4).toEqual(exchangeRate)
-    expect(mockDynamoDbGet).toHaveBeenCalledTimes(1)
   })
 })

@@ -2,7 +2,7 @@ import { migrateAllTenants } from '../utils/tenant'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
-} from '../utils/migration-progress'
+} from '@/utils/migration-progress'
 import { Tenant } from '@/services/accounts'
 import { HitsByUserStatsDashboardMetric } from '@/services/analytics/dashboard-metrics/hits-by-user-stats'
 import { TimeRange } from '@/services/dashboard/repositories/types'

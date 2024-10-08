@@ -12,13 +12,13 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const TableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID)
+const dynamoDb = getDynamoDbClient()
 
 @traceable
 export class CurrencyRepository {
   public async storeCache(
     cdnData: CurrencyExchangeUSDType
   ): Promise<CurrencyExchangeUSDType> {
-    const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new PutCommand({
       TableName,
@@ -35,7 +35,6 @@ export class CurrencyRepository {
 
   public async getCache(): Promise<CurrencyExchangeUSDType | undefined> {
     const keys = DynamoDbKeys.CURRENCY_CACHE()
-    const dynamoDb = getDynamoDbClient()
     const command = await dynamoDb.send(
       new GetCommand({
         TableName,
@@ -47,7 +46,6 @@ export class CurrencyRepository {
   }
 
   public async clearCache(): Promise<void> {
-    const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new DeleteCommand({
       TableName,
@@ -58,7 +56,6 @@ export class CurrencyRepository {
   }
 
   public async expireCache(): Promise<void> {
-    const dynamoDb = getDynamoDbClient()
     const keys = DynamoDbKeys.CURRENCY_CACHE()
     const command = new UpdateCommand({
       TableName,

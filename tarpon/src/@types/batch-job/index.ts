@@ -189,6 +189,24 @@ export type BackFillAvgTrs = {
   tenantId: string
 }
 
+export type PnbBackfillEntities = {
+  type: 'PNB_BACKFILL_ENTITIES'
+  tenantId: string
+  parameters: {
+    importFileS3Key: string
+    type: 'TRANSACTION' | 'CONSUMER' | 'BUSINESS'
+    dynamoDbOnly: boolean
+  }
+}
+export type PnbBackfillTransactions = {
+  type: 'PNB_BACKFILL_TRANSACTIONS'
+  tenantId: string
+  parameters: {
+    importFileS3Key: string
+    concurrency: number
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -209,7 +227,8 @@ export type BatchJob =
   | ReverifyTransactionsBatchJob
   | SanctionsDataFetchBatchJob
   | BackFillAvgTrs
-
+  | PnbBackfillEntities
+  | PnbBackfillTransactions
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

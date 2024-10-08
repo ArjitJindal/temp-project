@@ -1022,7 +1022,11 @@ export class UserRepository {
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId: user.userId },
-      user
+      {
+        ...user,
+        createdAt: user.createdAt ?? Date.now(),
+        updatedAt: Date.now(),
+      }
     )
 
     return user as InternalUser

@@ -9,7 +9,6 @@ import { TEST_DYNAMODB_TABLE_NAMES } from './src/test-utils/dynamodb-test-utils'
 import { mockedCurrencyExchangeRates as MOCKED_CURRENCY_EXCHANGE_RATES } from './test-resources/mocked-currency-exchange-rates'
 import { CurrencyService } from '@/services/currency'
 process.env.ENV = 'local'
-process.env.DYNAMODB_URI = 'http://localhost:7999'
 if (!process.env.EXEC_SOURCE) {
   process.env.EXEC_SOURCE = 'LOCAL_TEST'
 }

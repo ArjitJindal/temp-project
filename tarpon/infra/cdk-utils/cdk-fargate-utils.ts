@@ -80,6 +80,8 @@ export const addFargateContainer = (
       REGION: scope.config.region as string,
       RELEASE_VERSION: process.env.RELEASE_VERSION as string,
       NODE_OPTIONS: `--max_old_space_size=${props.memoryLimitMiB ?? 512}`,
+      LOG_LEVEL: 'warn',
+      CUSTOM_METRICS: 'false',
     },
   })
 

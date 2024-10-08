@@ -122,9 +122,6 @@ async function userHandler(
     usersRepo.getUserById(internalUser.userId),
   ])
 
-  internalUser.createdAt = existingUser?.createdAt ?? Date.now()
-  internalUser.updatedAt = Date.now()
-
   const savedUser = await usersRepo.saveUserMongo({
     ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
     ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
