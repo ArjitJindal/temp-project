@@ -1,7 +1,13 @@
-import { Document, MongoClient, ObjectId, WithId } from 'mongodb'
+import {
+  Document,
+  MongoClient,
+  ObjectId,
+  WithId,
+  Filter,
+  FindCursor,
+} from 'mongodb'
 import { Dictionary, groupBy, memoize } from 'lodash'
 import pMap from 'p-map'
-import { MongoConsumerSQSMessage } from './app'
 import {
   batchInsertToClickhouse,
   getClickhouseClient,
@@ -15,7 +21,7 @@ import {
 import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
-import { logger } from '@/core/logger'
+import { generateChecksum } from '@/utils/object'
 
 type TableDetails = {
   tenantId: string
@@ -24,12 +30,31 @@ type TableDetails = {
   mongoCollectionName: string
 }
 
+type MongoConsumerFilterDocument = {
+  type: 'filter'
+  value: Filter<Document>
+}
+
+type MongoConsumerIdDocument = {
+  type: 'id'
+  value: string
+}
+
+export type MongoConsumerMessage = {
+  operationType: 'delete' | 'insert' | 'update' | 'replace'
+  documentKey: MongoConsumerFilterDocument | MongoConsumerIdDocument
+  clusterTime: number
+  collectionName: string
+}
+
 @traceable
 export class MongoDbConsumer {
-  mongoClient: MongoClient
+  private mongoClient: MongoClient
+  private currencyService: CurrencyService
 
   constructor(mongoClient: MongoClient) {
     this.mongoClient = mongoClient
+    this.currencyService = new CurrencyService()
   }
 
   private findClickhouseTableDefinition = memoize(
@@ -39,6 +64,48 @@ export class MongoDbConsumer {
       ) as ClickhouseTableDefinition
     }
   )
+
+  public async handleMongoConsumerMessage(events: MongoConsumerMessage[]) {
+    const { messagesToReplace, messagesToDelete } =
+      this.segregateMessages(events)
+
+    await Promise.all([
+      this.handleMessagesReplace(messagesToReplace),
+      this.handleMessagesDelete(messagesToDelete),
+    ])
+  }
+
+  public async handleMessagesReplace(
+    messagesToReplace: Dictionary<MongoConsumerMessage[]>
+  ) {
+    return Promise.all(
+      Object.entries(messagesToReplace).map(
+        async ([collectionName, records]) => {
+          const tableDetails = this.fetchTableDetails(collectionName)
+          if (!tableDetails) {
+            return
+          }
+
+          const { tenantId, clickhouseTable, mongoCollectionName } =
+            tableDetails
+          const documentsToReplace = await this.fetchDocuments(
+            collectionName,
+            records
+          )
+          const updatedDocuments = await this.updateInsertMessages(
+            mongoCollectionName,
+            documentsToReplace
+          )
+
+          await batchInsertToClickhouse(
+            tenantId,
+            clickhouseTable.table,
+            updatedDocuments
+          )
+        }
+      )
+    )
+  }
 
   public fetchTableDetails(tableName: string): TableDetails | false {
     const tableSuffix = Object.keys(
@@ -60,149 +127,129 @@ export class MongoDbConsumer {
     }
   }
 
-  async handleMessagesReplace(
-    messagesToReplace: Dictionary<MongoConsumerSQSMessage[]>
-  ) {
-    return Promise.all(
-      Object.entries(messagesToReplace).map(
-        async ([collectionName, records]) => {
-          const tableDetails = this.fetchTableDetails(collectionName)
-          if (!tableDetails) {
-            return
-          }
+  private async fetchDocuments(
+    collectionName: string,
+    records: MongoConsumerMessage[],
+    onlyId: boolean = false
+  ): Promise<WithId<Document>[]> {
+    const mongoCollection = this.mongoClient.db().collection(collectionName)
+    const filters = this.buildFilters(records)
+    const documents: FindCursor<WithId<Document>> = mongoCollection.find({
+      $or: filters,
+    })
 
-          const { tenantId, clickhouseTable, mongoCollectionName } =
-            tableDetails
+    if (onlyId) {
+      documents.project({ _id: 1 })
+    }
 
-          const mongoCollection = this.mongoClient
-            .db()
-            .collection(collectionName)
-          const _ids = records.map((doc) => new ObjectId(doc.documentKey._id))
-          const documents = mongoCollection.find({ _id: { $in: _ids } })
-          const documentsToReplace = await documents.toArray()
+    return documents.toArray()
+  }
 
-          const updatedDocuments = await this.updateInsertMessages(
-            mongoCollectionName,
-            documentsToReplace
-          )
+  private buildFilters(records: MongoConsumerMessage[]): Filter<Document>[] {
+    return records.map((record) => {
+      if (record.documentKey.type === 'filter') {
+        return record.documentKey.value
+      }
+      return { _id: new ObjectId(record.documentKey.value) }
+    })
+  }
 
-          await batchInsertToClickhouse(
-            tenantId,
-            clickhouseTable.table,
-            updatedDocuments
-          )
-        }
-      )
-    )
+  public async updateInsertMessages(
+    mongoCollectionName: string,
+    records: WithId<Document>[]
+  ): Promise<WithId<Document>[]> {
+    switch (mongoCollectionName) {
+      case 'transactions':
+        return this.updateTransactionInsertMessages(records)
+      default:
+        return records
+    }
+  }
+
+  private DEFAULT_AMOUNT_DETAILS: TransactionAmountDetails = {
+    transactionAmount: 0,
+    transactionCurrency: 'USD',
   }
 
   private async updateTransactionInsertMessages(
     records: WithId<Document>[]
   ): Promise<WithId<Document>[]> {
-    const currencyService = new CurrencyService()
-
-    const DEFAULT_AMOUNT_DETAILS: TransactionAmountDetails = {
-      transactionAmount: 0,
-      transactionCurrency: 'USD',
-    }
-
-    const updatedRecords = await pMap(
+    return await pMap(
       records,
       async (record) => {
         const transaction = record as WithId<Transaction>
-        const originAmountDetails = transaction.originAmountDetails
-        const destinationAmountDetails = transaction.destinationAmountDetails
+        const { originAmountDetails, destinationAmountDetails } = transaction
 
-        const [
-          originTransactionAmountInUsd,
-          destinationTransactionAmountInUsd,
-        ] = await Promise.all([
-          originAmountDetails
-            ? currencyService.getTargetCurrencyAmount(
-                originAmountDetails,
-                'USD'
-              )
-            : DEFAULT_AMOUNT_DETAILS,
-          destinationAmountDetails
-            ? currencyService.getTargetCurrencyAmount(
-                destinationAmountDetails,
-                'USD'
-              )
-            : DEFAULT_AMOUNT_DETAILS,
+        const [originAmountInUsd, destinationAmountInUsd] = await Promise.all([
+          this.getAmountInUsd(originAmountDetails),
+          this.getAmountInUsd(destinationAmountDetails),
         ])
-
-        logger.info('Updated transaction', {
-          transactionId: transaction.transactionId,
-          originTransactionAmountInUsd,
-          destinationTransactionAmountInUsd,
-        })
 
         return {
           ...transaction,
           originAmountDetails: {
             ...originAmountDetails,
-            amountInUsd: originTransactionAmountInUsd.transactionAmount,
+            amountInUsd: originAmountInUsd.transactionAmount,
           },
           destinationAmountDetails: {
             ...destinationAmountDetails,
-            amountInUsd: destinationTransactionAmountInUsd,
+            amountInUsd: destinationAmountInUsd.transactionAmount,
           },
         }
       },
       { concurrency: 100 }
     )
-
-    logger.info('Updated transactions', {
-      updatedRecords: updatedRecords.length,
-    })
-
-    return updatedRecords
   }
 
-  public async updateInsertMessages(
-    monngoCollectionName: string,
-    records: WithId<Document>[]
-  ): Promise<WithId<Document>[]> {
-    switch (monngoCollectionName) {
-      case 'transactions': {
-        return await this.updateTransactionInsertMessages(records)
-      }
-      default: {
-        return records
-      }
+  private async getAmountInUsd(
+    amountDetails?: TransactionAmountDetails
+  ): Promise<TransactionAmountDetails> {
+    if (!amountDetails) {
+      return this.DEFAULT_AMOUNT_DETAILS
     }
+    return this.currencyService.getTargetCurrencyAmount(amountDetails, 'USD')
   }
 
-  public segregateMessages(records: MongoConsumerSQSMessage[]): {
-    messagesToDelete: Dictionary<MongoConsumerSQSMessage[]>
-    messagesToReplace: Dictionary<MongoConsumerSQSMessage[]>
+  private async executeDeleteQuery(
+    tenantId: string,
+    tableName: string,
+    filterConditions: string
+  ) {
+    const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE ${filterConditions}`
+    const client = await getClickhouseClient(tenantId)
+    await client.query({ query })
+  }
+
+  public segregateMessages(records: MongoConsumerMessage[]): {
+    messagesToDelete: Dictionary<MongoConsumerMessage[]>
+    messagesToReplace: Dictionary<MongoConsumerMessage[]>
   } {
-    const messagesToDelete: Record<string, MongoConsumerSQSMessage> = {}
-    const messagesToReplace: Record<string, MongoConsumerSQSMessage> = {}
+    const messagesToDelete: Record<string, MongoConsumerMessage> = {}
+    const messagesToReplace: Record<string, MongoConsumerMessage> = {}
 
     for (const record of records) {
-      const { operationType, documentKey, clusterTime } = record
-      const { _id } = documentKey
+      const { operationType, documentKey, clusterTime, collectionName } = record
+      const key = this.getUniqueKey(collectionName, documentKey)
 
       if (operationType === 'delete') {
         const deleteRecord = record
 
         if (
-          !messagesToReplace[_id] ||
-          (messagesToReplace[_id]?.clusterTime ?? 0) < clusterTime
+          !messagesToReplace[key] ||
+          (messagesToReplace[key]?.clusterTime ?? 0) < clusterTime
         ) {
-          delete messagesToReplace[_id]
-          messagesToDelete[_id] = deleteRecord
+          delete messagesToReplace[key]
+          messagesToDelete[key] = deleteRecord
         }
       } else if (['insert', 'update', 'replace'].includes(operationType)) {
         const replaceRecord = record
 
         if (
-          !messagesToDelete[_id] ||
-          (messagesToDelete[_id]?.clusterTime ?? 0) < clusterTime
+          !messagesToDelete[key] ||
+          (messagesToDelete[key]?.clusterTime ?? 0) < clusterTime
         ) {
-          delete messagesToDelete[_id]
-          messagesToReplace[_id] = replaceRecord
+          delete messagesToDelete[key]
+          messagesToReplace[key] = replaceRecord
         }
       }
     }
@@ -222,8 +269,8 @@ export class MongoDbConsumer {
     }
   }
 
-  async handleMessagesDelete(
-    messagesToDelete: Dictionary<MongoConsumerSQSMessage[]>
+  private async handleMessagesDelete(
+    messagesToDelete: Dictionary<MongoConsumerMessage[]>
   ) {
     return Promise.all(
       Object.entries(messagesToDelete).map(
@@ -234,22 +281,35 @@ export class MongoDbConsumer {
           }
 
           const { clickhouseTable, tenantId } = tableDetails
-          const tableName = clickhouseTable.table
+          const items = await this.fetchDocuments(collectionName, records)
+          const filterConditions = `mongo_id IN (${items
+            .map((item) => `'${item._id}'`)
+            .join(',')})`
 
-          const query = `ALTER TABLE ${tableName} UPDATE is_deleted = 1 WHERE mongo_id IN (${records
-            .map((doc) => `'${doc.documentKey._id}'`)
-            .join(', ')})`
-
-          const client = await getClickhouseClient(tenantId)
-          await client.query({
-            query,
-          })
+          await this.executeDeleteQuery(
+            tenantId,
+            clickhouseTable.table,
+            filterConditions
+          )
         }
       )
     )
   }
 
-  async handleMongoConsumerSQSMessage(events: MongoConsumerSQSMessage[]) {
+  private getUniqueKey(
+    collectionName: string,
+    documentKey: { _id: string } | Filter<Document>
+  ): string {
+    if ('_id' in documentKey) {
+      return generateChecksum(documentKey._id, 20)
+    }
+    return generateChecksum(
+      `${collectionName}:${JSON.stringify(documentKey)}`,
+      20
+    )
+  }
+
+  async handleMongoConsumerSQSMessage(events: MongoConsumerMessage[]) {
     const { messagesToReplace, messagesToDelete } =
       this.segregateMessages(events)
 

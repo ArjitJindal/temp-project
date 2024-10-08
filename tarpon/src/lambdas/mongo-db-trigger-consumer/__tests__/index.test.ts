@@ -38,7 +38,8 @@ describe('Handle Messages', () => {
       mongoDbConsumerService.segregateMessages([
         {
           documentKey: {
-            _id: '666666666666666666666666',
+            type: 'id',
+            value: '666666666666666666666666',
           },
           operationType: 'delete',
           clusterTime: 0,
@@ -46,7 +47,8 @@ describe('Handle Messages', () => {
         },
         {
           documentKey: {
-            _id: '666666666666666666666666',
+            type: 'id',
+            value: '666666666666666666666666',
           },
           operationType: 'update',
           clusterTime: 1,
@@ -58,7 +60,8 @@ describe('Handle Messages', () => {
         cases: [
           {
             documentKey: {
-              _id: '666666666666666666666666',
+              type: 'id',
+              value: '666666666666666666666666',
             },
             operationType: 'update',
             clusterTime: 1,
@@ -76,7 +79,8 @@ describe('Handle Messages', () => {
       mongoDbConsumerService.segregateMessages([
         {
           documentKey: {
-            _id: '666666666666666666666666',
+            type: 'id',
+            value: '666666666666666666666666',
           },
           operationType: 'delete',
           clusterTime: 0,
@@ -88,7 +92,8 @@ describe('Handle Messages', () => {
         cases: [
           {
             documentKey: {
-              _id: '666666666666666666666666',
+              type: 'id',
+              value: '666666666666666666666666',
             },
             operationType: 'delete',
             clusterTime: 0,

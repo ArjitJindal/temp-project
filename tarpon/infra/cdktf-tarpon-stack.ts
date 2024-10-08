@@ -6,37 +6,10 @@ import * as atlas from '@cdktf/providers/mongodbatlas'
 import * as clickhouse from '@cdktf/providers/clickhouse'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
-import { Stage } from '@flagright/lib/constants/deploy'
 import { getClickhouseTenantConfig } from '@lib/configs/clickhouse/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
 
-const mongoTriggerDisabledTenants: Partial<Record<Stage, string[]>> = {
-  dev: ['cypress', 'flagright-postman', 'flagright-test'],
-  sandbox: [],
-}
-
-const mongoDbTriggers: Partial<
-  Record<Stage, { region: string; appId: string; serviceId: string }[]>
-> = {
-  dev: [
-    {
-      region: 'eu-central-1',
-      appId: '66d9428314abc3549b0db50a',
-      serviceId: '66d9428b14abc3549b0dbfc8',
-    },
-  ],
-  sandbox: [
-    {
-      serviceId: '66ed35cb6f9b16b8426978ca',
-      appId: '66ed35bfbe2fb91d06629029',
-      region: 'ap-southeast-1',
-    },
-  ],
-}
-
 const CLICKHOUSE_ORGANIZATION_ID = 'c9ccc4d7-3de9-479b-afd6-247a5ac0494e'
-
-const enabledCollections = ['cases'] // Transactions are Users are already handled
 
 export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {
@@ -126,59 +99,6 @@ export class CdktfTarponStack extends TerraformStack {
       }),
       mappingsDynamic: false,
       searchAnalyzer: 'lucene.standard',
-    })
-
-    mongoDbTriggers[config.stage]?.forEach((trigger) => {
-      new atlas.eventTrigger.EventTrigger(this, 'event-trigger', {
-        name: 'event-trigger',
-        projectId: project.projectId,
-        appId: trigger.appId,
-        configServiceId: trigger.serviceId,
-        type: 'DATABASE',
-        configDatabase: 'tarpon',
-        eventProcessors: {
-          awsEventbridge: {
-            configAccountId: config.env.account,
-            configRegion: trigger.region,
-          },
-        },
-        disabled: true, // TEMPORARY DISABLED TRIGGER (TO MANY EVENTS GENERATED)
-        unordered: false,
-        configOperationTypes: ['INSERT', 'UPDATE', 'DELETE', 'REPLACE'],
-        configMatch: Fn.jsonencode({
-          $and: [
-            ...(mongoTriggerDisabledTenants?.[config.stage]?.length
-              ? [
-                  {
-                    $and:
-                      mongoTriggerDisabledTenants?.[config.stage]?.map(
-                        (tenant) => ({
-                          'ns.coll': {
-                            $regex: `^(?!${tenant}).*`,
-                          },
-                        })
-                      ) ?? [],
-                  },
-                ]
-              : []),
-            {
-              $or: enabledCollections.map((collection) => ({
-                // ends with the collection name
-                'ns.coll': {
-                  $regex: `.*-${collection}$`,
-                },
-              })),
-            },
-          ],
-        }),
-        configProject: Fn.jsonencode({
-          operationType: 1,
-          ns: 1,
-          _id: 1,
-          documentKey: 1,
-          clusterTime: 1,
-        }),
-      })
     })
 
     const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)

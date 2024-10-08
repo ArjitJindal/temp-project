@@ -36,7 +36,7 @@ import { Tag } from '@/@types/openapi-public/Tag'
 import {
   DAY_DATE_FORMAT,
   getMongoDbClient,
-  internalMongoFindAndUpdate,
+  internalMongoUpdateOne,
   internalMongoReplace,
   lookupPipelineStage,
   paginateCursor,
@@ -1635,7 +1635,7 @@ export class MongoDbTransactionRepository
     transactionId: string,
     update: Partial<InternalTransaction>
   ) {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       TRANSACTIONS_COLLECTION(this.tenantId),
       { transactionId },

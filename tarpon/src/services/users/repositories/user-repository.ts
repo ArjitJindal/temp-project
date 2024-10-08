@@ -29,7 +29,7 @@ import { Business } from '@/@types/openapi-public/Business'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   DAY_DATE_FORMAT,
-  internalMongoFindAndUpdate,
+  internalMongoUpdateOne,
   internalMongoReplace,
   paginatePipeline,
   prefixRegexMatchFilter,
@@ -107,7 +107,7 @@ export class UserRepository {
     fileS3Key: string,
     summary: string
   ) {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId },
@@ -1154,7 +1154,7 @@ export class UserRepository {
     updatePipeline: UpdateFilter<InternalUser>,
     arrayFilters?: Document[]
   ) {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId },
@@ -1179,7 +1179,7 @@ export class UserRepository {
     userId: string,
     avgArsScore: AverageArsScore
   ): Promise<void> {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId },
@@ -1191,7 +1191,7 @@ export class UserRepository {
     userId: string,
     drsScore: DrsScore
   ): Promise<void> {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId },
@@ -1453,7 +1453,7 @@ export class UserRepository {
   }
 
   private async updateUser(userId: string, update: Partial<InternalUser>) {
-    await internalMongoFindAndUpdate(
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId },

@@ -153,7 +153,8 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
                   collectionName: TRANSACTIONS_COLLECTION(this.tenantId),
                   operationType: 'replace',
                   documentKey: {
-                    _id: transaction._id.toString(),
+                    value: transaction._id.toString(),
+                    type: 'id',
                   },
                   clusterTime: Date.now(),
                 }
@@ -210,7 +211,8 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
               collectionName: USERS_COLLECTION(this.tenantId),
               operationType: 'replace',
               documentKey: {
-                _id: user._id.toString(),
+                value: user._id.toString(),
+                type: 'id',
               },
               clusterTime: Date.now(),
             })),

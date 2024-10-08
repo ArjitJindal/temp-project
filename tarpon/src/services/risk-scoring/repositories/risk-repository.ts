@@ -707,7 +707,7 @@ export class RiskRepository {
     await sendMessageToMongoConsumer({
       clusterTime: Date.now(),
       collectionName,
-      documentKey: { _id: data.insertedId.toString() },
+      documentKey: { type: 'id', value: data.insertedId.toString() },
       operationType: 'insert',
     })
 

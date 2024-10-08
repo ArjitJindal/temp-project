@@ -30,7 +30,6 @@ import {
 import { Queue } from 'aws-cdk-lib/aws-sqs'
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
 import { Alias, FunctionProps, StartingPosition } from 'aws-cdk-lib/aws-lambda'
-import * as events from 'aws-cdk-lib/aws-events'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
 import { Construct, IConstruct } from 'constructs'
 import { IStream, Stream, StreamMode } from 'aws-cdk-lib/aws-kinesis'
@@ -52,7 +51,6 @@ import {
 } from 'aws-cdk-lib/aws-ec2'
 import { Certificate } from 'aws-cdk-lib/aws-certificatemanager'
 import { CnameRecord, HostedZone } from 'aws-cdk-lib/aws-route53'
-import * as eventschema from 'aws-cdk-lib/aws-eventschemas'
 import {
   DYNAMODB_TABLE_NAMES,
   getDeadLetterQueueName,
@@ -1382,8 +1380,8 @@ export class CdkTarponStack extends cdk.Stack {
 
     mongoDbTriggerQueueConsumerAlias.addEventSource(
       new SqsEventSource(mongoDbConsumerQueue, {
-        batchSize: 1000,
-        maxBatchingWindow: Duration.seconds(30),
+        batchSize: 100,
+        maxBatchingWindow: Duration.seconds(10),
       })
     )
 
@@ -1396,58 +1394,6 @@ export class CdkTarponStack extends cdk.Stack {
         privateDnsEnabled: true,
         securityGroups: [clickhouseSecurityGroup, securityGroup],
       })
-    }
-
-    if (
-      this.config.clickhouse?.enabled &&
-      !isQaEnv() &&
-      this.config.env.account &&
-      this.config.env.region
-    ) {
-      const eventBus = new events.EventBus(this, 'MongoEvent', {
-        eventSourceName: `aws.partner/mongodb.com/stitch.trigger/${this.config.application.MONGO_EVENT_TRIGGER_RULE_ID}`,
-      })
-
-      this.addTagsToResource(eventBus, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      const eventRule = new events.Rule(this, 'MongoEventRule', {
-        eventBus,
-        enabled: true,
-        eventPattern: {
-          account: [this.config.env.account],
-          region: [this.config.env.region],
-        },
-        description: 'Trigger for MongoDB Atlas',
-      })
-
-      this.addTagsToResource(eventRule, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      new eventschema.CfnDiscoverer(this, 'MongoDBTriggerDiscoverer', {
-        sourceArn: eventBus.eventBusArn,
-        tags: [{ key: FEATURE, value: FEATURES.MONGO_DB_CONSUMER }],
-      })
-
-      const { alias: mongoDbConsumerAlias, func } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.MONGO_DB_TRIGGER_CONSUMER_FUNCTION_NAME,
-        }
-      )
-
-      this.addTagsToResource(mongoDbConsumerAlias, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      this.addTagsToResource(func, {
-        [FEATURE]: FEATURES.MONGO_DB_CONSUMER,
-      })
-
-      eventRule.addTarget(new LambdaFunctionTarget(mongoDbConsumerAlias))
     }
 
     /**

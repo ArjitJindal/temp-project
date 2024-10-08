@@ -7,8 +7,11 @@ import {
   Filter,
   FindCursor,
   FindOptions,
+  ModifyResult,
   MongoClient,
   ObjectId,
+  OptionalUnlessRequiredId,
+  UpdateResult,
   WithId,
 } from 'mongodb'
 
@@ -424,9 +427,7 @@ export async function internalMongoReplace<T extends Document>(
 
   await sendMessageToMongoConsumer({
     collectionName,
-    documentKey: {
-      _id: String(result._id),
-    },
+    documentKey: { type: 'id', value: String(result._id) },
     operationType: 'replace',
     clusterTime: Date.now(),
   })
@@ -434,28 +435,68 @@ export async function internalMongoReplace<T extends Document>(
   return result
 }
 
-export async function internalMongoFindAndUpdate<T extends Document>(
+export async function internalMongoUpdateOne<T extends Document>(
   mongoClient: MongoClient,
   collectionName: string,
   filter: Filter<T>,
   update: Document,
-  options?: { arrayFilters?: Document[] }
-): Promise<void> {
+  options?: { arrayFilters?: Document[]; returnFullDocument?: boolean }
+): Promise<ModifyResult<T>> {
   const db = mongoClient.db()
   const collection = db.collection<T>(collectionName)
   const data = await collection.findOneAndUpdate(filter, update, {
     returnDocument: 'after',
     upsert: true,
-    projection: { _id: 1 },
     ...(options?.arrayFilters ? { arrayFilters: options.arrayFilters } : {}),
+    ...(options?.returnFullDocument ? {} : { projection: { _id: 1 } }),
   })
 
   const result = data.value as { _id: ObjectId }
 
   await sendMessageToMongoConsumer({
     collectionName,
-    documentKey: { _id: String(result._id) },
+    documentKey: { type: 'id', value: String(result._id) },
     operationType: 'update',
+    clusterTime: Date.now(),
+  })
+
+  return data
+}
+
+export async function internalMongoUpdateMany<T extends Document = Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  filter: Filter<T>,
+  update: Document,
+  options?: { arrayFilters?: Document[] }
+): Promise<UpdateResult<T>> {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  const result = await collection.updateMany(filter, update, options)
+
+  await sendMessageToMongoConsumer({
+    collectionName,
+    documentKey: { type: 'filter', value: filter as Filter<Document> },
+    operationType: 'update',
+    clusterTime: Date.now(),
+  })
+
+  return result
+}
+
+export async function internalMongoInsert<T extends Document>(
+  mongoClient: MongoClient,
+  collectionName: string,
+  document: OptionalUnlessRequiredId<T>
+): Promise<void> {
+  const db = mongoClient.db()
+  const collection = db.collection<T>(collectionName)
+  const result = await collection.insertOne(document)
+
+  await sendMessageToMongoConsumer({
+    collectionName,
+    documentKey: { type: 'id', value: String(result.insertedId) },
+    operationType: 'insert',
     clusterTime: Date.now(),
   })
 }

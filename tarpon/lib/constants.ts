@@ -307,9 +307,6 @@ export const StackConstants = {
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
   ),
-  MONGO_DB_TRIGGER_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
-    'MongoDbChangeCaptureConsumerFunction'
-  ),
   MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'MongoDbChangeCaptureQueueConsumerFunction'
   ),

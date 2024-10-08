@@ -13,6 +13,25 @@ const cachedData: Partial<CurrencyExchangeUSDType> = {}
 
 export type Currency = string
 
+let dbCache = false
+
+export function enableDbCache(): void {
+  dbCache = true
+}
+
+export function disableDbCache(): void {
+  dbCache = false
+}
+
+export function useDbCache(): void {
+  beforeAll(() => {
+    enableDbCache()
+  })
+  afterAll(() => {
+    disableDbCache()
+  })
+}
+
 export type CoinbaseResponse = {
   data: {
     rates: Record<CurrencyCode, string>
@@ -130,6 +149,9 @@ export class CurrencyService {
   }
 
   private async getCache(): Promise<CurrencyExchangeUSDType | undefined> {
+    if ((envIs('local') || envIs('test')) && !dbCache) {
+      return CurrencyService.parseCoinbaseResponse(mockedCurrencyExchangeRates)
+    }
     if (!isEmpty(cachedData) && cachedData.date && cachedData.rates) {
       return cachedData as CurrencyExchangeUSDType
     }

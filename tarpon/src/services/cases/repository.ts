@@ -3,8 +3,10 @@ import {
   AggregationCursor,
   Document,
   Filter,
+  ModifyResult,
   MongoClient,
   UpdateFilter,
+  UpdateResult,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
@@ -18,9 +20,14 @@ import {
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { TimeRange } from '../rules-engine/repositories/transaction-repository-interface'
 import {
+  internalMongoInsert,
+  internalMongoReplace,
   lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
+  internalMongoUpdateMany,
+  internalMongoUpdateOne,
+  withTransaction,
 } from '@/utils/mongodb-utils'
 import {
   ACCOUNTS_COLLECTION,
@@ -32,8 +39,6 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Case } from '@/@types/openapi-internal/Case'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Priority } from '@/@types/openapi-internal/Priority'
-import { User } from '@/@types/openapi-public/User'
-import { Business } from '@/@types/openapi-public/Business'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
@@ -177,54 +182,83 @@ export class CaseRepository {
   }
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {
-    const db = this.mongoDb.db()
-    const session = this.mongoDb.startSession()
     const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
-    try {
-      await session.withTransaction(async () => {
-        const casesCollection = db.collection<Case>(
-          CASES_COLLECTION(this.tenantId)
+    await withTransaction(async () => {
+      const casesCollectionName = CASES_COLLECTION(this.tenantId)
+
+      if (!caseEntity.caseId) {
+        const caseCount = await counterRepository.getNextCounterAndUpdate(
+          'Case'
         )
 
-        if (!caseEntity.caseId) {
-          const caseCount = await counterRepository.getNextCounterAndUpdate(
-            'Case'
-          )
-
-          caseEntity.caseId = `C-${caseCount}`
-        }
-        if (caseEntity.alerts) {
-          caseEntity.alerts = await Promise.all(
-            caseEntity.alerts?.map(async (alert) => {
-              if (alert._id && alert.alertId) {
-                return {
-                  ...alert,
-                  caseId: caseEntity.caseId,
-                }
-              }
-
-              const alertCount =
-                await counterRepository.getNextCounterAndUpdate('Alert')
-
+        caseEntity.caseId = `C-${caseCount}`
+      }
+      if (caseEntity.alerts) {
+        caseEntity.alerts = await Promise.all(
+          caseEntity.alerts?.map(async (alert) => {
+            if (alert._id && alert.alertId) {
               return {
                 ...alert,
-                _id: alert._id ?? alertCount,
-                alertId: alert.alertId ?? `A-${alertCount}`,
                 caseId: caseEntity.caseId,
               }
-            })
-          )
-        }
-        await casesCollection.replaceOne(
-          { caseId: caseEntity.caseId },
-          caseEntity,
-          { upsert: true }
+            }
+
+            const alertCount = await counterRepository.getNextCounterAndUpdate(
+              'Alert'
+            )
+
+            return {
+              ...alert,
+              _id: alert._id ?? alertCount,
+              alertId: alert.alertId ?? `A-${alertCount}`,
+              caseId: caseEntity.caseId,
+            }
+          })
         )
-      })
-      return caseEntity
-    } finally {
-      await session.endSession()
+      }
+
+      await internalMongoReplace(
+        this.mongoDb,
+        casesCollectionName,
+        { caseId: caseEntity.caseId },
+        caseEntity
+      )
+    })
+
+    return caseEntity
+  }
+
+  private async updateManyCases(
+    filter: Filter<Case>,
+    update: UpdateFilter<Case>,
+    options?: {
+      arrayFilters?: Document[]
     }
+  ): Promise<UpdateResult<Case>> {
+    return internalMongoUpdateMany(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      filter,
+      update,
+      options
+    )
+  }
+
+  private async updateOneCase(
+    filter: Filter<Case>,
+    update: UpdateFilter<Case>,
+    options?: {
+      arrayFilters?: Document[]
+      returnFullDocument?: boolean
+    }
+  ): Promise<ModifyResult<Case>> {
+    return internalMongoUpdateOne(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      filter,
+      update,
+      options
+    )
   }
 
   private getAssignmentFilter = (
@@ -879,9 +913,7 @@ export class CaseRepository {
     statusChange: CaseStatusChange,
     isLastInReview?: boolean
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    await collection.updateMany(
+    await this.updateManyCases(
       { caseId: { $in: caseIds } },
       this.getUpdatePipeline(statusChange, isLastInReview).updatePipeline
     )
@@ -891,10 +923,7 @@ export class CaseRepository {
     caseIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
+    await this.updateManyCases(
       { caseId: { $in: caseIds } },
       { $set: { assignments, updatedAt: Date.now() } }
     )
@@ -904,10 +933,7 @@ export class CaseRepository {
     caseIds: string[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
+    await this.updateManyCases(
       { caseId: { $in: caseIds } },
       { $set: { reviewAssignments, updatedAt: Date.now() } }
     )
@@ -918,10 +944,7 @@ export class CaseRepository {
     assignments: Assignment[],
     reviewAssignments: Assignment[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
+    await this.updateManyCases(
       { caseId: { $in: caseIds } },
       { $set: { reviewAssignments, assignments } }
     )
@@ -931,8 +954,6 @@ export class CaseRepository {
     assignmentId: string,
     reassignmentId: string
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const user = getContext()?.user as Account
     const assignmentsObject: Assignment[] = [
       {
@@ -945,7 +966,7 @@ export class CaseRepository {
     const keys = ['assignments', 'reviewAssignments'] as (keyof Case)[]
 
     const pullPromises = keys.map((field) =>
-      collection.updateMany(
+      this.updateManyCases(
         {
           [`${field}.assigneeUserId`]: assignmentId,
           [`${field}.1`]: { $exists: true },
@@ -954,9 +975,8 @@ export class CaseRepository {
       )
     )
 
-    // Reassign cases that have only one assignment
     const promises = keys.map((field) =>
-      collection.updateMany(
+      this.updateManyCases(
         {
           [`${field}.assigneeUserId`]: assignmentId,
           [field]: { $size: 1 },
@@ -965,18 +985,13 @@ export class CaseRepository {
       )
     )
 
-    // Pull assignment from cases that have more than one assignment
-
     await Promise.all([...promises, ...pullPromises])
   }
 
   public async updateReviewAssignmentsToAssignments(
     caseIds: string[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany({ caseId: { $in: caseIds } }, [
+    await this.updateManyCases({ caseId: { $in: caseIds } }, [
       {
         $set: {
           assignments: '$reviewAssignments',
@@ -987,15 +1002,13 @@ export class CaseRepository {
   }
 
   public async saveComment(caseId: string, comment: Comment): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const commentToSave: Comment = {
       ...comment,
       id: comment.id || uuidv4(),
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-    await collection.updateOne({ caseId }, [
+    await this.updateOneCase({ caseId }, [
       {
         $set: {
           comments: {
@@ -1015,8 +1028,6 @@ export class CaseRepository {
     caseIds: string[],
     comment: Comment
   ): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const commentToSave: Comment = {
       ...comment,
       id: comment.id || uuidv4(),
@@ -1024,7 +1035,7 @@ export class CaseRepository {
       updatedAt: Date.now(),
     }
 
-    await collection.updateMany(
+    await this.updateManyCases(
       {
         caseId: { $in: caseIds },
       },
@@ -1047,9 +1058,7 @@ export class CaseRepository {
   }
 
   public async deleteCaseComment(caseId: string, commentId: string) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    await collection.updateOne(
+    await this.updateOneCase(
       { caseId },
       {
         $set: {
@@ -1088,10 +1097,7 @@ export class CaseRepository {
     fileS3Key: string,
     summary: string
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    return collection.updateOne(
+    return this.updateOneCase(
       { caseId, 'comments.id': commentId },
       {
         $set: {
@@ -1265,25 +1271,6 @@ export class CaseRepository {
       .toArray()
   }
 
-  public async updateUsersInCases(user: User | Business) {
-    const db = this.mongoDb.db()
-    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await casesCollection.bulkWrite([
-      {
-        updateMany: {
-          filter: { 'caseUsers.origin.userId': user.userId },
-          update: { $set: { 'caseUsers.origin': user } },
-        },
-      },
-      {
-        updateMany: {
-          filter: { 'caseUsers.destination.userId': user.userId },
-          update: { $set: { 'caseUsers.destination': user } },
-        },
-      },
-    ])
-  }
   public async getCasesByTransactionIds(
     transactionIds: string[],
     additionalFilters?: Filter<Case>
@@ -1307,10 +1294,7 @@ export class CaseRepository {
   }
 
   public async markAllChecklistItemsAsDone(caseIds: string[]) {
-    const db = this.mongoDb.db()
-    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await casesCollection.updateMany(
+    await this.updateManyCases(
       { caseId: { $in: caseIds } },
       { $set: { 'alerts.$[alert].ruleChecklist.$[item].done': 'DONE' } },
       {
@@ -1330,12 +1314,9 @@ export class CaseRepository {
     originDrsScore: number | undefined | null,
     destinationDrsScore: number | undefined | null
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     await Promise.all([
       originDrsScore != null &&
-        collection.updateOne(
+        this.updateOneCase(
           {
             caseTransactionsIds: transactionId,
             'caseUsers.origin': { $ne: null },
@@ -1347,7 +1328,7 @@ export class CaseRepository {
           }
         ),
       destinationDrsScore != null &&
-        collection.updateOne(
+        this.updateOneCase(
           {
             caseTransactionsIds: transactionId,
             'caseUsers.destination': { $ne: null },
@@ -1364,17 +1345,16 @@ export class CaseRepository {
   public async addExternalCaseMongo(
     caseEntity: Case
   ): Promise<CaseWithoutCaseTransactions> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    await collection.insertOne(caseEntity)
+    await internalMongoInsert(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      caseEntity
+    )
     return caseEntity
   }
 
   public async updateCase(caseEntity: Partial<Case>): Promise<Case | null> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    const updatedCase = await collection.findOneAndUpdate(
+    const updatedCase = await this.updateOneCase(
       { caseId: caseEntity.caseId },
       {
         $set: {
@@ -1382,32 +1362,21 @@ export class CaseRepository {
           updatedAt: Date.now(),
         },
       },
-      { returnDocument: 'after' }
+      { returnFullDocument: true }
     )
 
     return updatedCase.value
   }
 
   public async syncCaseUsers(newUser: InternalUser): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     await Promise.all([
-      collection.updateMany(
+      this.updateManyCases(
         { 'caseUsers.origin.userId': newUser.userId },
-        {
-          $set: {
-            'caseUsers.origin': newUser,
-          },
-        }
+        { $set: { 'caseUsers.origin': newUser } }
       ),
-      collection.updateMany(
+      this.updateManyCases(
         { 'caseUsers.destination.userId': newUser.userId },
-        {
-          $set: {
-            'caseUsers.destination': newUser,
-          },
-        }
+        { $set: { 'caseUsers.destination': newUser } }
       ),
     ])
   }

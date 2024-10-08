@@ -8,6 +8,8 @@ import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
   DAY_DATE_FORMAT,
+  internalMongoUpdateMany,
+  internalMongoUpdateOne,
   lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
@@ -125,10 +127,7 @@ export class AlertsRepository {
     fileS3Key: string,
     summary: string
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    return collection.updateOne(
+    return this.updateOneAlert(
       { 'alerts.alertId': alertId },
       {
         $set: {
@@ -711,10 +710,7 @@ export class AlertsRepository {
   }
 
   public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         'alerts.alertId': {
           $in: alertIds,
@@ -794,8 +790,6 @@ export class AlertsRepository {
     caseIds: string[],
     comment: Comment
   ): Promise<Comment> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const now = Date.now()
 
     const commentToSave: Comment = {
@@ -805,7 +799,7 @@ export class AlertsRepository {
       updatedAt: now,
     }
 
-    await collection.updateMany(
+    await this.updateManyAlerts(
       { caseId: { $in: caseIds } },
       {
         $push: { 'alerts.$[alert].comments': commentToSave },
@@ -822,12 +816,9 @@ export class AlertsRepository {
     alertId: string,
     commentId: string
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     const now = Date.now()
 
-    await collection.updateOne(
+    await this.updateOneAlert(
       { caseId, 'alerts.alertId': alertId },
       {
         $set: {
@@ -872,7 +863,7 @@ export class AlertsRepository {
       reviewerId: isLastInReview ? statusChange.userId : undefined,
     }
 
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         caseId: {
           $in: caseIds,
@@ -1001,30 +992,12 @@ export class AlertsRepository {
     return result
   }
 
-  public async updateReviewAssignments(
-    alertIds: string[],
-    reviewAssignments: Assignment[]
-  ): Promise<void> {
-    return this.updateReviewAssigneeToAlertsPrivate(alertIds, reviewAssignments)
-  }
-
   public async updateAssignments(
     alertIds: string[],
     assignments: Assignment[]
   ): Promise<void> {
-    return this.updateAssigneeToAlertsPrivate(alertIds, assignments)
-  }
-
-  private async updateReviewAssigneeToAlertsPrivate(
-    alertIds: string[],
-    reviewAssignments: Assignment[]
-  ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     const now = Date.now()
-
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         'alerts.alertId': {
           $in: alertIds,
@@ -1032,8 +1005,9 @@ export class AlertsRepository {
       },
       {
         $set: {
-          'alerts.$[alert].reviewAssignments': reviewAssignments,
+          'alerts.$[alert].assignments': assignments,
           'alerts.$[alert].updatedAt': now,
+          updatedAt: now,
         },
       },
       {
@@ -1051,12 +1025,8 @@ export class AlertsRepository {
   public async updateReviewAssignmentsToAssignments(
     alertIds: string[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     const now = Date.now()
-
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         'alerts.alertId': {
           $in: alertIds,
@@ -1100,10 +1070,7 @@ export class AlertsRepository {
     assignments: Assignment[],
     reviewAssignments: Assignment[]
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         'alerts.alertId': {
           $in: alertIds,
@@ -1116,27 +1083,17 @@ export class AlertsRepository {
         },
       },
       {
-        arrayFilters: [
-          {
-            'alert.alertId': {
-              $in: alertIds,
-            },
-          },
-        ],
+        arrayFilters: [{ 'alert.alertId': { $in: alertIds } }],
       }
     )
   }
 
-  private async updateAssigneeToAlertsPrivate(
+  public async updateReviewAssignments(
     alertIds: string[],
-    assignments: Assignment[]
+    reviewAssignments: Assignment[]
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
     const now = Date.now()
-
-    await collection.updateMany(
+    await this.updateManyAlerts(
       {
         'alerts.alertId': {
           $in: alertIds,
@@ -1144,7 +1101,7 @@ export class AlertsRepository {
       },
       {
         $set: {
-          'alerts.$[alert].assignments': assignments,
+          'alerts.$[alert].reviewAssignments': reviewAssignments,
           'alerts.$[alert].updatedAt': now,
           updatedAt: now,
         },
@@ -1165,8 +1122,6 @@ export class AlertsRepository {
     assignmentId: string,
     reassignToUserId: string
   ): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const user = getContext()?.user as Account
 
     const now = Date.now()
@@ -1185,7 +1140,7 @@ export class AlertsRepository {
     ]
 
     const promises = keys.map((key) => {
-      return collection.updateMany(
+      return this.updateManyAlerts(
         {
           [`alerts.${key}.assigneeUserId`]: assignmentId,
         },
@@ -1209,7 +1164,7 @@ export class AlertsRepository {
     })
 
     const pullPromises = keys.map((key) => {
-      return collection.updateMany(
+      return this.updateManyAlerts(
         {
           [`alerts.${key}.assigneeUserId`]: assignmentId,
         },
@@ -1237,55 +1192,29 @@ export class AlertsRepository {
   }
 
   public async updateRuleQueue(ruleInstanceId: string, ruleQueueId?: string) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
-      {
-        'alerts.ruleInstanceId': {
-          $eq: ruleInstanceId,
-        },
-      },
+    await this.updateManyAlerts(
+      { 'alerts.ruleInstanceId': { $eq: ruleInstanceId } },
       {
         $set: {
           'alerts.$[alert].ruleQueueId': ruleQueueId,
         },
       },
       {
-        arrayFilters: [
-          {
-            'alert.ruleInstanceId': {
-              $eq: ruleInstanceId,
-            },
-          },
-        ],
+        arrayFilters: [{ 'alert.ruleInstanceId': { $eq: ruleInstanceId } }],
       }
     )
   }
 
   public async deleteRuleQueue(ruleQueueId: string) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-
-    await collection.updateMany(
-      {
-        'alerts.ruleQueueId': {
-          $eq: ruleQueueId,
-        },
-      },
+    await this.updateManyAlerts(
+      { 'alerts.ruleQueueId': { $eq: ruleQueueId } },
       {
         $set: {
           'alerts.$[alert].ruleQueueId': undefined,
         },
       },
       {
-        arrayFilters: [
-          {
-            'alert.ruleQueueId': {
-              $eq: ruleQueueId,
-            },
-          },
-        ],
+        arrayFilters: [{ 'alert.ruleQueueId': { $eq: ruleQueueId } }],
       }
     )
   }
@@ -1481,11 +1410,9 @@ export class AlertsRepository {
     alert: Alert,
     caseData: { caseAggregates: CaseAggregates; caseTransactionsIds: string[] }
   ) {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const { caseAggregates, caseTransactionsIds } = caseData
 
-    await collection.updateOne(
+    await this.updateOneAlert(
       { caseId },
       {
         $push: { alerts: alert },
@@ -1615,5 +1542,33 @@ export class AlertsRepository {
     ]
 
     return collection.aggregate<RuleInstanceAlertsStats>(pipeline).toArray()
+  }
+
+  private async updateManyAlerts(
+    filter: Filter<Case>,
+    update: Document,
+    options?: { arrayFilters?: Document[] }
+  ): Promise<void> {
+    await internalMongoUpdateMany(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      filter,
+      update,
+      options
+    )
+  }
+
+  private async updateOneAlert(
+    filter: Filter<Case>,
+    update: Document,
+    options?: { arrayFilters?: Document[] }
+  ): Promise<void> {
+    await internalMongoUpdateOne(
+      this.mongoDb,
+      CASES_COLLECTION(this.tenantId),
+      filter,
+      update,
+      options
+    )
   }
 }

@@ -20,10 +20,8 @@ import {
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
-import {
-  handleMongoConsumerSQSMessage,
-  MongoConsumerSQSMessage,
-} from '@/lambdas/mongo-db-trigger-consumer/app'
+import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
+import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 
 export const isClickhouseEnabledInRegion = () => {
   logger.info('Checking if clickhouse is enabled in region', {
@@ -612,8 +610,12 @@ export const sanitizeSqlName = (tableName: string) =>
 const sqs = new SQS({ region: process.env.AWS_REGION })
 
 export const sendMessageToMongoConsumer = async (
-  message: MongoConsumerSQSMessage
+  message: MongoConsumerMessage
 ) => {
+  if (envIs('test') && !hasFeature('CLICKHOUSE_ENABLED')) {
+    return
+  }
+
   if (envIs('local') || envIs('test')) {
     await handleMongoConsumerSQSMessage([message])
     return
