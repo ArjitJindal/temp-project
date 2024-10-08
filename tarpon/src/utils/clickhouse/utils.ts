@@ -187,9 +187,7 @@ const clickhouseInsert = async (
   }
 
   const insert = async () => {
-    logger.info('Inserting into clickhouse', {
-      table,
-    })
+    logger.info('Inserting into clickhouse', { table })
     await client.insert({
       table,
       values,

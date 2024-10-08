@@ -204,7 +204,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           ELSE NULL
       END`,
       `craRiskLevel Nullable(String) MATERIALIZED JSON_VALUE(data, '$.drsScore.manualRiskLevel')`,
-      `drsScore_drsScore Float32 MATERIALIZED JSON_VALUE(data, '$.drsScore.drsScore')`,
+      `drsScore_drsScore Float32 MATERIALIZED JSONExtractFloat(data, 'drsScore', 'drsScore')`,
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
       `isPepHit Bool MATERIALIZED has(arrayMap(x -> x.1, JSONExtract(data, 'pepStatus', 'Array(Tuple(isPepHit Bool))')), true)`,
     ],
