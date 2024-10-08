@@ -66,8 +66,8 @@ export const UniquePaymentIdentifier: TableQuestion<
       WHERE
         ${
           direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
-        } = '${userId}'
-        and timestamp between ${period.from} and ${period.to}
+        } = :userId
+        and timestamp between :from and :to
       GROUP BY
         ${
           direction === 'ORIGIN'
@@ -83,7 +83,16 @@ export const UniquePaymentIdentifier: TableQuestion<
         paymentMethod: string
         count: number
         sum: number
-      }>(clickhouseClient, query, page, pageSize)
+      }>(
+        clickhouseClient,
+        query,
+        {
+          userId,
+          ...period,
+        },
+        page,
+        pageSize
+      )
 
       items = rows.map((r) => {
         return [

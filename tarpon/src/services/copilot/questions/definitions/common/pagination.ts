@@ -1,5 +1,5 @@
 import { ClickHouseClient } from '@clickhouse/client'
-import { executeSql } from '@/utils/viper'
+import { executeSql, replacePlaceholders } from '@/utils/viper'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 export async function paginatedSqlQuery<T>(
@@ -30,22 +30,31 @@ export async function paginatedSqlQuery<T>(
 export async function paginatedClickhouseQuery<T>(
   client: ClickHouseClient,
   clickhouseQuery: string,
+  params: { [key: string]: string | number },
   page?: number,
   pageSize?: number
 ): Promise<{ rows: T[]; total: number }> {
   const pageOrDefault = page || 1
   const pageSizeOrDefault = pageSize || DEFAULT_PAGE_SIZE
+  const offset = (pageOrDefault - 1) * pageSizeOrDefault
+  const finalTotalQueryString = replacePlaceholders(
+    `select count(*) as total from ( ${clickhouseQuery} )`,
+    params
+  )
   const totalQuery = client.query({
-    query: `select count(*) as total from ( ${clickhouseQuery} )`,
+    query: finalTotalQueryString,
     format: 'JSONEachRow',
   })
 
-  const queryString = `${clickhouseQuery} limit ${pageSizeOrDefault} offset ${
-    (pageOrDefault - 1) * pageSizeOrDefault
-  }`
+  const queryString = `${clickhouseQuery} limit :limit offset :offset`
+
+  const finalQueryString = replacePlaceholders(queryString, {
+    limit: pageSizeOrDefault,
+    offset: offset,
+  })
 
   const query = client.query({
-    query: queryString,
+    query: finalQueryString,
     format: 'JSONEachRow',
   })
 
