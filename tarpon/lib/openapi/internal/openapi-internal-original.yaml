@@ -10174,6 +10174,20 @@ components:
         - OPEN_ON_HOLD
         - ESCALATED_IN_PROGRESS
         - ESCALATED_ON_HOLD
+    SarDetails:
+      title: SarDetails
+      type: object
+      properties:
+        reportId:
+          type: string
+        status:
+          $ref: '#/components/schemas/ReportStatus'
+        region:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+      required:
+        - reportId
+        - status
+        - region
     DerivedStatus:
       type: string
       title: Status

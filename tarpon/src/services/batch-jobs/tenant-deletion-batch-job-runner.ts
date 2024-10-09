@@ -362,6 +362,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteSlackAlertsMarker.bind(this),
         order: 13,
       },
+      SAR_ITEMS: {
+        method: this.deleteSarItems.bind(this),
+        order: 14,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -421,6 +425,16 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     await client.query({
       query: `DROP DATABASE ${getClickhouseDbName(tenantId)}`,
     })
+  }
+
+  private async deleteSarItems(tenantId: string) {
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      DynamoDbKeys.SAR_ITEMS(tenantId, '').PartitionKeyID,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      'SAR Items'
+    )
   }
 
   private async deleteListDeleted(tenantId: string) {

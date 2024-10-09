@@ -1813,5 +1813,8 @@
   "BUSINESS_USER:creationAgeMonths__BOTH",
   "BUSINESS_USER:creationAgeYears__SENDER",
   "BUSINESS_USER:creationAgeYears__RECEIVER",
-  "BUSINESS_USER:creationAgeYears__BOTH"
+  "BUSINESS_USER:creationAgeYears__BOTH",
+  "USER:sarDetails__SENDER",
+  "USER:sarDetails__RECEIVER",
+  "USER:sarDetails__BOTH"
 ]

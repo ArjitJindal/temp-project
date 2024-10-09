@@ -14,6 +14,9 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import dayjs from '@/utils/dayjs'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { ReportRepository } from '@/services/sar/repositories/report-repository'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 jest.mock('../../operators/starts-ends-with', () => {
   const actualModule = jest.requireActual('../../operators/starts-ends-with')
@@ -1766,6 +1769,85 @@ describe('operators', () => {
       }
     )
     expect(operatorSpy).toHaveBeenCalledTimes(1)
+  })
+})
+
+describe('SAR details', () => {
+  withFeatureHook(['SAR'])
+  test('SAR details hit', async () => {
+    const tenantId = getTestTenantId()
+    const mongoDb = await getMongoDbClient()
+    const reportRepository = new ReportRepository(
+      tenantId,
+      mongoDb,
+      getDynamoDbClient()
+    )
+    await reportRepository.addOrUpdateSarItemsInDynamo('U-1', {
+      reportId: '1',
+      status: 'SUBMISSION_SUCCESSFUL',
+      region: 'US',
+    })
+    const user = getTestUser({
+      userId: 'U-1',
+    })
+    const evaluator = new LogicEvaluator(tenantId, getDynamoDbClient())
+    const result = await evaluator.evaluate(
+      {
+        and: [
+          {
+            some: [
+              {
+                var: 'USER:sarDetails__SENDER',
+              },
+              {
+                and: [
+                  {
+                    '==': [
+                      {
+                        var: 'region',
+                      },
+                      'US',
+                    ],
+                  },
+                  {
+                    '==': [
+                      {
+                        var: 'status',
+                      },
+                      'SUBMISSION_SUCCESSFUL',
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {},
+      {
+        tenantId,
+        baseCurrency: 'EUR',
+      },
+      {
+        type: 'USER',
+        user,
+      }
+    )
+    expect(result).toEqual({
+      hit: true,
+      hitDirections: ['ORIGIN'],
+      vars: [
+        {
+          direction: 'ORIGIN',
+          value: {
+            'USER:sarDetails__SENDER': {
+              region: ['US'],
+              status: ['SUBMISSION_SUCCESSFUL'],
+            },
+          },
+        },
+      ],
+    })
   })
 })
 

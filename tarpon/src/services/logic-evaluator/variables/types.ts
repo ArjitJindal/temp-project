@@ -29,6 +29,7 @@ export interface LogicVariableBase {
   entity: LogicEntityType
   uiDefinition: FieldOrGroup
   valueType: LogicValueTypesEnum
+  sourceField?: string
   requiredFeatures?: Feature[]
   load: (...args: any[]) => Promise<any>
 }

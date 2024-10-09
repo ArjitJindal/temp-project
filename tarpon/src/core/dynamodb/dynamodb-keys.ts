@@ -380,6 +380,10 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#avg-ars-ready`,
     SortKeyID: '1',
   }),
+  SAR_ITEMS: (tenantId: string, userId: string) => ({
+    PartitionKeyID: `${tenantId}#sar-items`,
+    SortKeyID: `${userId}`,
+  }),
   ACTIVE_SESSIONS: (
     tenantId: string,
     userId: string,

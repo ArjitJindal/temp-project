@@ -1,6 +1,13 @@
 import { Document, Filter, MongoClient, WithId } from 'mongodb'
-
 import { omit } from 'lodash'
+import { StackConstants } from '@lib/constants'
+import {
+  DynamoDBDocumentClient,
+  GetCommand,
+  GetCommandInput,
+  UpdateCommand,
+  UpdateCommandInput,
+} from '@aws-sdk/lib-dynamodb'
 import { Report } from '@/@types/openapi-internal/Report'
 import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import {
@@ -13,15 +20,24 @@ import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { CounterRepository } from '@/services/counter/repository'
+import { SarDetails } from '@/@types/openapi-internal/SarDetails'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 @traceable
 export class ReportRepository {
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb?: DynamoDBDocumentClient
 
-  constructor(tenantId: string, mongoDb: MongoClient) {
+  constructor(
+    tenantId: string,
+    mongoDb: MongoClient,
+    dynamoDb?: DynamoDBDocumentClient
+  ) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.dynamoDb = dynamoDb
   }
 
   public async getId(): Promise<string> {
@@ -45,6 +61,67 @@ export class ReportRepository {
       total: data.length,
       items: data,
     }
+  }
+
+  public async getReportsDataForUserFromDynamo(
+    userId: string
+  ): Promise<SarDetails[]> {
+    const getCommandInput: GetCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.SAR_ITEMS(this.tenantId, userId),
+    }
+    if (!this.dynamoDb) {
+      throw new Error('DynamoDB client not initialized')
+    }
+    const response = await this.dynamoDb?.send(new GetCommand(getCommandInput))
+    if (!response || !response.Item) {
+      return []
+    }
+    return response?.Item.sarDetails as SarDetails[]
+  }
+
+  public async addOrUpdateSarItemsInDynamo(
+    userId: string,
+    updatedSarItem: SarDetails
+  ) {
+    if (!this.dynamoDb) {
+      throw new Error('DynamoDB client not initialized')
+    }
+
+    const getCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.SAR_ITEMS(this.tenantId, userId),
+    }
+
+    const response = await this.dynamoDb.send(new GetCommand(getCommandInput))
+
+    let sarDetails: SarDetails[] = []
+
+    if (response && response.Item && response.Item.sarDetails) {
+      sarDetails = response.Item.sarDetails
+    }
+
+    const reportIndex = sarDetails.findIndex(
+      (item) => item.reportId === updatedSarItem.reportId
+    )
+
+    if (reportIndex !== -1) {
+      sarDetails[reportIndex].status = updatedSarItem.status
+    } else {
+      sarDetails.push(updatedSarItem)
+    }
+
+    const updateCommandInput: UpdateCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: DynamoDbKeys.SAR_ITEMS(this.tenantId, userId),
+      UpdateExpression: 'SET sarDetails = :updatedSarDetails',
+      ExpressionAttributeValues: {
+        ':updatedSarDetails': sarDetails,
+      },
+      ReturnValues: 'UPDATED_NEW',
+    }
+
+    await this.dynamoDb.send(new UpdateCommand(updateCommandInput))
   }
 
   public async saveOrUpdateReport(reportPayload: Report): Promise<Report> {
@@ -116,6 +193,13 @@ export class ReportRepository {
         upsert: true,
       }
     )
+
+    await this.addOrUpdateSarItemsInDynamo(newReport.caseUserId, {
+      reportId: newReport.id ?? '',
+      status: newReport.status,
+      region: newReport.reportTypeId.split('-')[0] as CountryCode,
+    })
+
     return newReport
   }
 
@@ -240,5 +324,10 @@ export class ReportRepository {
       { id: reportId },
       { $set: { status, statusInfo } }
     )
+    await this.addOrUpdateSarItemsInDynamo(reportId, {
+      reportId,
+      status,
+      region: '' as CountryCode, // As the id should be already present so we only update the status so region is not needed
+    })
   }
 }
