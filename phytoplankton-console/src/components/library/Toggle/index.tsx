@@ -4,7 +4,7 @@ import { InputProps } from '../Form';
 import s from './style.module.less';
 import COLORS from '@/components/ui/colors';
 
-export type ToggleSize = 'SMALL' | 'DEFAULT' | 'LARGE';
+export type ToggleSize = 'XS' | 'SMALL' | 'DEFAULT' | 'LARGE';
 
 interface Props extends InputProps<boolean>, Omit<ReactSwitchProps, 'checked' | 'onChange'> {
   size?: ToggleSize;
@@ -35,6 +35,9 @@ export default function Toggle(props: Props) {
   } else if (size === 'LARGE') {
     height = 40;
     width = 80;
+  } else if (size === 'XS') {
+    height = 20;
+    width = 40;
   }
   return (
     <div data-cy={testId}>

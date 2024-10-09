@@ -782,7 +782,6 @@ export class RulesEngineService {
         .map((ruleInstance) => ruleInstance.ruleId)
         .filter(Boolean) as string[]
     )
-
     return {
       monitoringResult: await this.verifyUserByRules(
         user,

@@ -1614,6 +1614,9 @@ components:
           $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        pepStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+          description: Whether the user is a PEP
       required:
         - usersToCheck
     RiskLevelsTriggersOnHit:

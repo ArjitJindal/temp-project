@@ -128,7 +128,6 @@ export class UserManagementService {
           }),
         ]
       : []
-
     if (isConsumerUser) {
       await Promise.all([
         this.userRepository.saveConsumerUser(userResult),
@@ -411,7 +410,6 @@ export class UserManagementService {
       user.hitRules ?? [],
       monitoringResult.hitRules ?? []
     )
-
     await Promise.all([
       this.userRepository.updateUserWithExecutedRules(
         userId,

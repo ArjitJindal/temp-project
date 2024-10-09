@@ -23,6 +23,7 @@ export class UserAuditLogService {
   }
   public async handleAuditLogForUserUpdate(
     updateRequest: UserUpdateRequest,
+    oldImage: UserUpdateRequest,
     userId: string
   ): Promise<void> {
     const auditLog: AuditLog = {
@@ -30,6 +31,7 @@ export class UserAuditLogService {
       action: 'UPDATE',
       timestamp: Date.now(),
       newImage: updateRequest,
+      oldImage: oldImage,
       entityId: userId,
       subtype: has(updateRequest, 'userStateDetails')
         ? 'USER_STATUS_CHANGE'

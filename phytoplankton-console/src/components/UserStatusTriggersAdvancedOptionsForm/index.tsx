@@ -3,6 +3,7 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { humanizeKYCStatus } from '../utils/humanizeKYCStatus';
 import { useFormContext } from '../library/Form/utils/hooks';
 import s from './style.module.less';
+import TagsInput from './components/TagsInput';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { USER_DIRECTIONSS } from '@/apis/models-custom/UserDirections';
 import Select from '@/components/library/Select';
@@ -17,8 +18,11 @@ import {
   TriggersOnHit,
   UserDirections,
   UserState,
+  PEPStatus,
+  PepRank,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
+import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/GeneralDetails/PepStatus';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
@@ -167,6 +171,40 @@ export const UserStatusTriggersAdvancedOptionsForm = (
           </InputField>
         )}
       </NestedForm>
+      {type === 'RULE' && (
+        <NestedForm<TriggersOnHit> name={'pepStatus'}>
+          <div className={s.stateDetails}>
+            <InputField<PEPStatus, 'isPepHit'> name={'isPepHit'} label={'Update PEP status to'}>
+              {(inputProps) => (
+                <Select
+                  options={[
+                    { label: 'Hit', value: true },
+                    { label: 'Not Hit', value: false },
+                  ]}
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+            <InputField<PEPStatus, 'pepRank'> name={'pepRank'} label={'PEP Rank'}>
+              {(inputProps) => (
+                <Select<PepRank>
+                  options={PEP_RANK_OPTIONS.map((rank) => ({
+                    label: humanizeConstant(rank),
+                    value: rank,
+                  }))}
+                  mode="SINGLE"
+                  {...inputProps}
+                />
+              )}
+            </InputField>
+          </div>
+        </NestedForm>
+      )}
+      {type === 'RULE' && (
+        <InputField<TriggersOnHit, 'tags'> name="tags" label="Update tags to">
+          {(inputProps) => <TagsInput {...inputProps} />}
+        </InputField>
+      )}
     </>
   );
 };

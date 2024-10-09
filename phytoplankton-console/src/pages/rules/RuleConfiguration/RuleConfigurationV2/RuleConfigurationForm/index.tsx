@@ -113,6 +113,7 @@ const RuleConfigurationForm = (
         ...formInitialValues,
       }
     : defaultInitialValues;
+
   const [activeTabKey, setActiveTabKey] = useState('rule_details');
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
 

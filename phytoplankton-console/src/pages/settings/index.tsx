@@ -25,6 +25,7 @@ import SlaPolicySettings from './components/SlaPolicySettings';
 import { SecuritySettings } from './components/SecuritySettings';
 import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
+import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -114,6 +115,7 @@ export default function SettingsPage() {
             children: (
               <>
                 <KYCUserStatusSettings />
+                <PepStatusConfigSettings />
                 <TagSettings />
               </>
             ),

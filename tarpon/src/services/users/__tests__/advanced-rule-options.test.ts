@@ -16,13 +16,16 @@ import {
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
-import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import * as Context from '@/core/utils/context'
 import { getS3Client } from '@/utils/s3'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
 dynamoDbSetupHook()
 
@@ -36,6 +39,7 @@ beforeAll(() => {
 
 describe('Advanced Rule Options Tests', () => {
   const tenantId = getTestTenantId()
+  withFeatureHook(['RULES_ENGINE_V8'])
 
   setUpRulesHooks(tenantId, [
     {
@@ -58,6 +62,16 @@ describe('Advanced Rule Options Tests', () => {
           state: 'ACTIVE',
           description: 'Test Description User State Test Rule',
         },
+        pepStatus: {
+          isPepHit: true,
+          pepRank: 'LEVEL_1',
+        },
+        tags: [
+          {
+            key: 'test-tag',
+            value: 'test-value',
+          },
+        ],
       },
     },
     {
@@ -82,19 +96,60 @@ describe('Advanced Rule Options Tests', () => {
         },
       },
     },
+    {
+      type: 'USER',
+      id: 'test-rule-3',
+      ruleImplementationName: '',
+      defaultLogic: {
+        and: [
+          {
+            '==': [
+              { var: 'CONSUMER_USER:userDetails-name-firstName__SENDER' },
+              'TESTER',
+            ],
+          },
+        ],
+      },
+      action: 'FLAG',
+      triggersOnHit: {
+        usersToCheck: 'ALL',
+        tags: [
+          {
+            key: 'test-tag',
+            value: 'test-value',
+          },
+        ],
+      },
+    },
   ])
 
   const user1 = getTestUser({
     userId: 'user1',
+    tags: [
+      {
+        key: 'test-tag',
+        value: 'test--before-value',
+      },
+    ],
+  })
+  const user2 = getTestUser({
+    userId: 'user2',
+    userDetails: {
+      name: {
+        firstName: 'TESTER',
+      },
+    },
+    tags: undefined,
   })
 
   const business1 = getTestBusiness({
     userId: 'business1',
+    tags: [],
   })
 
   setUpUsersHooks(tenantId, [user1, business1])
 
-  it('should change user state', async () => {
+  it('should change user state (transaction rule)', async () => {
     const dynamoDb = getDynamoDbClient(undefined, { retry: true })
     const mongoDb = await getMongoDbClient()
     const userRepo = new UserRepository(tenantId, {
@@ -146,8 +201,8 @@ describe('Advanced Rule Options Tests', () => {
       .spyOn(UserEventRepository.prototype, 'saveUserEvent')
       .mockResolvedValue('test')
 
-    await userService.handleTransactionUserStatusUpdateTrigger(
-      transaction as TransactionWithRulesResult,
+    await userService.handleUserStatusUpdateTrigger(
+      transaction?.hitRules as HitRulesDetails[],
       ruleInstances,
       preUser,
       preBusiness
@@ -165,26 +220,53 @@ describe('Advanced Rule Options Tests', () => {
       state: 'UNACCEPTABLE',
       description: 'Test Description User State',
     })
-
+    expect(user?.pepStatus).toEqual([{ isPepHit: true, pepRank: 'LEVEL_1' }])
+    expect(user?.tags).toEqual([{ key: 'test-tag', value: 'test-value' }])
     const business = await userRepo.getBusinessUser('business1')
     const mongoBusiness = await userRepo.getMongoUser('business1')
 
-    expect(mongoBusiness?.comments).toMatchObject([
-      {
-        body:
-          `Rule test-rule(${
-            ruleInstances.find((rule) => rule.ruleId === 'test-rule')?.id
-          }) is hit and KYC status updated to FAILED and Rule test-rule-2(${
-            ruleInstances.find((rule) => rule.ruleId === 'test-rule-2')?.id
-          }) is hit and User status updated to UNACCEPTABLE` +
-          '\nUser state update reason: Test 2\n' +
-          'User state update description: Test Description User State\n' +
-          'KYC status update reason: Test 1 Kyc' +
-          '\nKYC status update description: Test Description Kyc Test Rule',
-        userId: FLAGRIGHT_SYSTEM_USER,
-        files: [],
-      },
-    ])
+    expect(business?.tags).toEqual([{ key: 'test-tag', value: 'test-value' }])
+    const body = mongoBusiness?.comments?.[0]?.body.concat(
+      mongoBusiness?.comments?.[1]?.body
+    )
+
+    expect(body).toEqual(
+      expect.stringContaining(
+        `Rule test-rule(${
+          ruleInstances.find((rule) => rule.ruleId === 'test-rule')?.id
+        }) is hit and KYC status updated to FAILED`
+      )
+    )
+
+    expect(body).toEqual(
+      expect.stringContaining(
+        `Rule test-rule-2(${
+          ruleInstances.find((rule) => rule.ruleId === 'test-rule-2')?.id
+        }) is hit and User status updated to UNACCEPTABLE`
+      )
+    )
+
+    expect(body).toEqual(
+      expect.stringContaining('User state update reason: Test 2')
+    )
+    expect(body).toEqual(
+      expect.stringContaining(
+        'User state update description: Test Description User State'
+      )
+    )
+    expect(body).toEqual(
+      expect.stringContaining('KYC status update reason: Test 1 Kyc')
+    )
+    expect(body).toEqual(
+      expect.stringContaining(
+        'KYC status update description: Test Description Kyc Test Rule'
+      )
+    )
+    expect(body).toEqual(
+      expect.stringContaining(
+        'User API tags updated due to hit of rule test-rule.1'
+      )
+    )
 
     expect(business?.kycStatusDetails).toEqual({
       reason: 'Test 1 Kyc',
@@ -198,4 +280,48 @@ describe('Advanced Rule Options Tests', () => {
       description: 'Test Description User State',
     })
   }, 180000)
+  test('should update user tags (user rule hit)', async () => {
+    const dynamoDb = getDynamoDbClient()
+    const mongoDb = await getMongoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const userManagementService = new UserManagementService(
+      tenantId,
+      dynamoDb,
+      mongoDb,
+      logicEvaluator
+    )
+    const result = await userManagementService.verifyUser(user2, 'CONSUMER')
+    const userService = new UserService(
+      tenantId,
+      { dynamoDb, mongoDb },
+      getS3Client(),
+      '',
+      ''
+    )
+    const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+      dynamoDb,
+    })
+
+    const ruleInstances = (await ruleInstanceRepository.getActiveRuleInstances(
+      'USER'
+    )) as RuleInstance[]
+    const userRepository = new UserRepository(tenantId, {
+      dynamoDb,
+      mongoDb,
+    })
+    await userRepository.saveUserMongo({ ...user1, type: 'CONSUMER' })
+    await userService.handleUserStatusUpdateTrigger(
+      result.hitRules ?? [],
+      ruleInstances,
+      user2 as InternalUser,
+      null
+    )
+    const updatedUser = await userRepository.getConsumerUser(user2.userId)
+    expect(updatedUser?.tags).toEqual([
+      {
+        key: 'test-tag',
+        value: 'test-value',
+      },
+    ])
+  })
 })

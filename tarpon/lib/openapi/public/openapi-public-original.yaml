@@ -4958,8 +4958,17 @@ components:
           type: boolean
         pepCountry:
           $ref: '#/components/schemas/CountryCode'
+        pepRank:
+          $ref: '#/components/schemas/PepRank'
       required:
         - isPepHit
+    PepRank:
+      type: string
+      description: PEP rank
+      enum:
+        - LEVEL_1
+        - LEVEL_2
+        - LEVEL_3
     KYCStatusDetails:
       title: KYCStatusDetails
       type: object
@@ -5218,6 +5227,7 @@ components:
         - KYC_STATUS_UPDATED
         - CASE_OPENED
         - ALERT_OPENED
+        - PEP_STATUS_UPDATED
         - USER_TAGS_UPDATED
         - CRA_RISK_LEVEL_UPDATED
     ListType:

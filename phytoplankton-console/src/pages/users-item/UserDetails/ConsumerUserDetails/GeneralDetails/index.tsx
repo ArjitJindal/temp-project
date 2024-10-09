@@ -1,9 +1,8 @@
-import React from 'react';
-import { uniqBy } from 'lodash';
+import React, { useState } from 'react';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import styles from './index.module.less';
-import { InternalConsumerUser } from '@/apis';
+import { PepStatusLabel, PepStatusValue } from './PepStatus';
+import { InternalConsumerUser, PEPStatus } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import CountryDisplay from '@/components/ui/CountryDisplay';
@@ -23,7 +22,7 @@ const GENDER_MAP = {
 
 export default function GeneralDetails(props: Props) {
   const { user } = props;
-
+  const [pepStatus, setPepStatus] = useState<PEPStatus[]>(user.pepStatus ?? []);
   return (
     <EntityPropertiesCard
       title={'General details'}
@@ -107,16 +106,14 @@ export default function GeneralDetails(props: Props) {
           ),
         },
         {
-          label: 'PEP Status',
-          value: uniqBy(
-            user.pepStatus?.filter((pep) => pep.isPepHit != null),
-            'pepCountry',
-          ).map((pepCountry) => (
-            <div className={styles.pepStatus}>
-              <CountryDisplay key={pepCountry.pepCountry} isoCode={pepCountry.pepCountry} />
-              <div>{pepCountry.isPepHit ? '(Yes)' : '(No)'}</div>
-            </div>
-          )),
+          label: (
+            <PepStatusLabel
+              userId={user.userId}
+              pepStatus={user.pepStatus ?? []}
+              updatePepStatus={setPepStatus}
+            />
+          ),
+          value: <PepStatusValue pepStatus={pepStatus} />,
         },
       ]}
     />

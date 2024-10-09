@@ -7595,6 +7595,12 @@ components:
           $ref: '#/components/schemas/UserStateDetailsInternal'
         kycStatusDetails:
           $ref: '#/components/schemas/KYCStatusDetailsInternal'
+        pepStatus:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+        tags:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserTag'
       required:
         - usersToCheck
     RiskLevelsTriggersOnHit:
@@ -9100,6 +9106,10 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionLimits
         comment:
           $ref: '#/components/schemas/CommentRequest'
+        pepStatus:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
         tags:
           type: array
           items:
@@ -9352,6 +9362,8 @@ components:
         isAiEnabled:
           type: boolean
         kycUserStatusLock:
+          type: boolean
+        pepStatusLock:
           type: boolean
         apiKeyViewData:
           type: array

@@ -1,7 +1,7 @@
 import s from './index.module.less';
 
 interface Item {
-  label: string;
+  label: React.ReactNode;
   value?: React.ReactNode;
 }
 

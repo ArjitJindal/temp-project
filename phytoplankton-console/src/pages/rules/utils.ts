@@ -322,6 +322,7 @@ export function formValuesToRuleInstance(
   const defaultTriggersOnHit: TriggersOnHit = {
     usersToCheck: 'ALL',
   };
+
   return {
     ...initialRuleInstance,
     ruleId: initialRuleInstance.ruleId,

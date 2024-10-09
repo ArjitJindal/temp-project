@@ -49,6 +49,8 @@ import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskService } from '@/services/risk'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -72,7 +74,6 @@ async function userHandler(
   updateLogMetadata({ userId: newUser.userId })
 
   logger.info(`Processing User`)
-
   let internalUser = newUser as InternalUser
   const { mongoDb, dynamoDb } = dbClients
   const casesRepo = new CaseRepository(tenantId, {
@@ -108,6 +109,40 @@ async function userHandler(
       `KRS score not found for user ${internalUser.userId} for tenant ${tenantId}`
     )
   }
+  const userService = new UserService(tenantId, {
+    dynamoDb,
+    mongoDb,
+  })
+  const ruleInstancesRepo = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+
+  if (!isEqual(oldUser?.hitRules, newUser?.hitRules)) {
+    /* Comparing hit rules to avoid a loop being created */
+    const ruleInstances = await ruleInstancesRepo.getRuleInstancesByIds(
+      filterLiveRules({ hitRules: internalUser.hitRules }).hitRules.map(
+        (rule) => rule.ruleInstanceId
+      )
+    )
+    await userService.handleUserStatusUpdateTrigger(
+      internalUser.hitRules as HitRulesDetails[],
+      ruleInstances,
+      internalUser,
+      null // Only sending it for one direction to avoid updating twice
+    )
+    const updatedUser = await usersRepo.getUser<InternalUser>(
+      internalUser.userId
+    )
+    internalUser = {
+      ...internalUser,
+      ...UserUpdateRequest.getAttributeTypeMap().reduce((acc, key) => {
+        if (updatedUser?.[key.name]) {
+          acc[key.name] = updatedUser?.[key.name]
+        }
+        return acc
+      }, {} as InternalUser),
+    }
+  }
 
   internalUser = {
     ...internalUser,
@@ -121,12 +156,10 @@ async function userHandler(
       : null,
     usersRepo.getUserById(internalUser.userId),
   ])
-
   const savedUser = await usersRepo.saveUserMongo({
     ...pick(existingUser, INTERNAL_ONLY_USER_ATTRIBUTES),
     ...(omit(internalUser, DYNAMO_KEYS) as InternalUser),
   })
-
   const newHitRules = savedUser.hitRules?.filter(
     (hitRule) => !hitRule.ruleHitMeta?.isOngoingScreeningHit
   )
@@ -306,8 +339,8 @@ export const transactionHandler = async (
     ruleWithAdvancedOptions?.length &&
     (ORIGIN?.type === 'USER' || DESTINATION?.type === 'USER')
   ) {
-    await userService.handleTransactionUserStatusUpdateTrigger(
-      transaction,
+    await userService.handleUserStatusUpdateTrigger(
+      transaction.hitRules,
       ruleInstances as RuleInstance[],
       ORIGIN?.type === 'USER' ? ORIGIN?.user : null,
       DESTINATION?.type === 'USER' ? DESTINATION?.user : null

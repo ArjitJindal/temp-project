@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { isEmpty, isEqual, omit } from 'lodash'
+import { find, isEmpty, isEqual, omit, pick, uniq, uniqBy } from 'lodash'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -20,7 +20,9 @@ import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { UserManagementService } from '../rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
+import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -51,7 +53,6 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserViewConfig } from '@/lambdas/console-api-user/app'
 import { traceable } from '@/core/xray'
-import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { KYCStatus } from '@/@types/openapi-internal/KYCStatus'
 import { UserState } from '@/@types/openapi-internal/UserState'
@@ -76,8 +77,11 @@ import {
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UsersSearchResponse } from '@/@types/openapi-public-management/UsersSearchResponse'
 import { pickKnownEntityFields } from '@/utils/object'
+import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
 import { S3Service } from '@/services/aws/s3-service'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { UserTagsUpdate } from '@/@types/openapi-public/UserTagsUpdate'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -126,6 +130,7 @@ export class UserService {
   userAuditLogService: UserAuditLogService
   userClickhouseRepository: UserClickhouseRepository
   userManagementService: UserManagementService
+  riskScoringV8Service: RiskScoringV8Service
   private s3Service: S3Service
   constructor(
     tenantId: string,
@@ -168,6 +173,14 @@ export class UserService {
       this.dynamoDb
     )
     const logicEvaluator = new LogicEvaluator(tenantId, this.dynamoDb)
+    this.riskScoringV8Service = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      }
+    )
     this.userManagementService = new UserManagementService(
       tenantId,
       this.dynamoDb,
@@ -260,22 +273,29 @@ export class UserService {
             user?.riskLevel ?? DEFAULT_RISK_LEVEL
           ]
         : ruleInstance.triggersOnHit
-
-    if (!triggersOnHit?.usersToCheck) {
+    if (
+      ruleInstance.type === 'TRANSACTION' &&
+      (!triggersOnHit?.usersToCheck ||
+        !['ALL', direction].includes(triggersOnHit?.usersToCheck))
+    ) {
       return
     }
-
-    if (!['ALL', direction].includes(triggersOnHit.usersToCheck)) {
-      return
-    }
-
     return triggersOnHit
   }
 
   private getUserEventData(
     user: User | Business,
-    userStateDetails: UserStateDetailsInternal | undefined,
-    kycStatusDetails: KYCStatusDetailsInternal | undefined
+    {
+      userStateDetails,
+      kycStatusDetails,
+      pepStatus,
+      tags,
+    }: {
+      userStateDetails?: UserStateDetailsInternal
+      kycStatusDetails?: KYCStatusDetailsInternal
+      pepStatus?: PEPStatus[]
+      tags?: UserTag[]
+    }
   ): UserUpdateRequest {
     const newKycStatus = kycStatusDetails?.status
     const oldKycStatus = user?.kycStatusDetails?.status
@@ -298,6 +318,14 @@ export class UserService {
         reason: userStateDetails?.reason ?? '',
         description: userStateDetails?.description ?? '',
       }
+    }
+
+    if (pepStatus?.length && !isEqual(pepStatus, user['pepStatus'])) {
+      updateableData.pepStatus = pepStatus
+    }
+
+    if (tags && !isEqual(tags, user['tags'])) {
+      updateableData.tags = tags
     }
 
     return updateableData
@@ -341,28 +369,80 @@ export class UserService {
     return [userStateDetails, kycStatusDetails, userStateRID, kycStatusRID]
   }
 
+  private processTagDetails(
+    triggersOnHit: TriggersOnHit,
+    tagDetails: UserTag[] | undefined
+  ): UserTag[] | undefined {
+    const tags = triggersOnHit.tags
+    if (!tags) {
+      return tagDetails
+    }
+    if (!tagDetails) {
+      return tags
+    }
+    return uniq([...tagDetails, ...tags])
+  }
+
+  private processPepStatusDetails(
+    triggersOnHit: TriggersOnHit,
+    pepStatusDetails: PEPStatus[] | undefined
+  ): PEPStatus[] | undefined {
+    const pepStatus = triggersOnHit.pepStatus
+    if (pepStatus == null) {
+      return undefined
+    }
+    if (!pepStatusDetails) {
+      return [pepStatus]
+    }
+    pepStatusDetails = this.getUniquePepStatus([...pepStatusDetails, pepStatus])
+    return pepStatusDetails
+  }
+
+  private getUniquePepStatus(
+    pepStatusDetails: PEPStatus[] | undefined
+  ): PEPStatus[] | undefined {
+    return uniqBy(
+      pepStatusDetails,
+      (pepStatus) =>
+        `${pepStatus.isPepHit ? '1' : '0'}${pepStatus.pepRank ?? ''}${
+          pepStatus.pepCountry ?? ''
+        }`
+    )
+  }
+
   private async saveUserEvents(
     user: User | Business | null,
     userStateDetails: UserStateDetailsInternal | undefined,
     kycStatusDetails: KYCStatusDetailsInternal | undefined,
     userRID?: RuleInstance,
-    kycStatusRID?: RuleInstance
+    kycStatusRID?: RuleInstance,
+    pepStatusRID?: RuleInstance,
+    pepStatus?: PEPStatus[],
+    tagDetails?: UserTag[],
+    tagDetailsRID?: RuleInstance
   ) {
     if (!user) {
       return
     }
-    const data = this.getUserEventData(user, userStateDetails, kycStatusDetails)
+    const data = this.getUserEventData(user, {
+      userStateDetails,
+      kycStatusDetails,
+      pepStatus,
+      tags: tagDetails,
+    })
     if (!isEmpty(data)) {
       await this.updateUser(user, data, {
         bySystem: true,
         kycRuleInstance: kycStatusRID,
         userStateRuleInstance: userRID,
+        pepStatusRuleInstance: pepStatusRID,
+        tagDetailsRuleInstance: tagDetailsRID,
       })
     }
   }
 
-  public async handleTransactionUserStatusUpdateTrigger(
-    transaction: TransactionWithRulesResult,
+  public async handleUserStatusUpdateTrigger(
+    hitRules: HitRulesDetails[],
     ruleInstancesHit: RuleInstance[],
     originUser: InternalUser | null,
     destinationUser: InternalUser | null
@@ -371,6 +451,11 @@ export class UserService {
     let destinationUserStateDetails: UserStateDetailsInternal | undefined
     let originKycStatusDetails: KYCStatusDetailsInternal | undefined
     let destinationKycStatusDetails: KYCStatusDetailsInternal | undefined
+    let originPepStatus: PEPStatus[] | undefined = originUser?.pepStatus
+    let destinationPepStatus: PEPStatus[] | undefined =
+      destinationUser?.pepStatus
+    let originTagDetails: UserTag[] | undefined = originUser?.tags
+    let destinationTagDetails: UserTag[] | undefined = destinationUser?.tags
 
     const isRiskLevelsEnabled = hasFeature('RISK_LEVELS')
 
@@ -378,9 +463,13 @@ export class UserService {
     let destinationKycStatusRID: RuleInstance | undefined
     let originUserStateRID: RuleInstance | undefined
     let destinationUserStateRID: RuleInstance | undefined
+    let originPepStatusRID: RuleInstance | undefined
+    let destinationPepStatusRID: RuleInstance | undefined
+    let originTagDetailsRID: RuleInstance | undefined
+    let destinationTagDetailsRID: RuleInstance | undefined
 
     ruleInstancesHit.forEach((ruleInstance) => {
-      const hitRulesDetails = transaction?.hitRules.find(
+      const hitRulesDetails = hitRules.find(
         (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
       )
 
@@ -419,6 +508,16 @@ export class UserService {
           originKycStatusRID,
           ruleInstance
         )
+        originPepStatus = this.processPepStatusDetails(
+          triggersOnHitOrigin,
+          originPepStatus
+        )
+        originPepStatusRID = ruleInstance
+        originTagDetails = this.processTagDetails(
+          triggersOnHitOrigin,
+          originTagDetails
+        )
+        originTagDetailsRID = ruleInstance
       }
 
       if (
@@ -438,27 +537,69 @@ export class UserService {
           destinationKycStatusRID,
           ruleInstance
         )
+        destinationPepStatus = this.processPepStatusDetails(
+          triggersOnHitDestination,
+          destinationPepStatus
+        )
+        destinationPepStatusRID = ruleInstance
+        destinationTagDetails = this.processTagDetails(
+          triggersOnHitDestination,
+          destinationTagDetails
+        )
+        destinationTagDetailsRID = ruleInstance
       }
     })
-
     const promises: Promise<void>[] = [
       this.saveUserEvents(
         originUser,
         originUserStateDetails,
         originKycStatusDetails,
         originUserStateRID,
-        originKycStatusRID
+        originKycStatusRID,
+        originPepStatusRID,
+        this.getUniquePepStatus(originPepStatus),
+        this.getUpdatedTagDetails(originTagDetails, originUser?.tags),
+        originTagDetailsRID
       ),
       this.saveUserEvents(
         destinationUser,
         destinationUserStateDetails,
         destinationKycStatusDetails,
         destinationUserStateRID,
-        destinationKycStatusRID
+        destinationKycStatusRID,
+        destinationPepStatusRID,
+        this.getUniquePepStatus(destinationPepStatus),
+        this.getUpdatedTagDetails(destinationTagDetails, destinationUser?.tags),
+        destinationTagDetailsRID
       ),
     ]
 
     await Promise.all(promises)
+  }
+
+  private getUpdatedTagDetails(
+    updateDetails: UserTag[] | undefined,
+    userTags: UserTag[] | undefined
+  ): UserTag[] | undefined {
+    if (!updateDetails) {
+      return userTags
+    }
+    if (!userTags) {
+      return updateDetails
+    }
+
+    const updatedTags = [...userTags]
+
+    updateDetails.forEach((tag) => {
+      const index = updatedTags.findIndex((t) => t.key === tag.key)
+      if (index !== -1) {
+        updatedTags[index] = { ...tag }
+      } else {
+        updatedTags.push({ ...tag })
+      }
+    })
+
+    return updatedTags
   }
 
   private getUserStateDetails(
@@ -765,90 +906,133 @@ export class UserService {
       kycRuleInstance?: RuleInstance
       userStateRuleInstance?: RuleInstance
       caseId?: string
+      pepStatusRuleInstance?: RuleInstance
+      tagDetailsRuleInstance?: RuleInstance
     }
-  ): Promise<Comment> {
+  ): Promise<Comment | null> {
     if (!user) {
       throw new NotFound('User not found')
     }
 
     const isBusiness = isBusinessUser(user)
-    let updatedUser: User | Business = { ...user }
-    let commentBody = ''
-    let auditLogPromise: Promise<void>
-    const webhookTasks: ThinWebhookDeliveryTask<UserTagsUpdate>[] = []
-    if (updateRequest.tags) {
-      updatedUser = { ...updatedUser, tags: updateRequest.tags }
-
-      // tags that are in updateRequest.tags but not in user.tags or whose values are updated from user.tags to updateRequest.tags
-      const newOrUpdatedTags = updateRequest.tags.filter((newTag) => {
-        const oldTag = user.tags?.find((oldTag) => oldTag.key === newTag.key)
-        return !oldTag || oldTag.value !== newTag.value
-      })
-
-      if (newOrUpdatedTags.length) {
-        webhookTasks.push({
-          event: 'USER_TAGS_UPDATED',
-          payload: {
-            userId: user.userId,
-            tags: newOrUpdatedTags,
-          },
-          triggeredBy: 'MANUAL',
-        })
+    const oldImage = Object.keys(updateRequest).reduce((acc, key) => {
+      if (key === 'pepStatus') {
+        acc[key] = (user as User).pepStatus
+      } else {
+        acc[key] = user[key]
       }
-
-      commentBody = 'User API tags updated over the console'
-      auditLogPromise = this.userAuditLogService.handleAuditLogForTagsUpdate(
-        user.userId,
-        updateRequest.tags
+      return acc as UserUpdateRequest
+    }, {} as UserUpdateRequest)
+    const updatedUser: User | Business = {
+      ...user,
+      ...this.getUserEventData(user, updateRequest),
+      transactionLimits: updateRequest.transactionLimits
+        ? {
+            ...user.transactionLimits,
+            paymentMethodLimits:
+              updateRequest.transactionLimits.paymentMethodLimits,
+          }
+        : undefined,
+      ...(!isBusiness && updateRequest.pepStatus?.length
+        ? { pepStatus: this.getUniquePepStatus(updateRequest.pepStatus) }
+        : {}),
+      ...(updateRequest.tags && { tags: updateRequest.tags }),
+    }
+    const shouldSaveUser = Object.keys(updateRequest).some(
+      (key) => updateRequest[key] && !isEqual(updateRequest[key], user[key])
+    )
+    const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
+    if (shouldSaveUser) {
+      if (isBusiness) {
+        await this.userRepository.saveBusinessUser(userToUpdate as Business)
+      } else {
+        await this.userRepository.saveConsumerUser(userToUpdate as User)
+      }
+      await this.userEventRepository.saveUserEvent(
+        {
+          timestamp: Date.now(),
+          userId: user.userId,
+          reason: updateRequest.userStateDetails?.reason ?? 'User update',
+          updatedConsumerUserAttributes: updateRequest,
+        },
+        isBusiness ? 'BUSINESS' : 'CONSUMER'
       )
-    } else {
-      updatedUser = {
-        ...updatedUser,
-        ...this.getUserEventData(
-          user,
-          updateRequest.userStateDetails,
-          updateRequest.kycStatusDetails
-        ),
-        transactionLimits: updateRequest.transactionLimits
-          ? {
-              ...user.transactionLimits,
-              paymentMethodLimits:
-                updateRequest.transactionLimits.paymentMethodLimits,
+      /* To rerun only risk scoring */
+      await this.riskScoringV8Service.handleUserUpdate(updatedUser)
+
+      const result = await Promise.all([
+        updateRequest.tags &&
+          this.handlePostActionForTagsUpdate(user, updateRequest, {
+            bySystem: options?.bySystem,
+            tagDetailsRuleInstance: options?.tagDetailsRuleInstance,
+          }),
+        (updateRequest.kycStatusDetails || updateRequest.userStateDetails) &&
+          this.handlePostActionForKycAndUserUpdate(
+            user,
+            updateRequest,
+            updatedUser,
+            {
+              bySystem: options?.bySystem,
+              kycRuleInstance: options?.kycRuleInstance,
+              userStateRuleInstance: options?.userStateRuleInstance,
+              caseId: options?.caseId,
             }
-          : undefined,
-      }
-      commentBody =
-        this.getKycAndUserUpdateComment({
-          caseId: options?.caseId,
-          kycRuleInstance: options?.kycRuleInstance,
-          kycStatusDetails: updateRequest.kycStatusDetails,
-          userStateDetails: updateRequest.userStateDetails,
-          comment: updateRequest.comment?.body,
-          userStateRuleInstance: options?.userStateRuleInstance,
-        }) ?? ''
-      auditLogPromise = this.userAuditLogService.handleAuditLogForUserUpdate(
-        updateRequest,
-        user.userId
-      )
+          ),
+        updateRequest.pepStatus &&
+          !isBusiness &&
+          this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
+            bySystem: options?.bySystem,
+            pepStatusRuleInstance: options?.pepStatusRuleInstance,
+          }),
+        (updateRequest.kycStatusDetails ||
+          updateRequest.userStateDetails ||
+          updateRequest.pepStatus) &&
+          this.userAuditLogService.handleAuditLogForUserUpdate(
+            updateRequest,
+            oldImage,
+            user.userId
+          ),
+      ])
+      const savedComment = find(result, (comment) => Boolean(comment))
+      return savedComment === false || savedComment === undefined
+        ? null
+        : savedComment
     }
+    return null
+  }
 
-    /* To reverify new user event */
-    if (isBusiness) {
-      await this.userManagementService.verifyBusinessUserEvent({
-        timestamp: Date.now(),
-        userId: user.userId,
-        reason: updateRequest.userStateDetails?.reason ?? 'User update',
-        updatedBusinessUserAttributes: omit(updateRequest, ['comment']),
-      })
-    } else {
-      await this.userManagementService.verifyConsumerUserEvent({
-        timestamp: Date.now(),
-        userId: user.userId,
-        reason: updateRequest.userStateDetails?.reason ?? 'User update',
-        updatedConsumerUserAttributes: omit(updateRequest, ['comment']),
+  private async handlePostActionForTagsUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: {
+      bySystem?: boolean
+      tagDetailsRuleInstance?: RuleInstance
+    }
+  ) {
+    if (!updateRequest.tags) {
+      return
+    }
+    const webhookTasks: ThinWebhookDeliveryTask<UserTagsUpdate>[] = []
+
+    // tags that are in updateRequest.tags but not in user.tags or whose values are updated from user.tags to updateRequest.tags
+    const newOrUpdatedTags = updateRequest.tags?.filter((newTag) => {
+      const oldTag = user.tags?.find((oldTag) => oldTag.key === newTag.key)
+      return !oldTag || oldTag.value !== newTag.value
+    })
+
+    if (newOrUpdatedTags?.length) {
+      webhookTasks.push({
+        event: 'USER_TAGS_UPDATED',
+        payload: {
+          userId: user.userId,
+          tags: newOrUpdatedTags,
+        },
+        triggeredBy: 'MANUAL',
       })
     }
-
+    const commentBody = options?.tagDetailsRuleInstance
+      ? `User API tags updated due to hit of rule ${options?.tagDetailsRuleInstance?.id}`
+      : 'User API tags updated over the console'
     const [savedComment] = await Promise.all([
       this.userRepository.saveUserComment(user.userId, {
         body: commentBody,
@@ -856,12 +1040,84 @@ export class UserService {
         userId: options?.bySystem
           ? FLAGRIGHT_SYSTEM_USER
           : (getContext()?.user?.id as string),
+        updatedAt: Date.now(),
+      }),
+      this.userAuditLogService.handleAuditLogForTagsUpdate(
+        user.userId,
+        updateRequest.tags
+      ),
+      sendWebhookTasks(this.userRepository.tenantId, webhookTasks),
+    ])
+    return savedComment
+  }
+
+  private async handlePostActionForKycAndUserUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    updatedUser: User | Business,
+    options?: {
+      bySystem?: boolean
+      kycRuleInstance?: RuleInstance
+      userStateRuleInstance?: RuleInstance
+      caseId?: string
+    }
+  ) {
+    const commentBody = this.getKycAndUserUpdateComment({
+      caseId: options?.caseId,
+      kycRuleInstance: options?.kycRuleInstance,
+      kycStatusDetails: updateRequest.kycStatusDetails,
+      userStateDetails: updateRequest.userStateDetails,
+      comment: updateRequest.comment?.body,
+      userStateRuleInstance: options?.userStateRuleInstance,
+    })
+
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody ?? '',
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
         files: updateRequest.comment?.files ?? [],
         updatedAt: Date.now(),
       }),
-      auditLogPromise,
       this.sendUserAndKycWebhook(user, updatedUser, options?.bySystem ?? false),
-      sendWebhookTasks(this.userRepository.tenantId, webhookTasks),
+    ])
+    return savedComment
+  }
+
+  private async handlePostActionsForPepStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    options?: {
+      bySystem?: boolean
+      pepStatusRuleInstance?: RuleInstance
+    }
+  ) {
+    const commentBody =
+      'PEP status updated ' +
+      (options?.pepStatusRuleInstance
+        ? `due to hit of rule ${options?.pepStatusRuleInstance?.id}`
+        : 'manually by ' + (getContext()?.user?.email as string))
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody,
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
+        updatedAt: Date.now(),
+      }),
+      sendWebhookTasks(this.userRepository.tenantId, [
+        {
+          event: 'PEP_STATUS_UPDATED',
+          payload: {
+            userId: user.userId,
+            pepStatus: updateRequest.pepStatus,
+          },
+          triggeredBy: options?.bySystem ? 'SYSTEM' : 'MANUAL',
+        },
+      ]),
     ])
     return savedComment
   }
