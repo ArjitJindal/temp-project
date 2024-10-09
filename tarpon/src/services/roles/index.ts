@@ -9,6 +9,7 @@ import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/Managed
 import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { getContext } from '@/core/utils/context'
+import { isFlagrightInternalUser } from '@/@types/jwt'
 
 @traceable
 export class RoleService {
@@ -23,11 +24,21 @@ export class RoleService {
   }
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
+    const isInternalUser =
+      isFlagrightInternalUser() && getContext()?.user?.role === 'root'
     // Prefixed so we don't return internal roles (ROOT, TENANT_ROOT) or tenant-scopes roles (in the future).
-    const roles = await Promise.all([
+
+    const promises: Promise<AccountRole[]>[] = [
       this.rolesByNamespace('default'),
       this.rolesByNamespace(tenantId),
-    ])
+    ]
+
+    const roles = await Promise.all(promises)
+
+    if (isInternalUser) {
+      const rootRole = await this.getRoleByName('root')
+      roles.push(rootRole)
+    }
 
     return roles.flat()
   }
@@ -69,6 +80,22 @@ export class RoleService {
     }
 
     return { ...inputRole, id: role.id }
+  }
+
+  public async getRoleByName(name: string): Promise<AccountRole[]> {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const rolesManager = managementClient.roles
+    const roles = await auth0AsyncWrapper(() =>
+      rolesManager.getAll({ name_filter: name })
+    )
+
+    return await Promise.all(
+      roles.map((r) => {
+        return this.getRole(r.id as string)
+      })
+    )
   }
 
   async updateRole(

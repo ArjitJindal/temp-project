@@ -34,7 +34,7 @@ import { RoleService } from '@/services/roles'
 import { getContext, hasFeature, tenantSettings } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
-import { isRoleAboveAdmin } from '@/@types/jwt'
+import { isFlagrightInternalUser, isRoleAboveAdmin } from '@/@types/jwt'
 import {
   DefaultApiAccountsChangeTenantRequest,
   DefaultApiAccountsEditRequest,
@@ -771,7 +771,11 @@ export class AccountsService {
     tenant: Tenant
   ): Promise<Account> {
     const { role } = request.AccountPatchPayload
-    if (role === 'root') {
+    if (
+      role === 'root' &&
+      !isFlagrightInternalUser() &&
+      getContext()?.user?.role === 'root'
+    ) {
       throw new Forbidden(`It's not possible to set a root role`)
     }
     return await this.patchUser(
