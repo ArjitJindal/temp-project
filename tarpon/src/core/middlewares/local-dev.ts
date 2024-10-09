@@ -32,9 +32,6 @@ export const localDev =
     }
 
     const authorizer = event.requestContext.authorizer || {}
-    event.requestContext.identity = {
-      sourceIp: '127.0.0.1',
-    }
     if (process.env.EXEC_SOURCE === 'cli') {
       event.requestContext.authorizer = {
         principalId: 'flagright',
