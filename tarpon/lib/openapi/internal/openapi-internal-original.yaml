@@ -7600,7 +7600,7 @@ components:
         tags:
           type: array
           items:
-            $ref: '#/components/schemas/UserTag'
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
       required:
         - usersToCheck
     RiskLevelsTriggersOnHit:
