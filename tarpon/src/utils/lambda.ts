@@ -11,12 +11,12 @@ export function parseStrings<T = string>(
 
 export function getTriggerSource(): DrsScoreTriggeredByEnum {
   const lambdaName = process.env.AWS_LAMBDA_FUNCTION_NAME
-  if (lambdaName?.startsWith('Console')) {
+  if (lambdaName?.includes('ConsoleApi')) {
     return 'CONSOLE'
   }
 
   if (
-    lambdaName?.startsWith('Public') &&
+    lambdaName?.includes('PublicApi') &&
     !process.env.SOURCE?.includes('/batch/')
   ) {
     return 'PUBLIC_API'
