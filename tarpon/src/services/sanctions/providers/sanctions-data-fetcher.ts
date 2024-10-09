@@ -104,8 +104,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     if (request.PEPRank) {
       match['$or'] = [
-        { ranks: { $in: request.PEPRank } },
-        { 'associates.ranks': { $in: request.PEPRank } },
+        { 'occupations.rank': request.PEPRank },
+        { 'associates.ranks': request.PEPRank },
       ]
     }
 
