@@ -525,6 +525,6 @@ export const getTestRiskFactor = (
   logicEntityVariables: [],
   defaultRiskScore: 75,
   defaultRiskLevel: 'HIGH',
-  riskLevelLogic: {},
+  riskLevelLogic: [],
   ...riskFactor,
 })

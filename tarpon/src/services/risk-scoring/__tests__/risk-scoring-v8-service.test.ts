@@ -47,8 +47,8 @@ describe('V8 Risk scoring ', () => {
       setUpRiskFactorsHook(tenantId, [
         getTestRiskFactor({
           id: 'RF1',
-          riskLevelLogic: {
-            VERY_LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
               },
@@ -56,7 +56,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 8,
               weight: 1,
             },
-            LOW: {
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
               },
@@ -64,7 +64,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 25,
               weight: 1,
             },
-            MEDIUM: {
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'REFUND'] }],
               },
@@ -72,7 +72,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 44,
               weight: 1,
             },
-          },
+          ],
         }),
       ])
       test('simple transaction only ARS (low)', async () => {
@@ -148,8 +148,8 @@ describe('V8 Risk scoring ', () => {
       setUpRiskFactorsHook(tenantId, [
         getTestRiskFactor({
           id: 'RF1',
-          riskLevelLogic: {
-            VERY_LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
               },
@@ -157,12 +157,12 @@ describe('V8 Risk scoring ', () => {
               riskScore: 8,
               weight: 1,
             },
-          },
+          ],
         }),
         getTestRiskFactor({
           id: 'RF2',
-          riskLevelLogic: {
-            LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:transactionId' }, 'TEST'] }],
               },
@@ -170,7 +170,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 25,
               weight: 1,
             },
-          },
+          ],
         }),
       ])
       test('simple transaction only one condition matches ARS other defaults (medium)', async () => {
@@ -237,14 +237,14 @@ describe('V8 Risk scoring ', () => {
       setUpRiskFactorsHook(tenantId, [
         getTestRiskFactor({
           id: 'RF1',
-          riskLevelLogic: {
-            HIGH: {
+          riskLevelLogic: [
+            {
               logic: { and: [{ '==': [{ var: 'agg:123' }, 2] }] },
               riskLevel: 'MEDIUM',
               riskScore: 50,
               weight: 0.5,
             },
-            VERY_HIGH: {
+            {
               logic: {
                 and: [{ '==': [{ var: 'agg:123' }, 1] }],
               },
@@ -252,7 +252,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 100,
               weight: 1,
             },
-          },
+          ],
           logicAggregationVariables: [
             {
               key: 'agg:123',
@@ -336,8 +336,8 @@ describe('V8 Risk scoring ', () => {
       setUpRiskFactorsHook(tenantId, [
         getTestRiskFactor({
           id: 'RF1',
-          riskLevelLogic: {
-            VERY_LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
               },
@@ -345,14 +345,14 @@ describe('V8 Risk scoring ', () => {
               riskScore: 10,
               weight: 0.5,
             },
-          },
+          ],
         }),
         getTestRiskFactor({
           id: 'RF2',
           type: 'TRANSACTION',
           baseCurrency: 'USD',
-          riskLevelLogic: {
-            HIGH: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [
                   {
@@ -369,7 +369,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 60,
               riskLevel: 'HIGH',
             },
-          },
+          ],
         }),
       ])
       setUpUsersHooks(tenantId, [user1, user2, user3], false)
@@ -624,8 +624,8 @@ describe('V8 Risk scoring ', () => {
         getTestRiskFactor({
           id: 'RF2',
           type: 'CONSUMER_USER',
-          riskLevelLogic: {
-            VERY_LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [
                   {
@@ -640,7 +640,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 8,
               weight: 1,
             },
-            LOW: {
+            {
               logic: {
                 and: [
                   {
@@ -655,7 +655,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 25,
               weight: 1,
             },
-            MEDIUM: {
+            {
               logic: {
                 and: [
                   {
@@ -670,7 +670,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 44,
               weight: 1,
             },
-          },
+          ],
         }),
       ])
       test('simple user only KRS (medium) and check components', async () => {
@@ -730,8 +730,8 @@ describe('V8 Risk scoring ', () => {
         getTestRiskFactor({
           id: 'RF2',
           type: 'CONSUMER_USER',
-          riskLevelLogic: {
-            LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [
                   {
@@ -746,13 +746,13 @@ describe('V8 Risk scoring ', () => {
               riskScore: 25,
               weight: 1,
             },
-          },
+          ],
         }),
         getTestRiskFactor({
           id: 'RF3',
           type: 'CONSUMER_USER',
-          riskLevelLogic: {
-            MEDIUM: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [
                   {
@@ -767,7 +767,7 @@ describe('V8 Risk scoring ', () => {
               riskScore: 44,
               weight: 1,
             },
-          },
+          ],
         }),
       ])
       test('simple user only one of two condition matches KRS (medium)', async () => {
@@ -1216,8 +1216,8 @@ describe('complete risk scoring flow (DRS)', () => {
       setUpRiskFactorsHook(tenantId, [
         getTestRiskFactor({
           id: 'RF1',
-          riskLevelLogic: {
-            VERY_LOW: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
               },
@@ -1225,7 +1225,7 @@ describe('complete risk scoring flow (DRS)', () => {
               riskScore: 10,
               weight: 1,
             },
-            LOW: {
+            {
               logic: {
                 and: [{ '==': [{ var: 'TRANSACTION:type' }, 'REFUND'] }],
               },
@@ -1233,13 +1233,13 @@ describe('complete risk scoring flow (DRS)', () => {
               riskScore: 20,
               weight: 1,
             },
-          },
+          ],
         }),
         getTestRiskFactor({
           id: 'RF2',
           type: 'CONSUMER_USER',
-          riskLevelLogic: {
-            HIGH: {
+          riskLevelLogic: [
+            {
               logic: {
                 and: [
                   {
@@ -1254,7 +1254,7 @@ describe('complete risk scoring flow (DRS)', () => {
               riskScore: 60,
               weight: 1,
             },
-            MEDIUM: {
+            {
               logic: {
                 and: [
                   {
@@ -1269,7 +1269,7 @@ describe('complete risk scoring flow (DRS)', () => {
               riskScore: 40,
               weight: 1,
             },
-          },
+          ],
         }),
       ])
 
@@ -1355,8 +1355,8 @@ describe('complete risk scoring flow (DRS)', () => {
       getTestRiskFactor({
         id: 'RF1',
         type: 'CONSUMER_USER',
-        riskLevelLogic: {
-          LOW: {
+        riskLevelLogic: [
+          {
             logic: {
               and: [
                 {
@@ -1371,7 +1371,7 @@ describe('complete risk scoring flow (DRS)', () => {
             riskScore: 30,
             weight: 1,
           },
-        },
+        ],
       }),
     ])
     const TEST_USER_1 = getTestUser({

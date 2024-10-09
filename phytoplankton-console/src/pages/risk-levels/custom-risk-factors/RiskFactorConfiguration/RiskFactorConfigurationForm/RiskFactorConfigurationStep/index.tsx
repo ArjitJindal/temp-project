@@ -7,14 +7,14 @@ import {
   LogicEntityVariableEntityEnum,
   LogicEntityVariableInUse,
   RuleType,
-  RiskLevelRiskFactorLogic,
+  RiskFactorLogic,
 } from '@/apis';
 import { useFieldState } from '@/components/library/Form/utils/hooks';
 import VariableDefinitionCard from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/RuleIsHitWhenStep/VariableDefinitionCard';
 
 export interface RiskFactorConfigurationStepFormValues {
   baseCurrency?: CurrencyCode;
-  riskLevelLogic?: RiskLevelRiskFactorLogic;
+  riskLevelLogic?: RiskFactorLogic[];
   entityVariables?: LogicEntityVariableInUse[];
   aggregationVariables?: LogicAggregationVariable[];
 }

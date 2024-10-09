@@ -899,8 +899,8 @@ describe('Create a consumer user event with risk scoring V8', () => {
     getTestRiskFactor({
       id: 'RF1',
       type: 'CONSUMER_USER',
-      riskLevelLogic: {
-        MEDIUM: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               {
@@ -915,7 +915,7 @@ describe('Create a consumer user event with risk scoring V8', () => {
           riskScore: 50,
           weight: 1,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [
               {
@@ -930,7 +930,7 @@ describe('Create a consumer user event with risk scoring V8', () => {
           riskScore: 90,
           weight: 1,
         },
-      },
+      ],
     }),
   ])
   test('returns updated user', async () => {
@@ -1004,8 +1004,8 @@ describe('Create a business user event with risk scoring V8', () => {
     getTestRiskFactor({
       id: 'RF1',
       type: 'BUSINESS',
-      riskLevelLogic: {
-        MEDIUM: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               {
@@ -1020,7 +1020,7 @@ describe('Create a business user event with risk scoring V8', () => {
           riskScore: 50,
           weight: 1,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [
               {
@@ -1035,7 +1035,7 @@ describe('Create a business user event with risk scoring V8', () => {
           riskScore: 90,
           weight: 1,
         },
-      },
+      ],
     }),
   ])
   test('returns saved user ID', async () => {

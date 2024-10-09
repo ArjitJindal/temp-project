@@ -10,7 +10,6 @@ import { LogicData, LogicEvaluator } from '../logic-evaluator/engine'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { RiskRepository } from './repositories/risk-repository'
-import { riskLevelPrecendence } from './utils'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
@@ -25,7 +24,6 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { RiskFactorsResult } from '@/@types/openapi-internal/RiskFactorsResult'
 import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
-import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { logger } from '@/core/logger'
@@ -73,12 +71,12 @@ export class RiskScoringV8Service {
   }> {
     const result = await Promise.all(
       riskFactor.map(async (factor): Promise<RiskFactorScoreDetails> => {
-        const levels = Object.keys(factor.riskLevelLogic ?? {}) as RiskLevel[]
-        levels.sort((a, b) => riskLevelPrecendence[a] - riskLevelPrecendence[b])
         let result: RiskFactorScoreDetails | undefined
-        for (const level of levels) {
-          const levelDetails = factor.riskLevelLogic?.[level] as RiskFactorLogic
-          const logic = levelDetails.logic
+        const logicDetailsArray = (factor.riskLevelLogic ?? []).sort(
+          (a, b) => a.riskScore - b.riskScore
+        )
+        for (const logicDetails of logicDetailsArray) {
+          const logic = logicDetails.logic
           const { hit, vars } = await this.logicEvaluator.evaluate(
             logic,
             {
@@ -95,10 +93,10 @@ export class RiskScoringV8Service {
             result = {
               riskFactorId: factor.id,
               vars: vars,
-              riskLevel: levelDetails.riskLevel,
-              score: levelDetails.riskScore,
+              riskLevel: logicDetails.riskLevel,
+              score: logicDetails.riskScore,
               hit: true,
-              weight: levelDetails.weight,
+              weight: logicDetails.weight,
             }
             break
           }

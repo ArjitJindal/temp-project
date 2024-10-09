@@ -3137,8 +3137,8 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
   setUpRiskFactorsHook(tenantId, [
     getTestRiskFactor({
       id: 'RF1',
-      riskLevelLogic: {
-        VERY_LOW: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [{ '==': [{ var: 'TRANSACTION:type' }, 'DEPOSIT'] }],
           },
@@ -3146,7 +3146,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 10,
           weight: 1,
         },
-        LOW: {
+        {
           logic: {
             and: [{ '==': [{ var: 'TRANSACTION:type' }, 'TRANSFER'] }],
           },
@@ -3154,7 +3154,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 30,
           weight: 1,
         },
-        MEDIUM: {
+        {
           logic: {
             and: [{ '==': [{ var: 'TRANSACTION:type' }, 'REFUND'] }],
           },
@@ -3162,7 +3162,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 50,
           weight: 1,
         },
-        HIGH: {
+        {
           logic: {
             and: [{ '==': [{ var: 'TRANSACTION:type' }, 'WITHDRAWAL'] }],
           },
@@ -3170,7 +3170,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 70,
           weight: 1,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [{ '==': [{ var: 'TRANSACTION:type' }, 'EXTERNAL_PAYMENT'] }],
           },
@@ -3178,13 +3178,13 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 90,
           weight: 1,
         },
-      },
+      ],
     }),
     getTestRiskFactor({
       id: 'RF2',
       type: 'CONSUMER_USER',
-      riskLevelLogic: {
-        MEDIUM: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               {
@@ -3199,7 +3199,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 50,
           weight: 1,
         },
-        HIGH: {
+        {
           logic: {
             and: [
               {
@@ -3214,12 +3214,12 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskScore: 70,
           weight: 1,
         },
-      },
+      ],
     }),
     getTestRiskFactor({
       id: 'RF3',
-      riskLevelLogic: {
-        LOW: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               { '==': [{ var: 'TRANSACTION:transactionState' }, 'REFUNDED'] },
@@ -3229,7 +3229,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskLevel: 'LOW',
           riskScore: 30,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [
               { '==': [{ var: 'TRANSACTION:transactionState' }, 'CREATED'] },
@@ -3239,7 +3239,7 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
           riskLevel: 'VERY_HIGH',
           riskScore: 90,
         },
-      },
+      ],
     }),
   ])
 

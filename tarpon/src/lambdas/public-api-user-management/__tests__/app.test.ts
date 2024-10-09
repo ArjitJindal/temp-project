@@ -370,8 +370,8 @@ describe('Public API - Create a consumer user with risk scoring V8', () => {
     getTestRiskFactor({
       id: 'RF1',
       type: 'CONSUMER_USER',
-      riskLevelLogic: {
-        MEDIUM: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               {
@@ -386,7 +386,7 @@ describe('Public API - Create a consumer user with risk scoring V8', () => {
           riskScore: 50,
           weight: 1,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [
               {
@@ -401,7 +401,7 @@ describe('Public API - Create a consumer user with risk scoring V8', () => {
           riskScore: 90,
           weight: 1,
         },
-      },
+      ],
     }),
   ])
   test('returns saved user ID', async () => {
@@ -472,8 +472,8 @@ describe('Public API - Create a business user with risk scoring V8', () => {
     getTestRiskFactor({
       id: 'RF1',
       type: 'BUSINESS',
-      riskLevelLogic: {
-        MEDIUM: {
+      riskLevelLogic: [
+        {
           logic: {
             and: [
               {
@@ -488,7 +488,7 @@ describe('Public API - Create a business user with risk scoring V8', () => {
           riskScore: 50,
           weight: 1,
         },
-        VERY_HIGH: {
+        {
           logic: {
             and: [
               {
@@ -503,7 +503,7 @@ describe('Public API - Create a business user with risk scoring V8', () => {
           riskScore: 90,
           weight: 1,
         },
-      },
+      ],
     }),
   ])
   test('returns saved user ID', async () => {

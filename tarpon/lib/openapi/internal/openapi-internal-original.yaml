@@ -9715,20 +9715,11 @@ components:
         - weight
         - riskLevel
         - riskScore
-    RiskLevelRiskFactorLogic:
-      title: RiskLevelRiskFactorLogic
-      type: object
-      properties:
-        VERY_HIGH:
-          $ref: '#/components/schemas/RiskFactorLogic'
-        HIGH:
-          $ref: '#/components/schemas/RiskFactorLogic'
-        MEDIUM:
-          $ref: '#/components/schemas/RiskFactorLogic'
-        LOW:
-          $ref: '#/components/schemas/RiskFactorLogic'
-        VERY_LOW:
-          $ref: '#/components/schemas/RiskFactorLogic'
+    RiskFactorLogicConditions:
+      title: RiskFactorLogicConditions
+      type: array
+      items:
+        $ref: '#/components/schemas/RiskFactorLogic'
     RiskLevelRiskFactorParameters:
       title: RiskLevelRiskFactorParameters
       type: object
@@ -9768,7 +9759,7 @@ components:
           minimum: 0
           maximum: 100
         riskLevelLogic:
-          $ref: '#/components/schemas/RiskLevelRiskFactorLogic'
+          $ref: '#/components/schemas/RiskFactorLogicConditions'
         name:
           type: string
         description:

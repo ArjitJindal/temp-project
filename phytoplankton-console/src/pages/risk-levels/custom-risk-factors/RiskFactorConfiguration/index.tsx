@@ -237,7 +237,7 @@ function serializeRiskItem(
       riskFactorFormValues.basicDetailsStep.defaultRiskValue,
       riskClassificationValues,
     ),
-    riskLevelLogic: riskFactorFormValues.riskFactorConfigurationStep.riskLevelLogic ?? {},
+    riskLevelLogic: riskFactorFormValues.riskFactorConfigurationStep.riskLevelLogic ?? [],
     logicAggregationVariables:
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
