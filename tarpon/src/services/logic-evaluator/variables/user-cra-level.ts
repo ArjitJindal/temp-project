@@ -14,7 +14,7 @@ export const USER_CRA_LEVEL: CommonUserLogicVariable = {
   entity: 'USER',
   valueType: 'string',
   uiDefinition: {
-    label: 'CRA Level',
+    label: 'CRA risk level',
     type: 'select',
     valueSources: ['value', 'field', 'func'],
     fieldSettings: {

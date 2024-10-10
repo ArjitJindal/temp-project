@@ -14,7 +14,7 @@ export const USER_KRS_LEVEL: CommonUserLogicVariable = {
   entity: 'USER',
   valueType: 'string',
   uiDefinition: {
-    label: 'KRS Level',
+    label: 'KRS risk level',
     type: 'select',
     valueSources: ['value', 'field', 'func'],
     fieldSettings: {

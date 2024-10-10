@@ -21,7 +21,11 @@ import {
   getOperatorsByValueType,
   getOperatorWithParameter,
 } from '@/components/ui/LogicBuilder/operators';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  getRiskLevelLabel,
+  useFeatureEnabled,
+  useSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import { JSON_LOGIC_FUNCTIONS } from '@/components/ui/LogicBuilder/functions';
 
 const InitialConfig = BasicConfig;
@@ -70,6 +74,16 @@ export function useRuleLogicConfig(ruleType: RuleType) {
           } else if (isUserSenderOrReceiverVariable(v.key)) {
             label += ' (sender or receiver)';
           }
+          if (label.includes('risk level')) {
+            if (v.uiDefinition.fieldSettings?.listValues) {
+              v.uiDefinition.fieldSettings.listValues = v.uiDefinition.fieldSettings.listValues.map(
+                (item: any) => ({
+                  ...item,
+                  title: getRiskLevelLabel(item.value, settings),
+                }),
+              );
+            }
+          }
           return {
             ...v,
             uiDefinition: {
@@ -90,7 +104,7 @@ export function useRuleLogicConfig(ruleType: RuleType) {
       };
     }
     return queryResult;
-  }, [queryResult, ruleType, settings.features]);
+  }, [queryResult, ruleType, settings]);
 }
 
 export function useLogicBuilderConfig(
