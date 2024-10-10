@@ -5,6 +5,7 @@ import {
 import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
 import { NotFound, BadRequest } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Account } from '../accounts'
 import { CaseRepository } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -23,6 +24,7 @@ import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { logger } from '@/core/logger'
 import { getContext } from '@/core/utils/context'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)
@@ -37,6 +39,7 @@ export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -45,12 +48,18 @@ export class ReportService {
   ): Promise<ReportService> {
     const { principalId: tenantId } = event.requestContext.authorizer
     const client = await getMongoDbClient()
-    return new ReportService(tenantId, client)
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    return new ReportService(tenantId, client, dynamoDb)
   }
-  constructor(tenantId: string, mongoDb: MongoClient) {
-    this.reportRepository = new ReportRepository(tenantId, mongoDb)
+  constructor(
+    tenantId: string,
+    mongoDb: MongoClient,
+    dynamoDb: DynamoDBDocumentClient
+  ) {
+    this.reportRepository = new ReportRepository(tenantId, mongoDb, dynamoDb)
     this.tenantId = tenantId
     this.mongoDb = mongoDb
+    this.dynamoDb = dynamoDb
   }
 
   public getTypes(): ReportType[] {

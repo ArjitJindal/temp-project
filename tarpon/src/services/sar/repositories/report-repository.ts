@@ -28,12 +28,12 @@ import { CountryCode } from '@/@types/openapi-public/CountryCode'
 export class ReportRepository {
   tenantId: string
   mongoDb: MongoClient
-  dynamoDb?: DynamoDBDocumentClient
+  dynamoDb: DynamoDBDocumentClient
 
   constructor(
     tenantId: string,
     mongoDb: MongoClient,
-    dynamoDb?: DynamoDBDocumentClient
+    dynamoDb: DynamoDBDocumentClient
   ) {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
