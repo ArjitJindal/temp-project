@@ -758,6 +758,27 @@ export class AccountsService {
     ])
   }
 
+  public async deactivateAccount(
+    tenant: Tenant,
+    accountId: string,
+    deactivateReason: Account['blockedReason']
+  ) {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+
+    const userManager = managementClient.users
+    await Promise.all([
+      this.updateAuth0UserInMongo(tenant.id, accountId, {
+        blocked: true,
+      }),
+      userManager.update(
+        { id: accountId },
+        { app_metadata: { blockedReason: deactivateReason }, blocked: true }
+      ),
+    ])
+  }
+
   async deleteAuth0User(userId: string) {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
