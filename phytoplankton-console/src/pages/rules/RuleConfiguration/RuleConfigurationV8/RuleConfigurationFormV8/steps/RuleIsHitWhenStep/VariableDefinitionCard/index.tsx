@@ -410,7 +410,7 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
           variable={editingVariable.variable}
           isNew={isNewVariable}
           entityVariables={entityVariableDefinitions.filter((v) =>
-            ruleType === 'USER' && entity ? entity === v.entity || v.entity === 'USER' : true,
+            ruleType === 'USER' && entity ? entity === v.entity : true,
           )}
           entityVariablesInUse={entityVariables ?? []}
           readOnly={readOnly}

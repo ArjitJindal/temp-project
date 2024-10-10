@@ -222,7 +222,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
             (isBothEnabled && isUserSenderOrReceiverVariable(v.key))) &&
           ((isConsumerEnabled && v.entity === 'CONSUMER_USER') ||
             (isBusinessEnabled && v.entity === 'BUSINESS_USER') ||
-            v.entity === 'USER')
+            ((formValues.userNatures ?? []).length === 0 && v.entity === 'USER'))
         );
       }
     });
