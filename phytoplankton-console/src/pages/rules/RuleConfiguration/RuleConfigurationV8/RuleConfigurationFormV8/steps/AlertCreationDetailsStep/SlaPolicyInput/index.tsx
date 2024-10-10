@@ -6,7 +6,7 @@ import { getOr, isLoading } from '@/utils/asyncResource';
 
 function SlaPolicyInput<FormValues extends { slaPolicies?: string[] }>() {
   const slaPoliciesData = useSlas();
-  const options = slaPoliciesOptions(getOr(slaPoliciesData, []), 'id');
+  const options = slaPoliciesOptions(getOr(slaPoliciesData, []), 'name');
   return (
     <InputField<FormValues, 'slaPolicies'>
       name={'slaPolicies'}
