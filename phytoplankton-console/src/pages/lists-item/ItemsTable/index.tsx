@@ -376,7 +376,7 @@ export default function ItemsTable(props: Props) {
   return (
     <>
       <QueryResultsTable<TableItem, CommonParams>
-        leftTools={<Button onClick={onImportCsv}>Import CSV...</Button>}
+        leftTools={<Button onClick={onImportCsv}>Import CSV</Button>}
         tableId="list-items-table"
         rowKey="rowKey"
         innerRef={tableRef}

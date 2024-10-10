@@ -56,7 +56,7 @@ export default function ImportCsvModal(props: Props) {
           setErrors(result.failedRows);
         } else {
           if (result.successRows === result.totalRows) {
-            message.success(`Imported all of ${result.totalRows} items!`);
+            message.success(`${result.totalRows} items imported successfully`);
           } else {
             message.success(`Imported ${result.successRows} or ${result.totalRows} items!`);
           }

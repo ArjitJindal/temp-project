@@ -111,6 +111,7 @@ export default function CreatedLists() {
           isOpen={isImportModalOpen}
           onClose={() => {
             setIsImportModalOpen(false);
+            queryClient.invalidateQueries(LISTS_ITEM(listId));
           }}
         />
       )}
