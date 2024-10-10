@@ -48,7 +48,6 @@ export const accountsHandler = lambdaApi()(
     )
 
     handlers.registerAccountsInvite(async (ctx, request) => {
-      assertCurrentUserRole('admin')
       return await accountsService.inviteAccount(
         organization,
         request.AccountInvitePayload
@@ -56,7 +55,6 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsResendInvite(async (ctx, request) => {
-      assertCurrentUserRole('admin')
       return await accountsService.sendPasswordResetEmail(
         request.ResendAccountInvitePayload.email
       )
@@ -71,8 +69,6 @@ export const accountsHandler = lambdaApi()(
     handlers.registerAccountsDelete(async (ctx, request) => {
       const accountId = request.accountId
       const reassignTo = request.AccountDeletePayload.reassignTo
-
-      assertCurrentUserRole('admin')
 
       if (accountId === userId) {
         throw new createHttpError.Forbidden(
@@ -90,7 +86,6 @@ export const accountsHandler = lambdaApi()(
     })
 
     handlers.registerAccountsEdit(async (ctx, request) => {
-      assertCurrentUserRole('admin')
       return await accountsService.patchUserHandler(request, organization)
     })
 
@@ -111,7 +106,6 @@ export const accountsHandler = lambdaApi()(
     )
 
     handlers.registerAccountsDeactivate(async (ctx, request) => {
-      assertCurrentUserRole('admin')
       return await accountsService.deactivateUser(
         ctx.tenantId,
         request.accountId,

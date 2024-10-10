@@ -794,8 +794,7 @@ export class AccountsService {
     const { role } = request.AccountPatchPayload
     if (
       role === 'root' &&
-      !isFlagrightInternalUser() &&
-      getContext()?.user?.role === 'root'
+      (!isFlagrightInternalUser() || getContext()?.user?.role !== 'root')
     ) {
       throw new Forbidden(`It's not possible to set a root role`)
     }

@@ -7,6 +7,8 @@ describe('Approval of payments', () => {
     ...PERMISSIONS.SETTINGS_ORGANIZATION,
     ...PERMISSIONS.CASE_DETAILS,
     ...PERMISSIONS.CASE_REOPEN,
+    ...PERMISSIONS.ACCOUNTS,
+    ...PERMISSIONS.ROLES,
   ];
   beforeEach(() => {
     cy.loginWithPermissions({

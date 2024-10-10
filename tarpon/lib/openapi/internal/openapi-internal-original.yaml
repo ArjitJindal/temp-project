@@ -3165,9 +3165,6 @@ paths:
       summary: Role - List
       operationId: get-roles
       tags: []
-      x-flagright:
-        permissions:
-          - settings:organisation:read
       responses:
         '200':
           description: OK
@@ -3183,7 +3180,7 @@ paths:
       tags: []
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - roles:overview:write
       requestBody:
         content:
           application/json:
@@ -3212,7 +3209,7 @@ paths:
           required: true
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - roles:overview:write
       requestBody:
         content:
           application/json:
@@ -3236,7 +3233,7 @@ paths:
           required: true
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - roles:overview:write
       responses:
         '200':
           description: OK
@@ -3248,7 +3245,7 @@ paths:
       tags: []
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - roles:overview:read
       parameters:
         - schema:
             type: string
@@ -3377,7 +3374,7 @@ paths:
       operationId: accounts-delete
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - accounts:overview:write
       responses:
         '200':
           description: OK
@@ -3412,7 +3409,7 @@ paths:
       operationId: accounts-resend-invite
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - accounts:overview:write
       requestBody:
         content:
           application/json:
@@ -3436,7 +3433,7 @@ paths:
       operationId: accounts-deactivate
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - accounts:overview:write
       responses:
         '200':
           description: OK
@@ -3473,7 +3470,7 @@ paths:
       operationId: accounts-invite
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - accounts:overview:write
     get:
       summary: Account - List
       tags: []
@@ -10143,6 +10140,10 @@ components:
         - copilot:narrative:read
         - copilot:narrative:write
         - notifications:all:read
+        - accounts:overview:read
+        - accounts:overview:write
+        - roles:overview:read
+        - roles:overview:write
     CaseStatus:
       type: string
       title: CaseStatus

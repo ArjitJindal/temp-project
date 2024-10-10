@@ -12,6 +12,8 @@ describe('Case Creation test', () => {
     ...PERMISSIONS.SETTINGS_ORGANIZATION,
     ...PERMISSIONS.CASE_OVERVIEW,
     ...PERMISSIONS.CASE_DETAILS,
+    ...PERMISSIONS.ACCOUNTS,
+    ...PERMISSIONS.ROLES,
   ];
   beforeEach(() => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });

@@ -36,7 +36,7 @@ export class RoleService {
     const roles = await Promise.all(promises)
 
     if (isInternalUser) {
-      const rootRole = await this.getRoleByName('root')
+      const rootRole = await this.getRolesByName('root')
       roles.push(rootRole)
     }
 
@@ -82,7 +82,7 @@ export class RoleService {
     return { ...inputRole, id: role.id }
   }
 
-  public async getRoleByName(name: string): Promise<AccountRole[]> {
+  public async getRolesByName(name: string): Promise<AccountRole[]> {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
@@ -92,8 +92,13 @@ export class RoleService {
     )
 
     return await Promise.all(
-      roles.map((r) => {
-        return this.getRole(r.id as string)
+      roles.map(async (r) => {
+        const roleDetails = await this.getRole(r.id as string)
+        return {
+          ...roleDetails,
+          name: r.name,
+          description: r.description,
+        }
       })
     )
   }
@@ -320,6 +325,9 @@ function getNamespacedRoleName(namespace: string, roleName?: string) {
 }
 
 function getRoleDisplayName(roleName?: string) {
+  if (roleName == 'root') {
+    return 'Root'
+  }
   return roleName && roleName.split(':')[1]
 }
 

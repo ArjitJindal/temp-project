@@ -617,7 +617,6 @@ export function useRoutes(): RouteItem[] {
         name: 'accounts',
         position: 'bottom',
         hideChildrenInMenu: true,
-        permissions: ['settings:organisation:read'],
         routes: [
           {
             path: '/accounts',

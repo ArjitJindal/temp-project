@@ -3,7 +3,11 @@ import { PERMISSIONS } from '../../support/permissions';
 
 describe('Custom Role - CRUD Test', () => {
   beforeEach(() => {
-    const REQUIRED_PERMISSIONS = [...PERMISSIONS.SETTINGS_ORGANIZATION];
+    const REQUIRED_PERMISSIONS = [
+      ...PERMISSIONS.SETTINGS_ORGANIZATION,
+      ...PERMISSIONS.ACCOUNTS,
+      ...PERMISSIONS.ROLES,
+    ];
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 

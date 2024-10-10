@@ -108,6 +108,7 @@ export function DeleteUser(props: DeleteUserProps) {
         onClick={handleDelete}
         isDisabled={isDisabled(item)}
         icon={<DeleteOutlined />}
+        requiredPermissions={['accounts:overview:write']}
       >
         Delete
       </Button>

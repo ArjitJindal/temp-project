@@ -311,6 +311,7 @@ export default function Team() {
                 }}
                 icon={<EditOutlined />}
                 isDisabled={item.blocked}
+                requiredPermissions={['accounts:overview:write']}
               >
                 Edit
               </Button>

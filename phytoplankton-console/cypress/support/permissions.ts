@@ -40,6 +40,8 @@ const SETTINGS_ORGANIZATION: Permission[] = [
   'settings:organisation:read',
   'settings:organisation:write',
 ];
+const ACCOUNTS: Permission[] = ['accounts:overview:read', 'accounts:overview:write'];
+const ROLES: Permission[] = ['roles:overview:read', 'roles:overview:write'];
 const SANCTIONS: Permission[] = ['sanctions:search:read'];
 const SETTINGS_DEVELOPER: Permission[] = ['settings:developers:read', 'settings:developers:write'];
 const SIMULATION: Permission[] = ['simulator:simulations:read', 'simulator:simulations:write'];
@@ -70,4 +72,6 @@ export const PERMISSIONS: {
   SIMULATION,
   NOTIFICATIONS,
   SANCTIONS,
+  ACCOUNTS,
+  ROLES,
 };

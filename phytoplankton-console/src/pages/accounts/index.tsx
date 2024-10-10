@@ -28,7 +28,7 @@ export default function () {
             key: 'team',
             title: startCase(i18n('menu.accounts.team')),
             children: (
-              <Authorized required={['settings:organisation:read']} showForbiddenPage>
+              <Authorized required={['accounts:overview:read']} showForbiddenPage>
                 <Team />
               </Authorized>
             ),
@@ -37,7 +37,7 @@ export default function () {
             key: 'roles',
             title: startCase(i18n('menu.accounts.roles')),
             children: (
-              <Authorized required={['settings:organisation:read']} showForbiddenPage>
+              <Authorized required={['roles:overview:read']} showForbiddenPage>
                 <Roles />
               </Authorized>
             ),
