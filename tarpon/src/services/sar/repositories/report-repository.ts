@@ -197,7 +197,7 @@ export class ReportRepository {
     await this.addOrUpdateSarItemsInDynamo(newReport.caseUserId, {
       reportId: newReport.id ?? '',
       status: newReport.status,
-      region: newReport.reportTypeId.split('-')[0] as CountryCode,
+      region: newReport.reportTypeId?.split('-')[0] as CountryCode,
     })
 
     return newReport

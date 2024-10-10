@@ -28,6 +28,9 @@ async function migrateTenant(tenant: Tenant) {
     .toArray()
   const reportRepository = new ReportRepository(tenant.id, mongoDb, dynamoDb)
   for (const entry of data) {
+    if (!entry || !entry.reportTypeId) {
+      return
+    }
     await reportRepository.addOrUpdateSarItemsInDynamo(entry.caseUserId, {
       reportId: entry.id,
       status: entry.status,
