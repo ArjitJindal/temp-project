@@ -68,6 +68,7 @@ const EditTagsModal: React.FC<Props> = ({
         "API tags marked as 'editable' can be updated via the console. Tags added through the console are set to 'editable' by default."
       }
       onOk={handleSave}
+      writePermissions={['users:user-tags:write']}
     >
       <ApiTagsTable tags={updatedTags} setTags={setUpdatedTags} />
     </Modal>

@@ -25,6 +25,7 @@ import UnlockIcon from '@/components/ui/icons/Remix/system/lock-unlock-line.reac
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM_RISKS_DRS, USER_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { DEFAULT_RISK_LEVEL } from '@/pages/risk-levels/risk-factors/ParametersTable/consts';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   userId: string;
@@ -35,6 +36,7 @@ export default function UserManualRiskPanel(props: Props) {
   const api = useApi();
   const [isLocked, setIsLocked] = useState(false);
   const queryResult = useQuery(USERS_ITEM_RISKS_DRS(userId), () => api.getDrsValue({ userId }));
+  const canUpdateManualRiskLevel = useHasPermissions(['users:user-manual-risk-levels:write']);
   const drsScore = useMemo(() => {
     if (isSuccess(queryResult.data)) {
       return queryResult.data.value;
@@ -76,6 +78,10 @@ export default function UserManualRiskPanel(props: Props) {
       drsScore && drsScore.length ? drsScore[drsScore.length - 1].drsScore : defaultRiskScore,
     ) ?? undefined;
   const handleLockingAndUnlocking = () => {
+    if (!canUpdateManualRiskLevel) {
+      message.warn('You are not authorized to update the manual risk level');
+      return;
+    }
     setSyncState(loading(getOr(syncState, null)));
     api
       .pulseManualRiskAssignment({
@@ -110,6 +116,10 @@ export default function UserManualRiskPanel(props: Props) {
   };
 
   const handleChangeRiskLevel = (newRiskLevel: RiskLevel | undefined) => {
+    if (!canUpdateManualRiskLevel) {
+      message.warn('You are not authorized to update the manual risk level');
+      return;
+    }
     if (!isLocked && newRiskLevel != null) {
       setSyncState(loading(getOr(syncState, null)));
       api
@@ -137,7 +147,9 @@ export default function UserManualRiskPanel(props: Props) {
   return (
     <div className={s.root}>
       <RiskLevelSwitch
-        isDisabled={isLocked || isLoading(syncState) || isFailed(syncState)}
+        isDisabled={
+          isLocked || isLoading(syncState) || isFailed(syncState) || !canUpdateManualRiskLevel
+        }
         value={getOr(
           map(
             syncState,
@@ -148,6 +160,7 @@ export default function UserManualRiskPanel(props: Props) {
         )}
         onChange={handleChangeRiskLevel}
       />
+
       <Tooltip
         title={
           isLocked

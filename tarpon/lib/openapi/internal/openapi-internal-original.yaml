@@ -2437,9 +2437,6 @@ paths:
     post:
       summary: Business Users - Item - POST
       operationId: post-business-users-userId
-      x-flagright:
-        permissions:
-          - users:user-overview:write
       responses:
         '200':
           description: OK
@@ -10117,6 +10114,9 @@ components:
         - users:user-overview:write
         - users:user-comments:write
         - users:user-details:read
+        - users:user-pep-status:write
+        - users:user-tags:write
+        - users:user-manual-risk-levels:write
         - dashboard:download-data:read
         - settings:organisation:read
         - settings:organisation:write

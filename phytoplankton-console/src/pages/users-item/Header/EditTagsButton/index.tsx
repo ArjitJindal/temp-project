@@ -25,6 +25,7 @@ function EditTagsButton(props: Props) {
         type="TETRIARY"
         icon={<DeleteBackLineIcon />}
         className={props.className}
+        requiredPermissions={['users:user-tags:write']}
       >
         Edit tags
       </Button>

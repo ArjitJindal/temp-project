@@ -17,6 +17,7 @@ import Button from '@/components/library/Button';
 import { message } from '@/components/library/Message';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { getErrorMessage } from '@/utils/lang';
+import { useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   userId: string;
@@ -41,6 +42,7 @@ export const PEP_RANK_OPTIONS: PepRank[] = ['LEVEL_1', 'LEVEL_2', 'LEVEL_3'];
 export const PepStatusLabel = (props: Props) => {
   const { userId, pepStatus, updatePepStatus } = props;
   const { pepStatusLock } = useSettings();
+  const canUpdatePEPStatus = useHasPermissions(['users:user-pep-status:write']);
   const [isOpen, setIsOpen] = useState(false);
   const consolidatedPepStatus = consolidatePEPStatus(pepStatus);
   const DEFAULT_FORM_VALUES: FormValues[] = consolidatedPepStatus.length
@@ -98,7 +100,9 @@ export const PepStatusLabel = (props: Props) => {
   return (
     <div className={s.root}>
       <span>PEP Status</span>
-      {!pepStatusLock && <EditIcon className={s.icon} onClick={() => setIsOpen(true)} />}
+      {!pepStatusLock && canUpdatePEPStatus && (
+        <EditIcon className={s.icon} onClick={() => setIsOpen(true)} />
+      )}
       <Modal
         isOpen={isOpen}
         onCancel={() => setIsOpen(false)}

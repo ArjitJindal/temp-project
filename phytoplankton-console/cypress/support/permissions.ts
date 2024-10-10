@@ -20,7 +20,13 @@ const RISK_SCORING_RISK_FACTORS: Permission[] = [
   'risk-scoring:risk-factors:write',
 ];
 const RISK_SCORING_RISK_ALGORITHMS: Permission[] = ['risk-scoring:risk-algorithms:read'];
-const USERS_USER_OVERVIEW: Permission[] = ['users:user-overview:read', 'users:user-overview:write'];
+const USERS_USER_OVERVIEW: Permission[] = [
+  'users:user-overview:read',
+  'users:user-overview:write',
+  'users:user-tags:write',
+  'users:user-manual-risk-levels:write',
+  'users:user-pep-status:write',
+];
 const USERS_USER_COMMENTS: Permission[] = ['users:user-comments:write'];
 const USERS_USER_DETAILS: Permission[] = ['users:user-details:read'];
 const TRANSACTION_OVERVIEW: Permission[] = [
