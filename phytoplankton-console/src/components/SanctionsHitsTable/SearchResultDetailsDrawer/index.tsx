@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { startCase } from 'lodash';
+import { startCase, uniq } from 'lodash';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { COUNTRIES } from '@flagright/lib/constants';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
@@ -206,7 +208,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {entity.nationality && entity.nationality.length > 0 && (
             <Form.Layout.Label key={entity.nationality?.join(',')} title={'Nationality'}>
-              {entity.nationality?.join(', ')}
+              {entity.nationality
+                ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
+                .join(', ')}
             </Form.Layout.Label>
           )}
           {occupations && occupations.length > 0 && (
@@ -222,7 +226,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
-                {entity.associates.map(({ association, name }, i) => (
+                {entity.associates.filter(Boolean).map(({ association, name }, i) => (
                   <React.Fragment key={i}>
                     {i !== 0 && ', '}
                     <span>
@@ -231,6 +235,26 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                   </React.Fragment>
                 ))}
               </div>
+            </Form.Layout.Label>
+          )}
+          {entity.occupations && entity.occupations.length > 0 && (
+            <Form.Layout.Label title={'PEP Level'}>
+              {uniq(
+                entity.occupations
+                  .map((occ) => (occ.rank ? humanizeSnakeCase(occ.rank) : null))
+                  .filter(Boolean)
+                  .join(', '),
+              )}
+            </Form.Layout.Label>
+          )}
+          {entity.occupations && entity.occupations.length > 0 && (
+            <Form.Layout.Label title={'Occupation categories'}>
+              {uniq(
+                entity.occupations
+                  .map((occ) => (occ.occupationCode ? humanizeSnakeCase(occ.occupationCode) : null))
+                  .filter(Boolean)
+                  .join(', '),
+              )}
             </Form.Layout.Label>
           )}
         </div>

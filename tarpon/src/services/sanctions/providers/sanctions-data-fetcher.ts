@@ -15,6 +15,7 @@ import { getContext } from '@/core/utils/context'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -72,40 +73,123 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     if (request.countryCodes) {
       match['countryCodes'] = { $in: request.countryCodes }
     }
-
+    let yearOfBirthMatch
     if (request.yearOfBirth) {
-      match['yearOfBirth'] = `${request.yearOfBirth}`
-    }
-
-    if (request.types) {
-      match['$or'] = [
-        { sanctionSearchTypes: { $in: request.types } },
+      yearOfBirthMatch = [
         {
-          'associates.sanctionSearchTypes': {
-            $in: request.types,
+          compound: {
+            should: [
+              {
+                text: {
+                  query: `${request.yearOfBirth}`,
+                  path: 'yearOfBirth',
+                },
+              },
+              {
+                equals: {
+                  value: null,
+                  path: 'yearOfBirth',
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
           },
         },
       ]
     }
-
-    if (request.documentId) {
-      match['documents.id'] = { $in: request.documentId }
+    let matchTypes: { text: { query: SanctionsSearchType; path: string } }[] =
+      []
+    if (request.types) {
+      matchTypes = request.types.flatMap((type) => [
+        {
+          text: {
+            query: type,
+            path: 'sanctionSearchTypes',
+          },
+        },
+        {
+          text: {
+            query: type,
+            path: 'associates.sanctionSearchTypes',
+          },
+        },
+      ])
     }
-
+    let documentIdMatch
+    if (request.documentId) {
+      documentIdMatch = [
+        {
+          compound: {
+            should: request.documentId.map((docId) => ({
+              text: {
+                query: docId,
+                path: 'documents.id',
+              },
+            })),
+            mustNot: [
+              {
+                equals: {
+                  value: null,
+                  path: 'documents.id',
+                },
+              },
+            ],
+            minimumShouldMatch: request.documentId.length > 0 ? 1 : 0,
+          },
+        },
+      ]
+    }
+    let nationalityMatch
     if (request.nationality) {
-      match['nationality'] = {
-        $or: [{ $in: request.nationality }, { $eq: null }],
-      }
+      nationalityMatch = [
+        {
+          compound: {
+            should: [
+              ...request.nationality.map((nationality) => ({
+                text: {
+                  query: nationality,
+                  path: 'nationality',
+                },
+              })),
+              {
+                equals: {
+                  value: null,
+                  path: 'nationality',
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
     }
 
     if (request.occupationCode) {
       match['occupations.occupationCode'] = { $in: request.occupationCode }
     }
 
+    let ranksMatch
     if (request.PEPRank) {
-      match['$or'] = [
-        { 'occupations.rank': request.PEPRank },
-        { 'associates.ranks': request.PEPRank },
+      ranksMatch = [
+        {
+          compound: {
+            should: [
+              {
+                text: {
+                  query: request.PEPRank,
+                  path: 'occupations.ranks',
+                },
+              },
+              {
+                text: {
+                  query: request.PEPRank,
+                  path: 'associates.ranks',
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
       ]
     }
 
@@ -116,16 +200,33 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           $search: {
             index: 'sanctions_search_index',
-            text: {
-              query: request.searchTerm,
-              path: {
-                wildcard: '*',
-              },
-              fuzzy: {
-                maxEdits: 2,
-                maxExpansions: 100,
-                prefixLength: 0,
-              },
+            concurrent: true,
+            compound: {
+              must: [
+                {
+                  text: {
+                    query: request.searchTerm,
+                    path: ['name', 'aka'],
+                    fuzzy: {
+                      maxEdits: 2,
+                      maxExpansions: 100,
+                      prefixLength: 0,
+                    },
+                  },
+                },
+              ],
+              filter: [
+                ...(yearOfBirthMatch ?? []),
+                {
+                  compound: {
+                    should: matchTypes,
+                    minimumShouldMatch: 1,
+                  },
+                },
+                ...(nationalityMatch ?? []),
+                ...(ranksMatch ?? []),
+                ...(documentIdMatch ?? []),
+              ],
             },
           },
         },

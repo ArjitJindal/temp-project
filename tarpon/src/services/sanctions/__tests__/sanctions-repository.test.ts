@@ -42,9 +42,15 @@ describe('MongoSanctionsRepository', () => {
   })
 
   it('should update associates field with correct names', async () => {
-    const associates: [string, string[]][] = [
-      ['1', ['2']],
-      ['2', ['3', '1']],
+    const associates: [string, { id: string; association: string }[]][] = [
+      ['1', [{ id: '2', association: '2' }]],
+      [
+        '2',
+        [
+          { id: '3', association: '3' },
+          { id: '1', association: '1' },
+        ],
+      ],
     ]
 
     const repo = new MongoSanctionsRepository()
@@ -77,7 +83,7 @@ describe('MongoSanctionsRepository', () => {
   })
 
   it('should handle empty associate arrays', async () => {
-    const associates: [string, string[]][] = [
+    const associates: [string, { id: string; association: string }[]][] = [
       ['1', []],
       ['2', []],
     ]
@@ -97,7 +103,9 @@ describe('MongoSanctionsRepository', () => {
   })
 
   it('should not modify documents without associates', async () => {
-    const associates: [string, string[]][] = [['1', ['2']]]
+    const associates: [string, { id: string; association: string }[]][] = [
+      ['1', [{ id: '2', association: '2' }]],
+    ]
 
     const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')
@@ -113,7 +121,7 @@ describe('MongoSanctionsRepository', () => {
   })
 
   it('should not fail if there are no associates to update', async () => {
-    const associates: [string, string[]][] = []
+    const associates: [string, { id: string; association: string }[]][] = []
 
     const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')

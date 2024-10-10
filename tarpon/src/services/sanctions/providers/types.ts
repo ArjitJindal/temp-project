@@ -22,7 +22,7 @@ export interface SanctionsRepository {
 
   saveAssociations(
     provider: SanctionsDataProviderName,
-    associations: [string, string[]][],
+    associations: [string, { id: string; association: string }[]][],
     version: string
   ): Promise<void>
 }

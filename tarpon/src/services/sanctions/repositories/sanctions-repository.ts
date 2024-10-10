@@ -1,4 +1,5 @@
 import { uniq } from 'lodash'
+import { RELATIONSHIP_CODE_TO_NAME } from '../providers/dow-jones-provider'
 import {
   Action,
   SanctionsDataProviderName,
@@ -10,6 +11,7 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
   async save(
@@ -83,7 +85,13 @@ export class MongoSanctionsRepository implements SanctionsRepository {
 
   async saveAssociations(
     provider: SanctionsDataProviderName,
-    associations: [string, string[]][],
+    associations: [
+      string,
+      {
+        id: string
+        association: string
+      }[]
+    ][],
     version: string
   ) {
     if (associations.length === 0) {
@@ -93,7 +101,9 @@ export class MongoSanctionsRepository implements SanctionsRepository {
     const coll = client.db().collection(SANCTIONS_COLLECTION)
 
     const assocationIds = uniq(
-      associations.flatMap(([_, associationIds]) => associationIds)
+      associations.flatMap(([_, associationIds]) =>
+        associationIds.map((a) => a.id)
+      )
     )
     const associates = await coll
       .aggregate<{
@@ -117,18 +127,14 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       .toArray()
 
     const associateNameMap = associates.reduce<{
-      [key: string]: {
-        name: string
-        ranks?: PepRank[]
-        sanctionSearchTypes: SanctionsSearchType[]
-      }
+      [key: string]: SanctionsAssociate
     }>((acc, { id, name, occupations, sanctionSearchTypes }) => {
       acc[id] = {
         name,
         ranks: occupations
           ?.map((occupation) => occupation.rank)
           .filter((rank): rank is PepRank => rank != null),
-        sanctionSearchTypes,
+        sanctionsSearchTypes: sanctionSearchTypes ?? [],
       }
       return acc
     }, {})
@@ -144,7 +150,12 @@ export class MongoSanctionsRepository implements SanctionsRepository {
             },
             update: {
               $set: {
-                associates: associateIds.map((id) => associateNameMap[id]),
+                associates: associateIds.map(({ id, association }) => ({
+                  ...associateNameMap[id],
+                  association: association
+                    ? RELATIONSHIP_CODE_TO_NAME[association]
+                    : undefined,
+                })),
               },
             },
           },

@@ -124,6 +124,56 @@ const PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE: Record<
   },
 }
 
+export const RELATIONSHIP_CODE_TO_NAME = {
+  '1': 'Wife',
+  '2': 'Husband',
+  '3': 'Brother',
+  '4': 'Sister',
+  '5': 'Son',
+  '6': 'Daughter',
+  '7': 'Mother',
+  '8': 'Father',
+  '9': 'Cousin',
+  '10': 'Step-Son',
+  '11': 'Step-Daughter',
+  '12': 'Brother-in-law',
+  '13': 'Sister-in-law',
+  '14': 'Uncle',
+  '15': 'Aunt',
+  '16': 'Mother-in-law',
+  '17': 'Father-in-law',
+  '18': 'Grandfather',
+  '19': 'Grandmother',
+  '20': 'Son-in-law',
+  '21': 'Daughter-in-law',
+  '22': 'Niece',
+  '23': 'Nephew',
+  '24': 'Grandson',
+  '25': 'Granddaughter',
+  '26': 'Stepfather',
+  '27': 'Stepmother',
+  '28': 'Business Associate',
+  '29': 'Friend',
+  '30': 'Financial Adviser',
+  '31': 'Legal Adviser',
+  '32': 'Colleague',
+  '33': 'Agent/Representative',
+  '34': 'Employee',
+  '35': 'Associate',
+  '36': 'Child',
+  '37': 'Family Member',
+  '38': 'Political Adviser',
+  '39': 'Senior Official',
+  '40': 'Unmarried Partner',
+  '41': 'Same-sex Spouse',
+  '42': 'Employer',
+  '43': 'Shareholder/Owner',
+  '44': 'Associated Special Interest Person',
+  '45': 'Parent Company',
+  '46': 'Subsidiary',
+  '47': 'Asset',
+}
+
 // Define the XML parser
 const parser = new XMLParser({
   ignoreAttributes: false,
@@ -395,7 +445,13 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   ) {
     const publicFigures = root.PublicFigure || []
     const associations = publicFigures.map((pf) => {
-      return [pf['@_id'], pf.Associate.map((a: any) => a['@_id'])]
+      return [
+        pf['@_id'],
+        pf.Associate.map((a: any) => ({
+          id: a['@_id'],
+          association: a['@_code'],
+        })),
+      ]
     })
     await repo.saveAssociations(this.provider(), associations, version)
   }
@@ -427,28 +483,36 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           return
         }
         const nameValue = name.NameValue[0]
-
+        const inactivePEP = person.DateDetails?.Date?.find(
+          (date: any) => date['@_DateType'] === 'Inactive as of (PEP)'
+        )
+        const inactiveRCA = person.DateDetails?.Date?.find(
+          (date: any) =>
+            date['@_DateType'] === 'Inactive as of (RCA related to PEP)'
+        )
         // This is a hardcoded mapping of the description1 to the type of screening.
         const sanctionSearchTypes: SanctionsSearchType[] = []
         const descriptions = person.Descriptions?.flatMap((d) => d.Description)
         const descriptionValues = descriptions.map((d) => d['@_Description1'])
-
+        const pepRcaMatchTypes: string[] = []
         const description2Values = descriptions.map((d) => d['@_Description2'])
-        if (descriptionValues?.includes('1')) {
+        if (descriptionValues?.includes('1') && !inactivePEP) {
           sanctionSearchTypes.push('PEP')
+          pepRcaMatchTypes.push('PEP')
+        }
+        if (descriptionValues?.includes('2') && !inactiveRCA) {
+          pepRcaMatchTypes.push('RCA')
         }
         if (descriptionValues?.includes('3')) {
           if (
-            ['1', '2', '11', '25'].some((val) =>
-              description2Values?.includes(val)
-            ) &&
+            ['1', '11'].some((val) => description2Values?.includes(val)) &&
             (!sanctionsReferences || sanctionsReferences.length > 0)
           ) {
             sanctionSearchTypes.push('SANCTIONS')
           }
           if (
-            ['7', '8', '9', '10', '31', '39', '21', '40'].some((val) =>
-              description2Values?.includes(val)
+            ['7', '8', '9', '10', '31', '39', '21', '40', '2', '25'].some(
+              (val) => description2Values?.includes(val)
             )
           ) {
             sanctionSearchTypes.push('ADVERSE_MEDIA')
@@ -495,14 +559,23 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           ),
           'id'
         )
-
+        const previousRoles = person.RoleDetail?.flatMap((rd) =>
+          rd.Roles.filter((r) => r['@_RoleType'] === 'Previous Roles').flatMap(
+            (r) => r.OccTitle
+          )
+        )
+          ?.map((role) => role['#text'])
+          ?.join(', ')
         const occupations = person.RoleDetail?.flatMap((rd) =>
           rd.Roles.filter((r) => r['@_RoleType'] != 'Previous Roles').flatMap(
             (r) => r.OccTitle
           )
         ).map((role): SanctionsOccupation => {
           return {
-            title: role['#text'],
+            title:
+              role['#text'] === 'See Previous Roles'
+                ? previousRoles
+                : role['#text'],
             occupationCode:
               PEP_RANK_DISTRIBUTION_BY_OCCUPATION_CODE[role['@_OccCat']]
                 ?.occupationCode,
@@ -528,14 +601,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
               .trim()
           ),
           entityType: 'Person',
-          matchTypes: descriptions
-            ?.map((d) => {
-              if (!masters.Description2List[d['@_Description2']]) {
-                return
-              }
-              return masters.Description2List[d['@_Description2']]['#text']
-            })
-            .filter(Boolean),
+          matchTypes: [
+            ...pepRcaMatchTypes,
+            ...(descriptions
+              ?.map((d) => {
+                if (!masters.Description2List[d['@_Description2']]) {
+                  return
+                }
+                return masters.Description2List[d['@_Description2']]['#text']
+              })
+              .filter(Boolean) ?? []),
+          ],
           freetext: person.ProfileNotes,
           documents,
           sanctionSearchTypes,

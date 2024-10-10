@@ -84,17 +84,47 @@ export class CdktfTarponStack extends TerraformStack {
       collectionName: 'sanctions',
       database: 'tarpon',
       mappingsFields: JSON.stringify({
-        name: {
-          type: 'string',
-          analyzer: 'lucene.standard',
-        },
         aka: {
+          type: 'string',
+        },
+        associates: {
           type: 'document',
           fields: {
-            name: {
+            ranks: {
+              type: 'string',
+            },
+            sanctionSearchTypes: {
               type: 'string',
             },
           },
+        },
+        documents: {
+          type: 'document',
+          fields: {
+            id: {
+              type: 'string',
+            },
+          },
+        },
+        name: {
+          type: 'string',
+        },
+        nationality: {
+          type: 'string',
+        },
+        occupations: {
+          type: 'document',
+          fields: {
+            rank: {
+              type: 'string',
+            },
+          },
+        },
+        sanctionSearchTypes: {
+          type: 'string',
+        },
+        yearOfBirth: {
+          type: 'string',
         },
       }),
       mappingsDynamic: false,

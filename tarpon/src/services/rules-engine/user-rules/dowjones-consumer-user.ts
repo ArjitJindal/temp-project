@@ -101,12 +101,16 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         PEPRank,
         ...(screeningValues?.includes('NRIC')
           ? {
-              documentId: user.legalDocuments?.map((doc) => doc.documentNumber),
+              documentId:
+                user.legalDocuments?.map((doc) => doc.documentNumber) ?? [],
             }
           : {}),
-        ...(screeningValues?.includes('NATIONALITY') &&
-        user.userDetails.countryOfNationality
-          ? { nationality: [user.userDetails.countryOfNationality] }
+        ...(screeningValues?.includes('NATIONALITY')
+          ? {
+              nationality: user.userDetails.countryOfNationality
+                ? [user.userDetails.countryOfNationality]
+                : [],
+            }
           : {}),
       },
       hitContext
