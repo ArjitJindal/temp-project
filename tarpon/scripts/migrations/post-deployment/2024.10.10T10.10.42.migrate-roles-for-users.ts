@@ -11,15 +11,12 @@ async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   const roles = await rolesService.getTenantRoles(tenant.id)
   for (const role of roles) {
     if (role.permissions.includes('users:user-overview:write')) {
-      await rolesService.updateRole(tenant.id, role.id, {
-        ...role,
-        permissions: [
-          ...role.permissions,
-          'users:user-pep-status:write',
-          'users:user-manual-risk-levels:write',
-          'users:user-tags:write',
-        ],
-      })
+      await rolesService.updateRolePermissions(role.id, [
+        ...role.permissions,
+        'users:user-pep-status:write',
+        'users:user-manual-risk-levels:write',
+        'users:user-tags:write',
+      ])
     }
   }
 }

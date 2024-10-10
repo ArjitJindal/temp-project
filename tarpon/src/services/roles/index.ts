@@ -225,7 +225,7 @@ export class RoleService {
     )
   }
 
-  private async updateRolePermissions(
+  public async updateRolePermissions(
     id: string,
     inputPermissions: Permission[]
   ) {
