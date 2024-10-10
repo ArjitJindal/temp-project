@@ -94,7 +94,7 @@ export const RiskFactorConfiguration = (props: Props) => {
     }
   };
   const navigateToRiskFactors = () => {
-    navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: riskItemType }));
+    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: riskItemType }));
   };
   return (
     <>
@@ -184,7 +184,7 @@ export const RiskFactorConfiguration = (props: Props) => {
             type="SECONDARY"
             onClick={() => {
               navigate(
-                makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
+                makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
                   type: riskItemType,
                   id,
                 }),

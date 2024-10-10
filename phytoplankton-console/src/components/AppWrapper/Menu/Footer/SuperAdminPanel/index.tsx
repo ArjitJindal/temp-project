@@ -123,6 +123,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'PNB',
     description: 'Enables PNB specific features',
   },
+  SALES_RISK_SCORING: {
+    title: 'Sales Risk Scoring',
+    description: 'Enables access to both views of risk configuration.',
+  },
 };
 
 export default function SuperAdminPanel() {

@@ -36,20 +36,20 @@ export default function () {
           <Breadcrumbs
             items={[
               {
-                title: 'Risk Factors',
-                to: '/risk-levels/risk-factors',
+                title: 'Custom Risk Factors',
+                to: '/risk-levels/custom-risk-factors',
               },
               type === 'consumer' && {
                 title: 'Consumer',
-                to: '/risk-levels/risk-factors/consumer',
+                to: '/risk-levels/custom-risk-factors/consumer',
               },
               type === 'business' && {
                 title: 'Business',
-                to: '/risk-levels/risk-factors/business',
+                to: '/risk-levels/custom-risk-factors/business',
               },
               type === 'transaction' && {
                 title: 'Transaction',
-                to: '/risk-levels/risk-factors/transaction',
+                to: '/risk-levels/custom-risk-factors/transaction',
               },
             ].filter(notEmpty)}
           />
@@ -73,7 +73,7 @@ const CustomRiskFactors = (props: Props) => {
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const navigate = useNavigate();
   useEffect(() => {
-    navigate(makeUrl(`/risk-levels/risk-factors/:type`, { type: selectedSection }), {
+    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: selectedSection }), {
       replace: true,
     });
   }, [selectedSection, navigate]);
@@ -136,7 +136,7 @@ const CustomRiskFactors = (props: Props) => {
         render: (id) => {
           return (
             <Id
-              to={makeUrl(`/risk-levels/risk-factors/:type/:id/read`, {
+              to={makeUrl(`/risk-levels/custom-risk-factors/:type/:id/read`, {
                 type: selectedSection,
                 id,
               })}
@@ -203,7 +203,7 @@ const CustomRiskFactors = (props: Props) => {
             <Button
               onClick={() => {
                 navigate(
-                  makeUrl(`/risk-levels/risk-factors/:type/:id/edit`, {
+                  makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
                     type: selectedSection,
                     id: entity.id,
                   }),
@@ -269,7 +269,7 @@ const CustomRiskFactors = (props: Props) => {
             type="SECONDARY"
             onClick={() => {
               navigate(
-                makeUrl(`/risk-levels/risk-factors/:type/create`, { type: selectedSection }),
+                makeUrl(`/risk-levels/custom-risk-factors/:type/create`, { type: selectedSection }),
                 { replace: true },
               );
             }}

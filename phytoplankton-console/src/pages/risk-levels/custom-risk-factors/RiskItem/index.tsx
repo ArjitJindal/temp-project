@@ -19,24 +19,24 @@ export default function () {
           <Breadcrumbs
             items={[
               {
-                title: 'Risk Factors',
-                to: '/risk-levels/risk-factors',
+                title: 'Custom Risk Factors',
+                to: '/risk-levels/custom-risk-factors',
               },
               type === 'consumer' && {
                 title: 'Consumer',
-                to: '/risk-levels/risk-factors/consumer',
+                to: '/risk-levels/custom-risk-factors/consumer',
               },
               type === 'business' && {
                 title: 'Business',
-                to: '/risk-levels/risk-factors/business',
+                to: '/risk-levels/custom-risk-factors/business',
               },
               type === 'transaction' && {
                 title: 'Transaction',
-                to: '/risk-levels/risk-factors/transaction',
+                to: '/risk-levels/custom-risk-factors/transaction',
               },
               mode === 'create' && {
                 title: 'Create',
-                to: makeUrl(`/risk-levels/risk-factors/:type/:mode`, { type, mode }),
+                to: makeUrl(`/risk-levels/custom-risk-factors/:type/:mode`, { type, mode }),
               },
               id && {
                 title: id,
@@ -44,7 +44,7 @@ export default function () {
               (mode === 'read' || mode === 'edit') &&
                 id && {
                   title: mode === 'read' ? 'View' : 'Edit',
-                  to: makeUrl(`/risk-levels/risk-factors/:type/:id/:mode`, {
+                  to: makeUrl(`/risk-levels/custom-risk-factors/:type/:id/:mode`, {
                     type,
                     id,
                     mode,

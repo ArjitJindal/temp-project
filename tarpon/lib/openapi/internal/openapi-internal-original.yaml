@@ -10007,6 +10007,7 @@ components:
         - DOW_JONES
         - ASYNC_RULES
         - PNB
+        - SALES_RISK_SCORING
       description: ''
     ManagedRoleName:
       type: string
