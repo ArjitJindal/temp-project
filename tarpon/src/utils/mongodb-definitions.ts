@@ -311,6 +311,10 @@ export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
 export const TENANT_DELETION_COLLECTION =
   FLAGRIGHT_TENANT_ID + '-tenant-deletion'
 
+export const UNIQUE_TRANSACTION_TAGS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-unique-transaction-tags`
+}
+
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>

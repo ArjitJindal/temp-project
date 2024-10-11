@@ -48,6 +48,7 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
+  UNIQUE_TRANSACTION_TAGS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -149,6 +150,8 @@ export class MongoDbTransactionRepository
       { transactionId: transaction.transactionId },
       payload
     )
+
+    await this.updateUniqueTransactionTags(transaction)
 
     return internalTransaction
   }
@@ -781,11 +784,19 @@ export class MongoDbTransactionRepository
     additionalFilters: Filter<InternalTransaction>[] = []
   ): Promise<string[]> {
     const db = this.mongoDb.db()
+
+    if (params.field === 'TAGS_KEY') {
+      const uniqueTagsCollection = db.collection(
+        UNIQUE_TRANSACTION_TAGS_COLLECTION(this.tenantId)
+      )
+      const uniqueTags = await uniqueTagsCollection.find().toArray()
+      return uniqueTags.map((doc) => doc.tag)
+    }
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
     const collection = db.collection<InternalTransaction>(name)
 
     let fieldPath: string
-    let unwindPath = ''
+    const unwindPath = ''
 
     const filterConditions = additionalFilters
     const paymentDetailsPath =
@@ -824,10 +835,6 @@ export class MongoDbTransactionRepository
             $in: ['GENERIC_BANK_ACCOUNT', 'SWIFT', 'ACH', 'IBAN'],
           },
         })
-        break
-      case 'TAGS_KEY':
-        fieldPath = 'tags.key'
-        unwindPath = 'tags'
         break
       case 'IBAN_NUMBER':
         fieldPath = `${paymentDetailsPath}.IBAN`
@@ -1887,5 +1894,30 @@ export class MongoDbTransactionRepository
       ...v,
       hitUsersCount: v.hitUserIds.length,
     }))
+  }
+
+  private async updateUniqueTransactionTags(
+    transaction: InternalTransaction
+  ): Promise<void> {
+    if (!transaction.tags || transaction.tags.length === 0) {
+      return
+    }
+
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TRANSACTION_TAGS_COLLECTION(this.tenantId)
+    )
+
+    const uniqueTags = transaction.tags.map((tag) => tag.key)
+
+    await Promise.all(
+      uniqueTags.map((tag) =>
+        uniqueTagsCollection.updateOne(
+          { tag },
+          { $set: { tag } },
+          { upsert: true }
+        )
+      )
+    )
   }
 }
