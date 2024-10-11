@@ -56,11 +56,13 @@ export const CaseHistory: TableQuestion<Period> = {
       },
       summary: `There have been ${
         result.length
-      } cases for ${humanReadableId} ${humanReadablePeriod(
-        period
-      )}. For the cases, ${calculatePercentageBreakdown(
-        result.map((c) => c?.caseStatus || '')
-      )}.`,
+      } cases for ${humanReadableId} ${humanReadablePeriod(period)}. ${
+        result.length
+          ? `For the cases, ${calculatePercentageBreakdown(
+              result.map((c) => c.caseStatus || '')
+            )}.`
+          : ``
+      }`,
     }
   },
   headers: [

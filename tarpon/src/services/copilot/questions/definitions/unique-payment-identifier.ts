@@ -32,7 +32,7 @@ export const UniquePaymentIdentifier: TableQuestion<
   questionId: COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
   categories: ['CONSUMER', 'BUSINESS'],
   title: async (_, vars) => {
-    return `Top payment identifiers transacted with as ${vars.direction.toLowerCase()} from ${humanReadablePeriod(
+    return `Top payment identifiers transacted with as ${vars.direction.toLowerCase()} ${humanReadablePeriod(
       vars
     )}`
   },
@@ -163,9 +163,14 @@ export const UniquePaymentIdentifier: TableQuestion<
         items,
         total,
       },
-      summary: `The top payment identifier used with ${username} as ${direction.toLowerCase()} was ${topPaymentIdentifier} which was a ${
-        items.at(0)?.[1]
-      } method.`,
+      summary:
+        items.length === 0
+          ? `${username} has not transacted with anyone ${humanReadablePeriod(
+              period
+            )}.`
+          : `The top payment identifier used with ${username} as ${direction.toLowerCase()} was ${topPaymentIdentifier} which was a ${
+              items.at(0)?.[1]
+            } method ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [

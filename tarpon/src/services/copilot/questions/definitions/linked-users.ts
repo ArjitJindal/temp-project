@@ -33,11 +33,13 @@ export const LinkedUsers: TableQuestion<any> = {
         items,
         total: items.length,
       },
-      summary: `There have ${
+      summary: `There have ${result.length} users linked to ${username}. ${
         result.length
-      } users linked to ${username}. For the linked users, ${calculatePercentageBreakdown(
-        result.map((u) => u?.userStateDetails?.state || '')
-      )}.`,
+          ? `For the linked users, ${calculatePercentageBreakdown(
+              result.map((u) => u?.userStateDetails?.state || '')
+            )}.`
+          : ``
+      }`,
     }
   },
   headers: [

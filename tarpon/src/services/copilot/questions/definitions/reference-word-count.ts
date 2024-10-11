@@ -106,9 +106,11 @@ export const ReferenceWordCount: TableQuestion<Period> = {
         items: data.map((r) => [r.word, r.count]),
         total: count,
       },
-      summary: `The top word used by ${username} in their transaction references was ${
-        data.at(0)?.word
-      }, appearing ${data.at(0)?.count} times.`,
+      summary: data.length
+        ? `The top word used by ${username} in their transaction references was ${
+            data.at(0)?.word
+          }, appearing ${data.at(0)?.count} times.`
+        : ``,
     }
   },
   headers: [

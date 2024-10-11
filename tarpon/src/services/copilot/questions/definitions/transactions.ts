@@ -158,11 +158,13 @@ from
       },
       summary: `There have been ${total} transactions for ${
         ctx.humanReadableId
-      } ${humanReadablePeriod(
-        period
-      )}.  For the transactions, ${calculatePercentageBreakdown(
-        rows.map((t) => t.transactionState || '')
-      )}.`,
+      } ${humanReadablePeriod(period)}. ${
+        total
+          ? `For the transactions, ${calculatePercentageBreakdown(
+              rows.map((t) => t.transactionState || '')
+            )}.`
+          : ``
+      }`,
     }
   },
   variableOptions: {

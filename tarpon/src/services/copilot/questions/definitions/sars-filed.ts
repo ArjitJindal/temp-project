@@ -8,7 +8,6 @@ import {
 import { Report } from '@/@types/openapi-internal/Report'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import {
-  calculatePercentageBreakdown,
   humanReadablePeriod,
   matchPeriod,
   Period,
@@ -73,11 +72,7 @@ export const SarsFiled: TableQuestion<Period> = {
       },
       summary: `There have been ${
         result.length
-      } SARs filed for ${username} ${humanReadablePeriod(
-        period
-      )}. For the SARs, ${calculatePercentageBreakdown(
-        result.map((r) => r.status || '')
-      )}.`,
+      } SARs filed ${username} ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [

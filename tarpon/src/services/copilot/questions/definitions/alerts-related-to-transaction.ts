@@ -86,11 +86,13 @@ export const AlertsRelatedToTransaction: TableQuestion<
       },
       summary: `There have been ${
         alerts.length
-      } alerts for ${humanReadableId} ${humanReadablePeriod(
-        period
-      )}. For the alerts, ${calculatePercentageBreakdown(
-        alerts.map((a) => a.alertStatus || '')
-      )}.`,
+      } alerts for ${humanReadableId} ${humanReadablePeriod(period)}. ${
+        alerts.length
+          ? `For the alerts, ${calculatePercentageBreakdown(
+              alerts.map((a) => a?.alertStatus || '')
+            )}.`
+          : ``
+      }`,
     }
   },
   headers: [

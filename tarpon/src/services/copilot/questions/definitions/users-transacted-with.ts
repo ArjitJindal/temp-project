@@ -153,9 +153,13 @@ order by
         items,
         total,
       },
-      summary: `The top user that ${username} has transacted with as ${direction.toLowerCase()} was ${
-        rows.at(0)?.name
-      }.`,
+      summary: !items.length
+        ? `${username} has not transacted with anyone ${humanReadablePeriod(
+            period
+          )}.`
+        : `The top user that ${username} has transacted with as ${direction.toLowerCase()} was ${
+            rows.at(0)?.name
+          } ${humanReadablePeriod(period)}.`,
     }
   },
   headers: [
