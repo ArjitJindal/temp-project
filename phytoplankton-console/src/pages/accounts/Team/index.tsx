@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import s from './index.module.less';
@@ -37,6 +37,7 @@ import { QueryResult } from '@/utils/queries/types';
 import { getOr, isSuccess, loading, success } from '@/utils/asyncResource';
 import { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
+import { ACCOUNT_LIST } from '@/utils/queries/keys';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -46,6 +47,7 @@ export default function Team() {
   const invalidateUsers = useInvalidateUsers().invalidate;
   let messageVar: CloseMessage | null = null;
   const allAccountsResult = useAccountsQueryResult();
+  const queryClient = useQueryClient();
   const accountsResult: QueryResult<PaginatedData<Account>> = useMemo(() => {
     if (isSuccess(allAccountsResult.data)) {
       const filteredAccounts = allAccountsResult.data.value
@@ -83,8 +85,8 @@ export default function Team() {
   }, [allAccountsResult]);
 
   const deactivateUserMutation = useMutation<
-    unknown,
-    unknown,
+    Account,
+    Error,
     { accountId: string; deactivate: boolean }
   >(
     async (payload: { accountId: string; deactivate: boolean }) => {
@@ -99,16 +101,29 @@ export default function Team() {
       });
     },
     {
-      onSuccess: (_, { deactivate }) => {
+      onSuccess: (data: Account, { deactivate }) => {
+        queryClient.setQueryData<Account[]>(ACCOUNT_LIST(), (oldData: Account[] | undefined) => {
+          if (oldData) {
+            return oldData.map((account: Account) => {
+              if (account.id === data.id) {
+                return {
+                  ...account,
+                  blocked: data.blocked,
+                  blockedReason: data.blockedReason,
+                };
+              }
+              return account;
+            });
+          }
+          return oldData;
+        });
         messageVar?.();
         message.success(`User ${deactivate ? 'deactivated' : 'reactivated'} successfully`);
-        accountsResult.refetch();
-        invalidateUsers();
       },
-      onError: (error, { deactivate }) => {
+      onError: (error: Error, { deactivate }) => {
         messageVar?.();
         message.error(
-          `Failed to ${deactivate ? 'deactivate' : 'reactivate'} user: ${(error as Error).message}`,
+          `Failed to ${deactivate ? 'deactivate' : 'reactivate'} user: ${error.message}`,
         );
       },
     },

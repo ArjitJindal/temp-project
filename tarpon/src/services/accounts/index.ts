@@ -901,7 +901,7 @@ export class AccountsService {
     tenantId: string,
     accountId: string,
     deactivate: boolean
-  ) {
+  ): Promise<ApiAccount> {
     await Promise.all([
       this.updateAuth0User(accountId, {
         blocked: deactivate,
@@ -912,6 +912,10 @@ export class AccountsService {
         blockedReason: deactivate ? 'DEACTIVATED' : undefined,
       }),
     ])
+
+    const updatedUser = await this.getAccount(accountId)
+
+    return updatedUser
   }
 
   async createAuth0Organization(
