@@ -7,6 +7,7 @@ import {
 } from '@aws-sdk/client-s3'
 import { BadRequest, InternalServerError } from 'http-errors'
 import { find, isUndefined } from 'lodash'
+import { backOff } from 'exponential-backoff'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { logger } from '@/core/logger'
 import { MAX_FILE_SIZE_BYTES } from '@/core/constants'
@@ -16,6 +17,8 @@ export type S3Config = {
   tmpBucketName: string
   documentBucketName: string
 }
+
+class MissingTagError extends Error {}
 
 export class S3Service {
   private static readonly S3_OBJECT_GUARD_DUTY_TAG =
@@ -65,6 +68,8 @@ export class S3Service {
         )
       case 'NO_THREATS_FOUND':
         return
+      case undefined:
+        throw new MissingTagError()
       default:
         logger.error(
           `Unknown GuardDuty tag value: ${guardDutyTag?.Value} for file: ${file.s3Key}`
@@ -102,7 +107,17 @@ export class S3Service {
       files.map(async (file) => {
         return await Promise.all([
           // Validate if the file is threat free
-          this.validateFileThreat(file),
+          backOff(
+            async () => {
+              await this.validateFileThreat(file)
+            },
+            {
+              startingDelay: 1000,
+              maxDelay: 5 * 1000,
+              numOfAttempts: 5,
+              retry: (e) => e instanceof MissingTagError,
+            }
+          ),
           // Validate if the file is within the size limit
           this.validateFileSize(file),
         ])
