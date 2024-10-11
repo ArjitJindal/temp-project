@@ -1135,8 +1135,12 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
+            1024,
         }
       )
+
       hammerheadQueueConsumerAlias.addEventSource(
         new SqsEventSource(hammerheadQueue)
       )
@@ -1152,6 +1156,8 @@ export class CdkTarponStack extends cdk.Stack {
         lambdaExecutionRole,
         {
           name: StackConstants.TARPON_QUEUE_CONSUMER_FUNCTION_NAME,
+          memorySize:
+            config.resource.TARPON_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ?? 1024,
         }
       )
       tarponQueueConsumerAlias.addEventSource(
