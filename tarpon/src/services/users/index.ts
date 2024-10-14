@@ -10,7 +10,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { find, isEmpty, isEqual, omit, pick, uniq, uniqBy } from 'lodash'
+import { isEmpty, isEqual, omit, pick, uniq, uniqBy } from 'lodash'
 import { diff } from 'deep-object-diff'
 import { ClickHouseClient } from '@clickhouse/client'
 import { DEFAULT_RISK_LEVEL } from '../risk-scoring/utils'
@@ -115,6 +115,16 @@ function internalUserToExternalUser(
   }
   return pickKnownEntityFields(user, User)
 }
+
+type UpdatableUserDetails = Pick<
+  UserUpdateRequest,
+  'kycStatusDetails' | 'userStateDetails' | 'pepStatus' | 'tags'
+>
+
+// User State Update Rule Instances are key in UpdatableUserDetails and value is RuleInstance
+type UserUpdateRuleInstances = Partial<
+  Record<keyof UpdatableUserDetails, RuleInstance>
+>
 
 @traceable
 export class UserService {
@@ -285,18 +295,9 @@ export class UserService {
 
   private getUserEventData(
     user: User | Business,
-    {
-      userStateDetails,
-      kycStatusDetails,
-      pepStatus,
-      tags,
-    }: {
-      userStateDetails?: UserStateDetailsInternal
-      kycStatusDetails?: KYCStatusDetailsInternal
-      pepStatus?: PEPStatus[]
-      tags?: UserTag[]
-    }
+    updates: UpdatableUserDetails
   ): UserUpdateRequest {
+    const { kycStatusDetails, userStateDetails, pepStatus, tags } = updates
     const newKycStatus = kycStatusDetails?.status
     const oldKycStatus = user?.kycStatusDetails?.status
     const oldUserState = user?.userStateDetails?.state
@@ -331,42 +332,42 @@ export class UserService {
     return updateableData
   }
 
-  private processUserAndKycDetails(
+  private processUserDetails(
     triggersOnHit: TriggersOnHit,
-    userStateDetails: UserStateDetailsInternal | undefined,
-    kycStatusDetails: KYCStatusDetailsInternal | undefined,
-    userStateRID: RuleInstance | undefined,
-    kycStatusRID: RuleInstance | undefined,
+    updates: UpdatableUserDetails,
+    ruleInstances: UserUpdateRuleInstances,
     ruleInstance: RuleInstance
-  ): [
-    UserStateDetailsInternal | undefined,
-    KYCStatusDetailsInternal | undefined,
-    RuleInstance | undefined,
-    RuleInstance | undefined
-  ] {
-    const newUserState = this.getUserStateDetails(
-      triggersOnHit,
-      userStateDetails
-    )
-
-    if (!isEqual(newUserState, userStateDetails)) {
-      userStateRID = ruleInstance
+  ): {
+    updates: UpdatableUserDetails
+    ruleInstances: UserUpdateRuleInstances
+  } {
+    // Improve function types while removing any
+    const updateFunctions: Record<
+      keyof UpdatableUserDetails,
+      (triggersOnHit: TriggersOnHit, details: any) => any
+    > = {
+      userStateDetails: this.getUserStateDetails,
+      kycStatusDetails: this.getKycStatusDetails,
+      pepStatus: this.processPepStatusDetails,
+      tags: this.processTagDetails,
     }
 
-    userStateDetails = newUserState
-
-    const newKycStatus = this.getKycStatusDetails(
-      triggersOnHit,
-      kycStatusDetails
-    )
-
-    if (!isEqual(newKycStatus, kycStatusDetails)) {
-      kycStatusRID = ruleInstance
+    for (const key in updateFunctions) {
+      const newValue = updateFunctions[key].call(
+        this,
+        triggersOnHit,
+        updates[key]
+      )
+      if (!isEqual(newValue, updates[key])) {
+        ruleInstances[key] = ruleInstance
+      }
+      updates[key] = newValue
     }
 
-    kycStatusDetails = newKycStatus
-
-    return [userStateDetails, kycStatusDetails, userStateRID, kycStatusRID]
+    return {
+      updates,
+      ruleInstances,
+    }
   }
 
   private processTagDetails(
@@ -412,32 +413,17 @@ export class UserService {
 
   private async saveUserEvents(
     user: User | Business | null,
-    userStateDetails: UserStateDetailsInternal | undefined,
-    kycStatusDetails: KYCStatusDetailsInternal | undefined,
-    userRID?: RuleInstance,
-    kycStatusRID?: RuleInstance,
-    pepStatusRID?: RuleInstance,
-    pepStatus?: PEPStatus[],
-    tagDetails?: UserTag[],
-    tagDetailsRID?: RuleInstance
+    details: UpdatableUserDetails,
+    ruleInstances: UserUpdateRuleInstances
   ) {
     if (!user) {
       return
     }
-    const data = this.getUserEventData(user, {
-      userStateDetails,
-      kycStatusDetails,
-      pepStatus,
-      tags: tagDetails,
-    })
+
+    const data = this.getUserEventData(user, details)
+
     if (!isEmpty(data)) {
-      await this.updateUser(user, data, {
-        bySystem: true,
-        kycRuleInstance: kycStatusRID,
-        userStateRuleInstance: userRID,
-        pepStatusRuleInstance: pepStatusRID,
-        tagDetailsRuleInstance: tagDetailsRID,
-      })
+      await this.updateUser(user, data, ruleInstances, { bySystem: true })
     }
   }
 
@@ -447,134 +433,71 @@ export class UserService {
     originUser: InternalUser | null,
     destinationUser: InternalUser | null
   ) {
-    let originUserStateDetails: UserStateDetailsInternal | undefined
-    let destinationUserStateDetails: UserStateDetailsInternal | undefined
-    let originKycStatusDetails: KYCStatusDetailsInternal | undefined
-    let destinationKycStatusDetails: KYCStatusDetailsInternal | undefined
-    let originPepStatus: PEPStatus[] | undefined = originUser?.pepStatus
-    let destinationPepStatus: PEPStatus[] | undefined =
-      destinationUser?.pepStatus
-    let originTagDetails: UserTag[] | undefined = originUser?.tags
-    let destinationTagDetails: UserTag[] | undefined = destinationUser?.tags
-
     const isRiskLevelsEnabled = hasFeature('RISK_LEVELS')
 
-    let originKycStatusRID: RuleInstance | undefined
-    let destinationKycStatusRID: RuleInstance | undefined
-    let originUserStateRID: RuleInstance | undefined
-    let destinationUserStateRID: RuleInstance | undefined
-    let originPepStatusRID: RuleInstance | undefined
-    let destinationPepStatusRID: RuleInstance | undefined
-    let originTagDetailsRID: RuleInstance | undefined
-    let destinationTagDetailsRID: RuleInstance | undefined
+    type UserData = {
+      userData: UpdatableUserDetails
+      ruleInstances: UserUpdateRuleInstances
+    }
 
-    ruleInstancesHit.forEach((ruleInstance) => {
-      const hitRulesDetails = hitRules.find(
-        (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
-      )
-
-      if (!hitRulesDetails) {
-        return
+    // Helper function to process a single user and save events
+    const processUser = async (
+      user: InternalUser | null,
+      direction: 'ORIGIN' | 'DESTINATION'
+    ): Promise<void> => {
+      const userData: UserData = {
+        userData: { pepStatus: user?.pepStatus, tags: user?.tags },
+        ruleInstances: {},
       }
 
-      const triggersOnHitOrigin = this.getTriggersOnHit(
-        ruleInstance,
-        originUser,
-        'ORIGIN',
-        isRiskLevelsEnabled
+      ruleInstancesHit.forEach((ruleInstance) => {
+        const hitRulesDetails = hitRules.find(
+          (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
+        )
+
+        if (
+          !hitRulesDetails ||
+          !hitRulesDetails.ruleHitMeta?.hitDirections?.includes(direction)
+        ) {
+          return
+        }
+
+        const triggersOnHit = this.getTriggersOnHit(
+          ruleInstance,
+          user,
+          direction,
+          isRiskLevelsEnabled
+        )
+
+        if (triggersOnHit) {
+          const result = this.processUserDetails(
+            triggersOnHit,
+            userData.userData,
+            userData.ruleInstances,
+            ruleInstance
+          )
+
+          Object.assign(userData, result)
+        }
+      })
+
+      // Save user events
+      await this.saveUserEvents(
+        user,
+        {
+          ...userData.userData,
+          pepStatus: this.getUniquePepStatus(userData.userData.pepStatus),
+          tags: this.getUpdatedTagDetails(userData.userData.tags, user?.tags),
+        },
+        userData.ruleInstances
       )
+    }
 
-      const triggersOnHitDestination = this.getTriggersOnHit(
-        ruleInstance,
-        destinationUser,
-        'DESTINATION',
-        isRiskLevelsEnabled
-      )
-
-      if (
-        triggersOnHitOrigin &&
-        hitRulesDetails.ruleHitMeta?.hitDirections?.includes('ORIGIN')
-      ) {
-        ;[
-          originUserStateDetails,
-          originKycStatusDetails,
-          originUserStateRID,
-          originKycStatusRID,
-        ] = this.processUserAndKycDetails(
-          triggersOnHitOrigin,
-          originUserStateDetails,
-          originKycStatusDetails,
-          originUserStateRID,
-          originKycStatusRID,
-          ruleInstance
-        )
-        originPepStatus = this.processPepStatusDetails(
-          triggersOnHitOrigin,
-          originPepStatus
-        )
-        originPepStatusRID = ruleInstance
-        originTagDetails = this.processTagDetails(
-          triggersOnHitOrigin,
-          originTagDetails
-        )
-        originTagDetailsRID = ruleInstance
-      }
-
-      if (
-        triggersOnHitDestination &&
-        hitRulesDetails.ruleHitMeta?.hitDirections?.includes('DESTINATION')
-      ) {
-        ;[
-          destinationUserStateDetails,
-          destinationKycStatusDetails,
-          destinationUserStateRID,
-          destinationKycStatusRID,
-        ] = this.processUserAndKycDetails(
-          triggersOnHitDestination,
-          destinationUserStateDetails,
-          destinationKycStatusDetails,
-          destinationUserStateRID,
-          destinationKycStatusRID,
-          ruleInstance
-        )
-        destinationPepStatus = this.processPepStatusDetails(
-          triggersOnHitDestination,
-          destinationPepStatus
-        )
-        destinationPepStatusRID = ruleInstance
-        destinationTagDetails = this.processTagDetails(
-          triggersOnHitDestination,
-          destinationTagDetails
-        )
-        destinationTagDetailsRID = ruleInstance
-      }
-    })
-    const promises: Promise<void>[] = [
-      this.saveUserEvents(
-        originUser,
-        originUserStateDetails,
-        originKycStatusDetails,
-        originUserStateRID,
-        originKycStatusRID,
-        originPepStatusRID,
-        this.getUniquePepStatus(originPepStatus),
-        this.getUpdatedTagDetails(originTagDetails, originUser?.tags),
-        originTagDetailsRID
-      ),
-      this.saveUserEvents(
-        destinationUser,
-        destinationUserStateDetails,
-        destinationKycStatusDetails,
-        destinationUserStateRID,
-        destinationKycStatusRID,
-        destinationPepStatusRID,
-        this.getUniquePepStatus(destinationPepStatus),
-        this.getUpdatedTagDetails(destinationTagDetails, destinationUser?.tags),
-        destinationTagDetailsRID
-      ),
-    ]
-
-    await Promise.all(promises)
+    // Process and save events for both users concurrently
+    await Promise.all([
+      processUser(originUser, 'ORIGIN'),
+      processUser(destinationUser, 'DESTINATION'),
+    ])
   }
 
   private getUpdatedTagDetails(
@@ -901,29 +824,81 @@ export class UserService {
   public async updateUser(
     user: User | Business,
     updateRequest: UserUpdateRequest,
-    options?: {
-      bySystem?: boolean
-      kycRuleInstance?: RuleInstance
-      userStateRuleInstance?: RuleInstance
-      caseId?: string
-      pepStatusRuleInstance?: RuleInstance
-      tagDetailsRuleInstance?: RuleInstance
-    }
+    ruleInstances?: UserUpdateRuleInstances,
+    options?: { bySystem?: boolean; caseId?: string }
   ): Promise<Comment | null> {
     if (!user) {
       throw new NotFound('User not found')
     }
 
     const isBusiness = isBusinessUser(user)
-    const oldImage = Object.keys(updateRequest).reduce((acc, key) => {
-      if (key === 'pepStatus') {
-        acc[key] = (user as User).pepStatus
-      } else {
-        acc[key] = user[key]
-      }
-      return acc as UserUpdateRequest
+    const oldImage = this.createOldImage(user, updateRequest)
+    const updatedUser = this.createUpdatedUser(user, updateRequest, isBusiness)
+
+    const shouldSaveUser = Object.keys(updateRequest).some(
+      (key) => updateRequest[key] && !isEqual(updateRequest[key], user[key])
+    )
+
+    if (!shouldSaveUser) {
+      return null
+    }
+
+    const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
+
+    // Save user
+    if (isBusiness) {
+      await this.userRepository.saveBusinessUser(userToUpdate as Business)
+    } else {
+      await this.userRepository.saveConsumerUser(userToUpdate as User)
+    }
+
+    // Save user event
+    await this.userEventRepository.saveUserEvent(
+      {
+        timestamp: Date.now(),
+        userId: user.userId,
+        reason: updateRequest.userStateDetails?.reason ?? 'User update',
+        updatedConsumerUserAttributes: updateRequest,
+      },
+      isBusiness ? 'BUSINESS' : 'CONSUMER'
+    )
+
+    // Handle risk scoring update
+    await this.riskScoringV8Service.handleUserUpdate(updatedUser)
+
+    // Handle post-update actions
+    const [_, comment] = await Promise.all([
+      this.handleTagsUpdate(user, updateRequest, ruleInstances, options),
+      this.handleKycAndUserUpdate(
+        user,
+        updateRequest,
+        updatedUser,
+        ruleInstances,
+        options
+      ),
+      this.handlePepStatusUpdate(user, updateRequest, ruleInstances, options),
+      this.handleAuditLog(updateRequest, oldImage, user.userId),
+    ])
+
+    return comment || null
+  }
+
+  private createOldImage(
+    user: User | Business,
+    updateRequest: UserUpdateRequest
+  ): UserUpdateRequest {
+    return Object.keys(updateRequest).reduce((acc, key) => {
+      acc[key] = key === 'pepStatus' ? (user as User).pepStatus : user[key]
+      return acc
     }, {} as UserUpdateRequest)
-    const updatedUser: User | Business = {
+  }
+
+  private createUpdatedUser(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    isBusiness: boolean
+  ): User | Business {
+    return {
       ...user,
       ...this.getUserEventData(user, updateRequest),
       transactionLimits: updateRequest.transactionLimits
@@ -938,67 +913,72 @@ export class UserService {
         : {}),
       ...(updateRequest.tags && { tags: updateRequest.tags }),
     }
-    const shouldSaveUser = Object.keys(updateRequest).some(
-      (key) => updateRequest[key] && !isEqual(updateRequest[key], user[key])
-    )
-    const userToUpdate = pick(updatedUser, DYNAMO_ONLY_USER_ATTRIBUTES)
-    if (shouldSaveUser) {
-      if (isBusiness) {
-        await this.userRepository.saveBusinessUser(userToUpdate as Business)
-      } else {
-        await this.userRepository.saveConsumerUser(userToUpdate as User)
-      }
-      await this.userEventRepository.saveUserEvent(
-        {
-          timestamp: Date.now(),
-          userId: user.userId,
-          reason: updateRequest.userStateDetails?.reason ?? 'User update',
-          updatedConsumerUserAttributes: updateRequest,
-        },
-        isBusiness ? 'BUSINESS' : 'CONSUMER'
-      )
-      /* To rerun only risk scoring */
-      await this.riskScoringV8Service.handleUserUpdate(updatedUser)
+  }
 
-      const result = await Promise.all([
-        updateRequest.tags &&
-          this.handlePostActionForTagsUpdate(user, updateRequest, {
+  private handleTagsUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    ruleInstances?: UserUpdateRuleInstances,
+    options?: { bySystem?: boolean }
+  ) {
+    return updateRequest.tags
+      ? this.handlePostActionForTagsUpdate(user, updateRequest, {
+          bySystem: options?.bySystem,
+          tagDetailsRuleInstance: ruleInstances?.tags,
+        })
+      : null
+  }
+
+  private handleKycAndUserUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    updatedUser: User | Business,
+    ruleInstances?: UserUpdateRuleInstances,
+    options?: { bySystem?: boolean; caseId?: string }
+  ) {
+    return updateRequest.kycStatusDetails || updateRequest.userStateDetails
+      ? this.handlePostActionForKycAndUserUpdate(
+          user,
+          updateRequest,
+          updatedUser,
+          {
             bySystem: options?.bySystem,
-            tagDetailsRuleInstance: options?.tagDetailsRuleInstance,
-          }),
-        (updateRequest.kycStatusDetails || updateRequest.userStateDetails) &&
-          this.handlePostActionForKycAndUserUpdate(
-            user,
-            updateRequest,
-            updatedUser,
-            {
-              bySystem: options?.bySystem,
-              kycRuleInstance: options?.kycRuleInstance,
-              userStateRuleInstance: options?.userStateRuleInstance,
-              caseId: options?.caseId,
-            }
-          ),
-        updateRequest.pepStatus &&
-          !isBusiness &&
-          this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
-            bySystem: options?.bySystem,
-            pepStatusRuleInstance: options?.pepStatusRuleInstance,
-          }),
-        (updateRequest.kycStatusDetails ||
-          updateRequest.userStateDetails ||
-          updateRequest.pepStatus) &&
-          this.userAuditLogService.handleAuditLogForUserUpdate(
-            updateRequest,
-            oldImage,
-            user.userId
-          ),
-      ])
-      const savedComment = find(result, (comment) => Boolean(comment))
-      return savedComment === false || savedComment === undefined
-        ? null
-        : savedComment
-    }
-    return null
+            kycRuleInstance: ruleInstances?.kycStatusDetails,
+            userStateRuleInstance: ruleInstances?.userStateDetails,
+            caseId: options?.caseId,
+          }
+        )
+      : null
+  }
+
+  private handlePepStatusUpdate(
+    user: User | Business,
+    updateRequest: UserUpdateRequest,
+    ruleInstances?: UserUpdateRuleInstances,
+    options?: { bySystem?: boolean }
+  ) {
+    return updateRequest.pepStatus && !isBusinessUser(user)
+      ? this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
+          bySystem: options?.bySystem,
+          pepStatusRuleInstance: ruleInstances?.pepStatus,
+        })
+      : null
+  }
+
+  private handleAuditLog(
+    updateRequest: UserUpdateRequest,
+    oldImage: UserUpdateRequest,
+    userId: string
+  ) {
+    return updateRequest.kycStatusDetails ||
+      updateRequest.userStateDetails ||
+      updateRequest.pepStatus
+      ? this.userAuditLogService.handleAuditLogForUserUpdate(
+          updateRequest,
+          oldImage,
+          userId
+        )
+      : null
   }
 
   private async handlePostActionForTagsUpdate(

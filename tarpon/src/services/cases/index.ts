@@ -408,9 +408,7 @@ export class CaseService extends CaseAlertsCommonService {
     if (!isEmpty(usersData)) {
       await Promise.all(
         usersData.map(({ user, caseId }) => {
-          return userService.updateUser(user, updateObject, {
-            caseId,
-          })
+          return userService.updateUser(user, updateObject, {}, { caseId })
         })
       )
     }
