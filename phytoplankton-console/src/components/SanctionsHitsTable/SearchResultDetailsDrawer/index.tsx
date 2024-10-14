@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { startCase, uniq } from 'lodash';
+import { startCase, uniq, uniqBy } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
@@ -196,11 +196,11 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.aka && entity.aka?.length > 0 && (
             <Form.Layout.Label title={'Aliases'}>{entity.aka.join(', ')}</Form.Layout.Label>
           )}
-          {entity.dateMatched && entity.yearOfBirth && (
+          {
             <Form.Layout.Label key={entity.yearOfBirth} title={'Year of Birth'}>
-              {entity.yearOfBirth}
+              {entity.yearOfBirth ?? '-'}
             </Form.Layout.Label>
-          )}
+          }
           {entity.countries && entity.countries.length > 0 && (
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
               {entity.countries?.join(', ')}
@@ -218,19 +218,25 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               {occupations.join(', ')}
             </Form.Layout.Label>
           )}
-          {entity.gender && (
+          {
             <Form.Layout.Label key={entity.gender} title={'Gender'}>
-              {entity.gender}
+              {entity.gender ?? '-'}
             </Form.Layout.Label>
-          )}
+          }
           {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
-                {entity.associates.filter(Boolean).map(({ association, name }, i) => (
+                {entity.associates.filter(Boolean).map(({ association, name, ranks }, i) => (
                   <React.Fragment key={i}>
                     {i !== 0 && ', '}
                     <span>
-                      {name} ({association})
+                      {name} ({association}
+                      {ranks && ranks.length > 0
+                        ? ` , PEP ranks: ${uniq(ranks)
+                            .map((r) => humanizeSnakeCase(r))
+                            .join(', ')})`
+                        : ''}
+                      )
                     </span>
                   </React.Fragment>
                 ))}
@@ -239,22 +245,27 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {entity.occupations && entity.occupations.length > 0 && (
             <Form.Layout.Label title={'PEP Level'}>
-              {uniq(
-                entity.occupations
-                  .map((occ) => (occ.rank ? humanizeSnakeCase(occ.rank) : null))
-                  .filter(Boolean)
-                  .join(', '),
-              )}
+              {uniqBy(
+                entity.occupations.filter((occ) => occ.rank != null),
+                (occ) => occ.rank,
+              )
+                .map((occ) => humanizeSnakeCase(occ.rank as string))
+                .join(', ')}
             </Form.Layout.Label>
           )}
           {entity.occupations && entity.occupations.length > 0 && (
             <Form.Layout.Label title={'Occupation categories'}>
-              {uniq(
-                entity.occupations
-                  .map((occ) => (occ.occupationCode ? humanizeSnakeCase(occ.occupationCode) : null))
-                  .filter(Boolean)
-                  .join(', '),
-              )}
+              {uniqBy(
+                entity.occupations.filter((occ) => occ.occupationCode != null),
+                (occ) => occ.occupationCode,
+              )
+                .map((occ) => humanizeSnakeCase(occ.occupationCode as string))
+                .join(', ')}
+            </Form.Layout.Label>
+          )}
+          {entity.documents && entity.documents.length > 0 && (
+            <Form.Layout.Label title={'Documents'}>
+              {entity.documents.map((doc) => `${doc.name} (${doc.id})`).join(', ')}
             </Form.Layout.Label>
           )}
         </div>

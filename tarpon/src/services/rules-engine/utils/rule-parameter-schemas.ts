@@ -883,7 +883,7 @@ export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
     nullable: true,
   } as const)
 
-const SANCTIONS_SCREENING_VALUES = ['NRIC', 'NATIONALITY']
+const SANCTIONS_SCREENING_VALUES = ['NRIC', 'NATIONALITY', 'YOB', 'GENDER']
 const PEP_RANK_VALUES: PepRank[] = ['LEVEL_1', 'LEVEL_2', 'LEVEL_3']
 export const SANCTIONS_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
   ({

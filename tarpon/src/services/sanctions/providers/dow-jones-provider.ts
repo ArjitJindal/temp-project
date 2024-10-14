@@ -505,15 +505,26 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         }
         if (descriptionValues?.includes('3')) {
           if (
-            ['1', '11'].some((val) => description2Values?.includes(val)) &&
+            description2Values?.includes('1') &&
             (!sanctionsReferences || sanctionsReferences.length > 0)
           ) {
             sanctionSearchTypes.push('SANCTIONS')
           }
           if (
-            ['7', '8', '9', '10', '31', '39', '21', '40', '2', '25'].some(
-              (val) => description2Values?.includes(val)
-            )
+            [
+              '7',
+              '8',
+              '9',
+              '10',
+              '31',
+              '39',
+              '21',
+              '40',
+              '2',
+              '25',
+              '11',
+              '6',
+            ].some((val) => description2Values?.includes(val))
           ) {
             sanctionSearchTypes.push('ADVERSE_MEDIA')
           }
@@ -550,9 +561,16 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           person.IDNumberTypes?.flatMap((id) =>
             id.ID?.flatMap((id): SanctionsIdDocument => {
               return id.IDValue?.map((idValue) => {
+                const idVal =
+                  typeof idValue === 'string'
+                    ? idValue
+                    : idValue['#text']
+                    ? String(idValue['#text'])
+                    : idValue['#text']
                 return {
-                  id: typeof idValue === 'string' ? idValue : idValue['#text'],
+                  id: idVal,
                   name: id['@_IDType'],
+                  formattedId: idVal?.replace('-', ''),
                 }
               })
             })
@@ -586,20 +604,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
         const entity: SanctionsEntity = {
           id: person['@_id'],
-          name: decode(
-            Object.entries(nameValue)
-              .reduce((acc, [key, val]) => {
-                if (
-                  val &&
-                  typeof val === 'string' &&
-                  key !== 'OriginalScriptName'
-                ) {
-                  return `${acc} ${val}`.trim()
-                }
-                return acc
-              }, '')
-              .trim()
-          ),
+          name: this.getNameValue(nameValue),
           entityType: 'Person',
           matchTypes: [
             ...pepRcaMatchTypes,
@@ -680,19 +685,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             .filter((n) => n['@_NameType'] !== 'Primary Name')
             .flatMap((name) => name.NameValue)
             .map((n) => {
-              const name = Object.entries(n)
-                .reduce((acc, [key, val]) => {
-                  if (
-                    val &&
-                    typeof val === 'string' &&
-                    key !== 'OriginalScriptName'
-                  ) {
-                    return `${acc} ${val}`.trim()
-                  }
-                  return acc
-                }, '')
-                .trim()
-              if (name.length > 0) {
+              const name = this.getNameValue(n)
+              if (name && name.length > 0) {
                 return decode(name)
               }
               return undefined
@@ -734,5 +728,23 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       console.error('Error reading directory:', err)
       return []
     }
+  }
+
+  private getNameValue(nameValue: any) {
+    let name = ''
+    const NAME_TYPES = ['FirstName', 'MiddleName', 'Surname']
+    const SINGLE_STRING_NAME = 'SingleStringName'
+    name = decode(
+      Object.entries(nameValue).reduce((acc, [key, val]) => {
+        if (val && typeof val === 'string' && NAME_TYPES.includes(key)) {
+          return `${acc} ${val}`.trim()
+        }
+        return acc
+      }, '')
+    )
+    if (!name && nameValue[SINGLE_STRING_NAME]) {
+      name = nameValue[SINGLE_STRING_NAME]
+    }
+    return name
   }
 }

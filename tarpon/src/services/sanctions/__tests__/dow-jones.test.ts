@@ -59,8 +59,9 @@ describe('DowJonesProvider', () => {
             nationality: ['IN'],
             documents: [
               {
-                id: 20603,
                 name: 'Others',
+                formattedId: '20603',
+                id: '20603',
               },
             ],
             freetext: `ASSOCIATED ENTITIES INFORMATION:
@@ -165,14 +166,17 @@ Patasse passed away on April 5, 2011.`,
               {
                 id: 'D00002264',
                 name: 'Passport No.',
+                formattedId: 'D00002264',
               },
               {
                 id: 'M4800002143743',
                 name: 'Others',
+                formattedId: 'M4800002143743',
               },
               {
                 id: 'CAR',
                 name: 'OFAC Program ID',
+                formattedId: 'CAR',
               },
               {
                 name: 'OFAC Unique ID',
@@ -180,22 +184,28 @@ Patasse passed away on April 5, 2011.`,
               {
                 id: 'CAF',
                 name: 'EU Sanctions Programme Indicator',
+                formattedId: 'CAF',
               },
               {
                 id: 'CFi.001',
                 name: 'UN Permanent Reference No.',
+                formattedId: 'CFi.001',
               },
               {
                 id: 'CAF0003',
                 name: 'UK Sanctions List Unique ID',
+                formattedId: 'CAF0003',
               },
               {
                 id: 'The Central African Republic (Sanctions) (EU Exit) Regulations 2020',
                 name: 'UK Sanctions List Regime',
+                formattedId:
+                  'The Central African Republic (Sanctions) (EU Exit) Regulations 2020',
               },
               {
                 id: 'Central African Republic',
                 name: 'HM Treasury Regime',
+                formattedId: 'Central African Republic',
               },
             ],
             yearOfBirth: '1937',

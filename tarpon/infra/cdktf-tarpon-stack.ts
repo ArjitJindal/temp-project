@@ -104,9 +104,15 @@ export class CdktfTarponStack extends TerraformStack {
             id: {
               type: 'string',
             },
+            formattedId: {
+              type: 'string',
+            },
           },
         },
         name: {
+          type: 'string',
+        },
+        gender: {
           type: 'string',
         },
         nationality: {

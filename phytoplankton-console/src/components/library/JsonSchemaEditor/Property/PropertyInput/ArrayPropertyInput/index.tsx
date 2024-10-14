@@ -45,7 +45,7 @@ export default function ArrayPropertyInput(props: Props) {
     const displayNames =
       enumNames?.length && enumNames.length === enumItems.length ? enumNames : enumItems;
 
-    if (enumItems.length > 0 && enumItems.length <= 3) {
+    if (enumItems.length > 0 && enumItems.length <= 4) {
       return (
         <SelectionGroup
           mode="MULTIPLE"

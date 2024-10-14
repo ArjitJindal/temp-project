@@ -16,7 +16,7 @@ import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 
-type ScreeningValues = 'NRIC' | 'NATIONALITY'
+type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
 export type DowJonesConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzzinessRange: {
@@ -94,9 +94,20 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
-        yearOfBirth,
+        ...(screeningValues?.includes('YOB') ? { yearOfBirth } : {}),
+        ...(screeningValues?.includes('GENDER') && user.userDetails.gender
+          ? {
+              gender:
+                user.userDetails.gender === 'M'
+                  ? 'Male'
+                  : user.userDetails.gender === 'F'
+                  ? 'Female'
+                  : 'NB',
+            }
+          : {}),
         types: screeningTypes,
         fuzzinessRange,
+        fuzziness: undefined,
         monitoring: { enabled: ongoingScreening },
         PEPRank,
         ...(screeningValues?.includes('NRIC')

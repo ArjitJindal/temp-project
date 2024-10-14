@@ -11438,6 +11438,8 @@ components:
               type: number
             upperBound:
               type: number
+        gender:
+          type: string
         PEPRank:
           $ref: '#/components/schemas/PepRank'
       required:
@@ -11899,6 +11901,8 @@ components:
         id:
           type: string
         name:
+          type: string
+        formattedId:
           type: string
     SanctionsOccupation:
       title: SanctionsOccupation

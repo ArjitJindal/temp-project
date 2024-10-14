@@ -90,7 +90,6 @@ export class SanctionsSearchRepository {
       }
       return { [`request.${k}`]: v }
     })
-
     const filters: Filter<SanctionsSearchHistory>[] = [
       ...paramFilters,
       { 'request.monitoring.enabled': request.monitoring?.enabled },

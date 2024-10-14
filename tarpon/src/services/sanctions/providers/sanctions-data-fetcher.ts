@@ -51,17 +51,19 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     request: SanctionsSearchRequest,
     percentageSimilarity: number
   ): boolean {
+    const percentageDissimilarity = 100 - percentageSimilarity
     if (
-      request.fuzzinessRange?.lowerBound &&
-      request.fuzzinessRange?.upperBound
+      request.fuzzinessRange?.lowerBound != null &&
+      request.fuzzinessRange?.upperBound != null
     ) {
       const { lowerBound, upperBound } = request.fuzzinessRange
       return (
-        percentageSimilarity >= lowerBound && percentageSimilarity <= upperBound
+        percentageDissimilarity >= lowerBound &&
+        percentageDissimilarity <= upperBound
       )
     }
     return request.fuzziness
-      ? percentageSimilarity <= request.fuzziness * 100
+      ? percentageDissimilarity <= request.fuzziness * 100
       : false
   }
   async search(
@@ -120,12 +122,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       documentIdMatch = [
         {
           compound: {
-            should: request.documentId.map((docId) => ({
-              text: {
-                query: docId,
-                path: 'documents.id',
-              },
-            })),
+            should:
+              request.documentId.length > 0
+                ? request.documentId.flatMap((docId) => [
+                    {
+                      text: {
+                        query: docId,
+                        path: 'documents.id',
+                      },
+                    },
+                    {
+                      text: {
+                        query: docId,
+                        path: 'documents.formattedId',
+                      },
+                    },
+                  ])
+                : [
+                    {
+                      text: {
+                        query: '__no_match__', // A value that will not match any document
+                        path: 'documents.id',
+                      },
+                    },
+                  ],
             mustNot: [
               {
                 equals: {
@@ -134,7 +154,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 },
               },
             ],
-            minimumShouldMatch: request.documentId.length > 0 ? 1 : 0,
+            minimumShouldMatch: 1,
           },
         },
       ]
@@ -145,7 +165,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           compound: {
             should: [
-              ...request.nationality.map((nationality) => ({
+              ...[...request.nationality, 'XX', 'ZZ'].map((nationality) => ({
                 text: {
                   query: nationality,
                   path: 'nationality',
@@ -192,7 +212,32 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         },
       ]
     }
-
+    let genderMatch
+    if (request.gender) {
+      genderMatch = [
+        {
+          compound: {
+            should: [
+              {
+                text: {
+                  query: request.gender,
+                  path: 'gender',
+                },
+              },
+              {
+                equals: {
+                  value: null,
+                  path: 'gender',
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
+    }
+    const searchScoreThreshold =
+      request.fuzzinessRange?.upperBound === 100 ? 3 : 7
     const results = await client
       .db()
       .collection(SANCTIONS_COLLECTION)
@@ -226,6 +271,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 ...(nationalityMatch ?? []),
                 ...(ranksMatch ?? []),
                 ...(documentIdMatch ?? []),
+                ...(genderMatch ?? []),
               ],
             },
           },
@@ -238,27 +284,46 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           // A minumum searchScore of 3 was encountered by trial and error
           // whilst using atlas search console
-          $match: { ...match, searchScore: { $gt: 3 } },
+          $match: { ...match, searchScore: { $gt: searchScoreThreshold } },
         },
       ])
       .toArray()
 
+    const searchTerm = request.searchTerm.toLowerCase()
     const filteredResults = results.filter((entity) => {
-      const values = [...(entity.aka || []), entity.name]
-      for (const value of values) {
-        const percentageSimilarity = calculateLevenshteinDistancePercentage(
-          request.searchTerm,
-          value
-        )
-        const fuzzyMatch = this.getFuzzinessEvaluationResult(
-          request,
-          percentageSimilarity
-        )
+      const values = [entity.name, ...(entity.aka || [])]
+      const hasAka = entity.aka && entity.aka.length > 0
 
-        const exactMatch =
-          value.toLowerCase() === request.searchTerm.toLowerCase()
-        return fuzzyMatch || exactMatch
+      if (request.fuzzinessRange?.upperBound === 100) {
+        return true
+      } else {
+        for (const value of values) {
+          if (value.toLowerCase() === searchTerm) {
+            return true
+          }
+        }
       }
+
+      const percentageSimilarity = calculateLevenshteinDistancePercentage(
+        request.searchTerm,
+        entity.name
+      )
+
+      const fuzzyMatch = this.getFuzzinessEvaluationResult(
+        request,
+        percentageSimilarity
+      )
+
+      if (fuzzyMatch) {
+        return true
+      }
+      return (
+        hasAka &&
+        this.getFuzzinessEvaluationResult(
+          request,
+          Math.max(percentageSimilarity - 10, 0) // Approximation to avoid calculating levenshtein distance for every pair to reduce complexity
+        )
+      )
     })
 
     const providerSearchId = request.existingProviderId || uuidv4()
