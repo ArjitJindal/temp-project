@@ -5,13 +5,13 @@ import { ClickHouseTables } from '@/utils/clickhouse/definition'
 import { envIs } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
-  if (!envIs('dev') && !envIs('local')) {
-    console.log('Skipping migration for tenant', tenant.id)
-    return
-  }
-
-  for (const table of ClickHouseTables) {
-    await syncClickhouseTableWithMongo(tenant.id, table)
+  if (
+    (envIs('sandbox') && process.env.REGION === 'asia-1') ||
+    envIs('sandbox:asia-1')
+  ) {
+    for (const table of ClickHouseTables) {
+      await syncClickhouseTableWithMongo(tenant.id, table)
+    }
   }
 }
 
