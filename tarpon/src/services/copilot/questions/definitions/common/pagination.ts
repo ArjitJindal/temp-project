@@ -49,6 +49,7 @@ export async function paginatedClickhouseQuery<T>(
   const queryString = `${clickhouseQuery} limit :limit offset :offset`
 
   const finalQueryString = replacePlaceholders(queryString, {
+    ...params,
     limit: pageSizeOrDefault,
     offset: offset,
   })

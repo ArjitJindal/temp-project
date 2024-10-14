@@ -150,6 +150,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       ...generatePaymentDetailColumns('destination'),
       "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
       "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
+      "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
