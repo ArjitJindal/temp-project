@@ -38,6 +38,13 @@ export const casesHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
+    handlers.registerCreateCaseReport(async (_ctx, request) => {
+      return await caseService.createReport({
+        caseId: request.caseId,
+        afterTimestamp: request.afterTimestamp,
+      })
+    })
+
     handlers.registerGetCaseList(
       async (ctx, request) =>
         await caseService.getCases(request, {

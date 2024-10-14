@@ -5126,6 +5126,33 @@ paths:
             schema:
               $ref: '#/components/schemas/ManualCasePatchRequest'
         required: true
+  /cases/{caseId}/report:
+    post:
+      operationId: create-case-report
+      summary: Create a transaction
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: caseId
+          required: true
+        - schema:
+            type: number
+          in: query
+          name: afterTimestamp
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  downloadUrl:
+                    type: string
+                required:
+                  - downloadUrl
   /cases/{caseId}/transactions:
     get:
       summary: Get transactions for a case

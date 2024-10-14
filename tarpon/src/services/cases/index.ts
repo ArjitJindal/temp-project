@@ -1,15 +1,17 @@
 import * as createError from 'http-errors'
-import { NotFound, BadRequest } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
-import { S3 } from '@aws-sdk/client-s3'
-import { capitalize, isEqual, isEmpty, compact, difference } from 'lodash'
+import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
+import { capitalize, compact, difference, isEmpty, isEqual } from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
+import { Upload } from '@aws-sdk/lib-storage'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
@@ -25,8 +27,8 @@ import {
 import { CasesListResponse } from '@/@types/openapi-internal/CasesListResponse'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import {
-  ThinWebhookDeliveryTask,
   sendWebhookTasks,
+  ThinWebhookDeliveryTask,
 } from '@/services/webhook/utils'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -69,11 +71,17 @@ import { traceable } from '@/core/xray'
 import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { S3Config } from '@/services/aws/s3-service'
+import { createReport } from '@/services/cases/utils/report'
+import * as XlsxGenerator from '@/services/cases/utils/xlsx-generator'
+import { LinkerService } from '@/services/linker'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
   caseRepository: CaseRepository
   alertsService: AlertsService
+  accountsService: AccountsService
+  linkerService: LinkerService
+  transactionsRepository: MongoDbTransactionRepository
   auditLogService: CasesAlertsAuditLogService
   tenantId: string
   mongoDb: MongoClient
@@ -125,6 +133,15 @@ export class CaseService extends CaseAlertsCommonService {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
+    this.accountsService = new AccountsService(
+      { auth0Domain: getContext()?.auth0Domain as string },
+      { mongoDb: this.mongoDb }
+    )
+    this.transactionsRepository = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+    this.linkerService = new LinkerService(this.tenantId)
   }
 
   private getUpdateManualCaseComment(
@@ -273,6 +290,55 @@ export class CaseService extends CaseAlertsCommonService {
       )
     )
     return result
+  }
+
+  public async createReport(params: {
+    caseId: string
+    afterTimestamp: number
+  }): Promise<{ downloadUrl: string }> {
+    const caseItem = await this.getCase(params.caseId)
+
+    const now = Date.now()
+    const fileName = `${params.caseId}-case-report-${now}.xlsx`
+
+    // Generate report
+    const { subjectType = 'USER' } = caseItem
+    const report = await createReport(
+      caseItem,
+      {
+        afterTimestamp: params.afterTimestamp,
+        addUserDetails: subjectType === 'USER',
+        addPaymentDetails: subjectType === 'PAYMENT',
+        addAlertDetails: caseItem.caseType !== 'MANUAL',
+        addOntology: hasFeature('ENTITY_LINKING'),
+      },
+      this.accountsService,
+      this.transactionsRepository,
+      this.linkerService
+    )
+    const dataStream = await XlsxGenerator.convert(report)
+
+    // Upload to temporal dir
+    const key = `${this.tenantId}/${fileName}`
+    const parallelUploadS3 = new Upload({
+      client: this.s3,
+      params: {
+        Bucket: this.s3Config.tmpBucketName,
+        Key: key,
+        Body: dataStream,
+      },
+    })
+    await parallelUploadS3.done()
+
+    // Create a download link
+    const getObjectCommand = new GetObjectCommand({
+      Bucket: this.s3Config.tmpBucketName,
+      Key: key,
+    })
+    const downloadUrl = await getSignedUrl(this.s3, getObjectCommand, {
+      expiresIn: 3600,
+    })
+    return { downloadUrl }
   }
 
   private getStatusChange(

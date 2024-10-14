@@ -27,3 +27,14 @@ export function notEmpty<T>(
 ): value is T {
   return notNullish(value) && value !== false && value !== ''
 }
+
+type SimpleValue = boolean | string | number | null | undefined
+
+export function isSimpleValue(value: unknown): value is SimpleValue {
+  return (
+    value == null ||
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'boolean'
+  )
+}

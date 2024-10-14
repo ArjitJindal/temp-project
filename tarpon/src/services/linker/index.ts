@@ -27,6 +27,12 @@ type UsersProjectedData = Pick<
   | 'type'
   | 'linkedEntities'
 >
+
+export type EntityGraph = {
+  nodes: GraphNodes[]
+  edges: GraphEdges[]
+}
+
 @traceable
 export class LinkerService {
   tenantId!: string
@@ -39,10 +45,7 @@ export class LinkerService {
     userId: string,
     afterTimestamp?: number,
     beforeTimestamp?: number
-  ): Promise<{
-    nodes: GraphNodes[]
-    edges: GraphEdges[]
-  }> {
+  ): Promise<EntityGraph> {
     const {
       linkedUsers,
       emailLinked,
@@ -98,6 +101,423 @@ export class LinkerService {
       nodes,
       edges: linkedEdges,
     }
+    // return {
+    //   "nodes": [
+    //     {
+    //       "id": "user:sanctions-200",
+    //       "label": "Muhammad Ismail Hosain bin Sanaway Mia"
+    //     },
+    //     {
+    //       "id": "user:bb1685937",
+    //       "label": "Sarah Charmer"
+    //     },
+    //     {
+    //       "id": "user:SU-271",
+    //       "label": "Sarah Charmer"
+    //     },
+    //     {
+    //       "id": "user:SU-272",
+    //       "label": "Sarah Charmer"
+    //     },
+    //     {
+    //       "id": "user:UH-271",
+    //       "label": "Belal"
+    //     },
+    //     {
+    //       "id": "user:UH-990",
+    //       "label": "Mir"
+    //     },
+    //     {
+    //       "id": "user:UH-991",
+    //       "label": "Hussain"
+    //     },
+    //     {
+    //       "id": "user:UH-992",
+    //       "label": "Halimah"
+    //     },
+    //     {
+    //       "id": "user:UH-993",
+    //       "label": "Halimah"
+    //     },
+    //     {
+    //       "id": "user:UH-994",
+    //       "label": "khalid"
+    //     },
+    //     {
+    //       "id": "user:UH-995",
+    //       "label": "Al rashid hussian"
+    //     },
+    //     {
+    //       "id": "user:UH-996",
+    //       "label": "Muamar Gadaffi bin Mohamad Shafawi"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1",
+    //       "label": "Muhammad Ismail Hosain bin Sanaway"
+    //     },
+    //     {
+    //       "id": "user:sanctions-2",
+    //       "label": "Muhammad Ismail Hosain bin Sanaway Mi"
+    //     },
+    //     {
+    //       "id": "user:sanctions-201",
+    //       "label": "Muhammad Ismail Hosain bin Sanaway Miha"
+    //     },
+    //     {
+    //       "id": "user:sanctions-202",
+    //       "label": "Muhammad Ismail Hosain"
+    //     },
+    //     {
+    //       "id": "user:sanctions-3",
+    //       "label": "Muhammad Ismail"
+    //     },
+    //     {
+    //       "id": "user:sanctions-203",
+    //       "label": "Muhammad Ismail Hosan"
+    //     },
+    //     {
+    //       "id": "user:sanctions-204",
+    //       "label": "Muhammad Ismail Hossain"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1010",
+    //       "label": "Muhamma"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1011",
+    //       "label": "khan ali"
+    //     },
+    //     {
+    //       "id": "emailAddress:charxxxx@sssil.com",
+    //       "label": ""
+    //     },
+    //     {
+    //       "id": "address:3xxxxStreet, BxxxU",
+    //       "label": ""
+    //     },
+    //     {
+    //       "id": "contactNumber:+447xxxx1",
+    //       "label": ""
+    //     }
+    //   ],
+    //   "edges": [
+    //     {
+    //       "id": "user:sanctions-1011-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-1011",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1010-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-1010",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-204-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-204",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-203-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-203",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-3-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-3",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-202-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-202",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-201-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-201",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-2-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-2",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-1",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-996-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-996",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-995-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-995",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-994-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-994",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-993-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-993",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-992-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-992",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-991-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-991",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-990-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-990",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:UH-271-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:UH-271",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:SU-272-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:SU-272",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:SU-271-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:SU-271",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:bb1685937-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:bb1685937",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-200-emailAddress:charxxxx@sssil.com",
+    //       "source": "user:sanctions-200",
+    //       "target": "emailAddress:charxxxx@sssil.com"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1011-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-1011",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1010-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-1010",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-204-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-204",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-203-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-203",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-3-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-3",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-202-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-202",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-201-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-201",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-2-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-2",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-1",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-996-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-996",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-995-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-995",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-994-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-994",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-993-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-993",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-992-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-992",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-991-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-991",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-990-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-990",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:UH-271-address:3xxxxStreet, BxxxU",
+    //       "source": "user:UH-271",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:SU-272-address:3xxxxStreet, BxxxU",
+    //       "source": "user:SU-272",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:SU-271-address:3xxxxStreet, BxxxU",
+    //       "source": "user:SU-271",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:bb1685937-address:3xxxxStreet, BxxxU",
+    //       "source": "user:bb1685937",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-200-address:3xxxxStreet, BxxxU",
+    //       "source": "user:sanctions-200",
+    //       "target": "address:3xxxxStreet, BxxxU"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1011-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-1011",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1010-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-1010",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-204-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-204",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-203-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-203",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-3-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-3",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-202-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-202",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-201-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-201",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-2-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-2",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-1-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-1",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-996-contactNumber:+447xxxx1",
+    //       "source": "user:UH-996",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-995-contactNumber:+447xxxx1",
+    //       "source": "user:UH-995",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-994-contactNumber:+447xxxx1",
+    //       "source": "user:UH-994",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-993-contactNumber:+447xxxx1",
+    //       "source": "user:UH-993",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-992-contactNumber:+447xxxx1",
+    //       "source": "user:UH-992",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-991-contactNumber:+447xxxx1",
+    //       "source": "user:UH-991",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-990-contactNumber:+447xxxx1",
+    //       "source": "user:UH-990",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:UH-271-contactNumber:+447xxxx1",
+    //       "source": "user:UH-271",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:SU-272-contactNumber:+447xxxx1",
+    //       "source": "user:SU-272",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:SU-271-contactNumber:+447xxxx1",
+    //       "source": "user:SU-271",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:bb1685937-contactNumber:+447xxxx1",
+    //       "source": "user:bb1685937",
+    //       "target": "contactNumber:+447xxxx1"
+    //     },
+    //     {
+    //       "id": "user:sanctions-200-contactNumber:+447xxxx1",
+    //       "source": "user:sanctions-200",
+    //       "target": "contactNumber:+447xxxx1"
+    //     }
+    //   ]
+    // }
   }
 
   private getAllContactDetails(user: UsersProjectedData): ContactDetails[] {
@@ -130,10 +550,7 @@ export class LinkerService {
     userId: string,
     afterTimestamp?: number,
     beforeTimestamp?: number
-  ): Promise<{
-    nodes: GraphNodes[]
-    edges: GraphEdges[]
-  }> {
+  ): Promise<EntityGraph> {
     const mongoClient = await getMongoDbClient()
     const db = mongoClient.db()
     const txnCollection = db.collection<InternalTransaction>(

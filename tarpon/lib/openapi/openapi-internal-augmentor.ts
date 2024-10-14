@@ -205,6 +205,7 @@ export const ConsoleApiPathToLambda: any = {
   '/cases/users/{userId}/caseIds':
     StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/cases/{caseId}/transactions': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
+  '/cases/{caseId}/report': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,
   '/tenant/usageData': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenant/apiKeys': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/cases/assignments': StackConstants.CONSOLE_API_CASE_FUNCTION_NAME,

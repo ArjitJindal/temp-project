@@ -8,6 +8,18 @@ export async function copyTextToClipboard(text: string) {
   await navigator.clipboard.writeText(text);
 }
 
+export function downloadUrl(filename: string | undefined, url: string) {
+  const element = document.createElement('a');
+  element.setAttribute('href', url);
+  if (filename) {
+    element.setAttribute('download', filename);
+  }
+  element.style.display = 'none';
+  document.body.appendChild(element);
+  element.click();
+  document.body.removeChild(element);
+}
+
 export function download(filename: string, text: string) {
   const element = document.createElement('a');
   element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));

@@ -17,7 +17,6 @@ interface Props {
 }
 
 const DEFAULT_PAST_DAYS = 30;
-const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
 
 export default function UserGraph(props: Props) {
   const [userId, setUserId] = useState(props.userId);
@@ -29,6 +28,7 @@ export default function UserGraph(props: Props) {
   const [edges, setEdges] = useState<GraphEdges[]>([]);
 
   useEffect(() => {
+    const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
     getGraph(userId, DEFAULT_AFTER_TIMESTAMP, undefined)
       .then(setEntity)
       .then(() => setFollowed((followed) => [userId, ...followed]));
