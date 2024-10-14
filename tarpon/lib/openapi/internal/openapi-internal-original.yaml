@@ -4624,7 +4624,7 @@ paths:
           description: OK
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-assignment:write
       requestBody:
         content:
           application/json:
@@ -4640,7 +4640,7 @@ paths:
           description: OK
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-assignment:write
       requestBody:
         content:
           application/json:
@@ -5419,7 +5419,7 @@ paths:
           description: OK
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-assignment:write
       requestBody:
         content:
           application/json:
@@ -5435,7 +5435,7 @@ paths:
           description: OK
       x-flagright:
         permissions:
-          - case-management:case-overview:write
+          - case-management:case-assignment:write
       requestBody:
         content:
           application/json:
@@ -10133,6 +10133,7 @@ components:
         - case-management:qa:read
         - case-management:qa:write
         - case-management:export:read
+        - case-management:case-assignment:write
         - rules:my-rules:read
         - rules:my-rules:write
         - rules:library:read

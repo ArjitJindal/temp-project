@@ -3,7 +3,7 @@ import cn from 'clsx';
 import { LoadingOutlined } from '@ant-design/icons';
 import s from './index.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
-import { useSortedUsers } from '@/utils/user-utils';
+import { useHasPermissions, useSortedUsers } from '@/utils/user-utils';
 import { Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';
 import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
@@ -26,8 +26,9 @@ export const AssigneesDropdown: React.FC<Props> = ({
   fixSelectorHeight = false,
 }) => {
   const [users, loadingUsers] = useSortedUsers();
+  const canEditAssignees = useHasPermissions(['case-management:case-assignment:write']);
 
-  return editing ? (
+  return editing && canEditAssignees ? (
     <>
       <Select<string[]>
         open={maxAssignees && assignments.length >= maxAssignees ? false : undefined}
