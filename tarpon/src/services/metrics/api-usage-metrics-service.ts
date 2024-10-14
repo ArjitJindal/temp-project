@@ -183,7 +183,7 @@ export class ApiUsageMetricsService {
   ): MonthlyMetricStats[] {
     const monthlyMetrics = mapValues(
       groupBy(dailyMetrics, (dailyMetric) =>
-        dayjs(dailyMetric.date).format('YYYY-MM')
+        dayjs(dailyMetric.date).format(MONTH_DATE_FORMAT_JS)
       ),
       (metrics) => {
         return Object.values(
@@ -348,7 +348,7 @@ export class ApiUsageMetricsService {
 
     return {
       ...dailyValues,
-      [dayjs().format(MONTH_DATE_FORMAT_JS)]: filteredAccount.length,
+      [dayjs().format(DAY_DATE_FORMAT_JS)]: filteredAccount.length,
     }
   }
 
@@ -472,7 +472,6 @@ export class ApiUsageMetricsService {
     if (!postHogClient) {
       return
     }
-
     postHogClient.capture({
       distinctId: tenantInfo.id,
       event,

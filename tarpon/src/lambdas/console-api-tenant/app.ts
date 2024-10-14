@@ -283,7 +283,6 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
-
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
         }
