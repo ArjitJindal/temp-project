@@ -857,7 +857,8 @@ export class LogicEvaluator {
                 let value = await entityVariable?.load(transaction, context)
                 if (
                   aggregationVariable.aggregationFilterFieldKey &&
-                  aggregationVariable.aggregationFilterFieldValue
+                  aggregationVariable.aggregationFilterFieldValue &&
+                  value
                 ) {
                   value = (value as { [key: string]: unknown }[])
                     .filter(
