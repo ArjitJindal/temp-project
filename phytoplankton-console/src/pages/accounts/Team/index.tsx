@@ -6,10 +6,10 @@ import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { DeleteUser } from '../components/DeleteUser';
 import s from './index.module.less';
 import {
-  isAtLeastAdmin,
   parseUserRole,
   useAccountsQueryResult,
   useAuth0User,
+  useHasPermissions,
   useInvalidateUsers,
   UserRole,
   useUsers,
@@ -130,6 +130,7 @@ export default function Team() {
   );
 
   const [isInviteVisible, setIsInviteVisible] = useState(false);
+  const isAccountPermissionsEnabled = useHasPermissions(['accounts:overview:write']);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
   const [users, loadingUsers] = useUsers({});
   const columnHelper = new ColumnHelper<Account>();
@@ -286,7 +287,7 @@ export default function Team() {
     }),
   ]);
 
-  if (isAtLeastAdmin(user)) {
+  if (isAccountPermissionsEnabled) {
     columns.push(
       columnHelper.display({
         title: 'Status',
@@ -359,7 +360,7 @@ export default function Team() {
         tableId="accounts-list"
         innerRef={actionRef}
         extraTools={
-          isAtLeastAdmin(user)
+          isAccountPermissionsEnabled
             ? [
                 () => (
                   <Button
