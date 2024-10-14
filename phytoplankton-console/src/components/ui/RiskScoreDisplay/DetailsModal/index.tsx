@@ -1,14 +1,11 @@
 import React from 'react';
 import cn from 'clsx';
-import MainPanel from '../MainPanel';
 import s from './index.module.less';
-import { columns, TableRow } from './consts';
-import { findParameter } from './helpers';
+import V8ModalDetails from './components/V8ModalDetails';
+import V2ModalDetails from './components/V2ModalDetails';
 import Modal from '@/components/library/Modal';
 import { ValueItem } from '@/components/ui/RiskScoreDisplay/types';
-import Table from '@/components/library/Table';
-import { RiskScoreComponent } from '@/apis';
-import { ParameterName } from '@/pages/risk-levels/risk-factors/ParametersTable/types';
+import { RiskFactorScoreDetails, RiskScoreComponent } from '@/apis';
 
 interface Props {
   icon: React.ReactNode;
@@ -16,6 +13,7 @@ interface Props {
   onCancel: () => void;
   title: string;
   components?: Array<RiskScoreComponent>;
+  factorScoreDetails?: Array<RiskFactorScoreDetails>;
   riskScoreName: string;
   showFormulaBackLink?: boolean;
   riskScoreAlgo: (value: ValueItem) => number;
@@ -23,88 +21,17 @@ interface Props {
   sortedItems: ValueItem[];
 }
 
-const VARIABLES = [
-  ...new Array(('z'.codePointAt(0) as number) - ('a'.codePointAt(0) as number) + 1),
-].map((_, i) => String.fromCodePoint(('a'.codePointAt(0) as number) + i));
-
 export default function DetailsModal(props: Props) {
-  const {
-    icon,
-    title,
-    isOpen,
-    onCancel,
-    components,
-    riskScoreName,
-    showFormulaBackLink,
-    riskScoreAlgo,
-    lastItem,
-    sortedItems,
-  } = props;
+  const { title, isOpen, onCancel, components, factorScoreDetails } = props;
 
-  const explanationText = riskScoreName || 'TRS';
   return (
     <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width="M">
       <div className={cn(s.root)}>
-        <div className={s.header}>
-          <MainPanel
-            icon={icon}
-            title={title}
-            lastItem={lastItem}
-            riskScoreAlgo={riskScoreAlgo}
-            sortedItems={sortedItems}
-          />
-          {components && (
-            <div className={s.formulaWrapper}>
-              <div className={s.formula}>
-                {`The following factors are used in calculating ${explanationText} :`}
-              </div>
-              <div className={s.formulaLegend}>
-                {components.map(({ entityType, parameter }, i) => {
-                  const parameterDescription = findParameter(
-                    entityType,
-                    parameter as ParameterName,
-                  );
-                  const variable = VARIABLES[i];
-                  return (
-                    <React.Fragment key={variable}>
-                      {i > 0 && <br />}
-                      {i + 1}. {parameterDescription?.title ?? parameter} risk
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-              {showFormulaBackLink ? (
-                <div className={s.formulaLink}>
-                  {`The complete formula for calculating ${explanationText} is `}
-                  <a href="/risk-levels/risk-algorithms"> here</a>
-                </div>
-              ) : (
-                <></>
-              )}
-            </div>
-          )}
-        </div>
-        {components && (
-          <div className={s.table}>
-            <Table<TableRow>
-              rowKey={'parameter'}
-              sizingMode="FULL_WIDTH"
-              pagination={false}
-              toolsOptions={false}
-              data={{
-                total: components.length,
-                items: components.map((component) => ({
-                  entityType: component.entityType,
-                  parameter: component.parameter as ParameterName,
-                  value: component.value,
-                  riskScore: component.score,
-                  weight: component.weight,
-                  riskLevel: component.riskLevel,
-                })),
-              }}
-              columns={columns}
-            />
-          </div>
+        {factorScoreDetails && factorScoreDetails.length > 0 && (
+          <V8ModalDetails {...props} factorScoreDetails={factorScoreDetails} />
+        )}
+        {components && components.length > 0 && (
+          <V2ModalDetails {...props} components={components} />
         )}
       </div>
     </Modal>

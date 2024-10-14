@@ -37,6 +37,7 @@ export default function RiskScoreDisplay(props: Props) {
   const sortedItems = useMemo(() => sortByDate(values), [values]);
   const lastItem = sortedItems[values.length - 1];
   const components = lastItem?.components;
+  const factorScoreDetails = lastItem?.factorScoreDetails;
   const isManualUpdate = lastItem?.transactionId === 'MANUAL_UPDATE' && lastItem?.manualRiskLevel;
 
   return (
@@ -44,7 +45,12 @@ export default function RiskScoreDisplay(props: Props) {
       <MainPanel
         icon={icon}
         title={title}
-        onClickInfo={components && components.length > 0 ? () => setModalOpen(true) : undefined}
+        onClickInfo={
+          (components && components.length > 0) ||
+          (factorScoreDetails && factorScoreDetails.length > 0)
+            ? () => setModalOpen(true)
+            : undefined
+        }
         customStyling={mainPanelCustomStyling}
         sortedItems={sortedItems}
         lastItem={lastItem}
@@ -64,6 +70,7 @@ export default function RiskScoreDisplay(props: Props) {
         title={title}
         isOpen={isModalOpen}
         components={components}
+        factorScoreDetails={factorScoreDetails}
         riskScoreName={riskScoreName}
         onCancel={() => {
           setModalOpen(false);

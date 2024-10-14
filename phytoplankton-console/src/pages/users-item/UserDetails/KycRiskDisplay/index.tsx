@@ -27,6 +27,7 @@ export default function KycRiskDisplay({ userId }: Props) {
                       score: result.krsScore,
                       createdAt: result.createdAt,
                       components: result.components,
+                      factorScoreDetails: result.factorScoreDetails,
                     },
                   ]
                 : []

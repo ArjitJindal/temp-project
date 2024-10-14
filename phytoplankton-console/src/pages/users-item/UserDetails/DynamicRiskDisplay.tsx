@@ -25,6 +25,7 @@ export default function DynamicRiskDisplay({ userId }: Props) {
               manualRiskLevel: x?.manualRiskLevel,
               createdAt: x.createdAt,
               components: x.components,
+              factorScoreDetails: x.factorScoreDetails,
               transactionId: x.transactionId,
             }))}
             icon={<User3LineIcon />}
