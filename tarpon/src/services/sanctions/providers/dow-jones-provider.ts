@@ -570,7 +570,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
                 return {
                   id: idVal,
                   name: id['@_IDType'],
-                  formattedId: idVal?.replace('-', ''),
+                  formattedId:
+                    typeof idValue === 'string'
+                      ? idVal?.replaceAll('-', '')
+                      : idVal,
                 }
               })
             })
