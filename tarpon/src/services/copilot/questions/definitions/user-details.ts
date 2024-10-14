@@ -142,7 +142,7 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
           value: result?.krsScore?.krsScore.toFixed(0),
         },
         {
-          key: 'DRS Score',
+          key: 'CRA Score',
           value: result?.drsScore?.drsScore.toFixed(0),
         },
         {
