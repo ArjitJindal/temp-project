@@ -24,16 +24,7 @@ import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consum
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 
 export const isClickhouseEnabledInRegion = () => {
-  logger.info('Checking if clickhouse is enabled in region', {
-    region: process.env.REGION,
-    env: process.env.ENV,
-  })
-  return (
-    envIs('local') ||
-    envIs('test') ||
-    envIs('dev') ||
-    (envIs('sandbox') && process.env.REGION === 'asia-1')
-  )
+  return envIs('local') || envIs('test') || envIs('dev') || envIs('sandbox')
 }
 
 export const getClickhouseDbName = (tenantId: string) => {

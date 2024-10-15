@@ -139,44 +139,63 @@ export class CdktfTarponStack extends TerraformStack {
 
     const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)
 
-    clickhouseTenantConfigs?.forEach((clickhouseTenantConfig) => {
-      const clickhouseSecret =
-        new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
-          this,
-          'clickhouse-secret',
-          {
-            secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouseApi`,
-          }
-        )
+    const clickhouseSecret =
+      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
+        this,
+        'clickhouse-secret',
+        {
+          secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouseApi`,
+        }
+      )
 
+    const clickhouseProvider = new clickhouse.provider.ClickhouseProvider(
+      this,
+      'clickhouse-provider',
+      {
+        organizationId: CLICKHOUSE_ORGANIZATION_ID,
+        tokenKey: Fn.lookup(
+          Fn.jsondecode(clickhouseSecret.secretString),
+          'keyId'
+        ),
+        tokenSecret: Fn.lookup(
+          Fn.jsondecode(clickhouseSecret.secretString),
+          'keySecret'
+        ),
+      }
+    )
+
+    const getClickhouseName = (name: string, region: string) => {
+      if (config.stage === 'dev') {
+        return name
+      }
+
+      if (config.stage === 'sandbox') {
+        if (region === 'ap-southeast-1') {
+          return name
+        }
+
+        return name + '-' + region
+      }
+
+      return name
+    }
+
+    clickhouseTenantConfigs?.forEach((clickhouseTenantConfig) => {
       const clickhousePassword =
         new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
           this,
-          'clickhouse-password',
+          getClickhouseName(
+            'clickhouse-password',
+            clickhouseTenantConfig.region
+          ),
           {
             secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:clickhouse`,
           }
         )
 
-      const clickhouseProvider = new clickhouse.provider.ClickhouseProvider(
-        this,
-        'clickhouse-provider',
-        {
-          organizationId: CLICKHOUSE_ORGANIZATION_ID,
-          tokenKey: Fn.lookup(
-            Fn.jsondecode(clickhouseSecret.secretString),
-            'keyId'
-          ),
-          tokenSecret: Fn.lookup(
-            Fn.jsondecode(clickhouseSecret.secretString),
-            'keySecret'
-          ),
-        }
-      )
-
       const clickhouseService = new clickhouse.service.Service(
         this,
-        'clickhouse-service',
+        getClickhouseName('clickhouse-service', clickhouseTenantConfig.region),
         {
           provider: clickhouseProvider,
           cloudProvider: 'aws',
@@ -203,7 +222,10 @@ export class CdktfTarponStack extends TerraformStack {
         const privateEndpoint =
           new clickhouse.privateEndpointRegistration.PrivateEndpointRegistration(
             this,
-            'clickhouse-private-endpoint-registration',
+            getClickhouseName(
+              'clickhouse-private-endpoint-registration',
+              clickhouseTenantConfig.region
+            ),
             {
               cloudProvider: 'aws',
               privateEndpointId:
@@ -215,7 +237,10 @@ export class CdktfTarponStack extends TerraformStack {
 
         new clickhouse.servicePrivateEndpointsAttachment.ServicePrivateEndpointsAttachment(
           this,
-          'clickhouse-service-private-endpoints-attachment',
+          getClickhouseName(
+            'clickhouse-service-private-endpoints-attachment',
+            clickhouseTenantConfig.region
+          ),
           {
             serviceId: clickhouseService.id,
             privateEndpointIds: [privateEndpoint.privateEndpointId],
