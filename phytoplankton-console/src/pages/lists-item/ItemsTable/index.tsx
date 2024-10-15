@@ -298,7 +298,7 @@ export default function ItemsTable(props: Props) {
       }),
       helper.display({
         title: 'Actions',
-        defaultWidth: 80,
+        defaultWidth: 170,
         render: (entity, context) => {
           const externalState: ExternalState = context.external as ExternalState;
           const [editUserData, setEditUserData] = externalState.editUserData;
