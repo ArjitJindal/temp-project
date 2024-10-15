@@ -214,6 +214,26 @@ export default function AccountForm(props: Props) {
     },
   );
 
+  const resetPasswordMutation = useMutation<unknown, unknown, { accountId: string }>(
+    async (payload) => {
+      return await api.accountsResetPassword({ accountId: payload.accountId });
+    },
+    {
+      onSuccess: () => {
+        message.success('Password reset!');
+        onSuccess();
+        hide?.();
+      },
+      onError: (e) => {
+        message.fatal(`Failed to reset password - ${getErrorMessage(e)}`, e);
+        hide?.();
+      },
+      onMutate: () => {
+        hide = message.loading('Resetting password...');
+      },
+    },
+  );
+
   const onFinish = async () => {
     const { email, role, isEscalationContact, reviewerId } = values;
     if (isEdit) {
@@ -257,6 +277,7 @@ export default function AccountForm(props: Props) {
             }}
             isDisabled={isInviteButtonDisabled}
             isLoading={inviteMutation.isLoading || editMutation.isLoading}
+            requiredPermissions={['accounts:overview:write']}
           >
             {isEdit ? 'Save' : 'Invite'}
           </Button>
@@ -359,21 +380,36 @@ export default function AccountForm(props: Props) {
           </div>
         )}
         {isEdit && (
-          <Button
-            type="SECONDARY"
-            onClick={() => {
-              if (editAccount) {
-                resendInviteMutation.mutate({
-                  accountId: editAccount.id,
-                  email: editAccount.email,
-                });
-              }
-            }}
-            requiredPermissions={['settings:organisation:write']}
-            style={{ width: 'fit-content' }}
-          >
-            Resend invitation
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'row' }}>
+            <Button
+              type="SECONDARY"
+              onClick={() => {
+                if (editAccount) {
+                  resendInviteMutation.mutate({
+                    accountId: editAccount.id,
+                    email: editAccount.email,
+                  });
+                }
+              }}
+              requiredPermissions={['accounts:overview:write']}
+              style={{ width: 'fit-content' }}
+            >
+              Resend invitation
+            </Button>
+
+            <Button
+              type="TETRIARY"
+              onClick={() => {
+                if (editAccount) {
+                  resetPasswordMutation.mutate({ accountId: editAccount.id });
+                }
+              }}
+              requiredPermissions={['accounts:overview:write']}
+              style={{ width: 'fit-content' }}
+            >
+              Reset password
+            </Button>
+          </div>
         )}
         {isInviteDisabled === true && (
           <P variant="m" fontWeight="normal">

@@ -47,6 +47,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/resend-invite':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
+  '/accounts/{accountId}/reset-password':
+    StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}/deactivate':
     StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,
   '/accounts/{accountId}': StackConstants.CONSOLE_API_ACCOUNT_FUNCTION_NAME,

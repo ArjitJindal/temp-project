@@ -113,6 +113,10 @@ export const accountsHandler = lambdaApi()(
       )
     })
 
+    handlers.registerAccountsResetPassword(async (ctx, request) => {
+      return await accountsService.resetPassword(request.accountId)
+    })
+
     handlers.registerGetCluesoAuthToken(async () => {
       const cluesoSecret = await getSecretByName('clueso')
       const payload = {}
