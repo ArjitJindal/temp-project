@@ -9,14 +9,7 @@ import {
   UpdateResult,
 } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import {
-  difference,
-  intersection,
-  isEmpty,
-  isNil,
-  isUndefined,
-  omitBy,
-} from 'lodash'
+import { difference, intersection, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { TimeRange } from '../rules-engine/repositories/transaction-repository-interface'
 import {
@@ -98,10 +91,7 @@ export class CaseRepository {
 
   constructor(
     tenantId: string,
-    connections: {
-      mongoDb?: MongoClient
-      dynamoDb?: DynamoDBDocumentClient
-    }
+    connections: { mongoDb?: MongoClient; dynamoDb?: DynamoDBDocumentClient }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
@@ -314,10 +304,7 @@ export class CaseRepository {
   ): Promise<Filter<Case>[]> {
     const conditions: Filter<Case>[] = []
 
-    if (
-      !isUndefined(params.filterAssignmentsRoles) &&
-      !isEmpty(params.filterAssignmentsRoles)
-    ) {
+    if (params.filterAssignmentsRoles?.length) {
       // Since the number of accounts is typically a small number, we can fetch relevant accounts and filter cases by
       // making use of the `params.filterAssignmentsIds` field.
       const accountsService = await AccountsService.getInstance()

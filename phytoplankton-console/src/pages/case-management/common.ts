@@ -63,14 +63,7 @@ export const getAlertsQueryParams = (
     filterAlertStatus: getStatuses(alertStatus),
     filterAssignmentsIds:
       showCases === 'MY_ALERTS' ? [user.userId] : assignedTo?.length ? assignedTo : undefined,
-    filterAssignmentsRoles:
-      showCases === 'MY_ALERTS'
-        ? user.role
-          ? [user.role]
-          : []
-        : roleAssignedTo?.length
-        ? roleAssignedTo
-        : undefined,
+    filterAssignmentsRoles: roleAssignedTo?.length ? roleAssignedTo : undefined,
     filterQaAssignmentsIds: qaAssignment?.length ? qaAssignment : undefined,
     filterBusinessIndustries:
       businessIndustryFilter && businessIndustryFilter.length > 0
