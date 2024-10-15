@@ -3,10 +3,12 @@ import { Permission } from '../../src/apis';
 const CASE_DETAILS: Permission[] = [
   'case-management:case-details:read',
   'case-management:case-details:write',
+  'case-management:case-assignment:write',
 ];
 const CASE_OVERVIEW: Permission[] = [
   'case-management:case-overview:read',
   'case-management:case-overview:write',
+  'case-management:case-assignment:write',
 ];
 const CASE_REOPEN: Permission[] = ['case-management:case-reopen:write'];
 const QA: Permission[] = ['case-management:qa:read', 'case-management:qa:write'];
