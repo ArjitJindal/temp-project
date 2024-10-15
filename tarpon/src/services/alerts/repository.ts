@@ -349,8 +349,21 @@ export class AlertsRepository {
     }
 
     if (params.filterAlertId != null) {
-      alertConditions.push({
+      const exactMatch = { 'alerts.alertId': params.filterAlertId }
+      const partialMatch = {
         'alerts.alertId': prefixRegexMatchFilter(params.filterAlertId),
+      }
+
+      alertConditions.push({
+        $or: [
+          exactMatch,
+          {
+            $and: [
+              { 'alerts.alertId': { $nin: [params.filterAlertId] } },
+              partialMatch,
+            ],
+          },
+        ],
       })
     }
 
