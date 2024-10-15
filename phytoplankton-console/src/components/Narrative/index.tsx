@@ -229,7 +229,9 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
                 narrative={props.value || ''}
                 setNarrativeValue={(value) => {
                   props.onChange?.(value);
-                  editorRef.current?.editorRef.current?.getInstance().setMarkdown(value);
+                  editorRef.current?.editorRef.current
+                    ?.getInstance()
+                    .setMarkdown(value.replaceAll(/\n\n/gi, `\n`));
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
                 entityType={entityType}

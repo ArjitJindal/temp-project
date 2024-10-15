@@ -13,11 +13,11 @@ const PLACEHOLDER_NARRATIVE = (type: string, attributes: AttributeSet) => {
   const isScreening = attributes
     ?.getAttribute('rules')
     ?.some((r) => r.narrative === 'SCREENING')
-  const overview = `OVERVIEW \nName: [name] \nDate of Case Generation: [caseGenerationDate] \nReason for Case Generation: [ruleHitNames] \nInvestigation Period: [caseGenerationDate] - [closureDate] \nClosure Date: [closureDate] \n\n`
-  const background = `BACKGROUND \n[This section should contain general details about the ${type} in question.] \n\n`
-  const investigation = `INVESTIGATION \n[This section should detail the method of the investigation and the ${type}'s activities that took place during the investigation.] \n\n`
-  const findings = `FINDINGS AND ASSESSMENT \n[This section should contain an analysis of the ${type}'s transactions and behaviors.] \n\n`
-  const screening = `SCREENING DETAILS \n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.] \n\n`
+  const overview = `OVERVIEW \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [caseGenerationDate] - [closureDate] \n\nClosure Date: [closureDate]`
+  const background = `BACKGROUND \n\n[This section should contain general details about the ${type} in question.]`
+  const investigation = `INVESTIGATION \n\n[This section should detail the method of the investigation and the ${type}'s activities that took place during the investigation.]`
+  const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the ${type}'s transactions and behaviors.]`
+  const screening = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]`
   const conclusion = `CONCLUSION`
 
   if (isScreening) {
