@@ -1,4 +1,3 @@
-import { BadRequest } from 'http-errors'
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { PropertiesQuestion } from '@/services/copilot/questions/types'
 import { CrmService } from '@/services/crm'
@@ -15,8 +14,12 @@ export const CrmInsights: PropertiesQuestion<any> = {
       user?.tags?.find((t) => t.key === 'crmAccountId')?.value ?? ''
 
     if (!crmAccountId) {
-      throw new BadRequest('No CRM data attached')
+      return {
+        data: [],
+        summary: '',
+      }
     }
+
     const crmAccount = await crmService.getAccount(crmAccountId)
 
     return {

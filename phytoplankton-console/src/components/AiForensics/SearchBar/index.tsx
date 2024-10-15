@@ -19,12 +19,13 @@ import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider'
 import { QuestionResponse } from '@/apis';
 import { QuestionResponseSkeleton } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type FormValues = {
   searchString: string;
 };
 
-const SUGGESTIONS_ORDER: readonly QuestionId[] = [
+const SUGGESTIONS_ORDER: QuestionId[] = [
   COPILOT_QUESTIONS.USER_DETAILS,
   COPILOT_QUESTIONS.ALERTS,
   COPILOT_QUESTIONS.TRS_SCORE,
@@ -33,8 +34,6 @@ const SUGGESTIONS_ORDER: readonly QuestionId[] = [
   COPILOT_QUESTIONS.PAYMENT_IDENTIFIERS,
   COPILOT_QUESTIONS.USERS_TRANSACTED_WITH,
   COPILOT_QUESTIONS.ALERTS_THAT_RESULTED_IN_SAR,
-  COPILOT_QUESTIONS.ONTOLOGY,
-  COPILOT_QUESTIONS.RECOMMENDATION,
 ];
 
 interface Props {
@@ -63,6 +62,7 @@ export const SearchBar = (props: Props) => {
     },
   );
   const suggestions = getOr(suggestionsQueryResult.data, []);
+  const isOntologyEnabled = useFeatureEnabled('ENTITY_LINKING');
   const [highlightedSuggestionIndex, setHighlightedSuggestionIndex] = useState<number>();
   const highlightedSuggestion =
     highlightedSuggestionIndex != null ? suggestions[highlightedSuggestionIndex] : undefined;
@@ -161,6 +161,14 @@ export const SearchBar = (props: Props) => {
               className={s.autoButton}
               onClick={() => {
                 setSearchText('');
+                if (isOntologyEnabled) {
+                  SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.ONTOLOGY);
+                }
+
+                if (demoMode) {
+                  SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.RECOMMENDATION);
+                }
+
                 searchMutation.mutate(SUGGESTIONS_ORDER.map((searchString) => ({ searchString })));
               }}
             >
