@@ -81,6 +81,10 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     ])
   })
 
+  afterAll(async () => {
+    await sanctionsCollection.drop()
+  })
+
   test('getSearch should return stored search result', async () => {
     const sanctionsFetcher = new TestSanctionsDataFetcher()
 

@@ -18,6 +18,7 @@ describe('MongoSanctionsRepository', () => {
     ) {
       await mongoDb.db().createCollection(SANCTIONS_COLLECTION)
     }
+
     // create index if it doesn't exist
     const indexExists = await collection.indexExists(
       'provider_1_id_1_version_1'
