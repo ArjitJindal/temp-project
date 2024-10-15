@@ -94,6 +94,13 @@ export const config: Config = {
     CREATE_METASTORE: false,
     CREATE_VPC: false,
   },
+  clickhouse: {
+    enabled: true,
+    privateEndpoint: {
+      awsPrivateLinkEndpointName:
+        'com.amazonaws.vpce.eu-central-1.vpce-svc-09b4c3c24933d2ee2',
+    },
+  },
   application: {
     MONGO_ATLAS_PROJECT: 'Tarpon-Sandbox',
     MONGO_ATLAS_CLUSTER: 'Sandbox',

@@ -17,6 +17,8 @@ type ClickhouseTenantConfig = {
   privateEndPointVpcEndpointId?: string
 }
 
+const codeBuildIps = ['3.72.188.71', '18.157.106.33', '18.153.172.163']
+
 export function getClickhouseTenantConfig(
   stage: Stage
 ): ClickhouseTenantConfig[] {
@@ -45,24 +47,30 @@ export function getClickhouseTenantConfig(
         region: CONFIG_MAP[stage]['asia-1'].env.region as string,
         idleScaling: true,
         idleTimeoutMinutes: 10,
-        ipAccess: [
-          {
-            source: '3.72.188.71',
-            description: 'Codebuild IP',
-          },
-          {
-            source: '18.157.106.33',
-            description: 'Codebuild IP',
-          },
-          {
-            source: '18.153.172.163',
-            description: 'Codebuild IP',
-          },
-        ],
+        ipAccess: codeBuildIps.map((ip) => ({
+          source: ip,
+          description: 'Codebuild IP',
+        })),
         privateEndPointVpcEndpointId: 'vpce-0ed74b4d1a90c3a4f',
       }
 
-      return [asia1Config]
+      const eu1Config: ClickhouseTenantConfig = {
+        ENVIROMENT: {
+          type: 'production',
+          minTotalMemoryGb: 24,
+          maxTotalMemoryGb: 24,
+        },
+        region: CONFIG_MAP[stage]['eu-1'].env.region as string,
+        idleScaling: true,
+        idleTimeoutMinutes: 10,
+        ipAccess: codeBuildIps.map((ip) => ({
+          source: ip,
+          description: 'Codebuild IP',
+        })),
+        privateEndPointVpcEndpointId: 'vpce-0a2b4df11b06e4872',
+      }
+
+      return [asia1Config, eu1Config]
     }
 
     default: {

@@ -6,8 +6,8 @@ import { envIs } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {
   if (
-    (envIs('sandbox') && process.env.REGION === 'asia-1') ||
-    envIs('sandbox:asia-1')
+    (envIs('sandbox') && process.env.REGION === 'eu-1') ||
+    envIs('sandbox:eu-1')
   ) {
     for (const table of ClickHouseTables) {
       await syncClickhouseTableWithMongo(tenant.id, table)
