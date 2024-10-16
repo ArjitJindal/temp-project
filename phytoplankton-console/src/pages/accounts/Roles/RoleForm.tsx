@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { startCase } from 'lodash';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
+import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import { AccountRole, CreateAccountRole, Permission } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
 import TextInput from '@/components/library/TextInput';
@@ -31,6 +32,8 @@ export default function RoleForm({
 }) {
   const api = useApi();
   const [edit, setEdit] = useState(!role);
+  const [duplicate, setDuplicate] = useState(false);
+  const [roleName, setRoleName] = useState(role?.name);
   const [isLoading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role?.permissions || []));
   const rows = permissionsToRows(permissions);
@@ -39,7 +42,7 @@ export default function RoleForm({
     description: notEmpty,
   };
   const canEdit = !isValidManagedRoleName(role?.name);
-  const isEditing = edit && canEdit;
+  const isEditing = (duplicate || edit) && canEdit;
   const [allExpanded, setAllExpanded] = useState(false);
 
   const onSubmit = async (
@@ -60,8 +63,9 @@ export default function RoleForm({
         description,
         permissions: [...permissions],
       };
-
-      if (role?.id) {
+      if (duplicate || !role?.id) {
+        await api.createRole({ CreateAccountRole: accountRole });
+      } else {
         await api.updateRole({
           roleId: role?.id,
           AccountRole: {
@@ -69,8 +73,6 @@ export default function RoleForm({
             id: role?.id,
           },
         });
-      } else {
-        await api.createRole({ CreateAccountRole: accountRole });
       }
       message.success(`${startCase(roleName)} role saved`);
       onChange(false, true);
@@ -147,7 +149,17 @@ export default function RoleForm({
             label={'Role name'}
             labelProps={{ required: { value: true, showHint: true } }}
           >
-            {(inputProps) => <TextInput {...inputProps} placeholder={'Enter role name'} />}
+            {(inputProps) => (
+              <TextInput
+                {...inputProps}
+                value={roleName}
+                onChange={(value) => {
+                  setRoleName(value);
+                  inputProps.onChange?.(value);
+                }}
+                placeholder={'Enter role name'}
+              />
+            )}
           </InputField>
           <InputField<FormValues>
             name={'description'}
@@ -166,6 +178,19 @@ export default function RoleForm({
             requiredPermissions={['settings:organisation:write']}
           >
             Edit
+          </Button>
+        )}
+        {canEdit && !isEditing && (
+          <Button
+            testName="duplicate-role"
+            onClick={() => {
+              setDuplicate(true);
+              setRoleName(`${roleName} Copy`);
+            }}
+            requiredPermissions={['settings:organisation:write']}
+            icon={<FileCopyOutlined />}
+          >
+            Duplicate
           </Button>
         )}
         {isEditing && (
