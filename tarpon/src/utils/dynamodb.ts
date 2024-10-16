@@ -388,7 +388,16 @@ export async function batchWrite(
           'Item size has exceeded the maximum allowed size'
         )
       ) {
-        logger.error(`Item size has exceeded the maximum allowed size (400 KB)`)
+        // TODO: Remove this in FR-5806
+        if (getContext()?.logMetadata?.ruleInstanceId) {
+          logger.warn(
+            `Item size has exceeded the maximum allowed size (400 KB)`
+          )
+        } else {
+          logger.error(
+            `Item size has exceeded the maximum allowed size (400 KB)`
+          )
+        }
       } else {
         throw e
       }
