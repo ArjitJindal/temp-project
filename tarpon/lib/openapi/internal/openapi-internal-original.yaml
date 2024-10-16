@@ -11172,6 +11172,8 @@ components:
       title: SanctionsWhitelistEntity
       type: object
       properties:
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
         sanctionsWhitelistId:
           type: string
         createdAt:
@@ -11200,6 +11202,13 @@ components:
         - sanctionsWhitelistId
         - createdAt
         - sanctionsEntity
+        - provider
+    SanctionsDataProviderName:
+      title: SanctionsDataProviderName
+      type: string
+      enum:
+        - dowjones
+        - comply-advantage
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -11540,6 +11549,8 @@ components:
       properties:
         _id:
           type: string
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
         request:
           $ref: '#/components/schemas/SanctionsSearchRequest'
         response:
@@ -11554,6 +11565,7 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/SanctionsHitContext
       required:
         - _id
+        - provider
         - request
         - createdAt
     SanctionsSearchMonitoring:
@@ -11828,6 +11840,8 @@ components:
       title: SanctionsHit
       type: object
       properties:
+        provider:
+          $ref: '#/components/schemas/SanctionsDataProviderName'
         sanctionsHitId:
           type: string
         searchId:
@@ -11862,6 +11876,7 @@ components:
         - createdAt
         - updatedAt
         - entity
+        - provider
     SanctionsSource:
       title: SanctionsSource
       type: object

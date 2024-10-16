@@ -15,6 +15,7 @@ export const sanctionsSearchHit = (
   const mediaSources = randomSubsetOfSize(MEDIA, 4)
   const pepSources = randomSubsetOfSize(PEP_SOURCES, 4)
   return {
+    provider: 'comply-advantage',
     searchId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -68,8 +69,9 @@ export const businessSanctionsSearch = (
     sanctionsSearchHit(searchId, username, userId),
     sanctionsSearchHit(searchId, username, userId),
   ]
-  const historyItem = {
+  const historyItem: SanctionsSearchHistory = {
     _id: searchId,
+    provider: 'comply-advantage',
     request: {
       searchTerm: username,
     },
@@ -109,8 +111,9 @@ export const consumerSanctionsSearch = (
     sanctionsSearchHit(searchId, username, userId),
     sanctionsSearchHit(searchId, username, userId),
   ]
-  const historyItem = {
+  const historyItem: SanctionsSearchHistory = {
     _id: searchId,
+    provider: 'comply-advantage',
     request: {
       searchTerm: username,
     },

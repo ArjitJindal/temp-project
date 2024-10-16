@@ -1,7 +1,6 @@
 import { groupBy, uniq } from 'lodash'
 import {
   SanctionsDataProvider,
-  SanctionsDataProviderName,
   SanctionsProviderResponse,
 } from '@/services/sanctions/providers/types'
 import { getSecretByName } from '@/utils/secrets-manager'
@@ -24,6 +23,7 @@ import { ComplyAdvantageSearchHitDoc } from '@/@types/openapi-internal/ComplyAdv
 import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
 import { removeUndefinedFields } from '@/utils/object'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES

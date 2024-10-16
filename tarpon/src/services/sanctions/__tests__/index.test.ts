@@ -77,6 +77,7 @@ describe('Sanctions Service', () => {
       ])
       expect(await service.getSearchHistory(response.searchId)).toEqual({
         _id: response.searchId,
+        provider: 'comply-advantage',
         createdAt: expect.any(Number),
         updatedAt: expect.any(Number),
         request,
@@ -201,12 +202,17 @@ describe('Sanctions Service', () => {
       }
       {
         const response = await service.search(request)
-        const hits = await service.createHitsForSearch(response, undefined)
+        const hits = await service.createHitsForSearch(
+          'comply-advantage',
+          response,
+          undefined
+        )
         expect(response.hitsCount).toEqual(totalMockHitsCount)
         expect(hits).toHaveLength(totalMockHitsCount)
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
+          'comply-advantage',
           entityList.content.map((ca) =>
             complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
           ),
@@ -215,7 +221,11 @@ describe('Sanctions Service', () => {
       }
       {
         const response = await service.search(request)
-        const hits = await service.createHitsForSearch(response, undefined)
+        const hits = await service.createHitsForSearch(
+          'comply-advantage',
+          response,
+          undefined
+        )
         expect(response.hitsCount).toEqual(0)
         expect(hits).toHaveLength(0)
       }
@@ -242,11 +252,16 @@ describe('Sanctions Service', () => {
       {
         const response = await service.search(request, hitContext1)
         expect(response.hitsCount).toEqual(totalMockHitsCount)
-        const hits = await service.createHitsForSearch(response, hitContext1)
+        const hits = await service.createHitsForSearch(
+          'comply-advantage',
+          response,
+          hitContext1
+        )
         expect(hits).toHaveLength(totalMockHitsCount)
       }
       for (const entityList of MOCK_SEARCH_1794517025_DATA.entities) {
         await service.addWhitelistEntities(
+          'comply-advantage',
           entityList.content.map((ca) =>
             complyAdvantageDocToEntity(convertComplyAdvantageEntityToHit(ca))
           ),
@@ -258,13 +273,21 @@ describe('Sanctions Service', () => {
       {
         const response = await service.search(request, hitContext1)
         expect(response.hitsCount).toEqual(0)
-        const hits = await service.createHitsForSearch(response, hitContext1)
+        const hits = await service.createHitsForSearch(
+          'comply-advantage',
+          response,
+          hitContext1
+        )
         expect(hits).toHaveLength(0)
       }
       {
         const response = await service.search(request, hitContext2)
         expect(response.hitsCount).toEqual(totalMockHitsCount)
-        const hits = await service.createHitsForSearch(response, hitContext2)
+        const hits = await service.createHitsForSearch(
+          'comply-advantage',
+          response,
+          hitContext2
+        )
         expect(hits).toHaveLength(totalMockHitsCount)
       }
     })
@@ -309,10 +332,20 @@ describe('Sanctions Service', () => {
         id: `${Date.now()}`,
       }))
 
-      const hits = await repository.addHits('test', rawHits, undefined)
+      const hits = await repository.addHits(
+        'comply-advantage',
+        'test',
+        rawHits,
+        undefined
+      )
       expect(hits).toHaveLength(rawHits.length)
 
-      const newHits = await repository.addNewHits('test', rawHits, undefined)
+      const newHits = await repository.addNewHits(
+        'comply-advantage',
+        'test',
+        rawHits,
+        undefined
+      )
       expect(newHits).toHaveLength(0)
     })
 
@@ -322,11 +355,17 @@ describe('Sanctions Service', () => {
         await getMongoDbClient()
       )
 
-      const hits = await repository.addHits('test2', [SAMPLE_HIT_1], undefined)
+      const hits = await repository.addHits(
+        'comply-advantage',
+        'test2',
+        [SAMPLE_HIT_1],
+        undefined
+      )
       expect(hits).toHaveLength(1)
 
       {
         const mergeResult = await repository.mergeHits(
+          'comply-advantage',
           'test2',
           [SAMPLE_HIT_1],
           undefined
@@ -336,6 +375,7 @@ describe('Sanctions Service', () => {
       }
       {
         const mergeResult = await repository.mergeHits(
+          'comply-advantage',
           'test2',
           [
             {

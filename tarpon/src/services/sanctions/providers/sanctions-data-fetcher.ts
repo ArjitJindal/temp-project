@@ -2,7 +2,6 @@ import { v4 as uuidv4 } from 'uuid'
 import { Collection } from 'mongodb'
 import {
   SanctionsDataProvider,
-  SanctionsDataProviderName,
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
@@ -15,6 +14,7 @@ import { getContext } from '@/core/utils/context'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {

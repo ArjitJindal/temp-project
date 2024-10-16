@@ -13,6 +13,7 @@ import { SanctionsSearchMonitoring } from '@/@types/openapi-internal/SanctionsSe
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -38,6 +39,7 @@ export class SanctionsSearchRepository {
   }
 
   public async saveSearchResult(props: {
+    provider: SanctionsDataProviderName
     request: SanctionsSearchRequest
     response: SanctionsSearchResponse
     createdAt?: number
@@ -45,7 +47,7 @@ export class SanctionsSearchRepository {
     searchedBy?: string
     hitContext: SanctionsHitContext | undefined
   }): Promise<void> {
-    const { request, response, createdAt, updatedAt } = props
+    const { provider, request, response, createdAt, updatedAt } = props
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
@@ -55,6 +57,7 @@ export class SanctionsSearchRepository {
       { _id: response.searchId },
       {
         $set: {
+          provider,
           request,
           response,
           createdAt: createdAt ?? Date.now(),
@@ -70,6 +73,7 @@ export class SanctionsSearchRepository {
   }
 
   public async getSearchResultByParams(
+    _provider: SanctionsDataProviderName,
     request: SanctionsSearchRequest
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
@@ -110,6 +114,11 @@ export class SanctionsSearchRepository {
         ],
       })
     }
+
+    // TODO uncomment once provider is definitely populated everywhere
+    // filters.push({
+    //   provider,
+    // })
 
     return await collection.findOne({
       $and: filters,
@@ -212,6 +221,7 @@ export class SanctionsSearchRepository {
   }
 
   public async getSearchResultByProviderSearchId(
+    _provider: SanctionsDataProviderName,
     providerSearchId: string
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
@@ -220,6 +230,8 @@ export class SanctionsSearchRepository {
     )
     const searches = await collection
       .find({
+        // TODO uncomment once provider is definitely populated everywhere
+        // provider,
         'response.providerSearchId': providerSearchId,
       })
       .toArray()

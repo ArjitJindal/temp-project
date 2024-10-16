@@ -27,7 +27,7 @@ import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScre
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { getContext, hasFeature } from '@/core/utils/context'
+import { getContext } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
@@ -38,6 +38,7 @@ import {
   CursorPaginationResponse,
 } from '@/utils/pagination'
 import {
+  SanctionsDataProviderName,
   SanctionsEntity,
   SanctionsHit,
   SanctionsSearchResponse,
@@ -48,6 +49,7 @@ import {
 } from '@/services/sanctions/providers/types'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -61,7 +63,6 @@ export class SanctionsService {
   counterRepository!: CounterRepository
   tenantId: string
   initializationPromise: Promise<void> | null = null
-  provider!: SanctionsDataProvider
 
   constructor(tenantId: string) {
     this.tenantId = tenantId
@@ -86,11 +87,18 @@ export class SanctionsService {
       this.tenantId,
       mongoDb
     )
+  }
 
-    // TODO drive this from TenantSettings instead.
-    this.provider = hasFeature('DOW_JONES')
-      ? await DowJonesProvider.build()
-      : await ComplyAdvantageDataProvider.build(this.tenantId)
+  private async getProvider(
+    provider: SanctionsDataProviderName
+  ): Promise<SanctionsDataProvider> {
+    switch (provider) {
+      case 'comply-advantage':
+        return await ComplyAdvantageDataProvider.build(this.tenantId)
+      case 'dowjones':
+        return await DowJonesProvider.build()
+    }
+    throw new Error(`Unknown provider ${provider}`)
   }
 
   private async initialize() {
@@ -99,18 +107,24 @@ export class SanctionsService {
     await this.initializationPromise
   }
 
-  public async refreshSearch(providerSearchId: string): Promise<boolean> {
+  public async refreshSearch(
+    providerSearchId: string,
+    providerName: SanctionsDataProviderName
+  ): Promise<boolean> {
     await this.initialize()
     const result =
       await this.sanctionsSearchRepository.getSearchResultByProviderSearchId(
+        providerName,
         providerSearchId
       )
     if (!result) {
       return false
     }
-    const response = await this.provider.getSearch(providerSearchId)
+    const provider = await this.getProvider(providerName)
+    const response = await provider.getSearch(providerSearchId)
 
     const newHits = await this.sanctionsHitsRepository.addNewHits(
+      providerName,
       result._id,
       response.data || [],
       result.hitContext
@@ -123,6 +137,7 @@ export class SanctionsService {
       createdAt: Date.now(),
     }
     await this.sanctionsSearchRepository.saveSearchResult({
+      provider: providerName,
       request: result.request,
       response: parsedResponse,
       createdAt: result.createdAt,
@@ -141,9 +156,12 @@ export class SanctionsService {
     request: SanctionsSearchRequest,
     context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
-    }
+    },
+    overrideProvider?: SanctionsDataProviderName
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
+
+    const providerName = overrideProvider || getDefaultProvider()
 
     // Normalize search term
     request.searchTerm = startCase(request.searchTerm.toLowerCase())
@@ -171,11 +189,15 @@ export class SanctionsService {
     let createdAt: number | undefined = undefined
 
     const existedSearch =
-      await this.sanctionsSearchRepository.getSearchResultByParams(request)
+      await this.sanctionsSearchRepository.getSearchResultByParams(
+        providerName,
+        request
+      )
     let sanctionsSearchResponse: SanctionsProviderResponse
 
     if (!existedSearch?.response) {
-      sanctionsSearchResponse = await this.provider.search({
+      const provider = await this.getProvider(providerName)
+      sanctionsSearchResponse = await provider.search({
         searchTerm: request.searchTerm,
         fuzziness: request.fuzziness,
         countryCodes: request.countryCodes,
@@ -212,6 +234,7 @@ export class SanctionsService {
 
     if (!existedSearch) {
       await this.sanctionsSearchRepository.saveSearchResult({
+        provider: providerName,
         createdAt: createdAt,
         request,
         response,
@@ -255,10 +278,12 @@ export class SanctionsService {
   }
 
   public createHitsForSearch(
+    provider: SanctionsDataProviderName,
     search: SanctionsSearchResponse,
     hitContext: SanctionsHitContext | undefined
   ): Promise<SanctionsHit[]> {
     return this.sanctionsHitsRepository.addHits(
+      provider,
       search.searchId,
       search.data ?? [],
       hitContext
@@ -324,7 +349,8 @@ export class SanctionsService {
     if (providerSearchId == null) {
       throw new Error(`Unable to get search id from response`)
     }
-    await this.provider.setMonitoring(providerSearchId, update.enabled)
+    const provider = await this.getProvider(search.provider)
+    await provider.setMonitoring(providerSearchId, update.enabled)
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,
       update
@@ -332,6 +358,7 @@ export class SanctionsService {
   }
 
   public async addWhitelistEntities(
+    provider: SanctionsDataProviderName,
     entities: SanctionsEntity[],
     subject: WhitelistSubject,
     options?: {
@@ -342,6 +369,7 @@ export class SanctionsService {
   ) {
     await this.initialize()
     return await this.sanctionsWhitelistEntityRepository.addWhitelistEntities(
+      provider,
       entities,
       subject,
       options

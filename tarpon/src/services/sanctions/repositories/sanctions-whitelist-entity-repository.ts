@@ -14,6 +14,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
 import { notEmpty } from '@/utils/array'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
 
@@ -35,6 +36,7 @@ export class SanctionsWhitelistEntityRepository {
   }
 
   public async addWhitelistEntities(
+    provider: SanctionsDataProviderName,
     entities: SanctionsEntity[],
     subject: WhitelistSubject,
     options?: {
@@ -64,9 +66,12 @@ export class SanctionsWhitelistEntityRepository {
             const result = await collection.findOneAndReplace(
               {
                 'sanctionsEntity.id': entity.id,
+                // TODO uncomment once provider is definitely populated everywhere
+                // provider,
                 ...definedFields,
               },
               {
+                provider,
                 sanctionsEntity: entity,
                 sanctionsWhitelistId: `SW-${ids[i]}`,
                 ...definedFields,

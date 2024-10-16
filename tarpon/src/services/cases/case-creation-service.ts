@@ -84,6 +84,8 @@ import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 type CaseSubject =
   | {
@@ -687,41 +689,47 @@ export class CaseCreationService {
     const sanctionsDetailsList = ruleHitMeta?.sanctionsDetails ?? []
 
     const updatedSanctionsDetailsList = await Promise.all(
-      sanctionsDetailsList.map(async (sanctionsDetail) => {
-        const searchResult =
-          await this.sanctionsSearchRepository.getSearchResult(
-            sanctionsDetail.searchId
-          )
-        const rawHits = searchResult?.response?.data ?? []
-        if (update) {
-          const { updatedIds, newIds } =
-            await this.sanctionsHitsRepository.mergeHits(
+      sanctionsDetailsList.map(
+        async (sanctionsDetail): Promise<SanctionsDetails | undefined> => {
+          const searchResult =
+            await this.sanctionsSearchRepository.getSearchResult(
+              sanctionsDetail.searchId
+            )
+          const rawHits = searchResult?.response?.data ?? []
+          if (update) {
+            const { updatedIds, newIds } =
+              await this.sanctionsHitsRepository.mergeHits(
+                searchResult?.provider || getDefaultProvider(),
+                sanctionsDetail.searchId,
+                rawHits,
+                sanctionsDetail.hitContext
+              )
+            return {
+              ...sanctionsDetail,
+              sanctionHitIds: [...updatedIds, ...newIds],
+            }
+          } else {
+            const hits = await this.sanctionsHitsRepository.addHits(
+              searchResult?.provider || getDefaultProvider(),
               sanctionsDetail.searchId,
               rawHits,
               sanctionsDetail.hitContext
             )
-          return {
-            ...sanctionsDetail,
-            sanctionHitIds: [...updatedIds, ...newIds],
-          }
-        } else {
-          const hits = await this.sanctionsHitsRepository.addHits(
-            sanctionsDetail.searchId,
-            rawHits,
-            sanctionsDetail.hitContext
-          )
-          return {
-            ...sanctionsDetail,
-            sanctionHitIds: hits.map((x) => x.sanctionsHitId),
+            return {
+              ...sanctionsDetail,
+              sanctionHitIds: hits.map((x) => x.sanctionsHitId) || [],
+            }
           }
         }
-      })
+      )
     )
 
     return updatedSanctionsDetailsList.length > 0
       ? {
           ...ruleHitMeta,
-          sanctionsDetails: updatedSanctionsDetailsList,
+          sanctionsDetails: updatedSanctionsDetailsList.filter(
+            (sd): sd is SanctionsDetails => Boolean(sd)
+          ),
         }
       : ruleHitMeta
   }

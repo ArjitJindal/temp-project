@@ -564,6 +564,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () =>
         [
           { createdAt: 1, _id: 1 },
+          { provider: 1, _id: 1 },
           { 'request.searchTerm': 1 },
           { 'response.data.types': 1 },
           { 'response.providerSearchId': 1 },

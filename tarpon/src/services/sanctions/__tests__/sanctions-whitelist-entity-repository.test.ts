@@ -32,8 +32,16 @@ describe('Whitelist repository', () => {
     })
 
     test('Adding entries should not duplicate', async () => {
-      await repo.addWhitelistEntities([SAMPLE_HIT_1], SUBJECT_1)
-      await repo.addWhitelistEntities([SAMPLE_HIT_1], SUBJECT_1)
+      await repo.addWhitelistEntities(
+        'comply-advantage',
+        [SAMPLE_HIT_1],
+        SUBJECT_1
+      )
+      await repo.addWhitelistEntities(
+        'comply-advantage',
+        [SAMPLE_HIT_1],
+        SUBJECT_1
+      )
       const entries = await repo.getWhitelistEntities(
         [SAMPLE_HIT_1?.id as string],
         SUBJECT_1
@@ -43,7 +51,11 @@ describe('Whitelist repository', () => {
 
     describe('Single entity in list', () => {
       beforeEach(async () => {
-        await repo.addWhitelistEntities([SAMPLE_HIT_1], SUBJECT_1)
+        await repo.addWhitelistEntities(
+          'comply-advantage',
+          [SAMPLE_HIT_1],
+          SUBJECT_1
+        )
       })
 
       test('Should not match with partial subject match', async () => {
@@ -81,7 +93,11 @@ describe('Whitelist repository', () => {
 
     describe('Multiple whitelist entities with the same subject', () => {
       beforeEach(async () => {
-        await repo.addWhitelistEntities([SAMPLE_HIT_1, SAMPLE_HIT_2], SUBJECT_1)
+        await repo.addWhitelistEntities(
+          'comply-advantage',
+          [SAMPLE_HIT_1, SAMPLE_HIT_2],
+          SUBJECT_1
+        )
       })
 
       test('Should not match with partial subject match', async () => {
@@ -123,8 +139,16 @@ describe('Whitelist repository', () => {
 
     describe('Multiple whitelist entities with the different subjects', () => {
       beforeEach(async () => {
-        await repo.addWhitelistEntities([SAMPLE_HIT_1], SUBJECT_1)
-        await repo.addWhitelistEntities([SAMPLE_HIT_2], SUBJECT_2)
+        await repo.addWhitelistEntities(
+          'comply-advantage',
+          [SAMPLE_HIT_1],
+          SUBJECT_1
+        )
+        await repo.addWhitelistEntities(
+          'comply-advantage',
+          [SAMPLE_HIT_2],
+          SUBJECT_2
+        )
       })
 
       test('Should not match with partial subject match', async () => {

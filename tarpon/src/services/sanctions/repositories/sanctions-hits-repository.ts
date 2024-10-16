@@ -13,6 +13,7 @@ import {
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 export interface HitsFilters {
   filterHitIds?: string[]
@@ -79,6 +80,7 @@ export class SanctionsHitsRepository {
   }
 
   async addHits(
+    provider: SanctionsDataProviderName,
     searchId: string,
     rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
@@ -103,6 +105,7 @@ export class SanctionsHitsRepository {
       (hit, i): SanctionsHit => ({
         searchId,
         status: 'OPEN' as const,
+        provider,
         sanctionsHitId: `SH-${ids[i]}`,
         createdAt: now,
         updatedAt: now,
@@ -119,6 +122,7 @@ export class SanctionsHitsRepository {
   }
 
   public async addNewHits(
+    provider: SanctionsDataProviderName,
     searchId: string,
     rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
@@ -152,13 +156,14 @@ export class SanctionsHitsRepository {
       return x?.id != null && !entityIds.includes(x?.id)
     })
 
-    return await this.addHits(searchId, newHits, hitContext)
+    return await this.addHits(provider, searchId, newHits, hitContext)
   }
 
   /*
     For passed raw hits creates missing hits and update existed hits entities
    */
   public async mergeHits(
+    provider: SanctionsDataProviderName,
     searchId: string,
     rawHits: SanctionsEntity[],
     hitContext: SanctionsHitContext | undefined
@@ -198,7 +203,12 @@ export class SanctionsHitsRepository {
     }
 
     // Add new hits
-    const newHits = await this.addNewHits(searchId, rawHits, hitContext)
+    const newHits = await this.addNewHits(
+      provider,
+      searchId,
+      rawHits,
+      hitContext
+    )
     return {
       updatedIds,
       newIds: newHits.map((x) => x.sanctionsHitId),

@@ -68,7 +68,8 @@ export const webhooksHandler = lambdaApi()(
           if (tenantSettings.features?.includes('SANCTIONS')) {
             const sanctionsService = new SanctionsService(tenantId)
             const refreshed = await sanctionsService.refreshSearch(
-              providerSearchId
+              providerSearchId,
+              'comply-advantage'
             )
             if (refreshed) {
               logger.info(

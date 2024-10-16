@@ -1,10 +1,9 @@
 import {
+  SanctionsDataProviderName,
   SanctionsEntity,
   SanctionsSearchRequest,
   SanctionsSearchResponse,
 } from '@/@types/openapi-internal/all'
-
-export type SanctionsDataProviderName = 'dowjones' | 'comply-advantage'
 
 export type Action = 'add' | 'remove' | 'change'
 

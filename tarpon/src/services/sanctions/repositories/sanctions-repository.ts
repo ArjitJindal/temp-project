@@ -2,7 +2,6 @@ import { uniq } from 'lodash'
 import { RELATIONSHIP_CODE_TO_NAME } from '../providers/dow-jones-provider'
 import {
   Action,
-  SanctionsDataProviderName,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -11,6 +10,7 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
