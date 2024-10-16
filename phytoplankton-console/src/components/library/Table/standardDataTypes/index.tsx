@@ -749,21 +749,29 @@ export const ADDRESS: ColumnDataType<Address> = {
       return <></>;
     }
     return (
-      <p>
+      <div className={s.address}>
+        <div>
+          {[
+            ...address.addressLines,
+            [address.city, address.state].filter((x) => !!x).join(', '),
+            address.postcode,
+            address.country,
+          ]
+            .filter((x) => !!x)
+            .map((str, j) => (
+              <React.Fragment key={j}>
+                {j !== 0 && <br />}
+                {str}
+              </React.Fragment>
+            ))}
+        </div>
         {[
-          ...address.addressLines,
-          [address.city, address.state].filter((x) => !!x).join(', '),
-          address.postcode,
-          address.country,
-        ]
-          .filter((x) => !!x)
-          .map((str, j) => (
-            <React.Fragment key={j}>
-              {j !== 0 && <br />}
-              {str}
-            </React.Fragment>
-          ))}
-      </p>
+          address.addressType ? (
+            <KeyValueTag key="addressType" tag={{ key: 'Type', value: address.addressType }} />
+          ) : undefined,
+          ...(address.tags?.map((tag) => <KeyValueTag key={tag.key} tag={tag} />) ?? []),
+        ].filter(Boolean)}
+      </div>
     );
   },
 };

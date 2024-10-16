@@ -61,6 +61,16 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       this.dynamoDb
     )
     this.mongoDbConsumer = new MongoDbConsumer(this.mongoDb)
+
+    await this.mongoDb
+      .db()
+      .collection(TRANSACTIONS_COLLECTION(tenantId))
+      .createIndex({ transactionId: 1 }, { unique: true })
+    await this.mongoDb
+      .db()
+      .collection(USERS_COLLECTION(tenantId))
+      .createIndex({ userId: 1 }, { unique: true })
+
     const s3 = getS3Client()
     const { Body } = await s3.send(
       new GetObjectCommand({
@@ -94,8 +104,8 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       batchEntities.push(jsonData)
       if (batchEntities.length === 10000) {
         await this.processBatch(batchEntities, type)
-        batchEntities = []
         logger.warn(`Processed ${batchEntities.length} entities`)
+        batchEntities = []
       }
     }
     await this.processBatch(batchEntities, type)
@@ -105,7 +115,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
     batchEntities: any[],
     type: 'TRANSACTION' | 'CONSUMER' | 'BUSINESS'
   ) {
-    for (const entityChunk of chunk(batchEntities, 100)) {
+    for (const entityChunk of chunk(batchEntities, 150)) {
       if (type === 'TRANSACTION') {
         await this.saveTransactions(entityChunk as Transaction[])
       } else {
@@ -140,52 +150,66 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }))
-      try {
-        optionalPromise = Promise.all([
-          this.mongoDb
-            .db()
-            .collection(TRANSACTIONS_COLLECTION(this.tenantId))
-            .insertMany(internalTransactions, { ordered: false }),
-          this.mongoDbConsumer.handleMessagesReplace({
-            [TRANSACTIONS_COLLECTION(this.tenantId)]: internalTransactions.map(
-              (transaction) => {
-                return {
-                  collectionName: TRANSACTIONS_COLLECTION(this.tenantId),
-                  operationType: 'replace',
-                  documentKey: {
-                    value: transaction._id.toString(),
-                    type: 'id',
-                  },
-                  clusterTime: Date.now(),
-                }
+      optionalPromise = (async () => {
+        await this.mongoDb
+          .db()
+          .collection(TRANSACTIONS_COLLECTION(this.tenantId))
+          .insertMany(internalTransactions, { ordered: false })
+        await this.mongoDbConsumer.handleMessagesReplace({
+          [TRANSACTIONS_COLLECTION(this.tenantId)]: internalTransactions.map(
+            (transaction) => {
+              return {
+                collectionName: TRANSACTIONS_COLLECTION(this.tenantId),
+                operationType: 'replace',
+                documentKey: {
+                  value: transaction._id.toString(),
+                  type: 'id',
+                },
+                clusterTime: Date.now(),
               }
-            ),
-          }),
-        ])
-      } catch (e) {
-        logger.error(e)
-      }
+            }
+          ),
+        })
+      })()
     }
 
-    await Promise.all([
-      pMap(
-        transactions,
-        async (transaction) => {
-          await this.dynamoDbTransactionRepository.saveTransaction(
-            transaction,
-            RULES_RESULT
-          )
-        },
-        { concurrency: 10 }
-      ),
-      optionalPromise,
-    ])
+    try {
+      await Promise.all([
+        pMap(
+          transactions,
+          async (transaction) => {
+            await this.dynamoDbTransactionRepository.saveTransaction(
+              transaction,
+              RULES_RESULT
+            )
+          },
+          { concurrency: 10 }
+        ),
+        optionalPromise,
+      ])
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('duplicate key error')) {
+        return
+      }
+      logger.error(e)
+    }
   }
   private async saveUsers(
     users: Array<User | Business>,
     type: 'CONSUMER' | 'BUSINESS'
   ) {
     users = uniqBy(users, 'userId')
+    users.forEach((user) => {
+      const employmentDetails = (user as User).employmentDetails
+      // Fix typo
+      if (employmentDetails && (employmentDetails as any).employmerName) {
+        employmentDetails.employerName = (
+          employmentDetails as any
+        ).employmerName
+        delete (employmentDetails as any).employmerName
+      }
+    })
+
     let optionalPromise: Promise<any> = Promise.resolve()
     if (!this.dynamoDbOnly) {
       const internalUsers: Array<
@@ -200,27 +224,23 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         createdAt: Date.now(),
         updatedAt: Date.now(),
       }))
-      try {
-        optionalPromise = Promise.all([
-          this.mongoDb
-            .db()
-            .collection(USERS_COLLECTION(this.tenantId))
-            .insertMany(internalUsers, { ordered: false }),
-          this.mongoDbConsumer.handleMessagesReplace({
-            [USERS_COLLECTION(this.tenantId)]: internalUsers.map((user) => ({
-              collectionName: USERS_COLLECTION(this.tenantId),
-              operationType: 'replace',
-              documentKey: {
-                value: user._id.toString(),
-                type: 'id',
-              },
-              clusterTime: Date.now(),
-            })),
-          }),
-        ])
-      } catch (e) {
-        logger.error(e)
-      }
+      optionalPromise = (async () => {
+        await this.mongoDb
+          .db()
+          .collection(USERS_COLLECTION(this.tenantId))
+          .insertMany(internalUsers, { ordered: false })
+        await this.mongoDbConsumer.handleMessagesReplace({
+          [USERS_COLLECTION(this.tenantId)]: internalUsers.map((user) => ({
+            collectionName: USERS_COLLECTION(this.tenantId),
+            operationType: 'replace',
+            documentKey: {
+              value: user._id.toString(),
+              type: 'id',
+            },
+            clusterTime: Date.now(),
+          })),
+        })
+      })()
     }
 
     const writeRequests: BatchWriteRequestInternal[] = users.map((user) => {
@@ -236,13 +256,20 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       }
     })
 
-    await Promise.all([
-      batchWrite(
-        this.dynamoDb,
-        writeRequests,
-        StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
-      ),
-      optionalPromise,
-    ])
+    try {
+      await Promise.all([
+        batchWrite(
+          this.dynamoDb,
+          writeRequests,
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+        ),
+        optionalPromise,
+      ])
+    } catch (e) {
+      if (e instanceof Error && e.message.includes('duplicate key error')) {
+        return
+      }
+      logger.error(e)
+    }
   }
 }

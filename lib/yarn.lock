@@ -43,13 +43,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/cloud-assembly-schema@npm:^36.0.24":
-  version: 36.3.0
-  resolution: "@aws-cdk/cloud-assembly-schema@npm:36.3.0"
+"@aws-cdk/cloud-assembly-schema@npm:^38.0.0":
+  version: 38.0.1
+  resolution: "@aws-cdk/cloud-assembly-schema@npm:38.0.1"
   dependencies:
     jsonschema: "npm:^1.4.1"
     semver: "npm:^7.6.3"
-  checksum: e16b17531037625313f0e5dc655ba14c83d3bd4bba292f8a160e2e9e4b0ec97242059fc4189f88f8ea123d618cd1e90f37331f2028ce8c1858ff780557a2b364
+  checksum: 5cfc455f586daad26788f739d272c08b9e2291ed50ac48d174769ef95d0c7ef623206480f78be86e36ee2d4939bd57327b1b6c407974eaa417848483430c622d
   languageName: node
   linkType: hard
 
@@ -1046,7 +1046,7 @@ __metadata:
     "@types/node": "npm:^20.11.16"
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
     "@typescript-eslint/parser": "npm:^7.0.1"
-    aws-cdk-lib: "npm:~2.159.1"
+    aws-cdk-lib: "npm:~2.162.1"
     constructs: "npm:^10.3.0"
     dayjs: "npm:^1.11.12"
     eslint: "npm:^8.56.0"
@@ -2596,14 +2596,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.159.1":
-  version: 2.159.1
-  resolution: "aws-cdk-lib@npm:2.159.1"
+"aws-cdk-lib@npm:~2.162.1":
+  version: 2.162.1
+  resolution: "aws-cdk-lib@npm:2.162.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
     "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.1.0"
-    "@aws-cdk/cloud-assembly-schema": "npm:^36.0.24"
+    "@aws-cdk/cloud-assembly-schema": "npm:^38.0.0"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -2617,7 +2617,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: c396eb6d50c1169b8ed7c175821f4e4c58046769b1dbd8d63d4a5d4c559bd4457964320266f6727c04e24f0bf04304a21e0f26d6a69be9d17882d6953711b3da
+  checksum: 1cfbda22b98edb2a01bc4fe14dee7e368da21b0cf33a01ba375e0cd1fc1f0c9047bfcab1d1b4b6766531cbf384efa943ae95e48eac2861814afd3bbc7fff24f7
   languageName: node
   linkType: hard
 

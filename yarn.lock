@@ -26,13 +26,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/cloud-assembly-schema@npm:^36.0.24":
-  version: 36.3.0
-  resolution: "@aws-cdk/cloud-assembly-schema@npm:36.3.0"
+"@aws-cdk/cloud-assembly-schema@npm:^38.0.0":
+  version: 38.0.1
+  resolution: "@aws-cdk/cloud-assembly-schema@npm:38.0.1"
   dependencies:
     jsonschema: "npm:^1.4.1"
     semver: "npm:^7.6.3"
-  checksum: e16b17531037625313f0e5dc655ba14c83d3bd4bba292f8a160e2e9e4b0ec97242059fc4189f88f8ea123d618cd1e90f37331f2028ce8c1858ff780557a2b364
+  checksum: 5cfc455f586daad26788f739d272c08b9e2291ed50ac48d174769ef95d0c7ef623206480f78be86e36ee2d4939bd57327b1b6c407974eaa417848483430c622d
   languageName: node
   linkType: hard
 
@@ -1683,14 +1683,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.158.0":
-  version: 2.158.0
-  resolution: "aws-cdk-lib@npm:2.158.0"
+"aws-cdk-lib@npm:~2.162.1":
+  version: 2.162.1
+  resolution: "aws-cdk-lib@npm:2.162.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.202"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.2"
     "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.1.0"
-    "@aws-cdk/cloud-assembly-schema": "npm:^36.0.24"
+    "@aws-cdk/cloud-assembly-schema": "npm:^38.0.0"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -1704,13 +1704,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 890b58479f19aa04717d744efb99ebb73fee81e5f736a027a93c5118593d50a81eea212b0927d0b1076de50827b670a53f4d305412f49f16c2fd2bd9eee83681
+  checksum: 1cfbda22b98edb2a01bc4fe14dee7e368da21b0cf33a01ba375e0cd1fc1f0c9047bfcab1d1b4b6766531cbf384efa943ae95e48eac2861814afd3bbc7fff24f7
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.158.0":
-  version: 2.158.0
-  resolution: "aws-cdk@npm:2.158.0"
+"aws-cdk@npm:~2.162.0":
+  version: 2.162.1
+  resolution: "aws-cdk@npm:2.162.1"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -1718,7 +1718,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 7ec07f45b5a671d32d40a2cc0c63fddd1767cd74d525d764709184bcd36bc7d58b5df95e46c96f11e9621b858561599c8f7671f1a36b058cce3288b7af8e5cf4
+  checksum: a893c1fcdac78dafbf2bf74186529182e320da34ccde7bd2441866e2b2671fec975d49b389a4e8eaf41cae48df8f9b43fd6c3803b41175b0f42256f5bcf5b512
   languageName: node
   linkType: hard
 
@@ -3327,8 +3327,8 @@ __metadata:
     "@slack/web-api": "npm:^7.4.0"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.7"
-    aws-cdk: "npm:~2.158.0"
-    aws-cdk-lib: "npm:~2.158.0"
+    aws-cdk: "npm:~2.162.0"
+    aws-cdk-lib: "npm:~2.162.1"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"
