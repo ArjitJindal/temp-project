@@ -67,7 +67,7 @@ export function getClickhouseTenantConfig(
           source: ip,
           description: 'Codebuild IP',
         })),
-        privateEndPointVpcEndpointId: 'vpce-0a2b4df11b06e4872',
+        privateEndPointVpcEndpointId: 'vpce-01bf2ecf25ad883c4',
       }
 
       return [asia1Config, eu1Config]
