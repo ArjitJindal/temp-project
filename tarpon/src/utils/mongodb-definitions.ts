@@ -407,11 +407,8 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     },
     [USERS_COLLECTION(tenantId)]: {
       getIndexes: () => {
-        return [
+        const indexes1: Array<{ index: { [key: string]: any } }> = [
           { type: 1 },
-          { createdTimestamp: 1 },
-          { updatedAt: 1 },
-          { createdAt: 1 },
           { userId: 1 },
           { isMonitoringEnabled: 1 },
           { 'userDetails.name.firstName': 1 },
@@ -430,7 +427,17 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             ]
           ),
           { 'linkedEntities.parentUserId': 1 },
-        ].map((index) => ({ index: { ...index, _id: 1 } }))
+        ].map((index) => ({
+          index: { ...index, createdTimestamp: -1, _id: 1 },
+        }))
+        const indexes2 = [
+          { createdTimestamp: 1 },
+          { updatedAt: 1 },
+          { createdAt: 1 },
+        ].map((index) => ({
+          index: { ...index, _id: 1 },
+        }))
+        return [...indexes1, ...indexes2]
       },
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {
