@@ -242,7 +242,6 @@ export async function batchInsertToClickhouse(
   objects: object[]
 ) {
   const tableDefinition = assertTableName(table, tenantId)
-  logger.info('Starting batch insert to clickhouse')
   if (envIs('test')) {
     if (!isClickhouseEnabled()) {
       return
@@ -250,7 +249,6 @@ export async function batchInsertToClickhouse(
       await createOrUpdateClickHouseTable(tenantId, tableDefinition)
     }
   }
-  logger.info('Clickhouse is enabled, starting batch insert')
   await clickhouseInsert(
     tenantId,
     sanitizeSqlName(table),
