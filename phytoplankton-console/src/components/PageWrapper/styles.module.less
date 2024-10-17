@@ -1,4 +1,5 @@
 @import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
 
 :root {
   .root {
@@ -57,4 +58,8 @@
 
 .customHeader {
   padding: 16px;
+  position: sticky;
+  top: 0;
+  z-index: @sticky-z-index;
+  background: @fr-global-bg-color;
 }
