@@ -2,7 +2,7 @@ import { JSONSchemaType } from 'ajv'
 import {
   ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
-  PERCENT_SCHEMA,
+  FUZZINESS_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -24,12 +24,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       type: 'object',
       properties: {
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
-        fuzziness: PERCENT_SCHEMA({
-          title: 'Fuzziness',
-          description:
-            'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/ phonetics',
-          multipleOf: 10,
-        }),
+        fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
             'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
