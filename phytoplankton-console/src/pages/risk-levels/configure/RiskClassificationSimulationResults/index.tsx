@@ -198,7 +198,7 @@ const IterationComponent = (props: IterationProps) => {
   const getGraphData = useCallback(
     (graphType: 'DRS' | 'ARS') => {
       let max = 0;
-      const graphData: { name: string; label: string; value: number }[] = [];
+      const graphData: { name: string; label: string; value: string | number }[] = [];
       RISK_LEVELS.forEach((label) => {
         const beforeCount = getCount('Before', graphType, label) ?? 0;
         const afterCount = getCount('After', graphType, label) ?? 0;
@@ -207,12 +207,12 @@ const IterationComponent = (props: IterationProps) => {
         graphData.push({
           name: label,
           label: 'Before',
-          value: beforeCount,
+          value: beforeCount > 1000 ? beforeCount.toLocaleString() : beforeCount,
         });
         graphData.push({
           name: label,
           label: 'After',
-          value: afterCount,
+          value: afterCount > 1000 ? afterCount.toLocaleString() : afterCount,
         });
       });
       return { graphData, max };
