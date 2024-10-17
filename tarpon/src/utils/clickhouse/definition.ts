@@ -293,6 +293,12 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedColumns: [
       "name String MATERIALIZED JSON_VALUE(data, '$.name')",
       enumFields(SANCTIONS_SCREENING_ENTITYS, 'entity', 'entity'),
+      "isNew Bool MATERIALIZED JSONExtractBool(data, 'isNew')",
+      "ruleInstanceIds Array(String) MATERIALIZED JSONExtract(data, 'ruleInstanceIds', 'Array(String)')",
+      "userIds Array(String) MATERIALIZED JSONExtract(data, 'userIds', 'Array(String)')",
+      "transactionIds Array(String) MATERIALIZED JSONExtract(data, 'transactionIds', 'Array(String)')",
+      "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
+      "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
     ],
   },
 ] as const

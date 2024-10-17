@@ -8,9 +8,13 @@ import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
 import { internalMongoReplace, paginatePipeline } from '@/utils/mongodb-utils'
-import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { hasFeature } from '@/core/utils/context'
+import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
@@ -73,10 +77,66 @@ export class SanctionsScreeningDetailsRepository {
     )
   }
 
+  private async getSanctionsScreeningStatsClickhouse(timestampRange?: {
+    from: number
+    to: number
+  }): Promise<SanctionsScreeningStats> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+
+    const query = `
+    SELECT
+      entity,
+      count() as screenedCount,
+      sum(isHit = true) as hitCount,
+      sum(isNew = true) as newCount
+    FROM
+      sanctions_screening_details
+    WHERE
+      timestamp >= ${timestampRange?.from ?? 0} AND timestamp <= ${
+      timestampRange?.to ?? Number.MAX_SAFE_INTEGER
+    }
+    GROUP BY
+      entity,
+      isHit,
+      isNew
+    SETTINGS output_format_json_quote_64bit_integers = 0
+    `
+
+    const data = await clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const result = await data.json<SanctionsScreeningEntityStats>()
+
+    return {
+      data: SANCTIONS_SCREENING_ENTITYS.map((entity) => {
+        const screenedCount = sum(
+          result.filter((r) => r.entity === entity).map((v) => v.screenedCount)
+        )
+        const newCount = sum(
+          result.filter((r) => r.entity === entity).map((v) => v.newCount)
+        )
+        return {
+          entity,
+          screenedCount,
+          newCount,
+          hitCount: sum(
+            result.filter((r) => r.entity === entity).map((v) => v.hitCount)
+          ),
+        }
+      }),
+    }
+  }
+
   public async getSanctionsScreeningStats(timestampRange?: {
     from: number
     to: number
   }): Promise<SanctionsScreeningStats> {
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      return this.getSanctionsScreeningStatsClickhouse(timestampRange)
+    }
+
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsScreeningDetails>(
       SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
@@ -143,6 +203,56 @@ export class SanctionsScreeningDetailsRepository {
         }
       }),
     }
+  }
+
+  private getSanctionsScreeningDetailsClickhouseQuery(
+    params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
+  ): string {
+    const where: string[] = []
+
+    if (params.afterTimestamp) {
+      where.push(`timestamp >= ${params.afterTimestamp}`)
+    }
+
+    if (params.beforeTimestamp) {
+      where.push(`timestamp <= ${params.beforeTimestamp}`)
+    }
+
+    if (params.filterEntities) {
+      where.push(
+        `entity IN (${params.filterEntities.map((e) => `'${e}'`).join(',')})`
+      )
+    }
+
+    if (params.filterName) {
+      where.push(`name LIKE '%${params.filterName}%'`)
+    }
+
+    if (params.filterIsHit != null) {
+      if (params.filterIsHit == 'true') {
+        where.push('isHit = 1')
+      } else {
+        where.push('isHit != 1')
+      }
+    }
+
+    if (params.filterIsOngoingScreening != null) {
+      if (params.filterIsOngoingScreening == 'true') {
+        where.push('isOngoingScreening = 1')
+      } else {
+        where.push('isOngoingScreening != 1')
+      }
+    }
+
+    if (params.filterIsNew != null) {
+      if (params.filterIsNew == 'true') {
+        where.push('isNew = 1')
+      } else {
+        where.push('isNew != 1')
+      }
+    }
+
+    return where.join(' AND ')
   }
 
   private getSanctionsScreeningDetailsPipeline(
@@ -223,9 +333,37 @@ export class SanctionsScreeningDetailsRepository {
     ]
   }
 
+  public async getSanctionsScreeningDetailsClickhouse(
+    params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
+  ): Promise<SanctionsScreeningDetailsResponse> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    const query = this.getSanctionsScreeningDetailsClickhouseQuery(params)
+
+    const data = await offsetPaginateClickhouse<SanctionsScreeningDetails>(
+      this.tenantId,
+      clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+      CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+      {
+        page: params.page,
+        pageSize: params.pageSize,
+        sortField: 'timestamp',
+        sortOrder: 'descend',
+      },
+      query,
+      { bypassNestedQuery: true }
+    )
+
+    return { total: data.count, data: data.items }
+  }
+
   public async getSanctionsScreeningDetails(
     params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
   ): Promise<SanctionsScreeningDetailsResponse> {
+    if (hasFeature('CLICKHOUSE_ENABLED')) {
+      return this.getSanctionsScreeningDetailsClickhouse(params)
+    }
+
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsScreeningDetails>(
       SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
