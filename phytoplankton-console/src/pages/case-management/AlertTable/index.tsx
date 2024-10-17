@@ -8,6 +8,7 @@ import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
+import s from './index.module.less';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
 import SlaStatus from './SlaStatus';
@@ -362,7 +363,7 @@ export default function AlertTable(props: Props) {
                 return <div>{alertId}</div>;
               }
               return (
-                <>
+                <div className={s.alert}>
                   <Id
                     to={
                       entity?.caseId != null && alertId != null
@@ -384,7 +385,7 @@ export default function AlertTable(props: Props) {
                         rounded
                       />
                     )}
-                </>
+                </div>
               );
             },
             stringify(value, item) {

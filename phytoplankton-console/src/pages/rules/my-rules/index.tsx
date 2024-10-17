@@ -254,13 +254,14 @@ const MyRule = (props: { simulationMode?: boolean }) => {
                 : 0;
             return (
               <>
-                <Tooltip
-                  title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
-                >
-                  {(percent ?? 0.0)?.toFixed(2)}%
-                </Tooltip>
-
-                <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
+                <div className={s.tag}>
+                  <Tooltip
+                    title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
+                  >
+                    {(percent ?? 0.0)?.toFixed(2)}%
+                  </Tooltip>
+                  <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
+                </div>
               </>
             );
           },
