@@ -244,7 +244,7 @@ export function sampleConsumerUser() {
   const riskLevel = pickRandom(RISK_LEVELS)
   const countryOfResidence = pickRandom(COUNTRY_CODES)
   const countryOfNationality = pickRandom(COUNTRY_CODES)
-
+  const timestamp = sampleTimestamp(3600 * 24 * 365 * 1000)
   const user: InternalConsumerUser = {
     type: 'CONSUMER' as const,
     userId,
@@ -279,7 +279,9 @@ export function sampleConsumerUser() {
       `${name.firstName} ${name.middleName} ${name.lastName}`,
       'CONSUMER'
     ),
-    createdTimestamp: sampleTimestamp(3600 * 24 * 365 * 1000),
+    createdTimestamp: timestamp,
+    updatedAt: timestamp,
+    createdAt: timestamp,
     tags: [
       {
         key: 'crmAccountId',

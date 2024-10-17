@@ -1,4 +1,5 @@
 import { cloneDeep, memoize, random } from 'lodash'
+import { getRandomUser } from '../samplers/accounts'
 import { getSLAPolicies } from './sla'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
@@ -106,6 +107,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604237253,
       updatedAt: 1688115753059,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 1848,
       hitCount: 8,
       checksFor: ['Transaction amount', 'No. of transactions'],
@@ -173,6 +175,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 1848,
       hitCount: 1434,
       types: [],
@@ -236,6 +239,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 1848,
       hitCount: 1434,
       types: [],
@@ -301,6 +305,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 295,
       hitCount: 102,
       checksFor: ['Username', 'User’s Y.O.B'],
@@ -371,6 +376,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 603,
       hitCount: 340,
       types: [],
@@ -441,6 +447,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 340,
       hitCount: 240,
       types: [],
@@ -503,6 +510,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 340,
       hitCount: 240,
       types: [],
@@ -583,6 +591,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       runCount: 1848,
       hitCount: 1434,
       types: [],

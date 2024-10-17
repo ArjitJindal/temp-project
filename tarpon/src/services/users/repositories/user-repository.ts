@@ -1380,7 +1380,7 @@ export class UserRepository {
       USERS_COLLECTION(this.tenantId)
     )
     const timestampMatch = {
-      createdTimestamp: {
+      updatedAt: {
         $gte: timeRange.afterTimestamp,
         $lt: timeRange.beforeTimestamp,
       },

@@ -64,8 +64,6 @@ import {
 } from '@/core/seed/data/crm'
 import { data as transactionEvents } from '@/core/seed/data/transaction_events'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
-import { AccountsService } from '@/services/accounts'
-import { setAccounts } from '@/core/seed/samplers/accounts'
 import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -113,33 +111,6 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   const settings = await tenantRepository.getTenantSettings(['auth0Domain'])
   const auth0Domain =
     settings.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-  const accountsService = new AccountsService(
-    { auth0Domain },
-    { mongoDb: client }
-  )
-
-  logger.info(`TenantId: ${tenantId}`)
-
-  let tenant = await accountsService.getTenantById(originalTenantId) // As we are appending -test to the tenantId, we need to remove it to get the real tenantId when in demo mode
-
-  logger.info(`Tenant: ${JSON.stringify(tenant)}`)
-
-  if (tenant == null) {
-    tenant = await accountsService.getTenantById(tenantId)
-  }
-
-  const allAccounts =
-    tenant != null ? await accountsService.getTenantAccounts(tenant) : []
-  const accounts = allAccounts.filter(
-    (account) =>
-      account.role !== 'root' &&
-      !account.blocked &&
-      account.name.endsWith('flagright.com')
-  )
-
-  logger.info(`Accounts: ${JSON.stringify(accounts.map((a) => a.email))}}`)
-
-  setAccounts(accounts)
 
   try {
     logger.info('Get all collections')
