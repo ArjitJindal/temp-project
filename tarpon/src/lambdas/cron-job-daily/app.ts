@@ -25,14 +25,13 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   } catch (e) {
     logger.error(`Failed to create API usage jobs: ${(e as Error)?.message}`, e)
   }
-  try {
-    await createOngoingScreeningJobs(tenantInfos)
-  } catch (e) {
-    logger.error(
-      `Failed to create ongoing screening jobs: ${(e as Error)?.message}`,
-      e
-    )
-  }
+  await sendBatchJobCommand({
+    type: 'SANCTIONS_DATA_FETCH',
+    tenantId: 'flagright',
+    parameters: {
+      from: dayjs().subtract(1, 'day').toISOString(),
+    },
+  })
   try {
     const tenantsToDeactivate = await TenantService.getTenantsToDelete()
     for (const tenant of tenantsToDeactivate) {
@@ -66,14 +65,6 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   } catch (e) {
     logger.error(`Failed to check dormant users: ${(e as Error)?.message}`, e)
   }
-
-  await sendBatchJobCommand({
-    type: 'SANCTIONS_DATA_FETCH',
-    tenantId: 'flagright',
-    parameters: {
-      from: dayjs().subtract(1, 'day').toISOString(),
-    },
-  })
 
   await Promise.all(
     tenantInfos.map((tenant) => sendCaseCreatedAlert(tenant.tenant.id))
@@ -121,17 +112,6 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
         },
       })
     }
-  }
-}
-
-async function createOngoingScreeningJobs(tenantInfos: TenantInfo[]) {
-  for await (const tenant of tenantInfos) {
-    const tenantId = tenant.tenant.id
-
-    await sendBatchJobCommand({
-      type: 'ONGOING_SCREENING_USER_RULE',
-      tenantId,
-    })
   }
 }
 

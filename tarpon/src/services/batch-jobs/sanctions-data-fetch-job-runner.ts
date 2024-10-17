@@ -1,9 +1,12 @@
+import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetchers } from '@/services/sanctions/data-fetchers'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
+import { TenantService } from '@/services/tenants'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
@@ -24,6 +27,21 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
       }
       await fetcher.updateMonitoredSearches()
+
+      const tenantInfos = await TenantService.getAllTenants(
+        process.env.ENV as Stage,
+        process.env.REGION as FlagrightRegion
+      )
+
+      // Once lists are updated, run the ongoing screening jobs
+      for await (const tenant of tenantInfos) {
+        const tenantId = tenant.tenant.id
+
+        await sendBatchJobCommand({
+          type: 'ONGOING_SCREENING_USER_RULE',
+          tenantId,
+        })
+      }
     }
   }
 }

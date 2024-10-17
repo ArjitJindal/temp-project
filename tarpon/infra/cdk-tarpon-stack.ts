@@ -1056,11 +1056,11 @@ export class CdkTarponStack extends cdk.Stack {
         const triggerTime: Record<FlagrightRegion, Record<string, string>> = {
           'eu-1': { hour: '20', minute: '0' },
           'eu-2': { hour: '20', minute: '15' },
-          'asia-1': { hour: '20', minute: '30' },
           'asia-2': { hour: '20', minute: '45' },
           'au-1': { hour: '21', minute: '0' },
           'us-1': { hour: '21', minute: '15' },
           'me-1': { hour: '21', minute: '30' },
+          'asia-1': { hour: '23', minute: '00' },
         }
 
         triggerHour = triggerTime[config.region].hour
