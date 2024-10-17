@@ -90,7 +90,7 @@ export class SanctionsScreeningDetailsRepository {
       sum(isHit = true) as hitCount,
       sum(isNew = true) as newCount
     FROM
-      sanctions_screening_details
+      sanctions_screening_details FINAL
     WHERE
       timestamp >= ${timestampRange?.from ?? 0} AND timestamp <= ${
       timestampRange?.to ?? Number.MAX_SAFE_INTEGER
