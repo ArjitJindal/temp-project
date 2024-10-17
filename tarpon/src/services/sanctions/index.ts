@@ -209,6 +209,7 @@ export class SanctionsService {
         fuzzinessRange: request.fuzzinessRange,
         PEPRank: request.PEPRank,
         gender: request.gender,
+        orFilters: request.orFilters,
       })
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {

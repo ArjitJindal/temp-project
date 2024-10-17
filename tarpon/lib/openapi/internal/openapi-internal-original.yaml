@@ -11471,6 +11471,10 @@ components:
           type: string
         PEPRank:
           $ref: '#/components/schemas/PepRank'
+        orFilters:
+          type: array
+          items:
+            type: string
       required:
         - searchTerm
     PepRank:

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { startCase } from 'lodash';
+import { compact, startCase } from 'lodash';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -13,7 +13,6 @@ import {
   TableRefType,
   ToolRenderer,
 } from '@/components/library/Table/types';
-import { SanctionsHit } from '@/apis/models/SanctionsHit';
 import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -34,6 +33,7 @@ import {
   useFinishedSuccessfully,
 } from '@/utils/asyncResource';
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
+import { SanctionsHit } from '@/apis';
 
 export interface TableSearchParams {
   statuses?: SanctionsHitStatus[];
@@ -104,7 +104,7 @@ export default function SanctionsHitsTable(props: Props) {
     helper.derived<string[]>({
       title: 'Countries',
       value: (item: SanctionsHit): string[] => {
-        return item?.entity.countries || [];
+        return compact(item.entity.countries);
       },
       type: {
         defaultWrapMode: 'WRAP',

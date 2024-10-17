@@ -123,6 +123,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
                 : [],
             }
           : {}),
+        orFilters: ['yearOfBirth', 'gender', 'nationality'],
       },
       hitContext
     )

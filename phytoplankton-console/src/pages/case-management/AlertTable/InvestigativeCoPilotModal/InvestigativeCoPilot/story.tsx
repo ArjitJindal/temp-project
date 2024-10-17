@@ -20,8 +20,8 @@ export default function (): JSX.Element {
         createdAt: 1726500154888,
         updatedAt: 1726500154888,
         sanctionsHitId: 'SH-997436',
-        status: 'OPEN',
         provider: 'comply-advantage',
+        status: 'OPEN',
         hitContext: {
           userId: 'U-44',
           entity: 'USER',

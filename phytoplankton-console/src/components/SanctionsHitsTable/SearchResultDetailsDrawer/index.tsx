@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { startCase, uniq, uniqBy } from 'lodash';
+import { compact, startCase, uniq, uniqBy } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
@@ -208,7 +208,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {entity.nationality && entity.nationality.length > 0 && (
             <Form.Layout.Label key={entity.nationality?.join(',')} title={'Nationality'}>
-              {entity.nationality
+              {compact(entity.nationality)
                 ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
                 .join(', ')}
             </Form.Layout.Label>
@@ -265,7 +265,10 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {entity.documents && entity.documents.length > 0 && (
             <Form.Layout.Label title={'Documents'}>
-              {entity.documents.map((doc) => `${doc.name} (${doc.id})`).join(', ')}
+              {entity.documents
+                .filter((doc) => doc.id)
+                .map((doc) => `${doc.name}(${doc.id})`)
+                .join(', ')}
             </Form.Layout.Label>
           )}
         </div>
