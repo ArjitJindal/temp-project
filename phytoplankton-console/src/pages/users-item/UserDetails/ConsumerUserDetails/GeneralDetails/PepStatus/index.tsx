@@ -152,13 +152,21 @@ export const PepStatusValue = (props: { pepStatus: PEPStatus[] }) => {
   const pepCountries = uniq(
     pepStatus
       .filter((status) => status.isPepHit && status.pepCountry)
-      .map((status) => status.pepCountry),
+      .map((status) => ({
+        country: status.pepCountry,
+        rank: status.pepRank,
+      })),
   );
   const isPepHit = pepStatus.some((status) => status.isPepHit);
   return (
     <div>
       {pepCountries.length > 0 ? (
-        pepCountries.map((country) => <CountryDisplay key={country} isoCode={country} />)
+        pepCountries.map(({ country, rank }) => (
+          <div key={country} style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+            <CountryDisplay key={country} isoCode={country} />
+            {rank && ` (Rank ${rank.replace('LEVEL_', '')})`}
+          </div>
+        ))
       ) : isPepHit ? (
         <span>
           <Toggle value={isPepHit} size="XS" />
