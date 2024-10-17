@@ -73,7 +73,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         searchTerm: name,
         yearOfBirth,
         types: screeningTypes,
-        fuzziness,
+        fuzziness: fuzziness / 100,
         monitoring: { enabled: ongoingScreening },
       },
       hitContext
