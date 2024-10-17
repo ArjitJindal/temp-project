@@ -196,6 +196,7 @@ async function userHandler(
     await sendBatchJobCommand({
       type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
       tenantId,
+      parameters: { userIds: [internalUser.userId] },
     })
   }
 }

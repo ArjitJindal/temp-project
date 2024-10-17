@@ -911,9 +911,9 @@ export class RiskScoringService {
     }
   }
 
-  public async backfillUserRiskScores(): Promise<void> {
+  public async backfillUserRiskScores(userIds: string[] = []): Promise<void> {
     const users: FindCursor<User> =
-      this.userRepository.getUsersWithoutKrsScoreCursor()
+      this.userRepository.getUsersWithoutKrsScoreCursor(userIds)
 
     for await (const user of users) {
       if (!user) {

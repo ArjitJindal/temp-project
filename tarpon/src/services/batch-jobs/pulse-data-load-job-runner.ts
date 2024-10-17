@@ -16,6 +16,6 @@ export class PulseDataLoadJobRunner extends BatchJobRunner {
       mongoDb,
     })
 
-    await riskScoringService.backfillUserRiskScores()
+    await riskScoringService.backfillUserRiskScores(job.parameters.userIds)
   }
 }

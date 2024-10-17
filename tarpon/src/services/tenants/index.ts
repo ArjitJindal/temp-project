@@ -112,6 +112,7 @@ export class TenantService {
           await sendBatchJobCommand({
             type: 'PULSE_USERS_BACKFILL_RISK_SCORE',
             tenantId: this.tenantId,
+            parameters: { userIds: [] },
           })
         },
         RULES_ENGINE_V8_FOR_V2_RULES: async () => {

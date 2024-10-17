@@ -1217,7 +1217,9 @@ export class UserRepository {
     await this.updateUser(userId, { krsScore })
   }
 
-  public getUsersWithoutKrsScoreCursor(): FindCursor<InternalUser> {
+  public getUsersWithoutKrsScoreCursor(
+    userIds: string[] = []
+  ): FindCursor<InternalUser> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
@@ -1225,7 +1227,9 @@ export class UserRepository {
 
     const users = collection
       .find({
-        krsScore: { $exists: false },
+        ...(userIds.length > 0
+          ? { userId: { $in: userIds } }
+          : { krsScore: { $exists: false } }),
       })
       .batchSize(100)
 
