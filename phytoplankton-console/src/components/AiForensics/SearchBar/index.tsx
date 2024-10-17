@@ -45,7 +45,8 @@ interface Props {
 export const SearchBar = (props: Props) => {
   const { searchMutation, alertId, history } = props;
   const [showMore, setShowMore] = useState<boolean>(false);
-  const [demoMode] = useDemoMode();
+  const [isDemoModeRes] = useDemoMode();
+  const isDemoMode = getOr(isDemoModeRes, false);
   const mutationRes = getMutationAsyncResource(searchMutation);
   const [searchText, setSearchText] = useState<string>('');
   const debouncedSearch = useDebounce(searchText, { wait: 500 });
@@ -154,7 +155,7 @@ export const SearchBar = (props: Props) => {
         >
           <BrainIcon height={16} />
         </button>
-        {demoMode && history.length === 0 && (
+        {isDemoMode && history.length === 0 && (
           <>
             <div className={s.divider} />
             <button
@@ -165,7 +166,7 @@ export const SearchBar = (props: Props) => {
                   SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.ONTOLOGY);
                 }
 
-                if (demoMode) {
+                if (isDemoMode) {
                   SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.RECOMMENDATION);
                 }
 
