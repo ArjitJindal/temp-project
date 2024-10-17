@@ -21,7 +21,7 @@ import { envIsNot } from '@/utils/env'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 
-async function arsScoreEventHandler(
+export async function arsScoreEventHandler(
   tenantId: string,
   arsScore: ArsScore | undefined,
   dbClients: DbClients
@@ -52,7 +52,7 @@ async function arsScoreEventHandler(
   logger.info(`ARS Score Processed`)
 }
 
-async function drsScoreEventHandler(
+export async function drsScoreEventHandler(
   tenantId: string,
   oldDrsScore: DrsScore | undefined,
   newDrsScore: DrsScore | undefined,
@@ -107,7 +107,7 @@ async function drsScoreEventHandler(
   logger.info(`DRS Score Processed`)
 }
 
-async function krsScoreEventHandler(
+export async function krsScoreEventHandler(
   tenantId: string,
   krsScore: KrsScore | undefined,
   dbClients: DbClients
@@ -133,7 +133,7 @@ async function krsScoreEventHandler(
   logger.info(`KRS Score Processed`)
 }
 
-async function avgArsScoreEventHandler(
+export async function avgArsScoreEventHandler(
   tenantId: string,
   newAvgArs: AverageArsScore | undefined,
   dbClients: DbClients
@@ -159,6 +159,7 @@ if (envIsNot('test', 'local') && !process.env.HAMMERHEAD_QUEUE_URL) {
   throw new Error('HAMMERHEAD_QUEUE_URL is not defined')
 }
 
+// TODO: Remove Hammerhead change handler in next PR so that we will eventually phase out hammerhead once we have 0 traffic on it
 const hammerheadBuilder = new StreamConsumerBuilder(
   path.basename(__dirname) + '-hammerhead',
   process.env.HAMMERHEAD_QUEUE_URL ?? '',

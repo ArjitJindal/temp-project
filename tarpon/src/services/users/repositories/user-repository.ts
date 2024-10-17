@@ -30,7 +30,6 @@ import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   DAY_DATE_FORMAT,
   internalMongoUpdateOne,
-  internalMongoReplace,
   paginatePipeline,
   prefixRegexMatchFilter,
   regexMatchFilter,
@@ -91,10 +90,7 @@ export class UserRepository {
 
   constructor(
     tenantId: string,
-    connections: {
-      dynamoDb?: DynamoDBDocumentClient
-      mongoDb?: MongoClient
-    }
+    connections: { dynamoDb?: DynamoDBDocumentClient; mongoDb?: MongoClient }
   ) {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
@@ -1018,15 +1014,17 @@ export class UserRepository {
   public async saveUserMongo(
     user: InternalBusinessUser | InternalConsumerUser
   ): Promise<InternalUser> {
-    await internalMongoReplace(
+    const userToSave: InternalBusinessUser | InternalConsumerUser = {
+      ...user,
+      createdAt: user.createdAt ?? Date.now(),
+      updatedAt: Date.now(),
+    }
+
+    await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId: user.userId },
-      {
-        ...user,
-        createdAt: user.createdAt ?? Date.now(),
-        updatedAt: Date.now(),
-      }
+      { $set: userToSave }
     )
 
     return user as InternalUser

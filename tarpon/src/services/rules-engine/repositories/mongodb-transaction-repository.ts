@@ -37,7 +37,6 @@ import {
   DAY_DATE_FORMAT,
   getMongoDbClient,
   internalMongoUpdateOne,
-  internalMongoReplace,
   lookupPipelineStage,
   paginateCursor,
   paginateFindOptions,
@@ -144,11 +143,11 @@ export class MongoDbTransactionRepository
       ...internalTransaction,
     }
 
-    await internalMongoReplace(
+    await internalMongoUpdateOne(
       this.mongoDb,
       TRANSACTIONS_COLLECTION(this.tenantId),
       { transactionId: transaction.transactionId },
-      payload
+      { $set: payload }
     )
 
     await this.updateUniqueTransactionTags(transaction)

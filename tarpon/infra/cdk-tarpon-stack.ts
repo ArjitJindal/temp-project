@@ -290,6 +290,8 @@ export class CdkTarponStack extends cdk.Stack {
       StackConstants.TARPON_STREAM_NAME,
       Duration.days(7)
     )
+
+    // TODO: Remove Hammerhead stream in next PR Eventually phase out hammerhead stream after traffic is 0
     const hammerheadStream = this.createKinesisStream(
       StackConstants.HAMMERHEAD_STREAM_ID,
       StackConstants.HAMMERHEAD_STREAM_NAME,
@@ -306,7 +308,7 @@ export class CdkTarponStack extends cdk.Stack {
       true
     )
     this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TARPON_RULE)
-    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.HAMMERHEAD, hammerheadStream)
+    this.createDynamodbTable(DYNAMODB_TABLE_NAMES.HAMMERHEAD, tarponStream)
     this.createDynamodbTable(DYNAMODB_TABLE_NAMES.TRANSIENT, undefined, true)
 
     const siloTables: ITable[] = []
@@ -323,9 +325,7 @@ export class CdkTarponStack extends cdk.Stack {
 
       const siloHammerheadTable = this.createDynamodbTable(
         StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
-        hammerheadStream,
-        true,
-        true
+        tarponStream
       )
 
       siloTables.push(siloTarponTable, siloHammerheadTable)

@@ -3,6 +3,12 @@ import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { difference, isEmpty, isEqual, omit, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import {
+  arsScoreEventHandler,
+  avgArsScoreEventHandler,
+  drsScoreEventHandler,
+  krsScoreEventHandler,
+} from '../hammerhead-change-mongodb-consumer/app'
+import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -512,6 +518,20 @@ const tarponBuilder = new StreamConsumerBuilder(
       newUsers.flatMap((u) => u.executedRules ?? []),
       dbClients
     )
+  )
+  // Hammerhead Head change handlers
+  .setConcurrentGroupBy((update) => update.entityId ?? '')
+  .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore, dbClients) =>
+    arsScoreEventHandler(tenantId, newArsScore, dbClients)
+  )
+  .setDrsScoreEventHandler((tenantId, oldDrsScore, newDrsScore, dbClients) =>
+    drsScoreEventHandler(tenantId, oldDrsScore, newDrsScore, dbClients)
+  )
+  .setKrsScoreEventHandler((tenantId, oldKrsScore, newKrsScore, dbClients) =>
+    krsScoreEventHandler(tenantId, newKrsScore, dbClients)
+  )
+  .setAvgArsScoreEventHandler((tenantId, oldAvgArs, newAvgArs, dbClients) =>
+    avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
   )
 
 // NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding
