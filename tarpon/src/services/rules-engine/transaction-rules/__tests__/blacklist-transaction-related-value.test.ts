@@ -112,3 +112,59 @@ describe('R-132 Swift Code', () => {
     ['BCD is blacklisted in Blacklist ID test-1 for Bank Swift Code field.']
   )
 })
+
+describe('R-132 Country', () => {
+  beforeAll(async () => {
+    await listRepo.createList(
+      BLACK_LIST_TYPE,
+      'COUNTRY',
+      {
+        items: [
+          {
+            key: 'RU',
+          },
+        ],
+        metadata: {
+          status: true,
+        },
+      },
+      TEST_LIST_ID
+    )
+  })
+
+  const test1 = getTestTransaction({
+    originPaymentDetails: {
+      method: 'SWIFT',
+      swiftCode: 'BCD',
+      bankAddress: {
+        addressLines: ['Komendantskiy Prospekt, 13, korp. 1'],
+        postcode: '197371',
+        city: 'St Petersburg',
+        state: 'St Petersburg',
+        country: 'RU',
+      },
+    },
+  })
+
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      type: 'TRANSACTION',
+      ruleImplementationName: 'blacklist-transaction-related-value',
+      defaultParameters: {
+        blacklistId: TEST_LIST_ID,
+      } as BlacklistTransactionMatchedFieldRuleParameters,
+      defaultAction: 'BLOCK',
+    },
+  ])
+
+  testRuleDescriptionFormatting(
+    'first',
+    TEST_TENANT_ID,
+    [test1],
+    {
+      descriptionTemplate: getRuleByRuleId('R-132').descriptionTemplate,
+    }, //`A is blacklisted in Blacklist ID (uuid regex) for User ID field.
+
+    ['RU is blacklisted in Blacklist ID test-1 for Country field.']
+  )
+})

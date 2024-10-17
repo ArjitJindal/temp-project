@@ -15,6 +15,7 @@ import { CommonParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 import { StatePair } from '@/utils/state';
 
 interface ExistedTableItemData {
@@ -220,27 +221,37 @@ export default function ItemsTable(props: Props) {
 
             const [newUserData, setNewUserData] = externalState.newUserData;
 
-            return entity.type === 'NEW' ? (
-              <NewValueInput
-                key={String(isAddUserLoading)}
-                value={newUserData.value}
-                onChange={(value) => {
-                  setNewUserData((prevState) => ({
-                    ...prevState,
-                    value: value ?? [],
-                  }));
-                }}
-                onChangeMeta={(meta) => {
-                  setNewUserData((prevState) => ({
-                    ...prevState,
-                    meta,
-                  }));
-                }}
-                listSubtype={listHeader.subtype}
-              />
-            ) : (
-              <>{value}</>
-            );
+            if (entity.type === 'NEW') {
+              return (
+                <NewValueInput
+                  key={String(isAddUserLoading)}
+                  value={newUserData.value}
+                  onChange={(value) => {
+                    setNewUserData((prevState) => ({
+                      ...prevState,
+                      value: value ?? [],
+                    }));
+                  }}
+                  onChangeMeta={(meta) => {
+                    setNewUserData((prevState) => ({
+                      ...prevState,
+                      meta,
+                    }));
+                  }}
+                  listSubtype={listHeader.subtype}
+                />
+              );
+            } else if (listHeader.subtype === 'COUNTRY' && value != null) {
+              const valueArray = Array.isArray(value) ? value : [value];
+              return (
+                <>
+                  {valueArray.map((code) => (
+                    <CountryDisplay key={code} isoCode={code} />
+                  ))}
+                </>
+              );
+            }
+            return <>{value}</>;
           },
         },
       }),

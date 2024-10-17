@@ -5250,6 +5250,7 @@ components:
         - IP_ADDRESS
         - DEVICE_IDENTIFIER
         - STRING
+        - COUNTRY
     ListKeyMetadata:
       type: object
       title: ListKeyMetadata

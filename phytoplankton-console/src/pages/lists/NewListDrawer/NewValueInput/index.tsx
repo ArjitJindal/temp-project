@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
-import { Select } from 'antd';
+import { Select as AntSelect } from 'antd';
 import { useDebounce } from 'ahooks';
 import { DefaultOptionType } from 'antd/es/select';
+import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
 import { ListSubtype, TransactionsUniquesField } from '@/apis';
@@ -17,6 +18,7 @@ import { TRANSACTIONS_UNIQUES } from '@/utils/queries/keys';
 import { neverThrow } from '@/utils/lang';
 import { InputProps } from '@/components/library/Form';
 import Spinner from '@/components/library/Spinner';
+import Select, { Option } from '@/components/library/Select';
 
 interface Props extends InputProps<string[]> {
   onChangeMeta?: (meta: Metadata) => void;
@@ -28,6 +30,14 @@ export default function NewValueInput(props: Props) {
 
   if (listSubtype === 'USER_ID') {
     return <UserIdInput {...rest} />;
+  }
+
+  if (listSubtype === 'COUNTRY') {
+    return <CountriesInput {...rest} />;
+  }
+
+  if (listSubtype === 'STRING') {
+    return <Select<string> className={s.select} mode={'TAGS'} options={[]} {...rest} />;
   }
 
   return <SearchInput listSubtype={listSubtype} {...rest} />;
@@ -107,6 +117,7 @@ function SearchInput(
       case 'DEVICE_IDENTIFIER':
         return 'DEVICE_IDENTIFIER';
       case 'STRING':
+      case 'COUNTRY':
         throw new Error(`This value is not supported: ${listSubtype}`);
       default:
         throw neverThrow(listSubtype, `Unsupported type: ${listSubtype}`);
@@ -128,7 +139,7 @@ function SearchInput(
   );
 
   return (
-    <Select<string[]>
+    <AntSelect<string[]>
       className={s.select}
       showSearch
       filterOption={false}
@@ -142,6 +153,26 @@ function SearchInput(
       onChange={(value) => {
         onChange?.(value);
       }}
+    />
+  );
+}
+
+const OPTIONS = Object.entries(COUNTRIES).map(
+  (entry): Option<string> => ({
+    value: entry[0],
+    label: entry[1],
+    alternativeLabels: COUNTRY_ALIASES[entry[0]] ?? [],
+  }),
+);
+
+function CountriesInput(props: InputProps<string[]>) {
+  return (
+    <Select
+      mode={'MULTIPLE'}
+      options={OPTIONS}
+      placeholder={`Select countries`}
+      className={s.select}
+      {...props}
     />
   );
 }

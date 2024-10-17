@@ -5,6 +5,7 @@ import { RuleHitResult } from '@/services/rules-engine/rule'
 import { ListSubtype } from '@/@types/openapi-internal/ListSubtype'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { traceable } from '@/core/xray'
+import { neverReturn } from '@/utils/lang'
 
 export type BlacklistTransactionMatchedFieldRuleParameters = {
   blacklistId: string
@@ -269,10 +270,56 @@ export default class BlacklistTransactionMatchedFieldRule extends TransactionRul
         }
         return fields
       }
+      case 'COUNTRY': {
+        const fields: TransactionField[] = []
+        for (const [direction, paymentDetails] of [
+          ['ORIGIN', transaction.originPaymentDetails],
+          ['DESTINATION', transaction.destinationPaymentDetails],
+        ] as const) {
+          if (paymentDetails?.method === 'CARD') {
+            fields.push({
+              label: 'Country',
+              value: paymentDetails.cardIssuedCountry,
+              direction: direction,
+            })
+          }
+          if (
+            paymentDetails?.method === 'ACH' ||
+            paymentDetails?.method === 'SWIFT'
+          ) {
+            fields.push({
+              label: 'Country',
+              value: paymentDetails.bankAddress?.country,
+              direction: direction,
+            })
+          }
+          if (paymentDetails?.method === 'CHECK') {
+            fields.push({
+              label: 'Country',
+              value: paymentDetails.shippingAddress?.country,
+              direction: direction,
+            })
+          }
+          if (
+            paymentDetails?.method === 'GENERIC_BANK_ACCOUNT' ||
+            paymentDetails?.method === 'IBAN'
+          ) {
+            fields.push({
+              label: 'Country',
+              value: paymentDetails.country,
+              direction: direction,
+            })
+          }
+        }
+        return fields
+      }
+
       case 'IP_ADDRESS':
       case 'DEVICE_IDENTIFIER':
       case 'STRING':
         return []
+      default:
+        return neverReturn(listSubtype, [])
     }
   }
 }

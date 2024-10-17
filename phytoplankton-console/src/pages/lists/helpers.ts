@@ -1,3 +1,4 @@
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { ListSubtype, ListType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
@@ -25,6 +26,8 @@ const LIST_SUBTYPES: ListSubtype[] = [
   'UPI_IDENTIFYING_NUMBER',
   'IP_ADDRESS',
   'DEVICE_IDENTIFIER',
+  'COUNTRY',
+  'STRING',
 ];
 
 export const BLACKLIST_SUBTYPES: ListSubtype[] = LIST_SUBTYPES;
@@ -55,9 +58,11 @@ export function getListSubtypeTitle(subtype: ListSubtype) {
     case 'DEVICE_IDENTIFIER':
       return 'Device identifier';
     case 'STRING':
-      return 'String';
+      return 'Custom';
+    case 'COUNTRY':
+      return 'Country';
   }
-  return neverReturn(subtype, 'Unknown subtype');
+  return neverReturn(subtype, humanizeAuto(subtype));
 }
 
 export interface Metadata {
