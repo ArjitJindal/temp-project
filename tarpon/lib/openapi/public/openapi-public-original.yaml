@@ -4116,7 +4116,6 @@ components:
           $ref: '#/components/schemas/WalletNetwork'
       required:
         - method
-        - walletType
     WalletNetwork:
       type: string
       description: Network of the wallet
