@@ -6,7 +6,7 @@ import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-lin
 import { AccountRole, CreateAccountRole, Permission } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
 import TextInput from '@/components/library/TextInput';
-import Form from '@/components/library/Form';
+import Form, { FormRef } from '@/components/library/Form';
 import PermissionTable from '@/pages/accounts/Roles/PermissionTable';
 import { FieldValidators } from '@/components/library/Form/utils/validation/types';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
@@ -44,6 +44,7 @@ export default function RoleForm({
   const canEdit = !isValidManagedRoleName(role?.name);
   const isEditing = (duplicate || edit) && canEdit;
   const [allExpanded, setAllExpanded] = useState(false);
+  const ref = useRef<FormRef<FormValues>>(null);
 
   const onSubmit = async (
     { roleName, description }: { roleName: string; description: string },
@@ -135,6 +136,7 @@ export default function RoleForm({
       initialValues={{ roleName: role?.name ?? '', description: role?.description ?? '' }}
       fieldValidators={fieldValidators}
       alwaysShowErrors={true}
+      ref={ref}
     >
       {!isEditing && (
         <>
@@ -186,6 +188,10 @@ export default function RoleForm({
             onClick={() => {
               setDuplicate(true);
               setRoleName(`${roleName} Copy`);
+              ref.current?.setValues({
+                ...ref.current?.getValues(),
+                roleName: `${roleName} Copy`,
+              });
             }}
             requiredPermissions={['settings:organisation:write']}
             icon={<FileCopyOutlined />}
