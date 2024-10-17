@@ -7,7 +7,7 @@ import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsSc
 import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
-import { paginatePipeline } from '@/utils/mongodb-utils'
+import { internalMongoReplace, paginatePipeline } from '@/utils/mongodb-utils'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
@@ -23,12 +23,15 @@ export class SanctionsScreeningDetailsRepository {
   }
 
   public async addSanctionsScreeningDetails(
-    details: SanctionsScreeningDetails,
+    details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'>,
     screenedAt = Date.now()
   ): Promise<void> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsScreeningDetails>(
+    const sanctionsScreeningCollectionName =
       SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
+
+    const collection = db.collection<SanctionsScreeningDetails>(
+      sanctionsScreeningCollectionName
     )
     const previousScreenResult = await collection.findOne({
       lastScreenedAt: { $lt: screenedAt },
@@ -43,7 +46,10 @@ export class SanctionsScreeningDetailsRepository {
       lastScreenedAt: roundedScreenedAt,
     }
     const existingRecord = await collection.findOne(filter)
-    await collection.replaceOne(
+
+    await internalMongoReplace(
+      this.mongoDb,
+      sanctionsScreeningCollectionName,
       filter,
       {
         ...existingRecord,
@@ -63,8 +69,7 @@ export class SanctionsScreeningDetailsRepository {
         ),
         lastScreenedAt: roundedScreenedAt,
         isNew: !previousScreenResult,
-      },
-      { upsert: true }
+      }
     )
   }
 

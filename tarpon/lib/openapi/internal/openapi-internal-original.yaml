@@ -11608,6 +11608,11 @@ components:
           type: string
         lastScreenedAt:
           type: number
+      required:
+        - searchId
+        - lastScreenedAt
+        - name
+        - entity
     SanctionsScreeningDetailsResponse:
       type: object
       title: SanctionsScreeningDetailsResponse

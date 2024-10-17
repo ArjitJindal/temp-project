@@ -7,6 +7,7 @@ import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionTyp
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 
 type BaseTableDefinition = {
   table: string
@@ -107,6 +108,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   ARS_SCORE: {
     tableName: 'ars_score',
+  },
+  SANCTIONS_SCREENING_DETAILS: {
+    tableName: 'sanctions_screening_details',
   },
 }
 
@@ -278,6 +282,19 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "destinationUserId String MATERIALIZED JSON_VALUE(data, '$.destinationUserId')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+    idColumn: 'searchId',
+    timestampColumn: 'lastScreenedAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, name, entity)',
+    orderBy: '(timestamp, name, entity)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "name String MATERIALIZED JSON_VALUE(data, '$.name')",
+      enumFields(SANCTIONS_SCREENING_ENTITYS, 'entity', 'entity'),
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -297,6 +314,8 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
     CLICKHOUSE_DEFINITIONS.DRS_SCORE.tableName,
   [MONGO_TABLE_SUFFIX_MAP.ARS_SCORE]:
     CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
+    CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

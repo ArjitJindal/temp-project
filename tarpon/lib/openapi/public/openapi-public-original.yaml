@@ -6254,6 +6254,8 @@ components:
           type: number
         searchTerm:
           type: string
+      required:
+        - entity
     SanctionsScreeningEntity:
       type: string
       enum:

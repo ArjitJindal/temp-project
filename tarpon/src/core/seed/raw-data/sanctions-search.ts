@@ -25,6 +25,7 @@ export const sanctionsSearchHit = (
     status: 'OPEN',
     hitContext: {
       userId,
+      entity: 'USER',
     },
     entity: {
       id: id,

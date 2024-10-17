@@ -249,7 +249,7 @@ export class SanctionsService {
 
     if (context && context.ruleInstanceId) {
       // Save the screening details check when running a rule
-      const details: SanctionsScreeningDetails = {
+      const details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'> = {
         name: request.searchTerm,
         entity: context.entity,
         ruleInstanceIds: [context.ruleInstanceId],

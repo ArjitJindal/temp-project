@@ -23,6 +23,7 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   KRS_SCORE: 'kyc-risk-values',
   DRS_SCORE: 'dynamic-risk-values',
   ARS_SCORE: 'action-risk-values',
+  SANCTIONS_SCREENING_DETAILS: 'sanctions-screening-details',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {
@@ -236,7 +237,7 @@ export const SANCTIONS_WHITELIST_ENTITIES_COLLECTION = (tenantId: string) => {
 }
 
 export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions-screening-details`
+  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS}`
 }
 
 export const IBAN_COLLECTION = (tenantId: string) => {

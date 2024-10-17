@@ -14,6 +14,7 @@ import {
   convertComplyAdvantageEntityToHit,
 } from '@/services/sanctions/providers/comply-advantage-provider'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -241,11 +242,13 @@ describe('Sanctions Service', () => {
         yearOfBirth: 1992,
         types: ['SANCTIONS', 'PEP'],
       }
-      const hitContext1 = {
+      const hitContext1: SanctionsHitContext = {
+        entity: 'USER',
         ruleInstanceId: 'test',
         userId: 'test-user-id',
       }
-      const hitContext2 = {
+      const hitContext2: SanctionsHitContext = {
+        entity: 'USER',
         ruleInstanceId: 'test',
         userId: 'test-user-id-2',
       }
