@@ -106,7 +106,7 @@ describe('getComparisonItems', () => {
   });
 
   it('should handle empty input gracefully', () => {
-    expect(getComparisonItems([], {})).toEqual([]);
+    expect(getComparisonItems([], { entity: 'USER' })).toEqual([]);
   });
 
   it('should group items by title, screeningValue, kycValue, and match', () => {

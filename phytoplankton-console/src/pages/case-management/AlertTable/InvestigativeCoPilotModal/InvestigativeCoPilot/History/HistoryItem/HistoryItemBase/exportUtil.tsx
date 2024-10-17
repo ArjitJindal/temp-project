@@ -100,7 +100,7 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
       const { sanctionsHit } = item;
       const comparisonItems = getComparisonItems(
         sanctionsHit?.entity.matchTypeDetails || [],
-        sanctionsHit?.hitContext || {},
+        sanctionsHit?.hitContext || { entity: 'USER' },
       );
       const header: CsvRow = [
         csvValue('title'),

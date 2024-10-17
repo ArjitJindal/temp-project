@@ -14,7 +14,7 @@ export default function HistoryItemScreeningComparison(props: Props) {
   const { sanctionsHit } = item;
   const comparisonItems = getComparisonItems(
     sanctionsHit?.entity.matchTypeDetails || [],
-    sanctionsHit?.hitContext || {},
+    sanctionsHit?.hitContext || { entity: 'USER' },
   );
   if (comparisonItems.length == 0) {
     return (

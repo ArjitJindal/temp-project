@@ -161,7 +161,7 @@ function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: num
   const { hit, pdfMode = false, searchedAt } = props;
   const comparisonItems = getComparisonItems(
     hit.entity.matchTypeDetails || [],
-    hit.hitContext || {},
+    hit.hitContext || { entity: 'USER' },
   );
   return (
     <>
