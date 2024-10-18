@@ -7838,6 +7838,7 @@ components:
       title: UserRuleScheduleUnit
       type: string
       enum:
+        - DAY
         - WEEK
         - MONTH
         - YEAR
