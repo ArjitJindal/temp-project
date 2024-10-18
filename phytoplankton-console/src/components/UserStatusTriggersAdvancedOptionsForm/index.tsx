@@ -20,12 +20,14 @@ import {
   UserState,
   PEPStatus,
   PepRank,
+  RuleType,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
 import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/GeneralDetails/PepStatus';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';
+  ruleType?: RuleType;
 };
 
 export interface UserStateDetails {
@@ -43,7 +45,7 @@ export interface KYCStatusDetails {
 export const UserStatusTriggersAdvancedOptionsForm = (
   props: UserStatusTriggersAdvancedOptionsFormProps,
 ) => {
-  const { type } = props;
+  const { type, ruleType } = props;
   const [isUserStateDetailsOpen, setIsUserStateDetailsOpen] = useState(false);
   const [isKYCStatusDetailsOpen, setIsKYCStatusDetailsOpen] = useState(false);
 
@@ -57,13 +59,19 @@ export const UserStatusTriggersAdvancedOptionsForm = (
   } = useFormContext();
   return (
     <>
-      {type === 'RULE' && (
+      {type === 'RULE' && ruleType === 'TRANSACTION' && (
         <InputField<TriggersOnHit, 'usersToCheck'>
           name={'usersToCheck'}
           label={'Users to update'}
           description={
             'Select users of a transaction direction below for which the User/KYC status needs to be updated. If set to ORIGIN, then only users of origin side state are updated.'
           }
+          labelProps={{
+            required: {
+              value: true,
+              showHint: true,
+            },
+          }}
         >
           {(inputProps) => (
             <SelectionGroup<TriggersOnHit['usersToCheck']>
@@ -73,6 +81,7 @@ export const UserStatusTriggersAdvancedOptionsForm = (
                 value: direction,
               }))}
               {...inputProps}
+              value={inputProps?.value ?? 'ALL'}
             />
           )}
         </InputField>

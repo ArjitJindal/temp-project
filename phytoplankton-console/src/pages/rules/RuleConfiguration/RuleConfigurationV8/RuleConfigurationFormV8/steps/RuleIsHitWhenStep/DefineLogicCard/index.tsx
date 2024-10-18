@@ -181,7 +181,7 @@ export default function DefineLogicCard(props: Props) {
             }
             renderThen={
               <div className={s.root}>
-                <RuleActionsCard currentRiskLevel={currentRiskLevel} />
+                <RuleActionsCard currentRiskLevel={currentRiskLevel} ruleType={ruleType} />
                 {isRiskLevelsEnabled && (
                   <ApplyToOtherLevelsCard
                     currentRiskLevel={currentRiskLevel}

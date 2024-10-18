@@ -7,14 +7,15 @@ import { AdvancedOptions } from '@/pages/rules/RuleConfiguration/RuleConfigurati
 import NestedForm from '@/components/library/Form/NestedForm';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevel } from '@/utils/risk-levels';
-import { RiskLevelRuleActions } from '@/apis';
+import { RiskLevelRuleActions, RuleType } from '@/apis';
 
 interface Props {
   currentRiskLevel: RiskLevel;
+  ruleType: RuleType;
 }
 
 export default function RuleActionsCard(props: Props) {
-  const { currentRiskLevel } = props;
+  const { currentRiskLevel, ruleType } = props;
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   if (isRiskLevelsEnabled) {
     return (
@@ -33,7 +34,7 @@ export default function RuleActionsCard(props: Props) {
             )}
           </InputField>
         </NestedForm>
-        <AdvancedOptions riskLevel={currentRiskLevel} />
+        <AdvancedOptions riskLevel={currentRiskLevel} ruleType={ruleType} />
       </SubCard>
     );
   }
@@ -48,7 +49,7 @@ export default function RuleActionsCard(props: Props) {
       >
         {(inputProps) => <RuleActionSelector {...inputProps} />}
       </InputField>
-      <AdvancedOptions />
+      <AdvancedOptions ruleType={ruleType} />
     </SubCard>
   );
 }

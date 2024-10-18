@@ -76,7 +76,7 @@ function RuleSpecificParameters(props: Props) {
         >
           {(inputProps) => <RuleActionSelector {...inputProps} />}
         </InputField>
-        <AdvancedOptions />
+        <AdvancedOptions ruleType={rule.type} />
       </PropertyListLayout>
     </>
   );
@@ -121,7 +121,7 @@ function RiskBasedThresholds(props: Props) {
                 {(inputProps) => <RuleActionSelector {...inputProps} />}
               </InputField>
             </NestedForm>
-            <AdvancedOptions riskLevel={riskLevel} />
+            <AdvancedOptions riskLevel={riskLevel} ruleType={rule.type} />
             <ApplyRiskLevels
               defaultInitialValues={defaultInitialValues.riskLevelParameters}
               currentRiskLevel={riskLevel}
@@ -183,6 +183,7 @@ function RiskBasedThresholds(props: Props) {
     rule.parametersSchema,
     settings,
     defaultInitialValues.riskLevelParameters,
+    rule.type,
   ]);
 
   return (

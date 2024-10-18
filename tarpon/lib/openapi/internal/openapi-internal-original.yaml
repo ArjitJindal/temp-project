@@ -7646,8 +7646,6 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
-      required:
-        - usersToCheck
     RiskLevelsTriggersOnHit:
       title: RiskLevelsTriggersOnHit
       type: object

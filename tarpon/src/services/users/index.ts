@@ -285,8 +285,7 @@ export class UserService {
         : ruleInstance.triggersOnHit
     if (
       ruleInstance.type === 'TRANSACTION' &&
-      (!triggersOnHit?.usersToCheck ||
-        !['ALL', direction].includes(triggersOnHit?.usersToCheck))
+      !['ALL', direction].includes(triggersOnHit?.usersToCheck ?? 'ALL')
     ) {
       return
     }

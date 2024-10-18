@@ -1617,8 +1617,6 @@ components:
         pepStatus:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
           description: Whether the user is a PEP
-      required:
-        - usersToCheck
     RiskLevelsTriggersOnHit:
       title: RiskLevelsTriggersOnHit
       type: object

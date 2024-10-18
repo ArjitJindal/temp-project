@@ -3,13 +3,15 @@ import Label from '@/components/library/Label';
 import NestedForm from '@/components/library/Form/NestedForm';
 import { ExpandContentButton } from '@/components/library/ExpandContentButton';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
+import { RuleType } from '@/apis';
 
 interface Props {
   riskLevel?: string;
+  ruleType?: RuleType;
 }
 
 export const AdvancedOptions = (props: Props) => {
-  const { riskLevel } = props;
+  const { riskLevel, ruleType } = props;
 
   return (
     <ExpandContentButton suffixText="advanced options">
@@ -24,10 +26,10 @@ export const AdvancedOptions = (props: Props) => {
         >
           {riskLevel ? (
             <NestedForm<FormValues['riskLevelsTriggersOnHit']> name={riskLevel}>
-              <UserStatusTriggersAdvancedOptionsForm type="RULE" />
+              <UserStatusTriggersAdvancedOptionsForm type="RULE" ruleType={ruleType} />
             </NestedForm>
           ) : (
-            <UserStatusTriggersAdvancedOptionsForm type="RULE" />
+            <UserStatusTriggersAdvancedOptionsForm type="RULE" ruleType={ruleType} />
           )}
         </Label>
       </NestedForm>
