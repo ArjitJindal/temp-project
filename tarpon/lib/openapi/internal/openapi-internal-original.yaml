@@ -10052,6 +10052,7 @@ components:
         - ASYNC_RULES
         - PNB
         - SALES_RISK_SCORING
+        - STRICT_FILE_SECURITY
       description: ''
     ManagedRoleName:
       type: string

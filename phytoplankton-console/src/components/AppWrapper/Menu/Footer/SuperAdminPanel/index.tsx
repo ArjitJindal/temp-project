@@ -39,60 +39,60 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { isSuccess } from '@/utils/asyncResource';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
-  RISK_LEVELS: { title: 'Risk Levels', description: 'Enable risk levels' },
-  RISK_SCORING: { title: ' Risk Scoring', description: 'Enables risk scoring' },
-  AUDIT_LOGS: { title: 'Audit Logs', description: 'Enables audit log' },
-  SLACK_ALERTS: { title: 'Slack Alerts', description: 'Enables slack alerts for cases' },
+  RISK_LEVELS: { title: 'Risk levels', description: 'Enable risk levels' },
+  RISK_SCORING: { title: ' Risk scoring', description: 'Enables risk scoring' },
+  AUDIT_LOGS: { title: 'Audit logs', description: 'Enables audit log' },
+  SLACK_ALERTS: { title: 'Slack alerts', description: 'Enables slack alerts for cases' },
   NARRATIVE_COPILOT: {
-    title: 'Narrative Copilot',
+    title: 'Narrative copilot',
     description: 'Enables AI copilot feature in case management',
   },
-  AI_FORENSICS: { title: 'AI Forensics', description: 'Enables AI forensics' },
+  AI_FORENSICS: { title: 'AI forensics', description: 'Enables AI forensics' },
   GOOGLE_SSO: { title: "Google SSO (Don't Use)", description: 'Enable google log in' },
   SANCTIONS: { title: 'Screening', description: 'Enables screening' },
   FALSE_POSITIVE_CHECK: {
-    title: 'False Positive Check',
+    title: 'False positive check',
     description: 'Demo feature for false positive check',
   },
-  DEMO_MODE: { title: 'Demo Mode', description: 'Enables demo mode' },
-  DEMO_RULES: { title: 'Demo Rules', description: 'Enable demo rules, they don’t work actually' },
+  DEMO_MODE: { title: 'Demo mode', description: 'Enables demo mode' },
+  DEMO_RULES: { title: 'Demo rules', description: 'Enable demo rules, they don’t work actually' },
   SIMULATOR: { title: 'Simulator', description: 'Enables simulator for rules & risk levels' },
   CRM: { title: "CRM (Don't Use)", description: 'Enables CRM data' },
   ENTITY_LINKING: { title: 'Ontology', description: 'Enables Ontology (entity linking)' },
-  ADVANCED_WORKFLOWS: { title: 'Advanced Workflows', description: 'Enables case escalations flow' },
+  ADVANCED_WORKFLOWS: { title: 'Advanced workflows', description: 'Enables case escalations flow' },
   IBAN_RESOLUTION: {
-    title: 'IBAN Resolution',
+    title: 'IBAN resolution',
     description:
       'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
   },
   MERCHANT_MONITORING: {
-    title: 'Merchant Monitoring',
+    title: 'Merchant monitoring',
     description: 'Enables merchant monitoring in users & case details',
   },
   SAR: { title: 'SAR', description: 'Enables SAR' },
   QA: { title: 'QA', description: 'Enables QA in case management' },
   RULES_ENGINE_V8: {
-    title: 'Rules Engine V8',
+    title: 'Rules engine V8',
     description: 'Enables new rules Engine V8 (Experimental)',
   },
   NOTIFICATIONS: {
-    title: 'Console Notifications',
+    title: 'Console notifications',
     description: 'Enables console notifications',
   },
   RULES_ENGINE_V8_FOR_V2_RULES: {
-    title: 'Rules Engine V8 for V2 Rules',
+    title: 'Rules engine V8 for V2 Rules',
     description: 'Enables new rules Engine V8 for V2 rules (Experimental)',
   },
   KINESIS_ASYNC: {
-    title: 'Kinesis Async',
+    title: 'Kinesis async',
     description: 'Enables Kinesis Async for case creation',
   },
   FILES_AI_SUMMARY: {
-    title: 'AI Attachment Summarization',
+    title: 'AI attachment summarization',
     description: 'Enables AI Attachment Summarization (pdf only)',
   },
   CLICKHOUSE_ENABLED: {
-    title: 'Clickhouse Enabled (Experimental Dev Only)',
+    title: 'Clickhouse (Beta)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
   },
   MACHINE_LEARNING: {
@@ -104,7 +104,7 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     description: 'Enables Alert SLA',
   },
   RISK_SCORING_V8: {
-    title: 'Risk Scoring V8',
+    title: 'Risk scoring V8',
     description: 'Enables risk scoring V8',
   },
   DOW_JONES: {
@@ -112,20 +112,25 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     description: 'Enables using Dow Jones for sanctions',
   },
   ASYNC_RULES: {
-    title: 'Async Rules',
+    title: 'Async rules',
     description: 'Enables async rules',
   },
   RULES_ENGINE_V8_ASYNC_AGGREGATION: {
-    title: 'Rules Engine V8 Async Aggregation',
-    description: 'Enables Rules Engine V8 Async Aggregation',
+    title: 'Rules engine V8 async aggregation',
+    description: 'Enables Rules engine V8 async aggregation',
   },
   PNB: {
     title: 'PNB',
     description: 'Enables PNB specific features',
   },
   SALES_RISK_SCORING: {
-    title: 'Sales Risk Scoring',
+    title: 'Sales risk scoring',
     description: 'Enables access to both views of risk configuration.',
+  },
+  STRICT_FILE_SECURITY: {
+    title: 'Strict file security',
+    description:
+      'Enables strict file security (forbid the following file extensions: .xlsx, .xlsm, .xltm)',
   },
 };
 

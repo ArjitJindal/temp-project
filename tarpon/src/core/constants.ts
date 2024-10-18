@@ -22,7 +22,6 @@ export const ACCEPTED_FILE_EXTENSIONS_SET = new Set([
   '.json',
   '.doc',
   '.js',
-  '.xls',
   '.tif',
   '.dotx',
   '.eml',

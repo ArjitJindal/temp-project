@@ -8,6 +8,7 @@ import {
 } from 'aws-lambda'
 import { isEmpty } from 'lodash'
 import { BadRequest } from 'http-errors'
+import { hasFeature } from '@/core/utils/context'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -16,6 +17,17 @@ import {
   ACCEPTED_FILE_EXTENSIONS_SET,
   MAX_FILE_SIZE_BYTES,
 } from '@/core/constants'
+
+function getAcceptedFileExtensions() {
+  if (hasFeature('STRICT_FILE_SECURITY')) {
+    return new Set(
+      Array.from(ACCEPTED_FILE_EXTENSIONS_SET).filter(
+        (ext) => !ext.startsWith('.xl')
+      )
+    )
+  }
+  return ACCEPTED_FILE_EXTENSIONS_SET
+}
 
 export type GetPresignedUrlConfig = {
   TMP_BUCKET: string
@@ -40,10 +52,11 @@ export const getPresignedUrlHandler = lambdaApi()(
 
       // Accept only specific file extensions
       const fileExtension = extname(request.filename)
-      if (!ACCEPTED_FILE_EXTENSIONS_SET.has(fileExtension.toLowerCase())) {
+      const acceptedFileExtensions = getAcceptedFileExtensions()
+      if (!acceptedFileExtensions.has(fileExtension.toLowerCase())) {
         throw new BadRequest(
           `File extension "${fileExtension}" is not allowed. Allowed extensions are: ${Array.from(
-            ACCEPTED_FILE_EXTENSIONS_SET
+            acceptedFileExtensions
           ).join(', ')}`
         )
       }
