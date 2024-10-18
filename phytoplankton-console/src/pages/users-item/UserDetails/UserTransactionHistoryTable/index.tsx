@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { ManualCaseCreationButton } from '../../ManualCaseCreationButton';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
@@ -35,6 +35,9 @@ import { makeUrl } from '@/utils/routing';
 import Id from '@/components/ui/Id';
 import { getOr } from '@/utils/asyncResource';
 import { dayjs } from '@/utils/dayjs';
+import { PaymentDetails } from '@/utils/api/payment-details';
+import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
+import { PAYMENT_DETAILS_OR_METHOD } from '@/pages/transactions/components/TransactionsTable/helpers/tableDataTypes';
 
 export type DataItem = {
   index: number;
@@ -51,6 +54,8 @@ export type DataItem = {
   arsRiskLevel?: RiskLevel;
   arsScore?: number;
   transactionState?: TransactionState;
+  originPaymentDetails?: PaymentDetails;
+  destinationPaymentDetails?: PaymentDetails;
 };
 
 const DEFAULT_TIMESTAMP = [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')];
@@ -80,6 +85,8 @@ export function Content(props: { userId: string }) {
       });
     },
   );
+
+  const [showDetailsView, setShowDetailsView] = useState(false);
 
   const responseRes = useCursorQuery(
     USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
@@ -134,11 +141,163 @@ export function Content(props: { userId: string }) {
     },
   );
 
-  const helper = new ColumnHelper<DataItem>();
-
   const casesList = getOr<CasesListResponse>(cases.data, { data: [], total: 0 }); // eslint-disable-line
 
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+  const columns = useMemo(() => {
+    const helper = new ColumnHelper<DataItem>();
+
+    return helper.list([
+      helper.simple<'transactionId'>({
+        title: 'Transaction ID',
+        key: 'transactionId',
+        type: {
+          render: (transactionId) => {
+            return (
+              <div className={style.idColumn}>
+                <Id to={makeUrl(`/transactions/item/:id`, { id: transactionId ?? '' })}>
+                  {transactionId}
+                </Id>
+              </div>
+            );
+          },
+        },
+      }),
+      ...(isRiskScoringEnabled
+        ? [
+            helper.simple({
+              title: 'TRS score',
+              key: 'arsScore',
+              id: 'arsScore.arsScore',
+              type: FLOAT,
+              sorting: true,
+              tooltip: 'Transaction Risk Score',
+            }),
+            helper.simple<'arsRiskLevel'>({
+              title: 'TRS level',
+              type: RISK_LEVEL,
+              key: 'arsRiskLevel',
+              tooltip: 'Transaction Risk Score level',
+            }),
+          ]
+        : []),
+      helper.simple<'ruleName'>({
+        title: 'Rules hit',
+        key: 'ruleName',
+      }),
+      helper.simple<'ruleDescription'>({
+        title: 'Rules description',
+        tooltip: 'Describes the conditions required for this rule to be hit.',
+        key: 'ruleDescription',
+      }),
+      helper.simple<'transactionState'>({
+        id: 'lastTransactionState',
+        title: 'Last transaction state',
+        key: 'transactionState',
+        type: TRANSACTION_STATE,
+      }),
+      helper.simple<'timestamp'>({
+        title: 'Transaction time',
+        key: 'timestamp',
+        type: {
+          ...DATE,
+          autoFilterDataType: {
+            kind: 'dateTimeRange',
+            allowClear: false,
+          },
+        },
+        sorting: true,
+        filtering: true,
+      }),
+      helper.simple<'status'>({
+        key: 'status',
+        title: 'Status',
+        type: RULE_ACTION_STATUS,
+        sorting: true,
+        filtering: true,
+      }),
+      helper.simple<'direction'>({
+        title: 'Transaction direction',
+        key: 'direction',
+        type: {
+          autoFilterDataType: {
+            kind: 'select',
+            options: [
+              { value: 'all', label: 'All' },
+              { value: 'incoming', label: 'Incoming' },
+              { value: 'outgoing', label: 'Outgoing' },
+            ],
+            mode: 'SINGLE',
+            displayMode: 'select',
+          },
+        },
+        filtering: true,
+      }),
+      helper.group({
+        title: 'Origin',
+        tooltip: 'Origin is the Sender in a transaction',
+        children: helper.list([
+          helper.derived<Amount>({
+            id: 'originAmount',
+            title: 'Origin amount',
+            value: (entity): Amount | undefined => {
+              if (entity.originAmountDetails == null) {
+                return undefined;
+              }
+              return {
+                amountValue: entity.originAmountDetails?.transactionAmount,
+                amountCurrency: entity.originAmountDetails?.transactionCurrency,
+              };
+            },
+            type: MONEY,
+          }),
+          helper.simple<'originAmountDetails.country'>({
+            id: 'originCountry',
+            title: 'Origin country',
+            key: 'originAmountDetails.country',
+            type: COUNTRY,
+          }),
+          helper.simple<'originPaymentDetails'>({
+            title: showDetailsView ? 'Payment details' : 'Payment method',
+            key: 'originPaymentDetails',
+            type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+          }),
+        ]),
+      }),
+      helper.group({
+        title: 'Destination',
+        tooltip: 'Destination is the Receiver in a transaction',
+        children: helper.list([
+          helper.derived({
+            id: 'destinationAmount',
+            title: 'Destination amount',
+            value: (entity): Amount | undefined => {
+              if (entity.destinationAmountDetails == null) {
+                return undefined;
+              }
+              return {
+                amountValue: entity.destinationAmountDetails?.transactionAmount,
+                amountCurrency: entity.destinationAmountDetails?.transactionCurrency,
+              };
+            },
+            type: MONEY,
+          }),
+          helper.simple<'destinationAmountDetails.country'>({
+            id: 'destinationCountry',
+            title: 'Destination country',
+            key: 'destinationAmountDetails.country',
+            type: COUNTRY,
+          }),
+          helper.simple<'destinationPaymentDetails'>({
+            title: showDetailsView ? 'Payment details' : 'Payment method',
+            key: 'destinationPaymentDetails',
+            type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
+          }),
+        ]),
+      }),
+    ]);
+  }, [isRiskScoringEnabled, showDetailsView]);
 
   return (
     <QueryResultsTable<DataItem>
@@ -146,145 +305,8 @@ export function Content(props: { userId: string }) {
       params={params}
       onChangeParams={setParams}
       queryResults={responseRes}
-      columns={helper.list([
-        helper.simple<'transactionId'>({
-          title: 'Transaction ID',
-          key: 'transactionId',
-          type: {
-            render: (transactionId) => {
-              return (
-                <div className={style.idColumn}>
-                  <Id to={makeUrl(`/transactions/item/:id`, { id: transactionId ?? '' })}>
-                    {transactionId}
-                  </Id>
-                </div>
-              );
-            },
-          },
-        }),
-        ...(isRiskScoringEnabled
-          ? [
-              helper.simple({
-                title: 'TRS score',
-                key: 'arsScore',
-                id: 'arsScore.arsScore',
-                type: FLOAT,
-                sorting: true,
-                tooltip: 'Transaction Risk Score',
-              }),
-              helper.simple<'arsRiskLevel'>({
-                title: 'TRS level',
-                type: RISK_LEVEL,
-                key: 'arsRiskLevel',
-                tooltip: 'Transaction Risk Score level',
-              }),
-            ]
-          : []),
-        helper.simple<'ruleName'>({
-          title: 'Rules hit',
-          key: 'ruleName',
-        }),
-        helper.simple<'ruleDescription'>({
-          title: 'Rules description',
-          tooltip: 'Describes the conditions required for this rule to be hit.',
-          key: 'ruleDescription',
-        }),
-        helper.simple<'transactionState'>({
-          id: 'lastTransactionState',
-          title: 'Last transaction state',
-          key: 'transactionState',
-          type: TRANSACTION_STATE,
-        }),
-        helper.simple<'timestamp'>({
-          title: 'Transaction time',
-          key: 'timestamp',
-          type: {
-            ...DATE,
-            autoFilterDataType: {
-              kind: 'dateTimeRange',
-              allowClear: false,
-            },
-          },
-          sorting: true,
-          filtering: true,
-        }),
-        helper.simple<'status'>({
-          key: 'status',
-          title: 'Status',
-          type: RULE_ACTION_STATUS,
-          sorting: true,
-          filtering: true,
-        }),
-        helper.simple<'direction'>({
-          title: 'Transaction direction',
-          key: 'direction',
-          type: {
-            autoFilterDataType: {
-              kind: 'select',
-              options: [
-                { value: 'all', label: 'All' },
-                { value: 'incoming', label: 'Incoming' },
-                { value: 'outgoing', label: 'Outgoing' },
-              ],
-              mode: 'SINGLE',
-              displayMode: 'select',
-            },
-          },
-          filtering: true,
-        }),
-        helper.group({
-          title: 'Origin',
-          tooltip: 'Origin is the Sender in a transaction',
-          children: helper.list([
-            helper.derived<Amount>({
-              id: 'originAmount',
-              title: 'Origin amount',
-              value: (entity): Amount | undefined => {
-                if (entity.originAmountDetails == null) {
-                  return undefined;
-                }
-                return {
-                  amountValue: entity.originAmountDetails?.transactionAmount,
-                  amountCurrency: entity.originAmountDetails?.transactionCurrency,
-                };
-              },
-              type: MONEY,
-            }),
-            helper.simple<'originAmountDetails.country'>({
-              id: 'originCountry',
-              title: 'Origin country',
-              key: 'originAmountDetails.country',
-              type: COUNTRY,
-            }),
-          ]),
-        }),
-        helper.group({
-          title: 'Destination',
-          tooltip: 'Destination is the Receiver in a transaction',
-          children: helper.list([
-            helper.derived({
-              id: 'destinationAmount',
-              title: 'Destination amount',
-              value: (entity): Amount | undefined => {
-                if (entity.destinationAmountDetails == null) {
-                  return undefined;
-                }
-                return {
-                  amountValue: entity.destinationAmountDetails?.transactionAmount,
-                  amountCurrency: entity.destinationAmountDetails?.transactionCurrency,
-                };
-              },
-              type: MONEY,
-            }),
-            helper.simple<'destinationAmountDetails.country'>({
-              id: 'destinationCountry',
-              title: 'Destination country',
-              key: 'destinationAmountDetails.country',
-              type: COUNTRY,
-            }),
-          ]),
-        }),
-      ])}
+      rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
+      columns={columns}
       renderExpanded={(item) => <TransactionEventsTable events={item.events} />}
       fixedExpandedContainer={true}
       fitHeight={true}
@@ -309,6 +331,15 @@ export function Content(props: { userId: string }) {
           : undefined
       }
       selection={true}
+      extraTools={[
+        () => (
+          <DetailsViewButton
+            onConfirm={(value) => {
+              setShowDetailsView(value);
+            }}
+          />
+        ),
+      ]}
       selectedIds={selectedIds}
       onSelect={setSelectedIds}
     />

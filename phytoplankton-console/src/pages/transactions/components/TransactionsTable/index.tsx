@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
+import { PAYMENT_DETAILS_OR_METHOD } from './helpers/tableDataTypes';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import {
   Alert,
@@ -13,7 +14,6 @@ import {
 } from '@/apis';
 import {
   AllParams,
-  ColumnDataType,
   CommonParams,
   DerivedColumn,
   SelectionAction,
@@ -29,7 +29,6 @@ import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
 import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
-import PaymentMethodTag from '@/components/library/Tag/PaymentTypeTag';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
   COUNTRY,
@@ -53,24 +52,9 @@ import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useHasPermissions } from '@/utils/user-utils';
-import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
-import { PaymentDetails } from '@/utils/api/payment-details';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
 import Tag from '@/components/library/Tag';
-
-const PAYMENT_DETAILS_OR_METHOD = (showDetailsView: boolean): ColumnDataType<PaymentDetails> => ({
-  stringify: (value) => {
-    return `${value?.method}`;
-  },
-  defaultWrapMode: 'WRAP',
-  render: (value) => {
-    if (showDetailsView) {
-      return <PaymentDetailsProps paymentDetails={value} />;
-    }
-    return <PaymentMethodTag paymentMethod={value?.method} />;
-  },
-});
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;

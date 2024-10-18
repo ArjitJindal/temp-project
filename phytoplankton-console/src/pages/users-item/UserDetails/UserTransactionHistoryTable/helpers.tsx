@@ -23,6 +23,8 @@ export function prepareTableData(
       arsRiskLevel: item.arsScore?.riskLevel,
       arsScore: item.arsScore?.arsScore,
       transactionState: item.transactionState,
+      originPaymentDetails: item.originPaymentDetails,
+      destinationPaymentDetails: item.destinationPaymentDetails,
     };
     if (item.hitRules.length === 0) {
       return dataItem;
@@ -43,6 +45,9 @@ export function prepareTableData(
         'destinationCountry',
         'destinationPaymentMethodId',
         'originPaymentMethodId',
+        'destinationPaymentMethodId',
+        'originPaymentDetails',
+        'destinationPaymentDetails',
       ],
       rows: item.hitRules.map((rule, i): DataItem => {
         const isFirstRow = i == 0;
