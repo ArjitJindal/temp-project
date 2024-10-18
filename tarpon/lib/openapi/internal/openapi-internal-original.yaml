@@ -924,6 +924,14 @@ paths:
               $ref: '#/components/schemas/RuleAction'
           in: query
           name: filterStatus
+        - schema:
+            type: boolean
+          in: query
+          name: includeUsers
+        - schema:
+            type: boolean
+          in: query
+          name: includeEvents
   /transactions:
     get:
       summary: Transaction - List

@@ -2,7 +2,10 @@ import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetTransactionsListRequest,
+  DefaultApiGetTransactionsV2ListRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { TransactionsStatsByTypesResponse } from '@/@types/openapi-internal/TransactionsStatsByTypesResponse'
@@ -15,6 +18,9 @@ import { Currency } from '@/services/currency'
 import { TransactionsResponse } from '@/@types/openapi-internal/TransactionsResponse'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
+import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 
 @traceable
 export class TransactionService {
@@ -60,6 +66,22 @@ export class TransactionService {
     return await this.transactionRepository.getTransactionsCount(params)
   }
 
+  public async getTransactionsListV2(
+    params: DefaultApiGetTransactionsV2ListRequest
+  ): Promise<TransactionsResponseOffsetPaginated> {
+    const clickhouseClient = await getClickhouseClient(this.tenantId)
+    const clickhouseTransactionsRepository =
+      new ClickhouseTransactionsRepository(this.tenantId, clickhouseClient)
+
+    const data = await clickhouseTransactionsRepository.getTransactions(params)
+
+    if (params.includeUsers) {
+      data.items = await this.getTransactionUsers(data.items)
+    }
+
+    return data
+  }
+
   public async getTransactionsList(
     params: DefaultApiGetTransactionsListRequest,
     options: { includeEvents?: boolean; includeUsers?: boolean }
@@ -68,23 +90,9 @@ export class TransactionService {
     const response = await this.getTransactions(params)
 
     if (includeUsers) {
-      const userIds = Array.from(
-        new Set<string>(
-          response.items.flatMap(
-            (t) =>
-              [t.originUserId, t.destinationUserId].filter(Boolean) as string[]
-          )
-        )
-      )
-      const users = await this.userRepository.getMongoUsersByIds(userIds)
-      const userMap = new Map()
-      users.forEach((u) => userMap.set(u.userId, u))
-      response.items.map((t) => {
-        t.originUser = userMap.get(t.originUserId)
-        t.destinationUser = userMap.get(t.destinationUserId)
-        return t
-      })
+      response.items = await this.getTransactionUsers(response.items)
     }
+
     if (includeEvents) {
       const events =
         await this.transactionEventsRepository.getMongoTransactionEvents(
@@ -96,6 +104,39 @@ export class TransactionService {
       })
     }
     return response
+  }
+
+  private async getTransactionUsers(
+    transaction: InternalTransaction[]
+  ): Promise<InternalTransaction[]> {
+    const userIds = Array.from(
+      new Set<string>(
+        transaction.flatMap(
+          (t) =>
+            [t.originUserId, t.destinationUserId].filter(Boolean) as string[]
+        )
+      )
+    )
+
+    const users = await this.userRepository.getMongoUsersByIds(userIds, {
+      projection: {
+        type: 1,
+        'userDetails.name': 1,
+        'legalEntity.companyGeneralDetails.legalName': 1,
+        userId: 1,
+      },
+    })
+
+    const userMap = new Map()
+    users.forEach((u) => userMap.set(u.userId, u))
+
+    transaction.map((t) => {
+      t.originUser = userMap.get(t.originUserId)
+      t.destinationUser = userMap.get(t.destinationUserId)
+      return t
+    })
+
+    return transaction
   }
 
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {

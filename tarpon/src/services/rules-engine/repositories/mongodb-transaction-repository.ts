@@ -703,17 +703,15 @@ export class MongoDbTransactionRepository
   public async getInternalTransaction(
     transactionId: string
   ): Promise<InternalTransaction | null> {
-    return (
-      await this.getDenormalizedTransactions(
-        {
-          transactionId,
-        },
-        {
-          includeUsers: true,
-          includeEvents: true,
-          beforeTimestamp: Date.now(),
-        }
-      )
+    return this.getDenormalizedTransactions(
+      {
+        transactionId,
+      },
+      {
+        includeUsers: true,
+        includeEvents: true,
+        beforeTimestamp: Date.now(),
+      }
     ).next()
   }
 

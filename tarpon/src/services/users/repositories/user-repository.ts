@@ -816,12 +816,21 @@ export class UserRepository {
     return await collection.findOne(matchCondition as Filter<InternalUser>)
   }
 
-  public async getMongoUsersByIds(userIds: string[]): Promise<InternalUser[]> {
+  public async getMongoUsersByIds(
+    userIds: string[],
+    options?: { projection?: Document }
+  ): Promise<InternalUser[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
-    return await collection.find({ userId: { $in: userIds } }).toArray()
+    const cursor = collection.find({ userId: { $in: userIds } })
+
+    if (options?.projection) {
+      cursor.project(options.projection)
+    }
+
+    return cursor.toArray()
   }
 
   public getOngoingScreeningUsersCursor(): FindCursor<InternalBusinessUser> {
