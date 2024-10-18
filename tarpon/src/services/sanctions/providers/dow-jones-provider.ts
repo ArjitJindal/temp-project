@@ -562,8 +562,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             id.ID?.flatMap((id): SanctionsIdDocument => {
               return id.IDValue?.map((idValue) => {
                 const idVal =
-                  typeof idValue === 'string'
-                    ? idValue
+                  typeof idValue !== 'object'
+                    ? String(idValue)
                     : idValue['#text']
                     ? String(idValue['#text'])
                     : idValue['#text']

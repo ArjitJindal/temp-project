@@ -180,6 +180,8 @@ Patasse passed away on April 5, 2011.`,
               },
               {
                 name: 'OFAC Unique ID',
+                formattedId: '16723',
+                id: '16723',
               },
               {
                 id: 'CAF',
@@ -187,9 +189,29 @@ Patasse passed away on April 5, 2011.`,
                 formattedId: 'CAF',
               },
               {
+                id: '7355',
+                name: 'EU Consolidated Electronic List ID',
+                formattedId: '7355',
+              },
+              {
                 id: 'CFi.001',
                 name: 'UN Permanent Reference No.',
                 formattedId: 'CFi.001',
+              },
+              {
+                formattedId: '12998',
+                id: '12998',
+                name: 'HM Treasury Group ID',
+              },
+              {
+                formattedId: '27651',
+                id: '27651',
+                name: 'SECO SSID',
+              },
+              {
+                formattedId: '2673',
+                id: '2673',
+                name: 'DFAT Reference Number',
               },
               {
                 id: 'CAF0003',
