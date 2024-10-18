@@ -9118,6 +9118,8 @@ components:
           type: string
         timestamp:
           type: number
+        escalationLevel:
+          $ref: '#/components/schemas/EscalationLevel'
       required:
         - assigneeUserId
         - timestamp
@@ -9225,6 +9227,11 @@ components:
           type: string
       required:
         - reassignTo
+    EscalationLevel:
+      type: string
+      enum:
+        - L1
+        - L2
     Account:
       title: Account
       type: object
@@ -9243,9 +9250,11 @@ components:
           type: string
         blocked:
           type: boolean
-        isEscalationContact:
-          type: boolean
+        escalationLevel:
+          $ref: '#/components/schemas/EscalationLevel'
         reviewerId:
+          type: string
+        escalationReviewerId:
           type: string
         allowTenantDeletion:
           type: boolean
@@ -9266,6 +9275,8 @@ components:
             - DORMANT
             - BRUTE_FORCE
             - DEACTIVATED
+        isReviewer:
+          type: boolean
       required:
         - id
         - role
@@ -9273,7 +9284,6 @@ components:
         - emailVerified
         - name
         - blocked
-        - isEscalationContact
     AccountSettings:
       title: AccountSettings
       type: object
@@ -9288,10 +9298,14 @@ components:
           type: string
         role:
           type: string
-        isEscalationContact:
-          type: boolean
         reviewerId:
           type: string
+        escalationLevel:
+          $ref: '#/components/schemas/EscalationLevel'
+        escalationReviewerId:
+          type: string
+        isReviewer:
+          type: boolean
       required:
         - email
     ResendAccountInvitePayload:
@@ -9308,10 +9322,14 @@ components:
       properties:
         role:
           type: string
-        isEscalationContact:
-          type: boolean
         reviewerId:
           type: string
+        escalationLevel:
+          $ref: '#/components/schemas/EscalationLevel'
+        escalationReviewerId:
+          type: string
+        isReviewer:
+          type: boolean
     Tenant:
       title: Tenant
       type: object
@@ -10059,6 +10077,7 @@ components:
         - DOW_JONES
         - ASYNC_RULES
         - PNB
+        - MULTI_LEVEL_ESCALATION
         - SALES_RISK_SCORING
         - STRICT_FILE_SECURITY
       description: ''
@@ -10220,6 +10239,9 @@ components:
         - OPEN_ON_HOLD
         - ESCALATED_IN_PROGRESS
         - ESCALATED_ON_HOLD
+        - ESCALATED_L2
+        - ESCALATED_L2_IN_PROGRESS
+        - ESCALATED_L2_ON_HOLD
     AlertStatus:
       type: string
       title: AlertStatus
@@ -10236,6 +10258,9 @@ components:
         - OPEN_ON_HOLD
         - ESCALATED_IN_PROGRESS
         - ESCALATED_ON_HOLD
+        - ESCALATED_L2
+        - ESCALATED_L2_IN_PROGRESS
+        - ESCALATED_L2_ON_HOLD
     SarDetails:
       title: SarDetails
       type: object
@@ -10261,6 +10286,7 @@ components:
         - IN_REVIEW
         - IN_PROGRESS
         - ON_HOLD
+        - ESCALATED_L2
     FilterOperator:
       type: string
       title: FilterOperator
@@ -14558,6 +14584,7 @@ components:
               - ESCALATED
               - IN_REVIEW
               - REOPENED
+              - ESCALATED_L2
         alertStatusesCount:
           type: array
           items:
@@ -14572,6 +14599,7 @@ components:
                   - ESCALATED
                   - REOPENED
                   - IN_REVIEW
+                  - ESCALATED_L2
               operator:
                 $ref: '#/components/schemas/NumberOperators'
               count:

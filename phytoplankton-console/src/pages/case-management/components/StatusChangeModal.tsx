@@ -37,13 +37,21 @@ export interface FormValues {
   userStateDetails?: UserStateDetailsInternal;
 }
 
+export type ActionLabel =
+  | 'Send back'
+  | 'Escalate'
+  | 'Approve'
+  | 'Decline'
+  | 'Close'
+  | 'Escalate L2';
+
 export interface Props {
   entityName: 'CASE' | 'ALERT' | 'TRANSACTION';
   isVisible: boolean;
   entityIds: string[];
   oldStatus?: CaseStatus;
   newStatus: CaseStatus;
-  newStatusActionLabel?: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
+  newStatusActionLabel?: ActionLabel;
   defaultReasons?: CaseReasons[];
   initialValues?: Partial<FormValues>;
   onClose: () => void;

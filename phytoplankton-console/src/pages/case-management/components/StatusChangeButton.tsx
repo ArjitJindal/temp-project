@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { compact } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { ActionLabel } from './StatusChangeModal';
 import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
 import Button, { ButtonSize } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
@@ -27,9 +28,11 @@ export const statusToOperationName = (
       return 'In review';
     case 'OPEN_IN_PROGRESS':
     case 'ESCALATED_IN_PROGRESS':
+    case 'ESCALATED_L2_IN_PROGRESS':
       return 'In progress';
     case 'OPEN_ON_HOLD':
     case 'ESCALATED_ON_HOLD':
+    case 'ESCALATED_L2_ON_HOLD':
       return 'On hold';
     case 'IN_REVIEW':
       return 'In review';
@@ -37,6 +40,9 @@ export const statusToOperationName = (
       return 'In progress';
     case 'ON_HOLD':
       return 'On hold';
+    case 'ESCALATED_L2':
+      return 'Escalated L2';
+
     default:
       return neverReturn(status, humanizeConstant(status));
   }
@@ -58,12 +64,8 @@ interface ChildrenProps {
 interface Props {
   ids: string[];
   status?: CaseStatus | AlertStatus;
-  buttonProps?: {
-    size?: ButtonSize | undefined;
-    isBlue?: boolean;
-    rounded?: boolean;
-  };
-  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: string }>>;
+  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
   children: (childrenProps: ChildrenProps) => React.ReactNode;
   isDisabled?: boolean;
   className?: string;

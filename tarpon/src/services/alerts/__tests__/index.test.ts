@@ -43,7 +43,7 @@ const TEST_ACCOUNT: Account = {
   emailVerified: true,
   name: 'ACCOUNT',
   blocked: false,
-  isEscalationContact: true,
+  escalationLevel: 'L1',
 }
 
 jest.mock('@/core/utils/context', () => {

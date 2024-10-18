@@ -1,5 +1,5 @@
 import React from 'react';
-import { FormValues } from '../StatusChangeModal';
+import { ActionLabel, FormValues } from '../StatusChangeModal';
 import AlertsStatusChangeModal from './AlertsStatusChangeModal';
 import { AlertStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
@@ -12,19 +12,9 @@ interface Props {
   caseId?: string;
   status?: AlertStatus;
   initialValues?: Partial<FormValues>;
-  buttonProps?: {
-    size?: ButtonSize | undefined;
-    isBlue?: boolean;
-    rounded?: boolean;
-  };
+  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
   statusTransitions?: Partial<
-    Record<
-      AlertStatus,
-      {
-        status: AlertStatus;
-        actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
-      }
-    >
+    Record<AlertStatus, { status: AlertStatus; actionLabel: ActionLabel }>
   >;
   onSaved: () => void;
   isDisabled?: boolean;

@@ -113,6 +113,10 @@ export function getDerivedStatus(
     case 'ESCALATED_ON_HOLD': {
       return 'ESCALATED'
     }
+    case 'ESCALATED_L2_IN_PROGRESS':
+    case 'ESCALATED_L2_ON_HOLD': {
+      return 'ESCALATED_L2'
+    }
     default:
       return status as DerivedStatus
   }

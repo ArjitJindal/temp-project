@@ -1,6 +1,7 @@
 import { AuthenticationClient, ManagementClient } from 'auth0'
 import { memoize } from 'lodash'
 import { getSecret } from './secrets-manager'
+import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'
 
 export type Auth0ManagementAPICreds = {
   clientId: string
@@ -36,10 +37,10 @@ export function isWhitelabelAuth0Domain(auth0Domain: string): boolean {
 
 export interface AppMetadata {
   role: string
-  isEscalationContact?: boolean
   isReviewer?: boolean
   isReviewRequired?: boolean
   reviewerId?: string
+  escalationLevel?: EscalationLevel
 }
 
 export const getAuth0ManagementClient = memoize(async (auth0Domain: string) => {

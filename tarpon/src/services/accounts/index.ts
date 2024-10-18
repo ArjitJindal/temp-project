@@ -194,6 +194,7 @@ export class AccountsService {
       throw new Conflict('User email can not be null')
     }
     const role: string = app_metadata ? app_metadata.role : 'user'
+
     return {
       id: user_id,
       role: role,
@@ -202,7 +203,6 @@ export class AccountsService {
       name: user.name ?? '',
       picture: user.picture,
       blocked: user.blocked ?? false,
-      isEscalationContact: app_metadata?.isEscalationContact === true,
       reviewerId: app_metadata?.reviewerId,
       ...(app_metadata?.blockedReason && {
         blockedReason: app_metadata.blockedReason,
@@ -210,6 +210,9 @@ export class AccountsService {
       lastLogin: dayjs(last_login as string).valueOf(),
       createdAt: dayjs(created_at as string).valueOf(),
       lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
+      escalationLevel: app_metadata?.escalationLevel,
+      escalationReviewerId: app_metadata?.escalationReviewerId,
+      isReviewer: app_metadata?.isReviewer,
     }
   }
 
@@ -272,7 +275,14 @@ export class AccountsService {
     organization: Tenant,
     values: AccountInvitePayload
   ): Promise<ApiAccount> {
-    const { role, email, isEscalationContact, reviewerId } = values
+    const {
+      role,
+      email,
+      reviewerId,
+      escalationLevel,
+      isReviewer,
+      escalationReviewerId,
+    } = values
     const inviteRole = role ?? 'analyst'
     if (inviteRole === 'root') {
       throw new Forbidden(`It's not possible to create a root user`)
@@ -295,8 +305,10 @@ export class AccountsService {
     const user = await this.createAccountInOrganization(organization, {
       email,
       role: inviteRole,
-      isEscalationContact,
       reviewerId,
+      escalationLevel,
+      isReviewer,
+      escalationReviewerId,
     })
 
     return user
@@ -307,10 +319,11 @@ export class AccountsService {
     params: {
       email: string
       role: string
-      isEscalationContact?: boolean
       isReviewer?: boolean
       isReviewRequired?: boolean
       reviewerId?: string
+      escalationLevel?: string
+      escalationReviewerId?: string
     }
   ): Promise<Account> {
     let user: GetUsers200ResponseOneOfInner | null = null
@@ -356,10 +369,11 @@ export class AccountsService {
             password: `P-${uuidv4()}@123`,
             app_metadata: {
               role: params.role,
-              isEscalationContact: params.isEscalationContact,
               isReviewer: params.isReviewer,
               isReviewRequired: params.isReviewRequired,
               reviewerId: params.reviewerId,
+              escalationLevel: params.escalationLevel,
+              escalationReviewerId: params.escalationReviewerId,
             } as AppMetadata,
             verify_email: false,
           })
@@ -453,14 +467,17 @@ export class AccountsService {
       .updateOne({ id: userId }, { $set: data })
   }
 
-  async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
-    const accounts: Account[] = []
+  async getTenantAccountsRaw(
+    tenant: Tenant
+  ): Promise<GetUsers200ResponseOneOfInner[]> {
+    const accounts: GetUsers200ResponseOneOfInner[] = []
     let totalCount = 0
     let page = 0
 
     const managementClient: ManagementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
+
     const organizationManager = managementClient.organizations
     const userManager = managementClient.users
 
@@ -483,8 +500,7 @@ export class AccountsService {
           q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
         })
       )
-
-      accounts.push(...users.map(AccountsService.userToAccount))
+      accounts.push(...users)
       totalCount += result.members.length
       if (totalCount >= result.total) {
         break
@@ -492,6 +508,11 @@ export class AccountsService {
       page += 1
     }
     return accounts
+  }
+
+  async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
+    const rawAccounts = await this.getTenantAccountsRaw(tenant)
+    return rawAccounts.map(AccountsService.userToAccount)
   }
 
   async refreshActiveSessions(
@@ -750,7 +771,8 @@ export class AccountsService {
   public async blockAccount(
     tenantId: string,
     accountId: string,
-    blockedReason: Account['blockedReason']
+    blockedReason: Account['blockedReason'],
+    skipRemovingRoles: boolean = false
   ): Promise<void> {
     const userTenant = await this.getAccountTenant(accountId)
     const managementClient = await getAuth0ManagementClient(
@@ -776,6 +798,7 @@ export class AccountsService {
         blockedReason,
       }),
       userRoles.data.length &&
+        !skipRemovingRoles &&
         userManager.deleteRoles(
           { id: accountId },
           { roles: userRoles.data.map((role) => role.id) }
@@ -862,19 +885,16 @@ export class AccountsService {
         {
           app_metadata: {
             ...user.app_metadata,
-            isEscalationContact: patch.isEscalationContact === true,
             reviewerId: patch.reviewerId ?? null,
+            escalationReviewerId: patch.escalationReviewerId ?? null,
+            escalationLevel: patch.escalationLevel ?? null,
+            isReviewer: patch.isReviewer ?? null,
           },
         }
       )
     )
 
-    await this.updateAuth0UserInMongo(tenant.id, accountId, {
-      role: patch.role,
-      isEscalationContact: patch.isEscalationContact ?? false,
-      reviewerId: patch?.reviewerId,
-    })
-
+    await this.updateAuth0UserInMongo(tenant.id, accountId, patch)
     return AccountsService.userToAccount(patchedUser)
   }
 
@@ -884,9 +904,7 @@ export class AccountsService {
     )
     const userManager = managementClient.users
     const user = await auth0AsyncWrapper(() =>
-      userManager.get({
-        id: accountId,
-      })
+      userManager.get({ id: accountId })
     )
     return {
       demoMode: user.user_metadata?.['demoMode'] === true,

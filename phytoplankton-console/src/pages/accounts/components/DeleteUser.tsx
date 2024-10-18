@@ -65,6 +65,16 @@ export function DeleteUser(props: DeleteUserProps) {
         reassignTo: user.userId, // reassign to self if superuser is the only user
       });
     } else {
+      const isReviewerIdAlreadyUsed = accounts.some((account) => account.reviewerId === item.id);
+
+      if (isReviewerIdAlreadyUsed) {
+        message.error(
+          'This checker is already assigned to a maker, please check before deleting the checker',
+        );
+
+        return;
+      }
+
       setIsModalVisible(true);
     }
   };

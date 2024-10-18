@@ -3,26 +3,14 @@ import CasesStatusChangeModal from './CasesStatusChangeModal';
 import { CaseStatus } from '@/apis';
 import { ButtonSize } from '@/components/library/Button';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
-import { FormValues } from '@/pages/case-management/components/StatusChangeModal';
+import { ActionLabel, FormValues } from '@/pages/case-management/components/StatusChangeModal';
 
 interface Props {
   caseIds: string[];
   caseStatus?: CaseStatus;
   initialValues?: FormValues;
-  buttonProps?: {
-    size?: ButtonSize | undefined;
-    isBlue?: boolean;
-    rounded?: boolean;
-  };
-  statusTransitions?: Partial<
-    Record<
-      CaseStatus,
-      {
-        status: CaseStatus;
-        actionLabel: 'Send back' | 'Escalate' | 'Approve' | 'Decline' | 'Close';
-      }
-    >
-  >;
+  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
   onSaved: () => void;
   isDisabled?: boolean;
   skipReasonsModal?: boolean;

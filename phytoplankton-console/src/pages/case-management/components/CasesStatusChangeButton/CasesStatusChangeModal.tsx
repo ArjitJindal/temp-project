@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import StatusChangeModal, {
   FormValues,
   Props as StatusChangeModalProps,
@@ -11,7 +12,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
-import { statusEscalated } from '@/utils/case-utils';
+import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
@@ -25,6 +26,84 @@ export default function CasesStatusChangeModal(props: Props) {
   const currentUser = useCurrentUser();
   const queryClient = useQueryClient();
 
+  const escalationCallback = useCallback(
+    async (updates: CaseStatusUpdate) => {
+      if (props.entityIds.length !== 1) {
+        message.error('Can only escalate a single case at a time');
+        return;
+      }
+      const { assigneeIds } = await api.postCasesCaseIdEscalate({
+        caseId: props.entityIds[0],
+        CaseEscalationRequest: {
+          caseUpdateRequest: updates,
+        },
+      });
+      const assignees = assigneeIds
+        ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
+        .filter((assigneeId) => {
+          const isL2Escalated = statusEscalatedL2(updates.caseStatus);
+
+          return isL2Escalated
+            ? users[assigneeId]?.escalationLevel === 'L2'
+            : users[assigneeId]?.escalationLevel !== 'L2';
+        })
+        .map((name) => `'${name}'`)
+        .join(', ');
+
+      if (currentUser?.reviewerId) {
+        return;
+      }
+
+      message.success(
+        `Case '${
+          props.entityIds[0]
+        }' is escalated successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to ${humanizeConstant(
+          updates.caseStatus as string,
+        )}`,
+      );
+    },
+    [api, props.entityIds, users, currentUser?.reviewerId],
+  );
+
+  const statusChangeCallback = useCallback(
+    async (updates: CaseStatusUpdate) => {
+      await api.patchCasesStatusChange({
+        CasesStatusUpdateRequest: {
+          caseIds: props.entityIds,
+          updates: updates,
+        },
+      });
+      if (props.newStatusActionLabel === 'Send back') {
+        const c = await api.getCase({
+          caseId: props.entityIds[0],
+        });
+        const assignees = c.assignments
+          ?.map((assignment) => users[assignment.assigneeUserId]?.name || assignment.assigneeUserId)
+          .filter((assigneeId) => {
+            const isL2Escalated = statusEscalatedL2(updates.caseStatus);
+
+            return isL2Escalated
+              ? users[assigneeId]?.escalationLevel === 'L2'
+              : users[assigneeId]?.escalationLevel !== 'L2';
+          })
+          .map((name) => `'${name}'`)
+          .join(', ');
+
+        message.success(
+          `Case '${
+            props.entityIds[0]
+          }' and the alerts under it are sent back successfully to ${assignees}. The case status and all '${
+            statusEscalatedL2(updates.caseStatus) ? 'Escalated L2' : 'Escalated'
+          }' alert statuses under it are changed to '${
+            statusEscalatedL2(updates.caseStatus) ? 'Escalated' : 'Open'
+          }'.`,
+        );
+      } else {
+        message.success('Saved');
+      }
+    },
+    [api, props.entityIds, users, props.newStatusActionLabel],
+  );
   const updateMutation = useMutation<unknown, unknown, FormValues>(
     async (formValues) => {
       const hideMessage = message.loading(`Saving...`);
@@ -48,49 +127,13 @@ export default function CasesStatusChangeModal(props: Props) {
 
       try {
         if (statusEscalated(updates.caseStatus)) {
-          if (props.entityIds.length !== 1) {
-            message.error('Can only escalate a single case at a time');
-            return;
-          }
-          const { assigneeIds } = await api.postCasesCaseIdEscalate({
-            caseId: props.entityIds[0],
-            CaseEscalationRequest: {
-              caseUpdateRequest: updates,
-            },
-          });
-          const assignees = assigneeIds
-            ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
-            .map((name) => `'${name}'`)
-            .join(', ');
-          if (currentUser?.reviewerId) {
-            return;
-          }
-          message.success(
-            `Case '${props.entityIds[0]}' is escalated successfully to ${assignees}. Please note that all 'Open' alert statuses are changed to 'Escalated'.`,
-          );
-        } else {
-          await api.patchCasesStatusChange({
-            CasesStatusUpdateRequest: {
-              caseIds: props.entityIds,
-              updates: updates,
-            },
-          });
-          if (props.newStatusActionLabel === 'Send back') {
-            const c = await api.getCase({
-              caseId: props.entityIds[0],
-            });
-            const assignees = c.assignments
-              ?.map(
-                (assignment) => users[assignment.assigneeUserId]?.name || assignment.assigneeUserId,
-              )
-              .map((name) => `'${name}'`)
-              .join(', ');
-            message.success(
-              `Case '${props.entityIds[0]}' and the alerts under it are sent back successfully to ${assignees}. The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
-            );
+          if (statusEscalatedL2(props.oldStatus)) {
+            await statusChangeCallback(updates);
           } else {
-            message.success('Saved');
+            await escalationCallback(updates);
           }
+        } else {
+          await statusChangeCallback(updates);
         }
       } finally {
         hideMessage();

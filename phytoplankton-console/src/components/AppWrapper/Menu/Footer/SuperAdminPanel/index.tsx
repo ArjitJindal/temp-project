@@ -95,14 +95,8 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Clickhouse (Beta)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
   },
-  MACHINE_LEARNING: {
-    title: 'Machine learning',
-    description: 'Enables machine learning features',
-  },
-  ALERT_SLA: {
-    title: 'Alerts SLA',
-    description: 'Enables Alert SLA',
-  },
+  MACHINE_LEARNING: { title: 'Machine learning', description: 'Enables machine learning features' },
+  ALERT_SLA: { title: 'Alerts SLA', description: 'Enables Alert SLA' },
   RISK_SCORING_V8: {
     title: 'Risk scoring V8',
     description: 'Enables risk scoring V8',
@@ -122,6 +116,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
   PNB: {
     title: 'PNB',
     description: 'Enables PNB specific features',
+  },
+  MULTI_LEVEL_ESCALATION: {
+    title: 'Multi Level Escalation',
+    description: 'Enables multi level escalation',
   },
   SALES_RISK_SCORING: {
     title: 'Sales risk scoring',

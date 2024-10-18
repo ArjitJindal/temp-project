@@ -1,10 +1,11 @@
 import { Avatar, Select } from 'antd';
 import cn from 'clsx';
 import { LoadingOutlined } from '@ant-design/icons';
+import { useMemo } from 'react';
 import s from './index.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
 import { useHasPermissions, useSortedUsers } from '@/utils/user-utils';
-import { Assignment } from '@/apis';
+import { Account, Assignment } from '@/apis';
 import AccountTag from '@/components/AccountTag';
 import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 
@@ -15,6 +16,7 @@ interface Props {
   maxAssignees?: number;
   placeholder?: string;
   fixSelectorHeight?: boolean;
+  customFilter?: (option: Account) => boolean;
 }
 
 export const AssigneesDropdown: React.FC<Props> = ({
@@ -23,10 +25,19 @@ export const AssigneesDropdown: React.FC<Props> = ({
   onChange,
   maxAssignees,
   placeholder,
+  customFilter,
   fixSelectorHeight = false,
 }) => {
   const [users, loadingUsers] = useSortedUsers();
   const canEditAssignees = useHasPermissions(['case-management:case-assignment:write']);
+
+  const filteredUsers = useMemo(() => {
+    if (!customFilter) {
+      return users;
+    }
+
+    return users.filter((user) => customFilter(user));
+  }, [users, customFilter]);
 
   return editing && canEditAssignees ? (
     <>
@@ -73,7 +84,7 @@ export const AssigneesDropdown: React.FC<Props> = ({
         }
         suffixIcon={<ArrowDropDownFill />}
       >
-        {users.map((user, index) => (
+        {filteredUsers.map((user, index) => (
           <Select.Option key={user.id}>
             <div className={s.item}>
               <Avatar

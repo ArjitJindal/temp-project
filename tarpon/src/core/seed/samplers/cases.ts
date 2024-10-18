@@ -16,7 +16,7 @@ import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
-import { isStatusInReview } from '@/utils/helpers'
+import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
 import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
@@ -32,6 +32,7 @@ import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { uniqObjects } from '@/utils/object'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { getSLAStatusFromElapsedTime } from '@/services/alerts/sla/sla-utils'
+import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 let counter = 1
 let alertCounter = 1
@@ -160,6 +161,13 @@ export function sampleTransactionUserCases(params: {
       'Terrorist financing',
       'Suspicious activity reported (SAR)',
     ])
+
+    let reviewAssignments: Assignment[] | undefined = []
+
+    if (isStatusInReview(caseStatus) || statusEscalated(caseStatus)) {
+      reviewAssignments = getRandomUsers()
+    }
+
     const caseId = `C-${counter++}`
     return {
       caseId,
@@ -174,7 +182,7 @@ export function sampleTransactionUserCases(params: {
         getRandomUser().assigneeUserId
       ),
       assignments: getRandomUsers(),
-      reviewAssignments: getRandomUsers(),
+      reviewAssignments,
       updatedAt: sampleTimestamp(),
       lastStatusChange:
         caseStatus === 'CLOSED' && user
@@ -301,6 +309,12 @@ export function sampleAlert(params: {
     ? [transactions[0].transactionId]
     : transactions.map((t) => t.transactionId)
 
+  let reviewAssignments: Assignment[] | undefined = []
+
+  if (isStatusInReview(alertStatus) || statusEscalated(alertStatus)) {
+    reviewAssignments = getRandomUsers()
+  }
+
   return {
     ...params.ruleHit,
     alertId: `A-${alertCounter++}`,
@@ -322,7 +336,7 @@ export function sampleAlert(params: {
     lastStatusChange: last(statusChanges),
     assignments: getRandomUsers(),
     qaAssignment: getRandomUsers(),
-    reviewAssignments: getRandomUsers(),
+    reviewAssignments,
     ruleChecklist: checklistTemplateId
       ? getChecklistTemplate(checklistTemplateId).categories.flatMap(
           (category): ChecklistItemValue[] =>

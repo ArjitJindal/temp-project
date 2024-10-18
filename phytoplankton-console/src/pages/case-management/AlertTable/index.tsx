@@ -64,6 +64,7 @@ import {
   canReviewCases,
   commentsToString,
   findLastStatusForInReview,
+  getAssignmentsToShow,
   getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
@@ -145,6 +146,7 @@ export default function AlertTable(props: Props) {
   const queryClient = useQueryClient();
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
+  const isMultiEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const [selectedTxns, setSelectedTxns] = useState<{ [alertId: string]: string[] }>({});
   const [selectedSanctionHits, setSelectedSanctionHits] = useState<{
@@ -571,7 +573,7 @@ export default function AlertTable(props: Props) {
               const otherStatuses = isOnHoldOrInProgressOrEscalated(entity?.alertStatus);
               return (
                 <AssigneesDropdown
-                  assignments={assignments || []}
+                  assignments={getAssignmentsToShow(entity) ?? []}
                   editing={
                     !(
                       statusInReview(entity.alertStatus) ||
@@ -802,6 +804,7 @@ export default function AlertTable(props: Props) {
                     transactionIds={selectedTxns}
                   />
                 )}
+
                 {entity?.caseId && isInReview && canReview && entity.alertStatus && (
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <ApproveSendBackButton
@@ -1173,10 +1176,43 @@ export default function AlertTable(props: Props) {
               OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
               ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
               ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
+              ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
+              ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
+              ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
             }}
             isDisabled={isDisabled}
           />
         )
+      );
+    },
+    ({ selectedIds, selectedItems, isDisabled }) => {
+      const isAllAlertsOfStatusEscalated = isAllAlertsOfStatus(selectedItems, 'ESCALATED');
+
+      if (!isMultiEscalationEnabled) {
+        return;
+      }
+
+      if (!isAllAlertsOfStatusEscalated) {
+        return;
+      }
+
+      const status = selectedItems[selectedIds[0]]?.alertStatus;
+
+      return (
+        <AlertsStatusChangeButton
+          ids={selectedIds}
+          transactionIds={selectedTxns}
+          onSaved={() => {
+            reloadTable();
+            setSelectedTxns({});
+          }}
+          status={status}
+          caseId={caseId}
+          isDisabled={isDisabled}
+          statusTransitions={{
+            ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+          }}
+        />
       );
     },
     ({ selectedIds, selectedItems, isDisabled }) => {

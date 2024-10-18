@@ -1,5 +1,4 @@
 import React, { useMemo, useRef, useState } from 'react';
-import { some } from 'lodash';
 import { EditOutlined, PlusOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -12,7 +11,6 @@ import {
   useHasPermissions,
   useInvalidateUsers,
   UserRole,
-  useUsers,
 } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { TableColumn, TableRefType } from '@/components/library/Table/types';
@@ -38,12 +36,14 @@ import { getOr, isSuccess, loading, success } from '@/utils/asyncResource';
 import { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
   const user = useAuth0User();
   const api = useApi();
   const [deletedUserId, setDeletedUserId] = useState<string | null>(null);
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const invalidateUsers = useInvalidateUsers().invalidate;
   let messageVar: CloseMessage | null = null;
   const allAccountsResult = useAccountsQueryResult();
@@ -132,7 +132,6 @@ export default function Team() {
   const [isInviteVisible, setIsInviteVisible] = useState(false);
   const isAccountPermissionsEnabled = useHasPermissions(['accounts:overview:write']);
   const [editAccount, setEditAccount] = useState<Account | null>(null);
-  const [users, loadingUsers] = useUsers({});
   const columnHelper = new ColumnHelper<Account>();
   const columns: TableColumn<Account>[] = columnHelper.list([
     columnHelper.simple<'email'>({
@@ -167,16 +166,24 @@ export default function Team() {
           return (
             <div className={s.roleTags}>
               {role != null && <RoleTag role={role} />}
-              {context.item.isEscalationContact && <Tag className={s.tag}>Escalation reviewer</Tag>}
-              {context.item.reviewerId && <Tag className={s.tag}>Maker</Tag>}
-              {!loadingUsers && some(users, (u) => u.reviewerId === context.item.id) && (
-                <Tag className={s.tag}>Checker</Tag>
+              {context.item.escalationLevel && (
+                <Tag className={s.tag}>
+                  Escalation{' '}
+                  {isMultiLevelEscalationEnabled ? context.item.escalationLevel : 'reviewer'}
+                </Tag>
               )}
+              {context.item.reviewerId && <Tag className={s.tag}>Maker</Tag>}
+              {context.item.isReviewer && <Tag className={s.tag}>Checker</Tag>}
             </div>
           );
         },
         stringify: (role, item) => {
-          return [role && getRoleTitle(role), item.isEscalationContact && 'Escalation reviewer']
+          return [
+            role && getRoleTitle(role),
+            item.escalationLevel && isMultiLevelEscalationEnabled
+              ? `Escalation ${item.escalationLevel}`
+              : 'Escalation reviewer',
+          ]
             .filter((x) => !!x)
             .join(', ');
         },
@@ -397,6 +404,7 @@ export default function Team() {
           accountsResult.refetch();
         }}
         key={editAccount?.id ?? 'new'}
+        accounts={accounts}
       />
     </PageWrapperContentContainer>
   );

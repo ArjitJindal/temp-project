@@ -22,7 +22,6 @@ export default function (): JSX.Element {
                 email: 'sample@sample.com',
                 name: 'John Dow',
                 blocked: false,
-                isEscalationContact: false,
                 emailVerified: true,
                 role: 'admin',
                 picture: hasPicture ? ImageUrl : null,

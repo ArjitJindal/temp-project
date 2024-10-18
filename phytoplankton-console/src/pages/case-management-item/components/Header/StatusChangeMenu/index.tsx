@@ -51,7 +51,12 @@ const useOptions = (props: Props) => {
   const caseClosedBefore = Boolean(
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
+  const isCaseEscalated = useMemo(() => {
+    return caseItem.caseStatus === 'ESCALATED';
+  }, [caseItem]);
+
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
   const previousStatus = useMemo(() => {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);
@@ -95,6 +100,30 @@ const useOptions = (props: Props) => {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
+                  ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
+                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
+                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
+                }}
+                className={s.statusButton}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...(isMultiLevelEscalationEnabled && isCaseEscalated && caseId
+      ? [
+          {
+            value: 'ESCALATE_L2',
+            label: (
+              <CasesStatusChangeButton
+                caseIds={[caseId]}
+                onSaved={onReload}
+                caseStatus={caseItem.caseStatus ?? 'OPEN'}
+                statusTransitions={{
+                  ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                  ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
+                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
+                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
                 }}
                 className={s.statusButton}
               />

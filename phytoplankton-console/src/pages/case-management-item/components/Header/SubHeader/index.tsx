@@ -14,6 +14,7 @@ import { CASES_ITEM } from '@/utils/queries/keys';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import {
+  getAssignmentsToShow,
   isOnHoldOrInProgressOrEscalated,
   statusEscalated,
   statusInReview,
@@ -44,15 +45,9 @@ export default function SubHeader(props: Props) {
     caseUser = caseUsers?.origin ?? caseUsers?.destination;
   }
   const isCaseEscalated = statusEscalated(caseItem.caseStatus);
-  const isCaseInReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem.caseStatus]);
   const otherStatuses = useMemo(
     () => isOnHoldOrInProgressOrEscalated(caseItem.caseStatus as CaseStatus),
     [caseItem.caseStatus],
-  );
-
-  const assignments = useMemo(
-    () => (isCaseInReview ? caseItem.reviewAssignments : caseItem.assignments),
-    [caseItem.assignments, caseItem.reviewAssignments, isCaseInReview],
   );
 
   const queryClient = useQueryClient();
@@ -165,7 +160,7 @@ export default function SubHeader(props: Props) {
 
         <Form.Layout.Label title={'Assigned to'}>
           <AssigneesDropdown
-            assignments={assignments ?? []}
+            assignments={getAssignmentsToShow(caseItem) ?? []}
             editing={
               !(statusInReview(caseItem.caseStatus) || otherStatuses) && hasEditingPermission
             }

@@ -7,7 +7,14 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
-import { capitalize, compact, difference, isEmpty, isEqual } from 'lodash'
+import {
+  capitalize,
+  compact,
+  difference,
+  isEmpty,
+  isEqual,
+  uniqBy,
+} from 'lodash'
 import { MongoClient } from 'mongodb'
 import pluralize from 'pluralize'
 import { Upload } from '@aws-sdk/lib-storage'
@@ -55,6 +62,7 @@ import {
   getMentionsFromComments,
   getParsedCommentBody,
   isStatusInReview,
+  statusEscalated,
 } from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -551,9 +559,8 @@ export class CaseService extends CaseAlertsCommonService {
       isReview = true
     }
 
-    const casesWithPreviousEscalations = cases.filter(
-      (c) =>
-        c.caseStatus === 'ESCALATED' || c.caseStatus === 'IN_REVIEW_ESCALATED'
+    const casesWithPreviousEscalations = cases.filter((c) =>
+      statusEscalated(c.caseStatus)
     )
 
     const currentStatus = cases[0].caseStatus
@@ -639,7 +646,7 @@ export class CaseService extends CaseAlertsCommonService {
           return
         }
 
-        if (updates.caseStatus === 'ESCALATED' && options?.reviewAssignments) {
+        if (statusEscalated(updates.caseStatus) && options?.reviewAssignments) {
           await this.alertsService.updateReviewAssignments(
             alerts.map((a) => a.alertId ?? ''),
             options.reviewAssignments
@@ -876,47 +883,62 @@ export class CaseService extends CaseAlertsCommonService {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
 
-    const existingReviewAssignments = case_.reviewAssignments || []
-    const escalationAssignments = this.getEscalationAssignments(accounts)
+    const reviewAssignments = this.getEscalationAssignments(
+      case_.caseStatus as CaseStatus,
+      case_.reviewAssignments ?? [],
+      accounts
+    )
 
-    const reviewAssignments =
-      existingReviewAssignments.length > 0
-        ? existingReviewAssignments
-        : escalationAssignments
+    const finalReviewAssignments = !isStatusInReview(case_.caseStatus)
+      ? uniqBy(
+          [...(case_.reviewAssignments ?? []), ...reviewAssignments],
+          'assigneeUserId'
+        )
+      : reviewAssignments
 
     const account = getContext()?.user
     const currentUserId = account?.id
+    const isL2Escalation =
+      statusEscalated(case_.caseStatus) && !isStatusInReview(case_.caseStatus)
 
-    if (isEmpty(case_.assignments) && currentUserId) {
-      caseUpdateRequest.assignments = [
-        { assigneeUserId: currentUserId, timestamp: Date.now() },
+    let caseAssignments = case_.assignments ?? []
+    let assignmentsToUpdate: Assignment[] = []
+
+    if (isEmpty(caseAssignments) && currentUserId) {
+      assignmentsToUpdate = caseAssignments = [
+        {
+          assigneeUserId: currentUserId,
+          timestamp: Date.now(),
+          assignedByUserId: currentUserId,
+          escalationLevel: isL2Escalation ? 'L2' : 'L1',
+        },
       ]
-
-      await this.caseRepository.updateAssignments(
-        [caseId],
-        caseUpdateRequest.assignments ?? []
-      )
     }
 
     if (
-      escalationAssignments[0]?.assigneeUserId &&
-      case_.caseStatus?.includes('IN_REVIEW')
+      caseAssignments[0]?.assigneeUserId &&
+      isStatusInReview(case_.caseStatus)
     ) {
-      await this.updateAssignments(
-        [caseId],
-        [
-          {
-            assigneeUserId: escalationAssignments[0]?.assigneeUserId,
-            assignedByUserId: currentUserId ?? '',
-            timestamp: Date.now(),
-          },
-        ]
-      )
+      assignmentsToUpdate = [
+        {
+          assigneeUserId: caseAssignments[0]?.assigneeUserId,
+          assignedByUserId: currentUserId ?? '',
+          timestamp: Date.now(),
+          escalationLevel: isL2Escalation ? 'L2' : 'L1',
+        },
+      ]
+    }
+
+    if (!isEmpty(assignmentsToUpdate)) {
+      await this.updateAssignments([caseId], assignmentsToUpdate)
     }
 
     const statusChange: CaseStatusUpdate = {
       reason: caseUpdateRequest.reason,
-      caseStatus: 'ESCALATED',
+      caseStatus:
+        hasFeature('MULTI_LEVEL_ESCALATION') && isL2Escalation
+          ? 'ESCALATED_L2'
+          : 'ESCALATED',
       otherReason: caseUpdateRequest.otherReason,
       comment: caseUpdateRequest.comment,
       files: caseUpdateRequest.files,
@@ -924,14 +946,17 @@ export class CaseService extends CaseAlertsCommonService {
       userStateDetails: caseUpdateRequest.userStateDetails,
     }
 
-    await Promise.all([
-      this.updateStatus([caseId], statusChange, {
-        cascadeAlertsUpdate: true,
-        reviewAssignments,
-      }),
-      !isEqual(case_.reviewAssignments, reviewAssignments) &&
-        this.updateReviewAssignments([caseId], reviewAssignments),
-    ])
+    await this.updateStatus([caseId], statusChange, {
+      cascadeAlertsUpdate: true,
+      reviewAssignments: finalReviewAssignments,
+    })
+
+    if (
+      !isEqual(case_.reviewAssignments, finalReviewAssignments) &&
+      finalReviewAssignments?.length
+    ) {
+      await this.updateReviewAssignments([caseId], finalReviewAssignments)
+    }
 
     await this.auditLogService.handleAuditLogForCaseEscalation(
       caseId,

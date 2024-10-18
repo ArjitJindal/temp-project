@@ -39,7 +39,8 @@ const TEST_ACCOUNT_1: Account = {
   emailVerified: true,
   name: 'ACCOUNT-1',
   blocked: false,
-  isEscalationContact: true,
+  escalationLevel: 'L1',
+  escalationReviewerId: 'ACCOUNT-4',
 }
 
 const TEST_ACCOUNT_2: Account = {
@@ -49,7 +50,6 @@ const TEST_ACCOUNT_2: Account = {
   emailVerified: true,
   name: 'ACCOUNT-2',
   blocked: false,
-  isEscalationContact: false,
 }
 
 const REVIEWEE: Account = {
@@ -59,8 +59,17 @@ const REVIEWEE: Account = {
   emailVerified: true,
   name: 'ACCOUNT-3',
   blocked: false,
-  isEscalationContact: false,
   reviewerId: 'ACCOUNT-1',
+}
+
+const ESCALATION_L2_ACCOUNT: Account = {
+  id: 'ACCOUNT-4',
+  role: 'admin',
+  email: 'abcde@email.com',
+  emailVerified: true,
+  name: 'ACCOUNT-4',
+  blocked: false,
+  escalationLevel: 'L2',
 }
 
 const CASE_TRANSACTION_IDS = ['T-1', 'T-2', 'T-3', 'T-4']
@@ -191,6 +200,8 @@ jest
       return TEST_ACCOUNT_2
     } else if (accountId === REVIEWEE.id) {
       return REVIEWEE
+    } else if (accountId === ESCALATION_L2_ACCOUNT.id) {
+      return ESCALATION_L2_ACCOUNT
     }
     return TEST_ACCOUNT_1
   })
@@ -198,7 +209,7 @@ jest
 jest
   .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
   .mockImplementation(async () => {
-    return [TEST_ACCOUNT_1, TEST_ACCOUNT_2, REVIEWEE]
+    return [TEST_ACCOUNT_1, TEST_ACCOUNT_2, REVIEWEE, ESCALATION_L2_ACCOUNT]
   })
 
 describe('Case service', () => {
@@ -294,7 +305,7 @@ describe('Case service', () => {
         createdTimestamp: t,
         caseStatus: 'OPEN',
         assignments: [{ assigneeUserId: 'U-1', timestamp: t }],
-        reviewAssignments: [{ assigneeUserId: 'U-2', timestamp: t }],
+        reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1', timestamp: t }],
         alerts: [TEST_ALERT_1, TEST_ALERT_2],
         caseType: 'SYSTEM',
         caseAggregates: DEFAULT_CASE_AGGREGATES,
@@ -303,7 +314,7 @@ describe('Case service', () => {
       const c = await caseService.getCase('C-2')
       expect(c).toMatchObject({
         caseId: 'C-2',
-        reviewAssignments: [{ assigneeUserId: 'U-2', timestamp: t }],
+        reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1', timestamp: t }],
       })
     })
   })
@@ -2005,13 +2016,6 @@ describe('Test Review Approvals Send Back Flow', () => {
       ],
       caseType: 'SYSTEM',
       caseAggregates: DEFAULT_CASE_AGGREGATES,
-    })
-
-    await caseService.escalateCase(caseId, {
-      reason: ['False positive'],
-      otherReason: 'This is a duplicate case',
-      comment: 'I am closing this case',
-      caseStatus: 'ESCALATED',
       assignments: [
         {
           assignedByUserId: 'ACCOUNT-3',
@@ -2019,6 +2023,13 @@ describe('Test Review Approvals Send Back Flow', () => {
           timestamp: Date.now(),
         },
       ],
+    })
+
+    await caseService.escalateCase(caseId, {
+      reason: ['False positive'],
+      otherReason: 'This is a duplicate case',
+      comment: 'I am closing this case',
+      caseStatus: 'ESCALATED',
       reviewAssignments: [
         {
           assignedByUserId: 'ACCOUNT-3',
@@ -2078,7 +2089,7 @@ describe('Test Review Approvals Send Back Flow', () => {
         },
         { alertId: alertId2, alertStatus: 'CLOSED' },
       ],
-      assignments: [{ assigneeUserId: 'ACCOUNT-1' }],
+      assignments: [{ assigneeUserId: 'ACCOUNT-3' }],
       reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
       lastStatusChange: {
         userId: 'ACCOUNT-3',
@@ -2859,5 +2870,79 @@ describe('Test alert should reopen if qa status is failed', () => {
     const updatedAlert = await alertsService.getAlert('AL-1234')
 
     expect(updatedAlert?.alertStatus).toBe('REOPENED')
+  })
+})
+
+describe.only('Test case escalation l2', () => {
+  withFeatureHook(['MULTI_LEVEL_ESCALATION', 'ADVANCED_WORKFLOWS'])
+  const testTenantId = getTestTenantId()
+  test('should escalate case to l2 if l1 is not assigned', async () => {
+    getContextMocker.mockReturnValue({
+      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+    })
+    // create a case
+    const caseService = await getCaseService(testTenantId)
+    const caseId = nanoid()
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseType: 'SYSTEM',
+      caseStatus: 'OPEN',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      assignments: [
+        {
+          assigneeUserId: 'ACCOUNT-3',
+          assignedByUserId: 'ACCOUNT-2',
+          timestamp: Date.now(),
+        },
+      ],
+    })
+
+    // escalate case
+    await caseService.escalateCase(caseId, {
+      caseStatus: 'ESCALATED',
+      reason: ['Other'],
+    })
+
+    const updatedCase = await caseService.getCase(caseId)
+    expect(updatedCase?.caseStatus).toBe('IN_REVIEW_ESCALATED')
+
+    getContextMocker.mockReturnValue({
+      user: TEST_ACCOUNT_1,
+    })
+
+    // approve case
+    await caseService.escalateCase(caseId, {
+      caseStatus: 'ESCALATED',
+      reason: ['Other'],
+    })
+
+    const updatedCase2 = await caseService.getCase(caseId)
+    expect(updatedCase2?.caseStatus).toBe('ESCALATED')
+    expect(updatedCase2?.reviewAssignments).toMatchObject([
+      {
+        assigneeUserId: 'ACCOUNT-1',
+        assignedByUserId: 'ACCOUNT-3',
+        timestamp: expect.any(Number),
+        escalationLevel: 'L1',
+      },
+    ])
+
+    getContextMocker.mockReturnValue({
+      user: TEST_ACCOUNT_1,
+    })
+
+    await caseService.escalateCase(caseId, {
+      caseStatus: 'ESCALATED',
+      reason: ['Other'],
+    })
+
+    const updatedCase3 = await caseService.getCase(caseId)
+    expect(updatedCase3?.caseStatus).toBe('ESCALATED_L2')
+    expect(
+      updatedCase3?.reviewAssignments?.find(
+        (assignment) => assignment.escalationLevel === 'L2'
+      )?.assigneeUserId
+    ).toBe('ACCOUNT-4')
   })
 })

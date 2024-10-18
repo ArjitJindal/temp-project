@@ -12,6 +12,7 @@ import {
   isEqual,
   cloneDeep,
   difference,
+  uniqBy,
 } from 'lodash'
 import {
   APIGatewayEventLambdaAuthorizerContext,
@@ -70,6 +71,8 @@ import {
   getMentionsFromComments,
   getParsedCommentBody,
   isStatusInReview,
+  statusEscalated,
+  statusEscalatedL2,
 } from '@/utils/helpers'
 import { ChecklistStatus } from '@/@types/openapi-internal/ChecklistStatus'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
@@ -234,7 +237,7 @@ export class AlertsService extends CaseAlertsCommonService {
       throw new Forbidden('User not found or deleted')
     }
 
-    const isReviewRequired = currentUserAccount.reviewerId ?? false
+    const isReviewRequired = !!currentUserAccount.reviewerId
 
     const caseService = new CaseService(
       this.caseRepository,
@@ -248,7 +251,11 @@ export class AlertsService extends CaseAlertsCommonService {
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
-    if (c.caseHierarchyDetails?.parentCaseId) {
+    if (
+      c.caseHierarchyDetails?.parentCaseId &&
+      !hasFeature('MULTI_LEVEL_ESCALATION') &&
+      !statusEscalatedL2(c.caseStatus)
+    ) {
       throw new BadRequest(
         `Cannot escalated an already escalated case. Parent case ${c.caseHierarchyDetails?.parentCaseId}`
       )
@@ -280,7 +287,11 @@ export class AlertsService extends CaseAlertsCommonService {
     })
 
     const currentTimestamp = Date.now()
-    const reviewAssignments = this.getEscalationAssignments(accounts)
+    const reviewAssignments = this.getEscalationAssignments(
+      c.caseStatus as CaseStatus,
+      c.reviewAssignments ?? [],
+      accounts
+    )
 
     const escalatedAlerts = c.alerts?.filter((alert) =>
       alertEscalations?.some(
@@ -341,9 +352,10 @@ export class AlertsService extends CaseAlertsCommonService {
       }
 
       return {
-        assigneeIds: reviewAssignments.map((a) => a.assigneeUserId),
+        assigneeIds: uniq(reviewAssignments.map((v) => v.assigneeUserId)),
       }
     }
+
     const newAlertsTransactions: Array<{
       alertId: string
       transactionIds: string[]
@@ -351,16 +363,17 @@ export class AlertsService extends CaseAlertsCommonService {
     // get the alerts that are being escalated
     const escalatedAlertsDetails = escalatedAlerts?.map(
       (escalatedAlert: Alert): Alert => {
+        const isAlreadyEscalated = statusEscalated(escalatedAlert.alertStatus)
         const lastStatusChange: CaseStatusChange = {
           userId: currentUserId ?? '',
           caseStatus:
-            isTransactionsEscalation && isReviewRequired
+            isTransactionsEscalation && isReviewRequired && !isAlreadyEscalated
               ? 'IN_REVIEW_ESCALATED'
+              : isAlreadyEscalated && hasFeature('MULTI_LEVEL_ESCALATION')
+              ? 'ESCALATED_L2'
               : 'ESCALATED',
           timestamp: currentTimestamp,
-          meta: {
-            closeSourceCase: caseEscalationRequest.closeSourceCase,
-          },
+          meta: { closeSourceCase: caseEscalationRequest.closeSourceCase },
         }
 
         const escalationAlertReq = alertEscalations?.find(
@@ -395,6 +408,14 @@ export class AlertsService extends CaseAlertsCommonService {
                     timestamp: currentTimestamp,
                   },
                 ]
+              : !isStatusInReview(escalatedAlert.alertStatus)
+              ? uniqBy(
+                  [
+                    ...reviewAssignments,
+                    ...(escalatedAlert.reviewAssignments ?? []),
+                  ],
+                  'assigneeUserId'
+                )
               : reviewAssignments,
           statusChanges: escalatedAlert.statusChanges
             ? [...escalatedAlert.statusChanges, lastStatusChange]
@@ -466,12 +487,14 @@ export class AlertsService extends CaseAlertsCommonService {
     let caseHierarchyDetailsForOriginalCase: CaseHierarchyDetails = {
       childCaseIds: [childCaseId],
       childTransactionIds,
+      parentCaseId: c.caseHierarchyDetails?.parentCaseId,
     }
 
     if (c.caseHierarchyDetails?.childCaseIds) {
       caseHierarchyDetailsForOriginalCase = {
         childCaseIds: [...c.caseHierarchyDetails.childCaseIds, childCaseId],
         childTransactionIds,
+        parentCaseId: c.caseHierarchyDetails.parentCaseId,
       }
     }
 
@@ -483,13 +506,28 @@ export class AlertsService extends CaseAlertsCommonService {
         ) ||
         false)
 
+    const isStatusEscalatedL2 = statusEscalatedL2(
+      escalatedAlertsDetails?.[0]?.alertStatus
+    )
+
     const newCase: Case = {
       ...mainCaseAttributes,
       caseId: childCaseId,
       alerts: escalatedAlertsDetails,
       createdTimestamp: currentTimestamp,
-      caseStatus: 'ESCALATED',
-      reviewAssignments,
+      caseStatus:
+        isStatusEscalatedL2 && hasFeature('MULTI_LEVEL_ESCALATION')
+          ? 'ESCALATED_L2'
+          : 'ESCALATED',
+      reviewAssignments: isStatusEscalatedL2
+        ? uniqBy(
+            [
+              ...reviewAssignments,
+              ...(mainCaseAttributes.reviewAssignments ?? []),
+            ],
+            'assigneeUserId'
+          )
+        : reviewAssignments,
       caseTransactionsIds: filteredTransactionIdsForNewCase,
       caseHierarchyDetails: { parentCaseId: caseId },
       lastStatusChange: undefined,
@@ -497,7 +535,7 @@ export class AlertsService extends CaseAlertsCommonService {
       comments: [],
     }
 
-    if (isTransactionsEscalation && isReviewRequired) {
+    if (isTransactionsEscalation && isReviewRequired && !isStatusEscalatedL2) {
       newCase.caseStatus = 'IN_REVIEW_ESCALATED'
     }
 
@@ -966,10 +1004,8 @@ export class AlertsService extends CaseAlertsCommonService {
       this.awsCredentials
     )
 
-    const alertsWithPreviousEscalations = alerts.filter(
-      (alert) =>
-        alert.alertStatus === 'ESCALATED' ||
-        alert.alertStatus === 'IN_REVIEW_ESCALATED'
+    const alertsWithPreviousEscalations = alerts.filter((alert) =>
+      statusEscalated(alert.alertStatus)
     )
 
     await withTransaction(async () => {

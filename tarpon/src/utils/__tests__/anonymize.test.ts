@@ -65,7 +65,6 @@ describe('Anonymizer', () => {
         email: 'tim@flagright.com',
         emailVerified: true,
         blocked: false,
-        isEscalationContact: false,
       },
     })
 

@@ -89,6 +89,10 @@ export function statusEscalated(status: CaseStatus | undefined): boolean {
   return status?.includes('ESCALATED') ?? false
 }
 
+export function statusEscalatedL2(status: CaseStatus | undefined): boolean {
+  return status?.includes('ESCALATED_L2') ?? false
+}
+
 export function shouldUseReviewAssignments(
   status: CaseStatus | undefined
 ): boolean {

@@ -276,7 +276,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const users = await accountsService.getTenantAccounts(tenant)
     for (const user of users) {
       logger.info(`Deactivating auth0 user ${user.id}`)
-      await accountsService.blockAccount(tenantId, user.id, 'DELETED')
+      await accountsService.blockAccount(tenantId, user.id, 'DELETED', true)
     }
   }
 

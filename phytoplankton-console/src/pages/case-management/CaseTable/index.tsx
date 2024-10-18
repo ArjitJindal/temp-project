@@ -67,6 +67,8 @@ import {
   statusInReview,
   casesCommentsGenerator,
   getNextStatusFromInReview,
+  getAssignmentsToShow,
+  statusEscalatedL2,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
@@ -91,6 +93,7 @@ export default function CaseTable(props: Props) {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
   const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const reloadTable = useCallback(() => {
     tableRef.current?.reload();
@@ -251,14 +254,10 @@ export default function CaseTable(props: Props) {
           },
           render: (__, { item: entity }) => {
             const isStatusInReview = statusInReview(entity.caseStatus);
-            const assignments =
-              statusEscalated(entity.caseStatus) || isStatusInReview
-                ? entity.reviewAssignments
-                : entity.assignments;
             const otherStatuses = isOnHoldOrInProgressOrEscalated(entity.caseStatus);
             return (
               <AssigneesDropdown
-                assignments={assignments || []}
+                assignments={getAssignmentsToShow(entity) ?? []}
                 editing={!(isStatusInReview || otherStatuses) && !(entity.caseStatus === 'CLOSED')}
                 onChange={(assignees) => {
                   const assignments = assignees.map((assigneeUserId) => ({
@@ -675,6 +674,37 @@ export default function CaseTable(props: Props) {
           );
         },
         ({ selectedIds, selectedItems, isDisabled }) => {
+          if (
+            !isMultiLevelEscalationEnabled ||
+            !escalationEnabled ||
+            selectedIds.length !== 1 ||
+            !selectedItems ||
+            isEmpty(selectedItems)
+          ) {
+            return;
+          }
+
+          const caseItem = selectedItems[selectedIds[0]];
+
+          if (statusEscalatedL2(caseItem.caseStatus) || !statusEscalated(caseItem.caseStatus)) {
+            return;
+          }
+
+          return (
+            <CasesStatusChangeButton
+              caseIds={selectedIds}
+              caseStatus={caseItem.caseStatus}
+              onSaved={reloadTable}
+              isDisabled={isDisabled}
+              statusTransitions={{
+                ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                ESCALATED_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                ESCALATED_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+              }}
+            />
+          );
+        },
+        ({ selectedIds, selectedItems, isDisabled }) => {
           if (isEmpty(selectedItems)) {
             return;
           }
@@ -712,6 +742,9 @@ export default function CaseTable(props: Props) {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
+                  ESCALATED_L2: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
+                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
+                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
                 }}
               />
             )

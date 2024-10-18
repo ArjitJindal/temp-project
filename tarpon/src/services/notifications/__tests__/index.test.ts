@@ -343,13 +343,12 @@ describe('Test notifications service', () => {
         id: user,
         email: `${user}@test.com`,
         role: 'Admin',
-        isEscalationContact: false,
       } as Account,
       {
         id: user2,
         email: `${user2}@test.com`,
         role: 'Admin',
-        isEscalationContact: true,
+        escalationLevel: 'L1',
       } as Account,
     ]
 
@@ -456,13 +455,13 @@ describe('Test notifications service', () => {
       {
         id: user,
         email: `${user}@test.com`,
-        isEscalationContact: false,
+
         role: 'Admin',
       } as Account,
       {
         id: user2,
         email: `${user2}@test.com`,
-        isEscalationContact: true,
+        escalationLevel: 'L1',
         role: 'Admin',
       } as Account,
     ]

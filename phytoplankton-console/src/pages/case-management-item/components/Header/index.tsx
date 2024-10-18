@@ -90,82 +90,83 @@ export default function Header(props: Props) {
   );
 
   return (
-    <>
-      <EntityHeader
-        stickyElRef={headerStickyElRef}
-        breadcrumbItems={[
-          {
-            title: 'Cases',
-            to: '/case-management/cases',
-          },
-          {
-            title: caseItem.caseId ?? '',
-          },
-        ]}
-        chips={[
-          ...(caseItem.caseType === 'MANUAL' || caseItem.caseType === 'EXTERNAL'
-            ? [<CaseGenerationMethodTag method={caseItem.caseType} />]
-            : []),
-          ...(caseItem.caseStatus
-            ? [
-                <CaseStatusWithDropDown
-                  caseStatus={caseItem.caseStatus}
-                  statusChanges={caseItem.statusChanges ?? []}
-                  previousStatus={previousStatus}
-                  assignments={caseItem.assignments ?? []}
-                  onSelect={(newStatus) => {
-                    statusChangeMutation.mutate(newStatus);
-                  }}
-                  reviewAssignments={caseItem.reviewAssignments ?? []}
-                />,
-              ]
-            : []),
-        ]}
-        buttons={[
-          <CommentButton
-            disabled={isLoading}
-            onSuccess={(newComment) => {
-              onCommentAdded(newComment, caseId ?? '');
-            }}
-            submitRequest={async (commentFormValues) => {
-              if (caseId == null) {
-                throw new Error(`Case ID is not defined`);
-              }
-              const commentData = {
-                CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
-              };
-              return await api.postCaseComments({
-                caseId: caseId,
-                ...commentData,
-              });
-            }}
-            requiredPermissions={['case-management:case-overview:write']}
-          />,
-          <ExportButton caseId={caseItem.caseId ?? ''} />,
-          ...(!isReview && caseId
-            ? [
-                <CasesStatusChangeButton
-                  caseIds={[caseId]}
-                  caseStatus={caseItem.caseStatus}
-                  onSaved={handleStatusChangeSuccess}
-                  isDisabled={(caseItem.caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading}
-                  statusTransitions={{
-                    OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                    OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                    ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                    ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                  }}
-                />,
-              ]
-            : []),
-          <StatusChangeMenu
-            isDisabled={isLoading}
-            caseItem={caseItem}
-            onReload={handleStatusChangeSuccess}
-          />,
-        ]}
-        subHeader={<SubHeader caseItem={caseItem} />}
-      />
-    </>
+    <EntityHeader
+      stickyElRef={headerStickyElRef}
+      breadcrumbItems={[
+        {
+          title: 'Cases',
+          to: '/case-management/cases',
+        },
+        {
+          title: caseItem.caseId ?? '',
+        },
+      ]}
+      chips={[
+        ...(caseItem.caseType === 'MANUAL' || caseItem.caseType === 'EXTERNAL'
+          ? [<CaseGenerationMethodTag method={caseItem.caseType} />]
+          : []),
+        ...(caseItem.caseStatus
+          ? [
+              <CaseStatusWithDropDown
+                caseStatus={caseItem.caseStatus}
+                statusChanges={caseItem.statusChanges ?? []}
+                previousStatus={previousStatus}
+                assignments={caseItem.assignments ?? []}
+                onSelect={(newStatus) => {
+                  statusChangeMutation.mutate(newStatus);
+                }}
+                reviewAssignments={caseItem.reviewAssignments ?? []}
+              />,
+            ]
+          : []),
+      ]}
+      buttons={[
+        <CommentButton
+          disabled={isLoading}
+          onSuccess={(newComment) => {
+            onCommentAdded(newComment, caseId ?? '');
+          }}
+          submitRequest={async (commentFormValues) => {
+            if (caseId == null) {
+              throw new Error(`Case ID is not defined`);
+            }
+            const commentData = {
+              CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
+            };
+            return await api.postCaseComments({
+              caseId: caseId,
+              ...commentData,
+            });
+          }}
+          requiredPermissions={['case-management:case-overview:write']}
+        />,
+        <ExportButton caseId={caseItem.caseId ?? ''} />,
+        ...(!isReview && caseId
+          ? [
+              <CasesStatusChangeButton
+                caseIds={[caseId]}
+                caseStatus={caseItem.caseStatus}
+                onSaved={handleStatusChangeSuccess}
+                isDisabled={(caseItem.caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading}
+                statusTransitions={{
+                  OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                  OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_L2: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_L2_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+                  ESCALATED_L2_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+                }}
+              />,
+            ]
+          : []),
+        <StatusChangeMenu
+          isDisabled={isLoading}
+          caseItem={caseItem}
+          onReload={handleStatusChangeSuccess}
+        />,
+      ]}
+      subHeader={<SubHeader caseItem={caseItem} />}
+    />
   );
 }

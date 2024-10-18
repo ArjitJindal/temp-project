@@ -10,6 +10,7 @@ import {
   Alert,
   AlertStatus,
   Assignment,
+  Case,
   CaseStatus,
   CaseStatusChange,
   Comment,
@@ -32,6 +33,12 @@ export const statusEscalated = (
   status: CaseStatus | undefined,
 ): status is 'ESCALATED' | 'ESCALATED_IN_PROGRESS' | 'ESCALATED_ON_HOLD' => {
   return status?.startsWith('ESCALATED') ?? false;
+};
+
+export const statusEscalatedL2 = (
+  status: CaseStatus | undefined,
+): status is 'ESCALATED_L2' | 'ESCALATED_L2_IN_PROGRESS' | 'ESCALATED_L2_ON_HOLD' => {
+  return status?.startsWith('ESCALATED_L2') ?? false;
 };
 
 export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): CaseStatus => {
@@ -117,6 +124,11 @@ export const getNextStatus = (
       return 'REOPENED';
     case 'IN_REVIEW_ESCALATED':
       return 'ESCALATED';
+    case 'ESCALATED_L2_IN_PROGRESS':
+    case 'ESCALATED_L2_ON_HOLD':
+      return 'ESCALATED_L2';
+    case 'ESCALATED_L2':
+      return 'CLOSED';
     default:
       return neverReturn(status, status);
   }
@@ -136,6 +148,9 @@ export const isOnHoldOrInProgressOrEscalated = (status: CaseStatus | null | unde
     'ESCALATED_IN_PROGRESS',
     'ESCALATED_ON_HOLD',
     'ESCALATED',
+    'ESCALATED_L2',
+    'ESCALATED_L2_IN_PROGRESS',
+    'ESCALATED_L2_ON_HOLD',
   ].includes(status);
 };
 
@@ -163,6 +178,10 @@ export const getDerivedStatus = (s: CaseStatus | AlertStatus | DerivedStatus): D
     case 'OPEN_ON_HOLD':
     case 'ESCALATED_ON_HOLD':
       return 'ON_HOLD';
+    case 'ESCALATED_L2':
+    case 'ESCALATED_L2_IN_PROGRESS':
+    case 'ESCALATED_L2_ON_HOLD':
+      return 'ESCALATED_L2';
   }
   return s;
 };
@@ -240,4 +259,21 @@ export function casesCommentsGenerator(
 
     return commentData;
   }
+}
+
+export function getAssignmentsToShow(item: Case | Alert): Assignment[] | undefined {
+  const status = 'caseStatus' in item ? item.caseStatus : (item as Alert).alertStatus;
+  const isStatusEscalatedL2 = statusEscalatedL2(status);
+  const isItemEscalated = statusEscalated(status);
+  const isItemInReview = statusInReview(status);
+
+  if (isStatusEscalatedL2) {
+    return item.reviewAssignments?.filter((assignment) => assignment.escalationLevel === 'L2');
+  }
+
+  if (isItemEscalated || isItemInReview) {
+    return item.reviewAssignments?.filter((assignment) => assignment.escalationLevel !== 'L2');
+  }
+
+  return item.assignments;
 }

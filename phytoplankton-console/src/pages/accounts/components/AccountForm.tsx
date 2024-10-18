@@ -14,7 +14,7 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { getErrorMessage, isEqual } from '@/utils/lang';
 import {
   Feature,
-  useFeatures,
+  useFeatureEnabled,
   useSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { getBranding } from '@/utils/branding';
@@ -34,28 +34,33 @@ interface Props {
   onSuccess: () => void;
   isVisibile: boolean;
   onChangeVisibility: (isVisible: boolean) => void;
+  accounts: Account[];
 }
 
 const REQUIRED_FIELDS = ['email', 'role'];
 
 const defaultState = {
   name: '',
-  isEscalationContact: false,
   reviewerId: undefined,
   role: 'admin',
   email: '',
+  isReviewer: false,
+};
+
+const defaultEscalationsState = {
+  escalationLevel: undefined,
+  isReviewer: false,
 };
 
 export default function AccountForm(props: Props) {
-  const { editAccount, onSuccess } = props;
+  const { editAccount, onSuccess, accounts } = props;
   const api = useApi();
   const user = useAuth0User();
   const rolesResp = useQuery<AccountRole[]>(ROLES_LIST(), async () => {
     return await api.getRoles();
   });
-  const branding = getBranding();
-  const features = useFeatures();
 
+  const branding = getBranding();
   const settings = useSettings();
   const maxSeats = settings.limits?.seats;
 
@@ -64,15 +69,21 @@ export default function AccountForm(props: Props) {
   // todo: i18n
   const isInviteDisabled = useIsInviteDisabled();
 
-  const isEscalationsEnabled = useMemo(() => features.includes('ADVANCED_WORKFLOWS'), [features]);
+  const isEscalationsEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+  const isMultiEscalationsEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const defaultValues = useMemo(() => {
     if (editAccount) {
       return {
         name: editAccount?.name || '',
         ...(isEscalationsEnabled && {
-          isEscalationContact: editAccount?.isEscalationContact || false,
-          reviewerId: editAccount?.reviewerId || undefined,
+          escalationLevel: editAccount?.escalationLevel || undefined,
+          isReviewer: editAccount.isReviewer ?? false,
+          reviewerId: !editAccount.escalationLevel ? editAccount?.reviewerId : undefined,
+          escalationReviewerId:
+            editAccount.escalationLevel === 'L1' && isMultiEscalationsEnabled
+              ? editAccount?.escalationReviewerId
+              : undefined,
         }),
         role: editAccount?.role || 'admin',
         email: editAccount?.email || '',
@@ -81,11 +92,11 @@ export default function AccountForm(props: Props) {
     } else {
       return defaultState;
     }
-  }, [isEscalationsEnabled, editAccount]);
+  }, [isEscalationsEnabled, editAccount, isMultiEscalationsEnabled]);
 
   const [values, setValues] = useState<Partial<Account>>(defaultValues);
 
-  const [isReviewRequired, setIsReviewRequired] = useState(false);
+  const [isReviewRequired, setIsReviewRequired] = useState(values.reviewerId != null);
 
   const editAccountChanged = useIsChanged(editAccount);
   useEffect(() => {
@@ -128,14 +139,24 @@ export default function AccountForm(props: Props) {
         hide?.();
         return;
       }
+
       if (!payload.email || !isValidEmail(payload.email)) {
         message.error('Invalid email format');
         hide?.();
         return;
       }
-      return await api.accountsInvite({
-        AccountInvitePayload: payload,
-      });
+
+      if (
+        values.escalationLevel === 'L1' &&
+        isMultiEscalationsEnabled &&
+        !values.escalationReviewerId
+      ) {
+        message.error('Escalation L2 is required');
+        hide?.();
+        return;
+      }
+
+      return await api.accountsInvite({ AccountInvitePayload: payload });
     },
     {
       onSuccess: async (data) => {
@@ -164,11 +185,32 @@ export default function AccountForm(props: Props) {
     { accountId: string; AccountPatchPayload: AccountPatchPayload }
   >(
     async (payload) => {
+      const accountId = payload.accountId;
       if (isReviewRequired && !payload.AccountPatchPayload.reviewerId) {
         message.error('Checker is required');
         hide?.();
         return;
       }
+
+      if (
+        values.escalationLevel === 'L1' &&
+        isMultiEscalationsEnabled &&
+        !values.escalationReviewerId
+      ) {
+        message.error('Escalation L2 is required');
+        hide?.();
+        return;
+      }
+
+      // if any account has already this reviewerId, then we should not allow to change it
+      const isReviewerIdAlreadyUsed = accounts.some((account) => account.reviewerId === accountId);
+
+      if (isReviewerIdAlreadyUsed && !payload.AccountPatchPayload.isReviewer) {
+        message.error('This checker is already assigned to a maker');
+        hide?.();
+        return;
+      }
+
       return await api.accountsEdit(payload);
     },
     {
@@ -214,6 +256,18 @@ export default function AccountForm(props: Props) {
     },
   );
 
+  const assignments = useMemo(() => {
+    if (values.reviewerId && !values.escalationLevel) {
+      return [{ assigneeUserId: values.reviewerId, assignedByUserId: '', timestamp: 0 }];
+    }
+
+    if (values.escalationReviewerId && values.escalationLevel === 'L1') {
+      return [{ assigneeUserId: values.escalationReviewerId, assignedByUserId: '', timestamp: 0 }];
+    }
+
+    return [];
+  }, [values.escalationLevel, values.escalationReviewerId, values.reviewerId]);
+
   const resetPasswordMutation = useMutation<unknown, unknown, { accountId: string }>(
     async (payload) => {
       return await api.accountsResetPassword({ accountId: payload.accountId });
@@ -235,11 +289,19 @@ export default function AccountForm(props: Props) {
   );
 
   const onFinish = async () => {
-    const { email, role, isEscalationContact, reviewerId } = values;
+    const { email, ...payload } = values;
+
     if (isEdit) {
       editMutation.mutate({
         accountId: editAccount?.id,
-        AccountPatchPayload: { role, isEscalationContact, reviewerId },
+        AccountPatchPayload: {
+          ...payload,
+          escalationReviewerId:
+            payload.escalationLevel === 'L1' && isMultiEscalationsEnabled
+              ? payload.escalationReviewerId
+              : undefined,
+          reviewerId: !payload.escalationLevel ? payload.reviewerId : undefined,
+        },
       });
       return;
     }
@@ -247,7 +309,7 @@ export default function AccountForm(props: Props) {
     if (email == null) {
       throw new Error(`email can not be null`);
     }
-    inviteMutation.mutate({ email: email.trim(), role: role, isEscalationContact, reviewerId });
+    inviteMutation.mutate({ email: email.trim(), ...payload });
   };
 
   return (
@@ -272,9 +334,7 @@ export default function AccountForm(props: Props) {
           <Button
             testName="accounts-invite"
             type="PRIMARY"
-            onClick={() => {
-              onFinish();
-            }}
+            onClick={onFinish}
             isDisabled={isInviteButtonDisabled}
             isLoading={inviteMutation.isLoading || editMutation.isLoading}
             requiredPermissions={['accounts:overview:write']}
@@ -292,10 +352,7 @@ export default function AccountForm(props: Props) {
             allowClear={false}
             value={values.email}
             onChange={(value) => {
-              setValues({
-                ...values,
-                email: value,
-              });
+              setValues({ ...values, email: value });
             }}
           />
         </Label>
@@ -304,16 +361,10 @@ export default function AccountForm(props: Props) {
             <Label label="Role" level={4}>
               <Select
                 allowClear={false}
-                options={roles.map((name) => ({
-                  value: name.name,
-                  label: startCase(name.name),
-                }))}
+                options={roles.map((name) => ({ value: name.name, label: startCase(name.name) }))}
                 value={values.role}
                 onChange={(value) => {
-                  setValues({
-                    ...values,
-                    role: value,
-                  });
+                  setValues({ ...values, role: value });
                 }}
                 isDisabled={user.userId === editAccount?.id || editAccount?.role == 'root'}
               />
@@ -326,59 +377,98 @@ export default function AccountForm(props: Props) {
               Review permissions
             </P>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-              <Label position="RIGHT" label="Escalation reviewer" level={2}>
-                <Checkbox
-                  value={values.isEscalationContact}
-                  onChange={(value) => {
-                    setValues({
-                      ...values,
-                      isEscalationContact: value,
-                    });
-                  }}
-                />
-              </Label>
               <Label position="RIGHT" label="Maker" level={2}>
                 <Checkbox
                   value={isReviewRequired}
                   onChange={() => {
                     setIsReviewRequired((prev) => {
-                      setValues({
-                        ...values,
-                        reviewerId: prev ? undefined : values.reviewerId,
-                      });
+                      setValues({ ...values, ...defaultEscalationsState });
                       return !prev;
                     });
                   }}
                 />
               </Label>
+              <Label position="RIGHT" label="Checker" level={2}>
+                <Checkbox
+                  value={values.isReviewer ?? false}
+                  onChange={(value) => {
+                    setValues({
+                      ...values,
+                      ...defaultEscalationsState,
+                      isReviewer: value,
+                    });
+                    setIsReviewRequired(false);
+                  }}
+                />
+              </Label>
+              <Label
+                position="RIGHT"
+                label={isMultiEscalationsEnabled ? 'Escalation L1' : 'Escalation reviewer'}
+                level={2}
+              >
+                <Checkbox
+                  value={values.escalationLevel === 'L1'}
+                  onChange={(value) => {
+                    setValues({
+                      ...values,
+                      ...defaultEscalationsState,
+                      escalationLevel: value ? 'L1' : undefined,
+                      reviewerId: value ? values.reviewerId : undefined,
+                    });
+                    setIsReviewRequired(false);
+                  }}
+                />
+              </Label>
+              <Feature name="MULTI_LEVEL_ESCALATION">
+                <Label position="RIGHT" label="Escalation L2" level={2}>
+                  <Checkbox
+                    value={values.escalationLevel === 'L2'}
+                    onChange={(value) => {
+                      setValues({
+                        ...values,
+                        ...defaultEscalationsState,
+                        escalationLevel: value ? 'L2' : undefined,
+                      });
+                      setIsReviewRequired(false);
+                    }}
+                  />
+                </Label>
+              </Feature>
             </div>
           </div>
         </Feature>
-        {isReviewRequired && isEscalationsEnabled && (
-          <div style={{ marginTop: '1rem' }}>
-            <Label label="Select a checker">
-              <AssigneesDropdown
-                maxAssignees={1}
-                editing={true}
-                placeholder="Select a reviewer"
-                assignments={
-                  values.reviewerId
-                    ? [
-                        {
-                          assigneeUserId: values.reviewerId,
-                          assignedByUserId: '',
-                          timestamp: 0,
-                        },
-                      ]
-                    : []
-                }
-                onChange={(value) => {
-                  setValues({ ...values, reviewerId: value[0] });
-                }}
-              />
-            </Label>
-          </div>
-        )}
+        {isEscalationsEnabled &&
+          (isReviewRequired || (isMultiEscalationsEnabled && values.escalationLevel === 'L1')) && (
+            <div style={{ marginTop: '1rem' }}>
+              <Label label={values.escalationLevel === 'L1' ? 'Escalation L2 reviewer' : 'Checker'}>
+                <AssigneesDropdown
+                  maxAssignees={1}
+                  editing={true}
+                  placeholder={
+                    values.escalationLevel === 'L1'
+                      ? 'Select a escalation L2 reviewer'
+                      : 'Select a checker'
+                  }
+                  customFilter={(option) => {
+                    if (values.escalationLevel === 'L1') {
+                      return option.escalationLevel === 'L2';
+                    }
+
+                    return option.isReviewer ?? false;
+                  }}
+                  assignments={assignments}
+                  onChange={(value) => {
+                    if (values.escalationLevel === 'L1') {
+                      setValues({ ...values, escalationReviewerId: value[0] });
+                      return;
+                    }
+
+                    setValues({ ...values, reviewerId: value[0] });
+                  }}
+                />
+              </Label>
+            </div>
+          )}
         {isEdit && (
           <div style={{ display: 'flex', gap: '0.5rem', flexDirection: 'row' }}>
             <Button

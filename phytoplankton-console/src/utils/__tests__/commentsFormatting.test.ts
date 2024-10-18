@@ -15,7 +15,6 @@ const testUsers: { [key: string]: Account } = {
     email: 'user1@email.com',
     emailVerified: true,
     id: 'user1',
-    isEscalationContact: false,
     name: 'user1',
     role: 'analyst',
   },
