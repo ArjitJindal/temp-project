@@ -75,6 +75,15 @@ export function DeleteUser(props: DeleteUserProps) {
         return;
       }
 
+      const isEscalationReviewerIdAlreadyUsed = accounts.some(
+        (account) => account.escalationReviewerId === item.id && account.escalationLevel === 'L1',
+      );
+
+      if (isEscalationReviewerIdAlreadyUsed) {
+        message.error('This escalation L2 is already assigned to a maker');
+        return;
+      }
+
       setIsModalVisible(true);
     }
   };

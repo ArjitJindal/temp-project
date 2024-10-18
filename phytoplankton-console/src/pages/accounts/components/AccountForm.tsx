@@ -211,6 +211,16 @@ export default function AccountForm(props: Props) {
         return;
       }
 
+      const isEscalationReviewerIdAlreadyUsed = accounts.some(
+        (account) => account.escalationReviewerId === accountId && account.escalationLevel === 'L1',
+      );
+
+      if (isEscalationReviewerIdAlreadyUsed && values.escalationLevel === 'L1') {
+        message.error('This escalation L2 is already assigned to a maker');
+        hide?.();
+        return;
+      }
+
       return await api.accountsEdit(payload);
     },
     {
