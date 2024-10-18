@@ -894,7 +894,7 @@ describe('Create a consumer user event with risk scoring V8', () => {
       riskScoringCraEnabled: true,
     })
   })
-  withFeatureHook(['RISK_SCORING_V8', 'RISK_LEVELS'])
+  withFeatureHook(['RISK_SCORING', 'RISK_SCORING_V8', 'RISK_LEVELS'])
   setUpRiskFactorsHook(TEST_TENANT_ID, [
     getTestRiskFactor({
       id: 'RF1',
@@ -999,7 +999,7 @@ describe('Create a business user event with risk scoring V8', () => {
       riskScoringCraEnabled: true,
     })
   })
-  withFeatureHook(['RISK_SCORING_V8'])
+  withFeatureHook(['RISK_SCORING', 'RISK_SCORING_V8'])
   setUpRiskFactorsHook(TEST_TENANT_ID, [
     getTestRiskFactor({
       id: 'RF1',

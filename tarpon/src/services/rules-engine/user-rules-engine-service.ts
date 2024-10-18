@@ -305,18 +305,19 @@ export class UserManagementService {
     let riskScoreDetails: UserRiskScoreDetails | undefined
 
     if (hasFeature('RISK_SCORING')) {
-      riskScoreDetails =
-        await this.riskScoringService.calculateAndUpdateKRSAndDRS(
+      if (hasFeature('RISK_SCORING_V8')) {
+        riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate(
           updatedUser,
+          updatedAttributes.riskLevel,
           isDrsUpdatable
         )
-    }
-    if (hasFeature('RISK_SCORING_V8')) {
-      riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate(
-        updatedUser,
-        updatedAttributes.riskLevel,
-        isDrsUpdatable
-      )
+      } else {
+        riskScoreDetails =
+          await this.riskScoringService.calculateAndUpdateKRSAndDRS(
+            updatedUser,
+            isDrsUpdatable
+          )
+      }
     }
 
     const { monitoringResult, isAnyAsyncRules } =
