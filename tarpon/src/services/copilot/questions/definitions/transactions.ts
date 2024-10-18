@@ -13,16 +13,190 @@ import {
   periodDefaults,
   periodVars,
   sqlPeriod,
+  paymentIdentifierQueryClickhouse,
 } from '@/services/copilot/questions/definitions/util'
 import { paginatedSqlQuery } from '@/services/copilot/questions/definitions/common/pagination'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 import { formatConsumerName } from '@/utils/helpers'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { replacePlaceholders } from '@/utils/viper'
+import { hasFeature } from '@/core/utils/context'
+
+const athenaTransactionQuery = async (
+  ctx: InvestigationContext,
+  period: Period,
+  where: (ctx: InvestigationContext) => string = () => ``,
+  page: number,
+  pageSize: number
+) => {
+  const { rows, total } = await paginatedSqlQuery<
+    Transaction & {
+      originBusinessName?: string
+      destinationBusinessName?: string
+      originConsumerName: ConsumerName
+      destinationConsumerName: ConsumerName
+    }
+  >(
+    `select
+  t.transactionId as transactionId,
+  t.type as type,
+  t.timestamp as timestamp,
+  t.transactionState as transactionState,
+  t.originUserId as originUserId,
+  t.originAmountDetails as originAmountDetails,
+  t.destinationUserId as destinationUserId,
+  t.destinationAmountDetails as destinationAmountDetails,
+  t.reference as reference,
+  origin.userDetails.name as originConsumerName,
+  origin.legalEntity.companyGeneralDetails.legalName as originBusinessName,
+  destination.userDetails.name as destinationConsumerName,
+  destination.legalEntity.companyGeneralDetails.legalName as destinationBusinessName
+from
+  transactions t
+  left join users origin on t.originUserId = origin.userId
+  left join users destination on t.destinationUserId = destination.userId
+        ${where(ctx)} and t.timestamp between :from and :to
+      `,
+    {
+      userId: ctx.userId,
+      ...ctx.paymentIdentifier,
+      ...sqlPeriod(period),
+    },
+    page,
+    pageSize
+  )
+
+  const items = rows.map((t) => {
+    return [
+      t.transactionId,
+      t.type,
+      t.timestamp,
+      t.transactionState,
+      t.originUserId,
+      t.originConsumerName
+        ? formatConsumerName(t.originConsumerName)
+        : t.originBusinessName,
+      t.originAmountDetails?.transactionAmount,
+      t.originAmountDetails?.transactionCurrency,
+      t.originAmountDetails?.country,
+      t.destinationUserId,
+      t.destinationConsumerName
+        ? formatConsumerName(t.destinationConsumerName)
+        : t.destinationBusinessName,
+      t.destinationAmountDetails?.transactionAmount,
+      t.destinationAmountDetails?.transactionCurrency,
+      t.destinationAmountDetails?.country,
+      t.reference,
+    ]
+  })
+
+  return {
+    items,
+    total,
+    rows,
+  }
+}
+
+const clickhouseTransactionQuery = async (
+  ctx: InvestigationContext,
+  period: Period,
+  clickhouseWhere: (ctx: InvestigationContext) => string = () => ``,
+  page: number,
+  pageSize: number
+) => {
+  const transactionsQuery = `
+  SELECT
+      id as transactionId,
+      type,
+      timestamp,
+      transactionState,
+      originUserId,
+      originAmountDetails_transactionAmount as originAmount,
+      originAmountDetails_transactionCurrency as originCurrency,
+      originAmountDetails_country as originCountry,
+      destinationUserId,
+      destinationAmountDetails_transactionAmount as destinationAmount,
+      destinationAmountDetails_transactionCurrency as destinationCurrency,
+      destinationAmountDetails_country as destinationCountry,
+      reference
+    FROM transactions
+    WHERE timestamp between :from and :to and ${clickhouseWhere(ctx)}
+    `
+
+  const query = `
+  WITH transactions AS (
+    ${transactionsQuery}
+    LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+),
+ users as (
+  SELECT
+    id as userId,
+    username
+  FROM users
+  WHERE id in (SELECT originUserId FROM transactions)
+    OR id in (SELECT destinationUserId FROM transactions)
+) SELECT
+  transactions.*,
+  users.username as originConsumerName,
+  users.username as destinationConsumerName
+FROM transactions
+LEFT JOIN users ON transactions.originUserId = users.userId
+
+`
+
+  const countQuery = replacePlaceholders(
+    `
+    SELECT count(*) from transactions 
+    WHERE timestamp between :from and :to and ${clickhouseWhere(ctx)}
+    `,
+    {
+      ...sqlPeriod(period),
+      userId: ctx.userId,
+    }
+  )
+  const formattedQuery = replacePlaceholders(query, {
+    userId: ctx.userId,
+    ...sqlPeriod(period),
+  })
+
+  const [transactions, total] = await Promise.all([
+    executeClickhouseQuery<any>(ctx.tenantId, formattedQuery, {}),
+    executeClickhouseQuery<{ total: number }>(ctx.tenantId, countQuery, {}),
+  ])
+
+  const items = transactions.map((t) => {
+    return [
+      t.transactionId,
+      t.type,
+      t.timestamp,
+      t.transactionState,
+      t.originUserId,
+      t.originConsumerName,
+      t.originAmount,
+      t.originCurrency,
+      t.originCountry,
+      t.destinationUserId,
+      t.destinationConsumerName,
+      t.destinationAmount,
+      t.destinationCurrency,
+      t.destinationCountry,
+      t.reference,
+    ]
+  })
+
+  return {
+    items,
+    total: total[0].total,
+    rows: transactions,
+  }
+}
 
 export const transactionQuestion = (
   questionId: QuestionId,
   title: (ctx: InvestigationContext, vars: Variables) => Promise<string>,
-  where: (ctx: InvestigationContext) => string = () => ``
+  where: (ctx: InvestigationContext) => string = () => ``,
+  clickhouseWhere: (ctx: InvestigationContext) => string = () => ``
 ): TableQuestion<Period> => ({
   type: 'TABLE',
   questionId,
@@ -91,66 +265,22 @@ export const transactionQuestion = (
     },
   ],
   aggregationPipeline: async (ctx, { page, pageSize, ...period }) => {
-    const { rows, total } = await paginatedSqlQuery<
-      Transaction & {
-        originBusinessName?: string
-        destinationBusinessName?: string
-        originConsumerName: ConsumerName
-        destinationConsumerName: ConsumerName
-      }
-    >(
-      `select
-  t.transactionId as transactionId,
-  t.type as type,
-  t.timestamp as timestamp,
-  t.transactionState as transactionState,
-  t.originUserId as originUserId,
-  t.originAmountDetails as originAmountDetails,
-  t.destinationUserId as destinationUserId,
-  t.destinationAmountDetails as destinationAmountDetails,
-  t.reference as reference,
-  origin.userDetails.name as originConsumerName,
-  origin.legalEntity.companyGeneralDetails.legalName as originBusinessName,
-  destination.userDetails.name as destinationConsumerName,
-  destination.legalEntity.companyGeneralDetails.legalName as destinationBusinessName
-from
-  transactions t
-  left join users origin on t.originUserId = origin.userId
-  left join users destination on t.destinationUserId = destination.userId
-        ${where(ctx)} and t.timestamp between :from and :to
-      `,
-      {
-        userId: ctx.userId,
-        ...ctx.paymentIdentifier,
-        ...sqlPeriod(period),
-      },
-      page,
-      pageSize
-    )
+    const { items, total, rows } = !hasFeature('CLICKHOUSE_ENABLED')
+      ? await athenaTransactionQuery(
+          ctx,
+          period,
+          where,
+          page ?? 0,
+          pageSize ?? 20
+        )
+      : await clickhouseTransactionQuery(
+          ctx,
+          period,
+          clickhouseWhere,
+          page ?? 0,
+          pageSize ?? 20
+        )
 
-    const items = rows.map((t) => {
-      return [
-        t.transactionId,
-        t.type,
-        t.timestamp,
-        t.transactionState,
-        t.originUserId,
-        t.originConsumerName
-          ? formatConsumerName(t.originConsumerName)
-          : t.originBusinessName,
-        t.originAmountDetails?.transactionAmount,
-        t.originAmountDetails?.transactionCurrency,
-        t.originAmountDetails?.country,
-        t.destinationUserId,
-        t.destinationConsumerName
-          ? formatConsumerName(t.destinationConsumerName)
-          : t.destinationBusinessName,
-        t.destinationAmountDetails?.transactionAmount,
-        t.destinationAmountDetails?.transactionCurrency,
-        t.destinationAmountDetails?.country,
-        t.reference,
-      ]
-    })
     return {
       data: {
         items,
@@ -183,6 +313,12 @@ const UserTransactions = transactionQuestion(
       ? `t.originUserId = :userId or t.destinationUserId = :userId`
       : transactionPaymentIdentifierQuerySQL(ctx.paymentIdentifier)
     return `WHERE (${condition})`
+  },
+  (ctx) => {
+    const condition = ctx.userId
+      ? `originUserId = :userId or destinationUserId = :userId`
+      : paymentIdentifierQueryClickhouse(ctx.paymentIdentifier)
+    return `(${condition})`
   }
 )
 
@@ -190,7 +326,8 @@ const AlertTransactions = transactionQuestion(
   COPILOT_QUESTIONS.ALERT_TRANSACTIONS,
   async (ctx) => `Transactions for alert ${ctx.alertId}`,
   (ctx) =>
-    `WHERE t.transactionId in ('${ctx.alert.transactionIds?.join("','")}')`
+    `WHERE t.transactionId in ('${ctx.alert.transactionIds?.join("','")}')`,
+  (ctx) => `id in ('${ctx.alert.transactionIds?.join("','")}')`
 )
 
 const CaseTransactions = transactionQuestion(
@@ -199,7 +336,11 @@ const CaseTransactions = transactionQuestion(
   (ctx) =>
     `WHERE t.transactionId in ('${uniq(
       ctx._case.alerts?.flatMap((a) => a.transactionIds)
-    )?.join("','")}')`
+    )?.join("','")}')`,
+  (ctx) =>
+    `id in ('${uniq(ctx._case.alerts?.flatMap((a) => a.transactionIds))?.join(
+      "','"
+    )}')`
 )
 
 export const TransactionQuestions = [
