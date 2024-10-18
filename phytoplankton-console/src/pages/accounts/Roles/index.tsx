@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { startCase } from 'lodash';
 import { Card } from 'antd';
 import { LockFilled } from '@ant-design/icons';
@@ -35,6 +35,7 @@ export default function Roles() {
 const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () => any }) => {
   const [key, setKey] = useState<string>(roles[0]?.id || '');
   const [isCreateRoleForm, setIsCreateRoleForm] = useState<boolean>(false);
+  const existingRoleNames = useMemo(() => roles.map((r) => r.name), [roles]);
   return (
     <div>
       <VerticalMenu
@@ -78,16 +79,23 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
         }}
       >
         {isCreateRoleForm ? (
-          <RoleForm onChange={onChange} />
+          <RoleForm onChange={onChange} existingRoleNames={existingRoleNames} type="create" />
         ) : (
-          <RoleFormAsync roleId={key} onChange={onChange} />
+          <RoleFormAsync roleId={key} onChange={onChange} existingRoleNames={existingRoleNames} />
         )}
       </VerticalMenu>
     </div>
   );
 };
 
-const RoleFormAsync = ({ roleId, onChange }: { roleId: string; onChange: () => void }) => {
+type RoleFormAsyncProps = {
+  roleId: string;
+  onChange: () => void;
+  existingRoleNames: string[];
+};
+
+const RoleFormAsync = (props: RoleFormAsyncProps) => {
+  const { roleId, onChange, existingRoleNames } = props;
   const api = useApi();
   const result = useQuery<AccountRole>(ROLE(roleId), async () => {
     return await api.getRole({ roleId });
@@ -105,6 +113,8 @@ const RoleFormAsync = ({ roleId, onChange }: { roleId: string; onChange: () => v
             }
             onChange();
           }}
+          existingRoleNames={existingRoleNames}
+          type="edit"
         />
       )}
     </AsyncResourceRenderer>

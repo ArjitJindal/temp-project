@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { startCase } from 'lodash';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
@@ -23,13 +23,15 @@ export interface FormValues {
   roleName: string;
   description: string;
 }
-export default function RoleForm({
-  role,
-  onChange,
-}: {
+
+type RoleFormProps = {
   role?: AccountRole;
-  onChange: (onDelete: boolean, onUpdate: boolean) => any;
-}) {
+  onChange: (onDelete: boolean, onUpdate: boolean) => void;
+  existingRoleNames: string[];
+  type: 'create' | 'edit';
+};
+
+export default function RoleForm({ role, onChange, existingRoleNames, type }: RoleFormProps) {
   const api = useApi();
   const [edit, setEdit] = useState(!role);
   const [duplicate, setDuplicate] = useState(false);
@@ -46,45 +48,53 @@ export default function RoleForm({
   const [allExpanded, setAllExpanded] = useState(false);
   const ref = useRef<FormRef<FormValues>>(null);
 
-  const onSubmit = async (
-    { roleName, description }: { roleName: string; description: string },
-    { isValid }: { isValid: boolean },
-  ) => {
-    if (!isValid) {
-      return;
-    }
-    setLoading(true);
-    try {
-      if (isValidManagedRoleName(roleName)) {
-        message.error('Role name should not match with default roles');
+  const onSubmit = useCallback(
+    async (
+      { roleName, description }: { roleName: string; description: string },
+      { isValid }: { isValid: boolean },
+    ) => {
+      if (!isValid) {
         return;
       }
-      const accountRole: CreateAccountRole = {
-        name: roleName,
-        description,
-        permissions: [...permissions],
-      };
-      if (duplicate || !role?.id) {
-        await api.createRole({ CreateAccountRole: accountRole });
-      } else {
-        await api.updateRole({
-          roleId: role?.id,
-          AccountRole: {
-            ...accountRole,
-            id: role?.id,
-          },
-        });
-      }
-      message.success(`${startCase(roleName)} role saved`);
-      onChange(false, true);
-    } catch (e) {
-      message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
-    } finally {
-      setLoading(false);
-    }
-  };
+      setLoading(true);
+      try {
+        if (isValidManagedRoleName(roleName)) {
+          message.error('Role name should not match with default roles');
+          return;
+        }
 
-  const onDelete = async () => {
+        const existingRole = existingRoleNames.find(
+          (name) => name.toLowerCase() === roleName.toLowerCase(),
+        );
+
+        if (type === 'create' && existingRole) {
+          message.error(`Role name: ${roleName} already exists`);
+          return;
+        }
+
+        const accountRole: CreateAccountRole = {
+          name: roleName,
+          description,
+          permissions: [...permissions],
+        };
+
+        if (duplicate || !role?.id) {
+          await api.createRole({ CreateAccountRole: accountRole });
+        } else {
+          await api.updateRole({ roleId: role?.id, AccountRole: { ...accountRole, id: role?.id } });
+        }
+        message.success(`${startCase(roleName)} role saved`);
+        onChange(false, true);
+      } catch (e) {
+        message.fatal(`Failed to save role - ${getErrorMessage(e)}`, e);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [duplicate, existingRoleNames, permissions, role, type, api, onChange],
+  );
+
+  const onDelete = useCallback(async () => {
     setLoading(true);
     try {
       if (!role?.id) {
@@ -99,34 +109,37 @@ export default function RoleForm({
     } finally {
       setLoading(false);
     }
-  };
+  }, [role, api, onChange]);
 
   const tableRef = useRef<TableRefType | null>(null);
 
-  const onExpand = () => {
+  const onExpand = useCallback(() => {
     tableRef.current?.toggleExpanded();
-  };
+  }, []);
 
-  const onPermissionChange = (permission: Permission, enabled: boolean) => {
-    if (enabled) {
-      permissions.add(permission);
-      if (permission.endsWith(':write')) {
-        const readPerm = permission.replace(/(.*:)write$/, '$1read');
-        if (isValidPermission(readPerm)) {
-          permissions.add(readPerm);
+  const onPermissionChange = useCallback(
+    (permission: Permission, enabled: boolean) => {
+      if (enabled) {
+        permissions.add(permission);
+        if (permission.endsWith(':write')) {
+          const readPerm = permission.replace(/(.*:)write$/, '$1read') as Permission;
+          if (isValidPermission(readPerm)) {
+            permissions.add(readPerm);
+          }
+        }
+      } else {
+        permissions.delete(permission);
+        if (permission.endsWith(':read')) {
+          const readPerm = permission.replace(/(.*:)read$/, '$1write') as Permission;
+          if (isValidPermission(readPerm)) {
+            permissions.delete(readPerm);
+          }
         }
       }
-    } else {
-      permissions.delete(permission);
-      if (permission.endsWith(':read')) {
-        const readPerm = permission.replace(/(.*:)read$/, '$1write');
-        if (isValidPermission(readPerm)) {
-          permissions.delete(readPerm);
-        }
-      }
-    }
-    setPermissions(new Set([...permissions]));
-  };
+      setPermissions(new Set([...permissions]));
+    },
+    [permissions],
+  );
 
   return (
     <Form<FormValues>
