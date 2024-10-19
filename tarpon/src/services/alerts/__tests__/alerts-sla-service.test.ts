@@ -32,7 +32,9 @@ describe('test sla service', () => {
   const tenantId = getTestTenantId()
   describe('test calculateSLAStatusForAlert', () => {
     describe('basic SLA calculation logic test', () => {
-      const TEST_POLICY = getTestPolicy({})
+      const TEST_POLICY = getTestPolicy({
+        id: 'test-policy-1',
+      })
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
@@ -52,7 +54,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-1'
         )
         expect(result).toEqual({
           elapsedTime: 86400000,
@@ -77,7 +79,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-1'
         )
         expect(result).toEqual({
           elapsedTime: 604800000,
@@ -102,7 +104,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-1'
         )
         expect(result).toEqual({
           elapsedTime: 864000000,
@@ -112,6 +114,7 @@ describe('test sla service', () => {
     })
     describe('test SLA calculation with different status changes', () => {
       const TEST_POLICY = getTestPolicy({
+        id: 'test-policy-2',
         policyConfiguration: {
           accountRoles: ['test'],
           alertStatusDetails: {
@@ -168,7 +171,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-2'
         )
         expect(result).toEqual({
           elapsedTime: 259200000,
@@ -208,7 +211,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-2'
         )
         expect(result).toEqual({
           elapsedTime: 864000000,
@@ -217,7 +220,9 @@ describe('test sla service', () => {
       })
     })
     describe('test SLA calculation without accountRoles', () => {
-      const TEST_POLICY = getTestPolicy({})
+      const TEST_POLICY = getTestPolicy({
+        id: 'test-policy-3',
+      })
       TEST_POLICY.policyConfiguration.accountRoles = undefined
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
@@ -238,7 +243,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-3'
         )
         expect(result).toEqual({
           elapsedTime: 86400000,
@@ -248,6 +253,7 @@ describe('test sla service', () => {
     })
     describe('test SLA calculation with different days', () => {
       const TEST_POLICY = getTestPolicy({
+        id: 'test-policy-4',
         policyConfiguration: {
           alertStatusDetails: {
             alertStatuses: ['OPEN'],
@@ -280,7 +286,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-4'
         )
         expect(result).toEqual({
           elapsedTime: 86400000,
@@ -305,7 +311,7 @@ describe('test sla service', () => {
 
         const result = await service.calculateSLAStatusForAlert(
           alert,
-          'testPolicy1'
+          'test-policy-4'
         )
         expect(result).toEqual({
           elapsedTime: 172800000,
@@ -315,9 +321,11 @@ describe('test sla service', () => {
     })
   })
   describe('test calculation of SLA status for all non closed alerts', () => {
-    const TEST_POLICY1 = getTestPolicy({})
+    const TEST_POLICY1 = getTestPolicy({
+      id: 'test-policy-5',
+    })
     const TEST_POLICY2 = getTestPolicy({
-      id: 'testPolicy2',
+      id: 'test-policy-6',
       policyConfiguration: {
         accountRoles: ['test'],
         alertStatusDetails: {
@@ -351,12 +359,12 @@ describe('test sla service', () => {
             alertStatus: 'IN_REVIEW_OPEN',
             slaPolicyDetails: [
               {
-                slaPolicyId: 'testPolicy1',
+                slaPolicyId: 'test-policy-5',
                 elapsedTime: 0,
                 policyStatus: 'OK',
               },
               {
-                slaPolicyId: 'testPolicy2',
+                slaPolicyId: 'test-policy-6',
                 elapsedTime: 0,
                 policyStatus: 'OK',
               },
@@ -375,7 +383,7 @@ describe('test sla service', () => {
             alertStatus: 'IN_REVIEW_OPEN',
             slaPolicyDetails: [
               {
-                slaPolicyId: 'testPolicy2',
+                slaPolicyId: 'test-policy-6',
                 elapsedTime: 0,
                 policyStatus: 'OK',
               },
@@ -402,12 +410,12 @@ describe('test sla service', () => {
             alertStatus: 'IN_REVIEW_OPEN',
             slaPolicyDetails: [
               {
-                slaPolicyId: 'testPolicy1',
+                slaPolicyId: 'test-policy-5',
                 elapsedTime: 0,
                 policyStatus: 'OK',
               },
               {
-                slaPolicyId: 'testPolicy2',
+                slaPolicyId: 'test-policy-6',
                 elapsedTime: 0,
                 policyStatus: 'OK',
               },
@@ -429,31 +437,31 @@ describe('test sla service', () => {
       const alert3 = await alertsRepository.getAlertById('testAlert3')
       expect(alert1?.slaPolicyDetails).toMatchObject([
         {
-          slaPolicyId: 'testPolicy1',
+          slaPolicyId: 'test-policy-5',
           elapsedTime: 172800000,
           policyStatus: 'OK',
         },
         {
-          slaPolicyId: 'testPolicy2',
+          slaPolicyId: 'test-policy-6',
           elapsedTime: 172800000,
           policyStatus: 'BREACHED',
         },
       ])
       expect(alert2?.slaPolicyDetails).toMatchObject([
         {
-          slaPolicyId: 'testPolicy2',
+          slaPolicyId: 'test-policy-6',
           elapsedTime: 86400000,
           policyStatus: 'OK',
         },
       ])
       expect(alert3?.slaPolicyDetails).toMatchObject([
         {
-          slaPolicyId: 'testPolicy1',
+          slaPolicyId: 'test-policy-5',
           elapsedTime: 864000000,
           policyStatus: 'BREACHED',
         },
         {
-          slaPolicyId: 'testPolicy2',
+          slaPolicyId: 'test-policy-6',
           elapsedTime: 864000000,
           policyStatus: 'BREACHED',
         },

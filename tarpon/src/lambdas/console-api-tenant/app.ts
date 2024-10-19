@@ -380,7 +380,13 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerGetSlaPolicy(async (ctx, request) => {
       const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
       const policyId = request.slaId
-      return await slaPolicyService.getSLAPolicyById(policyId)
+      const policy = await slaPolicyService.getSLAPolicyById(policyId)
+
+      if (!policy || policy.isDeleted) {
+        throw new createHttpError.NotFound('SLA Policy not found')
+      }
+
+      return policy
     })
 
     handlers.registerPostSlaPolicy(async (ctx, request) => {

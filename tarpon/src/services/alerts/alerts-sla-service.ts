@@ -32,16 +32,15 @@ export class AlertsSLAService {
     alert: Alert,
     slaPolicyId: string
   ): Promise<
-    | {
-        elapsedTime: number
-        policyStatus: SLAPolicyStatus
-      }
-    | undefined
+    { elapsedTime: number; policyStatus: SLAPolicyStatus } | undefined
   > {
     const slaPolicy = await this.getSLAPolicy(slaPolicyId)
-    if (!slaPolicy) {
-      throw new Error('SLA Policy not found')
+
+    if (!slaPolicy || slaPolicy.isDeleted) {
+      logger.warn(`SLA Policy not found for id: ${slaPolicyId}`)
+      return
     }
+
     const assignees = alert.assignments
     const accounts = assignees
       ? await Promise.all(

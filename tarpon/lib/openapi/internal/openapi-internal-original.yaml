@@ -14511,6 +14511,8 @@ components:
           type: number
         updatedAt:
           type: number
+        isDeleted:
+          type: boolean
       required:
         - name
         - policyConfiguration

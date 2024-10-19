@@ -20,7 +20,11 @@ export class SLAPolicyRepository {
     const collection = db.collection<SLAPolicy>(
       SLA_POLICIES_COLLECTION(this.tenantId)
     )
-    const cursor = collection.find({}).sort({ createdAt: -1 })
+
+    const cursor = collection
+      .find({ isDeleted: { $ne: true } })
+      .sort({ createdAt: -1 })
+
     const paginatedCursor = paginateCursor<
       DefaultApiGetSlaPoliciesRequest,
       SLAPolicy
@@ -59,7 +63,10 @@ export class SLAPolicyRepository {
     const collection = db.collection<SLAPolicy>(
       SLA_POLICIES_COLLECTION(this.tenantId)
     )
-    await collection.deleteOne({ id: id })
+    await collection.findOneAndUpdate(
+      { id: id },
+      { $set: { isDeleted: true, updatedAt: Date.now() } }
+    )
   }
 
   public async getNewId(update?: boolean): Promise<string> {
