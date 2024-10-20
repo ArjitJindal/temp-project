@@ -6,6 +6,7 @@ import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-
 import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
 import { PnbBackfillEntitiesBatchJobRunner } from './pnb-backfill-entities-fargate-batch-job'
 import { PnbBackfillTransactionsBatchJobRunner } from './pnb-backfill-transactions-fargate-batch-job'
+import { ManualRulePreAggregationBatchJobRunner } from './manual-rule-pre-aggregation-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -46,6 +47,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new SimulationRiskFactorsBatchJobRunner(jobId),
     RULE_PRE_AGGREGATION: (jobId) =>
       new RulePreAggregationBatchJobRunner(jobId),
+    MANUAL_RULE_PRE_AGGREGATION: (jobId) =>
+      new ManualRulePreAggregationBatchJobRunner(jobId),
     FILES_AI_SUMMARY: (jobId) => new FilesAiSummaryBatchJobRunner(jobId),
     ALERT_SLA_STATUS_REFRESH: (jobId) =>
       new AlertSLAStatusRefreshBatchJobRunner(jobId),

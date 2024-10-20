@@ -151,7 +151,7 @@ export type V8TransactionAggregationTask = {
 export type V8LogicAggregationRebuildTask = {
   type: 'PRE_AGGREGATION'
   tenantId: string
-  entity:
+  entity?:
     | { type: 'RULE'; ruleInstanceId: string }
     | { type: 'RISK_FACTOR'; riskFactorId: string }
   jobId: string
@@ -170,6 +170,7 @@ export type TransactionAggregationTaskEntry = {
 }
 
 type ValidationOptions = {
+  validateTransactionId?: boolean
   validateOriginUserId?: boolean
   validateDestinationUserId?: boolean
 }
@@ -431,7 +432,7 @@ export class RulesEngineService {
     transaction: Transaction,
     options?: ValidationOptions
   ): Promise<TransactionMonitoringResult | DuplicateTransactionReturnType> {
-    if (transaction.transactionId) {
+    if (transaction.transactionId && (options?.validateTransactionId ?? true)) {
       const existingTransaction =
         await this.transactionRepository.getTransactionById(
           transaction.transactionId

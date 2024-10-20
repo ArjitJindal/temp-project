@@ -10080,6 +10080,7 @@ components:
         - MULTI_LEVEL_ESCALATION
         - SALES_RISK_SCORING
         - STRICT_FILE_SECURITY
+        - MANUAL_PRE_AGGREGATION
       description: ''
     ManagedRoleName:
       type: string

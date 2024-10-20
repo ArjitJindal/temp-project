@@ -50,21 +50,15 @@ function getAggregationTaskMessage(
 
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
-  private sentTaskDedupIds = new Set<string>()
-
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     const dynamoDb = getDynamoDbClient()
-    const { entity, aggregationVariables } = job.parameters
+    const { entity, aggregationVariables, currentTimestamp } = job.parameters
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb,
     })
 
-    const ruleInstanceId =
-      entity.type === 'RULE'
-        ? entity.ruleInstanceId
-        : job.parameters.ruleInstanceId
-
-    if (ruleInstanceId) {
+    if (entity?.type === 'RULE') {
+      const { ruleInstanceId } = entity
       const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
         ruleInstanceId
       )
@@ -83,7 +77,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         )
         return
       }
-    } else if (entity.type === 'RISK_FACTOR') {
+    } else if (entity?.type === 'RISK_FACTOR') {
       const riskRepository = new RiskRepository(job.tenantId, {
         dynamoDb,
         mongoDb: await getMongoDbClient(),
@@ -118,7 +112,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       const varMessages = await this.preAggregateVariable(
         job.tenantId,
         entity,
-        aggregationVariable
+        aggregationVariable,
+        currentTimestamp
       )
       messages.push(...varMessages)
     }
@@ -167,12 +162,12 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
 
     logger.info(`Total tasks: ${dedupMessages.length}`)
 
-    if (dedupMessages.length === 0 && ruleInstanceId) {
+    if (dedupMessages.length === 0 && entity?.type === 'RULE') {
       logger.info(
-        `No tasks to pre-aggregate. Switching rule instance ${ruleInstanceId} to ACTIVE.`
+        `No tasks to pre-aggregate. Switching rule instance ${entity.ruleInstanceId} to ACTIVE.`
       )
       await ruleInstanceRepository.updateRuleInstanceStatus(
-        ruleInstanceId,
+        entity.ruleInstanceId,
         'ACTIVE'
       )
     }
@@ -181,7 +176,8 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
   private async preAggregateVariable(
     tenantId: string,
     entity: RulePreAggregationBatchJob['parameters']['entity'],
-    aggregationVariable: LogicAggregationVariable
+    aggregationVariable: LogicAggregationVariable,
+    currentTimestamp: number = Date.now()
   ): Promise<Array<FifoSqsMessage>> {
     const transactionsRepo = new MongoDbTransactionRepository(
       tenantId,
@@ -189,7 +185,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     )
     const { timeWindow } = aggregationVariable
     const timeRange = getTimeRangeByTimeWindows(
-      Date.now(),
+      currentTimestamp,
       timeWindow.start,
       timeWindow.end
     )
@@ -212,7 +208,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             aggregationVariable,
             tenantId,
             userId,
-            currentTimestamp: Date.now(),
+            currentTimestamp,
             jobId: this.jobId,
             entity,
           },
@@ -249,7 +245,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
             aggregationVariable,
             tenantId,
             paymentDetails: userInfo.paymentDetails,
-            currentTimestamp: Date.now(),
+            currentTimestamp,
             jobId: this.jobId,
             entity,
           },

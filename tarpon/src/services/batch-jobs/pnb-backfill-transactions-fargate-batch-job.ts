@@ -113,9 +113,16 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
           compact([transaction.originUserId, transaction.destinationUserId])
         )
         try {
-          await this.rulesEngine.verifyTransaction({
-            ...transaction,
-          })
+          await this.rulesEngine.verifyTransaction(
+            {
+              ...transaction,
+            },
+            {
+              validateTransactionId: false,
+              validateDestinationUserId: false,
+              validateOriginUserId: false,
+            }
+          )
         } catch (e) {
           logger.error(e)
         } finally {

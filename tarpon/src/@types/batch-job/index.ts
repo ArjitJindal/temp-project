@@ -92,8 +92,8 @@ export type GlobalRuleAggregationRebuildBatchJob = {
 
 /* Rule pre-aggregation */
 type RulePreAggregationBatchJobParameters = {
-  entity: V8LogicAggregationRebuildTask['entity']
-  ruleInstanceId?: string
+  entity?: V8LogicAggregationRebuildTask['entity']
+  currentTimestamp?: number
   aggregationVariables: LogicAggregationVariable[]
 }
 export type RulePreAggregationMetadata = {
@@ -105,6 +105,13 @@ export type RulePreAggregationBatchJob = {
   tenantId: string
   parameters: RulePreAggregationBatchJobParameters
   metadata?: RulePreAggregationMetadata
+}
+
+/* Manual rule pre-aggregation (for all active rules) */
+export type ManualRulePreAggregationBatchJob = {
+  type: 'MANUAL_RULE_PRE_AGGREGATION'
+  tenantId: string
+  currentTimestamp: number
 }
 
 /* SLA Status Calculation */
@@ -225,6 +232,7 @@ export type BatchJob =
   | TestFargateJob
   | TenantDeletionBatchJob
   | RulePreAggregationBatchJob
+  | ManualRulePreAggregationBatchJob
   | FilesAISummary
   | AlertSLAStatusRefreshBatchJob
   | ReverifyTransactionsBatchJob

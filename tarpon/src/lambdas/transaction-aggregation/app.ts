@@ -131,7 +131,7 @@ export async function handleV8PreAggregationTask(
 
   const ruleEvaluator = new LogicEvaluator(task.tenantId, dynamoDb)
 
-  if (task.entity.type === 'RULE') {
+  if (task.entity?.type === 'RULE') {
     const ruleInstanceId = task.entity.ruleInstanceId
     if (!ruleInstanceId) {
       logger.error(`Rule instance ID is required for pre-aggregation task`)
@@ -190,7 +190,7 @@ export async function handleV8PreAggregationTask(
         'ACTIVE'
       )
     }
-  } else if (task.entity.type === 'RISK_FACTOR') {
+  } else if (task.entity?.type === 'RISK_FACTOR') {
     const riskFactor = await riskRepository.getRiskFactor(
       task.entity.riskFactorId
     )
@@ -216,6 +216,16 @@ export async function handleV8PreAggregationTask(
       )
     }
 
+    await jobRepository.updateJob(task.jobId, {
+      $inc: { 'metadata.completeTasksCount': 1 },
+    })
+  } else if (!task.entity) {
+    await ruleEvaluator.rebuildAggregationVariable(
+      task.aggregationVariable,
+      task.currentTimestamp,
+      task.userId,
+      task.paymentDetails
+    )
     await jobRepository.updateJob(task.jobId, {
       $inc: { 'metadata.completeTasksCount': 1 },
     })
