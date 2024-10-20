@@ -130,6 +130,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     description:
       'Enables strict file security (forbid the following file extensions: .xlsx, .xlsm, .xltm)',
   },
+  MANUAL_PRE_AGGREGATION: {
+    title: 'Manual pre-aggregation',
+    description: 'Enables manual pre-aggregation',
+  },
 };
 
 export default function SuperAdminPanel() {
