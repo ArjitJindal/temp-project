@@ -35,6 +35,10 @@ describe('SAR Generate', () => {
         countryName: 'United States of America',
         reportType: 'SAR',
       },
+      {
+        countryName: 'Malaysia',
+        reportType: 'STR',
+      },
     ];
     SarCountrywithReports.map((item) => {
       cy.get('div[id="rc-tabs-1-panel-transactions"] input[data-cy="row-table-checkbox"]', {
@@ -42,7 +46,7 @@ describe('SAR Generate', () => {
       })
         .first()
         .click();
-      cy.get('button[data-cy="sar-button"]').click();
+      cy.get('button[data-cy="sar-button"]').first().click();
       cy.get('[data-cy="sar-country-select"] input').click();
       cy.get(`div[title="${item.countryName}"]`).click();
       cy.get('[data-cy="sar-report-type-select"] input').click();
