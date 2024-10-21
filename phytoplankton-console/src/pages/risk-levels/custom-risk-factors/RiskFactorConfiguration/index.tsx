@@ -1,6 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
 import { EditOutlined } from '@ant-design/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router';
 import { getSelectedRiskLevel, getSelectedRiskScore } from '../utils';
 import s from './style.module.less';
@@ -13,89 +12,49 @@ import { FormRef } from '@/components/library/Form';
 import { useHasPermissions } from '@/utils/user-utils';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
-import { useApi } from '@/api';
 import { RiskClassificationScore, RiskFactor, RiskFactorsPostRequest } from '@/apis';
-import { message } from '@/components/library/Message';
-import { RISK_FACTORS_V8 } from '@/utils/queries/keys';
 import { makeUrl } from '@/utils/routing';
-import { useRiskClassificationScores } from '@/utils/risk-levels';
-import { getOr } from '@/utils/asyncResource';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
   mode: 'CREATE' | 'EDIT' | 'READ';
   id?: string;
   riskItem?: RiskFactor;
+  onSubmit: (values: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => void;
+  isLoadingUpdation?: boolean;
+  isLoadingCreation?: boolean;
+  dataKey?: string;
 }
 
 export const RiskFactorConfiguration = (props: Props) => {
-  const { riskItemType, mode, id, riskItem } = props;
-  const riskClassificationQuery = useRiskClassificationScores();
-  const riskClassificationValues = getOr(riskClassificationQuery, []);
+  const {
+    riskItemType,
+    mode,
+    id,
+    riskItem,
+    onSubmit,
+    isLoadingUpdation,
+    isLoadingCreation,
+    dataKey,
+  } = props;
   const navigate = useNavigate();
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
   const isMutable = useMemo(() => ['CREATE', 'EDIT'].includes(mode), [mode]);
-  const api = useApi();
-  const queryClient = useQueryClient();
   const formInitialValues = riskItem ? deserializeRiskItem(riskItem) : undefined;
-  const updateRiskFactorMutation = useMutation(
-    async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
-      if (!riskItem || !id) {
-        throw new Error('Risk item is missing');
-      }
-      return api.putRiskFactors({
-        riskFactorId: id,
-        RiskFactorsUpdateRequest: {
-          ...serializeRiskItem(riskFactorFormValues, riskItemType, riskClassificationValues),
-          status: riskItem.status,
-        },
-      });
-    },
-    {
-      onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactors();
-        await queryClient.invalidateQueries(RISK_FACTORS_V8(riskItemType));
-        message.success(`Risk factor updated - ${newRiskFactor.id}`);
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to update the risk factor - Some parameters are missing`, err);
-      },
-    },
-  );
-  const createRiskFactorMutation = useMutation(
-    async (riskFactorFormValues: RiskFactorConfigurationFormValues) => {
-      return api.postCreateRiskFactor({
-        RiskFactorsPostRequest: serializeRiskItem(
-          riskFactorFormValues,
-          riskItemType,
-          riskClassificationValues,
-        ),
-      });
-    },
-    {
-      onSuccess: async (newRiskFactor) => {
-        navigateToRiskFactors();
-        await queryClient.invalidateQueries(RISK_FACTORS_V8(riskItemType));
-        message.success(`Risk factor created - ${newRiskFactor.id}`);
-      },
-      onError: async (err) => {
-        message.fatal(`Unable to create the risk factor - Some parameters are missing`, err);
-      },
-    },
-  );
-  const handleSubmit = (formValues: RiskFactorConfigurationFormValues) => {
-    if (mode === 'EDIT' && riskItem) {
-      updateRiskFactorMutation.mutate(formValues);
-    } else if (mode === 'CREATE') {
-      createRiskFactorMutation.mutate(formValues);
-    }
-  };
   const navigateToRiskFactors = () => {
-    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: riskItemType }));
+    dataKey
+      ? navigate(
+          makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type`, {
+            type: riskItemType,
+            key: dataKey,
+          }),
+        )
+      : navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: riskItemType }));
   };
+
   return (
     <>
       <RiskFactorConfigurationForm
@@ -103,7 +62,9 @@ export const RiskFactorConfiguration = (props: Props) => {
         activeStepKey={activeStepKey}
         readonly={!canWriteRiskFactors || mode === 'READ'}
         onActiveStepChange={setActiveStepKey}
-        onSubmit={handleSubmit}
+        onSubmit={(formValues) => {
+          onSubmit(formValues, riskItem);
+        }}
         id={id}
         type={riskItemType}
         formInitialValues={formInitialValues}
@@ -145,7 +106,7 @@ export const RiskFactorConfiguration = (props: Props) => {
           <>
             <Button
               htmlType="submit"
-              isLoading={createRiskFactorMutation.isLoading}
+              isLoading={isLoadingCreation}
               isDisabled={!canWriteRiskFactors}
               onClick={() => {
                 if (!formRef?.current?.validate()) {
@@ -164,7 +125,7 @@ export const RiskFactorConfiguration = (props: Props) => {
         {canWriteRiskFactors && mode === 'EDIT' && (
           <Button
             htmlType="submit"
-            isLoading={updateRiskFactorMutation.isLoading}
+            isLoading={isLoadingUpdation}
             isDisabled={!canWriteRiskFactors}
             onClick={() => {
               if (!formRef?.current?.validate()) {
@@ -183,12 +144,22 @@ export const RiskFactorConfiguration = (props: Props) => {
           <Button
             type="SECONDARY"
             onClick={() => {
-              navigate(
-                makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
-                  type: riskItemType,
-                  id,
-                }),
-              );
+              if (dataKey) {
+                navigate(
+                  makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/edit`, {
+                    type: riskItemType,
+                    key: dataKey,
+                    id,
+                  }),
+                );
+              } else {
+                navigate(
+                  makeUrl(`/risk-levels/custom-risk-factors/:type/:id/edit`, {
+                    type: riskItemType,
+                    id,
+                  }),
+                );
+              }
             }}
             icon={<EditOutlined />}
             requiredPermissions={['risk-scoring:risk-factors:write']}
@@ -201,7 +172,7 @@ export const RiskFactorConfiguration = (props: Props) => {
   );
 };
 
-function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormValues {
+export function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormValues {
   return {
     basicDetailsStep: {
       name: riskItem.name,
@@ -218,7 +189,7 @@ function deserializeRiskItem(riskItem: RiskFactor): RiskFactorConfigurationFormV
   };
 }
 
-function serializeRiskItem(
+export function serializeRiskItem(
   riskFactorFormValues: RiskFactorConfigurationFormValues,
   type: 'consumer' | 'business' | 'transaction',
   riskClassificationValues: RiskClassificationScore[],

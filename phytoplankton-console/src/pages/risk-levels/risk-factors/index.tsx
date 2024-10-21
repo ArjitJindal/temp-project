@@ -2,6 +2,8 @@ import React, { useCallback, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { useQueryClient } from '@tanstack/react-query';
+import { ParameterValue, RiskFactorsSimulation } from '../RiskFactorsSimulation';
+import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import ParametersTable from './ParametersTable';
 import {
   ALL_RISK_PARAMETERS,
@@ -11,8 +13,6 @@ import {
   USER_RISK_PARAMETERS,
 } from './ParametersTable/consts';
 import { RiskLevelTableItem } from './ParametersTable/types';
-import { ParameterValue, RiskFactorsSimulation } from './RiskFactorsSimulation';
-import { SimulationHistory } from './RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import {
@@ -263,7 +263,7 @@ export function RiskFactors(props: { type: string }) {
                   }),
                 };
               });
-              return <RiskFactorsSimulation parameterValues={parameterValues} />;
+              return <RiskFactorsSimulation riskFactors={[]} parameterValues={parameterValues} />;
             }}
           </AsyncResourceRenderer>
         ) : (

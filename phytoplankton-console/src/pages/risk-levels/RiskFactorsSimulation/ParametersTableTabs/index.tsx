@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import ParametersTable from '../../ParametersTable';
+import ParametersTable from '../../risk-factors/ParametersTable';
 import {
   BUSINESS_RISK_PARAMETERS,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
-} from '../../ParametersTable/consts';
-import { Entity, ParameterName, ParameterValues } from '../../ParametersTable/types';
+} from '../../risk-factors/ParametersTable/consts';
+import { Entity, ParameterName, ParameterValues } from '../../risk-factors/ParametersTable/types';
 import { RiskFactorsSettings } from '../SimulationResult';
 import PageTabs from '@/components/ui/PageTabs';
 import { RiskScoreValueLevel, RiskScoreValueScore } from '@/apis';

@@ -24,6 +24,7 @@ import { SimulationRiskFactorsStatistics } from '@/@types/openapi-internal/Simul
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { SimulationRiskFactorsJob } from '@/@types/openapi-internal/SimulationRiskFactorsJob'
 
 const SAMPLE_USERS_COUNT = 10_000
 const SAMPLE_TRANSACTIONS_COUNT = 10_000
@@ -60,9 +61,10 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       tenantId,
       mongoDb
     )
-    const currentJob = await simulationTaskRepository.getSimulationJob(
-      parameters.jobId
-    )
+    const currentJob =
+      await simulationTaskRepository.getSimulationJob<SimulationRiskFactorsJob>(
+        parameters.jobId
+      )
     const task = currentJob?.iterations.find(
       (i) => i.taskId === parameters.taskId
     )

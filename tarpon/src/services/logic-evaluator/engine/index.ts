@@ -1575,7 +1575,8 @@ export class LogicEvaluator {
     if (
       hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION') ||
       (!hasFeature('RULES_ENGINE_V8') && type === 'RULES') ||
-      (!hasFeature('RISK_SCORING_V8') && type === 'RISK')
+      (!hasFeature('RISK_SCORING_V8') && type === 'RISK') ||
+      this.mode === 'MONGODB'
     ) {
       return
     }

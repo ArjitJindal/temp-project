@@ -9,6 +9,7 @@ import {
   GetCommandInput,
   PutCommand,
   PutCommandInput,
+  QueryCommand,
   QueryCommandInput,
   UpdateCommand,
   UpdateCommandInput,
@@ -19,7 +20,12 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils/risk'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { paginateQuery } from '@/utils/dynamodb'
+import {
+  batchWrite,
+  BatchWriteRequestInternal,
+  DeleteRequestInternal,
+  paginateQuery,
+} from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import {
@@ -820,13 +826,58 @@ export class RiskRepository {
     }
   }
 
+  async deleteAllRiskFactors() {
+    logger.info(`Deleting all risk factors.`)
+
+    try {
+      // Query to get all risk factor keys
+      const queryInput: QueryCommandInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
+        },
+        ProjectionExpression: 'PartitionKeyID, SortKeyID',
+      }
+
+      const queryResult = await this.dynamoDb.send(new QueryCommand(queryInput))
+
+      if (queryResult.Items && queryResult.Items.length > 0) {
+        // Prepare batch delete request
+        const deleteRequests = queryResult.Items.map(
+          (item): BatchWriteRequestInternal => ({
+            DeleteRequest: {
+              Key: {
+                PartitionKeyID: item.PartitionKeyID,
+                SortKeyID: item.SortKeyID,
+              },
+            } as DeleteRequestInternal,
+          })
+        )
+
+        await batchWrite(
+          this.dynamoDb,
+          deleteRequests,
+          StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId)
+        )
+        // Remove risk factors from used aggregation variables
+        for (const item of queryResult.Items) {
+          await this.removeRiskFactorFromUsedAggVar(item.SortKeyID)
+        }
+      }
+    } catch (e) {
+      logger.error(e)
+    }
+    logger.info(`Deleted all risk factors.`)
+  }
+
   async deleteRiskFactor(riskFactorId: string) {
     logger.info(`Deleting risk factor.`)
-    const primaryKey = DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId)
+    const key = DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId)
 
     const deleteItemInput: DeleteCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: primaryKey,
+      Key: key,
     }
 
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))

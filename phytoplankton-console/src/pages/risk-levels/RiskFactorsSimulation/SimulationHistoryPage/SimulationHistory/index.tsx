@@ -1,6 +1,7 @@
 import { useContext, useMemo, useRef, useState } from 'react';
+import { useLocation } from 'react-router';
 import { useApi } from '@/api';
-import { SimulationRiskFactorsJob } from '@/apis';
+import { SimulationRiskFactorsJob, SimulationV8RiskFactorsJob } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { AllParams, TableRefType } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -15,16 +16,23 @@ import { SuperAdminModeContext } from '@/components/AppWrapper/Providers/SuperAd
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 
+export type SimulationJob = SimulationRiskFactorsJob | SimulationV8RiskFactorsJob;
 export function SimulationHistory() {
   const api = useApi();
+  const location = useLocation();
+  const type = location.pathname.includes('custom-risk-factors')
+    ? 'RISK_FACTORS_V8'
+    : 'RISK_FACTORS';
+  const jobUrl = type === 'RISK_FACTORS_V8' ? 'custom-risk-factors' : 'risk-factors';
   const [users, loading] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const [params, setParams] = useState<AllParams<DefaultApiGetSimulationsRequest>>({
     ...DEFAULT_PARAMS_STATE,
     page: 1,
-    type: 'RISK_FACTORS',
+    type: type,
     sort: [['createdAt', 'descend']],
   });
   const context = useContext(SuperAdminModeContext);
+
   const finalParams = useMemo(
     () => ({ ...params, includeInternal: context?.isSuperAdminMode }),
     [context?.isSuperAdminMode, params],
@@ -43,16 +51,16 @@ export function SimulationHistory() {
       });
 
       return {
-        items: simulations.data as SimulationRiskFactorsJob[],
+        items: simulations.data as SimulationJob[],
         total: simulations.total,
       };
     },
   );
   const actionRef = useRef<TableRefType>(null);
-  const helper = new ColumnHelper<SimulationRiskFactorsJob>();
+  const helper = new ColumnHelper<SimulationJob>();
   return (
     <PageWrapperContentContainer>
-      <QueryResultsTable<SimulationRiskFactorsJob, typeof params>
+      <QueryResultsTable<SimulationJob, typeof params>
         rowKey="jobId"
         innerRef={actionRef}
         queryResults={allSimulationsQueryResult}
@@ -69,7 +77,7 @@ export function SimulationHistory() {
               render: (jobId) =>
                 jobId ? (
                   <Id
-                    to={makeUrl(`/risk-levels/risk-factors/simulation-history/:jobId`, {
+                    to={makeUrl(`/risk-levels/${jobUrl}/simulation-history/:jobId`, {
                       jobId: jobId,
                     })}
                   >

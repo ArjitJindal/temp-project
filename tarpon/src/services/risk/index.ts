@@ -165,6 +165,13 @@ export class RiskService {
     return this.riskRepository.getAllRiskFactors(entityType)
   }
 
+  async bulkCreateandReplaceRiskFactors(riskFactors: RiskFactorsPostRequest[]) {
+    await this.riskRepository.deleteAllRiskFactors()
+    for (const riskFactor of riskFactors) {
+      await this.createOrUpdateRiskFactor(riskFactor)
+    }
+  }
+
   async createOrUpdateRiskFactor(
     riskFactor: RiskFactorsUpdateRequest,
     riskFactorId?: string

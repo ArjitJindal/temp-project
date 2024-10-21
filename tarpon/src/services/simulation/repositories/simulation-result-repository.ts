@@ -8,6 +8,7 @@ import { DefaultApiGetSimulationTaskIdResultRequest } from '@/@types/openapi-int
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsResult } from '@/@types/openapi-internal/SimulationRiskFactorsResult'
 import { SimulationRiskLevelsAndRiskFactorsResultResponse } from '@/@types/openapi-internal/SimulationRiskLevelsAndRiskFactorsResultResponse'
+import { SimulationV8RiskFactorsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsResult'
 
 @traceable
 export class SimulationResultRepository {
@@ -20,14 +21,19 @@ export class SimulationResultRepository {
   }
 
   public async saveSimulationResults(
-    results: SimulationRiskLevelsResult[] | SimulationRiskFactorsResult[]
+    results:
+      | SimulationRiskLevelsResult[]
+      | SimulationRiskFactorsResult[]
+      | SimulationV8RiskFactorsResult[]
   ): Promise<void> {
     if (results.length === 0) {
       return
     }
     const db = this.mongoDb.db()
     const collection = db.collection<
-      SimulationRiskLevelsResult | SimulationRiskFactorsResult
+      | SimulationRiskLevelsResult
+      | SimulationRiskFactorsResult
+      | SimulationV8RiskFactorsResult
     >(SIMULATION_RESULT_COLLECTION(this.tenantId))
 
     await collection.insertMany(results)
@@ -38,7 +44,9 @@ export class SimulationResultRepository {
   ): Promise<SimulationRiskLevelsAndRiskFactorsResultResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<
-      SimulationRiskLevelsResult | SimulationRiskFactorsResult
+      | SimulationRiskLevelsResult
+      | SimulationRiskFactorsResult
+      | SimulationV8RiskFactorsResult
     >(SIMULATION_RESULT_COLLECTION(this.tenantId))
 
     const items = await collection

@@ -63,7 +63,7 @@ export class RiskScoringV8Service {
     return this.mongoDb
   }
 
-  private async calculateRiskFactorsScore(
+  public async calculateRiskFactorsScore(
     riskData: LogicData,
     riskFactor: RiskFactor[]
   ): Promise<{

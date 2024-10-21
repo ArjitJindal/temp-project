@@ -108,6 +108,12 @@ export const parameterRiskAssignmentHandler = lambdaApi({
       )
     })
 
+    handlers.registerPostBulkRiskFactors(async (ctx, request) => {
+      return await riskService.bulkCreateandReplaceRiskFactors(
+        request.RiskFactorsPostRequest
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

@@ -11,11 +11,12 @@ interface RuleStatusSwitchProps {
   entity: RuleInstance | RiskFactor;
   type?: 'RULE' | 'RISK_FACTOR';
   onToggle?: (enabled: boolean) => void;
+  isDisabled?: boolean;
 }
 
 export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleStatusSwitchProps) => {
   const canWriteRules = useHasPermissions(['rules:my-rules:write']);
-  const { entity, type = 'RULE', onToggle } = props;
+  const { entity, type = 'RULE', onToggle, isDisabled = false } = props;
   const isDeploying = entity.status === 'DEPLOYING';
   const tooltipText = isDeploying
     ? `The ${type === 'RULE' ? 'rule' : 'risk factor'} will be live once deployed`
@@ -28,7 +29,7 @@ export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleSta
     <Tooltip title={tooltipText} placement="top">
       <Switch
         className={cn(isDeploying && s.deploying)}
-        disabled={!canWriteRules || justDeploying}
+        disabled={!canWriteRules || justDeploying || isDisabled}
         checked={entity.status !== 'INACTIVE'}
         onChange={onToggle}
       />

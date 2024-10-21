@@ -29,7 +29,8 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
       const parameters =
         request.SimulationPostRequest.beaconParameters ||
         request.SimulationPostRequest.riskFactorsParameters ||
-        request.SimulationPostRequest.riskLevelsParameters
+        request.SimulationPostRequest.riskLevelsParameters ||
+        request.SimulationPostRequest.riskFactorsV8Parameters
 
       if (!parameters) {
         throw new BadRequest('Invalid simulation parameters')
@@ -40,7 +41,7 @@ export const simulationHandler = lambdaApi({ requiredFeatures: ['SIMULATOR'] })(
     handlers.registerGetSimulationTestId(async (ctx, request) => {
       const data = await simulationService.getSimulationJob(request.jobId)
 
-      if (isEmpty(data)) {
+      if (isEmpty(data) || data === null) {
         throw new NotFound(`Simulation job ${request.jobId} not found`)
       }
 

@@ -1,17 +1,21 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-// import { Progress } from 'antd';
 import { isEmpty } from 'lodash';
 import { capitalizeWords } from '@flagright/lib/utils/humanize';
+import cn from 'clsx';
 import { ParametersTableTabs } from '../ParametersTableTabs';
+import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 import s from './styles.module.less';
 import {
   ParameterAttributeRiskValues,
   RiskLevel,
   SimulationRiskFactorsIteration,
   SimulationRiskFactorsJob,
-  SimulationRiskFactorsStatisticsRiskTypeEnum,
   SimulationRiskLevelsAndRiskFactorsResult,
+  SimulationV8RiskFactorsIteration,
+  SimulationV8RiskFactorsJob,
+  SimulationV8RiskFactorsParameters,
+  SimulationV8RiskFactorsStatisticsRiskTypeEnum,
 } from '@/apis';
 import { AsyncResource, init, isLoading, isSuccess, loading, success } from '@/utils/asyncResource';
 import * as Card from '@/components/ui/Card';
@@ -39,7 +43,6 @@ import { getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Progress } from '@/components/Simulation/Progress';
-
 interface Props {
   jobId: string;
 }
@@ -48,8 +51,12 @@ const SIMULATION_REFETCH_INTERVAL = 10;
 
 export const SimulationResult = (props: Props) => {
   const { jobId } = props;
+  const location = useLocation();
+  const isCustomRiskFactors = location.pathname.includes('custom-risk-factors');
   const navigate = useNavigate();
-  function isAllIterationsCompleted(iterations: SimulationRiskFactorsIteration[]): boolean {
+  function isAllIterationsCompleted(
+    iterations: SimulationRiskFactorsIteration[] | SimulationV8RiskFactorsIteration[],
+  ): boolean {
     return iterations.every(
       (iteration) =>
         iteration.latestStatus.status === 'SUCCESS' || iteration.latestStatus.status === 'FAILED',
@@ -61,7 +68,7 @@ export const SimulationResult = (props: Props) => {
     () =>
       api.getSimulationTestId({
         jobId: jobId ?? '',
-      }) as Promise<SimulationRiskFactorsJob>,
+      }) as Promise<SimulationRiskFactorsJob | SimulationV8RiskFactorsJob>,
     {
       refetchInterval: (data) =>
         isAllIterationsCompleted(data?.iterations || [])
@@ -84,9 +91,19 @@ export const SimulationResult = (props: Props) => {
   const updateParametersMutation = useMutation<void, unknown, void>(
     async () => {
       setUpdateResource(loading());
-      return api.postPulseRiskParameters({
-        PostPulseRiskParametersBulk: iterations[activeIterationIndex - 1].parameters,
-      });
+      if (isCustomRiskFactors) {
+        return api.postBulkRiskFactors({
+          RiskFactorsPostRequest: (
+            iterations[activeIterationIndex - 1] as SimulationV8RiskFactorsIteration
+          ).parameters.parameters,
+        });
+      } else {
+        return api.postPulseRiskParameters({
+          PostPulseRiskParametersBulk: (
+            iterations[activeIterationIndex - 1] as SimulationRiskFactorsIteration
+          ).parameters,
+        });
+      }
     },
     {
       onSuccess: (data) => {
@@ -110,7 +127,14 @@ export const SimulationResult = (props: Props) => {
           ...iterations.map((iteration, index) => ({
             title: `Iteration ${index + 1}`,
             key: `${index + 1}`,
-            children: <SimulationResultWidgets iteration={iteration} />,
+            children: (
+              <SimulationResultWidgets
+                jobId={jobId}
+                isCustomRiskFactors={isCustomRiskFactors}
+                iteration={iteration}
+                activeIterationIndex={index + 1}
+              />
+            ),
           })),
         ]}
       />
@@ -150,7 +174,10 @@ export const SimulationResult = (props: Props) => {
 };
 
 interface WidgetProps {
-  iteration: SimulationRiskFactorsIteration;
+  iteration: SimulationRiskFactorsIteration | SimulationV8RiskFactorsIteration;
+  isCustomRiskFactors: boolean;
+  activeIterationIndex: number;
+  jobId: string;
 }
 
 export type RiskFactorsSettings = {
@@ -161,7 +188,7 @@ export type RiskFactorsSettings = {
 
 const SimulationResultWidgets = (props: WidgetProps) => {
   const settings = useSettings();
-  const { iteration } = props;
+  const { iteration, isCustomRiskFactors, activeIterationIndex, jobId } = props;
   const { pathname } = useLocation();
   const [params, setParams] = useState<CommonParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -250,11 +277,41 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         },
       },
     }),
+    ...(isCustomRiskFactors
+      ? [
+          helper.simple<'current.drs.riskLevel'>({
+            title: 'CRA risk level before',
+            key: 'current.drs.riskLevel',
+            type: {
+              render: (riskLevel) => {
+                if (riskLevel) {
+                  return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+                } else {
+                  return <>{'-'}</>;
+                }
+              },
+            },
+          }),
+          helper.simple<'simulated.drs.riskLevel'>({
+            title: 'CRA risk level after',
+            key: 'simulated.drs.riskLevel',
+            type: {
+              render: (riskLevel) => {
+                if (riskLevel) {
+                  return <>{getRiskLevelLabel(riskLevel, settings)}</>;
+                } else {
+                  return <>{'-'}</>;
+                }
+              },
+            },
+          }),
+        ]
+      : []),
   ]);
   const getCount = useCallback(
     (
       label: 'Before' | 'After',
-      scoreType: SimulationRiskFactorsStatisticsRiskTypeEnum,
+      scoreType: SimulationV8RiskFactorsStatisticsRiskTypeEnum,
       riskLevel: RiskLevel,
     ) => {
       if (isEmpty(iteration?.statistics?.[label === 'Before' ? 'current' : 'simulated'])) {
@@ -270,7 +327,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   );
 
   const getGraphData = useCallback(
-    (graphType: SimulationRiskFactorsStatisticsRiskTypeEnum) => {
+    (graphType: SimulationV8RiskFactorsStatisticsRiskTypeEnum) => {
       let max = 0;
       const graphData: { name: string; label: string; value: number }[] = [];
       RISK_LEVELS.forEach((label) => {
@@ -296,7 +353,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
 
   const { graphData: krsGraphdata, max: maxKRS } = getGraphData('KRS');
   const { graphData: arsGraphData, max: maxARS } = getGraphData('ARS');
-
+  const { graphData: drsGraphData, max: maxDRS } = isCustomRiskFactors
+    ? getGraphData('DRS')
+    : { graphData: [], max: 0 };
   const deserializeRiskFactors = (
     parameterAttributeRiskValues: ParameterAttributeRiskValues[],
   ): RiskFactorsSettings => {
@@ -329,8 +388,11 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   };
 
   const riskFactorsSettings: RiskFactorsSettings = useMemo(() => {
-    return deserializeRiskFactors(iteration.parameters.parameterAttributeRiskValues);
-  }, [iteration.parameters.parameterAttributeRiskValues]);
+    if (iteration.type === 'RISK_FACTORS') {
+      return deserializeRiskFactors(iteration.parameters.parameterAttributeRiskValues);
+    }
+    return {};
+  }, [iteration.parameters, iteration.type]);
 
   return showResults ? (
     <div className={s.root}>
@@ -360,6 +422,14 @@ const SimulationResultWidgets = (props: WidgetProps) => {
             <GroupedColumn data={krsGraphdata} max={Math.ceil(maxKRS + maxKRS * 0.2)} />
           </Card.Section>
         </Card.Root>
+        {isCustomRiskFactors && (
+          <Card.Root noBorder>
+            <Card.Section>
+              <span className={s.title}>Users distribution based on CRA</span>
+              <GroupedColumn data={drsGraphData} max={Math.ceil(maxDRS + maxDRS * 0.2)} />
+            </Card.Section>
+          </Card.Root>
+        )}
         <Card.Root noBorder>
           <Card.Section>
             <span className={s.title}>Transactions distribution based on TRS</span>
@@ -369,7 +439,9 @@ const SimulationResultWidgets = (props: WidgetProps) => {
       </div>
       <Card.Root noBorder>
         <Card.Section>
-          <span className={s.title}>User's updated KRS risk level</span>
+          <span className={s.title}>
+            User's updated {isCustomRiskFactors ? '' : 'KRS'} risk levels
+          </span>
           <QueryResultsTable<SimulationRiskLevelsAndRiskFactorsResult>
             columns={columns}
             queryResults={iterationQueryResults}
@@ -382,9 +454,23 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         </Card.Section>
       </Card.Root>
       <Card.Root noBorder>
-        <Card.Section className={s.skipGap}>
+        <Card.Section
+          className={cn(!isCustomRiskFactors && s.skipGap, isCustomRiskFactors && s.haveGap)}
+        >
           <span className={s.title}>Updated risk factors</span>
-          <ParametersTableTabs parameterSettings={riskFactorsSettings} canEditParameters={false} />
+          {isCustomRiskFactors ? (
+            <SimulationCustomRiskFactorsTable
+              riskFactors={(iteration.parameters as SimulationV8RiskFactorsParameters).parameters}
+              canEditRiskFactors={false}
+              activeIterationIndex={activeIterationIndex}
+              jobId={jobId}
+            />
+          ) : (
+            <ParametersTableTabs
+              parameterSettings={riskFactorsSettings}
+              canEditParameters={false}
+            />
+          )}
         </Card.Section>
       </Card.Root>
     </div>

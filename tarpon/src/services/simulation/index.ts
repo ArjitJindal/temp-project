@@ -13,11 +13,13 @@ import {
 import { SimulationResultRepository } from '@/services/simulation/repositories/simulation-result-repository'
 import { SimulationRiskLevelsParametersRequest } from '@/@types/openapi-internal/SimulationRiskLevelsParametersRequest'
 import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
+import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
 
 type SimulationParameters =
   | SimulationRiskLevelsParametersRequest
   | SimulationRiskFactorsParametersRequest
   | SimulationBeaconParametersRequest
+  | SimulationV8RiskFactorsParametersRequest
 
 @traceable
 export class SimulationService {
@@ -87,6 +89,19 @@ export class SimulationService {
         if (parameters.type === 'RISK_FACTORS') {
           await sendBatchJobCommand({
             type: 'SIMULATION_RISK_FACTORS',
+            tenantId: this.tenantId,
+            parameters: {
+              taskId: taskIds[i],
+              jobId,
+              sampling: parameters.sampling ?? {
+                usersCount: 'RANDOM',
+              },
+            },
+          })
+        }
+        if (parameters.type === 'RISK_FACTORS_V8') {
+          await sendBatchJobCommand({
+            type: 'SIMULATION_RISK_FACTORS_V8',
             tenantId: this.tenantId,
             parameters: {
               taskId: taskIds[i],

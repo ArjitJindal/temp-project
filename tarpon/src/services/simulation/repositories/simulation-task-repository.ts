@@ -30,26 +30,34 @@ import { SimulationRiskFactorsStatisticsResult } from '@/@types/openapi-internal
 import { SimulationRiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationRiskFactorsParametersRequest'
 import { SimulationRiskFactorsJob } from '@/@types/openapi-internal/SimulationRiskFactorsJob'
 import { SimulationRiskFactorsIteration } from '@/@types/openapi-internal/SimulationRiskFactorsIteration'
+import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/SimulationV8RiskFactorsJob'
+import { SimulationV8RiskFactorsIteration } from '@/@types/openapi-internal/SimulationV8RiskFactorsIteration'
+import { SimulationV8RiskFactorsStatisticsResult } from '@/@types/openapi-internal/SimulationV8RiskFactorsStatisticsResult'
+import { SimulationV8RiskFactorsParametersRequest } from '@/@types/openapi-internal/SimulationV8RiskFactorsParametersRequest'
 
 type SimulationRequest =
   | SimulationRiskLevelsParametersRequest
   | SimulationBeaconParametersRequest
   | SimulationRiskFactorsParametersRequest
+  | SimulationV8RiskFactorsParametersRequest
 
 type SimulationIteration =
   | SimulationRiskLevelsIteration
   | SimulationBeaconIteration
   | SimulationRiskFactorsIteration
+  | SimulationV8RiskFactorsIteration
 
 type SimulationAllJobs =
   | SimulationRiskLevelsJob
   | SimulationBeaconJob
   | SimulationRiskFactorsJob
+  | SimulationV8RiskFactorsJob
 
 type SimulationStatisticsResult =
   | SimulationRiskLevelsStatisticsResult
   | SimulationBeaconStatisticsResult
   | SimulationRiskFactorsStatisticsResult
+  | SimulationV8RiskFactorsStatisticsResult
 
 @traceable
 export class SimulationTaskRepository {
@@ -87,13 +95,15 @@ export class SimulationTaskRepository {
           current: {},
           simulated: {},
         }
-      } else if (simulationRequest.type === 'RISK_FACTORS') {
+      } else if (
+        simulationRequest.type === 'RISK_FACTORS' ||
+        simulationRequest.type === 'RISK_FACTORS_V8'
+      ) {
         statistics = {
           current: {},
           simulated: {},
         }
       }
-
       return {
         taskId,
         parameters: parameter,
@@ -116,6 +126,8 @@ export class SimulationTaskRepository {
       ? (result as SimulationRiskLevelsIteration[])
       : simulationRequest.type === 'BEACON'
       ? (result as SimulationBeaconIteration[])
+      : simulationRequest.type === 'RISK_FACTORS_V8'
+      ? (result as SimulationV8RiskFactorsIteration[])
       : (result as SimulationRiskFactorsIteration[])
   }
 
@@ -173,6 +185,12 @@ export class SimulationTaskRepository {
           defaultRuleInstance: simulationRequest.defaultRuleInstance,
           iterations: this.generateIterationsObject(simulationRequest, taskIds),
         } as SimulationBeaconJob
+      } else if (simulationRequest.type === 'RISK_FACTORS_V8') {
+        job = {
+          ...baseJob,
+          type: 'RISK_FACTORS_V8',
+          iterations: this.generateIterationsObject(simulationRequest, taskIds),
+        } as SimulationV8RiskFactorsJob
       } else {
         job = {
           ...baseJob,
@@ -300,15 +318,18 @@ export class SimulationTaskRepository {
     )
   }
 
-  public async getSimulationJob(
+  public async getSimulationJob<T extends SimulationAllJobs>(
     jobId: string
-  ): Promise<SimulationRiskLevelsJob | null> {
+  ): Promise<T | null> {
     const db = this.mongoDb.db()
-    const collection = db.collection<SimulationRiskLevelsJob>(
+    const collection = db.collection<T>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
     const task = await collection.findOne({ _id: jobId as any })
-    return omit(task, '_id')
+    if (!task) {
+      return null
+    }
+    return omit(task, '_id') as unknown as T
   }
 
   public async getSimulationJobs(

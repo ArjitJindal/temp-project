@@ -53,16 +53,16 @@ function replaceSimulationGetResponse(paths) {
       .readFileSync(path)
       .toString()
       .replace(
-        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob } from './SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob } from './SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob';",
         '',
       )
       .replace(
-        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob } from '../models/SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob';",
+        "import { SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob } from '../models/SimulationRiskLevelsJob | SimulationBeaconJob | SimulationRiskFactorsJob | SimulationV8RiskFactorsJob';",
         '',
       )
       .replace(
-        "import { SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType } from './SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType';",
-        'import { SimulationRiskLevelsType } from "../models/SimulationRiskLevelsType"; import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationRiskFactorsType } from "../models/SimulationRiskFactorsType";',
+        "import { SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType } from './SimulationRiskLevelsType | SimulationBeaconType | SimulationRiskFactorsType | SimulationV8RiskFactorsType';",
+        'import { SimulationRiskLevelsType } from "../models/SimulationRiskLevelsType"; import { SimulationBeaconType } from "../models/SimulationBeaconType"; import { SimulationRiskFactorsType } from "../models/SimulationRiskFactorsType"; import { SimulationV8RiskFactorsType } from "../models/SimulationV8RiskFactorsType";',
       );
 
     fs.writeFileSync(path, newText);

@@ -37,8 +37,8 @@ import ReportsList from '@/pages/reports';
 import Clueso from '@/pages/auth/clueso';
 import { QASamplesTable } from '@/pages/qa-samples';
 import { QASamplePage } from '@/pages/qa-sample-item';
-import { SimulationHistoryResultPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
-import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/risk-factors/RiskFactorsSimulation/SimulationHistoryPage';
+import { SimulationHistoryResultPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage/SimulationHistoryResultPage';
+import { SimulationHistoryPage as RiskFactorsSimulationHistoryPage } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationHistoryPage';
 import { RuleInstancePage } from '@/pages/rules/rule-instance-page';
 import RiskFactorItemPage from '@/pages/risk-levels/custom-risk-factors/RiskItem';
 import { MlModelsPage } from '@/pages/ml-models';
@@ -366,6 +366,20 @@ export function useRoutes(): RouteItem[] {
           },
           {
             name: 'custom-risk-factors',
+            path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode',
+            component: RiskFactorItemPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+          },
+          {
+            name: 'custom-risk-factors',
+            path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode',
+            component: RiskFactorItemPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+          },
+          {
+            name: 'custom-risk-factors',
             path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
             component: RiskFactorItemPage,
             hideInMenu: true,
@@ -377,6 +391,27 @@ export function useRoutes(): RouteItem[] {
             component: RiskFactorItemPage,
             hideInMenu: true,
             permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+          },
+          {
+            name: 'custom-risk-factors',
+            path: '/risk-levels/custom-risk-factors/simulation-history',
+            component: RiskFactorsSimulationHistoryPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
+          },
+          {
+            name: 'custom-risk-factors',
+            path: '/risk-levels/custom-risk-factors/simulation-history/:jobId',
+            component: SimulationHistoryResultPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
+          },
+          {
+            name: 'custom-risk-factors',
+            path: '/risk-levels/custom-risk-factors/simulation-result/:jobId',
+            component: SimulationHistoryResultPage,
+            hideInMenu: true,
+            permissions: ['risk-scoring:risk-factors:read'],
           },
         ],
       },
@@ -457,6 +492,20 @@ export function useRoutes(): RouteItem[] {
                   },
                   {
                     name: 'custom-risk-factors',
+                    path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode',
+                    component: RiskFactorItemPage,
+                    hideInMenu: true,
+                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  },
+                  {
+                    name: 'custom-risk-factors',
+                    path: '/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:mode',
+                    component: RiskFactorItemPage,
+                    hideInMenu: true,
+                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  },
+                  {
+                    name: 'custom-risk-factors',
                     path: '/risk-levels/custom-risk-factors/:type/:id/:mode',
                     component: RiskFactorItemPage,
                     hideInMenu: true,
@@ -466,6 +515,27 @@ export function useRoutes(): RouteItem[] {
                     name: 'custom-risk-factors',
                     path: '/risk-levels/custom-risk-factors/:type/:mode',
                     component: RiskFactorItemPage,
+                    hideInMenu: true,
+                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  },
+                  {
+                    name: 'custom-risk-factors',
+                    path: '/risk-levels/custom-risk-factors/simulation-history',
+                    component: RiskFactorsSimulationHistoryPage,
+                    hideInMenu: true,
+                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  },
+                  {
+                    name: 'custom-risk-factors',
+                    path: '/risk-levels/custom-risk-factors/simulation-history/:jobId',
+                    component: SimulationHistoryResultPage,
+                    hideInMenu: true,
+                    permissions: ['risk-scoring:risk-factors:read'] as Permission[],
+                  },
+                  {
+                    name: 'custom-risk-factors',
+                    path: '/risk-levels/custom-risk-factors/simulation-result/:jobId',
+                    component: SimulationHistoryResultPage,
                     hideInMenu: true,
                     permissions: ['risk-scoring:risk-factors:read'] as Permission[],
                   },

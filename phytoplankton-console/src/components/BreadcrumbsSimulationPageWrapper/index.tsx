@@ -9,6 +9,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import { SimulationPageWrapper } from '@/components/SimulationPageWrapper';
 import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
+import { LocalStorageKey } from '@/pages/risk-levels/RiskFactorsSimulation/SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
@@ -21,7 +22,7 @@ export type PageWrapperProps = {
   simulationHistoryUrl: string;
   simulationDefaultUrl: string;
   nonSimulationDefaultUrl: string;
-  storageKey: 'SIMULATION_RULES' | 'SIMULATION_RISK_FACTORS';
+  storageKey: 'SIMULATION_RULES' | 'SIMULATION_RISK_FACTORS' | 'SIMULATION_CUSTOM_RISK_FACTORS';
 };
 
 export const BreadcrumbsSimulationPageWrapper = forwardRef<
@@ -51,12 +52,39 @@ export const BreadcrumbsSimulationPageWrapper = forwardRef<
     (value: boolean | undefined) => {
       setIsSimulationEnabled(value);
       if (!value) {
+        if (props.storageKey === 'SIMULATION_CUSTOM_RISK_FACTORS') {
+          // Remove all simulation data from local storage
+          const keysToRemove: string[] = [];
+
+          // First, collect all keys to remove
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.includes(LocalStorageKey)) {
+              keysToRemove.push(key);
+            }
+          }
+
+          // Then, remove the collected keys
+          keysToRemove.forEach((key) => {
+            try {
+              localStorage.removeItem(key);
+            } catch (error) {
+              console.error(`Failed to remove key ${key} from localStorage:`, error);
+            }
+          });
+        }
         navigate(props.nonSimulationDefaultUrl);
       } else {
         navigate(props.simulationDefaultUrl);
       }
     },
-    [navigate, setIsSimulationEnabled, props.nonSimulationDefaultUrl, props.simulationDefaultUrl],
+    [
+      navigate,
+      setIsSimulationEnabled,
+      props.nonSimulationDefaultUrl,
+      props.simulationDefaultUrl,
+      props.storageKey,
+    ],
   );
 
   const location = useLocation();

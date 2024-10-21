@@ -2,10 +2,10 @@ import { useNavigate, useParams } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
+import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
 import s from './style.module.less';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
-import PageWrapper from '@/components/PageWrapper';
-import Breadcrumbs from '@/components/library/Breadcrumbs';
 import { notEmpty } from '@/utils/array';
 import * as Card from '@/components/ui/Card';
 import SegmentedControl from '@/components/library/SegmentedControl';
@@ -26,37 +26,50 @@ import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Id from '@/components/ui/Id';
 import { RuleStatusSwitch } from '@/pages/rules/components/RuleStatusSwitch';
-
+import { BreadcrumbsSimulationPageWrapper } from '@/components/BreadcrumbsSimulationPageWrapper';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 export default function () {
-  const { type = 'consumer' } = useParams();
+  const isSimulationMode = localStorage.getItem('SIMULATION_CUSTOM_RISK_FACTORS') === 'true';
+  const { type = isSimulationMode ? 'simulation' : 'consumer' } = useParams();
   return (
     <Feature name="RISK_SCORING_V8" fallback={'Not enabled'}>
-      <PageWrapper
-        header={
-          <Breadcrumbs
-            items={[
-              {
-                title: 'Custom Risk Factors',
-                to: '/risk-levels/custom-risk-factors',
-              },
-              type === 'consumer' && {
-                title: 'Consumer',
-                to: '/risk-levels/custom-risk-factors/consumer',
-              },
-              type === 'business' && {
-                title: 'Business',
-                to: '/risk-levels/custom-risk-factors/business',
-              },
-              type === 'transaction' && {
-                title: 'Transaction',
-                to: '/risk-levels/custom-risk-factors/transaction',
-              },
-            ].filter(notEmpty)}
-          />
-        }
+      <BreadcrumbsSimulationPageWrapper
+        storageKey={'SIMULATION_CUSTOM_RISK_FACTORS'}
+        nonSimulationDefaultUrl="/risk-levels/custom-risk-factors/"
+        simulationDefaultUrl="/risk-levels/custom-risk-factors/simulation"
+        breadcrumbs={[
+          {
+            title: 'Custom Risk factors',
+            to: `/risk-levels/custom-risk-factors/${isSimulationMode ? 'simulation' : ''}`,
+          },
+          type === 'consumer' &&
+            !isSimulationMode && {
+              title: 'Consumer',
+              to: '/risk-levels/custom-risk-factors/consumer',
+            },
+          type === 'business' &&
+            !isSimulationMode && {
+              title: 'Business',
+              to: '/risk-levels/custom-risk-factors/business',
+            },
+          type === 'transaction' &&
+            !isSimulationMode && {
+              title: 'Transaction',
+              to: '/risk-levels/custom-risk-factors/transaction',
+            },
+          (type === 'simulation' || type === 'simulation-history') && {
+            title: 'Simulation',
+            to: '/risk-levels/custom-risk-factors/simulation',
+          },
+          type === 'simulation-history' && {
+            title: 'Simulation history',
+            to: '/risk-levels/custom-risk-factors/simulation-history',
+          },
+        ].filter(notEmpty)}
+        simulationHistoryUrl="/risk-levels/custom-risk-factors/simulation-history"
       >
         <CustomRiskFactors type={type} />
-      </PageWrapper>
+      </BreadcrumbsSimulationPageWrapper>
     </Feature>
   );
 }
@@ -64,8 +77,23 @@ interface Props {
   type: string;
 }
 type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
-const CustomRiskFactors = (props: Props) => {
+export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
+  const api = useApi();
+  const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
+    const entityType =
+      type === 'consumer'
+        ? 'CONSUMER_USER'
+        : type === 'business'
+        ? 'BUSINESS'
+        : type === 'transaction'
+        ? 'TRANSACTION'
+        : undefined;
+    return await api.getAllRiskFactors({
+      entityType: entityType,
+    });
+  });
+
   const [selectedSection, setSelectedSection] = useState<ScopeSelectorValue>(
     type as ScopeSelectorValue,
   );
@@ -73,18 +101,13 @@ const CustomRiskFactors = (props: Props) => {
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
   const navigate = useNavigate();
   useEffect(() => {
-    navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: selectedSection }), {
-      replace: true,
-    });
-  }, [selectedSection, navigate]);
-  const api = useApi();
-  const queryResult = useQuery(RISK_FACTORS_V8(type), async () => {
-    const entityType =
-      type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION';
-    return await api.getAllRiskFactors({
-      entityType: entityType,
-    });
-  });
+    if (type !== 'simulation' && type !== 'simulation-history') {
+      navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: selectedSection }), {
+        replace: true,
+      });
+    }
+  }, [selectedSection, navigate, type]);
+
   const queryClient = useQueryClient();
   const handleActivationChangeMutation = useMutation<
     RiskFactor,
@@ -248,6 +271,15 @@ const CustomRiskFactors = (props: Props) => {
       },
     }),
   ]);
+  if (type === 'simulation') {
+    return (
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(data) => <RiskFactorsSimulation riskFactors={data} parameterValues={{}} />}
+      </AsyncResourceRenderer>
+    );
+  } else if (type === 'simulation-history') {
+    return <SimulationHistory />;
+  }
   return (
     <Card.Root noBorder>
       <Card.Section>

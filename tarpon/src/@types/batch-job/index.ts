@@ -32,6 +32,17 @@ export type SimulationRiskFactorsBatchJob = {
   awsCredentials?: Credentials
 }
 
+/* Simulation (Risk Scoring V8) */
+export type SimulationRiskFactorsV8BatchJob = {
+  type: 'SIMULATION_RISK_FACTORS_V8'
+  tenantId: string
+  parameters: {
+    taskId: string
+    jobId: string
+    sampling: SimulationRiskFactorsSampling
+  }
+}
+
 /* Simulation (Beacon) */
 export type SimulationBeaconBatchJob = {
   type: 'SIMULATION_BEACON'
@@ -221,6 +232,7 @@ export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
   | SimulationBeaconBatchJob
+  | SimulationRiskFactorsV8BatchJob
   | DemoModeDataLoadBatchJob
   | OngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob

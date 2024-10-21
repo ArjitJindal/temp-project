@@ -3972,6 +3972,29 @@ paths:
                 type: array
                 items:
                   $ref: '#/components/schemas/RiskFactor'
+  /risk-factors/bulk:
+    post:
+      summary: Risk factors - POST Bulk
+      operationId: post-bulk-risk-factors
+      x-flagright:
+        permissions:
+          - risk-scoring:risk-factors:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: BulkRiskFactors
+              type: array
+              items:
+                $ref: '#/components/schemas/RiskFactorsPostRequest'
+        required: true
+      responses:
+        '200':
+          description: OK
+        '403':
+          description: Not enough privileges
+      parameters: []
+      description: ''
   /risk-factors/{riskFactorId}:
     parameters:
       - schema:
@@ -6007,6 +6030,7 @@ paths:
               - PULSE
               - BEACON
               - RISK_FACTORS
+              - RISK_FACTORS_V8
           in: query
           name: type
           required: true
@@ -6031,6 +6055,7 @@ paths:
                   - $ref: '#/components/schemas/SimulationRiskLevelsJob'
                   - $ref: '#/components/schemas/SimulationBeaconJob'
                   - $ref: '#/components/schemas/SimulationRiskFactorsJob'
+                  - $ref: '#/components/schemas/SimulationV8RiskFactorsJob'
       parameters: []
     parameters:
       - schema:
@@ -12894,6 +12919,63 @@ components:
         - parameters
         - type
         - sampling
+    SimulationV8RiskFactorsParametersRequest:
+      title: SimulationV8RiskFactorsParametersRequest
+      type: object
+      properties:
+        jobId:
+          type: string
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationV8RiskFactorsParameters'
+        type:
+          $ref: '#/components/schemas/SimulationV8RiskFactorsType'
+        sampling:
+          $ref: '#/components/schemas/SimulationRiskFactorsSampling'
+      required:
+        - parameters
+        - type
+        - sampling
+    SimulationV8RiskFactorsJob:
+      title: SimulationV8RiskFactorsJob
+      allOf:
+        - $ref: '#/components/schemas/SimulationJob'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationV8RiskFactorsType'
+            parameters:
+              $ref: '#/components/schemas/SimulationV8RiskFactorsParameters'
+            iterations:
+              type: array
+              items:
+                $ref: '#/components/schemas/SimulationV8RiskFactorsIteration'
+          required:
+            - type
+            - parameters
+            - iterations
+    SimulationV8RiskFactorsParameters:
+      title: SimulationV8RiskFactorsParameters
+      type: object
+      properties:
+        jobId:
+          type: string
+        type:
+          $ref: '#/components/schemas/SimulationV8RiskFactorsType'
+        parameters:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskFactor'
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - parameters
+        - name
+        - description
+        - type
     SimulationRiskFactorsType:
       title: SimulationRiskFactorsType
       type: string
@@ -13041,6 +13123,53 @@ components:
             - type
             - parameters
             - statistics
+    SimulationV8RiskFactorsIteration:
+      title: SimulationV8RiskFactorsIteration
+      allOf:
+        - $ref: '#/components/schemas/SimulationIteration'
+        - type: object
+          properties:
+            type:
+              $ref: '#/components/schemas/SimulationV8RiskFactorsType'
+            parameters:
+              $ref: '#/components/schemas/SimulationV8RiskFactorsParameters'
+            statistics:
+              $ref: '#/components/schemas/SimulationV8RiskFactorsStatisticsResult'
+          required:
+            - type
+            - parameters
+            - statistics
+    SimulationV8RiskFactorsType:
+      title: SimulationV8RiskFactorsType
+      type: string
+      enum:
+        - RISK_FACTORS_V8
+    SimulationV8RiskFactorsStatisticsResult:
+      title: SimulationV8RiskFactorsStatisticsResult
+      type: object
+      properties:
+        current:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationV8RiskFactorsStatistics'
+        simulated:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationV8RiskFactorsStatistics'
+    SimulationV8RiskFactorsStatistics:
+      title: SimulationV8RiskFactorsStatistics
+      type: object
+      properties:
+        count:
+          type: number
+        riskType:
+          type: string
+          enum:
+            - KRS
+            - ARS
+            - DRS
+        riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
     SimulationRiskFactorsIteration:
       title: SimulationRiskFactorsIteration
       allOf:
@@ -13217,6 +13346,33 @@ components:
         - old
         - new
         - userName
+    SimulationV8RiskFactorsResult:
+      title: SimulationV8RiskFactorsResult
+      type: object
+      properties:
+        taskId:
+          type: string
+        type:
+          type: string
+          enum:
+            - RISK_FACTORS_V8
+        userId:
+          type: string
+        userType:
+          type: string
+        current:
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
+        simulated:
+          $ref: '#/components/schemas/SimulationRiskLevelsRiskScoreResult'
+        userName:
+          type: string
+      required:
+        - taskId
+        - type
+        - userId
+        - old
+        - new
+        - userName
     SimulationRiskFactorsResult:
       title: SimulationRiskFactorsResult
       type: object
@@ -13255,6 +13411,7 @@ components:
           enum:
             - PULSE
             - RISK_FACTORS
+            - RISK_FACTORS_V8
         userId:
           type: string
         userType:
@@ -13272,6 +13429,19 @@ components:
         - old
         - new
         - userName
+    SimulationV8RiskFactorsResultResponse:
+      title: SimulationV8RiskFactorsResultResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/SimulationV8RiskFactorsResult'
+        total:
+          type: number
+      required:
+        - items
+        - total
     SimulationRiskLevelsAndRiskFactorsResultResponse:
       title: SimulationRiskLevelsAndRiskFactorsResultResponse
       type: object
@@ -13319,6 +13489,8 @@ components:
           $ref: '#/components/schemas/SimulationBeaconParametersRequest'
         riskFactorsParameters:
           $ref: '#/components/schemas/SimulationRiskFactorsParametersRequest'
+        riskFactorsV8Parameters:
+          $ref: '#/components/schemas/SimulationV8RiskFactorsParametersRequest'
     SimulationPostResponse:
       type: object
       properties:
@@ -13344,6 +13516,7 @@ components:
               - $ref: '#/components/schemas/SimulationRiskLevelsJob'
               - $ref: '#/components/schemas/SimulationBeaconJob'
               - $ref: '#/components/schemas/SimulationRiskFactorsJob'
+              - $ref: '#/components/schemas/SimulationV8RiskFactorsJob'
       required:
         - total
         - data
