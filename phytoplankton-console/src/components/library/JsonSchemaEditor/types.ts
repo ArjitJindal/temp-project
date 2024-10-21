@@ -5,10 +5,16 @@ export interface UiSchemaCommon {
   'ui:entityName'?: string;
   'ui:order'?: [string];
   'ui:hidden'?: boolean;
+  'ui:readOnly'?: boolean;
+  'ui:width'?: 'FULL' | 'HALF';
 }
 
 export interface UiSchemaUnknown extends UiSchemaCommon {
   'ui:subtype'?: undefined;
+}
+
+export interface UiSchemaTextarea extends UiSchemaCommon {
+  'ui:subtype': 'TEXTAREA';
 }
 
 export interface UiSchemaDayWindow extends UiSchemaCommon {
@@ -124,6 +130,7 @@ export interface UiSchemaWebhook extends UiSchemaCommon {
 
 export type UiSchema =
   | UiSchemaUnknown
+  | UiSchemaTextarea
   | UiSchemaDayWindow
   | UiSchemaTimeWindow
   | UiSchemaCountries

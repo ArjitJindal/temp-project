@@ -23,7 +23,8 @@ export default function TransactionStep(props: Props) {
     return {
       key: tid,
       title: `Transaction ${tid}`,
-      isInvalid: alwaysShowErrors && !validationResultElement?.isValid,
+      isInvalid:
+        alwaysShowErrors && validationResultElement != null && !validationResultElement.isValid,
     };
   });
 

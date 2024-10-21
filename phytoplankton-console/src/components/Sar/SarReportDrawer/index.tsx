@@ -9,17 +9,20 @@ import { useApi } from '@/api';
 import StepButtons from '@/components/library/StepButtons';
 import { dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import Button from '@/components/library/Button';
-import { download } from '@/utils/browser';
+import { download, downloadUrl } from '@/utils/browser';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useId } from '@/utils/hooks';
 import SarReportDrawerForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm';
+import { notEmpty } from '@/utils/array';
+import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 
 const DISABLE_SUBMIT_STATUSES: ReportStatus[] = ['SUBMITTING', 'SUBMISSION_REJECTED'];
 
 export const SarContext = createContext<Report | null>(null);
 export const REPORT_STEP = 'REPORT_STEP';
 export const TRANSACTION_METADATA_STEP = 'TRANSACTION_METADATA_STEP';
+export const CUSTOMER_AND_ACCOUNT_DETAILS_STEP = 'CUSTOMER_AND_ACCOUNT_DETAILS_STEP';
 export const TRANSACTION_STEP = 'TRANSACTION_STEP';
 export const INDICATOR_STEP = 'INDICATOR_STEP';
 export const ATTACHMENTS_STEP = 'ATTACHMENTS_STEP';
@@ -36,11 +39,21 @@ interface Props {
   onChangeVisibility: (isVisible: boolean) => void;
 }
 
-function downloadReport(report: Report) {
+async function downloadReport(report: Report, api: FlagrightApi) {
   const revision = report.revisions[report.revisions.length - 1];
   const output = revision.output;
-  const reportName = `SAR-report-${dayjs(revision.createdAt).format(YEAR_MONTH_DATE_FORMAT)}.xml`;
-  if (output) {
+  if (output?.startsWith('s3')) {
+    const match = output.match(/^s3:(.+?):(.+)$/);
+    if (match) {
+      const [_, bucket, key] = match;
+      const { url } = await api.getPresignedDownloadUrl({ bucket, key });
+      downloadUrl(key, url);
+    } else {
+      console.error(`Unable to parse S3 link: ${output}`);
+      throw new Error(`Unable to parse report output format`);
+    }
+  } else if (output) {
+    const reportName = `SAR-report-${dayjs(revision.createdAt).format(YEAR_MONTH_DATE_FORMAT)}.xml`;
     download(reportName, output);
   } else {
     throw new Error(`XML output in response is empty, unable to download!`);
@@ -50,7 +63,7 @@ function downloadReport(report: Report) {
 export default function SarReportDrawer(props: Props) {
   const api = useApi();
   const steps = useMemo(
-    () =>
+    (): Step[] =>
       [
         !isEmpty(props.initialReport.schema?.reportSchema) &&
           props.initialReport.schema !== undefined && {
@@ -58,6 +71,11 @@ export default function SarReportDrawer(props: Props) {
             title: 'General details',
             description: 'Enter reporting entity, person and report details',
           },
+        !isEmpty(props.initialReport.schema?.customerAndAccountDetailsSchema) && {
+          key: CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
+          title: 'Customer & Account details',
+          description: 'Enter customer information and account holder details',
+        },
         !isEmpty(props.initialReport.schema?.transactionMetadataSchema) && {
           key: TRANSACTION_METADATA_STEP,
           title: 'Suspicious activity details',
@@ -73,12 +91,12 @@ export default function SarReportDrawer(props: Props) {
           title: 'Indicators',
           description: 'Select one or more indicators that are relevant to your report',
         },
-        {
+        !(props.initialReport.schema?.settings?.disableAttachmentsStep === true) && {
           key: ATTACHMENTS_STEP,
           title: 'Attachments',
           description: 'Upload any supporting documents for your report',
         },
-      ].filter(Boolean) as Step[],
+      ].filter(notEmpty),
     [props.initialReport.schema],
   );
   const reportType = useReportType(props.initialReport.reportTypeId);
@@ -103,7 +121,7 @@ export default function SarReportDrawer(props: Props) {
         const result = await api.postReports({
           Report: reportWithoutSchema,
         });
-        downloadReport(result);
+        await downloadReport(result, api);
         return result;
       } finally {
         hideLoading();
@@ -193,11 +211,10 @@ export default function SarReportDrawer(props: Props) {
               <Button
                 type="TETRIARY"
                 isDisabled={props.initialReport.revisions.length === 0}
-                onClick={() => downloadReport(props.initialReport)}
+                onClick={() => downloadReport(props.initialReport, api)}
               >
                 Download
               </Button>
-
               <Button
                 isLoading={submitMutation.isLoading}
                 type="PRIMARY"

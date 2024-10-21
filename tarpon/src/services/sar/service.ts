@@ -4,7 +4,9 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { Document, MongoClient } from 'mongodb'
-import { NotFound, BadRequest } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
+import { S3 } from '@aws-sdk/client-s3'
+import { Upload } from '@aws-sdk/lib-storage'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Account } from '../accounts'
 import { CaseRepository } from '../cases/repository'
@@ -24,6 +26,7 @@ import { traceable } from '@/core/xray'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { logger } from '@/core/logger'
 import { getContext } from '@/core/utils/context'
+import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 function withSchema(report: Report): Report {
@@ -34,11 +37,17 @@ function withSchema(report: Report): Report {
   }
 }
 
+type S3Config = {
+  documentBucket: string
+}
+
 @traceable
 export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
   mongoDb: MongoClient
+  s3: S3
+  s3Config: S3Config
   dynamoDb: DynamoDBDocumentClient
 
   public static async fromEvent(
@@ -49,17 +58,29 @@ export class ReportService {
     const { principalId: tenantId } = event.requestContext.authorizer
     const client = await getMongoDbClient()
     const dynamoDb = getDynamoDbClientByEvent(event)
-    return new ReportService(tenantId, client, dynamoDb)
+    const s3 = getS3ClientByEvent(event)
+    const { DOCUMENT_BUCKET } = process.env as {
+      DOCUMENT_BUCKET: string
+    }
+
+    return new ReportService(tenantId, client, dynamoDb, s3, {
+      documentBucket: DOCUMENT_BUCKET,
+    })
   }
+
   constructor(
     tenantId: string,
     mongoDb: MongoClient,
-    dynamoDb: DynamoDBDocumentClient
+    dynamoDb: DynamoDBDocumentClient,
+    s3: S3,
+    s3Config: S3Config
   ) {
     this.reportRepository = new ReportRepository(tenantId, mongoDb, dynamoDb)
     this.tenantId = tenantId
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
+    this.s3 = s3
+    this.s3Config = s3Config
   }
 
   public getTypes(): ReportType[] {
@@ -94,10 +115,10 @@ export class ReportService {
   public async getReportDraft(
     reportTypeId: string,
     caseId: string,
-    alertIds: string[],
-    transactionIds: string[]
+    alertIds?: string[],
+    transactionIds?: string[]
   ): Promise<Report> {
-    if (transactionIds?.length > 20) {
+    if (transactionIds != null && transactionIds.length > 20) {
       throw new NotFound(`Cant select more than 20 transactions`)
     }
     const caseRepository = new CaseRepository(this.tenantId, {
@@ -109,6 +130,7 @@ export class ReportService {
     }
     if (
       (!transactionIds || transactionIds.length === 0) &&
+      alertIds != null &&
       alertIds?.length > 0
     ) {
       transactionIds = c.caseTransactionsIds || []
@@ -120,7 +142,7 @@ export class ReportService {
     )
 
     const transactions = await txpRepo.getTransactions({
-      filterIdList: transactionIds,
+      filterIdList: transactionIds ?? [],
       includeUsers: true,
       pageSize: 20,
     })
@@ -195,10 +217,40 @@ export class ReportService {
       generator?.getAugmentedReportParams(report) ?? report.parameters
     report.id = report.id ?? (await this.reportRepository.getId())
     report.status = 'COMPLETE'
-    report.revisions.push({
-      output: (await generator.generate(report.parameters, report)) || '',
-      createdAt: Date.now(),
-    })
+    const generationResult = await generator.generate(report.parameters, report)
+    const now = Date.now()
+    if (generationResult?.type === 'STRING') {
+      report.revisions.push({
+        output: generationResult.value,
+        createdAt: now,
+      })
+    } else {
+      const key = `${this.tenantId}/${
+        report.id
+      }-report-${now}.${generationResult.contentType.toLowerCase()}`
+      const stream = generationResult.stream
+      const buffers: Buffer[] = []
+      for await (const data of stream) {
+        if (typeof data !== 'string') {
+          buffers.push(data)
+        }
+      }
+      const body = Buffer.concat(buffers)
+      const parallelUploadS3 = new Upload({
+        client: this.s3,
+        params: {
+          Bucket: this.s3Config.documentBucket,
+          Key: key,
+          Body: body,
+        },
+      })
+      await parallelUploadS3.done()
+
+      report.revisions.push({
+        output: `s3:document:${key}`,
+        createdAt: now,
+      })
+    }
 
     if (directSubmission && generator.submit) {
       logger.info('Submitting report')

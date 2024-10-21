@@ -22,22 +22,28 @@ export default function VerticalMenu(props: Props) {
   const { active, items, children, minWidth, onChange, testId = 'vertical-menu' } = props;
   return (
     <div className={s.root} data-cy={testId}>
-      <div className={s.items} style={{ minWidth }}>
-        {props.additionalMenuTop}
-        {items.map((item) => (
-          <div
-            data-cy={`${testId}-item`}
-            key={item.key}
-            className={cn(s.item, active === item.key && s.isActive, item.isInvalid && s.isInvalid)}
-            onClick={() => onChange(item.key)}
-          >
-            {item.icon && <div className={s.icon}>{item.icon}</div>}
-            <SameWidthDiv className={s.title} title={item.title}>
-              {item.title}
-            </SameWidthDiv>
-          </div>
-        ))}
-      </div>
+      {(items.length > 0 || props.additionalMenuTop) && (
+        <div className={s.items} style={{ minWidth }}>
+          {props.additionalMenuTop}
+          {items.map((item) => (
+            <div
+              data-cy={`${testId}-item`}
+              key={item.key}
+              className={cn(
+                s.item,
+                active === item.key && s.isActive,
+                item.isInvalid && s.isInvalid,
+              )}
+              onClick={() => onChange(item.key)}
+            >
+              {item.icon && <div className={s.icon}>{item.icon}</div>}
+              <SameWidthDiv className={s.title} title={item.title}>
+                {item.title}
+              </SameWidthDiv>
+            </div>
+          ))}
+        </div>
+      )}
       {children && <div className={s.children}>{children}</div>}
     </div>
   );

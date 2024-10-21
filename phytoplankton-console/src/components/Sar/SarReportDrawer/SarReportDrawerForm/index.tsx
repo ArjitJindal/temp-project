@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import s from './index.module.less';
 import { StatePair } from '@/utils/state';
 import { FileInfo, Report } from '@/apis';
 import Form from '@/components/library/Form';
@@ -7,6 +8,7 @@ import NestedForm from '@/components/library/Form/NestedForm';
 import GenericFormField, { FormFieldRenderProps } from '@/components/library/Form/GenericFormField';
 import {
   ATTACHMENTS_STEP,
+  CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
   INDICATOR_STEP,
   REPORT_STEP,
   Step,
@@ -25,6 +27,7 @@ import { message } from '@/components/library/Message';
 export type FormState = Partial<{
   [REPORT_STEP]: unknown;
   [TRANSACTION_METADATA_STEP]: unknown;
+  [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: unknown;
   [TRANSACTION_STEP]: {
     [transactionId: string]: unknown;
   };
@@ -66,6 +69,11 @@ export default function SarReportDrawerForm(props: Props) {
       isRequired: false,
       schema: report.schema?.transactionMetadataSchema,
     },
+    {
+      name: CUSTOMER_AND_ACCOUNT_DETAILS_STEP,
+      isRequired: false,
+      schema: report.schema?.customerAndAccountDetailsSchema,
+    },
     ...(report.schema?.transactionSchema != null
       ? [
           {
@@ -101,6 +109,7 @@ export default function SarReportDrawerForm(props: Props) {
   return (
     <Form
       id={formId}
+      className={s.root}
       fieldValidators={fieldValidators as ObjectFieldValidator<FormState>}
       initialValues={initialValues}
       alwaysShowErrors={alwaysShowErrors}
@@ -148,6 +157,16 @@ export default function SarReportDrawerForm(props: Props) {
                   alwaysShowErrors={alwaysShowErrors}
                 />
               )}
+              {activeStepKey == CUSTOMER_AND_ACCOUNT_DETAILS_STEP && (
+                <ReportStep
+                  validationResult={
+                    validationResult?.fieldValidationErrors?.[CUSTOMER_AND_ACCOUNT_DETAILS_STEP]
+                  }
+                  parametersSchema={report.schema?.customerAndAccountDetailsSchema}
+                  settings={settings}
+                  alwaysShowErrors={alwaysShowErrors}
+                />
+              )}
               {activeStepKey === TRANSACTION_STEP && (
                 <TransactionStep
                   settings={settings}
@@ -178,6 +197,7 @@ function deserializeFormState(reportTemplate: Report): FormState {
   return {
     [REPORT_STEP]: reportTemplate?.parameters.report,
     [TRANSACTION_METADATA_STEP]: reportTemplate?.parameters.transactionMetadata,
+    [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: reportTemplate?.parameters.customerAndAccountDetails,
     [TRANSACTION_STEP]: reportTemplate?.parameters.transactions?.reduce((acc, x) => {
       return {
         ...acc,
@@ -200,6 +220,7 @@ export function serializeFormState(originalReport: Report, formState: FormState)
       report: formState[REPORT_STEP],
       indicators: formState[INDICATOR_STEP]?.selection ?? [],
       transactionMetadata: formState[TRANSACTION_METADATA_STEP],
+      customerAndAccountDetails: formState[CUSTOMER_AND_ACCOUNT_DETAILS_STEP],
       transactions: Object.entries(formState[TRANSACTION_STEP] ?? {}).map(([id, transaction]) => ({
         id,
         transaction,

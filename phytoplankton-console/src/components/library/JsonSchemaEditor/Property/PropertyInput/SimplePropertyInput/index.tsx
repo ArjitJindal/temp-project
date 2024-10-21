@@ -10,6 +10,7 @@ import { getUiSchema } from '@/components/library/JsonSchemaEditor/utils';
 import DatePicker from '@/components/ui/DatePicker';
 import { DATE_TIME_ISO_FORMAT, Dayjs, dayjs, YEAR_MONTH_DATE_FORMAT } from '@/utils/dayjs';
 import Slider from '@/components/library/Slider';
+import TextArea from '@/components/library/TextArea';
 
 // todo: fix any
 interface Props extends InputProps<any> {
@@ -17,7 +18,12 @@ interface Props extends InputProps<any> {
 }
 
 export default function SimplePropertyInput(props: Props) {
-  const { schema, ...inputProps } = props;
+  const { schema, ...restProps } = props;
+
+  const inputProps = {
+    ...restProps,
+    isDisabled: restProps.isDisabled || schema.readOnly,
+  };
 
   const uiSchema = getUiSchema(schema);
 
@@ -53,6 +59,7 @@ export default function SimplePropertyInput(props: Props) {
         }
         return (
           <DatePicker
+            disabled={inputProps.isDisabled}
             showTime={schema.format === 'date-time'}
             value={value}
             allowClear
@@ -70,7 +77,10 @@ export default function SimplePropertyInput(props: Props) {
           />
         );
       }
-      return <TextInput {...inputProps} placeholder="Enter text" isDisabled={schema.readOnly} />;
+      if (uiSchema['ui:subtype'] === 'TEXTAREA') {
+        return <TextArea placeholder="Enter text" {...inputProps} />;
+      }
+      return <TextInput placeholder="Enter text" {...inputProps} />;
     }
     case 'boolean':
       return <Checkbox {...inputProps} value={inputProps.value ?? false} />;

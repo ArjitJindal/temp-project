@@ -25,7 +25,7 @@ module.exports = {
     'import/no-unresolved': [
       'error',
       {
-        ignore: ['aws-lambda', '@/*', '@cdk/*'],
+        ignore: ['aws-lambda', '@/*', '@cdk/*', 'pdfmake/interfaces'],
       },
     ],
     'import/order': 'error',

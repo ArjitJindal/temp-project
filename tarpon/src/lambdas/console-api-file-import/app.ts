@@ -1,7 +1,7 @@
 import { extname } from 'path'
 import { v4 as uuidv4 } from 'uuid'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { PutObjectCommand } from '@aws-sdk/client-s3'
+import { GetObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -31,6 +31,7 @@ function getAcceptedFileExtensions() {
 
 export type GetPresignedUrlConfig = {
   TMP_BUCKET: string
+  DOCUMENT_BUCKET: string
 }
 
 export const getPresignedUrlHandler = lambdaApi()(
@@ -39,11 +40,33 @@ export const getPresignedUrlHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { TMP_BUCKET } = process.env as GetPresignedUrlConfig
+    const { TMP_BUCKET, DOCUMENT_BUCKET } = process.env as GetPresignedUrlConfig
 
     const s3 = getS3ClientByEvent(event)
 
     const handlers = new Handlers()
+
+    handlers.registerGetPresignedDownloadUrl(async (ctx, request) => {
+      const { bucket, key } = request
+      let bucketFullName
+      if (bucket === 'document') {
+        bucketFullName = DOCUMENT_BUCKET
+      } else if (bucket === 'tmp') {
+        bucketFullName = TMP_BUCKET
+      } else {
+        throw new Error(`Bucket not supported yet: ${bucket}`)
+      }
+      const getObjectCommand = new GetObjectCommand({
+        Bucket: bucketFullName,
+        Key: key,
+      })
+
+      const url = await getSignedUrl(s3, getObjectCommand, {
+        expiresIn: 3600,
+      })
+
+      return { url }
+    })
 
     handlers.registerPostGetPresignedUrl(async (ctx, request) => {
       if (isEmpty(request.filename)) {

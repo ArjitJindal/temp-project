@@ -16,6 +16,7 @@ import { REPORT_SCHEMAS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+
 export function SarButton({
   caseId,
   alertIds,

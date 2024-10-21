@@ -32,6 +32,11 @@ export default function PropertyList(props: Props): JSX.Element {
       return scope === selectedSection;
     });
   }, [selectedSection, items]);
+
+  const columns = scopeItems.some((item) => getUiSchema(item.schema)['ui:width'] === 'HALF')
+    ? 2
+    : 1;
+
   return (
     <>
       {!!scopeSelectorItems?.length && (
@@ -44,21 +49,32 @@ export default function PropertyList(props: Props): JSX.Element {
           items={scopeSelectorItems}
         />
       )}
-      <PropertyListLayout>
-        {scopeItems.map((item) => (
-          <Property
-            key={item.name}
-            item={item}
-            labelProps={labelProps}
-            collapseForNestedProperties={collapseForNestedProperties}
-            parentSchema={parentSchema}
-          />
-        ))}
+      <PropertyListLayout columns={columns}>
+        {scopeItems.map((item) => {
+          const width = getUiSchema(item.schema)['ui:width'] ?? 'FULL';
+          return (
+            <div key={item.name} style={{ gridColumn: `span ${width === 'FULL' ? 2 : 1}` }}>
+              <Property
+                item={item}
+                labelProps={labelProps}
+                collapseForNestedProperties={collapseForNestedProperties}
+                parentSchema={parentSchema}
+              />
+            </div>
+          );
+        })}
       </PropertyListLayout>
     </>
   );
 }
 
-export function PropertyListLayout(props: { children: React.ReactNode }) {
-  return <div className={s.root}>{props.children}</div>;
+export function PropertyListLayout(props: { columns?: number; children: React.ReactNode }) {
+  return (
+    <div
+      className={s.root}
+      style={{ gridTemplateColumns: props.columns ? `repeat(${props.columns}, 1fr)` : undefined }}
+    >
+      {props.children}
+    </div>
+  );
 }

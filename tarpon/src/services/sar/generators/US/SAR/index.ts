@@ -8,7 +8,7 @@ import { XMLBuilder, XMLParser } from 'fast-xml-parser'
 import { chunk, cloneDeep, isEqual, last, omit, pick } from 'lodash'
 import SftpClient from 'ssh2-sftp-client'
 import { backOff } from 'exponential-backoff'
-import { InternalReportType, ReportGenerator } from '../..'
+import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
 import {
   ContactOffice,
   FilingInstitution,
@@ -541,7 +541,9 @@ export class UsSarReportGenerator implements ReportGenerator {
     }
     return constructedReportParams
   }
-  public async generate(reportParams: ReportParameters): Promise<string> {
+  public async generate(
+    reportParams: ReportParameters
+  ): Promise<GenerateResult> {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@',
       ignoreAttributes: false,
@@ -598,7 +600,10 @@ export class UsSarReportGenerator implements ReportGenerator {
       )
     }
     fs.rmSync(outputFile)
-    return newXmlFile
+    return {
+      type: 'STRING',
+      value: newXmlFile,
+    }
   }
 
   private callFinCenBinary(...args: string[]): string {

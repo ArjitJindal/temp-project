@@ -26,6 +26,7 @@ import { useApi } from '@/api';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import {
   AllParams,
+  isSingleRow,
   SelectionAction,
   TableColumn,
   TableData,
@@ -79,7 +80,7 @@ import QaStatusChangeModal from '@/pages/case-management/AlertTable/QaStatusChan
 import { useQaEnabled, useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
-import { getOr } from '@/utils/asyncResource';
+import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import { denseArray, getErrorMessage } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
@@ -1068,6 +1069,28 @@ export default function AlertTable(props: Props) {
         return;
       }
 
+      const selectedTransactionAlertIds = Object.entries(selectedTxns)
+        .filter(([_, ids]) => ids.some((x) => selectedTransactionIds.includes(x)))
+        .map(([alertIds]) => alertIds);
+
+      const selectedAlertsCaseIds = getOr(
+        map(queryResults.data, (alerts) => {
+          return alerts.items
+            .filter(isSingleRow)
+            .filter((tableItem) => {
+              return (
+                tableItem.alertId != null && selectedTransactionAlertIds.includes(tableItem.alertId)
+              );
+            })
+            .map(({ caseId }) => caseId);
+        }),
+        [],
+      );
+
+      if (selectedAlertsCaseIds.length !== 1) {
+        return;
+      }
+      const [caseId] = selectedAlertsCaseIds;
       if (!caseId) {
         return;
       }

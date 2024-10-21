@@ -4,6 +4,7 @@ import {
 } from '@/services/sar/generators/KE/SAR/schema'
 import { Report } from '@/@types/openapi-internal/Report'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
+
 describe.skip('SAR Generation', () => {
   describe('Dummy tests to log JSON schema to console for use on JSON schema form playground https://rjsf-team.github.io/react-jsonschema-form/', () => {
     test('Report Schema', async () => {
@@ -29,7 +30,7 @@ describe('Schema to XML', () => {
       },
       { id: 'reportId' } as Report
     )
-    expect(xml).toEqual(expected)
+    expect(xml).toEqual({ type: 'STRING', value: expected })
   })
 })
 

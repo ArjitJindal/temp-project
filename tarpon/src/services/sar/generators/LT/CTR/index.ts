@@ -5,7 +5,11 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { ReportParameters } from '@/@types/openapi-internal/ReportParameters'
-import { InternalReportType, ReportGenerator } from '@/services/sar/generators'
+import {
+  GenerateResult,
+  InternalReportType,
+  ReportGenerator,
+} from '@/services/sar/generators'
 import {
   account,
   ajvLithuaniaValidator,
@@ -88,7 +92,9 @@ export class LithuaniaCTRReportGenerator implements ReportGenerator {
   public getAugmentedReportParams(report: Report): ReportParameters {
     return report.parameters
   }
-  public async generate(reportParams: ReportParameters): Promise<string> {
+  public async generate(
+    reportParams: ReportParameters
+  ): Promise<GenerateResult> {
     const builder = new XMLBuilder({
       attributeNamePrefix: '@_',
       ignoreAttributes: false,
@@ -180,6 +186,9 @@ export class LithuaniaCTRReportGenerator implements ReportGenerator {
 
     const xmlRawData = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>${xmlContent}`
 
-    return xmlRawData
+    return {
+      type: 'STRING',
+      value: xmlRawData,
+    }
   }
 }

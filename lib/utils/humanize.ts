@@ -45,7 +45,9 @@ export function humanizeCamelCase(name: string): string {
     .replace(/([A-Z])([A-Z])([a-z])/g, '$1 $2$3') // Insert space between consecutive uppercase letters followed by a lowercase letter
     .replace(/( [A-Z])([a-z])/g, (v, g1, g2) => g1.toLowerCase() + g2) // Convert uppercase letter to lowercase if preceded by a space
     .replace(/^[a-z]/, (v) => v.toUpperCase()) // Capitalize the first letter of the string
-    .replace(/ id$/, ' ID')
+    .split(/\s+/)
+    .map((x) => (ACRONYMS.includes(x.toUpperCase()) ? x.toUpperCase() : x))
+    .join(' ')
 }
 
 export function humanizeAuto(value: string): string {

@@ -42,6 +42,21 @@ async function copyDirToDist(
   await fs.ensureDir(dest)
   await fs.copy(src, dest)
 }
+async function copyFilesToDist(
+  relativeSrc,
+  relativeDest,
+  validateDestPath = true
+) {
+  const src = path.join(ROOT_DIR, relativeSrc)
+  const dest = path.join(OUT_DIR, relativeDest)
+  const destDir = path.parse(dest).dir
+  if (validateDestPath && !(await fs.exists(destDir))) {
+    throw new Error(`${destDir} does not exist!`)
+  }
+  await fs.ensureDir(dest)
+  await fs.copyFile(src, dest)
+}
+
 async function copyDirsToDist(entries) {
   await Promise.all(
     entries.map(({ src, dest, validateDestPath }) =>
@@ -53,9 +68,10 @@ async function copyDirsToDist(entries) {
 async function main() {
   console.log('Bundling...')
   console.time('Total build time')
-  const lambdaEntries = fs
-    .readdirSync(`${ROOT_DIR}/src/lambdas`)
-    .map((lambdaDirName) => `src/lambdas/${lambdaDirName}/app.ts`)
+  const lambdaNames = fs.readdirSync(`${ROOT_DIR}/src/lambdas`)
+  const lambdaEntries = lambdaNames.map(
+    (lambdaDirName) => `src/lambdas/${lambdaDirName}/app.ts`
+  )
 
   const canaryEntries = fs
     .readdirSync(`${ROOT_DIR}/src/canaries`)
@@ -109,6 +125,32 @@ async function main() {
       dest: 'lambdas/console-api-sar/bin',
     },
   ])
+
+  // Copy files required for pdfmake library
+  for (const lambdaName of lambdaNames) {
+    for (const file of ['indic.trie', 'use.trie', 'data.trie']) {
+      await fs.copyFile(
+        `${ROOT_DIR}/node_modules/@foliojs-fork/fontkit/${file}`,
+        `${OUT_DIR}/lambdas/${lambdaName}/${file}`
+      )
+    }
+    await fs.copyFile(
+      `${ROOT_DIR}/node_modules/@foliojs-fork/linebreak/src/classes.trie`,
+      `${OUT_DIR}/lambdas/${lambdaName}/classes.trie`
+    )
+    await fs.ensureDir(`${OUT_DIR}/lambdas/${lambdaName}/data`)
+    for (const file of [
+      'Helvetica-Bold.afm',
+      'Helvetica.afm',
+      'Helvetica-BoldOblique.afm',
+      'Helvetica-Oblique.afm',
+    ]) {
+      await fs.copyFile(
+        `${ROOT_DIR}/node_modules/@foliojs-fork/pdfkit/js/data/${file}`,
+        `${OUT_DIR}/lambdas/${lambdaName}/data/${file}`
+      )
+    }
+  }
 
   const canaries = fs.readdirSync(`${ROOT_DIR}/dist/canaries`)
   // We need to move canaries to a subfolder as per the requirements of synthetics

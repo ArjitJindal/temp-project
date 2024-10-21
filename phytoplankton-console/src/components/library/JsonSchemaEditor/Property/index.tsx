@@ -79,7 +79,7 @@ export default function Property(props: Props) {
   const requiredFeatures = uiSchema['ui:requiredFeatures'] ?? [];
   const canShowProperty = useFeaturesEnabled(requiredFeatures);
   return canShowProperty ? (
-    <PropertyContext.Provider value={{ item }}>
+    <PropertyContext.Provider value={{ item, label: humanizeFunction(name) }}>
       <InputField<any>
         name={name}
         label={schema.title ?? humanizeFunction(name)}
@@ -102,7 +102,12 @@ export default function Property(props: Props) {
             <div
               className={cn(s.children, siblingPropertiesCount === 1 ? s.childrenSeparator : '')}
             >
-              <PropertyInput {...inputProps} schema={schema} labelProps={labelProps} />
+              <PropertyInput
+                {...inputProps}
+                schema={schema}
+                collapseForNestedProperties={collapseForNestedProperties}
+                labelProps={labelProps}
+              />
             </div>
           ) : (
             <PropertyInput
@@ -126,5 +131,6 @@ function dontHumanize(name: string): string {
 
 interface PropertyContextValue {
   item: PropertyItem;
+  label: string;
 }
 export const PropertyContext = React.createContext<PropertyContextValue | null>(null);

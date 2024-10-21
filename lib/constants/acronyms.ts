@@ -16,6 +16,7 @@ export const ACRONYMS: ReadonlyArray<string> = [
   'PEP',
   'QA',
   'NRIC',
+  'ID',
   'L2',
   'YOB',
 ]

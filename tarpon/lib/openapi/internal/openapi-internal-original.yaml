@@ -497,6 +497,35 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllUsersListResponse'
+  /files/getPresignedDownloadUrl/{bucket}/{key}:
+    parameters: []
+    get:
+      summary: Takes s3 key from documents bucket and return a temporal download ink
+      operationId: getPresignedDownloadUrl
+      parameters:
+        - schema:
+            type: string
+          name: bucket
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: key
+          in: path
+          required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  url:
+                    type: string
+                required:
+                  - url
+      description: Get a presigned URL for downloading a file
   /files/getPresignedUrl:
     parameters: []
     get:
@@ -6321,24 +6350,22 @@ paths:
           name: reportTypeId
           required: true
         - schema:
+            type: string
+          in: query
+          name: caseId
+          required: true
+        - schema:
             type: array
             items:
               type: string
           in: query
           name: transactionIds
-          required: true
         - schema:
             type: array
             items:
               type: string
           in: query
           name: alertIds
-          required: true
-        - schema:
-            type: string
-          in: query
-          name: caseId
-          required: true
   /reports:
     get:
       summary: Get created reports
@@ -13409,9 +13436,13 @@ components:
                 - SNAKE_CASE
                 - AS_IS
                 - CAMEL_CASE
+            disableAttachmentsStep:
+              type: boolean
         reportSchema:
           type: object
         transactionMetadataSchema:
+          type: object
+        customerAndAccountDetailsSchema:
           type: object
         transactionSchema:
           type: object
@@ -13540,6 +13571,8 @@ components:
         report:
           type: object
         transactionMetadata:
+          type: object
+        customerAndAccountDetails:
           type: object
         indicators:
           type: array

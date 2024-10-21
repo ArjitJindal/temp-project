@@ -235,6 +235,6 @@ describe('FinCEN SAR Generation', () => {
       path.join(__dirname, 'expected-test-output.xml'),
       'utf8'
     )
-    expect(xml).toEqual(expectedOutput)
+    expect(xml).toEqual({ type: 'STRING', value: expectedOutput })
   })
 })

@@ -69,10 +69,10 @@ export function StepperSteps(
                 {step.title}
                 {step.isOptional ? (
                   <span className={s.optional} data-cy="optional-span">
-                    {' - optional'}
+                    {'\xa0-\xa0optional'}
                   </span>
                 ) : (
-                  <span className={s.required}>{' *'}</span>
+                  <span className={s.required}>{'\xa0*'}</span>
                 )}
               </div>
               <div className={s.stepDescription}>{step.description}</div>

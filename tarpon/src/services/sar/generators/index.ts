@@ -8,6 +8,7 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
 import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
+import { MalaysianSTRReportGenerator } from '@/services/sar/generators/MY/STR'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
 
 export type InternalReportType = {
@@ -15,6 +16,18 @@ export type InternalReportType = {
   countryCode: CountryCode
   directSubmission: boolean
 }
+
+export type GenerateResult =
+  | {
+      type: 'STRING'
+      value: string
+    }
+  | {
+      type: 'STREAM'
+      contentType: 'PDF'
+      stream: NodeJS.ReadableStream
+    }
+
 export interface ReportGenerator {
   tenantId?: string
   // Metadata about the report type that this generates
@@ -31,7 +44,10 @@ export interface ReportGenerator {
   getAugmentedReportParams(report?: Report): ReportParameters
 
   // Generate the report (XML)
-  generate(reportParams: ReportParameters, report: Report): Promise<string>
+  generate(
+    reportParams: ReportParameters,
+    report: Report
+  ): Promise<GenerateResult>
   submit?(report: Report): Promise<string>
 }
 
@@ -40,6 +56,7 @@ const reportGenerators = [
   LithuaniaSTRReportGenerator,
   LithuaniaCTRReportGenerator,
   UsSarReportGenerator,
+  MalaysianSTRReportGenerator,
 ]
 export const REPORT_GENERATORS = new Map<string, ReportGenerator>(
   reportGenerators.map((rg) => {

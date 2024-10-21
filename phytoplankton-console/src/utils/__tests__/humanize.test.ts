@@ -32,6 +32,7 @@ describe('humanize', () => {
     expect(humanizeCamelCase('FB')).toEqual('FB');
     expect(humanizeCamelCase('UserIBANNumber')).toEqual('User IBAN number');
     expect(humanizeCamelCase('fiveShortSimpleWordsHere')).toEqual('Five short simple words here');
+    expect(humanizeCamelCase('customerAmlRating')).toEqual('Customer AML rating');
   });
 });
 

@@ -29,7 +29,7 @@ interface Props extends InputProps<any> {
   collapseForNestedProperties?: boolean;
 }
 
-export default function GenericObjectInput(props: Props) {
+export default function ObjectPropertyInput(props: Props) {
   const { schema, value, onChange, labelProps, collapseForNestedProperties } = props;
   const properties = useOrderedProps(schema);
   const [fieldMeta, setFieldsMeta] = useState<{ [key: string]: FieldMeta }>({});
@@ -83,7 +83,7 @@ export default function GenericObjectInput(props: Props) {
             fieldValidation={isInvalid}
             title={
               <Label
-                label={schema.title}
+                label={schema.title ?? propertyContext?.label}
                 description={schema.description}
                 required={labelRequiredProps}
                 testId={`Property/${propertyContext?.item.name}/card`}

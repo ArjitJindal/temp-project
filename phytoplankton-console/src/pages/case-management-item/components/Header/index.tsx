@@ -17,6 +17,7 @@ import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTa
 import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { useBackUrl } from '@/utils/backUrl';
 import { useMutation } from '@/utils/queries/mutations/hooks';
+import { SarButton } from '@/components/Sar';
 
 interface Props {
   isLoading: boolean;
@@ -141,6 +142,9 @@ export default function Header(props: Props) {
           requiredPermissions={['case-management:case-overview:write']}
         />,
         <ExportButton caseId={caseItem.caseId ?? ''} />,
+        ...(caseId != null
+          ? [<SarButton caseId={caseId} alertIds={[]} transactionIds={[]} />]
+          : []),
         ...(!isReview && caseId
           ? [
               <CasesStatusChangeButton

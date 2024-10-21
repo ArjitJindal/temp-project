@@ -394,6 +394,21 @@ export const COUNTRY_REGIONS = {
     YU: 'Yucatán',
     ZA: 'Zacatecas',
   },
+  MY: {
+    JHR: 'Johor',
+    KDH: 'Kedah',
+    KTN: 'Kelantan',
+    MLK: 'Malacca',
+    NSN: 'Negeri Sembilan',
+    PHG: 'Pahang',
+    PNG: 'Penang',
+    PRK: 'Perak',
+    PLS: 'Perlis',
+    SBH: 'Sabah',
+    SWK: 'Sarawak',
+    SGR: 'Selangor',
+    TRG: 'Terengganu',
+  },
 }
 
 export const COUNTRY_ALIASES: { [key in CountryCode]?: string[] } = {

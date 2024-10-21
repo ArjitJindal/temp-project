@@ -1,5 +1,5 @@
 import { XMLBuilder } from 'fast-xml-parser'
-import { InternalReportType, ReportGenerator } from '../..'
+import { GenerateResult, InternalReportType, ReportGenerator } from '../..'
 import { indicators, KenyaReportSchema, KenyaTransactionSchema } from './schema'
 import { Report } from '@/@types/openapi-internal/Report'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -112,7 +112,7 @@ export class KenyaSARReportGenerator implements ReportGenerator {
   public async generate(
     reportParams: ReportParameters,
     report: Report
-  ): Promise<string> {
+  ): Promise<GenerateResult> {
     const builder = new XMLBuilder()
     const xmlContent = builder.build({
       reentity_id: reportParams.report.reentity_id,
@@ -133,7 +133,10 @@ export class KenyaSARReportGenerator implements ReportGenerator {
           indicator,
         })) ?? [],
     })
-    return `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report>${xmlContent}</report>`
+    return {
+      type: 'STRING',
+      value: `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><report>${xmlContent}</report>`,
+    }
   }
 
   private address(a: Address): object | undefined {
