@@ -391,24 +391,49 @@ export const withTransaction = async <T = void>(
 export async function processCursorInBatch<T>(
   entityCursor: FindCursor<WithId<T>> | AggregationCursor<T>,
   processBatch: (batch: (T | WithId<T>)[]) => Promise<void>,
-  options?: { mongoBatchSize?: number; processBatchSize?: number }
+  options?: {
+    mongoBatchSize?: number
+    processBatchSize?: number
+    parallelProcessing?: boolean
+  }
 ): Promise<void> {
   const mongoBatchSize = options?.mongoBatchSize ?? 1000
   const processBatchSize = options?.processBatchSize ?? 1000
+  const parallelProcessing = options?.parallelProcessing ?? false
+
   const cursor = entityCursor.batchSize(mongoBatchSize)
   let pendingEntities: (T | WithId<T>)[] = []
+  const batchPromises: Promise<void>[] = []
+
   for await (const entity of cursor) {
     pendingEntities.push(entity)
     if (pendingEntities.length === processBatchSize) {
-      await processBatch(pendingEntities)
+      if (parallelProcessing) {
+        // Add the batch processing promise to the array for parallel processing
+        batchPromises.push(processBatch(pendingEntities))
+      } else {
+        // Await immediately for sequential processing
+        await processBatch(pendingEntities)
+      }
       pendingEntities = []
     }
   }
+
   if (pendingEntities.length > 0) {
-    await processBatch(pendingEntities)
+    if (parallelProcessing) {
+      // Add the last batch to the promises array for parallel processing
+      batchPromises.push(processBatch(pendingEntities))
+    } else {
+      // Await the last batch immediately for sequential processing
+      await processBatch(pendingEntities)
+    }
+  }
+
+  if (parallelProcessing) {
+    // Wait for all batch processing promises to resolve concurrently
+    await Promise.all(batchPromises)
   }
 }
-
 export async function internalMongoReplace<T extends Document>(
   mongoClient: MongoClient,
   collectionName: string,

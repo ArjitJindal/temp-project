@@ -14,7 +14,7 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
-import { tenantHasFeature } from '@/core/utils/context'
+import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -131,7 +131,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         async (usersChunk) => {
           await this.runUsersBatch(usersChunk, rules, ruleInstances)
         },
-        { mongoBatchSize: 1000, processBatchSize: 1000 }
+        {
+          mongoBatchSize: 1000,
+          processBatchSize: 1000,
+          parallelProcessing: hasFeature('PNB'),
+        }
       )
     }
   }
