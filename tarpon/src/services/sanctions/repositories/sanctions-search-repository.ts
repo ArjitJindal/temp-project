@@ -73,7 +73,7 @@ export class SanctionsSearchRepository {
   }
 
   public async getSearchResultByParams(
-    _provider: SanctionsDataProviderName,
+    provider: SanctionsDataProviderName,
     request: SanctionsSearchRequest
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
@@ -115,10 +115,9 @@ export class SanctionsSearchRepository {
       })
     }
 
-    // TODO uncomment once provider is definitely populated everywhere
-    // filters.push({
-    //   provider,
-    // })
+    filters.push({
+      provider,
+    })
 
     return await collection.findOne({
       $and: filters,
@@ -221,7 +220,7 @@ export class SanctionsSearchRepository {
   }
 
   public async getSearchResultByProviderSearchId(
-    _provider: SanctionsDataProviderName,
+    provider: SanctionsDataProviderName,
     providerSearchId: string
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
@@ -230,8 +229,7 @@ export class SanctionsSearchRepository {
     )
     const searches = await collection
       .find({
-        // TODO uncomment once provider is definitely populated everywhere
-        // provider,
+        provider,
         'response.providerSearchId': providerSearchId,
       })
       .toArray()

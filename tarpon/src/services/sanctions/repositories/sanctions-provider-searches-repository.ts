@@ -1,0 +1,105 @@
+import { Collection } from 'mongodb'
+import { v4 as uuidv4 } from 'uuid'
+import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getContext } from '@/core/utils/context'
+import { SANCTIONS_PROVIDER_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+
+export class SanctionsProviderSearchRepository {
+  async updateMonitoredSearches(
+    searchFunction: (
+      request: SanctionsSearchRequest
+    ) => Promise<SanctionsProviderResponse>
+  ) {
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+
+    for await (const monitoredSearch of sanctionsProviderCollection.find({
+      monitor: true,
+    })) {
+      if (monitoredSearch.providerSearchId && monitoredSearch.request) {
+        await searchFunction({
+          existingProviderId: monitoredSearch.providerSearchId,
+          ...monitoredSearch.request,
+        })
+      }
+    }
+  }
+
+  async saveSearch(
+    results: Array<SanctionsEntity>,
+    request: SanctionsSearchRequest
+  ) {
+    const providerSearchId = request.existingProviderId || uuidv4()
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.updateOne(
+      { providerSearchId },
+      { $set: request },
+      {
+        upsert: true,
+      }
+    )
+    return {
+      providerSearchId,
+      hitsCount: results.length,
+      data: results,
+      createdAt: new Date().getTime(),
+    }
+  }
+
+  async getSearchResult(
+    providerSearchId: string
+  ): Promise<SanctionsProviderResponse> {
+    const result = await (
+      await this.getSanctionProviderCollection()
+    ).findOne({
+      providerSearchId: providerSearchId,
+    })
+
+    if (!result) {
+      throw new Error(`Search not found for ${providerSearchId}`)
+    }
+    return result
+  }
+  async deleteSearchResult(providerSearchId: string): Promise<void> {
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.deleteOne({
+      providerSearchId: providerSearchId,
+    })
+  }
+
+  async setMonitoring(
+    providerSearchId: string,
+    monitor: boolean
+  ): Promise<void> {
+    const sanctionsProviderCollection =
+      await this.getSanctionProviderCollection()
+    await sanctionsProviderCollection.updateOne(
+      {
+        providerSearchId,
+      },
+      {
+        $set: {
+          monitor,
+        },
+      }
+    )
+  }
+
+  private async getSanctionProviderCollection(): Promise<
+    Collection<SanctionsProviderResponse>
+  > {
+    const client = await getMongoDbClient()
+    const tenantId = getContext()?.tenantId
+    if (!tenantId) {
+      throw new Error('No tenant ID')
+    }
+    return client
+      .db()
+      .collection(SANCTIONS_PROVIDER_SEARCHES_COLLECTION(tenantId))
+  }
+}

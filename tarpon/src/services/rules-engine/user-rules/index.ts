@@ -11,6 +11,7 @@ import UserOnboardedFromHighRiskCountry from './user-onboarded-from-high-risk-co
 import { traceable } from '@/core/xray'
 import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import DowJonesConsumerUserRule from '@/services/rules-engine/user-rules/dowjones-consumer-user'
+import ListScreeningConsumerUser from '@/services/rules-engine/user-rules/list-screening-consumer-user'
 
 @traceable
 export class UserRuleBase extends UserRule<unknown> {
@@ -40,6 +41,7 @@ export const _USER_RULES = {
   'user-address-change': UserAddressChange,
   'user-onboarded-from-high-risk-country': UserOnboardedFromHighRiskCountry,
   'dowjones-consumer-user': DowJonesConsumerUserRule,
+  'list-screening-consumer-user': ListScreeningConsumerUser,
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,
 } as const

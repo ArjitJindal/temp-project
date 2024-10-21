@@ -50,8 +50,14 @@ import {
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 import { getDefaultProvider } from '@/services/sanctions/utils'
+import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 
 const DEFAULT_FUZZINESS = 0.5
+
+type ProviderConfig = {
+  providerName: SanctionsDataProviderName
+  listId: string
+}
 
 @traceable
 export class SanctionsService {
@@ -90,13 +96,22 @@ export class SanctionsService {
   }
 
   private async getProvider(
-    provider: SanctionsDataProviderName
+    provider: SanctionsDataProviderName,
+    providerConfig?: ProviderConfig
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
       case 'comply-advantage':
         return await ComplyAdvantageDataProvider.build(this.tenantId)
       case 'dowjones':
         return await DowJonesProvider.build()
+      case 'list':
+        if (!providerConfig?.listId) {
+          throw new Error(`No list ID given for list sanctions provider`)
+        }
+        return await SanctionsListProvider.build(
+          this.tenantId,
+          providerConfig.listId
+        )
     }
     throw new Error(`Unknown provider ${provider}`)
   }
@@ -157,11 +172,11 @@ export class SanctionsService {
     context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
     },
-    overrideProvider?: SanctionsDataProviderName
+    providerOverrides?: ProviderConfig
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
 
-    const providerName = overrideProvider || getDefaultProvider()
+    const providerName = providerOverrides?.providerName || getDefaultProvider()
 
     // Normalize search term
     request.searchTerm = startCase(request.searchTerm.toLowerCase())
@@ -196,7 +211,7 @@ export class SanctionsService {
     let sanctionsSearchResponse: SanctionsProviderResponse
 
     if (!existedSearch?.response) {
-      const provider = await this.getProvider(providerName)
+      const provider = await this.getProvider(providerName, providerOverrides)
       sanctionsSearchResponse = await provider.search({
         searchTerm: request.searchTerm,
         fuzziness: request.fuzziness,
@@ -245,7 +260,7 @@ export class SanctionsService {
     }
 
     if (!existedSearch?.response && request.monitoring) {
-      await this.updateSearch(searchId, request.monitoring)
+      await this.updateSearch(searchId, request.monitoring, providerOverrides)
     }
 
     if (context && context.ruleInstanceId) {
@@ -338,7 +353,8 @@ export class SanctionsService {
 
   public async updateSearch(
     searchId: string,
-    update: SanctionsSearchMonitoring
+    update: SanctionsSearchMonitoring,
+    providerOverrides?: ProviderConfig
   ): Promise<void> {
     await this.initialize()
     const search = await this.getSearchHistory(searchId)
@@ -350,7 +366,8 @@ export class SanctionsService {
     if (providerSearchId == null) {
       throw new Error(`Unable to get search id from response`)
     }
-    const provider = await this.getProvider(search.provider)
+
+    const provider = await this.getProvider(search.provider, providerOverrides)
     await provider.setMonitoring(providerSearchId, update.enabled)
     await this.sanctionsSearchRepository.updateSearchMonitoring(
       searchId,

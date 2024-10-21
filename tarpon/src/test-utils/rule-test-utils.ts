@@ -33,7 +33,7 @@ import {
   TransactionRuleBase,
 } from '@/services/rules-engine/transaction-rules'
 import { TransactionAggregationRule } from '@/services/rules-engine/transaction-rules/aggregation-rule'
-import { hasFeature } from '@/core/utils/context'
+import { hasFeature, withContext } from '@/core/utils/context'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
@@ -351,11 +351,20 @@ export function createUserRuleTestCase(
   ongoingScreeningMode?: boolean
 ) {
   test(testCaseName, async () => {
-    const results = await bulkVerifyUsers(tenantId, users, ongoingScreeningMode)
-    expect(getRuleHitMetadata(results)).toEqual(expectetRuleHitMetadata)
-    if (expectedRuleDescriptions) {
-      expect(getRuleDescriptions(results)).toEqual(expectedRuleDescriptions)
-    }
+    await withContext(
+      async () => {
+        const results = await bulkVerifyUsers(
+          tenantId,
+          users,
+          ongoingScreeningMode
+        )
+        expect(getRuleHitMetadata(results)).toEqual(expectetRuleHitMetadata)
+        if (expectedRuleDescriptions) {
+          expect(getRuleDescriptions(results)).toEqual(expectedRuleDescriptions)
+        }
+      },
+      { tenantId }
+    )
   })
 }
 

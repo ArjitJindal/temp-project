@@ -11271,6 +11271,7 @@ components:
       enum:
         - dowjones
         - comply-advantage
+        - list
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object

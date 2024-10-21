@@ -65,6 +65,7 @@ import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules
 import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { DowJonesConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/dowjones-consumer-user'
+import { ListScreeningConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/list-screening-consumer-user'
 
 export enum RuleChecksForField {
   FirstTransaction = '1st transaction',
@@ -1866,6 +1867,36 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
         'A consumer user can be checked for sanctions/PEP/AM match.',
+    }
+  },
+  () => {
+    const defaultParameters: ListScreeningConsumerUserRuleParameters = {
+      fuzzinessRange: {
+        upperBound: 20,
+        lowerBound: 20,
+      },
+      ongoingScreening: false,
+      listId: '',
+    }
+
+    return {
+      id: 'R-19',
+      name: 'Screening consumer users with against a provided list',
+      type: 'USER',
+      description: 'Screening on consumer users name against a given list',
+      descriptionTemplate:
+        'Screening on consumer users name against a given list',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'list-screening-consumer-user',
+      labels: [],
+      checksFor: [RuleChecksForField.UserDetails, RuleChecksForField.Username],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['PNB'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases: 'A consumer user can be checked against a given list',
     }
   },
   () => {

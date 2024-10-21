@@ -240,7 +240,7 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     this.complyAdvantageSearchProfileId = complyAdvantageSearchProfileId
   }
 
-  static async build(tenantId) {
+  static async build(tenantId: string) {
     const settings = await tenantSettings(tenantId)
     const complyAdvantageSearchProfileId =
       settings.sanctions?.customSearchProfileId
