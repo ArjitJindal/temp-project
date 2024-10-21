@@ -37,8 +37,8 @@ const TableList = () => {
         },
       ].filter(notEmpty)}
       simulationHistoryUrl={`/rules/${tab}/simulation-history`}
-      nonSimulationDefaultUrl="/rules/my-rules"
-      simulationDefaultUrl="/rules/my-rules"
+      nonSimulationDefaultUrl={`/rules/${tab}`}
+      simulationDefaultUrl={`/rules/${tab}`}
     >
       <Content tab={tab} />
     </BreadcrumbsSimulationPageWrapper>
