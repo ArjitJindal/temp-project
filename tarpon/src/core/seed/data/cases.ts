@@ -42,7 +42,6 @@ export const getCases: () => Case[] = memoize(() => {
     data.push(...destinationCases)
     data.push(...originCases)
   }
-
   return data
 })
 

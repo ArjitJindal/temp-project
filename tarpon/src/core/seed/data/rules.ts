@@ -36,7 +36,11 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       } as TransactionAmountRuleParameters,
       checksFor: ['Transaction amount'],
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
       },
       action: 'SUSPEND',
       type: 'TRANSACTION',
@@ -97,7 +101,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
       },
       ruleId: 'R-8',
       casePriority: 'P2',
@@ -191,6 +198,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
       casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       parameters: {
         transactionAmountThreshold: {
           USD: 10000,
@@ -252,7 +262,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       id: 'hODvd2',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
       },
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
@@ -322,6 +335,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-32',
       casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       parameters: {
         fuzziness: 20,
         ongoingScreening: false,
@@ -390,6 +406,12 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
+      },
       ruleId: 'R-128',
       casePriority: 'P1',
       parameters: {
@@ -461,6 +483,13 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
       checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
+      },
       ruleId: 'R-169',
       casePriority: 'P1',
       parameters: {
@@ -539,6 +568,9 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       type: 'TRANSACTION',
       ruleNameAlias: 'High velocity user',
       ruleDescriptionAlias: 'High velocity user',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
       filters: {},
       riskLevelParameters: {
         VERY_HIGH: {
