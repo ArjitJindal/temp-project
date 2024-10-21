@@ -5,7 +5,11 @@ import {
   consumerSanctionsSearch,
 } from '../raw-data/sanctions-search'
 import { getUsers } from './users'
-import { getSanctions, getSanctionsHits } from './sanctions'
+import {
+  getSanctions,
+  getSanctionsHits,
+  getSanctionsScreeningDetails,
+} from './sanctions'
 import {
   samplePaymentDetails,
   sampleTransaction,
@@ -78,7 +82,11 @@ const generator = function* (): Generator<InternalTransaction> {
       (u) => u.userId === destinationUserId
     ) as User | Business
 
-    const getSanctionsSearch = (user: User | Business): SanctionsDetails => {
+    const getSanctionsSearch = (
+      user: User | Business,
+      ruleInstanceId: string,
+      transactionId: string
+    ): SanctionsDetails => {
       const isConsumer = isConsumerUser(user)
       const name = isConsumer
         ? `${(user as User).userDetails?.name?.firstName} ${
@@ -87,12 +95,24 @@ const generator = function* (): Generator<InternalTransaction> {
         : (user as Business).legalEntity.companyGeneralDetails.legalName
 
       const data = isConsumer
-        ? consumerSanctionsSearch(name, user.userId)
-        : businessSanctionsSearch(name, user.userId)
+        ? consumerSanctionsSearch(
+            name,
+            user.userId,
+            ruleInstanceId,
+            transactionId,
+            'EXTERNAL_USER'
+          )
+        : businessSanctionsSearch(
+            name,
+            user.userId,
+            ruleInstanceId,
+            transactionId,
+            'EXTERNAL_USER'
+          )
 
       getSanctions().push(data.historyItem)
       getSanctionsHits().push(...data.hits)
-
+      getSanctionsScreeningDetails().push(data.screeningDetails)
       return {
         name,
         searchId: data.historyItem._id,
@@ -100,12 +120,16 @@ const generator = function* (): Generator<InternalTransaction> {
         sanctionHitIds: data.hits.map((hit) => hit.searchId),
       }
     }
-
+    const transactionId = `T-${i + 1}`
     const randomHitRules = hitRules.map((hitRule) => {
       if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
         const sanctionsDetails = [
-          getSanctionsSearch(originUser),
-          getSanctionsSearch(destinationUser),
+          getSanctionsSearch(originUser, hitRule.ruleInstanceId, transactionId),
+          getSanctionsSearch(
+            destinationUser,
+            hitRule.ruleInstanceId,
+            transactionId
+          ),
         ]
 
         return {
@@ -134,7 +158,6 @@ const generator = function* (): Generator<InternalTransaction> {
       return hitRule
     })
 
-    const transactionId = `T-${i + 1}`
     const timestamp = sampleTimestamp()
 
     const transactionAmount = randomInt(1_00_000)

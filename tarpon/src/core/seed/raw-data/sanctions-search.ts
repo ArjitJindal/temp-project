@@ -1,31 +1,126 @@
 import { v4 as uuid4 } from 'uuid'
-import { randomSubsetOfSize } from '../samplers/prng'
+import { compact } from 'lodash'
+import {
+  getRandomIntInclusive,
+  randomFloat,
+  randomInt,
+  randomSubsetOfSize,
+} from '../samplers/prng'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsMedia } from '@/@types/openapi-internal/SanctionsMedia'
+import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
+import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
+import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { CountryCode } from '@/@types/openapi-internal/CountryCode'
+import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsMatchType'
+import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
+import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
+
+const COUNTRY_MAP: Record<string, string> = {
+  RU: 'Russian Federation',
+  TR: 'Turkey',
+  PT: 'Portugal',
+  US: 'United States',
+  CN: 'China',
+  IN: 'India',
+  BR: 'Brazil',
+  DE: 'Germany',
+  FR: 'France',
+  GB: 'United Kingdom',
+  JP: 'Japan',
+  CA: 'Canada',
+  AU: 'Australia',
+  ZA: 'South Africa',
+}
+
+const COUNTRY_CODES = Object.keys(COUNTRY_MAP)
 
 export const sanctionsSearchHit = (
   searchId: string,
   username: string,
-  userId: string
-): SanctionsHit => {
+  userId: string,
+  ruleInstanceId?: string,
+  transactionId?: string,
+  entity?: string
+): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
+  const entityType =
+    entity === 'USER' || entity === 'EXTERNAL_USER'
+      ? 'individual'
+      : 'organisation'
+
   const id = uuid4()
-  const sanctionsSources = randomSubsetOfSize(SANCTIONS_SOURCES, 4)
-  const mediaSources = randomSubsetOfSize(MEDIA, 4)
-  const pepSources = randomSubsetOfSize(PEP_SOURCES, 4)
-  return {
+  const selectedCountryCodes = randomSubsetOfSize(
+    COUNTRY_CODES,
+    3
+  ) as CountryCode[]
+  const selectedCountries = selectedCountryCodes.map(
+    (code) => COUNTRY_MAP[code]
+  )
+
+  const relevantSanctionsSources = SANCTIONS_SOURCES.filter((source) =>
+    source.countryCodes?.some((code) => selectedCountryCodes.includes(code))
+  )
+  const relevantPepSources = PEP_SOURCES.filter((source) =>
+    source.countryCodes?.some((code) => selectedCountryCodes.includes(code))
+  )
+
+  const sanctionsSources = randomSubsetOfSize(
+    relevantSanctionsSources,
+    Math.min(4, relevantSanctionsSources.length)
+  )
+  const pepSources = randomSubsetOfSize(
+    relevantPepSources,
+    Math.min(4, relevantPepSources.length)
+  )
+  const matchTypes: SanctionsMatchType[] = randomSubsetOfSize(
+    SANCTIONS_MATCH_TYPES,
+    getRandomIntInclusive(1, 3)
+  )
+
+  const createMediaSource = (name: string) => {
+    const itemCount = randomInt(3) + 1
+    const mediaItems = randomSubsetOfSize(MEDIA, itemCount)
+    return {
+      name,
+      media: mediaItems,
+    }
+  }
+  const name = `${username}#${randomInt(1000)}`
+  const mediaSources = [
+    createMediaSource('Global News Database'),
+    createMediaSource('Company Adverse Media'),
+  ]
+  const sanctionsEntity: SanctionsEntity = {
+    id: Math.random().toString(36).substring(2, 8).toUpperCase(),
+    name,
+    entityType,
+    matchTypes,
+    sanctionsSources,
+    mediaSources,
+    pepSources,
+    countries: selectedCountries,
+    countryCodes: selectedCountryCodes,
+    types: compact([
+      sanctionsSources.length > 0 && 'sanction',
+      mediaSources.length > 0 && 'adverse-media',
+      pepSources.length > 0 && 'pep',
+    ]) as string[],
+  }
+  const hit: SanctionsHit = {
     provider: 'comply-advantage',
     searchId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    sanctionsHitId: `SH-${Math.round(999999 * Math.random())
-      .toString()
-      .padStart(6, '0')}`,
+    sanctionsHitId: `SH-${randomInt(999999).toString().padStart(6, '0')}`,
     status: 'OPEN',
     hitContext: {
       userId,
-      entity: 'USER',
+      ruleInstanceId,
+      ...(transactionId != null ? { transactionId } : {}),
+      entity: entity as SanctionsScreeningEntity,
     },
     entity: {
       id: id,
@@ -35,91 +130,135 @@ export const sanctionsSearchHit = (
         mediaSources.length > 0 && 'adverse-media',
         pepSources.length > 0 && 'pep',
       ].filter(Boolean) as string[],
-      name: `${username}#${Math.round(1000 * Math.random())}`,
-      entityType: 'organisation',
+      name,
+      entityType,
+      matchTypes,
       sanctionsSources,
       mediaSources,
       pepSources,
-      countries: ['Russian Federation', 'Turkey', 'Portugal'],
+      countries: selectedCountries,
     },
   }
+  return { hit, sanctionsEntity }
 }
 
 export const businessSanctionsSearch = (
   username: string,
-  userId: string
+  userId: string,
+  ruleInstanceId?: string,
+  transactionId?: string,
+  entity?: string
 ): {
   historyItem: SanctionsSearchHistory
   hits: SanctionsHit[]
+  screeningDetails: SanctionsScreeningDetails
 } => {
   const searchId = uuid4()
-  const hits = [
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-  ]
+  const screeningDetails: SanctionsScreeningDetails = {
+    searchId,
+    name: username,
+    ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
+    userIds: [userId],
+    transactionIds: transactionId ? [transactionId] : [],
+    isOngoingScreening: false,
+    isHit: true,
+    entity: entity as SanctionsScreeningEntity,
+    lastScreenedAt: sampleTimestamp(),
+    isNew: false,
+  }
+  const hits: SanctionsHit[] = []
+  const sanctionsEntityArray: SanctionsEntity[] = []
+  const hitsCount = getRandomIntInclusive(3, 14)
+  for (let i = 0; i < hitsCount; i++) {
+    const { hit, sanctionsEntity } = sanctionsSearchHit(
+      searchId,
+      username,
+      userId,
+      ruleInstanceId,
+      transactionId,
+      entity
+    )
+    hits.push(hit)
+    sanctionsEntityArray.push(sanctionsEntity)
+  }
+
   const historyItem: SanctionsSearchHistory = {
     _id: searchId,
     provider: 'comply-advantage',
     request: {
       searchTerm: username,
+      fuzziness: Number(randomFloat(10).toFixed(1)),
+      types: randomSubsetOfSize(
+        SANCTIONS_SEARCH_TYPES,
+        getRandomIntInclusive(1, 3)
+      ),
     },
     response: {
-      hitsCount: hits.length,
-      searchId: '229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
-      providerSearchId: 'provider-229b87fa-05ab-4b1d-82f8-b2df32fdcab7',
+      hitsCount,
+      data: sanctionsEntityArray,
+      searchId: searchId,
+      providerSearchId: `provider-${searchId}`,
       createdAt: 1683301138980,
     },
     createdAt: 1683301138980,
   }
-  return { historyItem, hits }
+  return { historyItem, hits, screeningDetails }
 }
 
 export const consumerSanctionsSearch = (
   username: string,
-  userId: string
+  userId: string,
+  ruleInstanceId?: string,
+  transactionId?: string,
+  entity?: string
 ): {
   historyItem: SanctionsSearchHistory
   hits: SanctionsHit[]
+  screeningDetails: SanctionsScreeningDetails
 } => {
   const searchId = uuid4()
-  const hits = [
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-    sanctionsSearchHit(searchId, username, userId),
-  ]
+  const screeningDetails: SanctionsScreeningDetails = {
+    searchId,
+    name: username,
+    ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
+    userIds: [userId],
+    transactionIds: transactionId ? [transactionId] : [],
+    entity: entity as SanctionsScreeningEntity,
+    isOngoingScreening: false,
+    isHit: true,
+    lastScreenedAt: sampleTimestamp(),
+    isNew: false,
+  }
+
+  const hits: SanctionsHit[] = []
+  const sanctionsEntityArray: SanctionsEntity[] = []
+  const hitsCount = getRandomIntInclusive(3, 14)
+  for (let i = 0; i < hitsCount; i++) {
+    const { hit, sanctionsEntity } = sanctionsSearchHit(
+      searchId,
+      username,
+      userId,
+      ruleInstanceId,
+      transactionId,
+      entity
+    )
+    hits.push(hit)
+    sanctionsEntityArray.push(sanctionsEntity)
+  }
   const historyItem: SanctionsSearchHistory = {
     _id: searchId,
     provider: 'comply-advantage',
     request: {
       searchTerm: username,
+      fuzziness: Number(randomFloat(10).toFixed(1)),
+      types: randomSubsetOfSize(
+        SANCTIONS_SEARCH_TYPES,
+        getRandomIntInclusive(1, 3)
+      ),
     },
     response: {
-      hitsCount: hits.length,
+      hitsCount,
+      data: sanctionsEntityArray,
       searchId: searchId,
       providerSearchId: searchId,
       createdAt: 1683301138980,
@@ -129,14 +268,25 @@ export const consumerSanctionsSearch = (
   return {
     historyItem,
     hits,
+    screeningDetails,
   }
 }
 
 const SANCTIONS_SOURCES: SanctionsSource[] = [
   {
-    countryCodes: ['RU'],
-    createdAt: new Date('2022-02-25T00:00:00Z').getTime(),
+    countryCodes: ['BE', 'RU'],
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'Belgium Consolidated List of the National and European Sanctions',
+    fields: [
+      {
+        name: 'Country',
+        values: ['Belgium'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Belgium'],
+      },
+    ],
     url: 'https://finance.belgium.be/en/control-financial-instruments-and-institutions/compliance/financial-sanctions',
   },
   {
@@ -144,66 +294,88 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
     name: 'company AM',
   },
   {
-    countryCodes: [
-      'BE',
-      'BR',
-      'CA',
-      'CF',
-      'ES',
-      'FR',
-      'GB',
-      'IR',
-      'JP',
-      'KN',
-      'LB',
-      'MD',
-      'MX',
-      'MY',
-      'NG',
-      'NL',
-      'PL',
-      'QA',
-      'RU',
-      'SG',
-      'UA',
-      'US',
-      'ZA',
-    ],
-    name: 'ComplyAdvantage Adverse Media',
-  },
-  {
-    countryCodes: ['RU'],
-    createdAt: new Date('2022-03-01T00:00:00Z').getTime(),
+    countryCodes: ['AU'],
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'DFAT Australia Consolidated Sanctions List',
+    fields: [
+      {
+        name: 'Country',
+        values: ['Australia'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Australia'],
+      },
+    ],
     url: 'https://www.dfat.gov.au/international-relations/security/sanctions/consolidated-list',
   },
   {
     countryCodes: ['RU'],
     name: 'Eurasian Economic Union Leadership',
     url: 'http://www.eaeunion.org/',
+    fields: [
+      {
+        name: 'Country',
+        values: ['Russia'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Russia'],
+      },
+    ],
   },
   {
     countryCodes: ['RU'],
-    createdAt: new Date('2022-02-25T00:00:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'EU External Action Service - Consolidated list of Sanctions',
     url: 'https://webgate.ec.europa.eu/fsd/fsf#!/files',
   },
   {
     countryCodes: ['RU'],
-    createdAt: new Date('2022-02-25T00:00:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'United Kingdom HM Treasury Office of Financial Sanctions Implementation Consolidated List',
+    fields: [
+      {
+        name: 'Country',
+        values: ['United Kingdom'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['United Kingdom'],
+      },
+    ],
     url: 'https://www.gov.uk/government/publications/financial-sanctions-consolidated-list-of-targets',
   },
   {
     countryCodes: ['RU'],
-    createdAt: new Date('2022-03-10T00:00:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'Liechtenstein International Sanctions',
     url: 'https://www.gesetze.li/konso/gebietssystematik?lrstart=946',
+    fields: [
+      {
+        name: 'Country',
+        values: ['Liechtenstein'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Liechtenstein'],
+      },
+    ],
   },
   {
-    createdAt: new Date('2022-03-01T00:00:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'Ministry of Finance Japan Economic Sanctions List',
     url: 'https://www.mof.go.jp/international_policy/gaitame_kawase/gaitame/economic_sanctions/list.html',
+    fields: [
+      {
+        name: 'Country',
+        values: ['Japan'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Japan'],
+      },
+    ],
   },
   {
     countryCodes: ['RU'],
@@ -215,37 +387,107 @@ const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['RU'],
     name: 'ComplyAdvantage PEP Data',
-    createdAt: new Date('2022-03-10T00:00:00Z').getTime(),
+    fields: [
+      {
+        name: 'Country',
+        values: ['Russia'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Russia'],
+      },
+    ],
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
   },
   {
     countryCodes: ['US', 'CA'],
     name: 'Global PEP Registry',
-    createdAt: new Date('2021-11-15T12:00:00Z').getTime(),
+    fields: [
+      {
+        name: 'Country',
+        values: ['United States', 'Canada'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['United States', 'Canada'],
+      },
+    ],
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
   },
   {
     countryCodes: ['BR'],
     name: 'Brazilian Government PEP Data',
-    createdAt: new Date('2020-06-22T08:30:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    fields: [
+      {
+        name: 'Country',
+        values: ['Brazil'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Brazil'],
+      },
+    ],
   },
   {
     countryCodes: ['DE', 'FR'],
     name: 'European PEP Records',
-    createdAt: new Date('2022-01-05T14:45:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    fields: [
+      {
+        name: 'Country',
+        values: ['Germany', 'France'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['Germany', 'France'],
+      },
+    ],
   },
   {
     countryCodes: ['IN'],
     name: 'India PEP Watchlist',
-    createdAt: new Date('2023-02-01T09:15:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    fields: [
+      {
+        name: 'Country',
+        values: ['India'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['India'],
+      },
+    ],
   },
   {
     countryCodes: ['CN', 'HK'],
     name: 'Asian PEP List',
-    createdAt: new Date('2021-09-10T10:00:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    fields: [
+      {
+        name: 'Country',
+        values: ['China', 'Hong Kong'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['China', 'Hong Kong'],
+      },
+    ],
   },
   {
     countryCodes: ['ZA'],
     name: 'South African PEP Database',
-    createdAt: new Date('2020-12-05T17:20:00Z').getTime(),
+    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    fields: [
+      {
+        name: 'Country',
+        values: ['South Africa'],
+      },
+      {
+        name: 'Original Country Text',
+        values: ['South Africa'],
+      },
+    ],
   },
 ]
 const MEDIA: SanctionsMedia[] = [

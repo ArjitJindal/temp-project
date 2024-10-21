@@ -2,7 +2,11 @@ import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { uniq } from 'lodash'
-import { getSanctions, getSanctionsHits } from '../data/sanctions'
+import {
+  getSanctions,
+  getSanctionsHits,
+  getSanctionsScreeningDetails,
+} from '../data/sanctions'
 import { sampleCountry } from './countries'
 import { sampleString } from './strings'
 import { sampleTag } from './tag'
@@ -208,16 +212,33 @@ export function getUserRules(
       'PAYMENT_NAME',
       'PAYMENT_BENEFICIARY_NAME',
     ] as const
-
+    const entity =
+      r.ruleId === 'R-32'
+        ? 'BANK'
+        : r.ruleId === 'R-169'
+        ? 'EXTERNAL_USER'
+        : 'USER'
     for (const entityType of entityTypes) {
       // Seed a sanctions response
-      const { historyItem, hits } =
+      const { historyItem, hits, screeningDetails } =
         type === 'CONSUMER'
-          ? consumerSanctionsSearch(username, userId)
-          : businessSanctionsSearch(username, userId)
+          ? consumerSanctionsSearch(
+              username,
+              userId,
+              r.ruleInstanceId,
+              undefined,
+              entity
+            )
+          : businessSanctionsSearch(
+              username,
+              userId,
+              r.ruleInstanceId,
+              undefined,
+              entity
+            )
       getSanctions().push(historyItem)
       getSanctionsHits().push(...hits)
-
+      getSanctionsScreeningDetails().push(screeningDetails)
       const sanctionsDetails: SanctionsDetails = {
         name: username,
         searchId: historyItem._id,

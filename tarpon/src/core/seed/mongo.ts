@@ -49,11 +49,16 @@ import {
   SANCTIONS_HITS_COLLECTION,
   SLA_POLICIES_COLLECTION,
   ML_MODELS_COLLECTION,
+  SANCTIONS_SCREENING_DETAILS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'
-import { getSanctions, getSanctionsHits } from '@/core/seed/data/sanctions'
+import {
+  getSanctions,
+  getSanctionsHits,
+  getSanctionsScreeningDetails,
+} from '@/core/seed/data/sanctions'
 import { getReports } from '@/core/seed/data/reports'
 import { getSimulations } from '@/core/seed/data/simulation'
 import {
@@ -86,6 +91,10 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [MERCHANT_MONITORING_DATA_COLLECTION, () => getMerchantMonitoring()],
   [SANCTIONS_SEARCHES_COLLECTION, () => getSanctions()],
   [SANCTIONS_HITS_COLLECTION, () => getSanctionsHits()],
+  [
+    SANCTIONS_SCREENING_DETAILS_COLLECTION,
+    () => getSanctionsScreeningDetails(),
+  ],
   [REPORT_COLLECTION, () => getReports()],
   [CRM_ENGAGEMENTS_COLLECTION, () => getEngagements()],
   [CRM_TASKS_COLLECTION, () => getTasks()],
