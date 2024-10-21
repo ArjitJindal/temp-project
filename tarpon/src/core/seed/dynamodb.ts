@@ -3,6 +3,7 @@ import { isEmpty, isEqual, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
+import { riskFactors } from './data/risk-factors'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUsers } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -86,7 +87,13 @@ export async function seedDynamo(
       hitRules: publicTxn.hitRules,
     })
   }
-
+  logger.info('Clear risk factors')
+  await dangerouslyDeletePartition(
+    dynamoDb,
+    tenantId,
+    DynamoDbKeys.RISK_FACTOR(tenantId).PartitionKeyID,
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
+  )
   const riskRepo = new RiskRepository(tenantId, {
     dynamoDb,
   })
@@ -99,7 +106,10 @@ export async function seedDynamo(
       arsScore.components
     )
   }
-
+  logger.info('Create risk factors')
+  for (const riskFactor of riskFactors()) {
+    await riskRepo.createOrUpdateRiskFactor(riskFactor)
+  }
   if (isDemoTenant(tenantId)) {
     const nonDemoTenantId = tenantId.replace(/-test$/, '')
     const nonDemoTenantRepo = new TenantRepository(nonDemoTenantId, {
