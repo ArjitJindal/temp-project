@@ -85,6 +85,14 @@ async function main() {
 
   console.time('Bundle time')
 
+  const trieFiles = ['indic.trie', 'use.trie', 'data.trie']
+  const fontFiles = [
+    'Helvetica-Bold.afm',
+    'Helvetica.afm',
+    'Helvetica-BoldOblique.afm',
+    'Helvetica-Oblique.afm',
+  ]
+
   for (const chunkEntries of [
     [...canaryEntries, ...lambdaEntries.slice(0, lambdaEntries.length / 2)],
     [...fargateEntries, ...lambdaEntries.slice(lambdaEntries.length / 2)],
@@ -128,7 +136,7 @@ async function main() {
 
   // Copy files required for pdfmake library
   for (const lambdaName of lambdaNames) {
-    for (const file of ['indic.trie', 'use.trie', 'data.trie']) {
+    for (const file of trieFiles) {
       await fs.copyFile(
         `${ROOT_DIR}/node_modules/@foliojs-fork/fontkit/${file}`,
         `${OUT_DIR}/lambdas/${lambdaName}/${file}`
@@ -139,12 +147,7 @@ async function main() {
       `${OUT_DIR}/lambdas/${lambdaName}/classes.trie`
     )
     await fs.ensureDir(`${OUT_DIR}/lambdas/${lambdaName}/data`)
-    for (const file of [
-      'Helvetica-Bold.afm',
-      'Helvetica.afm',
-      'Helvetica-BoldOblique.afm',
-      'Helvetica-Oblique.afm',
-    ]) {
+    for (const file of fontFiles) {
       await fs.copyFile(
         `${ROOT_DIR}/node_modules/@foliojs-fork/pdfkit/js/data/${file}`,
         `${OUT_DIR}/lambdas/${lambdaName}/data/${file}`
@@ -167,6 +170,25 @@ async function main() {
     `${ROOT_DIR}/dist/fargate/Dockerfile`,
     { overwrite: true }
   )
+
+  for (const file of trieFiles) {
+    await fs.copy(
+      `${ROOT_DIR}/node_modules/@foliojs-fork/fontkit/${file}`,
+      `${OUT_DIR}/fargate/${file}`
+    )
+  }
+
+  await fs.copy(
+    `${ROOT_DIR}/node_modules/@foliojs-fork/linebreak/src/classes.trie`,
+    `${OUT_DIR}/fargate/classes.trie`
+  )
+
+  for (const file of fontFiles) {
+    await fs.copy(
+      `${ROOT_DIR}/node_modules/@foliojs-fork/pdfkit/js/data/${file}`,
+      `${OUT_DIR}/fargate/data/${file}`
+    )
+  }
 
   console.timeEnd('Total build time')
 }
