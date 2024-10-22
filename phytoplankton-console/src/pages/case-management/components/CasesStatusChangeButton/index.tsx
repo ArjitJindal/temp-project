@@ -11,7 +11,7 @@ interface Props {
   initialValues?: FormValues;
   buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
   statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
-  onSaved: () => void;
+  onSaved: (status?: CaseStatus) => void;
   isDisabled?: boolean;
   skipReasonsModal?: boolean;
   className?: string;
@@ -51,7 +51,7 @@ export default function CasesStatusChangeButton(props: Props) {
             oldStatus={caseStatus}
             newStatus={newStatus}
             newStatusActionLabel={caseStatus && statusTransitions?.[caseStatus]?.actionLabel}
-            onSaved={onSaved}
+            onSaved={() => onSaved(newStatus)}
             initialValues={initialValues}
             onClose={() => {
               setVisible(false);

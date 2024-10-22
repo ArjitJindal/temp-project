@@ -9,7 +9,7 @@ import { Case, CaseStatus, Comment } from '@/apis';
 import { useApi } from '@/api';
 import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
 import CommentButton from '@/components/CommentButton';
-import { findLastStatusForInReview, getNextStatus, statusInReview } from '@/utils/case-utils';
+import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
 import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -42,10 +42,8 @@ export default function Header(props: Props) {
     return findLastStatusForInReview(caseItem.statusChanges ?? []);
   }, [caseItem]);
 
-  const newStatus = getNextStatus(caseItem.caseStatus);
-
-  const handleStatusChangeSuccess = () => {
-    if (newStatus === 'CLOSED') {
+  const handleStatusChangeSuccess = (updatedStatus?: CaseStatus) => {
+    if (updatedStatus === 'CLOSED') {
       if (backUrl && backUrl.startsWith('/case-management/cases')) {
         navigate(backUrl);
       } else {
@@ -73,6 +71,7 @@ export default function Header(props: Props) {
             },
           },
         });
+        handleStatusChangeSuccess(newStatus);
       } finally {
         hideMessage();
       }
@@ -82,7 +81,6 @@ export default function Header(props: Props) {
         if (caseId != null) {
           await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
         }
-        handleStatusChangeSuccess();
       },
       onError: () => {
         message.error('Failed to change case status');
