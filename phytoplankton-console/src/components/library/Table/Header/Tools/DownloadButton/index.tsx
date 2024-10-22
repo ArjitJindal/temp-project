@@ -45,22 +45,36 @@ export function transformCSVTableRows<T extends object>(
   props: Props<T, any>,
 ): CsvRow[] {
   const result: CsvRow[] = [];
+  const columnTitles: string[] = [];
+  const columnsWithLinks: Set<number> = new Set();
+  let index = 0;
+  columnsToExport.map((column) => {
+    columnTitles.push(getColumnTitile(column, props));
+    if (column.type?.link) {
+      columnsWithLinks.add(index);
+      columnTitles.push(`${getColumnTitile(column, props)} Link`);
+    }
+    index++;
+  });
 
-  result.push(
-    columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
-  );
+  result.push(columnTitles.map((title) => csvValue(title)));
 
   for (const row of items) {
-    const csvRow = columnsToExport.map((column): CsvValue => {
+    const csvRow: CsvValue[] = [];
+    let index = 0;
+    columnsToExport.map((column) => {
       const columnDataType = { ...UNKNOWN, ...column.type };
       const value = isSimpleColumn(column)
         ? applyFieldAccessor(row, column.key)
         : column.value(row);
 
-      return csvValue(
-        columnDataType.stringify?.(value as any, row),
-        columnDataType.link?.(value as any, row),
-      );
+      csvRow.push(csvValue(columnDataType.stringify?.(value as any, row)));
+
+      if (columnsWithLinks.has(index)) {
+        const link = columnDataType.link?.(value as any, row);
+        csvRow.push(csvValue(link ? `${getCurrentDomain()}${link}` : ''));
+      }
+      index++;
     });
     result.push(csvRow);
   }
@@ -85,9 +99,17 @@ export function transformXLSXTableRows<T extends object>(
   columnsToExport: (SimpleColumn<T, FieldAccessor<T>> | DerivedColumn<T>)[],
   props: Props<T, any>,
 ) {
-  const columnTitles = columnsToExport.map((adjustedColumn) =>
-    getColumnTitile(adjustedColumn, props),
-  );
+  const columnTitles: string[] = [];
+  const columnsWithLinks: Set<number> = new Set();
+  let index = 0;
+  columnsToExport.map((column) => {
+    columnTitles.push(getColumnTitile(column, props));
+    if (column.type?.link) {
+      columnsWithLinks.add(index);
+      columnTitles.push(`${getColumnTitile(column, props)} Link`);
+    }
+    index++;
+  });
 
   const style: CellStyle = {
     font: {
@@ -103,31 +125,31 @@ export function transformXLSXTableRows<T extends object>(
     })),
   ];
 
-  const dataRows = items.map((row) =>
-    columnsToExport.map((column): CellObject => {
+  const dataRows = items.map((row) => {
+    const rowData: CellObject[] = [];
+    let index = 0;
+    columnsToExport.map((column) => {
       const columnDataType = { ...UNKNOWN, ...column.type };
       const value = isSimpleColumn<T>(column)
         ? applyFieldAccessor(row, column.key)
         : column.value(row);
       const link = columnDataType.link?.(value as any, row);
 
-      if (link) {
-        return {
-          t: 's',
-          v: xlsxValue(columnDataType.stringify?.(value as any, row)),
-          l: {
-            Target: `${getCurrentDomain()}${link}`,
-            Tooltip: columnDataType.stringify?.(value as any, row),
-          },
-        };
-      }
-
-      return {
+      rowData.push({
         t: 's',
         v: xlsxValue(columnDataType.stringify?.(value as any, row)),
-      };
-    }),
-  );
+      });
+
+      if (columnsWithLinks.has(index)) {
+        rowData.push({
+          t: 's',
+          v: link ? `${getCurrentDomain()}${link}` : '',
+        });
+      }
+      index++;
+    });
+    return rowData;
+  });
 
   rows.push(...dataRows);
 
@@ -239,7 +261,7 @@ export default function DownloadButton<T extends object, Params extends object>(
       if (format === 'csv') {
         processTableCSVDownload(allFlatData, columnsToExport, props);
       } else {
-        await processTableExcelDownload(allFlatData, columnsToExport, props);
+        processTableExcelDownload(allFlatData, columnsToExport, props);
       }
     } catch (e) {
       message.error(`Unable to export data. ${getErrorMessage(e)}`);
