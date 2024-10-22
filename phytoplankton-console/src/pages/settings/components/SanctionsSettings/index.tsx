@@ -14,14 +14,14 @@ export const SanctionsSettings = () => {
   const handleDownload = () => {
     message.success('Screening list download started');
     const downloadUrl =
-      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+February+2024.xlsx';
-    downloadLink(downloadUrl, 'SanctionsList-February-2024.xlsx');
+      'https://phytoplankton-assets-sanctionslist.s3.eu-central-1.amazonaws.com/Data+Compliance+Overview+September+2024.xlsx';
+    downloadLink(downloadUrl, 'SanctionsList-September-2024.xlsx');
   };
   return (
     <SettingsCard
       title={
         isSanctionsEnabled
-          ? 'Sanctions list (as of 29th February 2024)'
+          ? 'Sanctions list (as of 30th September 2024)'
           : 'Sanctions/PEP/Adverse media screening'
       }
       description={isSanctionsEnabled ? '' : 'Screen individuals and entities in a single API.'}
