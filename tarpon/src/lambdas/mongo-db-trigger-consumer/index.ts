@@ -150,7 +150,16 @@ export class MongoDbConsumer {
       if (record.documentKey.type === 'filter') {
         return record.documentKey.value
       }
-      return { _id: new ObjectId(record.documentKey.value) }
+
+      let objectId: ObjectId | string
+
+      try {
+        objectId = new ObjectId(record.documentKey.value)
+      } catch (error) {
+        objectId = record.documentKey.value
+      }
+
+      return { _id: objectId as ObjectId }
     })
   }
 
