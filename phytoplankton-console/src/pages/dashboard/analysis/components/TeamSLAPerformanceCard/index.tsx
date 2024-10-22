@@ -13,12 +13,17 @@ import DatePicker from '@/components/ui/DatePicker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import { map } from '@/utils/queries/types';
+import { getOr } from '@/utils/asyncResource';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
+import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
+import { useUsers } from '@/utils/user-utils';
+
 interface Params extends TableCommonParams {
   dateRange?: RangeValue<Dayjs>;
 }
 
 function TeamSLAPerformanceCard(props: WidgetProps) {
+  const [users] = useUsers({ includeBlockedUsers: true, includeRootUsers: true });
   const startTime = dayjs().subtract(1, 'day').startOf('day');
   const endTime = dayjs().endOf('day');
   const [params, setParams] = useState<AllParams<Params>>({
@@ -71,8 +76,18 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
     }),
   ]);
 
+  const dataToExport = (items: DashboardStatsTeamSLAItem[]) => {
+    return items.map((item) => ({
+      'Team Member': users[item.accountId]?.name || item.accountId,
+      Breached: item.BREACHED,
+      Warning: item.WARNING,
+      OK: item.OK,
+    }));
+  };
+
   return (
     <Widget
+      {...props}
       extraControls={[
         <DatePicker.RangePicker
           value={params.dateRange}
@@ -86,7 +101,15 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
           }}
         />,
       ]}
-      {...props}
+      onDownload={(): Promise<{ fileName: string; data: string }> => {
+        return new Promise((resolve) => {
+          const fileData = {
+            fileName: `team-sla-performance-${dayjs().format('YYYY-MM-DD')}.csv`,
+            data: getCsvData(dataToExport(getOr(queryResult.data, []))),
+          };
+          resolve(fileData);
+        });
+      }}
     >
       <QueryResultsTable
         columns={columns}
@@ -95,7 +118,7 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
         toolsOptions={{
           reload: false,
           setting: false,
-          download: false,
+          download: true,
         }}
         queryResults={map(queryResult, (data) => ({
           items: data,
