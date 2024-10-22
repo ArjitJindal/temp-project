@@ -664,11 +664,15 @@ export class TenantService {
   public static async getAllTenantIds() {
     const mongoDb = (await getMongoDbClient()).db()
     const allTenantIds = (await mongoDb.listCollections().toArray())
-      .filter(({ name }) => !name.startsWith('migration'))
+      .filter(
+        ({ name }) =>
+          !name.startsWith('migration') && name.endsWith('transactions')
+      )
       .map((collection) => {
         const collectionName = collection.name
-        const tenantId = collectionName.split('-')[0]
-        return tenantId
+        const splittedNames = collectionName.split('-').slice(0, -1)
+        const tenantNameParts = splittedNames.filter((val) => val !== 'test')
+        return tenantNameParts.join('-')
       })
     return uniq(allTenantIds)
   }
