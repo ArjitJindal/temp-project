@@ -18,6 +18,7 @@ const generator = function* (): Generator<AuditLog> {
       action: 'VIEW',
       timestamp: Date.now(),
       entityId: uuid4(),
+      user: getRandomAccount(),
     }
     // User Viewed
     const allUsers = getUsers()

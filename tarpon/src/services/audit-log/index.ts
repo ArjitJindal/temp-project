@@ -1,5 +1,6 @@
 import { PublishCommand } from '@aws-sdk/client-sns'
 import { MongoClient } from 'mongodb'
+import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
 import { AuditLogRepository } from './repositories/auditlog-repository'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { AuditLogRecord } from '@/@types/audit-log'
@@ -21,7 +22,9 @@ export async function publishAuditLog(
     const auditLogRecord: AuditLogRecord = {
       tenantId,
       payload: {
-        user: getContext()?.user as Account,
+        user: (getContext()?.user ?? {
+          id: FLAGRIGHT_SYSTEM_USER,
+        }) as Account,
         timestamp: Date.now(),
         ...auditlog,
       },

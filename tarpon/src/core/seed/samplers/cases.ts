@@ -19,7 +19,11 @@ import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { isStatusInReview, statusEscalated } from '@/utils/helpers'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { CHECKLIST_STATUSS } from '@/@types/openapi-internal-custom/ChecklistStatus'
-import { getRandomUser, getRandomUsers } from '@/core/seed/samplers/accounts'
+import {
+  getRandomAccount,
+  getRandomUser,
+  getRandomUsers,
+} from '@/core/seed/samplers/accounts'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import dayjs from '@/utils/dayjs'
@@ -440,6 +444,7 @@ export const sampleAuditLogForStatusChange = (caseItem: Case) => {
     subtype: 'STATUS_CHANGE',
     timestamp: Date.now(),
     type: 'CASE',
+    user: getRandomAccount(),
   }
 }
 
