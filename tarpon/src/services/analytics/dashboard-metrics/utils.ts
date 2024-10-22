@@ -58,6 +58,7 @@ export async function cleanUpStaleData(
       updatedAt: {
         $gte: lastUpdatedAt,
       },
+      ...additionalMatch,
     },
     { $unset: { ready: '' } }
   )
