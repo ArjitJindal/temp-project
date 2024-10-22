@@ -18,6 +18,7 @@ export type Config = {
     CLOUD_WATCH: {
       logRetention: RetentionDays
     }
+    DYNAMO_PROD_WRITE_CAPACITY_THRESHOLD?: number
     FARGATE_BATCH_JOB_CONTAINER: {
       CPU: number
       MEMORY_LIMIT: number

@@ -205,7 +205,9 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
           'ConsumedWriteCapacityUnits',
           this.config.stage === 'prod'
             ? {
-                threshold: 300,
+                threshold:
+                  props.config.resource.DYNAMO_PROD_WRITE_CAPACITY_THRESHOLD ??
+                  300,
                 statistic: 'Maximum',
                 period: Duration.minutes(1),
               }
