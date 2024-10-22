@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import pluralize from 'pluralize';
 import { UseMutationResult } from '@tanstack/react-query';
 import { statusToOperationName } from './StatusChangeButton';
+import s from './index.module.less';
 import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInternal } from '@/apis';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import Modal from '@/components/library/Modal';
@@ -20,6 +21,8 @@ import { statusEscalated } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import { useUsers } from '@/utils/user-utils';
+import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 
 export const ESCALATION_REASONS: CaseReasons[] = [
   'Fraud',
@@ -97,6 +100,8 @@ export default function StatusChangeModal(props: Props) {
   const showConfirmation = isVisible && (isReopen || isAwaitingConfirmation || skipReasonsModal);
   const [showErrors, setAlwaysShowErrors] = useState(false);
   const [closeRelatedCase, setCloseRelatedCase] = useState(false);
+  const [users] = useUsers();
+  const isMentionsEnabled = useFeatureEnabled('NOTIFICATIONS');
 
   const updateRes = getMutationAsyncResource(updateMutation);
   const isFinishedSuccessfully = useFinishedSuccessfully(updateRes);
@@ -210,7 +215,7 @@ export default function StatusChangeModal(props: Props) {
         okText="Confirm"
         onOk={() => {
           const sanitizedComment = formState.values.comment
-            ? sanitizeComment(formState.values.comment)
+            ? `Checker Comment: ${sanitizeComment(formState.values.comment)}`
             : '';
           updateMutation.mutate({
             ...formState.values,
@@ -224,10 +229,32 @@ export default function StatusChangeModal(props: Props) {
           onClose();
         }}
       >
-        <span>
-          Are you sure you want to <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
-          {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ? {qaText}
-        </span>
+        <div className={s.confirmationModal}>
+          <span>
+            Are you sure you want to{' '}
+            <b>{newStatusActionLabel ?? statusToOperationName(newStatus)}</b>{' '}
+            {pluralize(entityName, entityIds.length, true)} <b>{entityIds.join(', ')}</b> ? {qaText}
+          </span>
+          {(newStatusActionLabel === 'Approve' || newStatusActionLabel === 'Decline') && (
+            <div className={s.commentContainer}>
+              <b>Comment</b>
+              <MarkdownEditor
+                initialValue={formState.values.comment || ''}
+                mentionsEnabled={isMentionsEnabled}
+                mentionsList={Object.keys(users).map((userId) => ({
+                  label: users[userId].email,
+                  id: users[userId].id,
+                }))}
+                onChange={(v) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    values: { ...prev.values, comment: v },
+                  }))
+                }
+              />
+            </div>
+          )}
+        </div>
       </Modal>
     </>
   );
