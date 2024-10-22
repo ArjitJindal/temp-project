@@ -45,6 +45,7 @@ export const DEFAULT_ROLES: {
     permissions: [
       'case-management:case-overview:read',
       'case-management:case-overview:write',
+      'case-management:case-assignment:write',
       'case-management:case-details:read',
       'case-management:case-details:write',
       'case-management:case-reopen:write',
@@ -74,6 +75,7 @@ export const DEFAULT_ROLES: {
     permissions: [
       'case-management:case-overview:read',
       'case-management:case-overview:write',
+      'case-management:case-assignment:write',
       'case-management:case-details:read',
       'case-management:case-details:write',
       'case-management:case-reopen:write',
