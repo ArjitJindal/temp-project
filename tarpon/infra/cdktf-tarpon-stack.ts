@@ -214,6 +214,7 @@ export class CdktfTarponStack extends TerraformStack {
               clickhouseTenantConfig.ENVIROMENT.minTotalMemoryGb,
             maxTotalMemoryGb:
               clickhouseTenantConfig.ENVIROMENT.maxTotalMemoryGb,
+            numReplicas: 3,
           }),
         }
       )
