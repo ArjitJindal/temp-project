@@ -33,9 +33,10 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { getUserName } from '@/utils/helpers'
 
-const MAX_USERS = 15000
-const CONCURRENCY = 50
-const SIMULATED_TRANSACTIONS_COUNT = 10000
+const MAX_USERS = 100000
+const CONCURRENCY = 200
+const SIMULATED_TRANSACTIONS_COUNT = 300000
+const PAGE_SIZE = 2000
 
 type SimulationRiskFactorsResultRaw = Record<
   RiskLevel,
@@ -71,6 +72,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     string,
     { current: number; simulated: number }
   >()
+  private usersProcessed = 0
   protected async run(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
     this.job = job
     const { tenantId, parameters } = job
@@ -222,14 +224,20 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     let isNext = true
     let next: string | undefined
     while (isNext) {
+      let pageSize = PAGE_SIZE
+      if (this.usersProcessed + PAGE_SIZE > MAX_USERS) {
+        pageSize = MAX_USERS - this.usersProcessed
+        if (pageSize <= 0) {
+          break
+        }
+      }
       const result = await this.userRepository?.getMongoUsersCursorsPaginate({
-        pageSize: 100,
+        pageSize: PAGE_SIZE,
         start: next,
       })
       next = result?.next
       isNext = result?.hasNext ?? false
       const users = result?.items
-
       await pMap(
         users ?? [],
         async (user) => {
@@ -388,7 +396,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
         await this.transactionRepo?.getTransactionsCursorPaginate({
           filterUserId: user.userId,
           start: next,
-          pageSize: 100,
+          pageSize: PAGE_SIZE,
         })
       next = transactionsResult?.next
       hasNext = transactionsResult?.hasNext ?? false
