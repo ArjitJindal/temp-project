@@ -83,10 +83,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Rules engine V8 for V2 Rules',
     description: 'Enables new rules Engine V8 for V2 rules (Experimental)',
   },
-  KINESIS_ASYNC: {
-    title: 'Kinesis async',
-    description: 'Enables Kinesis Async for case creation',
-  },
   FILES_AI_SUMMARY: {
     title: 'AI attachment summarization',
     description: 'Enables AI Attachment Summarization (pdf only)',

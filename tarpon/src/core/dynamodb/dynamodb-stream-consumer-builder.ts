@@ -4,7 +4,6 @@ import { MongoClient } from 'mongodb'
 import { groupBy } from 'lodash'
 import {
   initializeTenantContext,
-  tenantHasFeature,
   updateLogMetadata,
   withContext,
 } from '../utils/context'
@@ -393,11 +392,6 @@ export class StreamConsumerBuilder {
         mongoDb: await getMongoDbClient(),
       }
       await initializeTenantContext(tenantId)
-      const tenantHasFeatureKinesisAsync = await tenantHasFeature(
-        tenantId,
-        'KINESIS_ASYNC'
-      )
-
       const filteredUpdates = updates.filter(Boolean)
       await Promise.all(
         filteredUpdates.map(async (update) => {
@@ -416,7 +410,7 @@ export class StreamConsumerBuilder {
         })
       )
 
-      if (envIs('local', 'test') || !tenantHasFeatureKinesisAsync) {
+      if (envIs('local', 'test')) {
         await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
         return
       }
