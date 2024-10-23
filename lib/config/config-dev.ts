@@ -87,6 +87,7 @@ export const config: Config = {
       MEMORY_SIZE: 1024,
     },
     INSPECTOR_ENABLED: false,
+    ATLAS_SEARCH_ENABLED: true,
   },
   clickhouse: {
     enabled: true,

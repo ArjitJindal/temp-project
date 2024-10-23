@@ -102,6 +102,7 @@ export type Config = {
     }
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean
+    ATLAS_SEARCH_ENABLED?: boolean
   }
   viper?: {
     ADMIN_EMAILS: string[]

@@ -76,66 +76,68 @@ export class CdktfTarponStack extends TerraformStack {
       }
     )
 
-    new atlas.searchIndex.SearchIndex(this, 'sanctions-search-index', {
-      name: 'sanctions_search_index',
-      projectId: project.projectId,
-      clusterName: config.application.MONGO_ATLAS_CLUSTER || '',
-      analyzer: 'lucene.standard',
-      collectionName: 'sanctions',
-      database: 'tarpon',
-      mappingsFields: JSON.stringify({
-        aka: {
-          type: 'string',
-        },
-        associates: {
-          type: 'document',
-          fields: {
-            ranks: {
-              type: 'string',
-            },
-            sanctionSearchTypes: {
-              type: 'string',
+    if (config.resource.ATLAS_SEARCH_ENABLED) {
+      new atlas.searchIndex.SearchIndex(this, 'sanctions-search-index', {
+        name: 'sanctions_search_index',
+        projectId: project.projectId,
+        clusterName: config.application.MONGO_ATLAS_CLUSTER || '',
+        analyzer: 'lucene.standard',
+        collectionName: 'sanctions',
+        database: 'tarpon',
+        mappingsFields: JSON.stringify({
+          aka: {
+            type: 'string',
+          },
+          associates: {
+            type: 'document',
+            fields: {
+              ranks: {
+                type: 'string',
+              },
+              sanctionSearchTypes: {
+                type: 'string',
+              },
             },
           },
-        },
-        documents: {
-          type: 'document',
-          fields: {
-            id: {
-              type: 'string',
-            },
-            formattedId: {
-              type: 'string',
-            },
-          },
-        },
-        name: {
-          type: 'string',
-        },
-        gender: {
-          type: 'string',
-        },
-        nationality: {
-          type: 'string',
-        },
-        occupations: {
-          type: 'document',
-          fields: {
-            rank: {
-              type: 'string',
+          documents: {
+            type: 'document',
+            fields: {
+              id: {
+                type: 'string',
+              },
+              formattedId: {
+                type: 'string',
+              },
             },
           },
-        },
-        sanctionSearchTypes: {
-          type: 'string',
-        },
-        yearOfBirth: {
-          type: 'string',
-        },
-      }),
-      mappingsDynamic: false,
-      searchAnalyzer: 'lucene.standard',
-    })
+          name: {
+            type: 'string',
+          },
+          gender: {
+            type: 'string',
+          },
+          nationality: {
+            type: 'string',
+          },
+          occupations: {
+            type: 'document',
+            fields: {
+              rank: {
+                type: 'string',
+              },
+            },
+          },
+          sanctionSearchTypes: {
+            type: 'string',
+          },
+          yearOfBirth: {
+            type: 'string',
+          },
+        }),
+        mappingsDynamic: false,
+        searchAnalyzer: 'lucene.standard',
+      })
+    }
 
     const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)
 

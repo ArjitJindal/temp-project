@@ -94,6 +94,7 @@ export const config: Config = {
     },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
+    ATLAS_SEARCH_ENABLED: true,
   },
   viper: {
     ADMIN_EMAILS: ADMIN_EMAILS,
