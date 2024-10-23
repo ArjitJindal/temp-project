@@ -303,6 +303,11 @@ export class CaseService extends CaseAlertsCommonService {
   public async createReport(params: {
     caseId: string
     afterTimestamp: number
+    addUserOrPaymentDetails: boolean
+    addActivity: boolean
+    addTransactions: boolean
+    addAlertDetails: boolean
+    addOntology: boolean
   }): Promise<{ downloadUrl: string }> {
     const caseItem = await this.getCase(params.caseId)
 
@@ -315,10 +320,15 @@ export class CaseService extends CaseAlertsCommonService {
       caseItem,
       {
         afterTimestamp: params.afterTimestamp,
-        addUserDetails: subjectType === 'USER',
-        addPaymentDetails: subjectType === 'PAYMENT',
-        addAlertDetails: caseItem.caseType !== 'MANUAL',
-        addOntology: hasFeature('ENTITY_LINKING'),
+        addActivity: params.addActivity,
+        addTransactions: params.addTransactions,
+        addUserDetails:
+          params.addUserOrPaymentDetails && subjectType === 'USER',
+        addPaymentDetails:
+          params.addUserOrPaymentDetails && subjectType === 'PAYMENT',
+        addAlertDetails:
+          params.addAlertDetails && caseItem.caseType !== 'MANUAL',
+        addOntology: params.addOntology && hasFeature('ENTITY_LINKING'),
       },
       this.accountsService,
       this.transactionsRepository,

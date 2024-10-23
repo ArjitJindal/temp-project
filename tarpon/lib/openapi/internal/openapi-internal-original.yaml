@@ -5216,11 +5216,33 @@ paths:
           in: path
           name: caseId
           required: true
-        - schema:
-            type: number
-          in: query
-          name: afterTimestamp
-          required: true
+      requestBody:
+        content:
+          application/json:
+            schema:
+              title: CreateCaseParams
+              type: object
+              properties:
+                afterTimestamp:
+                  type: number
+                addUserOrPaymentDetails:
+                  type: boolean
+                addActivity:
+                  type: boolean
+                addTransactions:
+                  type: boolean
+                addAlertDetails:
+                  type: boolean
+                addOntology:
+                  type: boolean
+              required:
+                - afterTimestamp
+                - addUserOrPaymentDetails
+                - addActivity
+                - addTransactions
+                - addAlertDetails
+                - addOntology
+        required: true
       responses:
         '200':
           description: OK

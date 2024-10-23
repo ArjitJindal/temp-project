@@ -139,7 +139,7 @@ export default function Header(props: Props) {
           }}
           requiredPermissions={['case-management:case-overview:write']}
         />,
-        <ExportButton caseId={caseItem.caseId ?? ''} />,
+        <ExportButton caseItem={caseItem} />,
         ...(caseId != null
           ? [<SarButton caseId={caseId} alertIds={[]} transactionIds={[]} />]
           : []),
