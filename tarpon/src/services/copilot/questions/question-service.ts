@@ -222,6 +222,11 @@ export class QuestionService {
       humanReadableId: username ?? 'payment details',
     }
 
+    if (question.skipCache) {
+      const response = await this.getQuestionResponse(ctx, varObject, question)
+      return response
+    }
+
     const partitionKeyId = DynamoDbKeys.CACHE_QUESTION_RESULT(
       tenantId,
       alertId,
@@ -312,6 +317,7 @@ export class QuestionService {
         headers: question.headers.map((c) => ({
           name: c.name,
           columnType: c.columnType,
+          columnWidth: c.width,
         })),
       }
     }

@@ -4,6 +4,8 @@ export const COPILOT_QUESTIONS = {
   ALERTS_THAT_RESULTED_IN_SAR: 'Alerts that resulted in SAR',
   CASES: 'Cases',
   CHECKED_TRANSACTIONS: 'Checked transactions',
+  CLEARED_HITS: 'Cleared hits',
+  OPEN_HITS: 'Human review hits',
   CRM_INSIGHTS: 'CRM insights',
   DIRECTORS: 'Directors',
   ONTOLOGY: 'Ontology',

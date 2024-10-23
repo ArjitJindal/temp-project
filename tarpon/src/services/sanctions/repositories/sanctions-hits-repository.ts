@@ -1,4 +1,4 @@
-import { MongoClient, UpdateResult, Filter } from 'mongodb'
+import { MongoClient, UpdateResult, Filter, Document } from 'mongodb'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
@@ -9,16 +9,19 @@ import {
   cursorPaginate,
   CursorPaginationResponse,
   CursorPaginationParams,
+  PaginationParams,
 } from '@/utils/pagination'
 import { notEmpty } from '@/utils/array'
 import { SanctionsWhitelistEntityRepository } from '@/services/sanctions/repositories/sanctions-whitelist-entity-repository'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
 
 export interface HitsFilters {
   filterHitIds?: string[]
   filterSearchId?: string[]
   filterStatus?: SanctionsHitStatus[]
+  filterCountry?: CountryCode[]
 }
 
 @traceable
@@ -36,13 +39,7 @@ export class SanctionsHitsRepository {
       new SanctionsWhitelistEntityRepository(this.tenantId, mongoDb)
   }
 
-  async searchHits(
-    params: HitsFilters & CursorPaginationParams
-  ): Promise<CursorPaginationResponse<SanctionsHit>> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsHit>(
-      SANCTIONS_HITS_COLLECTION(this.tenantId)
-    )
+  private getSearchHitsFilters(params: HitsFilters): Document {
     const filter: Filter<SanctionsHit> = {}
     if (params?.filterHitIds) {
       filter.sanctionsHitId = { $in: params?.filterHitIds }
@@ -53,6 +50,20 @@ export class SanctionsHitsRepository {
     if (params?.filterSearchId) {
       filter.searchId = { $in: params?.filterSearchId }
     }
+
+    return filter
+  }
+
+  async searchHits(
+    params: HitsFilters & CursorPaginationParams
+  ): Promise<CursorPaginationResponse<SanctionsHit>> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsHit>(
+      SANCTIONS_HITS_COLLECTION(this.tenantId)
+    )
+
+    const filter = this.getSearchHitsFilters(params)
+
     const results = await cursorPaginate<SanctionsHit>(collection, filter, {
       ...params,
       sortField: params.sortField || 'sanctionsHitId',
@@ -60,6 +71,30 @@ export class SanctionsHitsRepository {
     return {
       ...results,
       items: results.items,
+    }
+  }
+
+  async searchHitsOffset(filters: HitsFilters & PaginationParams): Promise<{
+    items: SanctionsHit[]
+    total: number
+  }> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SanctionsHit>(
+      SANCTIONS_HITS_COLLECTION(this.tenantId)
+    )
+
+    const filter = this.getSearchHitsFilters(filters)
+    const itemsPromise = collection
+      .find(filter)
+      .skip(((filters.page ?? 1) - 1) * (filters.pageSize ?? 20))
+      .limit(filters.pageSize ?? 20)
+      .toArray()
+
+    const totalPromise = collection.countDocuments(filter)
+
+    return {
+      items: await itemsPromise,
+      total: await totalPromise,
     }
   }
 
@@ -187,14 +222,8 @@ export class SanctionsHitsRepository {
       const newEntity = rawHits.find((x) => x.id === entity.id)
       if (newEntity) {
         const updateResult = await collection.updateOne(
-          {
-            sanctionsHitId,
-          },
-          {
-            $set: {
-              entity: newEntity,
-            },
-          }
+          { sanctionsHitId },
+          { $set: { entity: newEntity } }
         )
         if (updateResult.matchedCount > 0) {
           updatedIds.push(sanctionsHitId)
@@ -253,12 +282,8 @@ export class SanctionsHitsRepository {
       SANCTIONS_HITS_COLLECTION(this.tenantId)
     )
     return await collection.updateMany(
-      {
-        sanctionsHitId: { $in: ids },
-      },
-      {
-        $set: updates,
-      }
+      { sanctionsHitId: { $in: ids } },
+      { $set: updates }
     )
   }
 }

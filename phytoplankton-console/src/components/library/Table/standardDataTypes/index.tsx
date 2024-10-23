@@ -154,17 +154,36 @@ export const FLOAT: ColumnDataType<number> = {
 };
 
 export const STRING: ColumnDataType<string> = {
-  render: (value) => <span>{value}</span>,
+  render: (value) => <span>{Array.isArray(value) ? value.join(', ') : value}</span>,
+  stringify: (value) => (Array.isArray(value) ? value.join(', ') : value ?? ''),
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
       <div className={s.maxWidth}>
         <TextInput
-          value={state}
+          value={Array.isArray(state) ? state.join(',') : state}
           onChange={(newValue) => {
             context.edit.onConfirm(newValue);
           }}
           enableEmptyString
+        />
+      </div>
+    );
+  },
+};
+
+export const STRING_MULTIPLE: ColumnDataType<string | string[]> = {
+  render: (value) => <>{Array.isArray(value) ? value.join(', ') : value}</>,
+  stringify: (value) => (Array.isArray(value) ? value.join(', ') : value ?? ''),
+  renderEdit: (context) => {
+    const [state] = context.edit.state;
+    return (
+      <div className={s.maxWidth}>
+        <TextInput
+          value={Array.isArray(state) ? state.join(', ') : state}
+          onChange={(newValue) => {
+            context.edit.onConfirm(newValue);
+          }}
         />
       </div>
     );
@@ -473,10 +492,10 @@ export const MONEY_CURRENCIES: ColumnDataType<CurrencyCode> = {
 };
 
 export const COUNTRY: ColumnDataType<ApiCountryCode> = {
-  render: (value: ApiCountryCode | undefined) => {
+  render: (value) => {
     return <CountryDisplay isoCode={value} />;
   },
-  stringify: (value: ApiCountryCode | undefined) => {
+  stringify: (value) => {
     return value ? COUNTRIES[value] : '';
   },
   autoFilterDataType: {
@@ -487,6 +506,27 @@ export const COUNTRY: ColumnDataType<ApiCountryCode> = {
       value: isoCode,
       label: country,
     })),
+  },
+};
+
+export const COUNTRIES_MULTIPLE: ColumnDataType<ApiCountryCode | ApiCountryCode[]> = {
+  render: (value) => {
+    return (
+      <>
+        {Array.isArray(value) ? (
+          value.map((isoCode) => <CountryDisplay isoCode={isoCode} />)
+        ) : (
+          <CountryDisplay isoCode={value} />
+        )}
+      </>
+    );
+  },
+  stringify: (value) => {
+    return Array.isArray(value)
+      ? value.map((isoCode) => COUNTRIES[isoCode]).join(',')
+      : value
+      ? COUNTRIES[value]
+      : '';
   },
 };
 
@@ -686,11 +726,20 @@ export const USER_STATE_TAG: ColumnDataType<UserState> = {
   stringify: (userState) => userState ?? '',
 };
 
-export const TAG: ColumnDataType<string> = {
-  render: (value: string | undefined) => {
+export const TAG: ColumnDataType<string | string[] | undefined> = {
+  render: (value: string | string[] | undefined) => {
+    if (Array.isArray(value)) {
+      return (
+        <>
+          {value.map((x) => (
+            <Tag>{capitalize(x)}</Tag>
+          ))}
+        </>
+      );
+    }
     return value ? <Tag>{capitalize(value)}</Tag> : <></>;
   },
-  stringify: (userState) => userState ?? '',
+  stringify: (value) => (Array.isArray(value) ? value.join(',') : value ?? ''),
 };
 
 export const EXTERNAL_LINK: ColumnDataType<string> = {

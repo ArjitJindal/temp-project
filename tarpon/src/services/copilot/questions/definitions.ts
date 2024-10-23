@@ -1,4 +1,5 @@
 import { Question } from './types'
+import { ClearedHits, OpenHits } from './definitions/hits'
 import { CaseHistory } from '@/services/copilot/questions/definitions/case-history'
 import { TransactionAggregations } from '@/services/copilot/questions/definitions/transaction-aggregations'
 import { TransactionType } from '@/services/copilot/questions/definitions/transaction-type'
@@ -59,6 +60,7 @@ export const getQuestions = (): Question<any>[] =>
       ? [CheckedTransactions, Recommendation]
       : []),
     ...(envIsNot('prod') ? [TransactionByRulesAction, TransactionType] : []),
+    ...(hasFeature('SANCTIONS') ? [OpenHits, ClearedHits] : []),
   ].sort((a, b) => a.questionId.localeCompare(b.questionId))
 
 export const getQueries = () =>

@@ -7081,6 +7081,8 @@ components:
             - MONEY_AMOUNT
             - MONEY_CURRENCY
             - COUNTRY
+        columnWidth:
+          type: number
       required:
         - name
         - columnType
@@ -11988,6 +11990,8 @@ components:
             $ref: '#/components/schemas/ComplyAdvantageMatchTypeDetails'
         entity:
           $ref: '#/components/schemas/SanctionsEntity'
+        comment:
+          type: string
       required:
         - sanctionsHitId
         - searchId

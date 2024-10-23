@@ -18,14 +18,14 @@ import { useApi } from '@/api';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { QuestionResponse } from '@/apis';
 import { QuestionResponseSkeleton } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
-import { COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
+import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 type FormValues = {
   searchString: string;
 };
 
-const SUGGESTIONS_ORDER: QuestionId[] = [
+let SUGGESTIONS_ORDER: QuestionId[] = [
   COPILOT_QUESTIONS.USER_DETAILS,
   COPILOT_QUESTIONS.ALERTS,
   COPILOT_QUESTIONS.TRS_SCORE,
@@ -52,6 +52,11 @@ export const SearchBar = (props: Props) => {
   const debouncedSearch = useDebounce(searchText, { wait: 500 });
 
   const api = useApi();
+  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () => {
+    const response = await api.getAlert({ alertId });
+    return response;
+  });
+  const alert = getOr(alertQueryResult.data, undefined);
   const suggestionsQueryResult = useQuery<string[]>(
     COPILOT_SUGGESTIONS(debouncedSearch),
     async () => {
@@ -155,7 +160,7 @@ export const SearchBar = (props: Props) => {
         >
           <BrainIcon height={16} />
         </button>
-        {isDemoMode && history.length === 0 && (
+        {history.length === 0 && (
           <>
             <div className={s.divider} />
             <button
@@ -168,6 +173,19 @@ export const SearchBar = (props: Props) => {
 
                 if (isDemoMode) {
                   SUGGESTIONS_ORDER.push(COPILOT_QUESTIONS.RECOMMENDATION);
+                }
+
+                // is any search id is present in the alert
+                const isSearchIdPresent = alert?.ruleHitMeta?.sanctionsDetails?.some(
+                  (detail) => !!detail.searchId,
+                );
+
+                if (isSearchIdPresent) {
+                  SUGGESTIONS_ORDER = [
+                    COPILOT_QUESTIONS.USER_DETAILS,
+                    COPILOT_QUESTIONS.OPEN_HITS,
+                    COPILOT_QUESTIONS.CLEARED_HITS,
+                  ];
                 }
 
                 searchMutation.mutate(SUGGESTIONS_ORDER.map((searchString) => ({ searchString })));

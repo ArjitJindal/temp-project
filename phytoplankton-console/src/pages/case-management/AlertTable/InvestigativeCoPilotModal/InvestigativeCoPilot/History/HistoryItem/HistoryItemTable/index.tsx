@@ -3,7 +3,6 @@ import { QuestionResponseTable } from '../../../types';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
-  STRING,
   NUMBER,
   FLOAT,
   LONG_TEXT,
@@ -15,8 +14,9 @@ import {
   TAG,
   MONEY_AMOUNT,
   MONEY_CURRENCY,
-  COUNTRY,
   FORENSICS_ENTITY_ID,
+  COUNTRIES_MULTIPLE,
+  STRING_MULTIPLE,
 } from '@/components/library/Table/standardDataTypes';
 import { ColumnDataType, CommonParams } from '@/components/library/Table/types';
 
@@ -25,6 +25,7 @@ interface Props {
   pageParams: CommonParams;
   onPageParams: (params: CommonParams) => void;
 }
+
 export const typeAssigner = (columnType: string | undefined) => {
   let type: ColumnDataType<any> = UNKNOWN;
   if (!columnType) {
@@ -33,7 +34,7 @@ export const typeAssigner = (columnType: string | undefined) => {
 
   switch (columnType) {
     case 'STRING': {
-      type = STRING;
+      type = STRING_MULTIPLE;
       break;
     }
     case 'NUMBER': {
@@ -81,7 +82,7 @@ export const typeAssigner = (columnType: string | undefined) => {
       break;
     }
     case 'COUNTRY': {
-      type = COUNTRY;
+      type = COUNTRIES_MULTIPLE;
       break;
     }
   }
@@ -132,6 +133,7 @@ export default function HistoryItemTable(props: Props) {
           title: header.name,
           key: header.name,
           type: typeAssigner(header.columnType),
+          ...(header.columnWidth ? { defaultWidth: header.columnWidth } : {}),
         });
       })}
       data={tableData}

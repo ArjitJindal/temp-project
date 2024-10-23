@@ -57,6 +57,7 @@ export type QuestionBase<V extends Variables> = {
   variableOptions: VariableOptions<V>
   defaults: (ctx: InvestigationContext) => V
   categories: QuestionCategory[]
+  skipCache?: boolean
 }
 
 export type Question<T extends Variables> =
@@ -75,12 +76,18 @@ export type AggregationQuestion<V extends Variables, D> = QuestionBase<V> & {
   ) => Promise<{ data: D; summary: string }>
 }
 
+export type ColumnDefinition = {
+  name: string
+  columnType: TableHeadersColumnTypeEnum
+  width?: number
+}
+
 export type TableQuestion<V extends Variables> = {
   type: 'TABLE'
-  headers: { name: string; columnType: TableHeadersColumnTypeEnum }[]
+  headers: ColumnDefinition[]
 } & AggregationQuestion<
   V & { pageSize?: PageSize; page?: number },
-  { items: (string | number | undefined)[][]; total: number }
+  { items: (string | string[] | number | undefined)[][]; total: number }
 >
 
 export type TimeseriesQuestion<V extends Variables> = {

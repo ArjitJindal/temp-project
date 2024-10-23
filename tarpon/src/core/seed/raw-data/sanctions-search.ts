@@ -1,7 +1,9 @@
 import { v4 as uuid4 } from 'uuid'
 import { compact } from 'lodash'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import {
   getRandomIntInclusive,
+  pickRandom,
   randomFloat,
   randomInt,
   randomSubsetOfSize,
@@ -18,8 +20,9 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsMatchType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
+import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 
-const COUNTRY_MAP: Record<string, string> = {
+const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
   RU: 'Russian Federation',
   TR: 'Turkey',
   PT: 'Portugal',
@@ -34,10 +37,148 @@ const COUNTRY_MAP: Record<string, string> = {
   CA: 'Canada',
   AU: 'Australia',
   ZA: 'South Africa',
+} as const
+
+const COUNTRY_CODES = Object.keys(COUNTRY_MAP) as CountryCode[]
+
+const commentGenerator = (hit: SanctionsHit) => {
+  const generateOpenComment = (
+    matchTypes: SanctionsMatchType[],
+    entityName: string,
+    countries: string[]
+  ) => {
+    const openingStatements = [
+      `Alert: ${entityName} requires human review due to the following match types: `,
+      `Human review needed for ${entityName} based on these identified match types: `,
+      `${entityName} has triggered a compliance alert. Match types include: `,
+      `Potential risk detected for ${entityName}. The following match types were found: `,
+      `Compliance check required for ${entityName}. Flagged for these match types: `,
+    ]
+
+    let comment = `${pickRandom(openingStatements)}${matchTypes
+      .map(humanizeAuto)
+      .join(', ')}. `
+
+    if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
+      comment += `The entity's name matches exactly with entries on our watchlist, particularly in the countries of operation (${countries.join(
+        ', '
+      )}). Further investigation is recommended to confirm the match. `
+    }
+    if (matchTypes.includes('name_fuzzy') || matchTypes.includes('aka_fuzzy')) {
+      comment += `There is a fuzzy match for the entity's name, suggesting potential similarities with known entities. This requires a detailed review to ensure accuracy. `
+    }
+    if (
+      matchTypes.includes('phonetic_name') ||
+      matchTypes.includes('phonetic_aka')
+    ) {
+      comment += `Phonetic similarities have been detected in the entity's name, indicating possible matches with known entities. A thorough assessment is necessary. `
+    }
+    if (
+      matchTypes.includes('equivalent_name') ||
+      matchTypes.includes('equivalent_aka')
+    ) {
+      comment += `The entity's name is equivalent to known aliases, which necessitates further verification to ensure compliance. `
+    }
+    if (matchTypes.includes('unknown')) {
+      comment += `The match type is unknown, requiring additional scrutiny to determine the nature of the match. `
+    }
+    if (matchTypes.includes('year_of_birth')) {
+      comment += `The year of birth matches with entries on our list, suggesting a potential match that needs further investigation. `
+    }
+    if (
+      matchTypes.includes('removed_personal_title') ||
+      matchTypes.includes('removed_personal_suffix')
+    ) {
+      comment += `Personal titles or suffixes have been removed, indicating a possible match that requires further review. `
+    }
+    if (
+      matchTypes.includes('removed_organisation_prefix') ||
+      matchTypes.includes('removed_organisation_suffix')
+    ) {
+      comment += `Organisation prefixes or suffixes have been removed, suggesting a potential match with known entities. `
+    }
+    if (matchTypes.includes('removed_clerical_mark')) {
+      comment += `Clerical marks have been removed, indicating a possible match that needs further verification. `
+    }
+    if (matchTypes.includes('name_variations_removal')) {
+      comment += `Variations in the entity's name have been detected, suggesting potential matches that require additional scrutiny. `
+    }
+
+    return comment
+  }
+
+  const generateClearedComment = (
+    matchTypes: SanctionsMatchType[],
+    entityName: string,
+    countries: string[]
+  ) => {
+    const clearingStatements = [
+      `${entityName} has been cleared after evaluation of the following match types: `,
+      `Compliance check completed: ${entityName} is cleared. Evaluated match types include: `,
+      `No further action required for ${entityName}. Cleared match types: `,
+      `${entityName} has passed the compliance review. Assessed match types: `,
+      `Verification complete: ${entityName} is approved. Examined match types: `,
+    ]
+
+    let comment = `${pickRandom(clearingStatements)}${matchTypes
+      .map(humanizeAuto)
+      .join(', ')}. `
+
+    if (matchTypes.includes('name_exact') || matchTypes.includes('aka_exact')) {
+      comment += `Exact name matches have been verified and cleared, confirming no issues with operations in ${countries.join(
+        ', '
+      )}. `
+    }
+    if (matchTypes.includes('name_fuzzy') || matchTypes.includes('aka_fuzzy')) {
+      comment += `Fuzzy name matches have been reviewed and found to be non-problematic, allowing continued operations. `
+    }
+    if (
+      matchTypes.includes('phonetic_name') ||
+      matchTypes.includes('phonetic_aka')
+    ) {
+      comment += `Phonetic matches have been assessed and cleared, ensuring compliance with all regulations. `
+    }
+    if (
+      matchTypes.includes('equivalent_name') ||
+      matchTypes.includes('equivalent_aka')
+    ) {
+      comment += `Equivalent names have been verified and found to be compliant with our standards. `
+    }
+    if (matchTypes.includes('unknown')) {
+      comment += `The unknown match type has been reviewed and deemed non-issue, allowing for continued operations. `
+    }
+    if (matchTypes.includes('year_of_birth')) {
+      comment += `Year of birth matches have been verified and cleared, confirming no issues. `
+    }
+    if (
+      matchTypes.includes('removed_personal_title') ||
+      matchTypes.includes('removed_personal_suffix')
+    ) {
+      comment += `Removed personal titles or suffixes have been reviewed and found to be non-problematic. `
+    }
+    if (
+      matchTypes.includes('removed_organisation_prefix') ||
+      matchTypes.includes('removed_organisation_suffix')
+    ) {
+      comment += `Removed organisation prefixes or suffixes have been assessed and cleared. `
+    }
+    if (matchTypes.includes('removed_clerical_mark')) {
+      comment += `Removed clerical marks have been verified and found to be compliant. `
+    }
+    if (matchTypes.includes('name_variations_removal')) {
+      comment += `Name variations have been reviewed and cleared, confirming no issues. `
+    }
+
+    return comment
+  }
+
+  const {
+    entity: { name, countries, matchTypes },
+  } = hit
+  return hit.status === 'OPEN'
+    ? generateOpenComment(matchTypes ?? [], name, countries ?? [])
+    : generateClearedComment(matchTypes ?? [], name, countries ?? [])
 }
-
-const COUNTRY_CODES = Object.keys(COUNTRY_MAP)
-
 export const sanctionsSearchHit = (
   searchId: string,
   username: string,
@@ -101,7 +242,7 @@ export const sanctionsSearchHit = (
     sanctionsSources,
     mediaSources,
     pepSources,
-    countries: selectedCountries,
+    countries: compact(selectedCountries),
     countryCodes: selectedCountryCodes,
     types: compact([
       sanctionsSources.length > 0 && 'sanction',
@@ -109,13 +250,16 @@ export const sanctionsSearchHit = (
       pepSources.length > 0 && 'pep',
     ]) as string[],
   }
+
+  const status = pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
+
   const hit: SanctionsHit = {
     provider: 'comply-advantage',
     searchId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
     sanctionsHitId: `SH-${randomInt(999999).toString().padStart(6, '0')}`,
-    status: 'OPEN',
+    status,
     hitContext: {
       userId,
       ruleInstanceId,
@@ -125,21 +269,34 @@ export const sanctionsSearchHit = (
     entity: {
       id: id,
       updatedAt: new Date().getTime(),
-      types: [
+      types: compact([
         sanctionsSources.length > 0 && 'sanction',
         mediaSources.length > 0 && 'adverse-media',
         pepSources.length > 0 && 'pep',
-      ].filter(Boolean) as string[],
+      ]),
       name,
       entityType,
       matchTypes,
       sanctionsSources,
       mediaSources,
       pepSources,
-      countries: selectedCountries,
+      countries: compact(selectedCountries),
+      gender: pickRandom(['male', 'female']),
+      countryCodes: selectedCountryCodes,
+      yearOfBirth: getRandomIntInclusive(1900, 2024).toString(),
+      nationality: randomSubsetOfSize(
+        COUNTRY_CODES,
+        getRandomIntInclusive(1, 3)
+      ) as CountryCode[],
     },
   }
-  return { hit, sanctionsEntity }
+
+  const comment = commentGenerator(hit)
+
+  return {
+    hit: { ...hit, comment },
+    sanctionsEntity,
+  }
 }
 
 export const businessSanctionsSearch = (
