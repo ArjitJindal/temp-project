@@ -62,10 +62,11 @@ import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { DEFAULT_CASE_AGGREGATES, generateCaseAggreates } from '@/utils/case'
 import {
   getContext,
+  hasFeature,
   tenantSettings,
   tenantTimezone,
 } from '@/core/utils/context'
-import { uniqObjects } from '@/utils/object'
+import { generateChecksum, uniqObjects } from '@/utils/object'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { Account } from '@/@types/openapi-internal/Account'
@@ -86,6 +87,7 @@ import { SanctionsSearchRepository } from '@/services/sanctions/repositories/san
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
 import { getDefaultProvider } from '@/services/sanctions/utils'
+import { acquireLock, releaseLock } from '@/utils/lock'
 
 type CaseSubject =
   | {
@@ -945,205 +947,216 @@ export class CaseCreationService {
     })
     const result: Case[] = []
     for (const { subject, direction } of hitSubjects) {
-      // keep only user related hits
-      let filteredHitRules = params.hitRules.filter((hitRule) => {
-        if (
-          !hitRule.ruleHitMeta?.hitDirections?.some(
-            (hitDirection) => hitDirection === direction
-          )
-        ) {
-          return false
-        }
-        const ruleInstance = ruleInstances.find(
-          (x) => x.id === hitRule.ruleInstanceId
-        )
-        if (ruleInstance == null) {
-          return false
-        }
-        // Create AlertFor Logic
-        let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
-        alertCreatedFor =
-          !alertCreatedFor || alertCreatedFor.length === 0
-            ? ['USER']
-            : alertCreatedFor
-
-        if (
-          !alertCreatedFor.includes('PAYMENT_DETAILS') &&
-          subject.type === 'PAYMENT'
-        ) {
-          return false
-        }
-
-        if (!alertCreatedFor.includes('USER') && subject.type === 'USER') {
-          return false
-        }
-
-        return true
-      })
-      if (filteredHitRules.length === 0) {
-        continue
+      if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {
+        await acquireLock(this.dynamoDb, generateChecksum(subject))
       }
 
-      const filteredTransaction = params.transaction
-        ? {
-            ...params.transaction,
-            hitRules: filteredHitRules,
-          }
-        : undefined
-
-      if (filteredTransaction) {
-        const casesHavingSameTransaction = await this.getCasesBySubject(
-          subject,
-          {
-            filterTransactionId: filteredTransaction.transactionId,
-            filterCaseType: 'SYSTEM',
-          }
-        )
-        filteredHitRules = filteredHitRules.filter((hitRule) => {
-          return casesHavingSameTransaction.every((c) =>
-            c.alerts?.every(
-              (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
+      try {
+        // keep only user related hits
+        let filteredHitRules = params.hitRules.filter((hitRule) => {
+          if (
+            !hitRule.ruleHitMeta?.hitDirections?.some(
+              (hitDirection) => hitDirection === direction
             )
+          ) {
+            return false
+          }
+          const ruleInstance = ruleInstances.find(
+            (x) => x.id === hitRule.ruleInstanceId
           )
+          if (ruleInstance == null) {
+            return false
+          }
+          // Create AlertFor Logic
+          let { alertCreatedFor } = ruleInstance.alertConfig ?? {}
+          alertCreatedFor =
+            !alertCreatedFor || alertCreatedFor.length === 0
+              ? ['USER']
+              : alertCreatedFor
+
+          if (
+            !alertCreatedFor.includes('PAYMENT_DETAILS') &&
+            subject.type === 'PAYMENT'
+          ) {
+            return false
+          }
+
+          if (!alertCreatedFor.includes('USER') && subject.type === 'USER') {
+            return false
+          }
+
+          return true
         })
         if (filteredHitRules.length === 0) {
           continue
         }
-      }
-      const now = Date.now()
-      const timezone = await tenantTimezone(this.tenantId)
-      const delayTimestamps = filteredHitRules.map((hitRule) => {
-        const ruleInstanceMatch: RuleInstance | undefined = ruleInstances.find(
-          (x) => hitRule.ruleInstanceId === x.id
-        )
-        const availableAfterTimestamp: number | undefined =
-          ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
-            ? calculateCaseAvailableDate(
-                now,
-                ruleInstanceMatch?.alertConfig?.alertCreationInterval,
-                timezone
+
+        const filteredTransaction = params.transaction
+          ? {
+              ...params.transaction,
+              hitRules: filteredHitRules,
+            }
+          : undefined
+
+        if (filteredTransaction) {
+          const casesHavingSameTransaction = await this.getCasesBySubject(
+            subject,
+            {
+              filterTransactionId: filteredTransaction.transactionId,
+              filterCaseType: 'SYSTEM',
+            }
+          )
+          filteredHitRules = filteredHitRules.filter((hitRule) => {
+            return casesHavingSameTransaction.every((c) =>
+              c.alerts?.every(
+                (alert) => alert.ruleInstanceId !== hitRule.ruleInstanceId
               )
-            : undefined
-
-        return {
-          hitRule,
-          ruleInstance: ruleInstanceMatch,
-          availableAfterTimestamp,
+            )
+          })
+          if (filteredHitRules.length === 0) {
+            continue
+          }
         }
-      })
-      const delayTimestampsGroups = Object.entries(
-        groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
-      ).map(([key, values]) => ({
-        availableAfterTimestamp:
-          key === 'undefined' ? undefined : parseInt(key),
-        hitRules: values.map((x) => x.hitRule).filter(notNullish),
-        ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
-      }))
+        const now = Date.now()
+        const timezone = await tenantTimezone(this.tenantId)
+        const delayTimestamps = filteredHitRules.map((hitRule) => {
+          const ruleInstanceMatch: RuleInstance | undefined =
+            ruleInstances.find((x) => hitRule.ruleInstanceId === x.id)
+          const availableAfterTimestamp: number | undefined =
+            ruleInstanceMatch?.alertConfig?.alertCreationInterval != null
+              ? calculateCaseAvailableDate(
+                  now,
+                  ruleInstanceMatch?.alertConfig?.alertCreationInterval,
+                  timezone
+                )
+              : undefined
 
-      const casesParams: SubjectCasesQueryParams = {
-        filterOutCaseStatus: 'CLOSED',
-        filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
-        filterAvailableAfterTimestamp: delayTimestampsGroups.map(
-          ({ availableAfterTimestamp }) => availableAfterTimestamp
-        ),
-        filterCaseType: 'SYSTEM',
-      }
-      const cases = await this.getCasesBySubject(subject, casesParams)
-
-      for (const {
-        availableAfterTimestamp,
-        ruleInstances,
-        hitRules,
-      } of delayTimestampsGroups) {
-        const existedCase = cases.find(
-          (x) =>
-            x.availableAfterTimestamp === availableAfterTimestamp ||
-            (x.availableAfterTimestamp == null &&
-              availableAfterTimestamp == null)
-        )
-
-        if (existedCase) {
-          logger.info(`Existed case for user`, {
-            existedCaseId: existedCase?.caseId ?? null,
-            existedCaseTransactionsIdsLength: (
-              existedCase?.caseTransactionsIds || []
-            ).length,
-          })
-
-          const unclosedAlerts =
-            existedCase.alerts?.filter((a) => a.alertStatus !== 'CLOSED') ?? []
-          const closedAlerts =
-            existedCase.alerts?.filter((a) => a.alertStatus === 'CLOSED') ?? []
-          const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
-            hitRules,
-            unclosedAlerts,
-            ruleInstances,
-            params.createdTimestamp,
-            filteredTransaction,
-            params.latestTransactionArrivalTimestamp,
-            params.checkListTemplates
-          )
-          const alerts = [...updatedAlerts, ...closedAlerts]
-          const caseTransactionsIds = uniq(
-            [
-              ...(existedCase.caseTransactionsIds ?? []),
-              filteredTransaction?.transactionId as string,
-            ].filter(Boolean)
-          )
-
-          logger.info('Update existed case with transaction')
-          result.push({
-            ...existedCase,
-            latestTransactionArrivalTimestamp:
-              params.latestTransactionArrivalTimestamp,
-            caseTransactionsIds,
-            caseAggregates: generateCaseAggreates(
-              [filteredTransaction as InternalTransaction],
-              existedCase.caseAggregates
-            ),
-            caseTransactionsCount: caseTransactionsIds.length,
-            priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
-            alerts,
-            updatedAt: now,
-          })
-        } else {
-          const newAlerts = await this.getAlertsForNewCase(
-            hitRules,
-            ruleInstances,
-            params.createdTimestamp,
-            params.latestTransactionArrivalTimestamp,
-            params.transaction,
-            params.checkListTemplates
-          )
-          logger.info('Create a new case for a transaction')
-          result.push({
-            ...(subject.type === 'USER'
-              ? this.getNewUserCase(direction, subject.user)
-              : this.getNewPaymentCase(direction, subject.paymentDetails)),
-            createdTimestamp:
-              availableAfterTimestamp ?? params.createdTimestamp,
-            latestTransactionArrivalTimestamp:
-              params.latestTransactionArrivalTimestamp,
-            caseAggregates: {
-              originPaymentMethods: filteredTransaction?.originPaymentDetails
-                ?.method
-                ? [filteredTransaction?.originPaymentDetails?.method]
-                : [],
-              destinationPaymentMethods: filteredTransaction
-                ?.destinationPaymentDetails?.method
-                ? [filteredTransaction?.destinationPaymentDetails?.method]
-                : [],
-              tags: uniqObjects(compact(filteredTransaction?.tags ?? [])),
-            },
-            caseTransactionsIds: filteredTransaction
-              ? [filteredTransaction.transactionId as string]
-              : [],
-            caseTransactionsCount: filteredTransaction ? 1 : 0,
-            priority: params.priority,
+          return {
+            hitRule,
+            ruleInstance: ruleInstanceMatch,
             availableAfterTimestamp,
-            alerts: newAlerts,
-            updatedAt: now,
-          })
+          }
+        })
+        const delayTimestampsGroups = Object.entries(
+          groupBy(delayTimestamps, (x) => x.availableAfterTimestamp)
+        ).map(([key, values]) => ({
+          availableAfterTimestamp:
+            key === 'undefined' ? undefined : parseInt(key),
+          hitRules: values.map((x) => x.hitRule).filter(notNullish),
+          ruleInstances: values.map((x) => x.ruleInstance).filter(notNullish),
+        }))
+
+        const casesParams: SubjectCasesQueryParams = {
+          filterOutCaseStatus: 'CLOSED',
+          filterMaxTransactions: MAX_TRANSACTION_IN_A_CASE,
+          filterAvailableAfterTimestamp: delayTimestampsGroups.map(
+            ({ availableAfterTimestamp }) => availableAfterTimestamp
+          ),
+          filterCaseType: 'SYSTEM',
+        }
+        const cases = await this.getCasesBySubject(subject, casesParams)
+
+        for (const {
+          availableAfterTimestamp,
+          ruleInstances,
+          hitRules,
+        } of delayTimestampsGroups) {
+          const existedCase = cases.find(
+            (x) =>
+              x.availableAfterTimestamp === availableAfterTimestamp ||
+              (x.availableAfterTimestamp == null &&
+                availableAfterTimestamp == null)
+          )
+
+          if (existedCase) {
+            logger.info(`Existed case for user`, {
+              existedCaseId: existedCase?.caseId ?? null,
+              existedCaseTransactionsIdsLength: (
+                existedCase?.caseTransactionsIds || []
+              ).length,
+            })
+
+            const unclosedAlerts =
+              existedCase.alerts?.filter((a) => a.alertStatus !== 'CLOSED') ??
+              []
+            const closedAlerts =
+              existedCase.alerts?.filter((a) => a.alertStatus === 'CLOSED') ??
+              []
+            const updatedAlerts = await this.getOrCreateAlertsForExistingCase(
+              hitRules,
+              unclosedAlerts,
+              ruleInstances,
+              params.createdTimestamp,
+              filteredTransaction,
+              params.latestTransactionArrivalTimestamp,
+              params.checkListTemplates
+            )
+            const alerts = [...updatedAlerts, ...closedAlerts]
+            const caseTransactionsIds = uniq(
+              [
+                ...(existedCase.caseTransactionsIds ?? []),
+                filteredTransaction?.transactionId as string,
+              ].filter(Boolean)
+            )
+
+            logger.info('Update existed case with transaction')
+            result.push({
+              ...existedCase,
+              latestTransactionArrivalTimestamp:
+                params.latestTransactionArrivalTimestamp,
+              caseTransactionsIds,
+              caseAggregates: generateCaseAggreates(
+                [filteredTransaction as InternalTransaction],
+                existedCase.caseAggregates
+              ),
+              caseTransactionsCount: caseTransactionsIds.length,
+              priority: minBy(alerts, 'priority')?.priority ?? last(PRIORITYS),
+              alerts,
+              updatedAt: now,
+            })
+          } else {
+            const newAlerts = await this.getAlertsForNewCase(
+              hitRules,
+              ruleInstances,
+              params.createdTimestamp,
+              params.latestTransactionArrivalTimestamp,
+              params.transaction,
+              params.checkListTemplates
+            )
+            logger.info('Create a new case for a transaction')
+            result.push({
+              ...(subject.type === 'USER'
+                ? this.getNewUserCase(direction, subject.user)
+                : this.getNewPaymentCase(direction, subject.paymentDetails)),
+              createdTimestamp:
+                availableAfterTimestamp ?? params.createdTimestamp,
+              latestTransactionArrivalTimestamp:
+                params.latestTransactionArrivalTimestamp,
+              caseAggregates: {
+                originPaymentMethods: filteredTransaction?.originPaymentDetails
+                  ?.method
+                  ? [filteredTransaction?.originPaymentDetails?.method]
+                  : [],
+                destinationPaymentMethods: filteredTransaction
+                  ?.destinationPaymentDetails?.method
+                  ? [filteredTransaction?.destinationPaymentDetails?.method]
+                  : [],
+                tags: uniqObjects(compact(filteredTransaction?.tags ?? [])),
+              },
+              caseTransactionsIds: filteredTransaction
+                ? [filteredTransaction.transactionId as string]
+                : [],
+              caseTransactionsCount: filteredTransaction ? 1 : 0,
+              priority: params.priority,
+              availableAfterTimestamp,
+              alerts: newAlerts,
+              updatedAt: now,
+            })
+          }
+        }
+      } finally {
+        if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {
+          await releaseLock(this.dynamoDb, generateChecksum(subject))
         }
       }
     }

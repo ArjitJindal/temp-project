@@ -10156,6 +10156,7 @@ components:
         - SALES_RISK_SCORING
         - STRICT_FILE_SECURITY
         - MANUAL_PRE_AGGREGATION
+        - CONCURRENT_DYNAMODB_CONSUMER
       description: ''
     ManagedRoleName:
       type: string

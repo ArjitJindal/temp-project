@@ -115,7 +115,7 @@ function getDynamoDbEntityMetadata(
     }
     return {
       type: 'KRS_VALUE',
-      entityId: `KRS_VALUE:${entityId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(ARS_KEY_IDENTIFIER)) {
     const entityId = entity.transactionId
@@ -124,7 +124,7 @@ function getDynamoDbEntityMetadata(
     }
     return {
       type: 'ARS_VALUE',
-      entityId: `ARS_VALUE:${entityId}`,
+      entityId: `TRANSACTION:${entityId}`,
     }
   } else if (partitionKeyId.includes(AVG_ARS_KEY_IDENTIFIER)) {
     const entityId = entity.userId
@@ -133,7 +133,7 @@ function getDynamoDbEntityMetadata(
     }
     return {
       type: 'AVG_ARS_VALUE',
-      entityId: `AVG_ARS_VALUE:${entityId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(DRS_KEY_IDENTIFIER)) {
     const entityId = entity.userId
@@ -142,7 +142,7 @@ function getDynamoDbEntityMetadata(
     }
     return {
       type: 'DRS_VALUE',
-      entityId: `DRS_VALUE:${entityId}`,
+      entityId: `USER:${entityId}`,
     }
   } else if (partitionKeyId.includes(RULE_INSTANCE_IDENTIFIER)) {
     const entityId = (entity as RuleInstance).id

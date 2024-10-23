@@ -3,6 +3,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { groupBy } from 'lodash'
 import {
+  hasFeature,
   initializeTenantContext,
   updateLogMetadata,
   withContext,
@@ -27,6 +28,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { acquireLock, releaseLock } from '@/utils/lock'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -216,7 +218,16 @@ export class StreamConsumerBuilder {
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
-          await this.handleDynamoDbUpdate(update, dbClients)
+          if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER') && update.entityId) {
+            await acquireLock(dbClients.dynamoDb, update.entityId)
+          }
+          try {
+            await this.handleDynamoDbUpdate(update, dbClients)
+          } finally {
+            if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER') && update.entityId) {
+              await releaseLock(dbClients.dynamoDb, update.entityId)
+            }
+          }
         }
         await this.handleDynamoDbUpdateGroup(groupUpdates, dbClients)
       })
@@ -419,7 +430,9 @@ export class StreamConsumerBuilder {
         .filter((update) => update.type && !update.NewImage?.ttl)
         .map((update) => ({
           MessageBody: JSON.stringify(update),
-          MessageGroupId: update.tenantId,
+          MessageGroupId: hasFeature('CONCURRENT_DYNAMODB_CONSUMER')
+            ? update.entityId
+            : update.tenantId,
           MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
         }))
       await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)

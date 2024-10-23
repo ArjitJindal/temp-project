@@ -130,6 +130,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Manual pre-aggregation',
     description: 'Enables manual pre-aggregation',
   },
+  CONCURRENT_DYNAMODB_CONSUMER: {
+    title: 'Concurrent DynamoDB consumer',
+    description: 'Enables concurrent DynamoDB consumer',
+  },
 };
 
 export default function SuperAdminPanel() {
