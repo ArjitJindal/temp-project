@@ -1035,14 +1035,15 @@ export class MongoDbTransactionRepository
     minMaxPipeline.push({ $match: query })
     minMaxPipeline.push({ $sort: { [sortField]: sortOrder } })
     minMaxPipeline.push(...paginatePipeline(params))
+    minMaxPipeline.push({ $sort: { timestamp: 1 } })
     minMaxPipeline.push({
       $group: {
         _id: '_id',
         oldest: {
-          $min: '$timestamp',
+          $first: '$timestamp',
         },
         youngest: {
-          $max: '$timestamp',
+          $last: '$timestamp',
         },
       },
     })

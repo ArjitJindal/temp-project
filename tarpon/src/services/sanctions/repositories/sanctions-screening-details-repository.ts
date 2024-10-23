@@ -297,6 +297,9 @@ export class SanctionsScreeningDetailsRepository {
         ),
       },
       {
+        $sort: { lastScreenedAt: -1 },
+      },
+      {
         $group: {
           _id: {
             name: '$name',
@@ -315,7 +318,7 @@ export class SanctionsScreeningDetailsRepository {
           isHits: { $addToSet: '$isHit' },
           isNews: { $addToSet: '$isNew' },
           searchId: { $last: '$searchId' },
-          lastScreenedAt: { $max: '$lastScreenedAt' },
+          lastScreenedAt: { $first: '$lastScreenedAt' },
         },
       },
       {
