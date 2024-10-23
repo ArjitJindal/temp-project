@@ -131,11 +131,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         async (usersChunk) => {
           await this.runUsersBatch(usersChunk, rules, ruleInstances)
         },
-        {
-          mongoBatchSize: 1000,
-          processBatchSize: 1000,
-          parallelProcessing: hasFeature('PNB'),
-        }
+        { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
       )
     }
   }
@@ -166,7 +162,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           await this.createCase(user, executedRules ?? [], hitRules)
         }
       },
-      { concurrency: CONCURRENT_BATCH_SIZE }
+      { concurrency: hasFeature('PNB') ? 1000 : CONCURRENT_BATCH_SIZE }
     )
   }
 
@@ -192,7 +188,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           )
         }
       },
-      { concurrency: CONCURRENT_BATCH_SIZE }
+      { concurrency: hasFeature('PNB') ? 1000 : CONCURRENT_BATCH_SIZE }
     )
   }
 
