@@ -263,18 +263,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'hammerhead-change-mongodb-consumer',
-    handlerName: 'hammerheadChangeMongoDbHandler',
-    expectedMaxSeconds: KINESIS_CONSUMER_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-  },
-  [StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME]: {
-    codePath: 'hammerhead-change-mongodb-consumer',
-    handlerName: 'hammerheadQueueHandler',
-    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME]: {
     codePath: 'console-api-sanctions',
     handlerName: 'sanctionsHandler',

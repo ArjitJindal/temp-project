@@ -77,9 +77,6 @@ export type Config = {
     TARPON_CHANGE_CAPTURE_LAMBDA?: {
       MEMORY_SIZE?: number
     }
-    HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?: {
-      MEMORY_SIZE?: number
-    }
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: number
       MEMORY_SIZE?: number

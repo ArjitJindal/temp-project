@@ -40,7 +40,6 @@ const allLambdas = Object.keys(LAMBDAS)
 
 const KINESIS_CONSUMER_LAMBDAS = [
   StackConstants.TARPON_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-  StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
 ]
 
 const API_GATEWAY_ALARM_NAMES = [
@@ -75,10 +74,6 @@ const KINESIS_STREAM_NAMES = [
   {
     streamId: StackConstants.TARPON_STREAM_ID,
     streamName: StackConstants.TARPON_STREAM_NAME,
-  },
-  {
-    streamId: StackConstants.HAMMERHEAD_STREAM_ID,
-    streamName: StackConstants.HAMMERHEAD_STREAM_NAME,
   },
 ]
 

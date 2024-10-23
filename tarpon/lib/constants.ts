@@ -231,8 +231,6 @@ export const StackConstants = {
   CONSOLE_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(
     'ConsoleApiThrottlingCount'
   ),
-  HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME:
-    getResourceNameForHammerhead('ChangeCaptureKinesisConsumer'),
   CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiRiskClassificationFunction'
   ),
@@ -253,8 +251,6 @@ export const StackConstants = {
   NUMBER_OF_RISK_LEVELS: 5,
   TARPON_STREAM_ID: 'tarponStream',
   TARPON_STREAM_NAME: 'tarponDynamoChangeCaptureStream',
-  HAMMERHEAD_STREAM_ID: 'hammerheadStream',
-  HAMMERHEAD_STREAM_NAME: 'hammerheadDynamoChangeCaptureStream',
   DATA_MIGRATION_CODEBUILD_PROJECT_NAME: 'DataMigration',
   CONSOLE_API_CASE_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiCaseFunction'
@@ -301,9 +297,6 @@ export const StackConstants = {
   TARPON_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'TarponQueueConsumerFunction'
   ),
-  HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
-    'HammerheadQueueConsumerFunction'
-  ),
   BATCH_JOB_STATE_MACHINE_NAME: getResourceNameForTarpon(
     'BatchJobStateMachine'
   ),
@@ -334,9 +327,6 @@ export const SQSQueues: {
   BATCH_JOB_QUEUE_NAME: { name: getResourceName('BatchJobQueue') },
   TARPON_QUEUE_NAME: {
     name: getResourceName('TarponQueue') + '.fifo',
-  },
-  HAMMERHEAD_QUEUE_NAME: {
-    name: getResourceName('HammerheadQueue') + '.fifo',
   },
   REQUEST_LOGGER_QUEUE_NAME: {
     name: getResourceName('RequestLoggerQueue'),

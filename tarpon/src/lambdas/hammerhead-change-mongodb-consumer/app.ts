@@ -1,14 +1,7 @@
-import path from 'path'
-import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { omit } from 'lodash'
-import { StackConstants } from '@lib/constants'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
-import {
-  DbClients,
-  StreamConsumerBuilder,
-} from '@/core/dynamodb/dynamodb-stream-consumer-builder'
+import { DbClients } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
@@ -17,7 +10,6 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { isDemoTenant } from '@/utils/tenant'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
-import { envIsNot } from '@/utils/env'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 
@@ -154,42 +146,3 @@ export async function avgArsScoreEventHandler(
   )
   logger.info(`AVG ARS Score Processed`)
 }
-
-if (envIsNot('test', 'local') && !process.env.HAMMERHEAD_QUEUE_URL) {
-  throw new Error('HAMMERHEAD_QUEUE_URL is not defined')
-}
-
-// TODO: Remove Hammerhead change handler in next PR so that we will eventually phase out hammerhead once we have 0 traffic on it
-const hammerheadBuilder = new StreamConsumerBuilder(
-  path.basename(__dirname) + '-hammerhead',
-  process.env.HAMMERHEAD_QUEUE_URL ?? '',
-  StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME
-)
-  .setConcurrentGroupBy((update) => update.entityId ?? '')
-  .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore, dbClients) =>
-    arsScoreEventHandler(tenantId, newArsScore, dbClients)
-  )
-  .setDrsScoreEventHandler((tenantId, oldDrsScore, newDrsScore, dbClients) =>
-    drsScoreEventHandler(tenantId, oldDrsScore, newDrsScore, dbClients)
-  )
-  .setKrsScoreEventHandler((tenantId, oldKrsScore, newKrsScore, dbClients) =>
-    krsScoreEventHandler(tenantId, newKrsScore, dbClients)
-  )
-  .setAvgArsScoreEventHandler((tenantId, oldAvgArs, newAvgArs, dbClients) =>
-    avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
-  )
-
-const hammerheadKinesisHandler = hammerheadBuilder.buildKinesisStreamHandler()
-const hammerheadSqsFanOutHandler = hammerheadBuilder.buildSqsFanOutHandler()
-
-export const hammerheadChangeMongoDbHandler = lambdaConsumer()(
-  async (event: KinesisStreamEvent) => {
-    await hammerheadKinesisHandler(event)
-  }
-)
-
-export const hammerheadQueueHandler = lambdaConsumer()(
-  async (event: SQSEvent) => {
-    await hammerheadSqsFanOutHandler(event)
-  }
-)

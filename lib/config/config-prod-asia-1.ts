@@ -77,7 +77,6 @@ export const config: Config = {
     TARPON_CHANGE_CAPTURE_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
-    HAMMERHEAD_CHANGE_CAPTURE_LAMBDA: {},
     TENANT_LAMBDA: {
       PROVISIONED_CONCURRENCY: 1,
     },

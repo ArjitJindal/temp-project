@@ -273,14 +273,6 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
       }
     )
-    const hammerheadQueue = this.createQueue(
-      SQSQueues.HAMMERHEAD_QUEUE_NAME.name,
-      {
-        fifo: true,
-        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
-        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
-      }
-    )
 
     /*
      * Kinesis Data Streams
@@ -288,13 +280,6 @@ export class CdkTarponStack extends cdk.Stack {
     const tarponStream = this.createKinesisStream(
       StackConstants.TARPON_STREAM_ID,
       StackConstants.TARPON_STREAM_NAME,
-      Duration.days(7)
-    )
-
-    // TODO: Remove Hammerhead stream in next PR Eventually phase out hammerhead stream after traffic is 0
-    const hammerheadStream = this.createKinesisStream(
-      StackConstants.HAMMERHEAD_STREAM_ID,
-      StackConstants.HAMMERHEAD_STREAM_NAME,
       Duration.days(7)
     )
 
@@ -494,7 +479,6 @@ export class CdkTarponStack extends cdk.Stack {
         AUDITLOG_TOPIC_ARN: auditLogTopic?.topicArn,
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
-        HAMMERHEAD_QUEUE_URL: hammerheadQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
       },
@@ -572,7 +556,6 @@ export class CdkTarponStack extends cdk.Stack {
             transactionAggregationQueue.queueArn,
             requestLoggerQueue.queueArn,
             notificationQueue.queueArn,
-            hammerheadQueue.queueArn,
             tarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
@@ -1120,35 +1103,6 @@ export class CdkTarponStack extends cdk.Stack {
         tarponChangeCaptureKinesisConsumerAlias,
         tarponStream,
         { startingPosition: StartingPosition.TRIM_HORIZON, batchSize: 200 }
-      )
-
-      /* Hammerhead Kinesis Change capture consumer */
-      const { alias: hammerheadChangeCaptureKinesisConsumerAlias } =
-        createFunction(this, lambdaExecutionRole, {
-          name: StackConstants.HAMMERHEAD_CHANGE_CAPTURE_KINESIS_CONSUMER_FUNCTION_NAME,
-          memorySize:
-            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE,
-        })
-
-      const { alias: hammerheadQueueConsumerAlias } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.HAMMERHEAD_QUEUE_CONSUMER_FUNCTION_NAME,
-          memorySize:
-            config.resource.HAMMERHEAD_CHANGE_CAPTURE_LAMBDA?.MEMORY_SIZE ??
-            1024,
-        }
-      )
-
-      hammerheadQueueConsumerAlias.addEventSource(
-        new SqsEventSource(hammerheadQueue)
-      )
-
-      this.createKinesisEventSource(
-        hammerheadChangeCaptureKinesisConsumerAlias,
-        hammerheadStream,
-        { startingPosition: StartingPosition.TRIM_HORIZON }
       )
 
       const { alias: tarponQueueConsumerAlias } = createFunction(
