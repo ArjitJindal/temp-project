@@ -407,9 +407,9 @@ export async function processCursorInBatch<T>(
     pendingEntities.push(entity)
     if (pendingEntities.length === processBatchSize) {
       await processBatch(pendingEntities)
+      i++
       pendingEntities = []
     }
-    i++
     if (debug) {
       logger.warn(
         `Processed batch #${i}, ${i * processBatchSize} entities processed`
