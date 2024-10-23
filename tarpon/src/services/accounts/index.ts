@@ -22,7 +22,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { sortBy } from 'lodash'
+import { memoize, sortBy } from 'lodash'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
@@ -610,13 +610,17 @@ export class AccountsService {
   }
 
   async getAccount(id: string): Promise<Account> {
+    return this.getAccountInternal(id)
+  }
+
+  private getAccountInternal = memoize(async (id: string): Promise<Account> => {
     const managementClient: ManagementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
     const userManager = managementClient.users
     const user = await auth0AsyncWrapper(() => userManager.get({ id }))
     return AccountsService.userToAccount(user)
-  }
+  })
 
   async getAccounts(ids: string[]): Promise<Account[]> {
     const managementClient: ManagementClient = await getAuth0ManagementClient(
