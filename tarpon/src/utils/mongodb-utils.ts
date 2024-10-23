@@ -409,11 +409,11 @@ export async function processCursorInBatch<T>(
       await processBatch(pendingEntities)
       i++
       pendingEntities = []
-    }
-    if (debug) {
-      logger.warn(
-        `Processed batch #${i}, ${i * processBatchSize} entities processed`
-      )
+      if (debug) {
+        logger.warn(
+          `Processed batch #${i}, ${i * processBatchSize} entities processed`
+        )
+      }
     }
   }
   if (pendingEntities.length > 0) {
