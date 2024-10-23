@@ -94,6 +94,8 @@ import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 
+class RebuildSyncRetryError extends Error {}
+
 export type TransactionLogicData = {
   type: 'TRANSACTION'
   transaction: TransactionWithRiskDetails
@@ -505,7 +507,23 @@ export class LogicEvaluator {
         ) => {
           return Promise.all(
             variableKeys.map(async ({ direction, aggVariable }) => {
-              return this.loadAggregationData(direction, aggVariable, data)
+              try {
+                return await this.loadAggregationData(
+                  direction,
+                  aggVariable,
+                  data
+                )
+              } catch (e) {
+                if (e instanceof RebuildSyncRetryError) {
+                  // try one more time after the rebuild is done
+                  return await this.loadAggregationData(
+                    direction,
+                    aggVariable,
+                    data
+                  )
+                }
+                throw e
+              }
             })
           )
         },
@@ -1381,15 +1399,36 @@ export class LogicEvaluator {
       if (!userKeyId) {
         return null
       }
-      aggData =
-        (await this.aggregationRepository.getUserLogicTimeAggregations(
+      const userAggData =
+        await this.aggregationRepository.getUserLogicTimeAggregations(
           userKeyId,
           aggregationVariable,
           afterTimestamp,
           beforeTimestamp,
           aggregationGranularity,
           newGroupValue
-        )) ?? []
+        )
+
+      if (!userAggData) {
+        if (
+          hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') &&
+          data.type === 'TRANSACTION'
+        ) {
+          await this.rebuildAggregationVariable(
+            aggregationVariable,
+            data.transaction.timestamp,
+            direction === 'origin'
+              ? data.transaction.originUserId
+              : data.transaction.destinationUserId,
+            direction === 'origin'
+              ? data.transaction.originPaymentDetails
+              : data.transaction.destinationPaymentDetails
+          )
+          throw new RebuildSyncRetryError()
+        }
+      }
+
+      aggData = userAggData ?? []
     } else {
       // If the mode is MONGODB, we rebuild the fresh aggregation data (without persisting the aggregation data)
       aggData = await this.loadAggregationDataFromRawData(

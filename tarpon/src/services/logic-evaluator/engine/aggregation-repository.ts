@@ -178,12 +178,12 @@ export class AggregationRepository {
     const result = await paginateQuery(this.dynamoDb, queryInput)
     const hasData = (result?.Items?.length || 0) > 0
     if (!hasData) {
-      const result = await paginateQuery(this.dynamoDb, {
-        ...queryInput,
-        Limit: 1,
-      })
-      const isRebuilt = Boolean(result.Count)
-      if (isRebuilt) {
+      const { ready } = await this.isAggregationVariableReady(
+        aggregationVariable,
+        userKeyId
+      )
+
+      if (ready) {
         // We return an empty array instead of undefined as it's not a cache miss.
         return []
       }

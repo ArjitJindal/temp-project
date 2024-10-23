@@ -365,11 +365,19 @@ export const AggregationVariableFormContent: React.FC<
         baseCurrency: settings.defaultValues?.currency ?? 'USD',
       }));
     }
+    if (!selectedArrayOfObjectsVar) {
+      setFormValues((prevValues) => ({
+        ...prevValues,
+        aggregationFilterFieldKey: undefined,
+        aggregationFilterFieldValue: undefined,
+      }));
+    }
   }, [
     setFormValues,
     baseCurrencyRequired,
     formValues.baseCurrency,
     settings.defaultValues?.currency,
+    selectedArrayOfObjectsVar,
   ]);
   const lastNEntitiesValidation = useMemo(() => {
     if (formValues.lastNEntities == null && !aggregateByLastN) {
