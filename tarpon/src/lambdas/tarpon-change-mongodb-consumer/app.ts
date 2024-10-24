@@ -238,9 +238,7 @@ export const transactionHandler = async (
     : undefined
 
   if (v8RiskScoringEnabled && !arsScore) {
-    logger.error(
-      `ARS score not found for transaction ${transaction.transactionId} for tenant ${tenantId}: Recalculating Async`
-    )
+    logger.error(`ARS score not found for transaction. Recalculating async`)
   }
 
   const existingTransaction = await transactionsRepo.getTransactionById(

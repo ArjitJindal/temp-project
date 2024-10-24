@@ -925,7 +925,7 @@ export class RulesEngineService {
     receiverUser: User | Business | null
   ): Promise<void> {
     let transactionEvents: TransactionEventWithRulesResult[] = []
-    if (this.tenantId.toLowerCase() === '0789ad73b8') {
+    if (this.tenantId === '0789ad73b8' || this.tenantId === 'pnb') {
       const events =
         await this.transactionEventRepository.getMongoTransactionEvents([
           updatedTransaction.transactionId,
