@@ -45,8 +45,8 @@ export class PnbBackfillArsBatchJobRunner extends BatchJobRunner {
       batchTransactions.push(transaction)
       if (batchTransactions.length === 10000) {
         await this.processBatch(batchTransactions, concurrency)
-        batchTransactions = []
         logger.warn(`Processed ${batchTransactions.length} transactions`)
+        batchTransactions = []
       }
     }
     await this.processBatch(batchTransactions, concurrency)

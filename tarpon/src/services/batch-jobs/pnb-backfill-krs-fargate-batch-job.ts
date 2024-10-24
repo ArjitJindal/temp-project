@@ -43,8 +43,8 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
       batchUsers.push(user)
       if (batchUsers.length === 10000) {
         await this.processBatch(batchUsers, concurrency)
-        batchUsers = []
         logger.warn(`Processed ${batchUsers.length} users`)
+        batchUsers = []
       }
     }
     await this.processBatch(batchUsers, concurrency)

@@ -22,7 +22,7 @@ import {
   getAllUsagePlans,
   USAGE_PLAN_REGEX,
 } from '@flagright/lib/tenants/usage-plans'
-import { flatten, isEmpty, uniq } from 'lodash'
+import { compact, flatten, isEmpty, uniq } from 'lodash'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
@@ -666,15 +666,12 @@ export class TenantService {
     const allTenantIds = (await mongoDb.listCollections().toArray())
       .filter(
         ({ name }) =>
-          !name.startsWith('migration') && name.endsWith('transactions')
+          !name.startsWith('migration') && name.endsWith('-transactions')
       )
-      .map((collection) => {
-        const collectionName = collection.name
-        const splittedNames = collectionName.split('-').slice(0, -1)
-        const tenantNameParts = splittedNames.filter((val) => val !== 'test')
-        return tenantNameParts.join('-')
-      })
-    return uniq(allTenantIds)
+      .map((collection) =>
+        collection.name.slice(0, collection.name.lastIndexOf('-'))
+      )
+    return uniq(compact(allTenantIds))
   }
 
   public async getTenantSettings(): Promise<TenantSettings> {
