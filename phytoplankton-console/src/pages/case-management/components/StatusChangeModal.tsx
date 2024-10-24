@@ -157,7 +157,7 @@ export default function StatusChangeModal(props: Props) {
         okProps={{
           isLoading: updateMutation.isLoading,
         }}
-        width="S"
+        width="M"
         okText="Confirm"
         onOk={() => {
           setAlwaysShowErrors(true);

@@ -200,6 +200,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
               />
               <div>
                 <MarkdownEditor
+                  editorHeight={250}
                   ref={editorRef}
                   initialValue={values.values.comment ? values.values.comment : ''}
                   onChange={(value) => {
