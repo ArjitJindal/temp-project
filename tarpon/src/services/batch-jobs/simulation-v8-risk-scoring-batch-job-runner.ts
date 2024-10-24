@@ -17,7 +17,7 @@ import { BatchJobRunner } from './batch-job-runner-base'
 import { traceable } from '@/core/xray'
 import { SimulationRiskFactorsV8BatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { SimulationV8RiskFactorsJob } from '@/@types/openapi-internal/SimulationV8RiskFactorsJob'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
@@ -32,11 +32,12 @@ import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { getUserName } from '@/utils/helpers'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 
 const MAX_USERS = 100000
 const CONCURRENCY = 200
 const SIMULATED_TRANSACTIONS_COUNT = 300000
-const PAGE_SIZE = 2000
+const BATCH_SIZE = 2000
 
 type SimulationRiskFactorsResultRaw = Record<
   RiskLevel,
@@ -50,12 +51,12 @@ type SegregatedRiskFactors = {
 
 @traceable
 export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
-  private tenantId?: string
-  private mongoDb?: MongoClient
-  private userRepository?: UserRepository
-  private transactionRepo?: MongoDbTransactionRepository
-  private riskScoringV8Service?: RiskScoringV8Service
-  private riskRepository?: RiskRepository
+  private tenantId!: string
+  private mongoDb!: MongoClient
+  private userRepository!: UserRepository
+  private transactionRepo!: MongoDbTransactionRepository
+  private riskScoringV8Service!: RiskScoringV8Service
+  private riskRepository!: RiskRepository
   private riskFactors?: SegregatedRiskFactors
   private job?: SimulationRiskFactorsV8BatchJob
   private dynamoDb?: DynamoDBClient
@@ -67,12 +68,13 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
   private totalUsers: number = 0
   private transactionsProcessedCount = 0
   private progress: number = 0
-  private progressQueue = new PQueue({ concurrency: 1 })
+  private usersProgressQueue = new PQueue({ concurrency: 1 })
+  private transactionsProgressQueue = new PQueue({ concurrency: 1 })
   private transactionIdsProcessed = new Map<
     string,
     { current: number; simulated: number }
   >()
-  private usersProcessed = 0
+
   protected async run(job: SimulationRiskFactorsV8BatchJob): Promise<void> {
     this.job = job
     const { tenantId, parameters } = job
@@ -221,134 +223,138 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       | FormulaSimpleAvg
       | FormulaLegacyMovingAvg
   ) {
-    let isNext = true
-    let next: string | undefined
-    while (isNext) {
-      let pageSize = PAGE_SIZE
-      if (this.usersProcessed + PAGE_SIZE > MAX_USERS) {
-        pageSize = MAX_USERS - this.usersProcessed
-        if (pageSize <= 0) {
-          break
+    const usersCursor = this.userRepository.sampleUsersCursor(this.totalUsers)
+    await processCursorInBatch(
+      usersCursor,
+      async (users) => {
+        await this.processUsersBatch(
+          users,
+          riskClassificationValues,
+          updateProgress,
+          riskScoringAlgorithm
+        )
+      },
+      {
+        processBatchSize: BATCH_SIZE,
+        mongoBatchSize: BATCH_SIZE,
+      }
+    )
+  }
+
+  private async processUsersBatch(
+    users: InternalUser[],
+    riskClassificationValues: RiskClassificationScore[],
+    updateProgress: (progress: number) => Promise<void>,
+    riskScoringAlgorithm?:
+      | FormulaCustom
+      | FormulaSimpleAvg
+      | FormulaLegacyMovingAvg
+  ) {
+    await pMap(
+      users ?? [],
+      async (user) => {
+        // processing user KRS
+        const [simulatedKrs, averageArs] = await Promise.all([
+          this.calculateUserKrs(user),
+          this.processUserTransactions(user),
+        ])
+
+        let simulatedDrs: number | undefined
+        if (
+          riskScoringAlgorithm?.type !== 'FORMULA_LEGACY_MOVING_AVG' // As we do not allow CRA simulation for legacy moving average
+        ) {
+          simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
+            algorithm: riskScoringAlgorithm ?? { type: 'FORMULA_SIMPLE_AVG' },
+            oldDrsScore: undefined,
+            krsScore: simulatedKrs,
+            avgArsScore: averageArs,
+            arsScore: undefined,
+          })
         }
-      }
-      const result = await this.userRepository?.getMongoUsersCursorsPaginate({
-        pageSize: PAGE_SIZE,
-        start: next,
-      })
-      next = result?.next
-      isNext = result?.hasNext ?? false
-      const users = result?.items
-      await pMap(
-        users ?? [],
-        async (user) => {
-          // processing user KRS
-          const [simulatedKrs, averageArs] = await Promise.all([
-            this.calculateUserKrs(user),
-            this.processUserTransactions(user),
-          ])
-
-          let simulatedDrs: number | undefined
-          if (
-            riskScoringAlgorithm?.type !== 'FORMULA_LEGACY_MOVING_AVG' // As we do not allow CRA simulation for legacy moving average
-          ) {
-            simulatedDrs = this.riskScoringV8Service?.calculateNewDrsScore({
-              algorithm: riskScoringAlgorithm ?? { type: 'FORMULA_SIMPLE_AVG' },
-              oldDrsScore: undefined,
-              krsScore: simulatedKrs,
-              avgArsScore: averageArs,
-              arsScore: undefined,
-            })
-          }
-          const currentKrs = user.krsScore?.krsScore ?? 0
-          const currentKrsRiskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            currentKrs
-          )
-          const currentDrs = user.drsScore?.drsScore ?? 0
-          const currentDrsRiskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            currentDrs
-          )
-          const simulatedKrsRiskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            simulatedKrs
-          )
-          const simulatedDrsRiskLevel = getRiskLevelFromScore(
-            riskClassificationValues,
-            simulatedDrs ?? 0
-          )
-          this.usersResultArray.push({
-            userId: user.userId,
-            type: 'RISK_FACTORS_V8',
-            userName: getUserName(user),
-            userType: user.type,
-            taskId: this.job?.parameters.taskId ?? '',
-            current: {
-              krs: {
-                riskScore: currentKrs,
-                riskLevel: currentKrsRiskLevel,
-              },
-              drs: {
-                riskScore: currentDrs,
-                riskLevel: currentDrsRiskLevel,
-              },
+        const currentKrs = user.krsScore?.krsScore ?? 0
+        const currentKrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          currentKrs
+        )
+        const currentDrs = user.drsScore?.drsScore ?? 0
+        const currentDrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          currentDrs
+        )
+        const simulatedKrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          simulatedKrs
+        )
+        const simulatedDrsRiskLevel = getRiskLevelFromScore(
+          riskClassificationValues,
+          simulatedDrs ?? 0
+        )
+        this.usersResultArray.push({
+          userId: user.userId,
+          type: 'RISK_FACTORS_V8',
+          userName: getUserName(user),
+          userType: user.type,
+          taskId: this.job?.parameters.taskId ?? '',
+          current: {
+            krs: {
+              riskScore: currentKrs,
+              riskLevel: currentKrsRiskLevel,
             },
-            simulated: {
-              krs: {
-                riskScore: simulatedKrs,
-                riskLevel: simulatedKrsRiskLevel,
-              },
-              drs: {
-                riskScore: simulatedDrs,
-                riskLevel: simulatedDrsRiskLevel,
-              },
+            drs: {
+              riskScore: currentDrs,
+              riskLevel: currentDrsRiskLevel,
             },
-          })
-          if (this.usersKrsResult?.[simulatedKrsRiskLevel]) {
-            this.usersKrsResult[simulatedKrsRiskLevel].simulated++
-          }
-          if (this.usersDrsResult?.[simulatedDrsRiskLevel]) {
-            this.usersDrsResult[simulatedDrsRiskLevel].simulated++
-          }
-          if (this.usersKrsResult?.[currentKrsRiskLevel]) {
-            this.usersKrsResult[currentKrsRiskLevel].current++
-          }
-          if (this.usersDrsResult?.[currentDrsRiskLevel]) {
-            this.usersDrsResult[currentDrsRiskLevel].current++
-          }
-          await this.progressQueue.add(async () => {
-            // Saving Transactions results here to avoid double counting transactions
-            const transactionData = Array.from(
-              this.transactionIdsProcessed.values()
-            ).slice(this.transactionsProcessedCount)
-            for (const transaction of transactionData) {
-              const simulatedLevel = getRiskLevelFromScore(
-                riskClassificationValues,
-                transaction.simulated
-              )
-              const currentLevel = getRiskLevelFromScore(
-                riskClassificationValues,
-                transaction.current
-              )
-              if (this.transactionsResult?.[currentLevel]) {
-                this.transactionsResult[currentLevel].current++
-              }
-              if (this.transactionsResult?.[simulatedLevel]) {
-                this.transactionsResult[simulatedLevel].simulated++
-              }
+          },
+          simulated: {
+            krs: {
+              riskScore: simulatedKrs,
+              riskLevel: simulatedKrsRiskLevel,
+            },
+            drs: {
+              riskScore: simulatedDrs,
+              riskLevel: simulatedDrsRiskLevel,
+            },
+          },
+        })
+        if (this.usersKrsResult?.[simulatedKrsRiskLevel]) {
+          this.usersKrsResult[simulatedKrsRiskLevel].simulated++
+        }
+        if (this.usersDrsResult?.[simulatedDrsRiskLevel]) {
+          this.usersDrsResult[simulatedDrsRiskLevel].simulated++
+        }
+        if (this.usersKrsResult?.[currentKrsRiskLevel]) {
+          this.usersKrsResult[currentKrsRiskLevel].current++
+        }
+        if (this.usersDrsResult?.[currentDrsRiskLevel]) {
+          this.usersDrsResult[currentDrsRiskLevel].current++
+        }
+        await this.usersProgressQueue.add(async () => {
+          // Saving Transactions results here to avoid double counting transactions
+          const transactionData = Array.from(
+            this.transactionIdsProcessed.values()
+          ).slice(this.transactionsProcessedCount)
+          for (const transaction of transactionData) {
+            const simulatedLevel = getRiskLevelFromScore(
+              riskClassificationValues,
+              transaction.simulated
+            )
+            const currentLevel = getRiskLevelFromScore(
+              riskClassificationValues,
+              transaction.current
+            )
+            if (this.transactionsResult?.[currentLevel]) {
+              this.transactionsResult[currentLevel].current++
             }
-            this.transactionsProcessedCount += transactionData.length
-            await this.updateStatusAndProgress(updateProgress)
-          })
-        },
-        { concurrency: CONCURRENCY }
-      )
-
-      if (!result?.hasNext) {
-        // Explicit exit to be sure that we don't enter an infinite loop
-        break
-      }
-    }
+            if (this.transactionsResult?.[simulatedLevel]) {
+              this.transactionsResult[simulatedLevel].simulated++
+            }
+          }
+          this.transactionsProcessedCount += transactionData.length
+          await this.updateStatusAndProgress(updateProgress)
+        })
+      },
+      { concurrency: CONCURRENCY }
+    )
   }
 
   private segregateAndFilterRiskFactors(
@@ -384,65 +390,69 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     )
   }
 
+  private async processUserTransactionsBatch(
+    transactions: InternalTransaction[],
+    updateArsStats: (ars: number) => void
+  ): Promise<void> {
+    await pMap(
+      transactions ?? [],
+      async (transaction) => {
+        const { originUserId, destinationUserId } = transaction
+        // Processing transactions using map to avoid double counting transactions
+        let score = 0
+        if (!this.transactionIdsProcessed.has(transaction.transactionId)) {
+          const senderUser = await this.userLoader(originUserId)
+          const receiverUser = await this.userLoader(destinationUserId)
+          const result =
+            await this.riskScoringV8Service?.calculateRiskFactorsScore(
+              {
+                transaction,
+                type: 'TRANSACTION',
+                transactionEvents: [],
+                senderUser,
+                receiverUser,
+              },
+              this.riskFactors?.transactions ?? []
+            )
+          score = result?.riskFactorsResult.score
+          this.transactionIdsProcessed.set(transaction.transactionId, {
+            current: transaction.arsScore?.arsScore ?? 0,
+            simulated: score ?? 0,
+          })
+        } else {
+          score =
+            this.transactionIdsProcessed.get(transaction.transactionId)
+              ?.simulated ?? 0
+        }
+        await this.transactionsProgressQueue.add(() => {
+          updateArsStats(score ?? 0)
+        })
+      },
+      { concurrency: CONCURRENCY }
+    )
+  }
+
   private async processUserTransactions(
     user: User | Business
   ): Promise<number> {
-    let next: string | undefined,
-      hasNext: boolean = true
-    let averageArs = 0
-    let transactionsCount = 0
-    while (hasNext) {
-      const transactionsResult =
-        await this.transactionRepo?.getTransactionsCursorPaginate({
-          filterUserId: user.userId,
-          start: next,
-          pageSize: PAGE_SIZE,
-        })
-      next = transactionsResult?.next
-      hasNext = transactionsResult?.hasNext ?? false
-      const transactions = transactionsResult?.items
-
-      await pMap(
-        transactions ?? [],
-        async (transaction) => {
-          const { originUserId, destinationUserId } = transaction
-          // Processing transactions using map to avoid double counting transactions
-          if (!this.transactionIdsProcessed.has(transaction.transactionId)) {
-            const senderUser = await this.userLoader(originUserId)
-            const receiverUser = await this.userLoader(destinationUserId)
-
-            const result =
-              await this.riskScoringV8Service?.calculateRiskFactorsScore(
-                {
-                  transaction,
-                  type: 'TRANSACTION',
-                  transactionEvents: [],
-                  senderUser,
-                  receiverUser,
-                },
-                this.riskFactors?.transactions ?? []
-              )
-            const score = result?.riskFactorsResult.score
-            this.transactionIdsProcessed.set(transaction.transactionId, {
-              current: transaction.arsScore?.arsScore ?? 0,
-              simulated: score ?? 0,
-            })
-            averageArs += score ?? 0
-          } else {
-            const score = this.transactionIdsProcessed.get(
-              transaction.transactionId
-            )?.simulated
-            averageArs += score ?? 0
-          }
-          transactionsCount++
-        },
-        { concurrency: CONCURRENCY }
-      )
-      if (!hasNext) {
-        break
-      }
+    const transactionsCursor = this.transactionRepo.getTransactionsCursor({
+      filterUserId: user.userId,
+    })
+    let totalArs = 0,
+      transactionsCount = 0
+    const updateArsStats = (ars: number) => {
+      totalArs += ars
+      transactionsCount++
     }
-    return averageArs / (transactionsCount == 0 ? 1 : transactionsCount)
+
+    await processCursorInBatch(
+      transactionsCursor,
+      async (transactions) => {
+        await this.processUserTransactionsBatch(transactions, updateArsStats)
+      },
+      { processBatchSize: BATCH_SIZE, mongoBatchSize: BATCH_SIZE }
+    )
+    return totalArs / (transactionsCount == 0 ? 1 : transactionsCount)
   }
 
   private async calculateUserKrs(user: User | Business): Promise<number> {
@@ -453,7 +463,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
     if (!riskFactors) {
       return 0
     }
-    const result = await this.riskScoringV8Service?.calculateRiskFactorsScore(
+    const result = await this.riskScoringV8Service.calculateRiskFactorsScore(
       {
         user,
         type: 'USER',
