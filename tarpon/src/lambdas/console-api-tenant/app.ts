@@ -234,11 +234,17 @@ export const tenantsHandler = lambdaApi()(
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
-          await sendBatchJobCommand({
-            type: 'ONGOING_SCREENING_USER_RULE',
-            tenantId: tenantId,
-          })
-
+          if (ctx.tenantId.toLowerCase().indexOf('pnb') > -1) {
+            await sendBatchJobCommand({
+              type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
+              tenantId,
+            })
+          } else {
+            await sendBatchJobCommand({
+              type: 'ONGOING_SCREENING_USER_RULE',
+              tenantId,
+            })
+          }
           break
         }
         case 'ONGOING_MERCHANT_MONITORING': {
