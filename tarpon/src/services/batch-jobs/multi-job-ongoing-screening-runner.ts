@@ -24,16 +24,26 @@ export class MultiJobOngoingScreeningRunner extends BatchJobRunner {
     const totalDocs = await users.estimatedDocumentCount()
     const batchSize = Math.ceil(totalDocs / NUMBER_OF_JOBS)
 
-    const froms = await Promise.all(
-      range(NUMBER_OF_JOBS).map(async (i): Promise<string> => {
-        return await users
-          .find({})
-          .sort({ userId: 1 })
-          .skip(i * batchSize)
-          .limit(1)
-          .toArray()[0].userId
-      })
-    )
+    const froms = (
+      await Promise.all(
+        range(NUMBER_OF_JOBS).map(async (i): Promise<string | null> => {
+          const user = (
+            await users
+              .find({})
+              .sort({ userId: 1 })
+              .skip(i * batchSize)
+              .limit(1)
+              .toArray()
+          )[0]
+
+          if (user) {
+            return user.userId
+          }
+          return null
+        })
+      )
+    ).filter((p): p is string => Boolean(p))
+
     for (let i = 0; i < froms.length - 1; i++) {
       const from = froms[i][0]
       const to = froms[i + 1][0]
