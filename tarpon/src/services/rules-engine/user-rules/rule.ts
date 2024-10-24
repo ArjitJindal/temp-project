@@ -33,6 +33,8 @@ export abstract class UserOngoingRule<P> extends Rule {
   rule: RuleModel
   riskLevelParameters: Record<RiskLevel, P>
   riskRepository: RiskRepository
+  from?: string
+  to?: string
 
   constructor(
     tenantId: string,
@@ -40,7 +42,9 @@ export abstract class UserOngoingRule<P> extends Rule {
     context: { ruleInstance: RuleInstance; rule: RuleModel },
     services: { riskRepository: RiskRepository },
     mongoDb: MongoClient,
-    dynamoDb: DynamoDBDocumentClient
+    dynamoDb: DynamoDBDocumentClient,
+    from?: string,
+    to?: string
   ) {
     super()
     this.tenantId = tenantId
@@ -51,6 +55,8 @@ export abstract class UserOngoingRule<P> extends Rule {
     this.dynamoDb = dynamoDb
     this.riskLevelParameters = params.riskLevelParameters
     this.riskRepository = services.riskRepository
+    this.from = from
+    this.to = to
   }
 
   public getUserOngoingVars(): UserOngoingVars<P> {
@@ -70,18 +76,36 @@ export abstract class UserOngoingRule<P> extends Rule {
 
     const hitUsersCursors = hasFeature('RISK_LEVELS')
       ? Object.entries(this.riskLevelParameters).map(([key, params]) => {
-          return usersCollection.aggregate<InternalUser>(
-            [
-              {
-                $match: getUsersFilterByRiskLevel(
-                  [key as RiskLevel],
-                  riskClassificationValues
-                ),
-              },
-              ...this.getHitRulePipline(params),
-            ],
-            { allowDiskUse: true }
-          )
+          let cursorMatchStage: any = {}
+          const from = this.from
+          const to = this.to
+
+          if (from) {
+            cursorMatchStage = {
+              userId: { $gte: from },
+            }
+          }
+
+          if (to) {
+            cursorMatchStage = {
+              userId: { ...cursorMatchStage.userId, $lte: to },
+            }
+          }
+
+          const pipeline = [
+            {
+              $match: getUsersFilterByRiskLevel(
+                [key as RiskLevel],
+                riskClassificationValues
+              ),
+            },
+            { $match: cursorMatchStage },
+            ...this.getHitRulePipline(params),
+          ]
+
+          return usersCollection.aggregate<InternalUser>(pipeline, {
+            allowDiskUse: true,
+          })
         })
       : [
           usersCollection.aggregate<InternalUser>(

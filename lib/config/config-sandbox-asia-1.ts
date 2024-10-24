@@ -17,10 +17,6 @@ export const config: Config = {
   },
   resource: {
     ...sandboxbaseConfig.resource,
-    FARGATE_BATCH_JOB_CONTAINER: {
-      CPU: 8192,
-      MEMORY_LIMIT: 16384,
-    },
     TRANSACTION_LAMBDA: {
       MAX_PROVISIONED_CONCURRENCY: 20,
       MIN_PROVISIONED_CONCURRENCY: 2,

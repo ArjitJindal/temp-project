@@ -777,13 +777,23 @@ export class UserRepository {
     }
   }
 
-  public getAllUsersCursor(): FindCursor<WithId<InternalUser>> {
+  public getAllUsersCursor(
+    from?: string,
+    to?: string
+  ): FindCursor<WithId<InternalUser>> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
 
-    return collection.find({})
+    let match: any = {}
+    if (from) {
+      match = { userId: { $gte: from } }
+    }
+    if (to) {
+      match = { userId: { ...match.userId, $lte: to } }
+    }
+    return collection.find(match)
   }
 
   public async getMongoBusinessUser(

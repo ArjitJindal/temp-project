@@ -25,6 +25,7 @@ import { SyncDatabases } from '@/services/batch-jobs/sync-mongo-indexes-job-runn
 import { TestFargateBatchJobRunner } from '@/services/batch-jobs/test-fargate-batch-job'
 import { FilesAiSummaryBatchJobRunner } from '@/services/batch-jobs/files-ai-summary-batch-job-runner'
 import { SanctionsDataFetchBatchJobRunner } from '@/services/batch-jobs/sanctions-data-fetch-job-runner'
+import { MultiJobOngoingScreeningRunner } from '@/services/batch-jobs/multi-job-ongoing-screening-runner'
 
 type JobRunnerMap = Record<BatchJobType, (jobId) => BatchJobRunner>
 
@@ -37,6 +38,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new GlobalRuleAggregationRebuildBatchJobRunner(jobId),
     ONGOING_SCREENING_USER_RULE: (jobId) =>
       new OngoingScreeningUserRuleBatchJobRunner(jobId),
+    MULTI_JOB_ONGOING_SCREENING_USER_RULE: (jobId) =>
+      new MultiJobOngoingScreeningRunner(jobId),
     PULSE_USERS_BACKFILL_RISK_SCORE: (jobId) =>
       new PulseDataLoadJobRunner(jobId),
     SIMULATION_BEACON: (jobId) => new SimulationBeaconBatchJobRunner(jobId),

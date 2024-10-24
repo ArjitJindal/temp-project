@@ -37,10 +37,17 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       for await (const tenant of tenantInfos) {
         const tenantId = tenant.tenant.id
 
-        await sendBatchJobCommand({
-          type: 'ONGOING_SCREENING_USER_RULE',
-          tenantId,
-        })
+        if (tenant.tenant.name.toLowerCase().indexOf('pnb') > -1) {
+          await sendBatchJobCommand({
+            type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
+            tenantId,
+          })
+        } else {
+          await sendBatchJobCommand({
+            type: 'ONGOING_SCREENING_USER_RULE',
+            tenantId,
+          })
+        }
       }
     }
   }

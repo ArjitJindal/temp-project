@@ -66,6 +66,13 @@ export type DemoModeDataLoadBatchJob = {
 export type OngoingScreeningUserRuleBatchJob = {
   type: 'ONGOING_SCREENING_USER_RULE'
   tenantId: string
+  from?: string // Optionally process a batch of users from this ID
+  to?: string // Optionally process a batch of users from to ID
+}
+/* Multi-job Sanctions Screening Rule */
+export type MultiJobOngoingScreeningUserRuleBatchJob = {
+  type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE'
+  tenantId: string
 }
 
 /* Pulse Backfill */
@@ -249,6 +256,7 @@ export type BatchJob =
   | SimulationRiskFactorsV8BatchJob
   | DemoModeDataLoadBatchJob
   | OngoingScreeningUserRuleBatchJob
+  | MultiJobOngoingScreeningUserRuleBatchJob
   | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob

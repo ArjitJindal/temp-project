@@ -290,7 +290,10 @@ export class RulesEngineService {
     return new RulesEngineService(tenantId, dynamoDb, logicEvaluator)
   }
 
-  public async verifyAllUsersRules(): Promise<
+  public async verifyAllUsersRules(
+    from?: string,
+    to?: string
+  ): Promise<
     Record<string, ConsumerUserMonitoringResult | BusinessUserMonitoringResult>
   > {
     const ruleInstances =
@@ -308,10 +311,13 @@ export class RulesEngineService {
             ruleInstanceId: ruleInstance.id,
           })
           logger.info(`Running rule`)
-          const result = await this.verifyAllUsersRule({
-            ruleInstance,
-            rule: rulesByIds[ruleInstance.ruleId ?? ''],
-          })
+          const result = await this.verifyAllUsersRule(
+            {
+              ruleInstance,
+              rule: rulesByIds[ruleInstance.ruleId ?? ''],
+            },
+            { from, to }
+          )
           logger.info(`Completed rule`)
           return result
         })
@@ -339,10 +345,16 @@ export class RulesEngineService {
     return groupedResults
   }
 
-  public async verifyAllUsersRule(data: {
-    ruleInstance: RuleInstance
-    rule: Rule
-  }) {
+  public async verifyAllUsersRule(
+    data: {
+      ruleInstance: RuleInstance
+      rule: Rule
+    },
+    cursors?: {
+      from?: string
+      to?: string
+    }
+  ) {
     const { ruleInstance, rule } = data
     const ruleClass =
       USER_ONGOING_SCREENING_RULES[rule.ruleImplementationName ?? '']
@@ -365,7 +377,9 @@ export class RulesEngineService {
         { ruleInstance, rule },
         { riskRepository: this.riskRepository },
         await getMongoDbClient(),
-        this.dynamoDb
+        this.dynamoDb,
+        cursors?.from,
+        cursors?.to
       )
 
       const result = await ruleClassInstance.computeRule()

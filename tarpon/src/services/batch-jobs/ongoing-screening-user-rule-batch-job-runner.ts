@@ -14,7 +14,7 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
-import { hasFeature, tenantHasFeature } from '@/core/utils/context'
+import { tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -69,14 +69,19 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   rulesEngineService?: RulesEngineService
   userRepository?: UserRepository
   caseCreationService?: CaseCreationService
+  from?: string
+  to?: string
 
-  public async init(tenantId: string) {
+  public async init(job: OngoingScreeningUserRuleBatchJob) {
+    const tenantId = job.tenantId
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
 
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+    this.from = job.from
+    this.to = job.to
     this.ruleRepository = new RuleRepository(tenantId, {
       dynamoDb,
     })
@@ -101,7 +106,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   }
 
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
-    await this.init(job.tenantId)
+    await this.init(job)
     const sequentialUserRuleInstances =
       await getOngoingScreeningUserRuleInstances(this.tenantId ?? '')
     const agglomerationUserRules =
@@ -124,7 +129,10 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId ?? '')
       )) ?? []
 
-    const usersCursor = this.userRepository?.getAllUsersCursor()
+    const usersCursor = this.userRepository?.getAllUsersCursor(
+      this.from,
+      this.to
+    )
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
         usersCursor,
@@ -146,7 +154,10 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     if (!this.rulesEngineService) {
       throw new Error('Rules Engine Service is not initialized')
     }
-    const data = await this.rulesEngineService.verifyAllUsersRules()
+    const data = await this.rulesEngineService.verifyAllUsersRules(
+      this.from,
+      this.to
+    )
     if (!this.userRepository) {
       throw new Error('User Repository is not initialized')
     }
@@ -162,7 +173,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           await this.createCase(user, executedRules ?? [], hitRules)
         }
       },
-      { concurrency: hasFeature('PNB') ? 1000 : CONCURRENT_BATCH_SIZE }
+      { concurrency: CONCURRENT_BATCH_SIZE }
     )
   }
 
@@ -188,7 +199,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           )
         }
       },
-      { concurrency: hasFeature('PNB') ? 1000 : CONCURRENT_BATCH_SIZE }
+      { concurrency: CONCURRENT_BATCH_SIZE }
     )
   }
 
