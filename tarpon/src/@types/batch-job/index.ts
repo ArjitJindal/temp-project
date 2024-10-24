@@ -227,6 +227,20 @@ export type PnbBackfillTransactions = {
     concurrency: number
   }
 }
+export type PnbBackfillKrs = {
+  type: 'PNB_BACKFILL_KRS'
+  tenantId: string
+  parameters: {
+    concurrency: number
+  }
+}
+export type PnbBackfillArs = {
+  type: 'PNB_BACKFILL_ARS'
+  tenantId: string
+  parameters: {
+    concurrency: number
+  }
+}
 
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
@@ -252,6 +266,8 @@ export type BatchJob =
   | BackFillAvgTrs
   | PnbBackfillEntities
   | PnbBackfillTransactions
+  | PnbBackfillKrs
+  | PnbBackfillArs
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

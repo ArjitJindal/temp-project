@@ -228,6 +228,7 @@ export class RiskService {
       this.tenantId,
       this.riskRepository
     )
+    this.riskRepository.getAllRiskFactors.cache.clear?.()
     return data
   }
 
@@ -242,6 +243,7 @@ export class RiskService {
   }
 
   async deleteRiskFactor(riskFactorId: string) {
+    this.riskRepository.getAllRiskFactors.cache.clear?.()
     return this.riskRepository.deleteRiskFactor(riskFactorId)
   }
 }

@@ -1115,7 +1115,9 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
       tarponQueueConsumerAlias.addEventSource(
-        new SqsEventSource(tarponEventQueue)
+        new SqsEventSource(tarponEventQueue, {
+          maxConcurrency: 100,
+        })
       )
     }
 

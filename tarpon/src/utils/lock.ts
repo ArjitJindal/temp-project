@@ -4,6 +4,7 @@ import {
   PutCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
+import { Mutex, MutexInterface } from 'async-mutex'
 import { backOff } from 'exponential-backoff'
 
 const DEFAULT_TTL = 600
@@ -63,4 +64,30 @@ export async function releaseLock(
       },
     })
   )
+}
+
+const inMemoryLocks = new Map<string, Mutex>()
+
+const getInMemoryLock = (lockKey: string): Mutex => {
+  if (!inMemoryLocks.has(lockKey)) {
+    inMemoryLocks.set(lockKey, new Mutex())
+  }
+  return inMemoryLocks.get(lockKey) as Mutex
+}
+export const acquireInMemoryLocks = async (
+  lockKeys: string[]
+): Promise<MutexInterface.Releaser> => {
+  lockKeys.sort()
+  const locks = lockKeys.map(getInMemoryLock)
+
+  const releaseLocks: MutexInterface.Releaser[] = []
+  for (const lock of locks) {
+    releaseLocks.push(await lock.acquire())
+  }
+
+  return () => {
+    for (const releaseLock of releaseLocks) {
+      releaseLock()
+    }
+  }
 }

@@ -14,7 +14,7 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, omit } from 'lodash'
+import { isEmpty, memoize, omit } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -885,45 +885,45 @@ export class RiskRepository {
     await this.removeRiskFactorFromUsedAggVar(riskFactorId)
   }
 
-  async getAllRiskFactors(
-    entityType?: RiskEntityType
-  ): Promise<Array<RiskFactor>> {
-    const keyConditionExpr = 'PartitionKeyID = :pk'
-    const expressionAttributeVals: Record<string, any> = {
-      ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
-    }
+  public getAllRiskFactors = memoize(
+    async (entityType?: RiskEntityType): Promise<Array<RiskFactor>> => {
+      const keyConditionExpr = 'PartitionKeyID = :pk'
+      const expressionAttributeVals: Record<string, any> = {
+        ':pk': DynamoDbKeys.RISK_FACTOR(this.tenantId).PartitionKeyID,
+      }
 
-    const expressionAttributeNames: Record<string, string> = {}
-    let filterExpression = ''
+      const expressionAttributeNames: Record<string, string> = {}
+      let filterExpression = ''
 
-    if (entityType) {
-      filterExpression = '#type = :entityType'
-      expressionAttributeVals[':entityType'] = entityType
-      expressionAttributeNames['#type'] = 'type'
-    }
+      if (entityType) {
+        filterExpression = '#type = :entityType'
+        expressionAttributeVals[':entityType'] = entityType
+        expressionAttributeNames['#type'] = 'type'
+      }
 
-    const queryInput: QueryCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      KeyConditionExpression: keyConditionExpr,
-      ExpressionAttributeValues: expressionAttributeVals,
-      ...(Object.keys(expressionAttributeNames).length > 0 && {
-        ExpressionAttributeNames: expressionAttributeNames,
-      }),
-      ...(filterExpression && { FilterExpression: filterExpression }),
-    }
+      const queryInput: QueryCommandInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        KeyConditionExpression: keyConditionExpr,
+        ExpressionAttributeValues: expressionAttributeVals,
+        ...(Object.keys(expressionAttributeNames).length > 0 && {
+          ExpressionAttributeNames: expressionAttributeNames,
+        }),
+        ...(filterExpression && { FilterExpression: filterExpression }),
+      }
 
-    try {
-      const result = await paginateQuery(this.dynamoDb, queryInput)
-      return result.Items && result.Items.length > 0
-        ? (result.Items.map((item) =>
-            omit(item, ['PartitionKeyID', 'SortKeyID'])
-          ) as RiskFactor[])
-        : []
-    } catch (e) {
-      logger.error(e)
-      return []
+      try {
+        const result = await paginateQuery(this.dynamoDb, queryInput)
+        return result.Items && result.Items.length > 0
+          ? (result.Items.map((item) =>
+              omit(item, ['PartitionKeyID', 'SortKeyID'])
+            ) as RiskFactor[])
+          : []
+      } catch (e) {
+        logger.error(e)
+        return []
+      }
     }
-  }
+  )
 }
 
 /** Kinesis Util */

@@ -2,7 +2,6 @@ import * as readline from 'readline'
 import { Readable } from 'stream'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import pMap from 'p-map'
-import { Mutex, MutexInterface } from 'async-mutex'
 import { compact } from 'lodash'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RulesEngineService } from '../rules-engine'
@@ -16,33 +15,7 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
-
-const userLocks = new Map<string, Mutex>()
-
-const getUserLock = (userId): Mutex => {
-  if (!userLocks.has(userId)) {
-    userLocks.set(userId, new Mutex())
-  }
-  return userLocks.get(userId) as Mutex
-}
-const lockUsers = async (
-  userIds: string[]
-): Promise<MutexInterface.Releaser> => {
-  userIds.sort()
-  const locks = userIds.map(getUserLock)
-
-  const releaseLocks: MutexInterface.Releaser[] = []
-  for (const lock of locks) {
-    releaseLocks.push(await lock.acquire())
-  }
-
-  return () => {
-    for (const releaseLock of releaseLocks) {
-      releaseLock()
-    }
-  }
-}
-
+import { acquireInMemoryLocks } from '@/utils/lock'
 export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
   private rulesEngine!: RulesEngineService
   private progressKey!: string
@@ -109,25 +82,20 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
     await pMap(
       batchTransactions,
       async (transaction, index) => {
-        const releaseLocks = await lockUsers(
+        const releaseLocks = await acquireInMemoryLocks(
           compact([transaction.originUserId, transaction.destinationUserId])
         )
-        try {
-          await this.rulesEngine.verifyTransaction(
-            {
-              ...transaction,
-            },
-            {
-              validateTransactionId: false,
-              validateDestinationUserId: false,
-              validateOriginUserId: false,
-            }
-          )
-        } catch (e) {
-          logger.error(e)
-        } finally {
-          releaseLocks()
-        }
+        await this.rulesEngine.verifyTransaction(
+          {
+            ...transaction,
+          },
+          {
+            validateTransactionId: false,
+            validateDestinationUserId: false,
+            validateOriginUserId: false,
+          }
+        )
+        releaseLocks()
         if (index % 100 === 0) {
           await updateMigrationLastCompletedTimestamp(
             this.progressKey,
