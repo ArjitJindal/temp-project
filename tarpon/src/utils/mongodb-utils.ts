@@ -1,6 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import {
   AggregationCursor,
+  ClientSession,
   Collection,
   Db,
   Document,
@@ -370,14 +371,14 @@ export async function syncIndexes<T>(
 }
 
 export const withTransaction = async <T = void>(
-  callback: () => Promise<T>
+  callback: (session: ClientSession) => Promise<T>
 ): Promise<T> => {
   const mongoDb = await getMongoDbClient()
   const session = mongoDb.startSession()
 
   session.startTransaction()
   try {
-    const result = await callback()
+    const result = await callback(session)
     await session.commitTransaction()
     return result
   } catch (error) {
@@ -458,7 +459,11 @@ export async function internalMongoUpdateOne<T extends Document>(
   collectionName: string,
   filter: Filter<T>,
   update: Document,
-  options?: { arrayFilters?: Document[]; returnFullDocument?: boolean }
+  options?: {
+    arrayFilters?: Document[]
+    returnFullDocument?: boolean
+    session?: ClientSession
+  }
 ): Promise<ModifyResult<T>> {
   const db = mongoClient.db()
   const collection = db.collection<T>(collectionName)
@@ -467,6 +472,7 @@ export async function internalMongoUpdateOne<T extends Document>(
     upsert: true,
     ...(options?.arrayFilters ? { arrayFilters: options.arrayFilters } : {}),
     ...(options?.returnFullDocument ? {} : { projection: { _id: 1 } }),
+    ...(options?.session ? { session: options.session } : {}),
   })
 
   const result = data.value as { _id: ObjectId }

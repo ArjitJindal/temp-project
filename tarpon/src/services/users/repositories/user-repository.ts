@@ -6,6 +6,7 @@ import {
   WithId,
   AggregationCursor,
   UpdateFilter,
+  ClientSession,
 } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
@@ -1021,7 +1022,8 @@ export class UserRepository {
   }
 
   public async saveUserMongo(
-    user: InternalBusinessUser | InternalConsumerUser
+    user: InternalBusinessUser | InternalConsumerUser,
+    options?: { session?: ClientSession }
   ): Promise<InternalUser> {
     const userToSave: InternalBusinessUser | InternalConsumerUser = {
       ...user,
@@ -1033,7 +1035,8 @@ export class UserRepository {
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       { userId: user.userId },
-      { $set: userToSave }
+      { $set: userToSave },
+      { session: options?.session }
     )
 
     return user as InternalUser

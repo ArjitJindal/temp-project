@@ -357,7 +357,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           'originUserId',
           'status',
           'tags.key',
-          'transactionId',
           'transactionState',
           'type',
           'hitRules.ruleInstanceId',
@@ -382,10 +381,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { destinationUserId: 1, timestamp: -1, _id: -1 },
           { arsScore: 1 },
           { alertIds: 1, timestamp: -1, _id: -1 },
-          {
-            timestamp: 1,
-            _id: 1,
-          }
+          { timestamp: 1, _id: 1 }
         )
 
         // NOTE: These indexes are for running the rules in the Simulation mode
@@ -403,14 +399,21 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             ),
           })
         }
-        return txnIndexes.map((index) => ({ index }))
+
+        const uniqueTransactionIdIndex = {
+          index: { transactionId: 1 },
+          unique: true,
+        }
+
+        return txnIndexes
+          .map((index) => ({ index }))
+          .concat(uniqueTransactionIdIndex)
       },
     },
     [USERS_COLLECTION(tenantId)]: {
       getIndexes: () => {
         const indexes1: Array<{ index: { [key: string]: any } }> = [
           { type: 1 },
-          { userId: 1 },
           { isMonitoringEnabled: 1 },
           { 'userDetails.name.firstName': 1 },
           { 'userDetails.name.middleName': 1 },
@@ -431,6 +434,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ].map((index) => ({
           index: { ...index, createdTimestamp: -1, _id: 1 },
         }))
+
         const indexes2 = [
           { createdTimestamp: 1 },
           { updatedAt: 1 },
@@ -438,7 +442,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ].map((index) => ({
           index: { ...index, _id: 1 },
         }))
-        return [...indexes1, ...indexes2]
+
+        const uniqueUserIdIndex = { index: { userId: 1 }, unique: true }
+
+        return [...indexes1, ...indexes2, uniqueUserIdIndex]
       },
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {

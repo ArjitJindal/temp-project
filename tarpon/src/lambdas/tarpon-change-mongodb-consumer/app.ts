@@ -49,7 +49,6 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { envIsNot } from '@/utils/env'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { internalMongoReplace } from '@/utils/mongodb-utils'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
@@ -471,10 +470,6 @@ async function ruleStatsHandler(
         .map((r) => r.ruleInstanceId),
     },
   ])
-}
-
-if (envIsNot('test', 'local') && !process.env.TARPON_QUEUE_URL) {
-  throw new Error('TARPON_QUEUE_URL is not defined')
 }
 
 const tarponBuilder = new StreamConsumerBuilder(

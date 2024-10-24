@@ -1,5 +1,6 @@
 import {
   AggregationCursor,
+  ClientSession,
   Document,
   Filter,
   FindCursor,
@@ -109,7 +110,8 @@ export class MongoDbTransactionRepository
 
   async addTransactionToMongo(
     transaction: InternalTransaction,
-    arsScore?: ArsScore
+    arsScore?: ArsScore,
+    options?: { session?: ClientSession }
   ): Promise<InternalTransaction> {
     const internalTransaction: InternalTransaction = {
       ...transaction,
@@ -147,7 +149,8 @@ export class MongoDbTransactionRepository
       this.mongoDb,
       TRANSACTIONS_COLLECTION(this.tenantId),
       { transactionId: transaction.transactionId },
-      { $set: payload }
+      { $set: payload },
+      { session: options?.session }
     )
 
     await this.updateUniqueTransactionTags(transaction)

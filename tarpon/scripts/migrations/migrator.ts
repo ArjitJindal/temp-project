@@ -77,6 +77,8 @@ function initializeEnvVars() {
   const batchJobQueueName: string = SQSQueues.BATCH_JOB_QUEUE_NAME.name
   const asyncRuleQueueName: string = SQSQueues.ASYNC_RULE_QUEUE_NAME.name
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
+  const mongoDbConsumerQueueName: string =
+    SQSQueues.MONGO_DB_CONSUMER_QUEUE_NAME.name
   process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
   process.env.AUDITLOG_TOPIC_ARN = `arn:aws:sns:${process.env.AWS_REGION}:${process.env.AWS_ACCOUNT}:${auditLogTopicName}`
   process.env.ASYNC_RULE_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${asyncRuleQueueName}`
@@ -84,6 +86,7 @@ function initializeEnvVars() {
     StackConstants.S3_SHARED_ASSETS_PREFIX,
     getConfig()
   )
+  process.env.MONGO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoDbConsumerQueueName}`
 }
 
 async function main() {
