@@ -45,8 +45,8 @@ export class MultiJobOngoingScreeningRunner extends BatchJobRunner {
     ).filter((p): p is string => Boolean(p))
 
     for (let i = 0; i < froms.length - 1; i++) {
-      const from = froms[i][0]
-      const to = froms[i + 1][0]
+      const from = froms[i]
+      const to = froms[i + 1]
 
       await sendBatchJobCommand({
         type: 'ONGOING_SCREENING_USER_RULE',
