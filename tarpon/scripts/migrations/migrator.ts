@@ -118,7 +118,7 @@ async function main() {
       ? 'migrations-pre-deployment'
       : 'migrations-post-deployment'
 
-  if (migrationType === 'PRE_DEPLOYMENT') {
+  if (!isMigrationFileCreation && migrationType === 'PRE_DEPLOYMENT') {
     console.info('Syncing clickhouse tables before handling migrations')
     // Sync clickhouse tables before handling migrations
     await syncClickhouseTables()
