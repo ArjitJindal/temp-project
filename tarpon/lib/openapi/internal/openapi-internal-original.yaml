@@ -7875,7 +7875,7 @@ components:
               type: array
               items:
                 type: string
-              maxItems: 3
+              maxItems: 5
             defaultAlertStatus:
               type: string
               enum:
