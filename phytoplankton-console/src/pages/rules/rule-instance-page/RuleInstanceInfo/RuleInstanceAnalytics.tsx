@@ -147,12 +147,14 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                   {
                     title: isShadowRule
                       ? 'Estimated avg investigation time'
-                      : 'Avg investigation time',
+                      : 'Avg alert investigation time',
                     value: map(dataRes, (data) =>
                       data.usersHit > 0 && data.investigationTime
                         ? formatDuration(getDuration(data.investigationTime))
                         : '-',
                     ),
+                    toolTipInfo:
+                      "Alert investigation time is calculated only when the alert status is changed to 'In progress'",
                   },
                 ]}
               />
