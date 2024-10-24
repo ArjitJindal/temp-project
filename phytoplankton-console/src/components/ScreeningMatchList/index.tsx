@@ -77,14 +77,10 @@ export default function ScreeningMatchList(props: Props) {
   const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
     details[0]?.searchId,
   );
-  const selectedSanctionsDetailsItem = details.filter((x) => x.searchId === sanctionsDetailsId);
 
   // Data requests
-  const openHitsQueryResults = useSanctionHitsQuery(selectedSanctionsDetailsItem, openTableParams);
-  const clearedHitsQueryResults = useSanctionHitsQuery(
-    selectedSanctionsDetailsItem,
-    clearedTableParams,
-  );
+  const openHitsQueryResults = useSanctionHitsQuery(openTableParams, alertId);
+  const clearedHitsQueryResults = useSanctionHitsQuery(clearedTableParams, alertId);
 
   const openHitsCount = getOr(
     map(openHitsQueryResults.data, (x) => x.count),
@@ -226,18 +222,18 @@ export default function ScreeningMatchList(props: Props) {
   Helpers
  */
 function useSanctionHitsQuery(
-  sanctionDetails: SanctionsDetails[],
   params: AllParams<TableSearchParams>,
+  alertId?: string,
 ): QueryResult<CursorPaginatedData<SanctionsHit>> {
   const api = useApi();
   const filters = {
-    filterSearchId: sanctionDetails.map(({ searchId }) => searchId),
+    alertId: alertId,
     filterStatus: params.statuses ?? ['OPEN' as const],
   };
   return useCursorQuery(
     SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
     async (paginationParams): Promise<SanctionsHitListResponse> => {
-      if (filters.filterSearchId.length === 0) {
+      if (!filters.alertId) {
         return {
           items: [],
           next: '',

@@ -5899,6 +5899,10 @@ paths:
             type: string
           in: query
           name: sortField
+        - schema:
+            type: string
+          in: query
+          name: alertId
       operationId: search-sanctions-hits
   /sanctions/whitelist:
     get:

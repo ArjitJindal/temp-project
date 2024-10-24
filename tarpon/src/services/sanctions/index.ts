@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid'
 import { BadRequest } from 'http-errors'
 import { isEmpty, round, startCase } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
+import { AlertsRepository } from '../alerts/repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
 import {
   SanctionsWhitelistEntityRepository,
@@ -51,6 +52,7 @@ import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provi
 import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comply-advantage-provider'
 import { getDefaultProvider } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -424,8 +426,23 @@ export class SanctionsService {
       filterHitIds?: string[]
       filterSearchId?: string[]
       filterStatus?: SanctionsHitStatus[]
+      alertId?: string
     } & CursorPaginationParams
   ): Promise<SanctionsHitListResponse> {
+    if (params.alertId) {
+      const alertsRepository = new AlertsRepository(this.tenantId, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      })
+      const alert = await alertsRepository.getAlertById(params.alertId)
+      if (alert) {
+        params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails?.flatMap(
+          ({ sanctionHitIds }) => sanctionHitIds ?? []
+        )
+        params.filterSearchId = undefined
+      }
+    }
+
     if (isEmpty(params.filterHitIds) && isEmpty(params.filterSearchId)) {
       throw new BadRequest('Search ID or Hit IDs must be provided')
     }
