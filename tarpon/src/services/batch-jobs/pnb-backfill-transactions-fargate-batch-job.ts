@@ -1,13 +1,9 @@
-import * as readline from 'readline'
-import { Readable } from 'stream'
-import { GetObjectCommand } from '@aws-sdk/client-s3'
 import pMap from 'p-map'
 import { compact } from 'lodash'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RulesEngineService } from '../rules-engine'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillTransactions } from '@/@types/batch-job'
-import { getS3Client } from '@/utils/s3'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
@@ -16,13 +12,17 @@ import {
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
 import { acquireInMemoryLocks } from '@/utils/lock'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { pickKnownEntityFields } from '@/utils/object'
 export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
   private rulesEngine!: RulesEngineService
   private progressKey!: string
   protected async run(job: PnbBackfillTransactions): Promise<void> {
     const { tenantId } = job
-    const { importFileS3Key, concurrency = 50 } = job.parameters
-
+    const { startTimestamp, concurrency = 50 } = job.parameters
+    const db = await getMongoDbClientDb()
     const dynamoDb = getDynamoDbClient()
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.rulesEngine = new RulesEngineService(
@@ -31,42 +31,26 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
       logicEvaluator
     )
 
-    const s3 = getS3Client()
-    const { Body } = await s3.send(
-      new GetObjectCommand({
-        Bucket: process.env.IMPORT_BUCKET,
-        Key: importFileS3Key,
+    this.progressKey = `backfill-transactions-${tenantId}`
+    const lastCompletedTimestamp =
+      (await getMigrationLastCompletedTimestamp(this.progressKey)) ?? 0
+    const cursor = db
+      .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
+      .find({
+        timestamp: { $gt: Math.max(lastCompletedTimestamp, startTimestamp) },
       })
-    )
-    const stream = Body instanceof Readable ? Body : Readable.from(Body as any)
-    const rl = readline.createInterface({
-      input: stream,
-      crlfDelay: Infinity,
-    })
-
-    this.progressKey = `pnb-backfill-transactions-${importFileS3Key}`
-    const lastCompletedTimestamp = await getMigrationLastCompletedTimestamp(
-      this.progressKey
-    )
+      .sort({ timestamp: 1 })
 
     const start = Date.now()
     logger.warn('Starting to process transactions')
 
-    let batchTransactions: Transaction[] = []
-    for await (const line of rl) {
-      const transaction = JSON.parse(line) as Transaction
-      if (
-        lastCompletedTimestamp &&
-        transaction.timestamp &&
-        transaction.timestamp < lastCompletedTimestamp
-      ) {
-        continue
-      }
+    let batchTransactions: InternalTransaction[] = []
+    for await (const transaction of cursor) {
       batchTransactions.push(transaction)
       if (batchTransactions.length === 10000) {
         await this.processBatch(batchTransactions, concurrency)
-        batchTransactions = []
         logger.warn(`Processed ${batchTransactions.length} transactions`)
+        batchTransactions = []
       }
     }
     await this.processBatch(batchTransactions, concurrency)
@@ -76,12 +60,16 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
   }
 
   private async processBatch(
-    batchTransactions: Transaction[],
+    batchTransactions: InternalTransaction[],
     concurrency: number
   ) {
     await pMap(
       batchTransactions,
-      async (transaction, index) => {
+      async (internalTransaction, index) => {
+        const transaction = pickKnownEntityFields(
+          internalTransaction,
+          Transaction
+        )
         const releaseLocks = await acquireInMemoryLocks(
           compact([transaction.originUserId, transaction.destinationUserId])
         )

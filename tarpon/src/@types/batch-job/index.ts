@@ -223,7 +223,7 @@ export type PnbBackfillTransactions = {
   type: 'PNB_BACKFILL_TRANSACTIONS'
   tenantId: string
   parameters: {
-    importFileS3Key: string
+    startTimestamp: number
     concurrency: number
   }
 }
