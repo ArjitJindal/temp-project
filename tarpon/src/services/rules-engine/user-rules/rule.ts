@@ -99,6 +99,11 @@ export abstract class UserOngoingRule<P> extends Rule {
                 riskClassificationValues
               ),
             },
+            {
+              $sort: {
+                userId: 1,
+              },
+            },
             { $match: cursorMatchStage },
             ...this.getHitRulePipline(params),
           ]

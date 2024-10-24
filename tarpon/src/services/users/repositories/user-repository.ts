@@ -793,7 +793,7 @@ export class UserRepository {
     if (to) {
       match = { userId: { ...match.userId, $lte: to } }
     }
-    return collection.find(match)
+    return collection.find(match, { sort: { userId: 1 } })
   }
 
   public async getMongoBusinessUser(

@@ -129,6 +129,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId ?? '')
       )) ?? []
 
+    logger.warn(`Processing users from ${this.from} to ${this.to}`)
     const usersCursor = this.userRepository?.getAllUsersCursor(
       this.from,
       this.to

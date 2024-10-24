@@ -7,7 +7,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
-const NUMBER_OF_JOBS = 30
+const NUMBER_OF_JOBS = 20
 
 @traceable
 export class MultiJobOngoingScreeningRunner extends BatchJobRunner {
