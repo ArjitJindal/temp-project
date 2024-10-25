@@ -132,7 +132,7 @@ export default function AlertsStatusChangeModal(props: Props) {
 
       try {
         if (statusEscalated(updates.alertStatus) && props.caseId) {
-          if (statusEscalated(props.oldStatus)) {
+          if (statusEscalated(props.oldStatus) && !statusEscalatedL2(updates.alertStatus)) {
             await statusChangeCallback(updates);
           } else if (statusEscalatedL2(updates.alertStatus) && !isEscatedTimes(props.caseId, 2)) {
             await escalatedCaseCallback(formValues, updates);
