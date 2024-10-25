@@ -126,12 +126,14 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 text: {
                   query: docId,
                   path: 'documents.id',
+                  matchCriteria: 'all',
                 },
               },
               {
                 text: {
                   query: docId,
                   path: 'documents.formattedId',
+                  matchCriteria: 'all',
                 },
               },
             ])
