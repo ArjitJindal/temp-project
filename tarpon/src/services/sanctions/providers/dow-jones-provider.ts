@@ -277,7 +277,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
   }
 
   async downloadZip(filePath: string): Promise<string> {
-    logger.info(`Downloading file ${filePath}`)
+    logger.warn(`Downloading file ${filePath}`)
 
     const outputPath = path.join('/tmp', 'downloaded_files', filePath)
     await fs.promises.mkdir(path.dirname(outputPath), { recursive: true })
@@ -297,10 +297,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       responseType: 'stream',
     })
 
-    logger.info(`Streaming and unzipping file ${filePath}`)
+    logger.warn(`Streaming and unzipping file ${filePath}`)
     await pipelineAsync(response.data, unzipper.Extract({ path: outputDir }))
 
-    logger.info(`${filePath} extracted`)
+    logger.warn(`${filePath} extracted`)
 
     return outputDir
   }
@@ -309,7 +309,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     version: string,
     rootDir: string
   ) {
-    logger.info(`Processing ${rootDir}`)
+    logger.warn(`Processing ${rootDir}`)
     // Jump down two directories which are something like Factiva_PFA_Feed_XML/PFA2_202408312200_F_Splits
     const factivaPfaFeedDir = fs
       .readdirSync(rootDir)
@@ -334,7 +334,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     const peopleFiles = await this.listFilePaths(`${outputDir}/Person`)
     for (const peopleFile of peopleFiles) {
       const xml = this.readFile(peopleFile)
-      logger.info(`Processing ${peopleFile}`)
+      logger.warn(`Processing ${peopleFile}`)
       await this.fileToEntities(repo, version, xml, masterContext)
     }
     const associationFiles = await this.listFilePaths(
@@ -343,7 +343,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     for (const associationFile of associationFiles) {
       const xml = this.readFile(associationFile)
       const jsonObj = parser.parse(xml)
-      logger.info(`Processing ${associationFile}`)
+      logger.warn(`Processing ${associationFile}`)
       await this.processAssociations(repo, version, jsonObj.PFA)
     }
   }
@@ -353,7 +353,7 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     version: string,
     filepath: string
   ) {
-    logger.info(`Processing ${filepath}`)
+    logger.warn(`Processing ${filepath}`)
     const peopleFiles = await this.listFilePaths(filepath)
     if (peopleFiles.length == 0) {
       return

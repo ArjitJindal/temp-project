@@ -22,7 +22,9 @@ import dayjs from '@/utils/dayjs'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 
-const CONCURRENT_BATCH_SIZE = 100
+const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
+  ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
+  : 10
 
 export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
   const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
@@ -129,7 +131,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId ?? '')
       )) ?? []
 
-    logger.warn(`Processing users from ${this.from} to ${this.to}`)
     const usersCursor = this.userRepository?.getAllUsersCursor(
       this.from,
       this.to

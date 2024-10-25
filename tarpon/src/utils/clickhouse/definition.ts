@@ -109,6 +109,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   ARS_SCORE: {
     tableName: 'ars_score',
   },
+  SANCTIONS: {
+    tableName: 'sanctions_data',
+  },
   SANCTIONS_SCREENING_DETAILS: {
     tableName: 'sanctions_screening_details',
   },
@@ -212,6 +215,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `drsScore_drsScore Float64 MATERIALIZED JSONExtractFloat(data, 'drsScore', 'drsScore')`,
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
       `isPepHit Bool MATERIALIZED has(arrayMap(x -> x.1, JSONExtract(data, 'pepStatus', 'Array(Tuple(isPepHit Bool))')), true)`,
+      `documentIds Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'documentNumber'), JSONExtractArrayRaw(data, 'legalDocuments'))`,
+      `nationality String MATERIALIZED JSONExtractString(data, '$.userDetails.countryOfNationality')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
@@ -299,6 +304,36 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "transactionIds Array(String) MATERIALIZED JSONExtract(data, 'transactionIds', 'Array(String)')",
       "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
       "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
+      `lastScreenedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.lastScreenedAt'))`,
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.SANCTIONS.tableName,
+    idColumn: 'id',
+    timestampColumn: 'updatedAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(id, provider, version, timestamp)',
+    orderBy: '(id, provider, version, timestamp)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "version String MATERIALIZED JSON_VALUE(data, '$.version')",
+      "name String MATERIALIZED JSON_VALUE(data, '$.name')",
+      "gender String MATERIALIZED JSON_VALUE(data, '$.gender')",
+      "aka Array(String) MATERIALIZED JSONExtract(data, 'aka', 'Array(String)')",
+      "sanctionSearchTypes Array(String) MATERIALIZED JSONExtract(data, 'sanctionSearchTypes', 'Array(String)')",
+      "countryCodes Array(String) MATERIALIZED JSONExtract(data, 'countryCodes', 'Array(String)')",
+      "nationality Array(String) MATERIALIZED JSONExtract(data, 'nationality', 'Array(String)')",
+      `ranks Array(String) MATERIALIZED arrayConcat(
+        arrayMap(x -> JSONExtractString(x, 'rank'), JSONExtractArrayRaw(data, 'occupations')),
+        arrayFlatten(arrayMap(x -> JSONExtractArrayRaw(x, 'rank'), JSONExtractArrayRaw(data, 'associates')))
+      )`,
+      "occupationCodes Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'occupationCode'), JSONExtractArrayRaw(data, 'occupations'))",
+      `documentIds Array(String) MATERIALIZED arrayConcat(
+        arrayMap(x -> JSONExtractString(x, 'id'), JSONExtractArrayRaw(data, 'documents')),
+        arrayMap(x -> JSONExtractString(x, 'formattedId'), JSONExtractArrayRaw(data, 'documents'))
+      )`,
+      "provider String MATERIALIZED JSON_VALUE(data, '$.provider')",
+      "yearOfBirth String MATERIALIZED JSON_VALUE(data, '$.yearOfBirth')",
     ],
   },
 ] as const

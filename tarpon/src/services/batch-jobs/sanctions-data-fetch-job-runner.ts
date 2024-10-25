@@ -2,16 +2,18 @@ import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetchers } from '@/services/sanctions/data-fetchers'
-import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
+import { ClickhouseSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { createTenantDatabase } from '@/utils/clickhouse/utils'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
-  protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
+  public async run(job: SanctionsDataFetchBatchJob): Promise<void> {
+    await createTenantDatabase('flagright')
     const fetchers = await sanctionsDataFetchers()
-    const repo = new MongoSanctionsRepository()
+    const repo = new ClickhouseSanctionsRepository()
     const runFullLoad = job.parameters?.from
       ? new Date(job.parameters.from).getDay() === 0
       : true
@@ -38,10 +40,11 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         const tenantId = tenant.tenant.id
 
         if (tenant.tenant.name.toLowerCase().indexOf('pnb') > -1) {
-          await sendBatchJobCommand({
-            type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
-            tenantId,
-          })
+          // TODO: disabled until scalability sorted
+          // await sendBatchJobCommand({
+          //   type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
+          //   tenantId,
+          // })
         } else {
           await sendBatchJobCommand({
             type: 'ONGOING_SCREENING_USER_RULE',

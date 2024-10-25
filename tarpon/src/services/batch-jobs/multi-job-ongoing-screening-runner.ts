@@ -7,7 +7,9 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
-const NUMBER_OF_JOBS = 20
+const NUMBER_OF_JOBS = process.env.MULTI_SCREENING_JOBS
+  ? parseInt(process.env.MULTI_SCREENING_JOBS)
+  : 5
 
 @traceable
 export class MultiJobOngoingScreeningRunner extends BatchJobRunner {

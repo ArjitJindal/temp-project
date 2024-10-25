@@ -4,83 +4,37 @@ import {
   Action,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
+import {
+  bulkInsertToClickhouse,
+  executeClickhouseQuery,
+} from '@/utils/clickhouse/utils'
 
-export class MongoSanctionsRepository implements SanctionsRepository {
+export class ClickhouseSanctionsRepository implements SanctionsRepository {
   async save(
     provider: SanctionsDataProviderName,
     entities: [Action, SanctionsEntity][],
     version: string
   ): Promise<void> {
-    const client = await getMongoDbClient()
-    const coll = client.db().collection(SANCTIONS_COLLECTION)
-
-    const operations = entities.map(([action, entity]) => {
-      switch (action) {
-        case 'add':
-          return {
-            updateOne: {
-              filter: { id: entity.id, version, provider },
-              update: {
-                $setOnInsert: {
-                  ...entity,
-                  provider,
-                  version,
-                  createdAt: Date.now(),
-                },
-              },
-              upsert: true,
-            },
-          }
-        case 'change':
-          return {
-            updateOne: {
-              filter: {
-                id: entity.id,
-                provider,
-                version,
-                deletedAt: { $exists: false },
-              },
-              update: {
-                $set: {
-                  ...entity,
-                  version,
-                  updatedAt: Date.now(),
-                },
-              },
-            },
-          }
-        case 'remove':
-          return {
-            updateOne: {
-              filter: {
-                id: entity.id,
-                provider,
-                version,
-                deletedAt: { $exists: false },
-              },
-              update: {
-                $set: {
-                  ...entity,
-                  version,
-                  deletedAt: Date.now(),
-                },
-              },
-            },
-          }
-        default:
-          throw new Error(`Unsupported action: ${action}`)
-      }
-    })
-
-    await coll.bulkWrite(operations)
+    const objects = entities
+      .map(([action, entity]) => {
+        const entityToInsert = { version, provider, ...entity }
+        switch (action) {
+          case 'add':
+          case 'change':
+            return entityToInsert
+          case 'remove':
+            // TODO ask Aman how to do this, not a blocker
+            return
+          default:
+            throw new Error(`Unsupported action: ${action}`)
+        }
+      })
+      .filter((obj): obj is any => Boolean(obj))
+    return await bulkInsertToClickhouse('sanctions_data', objects, 'flagright')
   }
 
   async saveAssociations(
@@ -97,36 +51,39 @@ export class MongoSanctionsRepository implements SanctionsRepository {
     if (associations.length === 0) {
       return
     }
-    const client = await getMongoDbClient()
-    const coll = client.db().collection(SANCTIONS_COLLECTION)
 
-    const assocationIds = uniq(
-      associations.flatMap(([_, associationIds]) =>
-        associationIds.map((a) => a.id)
-      )
+    const associationIds = associations.flatMap(([_, associationIds]) =>
+      associationIds.map((a) => a.id)
     )
-    const associates = await coll
-      .aggregate<{
-        id: string
-        name: string
-        occupations: SanctionsOccupation[]
-        sanctionSearchTypes: SanctionsSearchType[]
-      }>([
-        { $match: { id: { $in: assocationIds }, provider, version } },
-        {
-          $project: {
-            id: 1,
-            name: 1,
-            provider: 1,
-            version: 1,
-            occupations: 1,
-            sanctionSearchTypes: 1,
-          },
-        },
-      ])
-      .toArray()
 
-    const associateNameMap = associates.reduce<{
+    const entityIds = associations.map(([id]) => id)
+
+    const rowIds = uniq(associationIds.concat(...entityIds))
+
+    const selectQuery = `SELECT data
+                         FROM sanctions_data
+                         WHERE id IN (${rowIds
+                           .map((id) => `'${id}'`)
+                           .join(', ')})
+                         AND provider = '${provider}' AND version = '${version}'`
+
+    const results = await executeClickhouseQuery<{
+      data: string
+    }>('flagright', selectQuery, {})
+    const allEntities = results.map(
+      (r) => JSON.parse(r.data) as SanctionsEntity
+    )
+    const entityMap = allEntities.reduce<{ [id: string]: SanctionsEntity }>(
+      (acc, entity) => {
+        acc[entity.id] = entity
+        return acc
+      },
+      {}
+    )
+
+    const associates = associationIds.map((id) => entityMap[id])
+
+    const associateNameMap = associates.filter(Boolean).reduce<{
       [key: string]: SanctionsAssociate
     }>((acc, { id, name, occupations, sanctionSearchTypes }) => {
       acc[id] = {
@@ -139,28 +96,21 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       return acc
     }, {})
 
-    await coll.bulkWrite(
-      associations.map(([entityId, associateIds]) => {
-        return {
-          updateOne: {
-            filter: {
-              id: entityId,
-              provider,
-              version,
-            },
-            update: {
-              $set: {
-                associates: associateIds.map(({ id, association }) => ({
-                  ...associateNameMap[id],
-                  association: association
-                    ? RELATIONSHIP_CODE_TO_NAME[association]
-                    : undefined,
-                })),
-              },
-            },
-          },
-        }
-      })
-    )
+    const objects = associations.map(([entityId, associateIds]) => {
+      const associates = associateIds
+        .filter(Boolean)
+        .map(({ id, association }) => ({
+          ...associateNameMap[id],
+          association: association
+            ? RELATIONSHIP_CODE_TO_NAME[association]
+            : undefined,
+        }))
+      const entity = entityMap[entityId]
+      return {
+        ...entity,
+        associates,
+      }
+    })
+    await bulkInsertToClickhouse('sanctions_data', objects, 'flagright')
   }
 }

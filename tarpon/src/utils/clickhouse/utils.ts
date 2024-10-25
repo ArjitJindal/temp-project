@@ -235,6 +235,36 @@ export async function insertToClickhouse<T extends object>(
     ['id', 'data', 'is_deleted']
   )
 }
+export async function bulkInsertToClickhouse<T extends object>(
+  tableName: TableName,
+  objects: T[],
+  tenantId: string = getContext()?.tenantId as string
+) {
+  if (!isClickhouseEnabledInRegion()) {
+    return
+  }
+
+  const tableDefinition = assertTableName(tableName, tenantId)
+
+  if (envIs('test')) {
+    if (!isClickhouseEnabled()) {
+      return
+    } else {
+      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
+    }
+  }
+
+  await clickhouseInsert(
+    tenantId,
+    tableName,
+    objects.map((object) => ({
+      id: object[tableDefinition.idColumn],
+      data: JSON.stringify(object),
+      is_deleted: 0,
+    })),
+    ['id', 'data', 'is_deleted']
+  )
+}
 
 export async function batchInsertToClickhouse(
   tenantId: string,

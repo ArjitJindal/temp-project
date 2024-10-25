@@ -11,7 +11,11 @@ import { internalMongoReplace, paginatePipeline } from '@/utils/mongodb-utils'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  executeClickhouseQuery,
+  getClickhouseClient,
+  insertToClickhouse,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
@@ -37,6 +41,56 @@ export class SanctionsScreeningDetailsRepository {
     const collection = db.collection<SanctionsScreeningDetails>(
       sanctionsScreeningCollectionName
     )
+
+    if (hasFeature('CLICKHOUSE_ENABLED') && hasFeature('PNB')) {
+      const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
+      const query = `
+        SELECT data
+        FROM
+          ${CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName}
+        WHERE
+            lastScreenedAt = ${roundedScreenedAt} AND name = '${details.name}' AND entity = '${details.entity}'
+      `
+
+      const results = await executeClickhouseQuery<{ data: string }>(
+        this.tenantId,
+        query,
+        {}
+      )
+
+      let existingResult: SanctionsScreeningDetails = {
+        lastScreenedAt: roundedScreenedAt,
+        ...details,
+      }
+
+      if (results.length > 0) {
+        existingResult = JSON.parse(results[0].data)
+      }
+      await insertToClickhouse(
+        CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+        {
+          ...existingResult,
+          ...details,
+          ruleInstanceIds: uniq(
+            (existingResult?.ruleInstanceIds ?? []).concat(
+              details.ruleInstanceIds ?? []
+            )
+          ),
+          userIds: uniq(
+            (existingResult?.userIds ?? []).concat(details.userIds ?? [])
+          ),
+          transactionIds: uniq(
+            (existingResult?.transactionIds ?? []).concat(
+              details.transactionIds ?? []
+            )
+          ),
+          lastScreenedAt: roundedScreenedAt,
+        },
+        this.tenantId
+      )
+      return
+    }
+
     const previousScreenResult = await collection.findOne({
       lastScreenedAt: { $lt: screenedAt },
       name: details.name,
