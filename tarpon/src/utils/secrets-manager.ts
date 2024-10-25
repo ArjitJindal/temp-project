@@ -6,6 +6,7 @@ import {
 } from '@aws-sdk/client-secrets-manager'
 import { fromIni } from '@aws-sdk/credential-providers'
 import { SecretName, Secrets } from '@flagright/lib/secrets/secrets'
+import { memoize } from 'lodash'
 import { envIs } from './env'
 import { WrappedError } from '@/utils/errors'
 
@@ -21,23 +22,7 @@ function getSecretManager() {
   )
 }
 
-export async function getSecretByName<T extends SecretName>(
-  secretId: T,
-  useCache = true
-): Promise<Secrets[T]> {
-  return getSecret(secretId, useCache)
-}
-
-const secretCache = new Map<string, any>()
-
-export async function getSecret<T>(
-  secretId: string,
-  useCache = true
-): Promise<T> {
-  if (useCache && secretCache.has(secretId)) {
-    return secretCache.get(secretId) as T
-  }
-
+export const getSecret = memoize(async <T>(secretId: string): Promise<T> => {
   let secretString: string | undefined
   try {
     secretString = (
@@ -59,15 +44,21 @@ export async function getSecret<T>(
     throw new Error(`No secret found for secret ${secretId}`)
   }
 
-  let secretValue: T
   try {
-    secretValue = JSON.parse(secretString as string) as T
+    return JSON.parse(secretString as string) as T
   } catch (e) {
-    secretValue = secretString as any as T
+    return secretString as any as T
   }
+})
 
-  secretCache.set(secretId, secretValue)
-  return secretValue
+export async function getSecretByName<T extends SecretName>(
+  secretId: T,
+  useCache = true
+): Promise<Secrets[T]> {
+  if (!useCache) {
+    getSecret.cache.clear?.()
+  }
+  return getSecret(secretId)
 }
 
 export async function deleteSecret(secretId: string): Promise<void> {

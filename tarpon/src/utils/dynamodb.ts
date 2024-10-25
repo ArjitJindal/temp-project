@@ -161,6 +161,10 @@ export function getDynamoDbClientByEvent(
   )
 }
 
+const MAX_SOCKETS = process.env.AWS_LAMBDA_FUNCTION_NAME ? 1000 : 60000
+const CONNECTION_TIMEOUT = process.env.AWS_LAMBDA_FUNCTION_NAME
+  ? undefined
+  : 30000
 export function getDynamoDbRawClient(
   credentials?: LambdaCredentials
 ): DynamoDBClient {
@@ -184,8 +188,9 @@ export function getDynamoDbRawClient(
       (attempt) => Math.min(2000, 100 * 2 ** attempt)
     ),
     requestHandler: new NodeHttpHandler({
-      httpAgent: { maxSockets: 1000 },
-      httpsAgent: { maxSockets: 1000 },
+      connectionTimeout: CONNECTION_TIMEOUT,
+      httpAgent: { maxSockets: MAX_SOCKETS },
+      httpsAgent: { maxSockets: MAX_SOCKETS },
     }),
   })
 

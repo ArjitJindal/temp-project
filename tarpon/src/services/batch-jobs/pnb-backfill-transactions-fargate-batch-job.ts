@@ -37,9 +37,10 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
     const cursor = db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({
-        timestamp: { $gt: Math.max(lastCompletedTimestamp, startTimestamp) },
+        timestamp: { $gte: Math.max(lastCompletedTimestamp, startTimestamp) },
       })
       .sort({ timestamp: 1 })
+      .addCursorFlag('noCursorTimeout', true)
 
     const start = Date.now()
     logger.warn('Starting to process transactions')

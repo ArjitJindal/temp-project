@@ -5,6 +5,7 @@ import {
   ContainerImage,
   FargateTaskDefinition,
   LogDriver,
+  UlimitName,
 } from 'aws-cdk-lib/aws-ecs'
 import { IRole } from 'aws-cdk-lib/aws-iam'
 import { FunctionProps } from 'aws-cdk-lib/aws-lambda'
@@ -67,6 +68,14 @@ export const addFargateContainer = (
         retention: scope.config.resource.CLOUD_WATCH.logRetention,
       }),
     }),
+    // Ulimit: https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_Ulimit.html
+    ulimits: [
+      {
+        name: UlimitName.NOFILE,
+        hardLimit: 60000,
+        softLimit: 60000,
+      },
+    ],
     environment: {
       ...scope.functionProps.environment,
       ...Object.entries(scope.config.application).reduce(

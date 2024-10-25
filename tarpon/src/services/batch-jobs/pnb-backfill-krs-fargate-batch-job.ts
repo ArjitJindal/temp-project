@@ -35,8 +35,9 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
       (await getMigrationLastCompletedTimestamp(this.progressKey)) ?? 0
     const cursor = db
       .collection<InternalUser>(USERS_COLLECTION(tenantId))
-      .find({ createdTimestamp: { $gt: lastCompletedTimestamp } })
+      .find({ createdTimestamp: { $gte: lastCompletedTimestamp } })
       .sort({ createdTimestamp: 1 })
+      .addCursorFlag('noCursorTimeout', true)
 
     let batchUsers: InternalUser[] = []
     for await (const user of cursor) {

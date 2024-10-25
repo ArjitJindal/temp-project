@@ -37,8 +37,9 @@ export class PnbBackfillArsBatchJobRunner extends BatchJobRunner {
       (await getMigrationLastCompletedTimestamp(this.progressKey)) ?? 0
     const cursor = db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
-      .find({ timestamp: { $gt: lastCompletedTimestamp } })
+      .find({ timestamp: { $gte: lastCompletedTimestamp } })
       .sort({ timestamp: 1 })
+      .addCursorFlag('noCursorTimeout', true)
 
     let batchTransactions: InternalTransaction[] = []
     for await (const transaction of cursor) {
