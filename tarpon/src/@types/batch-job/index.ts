@@ -217,6 +217,14 @@ export type BackFillAvgTrs = {
   tenantId: string
 }
 
+export type RiskScoringTriggersBatchJob = {
+  type: 'RISK_SCORING_RECALCULATION'
+  tenantId: string
+  parameters: {
+    userIds?: string[]
+    clearedListIds?: string[]
+  }
+}
 export type PnbBackfillEntities = {
   type: 'PNB_BACKFILL_ENTITIES'
   tenantId: string
@@ -272,6 +280,7 @@ export type BatchJob =
   | ReverifyTransactionsBatchJob
   | SanctionsDataFetchBatchJob
   | BackFillAvgTrs
+  | RiskScoringTriggersBatchJob
   | PnbBackfillEntities
   | PnbBackfillTransactions
   | PnbBackfillKrs

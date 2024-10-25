@@ -1,5 +1,5 @@
 import { MongoClient, UpdateFilter } from 'mongodb'
-import { BatchJobInDb, BatchJobWithId } from '@/@types/batch-job'
+import { BatchJobInDb, BatchJobType, BatchJobWithId } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
 import { JOBS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
@@ -23,12 +23,35 @@ export class BatchJobRepository {
     return db.collection<BatchJobInDb>(collection).findOne({ jobId })
   }
 
-  public async insertJob(job: BatchJobWithId): Promise<void> {
+  public async getJobsByStatus(
+    latestStatus: TaskStatusChangeStatusEnum,
+    params?: {
+      filterType?: BatchJobType
+    }
+  ): Promise<BatchJobInDb[]> {
+    const collection = JOBS_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    return db
+      .collection<BatchJobInDb>(collection)
+      .find({
+        $and: [
+          { 'latestStatus.status': latestStatus },
+          ...(params?.filterType ? [{ type: params.filterType }] : []),
+        ],
+      })
+      .toArray()
+  }
+
+  public async insertJob(
+    job: BatchJobWithId,
+    scheduledAt?: number
+  ): Promise<void> {
     const collection = JOBS_COLLECTION(this.tenantId)
     const db = this.mongoDb.db()
     const latestStatus: TaskStatusChange = {
       status: 'PENDING',
       timestamp: Date.now(),
+      scheduledAt: scheduledAt,
     }
     await db.collection(collection).insertOne({
       ...job,

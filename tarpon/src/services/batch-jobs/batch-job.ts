@@ -7,14 +7,14 @@ import { getSQSClient } from '@/utils/sns-sqs-client'
 
 const sqsClient = getSQSClient()
 
-export async function sendBatchJobCommand(job: BatchJob) {
+export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
   if (envIs('test') || job.tenantId === 'cypress-tenant') {
     return
   }
 
   const jobWithId: BatchJobWithId = {
     ...job,
-    jobId: uuidv4(),
+    jobId: jobId ?? uuidv4(),
   }
   if (envIs('local')) {
     // eslint-disable-next-line @typescript-eslint/no-var-requires

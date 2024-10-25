@@ -263,25 +263,30 @@ export class ListRepository {
 
   public async getListItems(
     listId: string,
-    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>
+    params?: Pick<CursorPaginationParams, 'fromCursorKey' | 'pageSize'>,
+    version?: number
   ): Promise<CursorPaginationResponse<ListItem>> {
-    const header = await this.getListHeader(listId)
-    if (header == null) {
-      throw new Error(`List doesn't exist`)
+    let requestedVersion = version
+    if (!requestedVersion) {
+      const header = await this.getListHeader(listId)
+      if (header == null) {
+        throw new Error(`List doesn't exist`)
+      }
+      requestedVersion = header.version
     }
     const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE
     const queryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, header.version)
+        ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, requestedVersion)
           .PartitionKeyID,
       },
       ExclusiveStartKey: params?.fromCursorKey
         ? DynamoDbKeys.LIST_ITEM(
             this.tenantId,
             listId,
-            header.version,
+            requestedVersion,
             params?.fromCursorKey
           )
         : undefined,
@@ -311,7 +316,7 @@ export class ListRepository {
     const [nextPageFirstItem] = Items.slice(pageSize)
     const hasNextPage = nextPageFirstItem != null
 
-    const count = await this.countListValues(listId, header.version)
+    const count = await this.countListValues(listId, requestedVersion)
     return {
       next:
         hasNextPage && LastEvaluatedKey != null && items.length > 0

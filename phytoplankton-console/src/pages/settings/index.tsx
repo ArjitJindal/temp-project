@@ -27,6 +27,7 @@ import RiskAlgorithmsCra from './components/RiskAlgorithmsCra';
 import CraToggleSettings from './components/CraToggleSettings';
 import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
+import ReRunTriggerSettings from './components/ReRunTriggerSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -130,6 +131,7 @@ export default function SettingsPage() {
                 <Feature name="RISK_SCORING_V8">
                   <CraToggleSettings />
                   {isRiskScoreEnabled ? <RiskAlgorithmsCra /> : ''}
+                  <ReRunTriggerSettings />
                 </Feature>
                 <RiskLevelSettings />
               </>

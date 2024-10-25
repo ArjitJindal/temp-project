@@ -11,6 +11,8 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { Account } from '../accounts'
 import { CaseRepository } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import {
@@ -46,6 +48,7 @@ export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
   mongoDb: MongoClient
+  riskScoringService: RiskScoringV8Service
   s3: S3
   s3Config: S3Config
   dynamoDb: DynamoDBDocumentClient
@@ -79,6 +82,12 @@ export class ReportService {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    this.riskScoringService = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      { dynamoDb, mongoDb }
+    )
     this.s3 = s3
     this.s3Config = s3Config
   }
@@ -190,6 +199,9 @@ export class ReportService {
         c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
     }
     const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
     return withSchema(savedReport)
   }
 
@@ -260,6 +272,9 @@ export class ReportService {
     }
 
     const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
     return withSchema(savedReport)
   }
 
@@ -280,7 +295,11 @@ export class ReportService {
       this.getReportGenerator(report.reportTypeId)?.getAugmentedReportParams(
         report
       ) ?? report.parameters
-    return withSchema(await this.reportRepository.saveOrUpdateReport(report))
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
+    return withSchema(savedReport)
   }
 
   async updateReportStatus(

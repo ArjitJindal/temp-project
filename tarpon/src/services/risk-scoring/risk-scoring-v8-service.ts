@@ -5,10 +5,12 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
+import { v4 as uuidv4 } from 'uuid'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { LogicData, LogicEvaluator } from '../logic-evaluator/engine'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
+import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -26,14 +28,15 @@ import { RiskFactorsResult } from '@/@types/openapi-internal/RiskFactorsResult'
 import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
-import { logger } from '@/core/logger'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { getContext } from '@/core/utils/context'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { ReRunTrigger } from '@/@types/openapi-internal/ReRunTrigger'
+import dayjs from '@/utils/dayjs'
 
-const DEFAULT_RISK_LEVEL = 'HIGH' // Values to be confirmed
-const DEFAULT_RISK_SCORE = 75 // Values to be confirmed
+const DEFAULT_RISK_LEVEL = 'HIGH'
+const DEFAULT_RISK_SCORE = 75
 
 @traceable
 export class RiskScoringV8Service {
@@ -42,6 +45,7 @@ export class RiskScoringV8Service {
   private logicEvaluator: LogicEvaluator
   private tenantId: string
   private mongoDb: MongoClient | undefined
+  private batchJobRepository?: BatchJobRepository
   constructor(
     tenantId: string,
     logicEvaluator: LogicEvaluator,
@@ -54,6 +58,9 @@ export class RiskScoringV8Service {
     this.logicEvaluator = logicEvaluator
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
+    if (this.mongoDb) {
+      this.batchJobRepository = new BatchJobRepository(tenantId, this.mongoDb)
+    }
   }
 
   private async getMongo() {
@@ -282,11 +289,8 @@ export class RiskScoringV8Service {
     if (oldDrsScore?.isUpdatable === false) {
       return oldDrsScore.drsScore
     }
-    const { riskScoringAlgorithm } = await this.getTenantSettings()
-    if (!riskScoringAlgorithm) {
-      logger.error('No risk scoring algorithm configured')
-      return
-    }
+    const { riskScoringAlgorithm = { type: 'FORMULA_SIMPLE_AVG' } } =
+      await this.getTenantSettings() // Default to simple average if no algorithm is set
     const krsScore = await this.getKrsScoreValue(userId)
     const newDrsScore = this.calculateNewDrsScore({
       algorithm: riskScoringAlgorithm,
@@ -541,9 +545,10 @@ export class RiskScoringV8Service {
       return oldDrsScore.drsScore
     }
     const avgArsScore = await this.riskRepository.getAverageArsScore(userId)
-    const { riskScoringAlgorithm } = await this.getTenantSettings()
+    const { riskScoringAlgorithm = { type: 'FORMULA_SIMPLE_AVG' } } =
+      await this.getTenantSettings() // Default to simple average if no algorithm is set
     const newDrsScore = this.calculateNewDrsScore({
-      algorithm: riskScoringAlgorithm ?? { type: 'FORMULA_SIMPLE_AVG' },
+      algorithm: riskScoringAlgorithm,
       oldDrsScore: oldDrsScore?.drsScore,
       krsScore: krsScore,
       avgArsScore: avgArsScore?.value ?? null,
@@ -589,6 +594,77 @@ export class RiskScoringV8Service {
       }
     }
     await this.riskRepository.setAvgArsReadyMarker(true)
+  }
+
+  public async handleReRunTriggers(
+    trigger: ReRunTrigger,
+    params: { userIds?: string[]; clearedListId?: string }
+  ) {
+    const { userIds, clearedListId } = params
+    if (!this.batchJobRepository) {
+      this.mongoDb = await getMongoDbClient()
+      this.batchJobRepository = new BatchJobRepository(
+        this.tenantId,
+        this.mongoDb
+      )
+    }
+    const settings = await this.getTenantSettings()
+    if (!settings.reRunRiskScoringTriggers?.includes(trigger)) {
+      return
+    }
+    const pendingJobs = await this.batchJobRepository.getJobsByStatus(
+      'PENDING',
+      {
+        filterType: 'RISK_SCORING_RECALCULATION',
+      }
+    )
+    const jobsToCheck = pendingJobs.sort((jobA, jobB) => {
+      return (
+        (jobB.latestStatus.scheduledAt ?? 0) -
+        (jobA.latestStatus.scheduledAt ?? 0)
+      )
+    })
+    if (
+      jobsToCheck.length > 0 &&
+      jobsToCheck[0].latestStatus.scheduledAt &&
+      jobsToCheck[0].latestStatus.scheduledAt - Date.now() > 5 * 1000 // Adding this to not update the job that might have been sent in the batch job queue already.
+    ) {
+      const targetJob = jobsToCheck[0]
+      const updateData: any = {
+        $set: {
+          'latestStatus.scheduledAt': {
+            $add: ['$latestStatus.scheduledAt', 15 * 60 * 1000],
+          },
+        },
+      }
+
+      if (clearedListId) {
+        updateData.$push = {
+          'parameters.clearedListIds': clearedListId,
+        }
+      }
+
+      if (userIds && userIds.length > 0) {
+        updateData.$push = {
+          ...updateData.$push,
+          'parameters.userIds': { $each: userIds },
+        }
+      }
+      await this.batchJobRepository.updateJob(targetJob.jobId, updateData)
+    } else {
+      await this.batchJobRepository.insertJob(
+        {
+          tenantId: this.tenantId,
+          jobId: uuidv4(),
+          type: 'RISK_SCORING_RECALCULATION',
+          parameters: {
+            userIds,
+            clearedListIds: clearedListId ? [clearedListId] : undefined,
+          },
+        },
+        dayjs().add(15, 'minutes').valueOf()
+      )
+    }
   }
 
   private async getTenantSettings(): Promise<TenantSettings> {

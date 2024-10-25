@@ -21,7 +21,7 @@ export default function CraToggleSettings() {
       <SettingsCard title="Risk scoring CRA" description="Turn on risk scoring CRA for all users">
         <div>
           <Toggle
-            onChange={settings.riskScoringCraEnabled === true ? handleDisable : handleEnable}
+            onChange={settings.riskScoringCraEnabled === false ? handleEnable : handleDisable}
             value={settings.riskScoringCraEnabled ?? true}
             loading={mutateTenantSettings.isLoading}
           />

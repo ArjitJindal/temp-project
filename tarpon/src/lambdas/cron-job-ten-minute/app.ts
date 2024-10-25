@@ -7,6 +7,7 @@ import { CurrencyService } from '@/services/currency'
 
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -30,6 +31,38 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   } catch (e) {
     logger.error(
       `Failed to send dashboard refresh batch jobs: ${(e as Error)?.message}`,
+      e
+    )
+  }
+}
+
+async function handleRiskScoringTriggerBatchJob(tenantIds: string[]) {
+  const mongoDb = await getMongoDbClient()
+  try {
+    await Promise.all(
+      tenantIds.map(async (id) => {
+        const batchJobRepository = new BatchJobRepository(id, mongoDb)
+        const pendingTriggerJobs = await batchJobRepository.getJobsByStatus(
+          'PENDING',
+          {
+            filterType: 'RISK_SCORING_RECALCULATION',
+          }
+        )
+        for (const job of pendingTriggerJobs) {
+          if (
+            job.latestStatus.scheduledAt &&
+            job.latestStatus.scheduledAt <= Date.now()
+          ) {
+            await sendBatchJobCommand(job)
+          }
+        }
+      })
+    )
+  } catch (e) {
+    logger.error(
+      `Failed to send risk scoring re run on triggers batch jobs: ${
+        (e as Error)?.message
+      }`,
       e
     )
   }
@@ -68,4 +101,5 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   const tenantIds = await TenantService.getAllTenantIds()
   await handleDashboardRefreshBatchJob(tenantIds)
   await handleSlaStatusCalculationBatchJob(tenantIds)
+  await handleRiskScoringTriggerBatchJob(tenantIds)
 })

@@ -14,7 +14,7 @@ type RiskAlgorithmsType = 'FORMULA_LEGACY_MOVING_AVG' | 'FORMULA_SIMPLE_AVG' | '
 
 function RiskAlgorithmsCra() {
   const settings = useSettings();
-  const isCraEnabled = settings.riskScoringCraEnabled ?? false;
+  const isCraEnabled = settings.riskScoringCraEnabled ?? true;
   const currentAlgorithm = settings.riskScoringAlgorithm;
   const mutateTenantSettings = useUpdateTenantSettings();
   const [algorithmType, setAlgorithmType] = useState<RiskAlgorithmsType>(

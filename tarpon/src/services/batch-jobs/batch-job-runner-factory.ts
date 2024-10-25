@@ -4,6 +4,7 @@ import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-j
 import { AlertSLAStatusRefreshBatchJobRunner } from './alert-sla-status-refresh-batch-job-runner'
 import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-runner'
 import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
+import { RiskScoringRecalculationBatchJobRunner } from './risk-scoring-recalculation-batch-job-runner'
 import { SimulationV8RiskFactorsBatchJobRunner } from './simulation-v8-risk-scoring-batch-job-runner'
 import { PnbBackfillEntitiesBatchJobRunner } from './pnb-backfill-entities-fargate-batch-job'
 import { PnbBackfillTransactionsBatchJobRunner } from './pnb-backfill-transactions-fargate-batch-job'
@@ -63,6 +64,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     SANCTIONS_DATA_FETCH: (jobId) =>
       new SanctionsDataFetchBatchJobRunner(jobId),
     BACKFILL_AVERAGE_TRS: (jobId) => new BackfillAvgTrsRunner(jobId),
+    RISK_SCORING_RECALCULATION: (jobId) =>
+      new RiskScoringRecalculationBatchJobRunner(jobId),
     SIMULATION_RISK_FACTORS_V8: (jobId) =>
       new SimulationV8RiskFactorsBatchJobRunner(jobId),
     PNB_BACKFILL_ENTITIES: (jobId) =>

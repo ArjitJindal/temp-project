@@ -9,6 +9,8 @@ import {
   Credentials,
 } from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { LogicEvaluator } from '../logic-evaluator/engine'
 import { ListRepository } from './repositories/list-repository'
 import { ListType } from '@/@types/openapi-public/ListType'
 import { ListSubtype } from '@/@types/openapi-public/ListSubtype'
@@ -32,6 +34,7 @@ import { CaseConfig } from '@/lambdas/console-api-case/app'
 @traceable
 export class ListService {
   listRepository: ListRepository
+  riskScoringService: RiskScoringV8Service
   protected s3: S3
   protected s3Config: S3Config
   protected awsCredentials?: Credentials
@@ -47,6 +50,12 @@ export class ListService {
     this.s3Config = s3Config
     this.awsCredentials = awsCredentials
     this.listRepository = new ListRepository(tenantId, connections.dynamoDb)
+    const logicEvaluator = new LogicEvaluator(tenantId, connections.dynamoDb)
+    this.riskScoringService = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      { dynamoDb: connections.dynamoDb }
+    )
   }
 
   public static async fromEvent(
@@ -79,16 +88,43 @@ export class ListService {
     )
   }
 
+  private async validateAndHandleReRunTriggers(
+    listId: string,
+    params: { items?: ListItem[]; clearedListId?: string }
+  ) {
+    const { items, clearedListId } = params
+    const listHeader = await this.getListHeader(listId)
+    if (listHeader?.subtype === 'USER_ID') {
+      const userIds = items?.map((item) => item.key)
+      await this.riskScoringService.handleReRunTriggers('LIST', {
+        userIds: userIds,
+        clearedListId: clearedListId,
+      })
+    }
+  }
+
   public async setListItem(listId: string, item: ListItem): Promise<void> {
-    return await this.listRepository.setListItem(listId, item)
+    const data = await this.listRepository.setListItem(listId, item)
+    // To rerun risk scores for user
+    await this.validateAndHandleReRunTriggers(listId, { items: [item] })
+    return data
   }
 
   public async setListItems(listId: string, items: ListItem[]): Promise<void> {
-    return await this.listRepository.setListItems(listId, items)
+    const data = await this.listRepository.setListItems(listId, items)
+    // To rerun risk scores for user
+    await this.validateAndHandleReRunTriggers(listId, { items })
+    return data
   }
 
   public async deleteListItem(listId: string, itemId: string): Promise<void> {
-    return await this.listRepository.deleteListItem(listId, itemId)
+    const existingItem = await this.listRepository.getListItem(listId, itemId)
+    if (!existingItem) {
+      return
+    }
+    await this.listRepository.deleteListItem(listId, itemId)
+    // To re run risk scoring on triggers
+    await this.validateAndHandleReRunTriggers(listId, { items: [existingItem] })
   }
 
   public async deleteList(listId: string) {
@@ -96,7 +132,11 @@ export class ListService {
   }
 
   public async clearListItems(listId: string): Promise<void> {
-    return await this.listRepository.clearListItems(listId)
+    await this.listRepository.clearListItems(listId)
+    // To re run risk scoring on triggers
+    await this.validateAndHandleReRunTriggers(listId, {
+      clearedListId: listId,
+    })
   }
 
   public async getListHeaders(

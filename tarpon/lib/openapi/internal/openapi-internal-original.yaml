@@ -9281,11 +9281,6 @@ components:
     TaskStatusChange:
       type: object
       title: TaskStatusChange
-      enum:
-        - IN_PROGRESS
-        - PENDING
-        - FAILED
-        - SUCCESS
       properties:
         status:
           type: string
@@ -9295,6 +9290,8 @@ components:
             - SUCCESS
             - FAILED
         timestamp:
+          type: number
+        scheduledAt:
           type: number
       required:
         - status
@@ -9483,6 +9480,10 @@ components:
             - $ref: '#/components/schemas/FormulaLegacyMovingAvg'
             - $ref: '#/components/schemas/FormulaSimpleAvg'
             - $ref: '#/components/schemas/FormulaCustom'
+        reRunRiskScoringTriggers:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReRunTrigger'
         riskLevelAlias:
           type: array
           items:
@@ -9563,6 +9564,12 @@ components:
           type: number
         maxActiveSessions:
           type: number
+    ReRunTrigger:
+      title: ReRunTrigger
+      type: string
+      enum:
+        - SAR
+        - LIST
     ConsoleTag:
       title: ConsoleTag
       type: object
