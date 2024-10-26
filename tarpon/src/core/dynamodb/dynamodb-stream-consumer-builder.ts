@@ -23,7 +23,7 @@ import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
-import { envIs } from '@/utils/env'
+import { envIs, envIsNot } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
@@ -218,13 +218,13 @@ export class StreamConsumerBuilder {
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
-          if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER') && update.entityId) {
+          if (update.entityId && envIsNot('test')) {
             await acquireLock(dbClients.dynamoDb, update.entityId)
           }
           try {
             await this.handleDynamoDbUpdate(update, dbClients)
           } finally {
-            if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER') && update.entityId) {
+            if (update.entityId && envIsNot('test')) {
               await releaseLock(dbClients.dynamoDb, update.entityId)
             }
           }

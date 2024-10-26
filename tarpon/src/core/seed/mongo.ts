@@ -1,4 +1,4 @@
-import { Document, MongoClient, WithId } from 'mongodb'
+import { Document, MongoClient, MongoError, WithId } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
@@ -160,7 +160,15 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     const clonedData = cloneDeep(collectionData)
 
     for await (const dataChunk of chunk(clonedData, 10000)) {
-      await collection.insertMany(dataChunk as any[])
+      try {
+        await collection.insertMany(dataChunk as any[], { ordered: false })
+      } catch (error) {
+        if ((error as MongoError).code === 11000) {
+          // Ignore duplicate key errors
+        } else {
+          throw error
+        }
+      }
     }
     logger.info(
       `Re-created collection: ${collectionNameFn(tenantId)} - ${
