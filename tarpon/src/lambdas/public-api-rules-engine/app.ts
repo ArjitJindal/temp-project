@@ -28,6 +28,7 @@ import { filterLiveRules } from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -97,9 +98,42 @@ export const transactionHandler = lambdaApi()(
         }
       }
 
-      logger.info(`Verifying transaction`)
       validationSegment?.close()
+      logger.info(`Verifying transaction`)
+
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+      if (request._trsOnly === 'true') {
+        const riskScoringV8Service = new RiskScoringV8Service(
+          tenantId,
+          logicEvaluator,
+          {
+            mongoDb: await getMongoDbClient(),
+            dynamoDb,
+          }
+        )
+        const result = await riskScoringV8Service.handleTransaction(
+          transaction,
+          [
+            {
+              transactionId: transaction.transactionId,
+              timestamp: transaction.timestamp,
+              transactionState: transaction.transactionState ?? 'CREATED',
+              updatedTransactionAttributes: transaction,
+            },
+          ],
+          // NOTE: no user entity variables being used in the transaction risk factors for PNB
+          undefined,
+          undefined
+        )
+        return {
+          transactionId: transaction.transactionId,
+          status: 'ALLOW',
+          executedRules: [],
+          hitRules: [],
+          riskScoreDetails: result,
+        }
+      }
+
       const rulesEngine = new RulesEngineService(
         tenantId,
         dynamoDb,
@@ -112,6 +146,9 @@ export const transactionHandler = lambdaApi()(
         validateDestinationUserId:
           !request?.validateDestinationUserId ||
           request?.validateDestinationUserId === 'true',
+        validateTransactionId:
+          !request?.validateTransactionId ||
+          request?.validateTransactionId === 'true',
       })
       logger.info(`Completed processing transaction`)
       return {

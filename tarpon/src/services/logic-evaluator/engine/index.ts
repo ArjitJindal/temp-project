@@ -94,7 +94,12 @@ import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 
-class RebuildSyncRetryError extends Error {}
+class RebuildSyncRetryError extends Error {
+  constructor() {
+    super()
+    this.name = 'RebuildSyncRetryError'
+  }
+}
 
 export type TransactionLogicData = {
   type: 'TRANSACTION'

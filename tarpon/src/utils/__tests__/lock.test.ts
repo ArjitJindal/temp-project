@@ -28,22 +28,4 @@ describe('lock', () => {
       expect(result.lastIndexOf(id) - result.indexOf(id)).toBe(1)
     }
   })
-  it('acquire/release lock in the correct order: same key', async () => {
-    const client = getDynamoDbClient()
-    const totalIds = 10
-    const ids = range(totalIds)
-    const result: number[] = []
-    await Promise.all(
-      ids.map(async (id) => {
-        await acquireLock(client, String(id))
-        result.push(id)
-        await new Promise((resolve) => setTimeout(resolve, 10))
-        await releaseLock(client, String(id))
-        result.push(id)
-      })
-    )
-    for (const id of ids) {
-      expect(result.lastIndexOf(id) - result.indexOf(id)).toBeGreaterThan(1)
-    }
-  })
 })

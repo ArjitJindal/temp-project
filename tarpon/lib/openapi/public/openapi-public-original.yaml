@@ -71,6 +71,17 @@ paths:
             Boolean string whether Flagright should validate if provided
             destinationUserId exist. True by default
           name: validateDestinationUserId
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          description:
+            Boolean string whether Flagright should validate if provided
+            transactionId exist. True by default
+          name: validateTransactionId
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: _trsOnly
       requestBody:
         description: ''
         content:

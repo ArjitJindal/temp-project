@@ -173,6 +173,7 @@ export class AggregationRepository {
         getAggVarHash(aggregationVariable),
         groupValue
       ).PartitionKeyID,
+      consistentRead: true,
     })
 
     const result = await paginateQuery(this.dynamoDb, queryInput)

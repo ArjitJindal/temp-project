@@ -234,23 +234,23 @@ export type PnbBackfillEntities = {
     dynamoDbOnly: boolean
   }
 }
-export type PnbBackfillTransactions = {
-  type: 'PNB_BACKFILL_TRANSACTIONS'
+type PnbBackfillTransactionsBase = {
   tenantId: string
   parameters: {
     startTimestamp: number
     concurrency: number
+    publicApiEndpoint: string
+    publicApiKey: string
   }
+}
+export type PnbBackfillTransactions = PnbBackfillTransactionsBase & {
+  type: 'PNB_BACKFILL_TRANSACTIONS'
+}
+export type PnbBackfillArs = PnbBackfillTransactionsBase & {
+  type: 'PNB_BACKFILL_ARS'
 }
 export type PnbBackfillKrs = {
   type: 'PNB_BACKFILL_KRS'
-  tenantId: string
-  parameters: {
-    concurrency: number
-  }
-}
-export type PnbBackfillArs = {
-  type: 'PNB_BACKFILL_ARS'
   tenantId: string
   parameters: {
     concurrency: number

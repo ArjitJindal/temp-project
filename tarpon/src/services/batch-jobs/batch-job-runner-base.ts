@@ -18,14 +18,15 @@ export abstract class BatchJobRunner {
       await getMongoDbClient()
     )
 
-    for (let i = 0; i < 10; i++) {
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
       try {
         await this.run(job)
         return
       } catch (error) {
         // Ref: https://www.mongodb.com/docs/manual/reference/error-codes/
         if ((error as MongoError).code === 43) {
-          logger.warn(`Cursor expired, retrying... ${i}`)
+          logger.error(`Cursor expired, retrying...`)
           continue
         }
         throw error

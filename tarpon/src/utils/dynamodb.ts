@@ -443,6 +443,7 @@ export function dynamoDbQueryHelper(query: {
   partitionKey: string
   scanIndexForward?: boolean
   projectionExpression?: string
+  consistentRead?: boolean
 }): QueryCommandInput {
   const {
     tableName,
@@ -453,6 +454,7 @@ export function dynamoDbQueryHelper(query: {
     scanIndexForward,
     projectionExpression,
     expressionAttributeValues,
+    consistentRead = false,
   } = query
 
   const queryInput: QueryCommandInput = {
@@ -463,6 +465,7 @@ export function dynamoDbQueryHelper(query: {
         ExpressionAttributeNames: expressionAttributeNames,
         ScanIndexForward: scanIndexForward,
         ProjectionExpression: projectionExpression,
+        ConsistentRead: consistentRead,
       },
       isNil
     ),
