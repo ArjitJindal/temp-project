@@ -11,11 +11,7 @@ import { internalMongoReplace, paginatePipeline } from '@/utils/mongodb-utils'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
-import {
-  executeClickhouseQuery,
-  getClickhouseClient,
-  insertToClickhouse,
-} from '@/utils/clickhouse/utils'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
