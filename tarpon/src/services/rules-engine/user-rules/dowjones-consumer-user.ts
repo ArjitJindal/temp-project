@@ -15,6 +15,8 @@ import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchTy
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { hasFeature } from '@/core/utils/context'
 
 type ScreeningValues = 'NRIC' | 'NATIONALITY' | 'YOB' | 'GENDER'
 export type DowJonesConsumerUserRuleParameters = {
@@ -27,6 +29,8 @@ export type DowJonesConsumerUserRuleParameters = {
   screeningValues?: ScreeningValues[]
   PEPRank?: PepRank
 }
+
+const userIdsToCheck = new Map<string, boolean>()
 
 export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerUserRuleParameters> {
   public static getSchema(): JSONSchemaType<DowJonesConsumerUserRuleParameters> {
@@ -56,7 +60,31 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
     }
   }
 
+  // TODO this is a temporary change to enable quick execution for PNB by
+  // only checking IDs that have the potential for a hit.
+  // The change is in the rule instance so that everything else behaves the same
+  // and we have the appearance in the database that everything has been checked.
+  private async initialiseUserSubset() {
+    if (userIdsToCheck.size === 0) {
+      const usersToScreen = await executeClickhouseQuery<{ id: string }>(
+        this.tenantId,
+        'select id from users_to_screen',
+        {}
+      )
+      usersToScreen.forEach((user) => {
+        userIdsToCheck.set(user.id, true)
+      })
+    }
+  }
+
   public async computeRule() {
+    if (this.ongoingScreeningMode && hasFeature('PNB')) {
+      await this.initialiseUserSubset()
+      if (!userIdsToCheck.has(this.user.userId)) {
+        return
+      }
+    }
+
     const {
       fuzzinessRange,
       screeningTypes,
