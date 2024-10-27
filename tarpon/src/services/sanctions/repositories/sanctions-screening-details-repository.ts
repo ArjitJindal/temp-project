@@ -337,7 +337,7 @@ export class SanctionsScreeningDetailsRepository {
     ]
   }
 
-  public async getSanctionsScreeningDetailsClickhouse(
+  private async getSanctionsScreeningDetailsClickhouse(
     params: DefaultApiGetSanctionsScreeningActivityDetailsRequest
   ): Promise<SanctionsScreeningDetailsResponse> {
     const clickhouseClient = await getClickhouseClient(this.tenantId)

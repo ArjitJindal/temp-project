@@ -1,51 +1,45 @@
-import { ClickhouseSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
-import {
-  bulkInsertToClickhouse,
-  createTenantDatabase,
-  executeClickhouseQuery,
-  getClickhouseClient,
-} from '@/utils/clickhouse/utils'
-import { withFeatureHook } from '@/test-utils/feature-test-utils' // Adjust the path
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository' // Adjust the path
 
-withFeatureHook(['CLICKHOUSE_ENABLED'])
+describe('MongoSanctionsRepository', () => {
+  let collection: any
 
-describe('ClickhouseSanctionsRepository', () => {
   beforeAll(async () => {
-    await createTenantDatabase('flagright')
-    await bulkInsertToClickhouse(
-      'sanctions_data',
-      [
-        {
-          provider: 'dowjones',
-          version: '24-08',
-          id: '1',
-          name: 'Tim',
-          createdAt: Date.now(),
-        },
-        {
-          provider: 'dowjones',
-          version: '24-08',
-          id: '2',
-          name: 'Bob',
-          createdAt: Date.now(),
-        },
-        {
-          provider: 'dowjones',
-          version: '24-08',
-          id: '3',
-          name: 'Sam',
-          createdAt: Date.now(),
-        },
-      ],
-      'flagright'
+    // Connect to an in-memory or test MongoDB instance
+    const mongoDb = await getMongoDbClient()
+    collection = mongoDb.db().collection(SANCTIONS_COLLECTION)
+    // create collection if it doesn't exist
+    const listCollections = await mongoDb.db().listCollections().toArray()
+    if (
+      !listCollections.find(
+        (collection) => collection.name === SANCTIONS_COLLECTION
+      )
+    ) {
+      await mongoDb.db().createCollection(SANCTIONS_COLLECTION)
+    }
+
+    // create index if it doesn't exist
+    const indexExists = await collection.indexExists(
+      'provider_1_id_1_version_1'
     )
+
+    if (!indexExists) {
+      await collection.createIndex(
+        { provider: 1, id: 1, version: 1 }, // Define the fields for the index
+        { unique: true } // Enforce uniqueness
+      )
+    }
+    // Seed the database with test data
+    await collection.insertMany([
+      { provider: 'dowjones', version: '24-08', id: '1', name: 'Tim' },
+      { provider: 'dowjones', version: '24-08', id: '2', name: 'Bob' },
+      { provider: 'dowjones', version: '24-08', id: '3', name: 'Sam' },
+    ])
   })
 
   afterAll(async () => {
-    const client = await getClickhouseClient('flagright')
-    await client.command({
-      query: 'truncate table sanctions_data',
-    })
+    await collection.drop()
   })
 
   it('should update associates field with correct names', async () => {
@@ -60,15 +54,10 @@ describe('ClickhouseSanctionsRepository', () => {
       ],
     ]
 
-    const repo = new ClickhouseSanctionsRepository()
+    const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')
 
-    const objects = await executeClickhouseQuery<{ data: string }>(
-      'flagright',
-      'select data from sanctions_data',
-      {}
-    )
-    const result = objects.map((o) => JSON.parse(o.data))
+    const result = await collection.find({}).toArray()
     expect(result).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
@@ -100,15 +89,10 @@ describe('ClickhouseSanctionsRepository', () => {
       ['2', []],
     ]
 
-    const repo = new ClickhouseSanctionsRepository()
+    const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')
 
-    const objects = await executeClickhouseQuery<{ data: string }>(
-      'flagright',
-      'select data from sanctions_data',
-      {}
-    )
-    const result = objects.map((o) => JSON.parse(o.data))
+    const result = await collection.find({}).toArray()
 
     expect(result).toEqual(
       expect.arrayContaining([
@@ -124,15 +108,10 @@ describe('ClickhouseSanctionsRepository', () => {
       ['1', [{ id: '2', association: '2' }]],
     ]
 
-    const repo = new ClickhouseSanctionsRepository()
+    const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')
 
-    const objects = await executeClickhouseQuery<{ data: string }>(
-      'flagright',
-      `select data from sanctions_data where id = '3'`,
-      {}
-    )
-    const result = objects.map((o) => JSON.parse(o.data))[0]
+    const result = await collection.findOne({ id: '3' })
 
     expect(result).toEqual(
       expect.objectContaining({
@@ -145,15 +124,11 @@ describe('ClickhouseSanctionsRepository', () => {
   it('should not fail if there are no associates to update', async () => {
     const associates: [string, { id: string; association: string }[]][] = []
 
-    const repo = new ClickhouseSanctionsRepository()
+    const repo = new MongoSanctionsRepository()
     await repo.saveAssociations('dowjones', associates, '24-08')
 
-    const objects = await executeClickhouseQuery<{ data: string }>(
-      'flagright',
-      `select data from sanctions_data`,
-      {}
-    )
-    const result = objects.map((o) => JSON.parse(o.data))
+    const result = await collection.find({}).toArray()
+
     expect(result).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ id: '1', name: 'Tim' }),

@@ -2,18 +2,16 @@ import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetchers } from '@/services/sanctions/data-fetchers'
-import { ClickhouseSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
+import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
-  public async run(job: SanctionsDataFetchBatchJob): Promise<void> {
-    await createTenantDatabase('flagright')
+  protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
     const fetchers = await sanctionsDataFetchers()
-    const repo = new ClickhouseSanctionsRepository()
+    const repo = new MongoSanctionsRepository()
     const runFullLoad = job.parameters?.from
       ? new Date(job.parameters.from).getDay() === 0
       : true

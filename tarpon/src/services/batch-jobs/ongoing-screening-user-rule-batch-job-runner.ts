@@ -61,6 +61,7 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
 
   return ruleInstances
 }
+
 @traceable
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   mongoDb?: MongoClient

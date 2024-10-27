@@ -3,11 +3,13 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
+import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -31,143 +33,319 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return
   }
 
+  private getFuzzinessEvaluationResult(
+    request: SanctionsSearchRequest,
+    percentageSimilarity: number
+  ): boolean {
+    const percentageDissimilarity = 100 - percentageSimilarity
+    if (
+      request.fuzzinessRange?.lowerBound != null &&
+      request.fuzzinessRange?.upperBound != null
+    ) {
+      const { lowerBound, upperBound } = request.fuzzinessRange
+      return (
+        percentageDissimilarity >= lowerBound &&
+        percentageDissimilarity <= upperBound
+      )
+    }
+    return request.fuzziness
+      ? percentageDissimilarity <= request.fuzziness * 100
+      : false
+  }
+
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    const andFilters: string[] = []
-    const orFilters: string[] = []
+    const client = await getMongoDbClient()
+    const match = {}
 
-    // Country codes
+    const andFilters: any[] = []
+    const orFilters: any[] = []
+
     if (request.countryCodes) {
-      andFilters.push(
-        `arrayCount(x -> x IN (${request.countryCodes
-          .map((code) => `'${code}'`)
-          .join(',')}), countryCodes) > 0`
-      )
+      match['countryCodes'] = { $in: request.countryCodes }
     }
-
-    // Year of birth
     if (request.yearOfBirth) {
-      const yearOfBirthClause = `
-      (toString(yearOfBirth) = '${request.yearOfBirth}' OR yearOfBirth IS NULL OR yearOfBirth = '')
-    `
-      if (request.orFilters?.includes('yearOfBirth')) {
-        orFilters.push(yearOfBirthClause)
-      } else {
-        andFilters.push(yearOfBirthClause)
-      }
-    }
-
-    // Types (sanction types or associates' types)
-    if (request.types) {
-      const typeClause = `arrayCount(x -> x IN (${request.types
-        .map((id) => `'${id}'`)
-        .join(',')}), sanctionSearchTypes) > 0`
-
-      if (request.orFilters?.includes('types')) {
-        orFilters.push(typeClause)
-      } else {
-        andFilters.push(typeClause)
-      }
-    }
-
-    // Document ID
-    if (request.documentId) {
-      const documentClause = `arrayCount(x -> x IN (${request.documentId
-        .map((id) => `'${id}'`)
-        .join(',')}), documentIds) > 0`
-
-      if (request.orFilters?.includes('documentId')) {
-        orFilters.push(documentClause)
-        andFilters.push('documentIds is not null AND length(documentIds) > 0')
-      } else {
-        andFilters.push(documentClause)
-      }
-    }
-
-    // Nationality
-    if (request.nationality && request.nationality.length > 0) {
-      const nationalityClause = `(arrayCount(x -> x IN (${[
-        ...request.nationality,
-        'XX',
-        'ZZ',
+      const yearOfBirthMatch = [
+        {
+          text: {
+            query: `${request.yearOfBirth}`,
+            path: 'yearOfBirth',
+          },
+        },
+        {
+          equals: {
+            value: null,
+            path: 'yearOfBirth',
+          },
+        },
       ]
-        .map((id) => `'${id}'`)
-        .join(
-          ','
-        )}), nationality) > 0) OR nationality IS NULL OR length(nationality) = 0`
+      if (request.orFilters?.includes('yearOfBirth')) {
+        orFilters.push(...yearOfBirthMatch)
+      } else {
+        andFilters.push({
+          compound: {
+            should: yearOfBirthMatch,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+    if (request.types) {
+      const matchTypes = request.types.flatMap((type) => [
+        {
+          text: {
+            query: type,
+            path: 'sanctionSearchTypes',
+          },
+        },
+        {
+          text: {
+            query: type,
+            path: 'associates.sanctionSearchTypes',
+          },
+        },
+      ])
+      if (request.orFilters?.includes('types')) {
+        orFilters.push(...matchTypes)
+      } else {
+        andFilters.push({
+          compound: {
+            should: matchTypes,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+
+    if (request.documentId) {
+      const documentIdMatch =
+        request.documentId.length > 0
+          ? request.documentId.flatMap((docId) => [
+              {
+                text: {
+                  query: docId,
+                  path: 'documents.id',
+                  matchCriteria: 'all',
+                },
+              },
+              {
+                text: {
+                  query: docId,
+                  path: 'documents.formattedId',
+                  matchCriteria: 'all',
+                },
+              },
+            ])
+          : [
+              {
+                text: {
+                  query: '__no_match__', // A value that will not match any document
+                  path: 'documents.id',
+                },
+              },
+            ]
+      if (request.orFilters?.includes('documentId')) {
+        orFilters.push(...documentIdMatch)
+        andFilters.push({
+          mustNot: [
+            {
+              equals: {
+                value: null,
+                path: 'documents.id',
+              },
+            },
+          ],
+        })
+      } else {
+        andFilters.push({
+          compound: {
+            should: documentIdMatch,
+            mustNot: [
+              {
+                equals: {
+                  value: null,
+                  path: 'documents.id',
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+
+    if (request.nationality && request.nationality.length > 0) {
+      const nationalityMatch = [
+        ...[...request.nationality, 'XX', 'ZZ'].map((nationality) => ({
+          text: {
+            query: nationality,
+            path: 'nationality',
+          },
+        })),
+        {
+          equals: {
+            value: null,
+            path: 'nationality',
+          },
+        },
+      ]
       if (request.orFilters?.includes('nationality')) {
-        orFilters.push(nationalityClause)
+        orFilters.push(...nationalityMatch)
       } else {
-        andFilters.push(nationalityClause)
+        andFilters.push({
+          compound: {
+            should: nationalityMatch,
+            minimumShouldMatch: 1,
+          },
+        })
       }
     }
 
-    // Occupation Code
     if (request.occupationCode) {
-      andFilters.push(
-        `arrayCount(x -> x IN (${request.occupationCode
-          .map((id) => `'${id}'`)
-          .join(',')}), occupationCodes) > 0`
-      )
+      match['occupations.occupationCode'] = { $in: request.occupationCode }
     }
-
-    // PEP Rank
     if (request.PEPRank) {
-      andFilters.push(`
-      has(ranks, '${request.PEPRank}')
-    `)
+      andFilters.push({
+        compound: {
+          should: [
+            {
+              text: {
+                query: request.PEPRank,
+                path: 'occupations.rank',
+              },
+            },
+            {
+              text: {
+                query: request.PEPRank,
+                path: 'associates.ranks',
+              },
+            },
+          ],
+          minimumShouldMatch: 1,
+        },
+      })
     }
 
-    // Gender
     if (request.gender) {
-      const genderClause = `(gender = '${request.gender}' OR gender = 'Unknown' OR gender IS null OR gender = '')`
-
+      const genderMatch = [
+        {
+          text: {
+            query: request.gender,
+            path: 'gender',
+          },
+        },
+        {
+          equals: {
+            value: 'Unknown',
+            path: 'gender',
+          },
+        },
+      ]
       if (request.orFilters?.includes('gender')) {
-        orFilters.push(genderClause)
+        orFilters.push(...genderMatch)
       } else {
-        andFilters.push(genderClause)
+        andFilters.push({
+          compound: {
+            should: genderMatch,
+            minimumShouldMatch: 1,
+          },
+        })
       }
     }
+    const searchScoreThreshold =
+      request.fuzzinessRange?.upperBound === 100 ? 3 : 7
+    const results = await client
+      .db()
+      .collection(SANCTIONS_COLLECTION)
+      .aggregate<SanctionsEntity>([
+        {
+          $search: {
+            index: 'sanctions_search_index',
+            concurrent: true,
+            compound: {
+              must: [
+                {
+                  text: {
+                    query: request.searchTerm,
+                    path: ['name', 'aka'],
+                    fuzzy: {
+                      maxEdits: 2,
+                      maxExpansions: 100,
+                      prefixLength: 0,
+                    },
+                  },
+                },
+              ],
+              filter: [
+                ...(orFilters.length > 0
+                  ? [
+                      {
+                        compound: {
+                          should: orFilters,
+                          minimumShouldMatch: 1,
+                        },
+                      },
+                    ]
+                  : []),
+                ...andFilters,
+              ],
+            },
+          },
+        },
+        {
+          $limit: 100,
+        },
+        {
+          $addFields: {
+            searchScore: { $meta: 'searchScore' },
+          },
+        },
+        {
+          // A minumum searchScore of 3 was encountered by trial and error
+          // whilst using atlas search console
+          $match: { ...match, searchScore: { $gt: searchScoreThreshold } },
+        },
+      ])
+      .toArray()
 
-    // Search term fuzzy matching (simulating MongoDB Atlas fuzzy search)
-    if (request.searchTerm) {
-      let fuzzinessThreshold = 0
-      if (request.fuzzinessRange?.upperBound) {
-        fuzzinessThreshold = request.fuzzinessRange?.upperBound
-      }
-      if (request.fuzziness) {
-        fuzzinessThreshold = request.fuzziness * 100
-      }
-      const allowedDifference = fuzzinessThreshold / 100
-      andFilters.push(`
-    arrayExists(item -> (editDistance(lower(item), '${request.searchTerm.toLowerCase()}') / greatest(length(lower(item)), length('${request.searchTerm.toLowerCase()}'))) <= ${allowedDifference}, arrayConcat([name], aka))
-  `)
-    }
+    const searchTerm = request.searchTerm.toLowerCase()
+    const filteredResults = results.filter((entity) => {
+      const values = [entity.name, ...(entity.aka || [])]
+      const hasAka = entity.aka && entity.aka.length > 0
 
-    // Construct the final query
-    const query = `
-    SELECT
-       argMax(data, timestamp) AS data,
-       max(timestamp) AS latest_timestamp
-    FROM
-      sanctions_data
-    ${andFilters.length || orFilters.length ? 'WHERE' : ''}
-    ${andFilters.join(' AND ')}
-    ${andFilters.length && orFilters.length ? 'AND' : ''}
-    ${orFilters.length ? `(${orFilters.join(' OR ')})` : ''}
-    GROUP BY id, provider
-    LIMIT 500
-  `
-    // Execute the query
-    const results = await executeClickhouseQuery<{ data: string }>(
-      'flagright',
-      query,
-      {}
-    )
-    const filteredResults = results.map(
-      (r) => JSON.parse(r.data) as SanctionsEntity
-    )
+      if (request.fuzzinessRange?.upperBound === 100) {
+        return true
+      } else {
+        for (const value of values) {
+          if (value.toLowerCase() === searchTerm) {
+            return true
+          }
+        }
+      }
+
+      const percentageSimilarity = calculateLevenshteinDistancePercentage(
+        request.searchTerm,
+        entity.name
+      )
+
+      const fuzzyMatch = this.getFuzzinessEvaluationResult(
+        request,
+        percentageSimilarity
+      )
+
+      if (fuzzyMatch) {
+        return true
+      }
+      return (
+        hasAka &&
+        this.getFuzzinessEvaluationResult(
+          request,
+          Math.max(percentageSimilarity - 10, 0) // Approximation to avoid calculating levenshtein distance for every pair to reduce complexity
+        )
+      )
+    })
+
     return this.searchRepository.saveSearch(filteredResults, request)
   }
 
