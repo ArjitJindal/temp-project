@@ -42,55 +42,6 @@ export class SanctionsScreeningDetailsRepository {
       sanctionsScreeningCollectionName
     )
 
-    if (hasFeature('CLICKHOUSE_ENABLED') && hasFeature('PNB')) {
-      const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
-      const query = `
-        SELECT data
-        FROM
-          ${CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName}
-        WHERE
-            lastScreenedAt = ${roundedScreenedAt} AND name = '${details.name}' AND entity = '${details.entity}'
-      `
-
-      const results = await executeClickhouseQuery<{ data: string }>(
-        this.tenantId,
-        query,
-        {}
-      )
-
-      let existingResult: SanctionsScreeningDetails = {
-        lastScreenedAt: roundedScreenedAt,
-        ...details,
-      }
-
-      if (results.length > 0) {
-        existingResult = JSON.parse(results[0].data)
-      }
-      await insertToClickhouse(
-        CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
-        {
-          ...existingResult,
-          ...details,
-          ruleInstanceIds: uniq(
-            (existingResult?.ruleInstanceIds ?? []).concat(
-              details.ruleInstanceIds ?? []
-            )
-          ),
-          userIds: uniq(
-            (existingResult?.userIds ?? []).concat(details.userIds ?? [])
-          ),
-          transactionIds: uniq(
-            (existingResult?.transactionIds ?? []).concat(
-              details.transactionIds ?? []
-            )
-          ),
-          lastScreenedAt: roundedScreenedAt,
-        },
-        this.tenantId
-      )
-      return
-    }
-
     const previousScreenResult = await collection.findOne({
       lastScreenedAt: { $lt: screenedAt },
       name: details.name,
