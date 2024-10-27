@@ -121,13 +121,13 @@ export default function Drawer(props: Props) {
     </div>
   );
   return (
-    <>
+    <div className={s.wrapper}>
       {portaled
         ? ReactDOM.createPortal(
             <div className={cn(s.portaledMenuContainer, isVisible && s.isVisible)}>{result}</div>,
             window.document.body,
           )
         : result}
-    </>
+    </div>
   );
 }
