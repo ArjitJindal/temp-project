@@ -3,7 +3,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 import { omit } from 'lodash'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { paginatePipeline } from '@/utils/mongodb-utils'
+import { paginatePipeline, prefixRegexMatchFilter } from '@/utils/mongodb-utils'
 import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { DefaultApiGetAuditlogRequest } from '@/@types/openapi-internal/RequestParameters'
 import { COUNT_QUERY_LIMIT } from '@/utils/pagination'
@@ -71,10 +71,12 @@ export class AuditLogRepository {
     }
 
     if (params.searchEntityId) {
+      const searchEntityRegex = prefixRegexMatchFilter(
+        params.searchEntityId.join('|'),
+        true
+      )
       conditions.push({
-        entityId: {
-          $in: params.searchEntityId,
-        },
+        entityId: searchEntityRegex,
       })
     }
 
