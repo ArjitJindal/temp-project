@@ -463,12 +463,12 @@ export const createLambdaMemoryUtilizationAlarm = (
   }
   return new Alarm(context, `${lambdaName}MemoryUtilization`, {
     comparisonOperator: ComparisonOperator.GREATER_THAN_THRESHOLD,
-    threshold: 90,
+    threshold: 95,
     evaluationPeriods: 3,
     datapointsToAlarm: 3,
     alarmName: `Lambda-${lambdaName}MemoryUtilization`,
     alarmDescription: `Covers memory utilization percentage in ${lambdaName} in the AWS account. 
-    Alarm triggers when memory utilization percentage exceedes 90% for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
+    Alarm triggers when memory utilization percentage exceedes 95% for 3 consecutive data points in 15 mins (Checked every 5 minutes). `,
     metric: new MathExpression({
       expression: 'm1',
       usingMetrics: {
