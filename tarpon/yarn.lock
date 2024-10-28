@@ -12111,7 +12111,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ejs@npm:^3.1.9":
+"ejs@npm:^3.1.10":
   version: 3.1.10
   resolution: "ejs@npm:3.1.10"
   dependencies:
@@ -19817,7 +19817,7 @@ __metadata:
     deep-object-diff: "npm:^1.1.7"
     deepmerge: "npm:^4.3.1"
     dotenv: "npm:^16.0.1"
-    ejs: "npm:^3.1.9"
+    ejs: "npm:^3.1.10"
     esbuild: "npm:^0.15.13"
     eslint: "npm:^8.6.0"
     eslint-config-prettier: "npm:^8.3.0"
