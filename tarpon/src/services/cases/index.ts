@@ -917,7 +917,7 @@ export class CaseService extends CaseAlertsCommonService {
     if (isEmpty(caseAssignments) && currentUserId) {
       assignmentsToUpdate = caseAssignments = [
         {
-          assigneeUserId: reviewAssignments[0].assigneeUserId,
+          assigneeUserId: reviewAssignments[0]?.assigneeUserId,
           timestamp: Date.now(),
           assignedByUserId: currentUserId,
           escalationLevel: isL2Escalation ? 'L2' : 'L1',
