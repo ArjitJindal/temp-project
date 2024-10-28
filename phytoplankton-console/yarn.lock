@@ -3164,15 +3164,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@babel/runtime@npm:^7.14.0":
-  version: 7.22.3
-  resolution: "@babel/runtime@npm:7.22.3"
-  dependencies:
-    regenerator-runtime: "npm:^0.13.11"
-  checksum: 097d0d6aaab0dea782d14f720a7383ea50fa87cba6c070495aea691739ea11459d80b4acd086a38d52894a2b15d4748dc8040dba3706aa18a8d5c8d896dec9b0
-  languageName: node
-  linkType: hard
-
 "@babel/runtime@npm:^7.17.8":
   version: 7.22.6
   resolution: "@babel/runtime@npm:7.22.6"
@@ -10374,17 +10365,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dompurify@npm:^2.2.0":
-  version: 2.4.5
-  resolution: "dompurify@npm:2.4.5"
-  checksum: 90d880e04c8476041778777d412eaa3d204448f1be67b9c72f76374f8f113e04552d5abbcee2d76fe36d03db9f9cb97b2cfa48cd7440b20fbcae2e1c7131e9de
-  languageName: node
-  linkType: hard
-
 "dompurify@npm:^2.3.3":
   version: 2.4.3
   resolution: "dompurify@npm:2.4.3"
   checksum: 4c93f5bc8855bbe7dcb33487c0b252a00309fbd8a6d0ec280abbc3af695b43d1bf7f526c2f323fa697314b0b3de3511c756005dddc6ed90d1a1440a3d6ff89d9
+  languageName: node
+  linkType: hard
+
+"dompurify@npm:^2.5.4":
+  version: 2.5.7
+  resolution: "dompurify@npm:2.5.7"
+  checksum: 23c4f737182fcf3e731e458c3930ef4d2916191e4180e1e345f153124dfa7ec117d2810af1754e8854c581131fc75dac914a8391183d1511852ef32b4055f711
   languageName: node
   linkType: hard
 
@@ -11905,6 +11896,13 @@ __metadata:
   version: 0.6.10
   resolution: "fflate@npm:0.6.10"
   checksum: c452f720e4cb404b300fceb8ef0bdf345f18fbfd3f57f7d0974dce5f5e2ac0e8dd4b6ff4bb7061ae74fd919b9c707172f9dbd44d91149b1137199b8c705768f1
+  languageName: node
+  linkType: hard
+
+"fflate@npm:^0.8.1":
+  version: 0.8.2
+  resolution: "fflate@npm:0.8.2"
+  checksum: 03448d630c0a583abea594835a9fdb2aaf7d67787055a761515bf4ed862913cfd693b4c4ffd5c3f3b355a70cf1e19033e9ae5aedcca103188aaff91b8bd6e293
   languageName: node
   linkType: hard
 
@@ -15205,17 +15203,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jspdf@npm:^2.5.1":
-  version: 2.5.1
-  resolution: "jspdf@npm:2.5.1"
+"jspdf@npm:^2.5.2":
+  version: 2.5.2
+  resolution: "jspdf@npm:2.5.2"
   dependencies:
-    "@babel/runtime": "npm:^7.14.0"
+    "@babel/runtime": "npm:^7.23.2"
     atob: "npm:^2.1.2"
     btoa: "npm:^1.2.1"
     canvg: "npm:^3.0.6"
     core-js: "npm:^3.6.0"
-    dompurify: "npm:^2.2.0"
-    fflate: "npm:^0.4.8"
+    dompurify: "npm:^2.5.4"
+    fflate: "npm:^0.8.1"
     html2canvas: "npm:^1.0.0-rc.5"
   dependenciesMeta:
     canvg:
@@ -15226,7 +15224,7 @@ __metadata:
       optional: true
     html2canvas:
       optional: true
-  checksum: dad15d4f53ead1d2e9d5f6fd9b6e72c7233ba5cbc30d98461eb0ef609aa908b28fd5eaaf2b763b55df945c7ecca2323097d9331f09fee1d6c23c06785520ab5f
+  checksum: 0e715ba51fab41d7de85f76585a6a2b7d224f43e510993f17f071b608cf32f2107a66f3a04cbfb4d2e60b73dbd2a90f3092bcc70b9d30601cbc060caadc4d90a
   languageName: node
   linkType: hard
 
@@ -17336,7 +17334,7 @@ __metadata:
     jest: "npm:^29.2.2"
     jest-environment-jsdom: "npm:^29.5.0"
     json-templates: "npm:^4.2.0"
-    jspdf: "npm:^2.5.1"
+    jspdf: "npm:^2.5.2"
     jspdf-autotable: "npm:^3.7.0"
     jszip: "npm:^3.10.1"
     jwt-decode: "npm:^3.1.2"
