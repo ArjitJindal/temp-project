@@ -392,7 +392,6 @@ export default function Team() {
         }}
         columns={columns}
         pagination={false}
-        fitHeight
       />
 
       <AccountForm
