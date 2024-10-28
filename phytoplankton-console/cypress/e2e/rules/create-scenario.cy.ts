@@ -39,7 +39,7 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="drawer-next-button-v8"]').first().click();
     createAggregationVariable('Variable 1', 'type');
     if (type === 'USER') {
-      createEntityVariable('User id', type);
+      createEntityVariable('user id', type);
     } else {
       createEntityVariable('type', type);
     }
@@ -113,7 +113,7 @@ describe('Create scenario', () => {
         cy.get('.widget--has-valuerscs').click().type(`${value}{enter}`);
       });
   }
-
+  /* eslint-disable cypress/no-unnecessary-waiting */
   function createEntityVariable(entityText: string, type: 'USER' | 'TRANSACTION') {
     cy.get('button[data-cy="add-variable-v8"]').first().click();
     cy.get('[role="menuitem"]').contains('Entity variable').click();
@@ -122,7 +122,12 @@ describe('Create scenario', () => {
     } else {
       cy.get('input[data-cy="variable-type-v8"]').eq(0).click();
     }
-    cy.get('[data-cy="variable-entity-v8"]').click().type(`${entityText}`).type(`{enter}`);
+    cy.get('[data-cy="variable-entity-v8"]')
+      .click()
+      .type(`${entityText}`)
+      .wait(1)
+      .type('{downarrow}') // To get consumer user / user id instead of getting User / child user Ids
+      .type('{enter}');
     cy.get('button[data-cy="modal-ok"]').first().click();
   }
 
