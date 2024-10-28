@@ -1,5 +1,9 @@
 import { SQSEvent } from 'aws-lambda'
-import { SFNClient, StartExecutionCommand } from '@aws-sdk/client-sfn'
+import {
+  ExecutionAlreadyExists,
+  SFNClient,
+  StartExecutionCommand,
+} from '@aws-sdk/client-sfn'
 import {
   BATCH_JOB_PAYLOAD_RESULT_KEY,
   BATCH_JOB_RUN_TYPE_RESULT_KEY,
@@ -37,14 +41,20 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
       await jobRepository.insertJob(job)
     }
 
-    await sfnClient.send(
-      new StartExecutionCommand({
-        stateMachineArn: process.env.BATCH_JOB_STATE_MACHINE_ARN,
-        name: jobName,
-        input: record.body,
-      })
-    )
-    logger.info(`Job ${jobName} started`, { jobName, batchJobPayload: job })
+    try {
+      await sfnClient.send(
+        new StartExecutionCommand({
+          stateMachineArn: process.env.BATCH_JOB_STATE_MACHINE_ARN,
+          name: jobName,
+          input: record.body,
+        })
+      )
+      logger.info(`Job ${jobName} started`, { jobName, batchJobPayload: job })
+    } catch (e) {
+      if (!(e instanceof ExecutionAlreadyExists)) {
+        throw e
+      }
+    }
   }
 })
 

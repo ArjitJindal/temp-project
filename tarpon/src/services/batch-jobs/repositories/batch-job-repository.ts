@@ -1,4 +1,5 @@
 import { MongoClient, UpdateFilter } from 'mongodb'
+import { omit } from 'lodash'
 import { BatchJobInDb, BatchJobType, BatchJobWithId } from '@/@types/batch-job'
 import { traceable } from '@/core/xray'
 import { JOBS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -54,7 +55,7 @@ export class BatchJobRepository {
       scheduledAt: scheduledAt,
     }
     await db.collection(collection).insertOne({
-      ...job,
+      ...omit(job, '_id'),
       latestStatus,
       statuses: [latestStatus],
     })
