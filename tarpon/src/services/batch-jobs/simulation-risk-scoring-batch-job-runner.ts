@@ -96,7 +96,7 @@ export class SimulationRiskFactorsBatchJobRunner extends BatchJobRunner {
       SAMPLE_TRANSACTIONS_COUNT
     )
 
-    const allUsersCount = await this.userRepository.getUsersCount()
+    const allUsersCount = await this.userRepository.getEstimatedUsersCount()
     const usersCount =
       job.parameters.sampling.usersCount === 'ALL'
         ? allUsersCount

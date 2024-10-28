@@ -335,14 +335,57 @@ export class UserRepository {
     riskClassificationValues?: RiskClassificationScore[],
     userType?: UserType | undefined
   ) {
+    const useQuickSearch = (await this.getEstimatedUsersCount()) > 1000000
     const filterConditions: Filter<
       InternalBusinessUser | InternalConsumerUser
     >[] = []
 
     if (params.filterId != null) {
+      const db = this.mongoDb.db()
+      const collection = db.collection<
+        InternalConsumerUser | InternalBusinessUser
+      >(USERS_COLLECTION(this.tenantId))
+      const count = await collection.countDocuments({ userId: params.filterId })
+      if (count > 0) {
+        // If we can find the user by exact ID match, we don't need to filter by name
+        delete params.filterName
+      }
+
       filterConditions.push({
         userId: params.filterId,
       })
+    }
+    if (params.filterName != null) {
+      const filterNameConditions: Filter<
+        InternalBusinessUser | InternalConsumerUser
+      >[] = []
+      for (const part of params.filterName.split(/\s+/)) {
+        const regexFilter = useQuickSearch
+          ? prefixRegexMatchFilter(part)
+          : regexMatchFilter(part, true)
+        // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
+        filterNameConditions.push({
+          $or: [
+            {
+              'userDetails.name.firstName': regexFilter,
+            },
+            {
+              'userDetails.name.middleName': regexFilter,
+            },
+            {
+              'userDetails.name.lastName': regexFilter,
+            },
+            {
+              'legalEntity.companyGeneralDetails.legalName': regexFilter,
+            },
+            {
+              userId: regexFilter,
+            },
+          ],
+        })
+      }
+
+      filterConditions.push({ $and: filterNameConditions })
     }
 
     if (params.filterUserIds != null) {
@@ -401,39 +444,6 @@ export class UserRepository {
       filterConditions.push({
         hitRules: { $elemMatch: eleMatchCondition },
       })
-    }
-
-    if (params.filterName != null) {
-      const filterNameConditions: Filter<
-        InternalBusinessUser | InternalConsumerUser
-      >[] = []
-      for (const part of params.filterName.split(/\s+/)) {
-        // todo: is it safe to pass regexp to mongo, can't it cause infinite calculation?
-        filterNameConditions.push({
-          $or: [
-            {
-              'userDetails.name.firstName': regexMatchFilter(part, true),
-            },
-            {
-              'userDetails.name.middleName': regexMatchFilter(part, true),
-            },
-            {
-              'userDetails.name.lastName': regexMatchFilter(part, true),
-            },
-            {
-              'legalEntity.companyGeneralDetails.legalName': regexMatchFilter(
-                part,
-                true
-              ),
-            },
-            {
-              userId: prefixRegexMatchFilter(part, true),
-            },
-          ],
-        })
-      }
-
-      filterConditions.push({ $and: filterNameConditions })
     }
 
     if (params.filterEmail) {
@@ -1258,7 +1268,7 @@ export class UserRepository {
     return users
   }
 
-  public async getUsersCount(): Promise<number> {
+  public async getEstimatedUsersCount(): Promise<number> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)

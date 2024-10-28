@@ -121,7 +121,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       tenantId,
       this.mongoDb
     )
-    const allUsersCount = await this.userRepository.getUsersCount()
+    const allUsersCount = await this.userRepository.getEstimatedUsersCount()
     this.totalUsers = Math.min(MAX_USERS, allUsersCount)
     await simulationTaskRepository.updateTaskStatus(
       taskId,
