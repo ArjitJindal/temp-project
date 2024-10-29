@@ -1,4 +1,4 @@
-import { isEmpty, mapValues, set } from 'lodash'
+import { isEmpty, mapValues, memoize, set } from 'lodash'
 import * as Sentry from '@sentry/serverless'
 import { mockedCurrencyExchangeRates } from '../../../test-resources/mocked-currency-exchange-rates'
 import { CurrencyRepository } from './repository'
@@ -8,6 +8,7 @@ import { TransactionAmountDetails } from '@/@types/openapi-public/TransactionAmo
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const cachedData: Partial<CurrencyExchangeUSDType> = {}
 
@@ -46,8 +47,10 @@ export type CurrencyExchangeUSDType = {
 export class CurrencyService {
   repository: CurrencyRepository
 
+  private dynamoDb = memoize(() => getDynamoDbClient())
+
   constructor() {
-    this.repository = new CurrencyRepository()
+    this.repository = new CurrencyRepository(this.dynamoDb())
   }
 
   public static parseCoinbaseResponse(
