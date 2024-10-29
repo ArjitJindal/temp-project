@@ -7,10 +7,12 @@ import {
 import { isWhiteLabeled } from '@/utils/branding';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightMLSettings = () => {
+  const permissions = useHasPermissions(['settings:add-ons:read']);
   const settings = useSettings();
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
 
@@ -30,6 +32,7 @@ export const FlagrightMLSettings = () => {
               value={settings.isMlEnabled}
               onChange={handleToggle}
               loading={mutateTenantSettings.isLoading}
+              isDisabled={!permissions}
             />
           ) : (
             <Tooltip
@@ -37,7 +40,7 @@ export const FlagrightMLSettings = () => {
               placement="topLeft"
             >
               <div>
-                <Toggle value={false} disabled={true} />
+                <Toggle value={false} disabled={true} isDisabled={!permissions} />
               </div>
             </Tooltip>
           )}

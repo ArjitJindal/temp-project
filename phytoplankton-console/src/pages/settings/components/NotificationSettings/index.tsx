@@ -13,8 +13,10 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { NotificationType } from '@/apis';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export const NotificationsSettings = () => {
+  const permissions = useHasPermissions(['settings:notifications:write']);
   const types = Object.keys(NOTIFICATION_TYPES);
   const { notificationsSubscriptions } = useSettings();
   const [consoleNotificationSettings, setConsoleNotificationSettings] = useState(
@@ -70,6 +72,7 @@ export const NotificationsSettings = () => {
                           onChange={() => {
                             handleCheckboxChange(value);
                           }}
+                          isDisabled={!permissions}
                         />
                       </div>
                     </div>
@@ -84,6 +87,7 @@ export const NotificationsSettings = () => {
               onClick={() => {
                 handleSaveNotificationSettings();
               }}
+              isDisabled={!permissions}
             >
               Save
             </Button>

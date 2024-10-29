@@ -27,8 +27,8 @@ export function RuleQueuesSettings() {
         tableId="rule-queues-table"
         entityName="queue"
         entityIdField="id"
-        readPermissions={['settings:organisation:read']}
-        writePermissions={['settings:organisation:write']}
+        readPermissions={['settings:case-management:read']}
+        writePermissions={['settings:case-management:write']}
         apiOperations={{
           GET: (params) => api.getRuleQueues(params),
           CREATE: (entity) => api.postRuleQueue({ RuleQueue: entity }),

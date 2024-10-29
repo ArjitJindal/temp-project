@@ -3166,7 +3166,7 @@ paths:
           in: query
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - settings:developers:read
       summary: Tenant - Get API Keys
       operationId: get-tenant-api-keys
       responses:
@@ -6167,7 +6167,7 @@ paths:
       operationId: post-narrative-template
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6182,28 +6182,12 @@ paths:
               $ref: '#/components/schemas/NarrativeTemplateRequest'
         required: true
   /tenants/settings/narrative-template/{narrativeTemplateId}:
-    get:
-      summary: Get narrative
-      operationId: get-narrative-template
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/NarrativeTemplate'
-      parameters:
-        - schema:
-            type: string
-          in: path
-          name: narrativeTemplateId
-          required: true
     put:
       summary: Update narrative
       operationId: put-narrative-template
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6228,7 +6212,7 @@ paths:
       operationId: delete-narrative-template
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6268,7 +6252,7 @@ paths:
       operationId: get-sla-policies
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - settings:case-management:read
       responses:
         '200':
           description: OK
@@ -6290,7 +6274,7 @@ paths:
       operationId: post-sla-policy
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6310,7 +6294,7 @@ paths:
       operationId: get-sla-policy
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - settings:case-management:read
       responses:
         '200':
           description: OK
@@ -6329,7 +6313,7 @@ paths:
       operationId: put-sla-policy
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6354,7 +6338,7 @@ paths:
       operationId: delete-sla-policy
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6370,7 +6354,7 @@ paths:
       operationId: get-new-sla-id
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - settings:case-management:read
       responses:
         '200':
           description: OK
@@ -6601,7 +6585,7 @@ paths:
       operationId: post-checklist-templates
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6621,7 +6605,7 @@ paths:
       operationId: delete-tenant
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:system-config:write
       responses:
         '200':
           description: OK
@@ -6637,7 +6621,7 @@ paths:
       operationId: get-tenants-deletion-data
       x-flagright:
         permissions:
-          - settings:organisation:read
+          - settings:system-config:read
       responses:
         '200':
           description: OK
@@ -6680,7 +6664,7 @@ paths:
       operationId: put-checklist-templates
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6699,7 +6683,7 @@ paths:
       operationId: delete-checklist-template
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6737,7 +6721,7 @@ paths:
       operationId: post-rule-queue
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6773,7 +6757,7 @@ paths:
       operationId: put-rule-queue
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -6792,7 +6776,7 @@ paths:
       operationId: delete-rule-queue
       x-flagright:
         permissions:
-          - settings:organisation:write
+          - settings:case-management:write
       responses:
         '200':
           description: OK
@@ -10288,6 +10272,24 @@ components:
         - dashboard:download-data:read
         - settings:organisation:read
         - settings:organisation:write
+        - settings:system-config:read
+        - settings:system-config:write
+        - settings:case-management:write
+        - settings:case-management:read
+        - settings:security:read
+        - settings:security:write
+        - settings:transactions:read
+        - settings:transactions:write
+        - settings:users:read
+        - settings:users:write
+        - settings:rules:read
+        - settings:rules:write
+        - settings:risk-scoring:read
+        - settings:risk-scoring:write
+        - settings:notifications:read
+        - settings:notifications:write
+        - settings:add-ons:read
+        - settings:add-ons:write
         - settings:developers:read
         - settings:developers:write
         - sanctions:search:read
