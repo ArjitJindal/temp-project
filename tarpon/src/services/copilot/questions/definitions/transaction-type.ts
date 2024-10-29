@@ -35,7 +35,7 @@ export const TransactionType: BarchartQuestion<Period> = {
     > => {
       const clickhouseClient = await getClickhouseClient(tenantId)
       const identifierQuery = userId
-        ? `originUserId = '${userId}' OR destinationUserId = '${userId}'`
+        ? `(originUserId = '${userId}' OR destinationUserId = '${userId}')`
         : paymentIdentifierQueryClickhouse(paymentIdentifier)
 
       const query = `
