@@ -255,7 +255,7 @@ async function getSchemaAttributeRiskLevel(
   value: unknown
   riskValue: RiskScoreValueLevel | RiskScoreValueScore
 }> {
-  let resultValue = null
+  let resultValue: unknown | null = null
   let resultRiskValue: RiskScoreValueLevel | RiskScoreValueScore = defaultValue
   const endValue = get(entity, paramName)
 

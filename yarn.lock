@@ -1708,7 +1708,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.162.0":
+"aws-cdk@npm:~2.162.1":
   version: 2.162.1
   resolution: "aws-cdk@npm:2.162.1"
   dependencies:
@@ -3327,7 +3327,7 @@ __metadata:
     "@slack/web-api": "npm:^7.4.0"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.9"
-    aws-cdk: "npm:~2.162.0"
+    aws-cdk: "npm:~2.162.1"
     aws-cdk-lib: "npm:~2.162.1"
     constructs: "npm:^10.3.0"
     husky: "npm:^8.0.1"

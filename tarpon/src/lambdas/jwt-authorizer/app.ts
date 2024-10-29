@@ -18,7 +18,7 @@ import { logger } from '@/core/logger'
 import { getFullTenantId } from '@/utils/tenant'
 import { envIs } from '@/utils/env'
 
-const UNAUTHORIZED_RESPONSE = {
+const UNAUTHORIZED_RESPONSE: APIGatewayAuthorizerResult = {
   principalId: 'unknown',
   policyDocument: {
     Version: '2012-10-17',

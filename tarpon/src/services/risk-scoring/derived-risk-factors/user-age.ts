@@ -23,8 +23,8 @@ function getDerivedAge(
     return
   }
   return granularity === 'YEAR'
-    ? getAgeFromTimestamp(dayjs(endValue).valueOf())
-    : getAgeInDaysFromTimestamp(dayjs(endValue).valueOf())
+    ? getAgeFromTimestamp(dayjs(endValue as number).valueOf())
+    : getAgeInDaysFromTimestamp(dayjs(endValue as number).valueOf())
 }
 
 export const KRS_USER_AGE_RISK_HANDLERS: Array<
