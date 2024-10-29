@@ -252,6 +252,16 @@ export function prefixRegexMatchFilter(input: string, caseInsensitive = false) {
   }
 }
 
+export function prefixRegexMatchFilterForArray(
+  input: string[],
+  caseInsensitive = false
+) {
+  return {
+    $regex: `^${input.map((i) => escapeStringRegexp(i)).join('|')}`,
+    $options: caseInsensitive ? 'i' : '',
+  }
+}
+
 export function regexMatchFilter(input: string, caseInsensitive = false) {
   return {
     $regex: `${escapeStringRegexp(input)}`,

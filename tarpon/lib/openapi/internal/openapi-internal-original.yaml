@@ -3799,6 +3799,10 @@ paths:
           in: query
           name: searchEntityId
         - schema:
+            type: boolean
+          in: query
+          name: entityIdExactMatch
+        - schema:
             type: array
             items:
               $ref: '#/components/schemas/AuditLogActionEnum'
