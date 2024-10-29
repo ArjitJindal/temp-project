@@ -11,6 +11,7 @@ interface Props {
   onActionButtonClick?: () => void;
   showIcon?: boolean;
   showButtonIcon?: boolean;
+  actionPadding?: string;
 }
 
 export function EmptyEntitiesInfo(props: Props) {
@@ -29,7 +30,7 @@ export function EmptyEntitiesInfo(props: Props) {
       <div style={{ marginBottom: 16 }}>{props.showIcon && <EmptyBoxIcon />}</div>
       <H4 style={{ fontSize: 18 }}> {title ?? 'No data'}</H4>
       {description && (
-        <P variant="m" fontWeight="normal" grey={true}>
+        <P variant="m" fontWeight="normal" grey={true} style={{ marginBottom: '8px' }}>
           {description}
         </P>
       )}

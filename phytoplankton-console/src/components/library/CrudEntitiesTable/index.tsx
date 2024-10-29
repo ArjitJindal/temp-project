@@ -236,7 +236,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
           return data.total === 0 ? (
             <EmptyEntitiesInfo
               title={`No ${pluralEntityName} found`}
-              description={`You haven’t added any ${entityName} yet. Create a new ${entityName} by clicking below`}
+              description={`You haven't added any ${entityName} yet. Create a new ${entityName} by clicking below`}
               action={isReadOnly ? undefined : `Create ${entityName}`}
               onActionButtonClick={handleEntityCreation}
             />
