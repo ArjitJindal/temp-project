@@ -5,15 +5,11 @@ import React from 'react';
 import s from './index.module.less';
 import { TabItem } from '@/components/library/Tabs';
 import { captureTabEvent } from '@/utils/postHog';
-import { Permission } from '@/apis';
-import { useAuth0User } from '@/utils/user-utils';
 
 export const TABS_LINE_HEIGHT = 81;
 
-export type TabItemWithPermissions = TabItem & { requiredPermissions?: Permission[] };
-
 interface Props extends Pick<TabsProps, 'activeKey' | 'onChange' | 'tabBarExtraContent'> {
-  items?: TabItemWithPermissions[];
+  items?: TabItem[];
   sticky?: number;
   compact?: boolean;
   isPrimary?: boolean;
@@ -22,8 +18,6 @@ interface Props extends Pick<TabsProps, 'activeKey' | 'onChange' | 'tabBarExtraC
 }
 
 export default function PageTabs(props: Props) {
-  const user = useAuth0User();
-  const permissions = user?.permissions ?? new Map<Permission, boolean>();
   const {
     sticky,
     compact,
@@ -52,18 +46,14 @@ export default function PageTabs(props: Props) {
       tabBarStyle={sticky != null ? { top: sticky } : undefined}
       tabBarExtraContent={tabBarExtraContent}
     >
-      {items?.map((item: TabItemWithPermissions) => {
-        const { title, key, children, isClosable, isDisabled, requiredPermissions } = item;
-        const isEnabled = requiredPermissions?.length
-          ? requiredPermissions.some((permission) => permissions.get(permission))
-          : true;
-
+      {items?.map((item: TabItem) => {
+        const { title, key, children, isClosable, isDisabled } = item;
         return (
           <AntTabs.TabPane
             tab={<span data-sentry-allow={true}>{title}</span>}
             key={key}
             closable={isClosable}
-            disabled={isDisabled ?? !isEnabled ?? false}
+            disabled={isDisabled ?? false}
           >
             {children ?? <></>}
           </AntTabs.TabPane>

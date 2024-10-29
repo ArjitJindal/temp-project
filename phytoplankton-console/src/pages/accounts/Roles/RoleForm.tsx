@@ -190,7 +190,7 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
           <Button
             testName="edit-role"
             onClick={() => setEdit(true)}
-            requiredPermissions={['roles:overview:write']}
+            requiredPermissions={['settings:organisation:write']}
           >
             Edit
           </Button>
@@ -206,7 +206,7 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
                 roleName: `${roleName} Copy`,
               });
             }}
-            requiredPermissions={['roles:overview:write']}
+            requiredPermissions={['settings:organisation:write']}
             icon={<FileCopyOutlined />}
           >
             Duplicate

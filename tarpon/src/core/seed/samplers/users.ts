@@ -64,9 +64,6 @@ import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/reposit
 import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
 import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
-import { MARITAL_STATUSS } from '@/@types/openapi-public-custom/MaritalStatus'
-import { GENDERS } from '@/@types/openapi-public-custom/Gender'
-import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentStatus'
 
 export function sampleUserState(): UserState {
   return pickRandom(USER_STATES)
@@ -102,9 +99,9 @@ export const randomPhoneNumber = () => {
   return pickRandom(phoneNumber())
 }
 
-const generateRandomTimestamp = (yearDifference: number = 0) => {
+const generateRandomTimestamp = () => {
   const minDate = '1947-01-01'
-  const maxDate = dayjs().subtract(yearDifference, 'year').format('YYYY-MM-DD')
+  const maxDate = dayjs().format('YYYY-MM-DD')
 
   const min = dayjs(minDate).valueOf()
   const max = dayjs(maxDate).valueOf()
@@ -122,54 +119,6 @@ const tagKeys = [
   'internalTransactionId',
   'internalPayoutId',
   'internalRefundId',
-]
-
-const userCategory = [
-  'Individual',
-  'Business Owner',
-  'Freelancer',
-  'Investor',
-  'Student',
-  'Retiree',
-]
-
-const occupation = [
-  'Software Developer',
-  'Data Analyst',
-  'Marketing Manager',
-  'Consultant',
-  'Teacher',
-  'Doctor',
-  'Sales Executive',
-]
-
-const employmentSector = [
-  'Information Technology',
-  'Healthcare',
-  'Education',
-  'Finance',
-  'Manufacturing',
-  'Retail',
-  'Government',
-]
-
-const employerName = [
-  'TechCorp Solutions',
-  'GreenMed Health Services',
-  'EduBright Institute',
-  'Zenith Bank',
-  'Urban Retailers',
-  'State Innovations',
-]
-
-const businessIndustry = [
-  'E-commerce',
-  'Real Estate',
-  'Pharmaceuticals',
-  'Hospitality',
-  'Construction',
-  'Media & Entertainment',
-  'Automotive Industry',
 ]
 
 const getNormalTag = () => {
@@ -317,7 +266,6 @@ export function sampleConsumerUser() {
   const countryOfResidence = pickRandom(COUNTRY_CODES)
   const countryOfNationality = pickRandom(COUNTRY_CODES)
   const timestamp = sampleTimestamp(3600 * 24 * 365 * 1000)
-  const domain = name.firstName.toLowerCase().replace(' ', '').replace('&', '')
   const user: InternalConsumerUser = {
     type: 'CONSUMER' as const,
     userId,
@@ -329,33 +277,16 @@ export function sampleConsumerUser() {
     ],
     sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
     userStateDetails: sampleUserStateDetails(),
-    kycStatusDetails: sampleKycStatusDetails(),
-    userDetails: {
-      dateOfBirth: new Date(generateRandomTimestamp(18)).toISOString(),
-      countryOfResidence,
-      countryOfNationality,
-      name,
-      gender: pickRandom(GENDERS),
-      maritalStatus: pickRandom(MARITAL_STATUSS),
-      userCategory: pickRandom(userCategory),
-    },
     contactDetails: {
-      emailIds: [
-        `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}@${pickRandom(
-          emailDomains
-        )}`,
-      ],
-      faxNumbers: [randomPhoneNumber()],
-      websites: [domain],
       addresses: [randomAddress()],
       contactNumbers: [randomPhoneNumber()],
     },
-    occupation: pickRandom(occupation),
-    employmentStatus: pickRandom(EMPLOYMENT_STATUSS),
-    employmentDetails: {
-      employmentSector: pickRandom(employmentSector),
-      employerName: pickRandom(employerName),
-      businessIndustry: [pickRandom(businessIndustry)],
+    kycStatusDetails: sampleKycStatusDetails(),
+    userDetails: {
+      dateOfBirth: new Date(sampleTimestamp()).toISOString(),
+      countryOfResidence,
+      countryOfNationality,
+      name,
     },
     pepStatus: [randomPepStatus()],
     executedRules: userRules().map((rule) => {

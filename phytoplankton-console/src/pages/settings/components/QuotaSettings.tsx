@@ -7,7 +7,6 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { useQuery } from '@/utils/queries/hooks';
 import { TENANT_USAGE_DATA } from '@/utils/queries/keys';
-import { formatNumber } from '@/utils/number';
 
 export function QuotaSettings() {
   const api = useApi();
@@ -18,9 +17,7 @@ export function QuotaSettings() {
 
       return Object.entries(usageData).map(([key, value]: [string, string | number]) => ({
         key: humanizeCamelCase(key),
-        value: isNaN(Number(value))
-          ? startCase(toLower(value.toString()))
-          : formatNumber(Number(value)),
+        value: startCase(toLower(value.toString())),
       }));
     },
   );

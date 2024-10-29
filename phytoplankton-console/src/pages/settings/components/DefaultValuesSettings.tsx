@@ -1,5 +1,5 @@
 import { Select, SelectProps } from 'antd';
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
@@ -11,7 +11,6 @@ import Table from '@/components/library/Table';
 import { TIMEZONES } from '@/utils/dayjs';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { StatePair } from '@/utils/state';
-import { useHasPermissions } from '@/utils/user-utils';
 
 type TableItem = {
   valueType: string;
@@ -31,69 +30,62 @@ const DEFAULT_VALUES = {
 
 const columnHelper = new ColumnHelper<TableItem>();
 
+const columns = columnHelper.list([
+  columnHelper.simple({
+    title: 'Value type',
+    key: 'label',
+  }),
+  columnHelper.display({
+    title: 'Options',
+    id: 'options',
+    render: (record, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const [value, setValue] = externalState.value;
+      return (
+        <Select
+          value={value[record.valueType]}
+          onChange={(selectedValue) => {
+            setValue((value) => ({
+              ...value,
+              [record.valueType]: selectedValue,
+            }));
+          }}
+          options={record.options}
+          defaultValue={DEFAULT_VALUES[record.valueType]}
+          showSearch
+          style={{ width: '100%' }}
+        />
+      );
+    },
+    defaultWidth: 600,
+  }),
+  columnHelper.display({
+    id: 'action',
+    title: 'Action',
+    render: (record, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { onSave } = externalState;
+      const [value] = externalState.value;
+      const saving = externalState.saving;
+      return (
+        <Button
+          type="PRIMARY"
+          onClick={() => {
+            onSave(record.valueType, value[record.valueType]);
+          }}
+          isLoading={saving}
+          requiredPermissions={['settings:organisation:write']}
+        >
+          Save
+        </Button>
+      );
+    },
+  }),
+]);
+
 export const DefaultValuesSettings = () => {
   const [value, setValue] = useState<{ [key: string]: string }>(DEFAULT_VALUES);
   const settings = useSettings();
-
-  const hasSystemConfigWrite = useHasPermissions(['settings:system-config:write']);
-
-  const columns = useMemo(
-    () =>
-      columnHelper.list([
-        columnHelper.simple({
-          title: 'Value type',
-          key: 'label',
-        }),
-        columnHelper.display({
-          title: 'Options',
-          id: 'options',
-          render: (record, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const [value, setValue] = externalState.value;
-            return (
-              <Select
-                value={value[record.valueType]}
-                onChange={(selectedValue) => {
-                  setValue((value) => ({
-                    ...value,
-                    [record.valueType]: selectedValue,
-                  }));
-                }}
-                options={record.options}
-                defaultValue={DEFAULT_VALUES[record.valueType]}
-                showSearch
-                style={{ width: '100%' }}
-                disabled={!hasSystemConfigWrite}
-              />
-            );
-          },
-          defaultWidth: 600,
-        }),
-        columnHelper.display({
-          id: 'action',
-          title: 'Action',
-          render: (record, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { onSave } = externalState;
-            const [value] = externalState.value;
-            const saving = externalState.saving;
-            return (
-              <Button
-                type="PRIMARY"
-                onClick={() => {
-                  onSave(record.valueType, value[record.valueType]);
-                }}
-                isLoading={saving}
-                requiredPermissions={['settings:system-config:write']}
-              >
-                Save
-              </Button>
-            );
-          },
-        }),
-      ]),
-    [hasSystemConfigWrite],
-  );
 
   useEffect(() => {
     if (settings.defaultValues) {

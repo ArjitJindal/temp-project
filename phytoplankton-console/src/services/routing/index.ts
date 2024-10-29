@@ -664,14 +664,20 @@ export function useRoutes(): RouteItem[] {
         icon: 'settings',
         name: 'settings',
         position: 'bottom',
-
+        permissions: ['settings:organisation:read'],
         hideChildrenInMenu: true,
         component: SettingsPage,
         routes: [
           {
+            path: '/settings',
+            redirect: '/settings/system',
+            permissions: ['settings:organisation:read'],
+          },
+          {
             path: '/settings/:section',
             name: 'settings-section',
             component: SettingsPage,
+            permissions: ['settings:organisation:read'],
           },
         ],
       },

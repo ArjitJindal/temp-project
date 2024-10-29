@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import {
   useSettings,
   useUpdateTenantSettings,
@@ -10,7 +10,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TextInput from '@/components/library/TextInput';
 import { StatePair } from '@/utils/state';
 import Alert from '@/components/library/Alert';
-import { useHasPermissions } from '@/utils/user-utils';
 interface CommonItem {
   rowKey: string;
   key: string;
@@ -32,59 +31,52 @@ interface ExternalState {
 }
 
 const helper = new ColumnHelper<Item>();
+const columns = helper.list([
+  helper.display({
+    title: 'Key',
+    defaultWidth: 300,
+    render: (item, context) => {
+      const externalState = context.external as ExternalState;
+      const [newState, setNewState] = externalState.newStateDetails;
+      if (item.type === 'NEW') {
+        return (
+          <TextInput
+            value={newState?.key}
+            onChange={(e) => setNewState({ key: e ?? '', type: 'NEW', rowKey: 'new' })}
+          />
+        );
+      } else {
+        return <>{item.key}</>;
+      }
+    },
+  }),
+  helper.display({
+    title: 'Action',
+    defaultWidth: 300,
+    render: (item, context) => {
+      const externalState = context.external as ExternalState;
+      const [newState, setNewState] = externalState.newStateDetails;
+      if (item.type === 'NEW') {
+        return (
+          <Button
+            isDisabled={!newState?.key}
+            onClick={() => {
+              if (newState) {
+                externalState.onAdd(newState.key);
+                setNewState(undefined);
+              }
+            }}
+          >
+            Add
+          </Button>
+        );
+      }
+    },
+  }),
+]);
 
 function TagSettings() {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:users:write']);
-  const columns = useMemo(
-    () =>
-      helper.list([
-        helper.display({
-          title: 'Key',
-          defaultWidth: 300,
-          render: (item, context) => {
-            const externalState = context.external as ExternalState;
-            const [newState, setNewState] = externalState.newStateDetails;
-            if (item.type === 'NEW') {
-              return (
-                <TextInput
-                  value={newState?.key}
-                  onChange={(e) => setNewState({ key: e ?? '', type: 'NEW', rowKey: 'new' })}
-                  isDisabled={!permissions}
-                />
-              );
-            } else {
-              return <>{item.key}</>;
-            }
-          },
-        }),
-        helper.display({
-          title: 'Action',
-          defaultWidth: 300,
-          render: (item, context) => {
-            const externalState = context.external as ExternalState;
-            const [newState, setNewState] = externalState.newStateDetails;
-            if (item.type === 'NEW') {
-              return (
-                <Button
-                  isDisabled={!newState?.key || !permissions}
-                  onClick={() => {
-                    if (newState) {
-                      externalState.onAdd(newState.key);
-                      setNewState(undefined);
-                    }
-                  }}
-                >
-                  Add
-                </Button>
-              );
-            }
-          },
-        }),
-      ]),
-    [permissions],
-  );
-
   const mutateTenantSettings = useUpdateTenantSettings();
   const [newStateDetails, setNewStateDetails] = useState<Item | undefined>();
   const [isMaxTags, setIsMaxTags] = useState(false);

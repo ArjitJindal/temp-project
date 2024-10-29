@@ -30,14 +30,18 @@ import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
-import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { Feature, useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs from '@/components/ui/PageTabs';
 import { makeUrl } from '@/utils/routing';
+import { useHasPermissions } from '@/utils/user-utils';
 import Alert from '@/components/library/Alert';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
 import { getOr } from '@/utils/asyncResource';
 
 export default function SettingsPage() {
+  const isRiskScoreEnabled = useFeatureEnabled('RISK_SCORING');
+  const isDevelopersReadEnabled = useHasPermissions(['settings:developers:read']);
+
   const { section = 'system' } = useParams<'section'>() as {
     section:
       | 'system'
@@ -54,6 +58,7 @@ export default function SettingsPage() {
   const i18n = useI18n();
   const [isDemoModeRes] = useDemoMode();
   const isDemoMode = getOr(isDemoModeRes, false);
+  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
   return (
     <PageWrapper title={i18n('menu.settings')}>
       <PageTabs
@@ -65,7 +70,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.system'),
             key: 'system',
-            requiredPermissions: ['settings:system-config:read'],
             children: (
               <>
                 <DefaultValuesSettings />
@@ -77,21 +81,16 @@ export default function SettingsPage() {
             title: i18n('menu.settings.security'),
             key: 'security',
             children: <SecuritySettings />,
-            requiredPermissions: ['settings:security:read'],
           },
-
           {
             title: i18n('menu.settings.case-management'),
             key: 'case-management',
-            requiredPermissions: ['settings:case-management:read'],
             children: (
               <>
                 <NarrativeTemplatesSettings />
                 <ChecklistTemplatesSettings />
                 <RuleQueuesSettings />
-                <Feature name="ALERT_SLA">
-                  <SlaPolicySettings />
-                </Feature>
+                {isSlaEnabled && <SlaPolicySettings />}
                 <Feature name="NARRATIVE_COPILOT">
                   <AISources />
                 </Feature>
@@ -104,7 +103,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.transactions'),
             key: 'transactions',
-            requiredPermissions: ['settings:transactions:read'],
             children: (
               <>
                 <PaymentApprovalSettings />
@@ -115,7 +113,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.users'),
             key: 'users',
-            requiredPermissions: ['settings:users:read'],
             children: (
               <>
                 <KYCUserStatusSettings />
@@ -124,26 +121,16 @@ export default function SettingsPage() {
               </>
             ),
           },
-          {
-            title: i18n('menu.settings.rules'),
-            key: 'rules',
-            requiredPermissions: ['settings:rules:read'],
-            children: <RuleActionSettings />,
-          },
+          { title: i18n('menu.settings.rules'), key: 'rules', children: <RuleActionSettings /> },
           {
             title: i18n('menu.settings.risk-scoring'),
             key: 'risk-scoring',
-            requiredPermissions: ['settings:risk-scoring:read'],
             children: (
               <>
-                <Feature name="RISK_SCORING">
-                  <RiskAlgorithmsSettings />
-                </Feature>
+                {isRiskScoreEnabled ? <RiskAlgorithmsSettings /> : ''}
                 <Feature name="RISK_SCORING_V8">
                   <CraToggleSettings />
-                  <Feature name="RISK_SCORING">
-                    <RiskAlgorithmsCra />
-                  </Feature>
+                  {isRiskScoreEnabled ? <RiskAlgorithmsCra /> : ''}
                   <ReRunTriggerSettings />
                 </Feature>
                 <RiskLevelSettings />
@@ -153,7 +140,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.notifications'),
             key: 'notifications',
-            requiredPermissions: ['settings:notifications:read'],
             children: (
               <>
                 <SlackNotificationsSettings />
@@ -165,7 +151,6 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.addons'),
             key: 'addons',
-            requiredPermissions: ['settings:add-ons:read'],
             children: (
               <>
                 <FlagrightAISettings />
@@ -177,7 +162,7 @@ export default function SettingsPage() {
           {
             title: i18n('menu.settings.developers'),
             key: 'developers',
-            requiredPermissions: ['settings:developers:read'],
+            isDisabled: !isDevelopersReadEnabled,
             children: (
               <>
                 {isDemoMode && (

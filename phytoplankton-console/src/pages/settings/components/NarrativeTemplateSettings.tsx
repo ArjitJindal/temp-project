@@ -33,8 +33,8 @@ export function NarrativeTemplatesSettings() {
         tableId="narrative-templates-table"
         entityName="narrative template"
         entityIdField="id"
-        readPermissions={['settings:case-management:read']}
-        writePermissions={['settings:case-management:write']}
+        readPermissions={['settings:organisation:read']}
+        writePermissions={['settings:organisation:write']}
         apiOperations={{
           GET: (params) => {
             return api.getNarratives(params).then((value) => {

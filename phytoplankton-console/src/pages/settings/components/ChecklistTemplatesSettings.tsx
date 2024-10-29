@@ -164,8 +164,8 @@ export function ChecklistTemplatesSettings() {
         tableId="checklist-templates"
         entityName="template"
         entityIdField="id"
-        readPermissions={['settings:case-management:read']}
-        writePermissions={['settings:case-management:write']}
+        readPermissions={['settings:organisation:read']}
+        writePermissions={['settings:organisation:write']}
         apiOperations={{
           GET: (params) => api.getChecklistTemplates(params),
           CREATE: async (entity) => {
@@ -227,7 +227,7 @@ export function ChecklistTemplatesSettings() {
                       type="TETRIARY"
                       isDisabled={isActive}
                       onClick={onClick}
-                      requiredPermissions={['settings:case-management:write']}
+                      requiredPermissions={['settings:organisation:write']}
                     >
                       {isActive ? 'Active' : 'Draft'}
                     </Button>

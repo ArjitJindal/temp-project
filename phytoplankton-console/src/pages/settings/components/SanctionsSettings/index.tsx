@@ -6,10 +6,8 @@ import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
-import { useHasPermissions } from '@/utils/user-utils';
 
 export const SanctionsSettings = () => {
-  const permissions = useHasPermissions(['settings:add-ons:read']);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const branding = getBranding();
 
@@ -47,7 +45,6 @@ export const SanctionsSettings = () => {
                 onClick={() => {
                   handleDownload();
                 }}
-                isDisabled={!permissions}
               >
                 Download List
               </Button>
@@ -57,9 +54,7 @@ export const SanctionsSettings = () => {
       ) : (
         <>
           <a href={`mailto:${branding.supportEmail}`} className={s.sanctionsAccessButton}>
-            <Button isDisabled={!permissions} type="PRIMARY">
-              Request access
-            </Button>
+            <Button type="PRIMARY">Request access</Button>
           </a>
         </>
       )}

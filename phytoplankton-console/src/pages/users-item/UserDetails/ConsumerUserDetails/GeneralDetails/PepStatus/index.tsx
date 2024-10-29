@@ -201,7 +201,6 @@ export const PepStatusForm = (props: FormProps) => {
           value: false,
           showHint: true,
         }}
-        hint="Level refers to a PEP's influence and risk based on their position, with higher levels indicating greater authority."
       >
         <Select<PepRank>
           value={pepRank}

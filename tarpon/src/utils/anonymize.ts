@@ -74,7 +74,9 @@ function anonymizeDocument(anonymizer: any, input: any): any {
       return anonymized.get(input)
     }
     const [_one, two, three] = anonymizer.split('.')
-    const output = faker[two]?.[three]()
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    const output = faker[two][three]()
     anonymized.set(input, output)
     return output
   }

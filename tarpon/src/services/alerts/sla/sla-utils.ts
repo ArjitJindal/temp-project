@@ -8,11 +8,6 @@ import {
 import { SLAPolicyStatus } from '@/@types/openapi-internal/SLAPolicyStatus'
 import { getDerivedStatus } from '@/services/cases/utils'
 import dayjs, { duration } from '@/utils/dayjs'
-import {
-  isStatusInReview,
-  statusEscalated,
-  statusEscalatedL2,
-} from '@/utils/helpers'
 
 export const dayMapping: Record<SLAPolicyConfigurationWorkingDaysEnum, number> =
   {
@@ -25,10 +20,10 @@ export const dayMapping: Record<SLAPolicyConfigurationWorkingDaysEnum, number> =
     SAT: 6,
   }
 
-export function matchPolicyRoleConditions(
+export async function matchPolicyRoleConditions(
   policyConfiguration: SLAPolicyConfiguration,
   accounts: Account[]
-): boolean {
+): Promise<boolean> {
   if (
     !policyConfiguration.accountRoles ||
     policyConfiguration.accountRoles.length === 0
@@ -49,34 +44,11 @@ export function matchPolicyRoleConditions(
 export function matchPolicyStatusConditions(
   status: CaseStatus,
   statusCount: number,
-  policyConfiguration: SLAPolicyConfiguration,
-  accounts: {
-    makerAccounts: Account[]
-    reviewerAccounts: Account[]
-  }
+  policyConfiguration: SLAPolicyConfiguration
 ): boolean {
-  const { makerAccounts, reviewerAccounts } = accounts
   const derivedStatus = getDerivedStatus(status)
-  const isEscalatedL2 = statusEscalatedL2(status)
-  const isEscalated = statusEscalated(status)
-  const isInReview = isStatusInReview(status)
-
-  const filteredAccounts = reviewerAccounts.filter((account) => {
-    return (
-      (isEscalatedL2 && account.escalationLevel === 'L2') ||
-      isEscalated ||
-      (isInReview && account.isReviewer === true)
-    )
-  })
-
-  const policyMatch =
-    isEscalated || isInReview || isEscalatedL2
-      ? matchPolicyRoleConditions(policyConfiguration, filteredAccounts)
-      : matchPolicyRoleConditions(policyConfiguration, makerAccounts)
-
   if (
     derivedStatus === 'CLOSED' ||
-    !policyMatch ||
     !policyConfiguration.alertStatusDetails.alertStatuses.includes(
       derivedStatus
     )

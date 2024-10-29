@@ -475,7 +475,6 @@ export default function AccountForm(props: Props) {
 
                     setValues({ ...values, reviewerId: value[0] });
                   }}
-                  requiredPermissions={['accounts:overview:write']}
                 />
               </Label>
             </div>

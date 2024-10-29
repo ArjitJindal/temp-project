@@ -38,7 +38,7 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       id: 'userName',
       type: {
         render: (userDetails, { item: entity }) => (
-          <Link to={`/users/list/${entity.type?.toLowerCase()}/${entity.userId}`} replace>
+          <Link to={`/users/list/${entity.type.toLowerCase()}/${entity.userId}`} replace>
             {getUserName(entity)}
           </Link>
         ),

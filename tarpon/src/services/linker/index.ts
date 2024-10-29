@@ -523,7 +523,7 @@ export class LinkerService {
   private getAllContactDetails(user: UsersProjectedData): ContactDetails[] {
     const sharedHolders = user.shareHolders || []
     const directors = user.directors || []
-    const contactDetails = user.contactDetails ? [user.contactDetails] : []
+    const contactDetails = [user.contactDetails] ?? []
     const legalEntityContact = user.legalEntity?.contactDetails || {}
     return [
       ...contactDetails,

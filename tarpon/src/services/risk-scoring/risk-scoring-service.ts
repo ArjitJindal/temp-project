@@ -255,7 +255,7 @@ async function getSchemaAttributeRiskLevel(
   value: unknown
   riskValue: RiskScoreValueLevel | RiskScoreValueScore
 }> {
-  let resultValue: unknown | null = null
+  let resultValue = null
   let resultRiskValue: RiskScoreValueLevel | RiskScoreValueScore = defaultValue
   const endValue = get(entity, paramName)
 
@@ -888,9 +888,7 @@ export class RiskScoringService {
       return newRiskData
     }
 
-    const newDRSScore = mean(
-      [newKrsScore, oldDrs?.drsScore].filter((v) => v !== null)
-    )
+    const newDRSScore = mean([newKrsScore, oldDrs?.drsScore])
     const drsObj = await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
       newDRSScore,

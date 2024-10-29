@@ -1,6 +1,5 @@
 import {
   DeleteCommand,
-  DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   UpdateCommand,
@@ -9,18 +8,14 @@ import { StackConstants } from '@lib/constants'
 import { CurrencyExchangeUSDType } from '.'
 import { traceable } from '@/core/xray'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const TableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID)
+const dynamoDb = getDynamoDbClient()
 
 @traceable
 export class CurrencyRepository {
-  dynamoDb: DynamoDBDocumentClient
-
-  constructor(dynamoDb: DynamoDBDocumentClient) {
-    this.dynamoDb = dynamoDb
-  }
-
   public async storeCache(
     cdnData: CurrencyExchangeUSDType
   ): Promise<CurrencyExchangeUSDType> {
@@ -33,14 +28,14 @@ export class CurrencyRepository {
       },
     })
 
-    await this.dynamoDb.send(command)
+    await dynamoDb.send(command)
 
     return cdnData
   }
 
   public async getCache(): Promise<CurrencyExchangeUSDType | undefined> {
     const keys = DynamoDbKeys.CURRENCY_CACHE()
-    const command = await this.dynamoDb.send(
+    const command = await dynamoDb.send(
       new GetCommand({
         TableName,
         Key: keys,
@@ -57,7 +52,7 @@ export class CurrencyRepository {
       Key: keys,
     })
 
-    await this.dynamoDb.send(command)
+    await dynamoDb.send(command)
   }
 
   public async expireCache(): Promise<void> {
@@ -74,6 +69,6 @@ export class CurrencyRepository {
       },
     })
 
-    await this.dynamoDb.send(command)
+    await dynamoDb.send(command)
   }
 }

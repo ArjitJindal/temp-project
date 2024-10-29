@@ -120,7 +120,7 @@ const clickhouseTransactionQuery = async (
       destinationAmountDetails_transactionCurrency as destinationCurrency,
       destinationAmountDetails_country as destinationCountry,
       reference
-    FROM transactions FINAL
+    FROM transactions
     WHERE timestamp between :from and :to and ${clickhouseWhere(ctx)}
     `
 
@@ -133,7 +133,7 @@ const clickhouseTransactionQuery = async (
   SELECT
     id as userId,
     username
-  FROM users FINAL
+  FROM users
   WHERE id in (SELECT originUserId FROM transactions)
     OR id in (SELECT destinationUserId FROM transactions)
 ) SELECT

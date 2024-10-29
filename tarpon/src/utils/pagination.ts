@@ -245,7 +245,7 @@ export async function offsetPaginateClickhouse<T>(
   `
 
   if (options?.bypassNestedQuery) {
-    findSql = `SELECT data, NULL as count FROM ${queryTableName} FINAL ${
+    findSql = `SELECT data, NULL as count FROM ${queryTableName} ${
       where ? `WHERE ${where}` : ''
     } ${
       excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`

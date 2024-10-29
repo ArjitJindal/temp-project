@@ -1,10 +1,8 @@
 import { useState } from 'react';
 import SettingsCard from '@/components/library/SettingsCard';
 import SelectionGroup from '@/components/library/SelectionGroup';
-import { useHasPermissions } from '@/utils/user-utils';
 
 export const RiskAlgorithmsSettings = () => {
-  const permissions = useHasPermissions(['settings:risk-scoring:write']);
   const [value, setValue] = useState<string>('HEURISTIC');
   return (
     <SettingsCard
@@ -25,7 +23,6 @@ export const RiskAlgorithmsSettings = () => {
               'Use Heuristic based risk levels for your transaction monitoring. This risk score is calculated using your manually set risk factors.',
           },
         ]}
-        isDisabled={!permissions}
         onChange={(newValue) => {
           setValue(newValue ?? 'AI');
         }}

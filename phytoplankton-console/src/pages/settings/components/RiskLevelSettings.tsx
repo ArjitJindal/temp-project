@@ -6,6 +6,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { RiskLevel, RiskLevelAlias } from '@/apis';
+import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { STRING } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
@@ -24,7 +25,7 @@ interface ExternalState {
 
 const helper = new ColumnHelper<TableItem>();
 
-const columns = helper.list([
+const columns: TableColumn<TableItem>[] = helper.list([
   helper.simple({
     key: 'level',
     title: 'Level',
@@ -57,7 +58,7 @@ const columns = helper.list([
             (savedLevelToAlias.get(item.level) || '') === (newLevelToAlias.get(item.level) || '')
           }
           isLoading={item.level === savingLevel}
-          requiredPermissions={['settings:risk-scoring:write']}
+          requiredPermissions={['settings:organisation:write']}
         >
           Update
         </Button>

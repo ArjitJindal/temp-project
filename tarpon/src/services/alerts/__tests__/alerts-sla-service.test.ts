@@ -21,8 +21,6 @@ jest.mock('../../accounts', () => {
         getAccount: jest.fn().mockImplementation(() => {
           return {
             role: 'test',
-            isReviewer: true,
-            escalationLevel: 'L1',
           }
         }),
       }
@@ -147,13 +145,6 @@ describe('test sla service', () => {
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
           alertStatus: 'CLOSED',
-          reviewAssignments: [
-            {
-              assigneeUserId: 'test',
-              timestamp: new Date().valueOf(),
-              assignedByUserId: 'test',
-            },
-          ],
           statusChanges: [
             {
               caseStatus: 'IN_REVIEW_CLOSED',
@@ -194,13 +185,6 @@ describe('test sla service', () => {
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
           alertStatus: 'CLOSED',
-          reviewAssignments: [
-            {
-              assigneeUserId: 'test',
-              timestamp: new Date().valueOf(),
-              assignedByUserId: 'test',
-            },
-          ],
           statusChanges: [
             {
               caseStatus: 'IN_REVIEW_CLOSED',
@@ -336,7 +320,6 @@ describe('test sla service', () => {
       })
     })
   })
-
   describe('test calculation of SLA status for all non closed alerts', () => {
     const TEST_POLICY1 = getTestPolicy({
       id: 'test-policy-5',
@@ -483,62 +466,6 @@ describe('test sla service', () => {
           policyStatus: 'BREACHED',
         },
       ])
-    })
-  })
-  describe('test calculation of SLA status for advance workflows', () => {
-    const TEST_POLICY = getTestPolicy({
-      id: 'test-policy-7',
-      policyConfiguration: {
-        accountRoles: ['test'],
-        alertStatusDetails: {
-          alertStatuses: ['ESCALATED'],
-        },
-        SLATime: {
-          breachTime: {
-            units: 1,
-            granularity: 'days',
-          },
-        },
-        workingDays: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
-      },
-    })
-    setUpSLAHooks(tenantId, [TEST_POLICY])
-    test('should calculate SLA policy status for escalated alerts', async () => {
-      const mongoDb = await getMongoDbClient()
-      const service = new AlertsSLAService(tenantId, mongoDb, 'test')
-      const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
-      const alert: Alert = getTestAlert({
-        createdTimestamp: timestamp,
-        alertStatus: 'ESCALATED',
-        reviewAssignments: [
-          {
-            assigneeUserId: 'test',
-            timestamp: new Date().valueOf(),
-            assignedByUserId: 'test',
-          },
-        ],
-        assignments: [],
-        statusChanges: [
-          {
-            caseStatus: 'ESCALATED',
-            timestamp: new Date('2021-01-02T00:00:00Z').valueOf(),
-            userId: 'test',
-          },
-          {
-            caseStatus: 'CLOSED',
-            timestamp: new Date('2021-01-03T00:00:00Z').valueOf(),
-            userId: 'test',
-          },
-        ],
-      })
-      const result = await service.calculateSLAStatusForAlert(
-        alert,
-        'test-policy-7'
-      )
-      expect(result).toEqual({
-        elapsedTime: 86400000,
-        policyStatus: 'BREACHED',
-      })
     })
   })
 })

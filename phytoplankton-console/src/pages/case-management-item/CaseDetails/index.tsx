@@ -372,7 +372,6 @@ function useTabs(
                     caseStatus: flatten(filterCaseStatus),
                     includeRootUserRecords: true,
                     pageSize: 100,
-                    entityIdExactMatch: true,
                   });
                   return getLogData(response.data, users, 'CASE', riskClassificationValues);
                 },

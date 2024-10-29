@@ -98,7 +98,7 @@ export const AISources = () => {
                       aiSourcesDisabled: aiSourcesDisabled,
                     });
                   }}
-                  requiredPermissions={['settings:case-management:write']}
+                  requiredPermissions={['settings:organisation:write']}
                 >
                   Save
                 </Button>

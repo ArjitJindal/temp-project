@@ -9,12 +9,10 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Label from '@/components/library/Label';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
 
 type RiskAlgorithmsType = 'FORMULA_LEGACY_MOVING_AVG' | 'FORMULA_SIMPLE_AVG' | 'FORMULA_CUSTOM';
 
 function RiskAlgorithmsCra() {
-  const permissions = useHasPermissions(['settings:risk-scoring:write']);
   const settings = useSettings();
   const isCraEnabled = settings.riskScoringCraEnabled ?? true;
   const currentAlgorithm = settings.riskScoringAlgorithm;
@@ -71,7 +69,6 @@ function RiskAlgorithmsCra() {
           onChange={(newValue) => {
             setAlgorithmType(newValue as RiskAlgorithmsType);
           }}
-          isDisabled={!permissions}
         />
       </div>
       {algorithmType === 'FORMULA_CUSTOM' && (
@@ -100,7 +97,6 @@ function RiskAlgorithmsCra() {
                 max={1}
                 min={0}
                 step={0.1}
-                isDisabled={!permissions}
               />
             </div>
             <div>
@@ -118,17 +114,13 @@ function RiskAlgorithmsCra() {
                 max={1}
                 min={0}
                 step={0.1}
-                isDisabled={!permissions}
               />
             </div>
           </div>
         </div>
       )}
       <div className={s.buttonContainer}>
-        <Button
-          onClick={handleUpdateRiskAlgorithm}
-          isDisabled={mutateTenantSettings.isLoading || !permissions}
-        >
+        <Button onClick={handleUpdateRiskAlgorithm} isDisabled={mutateTenantSettings.isLoading}>
           Update
         </Button>
       </div>

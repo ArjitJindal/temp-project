@@ -10,8 +10,9 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 
 export const SecuritySettings = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:security:write']);
+  const permissions = useHasPermissions(['settings:organisation:write']);
   const mutateTenantSettings = useUpdateTenantSettings();
+  const isSettingsEnabled = useHasPermissions(['settings:organisation:write']);
   const handleDisable = () => {
     mutateTenantSettings.mutate({ mfaEnabled: false });
   };
@@ -75,7 +76,7 @@ export const SecuritySettings = () => {
             { label: '6 months', value: 180 },
             { label: '1 year', value: 365 },
           ]}
-          isDisabled={!permissions || isLoading('passwordResetDays')}
+          isDisabled={!isSettingsEnabled || isLoading('passwordResetDays')}
         />
       </SettingsCard>
 
@@ -101,7 +102,7 @@ export const SecuritySettings = () => {
             { label: '6 months', value: 180 },
             { label: '1 year', value: 365 },
           ]}
-          isDisabled={!permissions || isLoading('accountDormancyAllowedDays')}
+          isDisabled={!isSettingsEnabled || isLoading('accountDormancyAllowedDays')}
         />
       </SettingsCard>
       <SettingsCard
@@ -121,7 +122,7 @@ export const SecuritySettings = () => {
             { label: '24 hours', value: 1440 },
             { label: '48 hours', value: 2880 },
           ]}
-          isDisabled={!permissions || isLoading('sessionTimeoutMinutes')}
+          isDisabled={!isSettingsEnabled}
         />
       </SettingsCard>
       <SettingsCard
@@ -141,7 +142,7 @@ export const SecuritySettings = () => {
             { label: '2', value: 2 },
             { label: '3', value: 3 },
           ]}
-          isDisabled={!permissions || isLoading('maxActiveSessions')}
+          isDisabled={!isSettingsEnabled || isLoading('maxActiveSessions')}
         />
       </SettingsCard>
     </Fragment>

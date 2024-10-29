@@ -43,7 +43,7 @@ export const ReferenceWordCount: TableQuestion<Period> = {
               id,
               reference,
               word
-          FROM transactions FINAL
+          FROM transactions
           ARRAY JOIN splitByString(' ', reference) AS word
           WHERE (originUserId = :userId or destinationUserId = :userId)
           ${period ? `AND timestamp between :from and :to` : ''}

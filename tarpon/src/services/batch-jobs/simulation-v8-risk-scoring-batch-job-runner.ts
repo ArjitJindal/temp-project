@@ -223,9 +223,7 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
       | FormulaSimpleAvg
       | FormulaLegacyMovingAvg
   ) {
-    const usersCursor = this.userRepository
-      .sampleUsersCursor(this.totalUsers)
-      .addCursorFlag('noCursorTimeout', true)
+    const usersCursor = this.userRepository.sampleUsersCursor(this.totalUsers)
     await processCursorInBatch(
       usersCursor,
       async (users) => {
@@ -437,11 +435,9 @@ export class SimulationV8RiskFactorsBatchJobRunner extends BatchJobRunner {
   private async processUserTransactions(
     user: User | Business
   ): Promise<number> {
-    const transactionsCursor = this.transactionRepo
-      .getTransactionsCursor({
-        filterUserId: user.userId,
-      })
-      .addCursorFlag('noCursorTimeout', true)
+    const transactionsCursor = this.transactionRepo.getTransactionsCursor({
+      filterUserId: user.userId,
+    })
     let totalArs = 0,
       transactionsCount = 0
     const updateArsStats = (ars: number) => {

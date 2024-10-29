@@ -8,12 +8,10 @@ import {
 import { isWhiteLabeled } from '@/utils/branding';
 import Toggle from '@/components/library/Toggle';
 import Tooltip from '@/components/library/Tooltip';
-import { useHasPermissions } from '@/utils/user-utils';
 
 const whiteLabeled = isWhiteLabeled();
 
 export const FlagrightAISettings = () => {
-  const permissions = useHasPermissions(['settings:add-ons:write']);
   const settings = useSettings();
   const isNarrativeCopilotEnabled = useFeatureEnabled('NARRATIVE_COPILOT');
   const isAiForensicsEnabled = useFeatureEnabled('AI_FORENSICS');
@@ -43,14 +41,13 @@ export const FlagrightAISettings = () => {
                 value={settings.isAiEnabled}
                 onChange={!settings.isAiEnabled ? onClick : handleDisable}
                 loading={mutateTenantSettings.isLoading}
-                isDisabled={!permissions}
               />
             )}
           </Confirm>
         ) : (
           <Tooltip title={`Contact us to purchase AI features.`} placement="topLeft">
             <div>
-              <Toggle value={false} disabled={true} isDisabled={!permissions} />
+              <Toggle value={false} disabled={true} />
             </div>
           </Tooltip>
         )}

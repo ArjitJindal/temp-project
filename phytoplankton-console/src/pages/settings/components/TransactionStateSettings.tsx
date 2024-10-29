@@ -7,9 +7,9 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { TransactionState, TransactionStateAlias } from '@/apis';
+import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import Button from '@/components/library/Button';
-import { useHasPermissions } from '@/utils/user-utils';
 
 interface TableItem {
   state: TransactionState;
@@ -26,68 +26,60 @@ interface ExternalState {
 }
 
 const columnHelper = new ColumnHelper<TableItem>();
+const columns: TableColumn<TableItem>[] = columnHelper.list([
+  columnHelper.simple({
+    title: 'State',
+    key: 'state',
+    defaultWidth: 100,
+  }),
+  columnHelper.simple({
+    title: 'Description',
+    key: 'description',
+    defaultWidth: 250,
+  }),
+  columnHelper.display({
+    title: 'Alias',
+    tooltip:
+      'Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
+    defaultWidth: 200,
+    render: (item, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { newStateToAlias, onUpdateAlias } = externalState;
+      return (
+        <Input
+          value={newStateToAlias.get(item.state) ?? item.stateAlias}
+          onChange={(event) => onUpdateAlias(item.state, event.target.value)}
+        />
+      );
+    },
+  }),
+  columnHelper.display({
+    title: 'Action',
+    enableResizing: false,
+    render: (item, context) => {
+      const externalState: ExternalState = context.external as ExternalState;
+      const { newStateToAlias, savingState, savedStateToAlias, onSaveAlias } = externalState;
+      return (
+        <Button
+          type="PRIMARY"
+          onClick={() => onSaveAlias(item.state)}
+          isDisabled={
+            !!savingState ||
+            newStateToAlias.get(item.state) === undefined ||
+            (savedStateToAlias.get(item.state) || '') === (newStateToAlias.get(item.state) || '')
+          }
+          isLoading={item.state === savingState}
+          requiredPermissions={['settings:organisation:write']}
+        >
+          Update
+        </Button>
+      );
+    },
+  }),
+]);
 
 export const TransactionStateSettings: React.FC = () => {
   const settings = useSettings();
-  const permissions = useHasPermissions(['settings:transactions:write']);
-
-  const columns = useMemo(
-    () =>
-      columnHelper.list([
-        columnHelper.simple({
-          title: 'State',
-          key: 'state',
-          defaultWidth: 100,
-        }),
-        columnHelper.simple({
-          title: 'Description',
-          key: 'description',
-          defaultWidth: 250,
-        }),
-        columnHelper.display({
-          title: 'Alias',
-          tooltip:
-            'Allows you to add a name that will overwrite the default Transaction state displayed in the Console. The Alias name is only used in the Console and will have no impact on the API.',
-          defaultWidth: 200,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, onUpdateAlias } = externalState;
-            return (
-              <Input
-                value={newStateToAlias.get(item.state) ?? item.stateAlias}
-                onChange={(event) => onUpdateAlias(item.state, event.target.value)}
-                disabled={!permissions}
-              />
-            );
-          },
-        }),
-        columnHelper.display({
-          title: 'Action',
-          enableResizing: false,
-          render: (item, context) => {
-            const externalState: ExternalState = context.external as ExternalState;
-            const { newStateToAlias, savingState, savedStateToAlias, onSaveAlias } = externalState;
-            return (
-              <Button
-                type="PRIMARY"
-                onClick={() => onSaveAlias(item.state)}
-                isDisabled={
-                  !!savingState ||
-                  newStateToAlias.get(item.state) === undefined ||
-                  (savedStateToAlias.get(item.state) || '') ===
-                    (newStateToAlias.get(item.state) || '')
-                }
-                isLoading={item.state === savingState}
-                requiredPermissions={['settings:transactions:write']}
-              >
-                Update
-              </Button>
-            );
-          },
-        }),
-      ]),
-    [permissions],
-  );
   const [savingState, setSavingState] = useState<TransactionState | null>(null);
   const stateToAlias = useMemo<Map<TransactionState | undefined, string>>(
     () =>

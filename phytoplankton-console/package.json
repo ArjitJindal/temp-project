@@ -96,7 +96,7 @@
     "filesize": "^8.0.7",
     "flat": "^5.0.2",
     "html2canvas": "^1.4.1",
-    "jspdf": "^2.5.2",
+    "jspdf": "^2.5.1",
     "jspdf-autotable": "^3.7.0",
     "jszip": "^3.10.1",
     "jwt-decode": "^3.1.2",
