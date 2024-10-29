@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from 'uuid'
 import {
   BadRequest,
   Conflict,
@@ -216,6 +215,12 @@ export class AccountsService {
     }
   }
 
+  private generateRandomPassword() {
+    const randomString = 'TheBestProduct'
+
+    return `P-${randomString}@${Date.now()}`
+  }
+
   async resetPassword(accountId: string) {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
@@ -229,7 +234,7 @@ export class AccountsService {
 
     await managementClient.users.update(
       { id: accountId },
-      { password: `P-${uuidv4()}@123` }
+      { password: this.generateRandomPassword() }
     )
 
     await this.sendPasswordResetEmail(user.email)
@@ -366,7 +371,7 @@ export class AccountsService {
             connection: CONNECTION_NAME,
             email: params.email,
             // NOTE: We need at least one upper case character
-            password: `P-${uuidv4()}@123`,
+            password: this.generateRandomPassword(),
             app_metadata: {
               role: params.role,
               isReviewer: params.isReviewer,
