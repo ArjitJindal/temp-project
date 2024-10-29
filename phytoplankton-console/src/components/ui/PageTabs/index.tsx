@@ -6,7 +6,7 @@ import s from './index.module.less';
 import { TabItem } from '@/components/library/Tabs';
 import { captureTabEvent } from '@/utils/postHog';
 import { Permission } from '@/apis';
-import { useHasPermissions } from '@/utils/user-utils';
+import { useAuth0User } from '@/utils/user-utils';
 
 export const TABS_LINE_HEIGHT = 81;
 
@@ -22,6 +22,8 @@ interface Props extends Pick<TabsProps, 'activeKey' | 'onChange' | 'tabBarExtraC
 }
 
 export default function PageTabs(props: Props) {
+  const user = useAuth0User();
+  const permissions = user?.permissions ?? new Map<Permission, boolean>();
   const {
     sticky,
     compact,
@@ -51,25 +53,22 @@ export default function PageTabs(props: Props) {
       tabBarExtraContent={tabBarExtraContent}
     >
       {items?.map((item: TabItemWithPermissions) => {
-        return <PageTab {...item} />;
+        const { title, key, children, isClosable, isDisabled, requiredPermissions } = item;
+        const isEnabled = requiredPermissions?.length
+          ? requiredPermissions.some((permission) => permissions.get(permission))
+          : true;
+
+        return (
+          <AntTabs.TabPane
+            tab={<span data-sentry-allow={true}>{title}</span>}
+            key={key}
+            closable={isClosable}
+            disabled={isDisabled ?? !isEnabled ?? false}
+          >
+            {children ?? <></>}
+          </AntTabs.TabPane>
+        );
       })}
     </AntTabs>
   );
 }
-
-export const PageTab = (props: TabItemWithPermissions) => {
-  const { title, key, children, isClosable, isDisabled, requiredPermissions } = props;
-
-  const isEnabledByPermissions = useHasPermissions(requiredPermissions ?? []);
-
-  return (
-    <AntTabs.TabPane
-      tab={<span data-sentry-allow={true}>{title}</span>}
-      key={key}
-      closable={isClosable}
-      disabled={isDisabled ?? !isEnabledByPermissions ?? false}
-    >
-      {children ?? <></>}
-    </AntTabs.TabPane>
-  );
-};
