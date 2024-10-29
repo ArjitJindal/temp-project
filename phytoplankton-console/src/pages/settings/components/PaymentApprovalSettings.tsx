@@ -4,6 +4,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export const PaymentApprovalSettings = () => {
   const settings = useSettings();
@@ -15,6 +16,8 @@ export const PaymentApprovalSettings = () => {
   const handleEnable = () => {
     mutateTenantSettings.mutate({ isPaymentApprovalEnabled: true });
   };
+
+  const permissions = useHasPermissions(['settings:transactions:write']);
 
   return (
     <div>
@@ -28,6 +31,7 @@ export const PaymentApprovalSettings = () => {
             onChange={!settings.isPaymentApprovalEnabled ? handleEnable : handleDisable}
             value={settings.isPaymentApprovalEnabled}
             loading={mutateTenantSettings.isLoading}
+            disabled={!permissions}
           />
         </div>
       </SettingsCard>

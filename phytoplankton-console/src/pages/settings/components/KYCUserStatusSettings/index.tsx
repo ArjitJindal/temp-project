@@ -4,12 +4,12 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
-import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
+import { useHasPermissions } from '@/utils/user-utils';
 
 export const KYCUserStatusSettings = () => {
   const settings = useSettings();
-  const user = useAuth0User();
+  const permissions = useHasPermissions(['settings:users:write']);
 
   const mutateTenantSettings = useUpdateTenantSettings();
   const handleDisable = () => {
@@ -25,12 +25,12 @@ export const KYCUserStatusSettings = () => {
       title="KYC/user status lock"
       description="When enabled, prevents editing of 'KYC status' and 'User status' fields on user details page."
     >
-      <Tooltip title={!isAtLeastAdmin(user) ? 'User must be at least an admin' : ''}>
+      <Tooltip title={!permissions ? 'User must have permissions to update settings' : ''}>
         <Toggle
           value={settings.kycUserStatusLock}
           onChange={settings.kycUserStatusLock ? handleDisable : handleEnable}
           loading={mutateTenantSettings.isLoading}
-          disabled={!isAtLeastAdmin(user)}
+          disabled={!permissions}
         />
       </Tooltip>
     </SettingsCard>

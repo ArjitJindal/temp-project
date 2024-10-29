@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import pMap from 'p-map'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
@@ -16,6 +17,8 @@ import { logger } from '@/core/logger'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { SLAPolicyStatus } from '@/@types/openapi-internal/SLAPolicyStatus'
 import { hasFeature } from '@/core/utils/context'
+
+const CONCURRENCY = 50
 
 @traceable
 export class AlertsSLAService {
@@ -41,17 +44,26 @@ export class AlertsSLAService {
       return
     }
 
-    const assignees = alert.assignments
-    const accounts = assignees
+    // As we show these accounts in the UI as assignees but we store them as reviewAssignments
+    const accounts = alert.assignments
       ? await Promise.all(
-          assignees.map((assignee) => {
+          alert.assignments.map((assignee) => {
             return this.accountsService.getAccount(assignee.assigneeUserId)
           })
         )
       : []
-    const isRoleMatched = await matchPolicyRoleConditions(
+    const reviewAccounts = alert.reviewAssignments
+      ? await Promise.all(
+          alert.reviewAssignments.map((reviewAssignment) => {
+            return this.accountsService.getAccount(
+              reviewAssignment.assigneeUserId
+            )
+          })
+        )
+      : []
+    const isRoleMatched = matchPolicyRoleConditions(
       slaPolicy.policyConfiguration,
-      accounts
+      accounts.concat(reviewAccounts)
     )
     if (!isRoleMatched) {
       return undefined
@@ -75,7 +87,11 @@ export class AlertsSLAService {
         matchPolicyStatusConditions(
           statusChange.caseStatus,
           countMap.get(status) ?? 0,
-          slaPolicy.policyConfiguration
+          slaPolicy.policyConfiguration,
+          {
+            makerAccounts: accounts,
+            reviewerAccounts: reviewAccounts,
+          }
         )
       ) {
         elapsedTime += getElapsedTime(
@@ -102,33 +118,40 @@ export class AlertsSLAService {
     }
     const alerts = await this.alertsRepository.getNonClosedAlerts()
     logger.info(`Updating SLA Statuses for ${alerts.length} alerts`)
-    for (const alert of alerts) {
-      if (!alert.caseId) {
-        continue
-      }
-      const slaPolicyDetails = alert.slaPolicyDetails ?? []
-      for (let i = 0; i < slaPolicyDetails.length; i++) {
-        const slaPolicyDetail = slaPolicyDetails[i]
-        const statusData = await this.calculateSLAStatusForAlert(
-          alert,
-          slaPolicyDetail.slaPolicyId
+    await pMap(
+      alerts,
+      async (alert) => {
+        if (!alert.caseId) {
+          return
+        }
+        const slaPolicyDetails = alert.slaPolicyDetails ?? []
+        const updatedSlaPolicyDetails = await Promise.all(
+          slaPolicyDetails.map(async (slaPolicyDetail) => {
+            const statusData = await this.calculateSLAStatusForAlert(
+              alert,
+              slaPolicyDetail.slaPolicyId
+            )
+            if (!statusData) {
+              return slaPolicyDetail
+            }
+            return {
+              ...slaPolicyDetail,
+              elapsedTime: statusData.elapsedTime,
+              policyStatus: statusData.policyStatus,
+              updatedAt: Date.now(),
+            }
+          })
         )
-        if (!statusData) {
-          continue
+        const updatedAlert = {
+          ...alert,
+          slaPolicyDetails: updatedSlaPolicyDetails,
         }
-        slaPolicyDetails[i] = {
-          ...slaPolicyDetail,
-          elapsedTime: statusData?.elapsedTime,
-          policyStatus: statusData?.policyStatus,
-          updatedAt: Date.now(),
-        }
+        await this.alertsRepository.saveAlert(alert.caseId, updatedAlert)
+      },
+      {
+        concurrency: CONCURRENCY,
       }
-      const updatedAlert = {
-        ...alert,
-        slaPolicyDetails,
-      }
-      await this.alertsRepository.saveAlert(alert.caseId, updatedAlert)
-    }
+    )
     logger.info('SLA Statuses updated')
   }
 

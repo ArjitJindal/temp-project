@@ -66,7 +66,7 @@ export function SlaPolicySettings() {
       return await api.getSlaPolicies({ ...params, ...paginationParams });
     },
   );
-  const isReadOnly = !useHasPermissions(['settings:organisation:write']);
+  const isReadOnly = !useHasPermissions(['settings:case-management:write']);
   const formRef = useRef<FormRef<any>>(null);
   const [isDrawerVisible, setIsDrawerVisible] = useState(false);
   const currentUser = useCurrentUser();
@@ -287,7 +287,7 @@ export function SlaPolicySettings() {
                     <Button
                       type="PRIMARY"
                       onClick={handleOpenForm}
-                      requiredPermissions={['settings:organisation:write']}
+                      requiredPermissions={['settings:case-management:write']}
                     >
                       <PlusOutlined />
                       Create SLA

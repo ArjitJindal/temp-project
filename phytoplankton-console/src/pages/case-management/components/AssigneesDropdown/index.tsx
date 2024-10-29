@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import s from './index.module.less';
 import { colorSchema } from '@/components/utils/AssigneesDropdown/utils';
 import { useHasPermissions, useSortedUsers } from '@/utils/user-utils';
-import { Account, Assignment } from '@/apis';
+import { Account, Assignment, Permission } from '@/apis';
 import AccountTag from '@/components/AccountTag';
 import ArrowDropDownFill from '@/components/ui/icons/Remix/system/arrow-drop-down-fill.react.svg';
 
@@ -17,6 +17,7 @@ interface Props {
   placeholder?: string;
   fixSelectorHeight?: boolean;
   customFilter?: (option: Account) => boolean;
+  requiredPermissions?: Permission[];
 }
 
 export const AssigneesDropdown: React.FC<Props> = ({
@@ -27,9 +28,10 @@ export const AssigneesDropdown: React.FC<Props> = ({
   placeholder,
   customFilter,
   fixSelectorHeight = false,
+  requiredPermissions = ['case-management:case-assignment:write'],
 }) => {
   const [users, loadingUsers] = useSortedUsers();
-  const canEditAssignees = useHasPermissions(['case-management:case-assignment:write']);
+  const canEditAssignees = useHasPermissions(requiredPermissions);
 
   const filteredUsers = useMemo(() => {
     if (!customFilter) {

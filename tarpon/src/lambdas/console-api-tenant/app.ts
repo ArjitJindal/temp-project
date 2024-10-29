@@ -205,10 +205,7 @@ export const tenantsHandler = lambdaApi()(
           pageSize: request.pageSize,
         })
     )
-    handlers.registerGetNarrativeTemplate(
-      async (ctx, request) =>
-        await narrativeService.getNarrativeTemplate(request.narrativeTemplateId)
-    )
+
     handlers.registerPutNarrativeTemplate(
       async (ctx, request) =>
         await narrativeService.updateNarrativeTemplate(

@@ -97,6 +97,7 @@ export default function UserActivityCard(props: Props) {
             caseStatus: flatten(filterCaseStatus),
             includeRootUserRecords: true,
             pageSize: 100,
+            entityIdExactMatch: true,
           });
           return getLogData(response.data, users, 'CASE', riskClassificationValues);
         },

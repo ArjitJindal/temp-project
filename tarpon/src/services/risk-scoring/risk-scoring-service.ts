@@ -888,7 +888,9 @@ export class RiskScoringService {
       return newRiskData
     }
 
-    const newDRSScore = mean([newKrsScore, oldDrs?.drsScore])
+    const newDRSScore = mean(
+      [newKrsScore, oldDrs?.drsScore].filter((v) => v !== null)
+    )
     const drsObj = await this.riskRepository.createOrUpdateDrsScore(
       user.userId,
       newDRSScore,

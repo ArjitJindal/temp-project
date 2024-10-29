@@ -7,6 +7,7 @@ import {
 import SelectionGroup from '@/components/library/SelectionGroup';
 import SettingsCard from '@/components/library/SettingsCard';
 import { ReRunTrigger } from '@/apis';
+import { useHasPermissions } from '@/utils/user-utils';
 
 const options: { label: string; value: ReRunTrigger }[] = [
   {
@@ -22,6 +23,7 @@ const options: { label: string; value: ReRunTrigger }[] = [
 function ReRunTriggerSettings() {
   const settings = useSettings();
   const updateTenantSettings = useUpdateTenantSettings();
+  const permissions = useHasPermissions(['settings:risk-scoring:write']);
   return (
     <SettingsCard title="Re-run trigger settings">
       <div className={s.root}>
@@ -34,6 +36,7 @@ function ReRunTriggerSettings() {
               updateTenantSettings.mutate({ reRunRiskScoringTriggers: value });
             }
           }}
+          isDisabled={!permissions}
         />
       </div>
     </SettingsCard>

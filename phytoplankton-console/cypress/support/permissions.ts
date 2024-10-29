@@ -45,15 +45,21 @@ const REPORTS: Permission[] = [
   'reports:generated:write',
 ];
 const SETTINGS_ORGANIZATION: Permission[] = [
-  'settings:organisation:read',
-  'settings:organisation:write',
+  'settings:transactions:read',
+  'settings:transactions:write',
+  'settings:users:read',
+  'settings:users:write',
 ];
 const ACCOUNTS: Permission[] = ['accounts:overview:read', 'accounts:overview:write'];
 const ROLES: Permission[] = ['roles:overview:read', 'roles:overview:write'];
 const SANCTIONS: Permission[] = ['sanctions:search:read'];
 const SETTINGS_DEVELOPER: Permission[] = ['settings:developers:read', 'settings:developers:write'];
 const SIMULATION: Permission[] = ['simulator:simulations:read', 'simulator:simulations:write'];
-const NOTIFICATIONS: Permission[] = ['notifications:all:read'];
+const NOTIFICATIONS: Permission[] = [
+  'notifications:all:read',
+  'settings:notifications:write',
+  'settings:notifications:read',
+];
 
 export const PERMISSIONS: {
   [key: string]: Permission[];

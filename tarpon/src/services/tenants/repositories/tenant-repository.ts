@@ -23,6 +23,7 @@ import {
   createNonConsoleApiInMemoryCache,
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 type MetadataType = 'SLACK_WEBHOOK'
 type MetadataPayload = { slackWebhookURL: string; originalResponse: any }
@@ -49,6 +50,21 @@ export class TenantRepository {
     this.mongoDb = connections.mongoDb as MongoClient
 
     this.tenantId = tenantId
+  }
+
+  public static async isTenantDeleted(tenantId: string): Promise<boolean> {
+    const mongoDb = await getMongoDbClient()
+    const collection = mongoDb
+      .db()
+      .collection<DeleteTenant>(TENANT_DELETION_COLLECTION)
+    const tenant = await collection.findOne({
+      tenantId,
+      latestStatus: {
+        $in: ['IN_PROGRESS', 'WAITING_HARD_DELETE', 'HARD_DELETED'],
+      },
+    })
+
+    return tenant != null
   }
 
   public async getTenantSettings(

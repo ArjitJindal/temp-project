@@ -147,6 +147,7 @@ export class TenantService {
       await handlers.DISABLED?.[feature]?.()
     }
   }
+
   public static getTenantsToDelete = async (): Promise<DeleteTenant[]> => {
     const mongoDb = await getMongoDbClient()
     const collectionName = TENANT_DELETION_COLLECTION
