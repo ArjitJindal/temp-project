@@ -29,7 +29,12 @@ describe('sla-utils', () => {
       const result = matchPolicyStatusConditions(
         status,
         statusCount,
-        policyConfiguration
+        policyConfiguration,
+
+        {
+          makerAccounts: [],
+          reviewerAccounts: [],
+        }
       )
 
       expect(result).toBe(false)
@@ -52,7 +57,11 @@ describe('sla-utils', () => {
       const result = matchPolicyStatusConditions(
         status,
         statusCount,
-        policyConfiguration
+        policyConfiguration,
+        {
+          makerAccounts: [],
+          reviewerAccounts: [],
+        }
       )
 
       expect(result).toBe(false)
@@ -75,7 +84,11 @@ describe('sla-utils', () => {
       const result = matchPolicyStatusConditions(
         status,
         statusCount,
-        policyConfiguration
+        policyConfiguration,
+        {
+          makerAccounts: [],
+          reviewerAccounts: [],
+        }
       )
 
       expect(result).toBe(false)
@@ -98,7 +111,11 @@ describe('sla-utils', () => {
       const result = matchPolicyStatusConditions(
         status,
         statusCount,
-        policyConfiguration
+        policyConfiguration,
+        {
+          makerAccounts: [],
+          reviewerAccounts: [],
+        }
       )
 
       expect(result).toBe(true)
