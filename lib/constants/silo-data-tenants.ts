@@ -7,7 +7,7 @@ export const siloDataTenants: Partial<
     'eu-1': ['silo-flagright-dev'],
   },
   sandbox: {
-    'asia-1': ['pnb-uat'],
+    'asia-1': ['pnb-uat', 'pnb-stress-test'],
   },
   prod: {
     'asia-1': ['pnb'],
