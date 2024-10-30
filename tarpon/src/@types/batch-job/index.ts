@@ -241,6 +241,7 @@ type PnbBackfillTransactionsBase = {
     concurrency: number
     publicApiEndpoint: string
     publicApiKey: string
+    filters?: Filter<InternalTransaction>
   }
 }
 export type PnbBackfillTransactions = PnbBackfillTransactionsBase & {
@@ -251,6 +252,13 @@ export type PnbBackfillArs = PnbBackfillTransactionsBase & {
 }
 export type PnbBackfillKrs = {
   type: 'PNB_BACKFILL_KRS'
+  tenantId: string
+  parameters: {
+    concurrency: number
+  }
+}
+export type PnbBackfillCra = {
+  type: 'PNB_BACKFILL_CRA'
   tenantId: string
   parameters: {
     concurrency: number
@@ -285,6 +293,7 @@ export type BatchJob =
   | PnbBackfillTransactions
   | PnbBackfillKrs
   | PnbBackfillArs
+  | PnbBackfillCra
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

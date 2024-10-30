@@ -25,9 +25,10 @@ export class BatchJobRepository {
   }
 
   public async getJobsByStatus(
-    latestStatus: TaskStatusChangeStatusEnum,
+    latestStatuses: TaskStatusChangeStatusEnum[],
     params?: {
       filterType?: BatchJobType
+      filterParameters?: any
     }
   ): Promise<BatchJobInDb[]> {
     const collection = JOBS_COLLECTION(this.tenantId)
@@ -36,8 +37,11 @@ export class BatchJobRepository {
       .collection<BatchJobInDb>(collection)
       .find({
         $and: [
-          { 'latestStatus.status': latestStatus },
+          { 'latestStatus.status': { $in: latestStatuses } },
           ...(params?.filterType ? [{ type: params.filterType }] : []),
+          ...(params?.filterParameters
+            ? [{ parameters: params.filterParameters }]
+            : []),
         ],
       })
       .toArray()

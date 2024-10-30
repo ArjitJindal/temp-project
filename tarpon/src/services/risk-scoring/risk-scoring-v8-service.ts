@@ -311,10 +311,10 @@ export class RiskScoringV8Service {
 
   public calculateNewDrsScore(params: {
     algorithm: FormulaCustom | FormulaLegacyMovingAvg | FormulaSimpleAvg
-    oldDrsScore: number | undefined
-    krsScore: number | null
-    avgArsScore: number | null
-    arsScore: number | undefined
+    oldDrsScore?: number
+    krsScore?: number | null
+    avgArsScore?: number | null
+    arsScore?: number
     userEvent?: boolean
   }): number {
     const {
@@ -613,7 +613,7 @@ export class RiskScoringV8Service {
       return
     }
     const pendingJobs = await this.batchJobRepository.getJobsByStatus(
-      'PENDING',
+      ['PENDING'],
       {
         filterType: 'RISK_SCORING_RECALCULATION',
       }

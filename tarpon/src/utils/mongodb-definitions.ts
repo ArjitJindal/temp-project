@@ -707,6 +707,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       getIndexes: () => [
         { index: { jobId: 1 }, unique: true },
         { index: { type: 1, 'latestStatus.timestamp': 1 } },
+        { index: { type: 1, 'latestStatus.status': 1 } },
         { index: { 'latestStatus.timestamp': 1 } },
       ],
     },

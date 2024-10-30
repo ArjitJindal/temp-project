@@ -21,6 +21,11 @@ import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
+import {
+  DefaultApiPostBusinessUserRequest,
+  DefaultApiPostConsumerUserRequest,
+} from '@/@types/openapi-public/RequestParameters'
+import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 
 export const userHandler = lambdaApi()(
   async (
@@ -56,30 +61,34 @@ export const userHandler = lambdaApi()(
 
     const createUser = async <T extends User | Business>(
       userPayload: T,
-      lockCraRiskLevel?: string
+      options?: {
+        lockCraRiskLevel?: boolean
+        validateUserId?: boolean
+        krsOnly?: boolean
+      }
     ) => {
       updateLogMetadata({ userId: userPayload.userId })
       logger.info(`Processing User`) // Need to log to show on the logs
 
-      const existingUser = await validateUser(userPayload)
-      if (existingUser) {
-        return {
-          userId: existingUser.userId,
-          message:
-            'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
-          riskScoreDetails: existingUser.riskScoreDetails,
-          ...filterLiveRules({
-            executedRules: existingUser.executedRules,
-            hitRules: existingUser.hitRules,
-          }),
+      if (options?.validateUserId) {
+        const existingUser = await validateUser(userPayload)
+        if (existingUser) {
+          return {
+            userId: existingUser.userId,
+            message:
+              'The provided userId already exists. The user attribute updates are not saved. If you want to update the attributes of this user, please use user events instead.',
+            riskScoreDetails: existingUser.riskScoreDetails,
+            ...filterLiveRules({
+              executedRules: existingUser.executedRules,
+              hitRules: existingUser.hitRules,
+            }),
+          }
         }
       }
       const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
       const isV8RiskScoringEnabled = hasFeature('RISK_SCORING_V8')
 
-      const isDrsUpdatable = lockCraRiskLevel
-        ? lockCraRiskLevel !== 'true'
-        : true
+      const isDrsUpdatable = options?.lockCraRiskLevel !== true
 
       const riskScoringService = isV8RiskScoringEnabled
         ? new RiskScoringV8Service(tenantId, logicEvaluator, {
@@ -88,7 +97,7 @@ export const userHandler = lambdaApi()(
           })
         : new RiskScoringService(tenantId, { dynamoDb, mongoDb })
 
-      let riskScoreResult
+      let riskScoreResult: UserRiskScoreDetails
       if (isV8RiskScoringEnabled) {
         riskScoreResult = await (
           riskScoringService as RiskScoringV8Service
@@ -99,8 +108,19 @@ export const userHandler = lambdaApi()(
         ).runRiskScoresForUser(userPayload, isDrsUpdatable)
       }
 
-      const { craRiskScore, kycRiskLevel, kycRiskScore, craRiskLevel } =
+      const { craRiskScore, craRiskLevel, kycRiskScore, kycRiskLevel } =
         riskScoreResult
+      if (options?.krsOnly) {
+        return {
+          userId: userPayload.userId,
+          riskScoreDetails: {
+            kycRiskScore,
+            kycRiskLevel,
+          },
+          executedRules: [],
+          hitRules: [],
+        }
+      }
 
       const userManagementService = new UserManagementService(
         tenantId,
@@ -146,12 +166,24 @@ export const userHandler = lambdaApi()(
       }
       return user
     })
+
+    const getCreateUserOptions = (
+      request:
+        | DefaultApiPostConsumerUserRequest
+        | DefaultApiPostBusinessUserRequest
+    ) => ({
+      lockCraRiskLevel: request.lockCraRiskLevel === 'true',
+      validateUserId:
+        !request.validateUserId || request.validateUserId === 'true',
+      krsOnly: request._krsOnly === 'true',
+    })
     handlers.registerPostConsumerUser(async (_ctx, request) => {
-      return createUser(request.User, request.lockCraRiskLevel)
+      return createUser(request.User, getCreateUserOptions(request))
     })
     handlers.registerPostBusinessUser(async (_ctx, request) => {
-      return createUser(request.Business, request.lockCraRiskLevel)
+      return createUser(request.Business, getCreateUserOptions(request))
     })
+
     handlers.registerPostBatchConsumerUsers(async (ctx, request) => {
       const batchId = request.UserBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)

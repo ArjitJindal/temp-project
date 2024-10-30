@@ -36,6 +36,18 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
       job.tenantId,
       await getMongoDbClient()
     )
+    const inProgressJobs = await jobRepository.getJobsByStatus(
+      ['IN_PROGRESS'],
+      {
+        filterType: job.type,
+        filterParameters: (job as any).parameters,
+      }
+    )
+    if (inProgressJobs.length > 0) {
+      logger.info(`Job ${jobName} skipped`)
+      continue
+    }
+
     const existingJob = await jobRepository.getJobById(job.jobId)
     if (!existingJob) {
       await jobRepository.insertJob(job)
@@ -82,6 +94,7 @@ export const jobDecisionHandler = async (
     PNB_BACKFILL_ENTITIES: 'FARGATE',
     PNB_BACKFILL_TRANSACTIONS: 'FARGATE',
     PNB_BACKFILL_KRS: 'FARGATE',
+    PNB_BACKFILL_CRA: 'FARGATE',
     PNB_BACKFILL_ARS: 'FARGATE',
     TENANT_DELETION: 'FARGATE',
     SIMULATION_RISK_FACTORS: 'FARGATE',

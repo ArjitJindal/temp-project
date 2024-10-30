@@ -713,6 +713,15 @@ paths:
           description:
             Boolean string whether Flagright should lock the CRA risk level for
             the user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: validateUserId
+          description: Boolean string whether Flagright should validate the userId
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: _krsOnly
       requestBody:
         description: ''
         content:
@@ -989,6 +998,15 @@ paths:
           description:
             Boolean string whether Flagright should lock the CRA risk level for
             the user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: validateUserId
+          description: Boolean string whether Flagright should validate the userId
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: _krsOnly
       requestBody:
         description: ''
         content:

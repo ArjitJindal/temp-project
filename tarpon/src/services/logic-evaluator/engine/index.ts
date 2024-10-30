@@ -644,14 +644,14 @@ export class LogicEvaluator {
     currentTimestamp: number,
     userId: string | undefined,
     paymentDetails: PaymentDetails | undefined
-  ) {
+  ): Promise<boolean> {
     const userKeyId =
       aggregationVariable.type === 'USER_TRANSACTIONS'
         ? userId
         : paymentDetails && getPaymentDetailsIdentifiersKey(paymentDetails)
 
     if (this.mode !== 'DYNAMODB' || !userKeyId) {
-      return
+      return false
     }
 
     const { ready } =
@@ -660,7 +660,7 @@ export class LogicEvaluator {
         userKeyId
       )
     if (ready) {
-      return
+      return false
     }
 
     logger.info('Rebuilding aggregation...')
@@ -732,6 +732,7 @@ export class LogicEvaluator {
       lastTransactionTimestamp
     )
     logger.info('Rebuilt aggregation')
+    return true
   }
 
   private async getRebuiltAggregationVariableResult(
@@ -1419,7 +1420,7 @@ export class LogicEvaluator {
           hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') &&
           data.type === 'TRANSACTION'
         ) {
-          await this.rebuildAggregationVariable(
+          const isRebuilt = await this.rebuildAggregationVariable(
             aggregationVariable,
             data.transaction.timestamp,
             direction === 'origin'
@@ -1429,7 +1430,9 @@ export class LogicEvaluator {
               ? data.transaction.originPaymentDetails
               : data.transaction.destinationPaymentDetails
           )
-          throw new RebuildSyncRetryError()
+          if (isRebuilt) {
+            throw new RebuildSyncRetryError()
+          }
         }
       }
 

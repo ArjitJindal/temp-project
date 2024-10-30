@@ -43,7 +43,7 @@ async function handleRiskScoringTriggerBatchJob(tenantIds: string[]) {
       tenantIds.map(async (id) => {
         const batchJobRepository = new BatchJobRepository(id, mongoDb)
         const pendingTriggerJobs = await batchJobRepository.getJobsByStatus(
-          'PENDING',
+          ['PENDING'],
           {
             filterType: 'RISK_SCORING_RECALCULATION',
           }

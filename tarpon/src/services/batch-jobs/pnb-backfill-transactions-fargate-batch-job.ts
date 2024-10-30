@@ -31,10 +31,11 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
       concurrency = 50,
       publicApiKey,
       publicApiEndpoint,
+      filters,
     } = job.parameters
     const db = await getMongoDbClientDb()
 
-    this.progressKey = `backfill-${type}-${tenantId}`
+    this.progressKey = this.jobId
     this.publicApiKey = publicApiKey
     this.publicApiEndpoint = publicApiEndpoint
     this.tenantId = tenantId
@@ -50,9 +51,11 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({
         timestamp: { $gte: actualStartTimestamp },
+        ...filters,
       })
       .sort({ timestamp: 1 })
       .addCursorFlag('noCursorTimeout', true)
+      .allowDiskUse(true)
 
     const start = Date.now()
     logger.warn(
@@ -93,6 +96,10 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
       },
       body: JSON.stringify(transaction),
     })
+    if (response.status === 504) {
+      // Wait for the rebuild to complete
+      await new Promise((resolve) => setTimeout(resolve, 15 * 60 * 1000))
+    }
     releaseLocks()
     if (response.status >= 300) {
       logger.warn(
