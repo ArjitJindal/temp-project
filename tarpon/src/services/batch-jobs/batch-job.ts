@@ -29,5 +29,5 @@ export async function sendBatchJobCommand(job: BatchJob, jobId?: string) {
       QueueUrl: process.env.BATCH_JOB_QUEUE_URL as string,
     })
   )
-  logger.info(`Sent batch job ${jobWithId.type}`, jobWithId)
+  logger.warn(`Sent batch job ${jobWithId.type}`, jobWithId)
 }

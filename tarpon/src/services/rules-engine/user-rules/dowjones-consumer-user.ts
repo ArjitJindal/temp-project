@@ -93,6 +93,9 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
     }
     const result = await this.sanctionsService.search(
       {
+        ongoingSearchUserId: this.ongoingScreeningMode
+          ? this.user.userId
+          : undefined,
         searchTerm: name,
         ...(screeningValues?.includes('YOB') ? { yearOfBirth } : {}),
         ...(screeningValues?.includes('GENDER') && user.userDetails.gender
@@ -125,7 +128,9 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
       },
-      hitContext
+      hitContext,
+      undefined,
+      this.ongoingScreeningMode
     )
     if (result.hitsCount > 0) {
       hitResult.push({

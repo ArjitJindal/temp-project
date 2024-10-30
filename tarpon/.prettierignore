@@ -13,3 +13,4 @@ src/@types/openapi*
 *.xml
 Dockerfile
 *.lock
+*.csv

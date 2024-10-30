@@ -174,7 +174,8 @@ export class SanctionsService {
     context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
     },
-    providerOverrides?: ProviderConfig
+    providerOverrides?: ProviderConfig,
+    backfill = false
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
 
@@ -205,16 +206,21 @@ export class SanctionsService {
     let providerSearchId: string
     let createdAt: number | undefined = undefined
 
-    const existedSearch =
-      await this.sanctionsSearchRepository.getSearchResultByParams(
-        providerName,
-        request
-      )
+    let existedSearch: SanctionsSearchHistory | null = null
+    if (!backfill) {
+      existedSearch =
+        await this.sanctionsSearchRepository.getSearchResultByParams(
+          providerName,
+          request
+        )
+    }
+
     let sanctionsSearchResponse: SanctionsProviderResponse
 
     if (!existedSearch?.response) {
       const provider = await this.getProvider(providerName, providerOverrides)
       sanctionsSearchResponse = await provider.search({
+        ongoingSearchUserId: request.ongoingSearchUserId,
         searchTerm: request.searchTerm,
         fuzziness: request.fuzziness,
         countryCodes: request.countryCodes,
@@ -231,9 +237,9 @@ export class SanctionsService {
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {
       createdAt = existedSearch?.createdAt
-      searchId = existedSearch.response.searchId
-      providerSearchId = existedSearch.response.providerSearchId
-      sanctionsSearchResponse = existedSearch.response
+      searchId = existedSearch?.response.searchId
+      providerSearchId = existedSearch?.response.providerSearchId
+      sanctionsSearchResponse = existedSearch?.response
     }
 
     const filteredHits =
@@ -280,7 +286,9 @@ export class SanctionsService {
         searchId: response.searchId,
       }
       await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
-        details
+        details,
+        Date.now(),
+        backfill
       )
       if (context.iban) {
         await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
@@ -288,7 +296,9 @@ export class SanctionsService {
             ...details,
             name: context.iban,
             entity: 'IBAN',
-          }
+          },
+          Date.now(),
+          backfill
         )
       }
     }

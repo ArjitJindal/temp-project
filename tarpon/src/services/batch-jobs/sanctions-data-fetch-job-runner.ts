@@ -40,7 +40,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         if (tenant.tenant.name.toLowerCase().indexOf('pnb') > -1) {
           // TODO: disabled until scalability sorted
           // await sendBatchJobCommand({
-          //   type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
+          //   type: 'PNB_SCREENING_BACKFILL',
           //   tenantId,
           // })
         } else {

@@ -28,7 +28,8 @@ export class SanctionsScreeningDetailsRepository {
 
   public async addSanctionsScreeningDetails(
     details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'>,
-    screenedAt = Date.now()
+    screenedAt = Date.now(),
+    backfill = false
   ): Promise<void> {
     const db = this.mongoDb.db()
     const sanctionsScreeningCollectionName =
@@ -38,11 +39,30 @@ export class SanctionsScreeningDetailsRepository {
       sanctionsScreeningCollectionName
     )
 
+    if (backfill) {
+      try {
+        const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
+        await collection.insertOne({
+          ...details,
+          ruleInstanceIds: details.ruleInstanceIds,
+          userIds: details.userIds,
+          transactionIds: details.transactionIds,
+          lastScreenedAt: roundedScreenedAt,
+          isNew: true,
+        })
+      } catch (e) {
+        // Do nothing
+      }
+
+      return
+    }
+
     const previousScreenResult = await collection.findOne({
       lastScreenedAt: { $lt: screenedAt },
       name: details.name,
       entity: details.entity,
     })
+
     // NOTE: Round the timestamp to the nearest hour to avoid having too many records
     const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
     const filter = {

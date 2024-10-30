@@ -1,3 +1,6 @@
+import path from 'path'
+import fs from 'fs'
+import { uniq } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -10,6 +13,113 @@ import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { logger } from '@/core/logger'
+import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
+import { getS3Client, readFileFromS3 } from '@/utils/s3'
+import { envIs } from '@/utils/env'
+const documentIdToIds = new Map<string, string[]>()
+const nameToIds = new Map<string, string[]>()
+const sanctionEntities = new Map<string, SanctionsEntity>()
+const namesByLength = new Map<number, string[]>()
+const userMatches: Record<string, string[]> = {}
+
+let fetchPromise: Promise<any> | undefined
+let dataLoaded = false
+
+const fetchData = async function () {
+  if (!dataLoaded) {
+    if (!fetchPromise) {
+      const load = async () => {
+        logger.warn('Fetching sanctions data to store in memory')
+        const query = `
+        SELECT id, documentIds, arrayConcat([name], aka) AS names, data
+        FROM sanctions_data 
+        WHERE 
+            # Hack for PNB
+            (arrayCount(x -> x IN ('MY','ZZ', 'XX'), nationality) > 0) 
+            OR nationality IS NULL 
+            OR length(nationality) = 0`
+        let results: {
+          id: string
+          documentIds: string[]
+          names: string[]
+          data: string
+        }[] = []
+        if (envIs('test')) {
+          const filePath = path.join(
+            __dirname,
+            './__tests__/ongoing_search_results.json'
+          )
+          const fileContent = fs.readFileSync(filePath, 'utf-8')
+          results = JSON.parse(fileContent)
+        } else {
+          results = await executeClickhouseQuery<{
+            id: string
+            documentIds: string[]
+            names: string[]
+            data: string
+          }>('flagright', query, {})
+        }
+        // Store data into maps
+        results.forEach((result) => {
+          sanctionEntities.set(result.id, JSON.parse(result.data))
+          result.names.forEach((upperCaseName) => {
+            const name = upperCaseName.toLowerCase()
+            const ids = nameToIds.get(name) || []
+            ids.push(result.id)
+            nameToIds.set(name, ids)
+
+            const names = namesByLength.get(name.length) || []
+            names.push(name)
+            namesByLength.set(name.length, names)
+          })
+          result.documentIds.forEach((documentId) => {
+            const ids = documentIdToIds.get(documentId) || []
+            ids.push(result.id)
+            documentIdToIds.set(documentId, ids)
+          })
+        })
+
+        // Read the file contents
+        const s3Client = getS3Client()
+        let fileContent
+        if (envIs('test')) {
+          const filePath = path.join(
+            __dirname,
+            './__tests__/matched_user_ids.csv'
+          )
+          fileContent = fs.readFileSync(filePath, 'utf-8')
+        } else {
+          fileContent = await readFileFromS3(
+            s3Client,
+            'flagright-datalake-sandbox-asia-1-bucket',
+            'matched_user_ids.csv'
+          )
+        }
+
+        // Split the file content by lines
+        const lines = fileContent.trim().split('\n')
+
+        // Process each line
+        lines.forEach((line) => {
+          const row = line.split(',')
+          const userId = row[0]
+          const matchIds = row.slice(1)
+
+          if (!userMatches[userId]) {
+            userMatches[userId] = []
+          }
+
+          // Append match IDs to the user's entry in the map
+          userMatches[userId].push(...matchIds)
+        })
+      }
+      fetchPromise = load()
+    }
+    await fetchPromise
+    dataLoaded = true
+  }
+}
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -56,6 +166,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
+    if (request.ongoingSearchUserId) {
+      return this.searchInMemory(request)
+    }
+
     const client = await getMongoDbClient()
     const match = {}
 
@@ -347,6 +461,170 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     })
 
     return this.searchRepository.saveSearch(filteredResults, request)
+  }
+
+  async searchInMemory(
+    request: SanctionsSearchRequest
+  ): Promise<SanctionsProviderResponse> {
+    await fetchData()
+    const results: SanctionsEntity[] = []
+
+    let fuzzinessThreshold = 0
+    if (request.fuzzinessRange?.upperBound) {
+      fuzzinessThreshold = request.fuzzinessRange?.upperBound
+    } else if (request.fuzziness) {
+      fuzzinessThreshold = request.fuzziness * 100
+    }
+    const allowedDifference = fuzzinessThreshold / 100
+    const searchTerm = request.searchTerm.toLowerCase()
+
+    const matchingIds: string[] = []
+
+    if (
+      request.searchTerm &&
+      fuzzinessThreshold < 75 &&
+      request.ongoingSearchUserId
+    ) {
+      if (allowedDifference == 0) {
+        matchingIds.push(...(nameToIds.get(searchTerm) || []))
+      } else {
+        const matchedEntities = userMatches[request.ongoingSearchUserId] || []
+        const matchedNames = matchedEntities
+          .flatMap((id) => {
+            const entity = sanctionEntities.get(id)
+            return [entity?.name || '', ...(entity?.aka || [])]
+          })
+          .map((n) => n.toLowerCase())
+        const ids = matchedNames
+          .filter((n) => {
+            const percentageDifference =
+              100 - calculateLevenshteinDistancePercentage(n, searchTerm)
+            return percentageDifference < allowedDifference * 100
+          })
+          .flatMap((n) => {
+            return nameToIds.get(n) || ''
+          })
+        matchingIds.push(...ids)
+      }
+    }
+
+    if (!request.searchTerm) {
+      throw new Error('Must specify search term')
+    }
+
+    for (const entityId of uniq(matchingIds)) {
+      const entity = sanctionEntities.get(entityId)
+      if (!entity) {
+        continue
+      }
+      const andConditions: boolean[] = []
+      const orConditions: boolean[] = []
+
+      // Country Codes
+      if (request.countryCodes) {
+        andConditions.push(
+          entity.countryCodes?.some((code: string) =>
+            request.countryCodes?.includes(code)
+          ) ?? false
+        )
+      }
+
+      // Year of Birth
+      const yearOfBirthMatch =
+        !request.yearOfBirth ||
+        entity.yearOfBirth === `${request.yearOfBirth}` ||
+        !entity.yearOfBirth
+      ;(request.orFilters?.includes('yearOfBirth')
+        ? orConditions
+        : andConditions
+      ).push(yearOfBirthMatch)
+
+      // Types
+      if (request.types) {
+        const typeMatch =
+          entity.sanctionSearchTypes?.some((type) =>
+            request.types?.includes(type)
+          ) ?? false
+        ;(request.orFilters?.includes('types')
+          ? orConditions
+          : andConditions
+        ).push(typeMatch)
+      }
+
+      // Document ID
+      if (request.documentId) {
+        const documentIdMatch =
+          request.documentId.length > 0
+            ? request.documentId.some((docId) =>
+                entity.documents?.some(
+                  (doc) => doc.id === docId || doc.formattedId === docId
+                )
+              )
+            : false
+        ;(request.orFilters?.includes('documentId')
+          ? orConditions
+          : andConditions
+        ).push(documentIdMatch)
+      }
+
+      // Nationality
+      const nationality = request.nationality
+      if (nationality) {
+        const nationalityMatch =
+          entity.nationality?.some((nat: string) =>
+            [...nationality, 'XX', 'ZZ'].includes(nat)
+          ) ?? false
+        ;(request.orFilters?.includes('nationality')
+          ? orConditions
+          : andConditions
+        ).push(
+          nationalityMatch ||
+            !entity.nationality ||
+            entity.nationality.length === 0
+        )
+      }
+
+      // Occupation Code
+      if (request.occupationCode) {
+        andConditions.push(
+          entity.occupations?.some(
+            (occupation) =>
+              occupation.occupationCode &&
+              request.occupationCode?.includes(occupation.occupationCode)
+          ) ?? false
+        )
+      }
+
+      // PEP Rank
+      if (request.PEPRank) {
+        andConditions.push(
+          entity.occupations?.some(
+            (occupation) => occupation.rank == request.PEPRank
+          ) ?? false
+        )
+      }
+
+      // Gender
+      if (request.gender) {
+        const genderMatch =
+          entity.gender === request.gender ||
+          !entity.gender ||
+          entity.gender === 'Unknown'
+        ;(request.orFilters?.includes('gender')
+          ? orConditions
+          : andConditions
+        ).push(genderMatch)
+      }
+
+      // Combine Conditions
+      const isMatch =
+        andConditions.every(Boolean) &&
+        (orConditions.length === 0 || orConditions.some(Boolean))
+      if (isMatch) {
+        results.push(entity)
+      }
+    }
+    return this.searchRepository.saveSearch(results, request)
   }
 
   provider(): SanctionsDataProviderName {

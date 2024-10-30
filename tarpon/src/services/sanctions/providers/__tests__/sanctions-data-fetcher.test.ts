@@ -9,6 +9,7 @@ import {
   SANCTIONS_PROVIDER_SEARCHES_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 
 // Mock getContext
 jest.mock('@/core/utils/context', () => ({
@@ -173,5 +174,132 @@ describe('SanctionsDataFetcher Integration Tests', () => {
         existingProviderId: 'monitored-search',
       })
     )
+  })
+
+  test('in memory search should return results - 1', async () => {
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
+    const searchTerm = 'Amir Bin Mohamed'
+    const fuzzinessRange = {
+      lowerBound: 1,
+      upperBound: 50,
+    }
+    const yearOfBirth = 1965
+    const documentId = ['650724015035']
+    const searchResult = await sanctionsFetcher.searchInMemory({
+      searchTerm,
+      types: ['ADVERSE_MEDIA'],
+      ongoingSearchUserId: '000007733052',
+      fuzzinessRange,
+      yearOfBirth,
+      documentId,
+    })
+    searchResult.data?.forEach((result) => {
+      const differencePercentage =
+        100 -
+        calculateLevenshteinDistancePercentage(
+          searchTerm,
+          result.name.toLowerCase()
+        )
+      expect(differencePercentage).toBeLessThan(fuzzinessRange.upperBound)
+      expect(true).toEqual(
+        String(yearOfBirth) === result.yearOfBirth ||
+          result.yearOfBirth === undefined
+      )
+      const resultDocumentIds =
+        result.documents?.map((doc) => doc.formattedId) ?? []
+      console.log(resultDocumentIds)
+      expect(documentId.every((id) => resultDocumentIds.includes(id))).toBe(
+        true
+      )
+      expect(result.sanctionSearchTypes?.includes('ADVERSE_MEDIA')).toBe(true)
+    })
+  })
+
+  test('in memory search should return results - 2', async () => {
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
+    const searchTerm = 'John Doe'
+    const fuzzinessRange = {
+      lowerBound: 1,
+      upperBound: 50,
+    }
+    const searchResult = await sanctionsFetcher.searchInMemory({
+      searchTerm,
+      types: ['ADVERSE_MEDIA'],
+      ongoingSearchUserId: '000007733052',
+      fuzzinessRange,
+    })
+    expect(searchResult.data?.length).toBe(0)
+  })
+
+  test('in memory search should return results - 3', async () => {
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
+    const searchTerm = 'Hassan Bin Abdul Karim'
+    const fuzzinessRange = {
+      lowerBound: 1,
+      upperBound: 15,
+    }
+    const PEPRank = 'LEVEL_1'
+    const yearOfBirth = 1951
+    const searchResult = await sanctionsFetcher.searchInMemory({
+      searchTerm,
+      types: ['PEP'],
+      fuzzinessRange,
+      PEPRank,
+      yearOfBirth,
+    })
+    searchResult.data?.forEach((result) => {
+      const differencePercentage =
+        100 -
+        calculateLevenshteinDistancePercentage(
+          searchTerm,
+          result.name.toLowerCase()
+        )
+      expect(differencePercentage).toBeLessThan(fuzzinessRange.upperBound)
+      expect(true).toEqual(
+        String(yearOfBirth) === result.yearOfBirth ||
+          result.yearOfBirth === undefined
+      )
+      expect(
+        result.occupations?.some((occupation) => occupation.rank === PEPRank)
+      ).toBe(true)
+      expect(result.sanctionSearchTypes?.includes('PEP')).toBe(true)
+    })
+  })
+
+  test('in memory search should return results - 4', async () => {
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
+    const searchTerm = 'Mohd Nasir Ahmad'
+    const fuzzinessRange = {
+      lowerBound: 1,
+      upperBound: 10,
+    }
+    const PEPRank = 'LEVEL_2'
+    const searchResult = await sanctionsFetcher.searchInMemory({
+      searchTerm,
+      types: ['PEP'],
+      fuzzinessRange,
+      PEPRank,
+    })
+    searchResult.data?.forEach((result) => {
+      const differencePercentage =
+        100 -
+        calculateLevenshteinDistancePercentage(
+          searchTerm,
+          result.name.toLowerCase()
+        )
+      expect(differencePercentage).toBeLessThan(fuzzinessRange.upperBound)
+      expect(
+        result.occupations?.some((occupation) => occupation.rank === PEPRank)
+      ).toBe(true)
+      expect(result.sanctionSearchTypes?.includes('PEP')).toBe(true)
+    })
+
+    const searchResult2 = await sanctionsFetcher.searchInMemory({
+      searchTerm,
+      types: ['PEP'],
+      fuzzinessRange,
+      PEPRank: 'LEVEL_1',
+    })
+    expect(searchResult2.data?.length).toBe(0)
   })
 })

@@ -233,7 +233,7 @@ export const tenantsHandler = lambdaApi()(
         case 'ONGOING_SCREENING_USER_RULE': {
           if (ctx.tenantId.toLowerCase().indexOf('pnb') > -1) {
             await sendBatchJobCommand({
-              type: 'MULTI_JOB_ONGOING_SCREENING_USER_RULE',
+              type: 'PNB_SCREENING_BACKFILL',
               tenantId,
             })
           } else {
