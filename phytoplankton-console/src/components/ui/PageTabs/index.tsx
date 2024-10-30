@@ -10,9 +10,7 @@ import { useAuth0User } from '@/utils/user-utils';
 
 export const TABS_LINE_HEIGHT = 81;
 
-interface TabItemWithPermissions extends TabItem {
-  requiredPermissions?: Permission[];
-}
+export type TabItemWithPermissions = TabItem & { requiredPermissions?: Permission[] };
 
 interface Props extends Pick<TabsProps, 'activeKey' | 'onChange' | 'tabBarExtraContent'> {
   items?: TabItemWithPermissions[];

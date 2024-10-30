@@ -22,7 +22,6 @@ import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { generateChecksum } from '@/utils/object'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 type TableDetails = {
   tenantId: string
@@ -90,13 +89,13 @@ export class MongoDbConsumer {
           const { tenantId, clickhouseTable, mongoCollectionName } =
             tableDetails
 
-          const isTenantDeleted = await TenantRepository.isTenantDeleted(
-            tenantId
-          )
+          // const isTenantDeleted = await TenantRepository.isTenantDeleted(
+          //   tenantId
+          // )
 
-          if (isTenantDeleted) {
-            return
-          }
+          // if (isTenantDeleted) {
+          //   return
+          // }
 
           const documentsToReplace = await this.fetchDocuments(
             collectionName,
@@ -301,12 +300,12 @@ export class MongoDbConsumer {
 
           const { clickhouseTable, tenantId } = tableDetails
 
-          const isTenantDeleted = await TenantRepository.isTenantDeleted(
-            tenantId
-          )
-          if (isTenantDeleted) {
-            return
-          }
+          // const isTenantDeleted = await TenantRepository.isTenantDeleted(
+          //   tenantId
+          // )
+          // if (isTenantDeleted) {
+          //   return
+          // }
 
           const items = await this.fetchDocuments(collectionName, records)
           const filterConditions = `mongo_id IN (${items
