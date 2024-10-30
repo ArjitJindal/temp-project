@@ -22,6 +22,9 @@ import { CurrencyService } from '@/services/currency'
 import { Transaction } from '@/@types/openapi-internal/Transaction'
 import { TransactionAmountDetails } from '@/@types/openapi-internal/TransactionAmountDetails'
 import { generateChecksum } from '@/utils/object'
+import { TENANT_DELETION_COLLECTION } from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 
 type TableDetails = {
   tenantId: string
@@ -89,13 +92,10 @@ export class MongoDbConsumer {
           const { tenantId, clickhouseTable, mongoCollectionName } =
             tableDetails
 
-          // const isTenantDeleted = await TenantRepository.isTenantDeleted(
-          //   tenantId
-          // )
-
-          // if (isTenantDeleted) {
-          //   return
-          // }
+          const isTenantDeleted = await this.isTenantDeleted(tenantId)
+          if (isTenantDeleted) {
+            return
+          }
 
           const documentsToReplace = await this.fetchDocuments(
             collectionName,
@@ -300,12 +300,10 @@ export class MongoDbConsumer {
 
           const { clickhouseTable, tenantId } = tableDetails
 
-          // const isTenantDeleted = await TenantRepository.isTenantDeleted(
-          //   tenantId
-          // )
-          // if (isTenantDeleted) {
-          //   return
-          // }
+          const isTenantDeleted = await this.isTenantDeleted(tenantId)
+          if (isTenantDeleted) {
+            return
+          }
 
           const items = await this.fetchDocuments(collectionName, records)
           const filterConditions = `mongo_id IN (${items
@@ -321,6 +319,27 @@ export class MongoDbConsumer {
       )
     )
   }
+
+  private async isTenantDeleted(tenantId: string) {
+    const deletedTenants = await this.deletedTenants()
+    return deletedTenants.some((tenant) => tenant.tenantId === tenantId)
+  }
+
+  private deletedTenants = memoize(async () => {
+    const mongoDb = await getMongoDbClient()
+    const collection = mongoDb
+      .db()
+      .collection<Pick<DeleteTenant, 'tenantId'>>(TENANT_DELETION_COLLECTION)
+    const tenants = collection
+      .find({
+        latestStatus: {
+          $in: ['IN_PROGRESS', 'WAITING_HARD_DELETE', 'HARD_DELETED'],
+        },
+      })
+      .project({ tenantId: 1 })
+
+    return tenants.toArray()
+  })
 
   private getUniqueKey(
     collectionName: string,
