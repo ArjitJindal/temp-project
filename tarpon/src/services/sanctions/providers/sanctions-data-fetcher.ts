@@ -479,21 +479,9 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       fuzzinessThreshold = request.fuzziness * 100
     }
     const allowedDifference = fuzzinessThreshold / 100
-    const searchTerm = request.searchTerm.toLowerCase()
 
-    const matchingIds: string[] = []
-
-    if (request.searchTerm && request.ongoingSearchUserId) {
-      if (allowedDifference == 0) {
-        matchingIds.push(...(nameToIds.get(searchTerm) || []))
-      } else {
-        matchingIds.push(...(userMatches[request.ongoingSearchUserId] || []))
-      }
-    }
-
-    if (!request.searchTerm) {
-      throw new Error('Must specify search term')
-    }
+    const matchingIds: string[] =
+      userMatches[request.ongoingSearchUserId || ''] || []
 
     for (const entityId of uniq(matchingIds)) {
       const entity = sanctionEntities.get(entityId)
