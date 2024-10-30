@@ -1,5 +1,6 @@
 import { FlagrightRegion, Stage } from './deploy'
 
+// Don't end with -test
 export const siloDataTenants: Partial<
   Record<Stage, Partial<Record<FlagrightRegion, string[]>>>
 > = {
@@ -7,9 +8,9 @@ export const siloDataTenants: Partial<
     'eu-1': ['silo-flagright-dev'],
   },
   sandbox: {
-    'asia-1': ['pnb-uat', 'pnb-stress-test'],
+    'asia-1': ['pnb-uat'],
   },
   prod: {
-    'asia-1': ['pnb'],
+    'asia-1': ['pnb', 'pnb-stress'],
   },
 }
