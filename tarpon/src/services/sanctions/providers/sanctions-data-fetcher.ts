@@ -483,31 +483,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
 
     const matchingIds: string[] = []
 
-    if (
-      request.searchTerm &&
-      fuzzinessThreshold < 75 &&
-      request.ongoingSearchUserId
-    ) {
+    if (request.searchTerm && request.ongoingSearchUserId) {
       if (allowedDifference == 0) {
         matchingIds.push(...(nameToIds.get(searchTerm) || []))
       } else {
-        const matchedEntities = userMatches[request.ongoingSearchUserId] || []
-        const matchedNames = matchedEntities
-          .flatMap((id) => {
-            const entity = sanctionEntities.get(id)
-            return [entity?.name || '', ...(entity?.aka || [])]
-          })
-          .map((n) => n.toLowerCase())
-        const ids = matchedNames
-          .filter((n) => {
-            const percentageDifference =
-              100 - calculateLevenshteinDistancePercentage(n, searchTerm)
-            return percentageDifference < allowedDifference * 100
-          })
-          .flatMap((n) => {
-            return nameToIds.get(n) || ''
-          })
-        matchingIds.push(...ids)
+        matchingIds.push(...(userMatches[request.ongoingSearchUserId] || []))
       }
     }
 
@@ -522,6 +502,22 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
       const andConditions: boolean[] = []
       const orConditions: boolean[] = []
+
+      const searchTerm = request.searchTerm.toLowerCase()
+      if (allowedDifference === 0) {
+        andConditions.push(entity.name.toLowerCase() === searchTerm)
+      } else {
+        const allNames = [entity?.name || '', ...(entity?.aka || [])].map((n) =>
+          n.toLowerCase()
+        )
+        andConditions.push(
+          allNames.some((n) => {
+            const percentageDifference =
+              100 - calculateLevenshteinDistancePercentage(n, searchTerm)
+            return percentageDifference < allowedDifference * 100
+          })
+        )
+      }
 
       // Country Codes
       if (request.countryCodes) {
