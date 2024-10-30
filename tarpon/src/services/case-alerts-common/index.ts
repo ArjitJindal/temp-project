@@ -58,6 +58,8 @@ export class CaseAlertsCommonService {
     const isL2Escalation =
       statusEscalated(caseStatus) && !isStatusInReview(caseStatus)
 
+    const currentUserId = getContext()?.user?.id
+
     const isL1Escalation = !isL2Escalation
 
     let allL1EscalationAccounts = accounts.filter(
@@ -99,7 +101,7 @@ export class CaseAlertsCommonService {
             assigneeUserId: randomL1EscalationReviewer.id,
             timestamp: Date.now(),
             escalationLevel: 'L1',
-            assignedByUserId: getContext()?.user?.id,
+            assignedByUserId: currentUserId,
           },
         ],
         'assigneeUserId'
@@ -128,7 +130,7 @@ export class CaseAlertsCommonService {
             assigneeUserId: findEscalationReviewer,
             timestamp: Date.now(),
             escalationLevel: 'L2',
-            assignedByUserId: getContext()?.user?.id,
+            assignedByUserId: currentUserId,
           },
         ],
         'assigneeUserId'

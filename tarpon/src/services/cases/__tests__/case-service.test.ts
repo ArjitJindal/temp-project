@@ -2873,7 +2873,7 @@ describe('Test alert should reopen if qa status is failed', () => {
   })
 })
 
-describe.only('Test case escalation l2', () => {
+describe('Test case escalation l2', () => {
   withFeatureHook(['MULTI_LEVEL_ESCALATION', 'ADVANCED_WORKFLOWS'])
   const testTenantId = getTestTenantId()
   test('should escalate case to l2 if l1 is not assigned', async () => {
@@ -2922,7 +2922,7 @@ describe.only('Test case escalation l2', () => {
     expect(updatedCase2?.reviewAssignments).toMatchObject([
       {
         assigneeUserId: 'ACCOUNT-1',
-        assignedByUserId: 'ACCOUNT-3',
+        assignedByUserId: 'ACCOUNT-1',
         timestamp: expect.any(Number),
         escalationLevel: 'L1',
       },

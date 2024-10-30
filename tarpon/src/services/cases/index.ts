@@ -895,7 +895,7 @@ export class CaseService extends CaseAlertsCommonService {
 
     const reviewAssignments = this.getEscalationAssignments(
       case_.caseStatus as CaseStatus,
-      case_.reviewAssignments ?? [],
+      !isStatusInReview(case_.caseStatus) ? case_.reviewAssignments ?? [] : [],
       accounts
     )
 
@@ -917,7 +917,7 @@ export class CaseService extends CaseAlertsCommonService {
     if (isEmpty(caseAssignments) && currentUserId) {
       assignmentsToUpdate = caseAssignments = [
         {
-          assigneeUserId: reviewAssignments[0]?.assigneeUserId,
+          assigneeUserId: currentUserId,
           timestamp: Date.now(),
           assignedByUserId: currentUserId,
           escalationLevel: isL2Escalation ? 'L2' : 'L1',
@@ -956,17 +956,17 @@ export class CaseService extends CaseAlertsCommonService {
       userStateDetails: caseUpdateRequest.userStateDetails,
     }
 
-    await this.updateStatus([caseId], statusChange, {
-      cascadeAlertsUpdate: true,
-      reviewAssignments: finalReviewAssignments,
-    })
-
     if (
       !isEqual(case_.reviewAssignments, finalReviewAssignments) &&
       finalReviewAssignments?.length
     ) {
       await this.updateReviewAssignments([caseId], finalReviewAssignments)
     }
+
+    await this.updateStatus([caseId], statusChange, {
+      cascadeAlertsUpdate: true,
+      reviewAssignments: finalReviewAssignments,
+    })
 
     await this.auditLogService.handleAuditLogForCaseEscalation(
       caseId,
