@@ -21,10 +21,45 @@ const documentIdToIds = new Map<string, string[]>()
 const nameToIds = new Map<string, string[]>()
 const sanctionEntities = new Map<string, SanctionsEntity>()
 const namesByLength = new Map<number, string[]>()
-const userMatches: Record<string, string[]> = {}
+let userMatches: Record<string, string[]> = {}
 
 let fetchPromise: Promise<any> | undefined
 let dataLoaded = false
+
+export async function getUserMatches() {
+  // Read the file contents
+  const s3Client = getS3Client()
+  let fileContent
+  if (envIs('test')) {
+    const filePath = path.join(__dirname, './__tests__/matched_user_ids.csv')
+    fileContent = fs.readFileSync(filePath, 'utf-8')
+  } else {
+    fileContent = await readFileFromS3(
+      s3Client,
+      'flagright-datalake-sandbox-asia-1-bucket',
+      'matched_user_ids.csv'
+    )
+  }
+
+  // Split the file content by lines
+  const lines = fileContent.trim().split('\n')
+
+  const userMatches: Record<string, string[]> = {}
+  // Process each line
+  lines.forEach((line) => {
+    const row = line.split(',')
+    const userId = row[0]
+    const matchIds = row.slice(1)
+
+    if (!userMatches[userId]) {
+      userMatches[userId] = []
+    }
+
+    // Append match IDs to the user's entry in the map
+    userMatches[userId].push(...matchIds)
+  })
+  return userMatches
+}
 
 const fetchData = async function () {
   if (!dataLoaded) {
@@ -80,39 +115,7 @@ const fetchData = async function () {
           })
         })
 
-        // Read the file contents
-        const s3Client = getS3Client()
-        let fileContent
-        if (envIs('test')) {
-          const filePath = path.join(
-            __dirname,
-            './__tests__/matched_user_ids.csv'
-          )
-          fileContent = fs.readFileSync(filePath, 'utf-8')
-        } else {
-          fileContent = await readFileFromS3(
-            s3Client,
-            'flagright-datalake-sandbox-asia-1-bucket',
-            'matched_user_ids.csv'
-          )
-        }
-
-        // Split the file content by lines
-        const lines = fileContent.trim().split('\n')
-
-        // Process each line
-        lines.forEach((line) => {
-          const row = line.split(',')
-          const userId = row[0]
-          const matchIds = row.slice(1)
-
-          if (!userMatches[userId]) {
-            userMatches[userId] = []
-          }
-
-          // Append match IDs to the user's entry in the map
-          userMatches[userId].push(...matchIds)
-        })
+        userMatches = await getUserMatches()
       }
       fetchPromise = load()
     }

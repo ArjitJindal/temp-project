@@ -14,13 +14,14 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
-import { tenantHasFeature } from '@/core/utils/context'
+import { hasFeature, tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import dayjs from '@/utils/dayjs'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import { getUserMatches } from '@/services/sanctions/providers/sanctions-data-fetcher'
 
 const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
   ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
@@ -136,11 +137,19 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       this.from,
       this.to
     )
+
+    const matches = hasFeature('PNB') ? await getUserMatches() : {}
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
         usersCursor,
         async (usersChunk) => {
-          await this.runUsersBatch(usersChunk, rules, ruleInstances)
+          const filteredUsers = usersChunk.filter((u) => {
+            if (hasFeature('PNB')) {
+              return matches[u.userId]
+            }
+            return true
+          })
+          await this.runUsersBatch(filteredUsers, rules, ruleInstances)
         },
         { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
       )
