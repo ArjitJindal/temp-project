@@ -157,8 +157,8 @@ export class RiskService {
     return await this.riskRepository.getArsValueFromMongo(transactionId)
   }
 
-  async getAverageArsScore(userId: string) {
-    return await this.riskRepository.getAverageArsScore(userId)
+  async getAverageArsScoreForUser(userId: string) {
+    return await this.riskRepository.getAverageArsScoreForUser(userId)
   }
 
   async getAllRiskFactors(entityType?: RiskEntityType) {
