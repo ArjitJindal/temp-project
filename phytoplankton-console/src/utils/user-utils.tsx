@@ -242,10 +242,17 @@ export function useSortedUsers(
     includeSystemUsers: false,
   },
 ): [Account[], boolean] {
+  const currentUser = useAuth0User();
   const [users, loading] = useUsers(options);
   return [
     Object.values(users)
-      .sort((accountA, accountB) => accountA.name.localeCompare(accountB.name))
+      .sort((accountA, accountB) => {
+        if (currentUser.userId === accountA.id || currentUser.userId === accountB.id) {
+          return -1;
+        }
+
+        return accountA.name.localeCompare(accountB.name);
+      })
       .filter((account) => !isSystemUser(account.id)),
     loading,
   ];

@@ -40,7 +40,6 @@ export const AssigneesDropdown: React.FC<Props> = ({
 
     return users.filter((user) => customFilter(user));
   }, [users, customFilter]);
-
   return editing && canEditAssignees ? (
     <>
       <Select<string[]>
