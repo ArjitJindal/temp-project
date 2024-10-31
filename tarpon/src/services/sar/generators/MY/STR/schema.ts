@@ -294,6 +294,7 @@ export const CustomerInformation = {
     'residentialAddress',
     'correspondenceAddress',
     'occupation',
+    'identificationNoNric',
   ],
 }
 

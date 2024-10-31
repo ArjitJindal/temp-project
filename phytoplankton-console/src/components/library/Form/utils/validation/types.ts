@@ -5,7 +5,7 @@ export const $SELF_VALIDATION = Symbol('SELF_VALIDATION');
 // Need this hack since array field validator is just a validator for item type
 export const $IS_ARRAY_VALIDATOR = Symbol('IS_ARRAY_VALIDATOR');
 
-export const $IS_OPTIONAL = Symbol();
+export const $IS_OPTIONAL = Symbol('IS_OPTIONAL');
 
 export type ValidationError = string;
 export type ValidationResult = ValidationError | null;

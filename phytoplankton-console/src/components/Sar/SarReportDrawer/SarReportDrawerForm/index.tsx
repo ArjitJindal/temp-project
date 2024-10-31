@@ -29,8 +29,8 @@ export type FormState = Partial<{
   [TRANSACTION_METADATA_STEP]: unknown;
   [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: unknown;
   [TRANSACTION_STEP]: {
-    [transactionId: string]: unknown;
-  };
+    id: string;
+  }[];
   [INDICATOR_STEP]: {
     selection: string[];
   };
@@ -80,15 +80,8 @@ export default function SarReportDrawerForm(props: Props) {
             name: TRANSACTION_STEP,
             isRequired: false,
             schema: {
-              type: 'object' as const,
-              properties: report.parameters.transactions?.reduce((acc, x) => {
-                return {
-                  ...acc,
-                  [x.id]: report.schema?.transactionSchema,
-                };
-              }, {}),
-              definitions: report.schema?.transactionSchema?.definitions,
-              required: report.parameters.transactions?.map((x) => x.id),
+              type: 'array',
+              items: report.schema.transactionSchema,
             },
           },
         ]
@@ -108,6 +101,7 @@ export default function SarReportDrawerForm(props: Props) {
 
   return (
     <Form
+      portaled
       id={formId}
       className={s.root}
       fieldValidators={fieldValidators as ObjectFieldValidator<FormState>}
@@ -198,12 +192,10 @@ function deserializeFormState(reportTemplate: Report): FormState {
     [REPORT_STEP]: reportTemplate?.parameters.report,
     [TRANSACTION_METADATA_STEP]: reportTemplate?.parameters.transactionMetadata,
     [CUSTOMER_AND_ACCOUNT_DETAILS_STEP]: reportTemplate?.parameters.customerAndAccountDetails,
-    [TRANSACTION_STEP]: reportTemplate?.parameters.transactions?.reduce((acc, x) => {
-      return {
-        ...acc,
-        [x.id]: x.transaction,
-      };
-    }, {}),
+    [TRANSACTION_STEP]: reportTemplate?.parameters.transactions?.map(({ id, transaction }) => ({
+      id,
+      ...transaction,
+    })),
     [INDICATOR_STEP]: {
       selection: reportTemplate?.parameters.indicators ?? [],
     },
@@ -221,8 +213,8 @@ export function serializeFormState(originalReport: Report, formState: FormState)
       indicators: formState[INDICATOR_STEP]?.selection ?? [],
       transactionMetadata: formState[TRANSACTION_METADATA_STEP],
       customerAndAccountDetails: formState[CUSTOMER_AND_ACCOUNT_DETAILS_STEP],
-      transactions: Object.entries(formState[TRANSACTION_STEP] ?? {}).map(([id, transaction]) => ({
-        id,
+      transactions: (formState[TRANSACTION_STEP] ?? []).map((transaction) => ({
+        id: transaction.id,
         transaction,
       })),
     },
