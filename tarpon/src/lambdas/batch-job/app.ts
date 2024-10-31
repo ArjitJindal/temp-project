@@ -36,18 +36,6 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
       job.tenantId,
       await getMongoDbClient()
     )
-    const inProgressJobs = await jobRepository.getJobsByStatus(
-      ['IN_PROGRESS'],
-      {
-        filterType: job.type,
-        filterParameters: (job as any).parameters,
-      }
-    )
-    if (inProgressJobs.length > 0) {
-      logger.info(`Job ${jobName} skipped`)
-      continue
-    }
-
     const existingJob = await jobRepository.getJobById(job.jobId)
     if (!existingJob) {
       await jobRepository.insertJob(job)
