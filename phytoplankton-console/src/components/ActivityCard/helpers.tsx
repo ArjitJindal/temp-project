@@ -8,6 +8,7 @@ import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { getDisplayedUserInfo } from '@/utils/user-utils';
+import { statusEscalated } from '@/utils/case-utils';
 
 export const isActionUpdate = (log: AuditLog): boolean => {
   return log.action === 'UPDATE';
@@ -290,6 +291,18 @@ export const handleEscalatedStatus = (
 
   switch (entityStatus) {
     case 'ESCALATED': {
+      const isAlertEscalated = log.type === 'ALERT' && statusEscalated(log?.newImage?.alertStatus);
+      if (isAlertEscalated) {
+        return (
+          <>
+            {escalatedToLogMessage({
+              entityType,
+              entityId,
+              checkerUserName,
+            })}
+          </>
+        );
+      }
       if (entityType === 'CASE' && childCase !== entityId[0]) {
         if (type === 'USER') {
           return null;
@@ -592,6 +605,14 @@ const getReviewLogMessage = ({ approvalStatus, userName, entiyType, entityId, cu
     <>
       Review {approvalStatus} by <b>{userName}</b> on {humanizeAuto(entiyType)} <b>{entityId}</b>{' '}
       and status is set to {humanizeAuto(currentStatus)}
+    </>
+  );
+};
+const escalatedToLogMessage = ({ entityType, entityId, checkerUserName }) => {
+  return (
+    <>
+      {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is escalated to{' '}
+      <b>{checkerUserName}</b>
     </>
   );
 };
