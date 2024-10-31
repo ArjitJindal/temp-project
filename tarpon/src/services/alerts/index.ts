@@ -364,12 +364,17 @@ export class AlertsService extends CaseAlertsCommonService {
     const escalatedAlertsDetails = escalatedAlerts?.map(
       (escalatedAlert: Alert): Alert => {
         const isAlreadyEscalated = statusEscalated(escalatedAlert.alertStatus)
+        const isInReviewEscalatedL1 = isStatusInReview(
+          escalatedAlert.alertStatus
+        ) // as we don't have In review for escalated L2
         const lastStatusChange: CaseStatusChange = {
           userId: currentUserId ?? '',
           caseStatus:
             isTransactionsEscalation && isReviewRequired && !isAlreadyEscalated
               ? 'IN_REVIEW_ESCALATED'
-              : isAlreadyEscalated && hasFeature('MULTI_LEVEL_ESCALATION')
+              : isAlreadyEscalated &&
+                !isInReviewEscalatedL1 && // Added this as isAlreadyEscalated also returns true for status 'IN_REVIEW_ESCALATED'
+                hasFeature('MULTI_LEVEL_ESCALATION')
               ? 'ESCALATED_L2'
               : 'ESCALATED',
           timestamp: currentTimestamp,
