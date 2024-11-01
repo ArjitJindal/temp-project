@@ -20,7 +20,7 @@ export default function RegistrationDetails(props: Props) {
           value: user.legalEntity.companyRegistrationDetails?.registrationIdentifier ?? '-',
         },
         {
-          label: 'Registrated in',
+          label: 'Registered in',
           value: user.legalEntity.companyRegistrationDetails?.registrationCountry ? (
             <CountryDisplay
               isoCode={user.legalEntity.companyRegistrationDetails.registrationCountry}
