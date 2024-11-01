@@ -294,6 +294,15 @@ export class ReportRepository {
     }
   }
 
+  public async deleteReports(reportIds: string[]) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    await collection.deleteMany({
+      id: { $in: reportIds },
+      status: 'DRAFT',
+    })
+  }
+
   public async getLastGeneratedReport(
     schemaId: string
   ): Promise<Report | null> {

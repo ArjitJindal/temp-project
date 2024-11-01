@@ -21,7 +21,10 @@ import {
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { DefaultApiGetReportsRequest } from '@/@types/openapi-internal/RequestParameters'
+import {
+  DefaultApiGetReportsRequest,
+  DefaultApiDeleteReportsRequest,
+} from '@/@types/openapi-internal/RequestParameters'
 import { formatCountry } from '@/utils/countries'
 import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
@@ -207,6 +210,12 @@ export class ReportService {
 
   async getReports(params: DefaultApiGetReportsRequest) {
     return await this.reportRepository.getReports(params)
+  }
+
+  async deleteReports(params: DefaultApiDeleteReportsRequest) {
+    return await this.reportRepository.deleteReports(
+      params.ReportsDeleteRequest.reportIds
+    )
   }
 
   async getReport(reportId: string): Promise<Report> {

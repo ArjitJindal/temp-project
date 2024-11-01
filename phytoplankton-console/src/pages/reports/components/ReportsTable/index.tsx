@@ -5,15 +5,17 @@ import { COUNTRIES } from '@flagright/lib/constants';
 import { uniqBy } from 'lodash';
 import { useLocation, useNavigate } from 'react-router';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { useQueryClient } from '@tanstack/react-query';
+import pluralize from 'pluralize';
 import s from './index.module.less';
 import { sarQueryAdapter } from './helper';
 import Modal from '@/components/library/Modal';
 import { CountryCode, Report, ReportStatus, ReportTypesResponse } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { DATE, LONG_TEXT } from '@/components/library/Table/standardDataTypes';
+import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { AllParams, CommonParams } from '@/components/library/Table/types';
-import { getDisplayedUserInfo, isSuperAdmin, useAuth0User, useUsers } from '@/utils/user-utils';
+import { getDisplayedUserInfo, useHasPermissions, useUsers } from '@/utils/user-utils';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import Id from '@/components/ui/Id';
 import { makeUrl, parseQueryString } from '@/utils/routing';
@@ -32,6 +34,11 @@ import { getOr } from '@/utils/asyncResource';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { dayjs } from '@/utils/dayjs';
+import Button from '@/components/library/Button';
+import Confirm from '@/components/utils/Confirm';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { getErrorMessage } from '@/utils/lang';
+import { notEmpty } from '@/utils/array';
 
 interface TableSearchParams extends CommonParams {
   id?: string;
@@ -75,7 +82,9 @@ export default function ReportsTable() {
   const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
   const [statusInfoEditing, setStatusInfoEditing] = useState<boolean>(false);
   const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
-  const user = useAuth0User();
+
+  const queryClient = useQueryClient();
+  const canWrite = useHasPermissions(['reports:generated:write']);
 
   useDeepEqualEffect(() => {
     setParams((prevState: AllParams<TableParams>) => ({
@@ -87,7 +96,8 @@ export default function ReportsTable() {
     }));
   }, [parsedParams]);
 
-  const queryResult = usePaginatedQuery<Report>(REPORTS_LIST(params), async (paginationParams) => {
+  const reportListQueryKeys = REPORTS_LIST(params);
+  const queryResult = usePaginatedQuery<Report>(reportListQueryKeys, async (paginationParams) => {
     return await api.getReports({
       page: params.page,
       pageSize: params.pageSize,
@@ -107,155 +117,195 @@ export default function ReportsTable() {
     return api.getReportTypes();
   });
   const reportTypes = getOr(reportTypesQueryResult.data, { data: [], total: 0 });
+
+  const deleteMutation = useMutation<unknown, unknown, { reportIds: string[] }>(
+    async (variables) => {
+      const hideMessage = message.loading('Deleting reports...');
+      try {
+        await api.deleteReports({
+          ReportsDeleteRequest: {
+            reportIds: variables.reportIds,
+          },
+        });
+        message.success(`${pluralize('Report', variables.reportIds.length)} deleted!`);
+      } catch (e) {
+        console.error(e);
+        message.error(`Unable to delete reports: ${getErrorMessage(e)}`);
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onSuccess: async () => {
+        await queryClient.invalidateQueries(REPORTS_LIST({}));
+      },
+    },
+  );
+
   const columns = useMemo(() => {
     const helper = new ColumnHelper<Report>();
-    return helper.list([
-      helper.simple<'id'>({
-        title: 'SAR ID',
-        key: 'id',
-        type: {
-          render: (_value, { item: entity }) => {
-            return (
-              <>
+    return helper.list(
+      [
+        helper.simple<'id'>({
+          title: 'SAR ID',
+          key: 'id',
+          type: {
+            render: (_value, { item: entity }) => {
+              return (
                 <Id
-                  to={makeUrl('/reports/:reportId', { reportId: entity.id })}
+                  to={canWrite ? makeUrl('/reports/:reportId', { reportId: entity.id }) : undefined}
                   testName="report-id"
-                  alwaysShowCopy={false}
+                  alwaysShowCopy={!canWrite}
                 >
                   {entity.id}
                 </Id>
-              </>
-            );
+              );
+            },
+            autoFilterDataType: {
+              kind: 'string',
+            },
           },
-          autoFilterDataType: {
-            kind: 'string',
+          filtering: true,
+        }),
+        helper.simple<'description'>({
+          title: 'Description',
+          key: 'description',
+          defaultWidth: 200,
+          type: LONG_TEXT,
+        }),
+        helper.derived({
+          title: 'Case user ID',
+          id: 'caseUserId',
+          value: (report) => report.caseUser?.userId,
+          type: {
+            ...ID,
+            render: (id, { item: report }) => {
+              if (!report.caseUser) {
+                return <div>-</div>;
+              }
+              return (
+                <div>
+                  <Id to={getUserLink(report.caseUser)}>{id}</Id>
+                </div>
+              );
+            },
           },
-        },
-        filtering: true,
-      }),
-      helper.simple<'description'>({
-        title: 'Description',
-        key: 'description',
-        defaultWidth: 200,
-        type: LONG_TEXT,
-      }),
-      helper.simple<'caseUser'>({
-        title: 'Case user ID',
-        key: 'caseUser',
-        type: {
-          render: (caseUser) => {
-            if (!caseUser) {
-              return <div>Not Found</div>;
-            }
-            return (
-              <div>
-                <Id to={getUserLink(caseUser)}>{caseUser.userId}</Id>
-              </div>
-            );
+        }),
+        helper.derived({
+          title: 'Case user name',
+          id: 'caseUserName',
+          value: (report) => getUserName(report.caseUser),
+          type: STRING,
+        }),
+        helper.simple<'createdById'>({
+          title: 'Created by',
+          key: 'createdById',
+          type: {
+            render: (userId, _) => {
+              return userId ? (
+                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+              ) : (
+                <>-</>
+              );
+            },
+            stringify(value, items) {
+              return items.createdById ? getDisplayedUserInfo(users[items.createdById]).name : '-';
+            },
           },
-          stringify(caseUser) {
-            if (!caseUser) {
-              return 'Not Found';
-            }
-            return caseUser.userId;
+        }),
+        helper.simple<'createdAt'>({
+          title: 'Created at',
+          key: 'createdAt',
+          type: DATE,
+          filtering: true,
+        }),
+        helper.derived<Report>({
+          title: 'Status',
+          value: (report) => report,
+          type: {
+            render: (report) => {
+              return (
+                <div className={s.status}>
+                  {report?.status && (
+                    <Tag className={cn(s.tag, s[`status-${report.status}`])}>
+                      {humanizeConstant(report.status)}
+                    </Tag>
+                  )}
+                </div>
+              );
+            },
+            stringify: (report) => {
+              return report?.status || '';
+            },
           },
-        },
-      }),
-      helper.simple<'caseUser'>({
-        title: 'Case user name',
-        key: 'caseUser',
-        type: {
-          render: (caseUser) => {
-            if (!caseUser) {
-              return <div>Not Found</div>;
-            }
-            return <div>{getUserName(caseUser)}</div>;
+        }),
+        helper.simple<'updatedAt'>({
+          title: 'Last updated',
+          key: 'updatedAt',
+          type: DATE,
+        }),
+        helper.simple<'reportTypeId'>({
+          title: 'Jurisdiction',
+          key: 'reportTypeId',
+          type: {
+            render: (reportTypeId) => {
+              return reportTypeId ? <div>{COUNTRIES[reportTypeId.split('-')[0]]}</div> : <>-</>;
+            },
+            stringify: (reportTypeId) => {
+              return reportTypeId ? COUNTRIES[reportTypeId.split('-')[0]] : '-';
+            },
+            autoFilterDataType: {
+              kind: 'select',
+              options: uniqBy<Option<string>>(
+                reportTypes.data?.map((type) => ({
+                  value: type.countryCode,
+                  label: type.country,
+                })) ?? [],
+                'value',
+              ),
+              mode: 'SINGLE',
+              displayMode: 'list',
+            },
           },
-          stringify(value) {
-            if (value === undefined) {
-              return 'Not Found';
-            }
-            return getUserName(value);
-          },
-        },
-      }),
-      helper.simple<'createdById'>({
-        title: 'Created by',
-        key: 'createdById',
-        type: {
-          render: (userId, _) => {
-            return userId ? (
-              <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
-            ) : (
-              <>-</>
-            );
-          },
-          stringify(value, items) {
-            return items.createdById ? getDisplayedUserInfo(users[items.createdById]).name : '-';
-          },
-        },
-      }),
-      helper.simple<'createdAt'>({
-        title: 'Created at',
-        key: 'createdAt',
-        type: DATE,
-        filtering: true,
-      }),
-      helper.derived<Report>({
-        title: 'Status',
-        value: (report) => report,
-        type: {
-          render: (report) => {
-            return (
-              <div className={s.status} onClick={() => setDisplayStatusInfoReport(report)}>
-                {report?.status && (
-                  <Tag className={cn(s.tag, s[`status-${report.status}`])}>
-                    {humanizeConstant(report.status)}
-                  </Tag>
+          filtering: true,
+        }),
+        canWrite &&
+          helper.display({
+            title: 'Actions',
+            defaultWidth: 200,
+            render: (report) => (
+              <div className={s.actions}>
+                <Button type={'SECONDARY'} onClick={() => setDisplayStatusInfoReport(report)}>
+                  Status
+                </Button>
+                {report.status === 'DRAFT' && (
+                  <Confirm
+                    text={`Are you sure you want to delete ${report.id} report?`}
+                    onConfirm={() => {
+                      if (report.id) {
+                        deleteMutation.mutate({ reportIds: [report.id] });
+                      }
+                    }}
+                  >
+                    {({ onClick }) => (
+                      <Button isDanger={true} type={'SECONDARY'} onClick={onClick}>
+                        Delete
+                      </Button>
+                    )}
+                  </Confirm>
                 )}
               </div>
-            );
-          },
-          stringify: (report) => {
-            return report?.status || '';
-          },
-        },
-      }),
-      helper.simple<'updatedAt'>({
-        title: 'Last updated',
-        key: 'updatedAt',
-        type: DATE,
-      }),
-      helper.simple<'reportTypeId'>({
-        title: 'Jurisdiction',
-        key: 'reportTypeId',
-        type: {
-          render: (reportTypeId) => {
-            return reportTypeId ? <div>{COUNTRIES[reportTypeId.split('-')[0]]}</div> : <>-</>;
-          },
-          stringify: (reportTypeId) => {
-            return reportTypeId ? COUNTRIES[reportTypeId.split('-')[0]] : '-';
-          },
-          autoFilterDataType: {
-            kind: 'select',
-            options: uniqBy<Option<string>>(
-              reportTypes.data?.map((type) => ({ value: type.countryCode, label: type.country })) ??
-                [],
-              'value',
             ),
-            mode: 'SINGLE',
-            displayMode: 'list',
-          },
-        },
-        filtering: true,
-      }),
-    ]);
-  }, [reportTypes, loadingUsers, users]);
+          }),
+      ].filter(notEmpty),
+    );
+  }, [canWrite, deleteMutation, reportTypes, loadingUsers, users]);
 
   return (
     <>
       <QueryResultsTable
         rowKey={'id'}
+        fitHeight={true}
         columns={columns}
         queryResults={queryResult}
         params={params}
@@ -345,9 +395,9 @@ export default function ReportsTable() {
           }
         }}
         okText={statusInfoEditing ? 'Save' : 'Edit'}
-        hideFooter={!isSuperAdmin(user)}
+        hideFooter={!canWrite}
       >
-        {statusInfoEditing && isSuperAdmin(user) ? (
+        {statusInfoEditing && canWrite ? (
           <Space direction="vertical" style={{ width: '100%' }}>
             <Select
               mode="SINGLE"

@@ -41,6 +41,10 @@ export const sarHandler = lambdaApi()(
       async (ctx, request) => await reportService.getReport(request.reportId)
     )
 
+    handlers.registerDeleteReports(
+      async (ctx, request) => await reportService.deleteReports(request)
+    )
+
     handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
       // Only super admin can manually update a report's status for now
       assertCurrentUserRole('root')
