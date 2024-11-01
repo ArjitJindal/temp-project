@@ -14,7 +14,11 @@ import {
   bulkVerifyTransactions,
   setUpRulesHooks,
 } from '@/test-utils/rule-test-utils'
-import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  disableAsyncRulesInTest,
+  enableAsyncRulesInTest,
+  getTestTransaction,
+} from '@/test-utils/transaction-test-utils'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { getTestTransactionEvent } from '@/test-utils/transaction-event-test-utils'
 import { withContext } from '@/core/utils/context'
@@ -139,7 +143,8 @@ describe('Verify Transaction', () => {
       },
     ])
 
-    test('returns executed rules', async () => {
+    test('returns executed rules (w/o async rules)', async () => {
+      disableAsyncRulesInTest()
       const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
       const rulesEngine = new RulesEngineService(
         TEST_TENANT_ID,
@@ -191,21 +196,28 @@ describe('Verify Transaction', () => {
           },
         ],
       } as TransactionMonitoringResult)
+    })
 
-      // Check if the async rule is executed
-      await rulesEngine.verifyAsyncRulesTransaction(
-        transaction,
-        getTestUser({ userId: transaction.originUserId }),
-        getTestUser({ userId: transaction.destinationUserId })
+    test('returns executed rules (w/ async rules)', async () => {
+      enableAsyncRulesInTest()
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
       )
-
-      const transactionResult2 = await transactionRepository.getTransactionById(
+      const transaction = getTestTransaction({ transactionId: 'dummy-2' })
+      await rulesEngine.verifyTransaction(transaction)
+      const transactionRepository = new DynamoDbTransactionRepository(
+        TEST_TENANT_ID,
+        dynamoDb
+      )
+      const transactionResult = await transactionRepository.getTransactionById(
         transaction.transactionId as string
       )
-
-      expect(transactionResult2).toEqual({
+      expect(transactionResult).toEqual({
         ...transaction,
-        transactionId: 'dummy',
+        transactionId: 'dummy-2',
         status: 'FLAG',
         executedRules: [
           {
@@ -265,7 +277,7 @@ describe('Verify Transaction', () => {
             },
           },
         ],
-      })
+      } as TransactionMonitoringResult)
     })
   })
 

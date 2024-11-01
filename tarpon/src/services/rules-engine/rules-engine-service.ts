@@ -1230,9 +1230,9 @@ export class RulesEngineService {
         ?.components,
       senderUser,
       receiverUser,
-      isAnyAsyncRules: transactionRuleInstances.some((ruleInstance) =>
-        isAsyncRule(ruleInstance)
-      ),
+      isAnyAsyncRules: activeRuleInstances
+        .filter((ruleInstance) => ruleInstance.type === 'TRANSACTION')
+        .some(isAsyncRule),
       userRiskScoreDetails: userRiskScoreDetails,
     }
   }
