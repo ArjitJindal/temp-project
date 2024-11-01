@@ -289,6 +289,22 @@ export default function CaseTable(props: Props) {
           },
         },
       }),
+      helper.derived({
+        title: 'Assigned to role',
+        id: '_assigneeRole',
+        value: (item) =>
+          statusEscalated(item.caseStatus) || statusInReview(item.caseStatus)
+            ? item.reviewAssignments
+            : item.assignments,
+        type: {
+          ...ASSIGNMENTS,
+          stringify: (value) => {
+            return `${value?.map((x) => users[x.assigneeUserId]?.role ?? '').join(',') ?? ''}`;
+          },
+        },
+        hideInTable: true,
+        exporting: true,
+      }) as TableColumn<TableItem>,
       helper.simple<'caseStatus'>({
         title: 'Case status',
         key: 'caseStatus',
