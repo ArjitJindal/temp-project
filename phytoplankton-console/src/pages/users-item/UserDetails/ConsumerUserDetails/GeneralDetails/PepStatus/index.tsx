@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { uniq } from 'lodash';
+import { compact, sortBy } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus, validatePEPStatus } from './utils';
@@ -149,27 +149,44 @@ export const PepStatusLabel = (props: Props) => {
 
 export const PepStatusValue = (props: { pepStatus: PEPStatus[] }) => {
   const { pepStatus } = props;
-  const pepCountries = uniq(
-    pepStatus
-      .filter((status) => status.isPepHit && status.pepCountry)
-      .map((status) => ({
-        country: status.pepCountry,
-        rank: status.pepRank,
-      })),
-  );
+  const groupedByCountry = pepStatus
+    .filter((status) => status.isPepHit && status.pepCountry)
+    .reduce((acc, { pepCountry, pepRank }) => {
+      if (pepCountry && !acc[pepCountry]) {
+        acc[pepCountry] = { country: pepCountry, ranks: [] };
+      }
+      if (pepRank && pepCountry) {
+        acc[pepCountry].ranks.push(pepRank);
+      }
+      return acc;
+    }, {});
+
+  const pepCountries: { country: CountryCode; ranks: PepRank[] }[] =
+    Object.values(groupedByCountry);
   const isPepHit = pepStatus.some((status) => status.isPepHit);
+  const pepRanks = sortBy(
+    compact(
+      pepStatus
+        .filter((status) => status.isPepHit && status.pepRank)
+        .map((status) => status.pepRank),
+    ),
+  );
   return (
     <div>
       {pepCountries.length > 0 ? (
-        pepCountries.map(({ country, rank }) => (
-          <div key={country} style={{ display: 'flex', flexDirection: 'row', gap: 8 }}>
+        pepCountries.map(({ country, ranks }) => (
+          <div key={country} style={{ display: 'inline' }}>
             <CountryDisplay key={country} isoCode={country} />
-            {rank && ` (Rank ${rank.replace('LEVEL_', '')})`}
+            {ranks?.length
+              ? `(Rank ${ranks.map((rank) => rank.replace('LEVEL_', '')).join(', ')}),`
+              : ''}
           </div>
         ))
       ) : isPepHit ? (
         <span>
-          <Toggle value={isPepHit} size="XS" />
+          {pepRanks.length > 0
+            ? `Rank ${pepRanks.map((rank) => rank.replace('LEVEL_', '')).join(', ')}`
+            : 'Hit'}
         </span>
       ) : (
         '-'

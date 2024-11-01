@@ -34,15 +34,17 @@ export function validatePEPStatus(array: PEPStatus[]) {
   const seenEntries = new Map<string, { isPepHit: boolean; pepRank?: PepRank }>();
 
   for (const entry of array) {
-    const country = entry.pepCountry || 'undefined';
+    const key = `${entry.isPepHit}-${entry.pepRank}-${entry.pepCountry}`;
     const currentEntry = { isPepHit: entry.isPepHit, pepRank: entry.pepRank };
-    if (seenEntries.has(country)) {
+    if (seenEntries.has(key)) {
       message.error(
-        `Conflicting entries found ${entry.pepCountry ? `for country: ${COUNTRIES[country]}` : ''}`,
+        `Conflicting entries found ${
+          entry.pepCountry ? `for country: ${COUNTRIES[entry.pepCountry]}` : ''
+        }`,
       );
       return false;
     } else {
-      seenEntries.set(country, currentEntry);
+      seenEntries.set(key, currentEntry);
     }
   }
 
