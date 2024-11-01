@@ -235,7 +235,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (request.documentId) {
+    if (request.allowDocumentMatches && request.documentId) {
       const documentIdMatch =
         request.documentId.length > 0
           ? request.documentId.flatMap((docId) => [
@@ -290,6 +290,27 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         })
       }
+    }
+
+    if (!request.allowDocumentMatches && request.documentId?.length) {
+      andFilters.push({
+        compound: {
+          mustNot: request.documentId.flatMap((docId) => [
+            {
+              text: {
+                query: docId,
+                path: 'documents.id',
+              },
+            },
+            {
+              text: {
+                query: docId,
+                path: 'documents.formattedId',
+              },
+            },
+          ]),
+        },
+      })
     }
 
     if (request.nationality && request.nationality.length > 0) {
@@ -548,10 +569,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
                 )
               )
             : false
+
         ;(request.orFilters?.includes('documentId')
           ? orConditions
           : andConditions
-        ).push(documentIdMatch)
+        ).push(request.allowDocumentMatches === documentIdMatch)
       }
 
       // Nationality

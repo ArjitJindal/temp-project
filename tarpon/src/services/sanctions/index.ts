@@ -233,6 +233,7 @@ export class SanctionsService {
         PEPRank: request.PEPRank,
         gender: request.gender,
         orFilters: request.orFilters,
+        allowDocumentMatches: request.allowDocumentMatches,
       })
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {

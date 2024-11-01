@@ -11607,6 +11607,8 @@ components:
           type: array
           items:
             type: string
+        allowDocumentMatches:
+          type: boolean
       required:
         - searchTerm
     PepRank:

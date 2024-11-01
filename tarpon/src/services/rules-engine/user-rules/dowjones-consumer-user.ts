@@ -113,12 +113,8 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         fuzziness: undefined,
         monitoring: { enabled: ongoingScreening },
         PEPRank,
-        ...(screeningValues?.includes('NRIC')
-          ? {
-              documentId:
-                user.legalDocuments?.map((doc) => doc.documentNumber) ?? [],
-            }
-          : {}),
+        documentId: user.legalDocuments?.map((doc) => doc.documentNumber) ?? [],
+        allowDocumentMatches: screeningValues?.includes('NRIC'),
         ...(screeningValues?.includes('NATIONALITY')
           ? {
               nationality: user.userDetails.countryOfNationality
