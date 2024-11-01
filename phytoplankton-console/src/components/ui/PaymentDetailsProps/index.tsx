@@ -1,5 +1,6 @@
 import React from 'react';
 import { humanizeCamelCase, humanizeConstant } from '@flagright/lib/utils/humanize';
+import Money from '../Money';
 import s from './index.module.less';
 import * as Form from '@/components/ui/Form';
 import KeyValueTag from '@/components/library/Tag/KeyValueTag';
@@ -10,6 +11,7 @@ import {
   CardMerchantDetails,
   ConsumerName,
   Tag as ApiTag,
+  CurrencyCode,
 } from '@/apis';
 import { notNullish } from '@/utils/array';
 import { getPaymentMethodTitle, PaymentMethod } from '@/utils/payments';
@@ -56,6 +58,43 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
   }
   if (key === 'cardIssuedCountry' || key === 'country') {
     return <CountryDisplay isoCode={value as string} />;
+  }
+  if (key === 'cardBalance') {
+    const cardBalance = value as {
+      amountValue?: number;
+      amountCurrency?: string;
+      [key: string]: unknown;
+    };
+    return (
+      <div>
+        {Object.entries(cardBalance)
+          .filter(([_, val]) => val != null)
+          .map(([balanceKey, balanceValue]) => {
+            if (balanceKey === 'amountValue' && cardBalance.amountCurrency) {
+              return (
+                <div key={balanceKey}>
+                  <Money
+                    amount={{
+                      amountValue: balanceValue as number,
+                      amountCurrency: cardBalance.amountCurrency as CurrencyCode,
+                    }}
+                  />
+                </div>
+              );
+            }
+
+            if (balanceKey === 'amountCurrency') {
+              return null;
+            }
+
+            return (
+              <div key={balanceKey}>
+                {humanizeCamelCase(balanceKey)}: {stringifyValue(balanceValue)}
+              </div>
+            );
+          })}
+      </div>
+    );
   }
   if (
     key === 'deliveryStatus' ||
