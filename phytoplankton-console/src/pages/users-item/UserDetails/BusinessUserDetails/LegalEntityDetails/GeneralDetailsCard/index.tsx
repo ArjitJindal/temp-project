@@ -91,6 +91,12 @@ export default function GeneralDetailsCard(props: Props) {
           value: dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS),
         },
         {
+          label: 'Activated at',
+          value: user.activatedTimestamp
+            ? dayjs(user.activatedTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
+            : '-',
+        },
+        {
           label: 'Ongoing sanctions screening',
           value: (
             <div className={s.ongoingSanctions}>

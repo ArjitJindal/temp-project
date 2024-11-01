@@ -46,6 +46,12 @@ export default function GeneralDetails(props: Props) {
           value: dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS),
         },
         {
+          label: 'Activated at',
+          value: user.activatedTimestamp
+            ? dayjs(user.activatedTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)
+            : '-',
+        },
+        {
           label: 'Marital status',
           value: <GenericConstantTag>{user.userDetails?.maritalStatus}</GenericConstantTag>,
         },
