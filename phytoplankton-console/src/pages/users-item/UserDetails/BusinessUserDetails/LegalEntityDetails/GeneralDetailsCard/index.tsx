@@ -60,6 +60,20 @@ export default function GeneralDetailsCard(props: Props) {
               },
             ]
           : []),
+        ...(user.legalEntity?.companyGeneralDetails?.alias?.length
+          ? [
+              {
+                label: 'Alias',
+                value: (
+                  <TagList>
+                    {user.legalEntity?.companyGeneralDetails?.alias.map((alias) => (
+                      <Tag key={alias}>{alias}</Tag>
+                    ))}
+                  </TagList>
+                ),
+              },
+            ]
+          : []),
         ...(user.legalEntity?.sourceOfFunds?.length
           ? [
               {

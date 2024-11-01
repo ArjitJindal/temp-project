@@ -1,11 +1,11 @@
 import React from 'react';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { InternalBusinessUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
-import { callRender } from '@/components/library/Table/dataTypeHelpers';
-import { EMAIL, EXTERNAL_LINK, FAX, PHONE } from '@/components/library/Table/standardDataTypes';
+import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 interface Props {
-  user: InternalConsumerUser | InternalBusinessUser;
+  user: InternalBusinessUser;
 }
 
 export default function RegistrationDetails(props: Props) {
@@ -16,32 +16,44 @@ export default function RegistrationDetails(props: Props) {
       title={'Registration details'}
       items={[
         {
-          label: 'Email',
-          value:
-            user.type === 'CONSUMER'
-              ? user.contactDetails?.emailIds?.map((x) => callRender(EMAIL, x))
-              : user.legalEntity.contactDetails?.emailIds?.map((x) => callRender(EMAIL, x)),
+          label: 'Registration identifier',
+          value: user.legalEntity.companyRegistrationDetails?.registrationIdentifier ?? '-',
         },
         {
-          label: 'Tel.',
-          value:
-            user.type === 'CONSUMER'
-              ? user.contactDetails?.contactNumbers?.map((x) => callRender(PHONE, x))
-              : user.legalEntity.contactDetails?.contactNumbers?.map((x) => callRender(PHONE, x)),
+          label: 'Registrated in',
+          value: user.legalEntity.companyRegistrationDetails?.registrationCountry ? (
+            <CountryDisplay
+              isoCode={user.legalEntity.companyRegistrationDetails.registrationCountry}
+            />
+          ) : (
+            '-'
+          ),
         },
         {
-          label: 'Fax',
-          value:
-            user.type === 'CONSUMER'
-              ? user.contactDetails?.faxNumbers?.map((x) => callRender(FAX, x))
-              : user.legalEntity.contactDetails?.faxNumbers?.map((x) => callRender(FAX, x)),
+          label: 'Registered on',
+          value: user.legalEntity.companyRegistrationDetails?.dateOfRegistration
+            ? dayjs(user.legalEntity.companyRegistrationDetails.dateOfRegistration).format(
+                DATE_TIME_FORMAT_WITHOUT_SECONDS,
+              )
+            : '-',
         },
         {
-          label: 'Website',
-          value:
-            user.type === 'CONSUMER'
-              ? user.contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x))
-              : user.legalEntity.contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x)),
+          label: 'Tax residence',
+          value: user.legalEntity.companyRegistrationDetails?.taxResidenceCountry ? (
+            <CountryDisplay
+              isoCode={user.legalEntity.companyRegistrationDetails.taxResidenceCountry}
+            />
+          ) : (
+            '-'
+          ),
+        },
+        {
+          label: 'Tax ID',
+          value: user.legalEntity.companyRegistrationDetails?.taxIdentifier ?? '-',
+        },
+        {
+          label: 'Legal entity type',
+          value: user.legalEntity.companyRegistrationDetails?.legalEntityType ?? '-',
         },
       ]}
     />
