@@ -8,7 +8,7 @@ import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { getDisplayedUserInfo } from '@/utils/user-utils';
-import { statusEscalated } from '@/utils/case-utils';
+import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 
 export const isActionUpdate = (log: AuditLog): boolean => {
   return log.action === 'UPDATE';
@@ -290,6 +290,35 @@ export const handleEscalatedStatus = (
   const childCase: string = log?.newImage?.alertCaseId;
 
   switch (entityStatus) {
+    case 'ESCALATED_L2': {
+      if (
+        statusEscalatedL2(log?.newImage?.alertStatus) ||
+        statusEscalatedL2(log?.newImage?.caseStatus)
+      ) {
+        return (
+          <>
+            {escalatedToLogMessage({
+              entityType,
+              entityId,
+              checkerUserName,
+              escalationLevel: 'L2',
+            })}
+          </>
+        );
+      }
+      return (
+        <>
+          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated{' '}
+          {childCase && (
+            <>
+              to a new child case <b>{childCase}</b>
+            </>
+          )}{' '}
+          by <b>{makerUserName}</b> {files}
+        </>
+      );
+    }
+
     case 'ESCALATED': {
       const isAlertEscalated = log.type === 'ALERT' && statusEscalated(log?.newImage?.alertStatus);
       if (isAlertEscalated) {
@@ -299,6 +328,7 @@ export const handleEscalatedStatus = (
               entityType,
               entityId,
               checkerUserName,
+              escalationLevel: 'L1',
             })}
           </>
         );
@@ -371,6 +401,15 @@ export const handleEscalatedStatus = (
       );
     }
 
+    case 'ESCALATED_L2_IN_PROGRESS': {
+      return (
+        <>
+          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated L2
+          by <b>{makerUserName}</b> {files} and is in progress
+        </>
+      );
+    }
+
     case 'ESCALATED_IN_PROGRESS': {
       return (
         <>
@@ -385,6 +424,15 @@ export const handleEscalatedStatus = (
         <>
           {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated by{' '}
           <b>{makerUserName}</b> {files} and is on hold
+        </>
+      );
+    }
+
+    case 'ESCALATED_L2_ON_HOLD': {
+      return (
+        <>
+          {firstLetterUpper(entityType.toLowerCase())} <b>{entityId.join(', ')}</b> is escalated L2
+          by <b>{makerUserName}</b> {files} and is on hold
         </>
       );
     }
@@ -608,11 +656,11 @@ const getReviewLogMessage = ({ approvalStatus, userName, entiyType, entityId, cu
     </>
   );
 };
-const escalatedToLogMessage = ({ entityType, entityId, checkerUserName }) => {
+const escalatedToLogMessage = ({ entityType, entityId, checkerUserName, escalationLevel }) => {
   return (
     <>
-      {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is escalated to{' '}
-      <b>{checkerUserName}</b>
+      {firstLetterUpper(entityType.toLowerCase())} <b>{entityId}</b> is escalated
+      {escalationLevel === 'L2' ? ' L2' : ''} to <b>{checkerUserName}</b>
     </>
   );
 };
