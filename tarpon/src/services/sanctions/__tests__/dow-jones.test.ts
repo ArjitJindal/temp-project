@@ -2,6 +2,7 @@ import path from 'path'
 import axios from 'axios'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { SanctionsRepository } from '@/services/sanctions/providers/types'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 jest.mock('axios')
 jest.mock('unzipper')
@@ -425,3 +426,204 @@ Patasse passed away on April 5, 2011.`,
     )
   })
 })
+
+describe('Sanctions data fetcher', () => {
+  describe('Deriving match details', () => {
+    test('For unrelated search term there should be no match details', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'unrelated',
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: [],
+          query_term: 'unrelated',
+        },
+      ])
+    })
+    test('For exact match every term should have exact match', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'Vladimir Putiin',
+        },
+        HIT_WITH_DUPLICATED_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: ['exact_match', 'equivalent_name'],
+          query_term: 'Vladimir',
+        },
+        {
+          match_types: ['exact_match', 'equivalent_name'],
+          query_term: 'Putiin',
+        },
+      ])
+    })
+    test('Missing terms should be ignored', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'Vladimir Vladimirovich Putiin',
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: ['exact_match'],
+          query_term: 'Vladimir',
+        },
+        { match_types: [], query_term: 'Vladimirovich' },
+        {
+          match_types: ['exact_match'],
+          query_term: 'Putiin',
+        },
+      ])
+    })
+    test('Different case match should also be considered as exact match', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'VLADIMIR PUTIIN',
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: ['exact_match'],
+          query_term: 'VLADIMIR',
+        },
+        {
+          match_types: ['exact_match'],
+          query_term: 'PUTIIN',
+        },
+      ])
+    })
+    test('Should properly match terms by edit distance', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'Voladimir Putin',
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: ['edit_distance'],
+          query_term: 'Voladimir',
+        },
+        {
+          match_types: ['edit_distance'],
+          query_term: 'Putin',
+        },
+      ])
+    })
+    test('Should properly match terms by edit distance in AKA', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'Vovka Pupka',
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+        },
+        HIT_WITH_AKA
+      )
+      expect(result.nameMatches).toEqual([
+        {
+          match_types: ['name_variations_removal'],
+          query_term: 'Vovka',
+        },
+        {
+          match_types: ['name_variations_removal'],
+          query_term: 'Pupka',
+        },
+      ])
+    })
+  })
+  describe('Deriving birth year details', () => {
+    test('Should properly derive exact birth year match', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'unrelated',
+          yearOfBirth: 1952,
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.secondaryMatches).toEqual([
+        {
+          match_types: ['exact_birth_year_match'],
+          query_term: '1952',
+        },
+      ])
+    })
+    test('Should properly derive fuzzy birth year match', async () => {
+      const result = DowJonesProvider.deriveMatchingDetails(
+        {
+          searchTerm: 'unrelated',
+          yearOfBirth: 1950,
+          fuzzinessRange: {
+            lowerBound: 0,
+            upperBound: 20,
+          },
+        },
+        HIT_WITH_NO_AKA
+      )
+      expect(result.secondaryMatches).toEqual([
+        {
+          match_types: ['fuzzy_birth_year_match'],
+          query_term: '1950',
+        },
+      ])
+    })
+  })
+})
+
+const HIT_WITH_NO_AKA: SanctionsEntity = {
+  id: 'LIZCQ58HX6MYKMO',
+  updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
+  types: ['adverse-media'],
+  name: 'Vladimir Putiin',
+  entityType: 'person',
+  yearOfBirth: '1952',
+  sanctionsSources: [
+    {
+      name: 'company AM',
+      countryCodes: ['AU', 'CZ'],
+    },
+  ],
+}
+
+const HIT_WITH_DUPLICATED_AKA: SanctionsEntity = {
+  id: 'LIZCQ58HX6MYKMO',
+  updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
+  types: ['adverse-media'],
+  name: 'Vladimir Putiin',
+  aka: ['Vladimir Vladimirovich Putiin'],
+  entityType: 'person',
+  yearOfBirth: '1952',
+  sanctionsSources: [
+    {
+      name: 'company AM',
+      countryCodes: ['AU', 'CZ'],
+    },
+  ],
+}
+
+const HIT_WITH_AKA: SanctionsEntity = {
+  id: 'LIZCQ58HX6MYKMO',
+  updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
+  types: ['adverse-media'],
+  name: 'Vladimir Putiin',
+  entityType: 'person',
+  aka: ['Vova Pupa'],
+  yearOfBirth: '1952',
+  sanctionsSources: [
+    {
+      name: 'company AM',
+      countryCodes: ['AU', 'CZ'],
+    },
+  ],
+}

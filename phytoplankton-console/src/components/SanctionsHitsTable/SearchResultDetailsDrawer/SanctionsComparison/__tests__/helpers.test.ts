@@ -66,6 +66,19 @@ describe('reduceMatched', () => {
     ]);
     expect(result).toBe('POTENTIAL_HIT');
   });
+  test('for every term the most strongest hit should be considered', () => {
+    const result = reduceMatched([
+      {
+        match_types: ['edit_distance', 'exact_match'],
+        query_term: 'putin',
+      },
+      {
+        match_types: ['exact_match', 'edit_distance'],
+        query_term: 'vladimir',
+      },
+    ]);
+    expect(result).toBe('TRUE_HIT');
+  });
 });
 
 describe('getComparisonItems', () => {

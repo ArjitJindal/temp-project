@@ -146,11 +146,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return
   }
 
-  private getFuzzinessEvaluationResult(
+  public static getFuzzinessEvaluationResult(
     request: SanctionsSearchRequest,
     percentageSimilarity: number
   ): boolean {
     const percentageDissimilarity = 100 - percentageSimilarity
+
     if (
       request.fuzzinessRange?.lowerBound != null &&
       request.fuzzinessRange?.upperBound != null
@@ -467,7 +468,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         entity.name
       )
 
-      const fuzzyMatch = this.getFuzzinessEvaluationResult(
+      const fuzzyMatch = SanctionsDataFetcher.getFuzzinessEvaluationResult(
         request,
         percentageSimilarity
       )
@@ -477,7 +478,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
       return (
         hasAka &&
-        this.getFuzzinessEvaluationResult(
+        SanctionsDataFetcher.getFuzzinessEvaluationResult(
           request,
           Math.max(percentageSimilarity - 10, 0) // Approximation to avoid calculating levenshtein distance for every pair to reduce complexity
         )

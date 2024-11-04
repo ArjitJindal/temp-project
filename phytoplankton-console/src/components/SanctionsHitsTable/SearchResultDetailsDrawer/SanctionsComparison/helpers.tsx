@@ -78,27 +78,27 @@ export function getComparisonItems(
 export function reduceMatched(
   matches: ComplyAdvantageNameMatched[],
 ): SanctionsComparisonTableItemMatch {
-  const matchTypes: SanctionsComparisonTableItemMatch[] = matches
-    .flatMap(({ match_types }) => match_types ?? [])
-    .map((x) => {
-      let matchType: SanctionsComparisonTableItemMatch;
+  [].reduce;
+  const matchTypes: SanctionsComparisonTableItemMatch[] = matches.map(({ match_types = [] }) => {
+    return match_types.reduce<SanctionsComparisonTableItemMatch>((result, x) => {
+      if (result === 'TRUE_HIT') {
+        return result;
+      }
       switch (x) {
         case 'exact_match':
         case 'exact_birth_year_match':
-        case 'fuzzy_birth_year_match':
         case 'equivalent_name':
-          matchType = 'TRUE_HIT';
-          break;
+          return 'TRUE_HIT';
         default:
-          matchType = 'POTENTIAL_HIT';
+          return 'POTENTIAL_HIT';
       }
-      return matchType;
-    });
+    }, 'NO_HIT');
+  });
 
-  if (matchTypes.length === 0) {
+  if (matchTypes.length === 0 || matchTypes.every((x) => x === 'NO_HIT')) {
     return 'NO_HIT';
   }
-  if (!matchTypes.some((x) => x !== 'TRUE_HIT')) {
+  if (matchTypes.every((x) => x === 'TRUE_HIT')) {
     return 'TRUE_HIT';
   }
   return 'POTENTIAL_HIT';

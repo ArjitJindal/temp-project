@@ -11,6 +11,7 @@ import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import {
   Action,
+  SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getSecretByName } from '@/utils/secrets-manager'
@@ -27,6 +28,14 @@ import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupati
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { OccupationCode } from '@/@types/openapi-internal/OccupationCode'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
+import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
+import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
+import { notEmpty } from '@/utils/array'
+import {
+  SanctionsNameMatched,
+  SanctionsNameMatchedMatchTypesEnum,
+} from '@/@types/openapi-internal/SanctionsNameMatched'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -749,5 +758,134 @@ export class DowJonesProvider extends SanctionsDataFetcher {
       name = nameValue[SINGLE_STRING_NAME]
     }
     return name
+  }
+
+  public static deriveMatchingDetails(
+    searchRequest: SanctionsSearchRequest,
+    entity: SanctionsEntity
+  ): SanctionsMatchTypeDetails {
+    // Search data
+    const searchTerms = searchRequest.searchTerm.split(/\s+/)
+
+    // Entity data
+    const yearOfBirth =
+      (entity.yearOfBirth != null && parseInt(entity.yearOfBirth)) || undefined
+    const nameTerms = entity.name.split(/\s+/)
+    const akaTerms = entity.aka?.flatMap((aka) => aka.split(/\s+/)) ?? []
+    const allNameTerms = [
+      ...nameTerms.map((x) => ['NAME', x]),
+      ...akaTerms.map((x) => ['AKA', x]),
+    ]
+
+    function checkTermMatch(
+      term1: string,
+      term2: string
+    ): 'EXACT' | 'FUZZY' | undefined {
+      if (term1.toLowerCase() === term2.toLowerCase()) {
+        return 'EXACT'
+      } else {
+        const percentageSimilarity = calculateLevenshteinDistancePercentage(
+          term2,
+          term1
+        )
+        const matches = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+          searchRequest,
+          percentageSimilarity
+        )
+
+        if (matches) {
+          return 'FUZZY'
+        }
+      }
+    }
+
+    function checkYearMatch(
+      year1: number,
+      year2: number
+    ): 'EXACT' | 'FUZZY' | undefined {
+      if (year1 === year2) {
+        return 'EXACT'
+      } else {
+        const MAX_YEAR_DIFFERENCE = 20
+        const yearDif = Math.min(MAX_YEAR_DIFFERENCE, Math.abs(year1 - year2))
+        const similarity = 100 - (yearDif / MAX_YEAR_DIFFERENCE) * 100
+        const matches = SanctionsDataFetcher.getFuzzinessEvaluationResult(
+          searchRequest,
+          similarity
+        )
+
+        if (matches) {
+          return 'FUZZY'
+        }
+      }
+    }
+
+    // Calculate name matches
+    const nameMatches = searchTerms
+      .map((searchTerm) => {
+        const matchTypes = allNameTerms
+          .map(([field, nameTerm]) => {
+            const nameMatch = checkTermMatch(searchTerm, nameTerm)
+            if (nameMatch === 'EXACT') {
+              return field === 'NAME' ? 'exact_match' : 'equivalent_name'
+            } else if (nameMatch === 'FUZZY') {
+              return field === 'NAME'
+                ? 'edit_distance'
+                : 'name_variations_removal'
+            }
+            return
+          })
+          .filter(notEmpty)
+
+        return {
+          match_types: matchTypes,
+          query_term: searchTerm,
+        }
+      })
+      .filter(notEmpty)
+
+    // Calculate year matches
+    let secondaryMatches: SanctionsNameMatched[] = []
+    if (searchRequest.yearOfBirth != null) {
+      let matchTypes: SanctionsNameMatchedMatchTypesEnum[] = []
+      if (yearOfBirth != null) {
+        const match = checkYearMatch(yearOfBirth, searchRequest.yearOfBirth)
+        if (match === 'EXACT') {
+          matchTypes = ['exact_birth_year_match']
+        } else if (match === 'FUZZY') {
+          matchTypes = ['fuzzy_birth_year_match']
+        }
+      }
+      secondaryMatches = [
+        {
+          match_types: matchTypes,
+          query_term: searchRequest.yearOfBirth.toString(),
+        },
+      ]
+    }
+    return {
+      amlTypes: [],
+      matchingName: entity.name,
+      nameMatches: nameMatches,
+      secondaryMatches: secondaryMatches,
+      sources: [],
+    }
+  }
+
+  async search(
+    request: SanctionsSearchRequest
+  ): Promise<SanctionsProviderResponse> {
+    const result = await super.search(request)
+    return {
+      ...result,
+      data: result.data?.map(
+        (entity: SanctionsEntity): SanctionsEntity => ({
+          ...entity,
+          matchTypeDetails: [
+            DowJonesProvider.deriveMatchingDetails(request, entity),
+          ],
+        })
+      ),
+    }
   }
 }
