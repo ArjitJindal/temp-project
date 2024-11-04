@@ -2,7 +2,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { JWTAuthorizerResult, assertCurrentUserRole } from '@/@types/jwt'
+import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ReportService } from '@/services/sar/service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -46,8 +46,6 @@ export const sarHandler = lambdaApi()(
     )
 
     handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
-      // Only super admin can manually update a report's status for now
-      assertCurrentUserRole('root')
       const status = request.ReportStatusUpdateRequest.status
       let statusInfo = request.ReportStatusUpdateRequest.statusInfo
       const report = await reportService.getReport(request.reportId)
