@@ -1208,7 +1208,7 @@ export default function AlertTable(props: Props) {
         )
       );
     },
-    ({ selectedIds, selectedItems, isDisabled }) => {
+    ({ selectedIds, selectedItems, isDisabled, params }) => {
       const isAllAlertsOfStatusEscalated = isAllAlertsOfStatus(selectedItems, 'ESCALATED');
 
       if (!isMultiEscalationEnabled) {
@@ -1219,7 +1219,13 @@ export default function AlertTable(props: Props) {
         return;
       }
 
+      const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
+      const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
+      const caseId = params.caseId ?? selectedCaseId;
       const status = selectedItems[selectedIds[0]]?.alertStatus;
+      if (!caseId) {
+        return;
+      }
 
       return (
         <AlertsStatusChangeButton
