@@ -138,7 +138,7 @@ export const HeaderMenu = (props: Props) => {
                 }}
               >
                 {' '}
-                <Downloadicon className={s.icon} /> User report
+                <Downloadicon className={s.icon} /> Export
               </Button>
             );
           }}

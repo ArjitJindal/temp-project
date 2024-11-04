@@ -177,7 +177,7 @@ export default function TransactionsItem() {
                       await handleReportDownload(transaction, ruleAlertMap);
                     }}
                   >
-                    <DownloadLineIcon height={16} /> Download report
+                    <DownloadLineIcon height={16} /> Export
                   </Button>,
                 ]}
               />
