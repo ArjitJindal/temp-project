@@ -592,6 +592,11 @@ export class CdkTarponStack extends cdk.Stack {
           actions: ['ecs:*'],
           resources: ['*'],
         }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['states:*'],
+          resources: ['*'],
+        }),
 
         // TODO remove after initial deployment
         new PolicyStatement({
