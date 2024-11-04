@@ -270,14 +270,14 @@ export const transactionQuestion = (
           ctx,
           period,
           where,
-          page ?? 0,
+          page ?? 1,
           pageSize ?? 20
         )
       : await clickhouseTransactionQuery(
           ctx,
           period,
           clickhouseWhere,
-          page ?? 0,
+          page ?? 1,
           pageSize ?? 20
         )
 
