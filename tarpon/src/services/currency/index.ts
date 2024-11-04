@@ -11,7 +11,7 @@ import { envIs } from '@/utils/env'
 
 const cachedData: Partial<CurrencyExchangeUSDType> = {}
 
-export type Currency = string
+export type Currency = CurrencyCode
 
 let dbCache = false
 
@@ -43,6 +43,27 @@ export type CurrencyExchangeUSDType = {
   date: string
 }
 
+// Currency Codes that are not supported by the Coinbase API Should use USD as the exchange rate
+export const CURRENCY_CODES_WITH_NO_EXCHANGE_RATE: CurrencyCode[] = [
+  'FDUSD',
+  'AGX',
+  'AUX',
+  'BNB',
+  'CUBE',
+  'EMON',
+  'FDGT',
+  'KGLD',
+  'LODE',
+  'PASS',
+  'PREMIA',
+  'TAB1',
+  'TD-USD',
+  'TRX',
+  'TYUGA',
+  'VIC',
+  'XAI',
+] as const
+
 export class CurrencyService {
   repository: CurrencyRepository
 
@@ -53,6 +74,10 @@ export class CurrencyService {
   public static parseCoinbaseResponse(
     coinbaseResponse: CoinbaseResponse
   ): CurrencyExchangeUSDType {
+    CURRENCY_CODES_WITH_NO_EXCHANGE_RATE.forEach((currency) => {
+      coinbaseResponse.data.rates[currency] = coinbaseResponse.data.rates['USD']
+    })
+
     return {
       rates: mapValues(coinbaseResponse.data.rates, parseFloat) as Record<
         CurrencyCode,
@@ -68,6 +93,7 @@ export class CurrencyService {
     const response = await apiFetch<CoinbaseResponse>(
       `https://api.coinbase.com/v2/exchange-rates?currency=USD`
     )
+
     return CurrencyService.parseCoinbaseResponse(response.result)
   }
 

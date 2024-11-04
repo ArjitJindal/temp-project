@@ -204,6 +204,7 @@ export class QuestionService {
     // Preloading currency data so we don't have to make all the questions async.
     const cs = new CurrencyService()
     const exchangeData = await cs.getExchangeData()
+
     const convert = (amount: number, target: CurrencyCode) =>
       amount * exchangeData.rates[target]
 

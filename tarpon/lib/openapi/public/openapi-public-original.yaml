@@ -6186,6 +6186,23 @@ components:
         - ZMW
         - ZRX
         - ZWD
+        - FDUSD
+        - AGX
+        - AUX
+        - BNB
+        - CUBE
+        - EMON
+        - FDGT
+        - KGLD
+        - LODE
+        - PASS
+        - PREMIA
+        - TAB1
+        - TD-USD
+        - TRX
+        - TYUGA
+        - VIC
+        - XAI
     MCCDetails:
       title: MCCDetails
       type: object

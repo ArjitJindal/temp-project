@@ -16,6 +16,7 @@ import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/services/cases'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -121,14 +122,14 @@ export const transactionsViewHandler = lambdaApi()(
     handlers.registerGetTransactionsStatsByType(async (context, request) => ({
       data: await transactionService.getStatsByType(
         request,
-        request.referenceCurrency || 'USD'
+        (request.referenceCurrency || 'USD') as CurrencyCode
       ),
     }))
 
     handlers.registerGetTransactionsStatsByTime(async (context, request) => ({
       data: await transactionService.getStatsByTime(
         request,
-        request.referenceCurrency || 'USD',
+        (request.referenceCurrency || 'USD') as CurrencyCode,
         request.aggregateBy ?? 'status'
       ),
     }))
