@@ -659,7 +659,15 @@ export class CaseService extends CaseAlertsCommonService {
         if (statusEscalated(updates.caseStatus) && options?.reviewAssignments) {
           await this.alertsService.updateReviewAssignments(
             alerts.map((a) => a.alertId ?? ''),
-            options.reviewAssignments
+            isReview && accountUser?.reviewerId
+              ? [
+                  {
+                    assigneeUserId: accountUser.reviewerId,
+                    assignedByUserId: userId ?? '',
+                    timestamp: Date.now(),
+                  },
+                ] // As for already in review alerts we don't go through the review flow in alert status update method.
+              : options.reviewAssignments
           )
         }
 
