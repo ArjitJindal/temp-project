@@ -39,6 +39,7 @@ import { AlertAssignedToInput } from '@/pages/rules/RuleConfiguration/RuleConfig
 import { AlertInvestigationChecklist } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/steps/AlertCreationDetailsStep/AlertInvestigationChecklist';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
+import Toggle from '@/components/library/Toggle';
 
 export interface FormValues {
   ruleName: string | undefined;
@@ -63,6 +64,7 @@ export interface FormValues {
   frozenStatuses: DerivedStatus[];
   ruleExecutionMode: RuleExecutionMode;
   defaultAlertStatus?: RuleInstanceAlertConfigDefaultAlertStatusEnum;
+  alertCreationOnHit?: boolean;
 }
 
 export const INITIAL_VALUES: FormValues = {
@@ -80,6 +82,7 @@ export const INITIAL_VALUES: FormValues = {
   frozenStatuses: [],
   alertCreatedFor: ['USER'],
   ruleExecutionMode: 'SYNC',
+  alertCreationOnHit: true,
 };
 
 interface Props {
@@ -204,6 +207,24 @@ function RuleDetails(props: Props) {
             />
           )}
         </InputField>
+
+        <Feature name="PNB">
+          <InputField<FormValues, 'alertCreationOnHit'>
+            name={'alertCreationOnHit'}
+            label={'Alert creation on hit'}
+            labelProps={{ required: { value: false, showHint: true } }}
+          >
+            {(inputProps) => (
+              <Toggle
+                {...inputProps}
+                value={inputProps.value}
+                onChange={(value) => {
+                  inputProps.onChange?.(value);
+                }}
+              />
+            )}
+          </InputField>
+        </Feature>
 
         {rule.defaultFalsePositiveCheckEnabled != null && isFalsePositiveCheckEnabled && (
           <InputField<FormValues, 'falsePositiveCheckEnabled'>

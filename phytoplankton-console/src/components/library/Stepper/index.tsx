@@ -11,6 +11,7 @@ export type Step = {
   isOptional?: boolean;
   isUnfilled?: boolean;
   isInvalid?: boolean;
+  isDisabled?: boolean;
 };
 interface Props {
   steps: Step[];
@@ -45,7 +46,7 @@ export function StepperSteps(
       {steps.map((step, i) => {
         const isPassed = i < stepIndex;
         const isActive = active === step.key;
-        const { isUnfilled, isInvalid } = step;
+        const { isUnfilled, isInvalid, isDisabled } = step;
         return (
           <div
             key={step.key}
@@ -54,9 +55,12 @@ export function StepperSteps(
               [s.isActive]: isActive,
               [s.inUnfilled]: isUnfilled,
               [s.isInvalid]: isInvalid,
+              [s.isDisabled]: isDisabled,
             })}
             onClick={() => {
-              onChange(step.key);
+              if (!isDisabled) {
+                onChange(step.key);
+              }
             }}
             data-cy="step-prop"
           >

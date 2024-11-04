@@ -510,8 +510,8 @@ export class CaseCreationService {
   ): Promise<Alert[]> {
     const mongoDb = this.mongoDb
     const counterRepository = new CounterRepository(this.tenantId, mongoDb)
-    const alerts: Alert[] = await Promise.all(
-      hitRules.map(async (hitRule: HitRulesDetails) => {
+    const alerts: (Alert | null)[] = await Promise.all(
+      hitRules.map(async (hitRule: HitRulesDetails): Promise<Alert | null> => {
         const ruleInstanceMatch: RuleInstance | null =
           ruleInstances.find(
             (ruleInstance) => hitRule.ruleInstanceId === ruleInstance.id
@@ -590,7 +590,7 @@ export class CaseCreationService {
       })
     )
 
-    return alerts
+    return compact(alerts)
   }
 
   private async updateExistingAlerts(
@@ -606,6 +606,12 @@ export class CaseCreationService {
         if (!transaction || !latestTransactionArrivalTimestamp) {
           return alert
         }
+
+        const ruleInstanceMatch: RuleInstance | null =
+          ruleInstances?.find(
+            (ruleInstance) => alert.ruleInstanceId === ruleInstance.id
+          ) ?? null
+
         const transactionBelongsToAlert = Boolean(
           transaction.hitRules.find((rule) =>
             this.getFrozenStatusFilter(alert, rule, ruleInstances)
@@ -664,8 +670,7 @@ export class CaseCreationService {
           ruleHitMeta: updatedRuleHitMeta,
           ruleChecklistTemplateId:
             alert?.ruleChecklistTemplateId ??
-            ruleInstances?.find((rule) => rule.id === alert.ruleInstanceId)
-              ?.checklistTemplateId,
+            ruleInstanceMatch?.checklistTemplateId,
           ruleChecklist:
             alert?.ruleChecklist ??
             checkListTemplates?.flatMap((template) =>
@@ -940,11 +945,14 @@ export class CaseCreationService {
       hitRules: HitRulesDetails[]
       checkListTemplates?: ChecklistTemplate[]
     },
-    ruleInstances: ReadonlyArray<RuleInstance>
+    hitRuleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
     logger.info(`Hit directions to create or update cases`, {
       hitDirections: hitSubjects.map((hitUser) => hitUser.direction),
     })
+    const ruleInstances = hitRuleInstances.filter(
+      (r) => r.alertCreationOnHit !== false
+    )
     const result: Case[] = []
     for (const { subject, direction } of hitSubjects) {
       if (hasFeature('CONCURRENT_DYNAMODB_CONSUMER')) {

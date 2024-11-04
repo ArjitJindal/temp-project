@@ -30,6 +30,7 @@ import NumberInput from '@/components/library/NumberInput';
 import { USER_RULE_SCHEDULE_UNITS } from '@/apis/models-custom/UserRuleScheduleUnit';
 import { PropertyColumns } from '@/pages/users-item/UserDetails/PropertyColumns';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Toggle from '@/components/library/Toggle';
 
 export interface BasicDetailsFormValues {
   ruleId: string | undefined;
@@ -43,6 +44,7 @@ export interface BasicDetailsFormValues {
   simulationIterationName?: string;
   simulationIterationDescription?: string;
   simulationIterationTimeRange?: { start: number; end: number };
+  alertCreationOnHit?: boolean;
 }
 
 export const INITIAL_VALUES: Partial<BasicDetailsFormValues> = {
@@ -52,7 +54,9 @@ export const INITIAL_VALUES: Partial<BasicDetailsFormValues> = {
   ruleLabels: [],
   ruleType: 'TRANSACTION',
   ruleExecutionMode: 'SYNC',
+  alertCreationOnHit: true,
 };
+
 const DEFAULT_USER_RULE_SCHEDULE: UserRuleRunConditionSchedule = {
   value: 1,
   unit: 'WEEK',
@@ -269,6 +273,23 @@ export default function BasicDetailsStep(props: Props) {
                     )}
                   </InputField>
                 )}
+                <Feature name="PNB">
+                  <InputField<BasicDetailsFormValues, 'alertCreationOnHit'>
+                    name={'alertCreationOnHit'}
+                    label={'Alert creation on hit'}
+                    labelProps={{ required: false }}
+                  >
+                    {(inputProps) => (
+                      <Toggle
+                        {...inputProps}
+                        value={inputProps.value}
+                        onChange={(value) => {
+                          inputProps.onChange?.(value);
+                        }}
+                      />
+                    )}
+                  </InputField>
+                </Feature>
               </PropertyColumns>
             )}
             <InputField<BasicDetailsFormValues, 'ruleLabels'>

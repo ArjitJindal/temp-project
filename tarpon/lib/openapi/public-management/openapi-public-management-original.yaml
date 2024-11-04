@@ -1551,6 +1551,8 @@ components:
       properties:
         ruleId:
           type: string
+        alertCreationOnHit:
+          type: boolean
         filters:
           type: object
           description:

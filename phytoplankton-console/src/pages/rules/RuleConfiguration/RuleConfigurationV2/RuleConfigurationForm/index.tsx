@@ -152,6 +152,11 @@ const RuleConfigurationForm = (
     };
   }, [isRiskLevelsEnabled, ruleParametersValidators]);
   const [formState, setFormState] = useState<RuleConfigurationFormValues>(initialValues);
+
+  const isAlertCreationEnabled = useMemo(() => {
+    return formState.basicDetailsStep.alertCreationOnHit;
+  }, [formState.basicDetailsStep.alertCreationOnHit]);
+
   const STEPS = useMemo(
     () => [
       {
@@ -164,7 +169,9 @@ const RuleConfigurationForm = (
           ...(simulationMode ? [{ key: 'simulation_details', title: 'Simulation details' }] : []),
           { key: 'rule_details', title: 'Rule details' },
           ...(simulationMode ? [] : [{ key: 'checklist_details', title: 'Checklist details' }]),
-          { key: 'alert_creation_details', title: 'Alert creation details' },
+          ...(isAlertCreationEnabled
+            ? [{ key: 'alert_creation_details', title: 'Alert creation details' }]
+            : []),
         ],
       },
       {
@@ -220,6 +227,7 @@ const RuleConfigurationForm = (
       simulationMode,
       rule?.type,
       isRiskLevelsEnabled,
+      isAlertCreationEnabled,
     ],
   );
 

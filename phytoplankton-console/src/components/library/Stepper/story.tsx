@@ -58,6 +58,21 @@ export default function (): JSX.Element {
           Change step
         </Button>
       </UseCase>
+      <UseCase title={'Disabled step'}>
+        <Component
+          steps={[
+            ...steps,
+            {
+              key: 'disabled_step',
+              title: 'Disabled step',
+              description: 'This step is disabled',
+              isDisabled: true,
+            },
+          ]}
+          active={steps[active].key}
+          onChange={(newActive) => setActive(steps.findIndex((step) => step.key === newActive))}
+        />
+      </UseCase>
     </>
   );
 }

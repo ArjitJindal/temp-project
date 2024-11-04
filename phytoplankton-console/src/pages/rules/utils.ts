@@ -178,6 +178,7 @@ export function ruleInstanceToFormValues(
           slaPolicies: ruleInstance.alertConfig?.slaPolicies,
           alertCreatedFor: ruleInstance.alertConfig?.alertCreatedFor ?? ['USER'],
           ruleExecutionMode: ruleInstance.ruleExecutionMode,
+          alertCreationOnHit: ruleInstance.alertCreationOnHit,
           defaultAlertStatus: ruleInstance.alertConfig?.defaultAlertStatus,
         } as RuleConfigurationFormValues['basicDetailsStep'],
         standardFiltersStep: ruleInstance.filters,
@@ -240,6 +241,7 @@ export function ruleInstanceToFormValuesV8(
       ruleLabels: ruleInstance.labels,
       userRuleRunCondition: ruleInstance.userRuleRunCondition,
       ruleExecutionMode: ruleInstance.ruleExecutionMode,
+      alertCreationOnHit: ruleInstance.alertCreationOnHit,
     },
     ruleIsHitWhenStep: {
       baseCurrency: ruleInstance.baseCurrency,
@@ -338,6 +340,7 @@ export function formValuesToRuleInstance(
     queueId: basicDetailsStep.queueId,
     checklistTemplateId: basicDetailsStep.checklistTemplateId,
     ruleExecutionMode: basicDetailsStep.ruleExecutionMode,
+    alertCreationOnHit: basicDetailsStep.alertCreationOnHit,
     alertConfig: {
       alertAssignees:
         basicDetailsStep.alertAssigneesType == 'EMAIL'
@@ -447,6 +450,7 @@ export function formValuesToRuleInstanceV8(
     userRuleRunCondition:
       basicDetailsStep.ruleType === 'USER' ? basicDetailsStep.userRuleRunCondition : undefined,
     ruleExecutionMode: basicDetailsStep.ruleExecutionMode ?? 'SYNC',
+    alertCreationOnHit: basicDetailsStep.alertCreationOnHit,
     alertConfig: {
       alertAssignees:
         alertCreationDetailsStep.alertAssigneesType == 'EMAIL'

@@ -7799,6 +7799,8 @@ components:
           type: string
         casePriority:
           $ref: '#/components/schemas/Priority'
+        alertCreationOnHit:
+          type: boolean
         logic:
           type: object
         riskLevelLogic:

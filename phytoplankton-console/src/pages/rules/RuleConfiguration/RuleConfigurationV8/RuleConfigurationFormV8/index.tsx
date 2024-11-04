@@ -20,7 +20,7 @@ import { useId } from '@/utils/hooks';
 import * as Card from '@/components/ui/Card';
 
 import { Rule, RuleType } from '@/apis';
-import { StepperSteps } from '@/components/library/Stepper';
+import { Step, StepperSteps } from '@/components/library/Stepper';
 import Form, { FormRef } from '@/components/library/Form';
 import { validateField } from '@/components/library/Form/utils/validation/utils';
 import { message } from '@/components/library/Message';
@@ -134,7 +134,11 @@ function RuleConfigurationFormV8(
     isSimulationModeEnabled,
   ]);
 
-  const STEPS = useMemo(
+  const isAlertCreationDetailsStepDisabled = useMemo(() => {
+    return formState.basicDetailsStep.alertCreationOnHit === false;
+  }, [formState.basicDetailsStep.alertCreationOnHit]);
+
+  const STEPS: Step[] = useMemo(
     () =>
       [
         {
@@ -149,19 +153,28 @@ function RuleConfigurationFormV8(
           isOptional: false,
           description: 'Define rule variables and condition for which the rule is hit',
         },
-        {
-          key: ALERT_CREATION_DETAILS_STEP,
-          title: 'Alert creation details',
-          isOptional: false,
-          description: 'Define alert creation details for the defined rule when hit',
-        },
+        ...(!isAlertCreationDetailsStepDisabled
+          ? [
+              {
+                key: ALERT_CREATION_DETAILS_STEP,
+                title: 'Alert creation details',
+                description: 'Define alert creation details for the defined rule when hit',
+              },
+            ]
+          : []),
       ].map((step) => ({
         ...step,
         isInvalid:
           (showValidationError || alwaysShowErrors) &&
           validateField(fieldValidators?.[step.key], formState?.[step.key]) != null,
       })),
-    [alwaysShowErrors, fieldValidators, formState, showValidationError],
+    [
+      alwaysShowErrors,
+      fieldValidators,
+      formState,
+      showValidationError,
+      isAlertCreationDetailsStepDisabled,
+    ],
   );
 
   const handleSubmit = (
@@ -328,6 +341,7 @@ function useDefaultInitialValues(rule: Rule | undefined | null): RuleConfigurati
         ruleLabels: rule?.labels ?? BASIC_DETAILS_STEP_INITIAL_VALUES.ruleLabels,
         ruleType: 'TRANSACTION',
         ruleExecutionMode: BASIC_DETAILS_STEP_INITIAL_VALUES.ruleExecutionMode,
+        alertCreationOnHit: BASIC_DETAILS_STEP_INITIAL_VALUES.alertCreationOnHit,
       },
       ruleIsHitWhenStep,
       alertCreationDetailsStep: {
