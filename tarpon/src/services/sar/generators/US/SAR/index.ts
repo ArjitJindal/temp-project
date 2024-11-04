@@ -108,9 +108,12 @@ export class UsSarReportGenerator implements ReportGenerator {
       countryCode: 'US',
       type: 'SAR',
       directSubmission: true,
+      subjectTypes: ['CASE'],
     }
   }
-
+  public async getUserPopulatedParameters(): Promise<ReportParameters> {
+    throw new Error(`User subject is not supported`)
+  }
   public async getPopulatedParameters(
     c: Case,
     transactions: InternalTransaction[],

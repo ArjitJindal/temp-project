@@ -28,7 +28,6 @@ export function AutoFilter(props: Props): JSX.Element {
   const sharedProps = {
     title: filter.title,
     description: filter.description,
-    key: filter.key,
     icon: filter.icon,
     value: value as any,
     onChange,
@@ -42,6 +41,7 @@ export function AutoFilter(props: Props): JSX.Element {
     return (
       <InputQuickFilter<[string | undefined, string | undefined]>
         {...sharedProps}
+        key={filter.key}
         inputComponent={DateRangeInput}
       />
     );
@@ -50,6 +50,7 @@ export function AutoFilter(props: Props): JSX.Element {
     return (
       <InputQuickFilter<[string | undefined, string | undefined]>
         {...sharedProps}
+        key={filter.key}
         extraInputProps={{
           clearNotAllowedReason: sharedProps.clearNotAllowedReason,
         }}
@@ -62,6 +63,7 @@ export function AutoFilter(props: Props): JSX.Element {
       return (
         <ListQuickFilter
           {...sharedProps}
+          key={filter.key}
           options={filter.dataType.options ?? []}
           mode={filter.dataType.mode ?? 'SINGLE'}
         />
@@ -83,6 +85,7 @@ export function AutoFilter(props: Props): JSX.Element {
     return (
       <InputQuickFilter<string[]>
         {...sharedProps}
+        key={filter.key}
         buttonText={
           selectedOptions.length === 0
             ? undefined
@@ -101,6 +104,7 @@ export function AutoFilter(props: Props): JSX.Element {
     return (
       <InputQuickFilter<number>
         {...sharedProps}
+        key={filter.key}
         debounce={true}
         inputComponent={NumberInput}
         extraInputProps={{
@@ -114,6 +118,7 @@ export function AutoFilter(props: Props): JSX.Element {
   return (
     <InputQuickFilter<string>
       {...sharedProps}
+      key={filter.key}
       extraInputProps={{ innerRef: inputRef }}
       debounce={true}
       inputComponent={TextInput}

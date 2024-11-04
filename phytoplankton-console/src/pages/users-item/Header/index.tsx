@@ -7,6 +7,7 @@ import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import Id from '@/components/ui/Id';
 import { getUserName } from '@/utils/api/users';
+import { SarButton } from '@/components/Sar';
 
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
@@ -35,6 +36,7 @@ export default function Header(props: Props) {
         },
       ]}
       buttons={[
+        <SarButton userId={user.userId} />,
         <CommentButton
           onSuccess={onNewComment}
           submitRequest={async (commentFormValues) => {
@@ -51,7 +53,6 @@ export default function Header(props: Props) {
           }}
           requiredPermissions={['users:user-comments:write']}
         />,
-
         <HeaderMenu onNewTags={onNewTags} onNewComment={onNewComment} user={user} />,
       ]}
       subHeader={<SubHeader onNewComment={onNewComment} user={user} />}

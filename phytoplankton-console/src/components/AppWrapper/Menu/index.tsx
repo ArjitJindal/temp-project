@@ -193,6 +193,7 @@ function renderItems(
       }
       return (
         <RenderItem
+          key={`${parentTranslationKey}/${item.name}`}
           parentTranslationKey={parentTranslationKey}
           item={item}
           i18n={i18n}

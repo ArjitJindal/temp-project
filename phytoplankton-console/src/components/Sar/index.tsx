@@ -16,18 +16,24 @@ import { REPORT_SCHEMAS } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { ReportSubjectType } from '@/apis/models/ReportSubjectType';
 
-export function SarButton({
-  caseId,
-  alertIds,
-  transactionIds,
-  isDisabled,
-}: {
-  caseId: string;
-  alertIds: string[];
-  transactionIds: string[];
+interface CommonProps {
+  alertIds?: string[];
+  transactionIds?: string[];
   isDisabled?: boolean;
-}) {
+}
+
+interface UserProps extends CommonProps {
+  userId: string;
+}
+
+interface CaseProps extends CommonProps {
+  caseId: string;
+}
+
+export function SarButton(props: UserProps | CaseProps) {
+  const { alertIds, transactionIds, isDisabled } = props;
   const api = useApi();
   const queryResult = useQuery<ReportTypesResponse>(REPORT_SCHEMAS(), () => {
     return api.getReportTypes();
@@ -40,10 +46,10 @@ export function SarButton({
   const draft = useMutation<Report, unknown, string>(
     async (reportTypeId) => {
       return api.getReportsDraft({
-        caseId,
+        ...('caseId' in props ? { caseId: props.caseId } : { userId: props.userId }),
         reportTypeId,
-        alertIds,
-        transactionIds,
+        alertIds: alertIds ?? [],
+        transactionIds: transactionIds ?? [],
       });
     },
     {
@@ -53,6 +59,13 @@ export function SarButton({
       },
     },
   );
+
+  let reportSubjectType: ReportSubjectType;
+  if ('userId' in props) {
+    reportSubjectType = 'USER';
+  } else {
+    reportSubjectType = 'CASE';
+  }
 
   return (
     <>
@@ -81,59 +94,62 @@ export function SarButton({
         writePermissions={['case-management:case-details:write']}
       >
         <AsyncResourceRenderer<ReportTypesResponse> resource={queryResult.data}>
-          {(result) => (
-            <PropertyListLayout>
-              <Label label={'Select Jurisdiction'} testId="sar-country-select">
-                <Select
-                  value={country}
-                  options={uniqBy(
-                    result.data?.map((s) => {
-                      return {
+          {(result) => {
+            const reportTypes = (result.data ?? []).filter((x) => {
+              return x.subjectType?.includes(reportSubjectType);
+            });
+            return (
+              <PropertyListLayout>
+                <Label label={'Select Jurisdiction'} testId="sar-country-select">
+                  <Select
+                    value={country}
+                    options={uniqBy(
+                      reportTypes.map((s) => ({
                         label: s.country,
                         value: s.countryCode,
-                      };
-                    }),
-                    'value',
-                  )}
-                  onChange={(country) => {
-                    setCountry(country);
-                  }}
-                />
-              </Label>
-              {country && (
-                <Label label={'Select report type'} testId="sar-report-type-select">
-                  <Select
-                    value={reportTypeId}
-                    options={result.data
-                      ?.filter((t) => t.countryCode == country)
-                      .map((type) => ({
-                        label: type.type,
-                        value: type.id,
-                        isDisabled: !type.implemented,
-                      }))}
-                    onChange={(reportTypeId) => {
-                      setReportTypeId(reportTypeId);
+                      })),
+                      'value',
+                    )}
+                    onChange={(country) => {
+                      setCountry(country);
                     }}
                   />
                 </Label>
-              )}
-              <Alert
-                style={{ marginTop: 10 }}
-                description={
-                  <Row style={{ flexFlow: 'row' }}>
-                    <Col>
-                      <ErrorWarningFillIcon width={14} style={{ color: 'orange' }} />
-                    </Col>
-                    <Col style={{ paddingLeft: 5 }}>
-                      A maximum of 20 transactions can be selected to file an STR/SAR. Please
-                      contact Flagright if the limit needs to be increased.
-                    </Col>
-                  </Row>
-                }
-                type="warning"
-              />
-            </PropertyListLayout>
-          )}
+                {country && (
+                  <Label label={'Select report type'} testId="sar-report-type-select">
+                    <Select
+                      value={reportTypeId}
+                      options={reportTypes
+                        .filter((t) => t.countryCode == country)
+                        .map((type) => ({
+                          label: type.type,
+                          value: type.id,
+                          isDisabled: !type.implemented,
+                        }))}
+                      onChange={(reportTypeId) => {
+                        setReportTypeId(reportTypeId);
+                      }}
+                    />
+                  </Label>
+                )}
+                <Alert
+                  style={{ marginTop: 10 }}
+                  description={
+                    <Row style={{ flexFlow: 'row' }}>
+                      <Col>
+                        <ErrorWarningFillIcon width={14} style={{ color: 'orange' }} />
+                      </Col>
+                      <Col style={{ paddingLeft: 5 }}>
+                        A maximum of 20 transactions can be selected to file an STR/SAR. Please
+                        contact Flagright if the limit needs to be increased.
+                      </Col>
+                    </Row>
+                  }
+                  type="warning"
+                />
+              </PropertyListLayout>
+            );
+          }}
         </AsyncResourceRenderer>
       </Modal>
       {draft.data && (

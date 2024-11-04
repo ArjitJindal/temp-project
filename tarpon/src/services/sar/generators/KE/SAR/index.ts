@@ -29,8 +29,13 @@ export class KenyaSARReportGenerator implements ReportGenerator {
     return {
       countryCode: 'KE',
       type: 'SAR',
+      subjectTypes: ['CASE'],
       directSubmission: false,
     }
+  }
+
+  public async getUserPopulatedParameters(): Promise<ReportParameters> {
+    throw new Error(`User subject is not supported`)
   }
 
   public async getPopulatedParameters(

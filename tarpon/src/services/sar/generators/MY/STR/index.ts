@@ -59,18 +59,34 @@ import {
   TransactionType as ReportTransactionType,
 } from '@/services/sar/generators/MY/STR/schema-types/enums'
 import { neverReturn } from '@/utils/lang'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { MissingUser } from '@/@types/openapi-internal/MissingUser'
 
 // @traceable
 export class MalaysianSTRReportGenerator implements ReportGenerator {
   getType(): InternalReportType {
-    return { type: 'STR', countryCode: 'MY', directSubmission: false }
+    return {
+      type: 'STR',
+      countryCode: 'MY',
+      directSubmission: false,
+      subjectTypes: ['CASE', 'USER'],
+    }
   }
 
-  async getPopulatedParameters(
-    caseItem: Case,
+  private async genericPopulatedParameters(
+    subject:
+      | {
+          type: 'CASE'
+          case: Case
+        }
+      | {
+          type: 'USER'
+          user: InternalBusinessUser | InternalConsumerUser
+        },
     transactions: InternalTransaction[],
     _reporter: Account
-  ): Promise<ReportParameters> {
+  ) {
     const currencyService = new CurrencyService()
 
     const customerAndAccountDetails = {
@@ -120,12 +136,33 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
       },
     } as any
 
-    if (caseItem.subjectType === 'USER') {
-      const caseUser =
-        caseItem.caseUsers?.origin ??
-        caseItem.caseUsers?.destination ??
-        undefined
+    let caseUser:
+      | InternalBusinessUser
+      | InternalConsumerUser
+      | MissingUser
+      | undefined = undefined
+    if (subject.type === 'USER') {
+      caseUser = subject.user
+    } else {
+      if (subject.case.subjectType !== 'PAYMENT') {
+        caseUser =
+          subject.case.caseUsers?.origin ??
+          subject.case.caseUsers?.destination ??
+          undefined
+      }
+    }
 
+    let paymentDetails
+    if (subject.type === 'CASE') {
+      if (subject.case.subjectType !== 'USER') {
+        paymentDetails =
+          subject.case.paymentDetails?.origin ??
+          subject.case.paymentDetails?.destination ??
+          undefined
+      }
+    }
+
+    if (caseUser != null) {
       if (caseUser != null && 'type' in caseUser) {
         if (caseUser.type === 'CONSUMER') {
           const { userDetails } = caseUser
@@ -179,16 +216,10 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
           nationality: address.country,
         }
       }
-    } else {
-      const paymentDetails =
-        caseItem.paymentDetails?.origin ??
-        caseItem.paymentDetails?.destination ??
-        undefined
-      if (paymentDetails != null) {
-        if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
-          customerAndAccountDetails.accountDetails.accountNo =
-            paymentDetails.accountNumber
-        }
+    } else if (paymentDetails != null) {
+      if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
+        customerAndAccountDetails.accountDetails.accountNo =
+          paymentDetails.accountNumber
       }
     }
 
@@ -248,9 +279,16 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
           if (transaction.type === 'DEPOSIT') {
             reportTransactionType = 'DEPOSIT'
           } else if (transaction.type === 'TRANSFER') {
-            // todo: check that logic is valid
-            if (
-              caseItem.alerts?.some((alert) =>
+            if (caseUser != null) {
+              if (transaction.originUserId === caseUser.userId) {
+                reportTransactionType = 'TRANSFER-OUT'
+              } else if (transaction.destinationUserId === caseUser.userId) {
+                reportTransactionType = 'TRANSFER-IN'
+              }
+            } else if (
+              subject.type === 'CASE' &&
+              subject.case.subjectType === 'PAYMENT' &&
+              subject.case.alerts?.some((alert) =>
                 alert.ruleHitMeta?.hitDirections?.includes('DESTINATION')
               )
             ) {
@@ -331,6 +369,36 @@ export class MalaysianSTRReportGenerator implements ReportGenerator {
         })
       ),
     }
+  }
+
+  async getUserPopulatedParameters(
+    user: InternalConsumerUser | InternalBusinessUser,
+    transactions: InternalTransaction[],
+    reporter: Account
+  ) {
+    return this.genericPopulatedParameters(
+      {
+        type: 'USER',
+        user: user,
+      },
+      transactions,
+      reporter
+    )
+  }
+
+  async getPopulatedParameters(
+    caseItem: Case,
+    transactions: InternalTransaction[],
+    reporter: Account
+  ): Promise<ReportParameters> {
+    return this.genericPopulatedParameters(
+      {
+        type: 'CASE',
+        case: caseItem,
+      },
+      transactions,
+      reporter
+    )
   }
 
   public getSchema(): ReportSchema {

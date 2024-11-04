@@ -10,9 +10,13 @@ import { LithuaniaSTRReportGenerator } from '@/services/sar/generators/LT/STR'
 import { LithuaniaCTRReportGenerator } from '@/services/sar/generators/LT/CTR'
 import { MalaysianSTRReportGenerator } from '@/services/sar/generators/MY/STR'
 import { ReportSchema } from '@/@types/openapi-internal/ReportSchema'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
+import { ReportSubjectType } from '@/@types/openapi-internal/ReportSubjectType'
 
 export type InternalReportType = {
   type: string
+  subjectTypes: ReportSubjectType[]
   countryCode: CountryCode
   directSubmission: boolean
 }
@@ -36,6 +40,11 @@ export interface ReportGenerator {
   // Prepare the report data with what we already know about the suspicious user
   getPopulatedParameters(
     c: Case,
+    transactions: InternalTransaction[],
+    reporter: Account
+  ): Promise<ReportParameters>
+  getUserPopulatedParameters(
+    user: InternalConsumerUser | InternalBusinessUser,
     transactions: InternalTransaction[],
     reporter: Account
   ): Promise<ReportParameters>

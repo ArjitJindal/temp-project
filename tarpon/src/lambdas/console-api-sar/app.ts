@@ -23,15 +23,26 @@ export const sarHandler = lambdaApi()(
       total: reportService.getTypes().length,
     }))
 
-    handlers.registerGetReportsDraft(
-      async (ctx, request) =>
-        await reportService.getReportDraft(
+    handlers.registerGetReportsDraft(async (ctx, request) => {
+      if (request.caseId != null && request.userId != null) {
+        throw new Error(`Only one of userId or caseId should be passed`)
+      } else if (request.caseId != null) {
+        return await reportService.getCaseReportDraft(
           request.reportTypeId,
           request.caseId,
           request.alertIds,
           request.transactionIds
         )
-    )
+      } else if (request.userId != null) {
+        return await reportService.getUserReportDraft(
+          request.reportTypeId,
+          request.userId,
+          request.alertIds,
+          request.transactionIds
+        )
+      }
+      throw new Error(`Either userId or caseId is required`)
+    })
 
     handlers.registerGetReports(
       async (ctx, request) => await reportService.getReports(request)

@@ -112,20 +112,16 @@ export class RetrievalService {
     reasons: Array<CaseReasons>
   ): Promise<AttributeSet> {
     const report = await this.reportService.getReport(reportId)
-    const _case = await this.caseService.getCase(report.caseId)
+    const caseItem = report.caseId
+      ? await this.caseService.getCase(report.caseId)
+      : undefined
 
-    const userId =
-      _case.caseUsers?.origin?.userId || _case.caseUsers?.destination?.userId
-    if (!userId) {
-      throw new NotFound('No user for found for report')
-    }
-
-    const user = await this.userService.getUser(userId)
+    const user = await this.userService.getUser(report.caseUserId)
 
     // Hydrate case transactions
     const transactions = await this.txnRepository.getTransactionsByIds(
       report.parameters.transactions?.map((t) => t.id) ||
-        _case.caseTransactionsIds ||
+        caseItem?.caseTransactionsIds ||
         []
     )
 
@@ -133,7 +129,7 @@ export class RetrievalService {
       transactions,
       user,
       reasons,
-      _case,
+      _case: caseItem,
     })
   }
 

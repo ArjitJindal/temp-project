@@ -33,6 +33,8 @@ import { logger } from '@/core/logger'
 import { getContext } from '@/core/utils/context'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getUserName } from '@/utils/helpers'
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)
@@ -103,6 +105,7 @@ export class ReportService {
         country: formatCountry(type.countryCode) || 'Unknown',
         countryCode: type.countryCode,
         directSubmission: type.directSubmission,
+        subjectType: type.subjectTypes,
         id,
         implemented: true,
         type: type.type,
@@ -124,7 +127,79 @@ export class ReportService {
     )
   }
 
-  public async getReportDraft(
+  public async getUserReportDraft(
+    reportTypeId: string,
+    userId: string,
+    alertIds?: string[],
+    transactionIds?: string[]
+  ): Promise<Report> {
+    if (transactionIds != null && transactionIds.length > 20) {
+      throw new NotFound(`Cant select more than 20 transactions`)
+    }
+    const userRepository = new UserRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    const user = await userRepository.getUserById(userId)
+    if (!user) {
+      throw new NotFound(`Cannot find user ${userId}`)
+    }
+
+    const txpRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      this.mongoDb
+    )
+
+    const transactions = await txpRepo.getTransactions({
+      filterUserId: userId,
+      pageSize: 100,
+    })
+
+    const account = getContext()?.user as Account
+    const generator = this.getReportGenerator(reportTypeId)
+    if (!generator) {
+      throw new NotFound(`Cannot find report generator`)
+    }
+    generator.tenantId = this.tenantId
+    const lastGeneratedReport =
+      await this.reportRepository.getLastGeneratedReport(reportTypeId)
+
+    const populatedParameters = await generator.getUserPopulatedParameters(
+      user,
+      transactions.data,
+      account
+    )
+
+    const prefillReport = mergeObjects(
+      lastGeneratedReport?.parameters.report,
+      populatedParameters.report
+    )
+    const now = new Date().valueOf()
+
+    const report: Report = {
+      name: getUserName(user),
+      description: `SAR report for ${getUserName(user)}`,
+      reportTypeId,
+      createdAt: now,
+      updatedAt: now,
+      createdById: account.id,
+      status: 'DRAFT',
+      parameters: {
+        ...populatedParameters,
+        report: prefillReport,
+      },
+      comments: [],
+      revisions: [],
+      caseUserId: userId,
+    }
+    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    await this.riskScoringService.handleReRunTriggers('SAR', {
+      userIds: [report.caseUserId],
+    }) // To rerun risk scores for user
+    return withSchema(savedReport)
+  }
+
+  public async getCaseReportDraft(
     reportTypeId: string,
     caseId: string,
     alertIds?: string[],
@@ -140,11 +215,7 @@ export class ReportService {
     if (!c) {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
-    if (
-      (!transactionIds || transactionIds.length === 0) &&
-      alertIds != null &&
-      alertIds?.length > 0
-    ) {
+    if (!transactionIds || transactionIds.length === 0) {
       transactionIds = c.caseTransactionsIds || []
     }
 

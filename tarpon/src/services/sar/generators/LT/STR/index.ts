@@ -24,7 +24,15 @@ import { traceable } from '@/core/xray'
 @traceable
 export class LithuaniaSTRReportGenerator implements ReportGenerator {
   getType(): InternalReportType {
-    return { type: 'STR', countryCode: 'LT', directSubmission: false }
+    return {
+      type: 'STR',
+      countryCode: 'LT',
+      directSubmission: false,
+      subjectTypes: ['CASE'],
+    }
+  }
+  public async getUserPopulatedParameters(): Promise<ReportParameters> {
+    throw new Error(`User subject is not supported`)
   }
   async getPopulatedParameters(
     _c: Case,
