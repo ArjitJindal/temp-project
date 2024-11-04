@@ -1,4 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
+import { groupBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,
@@ -13,10 +14,12 @@ export const notificationsConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const mongoDb = await getMongoDbClient()
 
-    for (const record of event.Records) {
-      const snsMessage = JSON.parse(record.body)
-      const { tenantId, payload } = JSON.parse(snsMessage.Message as string)
+    const events = event.Records.map((record) =>
+      JSON.parse(JSON.parse(record.body).Message as string)
+    )
+    const groups = groupBy(events, (event) => event.tenantId)
 
+    for (const [tenantId, tenantEvents] of Object.entries(groups)) {
       await withContext(async () => {
         await initializeTenantContext(tenantId)
 
@@ -27,8 +30,11 @@ export const notificationsConsumerHandler = lambdaConsumer()(
         const notificationsService = new NotificationsService(tenantId, {
           mongoDb,
         })
-
-        await notificationsService.handleNotification(payload as AuditLog)
+        for (const event of tenantEvents) {
+          await notificationsService.handleNotification(
+            event.payload as AuditLog
+          )
+        }
       })
     }
   }

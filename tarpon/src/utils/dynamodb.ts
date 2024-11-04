@@ -48,13 +48,13 @@ export type DeleteRequestInternal = Omit<DeleteRequest, 'Key'> & {
   Key: Record<string, NativeAttributeValue> | undefined
 }
 
-export type BatchWriteRequestInternal = Record<
-  string,
-  Omit<WriteRequest, 'PutRequest' | 'DeleteRequest'> & {
-    PutRequest?: PutRequestInternal
-    DeleteRequest?: DeleteRequestInternal
-  }
->
+export type BatchWriteRequestInternal = Omit<
+  WriteRequest,
+  'PutRequest' | 'DeleteRequest'
+> & {
+  PutRequest?: PutRequestInternal
+  DeleteRequest?: DeleteRequestInternal
+}
 
 function getAugmentedDynamoDBCommand(command: any): {
   type: 'READ' | 'WRITE' | null
@@ -372,6 +372,7 @@ export async function* paginateQueryGenerator(
   }
 }
 
+const MAX_BATCH_WRITE_RETRY_COUNT = 5
 export async function batchWrite(
   dynamoDb: DynamoDBDocumentClient,
   requests: BatchWriteRequestInternal[],
@@ -379,13 +380,28 @@ export async function batchWrite(
 ): Promise<void> {
   for (const nextChunk of chunk(requests, 25)) {
     try {
-      await dynamoDb.send(
-        new BatchWriteCommand({
-          RequestItems: {
-            [table]: nextChunk,
-          },
-        })
-      )
+      let unProcessedItems: BatchWriteRequestInternal[] = nextChunk
+      let retryCount = 0
+      while (unProcessedItems.length > 0) {
+        const result = await dynamoDb.send(
+          new BatchWriteCommand({
+            RequestItems: {
+              [table]: unProcessedItems,
+            },
+          })
+        )
+        unProcessedItems = result.UnprocessedItems?.[table] ?? []
+        retryCount += 1
+        if (retryCount > MAX_BATCH_WRITE_RETRY_COUNT) {
+          logger.error(
+            `Failed to batch write items after ${MAX_BATCH_WRITE_RETRY_COUNT} retries`,
+            {
+              unProcessedItems: unProcessedItems.length,
+            }
+          )
+          break
+        }
+      }
     } catch (e) {
       if (
         (e as any)?.name === 'ValidationException' &&

@@ -3,8 +3,6 @@ import { StackConstants } from '@lib/constants'
 import {
   BatchGetCommand,
   BatchGetCommandInput,
-  BatchWriteCommand,
-  BatchWriteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
   GetCommandInput,
@@ -31,6 +29,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import {
+  batchWrite,
   dynamoDbQueryHelper,
   paginateQuery,
   paginateQueryGenerator,
@@ -81,27 +80,26 @@ export class DynamoDbTransactionRepository
     )
 
     const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
-    const batchWriteItemParams: BatchWriteCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
-          {
-            PutRequest: {
-              Item: {
-                ...primaryKey,
-                ...transaction,
-                ...rulesResult,
-              },
+    await batchWrite(
+      this.dynamoDb,
+      [
+        {
+          PutRequest: {
+            Item: {
+              ...primaryKey,
+              ...transaction,
+              ...rulesResult,
             },
           },
-          ...auxiliaryIndexes.map((item) => ({
-            PutRequest: {
-              Item: item,
-            },
-          })),
-        ],
-      },
-    }
-    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+        },
+        ...auxiliaryIndexes.map((item) => ({
+          PutRequest: {
+            Item: item,
+          },
+        })),
+      ],
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
 
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
@@ -149,28 +147,25 @@ export class DynamoDbTransactionRepository
       transaction.transactionId
     )
     const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
-
-    const batchWriteItemParams: BatchWriteCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
-          {
-            DeleteRequest: {
-              Key: primaryKey,
+    await batchWrite(
+      this.dynamoDb,
+      [
+        {
+          DeleteRequest: {
+            Key: primaryKey,
+          },
+        },
+        ...auxiliaryIndexes.map((item) => ({
+          DeleteRequest: {
+            Key: {
+              PartitionKeyID: item.PartitionKeyID,
+              SortKeyID: item.SortKeyID,
             },
           },
-          ...auxiliaryIndexes.map((item) => ({
-            DeleteRequest: {
-              Key: {
-                PartitionKeyID: item.PartitionKeyID,
-                SortKeyID: item.SortKeyID,
-              },
-            },
-          })),
-        ],
-      },
-    }
-
-    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+        })),
+      ],
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
   }
 
   public getTransactionAuxiliaryIndexes(transaction: Transaction) {

@@ -921,7 +921,7 @@ export class RulesEngineService {
       ),
       this.transactionEventRepository.updateTransactionEventRulesResult(
         transaction.transactionId,
-        (last(transactionEventsSorted) as TransactionEvent).timestamp,
+        last(transactionEventsSorted) as TransactionEvent,
         { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
       ),
       sendTransactionAggregationTasks(

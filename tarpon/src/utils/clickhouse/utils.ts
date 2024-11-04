@@ -188,19 +188,17 @@ const clickhouseInsert = async (
     })
   }
 
-  await backOff(insert, {
-    numOfAttempts: 3,
-    maxDelay: 10000,
-    startingDelay: 1000,
-    jitter: 'full',
-    retry(e, attemptNumber) {
-      logger.error(
-        `Error inserting into clickhouse, retrying... ${attemptNumber}, Message: ${e.message}`,
-        e
-      )
-      return true
-    },
-  })
+  try {
+    await backOff(insert, {
+      numOfAttempts: 3,
+      maxDelay: 10000,
+      startingDelay: 1000,
+      jitter: 'full',
+    })
+  } catch (e) {
+    logger.error(`Error inserting into clickhouse: ${(e as Error)?.message}`)
+    throw e
+  }
 }
 
 export async function insertToClickhouse<T extends object>(

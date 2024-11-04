@@ -542,6 +542,7 @@ describe('Verify Transaction Event', () => {
     ])
 
     test('returns executed rules', async () => {
+      disableAsyncRulesInTest()
       const transactionRepository = new DynamoDbTransactionRepository(
         TEST_TENANT_ID,
         dynamoDb

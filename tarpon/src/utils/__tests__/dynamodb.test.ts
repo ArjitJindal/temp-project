@@ -1,6 +1,5 @@
 import { StackConstants } from '@lib/constants'
-import { chunk, range } from 'lodash'
-import { BatchWriteCommand } from '@aws-sdk/lib-dynamodb'
+import { range } from 'lodash'
 import { batchWrite, getDynamoDbClient, paginateQuery } from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 const MOCK_RECORDS_COUNT = 250
@@ -25,24 +24,13 @@ const tenantId = 'tenantId'
 describe('paginateQuery', () => {
   beforeAll(async () => {
     // We need enough data to make query response paginated. Currently it'll result in 2 pages
-    for (const ck of chunk(range(0, MOCK_RECORDS_COUNT), 25)) {
-      const putRequests = ck.map((i) => ({
-        PutRequest: {
-          Item: {
-            PartitionKeyID: 'partition',
-            SortKeyID: `${i}`,
-            ...MOCK_ATTRIBUTES,
-          },
-        },
-      }))
-      await dynamoDb.send(
-        new BatchWriteCommand({
-          RequestItems: {
-            [StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)]: putRequests,
-          },
-        })
-      )
-    }
+    await batchWrite(
+      dynamoDb,
+      MOCK_ITEMS.map((item) => ({
+        PutRequest: { Item: item },
+      })),
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+    )
   })
   test('Returns all items - paginated', async () => {
     const result = await paginateQuery(dynamoDb, {

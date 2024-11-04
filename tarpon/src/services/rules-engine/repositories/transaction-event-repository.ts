@@ -2,12 +2,12 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import {
-  BatchWriteCommand,
-  BatchWriteCommandInput,
   DynamoDBDocumentClient,
+  PutCommand,
   QueryCommand,
   QueryCommandInput,
   UpdateCommand,
+  UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -46,26 +46,22 @@ export class TransactionEventRepository {
     const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,
       transactionEvent.transactionId,
-      transactionEvent.timestamp
+      {
+        timestamp: transactionEvent.timestamp,
+        eventId,
+      }
     )
-    const batchWriteItemParams: BatchWriteCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
-          {
-            PutRequest: {
-              Item: {
-                ...primaryKey,
-                eventId,
-                ...transactionEvent,
-                ...rulesResult,
-              },
-            },
-          },
-        ].filter(Boolean),
-      },
-    }
-
-    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
+    await this.dynamoDb.send(
+      new PutCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Item: {
+          ...primaryKey,
+          eventId,
+          ...transactionEvent,
+          ...rulesResult,
+        },
+      })
+    )
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
@@ -77,15 +73,14 @@ export class TransactionEventRepository {
 
   public async updateTransactionEventRulesResult(
     transactionId: string,
-    timestamp: number,
+    event: TransactionEvent,
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<void> {
     // just update the rules result
-    const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
-      this.tenantId,
-      transactionId,
-      timestamp
-    )
+    const key = DynamoDbKeys.TRANSACTION_EVENT(this.tenantId, transactionId, {
+      timestamp: event.timestamp,
+      eventId: event.eventId as string,
+    })
     const updateExpression =
       'SET executedRules = :executedRules, hitRules = :hitRules, #status = :status'
     const updateValues = {
@@ -93,9 +88,9 @@ export class TransactionEventRepository {
       ':hitRules': rulesResult.hitRules,
       ':status': rulesResult.status,
     }
-    const updateParams = {
+    const updateParams: UpdateCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: primaryKey,
+      Key: key,
       UpdateExpression: updateExpression,
       ExpressionAttributeValues: updateValues,
       ExpressionAttributeNames: {
@@ -107,7 +102,7 @@ export class TransactionEventRepository {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await localTarponChangeCaptureHandler(this.tenantId, key)
     }
   }
 

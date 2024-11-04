@@ -2,10 +2,9 @@ import { v4 as uuidv4 } from 'uuid'
 import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import {
-  BatchWriteCommand,
-  BatchWriteCommandInput,
   DynamoDBDocumentClient,
   GetCommand,
+  PutCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -79,24 +78,17 @@ export class UserEventRepository {
         userEvent.timestamp
       )
     }
-    const batchWriteItemParams: BatchWriteCommandInput = {
-      RequestItems: {
-        [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]: [
-          {
-            PutRequest: {
-              Item: {
-                ...primaryKey,
-                eventId,
-                ...userEvent,
-                ...rulesResult,
-              },
-            },
-          },
-        ].filter(Boolean),
-      },
-    }
-    await this.dynamoDb.send(new BatchWriteCommand(batchWriteItemParams))
-
+    await this.dynamoDb.send(
+      new PutCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+        Item: {
+          ...primaryKey,
+          eventId,
+          ...userEvent,
+          ...rulesResult,
+        },
+      })
+    )
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'

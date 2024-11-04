@@ -46,7 +46,7 @@ export class GeoIp2Provider implements IpLookupProvider {
           city: resolutionType === 'CITY' ? 'unknown' : undefined,
         }
       }
-      throw new Error('GeoIp failed to resolve IP')
+      throw new Error(`[${(error as any)?.code}] ${(error as any)?.message}`)
     }
   }
 

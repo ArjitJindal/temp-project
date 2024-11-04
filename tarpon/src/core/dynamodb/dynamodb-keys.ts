@@ -23,6 +23,7 @@ import { PaymentMethod } from '@/@types/openapi-public/PaymentMethod'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
 import { generateChecksum } from '@/utils/object'
+import dayjs from '@/utils/dayjs'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -68,11 +69,28 @@ export const DynamoDbKeys = {
   TRANSACTION_EVENT: (
     tenantId: string,
     transactionId: string,
-    timestamp?: number
-  ) => ({
-    PartitionKeyID: `${tenantId}#${TRANSACTION_EVENT_KEY_IDENTIFIER}${TRANSACTION_ID_PREFIX}${transactionId}`,
-    SortKeyID: `${timestamp}`,
-  }),
+    sortKeyData?: {
+      timestamp: number
+      eventId: string
+    }
+  ) => {
+    let sortKeyId = ''
+    if (sortKeyData) {
+      // Use new format for events created after 2024-11-06
+      if (
+        sortKeyData.timestamp > dayjs('2024-11-06').valueOf() &&
+        sortKeyData.eventId
+      ) {
+        sortKeyId = `${sortKeyData.timestamp}-${sortKeyData.eventId}`
+      } else {
+        sortKeyId = `${sortKeyData.timestamp}`
+      }
+    }
+    return {
+      PartitionKeyID: `${tenantId}#${TRANSACTION_EVENT_KEY_IDENTIFIER}${TRANSACTION_ID_PREFIX}${transactionId}`,
+      SortKeyID: sortKeyId,
+    }
+  },
   ALL_TRANSACTION: (
     tenantId: string,
     userId: string | undefined,

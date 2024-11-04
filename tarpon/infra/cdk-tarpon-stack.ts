@@ -808,7 +808,9 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     notificationsConsumerAlias.addEventSource(
-      new SqsEventSource(notificationQueue)
+      new SqsEventSource(notificationQueue, {
+        maxConcurrency: 5,
+      })
     )
 
     /* Batch Job */

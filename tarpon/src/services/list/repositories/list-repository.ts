@@ -1,14 +1,12 @@
 import { StackConstants } from '@lib/constants'
 import { v4 as uuidv4 } from 'uuid'
 import {
-  BatchWriteCommand,
   DeleteCommand,
   DynamoDBDocumentClient,
   GetCommand,
   PutCommand,
   QueryCommand,
 } from '@aws-sdk/lib-dynamodb'
-import { chunk } from 'lodash'
 import createHttpError from 'http-errors'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { ListExisted } from '@/@types/openapi-public/ListExisted'
@@ -190,29 +188,24 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    for (const nextChunk of chunk(listItems, 25)) {
-      const putRequests = nextChunk.map((listItem) => ({
-        PutRequest: {
-          Item: {
-            ...DynamoDbKeys.LIST_ITEM(
-              this.tenantId,
-              listId,
-              header.version,
-              listItem.key
-            ),
-            ...listItem,
-          },
+    const requests: BatchWriteRequestInternal[] = listItems.map((listItem) => ({
+      PutRequest: {
+        Item: {
+          ...DynamoDbKeys.LIST_ITEM(
+            this.tenantId,
+            listId,
+            header.version,
+            listItem.key
+          ),
+          ...listItem,
         },
-      }))
-      await this.dynamoDb.send(
-        new BatchWriteCommand({
-          RequestItems: {
-            [StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)]:
-              putRequests,
-          },
-        })
-      )
-    }
+      },
+    }))
+    await batchWrite(
+      this.dynamoDb,
+      requests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
     await this.refreshListHeader(header)
   }
 
