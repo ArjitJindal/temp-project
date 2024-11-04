@@ -1,6 +1,9 @@
 import { SQSEvent } from 'aws-lambda'
 import {
   ExecutionAlreadyExists,
+  ExecutionListItem,
+  ListExecutionsCommand,
+  ListExecutionsCommandInput,
   SFNClient,
   StartExecutionCommand,
 } from '@aws-sdk/client-sfn'
@@ -24,6 +27,32 @@ function getBatchJobName(job: BatchJobWithId) {
   return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
 }
 
+async function getRunningJobs(
+  stateMachineArn: string | undefined,
+  jobName: string,
+  sfnClient: SFNClient
+): Promise<ExecutionListItem[]> {
+  try {
+    const params: ListExecutionsCommandInput = {
+      stateMachineArn,
+      statusFilter: 'RUNNING',
+    }
+
+    const command = new ListExecutionsCommand(params)
+    const response = await sfnClient.send(command)
+
+    // Filter the jobs by name
+    const runningJobs = response?.executions?.filter(
+      (execution) => execution && execution.name?.includes(jobName)
+    )
+
+    return runningJobs ?? []
+  } catch (error) {
+    logger.error('Error fetching running jobs:', error)
+    throw error
+  }
+}
+
 export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
   const sfnClient = new SFNClient({
     region: process.env.ENV === 'local' ? 'local' : process.env.AWS_REGION,
@@ -39,6 +68,21 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     const existingJob = await jobRepository.getJobById(job.jobId)
     if (!existingJob) {
       await jobRepository.insertJob(job)
+    }
+
+    // TODO: Remove this once we have a proper way to handle this in FR-5951
+    const runningSLAJobs = await getRunningJobs(
+      process.env.BATCH_JOB_STATE_MACHINE_ARN,
+      'ALERT_SLA_STATUS_REFRESH', // Adding it to make SLA jobs idempotent, as the payload is same for all the jobs
+      sfnClient
+    )
+
+    if (runningSLAJobs.length > 0) {
+      logger.info(`Job ${jobName} is already running`, {
+        jobName,
+        batchJobPayload: job,
+      })
+      return
     }
 
     try {
@@ -89,7 +133,8 @@ export const jobDecisionHandler = async (
     RULE_PRE_AGGREGATION: 'FARGATE',
     MANUAL_RULE_PRE_AGGREGATION: 'FARGATE',
     FILES_AI_SUMMARY: 'LAMBDA',
-    ALERT_SLA_STATUS_REFRESH: 'LAMBDA',
+    // TODO: Remove this once we have a proper way to handle this in FR-5951
+    ALERT_SLA_STATUS_REFRESH: job.tenantId === 'pnb-uat' ? 'FARGATE' : 'LAMBDA',
     REVERIFY_TRANSACTIONS: 'FARGATE',
     SANCTIONS_DATA_FETCH: 'FARGATE',
     BACKFILL_AVERAGE_TRS: 'LAMBDA',
