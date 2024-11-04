@@ -56,7 +56,7 @@ const getCrmAccountId = (
 
 const getUserName = (
   user: InternalBusinessUser | InternalConsumerUser
-): string => {
+): string | undefined => {
   if (user.type === 'CONSUMER') {
     const { lastName, firstName, middleName } = user.userDetails?.name ?? {
       lastName: '',

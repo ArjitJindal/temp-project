@@ -73,9 +73,9 @@ export function generateNarrative(
     country = `${user.userDetails?.countryOfResidence}`
     websites = []
   } else {
-    name = user.legalEntity.companyGeneralDetails.legalName
-    country = user.legalEntity.companyRegistrationDetails?.registrationCountry
-    websites = user.legalEntity.contactDetails?.websites
+    name = user.legalEntity?.companyGeneralDetails?.legalName ?? ''
+    country = user.legalEntity?.companyRegistrationDetails?.registrationCountry
+    websites = user.legalEntity?.contactDetails?.websites
   }
 
   if (!reasons.includes('False positive')) {

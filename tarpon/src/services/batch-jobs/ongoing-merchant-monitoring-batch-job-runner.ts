@@ -82,7 +82,7 @@ export class OngoingMerchantMonitoringBatchJobRunner extends BatchJobRunner {
       await merchantMonitoringService.getMerchantMonitoringSummaries(
         tenantId,
         user.userId,
-        user.legalEntity.companyGeneralDetails.legalName,
+        user.legalEntity.companyGeneralDetails.legalName ?? '',
         allWebsites[0],
         {
           refresh: true,

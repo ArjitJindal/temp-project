@@ -24,7 +24,7 @@ export function getFullName(userDetails: UserDetails | undefined): string {
 }
 
 export function businessName(legalEntity: LegalEntity): string {
-  return legalEntity?.companyGeneralDetails?.legalName;
+  return legalEntity?.companyGeneralDetails?.legalName ?? '-';
 }
 
 export function getUserName(user?: TableUser | MissingUser | null): string {

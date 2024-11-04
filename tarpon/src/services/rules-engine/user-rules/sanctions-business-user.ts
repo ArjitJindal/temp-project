@@ -76,12 +76,12 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
     const business = this.user as Business
     const entities: Array<{
       entityType: SanctionsDetailsEntityType
-      name: string
+      name: string | undefined
       dateOfBirth?: string
     }> = [
       {
         entityType: 'LEGAL_NAME' as const,
-        name: business.legalEntity.companyGeneralDetails.legalName,
+        name: business.legalEntity.companyGeneralDetails.legalName ?? '',
       },
       ...(business.directors?.map((person) => ({
         entityType: 'DIRECTOR' as const,
@@ -113,7 +113,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           }
           const result = await this.sanctionsService.search(
             {
-              searchTerm: entity.name,
+              searchTerm: entity.name ?? '',
               yearOfBirth,
               types: screeningTypes,
               fuzziness: fuzziness / 100,
@@ -123,7 +123,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
           )
           if (result.hitsCount > 0) {
             const resultDetails: SanctionsDetails = {
-              name: entity.name,
+              name: entity.name ?? '',
               entityType: entity.entityType,
               searchId: result.searchId,
               hitContext,

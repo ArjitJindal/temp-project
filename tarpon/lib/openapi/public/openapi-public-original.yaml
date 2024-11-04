@@ -3297,8 +3297,6 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
-      required:
-        - legalName
     CompanyRegistrationDetails:
       title: CompanyRegistrationDetails
       type: object
