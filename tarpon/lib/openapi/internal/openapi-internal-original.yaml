@@ -4575,11 +4575,15 @@ paths:
           in: query
           name: filterCaseTypes
         - schema:
-            type: string
+            type: array
+            items:
+              type: string
           in: query
           name: filterSlaPolicyId
         - schema:
-            $ref: '#/components/schemas/SLAPolicyStatus'
+            type: array
+            items:
+              $ref: '#/components/schemas/SLAPolicyStatus'
           in: query
           name: filterSlaPolicyStatus
   /alerts/statusChange:

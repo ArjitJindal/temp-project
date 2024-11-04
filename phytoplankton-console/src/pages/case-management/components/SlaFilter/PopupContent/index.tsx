@@ -10,15 +10,15 @@ interface Props {
   slaPolicyOptions: Option<string>[];
   policyStatusOptions: Option<SLAPolicyStatus>[];
   handleClose: () => void;
-  onConfirm: (slaPolicyId?: string, slaPolicyStatus?: SLAPolicyStatus) => void;
+  onConfirm: (slaPolicyId?: Array<string>, slaPolicyStatus?: Array<SLAPolicyStatus>) => void;
   formRef?: React.Ref<FormRef<any>>;
-  slaPolicyId?: string;
-  slaPolicyStatus?: SLAPolicyStatus;
+  slaPolicyId?: Array<string>;
+  slaPolicyStatus?: Array<SLAPolicyStatus>;
 }
 
 interface FormValues {
-  slaPolicyId?: string;
-  slaPolicyStatus?: SLAPolicyStatus;
+  slaPolicyId?: Array<string>;
+  slaPolicyStatus?: Array<SLAPolicyStatus>;
 }
 
 function PopupContent(props: Props) {
@@ -42,7 +42,7 @@ function PopupContent(props: Props) {
           labelProps={{ level: 2 }}
         >
           {(inputProps) => (
-            <Select<string> {...inputProps} options={slaPolicyOptions} mode="SINGLE" />
+            <Select<string> {...inputProps} options={slaPolicyOptions} mode="MULTIPLE" />
           )}
         </InputField>
         <InputField<FormValues, 'slaPolicyStatus'>
@@ -51,7 +51,11 @@ function PopupContent(props: Props) {
           labelProps={{ level: 2 }}
         >
           {(inputProps) => (
-            <Select<SLAPolicyStatus> {...inputProps} options={policyStatusOptions} mode="SINGLE" />
+            <Select<SLAPolicyStatus>
+              {...inputProps}
+              options={policyStatusOptions}
+              mode="MULTIPLE"
+            />
           )}
         </InputField>
         <div className={s.buttons}>

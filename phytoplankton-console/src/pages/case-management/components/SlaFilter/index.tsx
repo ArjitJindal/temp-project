@@ -8,9 +8,9 @@ import { FormRef } from '@/components/library/Form';
 import { getOr } from '@/utils/asyncResource';
 
 interface Props {
-  slaPolicyId?: string;
-  slaPolicyStatus?: SLAPolicyStatus;
-  onConfirm: (slaPolicyId?: string, policyStatus?: SLAPolicyStatus) => void;
+  slaPolicyId?: Array<string>;
+  slaPolicyStatus?: Array<SLAPolicyStatus>;
+  onConfirm: (slaPolicyId?: Array<string>, policyStatus?: Array<SLAPolicyStatus>) => void;
   onUpdateFilterClose?: (status: boolean) => void;
 }
 
@@ -32,12 +32,21 @@ const policyStatusOptions: Option<SLAPolicyStatus>[] = [
 function SlaFilter(props: Props) {
   const slaPoliciesData = useSlas();
   const { slaPolicyId, slaPolicyStatus } = props;
+
   const formRef = useRef<FormRef<any>>(null);
   const isEmpty = !slaPolicyId && !slaPolicyStatus;
   return (
     <QuickFilter
       title="SLA status"
-      buttonText={isEmpty ? undefined : slaPolicyId ? slaPolicyId : slaPolicyStatus ?? 'All'}
+      buttonText={
+        isEmpty
+          ? undefined
+          : slaPolicyId && slaPolicyId.length > 0
+          ? slaPolicyId.join(', ')
+          : slaPolicyStatus && slaPolicyStatus.length > 0
+          ? slaPolicyStatus.join(', ')
+          : 'All'
+      }
       onClear={
         isEmpty
           ? undefined
@@ -53,7 +62,9 @@ function SlaFilter(props: Props) {
           slaPolicyOptions={slaPoliciesOptions(getOr(slaPoliciesData, []), 'name')}
           policyStatusOptions={policyStatusOptions}
           handleClose={() => setOpen(false)}
-          onConfirm={props.onConfirm}
+          onConfirm={(selectedSlaPolicyIds, selectedPolicyStatuses) => {
+            props.onConfirm(selectedSlaPolicyIds, selectedPolicyStatuses);
+          }}
           formRef={formRef}
           slaPolicyId={slaPolicyId}
           slaPolicyStatus={slaPolicyStatus}

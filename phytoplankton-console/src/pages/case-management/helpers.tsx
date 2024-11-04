@@ -71,8 +71,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: params.ruleQueueIds?.join(','),
       ruleNature: params.ruleNature?.join(','),
       forensicsFor: JSON.stringify(params.forensicsFor),
-      filterSlaPolicyId: params.filterSlaPolicyId ?? '',
-      filterSlaPolicyStatus: params.filterSlaPolicyStatus ?? '',
+      filterSlaPolicyId: params.filterSlaPolicyId?.join(','),
+      filterSlaPolicyStatus: params.filterSlaPolicyStatus?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -125,8 +125,8 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: raw.ruleQueueIds?.split(','),
       ruleNature: raw.ruleNature?.split(','),
       forensicsFor: raw.forensicsFor ? JSON.parse(raw.forensicsFor) : undefined,
-      filterSlaPolicyId: raw.filterSlaPolicyId ?? undefined,
-      filterSlaPolicyStatus: (raw.filterSlaPolicyStatus as SLAPolicyStatus) ?? undefined,
+      filterSlaPolicyId: raw.filterSlaPolicyId?.split(',') ?? undefined,
+      filterSlaPolicyStatus: raw.filterSlaPolicyStatus?.split(',') as SLAPolicyStatus[] | undefined,
     };
   },
 };
@@ -376,8 +376,8 @@ export const useCaseAlertFilters = (
       key: 'sla',
       renderer: ({ params, setParams }) => (
         <SlaFilter
-          slaPolicyId={params.filterSlaPolicyId}
-          slaPolicyStatus={params.filterSlaPolicyStatus}
+          slaPolicyId={params.filterSlaPolicyId ?? undefined}
+          slaPolicyStatus={params.filterSlaPolicyStatus ?? undefined}
           onConfirm={(slaPolicyId, slaPolicyStatus) => {
             setParams((state) => ({
               ...state,
