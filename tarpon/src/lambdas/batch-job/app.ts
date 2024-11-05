@@ -1,7 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import {
   ExecutionAlreadyExists,
-  ExecutionListItem,
   ListExecutionsCommand,
   ListExecutionsCommandInput,
   SFNClient,
@@ -31,7 +30,7 @@ async function getRunningJobs(
   stateMachineArn: string | undefined,
   jobName: string,
   sfnClient: SFNClient
-): Promise<ExecutionListItem[]> {
+): Promise<boolean> {
   try {
     const params: ListExecutionsCommandInput = {
       stateMachineArn,
@@ -46,7 +45,7 @@ async function getRunningJobs(
       (execution) => execution && execution.name?.includes(jobName)
     )
 
-    return runningJobs ?? []
+    return (runningJobs?.length ?? 0) > 0
   } catch (error) {
     logger.error('Error fetching running jobs:', error)
     throw error
@@ -71,20 +70,25 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     if (!existingJob) {
       await jobRepository.insertJob(job)
     }
+    let areSLAJobsRunning: boolean | undefined
 
     // TODO: Remove this once we have a proper way to handle this in FR-5951
-    const runningSLAJobs = await getRunningJobs(
-      process.env.BATCH_JOB_STATE_MACHINE_ARN,
-      'ALERT_SLA_STATUS_REFRESH', // Adding it to make SLA jobs idempotent, as the payload is same for all the jobs
-      sfnClient
-    )
+    if (job.tenantId === 'pnb-uat' && job.type === 'ALERT_SLA_STATUS_REFRESH') {
+      areSLAJobsRunning =
+        areSLAJobsRunning ??
+        (await getRunningJobs(
+          process.env.BATCH_JOB_STATE_MACHINE_ARN,
+          `${job.tenantId}-ALERT_SLA_STATUS_REFRESH`, // Adding it to make SLA jobs idempotent, as the payload is same for all the jobs
+          sfnClient
+        ))
 
-    if (runningSLAJobs.length > 0) {
-      logger.info(`Job ${jobName} is already running`, {
-        jobName,
-        batchJobPayload: job,
-      })
-      return
+      if (areSLAJobsRunning) {
+        logger.info(`Job ${jobName} is already running`, {
+          jobName,
+          batchJobPayload: job,
+        })
+        return
+      }
     }
 
     try {
