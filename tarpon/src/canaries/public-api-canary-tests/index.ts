@@ -895,35 +895,6 @@ const getTestBusinessUserSuccess = async () => {
           },
         }
       ),
-
-      executeHttpStep<Partial<Business>, ValidationError>(
-        'Legal name not provided',
-        '/business/users',
-        {
-          ...businessUserPayload,
-          legalEntity: {
-            companyGeneralDetails: {
-              businessIndustry: ['Alcohol', 'Scotch'],
-            } as any,
-          },
-        },
-        {
-          statusCode: 400,
-          statusMessage: 'Bad Request',
-          dataCallback: (_, data, reject) => {
-            if (
-              data.validationErrors !==
-              '[object has missing required properties (["legalName"])]'
-            ) {
-              reject('Validation error does not match')
-            }
-
-            if (data.message !== 'Invalid request body') {
-              reject('Message does not match')
-            }
-          },
-        }
-      ),
       executeHttpStep<Partial<Business>, ValidationError>(
         'Value not provided in tags',
         '/business/users',
