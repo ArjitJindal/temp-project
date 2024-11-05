@@ -5,9 +5,7 @@ import {
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
 import { CaseService } from '../../services/cases'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
-import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { Case } from '@/@types/openapi-internal/Case'
 import { hasFeature } from '@/core/utils/context'
@@ -25,16 +23,9 @@ export const casesHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { principalId: tenantId } = event.requestContext.authorizer
-    const client = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClientByEvent(event)
     const alertsService = await AlertsService.fromEvent(event)
     const caseService = await CaseService.fromEvent(event)
-
-    const caseCreationService = new CaseCreationService(tenantId, {
-      mongoDb: client,
-      dynamoDb,
-    })
+    const caseCreationService = await CaseCreationService.fromEvent(event)
 
     const handlers = new Handlers()
 

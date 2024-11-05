@@ -17,10 +17,19 @@ import createHttpError from 'http-errors'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+  Credentials as LambdaCredentials,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
+import { S3 } from '@aws-sdk/client-s3'
 import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
+import { S3Config } from '../aws/s3-service'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
+import { CaseService } from '.'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -80,7 +89,7 @@ import { RuleHitMeta } from '@/@types/openapi-public/RuleHitMeta'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { NewCaseAlertPayload } from '@/@types/alert/alert-payload'
 import { notNullish } from '@/utils/array'
-import { getS3Client } from '@/utils/s3'
+import { getS3Client, getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanctions-hits-repository'
 import { SanctionsSearchRepository } from '@/services/sanctions/repositories/sanctions-search-repository'
@@ -88,6 +97,9 @@ import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
 import { getDefaultProvider } from '@/services/sanctions/utils'
 import { acquireLock, releaseLock } from '@/utils/lock'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getCredentialsFromEvent } from '@/utils/credentials'
 
 type CaseSubject =
   | {
@@ -112,10 +124,36 @@ export class CaseCreationService {
   tenantRepository: TenantRepository
   sanctionsHitsRepository: SanctionsHitsRepository
   sanctionsSearchRepository: SanctionsSearchRepository
+  caseService?: CaseService
+
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ): Promise<CaseCreationService> {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
+    const s3 = getS3ClientByEvent(event)
+    return new CaseCreationService(
+      tenantId,
+      {
+        mongoDb: client,
+        dynamoDb,
+      },
+      s3,
+      { documentBucketName: DOCUMENT_BUCKET, tmpBucketName: TMP_BUCKET },
+      getCredentialsFromEvent(event)
+    )
+  }
 
   constructor(
     tenantID: string,
-    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient },
+    s3?: S3,
+    s3Config?: S3Config,
+    awsCredentials?: LambdaCredentials
   ) {
     this.caseRepository = new CaseRepository(tenantID, connections)
     this.userRepository = new UserRepository(tenantID, connections)
@@ -128,6 +166,14 @@ export class CaseCreationService {
       connections.mongoDb
     )
     this.auditLogService = new CasesAlertsAuditLogService(tenantID, connections)
+    if (s3 && s3Config) {
+      this.caseService = new CaseService(
+        this.caseRepository,
+        s3,
+        s3Config,
+        awsCredentials
+      )
+    }
     this.tenantId = tenantID
     this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
@@ -289,8 +335,11 @@ export class CaseCreationService {
       oldImage: {},
       subtype: 'MANUAL_CASE_CREATION',
     })
-
-    await this.caseRepository.saveComment(case_.caseId, comment)
+    if (this.caseService) {
+      await this.caseService.saveComment(case_.caseId, comment)
+    } else {
+      await this.caseRepository.saveComment(case_.caseId, comment)
+    }
 
     return case_
   }
