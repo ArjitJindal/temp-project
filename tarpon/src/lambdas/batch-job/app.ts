@@ -56,6 +56,8 @@ async function getRunningJobs(
 export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
   const sfnClient = new SFNClient({
     region: process.env.ENV === 'local' ? 'local' : process.env.AWS_REGION,
+    maxAttempts: 5,
+    retryMode: 'standard',
   })
 
   for (const record of event.Records) {
