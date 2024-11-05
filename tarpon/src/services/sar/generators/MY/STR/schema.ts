@@ -55,7 +55,7 @@ export const ReportDetailsAndSTRNature = {
           },
         },
       },
-      required: ['name', 'description'],
+      required: [],
     },
     natureOfStr: {
       type: 'object',
