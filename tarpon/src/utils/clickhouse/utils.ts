@@ -9,7 +9,7 @@ import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/confi
 import { chain, maxBy } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
-import { envIs } from '../env'
+import { envIs, envIsNot } from '../env'
 import {
   ClickHouseTables,
   MaterializedViewDefinition,
@@ -24,7 +24,7 @@ import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consum
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 
 export const isClickhouseEnabledInRegion = () => {
-  return envIs('local') || envIs('test') || envIs('dev') || envIs('sandbox')
+  return envIsNot('prod')
 }
 
 export const getClickhouseDbName = (tenantId: string) => {

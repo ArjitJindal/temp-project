@@ -372,7 +372,8 @@ export async function* paginateQueryGenerator(
   }
 }
 
-const MAX_BATCH_WRITE_RETRY_COUNT = 5
+const MAX_BATCH_WRITE_RETRY_COUNT = 20
+const MAX_BATCH_WRITE_RETRY_DELAY = 10 * 1000
 export async function batchWrite(
   dynamoDb: DynamoDBDocumentClient,
   requests: BatchWriteRequestInternal[],
@@ -382,6 +383,7 @@ export async function batchWrite(
     try {
       let unProcessedItems: BatchWriteRequestInternal[] = nextChunk
       let retryCount = 0
+      let retryDelay = 100
       while (unProcessedItems.length > 0) {
         const result = await dynamoDb.send(
           new BatchWriteCommand({
@@ -392,14 +394,17 @@ export async function batchWrite(
         )
         unProcessedItems = result.UnprocessedItems?.[table] ?? []
         retryCount += 1
-        if (retryCount > MAX_BATCH_WRITE_RETRY_COUNT) {
-          logger.error(
-            `Failed to batch write items after ${MAX_BATCH_WRITE_RETRY_COUNT} retries`,
-            {
-              unProcessedItems: unProcessedItems.length,
-            }
+        if (
+          unProcessedItems.length > 0 &&
+          retryCount > MAX_BATCH_WRITE_RETRY_COUNT
+        ) {
+          throw new Error(
+            `Failed to batch write items after ${MAX_BATCH_WRITE_RETRY_COUNT} retries (${unProcessedItems.length} items left)`
           )
-          break
+        }
+        if (unProcessedItems.length > 0) {
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
+          retryDelay = Math.min(retryDelay * 2, MAX_BATCH_WRITE_RETRY_DELAY)
         }
       }
     } catch (e) {

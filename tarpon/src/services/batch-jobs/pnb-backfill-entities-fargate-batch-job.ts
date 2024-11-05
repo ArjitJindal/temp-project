@@ -32,6 +32,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { logger } from '@/core/logger'
+import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
 
 const RULES_RESULT = {
   executedRules: [] as any,
@@ -155,21 +156,23 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
           .db()
           .collection(TRANSACTIONS_COLLECTION(this.tenantId))
           .insertMany(internalTransactions, { ordered: false })
-        await this.mongoDbConsumer.handleMessagesReplace({
-          [TRANSACTIONS_COLLECTION(this.tenantId)]: internalTransactions.map(
-            (transaction) => {
-              return {
-                collectionName: TRANSACTIONS_COLLECTION(this.tenantId),
-                operationType: 'replace',
-                documentKey: {
-                  value: transaction._id.toString(),
-                  type: 'id',
-                },
-                clusterTime: Date.now(),
+        if (isClickhouseEnabledInRegion()) {
+          await this.mongoDbConsumer.handleMessagesReplace({
+            [TRANSACTIONS_COLLECTION(this.tenantId)]: internalTransactions.map(
+              (transaction) => {
+                return {
+                  collectionName: TRANSACTIONS_COLLECTION(this.tenantId),
+                  operationType: 'replace',
+                  documentKey: {
+                    value: transaction._id.toString(),
+                    type: 'id',
+                  },
+                  clusterTime: Date.now(),
+                }
               }
-            }
-          ),
-        })
+            ),
+          })
+        }
       })()
     }
 
@@ -192,6 +195,17 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         return
       }
       logger.error(e)
+      await this.mongoDb
+        .db()
+        .collection('backfill-failure')
+        .insertMany(
+          transactions.map((transaction) => ({
+            job: 'PNB_BACKFILL_ENTITIES',
+            tenantId: this.tenantId,
+            transactionId: transaction.transactionId,
+            reason: (e as Error).message,
+          }))
+        )
     }
   }
   private async saveUsers(
@@ -229,17 +243,19 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
           .db()
           .collection(USERS_COLLECTION(this.tenantId))
           .insertMany(internalUsers, { ordered: false })
-        await this.mongoDbConsumer.handleMessagesReplace({
-          [USERS_COLLECTION(this.tenantId)]: internalUsers.map((user) => ({
-            collectionName: USERS_COLLECTION(this.tenantId),
-            operationType: 'replace',
-            documentKey: {
-              value: user._id.toString(),
-              type: 'id',
-            },
-            clusterTime: Date.now(),
-          })),
-        })
+        if (isClickhouseEnabledInRegion()) {
+          await this.mongoDbConsumer.handleMessagesReplace({
+            [USERS_COLLECTION(this.tenantId)]: internalUsers.map((user) => ({
+              collectionName: USERS_COLLECTION(this.tenantId),
+              operationType: 'replace',
+              documentKey: {
+                value: user._id.toString(),
+                type: 'id',
+              },
+              clusterTime: Date.now(),
+            })),
+          })
+        }
       })()
     }
 
@@ -270,6 +286,17 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         return
       }
       logger.error(e)
+      await this.mongoDb
+        .db()
+        .collection('backfill-failure')
+        .insertMany(
+          users.map((user) => ({
+            job: 'PNB_BACKFILL_ENTITIES',
+            tenantId: this.tenantId,
+            userId: user.userId,
+            reason: (e as Error).message,
+          }))
+        )
     }
   }
 }
