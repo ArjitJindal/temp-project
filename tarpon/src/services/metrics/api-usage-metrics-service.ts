@@ -362,7 +362,7 @@ export class ApiUsageMetricsService {
     )
     const createdAtField = 'createdAt'
     const result = await collection
-      .aggregate<{ _id: string; providerSearchIds: string[] }>([
+      .aggregate<{ _id: string; count: number }>([
         {
           $match: {
             [createdAtField]: {
@@ -374,23 +374,27 @@ export class ApiUsageMetricsService {
         {
           $group: {
             _id: {
-              $dateToString: {
-                format: DAY_DATE_FORMAT,
-                date: {
-                  $toDate: `$${createdAtField}`,
+              date: {
+                $dateToString: {
+                  format: DAY_DATE_FORMAT,
+                  date: {
+                    $toDate: `$${createdAtField}`,
+                  },
                 },
               },
+              providerSearchId: '$response.providerSearchId',
             },
-            providerSearchIds: {
-              $addToSet: '$response.providerSearchId',
-            },
+          },
+        },
+        {
+          $group: {
+            _id: '$_id.date',
+            count: { $sum: 1 },
           },
         },
       ])
       .toArray()
-    return Object.fromEntries(
-      result.map((item) => [item._id, item.providerSearchIds.length])
-    )
+    return Object.fromEntries(result.map((item) => [item._id, item.count]))
   }
 
   private getDimensions(tenantInfo: TenantBasic): Dimension[] {
