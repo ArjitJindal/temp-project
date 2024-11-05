@@ -4155,6 +4155,8 @@ components:
         - ARBITRUM_L2
         - SOLANA
         - AVALANCHE_C_CHAIN
+        - TEZOS
+        - VICTION
         - LITECOIN
         - BITCOIN_CASH
         - RIPPLE
