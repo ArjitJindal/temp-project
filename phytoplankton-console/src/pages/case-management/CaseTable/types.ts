@@ -7,6 +7,7 @@ import {
   Comment,
   Alert,
   RiskLevel,
+  CaseStatus,
 } from '@/apis';
 
 export type TableUser =
@@ -31,4 +32,5 @@ export type TableItem = Omit<Case, 'alerts' | 'caseUsers'> & {
   alertComments: Comment[];
   alerts?: Omit<Alert, 'transactionIds' | 'ruleChecklist'>[];
   userRiskLevel?: RiskLevel;
+  proposedAction?: CaseStatus;
 };

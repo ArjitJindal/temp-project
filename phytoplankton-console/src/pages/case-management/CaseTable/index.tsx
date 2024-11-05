@@ -328,10 +328,10 @@ export default function CaseTable(props: Props) {
       }),
       ...((isInReview
         ? [
-            helper.simple<'caseStatus'>({
+            helper.simple<'proposedAction'>({
               title: 'Proposed action',
               tooltip: 'Proposed action for the case',
-              key: 'caseStatus',
+              key: 'proposedAction',
               type: {
                 render: (caseStatus) => {
                   return caseStatus ? (
