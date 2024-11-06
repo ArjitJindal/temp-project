@@ -77,25 +77,32 @@ export default function CasesStatusChangeModal(props: Props) {
         const c = await api.getCase({
           caseId: props.entityIds[0],
         });
-        const assignees = c.assignments
-          ?.map((assignment) => users[assignment.assigneeUserId]?.name || assignment.assigneeUserId)
-          .filter((assigneeId) => {
-            const isL2Escalated = statusEscalatedL2(updates.caseStatus);
-
-            return isL2Escalated
-              ? users[assigneeId]?.escalationLevel === 'L2'
-              : users[assigneeId]?.escalationLevel !== 'L2';
-          })
-          .map((name) => `'${name}'`)
-          .join(', ');
+        const sendBackL2Escalated = statusEscalated(updates.caseStatus); // this is so because updates will have the updated status which is L1 for L2 cases
+        const assignees = sendBackL2Escalated
+          ? c.reviewAssignments
+              ?.filter((assignment) => {
+                const user = users[assignment.assigneeUserId];
+                return user?.escalationLevel === 'L1';
+              })
+              .map(
+                (assignment) =>
+                  `'${users[assignment.assigneeUserId]?.name || assignment.assigneeUserId}'`,
+              )
+              .join(', ')
+          : c.assignments
+              ?.map(
+                (assignment) =>
+                  `'${users[assignment.assigneeUserId]?.name || assignment.assigneeUserId}'`,
+              )
+              .join(', ');
 
         message.success(
           `Case '${
             props.entityIds[0]
           }' and the alerts under it are sent back successfully to ${assignees}. The case status and all '${
-            statusEscalatedL2(updates.caseStatus) ? 'Escalated L2' : 'Escalated'
+            sendBackL2Escalated ? 'Escalated L2' : 'Escalated'
           }' alert statuses under it are changed to '${
-            statusEscalatedL2(updates.caseStatus) ? 'Escalated' : 'Open'
+            sendBackL2Escalated ? 'Escalated' : 'Open'
           }'.`,
         );
       } else {
