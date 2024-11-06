@@ -1,5 +1,4 @@
 import { COPILOT_QUESTIONS, QuestionId } from '@flagright/lib/utils'
-import { uniq } from 'lodash'
 import {
   InvestigationContext,
   TableQuestion,
@@ -330,21 +329,4 @@ const AlertTransactions = transactionQuestion(
   (ctx) => `id in ('${ctx.alert.transactionIds?.join("','")}')`
 )
 
-const CaseTransactions = transactionQuestion(
-  COPILOT_QUESTIONS.CASE_TRANSACTIONS,
-  async (ctx) => `Transactions for case ${ctx.caseId}`,
-  (ctx) =>
-    `WHERE t.transactionId in ('${uniq(
-      ctx._case.alerts?.flatMap((a) => a.transactionIds)
-    )?.join("','")}')`,
-  (ctx) =>
-    `id in ('${uniq(ctx._case.alerts?.flatMap((a) => a.transactionIds))?.join(
-      "','"
-    )}')`
-)
-
-export const TransactionQuestions = [
-  UserTransactions,
-  AlertTransactions,
-  CaseTransactions,
-]
+export const TransactionQuestions = [UserTransactions, AlertTransactions]

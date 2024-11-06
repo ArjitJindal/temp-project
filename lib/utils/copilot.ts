@@ -30,7 +30,6 @@ export const COPILOT_QUESTIONS = {
   USER_DETAILS: 'User details',
   USERS_TRANSACTED_WITH: 'Users transacted with',
   ALERT_TRANSACTIONS: 'Alert transactions',
-  CASE_TRANSACTIONS: 'Case transactions',
   USER_TRANSACTIONS: 'Transactions',
   WEBSITE: 'Website',
 } as const
