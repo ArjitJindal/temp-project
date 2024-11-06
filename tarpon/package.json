@@ -246,7 +246,7 @@
     "axios": "^1.7.4",
     "base-x": "^3.0.9",
     "cdktf": "^0.20.5",
-    "cdktf-cli": "^0.20.5",
+    "cdktf-cli": "^0.20.8",
     "coverage-diff": "^3.2.0",
     "currency-symbol-map": "^5.1.0",
     "dataloader": "^2.2.2",
