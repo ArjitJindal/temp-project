@@ -1,4 +1,4 @@
-import { memoize } from 'lodash'
+import { memoize, compact, uniq } from 'lodash'
 import {
   merchantMonitoringSummaries,
   sampleBusinessUser,
@@ -32,3 +32,8 @@ export const getMerchantMonitoring: () => MerchantMonitoringSummary[] = memoize(
 
 export const getUsers: () => (InternalBusinessUser | InternalConsumerUser)[] =
   memoize(() => [...businessUsers(), ...consumerUsers()])
+
+export const getUserUniqueTags = memoize(() => {
+  const users = getUsers()
+  return compact(uniq(users.flatMap((u) => u.tags?.map((t) => t.key))))
+})

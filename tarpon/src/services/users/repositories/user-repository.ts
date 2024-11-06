@@ -41,6 +41,7 @@ import {
 import {
   CASES_COLLECTION,
   TRANSACTIONS_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -1041,15 +1042,37 @@ export class UserRepository {
       updatedAt: Date.now(),
     }
 
-    await internalMongoUpdateOne(
-      this.mongoDb,
-      USERS_COLLECTION(this.tenantId),
-      { userId: user.userId },
-      { $set: userToSave },
-      { session: options?.session }
-    )
+    await Promise.all([
+      internalMongoUpdateOne(
+        this.mongoDb,
+        USERS_COLLECTION(this.tenantId),
+        { userId: user.userId },
+        { $set: userToSave },
+        { session: options?.session }
+      ),
+      this.updateUniqueTags(userToSave?.tags),
+    ])
 
     return user as InternalUser
+  }
+
+  public async updateUniqueTags(tags: InternalUser['tags']): Promise<void> {
+    const db = this.mongoDb.db()
+    const uniqueTagsCollection = db.collection(
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
+    )
+
+    const uniqueTags = uniq(tags?.map((tag) => tag.key))
+
+    await Promise.all(
+      uniqueTags.map((tag) =>
+        uniqueTagsCollection.updateOne(
+          { tag, type: 'USER' },
+          { $set: { tag, type: 'USER' } },
+          { upsert: true }
+        )
+      )
+    )
   }
 
   public async deleteUser(userId: string): Promise<void> {
@@ -1078,14 +1101,23 @@ export class UserRepository {
     let fieldPath: string
     let unwindPath: string
     const filterConditions: any[] = []
+
+    if (params.field === 'TAGS_KEY') {
+      const uniqueTagsCollection = db.collection(
+        UNIQUE_TAGS_COLLECTION(this.tenantId)
+      )
+
+      const uniqueTags = await uniqueTagsCollection
+        .find({ type: 'USER' })
+        .project({ tag: 1 })
+        .toArray()
+
+      return uniqueTags.map((doc) => doc.tag)
+    }
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
         fieldPath = 'legalEntity.companyGeneralDetails.businessIndustry'
         unwindPath = 'legalEntity.companyGeneralDetails.businessIndustry'
-        break
-      case 'TAGS_KEY':
-        fieldPath = 'tags.key'
-        unwindPath = 'tags'
         break
       default:
         throw neverThrow(params.field, `Unknown field: ${params.field}`)

@@ -312,8 +312,8 @@ export const DYNAMODB_PARTITIONKEYS_COLLECTION = (tenantId: string) => {
 export const TENANT_DELETION_COLLECTION =
   FLAGRIGHT_TENANT_ID + '-tenant-deletion'
 
-export const UNIQUE_TRANSACTION_TAGS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-unique-transaction-tags`
+export const UNIQUE_TAGS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-unique-tags`
 }
 
 export function getMongoDbIndexDefinitions(tenantId: string): {
@@ -325,6 +325,15 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SANCTIONS_PROVIDER_SEARCHES_COLLECTION(tenantId)]: {
       getIndexes: () => {
         return [{ index: { providerSearchId: 1 } }]
+      },
+    },
+    [UNIQUE_TAGS_COLLECTION(tenantId)]: {
+      getIndexes: () => {
+        return [
+          { index: { tag: 1 } },
+          { index: { type: 1 } },
+          { index: { tag: 1, type: 1 }, unique: true },
+        ]
       },
     },
     [TRANSACTIONS_COLLECTION(tenantId)]: {

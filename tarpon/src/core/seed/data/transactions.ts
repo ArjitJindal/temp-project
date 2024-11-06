@@ -1,10 +1,10 @@
-import { memoize, random } from 'lodash'
+import { compact, random, memoize, uniq } from 'lodash'
 import { sampleTransactionRiskScoreComponents } from '../samplers/risk_score_components'
 import {
   businessSanctionsSearch,
   consumerSanctionsSearch,
 } from '../raw-data/sanctions-search'
-import { getUsers } from './users'
+import { getUsers, getUserUniqueTags } from './users'
 import {
   getSanctions,
   getSanctionsHits,
@@ -233,4 +233,22 @@ export function internalToPublic(
 
 export const getTransactions: () => InternalTransaction[] = memoize(() => {
   return [...generate()]
+})
+
+export const getTransactionUniqueTags = memoize(() => {
+  const transactions = getTransactions()
+  return compact(uniq(transactions.flatMap((t) => t.tags?.map((t) => t.key))))
+})
+
+export const allUniqueTags: () => {
+  tag: string
+  type: 'TRANSACTION' | 'USER'
+}[] = memoize(() => {
+  const transactionTags = getTransactionUniqueTags()
+  const userTags = getUserUniqueTags()
+
+  return [
+    ...transactionTags.map((t) => ({ tag: t, type: 'TRANSACTION' as const })),
+    ...userTags.map((u) => ({ tag: u, type: 'USER' as const })),
+  ]
 })

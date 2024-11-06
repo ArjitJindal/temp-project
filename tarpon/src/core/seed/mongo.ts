@@ -50,8 +50,9 @@ import {
   SLA_POLICIES_COLLECTION,
   ML_MODELS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { getTransactions } from '@/core/seed/data/transactions'
+import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'
 import {
@@ -107,6 +108,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [ALERTS_QA_SAMPLING_COLLECTION, () => getQASamples()],
   [SLA_POLICIES_COLLECTION, () => getSLAPolicies()],
   [ML_MODELS_COLLECTION, () => getMlModels()],
+  [UNIQUE_TAGS_COLLECTION, () => allUniqueTags()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {

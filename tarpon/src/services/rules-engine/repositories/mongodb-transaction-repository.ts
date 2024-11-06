@@ -48,7 +48,7 @@ import {
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
-  UNIQUE_TRANSACTION_TAGS_COLLECTION,
+  UNIQUE_TAGS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DefaultApiGetTransactionsListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -145,15 +145,16 @@ export class MongoDbTransactionRepository
       ...internalTransaction,
     }
 
-    await internalMongoUpdateOne(
-      this.mongoDb,
-      TRANSACTIONS_COLLECTION(this.tenantId),
-      { transactionId: transaction.transactionId },
-      { $set: payload },
-      { session: options?.session }
-    )
-
-    await this.updateUniqueTransactionTags(transaction)
+    await Promise.all([
+      internalMongoUpdateOne(
+        this.mongoDb,
+        TRANSACTIONS_COLLECTION(this.tenantId),
+        { transactionId: transaction.transactionId },
+        { $set: payload },
+        { session: options?.session }
+      ),
+      this.updateUniqueTransactionTags(transaction),
+    ])
 
     return internalTransaction
   }
@@ -787,9 +788,14 @@ export class MongoDbTransactionRepository
 
     if (params.field === 'TAGS_KEY') {
       const uniqueTagsCollection = db.collection(
-        UNIQUE_TRANSACTION_TAGS_COLLECTION(this.tenantId)
+        UNIQUE_TAGS_COLLECTION(this.tenantId)
       )
-      const uniqueTags = await uniqueTagsCollection.find().toArray()
+
+      const uniqueTags = await uniqueTagsCollection
+        .find({ type: 'TRANSACTION' })
+        .project({ tag: 1 })
+        .toArray()
+
       return uniqueTags.map((doc) => doc.tag)
     }
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -1906,7 +1912,7 @@ export class MongoDbTransactionRepository
 
     const db = this.mongoDb.db()
     const uniqueTagsCollection = db.collection(
-      UNIQUE_TRANSACTION_TAGS_COLLECTION(this.tenantId)
+      UNIQUE_TAGS_COLLECTION(this.tenantId)
     )
 
     const uniqueTags = transaction.tags.map((tag) => tag.key)
@@ -1914,8 +1920,8 @@ export class MongoDbTransactionRepository
     await Promise.all(
       uniqueTags.map((tag) =>
         uniqueTagsCollection.updateOne(
-          { tag },
-          { $set: { tag } },
+          { tag, type: 'TRANSACTION' },
+          { $set: { tag, type: 'TRANSACTION' } },
           { upsert: true }
         )
       )
