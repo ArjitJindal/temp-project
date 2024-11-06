@@ -112,6 +112,9 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         const reasonsComment = AlertsService.formatReasonsComment(updates)
 
         let whitelistUpdateComment: string | null = null
+        if (updates.status === 'OPEN' && whitelistHits) {
+          await sanctionsService.deleteWhitelistRecord(sanctionHitIds)
+        }
         if (updates.status === 'CLEARED' && whitelistHits) {
           for await (const hit of sanctionsService.sanctionsHitsRepository.iterateHits(
             {
