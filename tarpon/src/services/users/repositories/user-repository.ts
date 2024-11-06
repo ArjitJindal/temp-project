@@ -23,7 +23,10 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { get, isEmpty, keyBy, mapValues, mergeWith, set, uniq } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { getUsersFilterByRiskLevel } from '../utils/user-utils'
+import {
+  getUsersFilterByRiskLevel,
+  insertRiskScores,
+} from '../utils/user-utils'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
@@ -229,58 +232,10 @@ export class UserRepository {
     }
 
     if (isPulseEnabled) {
-      result.items = this.insertRiskScores(
-        result.items,
-        riskClassificationValues
-      )
+      result.items = insertRiskScores(result.items, riskClassificationValues)
     }
 
     return result as AllUsersListResponse
-  }
-
-  private insertRiskScores(
-    items:
-      | WithId<InternalBusinessUser | InternalConsumerUser>[]
-      | (InternalBusinessUser | InternalConsumerUser)[],
-    riskClassificationValues: RiskClassificationScore[]
-  ) {
-    const updatedItems = items.map((user) => {
-      const drsScore = user?.drsScore
-      const krsScore = user?.krsScore
-      let newUser = user
-      if (drsScore != null) {
-        const derivedRiskLevel = drsScore?.manualRiskLevel
-          ? undefined
-          : getRiskLevelFromScore(riskClassificationValues, drsScore?.drsScore)
-        const newDrsScore: DrsScore = {
-          ...drsScore,
-          derivedRiskLevel,
-        }
-        newUser = {
-          ...newUser,
-          drsScore: newDrsScore,
-        }
-      }
-
-      if (krsScore != null) {
-        const derivedRiskLevel = getRiskLevelFromScore(
-          riskClassificationValues,
-          krsScore?.krsScore
-        )
-
-        const newKrsScore: KrsScore = {
-          ...krsScore,
-          riskLevel: derivedRiskLevel,
-        }
-
-        newUser = {
-          ...newUser,
-          krsScore: newKrsScore,
-        }
-      }
-      return newUser
-    })
-    return updatedItems
   }
 
   public async getMongoAllUsers(
@@ -684,7 +639,7 @@ export class UserRepository {
       ])
       .toArray()
     if (isPulseEnabled) {
-      users = this.insertRiskScores(users, riskClassificationValues)
+      users = insertRiskScores(users, riskClassificationValues)
     }
 
     const total = await collection.countDocuments(query, {

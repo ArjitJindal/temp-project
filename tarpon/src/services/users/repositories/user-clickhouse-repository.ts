@@ -1,5 +1,7 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
+import { WithId } from 'mongodb'
+import { insertRiskScores } from '../utils/user-utils'
 import {
   DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListV2Request,
@@ -10,6 +12,9 @@ import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
 import { getSortedData, isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { hasFeature } from '@/core/utils/context'
+import { InternalConsumerUser } from '@/@types/openapi-internal/all'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 export class UserClickhouseRepository {
   private tenantId: string
@@ -42,6 +47,9 @@ export class UserClickhouseRepository {
         count: 0,
       }
     }
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
 
     const whereClause = await this.buildWhereClause(params, userType)
     const sortField =
@@ -52,32 +60,43 @@ export class UserClickhouseRepository {
     const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
-    const data = await offsetPaginateClickhouse<T>(
-      this.tenantId,
-      this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.USERS.tableName,
-      CLICKHOUSE_DEFINITIONS.USERS.tableName,
-      { page, pageSize, sortField, sortOrder },
-      whereClause,
-      {
-        excludeSortField: sortField === 'timestamp' && sortOrder === 'ascend',
-        bypassNestedQuery:
-          sortField === 'timestamp' && sortOrder === 'ascend' && page <= 20,
-      }
-    )
+    const [data, riskClassificationValues] = await Promise.all([
+      offsetPaginateClickhouse<T>(
+        this.tenantId,
+        this.clickhouseClient,
+        CLICKHOUSE_DEFINITIONS.USERS.tableName,
+        CLICKHOUSE_DEFINITIONS.USERS.tableName,
+        { page, pageSize, sortField, sortOrder },
+        whereClause,
+        {
+          excludeSortField: sortField === 'timestamp' && sortOrder === 'ascend',
+          bypassNestedQuery:
+            sortField === 'timestamp' && sortOrder === 'ascend' && page <= 20,
+        }
+      ),
+      riskRepository.getRiskClassificationValues(),
+    ])
     const sortFieldInItem =
       sortField === 'timestamp' ? 'createdTimestamp' : sortField
-    const sortedUsers = getSortedData<T>({
+    let sortedUsers = getSortedData<T>({
       data: data.items.filter((item) => item[sortFieldInItem] != null),
       sortField: sortFieldInItem,
       sortOrder,
       groupByField: 'userId',
       groupBySortField: sortFieldInItem,
     })
+
+    if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
+      sortedUsers = insertRiskScores(
+        sortedUsers as WithId<InternalBusinessUser | InternalConsumerUser>[],
+        riskClassificationValues
+      ) as T[]
+    }
+
     return {
       items: [
-        ...sortedUsers,
         ...data.items.filter((item) => item[sortFieldInItem] == null),
+        ...sortedUsers,
       ],
       count: data.count,
     }
