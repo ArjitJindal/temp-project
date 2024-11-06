@@ -7304,6 +7304,8 @@ components:
             - CONSOLE
             - BATCH
             - PUBLIC_API
+        prevDrsScore:
+          type: number
       required:
         - createdAt
         - drsScore

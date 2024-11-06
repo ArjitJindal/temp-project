@@ -122,6 +122,16 @@ export class RiskRepository {
     )
   }
 
+  async getPreviousCraLevel(
+    userId: string
+  ): Promise<RiskLevel | null | undefined> {
+    const drsScore = await this.getDrsScore(userId)
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    return drsScore?.prevDrsScore
+      ? getRiskLevelFromScore(riskClassificationValues, drsScore.prevDrsScore)
+      : null
+  }
+
   async getKrsScore(userId: string): Promise<KrsScore | null> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
@@ -279,6 +289,7 @@ export class RiskRepository {
     logger.info(
       `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
     )
+    const prevDrsScore = await this.getDrsScore(userId)
     const newDrsScoreItem: DrsScore = {
       drsScore,
       transactionId,
@@ -288,6 +299,7 @@ export class RiskRepository {
       components,
       factorScoreDetails,
       triggeredBy: getTriggerSource(),
+      prevDrsScore: prevDrsScore?.drsScore,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -411,7 +423,11 @@ export class RiskRepository {
   ) {
     logger.info(`Updating manual risk level for user ${userId} to ${riskLevel}`)
     const now = Date.now()
-    const riskClassificationValues = await this.getRiskClassificationValues()
+    const [riskClassificationValues, previousDrsScore] = await Promise.all([
+      this.getRiskClassificationValues(),
+      this.getDrsScore(userId),
+    ])
+
     const newDrsRiskValue: DrsScore = {
       manualRiskLevel: riskLevel,
       createdAt: now,
@@ -420,6 +436,7 @@ export class RiskRepository {
       userId,
       transactionId: 'MANUAL_UPDATE',
       triggeredBy: getTriggerSource(),
+      prevDrsScore: previousDrsScore?.drsScore,
     }
     const primaryKey = DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
     const putItemInput: PutCommandInput = {

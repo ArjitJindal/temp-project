@@ -9,6 +9,7 @@ import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
+import { getUserRiskScoreDetailsForPNB } from './pnb-custom-logic'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
@@ -113,6 +114,7 @@ export class UserManagementService {
 
     const { monitoringResult, isAnyAsyncRules } =
       await this.rulesEngineService.verifyUser(userPayload)
+
     const userResult = {
       ...userPayload,
       ...monitoringResult,
@@ -128,6 +130,7 @@ export class UserManagementService {
           }),
         ]
       : []
+
     if (isConsumerUser) {
       await Promise.all([
         this.userRepository.saveConsumerUser(userResult),
@@ -151,7 +154,7 @@ export class UserManagementService {
           {
             timestamp: userResult.createdTimestamp,
             userId: userResult.userId,
-            updatedBusinessUserAttributes: userResult,
+            updatedBusinessUserAttributes: userResult as Business,
           },
           'BUSINESS',
           monitoringResult
@@ -350,7 +353,17 @@ export class UserManagementService {
         }),
     ])
 
-    return omit(updatedUserResult, 'type') as UserResultType<T>
+    return {
+      ...(omit(updatedUserResult, 'type') as UserResultType<T>),
+      hitRules: monitoringResult.hitRules,
+      executedRules: monitoringResult.executedRules,
+      riskScoreDetails: hasFeature('PNB')
+        ? getUserRiskScoreDetailsForPNB(
+            monitoringResult.hitRules ?? [],
+            riskScoreDetails ?? {}
+          )
+        : riskScoreDetails,
+    }
   }
 
   public async verifyBusinessUserEvent(

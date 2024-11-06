@@ -63,6 +63,7 @@ import {
 } from './user-rules'
 import { TransactionWithRiskDetails } from './repositories/transaction-repository-interface'
 import { mergeRules } from './utils/rule-utils'
+import { getTransactionRiskScoreDetailsForPNB } from './pnb-custom-logic'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionMonitoringResult } from '@/@types/openapi-public/TransactionMonitoringResult'
 import { logger } from '@/core/logger'
@@ -561,10 +562,18 @@ export class RulesEngineService {
       status: getAggregatedRuleStatus(hitRules),
       ...(riskScoreDetails
         ? {
-            riskScoreDetails: {
-              ...riskScoreDetails,
-              ...userRiskScoreDetails,
-            },
+            riskScoreDetails: hasFeature('PNB')
+              ? {
+                  ...riskScoreDetails,
+                  ...getTransactionRiskScoreDetailsForPNB(
+                    hitRules,
+                    userRiskScoreDetails
+                  ),
+                }
+              : {
+                  ...riskScoreDetails,
+                  ...userRiskScoreDetails,
+                },
           }
         : {}),
     }
@@ -648,6 +657,7 @@ export class RulesEngineService {
         previousTransactionEvents
       )
     }
+
     await Promise.all([
       sendTransactionAggregationTasks(
         this.tenantId,
@@ -697,10 +707,18 @@ export class RulesEngineService {
       hitRules,
       ...(riskScoreDetails
         ? {
-            riskScoreDetails: {
-              ...riskScoreDetails,
-              ...userRiskScoreDetails,
-            },
+            riskScoreDetails: hasFeature('PNB')
+              ? {
+                  ...riskScoreDetails,
+                  ...getTransactionRiskScoreDetailsForPNB(
+                    hitRules,
+                    userRiskScoreDetails
+                  ),
+                }
+              : {
+                  ...riskScoreDetails,
+                  ...userRiskScoreDetails,
+                },
           }
         : {}),
     }
@@ -836,7 +854,6 @@ export class RulesEngineService {
     ).filter(Boolean) as ExecutedRulesResult[]
 
     const executionResult = getExecutedAndHitRulesResult(ruleResults)
-
     return {
       userId: user.userId,
       ...executionResult,
@@ -1045,26 +1062,12 @@ export class RulesEngineService {
       : relatedData
       ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
       : this.getTransactionRiskScoreDetails(transaction)
-    const [
-      { senderUser, receiverUser },
-      {
-        riskLevel: senderUserRiskLevel,
-        riskScore: senderUserRiskScore,
-        isUpdatable: isSenderUserUpdatable,
-      },
-      riskScoreDetails,
-      activeRuleInstances,
-      {
-        riskScore: receiverUserRiskScore,
-        isUpdatable: isReceiverUserUpdatable,
-      },
-    ] = await Promise.all([
+
+    const [{ senderUser, receiverUser }, riskScoreDetails] = await Promise.all([
       userPromise,
-      this.getUserRiskLevelAndScore(transaction.originUserId),
       riskScoringPromise,
-      this.ruleInstanceRepository.getActiveRuleInstances(),
-      this.getUserRiskLevelAndScore(transaction.destinationUserId),
     ])
+
     const newRiskScoreDetails = isV8RiskScoring
       ? await this.riskScoringV8Service.handleTransaction(
           transaction,
@@ -1073,6 +1076,22 @@ export class RulesEngineService {
           receiverUser
         )
       : riskScoreDetails
+    const [
+      {
+        riskLevel: senderUserRiskLevel,
+        riskScore: senderUserRiskScore,
+        isUpdatable: isSenderUserUpdatable,
+      },
+      activeRuleInstances,
+      {
+        riskScore: receiverUserRiskScore,
+        isUpdatable: isReceiverUserUpdatable,
+      },
+    ] = await Promise.all([
+      this.getUserRiskLevelAndScore(transaction.originUserId),
+      this.ruleInstanceRepository.getActiveRuleInstances(),
+      this.getUserRiskLevelAndScore(transaction.destinationUserId),
+    ])
 
     const toRunRule = (
       ruleInstance: RuleInstance,

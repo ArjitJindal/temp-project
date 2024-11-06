@@ -26,6 +26,7 @@ import { Credentials } from '@aws-sdk/client-sts'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { getReceiverKeyId, getSenderKeyId } from '../utils'
 import { transactionTimeRangeRuleFilterPredicate } from '../transaction-filters/utils/helpers'
+import { filterOutInternalRules } from '../pnb-custom-logic'
 import {
   AuxiliaryIndexTransaction,
   RulesEngineTransactionRepositoryInterface,
@@ -122,6 +123,8 @@ export class MongoDbTransactionRepository
         transaction.destinationPaymentDetails
       ),
       ...(arsScore ? { arsScore } : {}),
+      hitRules: filterOutInternalRules(transaction.hitRules),
+      executedRules: filterOutInternalRules(transaction.executedRules),
     }
 
     const existingTransaction = await this.getTransactionById(

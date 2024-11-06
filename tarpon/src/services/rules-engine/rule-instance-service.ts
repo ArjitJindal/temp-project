@@ -25,6 +25,7 @@ import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
 import { getRuleByRuleId } from './transaction-rules/library'
 import { V8_MIGRATED_RULES } from './v8-migrations'
+import { PNB_INTERNAL_RULES } from './pnb-custom-logic'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
@@ -195,7 +196,14 @@ export class RuleInstanceService {
   }
 
   async getAllRuleInstances(mode?: RuleRunMode): Promise<RuleInstance[]> {
-    return this.ruleInstanceRepository.getAllRuleInstances(mode)
+    const allRuleInstances =
+      await this.ruleInstanceRepository.getAllRuleInstances(mode)
+    return allRuleInstances.filter(
+      (ruleInstance) =>
+        !PNB_INTERNAL_RULES.find(
+          (internalRule) => internalRule.id === ruleInstance.id
+        )
+    )
   }
 
   async createOrUpdateRuleInstance(

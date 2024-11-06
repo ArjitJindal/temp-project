@@ -4,6 +4,7 @@ import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
 import { DEFAULT_RISK_LEVEL, getRiskScoreFromLevel } from '@flagright/lib/utils'
 import { CounterRepository } from '../counter/repository'
+import { UserRepository } from '../users/repositories/user-repository'
 import { PulseAuditLogService } from './pulse-audit-log'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -18,6 +19,8 @@ import { traceable } from '@/core/xray'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
+import { hasFeature } from '@/core/utils/context'
+import { User } from '@/@types/openapi-internal/User'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -131,6 +134,39 @@ export class RiskService {
       throw new BadRequest('Invalid request - please provide riskLevel')
     }
     const oldDrsRiskItem = await this.riskRepository.getDRSRiskItem(userId)
+    if (hasFeature('PNB')) {
+      const userRepository = new UserRepository(this.tenantId, {
+        dynamoDb: this.dynamoDb,
+        mongoDb: this.mongoDb,
+      })
+      const user = await userRepository.getUser<User>(userId)
+      if (user) {
+        const oldRiskLevel = oldDrsRiskItem?.derivedRiskLevel
+        const newRiskLevel = riskLevel
+        if (
+          (oldRiskLevel === 'VERY_LOW' && newRiskLevel === 'LOW') ||
+          ((oldRiskLevel === 'LOW' || oldRiskLevel === 'VERY_LOW') &&
+            newRiskLevel === 'MEDIUM')
+        ) {
+          await userRepository.saveUser(
+            {
+              ...user,
+              tags: [
+                ...(user.tags?.filter(
+                  (tag) => tag.key !== 'RISK_LEVEL_STATUS'
+                ) ?? []),
+                {
+                  isEditable: true,
+                  value: 'Incomplete',
+                  key: 'RISK_LEVEL_STATUS',
+                },
+              ],
+            },
+            'CONSUMER'
+          )
+        }
+      }
+    }
     const newDrsRiskItem =
       await this.riskRepository.createOrUpdateManualDRSRiskItem(
         userId,

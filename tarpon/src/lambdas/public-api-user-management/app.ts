@@ -26,6 +26,7 @@ import {
   DefaultApiPostConsumerUserRequest,
 } from '@/@types/openapi-public/RequestParameters'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
+import { getUserRiskScoreDetailsForPNB } from '@/services/rules-engine/pnb-custom-logic'
 
 export const userHandler = lambdaApi()(
   async (
@@ -121,7 +122,7 @@ export const userHandler = lambdaApi()(
           hitRules: [],
         }
       }
-
+      let craRiskLevelToReturn = craRiskLevel
       const userManagementService = new UserManagementService(
         tenantId,
         dynamoDb,
@@ -133,18 +134,26 @@ export const userHandler = lambdaApi()(
         userPayload,
         isConsumerUser ? 'CONSUMER' : 'BUSINESS'
       )
-
+      if (hasFeature('PNB') && riskScoreResult) {
+        craRiskLevelToReturn = getUserRiskScoreDetailsForPNB(
+          user.hitRules ?? [],
+          riskScoreResult
+        )?.craRiskLevel
+      }
       return {
         userId: user.userId,
         ...((kycRiskLevel || craRiskLevel) && {
           riskScoreDetails: {
             ...(kycRiskLevel && { kycRiskLevel, kycRiskScore }),
-            ...(craRiskLevel && { craRiskLevel, craRiskScore }),
+            ...(craRiskLevelToReturn && {
+              craRiskLevel: craRiskLevelToReturn,
+              craRiskScore,
+            }),
           },
         }),
         ...filterLiveRules({
-          executedRules: user.executedRules,
-          hitRules: user.hitRules,
+          executedRules: user.executedRules ?? [],
+          hitRules: user.hitRules ?? [],
         }),
       } as ConsumerUserMonitoringResult
     }
@@ -155,7 +164,13 @@ export const userHandler = lambdaApi()(
       if (!user) {
         throw new NotFound(`User ${request.userId} not found`)
       }
-      return user
+      return {
+        ...user,
+        ...filterLiveRules({
+          executedRules: user.executedRules ?? [],
+          hitRules: user.hitRules ?? [],
+        }),
+      }
     })
     handlers.registerGetBusinessUserUserId(async (_ctx, request) => {
       const user = await userRepository.getBusinessUserWithRiskScores(
@@ -164,7 +179,13 @@ export const userHandler = lambdaApi()(
       if (!user) {
         throw new NotFound(`User ${request.userId} not found`)
       }
-      return user
+      return {
+        ...user,
+        ...filterLiveRules({
+          executedRules: user.executedRules ?? [],
+          hitRules: user.hitRules ?? [],
+        }),
+      }
     })
 
     const getCreateUserOptions = (

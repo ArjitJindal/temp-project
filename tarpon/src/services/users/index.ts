@@ -21,6 +21,7 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { UserManagementService } from '../rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { getInternalRules } from '../rules-engine/pnb-custom-logic'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
@@ -448,7 +449,6 @@ export class UserService {
         userData: { pepStatus: user?.pepStatus, tags: user?.tags },
         ruleInstances: {},
       }
-
       ruleInstancesHit.forEach((ruleInstance) => {
         const hitRulesDetails = hitRules.find(
           (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
@@ -1014,21 +1014,24 @@ export class UserService {
       ? `User API tags updated due to hit of rule ${options?.tagDetailsRuleInstance?.id}`
       : 'User API tags updated over the console'
     const [savedComment] = await Promise.all([
-      this.userRepository.saveUserComment(user.userId, {
-        body: commentBody,
-        createdAt: Date.now(),
-        userId: options?.bySystem
-          ? FLAGRIGHT_SYSTEM_USER
-          : (getContext()?.user?.id as string),
-        updatedAt: Date.now(),
-      }),
+      !getInternalRules().find(
+        (rule) => options?.tagDetailsRuleInstance?.id === rule.id
+      ) &&
+        this.userRepository.saveUserComment(user.userId, {
+          body: commentBody,
+          createdAt: Date.now(),
+          userId: options?.bySystem
+            ? FLAGRIGHT_SYSTEM_USER
+            : (getContext()?.user?.id as string),
+          updatedAt: Date.now(),
+        }),
       this.userAuditLogService.handleAuditLogForTagsUpdate(
         user.userId,
         updateRequest.tags
       ),
       sendWebhookTasks(this.userRepository.tenantId, webhookTasks),
     ])
-    return savedComment
+    return savedComment || null
   }
 
   private async handlePostActionForKycAndUserUpdate(

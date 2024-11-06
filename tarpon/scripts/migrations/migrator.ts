@@ -20,6 +20,9 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleService } from '@/services/rules-engine'
 import { seedDemoData } from '@/core/seed'
 import { getAuth0ManagementClient } from '@/utils/auth0-utils'
+import { hasFeature } from '@/core/utils/context'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -177,6 +180,17 @@ async function syncData() {
   await syncFeatureFlags()
   await migrateAllTenants(async (tenant) => {
     await RuleInstanceService.migrateV2RuleInstancesToV8(tenant.id)
+    if (hasFeature('PNB')) {
+      const ruleInstanceService = new RuleInstanceService(tenant.id, {
+        mongoDb: await getMongoDbClient(),
+        dynamoDb: getDynamoDbClient(),
+      })
+      await Promise.all(
+        PNB_INTERNAL_RULES.map((rule) =>
+          ruleInstanceService.createOrUpdateRuleInstance(rule)
+        )
+      )
+    }
   })
   if (envIs('local')) {
     await syncAccountsLocally()

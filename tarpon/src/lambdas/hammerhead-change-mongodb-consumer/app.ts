@@ -12,6 +12,8 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
+import { hasFeature } from '@/core/utils/context'
+import { getRiskLevelForPNB } from '@/services/rules-engine/pnb-custom-logic'
 
 export async function arsScoreEventHandler(
   tenantId: string,
@@ -75,11 +77,14 @@ export async function drsScoreEventHandler(
       newDrsScore.drsScore
     )
     if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
+      const riskLevel = hasFeature('PNB')
+        ? getRiskLevelForPNB(oldRiskLevel, newRiskLevel)
+        : newRiskLevel
       await sendWebhookTasks(tenantId, [
         {
           event: 'CRA_RISK_LEVEL_UPDATED',
           payload: {
-            riskLevel: newRiskLevel,
+            riskLevel,
             userId: newDrsScore.userId,
           },
           triggeredBy:

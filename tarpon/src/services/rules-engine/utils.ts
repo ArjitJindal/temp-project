@@ -3,6 +3,7 @@ import { uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { V8TransactionAggregationTask } from './rules-engine-service'
+import { filterOutInternalRules } from './pnb-custom-logic'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
@@ -305,13 +306,21 @@ type Executions = {
   executedRules: ExecutedRulesResult[]
 }
 
-export function filterLiveRules(executions: Partial<Executions>): Executions {
+export function filterLiveRules(
+  executions: Partial<Executions>,
+  includeInternal = false
+): Executions {
+  const hitRules =
+    executions.hitRules?.filter((hitRule) => !hitRule.isShadow) ?? []
+  const executedRules =
+    executions.executedRules?.filter(
+      (executedRule) => !executedRule.isShadow
+    ) ?? []
   return {
-    hitRules: executions.hitRules?.filter((hitRule) => !hitRule.isShadow) ?? [],
-    executedRules:
-      executions.executedRules?.filter(
-        (executedRule) => !executedRule.isShadow
-      ) ?? [],
+    hitRules: includeInternal ? hitRules : filterOutInternalRules(hitRules),
+    executedRules: includeInternal
+      ? executedRules
+      : filterOutInternalRules(executedRules),
   }
 }
 

@@ -86,6 +86,7 @@ import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResp
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
 
 @traceable
 export class UserRepository {
@@ -1040,6 +1041,8 @@ export class UserRepository {
       ...user,
       createdAt: user.createdAt ?? Date.now(),
       updatedAt: Date.now(),
+      hitRules: filterOutInternalRules(user.hitRules ?? []),
+      executedRules: filterOutInternalRules(user.executedRules ?? []),
     }
 
     await Promise.all([

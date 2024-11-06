@@ -1,6 +1,8 @@
 import { isEmpty, uniqBy } from 'lodash'
+import { mergeRulesForPNB } from '../pnb-custom-logic'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
+import { hasFeature } from '@/core/utils/context'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -33,6 +35,9 @@ export function mergeRules<T extends { ruleInstanceId: string }>(
   existingRulesResult: Array<T>,
   newRulesResults: Array<T>
 ): Array<T> {
+  if (hasFeature('PNB')) {
+    return mergeRulesForPNB(existingRulesResult, newRulesResults)
+  }
   return uniqBy(
     (newRulesResults ?? []).concat(existingRulesResult ?? []),
     (r) => r.ruleInstanceId

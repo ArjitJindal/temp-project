@@ -125,7 +125,7 @@ async function userHandler(
   if (!isEqual(oldUser?.hitRules, newUser?.hitRules)) {
     /* Comparing hit rules to avoid a loop being created */
     const ruleInstances = await ruleInstancesRepo.getRuleInstancesByIds(
-      filterLiveRules({ hitRules: internalUser.hitRules }).hitRules.map(
+      filterLiveRules({ hitRules: internalUser.hitRules }, true).hitRules.map(
         (rule) => rule.ruleInstanceId
       )
     )
@@ -138,6 +138,7 @@ async function userHandler(
     const updatedUser = await usersRepo.getUser<InternalUser>(
       internalUser.userId
     )
+
     internalUser = {
       ...internalUser,
       ...UserUpdateRequest.getAttributeTypeMap().reduce((acc, key) => {
@@ -253,7 +254,7 @@ export const transactionHandler = async (
         arsScore
       ),
       ruleInstancesRepo.getRuleInstancesByIds(
-        filterLiveRules({ hitRules: transaction.hitRules }).hitRules.map(
+        filterLiveRules({ hitRules: transaction.hitRules }, true).hitRules.map(
           (rule) => rule.ruleInstanceId
         )
       ),

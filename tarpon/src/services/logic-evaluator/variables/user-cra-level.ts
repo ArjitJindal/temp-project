@@ -8,13 +8,15 @@ import { hasFeatures } from '@/core/utils/context'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 
-export const USER_CRA_LEVEL: CommonUserLogicVariable = {
-  // key is `userCRALevel` instead of `craLevel` for verbosity
-  key: 'userCRALevel',
+const getVariableDefinition = (
+  key: string,
+  label: string
+): Omit<CommonUserLogicVariable, 'load'> => ({
+  key,
   entity: 'USER',
   valueType: 'string',
   uiDefinition: {
-    label: 'CRA risk level',
+    label,
     type: 'select',
     valueSources: ['value', 'field', 'func'],
     fieldSettings: {
@@ -24,6 +26,11 @@ export const USER_CRA_LEVEL: CommonUserLogicVariable = {
     },
   },
   requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
+})
+
+export const USER_CRA_LEVEL: CommonUserLogicVariable = {
+  // key is `userCRALevel` instead of `craLevel` for verbosity
+  ...getVariableDefinition('userCRALevel', 'CRA risk level'),
   load: async (user: User | Business, context?: LogicVariableContext) => {
     if (!context) {
       throw new Error('Missing context')
@@ -44,5 +51,27 @@ export const USER_CRA_LEVEL: CommonUserLogicVariable = {
       riskClassificationValues,
       craScore?.drsScore ?? null
     )
+  },
+}
+
+export const USER_PREVIOUS_CRA_LEVEL: CommonUserLogicVariable = {
+  ...getVariableDefinition('userPreviousCRALevel', 'Previous CRA risk level'),
+  load: async (user: User | Business, context?: LogicVariableContext) => {
+    if (!context) {
+      throw new Error('Missing context')
+    }
+
+    if (!hasFeatures(['RISK_SCORING', 'RISK_LEVELS'])) {
+      return null
+    }
+
+    const dynamoDb = context.dynamoDb
+    const riskRepository = new RiskRepository(context.tenantId, {
+      dynamoDb,
+    })
+    const previousCraLevel = await riskRepository.getPreviousCraLevel(
+      user.userId
+    )
+    return previousCraLevel
   },
 }

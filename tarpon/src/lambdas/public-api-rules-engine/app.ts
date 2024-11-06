@@ -29,6 +29,7 @@ import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -343,11 +344,12 @@ export const userEventsHandler = lambdaApi()(
       const isDrsUpdatable = lockCraRiskLevel
         ? lockCraRiskLevel !== 'true'
         : undefined
-      const result = await userManagementService.verifyConsumerUserEvent(
-        userEvent,
-        allowUserTypeConversion === 'true',
-        isDrsUpdatable
-      )
+      const result: UserWithRulesResult =
+        await userManagementService.verifyConsumerUserEvent(
+          userEvent,
+          allowUserTypeConversion === 'true',
+          isDrsUpdatable
+        )
 
       return {
         ...result,

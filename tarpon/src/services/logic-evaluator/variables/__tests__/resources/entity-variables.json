@@ -1816,5 +1816,8 @@
   "BUSINESS_USER:creationAgeYears__BOTH",
   "USER:sarDetails__SENDER",
   "USER:sarDetails__RECEIVER",
-  "USER:sarDetails__BOTH"
+  "USER:sarDetails__BOTH",
+  "USER:userPreviousCRALevel__SENDER",
+  "USER:userPreviousCRALevel__RECEIVER",
+  "USER:userPreviousCRALevel__BOTH"
 ]

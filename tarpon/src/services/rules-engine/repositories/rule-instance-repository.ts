@@ -95,6 +95,7 @@ function toRuleInstance(item: any): RuleInstance {
     logicMachineLearningVariables: item.logicMachineLearningVariables,
     ruleExecutionMode: item.ruleExecutionMode,
     ruleRunMode: item.ruleRunMode,
+    alertCreationOnHit: item.alertCreationOnHit,
   }
 }
 
@@ -301,7 +302,7 @@ export class RuleInstanceRepository {
       alertConfig: ruleInstance.alertConfig,
       ruleId,
     }
-
+    console.log('newRuleInstance', newRuleInstance)
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {
@@ -362,7 +363,7 @@ export class RuleInstanceRepository {
   public async getActiveRuleInstances(
     type?: RuleType
   ): Promise<ReadonlyArray<RuleInstance>> {
-    return this.getRuleInstancesByStatus(ACTIVE_STATUS, type)
+    return await this.getRuleInstancesByStatus(ACTIVE_STATUS, type)
   }
 
   public async getDeployingRuleInstances(

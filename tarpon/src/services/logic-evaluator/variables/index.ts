@@ -52,7 +52,7 @@ import { USER_CHILD_USER_IDS } from './user-child-user-ids'
 import { USER_KRS_SCORE } from './user-krs-score'
 import { USER_CRA_SCORE } from './user-cra-score'
 import { USER_KRS_LEVEL } from './user-krs-level'
-import { USER_CRA_LEVEL } from './user-cra-level'
+import { USER_CRA_LEVEL, USER_PREVIOUS_CRA_LEVEL } from './user-cra-level'
 import { SAR_DETAILS } from './sar-details'
 import { PNB_TAGS_KEYS_VARIABLES } from './pnb-tags-keys'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -212,6 +212,7 @@ const USER_DERIVED_VARIABLES: Array<
   BUSINESS_USER_CREATION_AGE_MONTHS,
   BUSINESS_USER_CREATION_AGE_YEARS,
   SAR_DETAILS,
+  USER_PREVIOUS_CRA_LEVEL,
 ]
 
 function isTimestampVariable(key: string): boolean {
