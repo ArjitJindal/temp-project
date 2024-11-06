@@ -16,10 +16,19 @@ interface Props {
   isExpandedByDefault?: boolean;
   children: React.ReactNode;
   hasUpdates: boolean;
+  pdfMode?: boolean;
 }
 
 export default function ListingCard(props: Props) {
-  const { listedTime, title, countries, children, isExpandedByDefault = false, hasUpdates } = props;
+  const {
+    listedTime,
+    title,
+    countries,
+    children,
+    isExpandedByDefault = false,
+    hasUpdates,
+    pdfMode,
+  } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const nonEmptyTime = listedTime.filter(notEmpty);
   return (
@@ -37,7 +46,7 @@ export default function ListingCard(props: Props) {
           {countries.length > 0 && (
             <div className={s.countries}>
               {countries.map((code) => (
-                <CountryFlag key={code} code={code} />
+                <CountryFlag key={code} code={code} svg={!pdfMode} />
               ))}
             </div>
           )}

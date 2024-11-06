@@ -30,7 +30,7 @@ export default function CountryDisplay(props: Props): JSX.Element {
   );
 }
 
-export function CountryFlag(props: { code: CountryCode }) {
-  const { code } = props;
-  return <ReactCountryFlag countryCode={code} svg />;
+export function CountryFlag(props: { code: CountryCode; svg?: boolean }) {
+  const { code, svg } = props;
+  return <ReactCountryFlag countryCode={code} svg={svg ?? true} />;
 }

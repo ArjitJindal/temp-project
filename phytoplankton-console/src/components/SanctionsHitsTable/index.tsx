@@ -55,6 +55,7 @@ interface Props {
   searchedAt?: number;
   selectionActions?: SelectionAction<SanctionsHit, TableSearchParams>[];
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
+  alertCreatedAt?: number;
 }
 
 // todo: delete when have information in sanction hit
@@ -74,6 +75,7 @@ export default function SanctionsHitsTable(props: Props) {
     selectedIds,
     onSelect,
     onSanctionsHitsChangeStatus,
+    alertCreatedAt,
   } = props;
   const [selectedSearchHit, setSelectedSearchHit] = useState<
     AsyncResource<SanctionsHit | undefined>
@@ -211,6 +213,7 @@ export default function SanctionsHitsTable(props: Props) {
                 }
               : undefined
           }
+          alertCreatedAt={alertCreatedAt}
         />
       )}
     </>

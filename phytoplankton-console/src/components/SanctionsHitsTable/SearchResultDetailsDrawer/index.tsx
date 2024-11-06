@@ -3,11 +3,18 @@ import { LoadingOutlined } from '@ant-design/icons';
 import { compact, startCase, uniq, uniqBy } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
+import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
-import { SanctionsEntity, SanctionsHit, SanctionsHitStatus, SanctionsSource } from '@/apis';
+import {
+  CountryCode,
+  SanctionsEntity,
+  SanctionsHit,
+  SanctionsHitStatus,
+  SanctionsSource,
+} from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
@@ -28,6 +35,8 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import SanctionsComparison, {
   getComparisonItems,
 } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison';
+import { CountryFlag } from '@/components/ui/CountryDisplay';
+import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 
 interface Props {
   hitRes: AsyncResource<SanctionsHit | undefined>;
@@ -38,10 +47,20 @@ interface Props {
   showNavigation?: boolean;
   onNext?: () => void;
   onPrev?: () => void;
+  alertCreatedAt?: number;
 }
 
 export default function SearchResultDetailsDrawer(props: Props) {
-  const { hitRes, onClose, newStatus, onChangeStatus, showNavigation, onNext, onPrev } = props;
+  const {
+    hitRes,
+    onClose,
+    newStatus,
+    onChangeStatus,
+    showNavigation,
+    onNext,
+    onPrev,
+    alertCreatedAt,
+  } = props;
 
   const hit = getOr(hitRes, undefined);
 
@@ -142,7 +161,12 @@ export default function SearchResultDetailsDrawer(props: Props) {
                 <Portal>
                   <div style={{ position: 'fixed', opacity: 0, pointerEvents: 'none' }}>
                     <div ref={setPdfRef}>
-                      <Content {...props} pdfMode={true} hit={hit} />
+                      <Content
+                        {...props}
+                        pdfMode={true}
+                        hit={hit}
+                        alertCreatedAt={alertCreatedAt}
+                      />
                     </div>
                   </div>
                 </Portal>
@@ -157,14 +181,29 @@ export default function SearchResultDetailsDrawer(props: Props) {
   );
 }
 
-function Content(props: { hit: SanctionsHit; pdfMode?: boolean; searchedAt?: number }) {
-  const { hit, pdfMode = false, searchedAt } = props;
+function Content(props: {
+  hit: SanctionsHit;
+  pdfMode?: boolean;
+  searchedAt?: number;
+  alertCreatedAt?: number;
+}) {
+  const { hit, pdfMode = false, searchedAt, alertCreatedAt } = props;
   const comparisonItems = getComparisonItems(
     hit.entity.matchTypeDetails || [],
     hit.hitContext || { entity: 'USER' },
   );
   return (
     <>
+      {pdfMode ? (
+        <div className={s.pdfModeHeader}>
+          {alertCreatedAt && (
+            <div>Alert created at {dayjs(alertCreatedAt).format(DEFAULT_DATE_TIME_FORMAT)}</div>
+          )}{' '}
+          <div> Downloaded at {dayjs().format(DEFAULT_DATE_TIME_FORMAT)}</div>
+        </div>
+      ) : (
+        <></>
+      )}
       {hit.status === 'OPEN' && <AISummary text={makeStubAiText(hit)} />}
       {searchedAt && (
         <Section title={'Searched at'}>
@@ -183,6 +222,20 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
   const occupations = entity.occupations
     ? entity.occupations.map((occ) => occ.title).filter(Boolean)
     : [];
+
+  const countryCodesMap = compact(entity.countries)?.reduce((acc, countryName) => {
+    let code = Object.entries(COUNTRIES).find(([_, name]) => name === countryName)?.[0];
+    if (!code) {
+      code = Object.entries(COUNTRY_ALIASES).find(([_, aliases]) =>
+        aliases?.includes(countryName),
+      )?.[0];
+    }
+    if (code) {
+      acc[code] = countryName;
+    }
+    return acc;
+  }, {});
+
   return (
     <>
       <Section title={'Key information'}>
@@ -203,7 +256,15 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           }
           {entity.countries && entity.countries.length > 0 && (
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
-              {entity.countries?.join(', ')}
+              <div className={s.countryList}>
+                {Object.entries(countryCodesMap).map(([code, countryName], i) => (
+                  <div>
+                    <CountryFlag key={code} code={code as CountryCode} svg={!pdfMode} />{' '}
+                    <span>{countryName}</span>
+                    {i < Object.entries(countryCodesMap).length - 1 && ', '}{' '}
+                  </div>
+                ))}
+              </div>
             </Form.Layout.Label>
           )}
           {entity.nationality && entity.nationality.length > 0 && (
@@ -366,6 +427,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
 
                 return (
                   <ListingCard
+                    pdfMode={pdfMode}
                     key={source?.name}
                     countries={source.countryCodes || []}
                     title={sourceTitle || ''}

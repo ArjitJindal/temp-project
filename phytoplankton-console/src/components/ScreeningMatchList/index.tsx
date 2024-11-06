@@ -113,6 +113,7 @@ export default function ScreeningMatchList(props: Props) {
                 onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'OPEN');
               }}
               onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+              alertCreatedAt={alert?.createdTimestamp}
             />
           ),
         },
@@ -134,6 +135,7 @@ export default function ScreeningMatchList(props: Props) {
                 onSanctionsHitSelect?.(alert.alertId, sanctionHitsIds, 'CLEARED');
               }}
               onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+              alertCreatedAt={alert?.createdTimestamp}
             />
           ),
         },
