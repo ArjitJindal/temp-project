@@ -947,7 +947,8 @@ export class AlertsService extends CaseAlertsCommonService {
     const accountsService = await AccountsService.getInstance()
     let userAccount: Account | undefined = undefined
     if (!externalRequest && userId) {
-      userAccount = account ?? (await accountsService.getAccount(userId))
+      userAccount =
+        account ?? ((await accountsService.getAccount(userId)) || undefined)
       if (userAccount == null) {
         throw new Error(`User account not found`)
       }

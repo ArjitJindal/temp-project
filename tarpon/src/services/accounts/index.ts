@@ -228,7 +228,7 @@ export class AccountsService {
 
     const user = await this.getAccount(accountId)
 
-    if (!user.email) {
+    if (!user || !user.email) {
       throw new NotFound('User not found')
     }
 
@@ -614,18 +614,25 @@ export class AccountsService {
     return (result.Items ?? []) as ActiveSession[]
   }
 
-  async getAccount(id: string): Promise<Account> {
+  async getAccount(id: string): Promise<Account | null> {
     return this.getAccountInternal(id)
   }
 
-  private getAccountInternal = memoize(async (id: string): Promise<Account> => {
-    const managementClient: ManagementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const user = await auth0AsyncWrapper(() => userManager.get({ id }))
-    return AccountsService.userToAccount(user)
-  })
+  private getAccountInternal = memoize(
+    async (id: string): Promise<Account | null> => {
+      const managementClient: ManagementClient = await getAuth0ManagementClient(
+        this.config.auth0Domain
+      )
+      const userManager = managementClient.users
+      try {
+        const user = await auth0AsyncWrapper(() => userManager.get({ id }))
+        return AccountsService.userToAccount(user)
+      } catch (e) {
+        logger.warn(`Error getting account ${id}`, { error: e })
+        return null
+      }
+    }
+  )
 
   async getAccounts(ids: string[]): Promise<Account[]> {
     const managementClient: ManagementClient = await getAuth0ManagementClient(
@@ -953,7 +960,7 @@ export class AccountsService {
     tenantId: string,
     accountId: string,
     deactivate: boolean
-  ): Promise<ApiAccount> {
+  ): Promise<Account | null> {
     await Promise.all([
       this.updateAuth0User(accountId, {
         blocked: deactivate,

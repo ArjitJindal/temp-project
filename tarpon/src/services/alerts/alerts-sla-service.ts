@@ -1,7 +1,7 @@
 import { MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-import { AccountsService } from '../accounts'
+import { Account, AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
 import { AlertsRepository } from './repository'
 import {
@@ -31,6 +31,13 @@ export class AlertsSLAService {
     this.accountsService = new AccountsService({ auth0Domain }, { mongoDb })
   }
 
+  private async getAccounts(userIds: string[]): Promise<Account[]> {
+    const accounts = await Promise.all(
+      userIds.map((userId) => this.accountsService.getAccount(userId))
+    )
+    return accounts.filter((account) => account !== null) as Account[]
+  }
+
   public async calculateSLAStatusForAlert(
     alert: Alert,
     slaPolicyId: string
@@ -44,21 +51,16 @@ export class AlertsSLAService {
       return
     }
 
-    // As we show these accounts in the UI as assignees but we store them as reviewAssignments
     const accounts = alert.assignments
-      ? await Promise.all(
-          alert.assignments.map((assignee) => {
-            return this.accountsService.getAccount(assignee.assigneeUserId)
-          })
+      ? await this.getAccounts(
+          alert.assignments.map((assignee) => assignee.assigneeUserId)
         )
       : []
     const reviewAccounts = alert.reviewAssignments
-      ? await Promise.all(
-          alert.reviewAssignments.map((reviewAssignment) => {
-            return this.accountsService.getAccount(
-              reviewAssignment.assigneeUserId
-            )
-          })
+      ? await this.getAccounts(
+          alert.reviewAssignments.map(
+            (reviewAssignment) => reviewAssignment.assigneeUserId
+          )
         )
       : []
     const isRoleMatched = matchPolicyRoleConditions(

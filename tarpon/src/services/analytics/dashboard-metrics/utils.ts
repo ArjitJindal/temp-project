@@ -272,6 +272,9 @@ export const updateRoles = async (db: Db, collectionName: string) => {
       let role: string
       if (accountId.startsWith('auth0')) {
         const account = await accountsService.getAccount(accountId)
+        if (account === null) {
+          continue
+        }
         role = account.role
       } else {
         role = 'other'
