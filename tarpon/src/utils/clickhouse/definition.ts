@@ -196,6 +196,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
     )`,
       `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')`,
+      `pepDetails Array(Tuple(isPepHit Bool, pepCountry String, pepRank String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'pepStatus'), 'Array(Tuple(isPepHit Bool, pepCountry String, pepRank String))')`,
       `userRegistrationStatus Nullable(String) MATERIALIZED 
         CASE
             WHEN JSON_VALUE(data, '$.type') = 'BUSINESS' THEN 
@@ -211,7 +212,6 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `craRiskLevel Nullable(String) MATERIALIZED JSON_VALUE(data, '$.drsScore.manualRiskLevel')`,
       `drsScore_drsScore Float64 MATERIALIZED JSONExtractFloat(data, 'drsScore', 'drsScore')`,
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
-      `pepDetails Array(Tuple(isPepHit Bool, pepCountry LowCardinality(String), pepRank LowCardinality(String))) MATERIALIZED JSONExtract(data, 'pepStatus', 'Array(Tuple(isPepHit Bool, pepCountry LowCardinality(String), pepRank LowCardinality(String)))')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
