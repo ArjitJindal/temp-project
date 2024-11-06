@@ -19,7 +19,7 @@ import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSele
 export type CommonCaseParams = {
   caseId: string;
   timestamp: string[];
-  createdTimestamp: string[];
+  createdTimestamp: (string | undefined)[];
   caseCreatedTimestamp: string[];
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;

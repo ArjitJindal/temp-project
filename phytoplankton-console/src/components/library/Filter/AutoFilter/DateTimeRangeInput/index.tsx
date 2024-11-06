@@ -27,7 +27,9 @@ export default function DateTimeRangeInput(
 
   const handleCancel = useCallback(() => {
     setOpen(false);
-    setLocalState?.(value);
+    if (value != null) {
+      setLocalState?.(value);
+    }
   }, [setOpen, value]);
 
   const handleConfirm = useCallback(() => {
@@ -40,7 +42,7 @@ export default function DateTimeRangeInput(
   const isOpenChanged = useIsChanged(isOpen);
   useEffect(() => {
     const popoverJustClosed = isOpenChanged && !isOpen;
-    if (popoverJustClosed) {
+    if (popoverJustClosed && value != null) {
       setLocalState?.(value);
     }
   }, [isOpen, isOpenChanged, value]);

@@ -42,7 +42,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       showCases: params.showCases,
       alertId: params.alertId,
       timestamp: params.timestamp?.map((x) => dayjs(x).valueOf()).join(','),
-      createdTimestamp: params.createdTimestamp?.map((x) => dayjs(x).valueOf()).join(','),
+      createdTimestamp: params.createdTimestamp
+        ?.map((x) => (x ? dayjs(x).valueOf() : 'null'))
+        .join(','),
       caseId: params.caseId,
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
@@ -83,7 +85,9 @@ export const queryAdapter: Adapter<TableSearchParams> = {
         ? raw.timestamp.split(',').map((x) => dayjs(parseInt(x)).format())
         : undefined,
       createdTimestamp: raw.createdTimestamp
-        ? raw.createdTimestamp.split(',').map((x) => dayjs(parseInt(x)).format())
+        ? raw.createdTimestamp
+            .split(',')
+            .map((x) => (x === 'null' ? undefined : dayjs(parseInt(x)).format()))
         : undefined,
       caseId: raw.caseId,
       alertId: raw.alertId,
