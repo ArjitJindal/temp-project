@@ -69,26 +69,11 @@ export const canReviewCases = (
   return every(cases, (c) => some(c.reviewAssignments, (r) => r.assigneeUserId === userId));
 };
 
-export const canEscalateCases = (
-  cases: Record<string, { reviewAssignments?: Assignment[] }>,
-  userId: string,
-  isMultiLevelEscalationEnabled: boolean,
-): boolean => {
-  return isMultiLevelEscalationEnabled ? canReviewCases(cases, userId) : true;
-};
-
 export const isInReviewCases = (
   cases: Record<string, { caseStatus?: CaseStatus; alertStatus?: CaseStatus }>,
   alert?: boolean,
 ): boolean => {
   return some(cases, (c) => statusInReview(alert ? c.alertStatus : c.caseStatus));
-};
-
-export const isEscalatedCases = (
-  cases: Record<string, { caseStatus?: CaseStatus; alertStatus?: CaseStatus }>,
-  alert?: boolean,
-): boolean => {
-  return some(cases, (c) => statusEscalated(alert ? c.alertStatus : c.caseStatus));
 };
 
 export const getSingleCaseStatusCurrent = (
