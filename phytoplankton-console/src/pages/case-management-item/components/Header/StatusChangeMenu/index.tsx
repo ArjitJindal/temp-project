@@ -10,6 +10,7 @@ import {
   canReviewCases,
   findLastStatusForInReview,
   isInReviewCases,
+  isEscalatedCases,
   statusInReview,
 } from '@/utils/case-utils';
 import {
@@ -72,8 +73,21 @@ const useOptions = (props: Props) => {
       canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
   }, [caseItem, caseId, currentUser]);
+
+  const displayEscalateButtons = useMemo(() => {
+    if (!isMultiLevelEscalationEnabled) {
+      true;
+    }
+    if (!caseId) {
+      return false;
+    }
+    return (
+      isEscalatedCases({ [caseId]: caseItem }) &&
+      canReviewCases({ [caseId]: caseItem }, currentUser.userId)
+    );
+  }, [caseItem, caseId, currentUser, isMultiLevelEscalationEnabled]);
   return [
-    ...(escalationEnabled && !isReview && caseId
+    ...(escalationEnabled && !isReview && caseId && displayEscalateButtons
       ? [
           {
             value: 'ESCALATE',
@@ -110,7 +124,7 @@ const useOptions = (props: Props) => {
           },
         ]
       : []),
-    ...(isMultiLevelEscalationEnabled && isCaseEscalated && caseId
+    ...(isMultiLevelEscalationEnabled && isCaseEscalated && caseId && displayEscalateButtons
       ? [
           {
             value: 'ESCALATE_L2',

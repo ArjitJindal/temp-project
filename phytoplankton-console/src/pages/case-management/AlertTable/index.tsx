@@ -62,6 +62,7 @@ import {
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SarButton as SarButton } from '@/components/Sar';
 import {
+  canEscalateCases,
   canReviewCases,
   commentsToString,
   findLastStatusForInReview,
@@ -1176,11 +1177,13 @@ export default function AlertTable(props: Props) {
 
       const isReviewAlerts = isInReviewCases(selectedItems, true);
 
+      const canEscalate = canEscalateCases(selectedItems, user.userId, isMultiEscalationEnabled);
       return (
         escalationEnabled &&
         caseId &&
         alertStatus &&
-        !isReviewAlerts && (
+        !isReviewAlerts &&
+        canEscalate && (
           <AlertsStatusChangeButton
             ids={selectedIds}
             transactionIds={selectedTxns}
@@ -1227,21 +1230,24 @@ export default function AlertTable(props: Props) {
         return;
       }
 
+      const canEscalate = canEscalateCases(selectedItems, user.userId, isMultiEscalationEnabled);
       return (
-        <AlertsStatusChangeButton
-          ids={selectedIds}
-          transactionIds={selectedTxns}
-          onSaved={() => {
-            reloadTable();
-            setSelectedTxns({});
-          }}
-          status={status}
-          caseId={caseId}
-          isDisabled={isDisabled}
-          statusTransitions={{
-            ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
-          }}
-        />
+        canEscalate && (
+          <AlertsStatusChangeButton
+            ids={selectedIds}
+            transactionIds={selectedTxns}
+            onSaved={() => {
+              reloadTable();
+              setSelectedTxns({});
+            }}
+            status={status}
+            caseId={caseId}
+            isDisabled={isDisabled}
+            statusTransitions={{
+              ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+            }}
+          />
+        )
       );
     },
     ({ selectedIds, selectedItems, isDisabled }) => {

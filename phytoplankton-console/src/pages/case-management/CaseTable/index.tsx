@@ -69,6 +69,7 @@ import {
   getNextStatusFromInReview,
   getAssignmentsToShow,
   statusEscalatedL2,
+  canEscalateCases,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
@@ -705,19 +706,25 @@ export default function CaseTable(props: Props) {
           if (statusEscalatedL2(caseItem.caseStatus) || !statusEscalated(caseItem.caseStatus)) {
             return;
           }
-
+          const canEscalate = canEscalateCases(
+            selectedItems,
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
           return (
-            <CasesStatusChangeButton
-              caseIds={selectedIds}
-              caseStatus={caseItem.caseStatus}
-              onSaved={reloadTable}
-              isDisabled={isDisabled}
-              statusTransitions={{
-                ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
-                ESCALATED_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
-                ESCALATED_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
-              }}
-            />
+            canEscalate && (
+              <CasesStatusChangeButton
+                caseIds={selectedIds}
+                caseStatus={caseItem.caseStatus}
+                onSaved={reloadTable}
+                isDisabled={isDisabled}
+                statusTransitions={{
+                  ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                  ESCALATED_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                  ESCALATED_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                }}
+              />
+            )
           );
         },
         ({ selectedIds, selectedItems, isDisabled }) => {
@@ -731,10 +738,17 @@ export default function CaseTable(props: Props) {
             caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
           );
           const isInReview = isInReviewCases(selectedItems);
+
+          const canEscalate = canEscalateCases(
+            selectedItems,
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
           return (
             selectedIdsCount === 1 &&
             escalationEnabled &&
-            !isInReview && (
+            !isInReview &&
+            canEscalate && (
               <CasesStatusChangeButton
                 caseIds={selectedIds}
                 caseStatus={caseItem.caseStatus}
