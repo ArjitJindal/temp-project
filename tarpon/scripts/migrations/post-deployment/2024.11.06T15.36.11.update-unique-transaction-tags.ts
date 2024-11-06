@@ -17,6 +17,18 @@ async function migrateTenant(tenant: Tenant) {
   )
   const uniqueTagsCollection = db.collection(UNIQUE_TAGS_COLLECTION(tenant.id))
 
+  const isUniqueTagsCollectionExists =
+    (
+      await db
+        .listCollections({ name: UNIQUE_TAGS_COLLECTION(tenant.id) })
+        .toArray()
+    ).length > 0
+
+  if (isUniqueTagsCollectionExists) {
+    // If Unique Tags Collection exists, we assume that the migration is already done
+    return
+  }
+
   const uniqueTags = compact(
     await uniqueTransactionTagsCollection.distinct('tag')
   )
@@ -45,8 +57,16 @@ async function migrateTenant(tenant: Tenant) {
     )
   }
 
-  // drop collection
-  await db.dropCollection(uniqueTransactionTagsCollectionName)
+  const isCollectionExists =
+    (
+      await db
+        .listCollections({ name: uniqueTransactionTagsCollectionName })
+        .toArray()
+    ).length > 0
+
+  if (isCollectionExists) {
+    await db.dropCollection(uniqueTransactionTagsCollectionName)
+  }
 }
 
 export const up = async () => {
