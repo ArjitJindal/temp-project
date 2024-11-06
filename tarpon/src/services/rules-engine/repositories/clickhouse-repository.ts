@@ -172,7 +172,6 @@ export class ClickhouseTransactionsRepository {
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
 
     const data = await offsetPaginateClickhouse<InternalTransaction>(
-      this.tenantId,
       this.clickhouseClient,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,

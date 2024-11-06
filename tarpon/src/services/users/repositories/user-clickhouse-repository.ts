@@ -62,7 +62,6 @@ export class UserClickhouseRepository {
 
     const [data, riskClassificationValues] = await Promise.all([
       offsetPaginateClickhouse<T>(
-        this.tenantId,
         this.clickhouseClient,
         CLICKHOUSE_DEFINITIONS.USERS.tableName,
         CLICKHOUSE_DEFINITIONS.USERS.tableName,

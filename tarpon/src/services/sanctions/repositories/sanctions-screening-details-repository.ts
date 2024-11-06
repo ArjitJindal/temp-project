@@ -364,7 +364,6 @@ export class SanctionsScreeningDetailsRepository {
     const query = this.getSanctionsScreeningDetailsClickhouseQuery(params)
 
     const data = await offsetPaginateClickhouse<SanctionsScreeningDetails>(
-      this.tenantId,
       clickhouseClient,
       CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
       CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,

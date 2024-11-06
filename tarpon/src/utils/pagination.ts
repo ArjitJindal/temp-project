@@ -12,6 +12,7 @@ import {
 import { ClickHouseClient } from '@clickhouse/client'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
+import { getContext } from '@/core/utils/context'
 
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -219,7 +220,6 @@ async function getPrevCursor<T>(
 }
 
 export async function offsetPaginateClickhouse<T>(
-  tenantId: string,
   client: ClickHouseClient,
   dataTableName: string,
   queryTableName: string,
@@ -244,10 +244,13 @@ export async function offsetPaginateClickhouse<T>(
   })
   `
 
+  const tenantName = getContext()?.tenantName?.toLowerCase()
+
   if (options?.bypassNestedQuery) {
-    findSql = `SELECT data, NULL as count FROM ${queryTableName} FINAL ${
-      where ? `WHERE ${where}` : ''
-    } ${
+    // Temporary fix while removing final so that queries atleast work (Only for PNB)
+    findSql = `SELECT data, NULL as count FROM ${queryTableName} ${
+      !tenantName?.includes('pnb') ? 'FINAL ' : ''
+    } ${where ? `WHERE ${where}` : ''} ${
       excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`
     } LIMIT ${pageSize} OFFSET ${offset}`
   }
