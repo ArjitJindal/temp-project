@@ -126,9 +126,37 @@ export class UserClickhouseRepository {
       whereClauses.push(`type = '${userType}'`)
     }
 
-    if (params.filterIsPepHit != null) {
-      const isPepHit = params.filterIsPepHit === 'true' ? true : false
-      whereClauses.push(`isPepHit = ${isPepHit}`)
+    if (
+      params.filterIsPepHit != null ||
+      params.filterPepCountry != null ||
+      params.filterPepRank != null
+    ) {
+      // if false check for pepDetails which are empty or all have false
+      if (params.filterIsPepHit === 'false') {
+        whereClauses.push(
+          `(arrayAll(x -> x.isPepHit = false, pepDetails) OR length(pepDetails) = 0)`
+        )
+      }
+
+      if (params.filterIsPepHit === 'true') {
+        const arrayExistsClauses: string[] = []
+
+        arrayExistsClauses.push(`x.isPepHit = true`)
+
+        if (params.filterPepCountry?.length) {
+          arrayExistsClauses.push(
+            `x.pepCountry IN ('${params.filterPepCountry.join("','")}')`
+          )
+        }
+
+        if (params.filterPepRank != null) {
+          arrayExistsClauses.push(`x.pepRank = '${params.filterPepRank}'`)
+        }
+
+        whereClauses.push(
+          `arrayExists(x -> ${arrayExistsClauses.join(' AND ')}, pepDetails)`
+        )
+      }
     }
 
     if (params.filterName) {

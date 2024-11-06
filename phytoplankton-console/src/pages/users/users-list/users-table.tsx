@@ -9,7 +9,14 @@ import { InternalUser, RiskLevel } from '@/apis';
 import { TableColumn, TableData } from '@/components/library/Table/types';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { BOOLEAN, DATE, FLOAT, RISK_LEVEL } from '@/components/library/Table/standardDataTypes';
+import {
+  BOOLEAN,
+  COUNTRY,
+  DATE,
+  FLOAT,
+  PEP_RANK,
+  RISK_LEVEL,
+} from '@/components/library/Table/standardDataTypes';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
@@ -25,6 +32,7 @@ type Props = {
 
 const extraFilters = (
   list: 'business' | 'consumer' | 'all',
+  params: UserSearchParams,
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
@@ -108,9 +116,25 @@ const extraFilters = (
   if (list === 'consumer') {
     extraFilters.push({
       key: 'isPepHit',
-      title: 'Is PEP hit',
+      title: 'PEP status',
       renderer: BOOLEAN.autoFilterDataType,
     });
+
+    if (params.isPepHit === 'true') {
+      extraFilters.push({
+        key: 'pepCountry',
+        title: 'PEP Country',
+        renderer: COUNTRY.autoFilterDataType,
+        showFilterByDefault: false,
+      });
+
+      extraFilters.push({
+        key: 'pepRank',
+        title: 'PEP Rank',
+        renderer: PEP_RANK.autoFilterDataType,
+        showFilterByDefault: false,
+      });
+    }
   }
 
   return extraFilters;
@@ -188,7 +212,7 @@ export const UsersTable = (props: Props) => {
     <QueryResultsTable<InternalUser, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type)}
+      extraFilters={extraFilters(type, params)}
       columns={columns}
       queryResults={queryResults}
       params={params}

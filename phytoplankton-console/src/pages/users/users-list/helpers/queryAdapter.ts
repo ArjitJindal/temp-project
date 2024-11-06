@@ -2,7 +2,7 @@ import { UserSearchParams } from '..';
 import { Adapter } from '@/utils/routing';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
-import { RiskLevel, UserRegistrationStatus } from '@/apis';
+import { PepRank, CountryCode, RiskLevel, UserRegistrationStatus } from '@/apis';
 
 const DEFAULT_TIMESTAMP = [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')];
 
@@ -20,6 +20,8 @@ export const queryAdapter: Adapter<UserSearchParams> = {
       userRegistrationStatus: params.userRegistrationStatus?.join(',') ?? '',
       riskLevelLocked: params.riskLevelLocked,
       isPepHit: params.isPepHit,
+      pepCountry: params.pepCountry?.join(',') ?? '',
+      pepRank: params.pepRank,
     };
   },
   deserializer: (raw): UserSearchParams => {
@@ -37,6 +39,8 @@ export const queryAdapter: Adapter<UserSearchParams> = {
         : undefined,
       riskLevelLocked: raw.riskLevelLocked as 'true' | 'false' | undefined,
       isPepHit: raw.isPepHit as 'true' | 'false' | undefined,
+      pepCountry: raw.pepCountry ? (raw.pepCountry.split(',') as CountryCode[]) : undefined,
+      pepRank: raw.pepRank as PepRank | undefined,
     };
   },
 };

@@ -835,7 +835,8 @@ export class UserService {
     const updatedUser = this.createUpdatedUser(user, updateRequest, isBusiness)
 
     const shouldSaveUser = Object.keys(updateRequest).some(
-      (key) => updateRequest[key] && !isEqual(updateRequest[key], user[key])
+      (key) =>
+        updateRequest[key] != null && !isEqual(updateRequest[key], user[key])
     )
 
     if (!shouldSaveUser) {
@@ -956,7 +957,7 @@ export class UserService {
     ruleInstances?: UserUpdateRuleInstances,
     options?: { bySystem?: boolean }
   ) {
-    return updateRequest.pepStatus && !isBusinessUser(user)
+    return updateRequest.pepStatus != null && !isBusinessUser(user)
       ? this.handlePostActionsForPepStatusUpdate(user, updateRequest, {
           bySystem: options?.bySystem,
           pepStatusRuleInstance: ruleInstances?.pepStatus,

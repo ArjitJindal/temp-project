@@ -5,7 +5,7 @@ import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { InternalUser, RiskLevel, UserRegistrationStatus } from '@/apis';
+import { CountryCode, InternalUser, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
@@ -19,6 +19,8 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 
 export interface UserSearchParams extends CommonParams {
   isPepHit?: 'true' | 'false';
+  pepCountry?: CountryCode[];
+  pepRank?: PepRank;
   riskLevels?: RiskLevel[];
   userId?: string;
   tagKey?: string;
@@ -82,6 +84,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         sort,
         riskLevelLocked,
         isPepHit,
+        pepCountry,
+        pepRank,
       } = params;
 
       const queryObj = {
@@ -98,7 +102,9 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         sortField: sort[0]?.[0] ?? 'createdTimestamp',
         sortOrder: sort[0]?.[1] ?? 'descend',
         filterIsPepHit: isPepHit,
+        filterPepRank: pepRank,
         filterRiskLevelLocked: riskLevelLocked,
+        filterPepCountry: pepCountry,
       };
 
       const queryParam = {
@@ -144,7 +150,10 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterRiskLevel: params.riskLevels,
         filterRiskLevelLocked: params.riskLevelLocked,
         filterIsPepHit: params.isPepHit,
+        filterPepCountry: params.pepCountry,
+        filterPepRank: params.pepRank,
       };
+
       const response =
         type === 'business'
           ? await api.getBusinessUsersListV2({

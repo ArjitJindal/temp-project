@@ -218,13 +218,13 @@ export class StreamConsumerBuilder {
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
-          if (update.entityId && envIsNot('test')) {
+          if (update.entityId && envIsNot('test', 'local')) {
             await acquireLock(dbClients.dynamoDb, update.entityId)
           }
           try {
             await this.handleDynamoDbUpdate(update, dbClients)
           } finally {
-            if (update.entityId && envIsNot('test')) {
+            if (update.entityId && envIsNot('test', 'local')) {
               await releaseLock(dbClients.dynamoDb, update.entityId)
             }
           }

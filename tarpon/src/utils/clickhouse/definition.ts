@@ -211,7 +211,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `craRiskLevel Nullable(String) MATERIALIZED JSON_VALUE(data, '$.drsScore.manualRiskLevel')`,
       `drsScore_drsScore Float64 MATERIALIZED JSONExtractFloat(data, 'drsScore', 'drsScore')`,
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
-      `isPepHit Bool MATERIALIZED has(arrayMap(x -> x.1, JSONExtract(data, 'pepStatus', 'Array(Tuple(isPepHit Bool))')), true)`,
+      `pepDetails Array(Tuple(isPepHit Bool, pepCountry LowCardinality(String), pepRank LowCardinality(String))) MATERIALIZED JSONExtract(data, 'pepStatus', 'Array(Tuple(isPepHit Bool, pepCountry LowCardinality(String), pepRank LowCardinality(String)))')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',

@@ -1791,6 +1791,16 @@ paths:
             type: string
           in: query
           name: filterIsPepHit
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterPepCountry
+        - schema:
+            type: string
+          in: query
+          name: filterPepRank
     parameters: []
   /consumer/users-v2:
     get:
@@ -1863,6 +1873,16 @@ paths:
             type: string
           in: query
           name: filterIsPepHit
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterPepCountry
+        - schema:
+            type: string
+          in: query
+          name: filterPepRank
   /merchant-monitoring/{userId}/update_monitoring_status:
     post:
       summary: Update Monitoring Status

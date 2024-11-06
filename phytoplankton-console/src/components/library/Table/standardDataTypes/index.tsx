@@ -36,6 +36,7 @@ import {
   Priority,
   Alert,
   AlertsQaSampling,
+  PepRank,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -71,6 +72,7 @@ import { formatNumber } from '@/utils/number';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import Tag from '@/components/library/Tag';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
+import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -506,6 +508,19 @@ export const COUNTRY: ColumnDataType<ApiCountryCode> = {
       value: isoCode,
       label: country,
     })),
+  },
+};
+
+export const PEP_RANK: ColumnDataType<PepRank> = {
+  render: (value) => <>{value}</>,
+  autoFilterDataType: {
+    kind: 'select',
+    options: PEP_RANKS.map((type) => ({
+      value: type,
+      label: humanizeConstant(type),
+    })),
+    mode: 'SINGLE',
+    displayMode: 'select',
   },
 };
 

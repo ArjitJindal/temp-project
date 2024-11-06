@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { compact, sortBy } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { humanizeAuto, humanizeConstant } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { consolidatePEPStatus, expandPEPStatus, validatePEPStatus } from './utils';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -47,11 +46,7 @@ export const PepStatusLabel = (props: Props) => {
   const consolidatedPepStatus = consolidatePEPStatus(pepStatus);
   const DEFAULT_FORM_VALUES: FormValues[] = consolidatedPepStatus.length
     ? consolidatedPepStatus
-    : [
-        {
-          isPepHit: true,
-        },
-      ];
+    : [{ isPepHit: true }];
   const [formValues, setFormValues] = useState<FormValues[]>(DEFAULT_FORM_VALUES);
 
   const handleChange = (index: number, values: FormValues) => {
@@ -78,9 +73,7 @@ export const PepStatusLabel = (props: Props) => {
       }
       await api.postConsumerUsersUserId({
         userId: userId,
-        UserUpdateRequest: {
-          pepStatus: pepStatusToUpdate,
-        },
+        UserUpdateRequest: { pepStatus: pepStatusToUpdate },
       });
       updatePepStatus(pepStatusToUpdate);
     },
@@ -131,12 +124,7 @@ export const PepStatusLabel = (props: Props) => {
           <Button
             className={s.addButton}
             onClick={() => {
-              setFormValues((prev) => [
-                ...prev,
-                {
-                  isPepHit: true,
-                },
-              ]);
+              setFormValues((prev) => [...prev, { isPepHit: true }]);
             }}
           >
             Add
@@ -149,48 +137,24 @@ export const PepStatusLabel = (props: Props) => {
 
 export const PepStatusValue = (props: { pepStatus: PEPStatus[] }) => {
   const { pepStatus } = props;
-  const groupedByCountry = pepStatus
-    .filter((status) => status.isPepHit && status.pepCountry)
-    .reduce((acc, { pepCountry, pepRank }) => {
-      if (pepCountry && !acc[pepCountry]) {
-        acc[pepCountry] = { country: pepCountry, ranks: [] };
-      }
-      if (pepRank && pepCountry) {
-        acc[pepCountry].ranks.push(pepRank);
-      }
-      return acc;
-    }, {});
 
-  const pepCountries: { country: CountryCode; ranks: PepRank[] }[] =
-    Object.values(groupedByCountry);
-  const isPepHit = pepStatus.some((status) => status.isPepHit);
-  const pepRanks = sortBy(
-    compact(
-      pepStatus
-        .filter((status) => status.isPepHit && status.pepRank)
-        .map((status) => status.pepRank),
-    ),
-  );
   return (
-    <div>
-      {pepCountries.length > 0 ? (
-        pepCountries.map(({ country, ranks }) => (
-          <div key={country} style={{ display: 'inline' }}>
-            <CountryDisplay key={country} isoCode={country} />
-            {ranks?.length
-              ? `(Rank ${ranks.map((rank) => rank.replace('LEVEL_', '')).join(', ')}),`
-              : ''}
-          </div>
-        ))
-      ) : isPepHit ? (
-        <span>
-          {pepRanks.length > 0
-            ? `Rank ${pepRanks.map((rank) => rank.replace('LEVEL_', '')).join(', ')}`
-            : 'Hit'}
-        </span>
-      ) : (
-        '-'
-      )}
+    <div className={s.pepStatus}>
+      {pepStatus.map((status) => (
+        <div key={`${status.isPepHit}-${status.pepCountry}`} className={s.pepStatusItem}>
+          <span>
+            {status.isPepHit ? 'Yes' : 'No'}
+            {status.pepCountry ? <>{',\xa0'}</> : ''}
+          </span>
+
+          {status.pepCountry && (
+            <span>
+              <CountryDisplay isoCode={status.pepCountry} />
+            </span>
+          )}
+          {status.pepRank && <span>({humanizeConstant(status.pepRank)})</span>}
+        </div>
+      ))}
     </div>
   );
 };
@@ -214,19 +178,13 @@ export const PepStatusForm = (props: FormProps) => {
       </Label>
       <Label
         label="PEP Rank"
-        required={{
-          value: false,
-          showHint: true,
-        }}
+        required={{ value: false, showHint: true }}
         hint="Level refers to a PEP's influence and risk based on their position, with higher levels indicating greater authority."
       >
         <Select<PepRank>
           value={pepRank}
           onChange={(value) => {
-            onChange({
-              ...values,
-              pepRank: value,
-            });
+            onChange({ ...values, pepRank: value });
           }}
           options={PEP_RANK_OPTIONS.map((value) => ({
             label: humanizeAuto(value),
@@ -235,20 +193,11 @@ export const PepStatusForm = (props: FormProps) => {
           mode="SINGLE"
         />
       </Label>
-      <Label
-        label="PEP Country"
-        required={{
-          value: false,
-          showHint: true,
-        }}
-      >
+      <Label label="PEP Country" required={{ value: false, showHint: true }}>
         <Select<CountryCode>
           value={pepCountry}
           onChange={(value) => {
-            onChange({
-              ...values,
-              pepCountry: value,
-            });
+            onChange({ ...values, pepCountry: value });
           }}
           options={Object.entries(COUNTRIES).map(([key, value]) => ({
             label: value,

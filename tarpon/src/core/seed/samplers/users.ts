@@ -67,6 +67,7 @@ import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
 import { MARITAL_STATUSS } from '@/@types/openapi-public-custom/MaritalStatus'
 import { GENDERS } from '@/@types/openapi-public-custom/Gender'
 import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentStatus'
+import { PEP_RANKS } from '@/@types/openapi-public-custom/PepRank'
 
 export function sampleUserState(): UserState {
   return pickRandom(USER_STATES)
@@ -235,6 +236,7 @@ const randomPepStatus = (): PEPStatus => {
   return {
     isPepHit: Math.random() < 0.5,
     pepCountry: pickRandom(COUNTRY_CODES),
+    pepRank: pickRandom(PEP_RANKS),
   }
 }
 
@@ -357,7 +359,9 @@ export function sampleConsumerUser() {
       employerName: pickRandom(employerName),
       businessIndustry: [pickRandom(businessIndustry)],
     },
-    pepStatus: [randomPepStatus()],
+    pepStatus: Array.from({ length: Math.ceil(randomInt(3)) }).map(() =>
+      randomPepStatus()
+    ),
     executedRules: userRules().map((rule) => {
       return {
         ...rule,

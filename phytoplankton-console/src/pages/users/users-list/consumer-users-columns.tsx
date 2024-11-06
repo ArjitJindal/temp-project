@@ -1,4 +1,5 @@
 import React from 'react';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { InternalConsumerUser } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
@@ -6,11 +7,12 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { COUNTRY, DATE, TAGS } from '@/components/library/Table/standardDataTypes';
 import { getFullName, getUserLink } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
+import CountryDisplay from '@/components/ui/CountryDisplay';
 
 export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
   const helper = new ColumnHelper<InternalConsumerUser>();
 
-  return [
+  return helper.list([
     helper.simple<'userId'>({
       title: 'User ID',
       key: 'userId',
@@ -75,6 +77,32 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       },
       filtering: false,
     }),
+    helper.derived({
+      title: 'PEP hit status details',
+      value: (item) => item?.pepStatus,
+      id: 'pep-details',
+      exporting: false,
+      type: {
+        render: (value): JSX.Element => {
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              {value
+                ?.filter((part) => part.isPepHit)
+                .map((part) => (
+                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                    {part.pepCountry && <CountryDisplay isoCode={part.pepCountry} />}
+                    {part.pepRank && part.pepCountry ? <>{','}&nbsp;</> : ''}
+                    {part.pepRank && humanizeConstant(part.pepRank)}
+                  </div>
+                ))}
+            </div>
+          );
+        },
+        defaultWrapMode: 'WRAP',
+      },
+      tooltip: 'Only details where PEP is hit are displayed',
+      defaultWidth: 300,
+    }),
     helper.simple<'tags'>({
       title: 'Tags',
       key: 'tags',
@@ -93,5 +121,5 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
       sorting: true,
       filtering: true,
     }),
-  ];
+  ]);
 }

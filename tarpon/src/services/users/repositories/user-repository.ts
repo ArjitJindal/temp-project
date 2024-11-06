@@ -285,6 +285,8 @@ export class UserRepository {
       filterEmail?: string
       filterParentUserId?: string
       filterIsPepHit?: string
+      filterPepCountry?: string[]
+      filterPepRank?: string
     },
     isPulseEnabled: boolean,
     riskClassificationValues?: RiskClassificationScore[],
@@ -372,11 +374,43 @@ export class UserRepository {
       })
     }
 
-    if (params.filterIsPepHit != null) {
-      const isPepHit = params.filterIsPepHit === 'true' ? true : false
-      filterConditions.push({
-        'pepStatus.isPepHit': isPepHit,
-      })
+    if (
+      params.filterIsPepHit != null ||
+      params.filterPepCountry?.length ||
+      params.filterPepRank != null
+    ) {
+      if (params.filterIsPepHit === 'false') {
+        filterConditions.push({
+          $or: [
+            {
+              'pepStatus.0': { $exists: false },
+            },
+            {
+              pepStatus: {
+                $not: { $elemMatch: { isPepHit: true } },
+              },
+            },
+          ],
+        })
+      }
+
+      if (params.filterIsPepHit === 'true') {
+        filterConditions.push({
+          pepStatus: {
+            $elemMatch: {
+              ...(params.filterIsPepHit != null && {
+                isPepHit: params.filterIsPepHit === 'true' ? true : false,
+              }),
+              ...(params.filterPepCountry?.length && {
+                pepCountry: { $in: params.filterPepCountry },
+              }),
+              ...(params.filterPepRank != null && {
+                pepRank: params.filterPepRank,
+              }),
+            },
+          },
+        })
+      }
     }
 
     if (params.filterRiskLevelLocked != null) {
@@ -982,6 +1016,7 @@ export class UserRepository {
         ...newUser,
       },
     }
+
     try {
       await this.dynamoDb.send(new PutCommand(putItemInput))
     } catch (error) {
