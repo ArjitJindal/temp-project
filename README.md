@@ -4,6 +4,11 @@
 - [`tarpon`](https://github.com/flagright/orca/tree/main/tarpon) - Our backend API
 - [`viper`](https://github.com/flagright/orca/tree/main/viper) - Our Data Engineering stack
 - [`raptor`](https://github.com/flagright/orca/tree/main/raptor) - Our ML stack
+- [`lib`](https://github.com/flagright/orca/tree/main/lib) - Shared code
+- [`bin`](https://github.com/flagright/orca/tree/main/bin) - Pipeline code
+- [`email-templates`](https://github.com/flagright/orca/tree/main/email-templates) - Email templates
+- [`scripts`](https://github.com/flagright/orca/tree/main/scripts) - General scripts
+- [`flagright-figma-vars-plugin`](https://github.com/flagright/orca/tree/main/flagright-figma-vars-plugin) - Figma plugin for managing variables
 
 ![orca](/resources/orca.jpeg)
 
