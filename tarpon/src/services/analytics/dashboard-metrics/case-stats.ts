@@ -401,22 +401,25 @@ export class CaseStatsDashboardMetric {
         const stats = dashboardStatsById[label]
         return {
           _id: label,
-          count_OPEN: sum([stats?.OPEN ?? 0, stats?.IN_REVIEW_OPEN ?? 0]),
+          count_OPEN: sum([stats?.OPEN ?? 0]),
           count_IN_PROGRESS: sum([
             stats?.OPEN_IN_PROGRESS ?? 0,
             stats?.ESCALATED_IN_PROGRESS ?? 0,
+            stats?.ESCALATED_L2_IN_PROGRESS ?? 0,
           ]),
           count_ON_HOLD: sum([
             stats?.OPEN_ON_HOLD ?? 0,
             stats?.ESCALATED_ON_HOLD ?? 0,
+            stats?.ESCALATED_L2_ON_HOLD ?? 0,
           ]),
-          count_ESCALATED: sum([
-            stats?.ESCALATED ?? 0,
+          count_ESCALATED: sum([stats?.ESCALATED ?? 0]),
+          count_ESCALATED_L2: sum([stats?.ESCALATED_L2 ?? 0]),
+          count_CLOSED: sum([stats?.CLOSED ?? 0]),
+          count_REOPENED: sum([stats?.REOPENED ?? 0]),
+          count_IN_REVIEW: sum([
+            stats?.IN_REVIEW_OPEN ?? 0,
             stats?.IN_REVIEW_ESCALATED ?? 0,
-          ]),
-          count_CLOSED: sum([stats?.CLOSED ?? 0, stats?.IN_REVIEW_CLOSED ?? 0]),
-          count_REOPENED: sum([
-            stats?.REOPENED ?? 0,
+            stats?.IN_REVIEW_CLOSED ?? 0,
             stats?.IN_REVIEW_REOPENED ?? 0,
           ]),
         } as DashboardStatsAlertAndCaseStatusDistributionStatsData

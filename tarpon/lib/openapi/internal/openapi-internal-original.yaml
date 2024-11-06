@@ -14520,6 +14520,10 @@ components:
                 type: number
               count_REOPENED:
                 type: number
+              count_IN_REVIEW:
+                type: number
+              count_ESCALATED_L2:
+                type: number
             required:
               - _id
     CaseSubjectType:

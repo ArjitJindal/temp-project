@@ -26,11 +26,22 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_02,
   COLORS_V2_ANALYTICS_CHARTS_03,
   COLORS_V2_ANALYTICS_CHARTS_04,
+  COLORS_V2_ANALYTICS_CHARTS_05,
   COLORS_V2_ANALYTICS_CHARTS_06,
+  COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_08,
 } from '@/components/ui/colors';
 
-type statusType = 'OPEN' | 'CLOSED' | 'REOPENED' | 'ON_HOLD' | 'IN_PROGRESS' | 'ESCALATED';
+type statusType =
+  | 'OPEN'
+  | 'CLOSED'
+  | 'REOPENED'
+  | 'ON_HOLD'
+  | 'IN_PROGRESS'
+  | 'ESCALATED'
+  | 'IN_REVIEW'
+  | 'ESCALATED_L2';
+
 const statuses: statusType[] = [
   'REOPENED',
   'CLOSED',
@@ -38,6 +49,8 @@ const statuses: statusType[] = [
   'ON_HOLD',
   'IN_PROGRESS',
   'OPEN',
+  'IN_REVIEW',
+  'ESCALATED_L2',
 ];
 
 export default function DistributionByStatus(props: WidgetProps) {
@@ -113,6 +126,8 @@ export default function DistributionByStatus(props: WidgetProps) {
                 ESCALATED: COLORS_V2_ANALYTICS_CHARTS_06,
                 CLOSED: COLORS_V2_ANALYTICS_CHARTS_08,
                 REOPENED: COLORS_V2_ANALYTICS_CHARTS_02,
+                ESCALATED_L2: COLORS_V2_ANALYTICS_CHARTS_07,
+                IN_REVIEW: COLORS_V2_ANALYTICS_CHARTS_05,
               }}
               formatX={formatDate}
               formatSeries={(seriesValue) => {
