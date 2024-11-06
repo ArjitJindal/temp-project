@@ -167,8 +167,8 @@ async function migrateTenant(tenant: Tenant) {
 
 export const up = async () => {
   await migrateAllTenants(migrateTenant)
-  throw new Error('stop')
 }
+
 export const down = async () => {
   // skip
 }
