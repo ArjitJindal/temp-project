@@ -1,4 +1,4 @@
-import { Document, Filter, MongoClient } from 'mongodb'
+import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
@@ -592,7 +592,7 @@ export class AlertsRepository {
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
   }
 
-  public async getNonClosedAlerts(): Promise<Alert[]> {
+  public getNonClosedAlertsCursor(): AggregationCursor<Alert> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const pipeline = [
@@ -646,8 +646,7 @@ export class AlertsRepository {
         $unset: 'alert',
       },
     ]
-    const result = await collection.aggregate<Alert>(pipeline).toArray()
-    return result
+    return collection.aggregate<Alert>(pipeline)
   }
 
   public async getAlertsByIds(alertIds: string[]): Promise<Alert[]> {

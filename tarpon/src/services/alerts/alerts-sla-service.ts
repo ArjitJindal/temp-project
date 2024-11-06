@@ -17,8 +17,10 @@ import { logger } from '@/core/logger'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { SLAPolicyStatus } from '@/@types/openapi-internal/SLAPolicyStatus'
 import { hasFeature } from '@/core/utils/context'
+import { processCursorInBatch } from '@/utils/mongodb-utils'
 
 const CONCURRENCY = 50
+const BATCH_SIZE = 10000
 
 @traceable
 export class AlertsSLAService {
@@ -118,43 +120,52 @@ export class AlertsSLAService {
     if (!hasFeature('ALERT_SLA')) {
       return
     }
-    const alerts = await this.alertsRepository.getNonClosedAlerts()
-    logger.info(`Updating SLA Statuses for ${alerts.length} alerts`)
-    await pMap(
-      alerts,
-      async (alert) => {
-        if (!alert.caseId) {
-          return
-        }
-        const slaPolicyDetails = alert.slaPolicyDetails ?? []
-        const updatedSlaPolicyDetails = await Promise.all(
-          slaPolicyDetails.map(async (slaPolicyDetail) => {
-            const statusData = await this.calculateSLAStatusForAlert(
-              alert,
-              slaPolicyDetail.slaPolicyId
+    const alertsCursor = this.alertsRepository
+      .getNonClosedAlertsCursor()
+      .addCursorFlag('noCursorTimeout', true) // As for some tenants the alerts count could be in the millions, we need to make sure the cursor does not timeout
+    await processCursorInBatch(
+      alertsCursor,
+      async (alerts) => {
+        logger.info(`Updating SLA Statuses for ${alerts.length} alerts`)
+        await pMap(
+          alerts,
+          async (alert) => {
+            if (!alert.caseId) {
+              return
+            }
+            const slaPolicyDetails = alert.slaPolicyDetails ?? []
+            const updatedSlaPolicyDetails = await Promise.all(
+              slaPolicyDetails.map(async (slaPolicyDetail) => {
+                const statusData = await this.calculateSLAStatusForAlert(
+                  alert,
+                  slaPolicyDetail.slaPolicyId
+                )
+                if (!statusData) {
+                  return slaPolicyDetail
+                }
+                return {
+                  ...slaPolicyDetail,
+                  elapsedTime: statusData.elapsedTime,
+                  policyStatus: statusData.policyStatus,
+                  updatedAt: Date.now(),
+                }
+              })
             )
-            if (!statusData) {
-              return slaPolicyDetail
+            const updatedAlert: Alert = {
+              ...alert,
+              slaPolicyDetails: updatedSlaPolicyDetails,
             }
-            return {
-              ...slaPolicyDetail,
-              elapsedTime: statusData.elapsedTime,
-              policyStatus: statusData.policyStatus,
-              updatedAt: Date.now(),
-            }
-          })
+            await this.alertsRepository.saveAlert(alert.caseId, updatedAlert)
+          },
+          {
+            concurrency: CONCURRENCY,
+          }
         )
-        const updatedAlert = {
-          ...alert,
-          slaPolicyDetails: updatedSlaPolicyDetails,
-        }
-        await this.alertsRepository.saveAlert(alert.caseId, updatedAlert)
+        logger.info(`SLA Statuses updated for ${alerts.length} alerts`)
       },
-      {
-        concurrency: CONCURRENCY,
-      }
+      { mongoBatchSize: BATCH_SIZE, processBatchSize: BATCH_SIZE }
     )
-    logger.info('SLA Statuses updated')
+    logger.info('SLA Statuses updated for all alerts')
   }
 
   private async getSLAPolicy(slaPolicyId: string) {
