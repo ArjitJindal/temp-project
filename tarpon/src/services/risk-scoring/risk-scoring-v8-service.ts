@@ -6,11 +6,13 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { v4 as uuidv4 } from 'uuid'
+import pMap from 'p-map'
 import { isConsumerUser } from '../rules-engine/utils/user-rule-utils'
 import { LogicData, LogicEvaluator } from '../logic-evaluator/engine'
 import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
+import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -37,6 +39,7 @@ import dayjs from '@/utils/dayjs'
 
 const DEFAULT_RISK_LEVEL = 'HIGH'
 const DEFAULT_RISK_SCORE = 75
+const CONCURRENCY = 100
 
 @traceable
 export class RiskScoringV8Service {
@@ -565,34 +568,106 @@ export class RiskScoringV8Service {
     return newDrsScore
   }
 
-  public async backFillAvgTrs(): Promise<void> {
-    const mongoDb = await this.getMongo()
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      mongoDb
+  private async handleBatch<T>(
+    items: T[],
+    processor: (batch: T) => Promise<void>
+  ) {
+    await pMap(
+      items,
+      async (item) => {
+        await processor(item)
+      },
+      { concurrency: CONCURRENCY }
     )
-    await this.riskRepository.setAvgArsReadyMarker(false)
-    const transactionsCursor = transactionsRepo.getTransactionsCursor({})
-    /* To parallelize this, we need locks on the critical section where we get transaction count as without them the avg score will not be correct */
-    for await (const transaction of transactionsCursor) {
-      const arsScore = await this.getArsScore(transaction.transactionId)
-      if (arsScore) {
-        await Promise.all([
-          this.updateAverageArs(
-            arsScore.arsScore,
-            transaction.originUser?.userId,
-            transaction.transactionId,
-            false
-          ),
-          this.updateAverageArs(
-            arsScore.arsScore,
-            transaction.destinationUser?.userId,
-            transaction.transactionId,
-            false
-          ),
-        ])
+  }
+
+  private async processTransactions(
+    transactionIds: string[]
+  ): Promise<{ arsScoreSum: number; transactionCount: number }> {
+    let arsScoreSum = 0
+    let transactionCount = 0
+
+    await this.handleBatch(transactionIds, async (transactionId) => {
+      const arsScore = await this.getArsScore(transactionId)
+      if (arsScore != null) {
+        arsScoreSum += arsScore.arsScore
+        transactionCount++
+      }
+    })
+
+    return { arsScoreSum, transactionCount }
+  }
+
+  private async processUser(
+    userId: string,
+    transactionsRepo: MongoDbTransactionRepository
+  ) {
+    const userTransactions = transactionsRepo.getTransactionsCursor({
+      filterUserId: userId,
+    })
+    let arsScoreSum = 0
+    let transactionCount = 0
+    let batchTransactionIds: string[] = []
+
+    for await (const transaction of userTransactions) {
+      batchTransactionIds.push(transaction.transactionId)
+      if (batchTransactionIds.length === 10000) {
+        const { arsScoreSum: batchSum, transactionCount: batchCount } =
+          await this.processTransactions(batchTransactionIds)
+        arsScoreSum += batchSum
+        transactionCount += batchCount
+        batchTransactionIds = []
       }
     }
+
+    if (batchTransactionIds.length > 0) {
+      const { arsScoreSum: batchSum, transactionCount: batchCount } =
+        await this.processTransactions(batchTransactionIds)
+      arsScoreSum += batchSum
+      transactionCount += batchCount
+    }
+
+    if (transactionCount > 0) {
+      await this.riskRepository.updateOrCreateAverageArsScore(userId, {
+        userId,
+        value: arsScoreSum / transactionCount,
+        transactionCount,
+        createdAt: Date.now(),
+      })
+    }
+  }
+
+  private async updateBatchUserAverageArsScore() {
+    const userRepository = new UserRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+    const userCursor = userRepository.getAllUsersCursor()
+    const transactionsRepo = new MongoDbTransactionRepository(
+      this.tenantId,
+      await this.getMongo()
+    )
+    let batchUserIds: string[] = []
+
+    for await (const user of userCursor) {
+      batchUserIds.push(user.userId)
+      if (batchUserIds.length === 10000) {
+        await this.handleBatch(batchUserIds, async (userId) => {
+          await this.processUser(userId, transactionsRepo)
+        })
+        batchUserIds = []
+      }
+    }
+
+    if (batchUserIds.length > 0) {
+      await this.handleBatch(batchUserIds, async (userId) => {
+        await this.processUser(userId, transactionsRepo)
+      })
+    }
+  }
+
+  public async backFillAvgTrs(): Promise<void> {
+    await this.riskRepository.setAvgArsReadyMarker(false)
+    await this.updateBatchUserAverageArsScore()
     await this.riskRepository.setAvgArsReadyMarker(true)
   }
 
