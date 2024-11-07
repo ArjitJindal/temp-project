@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Input, Radio } from 'antd';
+import { Input } from 'antd';
 import { useDebounce } from 'ahooks';
-import { Mode, User } from '../types';
+import { User } from '../types';
 import { useLastSearches, useUsers } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
@@ -11,26 +11,16 @@ import { isSuccess } from '@/utils/asyncResource';
 
 interface Props {
   initialSearch: string;
-  initialMode: Mode | null;
   isVisible: boolean;
-  onConfirm: (user: User, mode: Mode | null) => void;
+  onConfirm: (user: User) => void;
   onCancel: () => void;
-  showOriginAndDestination: boolean;
-  onEnterInput: (userId: string, mode: Mode | null) => void;
+  onEnterInput: (userId: string) => void;
 }
 
 export default function PopupContent(props: Props) {
-  const {
-    isVisible,
-    initialSearch,
-    initialMode,
-    onConfirm,
-    showOriginAndDestination = true,
-    onEnterInput,
-  } = props;
+  const { isVisible, initialSearch, onConfirm, onEnterInput } = props;
 
   const [search, setSearch] = useState(initialSearch);
-  const [mode, setMode] = useState<Mode | null>(initialMode ?? null);
 
   const debouncedSearch = useDebounce(search, { wait: 500 });
   const usersRes = useUsers(debouncedSearch);
@@ -48,15 +38,13 @@ export default function PopupContent(props: Props) {
   useEffect(() => {
     if (!isVisible) {
       setSearch(initialSearch);
-      setMode(initialMode);
     }
-  }, [isVisible, initialSearch, initialMode]);
+  }, [isVisible, initialSearch]);
 
   function handleSelectUser(user: User) {
-    onConfirm(user, mode);
+    onConfirm(user);
     onAdd(debouncedSearch);
     setSearch('');
-    setMode(null);
   }
   // todo: i18n
   return (
@@ -69,27 +57,11 @@ export default function PopupContent(props: Props) {
           onChange={(e) => setSearch(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              onEnterInput(search, mode);
+              onEnterInput(search);
             }
           }}
           allowClear
         />
-        {initialMode != null && (
-          <Radio.Group
-            onChange={(e) => {
-              setMode(e.target.value);
-            }}
-            value={mode}
-          >
-            <Radio value={'ALL'}>All users</Radio>
-            {showOriginAndDestination && (
-              <>
-                <Radio value={'ORIGIN'}>Origin (Sender)</Radio>
-                <Radio value={'DESTINATION'}>Destination (Receiver)</Radio>
-              </>
-            )}
-          </Radio.Group>
-        )}
       </div>
       {search !== '' ? (
         <div className={s.content}>

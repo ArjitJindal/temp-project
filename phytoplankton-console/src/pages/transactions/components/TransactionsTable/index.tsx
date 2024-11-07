@@ -27,7 +27,6 @@ import { makeUrl } from '@/utils/routing';
 import { getUserLink } from '@/utils/api/users';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { QueryResult } from '@/utils/queries/types';
-import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import {
@@ -65,7 +64,6 @@ export interface TransactionsTableParams extends CommonParams {
   originCurrenciesFilter?: string[];
   destinationCurrenciesFilter?: string[];
   userId?: string;
-  userFilterMode?: Mode;
   tagKey?: string;
   tagValue?: string;
   originMethodFilter?: PaymentMethod;
@@ -120,9 +118,7 @@ export const transactionParamsToRequest = (
     filterRuleInstancesHit: ruleInstancesHitFilter,
     filterTagKey: tagKey,
     filterTagValue: tagValue,
-    filterUserId: params.userFilterMode === 'ALL' ? params.userId : undefined,
-    filterOriginUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
-    filterDestinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+    filterUserId: params.userId,
     filterOriginPaymentMethodId: params.originPaymentMethodId,
     filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
     filterTransactionStatus: transactionStatusFilter,

@@ -103,13 +103,11 @@ const TableList = () => {
               title: 'User ID/name',
               renderer: ({ params, setParams }) => (
                 <UserSearchButton
-                  initialMode={params.userFilterMode ?? 'ALL'}
                   userId={params.userId ?? null}
-                  onConfirm={(userId, mode) => {
+                  onConfirm={(userId) => {
                     setParams((state) => ({
                       ...state,
                       userId: userId ?? undefined,
-                      userFilterMode: mode ?? undefined,
                     }));
                   }}
                 />

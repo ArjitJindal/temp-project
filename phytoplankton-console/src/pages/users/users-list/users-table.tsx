@@ -40,14 +40,11 @@ const extraFilters = (
       title: 'User ID/Name',
       renderer: ({ params, setParams }) => (
         <UserSearchButton
-          initialMode={'ALL'}
           userId={params.userId ?? null}
-          showOriginAndDestination={false}
-          onConfirm={(userId, mode) => {
+          onConfirm={(userId) => {
             setParams((state) => ({
               ...state,
               userId: userId ?? undefined,
-              userFilterMode: mode ?? undefined,
             }));
           }}
         />

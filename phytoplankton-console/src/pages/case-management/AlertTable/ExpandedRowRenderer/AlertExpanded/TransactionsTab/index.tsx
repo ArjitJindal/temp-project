@@ -46,9 +46,7 @@ export default function TransactionsTab(props: Props) {
         start: from,
         page: params.page,
         pageSize: params.pageSize,
-        userId: params.userFilterMode === 'ALL' ? params.userId : undefined,
-        originUserId: params.userFilterMode === 'ORIGIN' ? params.userId : undefined,
-        destinationUserId: params.userFilterMode === 'DESTINATION' ? params.userId : undefined,
+        userId: params.userId,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,
         filterOriginPaymentMethodId: params.originPaymentMethodId,
@@ -97,13 +95,11 @@ export default function TransactionsTab(props: Props) {
             title: 'User ID/name',
             renderer: ({ params, setParams }) => (
               <UserSearchButton
-                initialMode={params.userFilterMode ?? 'ALL'}
                 userId={params.userId ?? null}
-                onConfirm={(userId, mode) => {
+                onConfirm={(userId) => {
                   setParams((state) => ({
                     ...state,
                     userId: userId ?? undefined,
-                    userFilterMode: mode ?? undefined,
                   }));
                 }}
               />

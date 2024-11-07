@@ -12,7 +12,6 @@ import '../../components/ui/colors';
 import { Adapter } from '@/utils/routing';
 import { isRuleAction, isTransactionState, useRuleOptions } from '@/utils/rules';
 import { TableSearchParams } from '@/pages/case-management/types';
-import { isMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
@@ -53,7 +52,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: params.rulesHitFilter?.join(','),
       rulesExecutedFilter: params.rulesExecutedFilter?.join(','),
       userId: params.userId,
-      userFilterMode: params.userFilterMode,
       status: params.status?.join(','),
       originMethodFilter: params.originMethodFilter?.join(','),
       destinationMethodFilter: params.destinationMethodFilter?.join(','),
@@ -98,7 +96,6 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       rulesHitFilter: raw.rulesHitFilter?.split(','),
       rulesExecutedFilter: raw.rulesExecutedFilter?.split(','),
       userId: raw.userId,
-      userFilterMode: isMode(raw.userFilterMode) ? raw.userFilterMode : undefined,
       status: raw.status ? raw.status.split(',').filter(isRuleAction) : undefined,
       originMethodFilter: raw.originMethodFilter?.split(',') as PaymentMethod[],
       destinationMethodFilter: raw.destinationMethodFilter?.split(',') as PaymentMethod[],
@@ -202,13 +199,11 @@ export const useCaseAlertFilters = (
       showFilterByDefault: true,
       renderer: ({ params, setParams }) => (
         <UserSearchButton
-          initialMode={params.userFilterMode ?? 'ALL'}
           userId={params.userId ?? null}
-          onConfirm={(userId, mode) => {
+          onConfirm={(userId) => {
             setParams((state) => ({
               ...state,
               userId: userId ?? undefined,
-              userFilterMode: mode ?? 'ALL',
             }));
           }}
         />

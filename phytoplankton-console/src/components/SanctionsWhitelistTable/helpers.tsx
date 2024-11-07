@@ -122,7 +122,6 @@ export function useExtraFilters(singleUserMode: boolean) {
           showFilterByDefault: true,
           renderer: ({ params, setParams }) => (
             <UserSearchButton
-              showOriginAndDestination={false}
               userId={params.userId ?? null}
               onConfirm={(userId) => {
                 setParams((state) => ({

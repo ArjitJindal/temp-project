@@ -3,17 +3,16 @@ import {
   CaseReasons,
   CaseType,
   ChecklistStatus,
+  DerivedStatus,
   PaymentMethod,
   Priority,
   RiskLevel,
   RuleAction,
-  DerivedStatus,
+  SLAPolicyStatus,
   TransactionState,
   UserState,
-  SLAPolicyStatus,
 } from '@/apis';
 import { CommonParams } from '@/components/library/Table/types';
-import { Mode as UserSearchMode } from '@/pages/transactions/components/UserSearchPopup/types';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
 
 export type CommonCaseParams = {
@@ -23,7 +22,6 @@ export type CommonCaseParams = {
   caseCreatedTimestamp: string[];
   rulesHitFilter: Array<string>;
   rulesExecutedFilter: Array<string>;
-  userFilterMode: UserSearchMode;
   userId: string;
   status: RuleAction[];
   transactionState: TransactionState[];

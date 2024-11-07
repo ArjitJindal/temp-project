@@ -5,26 +5,17 @@ import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { getErrorMessage } from '@/utils/lang';
-import { Mode } from '@/pages/transactions/components/UserSearchPopup/types';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 import PopupContent from '@/pages/transactions/components/UserSearchPopup/PopupContent';
 
 interface Props {
   userId: string | null;
-  initialMode?: Mode;
-  onConfirm: (userId: string | null, mode: Mode | null) => void;
-  showOriginAndDestination?: boolean;
+  onConfirm: (userId: string | null) => void;
   onUpdateFilterClose?: (status: boolean) => void;
 }
 
 export default function UserSearchButton(props: Props) {
-  const {
-    initialMode,
-    userId,
-    onConfirm,
-    onUpdateFilterClose,
-    showOriginAndDestination = true,
-  } = props;
+  const { userId, onConfirm, onUpdateFilterClose } = props;
   const [userRest, setUserRest] = useState<
     AsyncResource<InternalConsumerUser | InternalBusinessUser>
   >(init());
@@ -76,7 +67,7 @@ export default function UserSearchButton(props: Props) {
         isEmpty
           ? undefined
           : () => {
-              onConfirm(null, null);
+              onConfirm(null);
             }
       }
       onUpdateFilterClose={onUpdateFilterClose}
@@ -84,21 +75,18 @@ export default function UserSearchButton(props: Props) {
       {({ isOpen, setOpen }) => (
         <PopupContent
           initialSearch={userId ?? ''}
-          initialMode={initialMode ?? null}
           isVisible={isOpen}
-          showOriginAndDestination={showOriginAndDestination}
-          onConfirm={(user, mode) => {
+          onConfirm={(user) => {
             setUserRest(success(user));
-            onConfirm(user?.userId ?? null, mode ?? null);
-            // onConfirm(user, mode);
+            onConfirm(user?.userId ?? null);
             setOpen(false);
           }}
           onCancel={() => {
             setOpen(false);
           }}
-          onEnterInput={(userId, mode) => {
+          onEnterInput={(userId) => {
             setUserRest(init());
-            onConfirm(userId, mode);
+            onConfirm(userId);
             setOpen(false);
           }}
         />
