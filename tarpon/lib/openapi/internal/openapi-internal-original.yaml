@@ -7954,6 +7954,10 @@ components:
           $ref: '#/components/schemas/RuleExecutionMode'
         userRuleRunCondition:
           $ref: '#/components/schemas/UserRuleRunCondition'
+        ruleRunFor:
+          enum:
+            - SENDER
+            - RECEIVER
       required:
         - casePriority
         - nature

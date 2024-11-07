@@ -1084,6 +1084,7 @@ export class RulesEngineService {
       },
       activeRuleInstances,
       {
+        riskLevel: receiverUserRiskLevel,
         riskScore: receiverUserRiskScore,
         isUpdatable: isReceiverUserUpdatable,
       },
@@ -1164,6 +1165,7 @@ export class RulesEngineService {
             senderUser,
             receiverUser,
             transactionRiskScore: riskScoreDetails?.trsScore,
+            receiverUserRiskLevel,
           })
         )
       ),
@@ -1283,6 +1285,7 @@ export class RulesEngineService {
     rule?: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel?: RiskLevel
+    receiverUserRiskLevel?: RiskLevel
     transaction?: Transaction
     transactionEvents?: TransactionEventWithRulesResult[]
     database: 'MONGODB' | 'DYNAMODB'
@@ -1300,6 +1303,7 @@ export class RulesEngineService {
       rule,
       ruleInstance,
       senderUserRiskLevel,
+      receiverUserRiskLevel,
       transaction,
       transactionEvents,
       senderUser,
@@ -1310,7 +1314,10 @@ export class RulesEngineService {
       transactionRiskScore,
     } = options
     const { parameters, logic, action } = this.getUserSpecificParameters(
-      senderUserRiskLevel,
+      ruleInstance.type === 'TRANSACTION' &&
+        ruleInstance.ruleRunFor === 'RECEIVER'
+        ? receiverUserRiskLevel
+        : senderUserRiskLevel,
       ruleInstance
     )
     const ruleFilters = ruleInstance.filters as TransactionFilters & UserFilters
@@ -1539,6 +1546,7 @@ export class RulesEngineService {
     rule?: Rule
     ruleInstance: RuleInstance
     senderUserRiskLevel: RiskLevel | undefined
+    receiverUserRiskLevel: RiskLevel | undefined
     transaction: TransactionWithRiskDetails
     transactionEvents: TransactionEventWithRulesResult[]
     senderUser?: User | Business

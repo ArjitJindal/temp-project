@@ -593,6 +593,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
     ruleExecutionMode: 'SYNC',
     ruleRunMode: 'LIVE',
     alertCreationOnHit: false,
+    ruleRunFor: 'SENDER',
   },
   {
     id: 'pnb-internal-trigger-incomplete-risk-levels-destination-user',
@@ -915,6 +916,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
     ruleExecutionMode: 'SYNC',
     ruleRunMode: 'LIVE',
     alertCreationOnHit: false,
+    ruleRunFor: 'RECEIVER',
   },
   {
     id: 'pnb-internal-trigger-complete-risk-levels-origin-user',
@@ -1110,6 +1112,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
     ruleExecutionMode: 'SYNC',
     ruleRunMode: 'LIVE',
     alertCreationOnHit: false,
+    ruleRunFor: 'SENDER',
   },
   {
     id: 'pnb-internal-trigger-complete-risk-levels-destination-user',
@@ -1307,6 +1310,7 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
     ruleExecutionMode: 'SYNC',
     ruleRunMode: 'LIVE',
     alertCreationOnHit: false,
+    ruleRunFor: 'RECEIVER',
   },
 ]
 
@@ -1382,7 +1386,7 @@ export function getTransactionRiskScoreDetailsForPNB(
         'pnb-internal-trigger-incomplete-risk-levels-destination-user'
     )
   ) {
-    const craLevel = userRiskScoreDetails?.originUserCraRiskLevel
+    const craLevel = userRiskScoreDetails?.destinationUserCraRiskLevel
     riskScoreDetails = {
       ...riskScoreDetails,
       destinationUserCraRiskLevel: craLevel

@@ -96,6 +96,7 @@ function toRuleInstance(item: any): RuleInstance {
     ruleExecutionMode: item.ruleExecutionMode,
     ruleRunMode: item.ruleRunMode,
     alertCreationOnHit: item.alertCreationOnHit,
+    ruleRunFor: item.ruleRunFor,
   }
 }
 
