@@ -5,12 +5,20 @@ import { CaseStatusWithDropDown } from '../../CaseStatusWithDropDown';
 import ExportButton from './ExportButton';
 import SubHeader from './SubHeader';
 import StatusChangeMenu from './StatusChangeMenu';
-import { Case, CaseStatus, Comment } from '@/apis';
+import { Account, Case, CaseStatus, Comment } from '@/apis';
 import { useApi } from '@/api';
-import CasesStatusChangeButton from '@/pages/case-management/components/CasesStatusChangeButton';
+import CasesStatusChangeButton, {
+  CasesStatusChangeButtonProps,
+} from '@/pages/case-management/components/CasesStatusChangeButton';
 import CommentButton from '@/components/CommentButton';
-import { findLastStatusForInReview, statusInReview } from '@/utils/case-utils';
-import { useHasPermissions } from '@/utils/user-utils';
+import {
+  canMutateEscalatedCases,
+  findLastStatusForInReview,
+  statusEscalated,
+  statusEscalatedL2,
+  statusInReview,
+} from '@/utils/case-utils';
+import { useAuth0User, useHasPermissions, useUser } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
@@ -18,6 +26,7 @@ import { CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import { useBackUrl } from '@/utils/backUrl';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { SarButton } from '@/components/Sar';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   isLoading: boolean;
@@ -27,12 +36,104 @@ interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
 }
 
+function getStatusChangeButtonConfig(
+  caseItem: Case,
+  caseId: string,
+  userAccount: Account | null,
+  canMutateCases: boolean,
+  isReopenEnabled: boolean,
+  isLoading: boolean,
+  handleStatusChangeSuccess: () => void,
+  isEscalated: boolean,
+  isEscalatedL2: boolean,
+): CasesStatusChangeButtonProps | null {
+  const { caseStatus } = caseItem;
+  const isDisabled = (caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading;
+
+  if (isEscalatedL2 && canMutateCases && userAccount?.escalationLevel === 'L2') {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        ESCALATED_L2: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_L2_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_L2_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  } else if (isEscalated && canMutateCases) {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  } else if (!isEscalated && !isEscalatedL2) {
+    return {
+      caseIds: [caseId],
+      caseStatus,
+      onSaved: handleStatusChangeSuccess,
+      isDisabled,
+      statusTransitions: {
+        OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
+        OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
+      },
+    };
+  }
+  return null;
+}
+
+interface StatusChangeButtonProps {
+  caseItem: Case;
+  caseId: string;
+  userAccount: Account | null;
+  canMutateCases: boolean;
+  isReopenEnabled: boolean;
+  isLoading: boolean;
+  handleStatusChangeSuccess: () => void;
+  isEscalated: boolean;
+  isEscalatedL2: boolean;
+}
+
+const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
+  caseItem,
+  caseId,
+  userAccount,
+  canMutateCases,
+  isReopenEnabled,
+  isLoading,
+  handleStatusChangeSuccess,
+  isEscalated,
+  isEscalatedL2,
+}) => {
+  const config = getStatusChangeButtonConfig(
+    caseItem,
+    caseId,
+    userAccount,
+    canMutateCases,
+    isReopenEnabled,
+    isLoading,
+    handleStatusChangeSuccess,
+    isEscalated,
+    isEscalatedL2,
+  );
+
+  return config ? <CasesStatusChangeButton {...config} /> : null;
+};
+
 export default function Header(props: Props) {
   const { isLoading, caseItem, onReload, headerStickyElRef, onCommentAdded } = props;
   const { caseId } = caseItem;
   const backUrl = useBackUrl();
+  const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
   const navigate = useNavigate();
-
+  const user = useAuth0User();
+  const userAccount = useUser(user.userId);
   const isReopenEnabled = useHasPermissions(['case-management:case-reopen:write']);
 
   const api = useApi();
@@ -55,6 +156,17 @@ export default function Header(props: Props) {
   };
 
   const isReview = useMemo(() => statusInReview(caseItem.caseStatus), [caseItem]);
+  const isEscalated = useMemo(() => statusEscalated(caseItem.caseStatus), [caseItem]);
+  const isEscalatedL2 = useMemo(() => statusEscalatedL2(caseItem.caseStatus), [caseItem]);
+  const canMutateCases = useMemo(
+    () =>
+      canMutateEscalatedCases(
+        { [caseItem.caseId ?? '']: caseItem },
+        user.userId,
+        isMultiLevelEscalationEnabled,
+      ),
+    [caseItem, isMultiLevelEscalationEnabled, user.userId],
+  );
   const statusChangeMutation = useMutation(
     async (newStatus: CaseStatus) => {
       if (caseId == null) {
@@ -145,20 +257,16 @@ export default function Header(props: Props) {
           : []),
         ...(!isReview && caseId
           ? [
-              <CasesStatusChangeButton
-                caseIds={[caseId]}
-                caseStatus={caseItem.caseStatus}
-                onSaved={handleStatusChangeSuccess}
-                isDisabled={(caseItem.caseStatus === 'CLOSED' && !isReopenEnabled) || isLoading}
-                statusTransitions={{
-                  OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                  OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_L2: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_L2_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
-                  ESCALATED_L2_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
-                }}
+              <StatusChangeButton
+                caseItem={caseItem}
+                caseId={caseId}
+                userAccount={userAccount}
+                canMutateCases={canMutateCases}
+                isReopenEnabled={isReopenEnabled}
+                isLoading={isLoading}
+                handleStatusChangeSuccess={handleStatusChangeSuccess}
+                isEscalated={isEscalated}
+                isEscalatedL2={isEscalatedL2}
               />,
             ]
           : []),

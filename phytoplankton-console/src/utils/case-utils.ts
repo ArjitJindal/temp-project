@@ -62,6 +62,14 @@ export const statusInProgressOrOnHold = (status: CaseStatus | undefined): boolea
   return (status?.endsWith('IN_PROGRESS') || status?.endsWith('ON_HOLD')) ?? false;
 };
 
+export const canMutateEscalatedCases = (
+  cases: Record<string, { reviewAssignments?: Assignment[] }>,
+  userId: string,
+  isMultiLevelEscalationEnabled: boolean,
+): boolean => {
+  return isMultiLevelEscalationEnabled ? canReviewCases(cases, userId) : true;
+};
+
 export const canReviewCases = (
   cases: Record<string, { reviewAssignments?: Assignment[] }>,
   userId: string,
@@ -74,6 +82,13 @@ export const isInReviewCases = (
   alert?: boolean,
 ): boolean => {
   return some(cases, (c) => statusInReview(alert ? c.alertStatus : c.caseStatus));
+};
+
+export const isEscalatedCases = (
+  cases: Record<string, { caseStatus?: CaseStatus; alertStatus?: CaseStatus }>,
+  alert?: boolean,
+): boolean => {
+  return some(cases, (c) => statusEscalated(alert ? c.alertStatus : c.caseStatus));
 };
 
 export const getSingleCaseStatusCurrent = (

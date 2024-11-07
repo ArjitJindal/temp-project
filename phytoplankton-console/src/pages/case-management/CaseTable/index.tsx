@@ -71,6 +71,8 @@ import {
   getNextStatusFromInReview,
   getAssignmentsToShow,
   statusEscalatedL2,
+  canMutateEscalatedCases,
+  isEscalatedCases,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
 import { denseArray } from '@/utils/lang';
@@ -146,6 +148,9 @@ export default function CaseTable(props: Props) {
   }, [params.caseStatus, reloadTable]);
 
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
+
+  const userAccount = users[user.userId];
+
   const slaEnabled = useFeatureEnabled('PNB');
 
   const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
@@ -437,10 +442,15 @@ export default function CaseTable(props: Props) {
           });
           const canReview = canReviewCases({ [entity.caseId]: entity }, user.userId);
           const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
-
+          const isEscalated = statusEscalated(entity.caseStatus);
+          const canMutateCases = canMutateEscalatedCases(
+            { [entity.caseId]: entity },
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
           return (
             <>
-              {entity?.caseId && !statusInReview(entity.caseStatus) && (
+              {entity?.caseId && !statusInReview(entity.caseStatus) && !isEscalated && (
                 <CasesStatusChangeButton
                   caseIds={[entity.caseId]}
                   caseStatus={entity.caseStatus}
@@ -448,11 +458,23 @@ export default function CaseTable(props: Props) {
                   statusTransitions={{
                     OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                     OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                    ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                    ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                   }}
                 />
               )}
+              {entity?.caseId &&
+                !statusInReview(entity.caseStatus) &&
+                isEscalated &&
+                canMutateCases && (
+                  <CasesStatusChangeButton
+                    caseIds={[entity.caseId]}
+                    caseStatus={entity.caseStatus}
+                    onSaved={reloadTable}
+                    statusTransitions={{
+                      ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                      ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    }}
+                  />
+                )}
               {entity?.caseId && isInReview && canReview && entity.caseStatus && (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                   <ApproveSendBackButton
@@ -571,6 +593,7 @@ export default function CaseTable(props: Props) {
     isInReview,
     slaEnabled,
     slaPolicies.items,
+    isMultiLevelEscalationEnabled,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
@@ -673,8 +696,10 @@ export default function CaseTable(props: Props) {
 
           const isInReview = isInReviewCases(selectedItems);
           const caseStatus = selectedItems[selectedIds[0]].caseStatus;
+          const isEscalated = isEscalatedCases(selectedItems);
           return (
-            !isInReview && (
+            !isInReview &&
+            !isEscalated && (
               <CasesStatusChangeButton
                 caseIds={selectedIds}
                 onSaved={reloadTable}
@@ -683,6 +708,34 @@ export default function CaseTable(props: Props) {
                 statusTransitions={{
                   OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                }}
+              />
+            )
+          );
+        },
+        ({ selectedIds, isDisabled, selectedItems }) => {
+          if (isEmpty(selectedItems)) {
+            return;
+          }
+
+          const isInReview = isInReviewCases(selectedItems);
+          const caseStatus = selectedItems[selectedIds[0]].caseStatus;
+          const isEscalated = isEscalatedCases(selectedItems);
+          const canMutateCases = canMutateEscalatedCases(
+            selectedItems,
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
+          return (
+            !isInReview &&
+            isEscalated &&
+            canMutateCases && (
+              <CasesStatusChangeButton
+                caseIds={selectedIds}
+                onSaved={reloadTable}
+                caseStatus={caseStatus}
+                isDisabled={isDisabled}
+                statusTransitions={{
                   ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                 }}
@@ -728,9 +781,19 @@ export default function CaseTable(props: Props) {
             return;
           }
 
+          const canMutateCases = canMutateEscalatedCases(
+            selectedItems,
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
+
           const caseItem = selectedItems[selectedIds[0]];
 
-          if (statusEscalatedL2(caseItem.caseStatus) || !statusEscalated(caseItem.caseStatus)) {
+          if (
+            statusEscalatedL2(caseItem.caseStatus) ||
+            !statusEscalated(caseItem.caseStatus) ||
+            !canMutateCases
+          ) {
             return;
           }
 
@@ -755,14 +818,51 @@ export default function CaseTable(props: Props) {
 
           const selectedIdsCount = selectedIds.length;
           const caseItem = selectedItems[selectedIds[0]];
+          const canMutateCases =
+            canMutateEscalatedCases(selectedItems, user.userId, isMultiLevelEscalationEnabled) &&
+            userAccount?.escalationLevel === 'L2';
+          const isInReview = isInReviewCases(selectedItems);
+          const isCaseHavingEscalated = isEscalatedCases(selectedItems);
+          const isCaseStatusEscalatedL2 = statusEscalatedL2(caseItem.caseStatus);
+          return (
+            selectedIdsCount === 1 &&
+            escalationEnabled &&
+            isMultiLevelEscalationEnabled &&
+            canMutateCases &&
+            !isInReview &&
+            !isCaseHavingEscalated &&
+            isCaseStatusEscalatedL2 && (
+              <CasesStatusChangeButton
+                caseIds={selectedIds}
+                caseStatus={caseItem.caseStatus}
+                onSaved={reloadTable}
+                isDisabled={isDisabled}
+                statusTransitions={{
+                  ESCALATED_L2: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
+                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
+                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
+                }}
+              />
+            )
+          );
+        },
+        ({ selectedIds, selectedItems, isDisabled }) => {
+          if (isEmpty(selectedItems)) {
+            return;
+          }
+
+          const selectedIdsCount = selectedIds.length;
+          const caseItem = selectedItems[selectedIds[0]];
           const caseClosedBefore = Boolean(
             caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
           );
           const isInReview = isInReviewCases(selectedItems);
+          const isCaseHavingEscalated = isEscalatedCases(selectedItems);
           return (
             selectedIdsCount === 1 &&
             escalationEnabled &&
-            !isInReview && (
+            !isInReview &&
+            !isCaseHavingEscalated && (
               <CasesStatusChangeButton
                 caseIds={selectedIds}
                 caseStatus={caseItem.caseStatus}
@@ -778,6 +878,45 @@ export default function CaseTable(props: Props) {
                   CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                }}
+              />
+            )
+          );
+        },
+        ({ selectedIds, selectedItems, isDisabled }) => {
+          if (isEmpty(selectedItems)) {
+            return;
+          }
+
+          const selectedIdsCount = selectedIds.length;
+          const caseItem = selectedItems[selectedIds[0]];
+          const caseClosedBefore = Boolean(
+            caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
+          );
+
+          const canMutateCases = canMutateEscalatedCases(
+            selectedItems,
+            user.userId,
+            isMultiLevelEscalationEnabled,
+          );
+          const isInReview = isInReviewCases(selectedItems);
+          const isCaseHavingEscalated = isEscalatedCases(selectedItems);
+          return (
+            selectedIdsCount === 1 &&
+            escalationEnabled &&
+            !isInReview &&
+            canMutateCases &&
+            isCaseHavingEscalated && (
+              <CasesStatusChangeButton
+                caseIds={selectedIds}
+                caseStatus={caseItem.caseStatus}
+                onSaved={reloadTable}
+                isDisabled={isDisabled}
+                statusTransitions={{
+                  ESCALATED: {
+                    status: caseClosedBefore ? 'REOPENED' : 'OPEN',
+                    actionLabel: 'Send back',
+                  },
                   ESCALATED_IN_PROGRESS: {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
@@ -786,9 +925,6 @@ export default function CaseTable(props: Props) {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
-                  ESCALATED_L2: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
-                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
-                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
                 }}
               />
             )

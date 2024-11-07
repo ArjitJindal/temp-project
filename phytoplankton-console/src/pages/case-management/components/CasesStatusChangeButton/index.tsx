@@ -5,7 +5,7 @@ import { ButtonSize } from '@/components/library/Button';
 import StatusChangeButton from '@/pages/case-management/components/StatusChangeButton';
 import { ActionLabel, FormValues } from '@/pages/case-management/components/StatusChangeModal';
 
-interface Props {
+export interface CasesStatusChangeButtonProps {
   caseIds: string[];
   caseStatus?: CaseStatus;
   initialValues?: FormValues;
@@ -17,7 +17,7 @@ interface Props {
   className?: string;
 }
 
-export default function CasesStatusChangeButton(props: Props) {
+export default function CasesStatusChangeButton(props: CasesStatusChangeButtonProps) {
   const {
     caseIds,
     onSaved,

@@ -302,7 +302,7 @@ export class RuleInstanceRepository {
       alertConfig: ruleInstance.alertConfig,
       ruleId,
     }
-    console.log('newRuleInstance', newRuleInstance)
+
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Item: {

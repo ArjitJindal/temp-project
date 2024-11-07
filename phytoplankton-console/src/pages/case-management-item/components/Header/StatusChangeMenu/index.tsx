@@ -9,14 +9,17 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import {
   canReviewCases,
   findLastStatusForInReview,
+  isEscalatedCases,
   isInReviewCases,
+  statusEscalated,
+  statusEscalatedL2,
   statusInReview,
 } from '@/utils/case-utils';
 import {
   APPROVE_STATUS_TRANSITIONS,
   DECLINE_STATUS_TRANSITIONS,
 } from '@/pages/case-management/components/ApproveSendBackButton';
-import { useAuth0User } from '@/utils/user-utils';
+import { useAuth0User, useUser } from '@/utils/user-utils';
 
 interface Props {
   caseItem: Case;
@@ -51,8 +54,11 @@ const useOptions = (props: Props) => {
   const caseClosedBefore = Boolean(
     caseItem.statusChanges?.find((statusChange) => statusChange.caseStatus === 'CLOSED'),
   );
-  const isCaseEscalated = useMemo(() => {
-    return caseItem.caseStatus === 'ESCALATED';
+  const isCaseHavingEscalated = useMemo(() => {
+    return statusEscalated(caseItem.caseStatus);
+  }, [caseItem]);
+  const isCaseHavingEscalatedL2 = useMemo(() => {
+    return statusEscalatedL2(caseItem.caseStatus);
   }, [caseItem]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
@@ -63,6 +69,7 @@ const useOptions = (props: Props) => {
   }, [caseItem]);
 
   const currentUser = useAuth0User();
+  const currentUserAccount = useUser(currentUser.userId);
   const displayApproveButtons = useMemo(() => {
     if (!caseId) {
       return false;
@@ -72,8 +79,43 @@ const useOptions = (props: Props) => {
       canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
   }, [caseItem, caseId, currentUser]);
+  const showEscalatedOptions = useMemo(() => {
+    if (!isMultiLevelEscalationEnabled) {
+      true;
+    }
+    if (!caseId) {
+      return false;
+    }
+    return (
+      isEscalatedCases({ [caseId]: caseItem }) &&
+      canReviewCases({ [caseId]: caseItem }, currentUser.userId)
+    );
+  }, [caseItem, caseId, currentUser, isMultiLevelEscalationEnabled]);
+  const showEscalatedL2Options = useMemo(() => {
+    if (!isMultiLevelEscalationEnabled) {
+      true;
+    }
+    if (!caseId) {
+      return false;
+    }
+    return (
+      isEscalatedCases({ [caseId]: caseItem }) &&
+      currentUserAccount?.escalationLevel === 'L2' &&
+      canReviewCases({ [caseId]: caseItem }, currentUser.userId)
+    );
+  }, [
+    caseItem,
+    caseId,
+    currentUser,
+    isMultiLevelEscalationEnabled,
+    currentUserAccount?.escalationLevel,
+  ]);
   return [
-    ...(escalationEnabled && !isReview && caseId
+    ...(escalationEnabled &&
+    !isReview &&
+    caseId &&
+    !isCaseHavingEscalatedL2 &&
+    !isCaseHavingEscalated
       ? [
           {
             value: 'ESCALATE',
@@ -85,13 +127,30 @@ const useOptions = (props: Props) => {
                 statusTransitions={{
                   OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                  OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+                }}
+                className={s.statusButton}
+              />
+            ),
+          },
+        ]
+      : []),
+    ...(escalationEnabled && !isReview && caseId && showEscalatedOptions && isCaseHavingEscalated
+      ? [
+          {
+            value: 'ESCALATED_SEND_BACK',
+            label: (
+              <CasesStatusChangeButton
+                caseIds={[caseId]}
+                caseStatus={caseItem.caseStatus}
+                onSaved={onReload}
+                statusTransitions={{
                   ESCALATED: {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
-                  CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
-                  OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   ESCALATED_IN_PROGRESS: {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
@@ -100,27 +159,41 @@ const useOptions = (props: Props) => {
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
-                  ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
-                  ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
-                  ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
                 }}
                 className={s.statusButton}
               />
             ),
           },
+          ...(isMultiLevelEscalationEnabled && caseItem.caseStatus === 'ESCALATED'
+            ? [
+                {
+                  value: 'ESCALATE_L2',
+                  label: (
+                    <CasesStatusChangeButton
+                      caseIds={[caseId]}
+                      caseStatus={caseItem.caseStatus}
+                      onSaved={onReload}
+                      statusTransitions={{
+                        ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+                      }}
+                      className={s.statusButton}
+                    />
+                  ),
+                },
+              ]
+            : []),
         ]
       : []),
-    ...(isMultiLevelEscalationEnabled && isCaseEscalated && caseId
+    ...(isMultiLevelEscalationEnabled && isCaseHavingEscalatedL2 && caseId && showEscalatedL2Options
       ? [
           {
-            value: 'ESCALATE_L2',
+            value: 'ESCALATED_L2_SEND_BACK',
             label: (
               <CasesStatusChangeButton
                 caseIds={[caseId]}
                 onSaved={onReload}
                 caseStatus={caseItem.caseStatus ?? 'OPEN'}
                 statusTransitions={{
-                  ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
                   ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
                   ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
                   ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
