@@ -1,0 +1,38 @@
+#create-figma-plugin {
+  flex-direction: column;
+  display: flex;
+  height: 100%;
+}
+
+.root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  position: relative;
+}
+
+.header {
+  position: sticky;
+  background: var(--figma-color-bg);
+  z-index: 2;
+  top: 0;
+}
+
+.footer {
+  position: sticky;
+  background: var(--figma-color-bg);
+  z-index: 2;
+  bottom: 0;
+  padding: var(--space-extra-small);
+  display: flex;
+  flex-direction: column;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  flex: 1;
+  padding: var(--space-extra-small);
+  gap: var(--space-extra-small);
+}

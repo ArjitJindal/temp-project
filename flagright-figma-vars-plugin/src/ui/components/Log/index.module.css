@@ -1,0 +1,9 @@
+
+.log {
+  background: var(--figma-color-bg-hover);
+  font-family: ui-monospace, monospace, sans-serif;
+  border-radius: var(--border-radius-2);
+  padding: var(--space-extra-small);
+  border: 1px solid var(--figma-color-border);
+  flex: 1;
+}

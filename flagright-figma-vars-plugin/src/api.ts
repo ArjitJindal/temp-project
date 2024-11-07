@@ -1,4 +1,4 @@
-import { Request } from './request'
+import { Request, RequestError } from './request'
 
 export interface SearchResult<T> {
   incomplete_results: boolean
@@ -28,7 +28,9 @@ export class Api {
     )
   }
 
-  async searchPrs(params: { filterTitle?: string } = {}): Promise<
+  async searchPrs(
+    params: { filterTitle?: string; filterLabels?: string[] } = {}
+  ): Promise<
     SearchResult<{
       number: number
       title: string
@@ -39,7 +41,8 @@ export class Api {
       `state:open`,
       `type:pr`,
       `repo:${this.org}/${this.repo}`,
-      params.filterTitle && `${params.filterTitle} in:title`,
+      params.filterTitle && `"${params.filterTitle}" in:title`,
+      params.filterLabels?.map((x) => `label:${x}`).join(' '),
     ]
       .filter((x) => !!x)
       .join(' ')
@@ -173,6 +176,7 @@ export class Api {
     title: string
     body: string
     draft: boolean
+    labels?: string[]
   }): Promise<{ number: number; html_url: string }> {
     const newPr = await this.request.fetch<{
       number: number
@@ -184,6 +188,16 @@ export class Api {
       base: params.base,
       draft: params.draft,
     })
+    if (params.labels) {
+      await this.request.fetch<{
+        number: number
+        html_url: string
+      }>(
+        'PUT',
+        `/repos/${this.org}/${this.repo}/issues/${newPr.number}/labels`,
+        { labels: params.labels }
+      )
+    }
     return newPr
   }
 
@@ -199,5 +213,29 @@ export class Api {
       'GET',
       `/repos/${this.org}/${this.repo}/pulls/${number}`
     )
+  }
+
+  async getFileContent(
+    path: string,
+    ref?: string
+  ): Promise<{
+    content: string
+  } | null> {
+    try {
+      return await this.request.fetch(
+        'GET',
+        `/repos/${this.org}/${this.repo}/contents/${path}` +
+          (ref ? `?ref=${ref}` : ''),
+        undefined,
+        {
+          Accept: 'application/vnd.github.object+json',
+        }
+      )
+    } catch (e) {
+      if (e instanceof RequestError) {
+        return null
+      }
+      throw e
+    }
   }
 }

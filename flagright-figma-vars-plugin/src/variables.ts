@@ -28,7 +28,7 @@ export const LESS_GENERATOR: CodeGenerator = {
     return `${LESS_NAME_GLOBAL_PREFIX}-${name}`
   },
   generateColorLiteral: getColorString,
-  generateSimpleLiteral: (value) => JSON.stringify(value),
+  generateSimpleLiteral: (value) => `${value}`,
   generateVarReference: (name) => `@${name}`,
   generateVarDefinition(name: string, value: string) {
     return `@${name}: ${value};`
@@ -57,7 +57,7 @@ export async function serializeVariables(
   codeGenerator: CodeGenerator
 ): Promise<string> {
   const collections = await figma.variables.getLocalVariableCollectionsAsync()
-  const localVariables = await figma.variables.getLocalVariablesAsync('COLOR')
+  const localVariables = await figma.variables.getLocalVariablesAsync()
 
   const referencedVars = await collectReferencedVars(
     collections,

@@ -2,18 +2,17 @@
 
 ## Using the plugin
 
-1. Unpack the plugin package 
+1. Unpack the plugin package
 1. In the Figma desktop app, open a Figma document.
-1. Select menu item "Plugins > Development > Import plugin from manifest…", or look for it in the Quick Actions search bar. 
+1. Select menu item "Plugins > Development > Import plugin from manifest…", or look for it in the Quick Actions search bar.
 1. Select the `manifest.json` file inside the `package` folder of unpacked archive
-2. Run the plugin clicking on "Flagright Figma Vars Plugin" in the plugin manager
+1. Run the plugin clicking on "Flagright Figma Vars Plugin" in the plugin manager
 1. Generate a GitHub access token at https://github.com/settings/tokens. Required scopes: repo
 1. Copy token to "Settings" plugin's tab
 
-
 ## Development guide
 
-*This plugin is built with [Create Figma Plugin](https://yuanqing.github.io/create-figma-plugin/).*
+_This plugin is built with [Create Figma Plugin](https://yuanqing.github.io/create-figma-plugin/)._
 
 ### Pre-requisites
 
