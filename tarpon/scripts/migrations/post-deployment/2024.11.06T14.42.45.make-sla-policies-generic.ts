@@ -26,13 +26,14 @@ async function migrateTenant(tenant: Tenant) {
         $set: {
           type: 'ALERT',
           policyConfiguration: {
-            ...slaPolicy.policyConfiguration,
+            ...(slaPolicy.policyConfiguration ?? {}),
             statusDetails: {
               statuses:
-                slaPolicy.policyConfiguration.alertStatusDetails.alertStatuses,
+                slaPolicy.policyConfiguration?.alertStatusDetails
+                  ?.alertStatuses,
               statusesCount:
-                slaPolicy.policyConfiguration.alertStatusDetails
-                  .alertStatusesCount,
+                slaPolicy.policyConfiguration?.alertStatusDetails
+                  ?.alertStatusesCount,
             },
           },
         },
