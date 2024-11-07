@@ -153,12 +153,6 @@ export type DashboardRefreshBatchJob = {
   parameters: DashboardRefreshBatchJobParameters
 }
 
-/* Merchant Monitoring */
-export type OngoingMerchantMonitoringBatchJob = {
-  type: 'ONGOING_MERCHANT_MONITORING'
-  tenantId: string
-}
-
 /* Sync Indexes */
 export type SyncDatabasesBatchJob = {
   type: 'SYNC_DATABASES'
@@ -282,7 +276,6 @@ export type BatchJob =
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob
   | DashboardRefreshBatchJob
-  | OngoingMerchantMonitoringBatchJob
   | SyncDatabasesBatchJob
   | TestFargateJob
   | TenantDeletionBatchJob

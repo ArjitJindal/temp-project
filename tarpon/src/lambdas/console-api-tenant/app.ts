@@ -244,13 +244,6 @@ export const tenantsHandler = lambdaApi()(
           }
           break
         }
-        case 'ONGOING_MERCHANT_MONITORING': {
-          await sendBatchJobCommand({
-            type: 'ONGOING_MERCHANT_MONITORING',
-            tenantId: tenantId,
-          })
-          break
-        }
         case 'PULSE_USERS_BACKFILL_RISK_SCORE': {
           await sendBatchJobCommand({
             type: 'PULSE_USERS_BACKFILL_RISK_SCORE',

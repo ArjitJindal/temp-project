@@ -62,8 +62,6 @@ import { TransactionsAverageAmountExceededParameters } from '@/services/rules-en
 import { TransactionsAverageNumberExceededParameters } from '@/services/rules-engine/transaction-rules/transactions-average-number-exceeded'
 import { SamePaymentDetailsParameters } from '@/services/rules-engine/transaction-rules/same-payment-details'
 import { BlacklistTransactionMatchedFieldRuleParameters } from '@/services/rules-engine/transaction-rules/blacklist-transaction-related-value'
-import { MerchantMonitoringIndustryUserRuleParameters } from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
-import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { DowJonesConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/dowjones-consumer-user'
 import { ListScreeningConsumerUserRuleParameters } from '@/services/rules-engine/user-rules/list-screening-consumer-user'
 
@@ -1900,37 +1898,6 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: MerchantMonitoringIndustryUserRuleParameters = {
-      sourceType: MERCHANT_MONITORING_SOURCE_TYPES,
-    }
-
-    return {
-      id: 'R-17',
-      name: 'Business industry change',
-      type: 'USER',
-      description:
-        'Checks if industry has changed for a business user on an external platforms',
-      descriptionTemplate:
-        'Business industry for user has changed on {{ sourceType }}',
-      defaultParameters,
-      defaultAction: 'SUSPEND',
-      ruleImplementationName: 'merchant-monitoring-industry',
-      labels: [],
-      checksFor: [
-        RuleChecksForField.UserDetails,
-        RuleChecksForField.UsersIndustry,
-      ],
-      defaultNature: RuleNature.SCREENING,
-      defaultCasePriority: 'P1',
-      requiredFeatures: ['MERCHANT_MONITORING'],
-      types: [RuleTypeField.MerchantMonitoring],
-      typologies: [RuleTypology.UnusualBehaviour],
-      sampleUseCases:
-        'An alert is triggered when a company, previously listed as technology on a professional network, suddenly switches to healthcare, suggesting a possible profile discrepancy.',
-    }
-  },
-
-  () => {
     const defaultParameters: UserAddressChangeRuleParameters = {}
 
     return {
@@ -2010,8 +1977,6 @@ export const RULES_LIBRARY: Array<Rule> = _RULES_LIBRARY.map((getRule) => {
     defaultBaseCurrency: v8Config?.baseCurrency,
   }
 })
-
-export const ONGOING_MERCHANT_MONITORING_RULE_IDS = ['R-17']
 
 export const RULES_LOOKUP: Map<string, Rule> = new Map(
   RULES_LIBRARY.map((r) => [r.id, r])

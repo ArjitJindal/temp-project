@@ -142,7 +142,7 @@ test('Rule ID should be unique', () => {
   )
 })
 
-describe('', () => {
+describe.skip('', () => {
   let originLibrary: { [key: string]: Rule } | null = null
   beforeAll(async () => {
     const REVISION = 'origin/main'

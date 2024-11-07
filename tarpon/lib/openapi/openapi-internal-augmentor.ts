@@ -82,16 +82,6 @@ export const ConsoleApiPathToLambda: any = {
   '/lists/{listId}/import-csv': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/lists/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/lists/{listId}/items/{key}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/merchant-monitoring/summary':
-    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-  '/merchant-monitoring/history':
-    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-  '/merchant-monitoring/scrape':
-    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-  '/merchant-monitoring/stats':
-    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-  '/merchant-monitoring/{userId}/update_monitoring_status':
-    StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions-v2':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,

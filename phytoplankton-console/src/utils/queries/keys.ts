@@ -1,7 +1,7 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { Dayjs } from '@/utils/dayjs';
-import { ListType, MerchantMonitoringSource } from '@/apis';
+import { ListType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 
@@ -195,12 +195,6 @@ export const USERS_ITEM_RISKS_DRS = (userId: string): QueryKey => [
   'risks',
   'drs-score',
 ];
-
-export const MERCHANT_SUMMARY = (userId: string): QueryKey => ['merchant', 'summary', userId];
-export const MERCHANT_SUMMARY_HISTORY = (
-  userId: string,
-  source: MerchantMonitoringSource,
-): QueryKey => ['merchant', 'summary', userId, source.sourceType, source.sourceValue];
 export const USERS_ITEM_RISKS_KRS = (userId: string): QueryKey => [
   'users',
   'item',

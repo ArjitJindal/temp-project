@@ -156,9 +156,6 @@ export const StackConstants = {
   CONSOLE_API_BUSINESS_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiBusinessUsersViewFunction'
   ),
-  CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME: getResourceNameForTarpon(
-    'ConsoleApiMerchantMonitoringFunction'
-  ),
   CONSOLE_API_CONSUMER_USERS_VIEW_FUNCTION_NAME: getResourceNameForTarpon(
     'ConsoleApiConsumersUsersViewFunction'
   ),

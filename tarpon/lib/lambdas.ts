@@ -281,12 +281,6 @@ export const LAMBDAS: {
     expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_LAMBDA_TIMEOUT_SECONDS,
   },
-  [StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME]: {
-    codePath: 'console-api-merchant',
-    handlerName: 'merchantMonitoringHandler',
-    expectedMaxSeconds: ASYNC_SHORT_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
-    timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
-  },
   [StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME]: {
     codePath: 'console-api-notifications',
     handlerName: 'notificationsHandler',

@@ -195,11 +195,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       memorySize: this.config.resource.USERS_VIEW_LAMBDA.MEMORY_SIZE,
     })
 
-    /* Merchant Monitoring */
-    createFunction(this, lambdaExecutionRole, {
-      name: StackConstants.CONSOLE_API_MERCHANT_MONITORING_FUNCTION_NAME,
-    })
-
     /* Copilot */
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,

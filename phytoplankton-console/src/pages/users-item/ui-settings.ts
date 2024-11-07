@@ -34,10 +34,6 @@ export const UI_SETTINGS = {
       title: 'Transaction insights',
       key: 'user-details-transaction-insights',
     },
-    AI_INSIGHTS: {
-      title: 'AI merchant monitoring',
-      key: 'user-details-ai-insights',
-    },
     COMMENTS: {
       title: 'Comments',
       key: 'user-details-comments',

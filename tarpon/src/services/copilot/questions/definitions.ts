@@ -15,7 +15,6 @@ import { LinkedUsers } from '@/services/copilot/questions/definitions/linked-use
 import { UserDetails } from '@/services/copilot/questions/definitions/user-details'
 import { Shareholders } from '@/services/copilot/questions/definitions/shareholders'
 import { Directors } from '@/services/copilot/questions/definitions/directors'
-import { Website } from '@/services/copilot/questions/definitions/website'
 import { EntityLinking } from '@/services/copilot/questions/definitions/entity-linking'
 import { TransactionSummary } from '@/services/copilot/questions/definitions/transaction-summary'
 import { CrmInsights } from '@/services/copilot/questions/definitions/crm-insights'
@@ -54,7 +53,6 @@ export const getQuestions = (): Question<any>[] =>
     ...TransactionQuestions,
     ...(hasFeature('CRM') ? [CrmInsights] : []),
     ...(hasFeature('SAR') ? [SarsFiled] : []),
-    ...(hasFeature('MERCHANT_MONITORING') ? [CrmInsights, Website] : []),
     ...(hasFeature('ENTITY_LINKING') ? [LinkedUsers, EntityLinking] : []),
     ...(envIsNot('prod') && isDemoMode()
       ? [CheckedTransactions, Recommendation]

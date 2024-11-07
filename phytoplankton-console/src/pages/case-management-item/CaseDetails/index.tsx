@@ -2,7 +2,6 @@ import React from 'react';
 import { useNavigate, useParams } from 'react-router';
 import { flatten } from 'lodash';
 import { useQueryClient } from '@tanstack/react-query';
-import AIInsightsCard from './AIInsightsCard';
 import AlertsCard from './AlertsCard';
 import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
@@ -28,7 +27,7 @@ import { QueryResult } from '@/utils/queries/types';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
 import { useApi } from '@/api';
-import { useFeatureEnabled, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
@@ -37,8 +36,6 @@ import { useElementSize } from '@/utils/browser';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import Linking from '@/pages/users-item/UserDetails/Linking';
-import Tooltip from '@/components/library/Tooltip';
-import { getBranding } from '@/utils/branding';
 import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
 import { notEmpty } from '@/utils/array';
 import { isExistedUser } from '@/utils/api/users';
@@ -171,9 +168,6 @@ function useTabs(
   const paymentDetails =
     caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination ?? undefined;
   const user = caseItem.caseUsers?.origin ?? caseItem.caseUsers?.destination ?? undefined;
-  const settings = useSettings();
-  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
-  const branding = getBranding();
   const alertCommentsRes = useAlertsComments(alertIds);
   const entityIds = getEntityIds(caseItem);
   const [users, _] = useUsers();
@@ -305,30 +299,6 @@ function useTabs(
         isClosable: false,
         isDisabled: false,
         captureEvents: true,
-      },
-    isUserSubject &&
-      user &&
-      'type' in user &&
-      user?.type === 'BUSINESS' &&
-      isMerchantMonitoringEnabled && {
-        title: !settings.isAiEnabled ? (
-          <Tooltip
-            title={`You need to enable ${branding.companyName} AI Features under Settings to view this tab`}
-          >
-            <div className={style.icon}>
-              <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
-            </div>
-          </Tooltip>
-        ) : (
-          <div className={style.icon}>
-            <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
-          </div>
-        ),
-
-        key: 'ai-merchant-monitoring',
-        children: <AIInsightsCard user={user as InternalBusinessUser} />,
-        isClosable: false,
-        isDisabled: !settings.isAiEnabled,
       },
     isUserSubject &&
       user?.userId && {

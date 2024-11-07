@@ -1,1 +1,0 @@
-export const DEFAULT_MERCHANT_MOITORING_LIMIT = 5;

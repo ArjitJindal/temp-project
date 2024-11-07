@@ -28,7 +28,6 @@ import {
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
-import { DEFAULT_MERCHANT_MOITORING_LIMIT } from '@/utils/default-limits';
 import { BATCH_JOB_NAMESS } from '@/apis/models-custom/BatchJobNames';
 import Confirm from '@/components/utils/Confirm';
 import { getWhiteLabelBrandingByHost, isWhiteLabeled } from '@/utils/branding';
@@ -64,10 +63,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'IBAN resolution',
     description:
       'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
-  },
-  MERCHANT_MONITORING: {
-    title: 'Merchant monitoring',
-    description: 'Enables merchant monitoring in users & case details',
   },
   SAR: { title: 'SAR', description: 'Enables SAR' },
   QA: { title: 'QA', description: 'Enables QA in case management' },
@@ -408,18 +403,6 @@ export default function SuperAdminPanel() {
               <NumberInput
                 value={limits?.seats ?? 0}
                 onChange={(value) => setLimits({ ...limits, seats: value })}
-                isDisabled={false}
-              />
-            </Label>
-            <Label
-              label="Max ongoing merchant monitoring users"
-              description="The maximum number of merchant monitoring users allowed for this tenant"
-            >
-              <NumberInput
-                value={limits?.ongoingMerchantMonitoringUsers ?? DEFAULT_MERCHANT_MOITORING_LIMIT}
-                onChange={(value) =>
-                  setLimits({ ...limits, ongoingMerchantMonitoringUsers: value })
-                }
                 isDisabled={false}
               />
             </Label>

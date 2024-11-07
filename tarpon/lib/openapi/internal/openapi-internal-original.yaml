@@ -1883,43 +1883,6 @@ paths:
             type: string
           in: query
           name: filterPepRank
-  /merchant-monitoring/{userId}/update_monitoring_status:
-    post:
-      summary: Update Monitoring Status
-      operationId: post-update-monitoring-status
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UpdateMonitoringStatusRequest'
-        required: true
-      parameters:
-        - schema:
-            type: string
-          name: userId
-          in: path
-          required: true
-  /merchant-monitoring/stats:
-    get:
-      summary: Merchant Monitoring Stats
-      x-flagright:
-        permissions:
-          - users:user-overview:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MerchantMonitoringStatsResponse'
-      operationId: get-merchant-monitoring-stats
-      description: ''
   /users:
     get:
       summary: All Users - List
@@ -2506,63 +2469,6 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/UserUpdateRequest'
-        required: true
-  /merchant-monitoring/summary:
-    post:
-      summary: Merchant Monitoring
-      operationId: post-merchant-summary
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MerchantMonitoringSummaryResponse'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
-        required: true
-  /merchant-monitoring/scrape:
-    post:
-      summary: Merchant Monitoring Scrape
-      operationId: post-merchant-scrape
-      x-flagright:
-        permissions:
-          - users:user-overview:write
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MerchantMonitoringSummary'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MerchantMonitoringScrapeRequest'
-        required: true
-  /merchant-monitoring/history:
-    post:
-      summary: Merchant Monitoring
-      operationId: post-merchant-history
-      x-flagright:
-        permissions:
-          - users:user-overview:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/MerchantMonitoringSummaryResponse'
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/MerchantMonitoringSummaryRequest'
         required: true
   /users/uniques:
     get:
@@ -8616,7 +8522,6 @@ components:
       type: string
       enum:
         - ONGOING_SCREENING_USER_RULE
-        - ONGOING_MERCHANT_MONITORING
         - PULSE_USERS_BACKFILL_RISK_SCORE
         - DEMO_MODE_DATA_LOAD
         - TEST_FARGATE
@@ -9596,8 +9501,6 @@ components:
               type: number
             apiKeyView:
               type: number
-            ongoingMerchantMonitoringUsers:
-              type: number
         narrativeMode:
           type: string
           enum:
@@ -10210,7 +10113,6 @@ components:
         - ENTITY_LINKING
         - ADVANCED_WORKFLOWS
         - IBAN_RESOLUTION
-        - MERCHANT_MONITORING
         - SAR
         - QA
         - RULES_ENGINE_V8
@@ -11982,81 +11884,6 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ComplyAdvantageSearchHit'
-    MerchantMonitoringSummaryRequest:
-      type: object
-      properties:
-        source:
-          $ref: '#/components/schemas/MerchantMonitoringSource'
-        userId:
-          type: string
-        refresh:
-          type: boolean
-    MerchantMonitoringScrapeRequest:
-      type: object
-      properties:
-        userId:
-          type: string
-        url:
-          type: string
-    MerchantMonitoringSource:
-      type: object
-      properties:
-        sourceType:
-          $ref: '#/components/schemas/MerchantMonitoringSourceType'
-        sourceValue:
-          type: string
-    MerchantMonitoringSourceType:
-      type: string
-      enum:
-        - COMPANIES_HOUSE
-        - EXPLORIUM
-        - SCRAPE
-    MerchantMonitoringSummary:
-      type: object
-      properties:
-        source:
-          $ref: '#/components/schemas/MerchantMonitoringSource'
-        userId:
-          type: string
-        companyName:
-          type: string
-        domain:
-          type: string
-        url:
-          type: string
-        raw:
-          type: string
-        industry:
-          type: string
-        summary:
-          type: string
-        employees:
-          type: string
-        location:
-          type: string
-        revenue:
-          type: string
-        updatedAt:
-          type: number
-        products:
-          type: array
-          items:
-            type: string
-    MerchantMonitoringSummaryResponse:
-      type: object
-      properties:
-        data:
-          type: array
-          items:
-            $ref: '#/components/schemas/MerchantMonitoringSummary'
-    MerchantMonitoringStatsResponse:
-      type: object
-      title: MerchantMonitoringStatsResponse
-      properties:
-        count:
-          type: number
-      required:
-        - count
     SanctionsHit:
       title: SanctionsHit
       type: object

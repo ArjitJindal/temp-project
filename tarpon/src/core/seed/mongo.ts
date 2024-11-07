@@ -29,7 +29,6 @@ import {
   CASES_COLLECTION,
   DRS_SCORES_COLLECTION,
   KRS_SCORES_COLLECTION,
-  MERCHANT_MONITORING_DATA_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
@@ -53,7 +52,7 @@ import {
   UNIQUE_TAGS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
-import { getUsers, getMerchantMonitoring } from '@/core/seed/data/users'
+import { getUsers } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'
 import {
   getSanctions,
@@ -89,7 +88,6 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [AUDITLOG_COLLECTION, () => auditlogs()],
   [DRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[1]],
   [TRANSACTION_EVENTS_COLLECTION, () => transactionEvents()],
-  [MERCHANT_MONITORING_DATA_COLLECTION, () => getMerchantMonitoring()],
   [SANCTIONS_SEARCHES_COLLECTION, () => getSanctions()],
   [SANCTIONS_HITS_COLLECTION, () => getSanctionsHits()],
   [

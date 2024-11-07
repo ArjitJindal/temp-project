@@ -5,7 +5,6 @@ import KycRiskDisplay from '../../UserDetails/KycRiskDisplay';
 import DynamicRiskDisplay from '../../UserDetails/DynamicRiskDisplay';
 import { UserTrsRiskDisplay } from '../../UserDetails/UserTrsRiskDisplay';
 import s from './index.module.less';
-import { MerchantMonitoringToggle } from './MerchantMonitoringToggle';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -38,14 +37,6 @@ export default function SubHeader(props: Props) {
         <div className={s['row-items']}>
           <KycStatusEditor onNewComment={onNewComment} title={'KYC status'} user={user} />
           <UserStateEditor onNewComment={onNewComment} title={'User status'} user={user} />
-          {user.type === 'BUSINESS' && (
-            <Feature name="MERCHANT_MONITORING">
-              <MerchantMonitoringToggle
-                userId={userId}
-                isMonitoring={user.isMonitoringEnabled ?? false}
-              />
-            </Feature>
-          )}
         </div>
       </div>
       <Feature name="RISK_SCORING">

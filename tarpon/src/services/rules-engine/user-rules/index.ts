@@ -9,7 +9,6 @@ import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
 import UserOnboardedFromHighRiskCountry from './user-onboarded-from-high-risk-country'
 import { traceable } from '@/core/xray'
-import MerchantMonitoringIndustryUserRule from '@/services/rules-engine/user-rules/merchant-monitoring-industry'
 import DowJonesConsumerUserRule from '@/services/rules-engine/user-rules/dowjones-consumer-user'
 import ListScreeningConsumerUser from '@/services/rules-engine/user-rules/list-screening-consumer-user'
 
@@ -34,7 +33,6 @@ export class UserOngoingRuleBase extends UserOngoingRule<unknown> {
 }
 
 export const _USER_RULES = {
-  'merchant-monitoring-industry': MerchantMonitoringIndustryUserRule,
   'sanctions-business-user': SanctionsBusinessUserRule,
   'sanctions-bank-name': SanctionsBankUserRule,
   'sanctions-consumer-user': SanctionsConsumerUserRule,

@@ -38,9 +38,6 @@ import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
-import { MerchantMonitoringSummary } from '@/@types/openapi-internal/MerchantMonitoringSummary'
-import { MerchantMonitoringSourceType } from '@/@types/openapi-internal/MerchantMonitoringSourceType'
-import { MERCHANT_MONITORING_SOURCE_TYPES } from '@/@types/openapi-internal-custom/MerchantMonitoringSourceType'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { samplePaymentDetails } from '@/core/seed/samplers/transaction'
@@ -572,52 +569,6 @@ export function sampleBusinessUser({
   return {
     user,
   }
-}
-
-export function merchantMonitoringSummaries(
-  id: string,
-  c: CompanySeedData
-): MerchantMonitoringSummary[] {
-  return [0, 1, 2, 3].flatMap((n) => {
-    const summary = c.summaries[n % 2]
-    const sourceType: MerchantMonitoringSourceType =
-      MERCHANT_MONITORING_SOURCE_TYPES[n]
-    let url: string
-    switch (sourceType) {
-      case 'COMPANIES_HOUSE':
-        url =
-          'find-and-update.company-information.service.gov.uk/company/01772433'
-        break
-      case 'EXPLORIUM':
-        url = 'www.explorium.ai/'
-        break
-      case 'SCRAPE':
-        url = c.website
-        break
-    }
-    const days = 1000 * 60 * 60 * 24
-    return [
-      new Date().getTime(),
-      new Date().getTime() - days * randomInt(365),
-      new Date().getTime() - days * randomInt(365),
-    ].map((updatedAt) => ({
-      source: {
-        sourceType,
-        sourceValue: url,
-      },
-      summary,
-      userId: id,
-      domain: c.website,
-      products: c.products,
-      employees: c.companySize.toString(),
-      industry: c.industries[0],
-      location: c.location,
-      companyName: c.name,
-      revenue: new Intl.NumberFormat('en-US').format(c.annualRevenue),
-      updatedAt,
-      url,
-    }))
-  })
 }
 
 const sampleExpectedTransactionLimit = () => {

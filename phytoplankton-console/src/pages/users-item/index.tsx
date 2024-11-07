@@ -18,7 +18,6 @@ import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
-import AIInsightsCard from '@/pages/case-management-item/CaseDetails/AIInsightsCard';
 import UserTransactionHistoryTable from '@/pages/users-item/UserDetails/UserTransactionHistoryTable';
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import { useElementSize } from '@/utils/browser';
@@ -34,7 +33,6 @@ export default function UserItem() {
   const api = useApi();
 
   const queryClient = useQueryClient();
-  const isMerchantMonitoringEnabled = useFeatureEnabled('MERCHANT_MONITORING');
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
@@ -171,22 +169,6 @@ export default function UserItem() {
                       isClosable: false,
                       isDisabled: false,
                       captureEvents: true,
-                    },
-                  ]
-                : []),
-              ...(user.type === 'BUSINESS' && isMerchantMonitoringEnabled
-                ? [
-                    {
-                      title: (
-                        <div className={s.icon}>
-                          {' '}
-                          <BrainIcon /> <span>&nbsp; Merchant monitoring</span>
-                        </div>
-                      ),
-                      key: 'ai-merchant-monitoring',
-                      children: <AIInsightsCard user={user} />,
-                      isClosable: false,
-                      isDisabled: false,
                     },
                   ]
                 : []),

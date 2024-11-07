@@ -21,7 +21,6 @@ import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
 import { DashboardRefreshBatchJobRunner } from '@/services/batch-jobs/dashboard-refresh-batch-job-runner'
 import { DemoModeDataLoadJobRunner } from '@/services/batch-jobs/demo-mode-data-load-job-runner'
 import { GlobalRuleAggregationRebuildBatchJobRunner } from '@/services/batch-jobs/global-rule-aggregation-rebuild-batch-job-runner'
-import { OngoingMerchantMonitoringBatchJobRunner } from '@/services/batch-jobs/ongoing-merchant-monitoring-batch-job-runner'
 import { OngoingScreeningUserRuleBatchJobRunner } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 import { PulseDataLoadJobRunner } from '@/services/batch-jobs/pulse-data-load-job-runner'
 import { SimulationBeaconBatchJobRunner } from '@/services/batch-jobs/simulation-beacon-batch-job-runner'
@@ -48,8 +47,6 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new PulseDataLoadJobRunner(jobId),
     SIMULATION_BEACON: (jobId) => new SimulationBeaconBatchJobRunner(jobId),
     SIMULATION_PULSE: (jobId) => new SimulationRiskLevelsBatchJobRunner(jobId),
-    ONGOING_MERCHANT_MONITORING: (jobId) =>
-      new OngoingMerchantMonitoringBatchJobRunner(jobId),
     SYNC_DATABASES: (jobId) => new SyncDatabases(jobId),
     TEST_FARGATE: (jobId) => new TestFargateBatchJobRunner(jobId),
     TENANT_DELETION: (jobId) => new TenantDeletionBatchJobRunner(jobId),
