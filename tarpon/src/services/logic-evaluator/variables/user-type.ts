@@ -16,6 +16,7 @@ export const USER_TYPE: CommonUserLogicVariable = {
         { title: 'Consumer', value: 'CONSUMER' },
         { title: 'Business', value: 'BUSINESS' },
       ],
+      allowCustomValues: true,
     },
   },
   load: async (user: User | Business) => {

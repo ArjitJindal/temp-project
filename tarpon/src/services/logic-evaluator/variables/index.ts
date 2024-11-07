@@ -408,6 +408,7 @@ function getUiDefinition(info: EntityLeafValueInfo): FieldOrGroup {
     info.options && info.options.length > 0
       ? {
           listValues: info.options,
+          allowCustomValues: true,
         }
       : undefined
   return {

@@ -23,6 +23,7 @@ describe('List of entity variables', () => {
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
+              allowCustomValues: true,
               listValues: expect.arrayContaining([
                 {
                   title: 'Deposit',
@@ -57,6 +58,7 @@ describe('List of entity variables', () => {
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
+              allowCustomValues: true,
               listValues: expect.arrayContaining([
                 {
                   title: 'EUR (Euro)',
@@ -91,6 +93,7 @@ describe('List of entity variables', () => {
                   value: 'DE',
                 },
               ]),
+              allowCustomValues: true,
             },
           },
         },
@@ -104,6 +107,7 @@ describe('List of entity variables', () => {
             type: 'text',
             valueSources: ['value', 'field', 'func'],
             fieldSettings: {
+              allowCustomValues: true,
               listValues: expect.arrayContaining([
                 {
                   title: 'Sole Proprietorship',
@@ -182,6 +186,7 @@ describe('List of entity variables', () => {
                       value: 'DE',
                     },
                   ]),
+                  allowCustomValues: true,
                 },
               },
               'nameOnDocument.firstName': {

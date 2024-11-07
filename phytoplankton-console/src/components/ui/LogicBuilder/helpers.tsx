@@ -3,7 +3,7 @@ import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import { isEmpty } from 'lodash';
 import s from './index.module.less';
-import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS } from './operators';
+import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS, MULTI_SELECT_LIST_OPERATORS } from './operators';
 import ViewModeTags from './ViewModeTags';
 import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
@@ -190,7 +190,9 @@ export function makeConfig(params: LogicBuilderConfig): QueryBuilderConfig {
         // NOTE: Enum type variable is set to `text` type instead of `select` type to allow comparing
         // enum with text value. But we still only show select operators for enum type variable.
         const options = isLHSSelectType
-          ? props.items.filter((item) => SELECT_OPERATORS.includes(item.key))
+          ? props.items?.filter((item) =>
+              [...SELECT_OPERATORS, ...MULTI_SELECT_LIST_OPERATORS].includes(item.key),
+            )
           : props.items;
         const finalOptions = options.map((x) => ({ label: x.label, value: x.key }));
         if (isViewMode) {

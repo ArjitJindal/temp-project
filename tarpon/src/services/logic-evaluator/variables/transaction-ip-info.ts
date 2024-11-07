@@ -15,6 +15,7 @@ const getUiDefinition = (
     ? {
         fieldSettings: {
           listValues: getCountriesOptions(),
+          allowCustomValues: true,
         },
       }
     : {}),

@@ -21,6 +21,7 @@ export const USER_KRS_LEVEL: CommonUserLogicVariable = {
       listValues: map(RISK_LEVELS, (riskLevel) => {
         return { title: humanizeConstant(riskLevel), value: riskLevel }
       }),
+      allowCustomValues: true,
     },
   },
   requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
