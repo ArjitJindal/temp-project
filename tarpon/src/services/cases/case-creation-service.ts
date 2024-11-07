@@ -919,6 +919,8 @@ export class CaseCreationService {
       createdTimestamp: now,
       caseStatus: 'OPEN',
       caseType: 'SYSTEM',
+      subjectType: sourceCase.subjectType,
+      paymentDetails: sourceCase.paymentDetails,
       priority: minBy(newCaseAlerts, 'priority')?.priority ?? last(PRIORITYS),
       relatedCases: sourceCase.caseId
         ? [...(sourceCase.relatedCases ?? []), sourceCase.caseId]
