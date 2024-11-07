@@ -13674,14 +13674,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"fast-xml-parser@npm:^4.2.5":
-  version: 4.3.3
-  resolution: "fast-xml-parser@npm:4.3.3"
+"fast-xml-parser@npm:^4.4.1":
+  version: 4.5.0
+  resolution: "fast-xml-parser@npm:4.5.0"
   dependencies:
     strnum: "npm:^1.0.5"
   bin:
     fxparser: src/cli/cli.js
-  checksum: 501de1f38d9d22c98b8f722fe27a3bb6907cf82a4e37639aa5702f725721424123a1a05a3cc19ec5f3c995ba65fadc7891b10d425eb0dc833580d32aff373777
+  checksum: dc9571c10e7b57b5be54bcd2d92f50c446eb42ea5df347d253e94dd14eb99b5300a6d172e840f151e0721933ca2406165a8d9b316a6d777bf0596dc4fe1df756
   languageName: node
   linkType: hard
 
@@ -20338,7 +20338,7 @@ __metadata:
     express: "npm:^4.18.1"
     express-openapi-validator: "npm:^4.13.8"
     fast-levenshtein: "npm:^3.0.0"
-    fast-xml-parser: "npm:^4.2.5"
+    fast-xml-parser: "npm:^4.4.1"
     fern-api: "npm:^0.30.3"
     fetch-retry: "npm:^5.0.6"
     file-type: "npm:16.5.4"
