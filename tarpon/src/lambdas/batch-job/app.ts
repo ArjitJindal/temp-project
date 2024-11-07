@@ -146,6 +146,7 @@ export const jobDecisionHandler = async (
     BACKFILL_AVERAGE_TRS: 'LAMBDA',
     RISK_SCORING_RECALCULATION: 'FARGATE',
     SIMULATION_RISK_FACTORS_V8: 'FARGATE',
+    CASE_SLA_STATUS_REFRESH: 'LAMBDA',
   }
 
   return {

@@ -3,17 +3,19 @@ import { findIndex } from 'lodash';
 import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import OperatorSelect from '../OperatorSelect';
 import s from './styles.module.less';
-import { PolicyAlertStatusDetailsAlertStatusesEnum } from '@/apis/models/PolicyAlertStatusDetails';
-import { PolicyAlertStatusDetailsAlertStatusesCount } from '@/apis/models/PolicyAlertStatusDetailsAlertStatusesCount';
 import Label from '@/components/library/Label';
 import NumberInput from '@/components/library/NumberInput';
-import { NumberOperators } from '@/apis';
+import {
+  NumberOperators,
+  PolicyStatusDetailsStatusesCount,
+  PolicyStatusDetailsStatusesEnum,
+} from '@/apis';
 import { Option } from '@/components/library/Select';
 
 interface Props {
-  alertStatuses: Array<PolicyAlertStatusDetailsAlertStatusesEnum>;
-  onChange: (value: Array<PolicyAlertStatusDetailsAlertStatusesCount> | undefined) => void;
-  currentValues: Array<PolicyAlertStatusDetailsAlertStatusesCount> | undefined;
+  statuses: Array<PolicyStatusDetailsStatusesEnum>;
+  onChange: (value: Array<PolicyStatusDetailsStatusesCount> | undefined) => void;
+  currentValues: Array<PolicyStatusDetailsStatusesCount> | undefined;
 }
 
 const numberOperatorOptions: Option<NumberOperators>[] = [
@@ -26,17 +28,17 @@ const numberOperatorOptions: Option<NumberOperators>[] = [
 ];
 
 function getStatusIndex(
-  status: PolicyAlertStatusDetailsAlertStatusesEnum,
-  currentValues: Array<PolicyAlertStatusDetailsAlertStatusesCount> | undefined,
+  status: PolicyStatusDetailsStatusesEnum,
+  currentValues: Array<PolicyStatusDetailsStatusesCount> | undefined,
 ) {
   return findIndex(currentValues, (o) => o.status === status);
 }
 
 function StatusesCountInput(props: Props) {
-  const { alertStatuses, onChange, currentValues } = props;
+  const { statuses, onChange, currentValues } = props;
   return (
     <>
-      {alertStatuses?.map((status, index) => {
+      {statuses?.map((status, index) => {
         const currentIndex = getStatusIndex(status, currentValues);
         const { count, operator } = currentValues?.[currentIndex] ?? {};
         return (

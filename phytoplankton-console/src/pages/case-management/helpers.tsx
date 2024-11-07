@@ -1,8 +1,10 @@
 import { UserOutlined } from '@ant-design/icons';
 import { humanizeConstant, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
-import { map } from 'lodash';
+import { map, range } from 'lodash';
+import { MAX_SLA_POLICIES_PER_ENTITY } from '@flagright/lib/constants';
 import PaymentMethodButton from '../transactions/components/PaymentMethodButton';
 import SlaFilter from './components/SlaFilter';
+import { getPolicyTime } from './components/SlaStatus/SlaPolicyDetails';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import { dayjs } from '@/utils/dayjs';
@@ -22,6 +24,7 @@ import {
   ChecklistStatus,
   DerivedStatus,
   PaymentMethod,
+  SLAPolicy,
   SLAPolicyStatus,
 } from '@/apis';
 import { ScopeSelectorValue } from '@/pages/case-management/components/ScopeSelector';
@@ -34,6 +37,7 @@ import { DERIVED_STATUSS } from '@/apis/models-custom/DerivedStatus';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRoles } from '@/utils/user-utils';
+import { ColumnHelper } from '@/components/library/Table/columnHelper';
 
 export const queryAdapter: Adapter<TableSearchParams> = {
   serializer: (params) => {
@@ -139,7 +143,9 @@ export const useCaseAlertFilters = (
   filterIds?: string[],
 ): ExtraFilterProps<TableSearchParams>[] => {
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
-  const isSlaEnabled = useFeatureEnabled('ALERT_SLA');
+  const isAlertSlaEnabled = useFeatureEnabled('ALERT_SLA');
+  const isCaseSlaEnabled = useFeatureEnabled('PNB');
+  const isSlaEnabled = isAlertSlaEnabled || isCaseSlaEnabled;
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
@@ -393,4 +399,59 @@ export const useCaseAlertFilters = (
       ),
     },
   ]).filter((filter) => filterIds?.includes(filter.key)) as ExtraFilterProps<TableSearchParams>[];
+};
+
+export const getSlaColumnsForExport = <T extends ColumnHelper<any>>(
+  helper: T,
+  slaPolicies: SLAPolicy[],
+) => {
+  const columns = range(0, MAX_SLA_POLICIES_PER_ENTITY).flatMap((i) => [
+    helper.simple<'slaPolicyDetails'>({
+      title: `SLA policy ${i + 1} - Name`,
+      key: `slaPolicyDetails`,
+      type: {
+        stringify: (slaPolicyDetails) => {
+          const policyDetail = slaPolicyDetails?.[i];
+          const policyId = policyDetail?.slaPolicyId;
+          const policy = slaPolicies.find((policy) => policy.id === policyId);
+          return policy?.name ?? '-';
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
+    helper.simple<'slaPolicyDetails'>({
+      title: `SLA policy ${i + 1} - Status`,
+      key: `slaPolicyDetails`,
+      type: {
+        stringify: (slaPolicyDetails) => {
+          return slaPolicyDetails?.[i]?.policyStatus ?? '-';
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
+    helper.simple<'slaPolicyDetails'>({
+      title: `SLA policy ${i + 1} - Exceeded by/Exceeding in`,
+      key: `slaPolicyDetails`,
+      type: {
+        stringify: (slaPolicyDetails) => {
+          const policyDetail = slaPolicyDetails?.[i];
+          if (!policyDetail) {
+            return '-';
+          }
+
+          const { policyStatus, slaPolicyId, elapsedTime } = policyDetail;
+          const policy = slaPolicies.find((policy) => policy.id === slaPolicyId);
+
+          const timeDescription = policyStatus === 'BREACHED' ? 'Exceeded by ' : 'Exceeding in ';
+
+          return policy ? `${timeDescription}${getPolicyTime(policy, elapsedTime)}` : '-';
+        },
+      },
+      hideInTable: true,
+      exporting: true,
+    }),
+  ]);
+  return columns;
 };

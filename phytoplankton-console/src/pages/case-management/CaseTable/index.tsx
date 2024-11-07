@@ -6,6 +6,8 @@ import { TableSearchParams } from '../types';
 import CasesStatusChangeButton from '../components/CasesStatusChangeButton';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import AlertTable from '../AlertTable';
+import { getSlaColumnsForExport } from '../helpers';
+import SlaStatus from '../components/SlaStatus';
 import {
   Case,
   CasesAssignmentsUpdateRequest,
@@ -31,7 +33,7 @@ import { getUserLink } from '@/utils/api/users';
 import UserKycStatusTag from '@/components/library/Tag/UserKycStatusTag';
 import { AssigneesDropdown } from '@/pages/case-management/components/AssigneesDropdown';
 import UserStateTag from '@/components/library/Tag/UserStateTag';
-import { PaginatedData } from '@/utils/queries/hooks';
+import { PaginatedData, useQuery } from '@/utils/queries/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { ConsoleUserAvatar } from '@/pages/case-management/components/ConsoleUserAvatar';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -75,6 +77,8 @@ import { denseArray } from '@/utils/lang';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
+import { getOr } from '@/utils/asyncResource';
+import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -142,7 +146,17 @@ export default function CaseTable(props: Props) {
   }, [params.caseStatus, reloadTable]);
 
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
+  const slaEnabled = useFeatureEnabled('PNB');
 
+  const slaPoliciesQueryResult = useQuery(SLA_POLICY_LIST(), async () => {
+    return await api.getSlaPolicies({
+      pageSize: 100,
+    });
+  });
+  const slaPolicies = getOr(slaPoliciesQueryResult.data, {
+    items: [],
+    total: 0,
+  });
   const columns: TableColumn<TableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TableItem>();
     const mergedColumns: TableColumn<TableItem>[] = [
@@ -326,6 +340,17 @@ export default function CaseTable(props: Props) {
         filtering: true,
         sorting: true,
       }),
+      ...((slaEnabled
+        ? [
+            helper.display({
+              title: 'SLA status',
+              render: (entity) => {
+                return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+              },
+            }),
+            ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
+          ]
+        : []) as TableColumn<TableItem>[]),
       ...((isInReview
         ? [
             helper.simple<'proposedAction'>({
@@ -544,6 +569,8 @@ export default function CaseTable(props: Props) {
     caseAssignmentUpdateMutation,
     caseReviewAssignmentUpdateMutation,
     isInReview,
+    slaEnabled,
+    slaPolicies.items,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
@@ -561,6 +588,7 @@ export default function CaseTable(props: Props) {
     showAssignedToFilter && 'assignedTo',
     showAssignedToFilter && 'roleAssignedTo',
     'caseStatus',
+    slaEnabled && 'sla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
   const exportPermissions = useHasPermissions(['case-management:export:read']);

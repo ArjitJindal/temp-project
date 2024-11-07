@@ -1,7 +1,10 @@
 import { TenantDeletionBatchJobRunner } from './tenant-deletion-batch-job-runner'
 import { SimulationRiskFactorsBatchJobRunner } from './simulation-risk-scoring-batch-job-runner'
 import { RulePreAggregationBatchJobRunner } from './rule-pre-aggregation-batch-job-runner'
-import { AlertSLAStatusRefreshBatchJobRunner } from './alert-sla-status-refresh-batch-job-runner'
+import {
+  AlertSLAStatusRefreshBatchJobRunner,
+  CaseSLAStatusRefreshBatchJobRunner,
+} from './sla-status-refresh-batch-job-runner'
 import { ReverifyTransactionsBatchJobRunner } from './reverify-transactions-job-runner'
 import { BackfillAvgTrsRunner } from './backfill-avg-trs-runner'
 import { RiskScoringRecalculationBatchJobRunner } from './risk-scoring-recalculation-batch-job-runner'
@@ -75,6 +78,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     PNB_BACKFILL_KRS: (jobId) => new PnbBackfillKrsBatchJobRunner(jobId),
     PNB_BACKFILL_CRA: (jobId) => new PnbBackfillCraBatchJobRunner(jobId),
     PNB_BACKFILL_ARS: (jobId) => new PnbBackfillArsBatchJobRunner(jobId),
+    CASE_SLA_STATUS_REFRESH: (jobId) =>
+      new CaseSLAStatusRefreshBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

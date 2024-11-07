@@ -77,12 +77,17 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
         const tenantService = new TenantService(id, { mongoDb, dynamoDb })
         const features = (await tenantService.getTenantSettings()).features
         if (!features?.includes('ALERT_SLA')) {
-          return
+          await sendBatchJobCommand({
+            type: 'ALERT_SLA_STATUS_REFRESH',
+            tenantId: id,
+          })
         }
-        return sendBatchJobCommand({
-          type: 'ALERT_SLA_STATUS_REFRESH',
-          tenantId: id,
-        })
+        if (features?.includes('PNB')) {
+          await sendBatchJobCommand({
+            type: 'CASE_SLA_STATUS_REFRESH',
+            tenantId: id,
+          })
+        }
       })
     )
   } catch (e) {

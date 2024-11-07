@@ -1,10 +1,6 @@
-import { AlertsSLAService } from '../alerts-sla-service'
-import {
-  getTestAlert,
-  getTestPolicy,
-  setUpSLAHooks,
-} from '../sla/sla-test-utils'
-import { AlertsRepository } from '../repository'
+import { SLAService } from '../sla-service'
+import { getTestAlert, getTestPolicy, setUpSLAHooks } from '../sla-test-utils'
+import { AlertsRepository } from '../../alerts/repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -12,7 +8,7 @@ import { CaseRepository } from '@/services/cases/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 
-withFeatureHook(['ALERT_SLA'])
+withFeatureHook(['ALERT_SLA', 'PNB'])
 
 jest.mock('../../accounts', () => {
   return {
@@ -32,7 +28,7 @@ jest.mock('../../accounts', () => {
 
 describe('test sla service', () => {
   const tenantId = getTestTenantId()
-  describe('test calculateSLAStatusForAlert', () => {
+  describe('test calculateSLAStatusForEntity', () => {
     describe('basic SLA calculation logic test', () => {
       const TEST_POLICY = getTestPolicy({
         id: 'test-policy-1',
@@ -40,7 +36,7 @@ describe('test sla service', () => {
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -54,7 +50,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-1'
         )
@@ -65,7 +61,7 @@ describe('test sla service', () => {
       })
       test('should return the Warning status and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -79,7 +75,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-1'
         )
@@ -90,7 +86,7 @@ describe('test sla service', () => {
       })
       test('should return the Breached and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -104,7 +100,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-1'
         )
@@ -119,9 +115,9 @@ describe('test sla service', () => {
         id: 'test-policy-2',
         policyConfiguration: {
           accountRoles: ['test'],
-          alertStatusDetails: {
-            alertStatuses: ['OPEN', 'IN_REVIEW'],
-            alertStatusesCount: [
+          statusDetails: {
+            statuses: ['OPEN', 'IN_REVIEW'],
+            statusesCount: [
               { status: 'OPEN', count: 1, operator: 'EQ' },
               { status: 'IN_REVIEW', count: 1, operator: 'GTE' },
             ],
@@ -142,7 +138,7 @@ describe('test sla service', () => {
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status with second open status time skipped', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -178,7 +174,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-2'
         )
@@ -189,7 +185,7 @@ describe('test sla service', () => {
       })
       test('should return the Breached status with second open status time skipped', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -225,7 +221,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-2'
         )
@@ -243,7 +239,7 @@ describe('test sla service', () => {
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -257,7 +253,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-3'
         )
@@ -271,8 +267,8 @@ describe('test sla service', () => {
       const TEST_POLICY = getTestPolicy({
         id: 'test-policy-4',
         policyConfiguration: {
-          alertStatusDetails: {
-            alertStatuses: ['OPEN'],
+          statusDetails: {
+            statuses: ['OPEN'],
           },
           workingDays: ['MON', 'WED'],
           SLATime: {
@@ -286,7 +282,7 @@ describe('test sla service', () => {
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 2 day SLA only counting monday and wednesday', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf() // Thursday
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -300,7 +296,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-4'
         )
@@ -311,7 +307,7 @@ describe('test sla service', () => {
       })
       test('should return the Breached status and time for open alert with 2 day SLA only counting monday and wednesday', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, mongoDb, 'test')
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf() // Thursday
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -325,7 +321,7 @@ describe('test sla service', () => {
           ],
         })
 
-        const result = await service.calculateSLAStatusForAlert(
+        const result = await service.calculateSLAStatusForEntity(
           alert,
           'test-policy-4'
         )
@@ -345,8 +341,8 @@ describe('test sla service', () => {
       id: 'test-policy-6',
       policyConfiguration: {
         accountRoles: ['test'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
+        statusDetails: {
+          statuses: ['OPEN'],
         },
         workingDays: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'],
         SLATime: {
@@ -361,7 +357,7 @@ describe('test sla service', () => {
     test('should calculate SLA policy status for non closed alerts', async () => {
       const mongoDb = await getMongoDbClient()
       const caseRepository = new CaseRepository(tenantId, { mongoDb })
-      const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+      const service = new SLAService(tenantId, mongoDb, 'test')
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       /* Creating alerts in two cases to verify the SLA status calculation */
       await caseRepository.addCaseMongo({
@@ -447,7 +443,7 @@ describe('test sla service', () => {
           }),
         ],
       })
-      await service.calculateAndUpdateSLAStatuses()
+      await service.calculateAndUpdateSLAStatusesForAlerts()
       const alertsRepository = new AlertsRepository(tenantId, { mongoDb })
       const alert1 = await alertsRepository.getAlertById('testAlert1')
       const alert2 = await alertsRepository.getAlertById('testAlert2')
@@ -490,8 +486,8 @@ describe('test sla service', () => {
       id: 'test-policy-7',
       policyConfiguration: {
         accountRoles: ['test'],
-        alertStatusDetails: {
-          alertStatuses: ['ESCALATED'],
+        statusDetails: {
+          statuses: ['ESCALATED'],
         },
         SLATime: {
           breachTime: {
@@ -505,7 +501,7 @@ describe('test sla service', () => {
     setUpSLAHooks(tenantId, [TEST_POLICY])
     test('should calculate SLA policy status for escalated alerts', async () => {
       const mongoDb = await getMongoDbClient()
-      const service = new AlertsSLAService(tenantId, mongoDb, 'test')
+      const service = new SLAService(tenantId, mongoDb, 'test')
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       const alert: Alert = getTestAlert({
         createdTimestamp: timestamp,
@@ -531,7 +527,7 @@ describe('test sla service', () => {
           },
         ],
       })
-      const result = await service.calculateSLAStatusForAlert(
+      const result = await service.calculateSLAStatusForEntity(
         alert,
         'test-policy-7'
       )
@@ -539,6 +535,106 @@ describe('test sla service', () => {
         elapsedTime: 86400000,
         policyStatus: 'BREACHED',
       })
+    })
+  })
+  describe('test calculation of SLA status for all non closed manual cases', () => {
+    const tenantId = getTestTenantId()
+    const TEST_POLICY1 = getTestPolicy({
+      id: 'test-policy-8',
+      type: 'MANUAL_CASE',
+    })
+
+    setUpSLAHooks(tenantId, [TEST_POLICY1])
+    test('should calculate SLA policy status for non closed manual cases', async () => {
+      const mongoDb = await getMongoDbClient()
+      const caseRepository = new CaseRepository(tenantId, { mongoDb })
+      const service = new SLAService(tenantId, mongoDb, 'test')
+      const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
+      await caseRepository.addCaseMongo({
+        caseId: 'testCase1',
+        caseStatus: 'IN_REVIEW_CLOSED',
+        caseType: 'MANUAL',
+        caseAggregates: {} as CaseAggregates,
+        createdTimestamp: timestamp,
+        assignments: [
+          {
+            assigneeUserId: 'test',
+            assignedByUserId: 'test',
+            timestamp: new Date().valueOf(),
+          },
+        ],
+        slaPolicyDetails: [
+          {
+            slaPolicyId: 'test-policy-8',
+            elapsedTime: 0,
+            policyStatus: 'OK',
+          },
+        ],
+        statusChanges: [
+          {
+            caseStatus: 'IN_REVIEW_CLOSED',
+            timestamp: new Date('2021-01-02T00:00:00Z').valueOf(),
+            userId: 'test',
+          },
+        ],
+        alerts: [],
+      })
+      await caseRepository.addCaseMongo({
+        caseId: 'testCase2',
+        caseStatus: 'IN_REVIEW_CLOSED',
+        assignments: [
+          {
+            assigneeUserId: 'test',
+            assignedByUserId: 'test',
+            timestamp: new Date().valueOf(),
+          },
+        ],
+        caseType: 'MANUAL',
+        createdTimestamp: timestamp,
+        slaPolicyDetails: [
+          {
+            slaPolicyId: 'test-policy-8',
+            elapsedTime: 0,
+            policyStatus: 'OK',
+          },
+        ],
+        statusChanges: [
+          {
+            caseStatus: 'IN_REVIEW_CLOSED',
+            timestamp: new Date('2021-01-03T00:00:00Z').valueOf(),
+            userId: 'test',
+          },
+          {
+            caseStatus: 'OPEN',
+            timestamp: new Date('2021-01-04T00:00:00Z').valueOf(),
+            userId: 'test',
+          },
+          {
+            caseStatus: 'IN_REVIEW_CLOSED',
+            timestamp: new Date('2021-01-05T00:00:00Z').valueOf(),
+            userId: 'test',
+          },
+        ],
+        caseAggregates: {} as CaseAggregates,
+        alerts: [],
+      })
+      await service.calculateAndUpdateSLAStatusesForCases()
+      const case1 = await caseRepository.getCaseById('testCase1')
+      const case2 = await caseRepository.getCaseById('testCase2')
+      expect(case1?.slaPolicyDetails).toMatchObject([
+        {
+          slaPolicyId: 'test-policy-8',
+          elapsedTime: 86400000,
+          policyStatus: 'OK',
+        },
+      ])
+      expect(case2?.slaPolicyDetails).toMatchObject([
+        {
+          slaPolicyId: 'test-policy-8',
+          elapsedTime: 259200000,
+          policyStatus: 'OK',
+        },
+      ])
     })
   })
 })

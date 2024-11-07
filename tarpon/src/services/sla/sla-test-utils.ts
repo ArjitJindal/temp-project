@@ -50,10 +50,11 @@ export function getTestPolicy(slaPolicy: Partial<SLAPolicy> = {}): SLAPolicy {
     name: 'testPolicy1',
     description: 'test',
     createdBy: 'testUser',
+    type: 'ALERT',
     policyConfiguration: {
       accountRoles: ['test'],
-      alertStatusDetails: {
-        alertStatuses: ['OPEN'],
+      statusDetails: {
+        statuses: ['OPEN'],
       },
       SLATime: {
         breachTime: {

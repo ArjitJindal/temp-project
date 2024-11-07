@@ -35,7 +35,7 @@ import { CHECKLIST_DONE_STATUSS } from '@/@types/openapi-internal-custom/Checkli
 import { PaymentMethod } from '@/@types/tranasction/payment-type'
 import { uniqObjects } from '@/utils/object'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
-import { getSLAStatusFromElapsedTime } from '@/services/alerts/sla/sla-utils'
+import { getSLAStatusFromElapsedTime } from '@/services/sla/sla-utils'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 
 let counter = 1

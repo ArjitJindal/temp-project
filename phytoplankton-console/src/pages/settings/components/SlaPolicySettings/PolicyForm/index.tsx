@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { message } from 'antd';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { FormValues } from '../utils/utils';
 import PolicyConfigurationTable from './components/PolicyConfigurationTable';
 import s from './styles.module.less';
@@ -16,6 +17,9 @@ import { SLA_POLICY_ID } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { getOr } from '@/utils/asyncResource';
 import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
+import Select from '@/components/library/Select';
+import { SLA_POLICY_TYPES } from '@/apis/models-custom/SLAPolicyType';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   handleEdit: (values: FormValues) => void;
@@ -28,6 +32,7 @@ interface Props {
 
 function PolicyConfigurationForm(props: Props) {
   const { handleCreate, handleEdit, initialValues, mode, onChange } = props;
+  const isPnb = useFeatureEnabled('PNB');
   const api = useApi();
   const queryResult = useQuery<SLAPolicyIdResponse>(
     SLA_POLICY_ID(initialValues.id || 'new'),
@@ -78,7 +83,7 @@ function PolicyConfigurationForm(props: Props) {
           if (!policyConfiguration.SLATime.breachTime) {
             return 'Breach time is required';
           }
-          if (!policyConfiguration.alertStatusDetails.alertStatuses) {
+          if (!policyConfiguration.statusDetails.statuses) {
             return 'Alert statuses is required';
           }
           if (!policyConfiguration.workingDays) {
@@ -130,6 +135,20 @@ function PolicyConfigurationForm(props: Props) {
           >
             {(inputProps) => <TextInput {...inputProps} />}
           </InputField>
+          {isPnb && (
+            <InputField<FormValues, 'type'> name={'type'} label={'Type'}>
+              {(inputProps) => (
+                <Select
+                  {...inputProps}
+                  allowClear={false}
+                  options={SLA_POLICY_TYPES.map((value) => ({
+                    label: humanizeSnakeCase(value),
+                    value,
+                  }))}
+                />
+              )}
+            </InputField>
+          )}
           <NestedForm name={'policyConfiguration'}>
             <Label
               label={<H4 bold>Policy configuration</H4>}

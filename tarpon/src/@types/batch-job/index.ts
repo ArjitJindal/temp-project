@@ -137,6 +137,11 @@ export type AlertSLAStatusRefreshBatchJob = {
   type: 'ALERT_SLA_STATUS_REFRESH'
   tenantId: string
 }
+/* Case SLA Status Calculation */
+export type CaseSLAStatusRefreshBatchJob = {
+  type: 'CASE_SLA_STATUS_REFRESH'
+  tenantId: string
+}
 
 /* Dashboard refresh */
 type DashboardRefreshBatchJobParameters = {
@@ -294,6 +299,7 @@ export type BatchJob =
   | PnbBackfillKrs
   | PnbBackfillArs
   | PnbBackfillCra
+  | CaseSLAStatusRefreshBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

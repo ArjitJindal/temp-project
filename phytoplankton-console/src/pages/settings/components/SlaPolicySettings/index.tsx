@@ -1,6 +1,7 @@
 import PlusOutlined from '@ant-design/icons/lib/icons/PlusOutlined';
 import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import s from './styles.module.less';
 import PolicyForm from './PolicyForm';
 import { FormValues, formValuesToSlaPolicy } from './utils/utils';
@@ -34,11 +35,13 @@ import Id from '@/components/ui/Id';
 import { message } from '@/components/library/Message';
 import Confirm from '@/components/utils/Confirm';
 import { isEqual } from '@/utils/lang';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 const defaultValues: FormValues = {
   id: '',
   name: '',
   description: '',
+  type: 'ALERT',
   policyConfiguration: {
     SLATime: {
       breachTime: {
@@ -46,8 +49,8 @@ const defaultValues: FormValues = {
         granularity: 'hours',
       },
     },
-    alertStatusDetails: {
-      alertStatuses: ['OPEN'],
+    statusDetails: {
+      statuses: ['OPEN'],
     },
     workingDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
   },
@@ -60,6 +63,7 @@ export function SlaPolicySettings() {
     ...DEFAULT_PARAMS_STATE,
     pageSize: 50,
   });
+  const isPnb = useFeatureEnabled('PNB');
   const slaPoliciesResult = usePaginatedQuery<SLAPolicy>(
     SLA_POLICY_LIST(params),
     async (paginationParams) => {
@@ -193,6 +197,15 @@ export function SlaPolicySettings() {
         key: 'description',
         defaultWidth: 200,
       }),
+      ...(isPnb
+        ? [
+            helper.display({
+              title: 'Type',
+              id: 'type',
+              render: (value) => humanizeSnakeCase(value.type ?? ''),
+            }),
+          ]
+        : []),
       helper.simple<'createdBy'>({
         title: 'Created by',
         key: 'createdBy',
@@ -254,10 +267,10 @@ export function SlaPolicySettings() {
         },
       }),
     ]);
-  }, [deletionMutation, handleOpenForm, users, loadingUsers, handleCopySlaPolicy]);
+  }, [deletionMutation, handleOpenForm, users, loadingUsers, handleCopySlaPolicy, isPnb]);
   const initialValues = selectedSlaPolicy ?? defaultValues;
   return (
-    <SettingsCard title="SLA Policy" description="Define SLA policies for alert investigation">
+    <SettingsCard title="SLA Policy" description="Define SLA policies for investigation">
       <AsyncResourceRenderer resource={slaPoliciesResult.data}>
         {(slaPolicies) => {
           if (slaPolicies.items.length === 0) {

@@ -5196,6 +5196,18 @@ paths:
             type: boolean
           in: query
           name: includeDeleted
+        - schema:
+            type: array
+            items:
+              type: string
+          in: query
+          name: filterSlaPolicyId
+        - schema:
+            type: array
+            items:
+              $ref: '#/components/schemas/SLAPolicyStatus'
+          in: query
+          name: filterSlaPolicyStatus
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual
@@ -6297,6 +6309,10 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+        - schema:
+            $ref: '#/components/schemas/SLAPolicyType'
+          in: query
+          name: type
     post:
       summary: Create SLA Policy
       operationId: post-sla-policy
@@ -10752,6 +10768,10 @@ components:
           type: number
         caseAggregates:
           $ref: '#/components/schemas/CaseAggregates'
+        slaPolicyDetails:
+          type: array
+          items:
+            $ref: '#/components/schemas/SLAPolicyDetails'
       required:
         - caseType
         - caseAggregates
@@ -14822,6 +14842,8 @@ components:
       properties:
         id:
           type: string
+        type:
+          $ref: '#/components/schemas/SLAPolicyType'
         name:
           type: string
         description:
@@ -14840,8 +14862,15 @@ components:
         - name
         - policyConfiguration
         - id
+        - type
         - description
         - createdBy
+    SLAPolicyType:
+      title: SLAPolicyType
+      type: string
+      enum:
+        - ALERT
+        - MANUAL_CASE
     SLAPolicyConfiguration:
       title: SLAPolicyConfiguration
       type: object
@@ -14871,11 +14900,11 @@ components:
               - FRI
               - SAT
               - SUN
-        alertStatusDetails:
-          $ref: '#/components/schemas/PolicyAlertStatusDetails'
+        statusDetails:
+          $ref: '#/components/schemas/PolicyStatusDetails'
       required:
         - SLATime
-        - alertStatusDetails
+        - statusDetails
         - workingDays
     DashboardStatsTeamSLAItem:
       title: DashboardStatsTeamSLAItem
@@ -14894,11 +14923,11 @@ components:
         - WARNING
         - BREACHED
         - OK
-    PolicyAlertStatusDetails:
-      title: PolicyAlertStatusDetails
+    PolicyStatusDetails:
+      title: PolicyStatusDetails
       type: object
       properties:
-        alertStatuses:
+        statuses:
           type: array
           items:
             type: string
@@ -14910,7 +14939,7 @@ components:
               - IN_REVIEW
               - REOPENED
               - ESCALATED_L2
-        alertStatusesCount:
+        statusesCount:
           type: array
           items:
             type: object
@@ -14934,7 +14963,7 @@ components:
               - count
               - operator
       required:
-        - alertStatuses
+        - statuses
     SLATimeWindow:
       title: SLATimeWindow
       type: object

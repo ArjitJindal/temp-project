@@ -461,8 +461,10 @@ export class AlertsRepository {
 
     if (params.filterSlaPolicyId && params.filterSlaPolicyId.length > 0) {
       alertConditions.push({
-        'alerts.slaPolicyDetails.slaPolicyId': {
-          $in: params.filterSlaPolicyId,
+        'alerts.slaPolicyDetails': {
+          $elemMatch: {
+            slaPolicyId: { $in: params.filterSlaPolicyId },
+          },
         },
       })
     }
@@ -472,8 +474,10 @@ export class AlertsRepository {
       params.filterSlaPolicyStatus.length > 0
     ) {
       alertConditions.push({
-        'alerts.slaPolicyDetails.policyStatus': {
-          $in: params.filterSlaPolicyStatus,
+        'alerts.slaPolicyDetails': {
+          $elemMatch: {
+            policyStatus: { $in: params.filterSlaPolicyStatus },
+          },
         },
       })
     }

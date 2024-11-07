@@ -28,6 +28,7 @@ import { filterLiveRules } from '../rules-engine/utils'
 import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
 import { S3Config } from '../aws/s3-service'
+import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
 import { CaseService } from '.'
 import {
@@ -100,6 +101,7 @@ import { acquireLock, releaseLock } from '@/utils/lock'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
+import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 
 type CaseSubject =
   | {
@@ -125,6 +127,7 @@ export class CaseCreationService {
   sanctionsHitsRepository: SanctionsHitsRepository
   sanctionsSearchRepository: SanctionsSearchRepository
   caseService?: CaseService
+  slaPolicyService: SLAPolicyService
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -186,6 +189,7 @@ export class CaseCreationService {
       tenantID,
       connections.mongoDb
     )
+    this.slaPolicyService = new SLAPolicyService(tenantID, connections.mongoDb)
   }
 
   private tenantSettings = memoize(async () => {
@@ -287,6 +291,14 @@ export class CaseCreationService {
           compact(transactionIds)
         )
       : []
+    let slaPolicies: SLAPolicy[] = []
+    if (hasFeature('PNB')) {
+      slaPolicies = (
+        await this.slaPolicyService.getSLAPolicies({
+          type: 'MANUAL_CASE',
+        })
+      ).items
+    }
 
     const case_ = await this.addOrUpdateCase({
       caseType: 'MANUAL',
@@ -316,7 +328,14 @@ export class CaseCreationService {
         ),
         tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
       },
+      slaPolicyDetails:
+        slaPolicies.length > 0
+          ? slaPolicies.map((slaPolicy) => ({
+              slaPolicyId: slaPolicy.id,
+            }))
+          : undefined,
     })
+
     if (!case_.caseId) {
       throw Error('Cannot find CaseId')
     }

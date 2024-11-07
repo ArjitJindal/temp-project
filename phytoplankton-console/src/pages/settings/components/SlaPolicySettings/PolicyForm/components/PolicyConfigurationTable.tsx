@@ -14,7 +14,7 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import GenericFormField from '@/components/library/Form/GenericFormField';
 import { useFormContext } from '@/components/library/Form/utils/hooks';
 import NestedForm from '@/components/library/Form/NestedForm';
-import { PolicyAlertStatusDetailsAlertStatusesEnum } from '@/apis/models/PolicyAlertStatusDetails';
+import { PolicyStatusDetailsStatusesEnum } from '@/apis/models/PolicyStatusDetails';
 import Button from '@/components/library/Button';
 import { SLAPolicyConfigurationWorkingDaysEnum } from '@/apis';
 
@@ -30,10 +30,10 @@ const workingDaysOptions: Option<SLAPolicyConfigurationWorkingDaysEnum>[] = [
 
 function PolicyConfigurationTable() {
   const formContext = useFormContext<FormValues['policyConfiguration']>();
-  const statusCountDetails = formContext.values?.alertStatusDetails?.alertStatusesCount;
+  const statusCountDetails = formContext.values?.statusDetails?.statusesCount;
   const [roles] = useRoles();
   const warningTime = formContext.values?.SLATime?.warningTime;
-  const alertStatuses = formContext.values?.alertStatusDetails?.alertStatuses;
+  const statuses = formContext.values?.statusDetails?.statuses;
   const [isWarningTime, setIsWarningTime] = useState(warningTime ? true : false);
   const [isStatusCount, setIsStatusCount] = useState(statusCountDetails ? true : false);
   const roleOptions = useMemo(() => {
@@ -129,8 +129,8 @@ function PolicyConfigurationTable() {
         <GenericFormField<FormValues['policyConfiguration'], 'workingDays'> name="workingDays">
           {(inputProps) => <Select mode="MULTIPLE" options={workingDaysOptions} {...inputProps} />}
         </GenericFormField>
-        <NestedForm name="alertStatusDetails">
-          <Label label="Alert Status" required={{ value: true, showHint: true }} />
+        <NestedForm name="statusDetails">
+          <Label label="Statuses" required={{ value: true, showHint: true }} />
           <OperatorSelect
             value="CONTAINS"
             options={[{ value: 'CONTAINS', label: 'Contains' }]}
@@ -138,17 +138,17 @@ function PolicyConfigurationTable() {
           />
           <div className={s.nestedValue}>
             <GenericFormField<
-              FormValues['policyConfiguration']['alertStatusDetails'],
-              'alertStatuses'
-            > name="alertStatuses">
+              FormValues['policyConfiguration']['statusDetails'],
+              'statuses'
+            > name="statuses">
               {(inputProps) => (
-                <Select<PolicyAlertStatusDetailsAlertStatusesEnum>
+                <Select<PolicyStatusDetailsStatusesEnum>
                   className={s.statusSelect}
                   mode="MULTIPLE"
                   options={(
                     DERIVED_STATUSS.filter(
                       (status) => status !== 'CLOSED',
-                    ) as PolicyAlertStatusDetailsAlertStatusesEnum[]
+                    ) as PolicyStatusDetailsStatusesEnum[]
                   ).map((status) => ({
                     value: status,
                     label: <CaseStatusTag caseStatus={status} />,
@@ -167,8 +167,8 @@ function PolicyConfigurationTable() {
                 if (isStatusCount) {
                   formContext.setValues({
                     ...formContext.values,
-                    alertStatusDetails: {
-                      alertStatuses: formContext.values.alertStatusDetails.alertStatuses,
+                    statusDetails: {
+                      statuses: formContext.values.statusDetails.statuses,
                     },
                   });
                 }
@@ -182,16 +182,16 @@ function PolicyConfigurationTable() {
           </div>
           {isStatusCount && (
             <GenericFormField<
-              FormValues['policyConfiguration']['alertStatusDetails'],
-              'alertStatusesCount'
-            > name="alertStatusesCount">
+              FormValues['policyConfiguration']['statusDetails'],
+              'statusesCount'
+            > name="statusesCount">
               {(inputProps) => (
                 <StatusesCountInput
                   onChange={(value) => {
                     inputProps.onChange?.(value);
                   }}
                   currentValues={inputProps.value}
-                  alertStatuses={alertStatuses}
+                  statuses={statuses}
                 />
               )}
             </GenericFormField>

@@ -21,9 +21,12 @@ export class SLAPolicyRepository {
       SLA_POLICIES_COLLECTION(this.tenantId)
     )
 
-    const cursor = collection
-      .find({ isDeleted: { $ne: true } })
-      .sort({ createdAt: -1 })
+    const query: any = { isDeleted: { $ne: true } }
+    if (params.type !== undefined) {
+      query.type = params.type
+    }
+
+    const cursor = collection.find(query).sort({ createdAt: -1 })
 
     const paginatedCursor = paginateCursor<
       DefaultApiGetSlaPoliciesRequest,

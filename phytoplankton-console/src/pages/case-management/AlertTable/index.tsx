@@ -8,11 +8,11 @@ import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
 import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
+import SlaStatus from '../components/SlaStatus';
+import { getSlaColumnsForExport } from '../helpers';
 import s from './index.module.less';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
-import SlaStatus from './SlaStatus';
-import { getSlaColumnsForExport } from './helpers';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import {
   AlertsAssignmentsUpdateRequest,

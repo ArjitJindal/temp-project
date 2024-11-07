@@ -78,7 +78,7 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
-import { AlertsSLAService } from '@/services/alerts/alerts-sla-service'
+import { SLAService } from '@/services/sla/sla-service'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
@@ -253,9 +253,9 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   logger.info('Updating alerts SLA statuses')
 
-  const alertsSLAService = new AlertsSLAService(tenantId, client, auth0Domain)
+  const alertsSLAService = new SLAService(tenantId, client, auth0Domain)
 
-  await alertsSLAService.calculateAndUpdateSLAStatuses()
+  await alertsSLAService.calculateAndUpdateSLAStatusesForAlerts()
 
   logger.info('Alerts SLA statuses updated')
 }

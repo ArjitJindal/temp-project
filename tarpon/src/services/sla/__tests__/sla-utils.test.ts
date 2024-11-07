@@ -3,7 +3,7 @@ import {
   getElapsedTime,
   getSLAStatusFromElapsedTime,
   operatorCheck,
-} from '@/services/alerts/sla/sla-utils'
+} from '../sla-utils'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import {
   SLAPolicyConfiguration,
@@ -20,9 +20,9 @@ describe('sla-utils', () => {
           breachTime: { units: 2, granularity: 'hours' },
         },
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
-          alertStatusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
+        statusDetails: {
+          statuses: ['OPEN'],
+          statusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
         },
       }
 
@@ -40,7 +40,7 @@ describe('sla-utils', () => {
       expect(result).toBe(false)
     })
 
-    it('should return false if the derived status is not included in the alertStatuses', () => {
+    it('should return false if the derived status is not included in the statuses', () => {
       const status: CaseStatus = 'OPEN_IN_PROGRESS'
       const statusCount = 5
       const policyConfiguration: SLAPolicyConfiguration = {
@@ -48,9 +48,9 @@ describe('sla-utils', () => {
           breachTime: { units: 2, granularity: 'hours' },
         },
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
-          alertStatusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
+        statusDetails: {
+          statuses: ['OPEN'],
+          statusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
         },
       }
 
@@ -75,9 +75,9 @@ describe('sla-utils', () => {
           breachTime: { units: 2, granularity: 'hours' },
         },
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
-          alertStatusesCount: [{ status: 'OPEN', operator: 'GT', count: 10 }],
+        statusDetails: {
+          statuses: ['OPEN'],
+          statusesCount: [{ status: 'OPEN', operator: 'GT', count: 10 }],
         },
       }
 
@@ -102,9 +102,9 @@ describe('sla-utils', () => {
           breachTime: { units: 2, granularity: 'hours' },
         },
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
-          alertStatusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
+        statusDetails: {
+          statuses: ['OPEN'],
+          statusesCount: [{ status: 'OPEN', operator: 'EQ', count: 10 }],
         },
       }
 
@@ -208,8 +208,8 @@ describe('sla-utils', () => {
       const elapsedTime = 1000
       const slaPolicyConfiguration: SLAPolicyConfiguration = {
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
+        statusDetails: {
+          statuses: ['OPEN'],
         },
         SLATime: {
           warningTime: { units: 1, granularity: 'hours' },
@@ -229,8 +229,8 @@ describe('sla-utils', () => {
       const elapsedTime = 3600000 // 1 hour in milliseconds
       const slaPolicyConfiguration: SLAPolicyConfiguration = {
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
+        statusDetails: {
+          statuses: ['OPEN'],
         },
         SLATime: {
           warningTime: { units: 1, granularity: 'hours' },
@@ -250,8 +250,8 @@ describe('sla-utils', () => {
       const elapsedTime = 7200000 // 2 hours in milliseconds
       const slaPolicyConfiguration: SLAPolicyConfiguration = {
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
+        statusDetails: {
+          statuses: ['OPEN'],
         },
         SLATime: {
           warningTime: { units: 1, granularity: 'hours' },
@@ -271,8 +271,8 @@ describe('sla-utils', () => {
       const elapsedTime = 3600000 // 1 hour in milliseconds
       const slaPolicyConfiguration: SLAPolicyConfiguration = {
         workingDays: ['MON'],
-        alertStatusDetails: {
-          alertStatuses: ['OPEN'],
+        statusDetails: {
+          statuses: ['OPEN'],
         },
         SLATime: {
           breachTime: { units: 2, granularity: 'hours' },

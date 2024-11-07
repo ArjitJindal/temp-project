@@ -77,14 +77,12 @@ export function matchPolicyStatusConditions(
   if (
     derivedStatus === 'CLOSED' ||
     !policyMatch ||
-    !policyConfiguration.alertStatusDetails.alertStatuses.includes(
-      derivedStatus
-    )
+    !policyConfiguration.statusDetails.statuses.includes(derivedStatus)
   ) {
     return false
   }
   const configuredCountDetails = (
-    policyConfiguration.alertStatusDetails.alertStatusesCount ?? []
+    policyConfiguration.statusDetails.statusesCount ?? []
   ).find((entry) => entry.status === derivedStatus)
 
   if (

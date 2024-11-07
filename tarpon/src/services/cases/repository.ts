@@ -234,6 +234,27 @@ export class CaseRepository {
     )
   }
 
+  public getNonClosedManualCasesCursor(): AggregationCursor<Case> {
+    return this.mongoDb
+      .db()
+      .collection<Case>(CASES_COLLECTION(this.tenantId))
+      .aggregate([
+        {
+          $match: {
+            $and: [
+              {
+                caseType: { $eq: 'MANUAL' },
+              },
+              { caseStatus: { $exists: true } },
+              {
+                caseStatus: { $ne: 'CLOSED' },
+              },
+            ],
+          },
+        },
+      ])
+  }
+
   private async updateOneCase(
     filter: Filter<Case>,
     update: UpdateFilter<Case>,
@@ -579,6 +600,26 @@ export class CaseRepository {
         },
       ],
     })
+
+    if (params.filterSlaPolicyId?.length) {
+      conditions.push({
+        slaPolicyDetails: {
+          $elemMatch: {
+            slaPolicyId: { $in: params.filterSlaPolicyId },
+          },
+        },
+      })
+    }
+
+    if (params.filterSlaPolicyStatus?.length) {
+      conditions.push({
+        slaPolicyDetails: {
+          $elemMatch: {
+            policyStatus: { $in: params.filterSlaPolicyStatus },
+          },
+        },
+      })
+    }
 
     return conditions
   }

@@ -2,8 +2,7 @@ import { memoize } from 'lodash'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
 import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 
-const generatePolicyId = (index: number): string =>
-  `SLA-${index.toString().padStart(3, '0')}`
+const generatePolicyId = (index: number): string => `SLA-${index.toString()}`
 
 const createBasicPolicy = (
   index: number,
@@ -12,10 +11,11 @@ const createBasicPolicy = (
 ): SLAPolicy => ({
   id: generatePolicyId(index),
   name: `SLA Policy ${index}`,
+  type: 'ALERT',
   description: 'This is a basic SLA policy.',
   policyConfiguration: {
-    alertStatusDetails: {
-      alertStatuses: ['OPEN'],
+    statusDetails: {
+      statuses: ['OPEN'],
     },
     workingDays: ['MON', 'TUE', 'WED', 'THU', 'FRI'],
     SLATime: {
@@ -38,9 +38,9 @@ const createAdvancedPolicy = (
   policyConfiguration: {
     ...createBasicPolicy(index, breachTime, warningTime).policyConfiguration,
     accountRoles: ['admin'],
-    alertStatusDetails: {
-      alertStatuses: ['OPEN', 'IN_PROGRESS'],
-      alertStatusesCount: [
+    statusDetails: {
+      statuses: ['OPEN', 'IN_PROGRESS'],
+      statusesCount: [
         { status: 'OPEN', count: 2, operator: 'LTE' },
         { status: 'IN_PROGRESS', count: 10, operator: 'LTE' },
       ],
