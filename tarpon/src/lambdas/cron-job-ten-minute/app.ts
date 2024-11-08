@@ -76,7 +76,7 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
       tenantIds.map(async (id) => {
         const tenantService = new TenantService(id, { mongoDb, dynamoDb })
         const features = (await tenantService.getTenantSettings()).features
-        if (!features?.includes('ALERT_SLA')) {
+        if (features?.includes('ALERT_SLA')) {
           await sendBatchJobCommand({
             type: 'ALERT_SLA_STATUS_REFRESH',
             tenantId: id,

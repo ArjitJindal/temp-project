@@ -729,6 +729,7 @@ export class CaseRepository {
         alerts: 1,
         caseType: 1,
         caseHierarchyDetails: 1,
+        slaPolicyDetails: 1,
         ...(options.includeCaseTransactionIds
           ? { caseTransactionsIds: 1 }
           : {}),
