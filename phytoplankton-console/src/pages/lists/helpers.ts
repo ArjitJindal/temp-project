@@ -2,11 +2,11 @@ import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { ListSubtype, ListType } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 
-export function parseListType(str: string | undefined): ListType {
-  if (str === 'whitelist') {
-    return 'WHITELIST';
-  } else {
+export function parseListType(pathname): ListType {
+  if (pathname.indexOf('blacklist') !== -1) {
     return 'BLACKLIST';
+  } else {
+    return 'WHITELIST';
   }
 }
 

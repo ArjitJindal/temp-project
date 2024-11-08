@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate } from 'react-router';
 import s from './index.module.less';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -10,9 +10,9 @@ import Button from '@/components/library/Button';
 import NewListDrawer from '@/pages/lists/NewListDrawer';
 import { parseListType, stringifyListType } from '@/pages/lists/helpers';
 
-export default function CreatedLists() {
-  const params = useParams<'type'>();
-  const listType = parseListType(params.type);
+export default function CreatedListsPage() {
+  const location = useLocation();
+  const listType = parseListType(location.pathname);
 
   const navigate = useNavigate();
   const i18n = useI18n();

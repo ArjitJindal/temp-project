@@ -565,25 +565,25 @@ export function useRoutes(): RouteItem[] {
         routes: [
           {
             path: '/lists/whitelist',
-            name: 'lists-type',
+            name: 'lists-whitelist',
             component: CreatedListsPage,
             permissions: ['lists:whitelist:read'],
           },
           {
             path: '/lists/blacklist',
-            name: 'lists-type',
+            name: 'lists-blacklist',
             component: CreatedListsPage,
             permissions: ['lists:blacklist:read'],
           },
           {
             path: '/lists/whitelist/:id',
-            name: 'lists-item',
+            name: 'lists-whitelist-item',
             component: ListsItemPage,
             permissions: ['lists:whitelist:read'],
           },
           {
             path: '/lists/blacklist/:id',
-            name: 'lists-item',
+            name: 'lists-blacklist-item',
             component: ListsItemPage,
             permissions: ['lists:blacklist:read'],
           },
@@ -749,8 +749,9 @@ function disableForbiddenRoutes(r: RouteItem, permissions?: Map<Permission, bool
   if (!(isLeaf(r) || isTree(r))) {
     return r;
   }
-  const hasAnyOnePermission = r.permissions?.some((p) => permissions?.get(p));
-  if (r.permissions && !hasAnyOnePermission) {
+  const routePermissions = r.permissions ?? [];
+  const hasAnyOnePermission = routePermissions.some((p) => permissions?.get(p));
+  if (routePermissions.length > 0 && !hasAnyOnePermission) {
     r.disabled = true;
     if (isLeaf(r)) {
       r.component = ForbiddenPage;

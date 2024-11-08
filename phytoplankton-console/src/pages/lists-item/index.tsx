@@ -1,4 +1,4 @@
-import { useParams } from 'react-router';
+import { useLocation, useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
@@ -22,9 +22,10 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import ImportCsvModal from '@/pages/lists-item/ImportCsvModal';
 
-export default function CreatedLists() {
-  const params = useParams<'id' | 'type'>();
-  const listType = parseListType(params.type);
+export default function ListsItemPage() {
+  const params = useParams<'id'>();
+  const location = useLocation();
+  const listType = parseListType(location.pathname);
   const listId = params.id;
   const i18n = useI18n();
   const api = useApi();
