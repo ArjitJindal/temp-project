@@ -96,8 +96,6 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
           }
         : {};
 
-    const responseHeadersPolicy = this.getCloudFrontResponseHeaderPolicy();
-
     // CloudFront distribution
     const distribution = new cloudfront.Distribution(this, 'SiteDistribution', {
       priceClass: config.CLOUDFRONT_PRICE_CLASS,
@@ -127,7 +125,6 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
         }),
         compress: true,
         allowedMethods: cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-        responseHeadersPolicy,
         viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
         ...extraBehaviours,
       },
@@ -211,37 +208,5 @@ export class CdkPhytoplanktonStack extends cdk.Stack {
     }
 
     return csp;
-  }
-
-  private getCloudFrontResponseHeaderPolicy(): cloudfront.ResponseHeadersPolicy {
-    const csp = this.getContentSecurityPolicy();
-    return new cloudfront.ResponseHeadersPolicy(this, 'HTTPSecurityResponseHeadersPolicy', {
-      securityHeadersBehavior: {
-        contentSecurityPolicy: {
-          // Ideally this policy should've been derived at build time which can make use of nonce(s) generated, but
-          // the easiest way for now
-          contentSecurityPolicy: csp,
-          override: true,
-        },
-        strictTransportSecurity: {
-          accessControlMaxAge: cdk.Duration.days(365 * 2),
-          includeSubdomains: true,
-          preload: true,
-          override: true,
-        },
-        xssProtection: {
-          protection: true,
-          modeBlock: true,
-          override: true,
-        },
-        frameOptions: {
-          frameOption: cloudfront.HeadersFrameOption.DENY,
-          override: true,
-        },
-        contentTypeOptions: {
-          override: true,
-        },
-      },
-    });
   }
 }
