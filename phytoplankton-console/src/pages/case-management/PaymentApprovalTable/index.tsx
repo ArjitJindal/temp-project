@@ -34,8 +34,11 @@ export default function PaymentApprovalsTable(props: Props) {
   });
 
   const updateCacheData = useCallback(() => {
+    const queryState = queryClient.getQueryState(queryKey);
+    const pageParam = (queryState as any)?.state?.data?.pageParam ?? '';
+    const fullQueryKey = [...queryKey, { pageParam }];
     queryClient.setQueryData<TransactionsResponse>(
-      queryKey,
+      fullQueryKey,
       (data: TransactionsResponse | undefined): TransactionsResponse | undefined => {
         if (data == null) {
           return undefined;
