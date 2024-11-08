@@ -550,18 +550,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/PresignedUrlResponse'
       description: Get a presigned URL for uploading a file
-  /lists:
+  /whitelist:
     get:
-      summary: Lists - Get All By Type
+      summary: White Lists - Get All By Type
       tags: []
       x-flagright:
         permissions:
-          - lists:all:read
-      parameters:
-        - schema:
-            type: string
-          name: listType
-          in: query
+          - lists:whitelist:read
       responses:
         '200':
           description: OK
@@ -571,13 +566,13 @@ paths:
                 type: array
                 items:
                   $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
-      operationId: get-lists
+      operationId: get-whitelist
     post:
-      summary: Lists - Post
+      summary: White Lists - Post
       tags: []
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
       requestBody:
         content:
           application/json:
@@ -591,8 +586,45 @@ paths:
             application/json:
               schema:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
-      operationId: post-list
-  /lists/{listId}:
+      operationId: post-white-list
+  /blacklist:
+    get:
+      summary: Black Lists - Get All
+      tags: []
+      x-flagright:
+        permissions:
+          - lists:blacklist:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+      operationId: get-blacklist
+    post:
+      summary: Black Lists - Post
+      tags: []
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewListPayload'
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+      operationId: post-blacklist
+  /whitelist/{listId}:
     parameters:
       - schema:
           type: string
@@ -600,22 +632,22 @@ paths:
         in: path
         required: true
     delete:
-      summary: Lists - Delete
+      summary: White Lists - Delete
       tags: []
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
       responses:
         '200':
           description: OK
-      operationId: delete-list
+      operationId: delete-white-list
     patch:
-      summary: Lists - Patch
+      summary: White Lists - Patch
       tags: []
-      operationId: patch-list
+      operationId: patch-white-list
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
       requestBody:
         content:
           application/json:
@@ -630,12 +662,12 @@ paths:
               schema:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
     get:
-      summary: Lists - Item header
+      summary: White Lists - Item header
       tags: []
-      operationId: get-list
+      operationId: get-whitelist-list-header
       x-flagright:
         permissions:
-          - lists:all:read
+          - lists:whitelist:read
       responses:
         '200':
           description: OK
@@ -645,7 +677,60 @@ paths:
                 $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
         '404':
           description: Not found
-  /lists/{listId}/import-csv:
+  /blacklist/{listId}:
+    parameters:
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    delete:
+      summary: Black Lists - Delete
+      tags: []
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      responses:
+        '200':
+          description: OK
+      operationId: delete-blacklist
+    patch:
+      summary: Black Lists - Patch
+      tags: []
+      operationId: patch-blacklist
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListExisted
+    get:
+      summary: Black Lists - Item header
+      tags: []
+      operationId: get-blacklist-list-header
+      x-flagright:
+        permissions:
+          - lists:blacklist:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+        '404':
+          description: Not found
+  /whitelist/{listId}/import-csv:
     parameters:
       - schema:
           type: string
@@ -653,12 +738,12 @@ paths:
         in: path
         required: true
     post:
-      summary: Lists - Import CSV
+      summary: White Lists - Import CSV
       tags: []
-      operationId: list-import-csv
+      operationId: white-list-import-csv
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
       requestBody:
         content:
           application/json:
@@ -677,7 +762,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ListImportResponse'
-  /lists/{listId}/items:
+  /blacklist/{listId}/import-csv:
+    parameters:
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    post:
+      summary: Black Lists - Import CSV
+      tags: []
+      operationId: blacklist-import-csv
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                file:
+                  $ref: '#/components/schemas/FileInfo'
+              required:
+                - file
+        required: true
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListImportResponse'
+  /whitelist/{listId}/items:
     parameters:
       - schema:
           type: string
@@ -685,11 +802,11 @@ paths:
         in: path
         required: true
     delete:
-      summary: Lists - Clear list items
-      operationId: clear-list-items
+      summary: White Lists - Clear list items
+      operationId: clear-white-list-items
       x-flagright:
         permissions:
-          - lists:all:read
+          - lists:whitelist:write
       responses:
         '200':
           description: List cleared
@@ -704,12 +821,12 @@ paths:
         '404':
           description: List not found
     get:
-      summary: Lists - Items
+      summary: White Lists - Items
       tags: []
-      operationId: get-list-items
+      operationId: get-white-list-items
       x-flagright:
         permissions:
-          - lists:all:read
+          - lists:whitelist:read
       parameters:
         - schema:
             type: string
@@ -757,12 +874,12 @@ paths:
         '404':
           description: Not found
     post:
-      summary: Lists - Post Item
+      summary: White Lists - Post Item
       tags: []
-      operationId: post-list-item
+      operationId: post-white-list-item
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
       requestBody:
         content:
           application/json:
@@ -772,7 +889,102 @@ paths:
       responses:
         '200':
           description: OK
-  /lists/{listId}/items/{key}:
+  /blacklist/{listId}/items:
+    parameters:
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+    delete:
+      summary: Black Lists - Clear list items
+      operationId: clear-blacklist-items
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      responses:
+        '200':
+          description: List cleared
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: List cleared successfully
+        '404':
+          description: List not found
+    get:
+      summary: Black Lists - Items
+      tags: []
+      operationId: get-blacklist-items
+      x-flagright:
+        permissions:
+          - lists:blacklist:read
+      parameters:
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: number
+          name: pageSize
+          in: query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hasPrev:
+                    type: boolean
+                  prev:
+                    type: string
+                  next:
+                    type: string
+                  count:
+                    type: number
+                  limit:
+                    type: number
+                  last:
+                    type: string
+                  hasNext:
+                    type: boolean
+                  items:
+                    type: array
+                    items:
+                      $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+                required:
+                  - hasPrev
+                  - prev
+                  - next
+                  - count
+                  - limit
+                  - last
+                  - hasNext
+                  - items
+        '404':
+          description: Not found
+    post:
+      summary: Black Lists - Post Item
+      tags: []
+      operationId: post-blacklist-item
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/ListItem
+        required: true
+      responses:
+        '200':
+          description: OK
+  /whitelist/{listId}/items/{key}:
     parameters:
       - schema:
           type: string
@@ -787,10 +999,32 @@ paths:
     delete:
       summary: Lists - Items - delete
       tags: []
-      operationId: delete-list-item
+      operationId: delete-white-list-item
       x-flagright:
         permissions:
-          - lists:all:write
+          - lists:whitelist:write
+      responses:
+        '200':
+          description: OK
+  /blacklist/{listId}/items/{key}:
+    parameters:
+      - schema:
+          type: string
+        name: listId
+        in: path
+        required: true
+      - schema:
+          type: string
+        name: key
+        in: path
+        required: true
+    delete:
+      summary: Black Lists - Items - delete
+      tags: []
+      operationId: delete-blacklist-item
+      x-flagright:
+        permissions:
+          - lists:blacklist:write
       responses:
         '200':
           description: OK
@@ -10281,6 +10515,10 @@ components:
         - audit-log:export:read
         - lists:all:read
         - lists:all:write
+        - lists:whitelist:read
+        - lists:whitelist:write
+        - lists:blacklist:read
+        - lists:blacklist:write
         - lists:export:read
         - simulator:simulations:read
         - simulator:simulations:write
@@ -12663,14 +12901,11 @@ components:
       title: NewListPayload
       type: object
       properties:
-        listType:
-          $ref: ../public/openapi-public-original.yaml#/components/schemas/ListType
         subtype:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/ListSubtype
         data:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/ListData
       required:
-        - listType
         - subtype
         - data
     SimulationRiskLevelsParameters:

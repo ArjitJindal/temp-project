@@ -95,7 +95,7 @@ export default function Team() {
       );
       return await api.accountsDeactivate({
         accountId: payload.accountId,
-        InlineObject1: {
+        InlineObject2: {
           deactivate: payload.deactivate,
         },
       });

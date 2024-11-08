@@ -77,11 +77,20 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
   '/files/getPresignedDownloadUrl/{bucket}/{key}':
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
-  '/lists': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listId}/import-csv': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
-  '/lists/{listId}/items/{key}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/whitelist': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/whitelist/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/whitelist/{listId}/import-csv':
+    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/whitelist/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/whitelist/{listId}/items/{key}':
+    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/blacklist': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/blacklist/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/blacklist/{listId}/import-csv':
+    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/blacklist/{listId}/items': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
+  '/blacklist/{listId}/items/{key}':
+    StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/transactions': StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,
   '/transactions-v2':
     StackConstants.CONSOLE_API_TRANSACTIONS_VIEW_FUNCTION_NAME,

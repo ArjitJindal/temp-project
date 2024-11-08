@@ -33,21 +33,23 @@ export default function CreatedLists() {
     if (listId == null || listType == null) {
       throw new Error(`listId and listType can not be null`);
     }
-    const list = await api.getList({
-      listId,
-    });
+    const list =
+      listType === 'WHITELIST'
+        ? await api.getWhitelistListHeader({ listId })
+        : await api.getBlacklistListHeader({ listId });
     return list;
   });
   const queryClient = useQueryClient();
   const clearListMutation = useMutation(
-    LISTS_ITEM(listId),
+    LISTS_ITEM(listId, listType),
     async () => {
       if (!listId) {
         throw new Error('List ID is required');
       }
-      await api.clearListItems({
-        listId,
-      });
+      const clearMethod =
+        listType === 'WHITELIST' ? api.clearBlacklistItems : api.clearWhiteListItems;
+
+      await clearMethod({ listId });
       await queryClient.invalidateQueries(LISTS_ITEM(listId));
     },
     {
@@ -113,6 +115,7 @@ export default function CreatedLists() {
             setIsImportModalOpen(false);
             queryClient.invalidateQueries(LISTS_ITEM(listId));
           }}
+          listType={listType as 'WHITELIST' | 'BLACKLIST'}
         />
       )}
     </>

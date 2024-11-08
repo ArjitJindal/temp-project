@@ -61,9 +61,9 @@ export default function NewListDrawer(props: Props) {
       const { values } = event;
 
       if (values.subtype != null) {
-        await api.postList({
+        const method = listType === 'WHITELIST' ? api.postWhiteList : api.postBlacklist;
+        await method({
           NewListPayload: {
-            listType,
             subtype: values.subtype,
             data: {
               metadata: {

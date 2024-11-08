@@ -32,9 +32,16 @@ function ListTable(props: Props, ref: ListTableRef) {
   const api = useApi();
   const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
   const queryClient = useQueryClient();
-  const queryResults = useQuery(LISTS_OF_TYPE(listType), () => api.getLists({ listType }));
+  const queryResults = useQuery(LISTS_OF_TYPE(listType), () => {
+    if (listType === 'WHITELIST') {
+      return api.getWhitelist();
+    }
+    return api.getBlacklist();
+  });
 
-  const hasListWritePermissions = useHasPermissions(['lists:all:write']);
+  const hasListWritePermissions = useHasPermissions([
+    listType === 'WHITELIST' ? 'lists:whitelist:write' : 'lists:blacklist:write',
+  ]);
   useImperativeHandle(ref, () => ({
     reload: queryResults.refetch,
   }));
@@ -49,12 +56,8 @@ function ListTable(props: Props, ref: ListTableRef) {
       const { listId, metadata } = event;
       const hideMessage = message.loading('Updating list...');
       try {
-        await api.patchList({
-          listId,
-          ListData: {
-            metadata,
-          },
-        });
+        const patchMethod = listType === 'WHITELIST' ? api.patchWhiteList : api.patchBlacklist;
+        await patchMethod({ listId, ListData: { metadata } });
         message.success('List state saved!');
       } catch (e) {
         message.fatal(`Unable to save list! ${getErrorMessage(e)}`, e);
@@ -70,12 +73,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         const previousList = queryClient.getQueryData<ListHeader[]>(listsOfTypeKey);
         queryClient.setQueryData<ListHeader[]>(listsOfTypeKey, (prevState) =>
           prevState?.map((listHeader) =>
-            listHeader.listId === listId
-              ? {
-                  ...listHeader,
-                  metadata,
-                }
-              : listHeader,
+            listHeader.listId === listId ? { ...listHeader, metadata } : listHeader,
           ),
         );
         return { previousList };
@@ -141,33 +139,34 @@ function ListTable(props: Props, ref: ListTableRef) {
             onChange={(value) => {
               changeListMutation.mutate({
                 listId: entity.listId,
-                metadata: {
-                  ...entity.metadata,
-                  status: value,
-                },
+                metadata: { ...entity.metadata, status: value },
               });
             }}
           />
         ),
       },
     }),
-    helper.display({
-      title: 'Actions',
-      defaultWidth: 100,
-      render: (entity) => {
-        return (
-          <Button
-            type="SECONDARY"
-            onClick={() => {
-              setListToDelete(entity);
-            }}
-            isDisabled={!hasListWritePermissions}
-          >
-            Delete
-          </Button>
-        );
-      },
-    }),
+    ...(hasListWritePermissions
+      ? [
+          helper.display({
+            title: 'Actions',
+            defaultWidth: 100,
+            render: (entity) => {
+              return (
+                <Button
+                  type="SECONDARY"
+                  onClick={() => {
+                    setListToDelete(entity);
+                  }}
+                  isDisabled={!hasListWritePermissions}
+                >
+                  Delete
+                </Button>
+              );
+            },
+          }),
+        ]
+      : []),
   ]);
 
   return (

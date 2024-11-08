@@ -2,7 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { Input } from 'antd';
 import { UseMutationResult } from '@tanstack/react-query';
 import s from './index.module.less';
-import { ListHeader } from '@/apis';
+import { ListHeader, Permission } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
 import { getErrorMessage } from '@/utils/lang';
@@ -75,6 +75,10 @@ export default function ItemsTable(props: Props) {
     reason: '',
     meta: {},
   });
+  const requiredWritePermissions: Permission[] = useMemo(
+    () => (listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']),
+    [listType],
+  );
 
   const tableRef = useRef<TableRefType>(null);
 
@@ -83,29 +87,23 @@ export default function ItemsTable(props: Props) {
 
   const handleAddItem = useCallback(() => {
     const hideMessage = message.loading('Adding item to a list...');
+    const method = listType === 'WHITELIST' ? api.postWhiteListItem : api.postBlacklistItem;
     if (isNewUserValid) {
       setAddUserLoading(true);
       Promise.all(
         newUserData.value.map((itemValue) =>
-          api.postListItem({
+          method({
             listId,
             ListItem: {
               key: itemValue ?? '',
-              metadata: {
-                reason: newUserData.reason,
-                ...newUserData.meta,
-              },
+              metadata: { reason: newUserData.reason, ...newUserData.meta },
             },
           }),
         ),
       )
         .then(() => {
           hideMessage();
-          setNewUserData({
-            value: [],
-            reason: '',
-            meta: {},
-          });
+          setNewUserData({ value: [], reason: '', meta: {} });
           message.success(`Item successfully added!`);
           tableRef.current?.reload();
         })
@@ -117,24 +115,21 @@ export default function ItemsTable(props: Props) {
           setAddUserLoading(false);
         });
     }
-  }, [isNewUserValid, newUserData, listId, api]);
+  }, [isNewUserValid, newUserData, listId, api, listType]);
 
   const [isEditUserLoading, setEditUserLoading] = useState(false);
   const isEditUserValid = !!editUserData?.reason;
   const handleSaveItem = () => {
     if (isEditUserValid) {
       setEditUserLoading(true);
-      api
-        .postListItem({
-          listId,
-          ListItem: {
-            key: editUserData.value ?? '',
-            metadata: {
-              ...editUserData.meta,
-              reason: editUserData.reason,
-            },
-          },
-        })
+      const method = listType === 'WHITELIST' ? api.postWhiteListItem : api.postBlacklistItem;
+      method({
+        listId,
+        ListItem: {
+          key: editUserData.value ?? '',
+          metadata: { ...editUserData.meta, reason: editUserData.reason },
+        },
+      })
         .then(() => {
           setEditUserData(null);
           tableRef.current?.reload();
@@ -152,11 +147,8 @@ export default function ItemsTable(props: Props) {
   const handleDeleteUser = useCallback(
     (userId: string) => {
       setEditDeleteLoading(true);
-      api
-        .deleteListItem({
-          listId,
-          key: userId,
-        })
+      const method = listType === 'WHITELIST' ? api.deleteWhiteListItem : api.deleteBlacklistItem;
+      method({ listId, key: userId })
         .then(() => {
           tableRef.current?.reload();
         })
@@ -167,12 +159,13 @@ export default function ItemsTable(props: Props) {
           setEditDeleteLoading(false);
         });
     },
-    [api, listId],
+    [api, listId, listType],
   );
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
   const listResult = useCursorQuery(LISTS_ITEM_TYPE(listId, listType, params), async ({ from }) => {
-    const response = await api.getListItems({ listId, start: from, pageSize: params.pageSize });
+    const method = listType === 'WHITELIST' ? api.getWhiteListItems : api.getBlacklistItems;
+    const response = await method({ listId, start: from, pageSize: params.pageSize });
 
     const data: TableItem[] = [
       ...response.items.map(
@@ -324,6 +317,7 @@ export default function ItemsTable(props: Props) {
                   isLoading={isAddUserLoading}
                   isDisabled={!isNewUserValid}
                   onClick={onAdd}
+                  requiredPermissions={requiredWritePermissions}
                 >
                   Add
                 </Button>
@@ -338,6 +332,7 @@ export default function ItemsTable(props: Props) {
                     type="PRIMARY"
                     onClick={onSave}
                     isDisabled={isEditUserLoading || !isEditUserValid}
+                    requiredPermissions={requiredWritePermissions}
                   >
                     Save
                   </Button>
@@ -363,6 +358,7 @@ export default function ItemsTable(props: Props) {
                   onClick={() => {
                     setEditUserData(entity);
                   }}
+                  requiredPermissions={requiredWritePermissions}
                 >
                   Edit
                 </Button>
@@ -373,6 +369,7 @@ export default function ItemsTable(props: Props) {
                   onClick={() => {
                     onDelete(entity.value ?? '');
                   }}
+                  requiredPermissions={requiredWritePermissions}
                 >
                   Remove
                 </Button>
@@ -382,7 +379,13 @@ export default function ItemsTable(props: Props) {
         },
       }),
     ]);
-  }, [isAddUserLoading, isEditUserValid, isNewUserValid, listHeader.subtype]);
+  }, [
+    isAddUserLoading,
+    isEditUserValid,
+    isNewUserValid,
+    listHeader.subtype,
+    requiredWritePermissions,
+  ]);
 
   return (
     <>
@@ -404,6 +407,7 @@ export default function ItemsTable(props: Props) {
               type="TETRIARY"
               onClick={() => clearListMutation.mutate()}
               isDisabled={clearListMutation.isLoading}
+              requiredPermissions={requiredWritePermissions}
             >
               Clear list
             </Button>

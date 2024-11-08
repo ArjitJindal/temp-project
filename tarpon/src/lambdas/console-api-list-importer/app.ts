@@ -7,10 +7,10 @@ import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ListType } from '@/@types/openapi-internal/ListType'
 import { ListService } from '@/services/list'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { DefaultApiPatchBlacklistRequest } from '@/@types/openapi-internal/RequestParameters'
 
 export const listsHandler = lambdaApi()(
   async (
@@ -31,41 +31,67 @@ export const listsHandler = lambdaApi()(
 
     const handlers = new Handlers()
 
-    handlers.registerGetLists(
-      async (ctx, request) =>
-        await listService.getListHeaders(
-          (request.listType as ListType | null) ?? null
-        )
+    handlers.registerGetWhitelist(
+      async () => await listService.getListHeaders('WHITELIST')
     )
 
-    handlers.registerPostList(
+    handlers.registerGetBlacklist(
+      async () => await listService.getListHeaders('BLACKLIST')
+    )
+
+    handlers.registerPostWhiteList(
       async (ctx, request) =>
         await listService.createList(
-          request.NewListPayload.listType,
+          'WHITELIST',
           request.NewListPayload.subtype,
           request.NewListPayload.data
         )
     )
 
-    handlers.registerGetList(async (ctx, request) => {
+    handlers.registerPostBlacklist(
+      async (ctx, request) =>
+        await listService.createList(
+          'BLACKLIST',
+          request.NewListPayload.subtype,
+          request.NewListPayload.data
+        )
+    )
+
+    handlers.registerGetWhitelistListHeader(async (ctx, request) => {
       const list = await listService.getListHeader(request.listId)
 
       if (list == null) {
-        throw new httpsErrors.NotFound(`List not found: ${request.listId}`)
+        throw new httpsErrors.NotFound(
+          `White list not found: ${request.listId}`
+        )
       }
       return list
     })
 
-    handlers.registerDeleteList(
+    handlers.registerGetBlacklistListHeader(async (ctx, request) => {
+      const list = await listService.getListHeader(request.listId)
+      if (list == null) {
+        throw new httpsErrors.NotFound(
+          `Black list not found: ${request.listId}`
+        )
+      }
+      return list
+    })
+
+    handlers.registerDeleteWhiteList(
       async (ctx, request) => await listService.deleteList(request.listId)
     )
 
-    handlers.registerClearListItems(async (ctx, request) => {
+    handlers.registerDeleteBlacklist(
+      async (ctx, request) => await listService.deleteList(request.listId)
+    )
+
+    handlers.registerClearWhiteListItems(async (ctx, request) => {
       await listService.clearListItems(request.listId)
       return null
     })
 
-    handlers.registerPatchList(async (ctx, request) => {
+    const patchList = async (request: DefaultApiPatchBlacklistRequest) => {
       const listId = request.listId
       const body = request.ListData
       const list = await listService.getListHeader(listId)
@@ -82,9 +108,12 @@ export const listsHandler = lambdaApi()(
         await listService.updateListItems(listId, body.items)
       }
       return { listId, header: list, items: body.items ?? [] }
-    })
+    }
 
-    handlers.registerGetListItems(async (ctx, request) => {
+    handlers.registerPatchWhiteList(async (ctx, request) => patchList(request))
+    handlers.registerPatchBlacklist(async (ctx, request) => patchList(request))
+
+    handlers.registerGetWhiteListItems(async (ctx, request) => {
       const { listId, start, pageSize } = request
       return await listService.getListItems(listId, {
         fromCursorKey: start,
@@ -92,17 +121,35 @@ export const listsHandler = lambdaApi()(
       })
     })
 
-    handlers.registerPostListItem(
+    handlers.registerGetBlacklistItems(async (ctx, request) => {
+      const { listId, start, pageSize } = request
+      return await listService.getListItems(listId, {
+        fromCursorKey: start,
+        pageSize,
+      })
+    })
+
+    handlers.registerPostWhiteListItem(
       async (ctx, request) =>
         await listService.setListItem(request.listId, request.ListItem)
     )
 
-    handlers.registerDeleteListItem(
+    handlers.registerPostBlacklistItem(
+      async (ctx, request) =>
+        await listService.setListItem(request.listId, request.ListItem)
+    )
+
+    handlers.registerDeleteWhiteListItem(
       async (ctx, request) =>
         await listService.deleteListItem(request.listId, request.key)
     )
 
-    handlers.registerListImportCsv(async (ctx, request) => {
+    handlers.registerDeleteBlacklistItem(
+      async (ctx, request) =>
+        await listService.deleteListItem(request.listId, request.key)
+    )
+
+    handlers.registerWhiteListImportCsv(async (ctx, request) => {
       return await listService.importFromCSV(
         request.listId,
         request.InlineObject.file

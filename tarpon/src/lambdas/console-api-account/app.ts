@@ -109,7 +109,7 @@ export const accountsHandler = lambdaApi()(
       return await accountsService.deactivateUser(
         ctx.tenantId,
         request.accountId,
-        request.InlineObject1.deactivate
+        request.InlineObject2.deactivate
       )
     })
 

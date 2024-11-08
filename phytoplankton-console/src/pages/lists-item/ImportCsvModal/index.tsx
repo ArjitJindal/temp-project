@@ -17,10 +17,11 @@ interface Props {
   listId: string;
   isOpen: boolean;
   onClose: () => void;
+  listType: 'WHITELIST' | 'BLACKLIST';
 }
 
 export default function ImportCsvModal(props: Props) {
-  const { listId, isOpen, onClose } = props;
+  const { listId, isOpen, onClose, listType } = props;
   const [files, setFiles] = useState<FileInfo[]>();
   const [errors, setErrors] = useState<ListImportResponse['failedRows']>();
   const file = files?.[0];
@@ -37,11 +38,15 @@ export default function ImportCsvModal(props: Props) {
         if (file == null) {
           throw new Error(`File is not selected`);
         }
-        return await api.listImportCsv({
+        if (listType === 'WHITELIST') {
+          return await api.whiteListImportCsv({
+            listId: listId,
+            InlineObject: { file },
+          });
+        }
+        return await api.blacklistImportCsv({
           listId: listId,
-          InlineObject: {
-            file: file,
-          },
+          InlineObject1: { file },
         });
       } finally {
         closeLoading();

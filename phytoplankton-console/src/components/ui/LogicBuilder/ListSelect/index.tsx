@@ -14,8 +14,7 @@ export default function ListSelect(props: Props) {
   const { listType } = props;
   const api = useApi();
   const queryResults = useQuery(LISTS(), () => {
-    const params = listType ? { listType } : {};
-    return api.getLists(params);
+    return listType === 'WHITELIST' ? api.getWhitelist() : api.getBlacklist();
   });
   const res = queryResults.data;
   if (isFailed(res)) {

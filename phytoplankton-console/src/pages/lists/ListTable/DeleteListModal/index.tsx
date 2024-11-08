@@ -28,10 +28,8 @@ export default function DeleteListModal(props: Props) {
   const handleOk = useCallback(() => {
     if (listId != null && listType != null) {
       setLoading(true);
-      api
-        .deleteList({
-          listId: listId,
-        })
+      const method = listType === 'WHITELIST' ? api.deleteWhiteList : api.deleteBlacklist;
+      method({ listId })
         .then(
           () => {
             message.success('List deleted!');
@@ -56,10 +54,10 @@ export default function DeleteListModal(props: Props) {
       onCancel={onCancel}
       onOk={handleOk}
       okText={'Delete'}
-      okProps={{
-        isDanger: true,
-        isLoading: isLoading,
-      }}
+      okProps={{ isDanger: true, isLoading: isLoading }}
+      writePermissions={
+        listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']
+      }
     >
       <div className={s.title}>
         <Spam2FillIcon className={s.icon} />
