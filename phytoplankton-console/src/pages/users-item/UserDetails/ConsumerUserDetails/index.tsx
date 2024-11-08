@@ -1,4 +1,5 @@
 import ContactDetails from 'src/pages/users-item/UserDetails/shared/ContactDetailsCard';
+import ExpectedIncome from 'src/pages/users-item/UserDetails/shared/ExpectedIncome';
 import SavedPaymentDetails from 'src/pages/users-item/UserDetails/shared/SavedPaymentDetailsCard';
 import GeneralDetails from './GeneralDetails';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
@@ -26,8 +27,11 @@ export default function ConsumerUserDetails(props: Props) {
       <EntityInfoGrid.Cell>
         <Tags user={user} />
       </EntityInfoGrid.Cell>
-      <EntityInfoGrid.Cell columnSpan={2}>
+      <EntityInfoGrid.Cell>
         <SavedPaymentDetails user={user} />
+      </EntityInfoGrid.Cell>
+      <EntityInfoGrid.Cell>
+        <ExpectedIncome expectedIncome={user.expectedIncome} />
       </EntityInfoGrid.Cell>
     </EntityInfoGrid.Root>
   );
