@@ -62,7 +62,7 @@ function getStatusChangeButtonConfig(
         ESCALATED_L2_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
       },
     };
-  } else if (isEscalated && canMutateCases) {
+  } else if (isEscalated && canMutateCases && !isEscalatedL2) {
     return {
       caseIds: [caseId],
       caseStatus,

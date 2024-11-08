@@ -91,6 +91,13 @@ export const isEscalatedCases = (
   return some(cases, (c) => statusEscalated(alert ? c.alertStatus : c.caseStatus));
 };
 
+export const isEscalatedL2Cases = (
+  cases: Record<string, { caseStatus?: CaseStatus; alertStatus?: CaseStatus }>,
+  alert?: boolean,
+): boolean => {
+  return some(cases, (c) => statusEscalatedL2(alert ? c.alertStatus : c.caseStatus));
+};
+
 export const getSingleCaseStatusCurrent = (
   cases: Record<string, { caseStatus?: CaseStatus; alertStatus?: CaseStatus }>,
   alert?: boolean,

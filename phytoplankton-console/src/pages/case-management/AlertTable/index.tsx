@@ -10,6 +10,7 @@ import { useAlertQaAssignmentUpdateMutation } from '../QA/Table';
 import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
 import { getSlaColumnsForExport } from '../helpers';
+import { ActionLabel } from '../components/StatusChangeModal';
 import s from './index.module.less';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
@@ -17,6 +18,7 @@ import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line
 import {
   AlertsAssignmentsUpdateRequest,
   AlertsReviewAssignmentsUpdateRequest,
+  AlertStatus,
   Assignment,
   ChecklistStatus,
   SanctionHitStatusUpdateRequest,
@@ -71,6 +73,7 @@ import {
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
   isEscalatedCases,
+  isEscalatedL2Cases,
   isInReviewCases,
   isOnHoldOrInProgressOrEscalated,
   statusEscalated,
@@ -814,8 +817,6 @@ export default function AlertTable(props: Props) {
                     statusTransitions={{
                       OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                       OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                      ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                      ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                     }}
                     transactionIds={selectedTxns}
                   />
@@ -1200,39 +1201,42 @@ export default function AlertTable(props: Props) {
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
       const caseId = params.caseId ?? selectedCaseId;
       const alertStatus = selectedAlertStatus;
-      if (statusEscalated(alertStatus) && selectedTransactionIds.length) {
-        return;
-      }
-      const isCaseHavingEscalated = isEscalatedCases(selectedItems);
+      const isCaseHavingEscalated = isEscalatedCases(selectedItems, true);
       const status = selectedItems[selectedIds[0]]?.alertStatus;
 
       const isReviewAlerts = isInReviewCases(selectedItems, true);
 
+      if (isCaseHavingEscalated || isReviewAlerts) {
+        return;
+      }
+      if (
+        !escalationEnabled ||
+        !caseId ||
+        !alertStatus ||
+        isReviewAlerts ||
+        isCaseHavingEscalated
+      ) {
+        return;
+      }
       return (
-        escalationEnabled &&
-        caseId &&
-        alertStatus &&
-        !isReviewAlerts &&
-        !isCaseHavingEscalated && (
-          <AlertsStatusChangeButton
-            ids={selectedIds}
-            transactionIds={selectedTxns}
-            onSaved={() => {
-              reloadTable();
-              setSelectedTxns({});
-            }}
-            status={status}
-            caseId={caseId}
-            statusTransitions={{
-              OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
-              REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-              CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
-              OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
-              OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
-            }}
-            isDisabled={isDisabled}
-          />
-        )
+        <AlertsStatusChangeButton
+          ids={selectedIds}
+          transactionIds={selectedTxns}
+          onSaved={() => {
+            reloadTable();
+            setSelectedTxns({});
+          }}
+          status={status}
+          caseId={caseId}
+          statusTransitions={{
+            OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+            REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+            CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+            OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+            OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+          }}
+          isDisabled={isDisabled}
+        />
       );
     },
     ({ selectedIds, selectedItems, params, isDisabled }) => {
@@ -1246,42 +1250,37 @@ export default function AlertTable(props: Props) {
       const canMutateEscalatedL2Cases =
         canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) &&
         userAccount?.escalationLevel === 'L2';
-
+      if (
+        !escalationEnabled ||
+        !caseId ||
+        isReviewAlerts ||
+        !isAllAlertsOfStatusEscalatedL2 ||
+        !canMutateEscalatedL2Cases
+      ) {
+        return;
+      }
       return (
-        escalationEnabled &&
-        caseId &&
-        !isReviewAlerts &&
-        isAllAlertsOfStatusEscalatedL2 &&
-        canMutateEscalatedL2Cases && (
-          <AlertsStatusChangeButton
-            ids={selectedIds}
-            transactionIds={selectedTxns}
-            onSaved={() => {
-              reloadTable();
-              setSelectedTxns({});
-            }}
-            status={status}
-            caseId={caseId}
-            statusTransitions={{
-              ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
-              ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
-              ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
-            }}
-            isDisabled={isDisabled}
-          />
-        )
+        <AlertsStatusChangeButton
+          ids={selectedIds}
+          transactionIds={selectedTxns}
+          onSaved={() => {
+            reloadTable();
+            setSelectedTxns({});
+          }}
+          status={status}
+          caseId={caseId}
+          statusTransitions={{
+            ESCALATED_L2: { status: 'ESCALATED', actionLabel: 'Send back' },
+            ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
+            ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
+          }}
+          isDisabled={isDisabled}
+        />
       );
     },
     ({ selectedIds, selectedItems, isDisabled, params }) => {
       const isAllAlertsOfStatusEscalated = isAllAlertsOfStatus(selectedItems, 'ESCALATED');
 
-      if (
-        !isMultiEscalationEnabled ||
-        !isAllAlertsOfStatusEscalated ||
-        !canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled)
-      ) {
-        return;
-      }
       const isReviewAlerts = isInReviewCases(selectedItems, true);
       const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
       const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
@@ -1291,26 +1290,32 @@ export default function AlertTable(props: Props) {
         return;
       }
 
+      if (
+        !isMultiEscalationEnabled ||
+        !isAllAlertsOfStatusEscalated ||
+        !canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) ||
+        isReviewAlerts ||
+        !caseId ||
+        !status ||
+        status !== 'ESCALATED'
+      ) {
+        return;
+      }
       return (
-        !isReviewAlerts &&
-        caseId &&
-        status &&
-        status === 'ESCALATED' && (
-          <AlertsStatusChangeButton
-            ids={selectedIds}
-            transactionIds={selectedTxns}
-            onSaved={() => {
-              reloadTable();
-              setSelectedTxns({});
-            }}
-            status={status}
-            caseId={caseId}
-            isDisabled={isDisabled}
-            statusTransitions={{
-              ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
-            }}
-          />
-        )
+        <AlertsStatusChangeButton
+          ids={selectedIds}
+          transactionIds={selectedTxns}
+          onSaved={() => {
+            reloadTable();
+            setSelectedTxns({});
+          }}
+          status={status}
+          caseId={caseId}
+          isDisabled={isDisabled}
+          statusTransitions={{
+            ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
+          }}
+        />
       );
     },
     ({ selectedIds, selectedItems, isDisabled, params }) => {
@@ -1321,7 +1326,6 @@ export default function AlertTable(props: Props) {
       );
       const isReviewAlerts = isInReviewCases(selectedItems, true);
       if (
-        !isMultiEscalationEnabled ||
         !isAllAlertsOfStatusEscalated ||
         !canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) ||
         isReviewAlerts ||
@@ -1337,6 +1341,13 @@ export default function AlertTable(props: Props) {
       if (!caseId) {
         return;
       }
+      const statusTransitions: Partial<
+        Record<AlertStatus, { status: AlertStatus; actionLabel: ActionLabel }>
+      > = {
+        ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
+        ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
+        ESCALATED: { status: 'OPEN', actionLabel: 'Send back' },
+      };
 
       return (
         <AlertsStatusChangeButton
@@ -1349,11 +1360,7 @@ export default function AlertTable(props: Props) {
           status={status}
           caseId={caseId}
           isDisabled={isDisabled}
-          statusTransitions={{
-            ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
-            ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
-            ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
-          }}
+          statusTransitions={statusTransitions}
         />
       );
     },
@@ -1390,7 +1397,7 @@ export default function AlertTable(props: Props) {
         ),
       ];
       const isReviewAlerts = isInReviewCases(selectedItems, true);
-      const isEscalated = isEscalatedCases(selectedItems);
+      const isEscalated = isEscalatedCases(selectedItems, true);
       if (isReviewAlerts || isEscalated) {
         return;
       }
@@ -1423,8 +1430,9 @@ export default function AlertTable(props: Props) {
         ),
       ];
       const isReviewAlerts = isInReviewCases(selectedItems, true);
-      const isEscalated = isEscalatedCases(selectedItems);
-      if (isReviewAlerts || !isEscalated) {
+      const isEscalated = isEscalatedCases(selectedItems, true);
+      const isEscalatedL2 = isEscalatedL2Cases(selectedItems, true);
+      if (isReviewAlerts || !isEscalated || isEscalatedL2) {
         return;
       }
       const canMutateCases = canMutateEscalatedCases(

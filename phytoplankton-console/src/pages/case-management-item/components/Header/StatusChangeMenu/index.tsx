@@ -81,7 +81,7 @@ const useOptions = (props: Props) => {
   }, [caseItem, caseId, currentUser]);
   const showEscalatedOptions = useMemo(() => {
     if (!isMultiLevelEscalationEnabled) {
-      true;
+      return true;
     }
     if (!caseId) {
       return false;
@@ -90,10 +90,10 @@ const useOptions = (props: Props) => {
       isEscalatedCases({ [caseId]: caseItem }) &&
       canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
-  }, [caseItem, caseId, currentUser, isMultiLevelEscalationEnabled]);
+  }, [isMultiLevelEscalationEnabled, caseId, caseItem, currentUser]);
   const showEscalatedL2Options = useMemo(() => {
     if (!isMultiLevelEscalationEnabled) {
-      true;
+      return true;
     }
     if (!caseId) {
       return false;
@@ -103,13 +103,7 @@ const useOptions = (props: Props) => {
       currentUserAccount?.escalationLevel === 'L2' &&
       canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
-  }, [
-    caseItem,
-    caseId,
-    currentUser,
-    isMultiLevelEscalationEnabled,
-    currentUserAccount?.escalationLevel,
-  ]);
+  }, [isMultiLevelEscalationEnabled, caseId, caseItem, currentUser, currentUserAccount]);
   return [
     ...(escalationEnabled &&
     !isReview &&
@@ -137,7 +131,12 @@ const useOptions = (props: Props) => {
           },
         ]
       : []),
-    ...(escalationEnabled && !isReview && caseId && showEscalatedOptions && isCaseHavingEscalated
+    ...(escalationEnabled &&
+    !isReview &&
+    caseId &&
+    showEscalatedOptions &&
+    isCaseHavingEscalated &&
+    !isCaseHavingEscalatedL2
       ? [
           {
             value: 'ESCALATED_SEND_BACK',
@@ -164,7 +163,9 @@ const useOptions = (props: Props) => {
               />
             ),
           },
-          ...(isMultiLevelEscalationEnabled && caseItem.caseStatus === 'ESCALATED'
+          ...(isMultiLevelEscalationEnabled &&
+          caseItem.caseStatus === 'ESCALATED' &&
+          showEscalatedOptions
             ? [
                 {
                   value: 'ESCALATE_L2',
