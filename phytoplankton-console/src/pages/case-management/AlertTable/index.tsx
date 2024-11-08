@@ -96,6 +96,7 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
+import Tag from '@/components/library/Tag';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -173,6 +174,7 @@ export default function AlertTable(props: Props) {
   const [statusChangeModalState, setStatusChangeModalState] = useState<SanctionsHitStatus | null>(
     null,
   );
+  const location = useLocation();
 
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
 
@@ -196,7 +198,6 @@ export default function AlertTable(props: Props) {
       .filter(notEmpty);
   }, [selectedSanctionHits]);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const assignmentsToMutationAlerts = useMutation<unknown, Error, AlertsAssignmentsUpdateRequest>(
     async ({ alertIds, assignments }) => {
@@ -894,6 +895,34 @@ export default function AlertTable(props: Props) {
             stringify: (value) => commentsToString(value ?? [], users).trim(),
           },
         }),
+        helper.simple<'lastStatusChangeReasons'>({
+          title: 'Escalation Reason',
+          key: 'lastStatusChangeReasons',
+          filtering: false,
+          type: {
+            render: (lastStatusChangeReasons) => {
+              if (
+                !lastStatusChangeReasons ||
+                (lastStatusChangeReasons.reasons.length == 0 &&
+                  !lastStatusChangeReasons.otherReason)
+              ) {
+                return <>-</>;
+              }
+              return (
+                <div className={s.escalation}>
+                  <div className={s.tag}>
+                    {lastStatusChangeReasons.reasons.map((reason) => {
+                      return <Tag>{reason}</Tag>;
+                    })}
+                  </div>
+                  {lastStatusChangeReasons.otherReason && (
+                    <p>{lastStatusChangeReasons.otherReason}</p>
+                  )}
+                </div>
+              );
+            },
+          },
+        }),
       ]);
     };
     const col = mergedColumns(
@@ -926,29 +955,29 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
-    location.pathname,
-    users,
     showUserFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,
+    icpEnabled,
     user.userId,
     reloadTable,
     isFalsePositiveEnabled,
     selectedTxns,
-    icpEnabled,
-    caseId,
     qaEnabled,
-    ruleQueues,
+    slaEnabled,
+    showClosingReason,
     qaMode,
+    caseId,
+    isInReview,
+    users,
     qaAssigneesUpdateMutation,
+    ruleQueues,
+    loadingUsers,
+    location.pathname,
     params,
     navigate,
     expandedAlertId,
-    showClosingReason,
-    slaEnabled,
     slaPolicies,
-    isInReview,
-    loadingUsers,
     isMultiEscalationEnabled,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
