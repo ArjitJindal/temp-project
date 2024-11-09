@@ -220,7 +220,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           text: {
             query: type,
-            path: 'associates.sanctionSearchTypes',
+            path: 'associates.sanctionsSearchTypes',
           },
         },
       ])
@@ -551,9 +551,15 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       // Types
       if (request.types) {
         const typeMatch =
-          entity.sanctionSearchTypes?.some((type) =>
+          (entity.sanctionSearchTypes?.some((type) =>
             request.types?.includes(type)
-          ) ?? false
+          ) ||
+            entity.associates?.some((associate) =>
+              associate.sanctionsSearchTypes?.some((type) =>
+                request.types?.includes(type)
+              )
+            )) ??
+          false
         ;(request.orFilters?.includes('types')
           ? orConditions
           : andConditions

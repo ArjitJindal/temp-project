@@ -94,7 +94,7 @@ export class CdktfTarponStack extends TerraformStack {
               ranks: {
                 type: 'string',
               },
-              sanctionSearchTypes: {
+              sanctionsSearchTypes: {
                 type: 'string',
               },
             },
