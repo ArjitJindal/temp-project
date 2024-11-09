@@ -845,7 +845,7 @@ export default function AlertTable(props: Props) {
                   !statusInReview(entity.alertStatus) &&
                   isEscalatedL2 &&
                   canMutateCases &&
-                  userAccount.escalationLevel === 'L2' && (
+                  userAccount?.escalationLevel === 'L2' && (
                     <AlertsStatusChangeButton
                       caseId={entity.caseId}
                       ids={[entity.alertId]}
@@ -998,7 +998,7 @@ export default function AlertTable(props: Props) {
     expandedAlertId,
     slaPolicies,
     isMultiEscalationEnabled,
-    userAccount.escalationLevel,
+    userAccount?.escalationLevel,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {

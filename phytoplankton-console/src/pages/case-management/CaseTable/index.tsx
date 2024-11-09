@@ -481,7 +481,7 @@ export default function CaseTable(props: Props) {
                 !statusInReview(entity.caseStatus) &&
                 isEscalatedL2 &&
                 canMutateCases &&
-                userAccount.escalationLevel === 'L2' && (
+                userAccount?.escalationLevel === 'L2' && (
                   <CasesStatusChangeButton
                     caseIds={[entity.caseId]}
                     caseStatus={entity.caseStatus}
@@ -610,7 +610,7 @@ export default function CaseTable(props: Props) {
     slaEnabled,
     slaPolicies.items,
     isMultiLevelEscalationEnabled,
-    userAccount.escalationLevel,
+    userAccount?.escalationLevel,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');

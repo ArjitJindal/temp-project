@@ -290,11 +290,11 @@ export function getAssignmentsToShow(item: Case | Alert): Assignment[] | undefin
   const isItemInReview = statusInReview(status);
 
   if (isStatusEscalatedL2) {
-    return item.reviewAssignments?.filter((assignment) => assignment.escalationLevel === 'L2');
+    return item.reviewAssignments?.filter((assignment) => assignment?.escalationLevel === 'L2');
   }
 
   if (isItemEscalated || isItemInReview) {
-    return item.reviewAssignments?.filter((assignment) => assignment.escalationLevel !== 'L2');
+    return item.reviewAssignments?.filter((assignment) => assignment?.escalationLevel !== 'L2');
   }
 
   return item.assignments;
