@@ -443,6 +443,7 @@ export default function CaseTable(props: Props) {
           const canReview = canReviewCases({ [entity.caseId]: entity }, user.userId);
           const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
           const isEscalated = statusEscalated(entity.caseStatus);
+          const isEscalatedL2 = statusEscalatedL2(entity.caseStatus);
           const canMutateCases = canMutateEscalatedCases(
             { [entity.caseId]: entity },
             user.userId,
@@ -464,6 +465,7 @@ export default function CaseTable(props: Props) {
               {entity?.caseId &&
                 !statusInReview(entity.caseStatus) &&
                 isEscalated &&
+                !isEscalatedL2 &&
                 canMutateCases && (
                   <CasesStatusChangeButton
                     caseIds={[entity.caseId]}
@@ -472,6 +474,20 @@ export default function CaseTable(props: Props) {
                     statusTransitions={{
                       ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                       ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                    }}
+                  />
+                )}
+              {entity?.caseId &&
+                !statusInReview(entity.caseStatus) &&
+                isEscalatedL2 &&
+                canMutateCases &&
+                userAccount.escalationLevel === 'L2' && (
+                  <CasesStatusChangeButton
+                    caseIds={[entity.caseId]}
+                    caseStatus={entity.caseStatus}
+                    onSaved={reloadTable}
+                    statusTransitions={{
+                      ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
                     }}
                   />
                 )}
@@ -594,6 +610,7 @@ export default function CaseTable(props: Props) {
     slaEnabled,
     slaPolicies.items,
     isMultiLevelEscalationEnabled,
+    userAccount.escalationLevel,
   ]);
 
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');

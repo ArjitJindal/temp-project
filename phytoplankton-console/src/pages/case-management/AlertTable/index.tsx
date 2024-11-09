@@ -77,6 +77,7 @@ import {
   isInReviewCases,
   isOnHoldOrInProgressOrEscalated,
   statusEscalated,
+  statusEscalatedL2,
   statusInProgressOrOnHold,
   statusInReview,
 } from '@/utils/case-utils';
@@ -802,6 +803,7 @@ export default function AlertTable(props: Props) {
             const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
             const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
             const isEscalated = statusEscalated(entity.alertStatus);
+            const isEscalatedL2 = statusEscalatedL2(entity.alertStatus);
             const canMutateCases = canMutateEscalatedCases(
               { [entity.caseId]: entity },
               userId,
@@ -825,6 +827,7 @@ export default function AlertTable(props: Props) {
                 {entity?.caseId &&
                   !statusInReview(entity.alertStatus) &&
                   isEscalated &&
+                  !isEscalatedL2 &&
                   canMutateCases && (
                     <AlertsStatusChangeButton
                       caseId={entity.caseId}
@@ -834,6 +837,22 @@ export default function AlertTable(props: Props) {
                       statusTransitions={{
                         ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                         ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                      }}
+                      transactionIds={selectedTxns}
+                    />
+                  )}
+                {entity?.caseId &&
+                  !statusInReview(entity.alertStatus) &&
+                  isEscalatedL2 &&
+                  canMutateCases &&
+                  userAccount.escalationLevel === 'L2' && (
+                    <AlertsStatusChangeButton
+                      caseId={entity.caseId}
+                      ids={[entity.alertId]}
+                      status={entity.alertStatus}
+                      onSaved={reload}
+                      statusTransitions={{
+                        ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
                       }}
                       transactionIds={selectedTxns}
                     />
@@ -979,6 +998,7 @@ export default function AlertTable(props: Props) {
     expandedAlertId,
     slaPolicies,
     isMultiEscalationEnabled,
+    userAccount.escalationLevel,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
