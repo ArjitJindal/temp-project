@@ -883,7 +883,7 @@ export class RiskScoringService {
       components
     )
 
-    if (!oldDrs?.isUpdatable && !isDrsUpdatable) {
+    if (oldDrs && !oldDrs.isUpdatable && !isDrsUpdatable) {
       // To override the DRS score lock
       return newRiskData
     }
