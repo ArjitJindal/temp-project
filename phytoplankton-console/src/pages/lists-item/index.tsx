@@ -47,10 +47,12 @@ export default function ListsItemPage() {
       if (!listId) {
         throw new Error('List ID is required');
       }
-      const clearMethod =
-        listType === 'WHITELIST' ? api.clearBlacklistItems : api.clearWhiteListItems;
+      const promise =
+        listType === 'WHITELIST'
+          ? api.clearBlacklistItems({ listId })
+          : api.clearWhiteListItems({ listId });
 
-      await clearMethod({ listId });
+      await promise;
       await queryClient.invalidateQueries(LISTS_ITEM(listId));
     },
     {

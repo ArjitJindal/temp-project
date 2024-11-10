@@ -28,8 +28,12 @@ export default function DeleteListModal(props: Props) {
   const handleOk = useCallback(() => {
     if (listId != null && listType != null) {
       setLoading(true);
-      const method = listType === 'WHITELIST' ? api.deleteWhiteList : api.deleteBlacklist;
-      method({ listId })
+      const promise =
+        listType === 'WHITELIST'
+          ? api.deleteWhiteList({ listId })
+          : api.deleteBlacklist({ listId });
+
+      promise
         .then(
           () => {
             message.success('List deleted!');

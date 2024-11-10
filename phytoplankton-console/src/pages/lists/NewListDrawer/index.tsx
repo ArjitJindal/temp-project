@@ -18,6 +18,7 @@ import TextArea from '@/components/library/TextArea';
 import Toggle from '@/components/library/Toggle';
 import { UseFormState } from '@/components/library/Form/utils';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
+import { DefaultApiPostWhiteListRequest } from '@/apis/types/ObjectParamAPI';
 
 interface FormValues {
   subtype: ListSubtype | null;
@@ -61,8 +62,7 @@ export default function NewListDrawer(props: Props) {
       const { values } = event;
 
       if (values.subtype != null) {
-        const method = listType === 'WHITELIST' ? api.postWhiteList : api.postBlacklist;
-        await method({
+        const payload: DefaultApiPostWhiteListRequest = {
           NewListPayload: {
             subtype: values.subtype,
             data: {
@@ -74,7 +74,9 @@ export default function NewListDrawer(props: Props) {
               items: values.values?.map((key) => ({ key })) ?? [],
             },
           },
-        });
+        };
+
+        listType === 'WHITELIST' ? api.postWhiteList(payload) : api.postBlacklist(payload);
       }
     },
     {

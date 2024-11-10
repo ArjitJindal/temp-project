@@ -17,6 +17,10 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { message } from '@/components/library/Message';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { StatePair } from '@/utils/state';
+import {
+  DefaultApiGetWhiteListItemsRequest,
+  DefaultApiPostWhiteListItemRequest,
+} from '@/apis/types/ObjectParamAPI';
 
 interface ExistedTableItemData {
   value: string;
@@ -87,19 +91,23 @@ export default function ItemsTable(props: Props) {
 
   const handleAddItem = useCallback(() => {
     const hideMessage = message.loading('Adding item to a list...');
-    const method = listType === 'WHITELIST' ? api.postWhiteListItem : api.postBlacklistItem;
+
     if (isNewUserValid) {
       setAddUserLoading(true);
       Promise.all(
-        newUserData.value.map((itemValue) =>
-          method({
+        newUserData.value.map((itemValue) => {
+          const payload: DefaultApiPostWhiteListItemRequest = {
             listId,
             ListItem: {
-              key: itemValue ?? '',
+              key: itemValue,
               metadata: { reason: newUserData.reason, ...newUserData.meta },
             },
-          }),
-        ),
+          };
+
+          return listType === 'WHITELIST'
+            ? api.postWhiteListItem(payload)
+            : api.postBlacklistItem(payload);
+        }),
       )
         .then(() => {
           hideMessage();
@@ -119,17 +127,22 @@ export default function ItemsTable(props: Props) {
 
   const [isEditUserLoading, setEditUserLoading] = useState(false);
   const isEditUserValid = !!editUserData?.reason;
+
   const handleSaveItem = () => {
     if (isEditUserValid) {
       setEditUserLoading(true);
-      const method = listType === 'WHITELIST' ? api.postWhiteListItem : api.postBlacklistItem;
-      method({
+      const payload: DefaultApiPostWhiteListItemRequest = {
         listId,
         ListItem: {
           key: editUserData.value ?? '',
           metadata: { ...editUserData.meta, reason: editUserData.reason },
         },
-      })
+      };
+
+      const promise =
+        listType === 'WHITELIST' ? api.postWhiteListItem(payload) : api.postBlacklistItem(payload);
+
+      promise
         .then(() => {
           setEditUserData(null);
           tableRef.current?.reload();
@@ -147,8 +160,12 @@ export default function ItemsTable(props: Props) {
   const handleDeleteUser = useCallback(
     (userId: string) => {
       setEditDeleteLoading(true);
-      const method = listType === 'WHITELIST' ? api.deleteWhiteListItem : api.deleteBlacklistItem;
-      method({ listId, key: userId })
+      const promise =
+        listType === 'WHITELIST'
+          ? api.deleteWhiteListItem({ listId, key: userId })
+          : api.deleteBlacklistItem({ listId, key: userId });
+
+      promise
         .then(() => {
           tableRef.current?.reload();
         })
@@ -164,8 +181,16 @@ export default function ItemsTable(props: Props) {
   const [params, setParams] = useState<CommonParams>(DEFAULT_PARAMS_STATE);
 
   const listResult = useCursorQuery(LISTS_ITEM_TYPE(listId, listType, params), async ({ from }) => {
-    const method = listType === 'WHITELIST' ? api.getWhiteListItems : api.getBlacklistItems;
-    const response = await method({ listId, start: from, pageSize: params.pageSize });
+    const payload: DefaultApiGetWhiteListItemsRequest = {
+      listId,
+      start: from,
+      pageSize: params.pageSize,
+    };
+
+    const response =
+      listType === 'WHITELIST'
+        ? await api.getWhiteListItems(payload)
+        : await api.getBlacklistItems(payload);
 
     const data: TableItem[] = [
       ...response.items.map(
