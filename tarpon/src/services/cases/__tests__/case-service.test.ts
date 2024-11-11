@@ -2946,3 +2946,67 @@ describe('Test case escalation l2', () => {
     ).toBe('ACCOUNT-4')
   })
 })
+
+describe('Test no double escalation review', () => {
+  withFeatureHook(['MULTI_LEVEL_ESCALATION', 'ADVANCED_WORKFLOWS'])
+  const testTenantId = getTestTenantId()
+  test('should not double escalate review', async () => {
+    const caseService = await getCaseService(testTenantId)
+    const alertService = await getAlertsService(testTenantId)
+    const caseId = nanoid()
+    getContextMocker.mockReturnValue({
+      user: { id: REVIEWEE.id, role: 'REVIEWEE' },
+    })
+    await caseService.caseRepository.addCaseMongo({
+      caseId,
+      caseType: 'SYSTEM',
+      caseStatus: 'OPEN',
+      caseAggregates: DEFAULT_CASE_AGGREGATES,
+      alerts: [TEST_ALERT_1, TEST_ALERT_2, TEST_ALERT_3],
+    })
+
+    await alertService.updateStatus([TEST_ALERT_1.alertId], {
+      alertStatus: 'CLOSED',
+      reason: ['Other'],
+    })
+
+    const alert = await alertService.getAlert(TEST_ALERT_1.alertId)
+    expect(alert?.alertStatus).toBe('IN_REVIEW_CLOSED')
+
+    getContextMocker.mockReturnValue({
+      user: TEST_ACCOUNT_1,
+    })
+
+    await alertService.updateStatus([TEST_ALERT_1.alertId], {
+      alertStatus: 'OPEN',
+      reason: ['Other'],
+    })
+
+    const updatedAlert = await alertService.getAlert(TEST_ALERT_1.alertId)
+    expect(updatedAlert?.alertStatus).toBe('OPEN')
+
+    await alertService.escalateAlerts(caseId, {
+      alertEscalations: [{ alertId: TEST_ALERT_1.alertId, transactionIds: [] }],
+      caseUpdateRequest: {
+        caseStatus: 'ESCALATED',
+        reason: ['Other'],
+      },
+    })
+
+    const updatedCase = await caseService.getCase(caseId)
+    const childCaseId =
+      updatedCase?.caseHierarchyDetails?.childCaseIds?.[0] || ''
+
+    const childCase = await caseService.getCase(childCaseId)
+    console.log(childCase)
+    expect(childCase?.caseStatus).toBe('ESCALATED')
+    expect(childCase?.reviewAssignments).toMatchObject([
+      {
+        assigneeUserId: 'ACCOUNT-1',
+        assignedByUserId: 'ACCOUNT-1',
+        timestamp: expect.any(Number),
+        escalationLevel: 'L1',
+      },
+    ])
+  })
+})

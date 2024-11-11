@@ -287,11 +287,6 @@ export class AlertsService extends CaseAlertsCommonService {
     })
 
     const currentTimestamp = Date.now()
-    const reviewAssignments = this.getEscalationAssignments(
-      c.caseStatus as CaseStatus,
-      c.reviewAssignments ?? [],
-      accounts
-    )
 
     const escalatedAlerts = c.alerts?.filter((alert) =>
       alertEscalations?.some(
@@ -352,9 +347,15 @@ export class AlertsService extends CaseAlertsCommonService {
       }
 
       return {
-        assigneeIds: uniq(reviewAssignments.map((v) => v.assigneeUserId)),
+        assigneeIds: [currentUserAccount.reviewerId as string],
       }
     }
+
+    const reviewAssignments = this.getEscalationAssignments(
+      c.caseStatus as CaseStatus,
+      [],
+      accounts
+    )
 
     const newAlertsTransactions: Array<{
       alertId: string
