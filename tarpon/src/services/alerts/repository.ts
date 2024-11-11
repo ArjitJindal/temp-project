@@ -1497,15 +1497,6 @@ export class AlertsRepository {
     const timezone = dayjsLib.tz.guess()
     const pipeline = [
       {
-        $match: {
-          'alerts.ruleInstanceId': ruleInstanceId,
-          'alerts.createdTimestamp': {
-            $gte: timeRange.afterTimestamp,
-            $lte: timeRange.beforeTimestamp,
-          },
-        },
-      },
-      {
         $unwind: '$alerts',
       },
       {

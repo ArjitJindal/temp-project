@@ -119,8 +119,8 @@ describe('Simulation (Pulse) batch job runner', () => {
           progress: 1,
           statistics: {
             current: [
-              { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
               { count: 1, riskLevel: 'LOW', riskType: 'DRS' },
+              { count: 1, riskLevel: 'MEDIUM', riskType: 'DRS' },
             ],
             simulated: [{ count: 2, riskLevel: 'MEDIUM', riskType: 'DRS' }],
           },

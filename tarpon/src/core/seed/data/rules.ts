@@ -1,5 +1,6 @@
 import { cloneDeep, memoize, random } from 'lodash'
 import { getRandomUser } from '../samplers/accounts'
+import { sampleTimestamp } from '../samplers/timestamp'
 import { getSLAPolicies } from './sla'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { pickRandom, randomSubset } from '@/core/seed/samplers/prng'
@@ -651,6 +652,7 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
         nature: ri.nature,
         ruleDescription: ri.ruleDescriptionAlias as string,
         ruleHit: true,
+        executedAt: sampleTimestamp(),
         ruleHitMeta: {
           falsePositiveDetails:
             random(0, 10) < 4
@@ -677,6 +679,7 @@ export const userRules: () => ExecutedRulesResult[] = memoize(() => {
         nature: ri.nature,
         ruleDescription: ri.ruleDescriptionAlias as string,
         ruleHit: true,
+        executedAt: sampleTimestamp(),
         ruleHitMeta: {
           falsePositiveDetails:
             random(0, 10) < 2

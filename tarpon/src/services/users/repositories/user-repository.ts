@@ -1498,31 +1498,32 @@ export class UserRepository {
     const collection = db.collection<InternalUser>(
       USERS_COLLECTION(this.tenantId)
     )
-    const timestampMatch = {
-      updatedAt: {
-        $gte: timeRange.afterTimestamp,
-        $lt: timeRange.beforeTimestamp,
-      },
-    }
-    const ruleElementMatchCondition = {
+
+    const ruleElementMatchCondition: {
+      ruleInstanceId: string
+      isShadow: boolean | { $ne: boolean }
+    } = {
       ruleInstanceId,
+      isShadow: isShadowRule ? true : { $ne: true },
     }
-    if (isShadowRule) {
-      ruleElementMatchCondition['isShadow'] = true
-    } else {
-      ruleElementMatchCondition['isShadow'] = { $ne: true }
-    }
-    const groupBy = {
+    let groupBy = {
       $dateToString: {
         format: DAY_DATE_FORMAT,
-        date: { $toDate: '$createdTimestamp' },
+        date: { $toDate: '$executedRules.executedAt' },
       },
     }
     const runPipeline = [
       {
+        $unwind: '$executedRules',
+      },
+      {
         $match: {
-          ...timestampMatch,
-          executedRules: { $elemMatch: ruleElementMatchCondition },
+          'executedRules.executedAt': {
+            $gte: timeRange.afterTimestamp,
+            $lt: timeRange.beforeTimestamp,
+          },
+          'executedRules.ruleInstanceId': ruleInstanceId,
+          'executedRules.isShadow': ruleElementMatchCondition.isShadow,
         },
       },
       {
@@ -1532,11 +1533,24 @@ export class UserRepository {
         },
       },
     ]
+    groupBy = {
+      $dateToString: {
+        format: DAY_DATE_FORMAT,
+        date: { $toDate: '$hitRules.executedAt' },
+      },
+    }
     const hitPipeline = [
       {
+        $unwind: '$hitRules',
+      },
+      {
         $match: {
-          ...timestampMatch,
-          hitRules: { $elemMatch: ruleElementMatchCondition },
+          'hitRules.executedAt': {
+            $gte: timeRange.afterTimestamp,
+            $lt: timeRange.beforeTimestamp,
+          },
+          'hitRules.ruleInstanceId': ruleInstanceId,
+          'hitRules.isShadow': ruleElementMatchCondition.isShadow,
         },
       },
       {
@@ -1546,10 +1560,12 @@ export class UserRepository {
         },
       },
     ]
+
     const [runResult, hitResult] = await Promise.all([
       collection.aggregate(runPipeline).toArray(),
       collection.aggregate(hitPipeline).toArray(),
     ])
+
     const result = mergeWith(
       mapValues(keyBy(runResult, '_id'), (v) => ({
         runCount: v.runCount,

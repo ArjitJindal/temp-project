@@ -198,6 +198,7 @@ export function getExecutedAndHitRulesResult(
       labels: result?.labels,
       nature: result?.nature,
       isShadow: result?.isShadow,
+      executedAt: Date.now(),
     }))
     .sort(ruleAscendingComparator) as HitRulesDetails[]
 
@@ -1524,6 +1525,7 @@ export class RulesEngineService {
         ruleHit,
         labels: ruleInstance.labels,
         nature: ruleInstance.nature,
+        executedAt: Date.now(),
         ruleHitMeta: ruleHit
           ? {
               hitDirections: ruleHitDirections,

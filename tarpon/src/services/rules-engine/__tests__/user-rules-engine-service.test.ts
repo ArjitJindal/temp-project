@@ -116,6 +116,7 @@ describe('Verify User', () => {
             ruleId: 'RC-test-rule',
             ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
+            executedAt: expect.any(Number),
             vars: [
               {
                 direction: 'ORIGIN',
@@ -133,6 +134,7 @@ describe('Verify User', () => {
             nature: 'AML',
             ruleAction: 'FLAG',
             ruleDescription: '',
+            executedAt: expect.any(Number),
             ruleHitMeta: {
               falsePositiveDetails: undefined,
               hitDirections: ['ORIGIN'],
@@ -159,6 +161,7 @@ describe('Verify User', () => {
         hitRules: [
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleInstanceId: 'RC-test-rule-async',
@@ -172,6 +175,7 @@ describe('Verify User', () => {
           },
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleInstanceId: 'RC-test-rule',
@@ -187,6 +191,7 @@ describe('Verify User', () => {
         executedRules: [
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleHit: true,
@@ -211,6 +216,7 @@ describe('Verify User', () => {
             ruleAction: 'FLAG',
             nature: 'AML',
             ruleName: 'test rule name',
+            executedAt: expect.any(Number),
             ruleHit: true,
             ruleInstanceId: 'RC-test-rule',
             vars: [
@@ -284,6 +290,7 @@ describe('Verify User', () => {
             ruleId: 'RC-test-rule',
             ruleInstanceId: 'RC-test-rule',
             ruleName: 'test rule name',
+            executedAt: expect.any(Number),
             vars: [
               {
                 direction: 'ORIGIN',
@@ -297,6 +304,7 @@ describe('Verify User', () => {
         hitRules: [
           {
             isShadow: false,
+            executedAt: expect.any(Number),
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
@@ -390,6 +398,7 @@ describe('Verify User', () => {
             ruleId: 'RC-test-rule',
             ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
+            executedAt: expect.any(Number),
             vars: [
               {
                 direction: 'ORIGIN',
@@ -404,6 +413,7 @@ describe('Verify User', () => {
         hitRules: [
           {
             isShadow: false,
+            executedAt: expect.any(Number),
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
@@ -471,6 +481,7 @@ describe('Verify User', () => {
             ruleId: 'RC-test-rule',
             ruleInstanceId: 'RC-test-rule.1',
             ruleName: 'test rule name',
+            executedAt: expect.any(Number),
             vars: [
               {
                 direction: 'ORIGIN',
@@ -485,6 +496,7 @@ describe('Verify User', () => {
         hitRules: [
           {
             isShadow: false,
+            executedAt: expect.any(Number),
             labels: [],
             nature: 'AML',
             ruleAction: 'FLAG',
@@ -527,6 +539,7 @@ describe('Verify User', () => {
         hitRules: [
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleInstanceId: 'RC-test-rule-async.1',
@@ -540,6 +553,7 @@ describe('Verify User', () => {
           },
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleInstanceId: 'RC-test-rule.1',
@@ -555,6 +569,7 @@ describe('Verify User', () => {
         executedRules: [
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleHit: true,
@@ -578,6 +593,7 @@ describe('Verify User', () => {
           },
           {
             ruleAction: 'FLAG',
+            executedAt: expect.any(Number),
             nature: 'AML',
             ruleName: 'test rule name',
             ruleHit: true,
@@ -662,6 +678,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       executedRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
@@ -710,6 +727,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       executedRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
@@ -743,6 +761,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       hitRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
@@ -778,6 +797,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       executedRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
@@ -826,6 +846,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       executedRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',
@@ -859,6 +880,7 @@ describe('Verify user with V8 rule with aggregation variables', () => {
       hitRules: [
         {
           isShadow: false,
+          executedAt: expect.any(Number),
           labels: [],
           nature: 'AML',
           ruleAction: 'FLAG',

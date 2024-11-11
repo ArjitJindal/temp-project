@@ -91,6 +91,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -108,6 +109,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -166,6 +168,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -183,6 +186,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -222,6 +226,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -236,6 +241,7 @@ describe('Verify Transaction', () => {
           },
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -252,6 +258,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -265,6 +272,7 @@ describe('Verify Transaction', () => {
           },
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -307,6 +315,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -324,6 +333,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -370,6 +380,7 @@ describe('Verify Transaction', () => {
       const result = await rulesEngine.verifyTransaction(transaction)
       const expectedRuleResult = {
         ruleId: 'TEST-R-1',
+        executedAt: expect.any(Number),
         ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
         ruleName: 'test rule name',
         ruleDescription: '',
@@ -419,6 +430,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -487,6 +499,7 @@ describe('Verify Transaction', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -504,6 +517,7 @@ describe('Verify Transaction', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -588,8 +602,14 @@ describe('Verify Transaction Event', () => {
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
         transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
-        executedRules: result1.executedRules,
-        hitRules: result1.hitRules,
+        executedRules: result1.executedRules.map((rule) => ({
+          ...rule,
+          executedAt: expect.any(Number),
+        })),
+        hitRules: result1.hitRules.map((rule) => ({
+          ...rule,
+          executedAt: expect.any(Number),
+        })),
       })
       expect(latestTransaction?.originDeviceData).toEqual({
         deviceIdentifier: 'deviceIdentifier',
@@ -614,6 +634,7 @@ describe('Verify Transaction Event', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -628,6 +649,7 @@ describe('Verify Transaction Event', () => {
           },
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -644,6 +666,7 @@ describe('Verify Transaction Event', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -657,6 +680,7 @@ describe('Verify Transaction Event', () => {
           },
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -687,6 +711,7 @@ describe('Verify Transaction Event', () => {
       expect(lastEvent?.executedRules).toEqual([
         {
           ruleId: 'TEST-R-2',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -701,6 +726,7 @@ describe('Verify Transaction Event', () => {
         },
         {
           ruleId: 'TEST-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -745,8 +771,14 @@ describe('Verify Transaction Event', () => {
       expect(result2).toEqual({
         eventId: transactionEvent.eventId,
         transaction: omit(latestTransaction, ['executedRules', 'hitRules']),
-        executedRules: result1.executedRules,
-        hitRules: result1.hitRules,
+        executedRules: result1.executedRules.map((rule) => ({
+          ...rule,
+          executedAt: expect.any(Number),
+        })),
+        hitRules: result1.hitRules.map((rule) => ({
+          ...rule,
+          executedAt: expect.any(Number),
+        })),
       })
     })
   })
@@ -802,6 +834,7 @@ describe('Verify Transaction Event', () => {
             executedRules: [
               {
                 ruleId: 'TEST-R-1',
+                executedAt: expect.any(Number),
                 ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
                 ruleName: 'test rule name',
                 ruleDescription: '',
@@ -819,6 +852,7 @@ describe('Verify Transaction Event', () => {
             hitRules: [
               {
                 ruleId: 'TEST-R-1',
+                executedAt: expect.any(Number),
                 ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
                 ruleName: 'test rule name',
                 ruleDescription: '',
@@ -851,6 +885,7 @@ describe('Verify Transaction Event', () => {
         executedRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -868,6 +903,7 @@ describe('Verify Transaction Event', () => {
         hitRules: [
           {
             ruleId: 'TEST-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -924,6 +960,7 @@ describe('Verify Transaction for Simulation', () => {
     )
     expect(result).toEqual({
       ruleId: 'TEST-R-1',
+      executedAt: expect.any(Number),
       ruleInstanceId: testRuleInstanceId,
       ruleName: 'test rule name',
       ruleDescription: '',
@@ -1059,6 +1096,7 @@ describe('Verify Transaction: V8 engine', () => {
         executedRules: [
           {
             ruleId: 'RC-V8-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -1100,6 +1138,7 @@ describe('Verify Transaction: V8 engine', () => {
         executedRules: [
           {
             ruleId: 'RC-V8-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -1130,6 +1169,7 @@ describe('Verify Transaction: V8 engine', () => {
         hitRules: [
           {
             ruleId: 'RC-V8-R-1',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -2484,6 +2524,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       executedRules: [
         {
           ruleId: 'RC-V8-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -2519,6 +2560,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       executedRules: [
         {
           ruleId: 'RC-V8-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -2543,6 +2585,7 @@ describe('Verify Transaction: V8 engine course grained aggregation', () => {
       hitRules: [
         {
           ruleId: 'RC-V8-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -2681,6 +2724,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       executedRules: [
         {
           ruleId: 'RC-V8-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -2717,6 +2761,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
       executedRules: [
         {
           ruleId: 'RC-V8-R-1',
+          executedAt: expect.any(Number),
           ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -2837,6 +2882,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         executedRules: [
           {
             ruleId: 'RC-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -2863,6 +2909,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         hitRules: [
           {
             ruleId: 'RC-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -2894,6 +2941,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         executedRules: [
           {
             ruleId: 'RC-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -2920,6 +2968,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         hitRules: [
           {
             ruleId: 'RC-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -2958,6 +3007,7 @@ describe('Verify Transaction: V8 engine with rolling basis', () => {
         executedRules: [
           {
             ruleId: 'RC-2',
+            executedAt: expect.any(Number),
             ruleInstanceId: RULE_INSTANCE_ID_MATCHER,
             ruleName: 'test rule name',
             ruleDescription: '',
@@ -3102,6 +3152,7 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
       executedRules: [
         {
           ruleId: 'RC-deploying',
+          executedAt: expect.any(Number),
           ruleInstanceId: 'RC-deploying',
           ruleName: 'test rule name',
           ruleDescription: '',
@@ -3126,6 +3177,7 @@ describe('Verify Transaction: V8 engine with Deploying status', () => {
       hitRules: [
         {
           ruleId: 'RC-deploying',
+          executedAt: expect.any(Number),
           ruleInstanceId: 'RC-deploying',
           ruleName: 'test rule name',
           ruleDescription: '',

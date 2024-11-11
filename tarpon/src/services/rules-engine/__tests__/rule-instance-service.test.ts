@@ -55,6 +55,7 @@ function getTestUserHitOrNot(
     executedRules: [
       {
         ruleInstanceId,
+        executedAt: createdTimestamp,
         ruleName: '',
         ruleDescription: '',
         ruleAction: ruleHit ? 'FLAG' : 'ALLOW',
@@ -66,6 +67,7 @@ function getTestUserHitOrNot(
       ? [
           {
             ruleInstanceId,
+            executedAt: createdTimestamp,
             ruleName: '',
             ruleDescription: '',
             ruleAction: ruleHit ? 'FLAG' : 'ALLOW',

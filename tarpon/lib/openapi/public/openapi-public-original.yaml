@@ -2976,6 +2976,11 @@ components:
           $ref: '#/components/schemas/RuleAction'
         ruleHit:
           type: boolean
+        executedAt:
+          type: number
+          description: Timestamp when the rule was executed
+          minimum: 315529200000
+          maximum: 4133890801000
         ruleHitMeta:
           $ref: '#/components/schemas/RuleHitMeta'
         vars:
@@ -3024,6 +3029,11 @@ components:
           minLength: 1
           type: string
           description: Description of the rule
+        executedAt:
+          type: number
+          description: Timestamp when the rule was hit
+          minimum: 315529200000
+          maximum: 4133890801000
         ruleAction:
           $ref: '#/components/schemas/RuleAction'
         ruleHitMeta:
