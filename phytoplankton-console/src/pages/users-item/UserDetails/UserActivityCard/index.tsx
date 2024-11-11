@@ -29,6 +29,7 @@ import { USERS_ITEM } from '@/utils/queries/keys';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { FormValues } from '@/components/CommentEditor';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -38,15 +39,27 @@ interface Props {
   };
 }
 
+interface AliasMapping {
+  [key: string]: string;
+}
+
 export default function UserActivityCard(props: Props) {
   const { user, comments } = props;
   const api = useApi();
   const [users, _] = useUsers();
-
   const queryClient = useQueryClient();
-
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
+
+  const settings = useSettings();
+  const configRiskLevelAliasArray = settings?.riskLevelAlias || [];
+
+  const riskLevelAlias: AliasMapping = {};
+  configRiskLevelAliasArray.forEach((entry) => {
+    if (entry.level && entry.alias) {
+      riskLevelAlias[entry.level] = entry.alias;
+    }
+  });
 
   const deleteCommentMutation = useMutation<
     unknown,
@@ -99,7 +112,8 @@ export default function UserActivityCard(props: Props) {
             pageSize: 100,
             entityIdExactMatch: true,
           });
-          return getLogData(response.data, users, 'CASE', riskClassificationValues);
+
+          return getLogData(response.data, users, 'CASE', riskClassificationValues, riskLevelAlias);
         },
         filters: ([params, setParams]) => {
           return (
@@ -136,6 +150,7 @@ const getLogData = (
   users: { [userId: string]: Account },
   type: 'USER' | 'CASE',
   riskClassificationValues: RiskClassificationScore[],
+  riskLevelAlias: AliasMapping,
 ): LogItemData[] => {
   const logItemData: LogItemData[] = logs
     .map((log) => {
@@ -151,7 +166,13 @@ const getLogData = (
         );
       };
 
-      const createStatement = getCreateStatement(log, users, type, riskClassificationValues);
+      const createStatement = getCreateStatement(
+        log,
+        users,
+        type,
+        riskClassificationValues,
+        riskLevelAlias,
+      );
       if (isActionUpdate(log)) {
         return createStatement
           ? {

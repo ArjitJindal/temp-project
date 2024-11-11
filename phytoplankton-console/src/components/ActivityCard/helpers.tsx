@@ -31,6 +31,7 @@ export const getCreateStatement = (
   users: { [userId: string]: Account },
   type: 'USER' | 'CASE',
   riskClassificationValues: Array<RiskClassificationScore>,
+  riskLevelAlias: Record<string, string> = {},
 ): ReactElement | null => {
   const user = log.user?.id ? users[log.user?.id] : undefined;
   const userName = user ? (user.role === 'root' ? 'system' : user.name ?? user.email) : 'system';
@@ -43,6 +44,13 @@ export const getCreateStatement = (
     users,
     reviewAssignments: log.newImage?.reviewAssignments ?? [],
   });
+
+  const getRiskLevelLabelWithAlias = (riskLevel: string): string => {
+    return (
+      riskLevelAlias[riskLevel] || RISK_LEVEL_LABELS[riskLevel as keyof typeof RISK_LEVEL_LABELS]
+    );
+  };
+
   switch (subtype) {
     case 'COMMENT': {
       let actionStatement: string = '';
@@ -147,14 +155,15 @@ export const getCreateStatement = (
       const newRiskScore = log.newImage?.drsScore;
       const newRiskLevel =
         newRiskScore != null ? getRiskLevelFromScore(riskClassificationValues, newRiskScore) : null;
+      const displayRiskLevel = newRiskLevel ? getRiskLevelLabelWithAlias(newRiskLevel) : null;
+
       return riskLevelLockChange ? (
         <>
           Risk level <b>{riskLevelUpdatebleStatus}</b> by <b>{userName}</b>
         </>
-      ) : newRiskLevel ? (
+      ) : displayRiskLevel ? (
         <>
-          Risk level changed to <b>{RISK_LEVEL_LABELS[newRiskLevel].toLowerCase()}</b> by{' '}
-          <b>{userName}</b>
+          Risk level changed to <b>{displayRiskLevel.toLowerCase()}</b> by <b>{userName}</b>
         </>
       ) : (
         <></>
