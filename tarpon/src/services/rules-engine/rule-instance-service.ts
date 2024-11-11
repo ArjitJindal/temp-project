@@ -358,6 +358,7 @@ export class RuleInstanceService {
     )
 
     if (isShadow) {
+      alertsHit = usersHit
       investigationTime =
         await OverviewStatsDashboardMetric.getAverageInvestigationTime(
           this.tenantId,
