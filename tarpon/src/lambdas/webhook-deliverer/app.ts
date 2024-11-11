@@ -21,7 +21,11 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
-import { updateLogMetadata, withContext } from '@/core/utils/context'
+import {
+  hasFeature,
+  updateLogMetadata,
+  withContext,
+} from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { isTenantWhitelabeled } from '@/utils/tenant'
@@ -116,6 +120,14 @@ async function deliverWebhookEvent(
         logger.error(
           `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_HOURS} hours. Will not retry`
         )
+
+        if (hasFeature('PNB')) {
+          // Don't disable webhooks for PNB
+          logger.error(
+            `Webhook task for PNB failed with ID ${webhookDeliveryTask._id}`
+          )
+          return
+        }
         await webhookRepository.disableWebhook(
           webhook._id as string,
           `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${MAX_RETRY_HOURS} hours)`
