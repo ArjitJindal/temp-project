@@ -8,6 +8,7 @@ import { CurrencyService } from '@/services/currency'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
+import { tenantHasFeature } from '@/core/utils/context'
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -18,10 +19,13 @@ async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
       endTimestamp: now.valueOf(),
     }
     await Promise.all(
-      tenantIds.map(async (id) => {
+      tenantIds.map(async (tenantId) => {
+        if (await tenantHasFeature(tenantId, 'MANUAL_DASHBOARD_REFRESH')) {
+          return
+        }
         return sendBatchJobCommand({
           type: 'DASHBOARD_REFRESH',
-          tenantId: id,
+          tenantId,
           parameters: {
             checkTimeRange,
           },

@@ -129,6 +129,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Manual pre-aggregation',
     description: 'Enables manual pre-aggregation',
   },
+  MANUAL_DASHBOARD_REFRESH: {
+    title: 'Manual dashboard refresh',
+    description: 'Enables manual dashboard refresh (dashboard will not auto-refresh)',
+  },
   CONCURRENT_DYNAMODB_CONSUMER: {
     title: 'Concurrent DynamoDB consumer',
     description: 'Enables concurrent DynamoDB consumer',

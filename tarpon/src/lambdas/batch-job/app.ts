@@ -17,6 +17,7 @@ import { BatchJob, BatchJobWithId } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
 import {
   initializeTenantContext,
+  tenantSettings,
   updateLogMetadata,
 } from '@/core/utils/context'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
@@ -114,10 +115,14 @@ export const jobDecisionHandler = async (
   [BATCH_JOB_RUN_TYPE_RESULT_KEY]: BatchRunType
   [BATCH_JOB_PAYLOAD_RESULT_KEY]: any
 }> => {
+  const settings = await tenantSettings(job.tenantId)
+
   const BATCH_JOB_AND_RUN_TYPE_MAP: {
     [key in BatchJob['type']]: BatchRunType
   } = {
-    DASHBOARD_REFRESH: 'LAMBDA',
+    DASHBOARD_REFRESH: settings.features?.includes('MANUAL_DASHBOARD_REFRESH')
+      ? 'FARGATE'
+      : 'LAMBDA',
     API_USAGE_METRICS: 'LAMBDA',
     DEMO_MODE_DATA_LOAD: 'LAMBDA',
     GLOBAL_RULE_AGGREGATION_REBUILD: 'LAMBDA',
@@ -139,7 +144,9 @@ export const jobDecisionHandler = async (
     MANUAL_RULE_PRE_AGGREGATION: 'FARGATE',
     FILES_AI_SUMMARY: 'LAMBDA',
     // TODO: Remove this once we have a proper way to handle this in FR-5951
-    ALERT_SLA_STATUS_REFRESH: job.tenantId === 'pnb-uat' ? 'FARGATE' : 'LAMBDA',
+    ALERT_SLA_STATUS_REFRESH: settings.features?.includes('PNB')
+      ? 'FARGATE'
+      : 'LAMBDA',
     REVERIFY_TRANSACTIONS: 'FARGATE',
     SANCTIONS_DATA_FETCH: 'FARGATE',
     BACKFILL_AVERAGE_TRS: 'LAMBDA',
