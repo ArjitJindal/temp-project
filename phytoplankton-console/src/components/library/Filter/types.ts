@@ -25,14 +25,18 @@ export interface ExtraFilterProps<Params extends object | unknown> extends BaseF
   renderer: ExtraFilterRenderer<Params> | AutoFilterDataType | undefined;
 }
 
-type WithAllowClear<T> = T & { allowClear?: boolean; clearNotAllowedReason?: string };
+type WithSharedAutoFilterProps<T> = T & {
+  autoWidth?: boolean;
+  allowClear?: boolean;
+  clearNotAllowedReason?: string;
+};
 
 export type AutoFilterDataType =
-  | WithAllowClear<{ kind: 'string' }>
-  | WithAllowClear<{ kind: 'number'; max?: number; min?: number; step?: number }>
-  | WithAllowClear<{ kind: 'dateRange' }>
-  | WithAllowClear<{ kind: 'dateTimeRange' }>
-  | WithAllowClear<{
+  | WithSharedAutoFilterProps<{ kind: 'string' }>
+  | WithSharedAutoFilterProps<{ kind: 'number'; max?: number; min?: number; step?: number }>
+  | WithSharedAutoFilterProps<{ kind: 'dateRange' }>
+  | WithSharedAutoFilterProps<{ kind: 'dateTimeRange' }>
+  | WithSharedAutoFilterProps<{
       kind: 'select';
       options: Option<string>[];
       mode: 'SINGLE' | 'MULTIPLE' | 'TAGS';

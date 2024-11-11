@@ -5,6 +5,7 @@ import CloseLineIcon from '@/components/ui/icons/Remix/system/close-line.react.s
 
 export interface Props {
   buttonText?: React.ReactNode;
+  autoWidth?: boolean;
   icon?: React.ReactNode | false;
   analyticsName?: string;
   isActive?: boolean;
@@ -14,11 +15,16 @@ export interface Props {
 }
 
 export default function QuickFilterButton(props: Props) {
-  const { icon, buttonText, onClick, isActive, onClear, children } = props;
+  const { icon, autoWidth = false, buttonText, onClick, isActive, onClear, children } = props;
   return (
     <button
       data-cy="rules-filter"
-      className={cn(s.root, isActive && s.isActive, onClick != null && s.isClickable)}
+      className={cn(
+        s.root,
+        isActive && s.isActive,
+        autoWidth && s.autoWidth,
+        onClick != null && s.isClickable,
+      )}
       onClick={() => {
         onClick?.();
       }}

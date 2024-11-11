@@ -1,5 +1,5 @@
-import React, { useCallback, useState } from 'react';
-import { useNavigate } from 'react-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import ProductTypeSearchButton from './components/ProductTypeSearchButton';
 import { useApi } from '@/api';
@@ -18,11 +18,17 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import { InternalTransaction } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { dayjs } from '@/utils/dayjs';
+
+type NavigationState = {
+  isInitialised: boolean;
+} | null;
 
 const TableList = () => {
   const api = useApi();
   const i18n = useI18n();
   const navigate = useNavigate();
+  const location = useLocation();
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
@@ -30,12 +36,28 @@ const TableList = () => {
 
   const pushParamsToNavigation = useCallback(
     (params: TransactionsTableParams) => {
+      const state: NavigationState = {
+        isInitialised: true,
+      };
       navigate(makeUrl('/transactions/list', {}, queryAdapter.serializer(params)), {
         replace: true,
+        state: state,
       });
     },
     [navigate],
   );
+
+  useEffect(() => {
+    if ((location.state as NavigationState)?.isInitialised !== true) {
+      pushParamsToNavigation({
+        ...parsedParams,
+        timestamp: [
+          dayjs().subtract(3, 'month').startOf('day').format(),
+          dayjs().endOf('day').format(),
+        ],
+      });
+    }
+  }, [location.state, parsedParams, pushParamsToNavigation]);
 
   const handleChangeParams = (newParams: TransactionsTableParams) => {
     pushParamsToNavigation(newParams);

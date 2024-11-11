@@ -201,6 +201,7 @@ export default function TransactionsTable(props: Props) {
         title: 'Transaction ID',
         key: 'transactionId',
         filtering: true,
+        pinFilterToLeft: true,
         type: {
           ...STRING,
           render: (value: string | undefined) => {
@@ -254,16 +255,10 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'timestamp'>({
         title: 'Timestamp',
         key: 'timestamp',
-        type: {
-          ...DATE,
-          autoFilterDataType: {
-            kind: 'dateTimeRange',
-            allowClear: false,
-            clearNotAllowedReason: 'You must select an interval to view transactions',
-          },
-        },
+        type: DATE,
         sorting: true,
         filtering: true,
+        pinFilterToLeft: true,
       }),
       helper.simple<'transactionState'>({
         key: 'transactionState',

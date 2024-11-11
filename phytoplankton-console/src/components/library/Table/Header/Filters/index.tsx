@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { uniq } from 'lodash';
 import { AllParams } from '../../types';
 import style from './index.module.less';
@@ -7,6 +7,7 @@ import Button from '@/components/library/Button';
 import { usePersistedSettingsContext } from '@/components/library/Table/internal/settings';
 import Filter from '@/components/library/Filter';
 import { FilterProps } from '@/components/library/Filter/types';
+import { useElementSize } from '@/utils/browser';
 
 interface Props<Params extends object> {
   filters: FilterProps<Params>[];
@@ -18,16 +19,27 @@ interface Props<Params extends object> {
 export default function Filters<Params extends object>(props: Props<Params>) {
   const { filters, params, onChangeParams, readOnly } = props;
   const [filterClose, setFilterClose] = useState<boolean>(true);
-  const [fulfilledFilters, setfulfilledFilters] = useState(['']);
-  const pinnedFilters = filters
-    .filter((filter) => filter.pinFilterToLeft)
-    .map((filter) => filter.key);
+  const [fulfilledFilters, setFulfilledFilters] = useState(['']);
+
   const persistedSettingsContext = usePersistedSettingsContext();
   const [filtersVisible, setFiltersVisible] = persistedSettingsContext.filtersVisibility;
 
-  const shownFilters = readOnly
-    ? uniq([...fulfilledFilters, ...filters.map(({ key }) => key)])
-    : uniq([...pinnedFilters, ...fulfilledFilters, ...filtersVisible]);
+  const filtersOrder = useMemo(() => {
+    const pinnedFilters = filters
+      .filter((filter) => filter.pinFilterToLeft)
+      .map((filter) => filter.key);
+
+    const pinnedFulfilled = fulfilledFilters.filter((x) => pinnedFilters.includes(x));
+    const unpinnedFulfilled = fulfilledFilters.filter((x) => !pinnedFilters.includes(x));
+    const emptyPinned = filtersVisible.filter(
+      (x) => !fulfilledFilters.includes(x) && pinnedFilters.includes(x),
+    );
+    const unpinnedEmpty = filtersVisible.filter(
+      (x) => !fulfilledFilters.includes(x) && !pinnedFilters.includes(x),
+    );
+
+    return uniq([...pinnedFulfilled, ...unpinnedFulfilled, ...emptyPinned, ...unpinnedEmpty]);
+  }, [fulfilledFilters, filtersVisible, filters]);
 
   const handleResetParams = (keys: string[]) => {
     const newParams = {
@@ -57,16 +69,19 @@ export default function Filters<Params extends object>(props: Props<Params>) {
   };
 
   const sortedFilters = [...filters];
-  sortedFilters.sort((x, y) => shownFilters.indexOf(x.key) - shownFilters.indexOf(y.key));
+  sortedFilters.sort((x, y) => filtersOrder.indexOf(x.key) - filtersOrder.indexOf(y.key));
 
   useEffect(() => {
     if (filterClose) {
       const temporary = filters
         .map((filter) => filter.key)
         .filter((key: string) => params?.[key] != null);
-      setfulfilledFilters([...temporary]);
+      setFulfilledFilters([...temporary]);
     }
   }, [filterClose, filters, params]);
+
+  const [itemsEl, setItemsEl] = useState<HTMLDivElement | null>(null);
+  const size = useElementSize(itemsEl);
 
   if (sortedFilters.length === 0) {
     return <></>;
@@ -74,32 +89,38 @@ export default function Filters<Params extends object>(props: Props<Params>) {
 
   return (
     <div className={style.root}>
-      <div className={style.items}>
-        {sortedFilters
-          .filter(({ key }) => shownFilters.includes(key))
-          .map((filter) => (
-            <Filter
-              key={filter.key}
-              filter={filter}
-              params={params}
-              readOnly={readOnly}
-              onChangeParams={onChangeParams}
-              onUpdateFilterClose={onUpdateFilterClose}
-            />
-          ))}
-        {!readOnly && (
-          <FilterSelector
-            filters={filters}
-            defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}
-            shownFilters={shownFilters}
-            onToggleFilter={handleToggleFilter}
-            onUpdateFilterClose={onUpdateFilterClose}
-          />
-        )}
+      <div className={style.content} style={{ width: size?.width }}>
+        <div className={style.gradientMaskWrapper}>
+          <div className={style.items} ref={setItemsEl}>
+            {sortedFilters
+              .filter(({ key }) => filtersOrder.includes(key))
+              .map((filter) => (
+                <Filter
+                  key={filter.key}
+                  filter={filter}
+                  params={params}
+                  readOnly={readOnly}
+                  onChangeParams={onChangeParams}
+                  onUpdateFilterClose={onUpdateFilterClose}
+                />
+              ))}
+            {!readOnly && (
+              <FilterSelector
+                filters={filters}
+                defaultActiveFilters={persistedSettingsContext.defaultState.filtersVisibility}
+                shownFilters={filtersOrder}
+                onToggleFilter={handleToggleFilter}
+                onUpdateFilterClose={onUpdateFilterClose}
+              />
+            )}
+          </div>
+        </div>
         {fulfilledFilters.length > 0 && !readOnly && (
-          <Button type="TEXT" onClick={handleClickReset} size="SMALL">
-            Reset
-          </Button>
+          <div className={style.resetButton}>
+            <Button type="TEXT" onClick={handleClickReset} size="SMALL">
+              Reset
+            </Button>
+          </div>
         )}
       </div>
     </div>

@@ -21,6 +21,7 @@ export interface Props {
   allowClear?: boolean;
   clearNotAllowedReason?: string;
   readOnly?: boolean;
+  autoWidth?: boolean;
 }
 
 export default function QuickFilterBase(props: Props) {
@@ -36,6 +37,7 @@ export default function QuickFilterBase(props: Props) {
     innerRef,
     allowClear = true,
     readOnly = false,
+    autoWidth = false,
   } = props;
 
   const [isOpen, setOpen] = useState(false);
@@ -52,7 +54,7 @@ export default function QuickFilterBase(props: Props) {
   return (
     <>
       <QuickFilterButton
-        isActive={isOpen || onClear != null || !allowClear}
+        isActive={isOpen || onClear != null}
         buttonText={
           <>
             {title}
@@ -66,7 +68,8 @@ export default function QuickFilterBase(props: Props) {
         }
         icon={icon}
         analyticsName={analyticsName}
-        onClear={!readOnly ? onClear : undefined}
+        autoWidth={autoWidth}
+        onClear={!readOnly && allowClear ? onClear : undefined}
         onClick={
           !readOnly
             ? () => {

@@ -149,8 +149,9 @@ export interface DataColumn extends BaseColumn {
   children?: never;
   sorting?: boolean | 'desc'; // false by default
   filtering?: boolean; // true by default
+  pinFilterToLeft?: boolean; // false by default
   exporting?: boolean; // true by default
-  hideInTable?: boolean; // todo: do we need this?
+  hideInTable?: boolean;
 }
 
 export interface SimpleColumn<Item extends object, Accessor extends FieldAccessor<Item>>

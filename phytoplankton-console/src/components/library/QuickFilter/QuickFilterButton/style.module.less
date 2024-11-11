@@ -29,6 +29,12 @@
       background: @fr-colors-v2-highlight-flagrightBlue;
     }
   }
+
+  &.autoWidth {
+    .title {
+      max-width: unset;
+    }
+  }
 }
 
 .title {
@@ -39,6 +45,7 @@
   font-size: 12px;
   line-height: 26px;
   display: flex;
+  gap: 4px;
 }
 
 .icon {

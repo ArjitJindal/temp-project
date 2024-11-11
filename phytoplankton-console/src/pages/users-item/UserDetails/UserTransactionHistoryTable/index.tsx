@@ -14,10 +14,8 @@ import {
   TransactionState,
 } from '@/apis';
 import { useApi } from '@/api';
-import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { CASES_LIST, USERS_ITEM_TRANSACTIONS_HISTORY } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -27,8 +25,11 @@ import {
   DATE,
   FLOAT,
   MONEY,
+  MONEY_CURRENCIES,
+  PAYMENT_METHOD,
   RISK_LEVEL,
   RULE_ACTION_STATUS,
+  STRING,
   TRANSACTION_STATE,
 } from '@/components/library/Table/standardDataTypes';
 import { makeUrl } from '@/utils/routing';
@@ -38,6 +39,15 @@ import { dayjs } from '@/utils/dayjs';
 import { PaymentDetails } from '@/utils/api/payment-details';
 import DetailsViewButton from '@/pages/transactions/components/DetailsViewButton';
 import { PAYMENT_DETAILS_OR_METHOD } from '@/pages/transactions/components/TransactionsTable/helpers/tableDataTypes';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
+import {
+  transactionParamsToRequest,
+  TransactionsTableParams,
+} from '@/pages/transactions/components/TransactionsTable';
+import { useRuleOptions } from '@/utils/rules';
+import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
+import ProductTypeSearchButton from '@/pages/transactions/components/ProductTypeSearchButton';
 
 export type DataItem = {
   index: number;
@@ -58,19 +68,20 @@ export type DataItem = {
   destinationPaymentDetails?: PaymentDetails;
 };
 
-const DEFAULT_TIMESTAMP = [dayjs().subtract(1, 'month').startOf('day'), dayjs().endOf('day')];
+type TableParams = TransactionsTableParams & {
+  // includeEvents: boolean;
+};
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
 
-  const [params, setParams] = useState<
-    AllParams<DefaultApiGetTransactionsListRequest> & { timestamp?: string[] }
-  >({
+  const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
-    includeEvents: true,
-    timestamp: DEFAULT_TIMESTAMP.map((x) => x.format()),
+    timestamp: [dayjs().subtract(3, 'month').startOf('day'), dayjs().endOf('day')].map((x) =>
+      x.format(),
+    ),
   });
 
   const cases = useQuery(
@@ -91,44 +102,14 @@ export function Content(props: { userId: string }) {
   const responseRes = useCursorQuery(
     USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
     async ({ from }) => {
-      const [sortField, sortOrder] = params.sort[0] ?? [];
-
-      const directionFilter = (params ?? {})['direction'] ?? [];
-      const timestamp = (params ?? {})['timestamp'] ?? [];
-      const showIncoming = directionFilter.indexOf('incoming') !== -1;
-      const showOutgoing = directionFilter.indexOf('outgoing') !== -1;
-
-      const statusFilter = (params ?? {})['status'] ?? [];
-
-      const newParams: DefaultApiGetTransactionsListRequest = {
-        ...params,
-        start: from,
-        sortField: sortField ?? undefined,
-        sortOrder: sortOrder ?? undefined,
-        afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-        beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
+      const requestParams = {
+        ...transactionParamsToRequest(params),
+        start: from || params.from,
         includeEvents: true,
+        includeUsers: false,
       };
 
-      if (showOutgoing) {
-        newParams.filterOriginUserId = userId;
-      } else if (showIncoming) {
-        newParams.filterDestinationUserId = userId;
-      } else {
-        newParams.filterUserId = userId;
-      }
-
-      if (statusFilter.indexOf('ALLOW') !== -1) {
-        newParams.filterStatus = ['ALLOW'];
-      } else if (statusFilter.indexOf('FLAG') !== -1) {
-        newParams.filterStatus = ['FLAG'];
-      } else if (statusFilter.indexOf('BLOCK') !== -1) {
-        newParams.filterStatus = ['BLOCK'];
-      } else if (statusFilter.indexOf('SUSPEND') !== -1) {
-        newParams.filterStatus = ['SUSPEND'];
-      }
-
-      return api.getTransactionsList(newParams).then((result) => ({
+      return api.getTransactionsList(requestParams).then((result) => ({
         next: result.next,
         prev: result.prev,
         last: result.last,
@@ -152,7 +133,9 @@ export function Content(props: { userId: string }) {
       helper.simple<'transactionId'>({
         title: 'Transaction ID',
         key: 'transactionId',
+        filtering: true,
         type: {
+          ...STRING,
           render: (transactionId) => {
             return (
               <div className={style.idColumn}>
@@ -196,17 +179,12 @@ export function Content(props: { userId: string }) {
         title: 'Last transaction state',
         key: 'transactionState',
         type: TRANSACTION_STATE,
+        filtering: true,
       }),
       helper.simple<'timestamp'>({
         title: 'Transaction time',
         key: 'timestamp',
-        type: {
-          ...DATE,
-          autoFilterDataType: {
-            kind: 'dateTimeRange',
-            allowClear: false,
-          },
-        },
+        type: DATE,
         sorting: true,
         filtering: true,
       }),
@@ -299,6 +277,85 @@ export function Content(props: { userId: string }) {
     ]);
   }, [isRiskScoringEnabled, showDetailsView]);
 
+  const ruleOptions = useRuleOptions();
+
+  const fullExtraFilters: ExtraFilterProps<TableParams>[] = [
+    {
+      key: 'tagKey',
+      title: 'Tags',
+      renderer: ({ params, setParams }) => (
+        <TagSearchButton
+          initialState={{
+            key: params.tagKey ?? undefined,
+            value: params.tagValue ?? undefined,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              tagKey: value.key ?? undefined,
+              tagValue: value.value ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      key: 'productType',
+      title: 'Product Type',
+      renderer: ({ params, setParams }) => (
+        <ProductTypeSearchButton
+          initialState={{
+            productTypes: params.productType ?? undefined,
+          }}
+          onConfirm={(value) => {
+            setParams((state) => ({
+              ...state,
+              productType: value.productTypes,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      title: 'Origin currencies',
+      key: 'originCurrenciesFilter',
+      renderer: {
+        ...MONEY_CURRENCIES.autoFilterDataType,
+        mode: 'MULTIPLE',
+      },
+    } as ExtraFilterProps<TableParams>,
+    {
+      title: 'Destination currencies',
+      key: 'destinationCurrenciesFilter',
+      renderer: {
+        ...MONEY_CURRENCIES.autoFilterDataType,
+        mode: 'MULTIPLE',
+      },
+    } as ExtraFilterProps<TableParams>,
+    {
+      title: 'Origin method',
+      key: 'originMethodFilter',
+      renderer: PAYMENT_METHOD.autoFilterDataType,
+    } as ExtraFilterProps<TableParams>,
+    {
+      title: 'Destination method',
+      key: 'destinationMethodFilter',
+      renderer: PAYMENT_METHOD.autoFilterDataType,
+    },
+    {
+      title: 'Rules',
+      key: 'ruleInstancesHitFilter',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'select',
+        options: ruleOptions,
+      },
+      icon: <GavelIcon />,
+      showFilterByDefault: true,
+    },
+  ];
+
   return (
     <QueryResultsTable<DataItem>
       rowKey="rowKey"
@@ -340,6 +397,7 @@ export function Content(props: { userId: string }) {
           />
         ),
       ]}
+      extraFilters={fullExtraFilters}
       selectedIds={selectedIds}
       onSelect={setSelectedIds}
     />

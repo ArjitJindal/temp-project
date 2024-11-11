@@ -99,13 +99,7 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
     helper.simple<'createdTimestamp'>({
       title: 'Created at',
       key: 'createdTimestamp',
-      type: {
-        ...DATE,
-        autoFilterDataType: {
-          kind: 'dateTimeRange',
-          allowClear: false,
-        },
-      },
+      type: DATE,
       sorting: true,
       filtering: true,
     }),

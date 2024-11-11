@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router';
+import { useLocation, useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
@@ -35,6 +35,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
   const api = useApi();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [params, setParams] = useState<UserSearchParams>({ sort: [], pageSize: 20 });
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));

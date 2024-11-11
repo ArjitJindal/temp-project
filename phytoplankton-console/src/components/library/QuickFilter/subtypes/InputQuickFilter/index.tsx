@@ -11,6 +11,7 @@ import { joinReactNodes } from '@/utils/react';
 
 interface Props<Value> extends QuickFilterProps, InputProps<Value> {
   debounce?: boolean;
+  autoWidth?: boolean;
   inputComponent: React.FunctionComponent<InputProps<Value> & QuickFilterChildrenProps>;
   extraInputProps?: { [key: string]: unknown };
   innerRef?: React.RefObject<any>;
@@ -55,7 +56,7 @@ export default function InputQuickFilter<Value>(props: Props<Value>) {
     <QuickFilter
       buttonText={buttonText}
       onClear={
-        value == null || !allowClear
+        value == null
           ? undefined
           : () => {
               onChange(undefined);

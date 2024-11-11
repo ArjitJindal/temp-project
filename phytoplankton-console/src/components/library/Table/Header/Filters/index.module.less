@@ -3,38 +3,73 @@
   position: relative;
   height: 28px;
   flex: 1;
-
-  &::before {
-    content: ' ';
-    display: block;
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 100px;
-    height: 100%;
-    background: linear-gradient(to right, transparent, white, white);
-    z-index: 2;
-    pointer-events: none;
-  }
+  overflow-y: hidden;
 
   & > ::-webkit-scrollbar {
     height: 3px;
   }
 }
 
+.content {
+  position: relative;
+}
+
+.gradientMaskWrapper {
+  position: relative;
+  flex: 1;
+  overflow-x: auto;
+  height: 34px;
+  overflow-y: visible;
+}
+
 .items {
   position: absolute;
-  width: 100%;
   display: flex;
   gap: 8px;
   align-items: center;
   z-index: 1;
-  overflow-x: auto;
+  top: 0;
+  left: 0;
 
   &::after {
     content: ' ';
     display: block;
-    min-width: 100px;
+    min-width: 70px;
     height: 1px;
+  }
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  z-index: 3;
+}
+
+@mask: linear-gradient(to left, transparent, transparent 60px, #000000 80px, #000000);
+
+@supports (mask-image: @mask) {
+  .gradientMaskWrapper {
+    mask-image: @mask;
+  }
+}
+
+@supports (not (mask-image: @mask)) {
+  .root {
+    &::before {
+      content: ' ';
+      display: block;
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 100px;
+      height: 100%;
+      background: linear-gradient(to left, white, white 60px, transparent 80px, transparent);
+      z-index: 2;
+      pointer-events: none;
+    }
   }
 }

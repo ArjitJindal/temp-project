@@ -77,7 +77,7 @@
     "recreate-local-ddb": "npm run delete-local-ddb --table=$npm_config_table; npm run create-local-ddb --table=$npm_config_table",
     "create-local-ddb": "aws dynamodb create-table --endpoint-url http://localhost:8000 --table-name $npm_config_table --attribute-definitions AttributeName=PartitionKeyID,AttributeType=S AttributeName=SortKeyID,AttributeType=S --key-schema AttributeName=PartitionKeyID,KeyType=HASH AttributeName=SortKeyID,KeyType=RANGE --provisioned-throughput ReadCapacityUnits=1,WriteCapacityUnits=1 --region=us-east-2",
     "delete-local-ddb": "aws dynamodb delete-table --endpoint-url http://localhost:8000 --table-name $npm_config_table",
-    "dev:databases": "docker-compose up",
+    "dev:databases": "docker compose up",
     "dev:databases:init": "AUTH0_DOMAIN=dev-flagright.eu.auth0.com ENV=local AWS_REGION=eu-central-1 ts-node ./scripts/init-local-db.ts",
     "dev:databases:reset": "rm -rf .local-mongodb-data/ .local-dynamodb-data/ && mkdir .local-mongodb-data && mkdir .local-dynamodb-data",
     "dev:api": "yarn start-local-api",

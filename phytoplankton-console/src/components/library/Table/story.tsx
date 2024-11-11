@@ -677,6 +677,49 @@ export default function (): JSX.Element {
           )}
         </WithParams>
       </UseCase>
+      <UseCase title="Read-only filters">
+        <WithParams<any>
+          defaultParams={{
+            bio: 'test',
+            firstName: 'John',
+          }}
+        >
+          {(params, onChangeParams) => (
+            <Table<TableItem>
+              rowKey="id"
+              params={params}
+              onChangeParams={onChangeParams}
+              readOnlyFilters={true}
+              columns={[
+                {
+                  key: 'bio',
+                  type: LONG_TEXT,
+                  title: 'Bio',
+                  filtering: true,
+                  sorting: true,
+                } as SimpleColumn<TableItem, 'bio'>,
+                {
+                  key: 'firstName',
+                  type: STRING,
+                  title: 'First name',
+                  filtering: true,
+                  pinFilterToLeft: true,
+                } as SimpleColumn<TableItem, 'firstName'>,
+                {
+                  key: 'lastName',
+                  type: STRING,
+                  title: 'Last name',
+                  filtering: true,
+                  sorting: 'desc',
+                } as SimpleColumn<TableItem, 'lastName'>,
+              ]}
+              data={{
+                items: data.slice(0, 10),
+              }}
+            />
+          )}
+        </WithParams>
+      </UseCase>
       <UseCase title="Simplest table">
         <Table<TableItem>
           rowKey="id"
@@ -724,6 +767,7 @@ export default function (): JSX.Element {
       <UseCase title="Auto filters">
         <Table<TableItem>
           rowKey="id"
+          readOnlyFilters={true}
           columns={[
             { key: 'bio', type: LONG_TEXT, title: 'Bio', filtering: true } as SimpleColumn<
               TableItem,
@@ -874,14 +918,16 @@ function dataSource(params: { page?: number; pageSize: number }): PaginatedData<
 }
 
 function WithParams<Params>(props: {
+  defaultParams?: Partial<AllParams<Params>>;
   children: (
     params: AllParams<Params>,
     onChangeParams: (newParams: AllParams<Params>) => void,
   ) => React.ReactNode;
 }) {
-  const [params, setParams] = useState<AllParams<Params>>(
-    DEFAULT_PARAMS_STATE as AllParams<Params>,
-  );
+  const [params, setParams] = useState<AllParams<Params>>({
+    ...(DEFAULT_PARAMS_STATE as AllParams<Params>),
+    ...props.defaultParams,
+  });
 
   return <>{props.children(params, setParams)}</>;
 }

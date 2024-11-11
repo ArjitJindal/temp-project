@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import InputQuickFilter from '@/components/library/QuickFilter/subtypes/InputQuickFilter';
 import { InputProps } from '@/components/library/Form';
 import DatePicker from '@/components/ui/DatePicker';
-import { dayjs } from '@/utils/dayjs';
+import { dayjs, DEFAULT_DATE_FORMAT, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import TextInput from '@/components/library/TextInput';
 import ListQuickFilter from '@/components/library/QuickFilter/subtypes/ListQuickFilter';
 import Select from '@/components/library/Select';
@@ -18,13 +18,9 @@ interface Props extends InputProps<unknown> {
 
 export function AutoFilter(props: Props): JSX.Element {
   const { filter, value, onChange, readOnly } = props;
+  const { allowClear = true, clearNotAllowedReason, autoWidth } = filter.dataType;
 
   const inputRef = useRef<any>(null);
-  const allowClear = filter.dataType.allowClear != null ? filter.dataType.allowClear : true;
-  const clearNotAllowedReason =
-    filter.dataType.clearNotAllowedReason != null
-      ? filter.dataType.clearNotAllowedReason
-      : undefined;
   const sharedProps = {
     title: filter.title,
     description: filter.description,
@@ -33,6 +29,7 @@ export function AutoFilter(props: Props): JSX.Element {
     onChange,
     innerRef: inputRef,
     allowClear,
+    autoWidth,
     clearNotAllowedReason,
     readOnly,
   };
@@ -47,14 +44,29 @@ export function AutoFilter(props: Props): JSX.Element {
     );
   }
   if (filter.dataType.kind === 'dateTimeRange') {
+    const [start, end] = (value ?? []) as [string | undefined, string | undefined];
     return (
       <InputQuickFilter<[string | undefined, string | undefined]>
         {...sharedProps}
+        autoWidth={sharedProps.autoWidth ?? true}
         key={filter.key}
         extraInputProps={{
           clearNotAllowedReason: sharedProps.clearNotAllowedReason,
         }}
         inputComponent={DateTimeRangeInput}
+        buttonText={
+          value ? (
+            <div>
+              <span title={start ? dayjs(start).format(DEFAULT_DATE_TIME_FORMAT) : undefined}>
+                {start ? dayjs(start).format(DEFAULT_DATE_FORMAT) : 'any'}
+              </span>
+              <span>{' — '}</span>
+              <span title={end ? dayjs(end).format(DEFAULT_DATE_TIME_FORMAT) : undefined}>
+                {end ? dayjs(end).format(DEFAULT_DATE_FORMAT) : 'any'}
+              </span>
+            </div>
+          ) : undefined
+        }
       />
     );
   }

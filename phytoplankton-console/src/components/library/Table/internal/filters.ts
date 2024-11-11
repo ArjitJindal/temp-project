@@ -24,6 +24,7 @@ export function useAutoFilters<T extends object>(columns: TableColumn<T>[]): Aut
           key: getColumnId(column),
           title: column.title,
           icon: column?.icon,
+          pinFilterToLeft: column.pinFilterToLeft,
           dataType,
         };
       });
