@@ -124,6 +124,14 @@ export class RuleInstanceService {
         const updatedRuleV8PProps =
           ruleInstanceRepository.getV8PropsForV2RuleInstance(ruleInstance)
 
+        if (updatedRuleV8PProps) {
+          await RuleService.validateRuleLogic(
+            updatedRuleV8PProps.logic,
+            updatedRuleV8PProps.riskLevelLogic,
+            updatedRuleV8PProps.logicAggregationVariables,
+            ruleInstance.logicEntityVariables
+          )
+        }
         if (
           !updatedRuleV8PProps ||
           generateChecksum(currentRuleV8Props) ===
@@ -136,6 +144,7 @@ export class RuleInstanceService {
         await ruleInstanceRepository.createOrUpdateRuleInstance(
           {
             ...ruleInstance,
+            ...updatedRuleV8PProps,
           },
           ruleInstance.updatedAt
         )
@@ -219,7 +228,7 @@ export class RuleInstanceService {
       )
     }
 
-    if (!isV8RuleInstance(ruleInstance)) {
+    if (isV2RuleInstance(ruleInstance)) {
       assertValidRiskLevelParameters(
         ruleInstance.riskLevelActions,
         ruleInstance.riskLevelParameters
