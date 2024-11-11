@@ -513,6 +513,7 @@ export function sampleBusinessUser({
       const name: ConsumerName = randomConsumerName()
 
       return {
+        userId: uuid4(),
         generalDetails: {
           name,
           countryOfResidence: country ?? pickRandom(COUNTRY_CODES),
@@ -541,6 +542,7 @@ export function sampleBusinessUser({
       const name: ConsumerName = randomConsumerName()
 
       return {
+        userId: uuid4(),
         legalDocuments: Array.from({ length: Math.ceil(randomInt(4)) }, () =>
           legalDocument(name)
         ),

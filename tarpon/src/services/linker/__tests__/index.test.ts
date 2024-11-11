@@ -1,3 +1,4 @@
+import { v4 as uuid4 } from 'uuid'
 import { LinkerService } from '@/services/linker'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -128,6 +129,7 @@ describe('Linker', () => {
         },
         shareHolders: [
           {
+            userId: uuid4(),
             contactDetails: {
               emailIds: ['tim@flagright.com'],
             },
@@ -182,6 +184,7 @@ describe('Linker', () => {
         },
         shareHolders: [
           {
+            userId: uuid4(),
             generalDetails: {
               name: {
                 firstName: 'Tim',

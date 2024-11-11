@@ -1,3 +1,4 @@
+import { v4 as uuid4 } from 'uuid'
 import { SanctionsBusinessUserRuleParameters } from '../sanctions-business-user'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -12,7 +13,6 @@ import {
   MOCK_CA_SEARCH_RESPONSE,
 } from '@/test-utils/resources/mock-ca-search-response'
 import { SanctionsService } from '@/services/sanctions'
-
 const TEST_SANCTIONS_HITS = ['Company Name', 'Director 1', 'Shareholder 1']
 
 jest.mock('@/services/sanctions', () => {
@@ -94,6 +94,7 @@ describe('Sanctions hit', () => {
           shareHolders: undefined,
           directors: [
             {
+              userId: uuid4(),
               generalDetails: {
                 name: {
                   firstName: 'Director',
@@ -112,6 +113,7 @@ describe('Sanctions hit', () => {
           },
           directors: [
             {
+              userId: uuid4(),
               generalDetails: {
                 name: {
                   firstName: 'Director',
@@ -122,6 +124,7 @@ describe('Sanctions hit', () => {
           ],
           shareHolders: [
             {
+              userId: uuid4(),
               generalDetails: {
                 name: {
                   firstName: 'Shareholder',
@@ -219,6 +222,7 @@ describe('Sanctions no hit', () => {
           },
           directors: [
             {
+              userId: uuid4(),
               generalDetails: {
                 name: {
                   firstName: 'Director',
@@ -229,6 +233,7 @@ describe('Sanctions no hit', () => {
           ],
           shareHolders: [
             {
+              userId: uuid4(),
               generalDetails: {
                 name: {
                   firstName: 'Shareholder',

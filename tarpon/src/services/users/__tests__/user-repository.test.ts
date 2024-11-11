@@ -1,4 +1,4 @@
-import { v4 as uuidv4 } from 'uuid'
+import { v4 as uuidv4, v4 as uuid4 } from 'uuid'
 import { UserRepository } from '../repositories/user-repository'
 import { UserManagementService } from '../../rules-engine/user-rules-engine-service'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
@@ -12,7 +12,6 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { UserOptional } from '@/@types/openapi-internal/UserOptional'
 import { BusinessOptional } from '@/@types/openapi-internal/BusinessOptional'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
-
 dynamoDbSetupHook()
 withLocalChangeHandler()
 
@@ -239,6 +238,7 @@ describe('Test Business User Management Service', () => {
       },
       directors: [
         {
+          userId: uuid4(),
           generalDetails: {
             name: {
               firstName: 'Test',

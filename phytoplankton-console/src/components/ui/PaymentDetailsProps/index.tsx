@@ -29,7 +29,6 @@ export default function PaymentDetailsProps(props: Props) {
   const entries = paymentDetails
     ? (Object.entries(paymentDetails) as [PaymentDetailsKey, unknown][])
     : [];
-
   return (
     <div className={s.root}>
       {entries.length === 0 && '-'}

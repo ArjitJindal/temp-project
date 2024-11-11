@@ -2628,6 +2628,72 @@ paths:
         name: userId
         in: path
         required: true
+  /users/shareholder/attachment/{userId}/{shareholderId}:
+    post:
+      summary: Users - Shareholder - Attachment - Post
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/PersonAttachment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAttachmentUpdateRequest'
+        required: true
+      operationId: post-user-shareholder-attachment
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: shareholderId
+          in: path
+          required: true
+  /users/director/attachment/{userId}/{directorId}:
+    post:
+      summary: Users - Director - Attachment - Post
+      tags: []
+      x-flagright:
+        permissions:
+          - users:user-overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/PersonAttachment
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAttachmentUpdateRequest'
+        required: true
+      operationId: post-user-director-attachment
+      description: ''
+      parameters:
+        - schema:
+            type: string
+          name: userId
+          in: path
+          required: true
+        - schema:
+            type: string
+          name: directorId
+          in: path
+          required: true
   /users/{userId}/events:
     get:
       summary: Events - List
@@ -9307,6 +9373,8 @@ components:
                 type: string
             deletedAt:
               type: number
+            isAttachment:
+              type: boolean
       required:
         - body
     NarrativeType:
@@ -9443,6 +9511,14 @@ components:
         - transactionIds
         - reason
         - action
+    UserAttachmentUpdateRequest:
+      title: UserAttachmentUpdateRequest
+      type: object
+      properties:
+        attachment:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/PersonAttachment
+      required:
+        - attachment
     UserUpdateRequest:
       title: UserUpdateRequest
       type: object

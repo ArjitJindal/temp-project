@@ -6,6 +6,7 @@ export interface ColorSet {
   base: SimpleColor;
   tint: SimpleColor;
   shade: SimpleColor;
+  alpha?: SimpleColor;
 }
 
 interface MainPallete {
@@ -30,7 +31,7 @@ interface MainPallete {
 
 const MAIN_PALLETE: MainPallete = {
   navyBlue: { base: '#293f7a', tint: '#dee6fa', shade: '#131f40' }, // Base,Primary
-  brandBlue: { base: '#1169f9', tint: '#ebf2ff', shade: '#063075' }, // Base,Primary
+  brandBlue: { base: '#1169f9', tint: '#ebf2ff', shade: '#063075', alpha: '#1169f91a' }, // Base,Primary
   turquoise: { base: '#87e8de', tint: '#ebfcfb', shade: '#1ab0a1' }, // Accent,Base,Primary
   purpleGray: { base: '#7284a3', tint: '#dfe6f2', shade: '#2a374d' }, // Base,Primary
   leafGreen: { base: '#52c41a', tint: '#f1ffeb', shade: '#357317' }, // Graphs,Primary

@@ -84,6 +84,7 @@ import { S3Service } from '@/services/aws/s3-service'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { UserTagsUpdate } from '@/@types/openapi-public/UserTagsUpdate'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -760,6 +761,68 @@ export class UserService {
     return await this.userRepository.getTotalEnabledOngoingMonitoringUsers()
   }
 
+  private mergeList(
+    comments: Comment[] = [],
+    shareHoldersAttachment: PersonAttachment[] = [],
+    directorsAttachment: PersonAttachment[] = []
+  ): Comment[] {
+    const mergedComments: Comment[] = []
+    let i = 0 // pointer for comments
+    let j = 0 // pointer for shareHoldersAttachment
+    let k = 0 // pointer for directorsAttachment
+
+    while (
+      i < comments.length ||
+      j < shareHoldersAttachment.length ||
+      k < directorsAttachment.length
+    ) {
+      const commentTime =
+        i < comments.length ? comments[i].createdAt ?? Infinity : Infinity
+      const shareHolderTime =
+        j < shareHoldersAttachment.length
+          ? shareHoldersAttachment[j].createdAt ?? Infinity
+          : Infinity
+      const directorTime =
+        k < directorsAttachment.length
+          ? directorsAttachment[k].createdAt ?? Infinity
+          : Infinity
+
+      if (
+        commentTime <= shareHolderTime &&
+        commentTime <= directorTime &&
+        i < comments.length
+      ) {
+        mergedComments.push(comments[i])
+        i++
+      } else if (
+        shareHolderTime <= directorTime &&
+        j < shareHoldersAttachment.length
+      ) {
+        mergedComments.push({
+          id: shareHoldersAttachment[j].id,
+          body: shareHoldersAttachment[j].comment ?? '-',
+          createdAt: shareHoldersAttachment[j].createdAt,
+          userId: shareHoldersAttachment[j].userId,
+          files: shareHoldersAttachment[j].files,
+          isAttachment: true,
+        })
+        j++
+      } else if (k < directorsAttachment.length) {
+        mergedComments.push({
+          id: directorsAttachment[k].id,
+          body: directorsAttachment[k].comment ?? '-',
+          createdAt: directorsAttachment[k].createdAt,
+          userId: directorsAttachment[k].userId,
+          files: directorsAttachment[k].files,
+          isAttachment: true,
+        })
+        k++
+      }
+    }
+
+    return mergedComments
+  }
+
   public async getUser(userId: string): Promise<InternalUser> {
     const user = await this.userRepository.getUserById(userId)
 
@@ -767,9 +830,28 @@ export class UserService {
       throw new createError.NotFound(`User ${userId} not found`)
     }
 
+    const comments = user.comments?.filter(
+      (comment) => comment.deletedAt == null
+    )
+
+    const shareHoldersAttachment = user.shareHolders?.flatMap(
+      (shareHolder) => shareHolder.attachments ?? []
+    )
+
+    const directorsAttachment = user.directors?.flatMap(
+      (director) => director.attachments ?? []
+    )
+
+    // merging the three list using three pointer
+    const mergedComments = this.mergeList(
+      comments,
+      shareHoldersAttachment,
+      directorsAttachment
+    )
+
     return {
       ...user,
-      comments: user.comments?.filter((comment) => comment.deletedAt == null),
+      comments: mergedComments,
     }
   }
 
@@ -1143,6 +1225,34 @@ export class UserService {
     return {
       ...savedComment,
       files: await this.getUpdatedFiles(savedComment.files),
+    }
+  }
+
+  public async saveUserAttachment(
+    userId: string,
+    id: string,
+    isShareHolder: boolean,
+    attachment: PersonAttachment
+  ) {
+    const files = await this.s3Service.copyFilesToPermanentBucket(
+      attachment.files as FileInfo[]
+    )
+
+    if (isShareHolder) {
+      await this.userRepository.saveShareHolderAttachment(userId, id, {
+        ...attachment,
+        files: files,
+      })
+    } else {
+      await this.userRepository.saveDirectorAttachment(userId, id, {
+        ...attachment,
+        files: files,
+      })
+    }
+
+    return {
+      ...attachment,
+      file: await this.getUpdatedFiles(files),
     }
   }
 

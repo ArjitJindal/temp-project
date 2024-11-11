@@ -1,5 +1,11 @@
 @import 'src/components/ui/colors.less';
 
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
 .navigation {
   display: flex;
   gap: 4px;
@@ -15,4 +21,31 @@
     color: @fr-colors-v2-gray-4;
     pointer-events: none;
   }
+}
+
+// document section
+.subroot {
+  border: 1px solid @fr-colors-purpleGrayTint;
+  border-radius: 4px;
+}
+
+.header,
+.body {
+  padding: 8px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: min-content auto auto;
+  align-items: center;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.documentNumber {
+  text-align: right;
+}
+
+.body {
+  border-top: 1px solid @fr-colors-purpleGrayTint;
 }

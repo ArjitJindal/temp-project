@@ -2076,6 +2076,10 @@ components:
       title: Person
       type: object
       properties:
+        userId:
+          minLength: 1
+          type: string
+          description: Unique user ID for the person
         generalDetails:
           $ref: '#/components/schemas/UserDetails'
         legalDocuments:
@@ -2094,7 +2098,13 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        attachments:
+          type: array
+          description: User's attachments uploaded by business user
+          items:
+            $ref: '#/components/schemas/PersonAttachment'
       required:
+        - userId
         - generalDetails
       description:
         Model for a generic individual - different from User model by not
@@ -2185,6 +2195,53 @@ components:
         tags:
           - key: customerType
             value: wallet
+    Attachment:
+      title: FileInfo
+      type: object
+      properties:
+        s3Key:
+          type: string
+        bucket:
+          type: string
+        filename:
+          type: string
+        size:
+          type: number
+        downloadLink:
+          type: string
+        aiSummary:
+          type: string
+      required:
+        - s3Key
+        - filename
+        - size
+    PersonAttachment:
+      title: PersonAttachment
+      required:
+        - files
+        - userId
+      type: object
+      properties:
+        id:
+          type: string
+        comment:
+          type: string
+          description: User's comment on the attached file.
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/Attachment'
+        userId:
+          type: string
+        createdAt:
+          type: number
+      description: PersonAttachment model generalizes User's uploaded attachments
+      example:
+        comment: Arun's tax information
+        files:
+          filename: Tax Receipt FY 23-24
+          s3Key: flagright/693c2df4-ec15-4bd6-8d0b-3237dfdb701ed
+          size: 112419
     EmploymentDetails:
       title: EmploymentDetails
       type: object

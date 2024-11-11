@@ -1,3 +1,4 @@
+import { v4 as uuid4 } from 'uuid'
 import { RiskScoringService } from '..'
 import {
   DEFAULT_CLASSIFICATION_SETTINGS,
@@ -733,6 +734,7 @@ describe('Risk Scoring Service KRS', () => {
       },
       shareHolders: [
         {
+          userId: uuid4(),
           generalDetails: {
             name: {
               firstName: 'kavish',
@@ -743,6 +745,7 @@ describe('Risk Scoring Service KRS', () => {
       ],
       directors: [
         {
+          userId: uuid4(),
           generalDetails: {
             name: {
               firstName: 'kavish',

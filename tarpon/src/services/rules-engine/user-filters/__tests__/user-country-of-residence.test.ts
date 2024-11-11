@@ -1,9 +1,9 @@
+import { v4 as uuid4 } from 'uuid'
 import { UserCountryOfResidenceRuleFilter } from '../user-country-of-residence'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getTestUser, getTestBusiness } from '@/test-utils/user-test-utils'
 import { filterVariantsTest } from '@/test-utils/filter-test-utils'
-
 const dynamodb = getDynamoDbClient()
 
 const CONSUMER_TEST_USER = getTestUser({
@@ -17,6 +17,7 @@ const BUSINESS_TEST_USER = getTestBusiness({
   userId: '1',
   shareHolders: [
     {
+      userId: uuid4(),
       generalDetails: {
         name: { firstName: 'user' },
         countryOfResidence: 'BE',
@@ -25,6 +26,7 @@ const BUSINESS_TEST_USER = getTestBusiness({
   ],
   directors: [
     {
+      userId: uuid4(),
       generalDetails: {
         name: { firstName: 'user' },
         countryOfResidence: 'CN',

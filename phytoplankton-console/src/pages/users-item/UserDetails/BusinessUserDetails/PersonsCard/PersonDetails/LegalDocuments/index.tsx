@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
-import cn from 'clsx';
+import React, { useEffect, useState } from 'react';
 import s from './index.module.less';
+import LegalDocumentsProps from './LegalDocumentsProps';
+import { maskDocumentNumber } from './LegalDocumentsProps/utils';
+import ExpandIcon from '@/components/library/ExpandIcon';
 import { LegalDocument } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
-import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
-import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
-import { formatConsumerName } from '@/utils/api/users';
-import CountryDisplay from '@/components/ui/CountryDisplay';
-import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
-import TagList from '@/components/library/Tag/TagList';
-import KeyValueTag from '@/components/library/Tag/KeyValueTag';
+import ExpandContainer from '@/components/utils/ExpandContainer';
 
 interface Props {
   legalDocuments?: LegalDocument[];
@@ -17,71 +13,47 @@ interface Props {
 
 export default function LegalDocuments(props: Props) {
   const { legalDocuments } = props;
-  const [activeIndex, setActiveIndex] = useState(0);
-  const activeItem = legalDocuments?.[activeIndex];
+  const [expandedState, setExpandedState] = useState<boolean[]>([]);
+  useEffect(() => {
+    setExpandedState(legalDocuments?.map(() => false) ?? []);
+  }, [legalDocuments]);
+
+  const onExpandChange = (index: number) => {
+    setExpandedState((prev) => {
+      const newState = [...prev];
+      newState[index] = !prev[index];
+      return newState;
+    });
+  };
+
   if (!legalDocuments?.length) {
     return <></>;
   }
   return (
-    <EntityPropertiesCard
-      title={'Legal documents'}
-      extraControls={
-        legalDocuments &&
-        legalDocuments.length > 1 && (
-          <div className={s.navigation}>
-            <ArrowLeftSLineIcon
-              className={cn(s.navigationButton, activeIndex === 0 && s.isDisabled)}
+    <EntityPropertiesCard title={'Legal documents'}>
+      <div className={s.root}>
+        {legalDocuments.map((x, i) => (
+          <div className={s.subroot} key={i}>
+            <div
+              className={s.header}
               onClick={() => {
-                setActiveIndex((x) => x - 1);
+                onExpandChange(i);
               }}
-            />
-            {activeIndex + 1}/{legalDocuments.length}
-            <ArrowRightSLineIcon
-              className={cn(
-                s.navigationButton,
-                activeIndex >= legalDocuments.length - 1 && s.isDisabled,
-              )}
-              onClick={() => {
-                setActiveIndex((x) => x + 1);
-              }}
-            />
+            >
+              <ExpandIcon isExpanded={expandedState[i]} color="BLACK" />
+              {x.documentType}
+              <div className={s.documentNumber}>
+                {maskDocumentNumber(x.documentNumber as string)}
+              </div>
+            </div>
+            <ExpandContainer isCollapsed={!expandedState[i]}>
+              <div className={s.body}>
+                <LegalDocumentsProps legalDocument={x} />
+              </div>
+            </ExpandContainer>
           </div>
-        )
-      }
-      items={[
-        { label: 'Type', value: activeItem?.documentType },
-        { label: 'Number', value: activeItem?.documentNumber },
-        {
-          label: 'Name',
-          value: activeItem?.nameOnDocument && formatConsumerName(activeItem?.nameOnDocument),
-        },
-        {
-          label: 'Issued country',
-          value: <CountryDisplay isoCode={activeItem?.documentIssuedCountry} />,
-        },
-        {
-          label: 'Date of issue',
-          value:
-            activeItem?.documentIssuedDate &&
-            dayjs(activeItem?.documentIssuedDate).format(DEFAULT_DATE_TIME_FORMAT),
-        },
-        {
-          label: 'Date of expiry',
-          value:
-            activeItem?.documentExpirationDate &&
-            dayjs(activeItem?.documentExpirationDate).format(DEFAULT_DATE_TIME_FORMAT),
-        },
-        {
-          label: 'Tags',
-          value: activeItem?.tags?.length && (
-            <TagList>
-              {activeItem?.tags?.map((tag) => (
-                <KeyValueTag key={tag.key} tag={tag} />
-              ))}
-            </TagList>
-          ),
-        },
-      ]}
-    />
+        ))}
+      </div>
+    </EntityPropertiesCard>
   );
 }

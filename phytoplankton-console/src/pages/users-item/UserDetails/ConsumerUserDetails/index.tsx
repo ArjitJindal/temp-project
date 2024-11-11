@@ -2,9 +2,9 @@ import ContactDetails from 'src/pages/users-item/UserDetails/shared/ContactDetai
 import ExpectedIncome from 'src/pages/users-item/UserDetails/shared/ExpectedIncome';
 import SavedPaymentDetails from 'src/pages/users-item/UserDetails/shared/SavedPaymentDetailsCard';
 import GeneralDetails from './GeneralDetails';
+import LegalDocuments from './LegalDocument';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { InternalConsumerUser } from '@/apis';
-import LegalDocuments from '@/pages/users-item/UserDetails/BusinessUserDetails/PersonsCard/PersonDetails/LegalDocuments';
 import Tags from '@/pages/users-item/UserDetails/shared/Tags';
 
 interface Props {

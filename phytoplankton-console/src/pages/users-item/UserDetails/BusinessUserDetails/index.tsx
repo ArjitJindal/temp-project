@@ -27,8 +27,12 @@ export default function BusinessUserDetails(props: Props) {
         ]}
       />
       {activeTab === 'LEGAL_ENTITY' && <LegalEntityDetails user={user} />}
-      {activeTab === 'SHAREHOLDERS' && <Persons persons={user.shareHolders} />}
-      {activeTab === 'DIRECTORS' && <Persons persons={user.directors} />}
+      {activeTab === 'SHAREHOLDERS' && (
+        <Persons persons={user.shareHolders} userId={user.userId} isShareHolder={true} />
+      )}
+      {activeTab === 'DIRECTORS' && (
+        <Persons persons={user.directors} userId={user.userId} isShareHolder={false} />
+      )}
     </>
   );
 }

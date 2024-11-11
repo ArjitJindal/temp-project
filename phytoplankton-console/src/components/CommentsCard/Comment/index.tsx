@@ -127,7 +127,7 @@ export default function Comment(props: Props) {
             <div className={styles.separator}>.</div>
           )}
 
-          {currentUserId === comment.userId && (
+          {currentUserId === comment.userId && !comment.isAttachment && (
             <Ant.Tooltip
               key="delete"
               title="Delete"

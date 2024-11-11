@@ -86,6 +86,7 @@ import { AllUsersListResponse } from '@/@types/openapi-internal/AllUsersListResp
 import { DefaultApiGetUsersSearchRequest } from '@/@types/openapi-public-management/RequestParameters'
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
+import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
 
 @traceable
@@ -1193,6 +1194,47 @@ export class UserRepository {
     return commentToSave
   }
 
+  public async saveShareHolderAttachment(
+    userId: string,
+    shareHolderId: string,
+    attachment: PersonAttachment
+  ) {
+    const attachmentToSave: PersonAttachment = {
+      ...attachment,
+      id: uuidv4(),
+      createdAt: attachment.createdAt ?? Date.now(),
+    }
+    console.log(userId, shareHolderId, attachment)
+    await this.updateUserAttachment(
+      { userId, 'shareHolders.userId': shareHolderId },
+      {
+        $push: {
+          'shareHolders.$[shareholder].attachments': attachmentToSave,
+        },
+      }
+    )
+  }
+
+  public async saveDirectorAttachment(
+    userId: string,
+    directorId: string,
+    attachment: PersonAttachment
+  ) {
+    const attachmentToSave: PersonAttachment = {
+      ...attachment,
+      id: uuidv4(),
+      createdAt: attachment.createdAt ?? Date.now(),
+    }
+    await this.updateUserAttachment(
+      { userId, 'directors.userId': directorId },
+      {
+        $push: {
+          'directors.$[director].attachments': attachmentToSave,
+        },
+      }
+    )
+  }
+
   public async getUserById(userId: string): Promise<InternalUser | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
@@ -1227,6 +1269,24 @@ export class UserRepository {
           $or: [{ 'comment.id': commentId }, { 'comment.parentId': commentId }],
         },
       ]
+    )
+  }
+
+  public async updateUserAttachment(
+    filter: Filter<InternalUser>,
+    updatePipeline: UpdateFilter<InternalUser>
+  ) {
+    await internalMongoUpdateOne(
+      this.mongoDb,
+      USERS_COLLECTION(this.tenantId),
+      filter,
+      updatePipeline,
+      {
+        arrayFilters: [
+          { 'shareholder.userId': filter['shareHolders.userId'] },
+          { 'director.userId': filter['directors.userId'] },
+        ].filter((filter) => Object.values(filter)[0] !== undefined),
+      }
     )
   }
 

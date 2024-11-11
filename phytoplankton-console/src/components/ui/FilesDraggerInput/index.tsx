@@ -15,10 +15,21 @@ import UploadIcon from '@/components/ui/icons/Remix/system/upload-2-line.react.s
 interface Props extends InputProps<FileInfo[]> {
   singleFile?: boolean;
   size?: 'SMALL' | 'LARGE';
+  info?: string;
+  listType?: 'comment' | 'attachment';
+  setUploading?: (uploading: boolean) => void;
 }
 
 export default function FilesDraggerInput(props: Props) {
-  const { value, onChange, singleFile, size = 'SMALL' } = props;
+  const {
+    value,
+    onChange,
+    singleFile,
+    size = 'SMALL',
+    info = 'Support for a single or bulk upload. Strictly prohibit from uploading company data or other related files.',
+    listType = 'comment',
+    setUploading,
+  } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
 
@@ -46,9 +57,16 @@ export default function FilesDraggerInput(props: Props) {
         showUploadList={false}
         customRequest={async ({ file: f, onError, onSuccess }) => {
           setUploadingCount((count) => count + 1);
+          setUploading?.(true);
           const file = f as File;
           const hideMessage = message.loading('Uploading...');
           try {
+            if (listType === 'attachment') {
+              const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+              if (!allowedTypes.includes(file.type)) {
+                throw new Error('Unsupported file type');
+              }
+            }
             const { s3Key } = await uploadFile(api, file);
             if (onSuccess) {
               onSuccess(s3Key);
@@ -64,6 +82,7 @@ export default function FilesDraggerInput(props: Props) {
           } finally {
             hideMessage && hideMessage();
             setUploadingCount((count) => count - 1);
+            setUploading?.(false);
           }
         }}
       >
@@ -71,10 +90,7 @@ export default function FilesDraggerInput(props: Props) {
           <UploadIcon className={s.icon} />
           <div className={cn(s.title, size === 'SMALL' ? s.alignItemsStart : '')}>
             <div className={s.title1}>Click or drag file to this area to upload</div>
-            <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>
-              Support for a single or bulk upload. Strictly prohibit from uploading company data or
-              other related files.
-            </div>
+            <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>{info}</div>
           </div>
         </div>
       </Upload.Dragger>
