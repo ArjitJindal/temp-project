@@ -4084,6 +4084,8 @@ components:
         IBAN:
           type: string
           description: Account number of the user. Can be account number, IBAN number etc.
+        accountBalance:
+          $ref: '#/components/schemas/Amount'
         name:
           type: string
           description: Name of the bank account holder
@@ -4208,6 +4210,8 @@ components:
           type: string
           minLength: 1
           description: Bank account number of the individual
+        accountBalance:
+          $ref: '#/components/schemas/Amount'
         bankName:
           type: string
           minLength: 1
@@ -4245,6 +4249,8 @@ components:
           type: string
           minLength: 1
           description: Account number
+        accountBalance:
+          $ref: '#/components/schemas/Amount'
         accountType:
           type: string
           description: Account type. E.g. Checking, Savings etc.
@@ -4313,6 +4319,8 @@ components:
         accountType:
           type: string
           description: Bank account type. E.g. Checking, Savings etc.
+        accountBalance:
+          $ref: '#/components/schemas/Amount'
         bankName:
           type: string
           minLength: 1
