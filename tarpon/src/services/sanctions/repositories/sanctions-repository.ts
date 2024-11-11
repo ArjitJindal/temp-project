@@ -5,7 +5,6 @@ import {
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsOccupation } from '@/@types/openapi-internal/SanctionsOccupation'
@@ -14,13 +13,18 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate'
 
 export class MongoSanctionsRepository implements SanctionsRepository {
+  collectionName: string
+
+  constructor(collectionName: string) {
+    this.collectionName = collectionName
+  }
   async save(
     provider: SanctionsDataProviderName,
     entities: [Action, SanctionsEntity][],
     version: string
   ): Promise<void> {
     const client = await getMongoDbClient()
-    const coll = client.db().collection(SANCTIONS_COLLECTION)
+    const coll = client.db().collection(this.collectionName)
 
     const operations = entities.map(([action, entity]) => {
       switch (action) {
@@ -98,7 +102,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
       return
     }
     const client = await getMongoDbClient()
-    const coll = client.db().collection(SANCTIONS_COLLECTION)
+    const coll = client.db().collection(this.collectionName)
 
     const assocationIds = uniq(
       associations.flatMap(([_, associationIds]) =>

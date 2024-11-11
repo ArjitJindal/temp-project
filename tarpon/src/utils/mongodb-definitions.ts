@@ -278,6 +278,8 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 export const SANCTIONS_COLLECTION = 'sanctions'
+export const NEW_SANCTIONS_COLLECTION = 'sanctions-new'
+export const OLD_SANCTIONS_COLLECTION = 'sanctions-old'
 export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-provider-searches`
 }
