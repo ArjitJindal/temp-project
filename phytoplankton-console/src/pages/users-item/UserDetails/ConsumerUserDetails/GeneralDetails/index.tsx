@@ -42,6 +42,10 @@ export default function GeneralDetails(props: Props) {
           value: <CountryDisplay isoCode={user.userDetails?.countryOfResidence} />,
         },
         {
+          label: 'Tax residence',
+          value: <CountryDisplay isoCode={user.userDetails?.countryOfTaxResidence} />,
+        },
+        {
           label: 'Created at',
           value: dayjs(user.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS),
         },
@@ -110,6 +114,10 @@ export default function GeneralDetails(props: Props) {
               ))}
             </TagList>
           ),
+        },
+        {
+          label: 'Alias',
+          value: user.userDetails?.alias,
         },
         {
           label: (
