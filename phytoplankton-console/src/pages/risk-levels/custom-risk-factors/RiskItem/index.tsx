@@ -156,7 +156,7 @@ function SimulationRiskItemForm(props: SimulationRiskItemFormProps) {
     },
   );
   const riskFactor = id
-    ? riskFactorsMap[scopeToRiskEntityType(type)].find((riskFactor) => riskFactor.id === id)
+    ? riskFactorsMap[scopeToRiskEntityType(type)]?.find((riskFactor) => riskFactor.id === id)
     : undefined;
   return (
     <RiskFactorConfiguration
