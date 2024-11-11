@@ -3,6 +3,7 @@ import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { UserService } from '../users'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -73,6 +74,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   rulesEngineService?: RulesEngineService
   userRepository?: UserRepository
   caseCreationService?: CaseCreationService
+  userService?: UserService
   from?: string
   to?: string
 
@@ -103,10 +105,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       dynamoDb,
       mongoDb,
     })
-    this.userRepository = new UserRepository(tenantId, {
+    this.userService = new UserService(tenantId, {
       dynamoDb,
       mongoDb,
     })
+    this.userRepository = this.userService.userRepository
   }
 
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
@@ -204,11 +207,19 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
           { ongoingScreeningMode: true }
         )
         if (result?.hitRules && result.hitRules.length > 0) {
-          await this.createCase(
-            user,
-            result.executedRules ?? [],
-            result.hitRules
-          )
+          await Promise.all([
+            this.createCase(user, result.executedRules ?? [], result.hitRules),
+            this.userService?.handleUserStatusUpdateTrigger(
+              result.hitRules,
+              ruleInstances.filter((ruleInstance) =>
+                result.hitRules?.some(
+                  (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
+                )
+              ),
+              user,
+              null
+            ),
+          ])
         }
       },
       { concurrency: CONCURRENT_BATCH_SIZE }
