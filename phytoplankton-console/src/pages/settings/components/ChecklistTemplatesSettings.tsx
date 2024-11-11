@@ -114,10 +114,10 @@ export function ChecklistTemplatesSettings() {
   );
   const [itemsCount, setItemsCount] = useState({ p1: 0, p2: 0 });
   const handleEntityChange = useCallback((entity: ChecklistTemplate) => {
-    const p1ItemsCount = entity.categories
+    const p1ItemsCount = entity?.categories
       ?.flatMap((c) => c.checklistItems)
       .filter((c) => c.level === 'P1').length;
-    const p2ItemsCount = entity.categories
+    const p2ItemsCount = entity?.categories
       ?.flatMap((c) => c.checklistItems)
       .filter((c) => c.level === 'P2').length;
     setItemsCount({ p1: p1ItemsCount, p2: p2ItemsCount });

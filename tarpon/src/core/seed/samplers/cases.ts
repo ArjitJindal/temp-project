@@ -354,7 +354,7 @@ export function sampleAlert(params: {
               })
             )
         )
-      : undefined,
+      : [],
     ruleNature: userRules()
       .concat(transactionRules())
       .find((p) => p.ruleInstanceId === params.ruleHit.ruleInstanceId)?.nature,

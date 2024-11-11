@@ -21,7 +21,7 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
       checklistTemplateId: ruleInstance.checklistTemplateId,
     });
 
-    return template.categories.map((category): ChecklistCategory => {
+    return template?.categories?.map((category): ChecklistCategory => {
       return {
         name: category.name,
         items: category.checklistItems.map((cli): ChecklistItem => {
