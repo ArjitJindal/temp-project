@@ -75,8 +75,10 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: params.ruleQueueIds?.join(','),
       ruleNature: params.ruleNature?.join(','),
       forensicsFor: JSON.stringify(params.forensicsFor),
-      filterSlaPolicyId: params.filterSlaPolicyId?.join(','),
-      filterSlaPolicyStatus: params.filterSlaPolicyStatus?.join(','),
+      filterCaseSlaPolicyId: params.filterCaseSlaPolicyId?.join(','),
+      filterCaseSlaPolicyStatus: params.filterCaseSlaPolicyStatus?.join(','),
+      filterAlertSlaPolicyId: params.filterAlertSlaPolicyId?.join(','),
+      filterAlertSlaPolicyStatus: params.filterAlertSlaPolicyStatus?.join(','),
     };
   },
   deserializer: (raw): TableSearchParams => {
@@ -130,8 +132,14 @@ export const queryAdapter: Adapter<TableSearchParams> = {
       ruleQueueIds: raw.ruleQueueIds?.split(','),
       ruleNature: raw.ruleNature?.split(','),
       forensicsFor: raw.forensicsFor ? JSON.parse(raw.forensicsFor) : undefined,
-      filterSlaPolicyId: raw.filterSlaPolicyId?.split(',') ?? undefined,
-      filterSlaPolicyStatus: raw.filterSlaPolicyStatus?.split(',') as SLAPolicyStatus[] | undefined,
+      filterCaseSlaPolicyId: raw.filterCaseSlaPolicyId?.split(',') ?? undefined,
+      filterCaseSlaPolicyStatus: raw.filterCaseSlaPolicyStatus?.split(',') as
+        | SLAPolicyStatus[]
+        | undefined,
+      filterAlertSlaPolicyId: raw.filterAlertSlaPolicyId?.split(',') ?? undefined,
+      filterAlertSlaPolicyStatus: raw.filterAlertSlaPolicyStatus?.split(',') as
+        | SLAPolicyStatus[]
+        | undefined,
     };
   },
 };
@@ -142,7 +150,6 @@ export const useCaseAlertFilters = (
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isAlertSlaEnabled = useFeatureEnabled('ALERT_SLA');
   const isCaseSlaEnabled = useFeatureEnabled('PNB');
-  const isSlaEnabled = isAlertSlaEnabled || isCaseSlaEnabled;
   const ruleOptions = useRuleOptions();
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
@@ -376,18 +383,35 @@ export const useCaseAlertFilters = (
       showFilterByDefault: true,
       pinFilterToLeft: true,
     },
-    isSlaEnabled && {
+    isAlertSlaEnabled && {
       title: 'SLA status',
-      key: 'sla',
+      key: 'alertSla',
       renderer: ({ params, setParams }) => (
         <SlaFilter
-          slaPolicyId={params.filterSlaPolicyId ?? undefined}
-          slaPolicyStatus={params.filterSlaPolicyStatus ?? undefined}
+          slaPolicyId={params.filterAlertSlaPolicyId ?? undefined}
+          slaPolicyStatus={params.filterAlertSlaPolicyStatus ?? undefined}
           onConfirm={(slaPolicyId, slaPolicyStatus) => {
             setParams((state) => ({
               ...state,
-              filterSlaPolicyId: slaPolicyId ?? undefined,
-              filterSlaPolicyStatus: slaPolicyStatus ?? undefined,
+              filterAlertSlaPolicyId: slaPolicyId ?? undefined,
+              filterAlertSlaPolicyStatus: slaPolicyStatus ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    isCaseSlaEnabled && {
+      title: 'SLA status',
+      key: 'caseSla',
+      renderer: ({ params, setParams }) => (
+        <SlaFilter
+          slaPolicyId={params.filterCaseSlaPolicyId ?? undefined}
+          slaPolicyStatus={params.filterCaseSlaPolicyStatus ?? undefined}
+          onConfirm={(slaPolicyId, slaPolicyStatus) => {
+            setParams((state) => ({
+              ...state,
+              filterCaseSlaPolicyId: slaPolicyId ?? undefined,
+              filterCaseSlaPolicyStatus: slaPolicyStatus ?? undefined,
             }));
           }}
         />

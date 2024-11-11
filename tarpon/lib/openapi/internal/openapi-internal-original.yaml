@@ -4739,13 +4739,13 @@ paths:
             items:
               type: string
           in: query
-          name: filterSlaPolicyId
+          name: filterAlertSlaPolicyId
         - schema:
             type: array
             items:
               $ref: '#/components/schemas/SLAPolicyStatus'
           in: query
-          name: filterSlaPolicyStatus
+          name: filterAlertSlaPolicyStatus
   /alerts/statusChange:
     patch:
       summary: Alerts - Status Change
@@ -5341,13 +5341,13 @@ paths:
             items:
               type: string
           in: query
-          name: filterSlaPolicyId
+          name: filterCaseSlaPolicyId
         - schema:
             type: array
             items:
               $ref: '#/components/schemas/SLAPolicyStatus'
           in: query
-          name: filterSlaPolicyStatus
+          name: filterCaseSlaPolicyStatus
     post:
       summary: Create a Manual Case
       operationId: post-cases-manual

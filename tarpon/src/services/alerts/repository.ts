@@ -459,24 +459,34 @@ export class AlertsRepository {
       })
     }
 
-    if (params.filterSlaPolicyId && params.filterSlaPolicyId.length > 0) {
+    if (
+      params.filterAlertSlaPolicyId &&
+      params.filterAlertSlaPolicyId.length > 0
+    ) {
       alertConditions.push({
         'alerts.slaPolicyDetails': {
           $elemMatch: {
-            slaPolicyId: { $in: params.filterSlaPolicyId },
+            $and: [
+              {
+                slaPolicyId: { $in: params.filterAlertSlaPolicyId },
+              },
+              {
+                policyStatus: { $exists: true },
+              },
+            ],
           },
         },
       })
     }
 
     if (
-      params.filterSlaPolicyStatus &&
-      params.filterSlaPolicyStatus.length > 0
+      params.filterAlertSlaPolicyStatus &&
+      params.filterAlertSlaPolicyStatus.length > 0
     ) {
       alertConditions.push({
         'alerts.slaPolicyDetails': {
           $elemMatch: {
-            policyStatus: { $in: params.filterSlaPolicyStatus },
+            policyStatus: { $in: params.filterAlertSlaPolicyStatus },
           },
         },
       })

@@ -628,7 +628,7 @@ export default function CaseTable(props: Props) {
     showAssignedToFilter && 'assignedTo',
     showAssignedToFilter && 'roleAssignedTo',
     'caseStatus',
-    slaEnabled && 'sla',
+    'caseSla',
   ]);
   const filters = useCaseAlertFilters(filterIds);
   const exportPermissions = useHasPermissions(['case-management:export:read']);

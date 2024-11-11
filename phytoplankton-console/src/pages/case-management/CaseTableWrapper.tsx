@@ -43,8 +43,8 @@ export default function CaseTableWrapper(props: {
       ruleQueueIds,
       alertPriority,
       ruleNature,
-      filterSlaPolicyId,
-      filterSlaPolicyStatus,
+      filterCaseSlaPolicyId,
+      filterCaseSlaPolicyStatus,
     } = params;
 
     const [sortField, sortOrder] = sort[0] ?? [];
@@ -84,8 +84,10 @@ export default function CaseTableWrapper(props: {
           : Number.MAX_SAFE_INTEGER,
       }),
       filterAlertPriority: alertPriority,
-      filterSlaPolicyId: filterSlaPolicyId?.length ? filterSlaPolicyId : undefined,
-      filterSlaPolicyStatus: filterSlaPolicyStatus?.length ? filterSlaPolicyStatus : undefined,
+      filterCaseSlaPolicyId: filterCaseSlaPolicyId?.length ? filterCaseSlaPolicyId : undefined,
+      filterCaseSlaPolicyStatus: filterCaseSlaPolicyStatus?.length
+        ? filterCaseSlaPolicyStatus
+        : undefined,
     });
 
     return {

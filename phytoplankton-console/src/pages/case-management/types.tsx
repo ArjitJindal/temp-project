@@ -52,8 +52,10 @@ export type CommonCaseParams = {
     caseId: string;
   };
   expandedAlertId?: string;
-  filterSlaPolicyId?: string[];
-  filterSlaPolicyStatus?: SLAPolicyStatus[];
+  filterCaseSlaPolicyId?: string[];
+  filterCaseSlaPolicyStatus?: SLAPolicyStatus[];
+  filterAlertSlaPolicyId?: string[];
+  filterAlertSlaPolicyStatus?: SLAPolicyStatus[];
 };
 
 export type TableSearchParams = CommonParams & {

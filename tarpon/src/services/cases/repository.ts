@@ -601,21 +601,28 @@ export class CaseRepository {
       ],
     })
 
-    if (params.filterSlaPolicyId?.length) {
+    if (params.filterCaseSlaPolicyId?.length) {
       conditions.push({
         slaPolicyDetails: {
           $elemMatch: {
-            slaPolicyId: { $in: params.filterSlaPolicyId },
+            $and: [
+              {
+                slaPolicyId: { $in: params.filterCaseSlaPolicyId },
+              },
+              {
+                policyStatus: { $exists: true },
+              },
+            ],
           },
         },
       })
     }
 
-    if (params.filterSlaPolicyStatus?.length) {
+    if (params.filterCaseSlaPolicyStatus?.length) {
       conditions.push({
         slaPolicyDetails: {
           $elemMatch: {
-            policyStatus: { $in: params.filterSlaPolicyStatus },
+            policyStatus: { $in: params.filterCaseSlaPolicyStatus },
           },
         },
       })
