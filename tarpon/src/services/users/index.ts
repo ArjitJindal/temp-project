@@ -22,6 +22,7 @@ import { UserManagementService } from '../rules-engine/user-rules-engine-service
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { getInternalRules } from '../rules-engine/pnb-custom-logic'
+import { mergeUserTags } from '../rules-engine/utils'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
 import { User } from '@/@types/openapi-public/User'
@@ -446,7 +447,7 @@ export class UserService {
       direction: 'ORIGIN' | 'DESTINATION'
     ): Promise<void> => {
       const userData: UserData = {
-        userData: { pepStatus: user?.pepStatus, tags: user?.tags },
+        userData: { pepStatus: user?.pepStatus, tags: undefined },
         ruleInstances: {},
       }
       ruleInstancesHit.forEach((ruleInstance) => {
@@ -506,21 +507,11 @@ export class UserService {
     if (!updateDetails) {
       return userTags
     }
-    if (!userTags) {
+    if (!userTags || isEqual(updateDetails, userTags)) {
       return updateDetails
     }
 
-    const updatedTags = [...userTags]
-
-    updateDetails.forEach((tag) => {
-      const index = updatedTags.findIndex((t) => t.key === tag.key)
-      if (index !== -1) {
-        updatedTags[index] = { ...tag }
-      } else {
-        updatedTags.push({ ...tag })
-      }
-    })
-
+    const updatedTags = mergeUserTags(userTags, updateDetails)
     return updatedTags
   }
 

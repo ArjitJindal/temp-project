@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors'
-import { uniqBy } from 'lodash'
+import { groupBy, uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { V8TransactionAggregationTask } from './rules-engine-service'
@@ -23,6 +23,7 @@ import {
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { generateChecksum } from '@/utils/object'
+import { UserTag } from '@/@types/openapi-internal/all'
 
 export function getSenderKeys(
   tenantId: string,
@@ -383,4 +384,28 @@ export async function sendTransactionAggregationTasks(
     )
     logger.info(`Sent transaction aggregation tasks to SQS`)
   }
+}
+
+export function mergeUserTags(
+  previousTags?: UserTag[],
+  updatedTags?: UserTag[]
+) {
+  if (!previousTags && !updatedTags) {
+    return undefined
+  }
+  let newTagsToUpdate: UserTag[] = []
+  const prevTags = groupBy(previousTags ?? [], 'key')
+  const newTags = groupBy(updatedTags ?? [], 'key')
+  newTagsToUpdate = Object.keys(prevTags).flatMap((key) => {
+    if (newTags[key]?.length) {
+      const newTag = newTags[key]
+      delete newTags[key]
+      return newTag
+    }
+    return prevTags[key]
+  })
+  Object.keys(newTags).forEach((key) => {
+    newTagsToUpdate?.push(...newTags[key])
+  })
+  return newTagsToUpdate
 }

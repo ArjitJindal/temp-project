@@ -704,7 +704,10 @@ describe('Public API - Create a Consumer User Event', () => {
     expect(JSON.parse(response?.body as string)).toEqual({
       ...pickKnownEntityFields(consumerUser, User),
       riskLevel: 'VERY_HIGH',
-      tags: [{ key: 'key', value: 'value' }],
+      tags: [
+        { value: 'customValue', key: 'customKey' },
+        { key: 'key', value: 'value' },
+      ],
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
@@ -720,7 +723,10 @@ describe('Public API - Create a Consumer User Event', () => {
       ...internalConsumerUserWithComments,
       riskLevel: 'VERY_HIGH',
       updatedAt: expect.any(Number),
-      tags: [{ key: 'key', value: 'value' }],
+      tags: [
+        { key: 'customKey', value: 'customValue' },
+        { key: 'key', value: 'value' },
+      ],
       riskScoreDetails: {
         craRiskLevel: 'VERY_HIGH',
         craRiskScore: 90,

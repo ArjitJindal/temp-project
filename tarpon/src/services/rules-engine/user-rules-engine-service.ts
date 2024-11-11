@@ -10,6 +10,7 @@ import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
 import { getUserRiskScoreDetailsForPNB } from './pnb-custom-logic'
+import { mergeUserTags } from './utils'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
@@ -27,6 +28,7 @@ import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
 import { CaseRepository } from '@/services/cases/repository'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 type ConsumerUser = User & { type: 'CONSUMER' }
 type BusinessUser = Business & { type: 'BUSINESS' }
@@ -298,12 +300,17 @@ export class UserManagementService {
         )
       }
     }
+    let updatedTags: UserTag[] | undefined
+    if (updatedAttributes.tags) {
+      updatedTags = mergeUserTags(user.tags ?? [], updatedAttributes.tags)
+    }
 
-    const updatedUser = mergeEntities(
-      user,
-      updatedAttributes,
-      userType === 'CONSUMER'
-    ) as ConsumerUser | BusinessUser
+    const updatedUser = {
+      ...(mergeEntities(user, updatedAttributes, userType === 'CONSUMER') as
+        | ConsumerUser
+        | BusinessUser),
+      ...(updatedTags ? { tags: updatedTags } : {}),
+    }
 
     let riskScoreDetails: UserRiskScoreDetails | undefined
 

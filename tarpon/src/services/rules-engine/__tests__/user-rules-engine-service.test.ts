@@ -969,7 +969,10 @@ describe('Create a consumer user event with risk scoring V8', () => {
       ...pickKnownEntityFields(consumerUser, User),
       kycStatusDetails: { status: 'FAILED' },
       riskLevel: 'VERY_HIGH',
-      tags: [{ key: 'key', value: 'value' }],
+      tags: [
+        { key: 'customKey', value: 'customValue' },
+        { key: 'key', value: 'value' },
+      ],
       status: 'ALLOW',
       executedRules: [],
       hitRules: [],
