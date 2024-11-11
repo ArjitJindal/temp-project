@@ -190,6 +190,27 @@ export class UserStats {
           }
         )
         .next()
+      await usersCollection
+        .aggregate(
+          withUpdatedAt(
+            [
+              { $match: { type: userType } },
+              ...getAttributeCountStatsPipeline(
+                hourlyCollectionName,
+                'HOUR',
+                'createdTimestamp',
+                'userState',
+                ['userStateDetails.state'],
+                userCreatedTimeRange
+              ),
+            ],
+            lastUpdatedAt
+          ),
+          {
+            allowDiskUse: true,
+          }
+        )
+        .next()
       await cleanUpStaleData(
         hourlyCollectionName,
         'time',

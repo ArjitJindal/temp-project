@@ -8922,6 +8922,20 @@ components:
           type: number
         kycStatus_MANUAL_REVIEW:
           type: number
+        userState_UNACCEPTABLE:
+          type: number
+        userState_TERMINATED:
+          type: number
+        userState_ACTIVE:
+          type: number
+        userState_DORMANT:
+          type: number
+        userState_CREATED:
+          type: number
+        userState_SUSPENDED:
+          type: number
+        userState_BLOCKED:
+          type: number
       required:
         - time
     DashboardStatsKRSDistribution:

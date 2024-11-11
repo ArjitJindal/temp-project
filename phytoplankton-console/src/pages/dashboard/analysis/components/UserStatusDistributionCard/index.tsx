@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { capitalizeWords } from '@flagright/lib/utils/humanize';
-import Donut, { DonutData } from '../charts/Donut';
+import Donut from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -11,7 +11,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
-import { BusinessUsersListResponse, ConsumerUsersListResponse, UserState } from '@/apis';
+import { DashboardStatsUsersStats, UserState } from '@/apis';
 import { WidgetProps } from '@/components/library/Widget/types';
 import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
@@ -20,6 +20,9 @@ import WidgetRangePicker, {
 import { useUsersQuery } from '@/pages/dashboard/analysis/components/dashboardutils';
 import { dayjs } from '@/utils/dayjs';
 import { map, getOr } from '@/utils/asyncResource';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { USERS_STATS } from '@/utils/queries/keys';
 
 const COLORS = {
   UNACCEPTABLE: COLORS_V2_ANALYTICS_CHARTS_07,
@@ -31,51 +34,44 @@ const COLORS = {
   BLOCKED: COLORS_V2_ANALYTICS_CHARTS_01,
 };
 
-const USER_STATUS_ORDER = [
-  'ACTIVE',
-  'BLOCKED',
-  'CREATED',
-  'DORMANT',
-  'SUSPENDED',
-  'TERMINATED',
-  'UNACCEPTABLE',
-];
-
 interface Props extends WidgetProps {
   userType?: 'BUSINESS' | 'CONSUMER';
 }
 
 export default function UserStatusDistributionCard(props: Props) {
-  const { userType = 'CONSUMER' } = props;
+  const { userType = 'CONSUMER', id } = props;
   const [dateRange, setDateRange] = useState<WidgetRangePickerValue | undefined>({
     startTimestamp: dayjs().subtract(1, 'year').valueOf(),
     endTimestamp: dayjs().valueOf(),
   });
+  const params = {
+    userType,
+    startTimestamp: dateRange?.startTimestamp,
+    endTimestamp: dateRange?.endTimestamp,
+    id: id,
+  };
   const usersResult = useUsersQuery(userType, dateRange);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
-  const dataResource = map(
-    usersResult.data,
-    (users: ConsumerUsersListResponse | BusinessUsersListResponse): DonutData<UserState> => {
-      const frequencyMap: { [key in UserState]?: number } = {};
-      for (const user of users.items) {
-        const { userStateDetails } = user;
-        if (userStateDetails !== undefined) {
-          frequencyMap[userStateDetails.state] = (frequencyMap[userStateDetails.state] ?? 0) + 1;
+  const api = useApi();
+  const queryResult = useQuery(USERS_STATS(params), async () => {
+    return await api.getDashboardStatsUsersByTime(params);
+  });
+
+  const dataResource = map(queryResult.data, (data: DashboardStatsUsersStats[]) => {
+    const statusMap = data.reduce((acc, curr) => {
+      Object.entries(curr).forEach(([key, value]) => {
+        if (key.startsWith('userState')) {
+          const status = key.split('_')[1] as UserState;
+          acc[status] = (acc[status] ?? 0) + (value ?? 0);
         }
-      }
-
-      // Converting the frequency map into an array of objects
-      const data: DonutData<UserState> = Object.entries(frequencyMap).map(([action, value]) => ({
-        series: action as UserState,
-        value: value as number,
-      }));
-
-      data.sort((a, b) => {
-        return USER_STATUS_ORDER.indexOf(a.series) - USER_STATUS_ORDER.indexOf(b.series);
       });
-      return data;
-    },
-  );
+      return acc;
+    }, {});
+    return Object.entries(statusMap).map(([status, value]) => ({
+      series: status as UserState,
+      value: value as number,
+    }));
+  });
 
   return (
     <div ref={pdfRef}>
