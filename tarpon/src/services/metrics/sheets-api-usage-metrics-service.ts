@@ -246,11 +246,15 @@ export class SheetsApiUsageMetricsService {
       this.monthlyUsageMetricsSheet
     )
 
-    const tenantRow = tenantRows.findIndex(
-      (row) =>
-        row[META_DATA_HEADERS_MONTHLY.MONTH] === monthlyMetrics.month &&
-        row[META_DATA_HEADERS_MONTHLY.TENANT_ID] === this.tenantId
-    )
+    const tenantRow = tenantRows.findIndex((row) => {
+      const rowData = row.toObject()
+
+      return (
+        rowData[META_DATA_HEADERS_MONTHLY.MONTH] === monthlyMetrics.month &&
+        rowData[META_DATA_HEADERS_MONTHLY.TENANT_ID] === this.tenantId
+      )
+    })
+
     const newRow = merge(
       this.getMonthlyUsageMetadata(monthlyMetrics.month),
       ...monthlyMetrics.values.map((value) => ({
