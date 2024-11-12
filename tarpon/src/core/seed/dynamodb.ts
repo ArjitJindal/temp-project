@@ -124,7 +124,7 @@ export async function seedDynamo(
     if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
       logger.info('Setting tenant settings...')
       await tenantRepo.createOrUpdateTenantSettings({
-        ...demoSettings,
+        ...nonDemoSettings,
         features: mergedFeatureFlags,
       })
     }
