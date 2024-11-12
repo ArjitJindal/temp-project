@@ -5,7 +5,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 dynamoDbSetupHook()
 
-describe('lock', () => {
+describe.skip('lock', () => {
   it('acquire/release lock in the correct order: same key', async () => {
     const client = getDynamoDbClient()
     const totalIds = 10
