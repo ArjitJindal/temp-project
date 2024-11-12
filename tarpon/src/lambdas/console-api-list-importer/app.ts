@@ -156,6 +156,13 @@ export const listsHandler = lambdaApi()(
       )
     })
 
+    handlers.registerBlacklistImportCsv(async (ctx, request) => {
+      return await listService.importFromCSV(
+        request.listId,
+        request.InlineObject1.file
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

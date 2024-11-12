@@ -7184,22 +7184,22 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@slack/web-api@npm:^6.7.2":
-  version: 6.11.2
-  resolution: "@slack/web-api@npm:6.11.2"
+"@slack/web-api@npm:^6.12.1":
+  version: 6.13.0
+  resolution: "@slack/web-api@npm:6.13.0"
   dependencies:
     "@slack/logger": "npm:^3.0.0"
     "@slack/types": "npm:^2.11.0"
     "@types/is-stream": "npm:^1.1.0"
     "@types/node": "npm:>=12.0.0"
-    axios: "npm:^1.6.5"
+    axios: "npm:^1.7.4"
     eventemitter3: "npm:^3.1.0"
     form-data: "npm:^2.5.0"
     is-electron: "npm:2.2.2"
     is-stream: "npm:^1.1.0"
     p-queue: "npm:^6.6.1"
     p-retry: "npm:^4.0.0"
-  checksum: 829b2410fe2240b91283c9c34bd50576b1b764d411313de24ae1c13f935242bead470c6425883bc55faaa1d04efc3ea13e0fbfd48a945ef2fd61c1c7cc7a93a6
+  checksum: f98ccfcab1e82473f14bfbbcd886d52d93c20cc01871bb4a77e49712e1d2e2e686a93bd96a853f7e99d9a6dc6bd8b408ee922b57b1954a49490364c8697357ed
   languageName: node
   linkType: hard
 
@@ -10804,7 +10804,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.6.0, axios@npm:^1.6.5":
+"axios@npm:^1.6.0":
   version: 1.6.6
   resolution: "axios@npm:1.6.6"
   dependencies:
@@ -20265,7 +20265,7 @@ __metadata:
     "@sentry/node": "npm:^7.118.0"
     "@sentry/serverless": "npm:^7.118.0"
     "@slack/types": "npm:^2.7.0"
-    "@slack/web-api": "npm:^6.7.2"
+    "@slack/web-api": "npm:^6.12.1"
     "@slack/webhook": "npm:^7.0.1"
     "@smithy/node-http-handler": "npm:^3.2.3"
     "@smithy/util-retry": "npm:^2.0.5"
