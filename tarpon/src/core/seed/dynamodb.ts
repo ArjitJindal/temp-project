@@ -1,5 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { isEmpty, isEqual, pick } from 'lodash'
+import { isEmpty, isEqual, pick, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
@@ -117,9 +117,16 @@ export async function seedDynamo(
     })
     const nonDemoSettings = await nonDemoTenantRepo.getTenantSettings()
     const demoSettings = await tenantRepo.getTenantSettings()
+    const mergedFeatureFlags = uniq([
+      ...(demoSettings.features ?? []),
+      ...(nonDemoSettings.features ?? []),
+    ])
     if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
       logger.info('Setting tenant settings...')
-      await tenantRepo.createOrUpdateTenantSettings(nonDemoSettings)
+      await tenantRepo.createOrUpdateTenantSettings({
+        ...demoSettings,
+        features: mergedFeatureFlags,
+      })
     }
   }
 }
