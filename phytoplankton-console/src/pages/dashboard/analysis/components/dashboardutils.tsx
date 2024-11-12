@@ -27,8 +27,8 @@ export function useFilteredRuleInstances(
   dateRange: WidgetRangePickerValue | undefined,
 ): AsyncResource<RuleInstance[]> {
   const api = useApi();
-  const ruleInstanceResults = useQuery(RULE_INSTANCES('LIVE'), async () => {
-    return await api.getRuleInstances({ mode: 'LIVE' });
+  const ruleInstanceResults = useQuery(RULE_INSTANCES('ALL'), async () => {
+    return await api.getRuleInstances({});
   });
   const filteredResult = useMemo(() => {
     return map(ruleInstanceResults.data, (value) => {

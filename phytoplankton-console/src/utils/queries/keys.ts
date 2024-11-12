@@ -138,7 +138,7 @@ export const SANCTIONS_SCREENING_DETAILS = (params: AnyParameters): QueryKey => 
 
 export const RULE_LOGIC_CONFIG = (): QueryKey => ['rule-logic-config'];
 export const RULES = (): QueryKey => ['rules'];
-export const RULE_INSTANCES = (mode?: 'LIVE' | 'SHADOW'): QueryKey =>
+export const RULE_INSTANCES = (mode?: 'LIVE' | 'SHADOW' | 'ALL'): QueryKey =>
   ['rule-instances', mode].filter(Boolean);
 export const RULE_FILTERS = (): QueryKey => ['rule-filters'];
 export const HITS_PER_USER = (
