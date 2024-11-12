@@ -206,7 +206,7 @@ export class AlertsRepository {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-
+    const hasFeaturePNB = hasFeature('PNB')
     const caseConditions: Filter<Case>[] =
       await caseRepository.getCasesConditions(params, false)
 
@@ -544,15 +544,19 @@ export class AlertsRepository {
               },
             },
           },
-          {
-            $sort: {
-              [params?.sortField === 'caseCreatedTimestamp'
-                ? 'createdTimestamp'
-                : `alerts.${params?.sortField ?? '_id'}`]:
-                params?.sortOrder === 'ascend' ? 1 : -1,
-              [`alerts._id`]: 1,
-            },
-          },
+          ...(!hasFeaturePNB
+            ? [
+                {
+                  $sort: {
+                    [params?.sortField === 'caseCreatedTimestamp'
+                      ? 'createdTimestamp'
+                      : `alerts.${params?.sortField ?? '_id'}`]:
+                      params?.sortOrder === 'ascend' ? 1 : -1,
+                    [`alerts._id`]: 1,
+                  },
+                },
+              ]
+            : []),
           {
             $set: {
               alert: '$alerts',
