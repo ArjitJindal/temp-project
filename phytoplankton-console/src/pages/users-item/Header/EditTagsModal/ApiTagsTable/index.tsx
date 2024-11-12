@@ -44,8 +44,9 @@ const columns = helper.list([
     title: 'Key',
     tooltip: 'Use tag keys defined in settings to add new tags for a user.',
     render: (item, context) => {
-      const { newStateDetails, consoleTags } = context.external as ExternalState;
+      const { newStateDetails, consoleTags, tagsDetails } = context.external as ExternalState;
       const [newState, setNewState] = newStateDetails;
+      const [tags] = tagsDetails;
       if (item.type === 'NEW') {
         return (
           <Select
@@ -55,7 +56,11 @@ const columns = helper.list([
             mode="SINGLE"
             value={newState.key}
             onChange={(e) => setNewState({ ...newState, key: e ?? '' })}
-            options={consoleTags?.map((tag) => ({ label: tag.key, value: tag.key })) ?? []}
+            options={
+              consoleTags
+                ?.filter((tag) => !tags?.some((t) => t.key === tag.key))
+                ?.map((tag) => ({ label: tag.key, value: tag.key })) ?? []
+            }
           />
         );
       } else {
