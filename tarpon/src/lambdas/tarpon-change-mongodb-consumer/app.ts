@@ -56,6 +56,7 @@ import { RiskService } from '@/services/risk'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
+import { envIsNot } from '@/utils/env'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -206,7 +207,11 @@ export const transactionHandler = async (
   transaction: TransactionWithRulesResult | undefined,
   dbClients: DbClients
 ) => {
-  if (!transaction || !transaction.transactionId || isDemoTenant(tenantId)) {
+  if (
+    !transaction ||
+    !transaction.transactionId ||
+    (isDemoTenant(tenantId) && envIsNot('local'))
+  ) {
     return
   }
   updateLogMetadata({ transactionId: transaction.transactionId })

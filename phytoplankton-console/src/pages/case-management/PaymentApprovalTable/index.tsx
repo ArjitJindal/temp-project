@@ -77,6 +77,7 @@ export default function PaymentApprovalsTable(props: Props) {
             onSuccess={() => {
               onResetSelection();
               updateCacheData();
+              queryResult.refetch();
             }}
           />
         ),
@@ -87,6 +88,7 @@ export default function PaymentApprovalsTable(props: Props) {
             onSuccess={() => {
               onResetSelection();
               updateCacheData();
+              queryResult.refetch();
             }}
           />
         ),
