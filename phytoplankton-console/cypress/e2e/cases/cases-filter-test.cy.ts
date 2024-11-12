@@ -38,7 +38,7 @@ describe('Filter according to case id (optimized)', () => {
     );
 
     cy.get('[data-cy="segmented-control-all-alerts"]').click();
-    cy.get('[data-cy="rules-filter"]:contains("Add filter")').first().click();
+    cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
     cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
     cy.get('[data-cy="rules-filter"]:contains("Alert priority")').first().click();
     cy.get('.ant-popover .ant-select-selector').first().click();
@@ -57,7 +57,7 @@ describe('Filter according to case id (optimized)', () => {
     cy.get('[data-cy="segmented-control-all-alerts"]').click();
     cy.get('[data-cy="rules-filter"]:contains("Alert status")').first().click();
     cy.get('li[data-cy="OPEN"]').first().click();
-    cy.get('[data-cy="rules-filter"]:contains("Add filter")').first().click();
+    cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
     cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
     cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
     const ruleName = 'Transaction amount too high';

@@ -46,7 +46,7 @@ describe('Using Assignment filter and assigning cases', () => {
             cy.get('input[data-cy="row-table-checkbox"]').eq(0).click();
             cy.get('button[data-cy="update-assignment-button"]').click();
             cy.get('div[data-cy="assignment-option"]')
-              .first()
+              .contains('cypress+admin@flagright.com')
               .should('be.visible')
               .click({ force: true });
             cy.message('Assignee updated successfully').should('exist');
@@ -61,9 +61,10 @@ describe('Using Assignment filter and assigning cases', () => {
 
             cy.get('[data-cy="rules-filter"]')
               .filter(':contains("Add filter")')
+              .scrollIntoView()
               .eq(0)
               .should('exist')
-              .click();
+              .click({ force: true });
 
             cy.get('[data-cy="assignedTo-checkbox"]').then(($checkbox) => {
               if (!$checkbox.prop('checked')) {
