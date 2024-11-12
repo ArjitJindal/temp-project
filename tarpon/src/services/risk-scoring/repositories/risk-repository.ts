@@ -21,6 +21,7 @@ import {
 } from '@flagright/lib/utils/risk'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
+  batchGet,
   batchWrite,
   BatchWriteRequestInternal,
   DeleteRequestInternal,
@@ -257,6 +258,16 @@ export class RiskRepository {
       logger.error('Error getting ars score', error)
       return null
     }
+  }
+
+  async getArsScores(transactionIds: string[]): Promise<ArsScore[]> {
+    return await batchGet<ArsScore>(
+      this.dynamoDb,
+      StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      transactionIds.map((transactionId) =>
+        DynamoDbKeys.ARS_VALUE_ITEM(this.tenantId, transactionId, '1')
+      )
+    )
   }
 
   async getDrsScore(userId: string): Promise<DrsScore | null> {

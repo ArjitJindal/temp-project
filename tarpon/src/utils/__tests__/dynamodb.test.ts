@@ -1,6 +1,11 @@
 import { StackConstants } from '@lib/constants'
 import { range } from 'lodash'
-import { batchWrite, getDynamoDbClient, paginateQuery } from '../dynamodb'
+import {
+  batchGet,
+  batchWrite,
+  getDynamoDbClient,
+  paginateQuery,
+} from '../dynamodb'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 const MOCK_RECORDS_COUNT = 250
 const MOCK_ATTRIBUTES = {
@@ -187,6 +192,21 @@ describe('paginateQuery', () => {
         },
       ],
     })
+  })
+
+  test('batchGet', async () => {
+    const result = await batchGet<any>(
+      dynamoDb,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      MOCK_ITEMS.map((v) => ({
+        PartitionKeyID: v.PartitionKeyID,
+        SortKeyID: v.SortKeyID,
+      })),
+      {}
+    )
+    expect(
+      result.sort((a, b) => a.SortKeyID.localeCompare(b.SortKeyID))
+    ).toEqual(MOCK_ITEMS)
   })
 })
 

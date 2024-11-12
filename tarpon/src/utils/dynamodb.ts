@@ -7,6 +7,7 @@ import {
 import { chunk, isNil, omitBy, wrap, omit } from 'lodash'
 import {
   BatchGetCommand,
+  BatchGetCommandInput,
   BatchWriteCommand,
   DeleteCommand,
   DynamoDBDocumentClient,
@@ -24,6 +25,7 @@ import {
   WriteRequest,
   PutRequest,
   DeleteRequest,
+  KeysAndAttributes,
 } from '@aws-sdk/client-dynamodb'
 import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
@@ -429,6 +431,51 @@ export async function batchWrite(
       }
     }
   }
+}
+
+const MAX_BATCH_GET_RETRY_COUNT = 20
+const MAX_BATCH_GET_RETRY_DELAY = 10 * 1000
+export async function batchGet<T>(
+  dynamoDb: DynamoDBDocumentClient,
+  table: string,
+  keys: Record<string, NativeAttributeValue>[],
+  attributes: Omit<KeysAndAttributes, 'Keys'> = {}
+): Promise<T[]> {
+  const finalResult: T[] = []
+  for (const batchKeys of chunk(keys, 100)) {
+    let retryDelay = 100
+    let retryCount = 0
+    let unprocessedKeys = batchKeys
+    while (unprocessedKeys.length > 0) {
+      const batchGetItemInput: BatchGetCommandInput = {
+        RequestItems: {
+          [table]: {
+            Keys: unprocessedKeys,
+            ...attributes,
+          },
+        },
+      }
+      const result = await dynamoDb.send(new BatchGetCommand(batchGetItemInput))
+      const partialResult = result.Responses?.[table]
+      retryCount += 1
+      unprocessedKeys = result.UnprocessedKeys?.[table]?.Keys ?? []
+      finalResult.push(...(partialResult as T[]))
+
+      if (unprocessedKeys.length > 0) {
+        await new Promise((resolve) => setTimeout(resolve, retryDelay))
+        retryDelay = Math.min(retryDelay * 2, MAX_BATCH_GET_RETRY_DELAY)
+      }
+      if (
+        unprocessedKeys.length > 0 &&
+        retryCount > MAX_BATCH_GET_RETRY_COUNT
+      ) {
+        throw new Error(
+          `Failed to batch get items after ${MAX_BATCH_GET_RETRY_COUNT} retries (${unprocessedKeys.length} items left)`
+        )
+      }
+    }
+  }
+  return finalResult.filter(Boolean)
 }
 
 export function getUpdateAttributesUpdateItemInput(attributes: {

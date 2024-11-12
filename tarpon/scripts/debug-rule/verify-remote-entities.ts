@@ -14,7 +14,6 @@ import { RuleService } from '@/services/rules-engine'
 import { apiFetch } from '@/utils/api-fetch'
 import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
@@ -82,7 +81,7 @@ async function getRemoteRuleInstances(
 async function getRemoteTransaction(transactionId: string) {
   return (
     await apiFetch<InternalTransaction>(
-      `${api}/console/transactions/${transactionId}`,
+      `${api}/console/transactions/${encodeURIComponent(transactionId)}`,
       {
         method: 'GET',
         headers: {
@@ -96,7 +95,7 @@ async function getRemoteTransaction(transactionId: string) {
 async function getRemoteUser(userId: string) {
   try {
     const result = await apiFetch<InternalBusinessUser>(
-      `${api}/console/business/users/${userId}`,
+      `${api}/console/users/${encodeURIComponent(userId)}`,
       {
         method: 'GET',
         headers: {
@@ -106,23 +105,8 @@ async function getRemoteUser(userId: string) {
     )
     return result.result
   } catch (e) {
-    // continue
+    return null
   }
-  try {
-    const result = await apiFetch<InternalConsumerUser>(
-      `${api}/console/consumer/users/${userId}`,
-      {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${jwt}`,
-        },
-      }
-    )
-    return result.result
-  } catch (e) {
-    // continue
-  }
-  return null
 }
 
 async function createRuleInstancesLocally(ruleInstanceIds: string[]) {

@@ -206,13 +206,13 @@ export class RiskScoringV8Service {
     const [originAvgArs, destinationAvgArs] = await Promise.all([
       this.updateAverageArs(
         arsScore.score,
-        originUser?.userId,
+        transaction.originUserId,
         transaction.transactionId,
         transactionEvents.length > 1
       ),
       this.updateAverageArs(
         arsScore.score,
-        destinationUser?.userId,
+        transaction.destinationUserId,
         transaction.transactionId,
         transactionEvents.length > 1
       ),
@@ -792,5 +792,9 @@ export class RiskScoringV8Service {
   public async getArsScore(transactionId: string): Promise<ArsScore | null> {
     const arsScore = await this.riskRepository.getArsScore(transactionId)
     return arsScore
+  }
+
+  public async getArsScores(transactionIds: string[]): Promise<ArsScore[]> {
+    return await this.riskRepository.getArsScores(transactionIds)
   }
 }

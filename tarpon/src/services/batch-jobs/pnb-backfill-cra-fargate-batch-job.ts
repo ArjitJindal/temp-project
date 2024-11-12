@@ -1,7 +1,7 @@
 import pMap from 'p-map'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { Db } from 'mongodb'
-import { mean } from 'lodash'
+import { last, mean } from 'lodash'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
@@ -73,21 +73,27 @@ export class PnbBackfillCraBatchJobRunner extends BatchJobRunner {
         const txCollection = this.mongoDb.collection<InternalTransaction>(
           TRANSACTIONS_COLLECTION(this.tenantId)
         )
-        const transactionsCursor = txCollection.find({
-          $or: [
-            { originUserId: user.userId },
-            { destinationUserId: user.userId },
-          ],
-        })
-        const arsScores: number[] = []
-        let lastTransaction: InternalTransaction | null = null
-        for await (const transaction of transactionsCursor) {
-          if (transaction.arsScore) {
-            arsScores.push(transaction.arsScore.arsScore)
-          }
-          lastTransaction = transaction
-        }
-        const avgArsScore = arsScores.length > 0 ? mean(arsScores) : undefined
+        const transactionIds: string[] = (
+          await txCollection
+            .find({
+              $or: [
+                { originUserId: user.userId },
+                { destinationUserId: user.userId },
+              ],
+            })
+            .project({
+              transactionId: 1,
+            })
+            .toArray()
+        ).map((v) => v.transactionId)
+
+        const arsScores = await this.riskScoringService.getArsScores(
+          transactionIds
+        )
+        const avgArsScore =
+          arsScores.length > 0
+            ? mean(arsScores.map((v) => v.arsScore))
+            : undefined
         if (avgArsScore) {
           await this.riskRepository.updateOrCreateAverageArsScore(user.userId, {
             userId: user.userId,
@@ -98,23 +104,24 @@ export class PnbBackfillCraBatchJobRunner extends BatchJobRunner {
         }
 
         // Calculate and update CRA score
+        const krsScore = await this.riskScoringService.getKrsScore(user.userId)
         const newDrsScore = this.riskScoringService.calculateNewDrsScore({
           algorithm: {
             type: 'FORMULA_SIMPLE_AVG',
           },
           avgArsScore,
-          krsScore: user.krsScore?.krsScore,
+          krsScore: krsScore?.krsScore,
         })
 
         logger.debug(
-          `[${user.userId}] KRS: ${user.krsScore?.krsScore}, ARS: ${avgArsScore}, CRA: ${newDrsScore}`
+          `[${user.userId}] KRS: ${user.krsScore?.krsScore}, ARS: ${avgArsScore} (${arsScores.length} txs), CRA: ${newDrsScore}`
         )
 
         await this.riskScoringService.updateDrsScore(
           user.userId,
           newDrsScore,
-          lastTransaction?.transactionId ?? 'FIRST_DRS',
-          lastTransaction?.arsScore?.factorScoreDetails
+          last(transactionIds) ?? 'FIRST_DRS',
+          last(arsScores)?.factorScoreDetails
         )
 
         if (index % 100 === 0) {
