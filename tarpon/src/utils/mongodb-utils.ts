@@ -16,7 +16,7 @@ import {
   WithId,
 } from 'mongodb'
 
-import { isEqual } from 'lodash'
+import { isEqual, memoize } from 'lodash'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
@@ -35,34 +35,34 @@ import {
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 
-let cacheClient: MongoClient
+const getMongoDbClientInternal = memoize(async (useCache = true) => {
+  if (process.env.NODE_ENV === 'test') {
+    return await MongoClient.connect(
+      process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
+    )
+  }
+  if (process.env.ENV?.includes('local')) {
+    return await MongoClient.connect(
+      `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
+    )
+  }
+  const credentials = await getSecretByName('mongoAtlasCreds', useCache)
+  const DB_USERNAME = credentials['username']
+  const DB_PASSWORD = encodeURIComponent(credentials['password'])
+  const DB_HOST = credentials['host']
+  const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${StackConstants.MONGO_DB_DATABASE_NAME}`
+  return await MongoClient.connect(DB_URL as string)
+})
+
+export async function getMongoDbClient(useCache = true) {
+  if (!useCache) {
+    getMongoDbClientInternal.cache.clear?.()
+  }
+  return await getMongoDbClientInternal(useCache)
+}
 
 export async function getMongoDbClientDb(useCache = true) {
   return (await getMongoDbClient(useCache)).db()
-}
-
-export async function getMongoDbClient(useCache = true) {
-  if (useCache && cacheClient) {
-    return cacheClient
-  }
-
-  if (process.env.NODE_ENV === 'test') {
-    cacheClient = await MongoClient.connect(
-      process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
-    )
-  } else if (process.env.ENV?.includes('local')) {
-    cacheClient = await MongoClient.connect(
-      `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
-    )
-  } else {
-    const credentials = await getSecretByName('mongoAtlasCreds', useCache)
-    const DB_USERNAME = credentials['username']
-    const DB_PASSWORD = encodeURIComponent(credentials['password'])
-    const DB_HOST = credentials['host']
-    const DB_URL = `mongodb+srv://${DB_USERNAME}:${DB_PASSWORD}@${DB_HOST}/${StackConstants.MONGO_DB_DATABASE_NAME}`
-    cacheClient = await MongoClient.connect(DB_URL as string)
-  }
-  return cacheClient
 }
 
 export function success(body: object): object {

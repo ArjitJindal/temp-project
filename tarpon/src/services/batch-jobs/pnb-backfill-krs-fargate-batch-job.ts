@@ -45,6 +45,31 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
   }
 
   private async processUser(user: InternalUser) {
+    if (user.lastTransactionTimestamp === 0) {
+      delete user.lastTransactionTimestamp
+    }
+    if (user.userStateDetails) {
+      if (user.userStateDetails.state.includes('CLOSED')) {
+        user.userStateDetails.state = 'TERMINATED'
+      }
+      if (user.userStateDetails.state.includes('DECEASED')) {
+        user.userStateDetails.state = 'TERMINATED'
+      }
+      if (user.userStateDetails.state.includes('PENDING')) {
+        user.userStateDetails.state = 'SUSPENDED'
+      }
+    }
+    if (user.contactDetails?.addresses) {
+      user.contactDetails.addresses.forEach((address) => {
+        if (!address.city) {
+          address.city = ' '
+        }
+        if (!address.country) {
+          address.country = ' '
+        }
+      })
+    }
+
     const url = `${this.publicApiEndpoint}?validateUserId=false&_krsOnly=true`
     const response = await fetch(url, {
       method: 'POST',

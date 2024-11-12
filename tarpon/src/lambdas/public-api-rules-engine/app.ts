@@ -224,10 +224,6 @@ export const transactionEventHandler = lambdaApi()(
     const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const transactionEventRepository = new TransactionEventRepository(
-      tenantId,
-      { mongoDb: await getMongoDbClient() }
-    )
 
     const createTransactionEvent = async (
       transactionEvent: TransactionEvent
@@ -285,6 +281,10 @@ export const transactionEventHandler = lambdaApi()(
       return response
     })
     handlers.registerGetTransactionEvent(async (_ctx, { eventId }) => {
+      const transactionEventRepository = new TransactionEventRepository(
+        tenantId,
+        { mongoDb: await getMongoDbClient() }
+      )
       const result = await transactionEventRepository.getMongoTransactionEvent(
         eventId
       )
@@ -306,9 +306,6 @@ export const userEventsHandler = lambdaApi()(
     const handlers = new Handlers()
     const { principalId: tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const userEventRepository = new UserEventRepository(tenantId, {
-      mongoDb: await getMongoDbClient(),
-    })
 
     const createUserEvent = async (
       userEvent: ConsumerUserEvent,
@@ -461,6 +458,9 @@ export const userEventsHandler = lambdaApi()(
     )
 
     const getUserEventHandler = async (_ctx, { eventId }) => {
+      const userEventRepository = new UserEventRepository(tenantId, {
+        mongoDb: await getMongoDbClient(),
+      })
       const result = await userEventRepository.getMongoUserEvent(eventId)
       if (!result) {
         throw new NotFound(`User event ${eventId} not found`)

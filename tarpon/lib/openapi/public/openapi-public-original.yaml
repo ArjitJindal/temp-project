@@ -1673,8 +1673,6 @@ components:
       title: Address
       required:
         - addressLines
-        - city
-        - country
       type: object
       properties:
         addressLines:
@@ -1954,8 +1952,6 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
-          minimum: 315529200000
-          maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         savedPaymentDetails:
@@ -3922,8 +3918,6 @@ components:
         lastTransactionTimestamp:
           type: number
           description: Timestamp of the last successful transaction of the user
-          minimum: 315529200000
-          maximum: 4133890801000
         linkedEntities:
           $ref: '#/components/schemas/UserEntityLink'
         acquisitionChannel:
