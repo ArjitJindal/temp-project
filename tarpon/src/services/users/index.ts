@@ -323,7 +323,7 @@ export class UserService {
       }
     }
 
-    if (pepStatus?.length && !isEqual(pepStatus, user['pepStatus'])) {
+    if (pepStatus && !isEqual(pepStatus, user['pepStatus'])) {
       updateableData.pepStatus = pepStatus
     }
 
@@ -404,6 +404,9 @@ export class UserService {
   private getUniquePepStatus(
     pepStatusDetails: PEPStatus[] | undefined
   ): PEPStatus[] | undefined {
+    if (!pepStatusDetails) {
+      return undefined
+    }
     return uniqBy(
       pepStatusDetails,
       (pepStatus) =>
