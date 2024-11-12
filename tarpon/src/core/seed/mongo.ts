@@ -141,6 +141,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     ['Report', getReports().length],
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],
+    ['SLAPolicy', getSLAPolicies().length],
   ]
 
   for (const counter of counters) {
