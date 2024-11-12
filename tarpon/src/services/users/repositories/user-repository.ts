@@ -1120,6 +1120,9 @@ export class UserRepository {
     }
     switch (params.field) {
       case 'BUSINESS_INDUSTRY':
+        filterConditions.push({
+          'legalEntity.companyGeneralDetails.businessIndustry': { $ne: null },
+        })
         fieldPath = 'legalEntity.companyGeneralDetails.businessIndustry'
         unwindPath = 'legalEntity.companyGeneralDetails.businessIndustry'
         break
