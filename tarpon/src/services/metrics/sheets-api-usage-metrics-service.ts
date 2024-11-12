@@ -11,6 +11,7 @@ import {
   GoogleSpreadsheetRow,
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet'
+import { JWT } from 'google-auth-library'
 import { memoize, merge } from 'lodash'
 import { BackoffOptions, backOff } from 'exponential-backoff'
 import { DailyMetricStats, MonthlyMetricStats } from './utils'
@@ -124,14 +125,17 @@ export class SheetsApiUsageMetricsService {
   }
 
   private async initializePrivate() {
-    const googleSpreadsheetService = new GoogleSpreadsheet(this.googleSheetId)
-
     const secret = await getSecretByName('GoogleSheetsPrivateKey')
-
-    await googleSpreadsheetService.useServiceAccountAuth({
-      client_email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL as string,
-      private_key: secret.privateKey.replace(/\\n/g, '\n'),
+    const serviceAccountAuth = new JWT({
+      email: process.env.GOOGLE_SHEETS_CLIENT_EMAIL as string,
+      key: secret.privateKey.replace(/\\n/g, '\n'),
+      scopes: ['https://www.googleapis.com/auth/spreadsheets'],
     })
+
+    const googleSpreadsheetService = new GoogleSpreadsheet(
+      this.googleSheetId,
+      serviceAccountAuth
+    )
 
     await googleSpreadsheetService.loadInfo()
 
