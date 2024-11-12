@@ -294,6 +294,14 @@ export function getAssignmentsToShow(item: Case | Alert): Assignment[] | undefin
   }
 
   if (isItemEscalated || isItemInReview) {
+    const l1Assignments = item.reviewAssignments?.filter(
+      (assignment) => assignment?.escalationLevel === 'L1',
+    );
+
+    if (l1Assignments?.length && isItemEscalated) {
+      return l1Assignments;
+    }
+
     return item.reviewAssignments?.filter((assignment) => assignment?.escalationLevel !== 'L2');
   }
 
