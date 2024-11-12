@@ -1,38 +1,31 @@
 import pMap from 'p-map'
-import { LogicEvaluator } from '../logic-evaluator/engine'
-import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillKrs } from '@/@types/batch-job'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 import { logger } from '@/core/logger'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
-import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
-  private progressKey!: string
-  private riskScoringService!: RiskScoringV8Service
+  private tenantId!: string
+  private publicApiKey!: string
+  private publicApiEndpoint!: string
 
   protected async run(job: PnbBackfillKrs): Promise<void> {
     const { tenantId } = job
-    const { concurrency } = job.parameters
+    const { concurrency = 50, publicApiKey, publicApiEndpoint } = job.parameters
 
     const db = await getMongoDbClientDb()
-    const dynamoDb = getDynamoDbClient()
-    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    this.riskScoringService = new RiskScoringV8Service(
-      tenantId,
-      logicEvaluator,
-      { mongoDb: await getMongoDbClient(), dynamoDb }
-    )
+    this.publicApiKey = publicApiKey
+    this.publicApiEndpoint = publicApiEndpoint
+    this.tenantId = tenantId
 
-    this.progressKey = `backfill-krs-${tenantId}`
     const lastCompletedTimestamp =
-      (await getMigrationLastCompletedTimestamp(this.progressKey)) ?? 0
+      (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
     const cursor = db
       .collection<InternalUser>(USERS_COLLECTION(tenantId))
       .find({ createdTimestamp: { $gte: lastCompletedTimestamp } })
@@ -51,14 +44,37 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
     await this.processBatch(batchUsers, concurrency)
   }
 
+  private async processUser(user: InternalUser) {
+    const url = `${this.publicApiEndpoint}?validateUserId=false&_krsOnly=true`
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': this.publicApiKey,
+      },
+      body: JSON.stringify(user),
+    })
+    if (response.status >= 300) {
+      logger.warn(`[${response.status}] Error processing user ${user.userId}`)
+      const db = await getMongoDbClientDb()
+      await db.collection('backfill-failure').insertOne({
+        job: 'PNB_BACKFILL_KRS',
+        tenantId: this.tenantId,
+        userId: user.userId,
+        status: response.status,
+        reason: await response.json(),
+      })
+    }
+  }
+
   private async processBatch(batchUsers: InternalUser[], concurrency: number) {
     await pMap(
       batchUsers,
       async (user, index) => {
-        await this.riskScoringService.handleUserUpdate(user)
+        await this.processUser(user)
         if (index % 100 === 0) {
           await updateMigrationLastCompletedTimestamp(
-            this.progressKey,
+            this.jobId,
             user.createdTimestamp
           )
         }

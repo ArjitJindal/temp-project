@@ -16,7 +16,6 @@ import { pickKnownEntityFields } from '@/utils/object'
 
 export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
-  private progressKey!: string
   private publicApiKey!: string
   private publicApiEndpoint!: string
   private type!: 'transactions' | 'ars'
@@ -35,14 +34,13 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
     } = job.parameters
     const db = await getMongoDbClientDb()
 
-    this.progressKey = this.jobId
     this.publicApiKey = publicApiKey
     this.publicApiEndpoint = publicApiEndpoint
     this.tenantId = tenantId
     this.type = type
 
     const lastCompletedTimestamp =
-      (await getMigrationLastCompletedTimestamp(this.progressKey)) ?? 0
+      (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
     const actualStartTimestamp = Math.max(
       lastCompletedTimestamp,
       startTimestamp
@@ -130,7 +128,7 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
 
         if (index % 100 === 0) {
           await updateMigrationLastCompletedTimestamp(
-            this.progressKey,
+            this.jobId,
             internalTransaction.timestamp
           )
         }

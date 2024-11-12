@@ -254,6 +254,8 @@ export type PnbBackfillKrs = {
   tenantId: string
   parameters: {
     concurrency: number
+    publicApiEndpoint: string
+    publicApiKey: string
   }
 }
 export type PnbBackfillCra = {
