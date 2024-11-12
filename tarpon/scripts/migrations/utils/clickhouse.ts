@@ -15,8 +15,8 @@ export async function syncClickhouseTableWithMongo(
   const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
   const collectionName = `${tenantId}-${mongoTable}`
   const collection = db.collection(collectionName)
-  const cursor = collection.find()
   const batchSize = 10000
+  const cursor = collection.find().batchSize(batchSize)
   const batch: any[] = []
   let count = 0
   const clickhouseTable = table.table

@@ -16,6 +16,7 @@
     "cdktf:init": "([ -d \".gen\" ] && echo \"CDKTF already initialised\" || cdktf get --quiet)",
     "cdktf:deploy:dev": "ENV=dev && yarn cdktf:init && ASSUME_ROLE_ARN='' cdktf deploy --quiet dev-tarpon --auto-approve",
     "cdktf:deploy:sandbox": "ENV=sandbox && yarn cdktf:init && ASSUME_ROLE_ARN='' cdktf deploy --quiet sandbox-tarpon --auto-approve",
+    "cdktf:deploy:prod": "ENV=prod && yarn cdktf:init && ASSUME_ROLE_ARN='' cdktf deploy --quiet prod-tarpon --auto-approve",
     "synth:ci": "INFRA_CI=true; ENV=local && cdk synth --quiet local-tarpon && yarn cdktf:init",
     "synth:local": "ENV=local && yarn openapi:augment && cdk synth --quiet local-tarpon && yarn cdktf:init",
     "synth:dev": "ENV=dev && yarn openapi:augment && cdk synth --quiet dev-tarpon && yarn cdktf:init",

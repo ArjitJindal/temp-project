@@ -73,6 +73,26 @@ export function getClickhouseTenantConfig(
       return [asia1Config, eu1Config]
     }
 
+    case 'prod': {
+      const asia1Config: ClickhouseTenantConfig = {
+        ENVIROMENT: {
+          type: 'production',
+          minTotalMemoryGb: 24,
+          maxTotalMemoryGb: 24,
+        },
+        region: CONFIG_MAP[stage]['asia-1'].env.region as string,
+        idleScaling: true,
+        idleTimeoutMinutes: 10,
+        ipAccess: codeBuildIps.map((ip) => ({
+          source: ip,
+          description: 'Codebuild IP',
+        })),
+        privateEndPointVpcEndpointId: 'vpce-0631eebf8ddc9056b',
+      }
+
+      return [asia1Config]
+    }
+
     default: {
       return []
     }

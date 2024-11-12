@@ -122,4 +122,11 @@ export const config: Config = {
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
   },
+  clickhouse: {
+    enabled: true,
+    privateEndpoint: {
+      awsPrivateLinkEndpointName:
+        'com.amazonaws.vpce.ap-southeast-1.vpce-svc-0a2b4df11b06e4872',
+    },
+  },
 }

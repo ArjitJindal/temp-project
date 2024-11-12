@@ -9,6 +9,7 @@ import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/confi
 import { chain, maxBy } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { envIs, envIsNot } from '../env'
 import {
   ClickHouseTables,
@@ -23,8 +24,15 @@ import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
 
+const prodRegionsEnabled: FlagrightRegion[] = ['asia-1']
+
 export const isClickhouseEnabledInRegion = () => {
-  return envIsNot('prod')
+  if (envIsNot('prod')) {
+    return true
+  }
+
+  const region = process.env.REGION as FlagrightRegion
+  return prodRegionsEnabled.includes(region)
 }
 
 export const getClickhouseDbName = (tenantId: string) => {
