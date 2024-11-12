@@ -8,7 +8,7 @@ import DeleteListModal from '@/pages/lists/ListTable/DeleteListModal';
 import Id from '@/components/ui/Id';
 import { makeUrl } from '@/utils/routing';
 import { getErrorMessage } from '@/utils/lang';
-import { TableColumn } from '@/components/library/Table/types';
+import { TableColumn, ToolRenderer } from '@/components/library/Table/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { map } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -25,10 +25,11 @@ export type ListTableRef = React.Ref<{
 
 interface Props {
   listType: ListType;
+  extraTools?: ToolRenderer[];
 }
 
 function ListTable(props: Props, ref: ListTableRef) {
-  const { listType } = props;
+  const { listType, extraTools } = props;
   const api = useApi();
   const [listToDelete, setListToDelete] = useState<ListHeader | null>(null);
   const queryClient = useQueryClient();
@@ -175,6 +176,7 @@ function ListTable(props: Props, ref: ListTableRef) {
         queryResults={map(queryResults, (items) => ({
           items,
         }))}
+        extraTools={extraTools}
         rowKey="listId"
         columns={columns}
         pagination={false}

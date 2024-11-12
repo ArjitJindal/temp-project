@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
-import s from './index.module.less';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import PageTabs from '@/components/ui/PageTabs';
@@ -29,49 +28,32 @@ export default function CreatedListsPage() {
           onChange={(key) => {
             navigate(makeUrl(`/lists/:type`, { type: key }), { replace: true });
           }}
-          tabBarExtraContent={
-            <div className={s.buttons}>
-              {listType === 'WHITELIST' && (
-                <>
-                  <Button
-                    size="LARGE"
-                    onClick={() => {
-                      setNewModalOpen(true);
-                    }}
-                    requiredPermissions={['lists:whitelist:write']}
-                  >
-                    Add new whitelist
-                  </Button>
-                  {/*<Button type="skeleton" size="large">*/}
-                  {/*  Upload Whitelist*/}
-                  {/*</Button>*/}
-                </>
-              )}
-              {listType === 'BLACKLIST' && (
-                <>
-                  <Button
-                    size="LARGE"
-                    requiredPermissions={['lists:blacklist:write']}
-                    onClick={() => {
-                      setNewModalOpen(true);
-                    }}
-                  >
-                    Add new blacklist
-                  </Button>
-                  {/*<Button type="skeleton" size="large">*/}
-                  {/*  Upload Blacklist*/}
-                  {/*</Button>*/}
-                </>
-              )}
-            </div>
-          }
           items={[
             {
               key: 'whitelist',
               title: 'Whitelists',
               children: (
                 <PageWrapperContentContainer>
-                  <ListTable ref={whitelistsTableRef} listType="WHITELIST" />
+                  <ListTable
+                    ref={whitelistsTableRef}
+                    listType="WHITELIST"
+                    extraTools={[
+                      () =>
+                        listType === 'WHITELIST' && (
+                          <>
+                            <Button
+                              size="LARGE"
+                              onClick={() => {
+                                setNewModalOpen(true);
+                              }}
+                              requiredPermissions={['lists:all:write']}
+                            >
+                              Add new whitelist
+                            </Button>
+                          </>
+                        ),
+                    ]}
+                  />
                 </PageWrapperContentContainer>
               ),
             },
@@ -80,7 +62,26 @@ export default function CreatedListsPage() {
               title: 'Blacklists',
               children: (
                 <PageWrapperContentContainer>
-                  <ListTable ref={blacklistsTableRef} listType="BLACKLIST" />
+                  <ListTable
+                    ref={blacklistsTableRef}
+                    listType="BLACKLIST"
+                    extraTools={[
+                      () =>
+                        listType === 'BLACKLIST' && (
+                          <>
+                            <Button
+                              size="LARGE"
+                              onClick={() => {
+                                setNewModalOpen(true);
+                              }}
+                              requiredPermissions={['lists:all:write']}
+                            >
+                              Add new blacklist
+                            </Button>
+                          </>
+                        ),
+                    ]}
+                  />
                 </PageWrapperContentContainer>
               ),
             },
