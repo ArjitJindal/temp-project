@@ -635,7 +635,7 @@ You have to answer in below format as string. If you don't know any field, just 
           })
           aggVariableKeys.forEach((aggVar) => {
             if (!aggVarKeys.includes(aggVar)) {
-              throw new BadRequest(`Unknown aggregate variable '${aggVar}'`)
+              logger.error(`Unknown aggregate variable '${aggVar}'`)
             }
           })
         } catch (e) {
