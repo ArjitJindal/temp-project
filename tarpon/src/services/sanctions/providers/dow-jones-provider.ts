@@ -363,12 +363,21 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     filepath: string
   ) {
     logger.info(`Processing ${filepath}`)
-    const peopleFiles = await this.listFilePaths(filepath)
+    // Jump down two directories which are something like Factiva_PFA_Feed_XML
+    const pfaSplitsDir = fs
+      .readdirSync(filepath)
+      .filter((f) => fs.statSync(path.join(filepath, f)).isDirectory())[0]
+
+    const rootDir = path.join(filepath, pfaSplitsDir)
+
+    const peopleFiles = await this.listFilePaths(rootDir)
     if (peopleFiles.length == 0) {
+      logger.info(`No files in ${rootDir}`)
       return
     }
     await Promise.all(
       peopleFiles.map(async (peopleFile) => {
+        logger.info(`Processing ${peopleFile}`)
         const xml = this.readFile(peopleFile)
         const jsonObj = parser.parse(xml)
         const contextItems = [
@@ -483,6 +492,17 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     const people = jsonObj.PFA.Person ?? jsonObj.PFA.Records.Person
     const entities = people
       .map((person: any): [Action, SanctionsEntity] | undefined => {
+        if (person['@_action'] == 'del') {
+          return [
+            'del',
+            {
+              id: person['@_id'],
+              name: '',
+              entityType: '',
+            },
+          ]
+        }
+
         const sanctionsReferences = person.SanctionsReferences?.filter(
           (sr) => !sr['@_toDay']
         ) // Dow Jones uses this field to mark when a person is no longer under sanctions, they dont delete records
