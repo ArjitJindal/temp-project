@@ -730,61 +730,65 @@ export const getGlobalCollectionIndexes = (): {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
   }
 } => {
+  const sanctionsDefinition = {
+    getIndexes: () => [
+      {
+        index: {
+          provider: 1,
+          version: 1,
+          id: 1,
+          deletedAt: 1,
+        },
+      },
+      {
+        index: {
+          provider: 1,
+          version: 1,
+          id: 1,
+        },
+        unique: true,
+      },
+      {
+        index: {
+          'documents.formattedId': 1,
+        },
+      },
+      {
+        index: {
+          'documents.id': 1,
+        },
+      },
+      {
+        index: {
+          nationality: 1,
+        },
+      },
+      {
+        index: {
+          gender: 1,
+        },
+      },
+      {
+        index: {
+          'occupations.rank': 1,
+        },
+      },
+      {
+        index: {
+          'associates.ranks': 1,
+        },
+      },
+      {
+        index: {
+          yearOfBirth: 1,
+        },
+      },
+    ],
+  }
+
   return {
-    [SANCTIONS_COLLECTION]: {
-      getIndexes: () => [
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-            deletedAt: 1,
-          },
-        },
-        {
-          index: {
-            provider: 1,
-            version: 1,
-            id: 1,
-          },
-          unique: true,
-        },
-        {
-          index: {
-            'documents.formattedId': 1,
-          },
-        },
-        {
-          index: {
-            'documents.id': 1,
-          },
-        },
-        {
-          index: {
-            nationality: 1,
-          },
-        },
-        {
-          index: {
-            gender: 1,
-          },
-        },
-        {
-          index: {
-            'occupations.rank': 1,
-          },
-        },
-        {
-          index: {
-            'associates.ranks': 1,
-          },
-        },
-        {
-          index: {
-            yearOfBirth: 1,
-          },
-        },
-      ],
-    },
+    [OLD_SANCTIONS_COLLECTION]: sanctionsDefinition,
+    [SANCTIONS_COLLECTION]: sanctionsDefinition,
+    [NEW_SANCTIONS_COLLECTION]: sanctionsDefinition,
   }
 }
