@@ -1,4 +1,4 @@
-import { compact, memoize } from 'lodash'
+import { compact, memoize, uniqBy } from 'lodash'
 import { getUsers } from './users'
 import { getTransactions } from '@/core/seed/data/transactions'
 import {
@@ -42,7 +42,10 @@ export const getCases: () => Case[] = memoize(() => {
     data.push(...destinationCases)
     data.push(...originCases)
   }
-  return data
+
+  const uniqueCases = uniqBy(data, 'caseId')
+
+  return uniqueCases
 })
 
 export const auditLogForCaseStatusChange: () => AuditLog[] = memoize(() => {

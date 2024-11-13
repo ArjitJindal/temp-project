@@ -256,7 +256,7 @@ export function sampleTransactionUserCases(params: {
           })
         }),
     }
-  }).filter((c) => c.alerts && c.alerts.length > 0)
+  }).filter((c) => c.alerts && c.alerts.length)
 }
 
 export function sampleAlert(params: {

@@ -13,6 +13,7 @@ import {
   difference,
   isEmpty,
   isEqual,
+  uniq,
   uniqBy,
 } from 'lodash'
 import { MongoClient } from 'mongodb'
@@ -998,7 +999,10 @@ export class CaseService extends CaseAlertsCommonService {
     })
 
     const oldCases = await this.caseRepository.getCasesByIds(caseIds)
-    if (oldCases.length !== caseIds.length) {
+    const oldCasesIds = oldCases.map((c) => c.caseId)
+    const uniqueOldCasesIds = uniq(oldCasesIds)
+
+    if (uniqueOldCasesIds.length !== uniq(caseIds).length) {
       throw new NotFound(
         `Cases not found: ${difference(
           caseIds,

@@ -8,6 +8,7 @@ import { getArsScores } from './data/ars_scores'
 import { getQASamples } from './samplers/qa-samples'
 import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
+import { getCounterCollectionData } from './data/counter'
 import {
   batchInsertToClickhouse,
   createTenantDatabase,
@@ -83,6 +84,7 @@ import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
   [CASES_COLLECTION, () => getCases()],
+  [COUNTER_COLLECTION, () => getCounterCollectionData()],
   [USERS_COLLECTION, () => getUsers()],
   [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
   [AUDITLOG_COLLECTION, () => auditlogs()],
