@@ -11,7 +11,7 @@ import Form, { FormRef, InputProps } from '@/components/library/Form';
 import { CaseReasons, FileInfo, RuleAction } from '@/apis';
 import { CASE_REASONSS } from '@/apis/models-custom/CaseReasons';
 import { useApi } from '@/api';
-import { message } from '@/components/library/Message';
+import { CloseMessage, message } from '@/components/library/Message';
 import TextArea from '@/components/library/TextArea';
 import Select from '@/components/library/Select';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
@@ -45,9 +45,14 @@ export default function PaymentApprovalModal({
   const api = useApi();
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
 
+  let messageData: CloseMessage;
   const mutation = useMutation(
-    async (values: FormValues) =>
-      api.applyTransactionsAction({
+    async (values: FormValues) => {
+      messageData = message.loading(
+        `${humanizeConstant(action)} transaction${transactionIds.length > 1 ? 's' : ''}`,
+      );
+
+      const res = await api.applyTransactionsAction({
         TransactionAction: {
           transactionIds,
           comment: values.comment,
@@ -55,9 +60,13 @@ export default function PaymentApprovalModal({
           files: values.files?.length > 0 ? values.files : [],
           action,
         },
-      }),
+      });
+
+      return res;
+    },
     {
       onSuccess: () => {
+        messageData?.();
         if (action === 'ALLOW') {
           message.success(
             `Transaction(s) were allowed (It might take a few seconds to be visible in Console)`,
@@ -72,6 +81,7 @@ export default function PaymentApprovalModal({
         hide();
       },
       onError: (e) => {
+        messageData?.();
         message.error(`Could not update transaction status: ${e}`);
       },
     },
