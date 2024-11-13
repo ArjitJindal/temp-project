@@ -246,21 +246,32 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchTypeCondition)
       }
     }
-    if (request.documentId?.length && request.allowDocumentMatches) {
-      const matchDocumentCondition = {
-        $or: [
-          {
-            'documents.id': {
-              $in: request.documentId,
-            },
-          },
-          {
-            'documents.formattedId': {
-              $in: request.documentId,
-            },
-          },
-        ],
-      }
+    if (request.documentId && request.allowDocumentMatches) {
+      const matchDocumentCondition = request.documentId.length
+        ? {
+            $or: [
+              {
+                'documents.id': {
+                  $in: request.documentId,
+                },
+              },
+              {
+                'documents.formattedId': {
+                  $in: request.documentId,
+                },
+              },
+            ],
+          }
+        : {
+            $and: [
+              {
+                'documents.id': '__no_match__',
+              },
+              {
+                'documents.formattedId': '__no_match__',
+              },
+            ],
+          }
       if (request.orFilters?.includes('documentId')) {
         orConditions.push(matchDocumentCondition)
       } else {
@@ -679,7 +690,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     if (
       !request.manualSearch &&
-      (request.fuzzinessRange?.upperBound === 100 || request.fuzziness === 100)
+      (request.fuzzinessRange?.upperBound === 100 ||
+        (request.fuzziness ?? 0) * 100 === 100)
     ) {
       return this.searchWithoutMatchingNames(request)
     }
