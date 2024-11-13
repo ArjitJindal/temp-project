@@ -1210,14 +1210,18 @@ export class UserService {
       files,
     })
 
-    if (comment.files?.length && comment.id && hasFeature('FILES_AI_SUMMARY')) {
+    if (
+      comment.files?.length &&
+      savedComment.id &&
+      hasFeature('FILES_AI_SUMMARY')
+    ) {
       await sendBatchJobCommand({
         type: 'FILES_AI_SUMMARY',
         tenantId: this.userRepository.tenantId,
         parameters: {
           type: 'USER',
           entityId: userId,
-          commentId: comment.id,
+          commentId: savedComment.id,
         },
         awsCredentials: this.awsCredentials,
       })
