@@ -43,7 +43,7 @@ type RowHeightMode = 'FIXED' | 'AUTO';
 
 export interface Props<Item extends object, Params extends object = CommonParams> {
   innerRef?: React.Ref<TableRefType>;
-  cursor?: Cursor;
+  cursor?: AsyncResource<Cursor>;
   tableId?: string;
   rowKey: FieldAccessor<Item>;
   data: TableData<Item> | AsyncResource<TableData<Item>>;
@@ -455,7 +455,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
       {cursor && (
         <CursorPagination
           pageSize={params?.pageSize ?? DEFAULT_PAGE_SIZE}
-          cursor={cursor}
+          cursorRes={cursor}
           isDisabled={isLoading(dataRes)}
           onPageChange={(pageSize) => handleChangeParamsPaginated({ ...params, pageSize })}
           onFromChange={(from) => handleChangeParamsPaginated({ ...params, from })}

@@ -4,25 +4,20 @@ import { AsyncResource } from '@/utils/asyncResource';
 import { PaginationParams } from '@/utils/queries/hooks';
 
 export interface Cursor {
-  fetchNextPage: () => string;
-  fetchPreviousPage: () => string;
-  fetchFirstPage: () => string;
-  fetchLastPage: () => string;
-  prev: string;
-  next: string;
-  last: string;
-  from: string;
-  hasNext: boolean;
-  hasPrev: boolean;
-  count: number;
-  limit: number;
+  prev?: string;
+  next?: string;
+  last?: string;
+  hasNext?: boolean;
+  hasPrev?: boolean;
+  count?: number;
+  limit?: number;
 }
 export interface QueryResult<Data> {
   data: ar.AsyncResource<Data>;
   refetch: () => void;
   paginate?: (params: PaginationParams) => Promise<Data>;
   loadingNext?: boolean;
-  cursor?: Cursor;
+  cursor?: ar.AsyncResource<Cursor>;
 }
 
 export function map<T, R>(

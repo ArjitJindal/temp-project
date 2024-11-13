@@ -65,6 +65,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     async ({ from }) => {
       if (isClickhouseEnabled) {
         return {
+          from: from || params.from,
           items: [],
           next: '',
           prev: '',
@@ -121,6 +122,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
       return {
         ...response,
+        from: from || params.from,
         items: response.items as InternalUser[],
       };
     },

@@ -11,8 +11,8 @@ import { QueriesOptions } from '@tanstack/react-query/build/types/packages/react
 import { InfiniteData } from '@tanstack/query-core/src/types';
 import { useInterval } from 'ahooks';
 import { getErrorMessage, neverThrow } from '@/utils/lang';
-import { AsyncResource, failed, init, loading, success } from '@/utils/asyncResource';
-import { QueryResult } from '@/utils/queries/types';
+import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
+import { Cursor, QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
 
 export function useQuery<
@@ -88,9 +88,9 @@ export type PaginatedData<T> = {
 };
 
 export type CursorPaginatedData<T> = PaginatedData<T> & {
-  next: string;
-  prev: string;
-  last: string;
+  next: string | undefined;
+  prev: string | undefined;
+  last: string | undefined;
   hasNext: boolean;
   hasPrev: boolean;
   count: number;
@@ -143,61 +143,32 @@ export function useCursorQuery<TData = unknown, TQueryKey extends QueryKey = Que
     'queryKey' | 'queryFn' | 'initialData'
   > & { initialData?: () => undefined },
 ): QueryResult<CursorPaginatedData<TData>> {
-  const [pageParams, setPageParams] = useState({
-    next: '',
-    prev: '',
-    last: '',
-    hasNext: false,
-    hasPrev: false,
-    count: 0,
-    limit: 0,
-  });
-  const [pageParam, setPageParam] = useState('');
-  const newQueryKey = [
-    ...(Array.isArray(queryKey) ? queryKey : [queryKey]),
-    { pageParam },
-  ] as unknown as TQueryKey;
   const results = useQuery<CursorPaginatedData<TData>, CursorPaginatedData<TData>, TQueryKey>(
-    newQueryKey,
+    queryKey,
     () => {
-      return queryFn({ from: pageParam });
+      return queryFn({});
     },
     {
       ...options,
       cacheTime: 0,
-      onSuccess: (r) => {
-        setPageParams(r);
-      },
     },
   );
-  const fetchPreviousPage = () => {
-    setPageParam(pageParams.prev);
-    return pageParams.prev;
-  };
-  const fetchNextPage = () => {
-    setPageParam(pageParams.next);
-    return pageParams.next;
-  };
-  const fetchFirstPage = () => {
-    setPageParam('');
-    return '';
-  };
-  const fetchLastPage = () => {
-    setPageParam(pageParams.last);
-    return pageParams.last;
-  };
 
   return {
     ...results,
     paginate: queryFn,
-    cursor: {
-      ...pageParams,
-      from: pageParam,
-      fetchPreviousPage,
-      fetchNextPage,
-      fetchFirstPage,
-      fetchLastPage,
-    },
+    cursor: map(
+      results.data,
+      (result): Cursor => ({
+        next: result.next ?? '',
+        prev: result.prev ?? '',
+        last: result.last ?? '',
+        hasNext: result.hasNext,
+        hasPrev: result.hasPrev,
+        count: result.count,
+        limit: result.limit,
+      }),
+    ),
   };
 }
 

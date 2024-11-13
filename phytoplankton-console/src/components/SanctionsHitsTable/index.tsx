@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, startCase } from 'lodash';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
@@ -16,7 +16,7 @@ import {
 import { SanctionsHitStatus } from '@/apis/models/SanctionsHitStatus';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { QueryResult } from '@/utils/queries/types';
+import { Cursor, QueryResult } from '@/utils/queries/types';
 import Tag from '@/components/library/Tag';
 import {
   ID,
@@ -27,6 +27,7 @@ import Id from '@/components/ui/Id';
 import {
   AsyncResource,
   getOr,
+  init,
   isSuccess,
   loading,
   success,
@@ -81,7 +82,20 @@ export default function SanctionsHitsTable(props: Props) {
     AsyncResource<SanctionsHit | undefined>
   >(success(undefined));
 
-  const hitsNavigation = useHitsNavigation(selectedSearchHit, setSelectedSearchHit, queryResult);
+  const handleChangeCursor = useCallback(
+    (from: string) => {
+      if (params) {
+        onChangeParams?.({ ...params, from });
+      }
+    },
+    [params, onChangeParams],
+  );
+  const hitsNavigation = useHitsNavigation(
+    selectedSearchHit,
+    setSelectedSearchHit,
+    queryResult,
+    handleChangeCursor,
+  );
 
   const helper = new ColumnHelper<SanctionsHit>();
   const columns: TableColumn<SanctionsHit>[] = helper.list([
@@ -224,16 +238,12 @@ function useHitsNavigation(
   selectedSearchHitRes: AsyncResource<SanctionsHit | undefined>,
   setSelectedSearchHit: (sanctionsHit: AsyncResource<SanctionsHit | undefined>) => void,
   queryResult: QueryResult<TableData<SanctionsHit>>,
+  onChangeCursor: (from: string) => void,
 ): {
   onNext?: () => void;
   onPrev?: () => void;
 } {
-  const {
-    hasPrev = false,
-    hasNext = false,
-    fetchNextPage,
-    fetchPreviousPage,
-  } = queryResult.cursor ?? {};
+  const { prev, next, hasNext, hasPrev } = getOr<Cursor>(queryResult.cursor ?? init(), {});
 
   const tableItems: TableDataItem<SanctionsHit>[] = useMemo(() => {
     return getOr(queryResult.data, null)?.items ?? [];
@@ -282,8 +292,10 @@ function useHitsNavigation(
     } else if (hasNext) {
       onNext = () => {
         setSelectedSearchHit(loading(selectedSearchHit));
-        setWaitingNextPage(true);
-        fetchNextPage?.();
+        if (hasNext && next) {
+          setWaitingNextPage(true);
+          onChangeCursor(next);
+        }
       };
     }
 
@@ -293,8 +305,10 @@ function useHitsNavigation(
     } else if (hasPrev) {
       onPrev = () => {
         setSelectedSearchHit(loading(selectedSearchHit));
-        setWaitingPrevPage(true);
-        fetchPreviousPage?.();
+        if (hasPrev) {
+          setWaitingPrevPage(true);
+          onChangeCursor(prev ?? '');
+        }
       };
     }
     return {
@@ -305,10 +319,11 @@ function useHitsNavigation(
     selectedSearchHit,
     setSelectedSearchHit,
     tableItems,
-    fetchPreviousPage,
-    fetchNextPage,
+    next,
+    prev,
     hasNext,
     hasPrev,
     waitingPage,
+    onChangeCursor,
   ]);
 }
