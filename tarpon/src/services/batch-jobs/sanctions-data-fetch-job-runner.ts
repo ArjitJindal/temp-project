@@ -13,7 +13,10 @@ import {
   OLD_SANCTIONS_COLLECTION,
   SANCTIONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import {
+  createGlobalMongoDBCollections,
+  getMongoDbClient,
+} from '@/utils/mongodb-utils'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
@@ -25,10 +28,12 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       ? dayjs(job.parameters.from).format('YYYY-MM')
       : dayjs().format('YYYY-MM')
     logger.info(`Running ${runFullLoad ? 'full' : 'delta'} load`)
+    const client = await getMongoDbClient()
 
     for (const fetcher of fetchers) {
       logger.info(`Running ${fetcher.constructor.name}`)
       if (runFullLoad) {
+        await createGlobalMongoDBCollections(client)
         const repo = new MongoSanctionsRepository(NEW_SANCTIONS_COLLECTION)
         await fetcher.fullLoad(repo, version)
       } else {
@@ -45,7 +50,6 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         jitter: 'full',
       })
 
-      const client = await getMongoDbClient()
       const session = client.startSession()
       session.startTransaction()
 
