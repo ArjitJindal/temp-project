@@ -57,8 +57,10 @@ function ListTable(props: Props, ref: ListTableRef) {
       const { listId, metadata } = event;
       const hideMessage = message.loading('Updating list...');
       try {
-        const patchMethod = listType === 'WHITELIST' ? api.patchWhiteList : api.patchBlacklist;
-        await patchMethod({ listId, ListData: { metadata } });
+        listType === 'WHITELIST'
+          ? await api.patchWhiteList({ listId, ListData: { metadata } })
+          : await api.patchBlacklist({ listId, ListData: { metadata } });
+
         message.success('List state saved!');
       } catch (e) {
         message.fatal(`Unable to save list! ${getErrorMessage(e)}`, e);
