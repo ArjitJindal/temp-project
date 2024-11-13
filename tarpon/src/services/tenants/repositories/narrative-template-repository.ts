@@ -12,7 +12,7 @@ export class NarrativeRepository {
 
   constructor(tenantId: string, mongoClient: MongoClient) {
     this.collection = mongoClient
-      .db(tenantId)
+      .db()
       .collection<NarrativeTemplate>(NARRATIVE_TEMPLATE_COLLECTION(tenantId))
   }
 
