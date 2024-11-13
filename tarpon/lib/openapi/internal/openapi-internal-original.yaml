@@ -2830,6 +2830,7 @@ paths:
               - DAY
           in: query
           name: granularity
+          required: true
     parameters: []
   /dashboard_stats/transactions/total:
     get:

@@ -95,6 +95,7 @@ export const HOUR_DATE_FORMAT = '%Y-%m-%dT%H'
 export const MONTH_DATE_FORMAT_JS = 'YYYY-MM'
 export const DAY_DATE_FORMAT_JS = 'YYYY-MM-DD'
 export const HOUR_DATE_FORMAT_JS = 'YYYY-MM-DD[T]HH'
+export const DATE_TIME_FORMAT_JS = 'YYYY-MM-DD HH:mm:ss'
 
 export function getDateFormatByGranularity(
   granularity: 'HOUR' | 'DAY' | 'MONTH'
