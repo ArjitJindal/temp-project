@@ -320,7 +320,11 @@ export const executeTimeBasedClickhouseQuery = async <
 
   const query = `
     SELECT 
-      ${clickhouseTimeMethod}(toDateTime(timestamp / 1000)) as time,
+      ${
+        !countOnly
+          ? `${clickhouseTimeMethod}(toDateTime(timestamp / 1000))`
+          : `''`
+      } as time,
       ${selectStatement}
     FROM ${tableName} FINAL
     WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}') ${
@@ -340,10 +344,14 @@ export const executeTimeBasedClickhouseQuery = async <
     }
   `
 
-  const data = await executeClickhouseQuery<T>(tenantId, query, {})
+  let data = await executeClickhouseQuery<T>(tenantId, query, {})
 
-  return data.map((item) => {
-    item.time = dayjs(item.time).format(dateFormatJs)
-    return item
-  })
+  if (!countOnly) {
+    data = data.map((item) => {
+      item.time = dayjs(item.time).format(dateFormatJs)
+      return item
+    })
+  }
+
+  return data
 }
