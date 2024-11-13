@@ -956,23 +956,11 @@ export class RulesEngineService {
     senderUser: User | Business | null,
     receiverUser: User | Business | null
   ): Promise<void> {
-    let transactionEvents: TransactionEventWithRulesResult[] = []
-    if (this.tenantId === '0789ad73b8' || this.tenantId === 'pnb') {
-      const events =
-        await this.transactionEventRepository.getMongoTransactionEvents([
-          updatedTransaction.transactionId,
-        ])
-      transactionEvents = events.get(
-        updatedTransaction.transactionId
-      ) as TransactionEventWithRulesResult[]
-      transactionEvents.sort((a, b) => a.timestamp - b.timestamp)
-    } else {
-      transactionEvents =
-        await this.transactionEventRepository.getTransactionEvents(
-          updatedTransaction.transactionId,
-          { consistentRead: true }
-        )
-    }
+    const transactionEvents =
+      await this.transactionEventRepository.getTransactionEvents(
+        updatedTransaction.transactionId,
+        { consistentRead: true }
+      )
 
     const transactionEventInDb = transactionEvents.find(
       (event) => event.eventId === transactionEventId
