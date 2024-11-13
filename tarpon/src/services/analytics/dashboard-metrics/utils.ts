@@ -8,6 +8,10 @@ import {
 } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import { AccountsService } from '@/services/accounts'
+import {
+  executeClickhouseQuery,
+  getTimeformatsByGranularity,
+} from '@/utils/clickhouse/utils'
 
 export function withUpdatedAt(
   pipeline: Document[],
@@ -292,4 +296,54 @@ export const updateRoles = async (db: Db, collectionName: string) => {
       )
     }
   }
+}
+
+type TimeQueryResult<T> = T & { time: string }
+
+export const executeTimeBasedClickhouseQuery = async <
+  T extends TimeQueryResult<object>
+>(
+  tenantId: string,
+  tableName: string,
+  granularity: 'HOUR' | 'DAY' | 'MONTH',
+  selectStatement: string,
+  timeRange: { startTimestamp: number; endTimestamp: number },
+  additionalWhereClause: string,
+  options?: { countOnly?: boolean }
+): Promise<T[]> => {
+  const { clickhouseTimeMethod, dateFormatJs, timestampFormat } =
+    getTimeformatsByGranularity(granularity)
+  const countOnly = options?.countOnly ?? false
+  const { startTimestamp, endTimestamp } = timeRange
+  const gte = dayjs(startTimestamp).format(timestampFormat)
+  const lte = dayjs(endTimestamp).format(timestampFormat)
+
+  const query = `
+    SELECT 
+      ${clickhouseTimeMethod}(toDateTime(timestamp / 1000)) as time,
+      ${selectStatement}
+    FROM ${tableName} FINAL
+    WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}') ${
+    additionalWhereClause ? `AND ${additionalWhereClause}` : ''
+  }
+    ${
+      !countOnly
+        ? `
+    GROUP BY time
+    ORDER BY time ASC
+    WITH FILL
+    FROM ${clickhouseTimeMethod}(toDateTime(${startTimestamp} / 1000))
+    TO ${clickhouseTimeMethod}(toDateTime(${endTimestamp} / 1000)) + INTERVAL 1 ${granularity.toUpperCase()}
+    STEP INTERVAL 1 ${granularity.toUpperCase()}
+    `
+        : ''
+    }
+  `
+
+  const data = await executeClickhouseQuery<T>(tenantId, query, {})
+
+  return data.map((item) => {
+    item.time = dayjs(item.time).format(dateFormatJs)
+    return item
+  })
 }
