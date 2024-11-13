@@ -1,4 +1,5 @@
 import pMap from 'p-map'
+import { omit } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillKrs } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
@@ -9,6 +10,8 @@ import {
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { pickKnownEntityFields } from '@/utils/object'
+import { User } from '@/@types/openapi-public/User'
 
 export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
@@ -77,7 +80,9 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
         'Content-Type': 'application/json',
         'x-api-key': this.publicApiKey,
       },
-      body: JSON.stringify(user),
+      body: JSON.stringify(
+        omit(pickKnownEntityFields(user, User), 'riskLevel')
+      ),
     })
     if (response.status >= 300) {
       logger.warn(`[${response.status}] Error processing user ${user.userId}`)

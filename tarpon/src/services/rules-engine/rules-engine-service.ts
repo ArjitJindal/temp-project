@@ -1927,6 +1927,10 @@ export class RulesEngineService {
     transaction: Transaction,
     previousTransactionEvents: TransactionEvent[]
   ) {
+    if (hasFeature('PNB')) {
+      return
+    }
+
     const updateAggregationsSegment = await addNewSubsegment(
       'Rules Engine',
       'Update Global Aggregations'
