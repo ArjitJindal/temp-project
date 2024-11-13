@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { PepStatusLabel, PepStatusValue } from './PepStatus';
 import { InternalConsumerUser, PEPStatus } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
@@ -9,7 +8,6 @@ import CountryDisplay from '@/components/ui/CountryDisplay';
 import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
-import Money from '@/components/ui/Money';
 interface Props {
   user: InternalConsumerUser;
 }
@@ -84,14 +82,6 @@ export default function GeneralDetails(props: Props) {
           label: 'Employment status',
           value: user.employmentStatus ?? '-',
         },
-        ...(user.expectedIncome
-          ? Object.entries(user.expectedIncome)
-              .filter(([_key, value]) => value != null)
-              .map(([key, value]) => ({
-                label: humanizeAuto(key),
-                value: value ? <Money amount={value} /> : '-',
-              }))
-          : []),
         { label: 'Sector', value: user?.employmentDetails?.employmentSector },
         { label: 'Industry', value: user?.employmentDetails?.businessIndustry },
         { label: 'Employer', value: user?.employmentDetails?.employerName },
