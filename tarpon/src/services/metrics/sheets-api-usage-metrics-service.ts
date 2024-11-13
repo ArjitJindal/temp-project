@@ -212,11 +212,14 @@ export class SheetsApiUsageMetricsService {
       `${this.googleSheetId}-DAILY`,
       this.dailyUsageMetricsSheet
     )
-    const row = rows.findIndex(
-      (row) =>
-        row[META_DATA_HEADERS_DAILY.DATE].toString() === dailyMetrics.date &&
-        row[META_DATA_HEADERS_DAILY.TENANT_ID].toString() === this.tenantId
-    )
+    const row = rows.findIndex((row) => {
+      const rowData = row.toObject()
+      return (
+        rowData[META_DATA_HEADERS_DAILY.DATE].toString() ===
+          dailyMetrics.date &&
+        rowData[META_DATA_HEADERS_DAILY.TENANT_ID].toString() === this.tenantId
+      )
+    })
     const newRow = merge(
       this.getDailyUsageMetadata(dailyMetrics.date),
       ...dailyMetrics.values.map((value) => ({
