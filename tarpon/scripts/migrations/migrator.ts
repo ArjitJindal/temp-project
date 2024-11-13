@@ -23,6 +23,7 @@ import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
+import { isDemoTenant } from '@/utils/tenant'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
 import { Tenant } from '@/services/accounts'
@@ -179,6 +180,10 @@ async function syncData() {
   await syncListLibrary()
   await syncFeatureFlags()
   await migrateAllTenants(async (tenant) => {
+    if (isDemoTenant(tenant.id)) {
+      return
+    }
+
     await RuleInstanceService.migrateV2RuleInstancesToV8(tenant.id)
     if (hasFeature('PNB')) {
       const ruleInstanceService = new RuleInstanceService(tenant.id, {
