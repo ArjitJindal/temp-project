@@ -37,7 +37,7 @@ export async function getUserMatches() {
   } else {
     fileContent = await readFileFromS3(
       s3Client,
-      'flagright-datalake-sandbox-asia-1-bucket',
+      `flagright-datalake-prod-asia-1-bucket`,
       'matched_user_ids.csv'
     )
   }
