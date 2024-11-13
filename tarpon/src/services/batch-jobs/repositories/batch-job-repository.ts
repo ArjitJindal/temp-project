@@ -75,17 +75,13 @@ export class BatchJobRepository {
       status,
       timestamp: Date.now(),
     }
-    await db.collection(collection).updateOne(
-      { jobId },
-      {
-        $set: {
-          latestStatus,
-        },
-        $push: {
-          statuses: latestStatus,
-        },
-      }
-    )
+
+    await db
+      .collection<BatchJobInDb>(collection)
+      .updateOne(
+        { jobId },
+        { $set: { latestStatus }, $push: { statuses: latestStatus } }
+      )
   }
 
   public async updateJob(
@@ -97,6 +93,7 @@ export class BatchJobRepository {
     const result = await db
       .collection<BatchJobInDb>(collection)
       .findOneAndUpdate({ jobId }, updater, { returnDocument: 'after' })
-    return result.value as BatchJobInDb
+
+    return result as BatchJobInDb
   }
 }

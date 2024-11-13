@@ -53,7 +53,7 @@ export class NarrativeRepository {
       { $set: { ...narrative } }
     )
 
-    return data.value
+    return data
   }
 
   public async deleteNarrativeTemplate(narrativeTemplateId: string) {

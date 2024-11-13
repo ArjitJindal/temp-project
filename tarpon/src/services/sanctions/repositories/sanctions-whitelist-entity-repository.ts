@@ -81,7 +81,7 @@ export class SanctionsWhitelistEntityRepository {
               },
               { upsert: true, returnDocument: 'after' }
             )
-            return result.value
+            return result
           }
         )
       )

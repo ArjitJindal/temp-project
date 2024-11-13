@@ -65,9 +65,10 @@ export class InvestigationRepository {
         upsert: true,
       }
     )
-    if (!investigation.value) {
+    if (!investigation) {
       return insert
     }
-    return investigation.value
+
+    return investigation
   }
 }

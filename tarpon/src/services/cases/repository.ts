@@ -168,7 +168,7 @@ export class CaseRepository {
       { returnDocument: 'after' }
     )
 
-    return updatedCase.value
+    return updatedCase
   }
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {

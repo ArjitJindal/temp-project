@@ -62,7 +62,7 @@ export class CounterRepository {
       { upsert: true, returnDocument: 'after' }
     )
 
-    return data.value?.count ?? 1
+    return data?.count ?? 1
   }
 
   public async getNextCountersAndUpdate(
@@ -79,7 +79,7 @@ export class CounterRepository {
       { upsert: true, returnDocument: 'after' }
     )
 
-    const value = data.value?.count ?? 1
+    const value = data?.count ?? 1
     return [...new Array(count)].map((_, i) => value - i)
   }
 

@@ -356,7 +356,7 @@ export async function syncIndexes<T>(
   while (indexesToDrop.length > 0 || indexesToCreate.length > 0) {
     if (currentTotalIndexes === 64 || indexesToCreate.length === 0) {
       const indexToDrop = indexesToDrop.pop()
-      if (indexToDrop) {
+      if (indexToDrop?.name) {
         await collection.dropIndex(indexToDrop.name)
         logger.info(
           `Dropped index - ${indexToDrop.name} (${collection.collectionName})`
@@ -453,7 +453,7 @@ export async function internalMongoReplace<T extends Document>(
     projection: { _id: 1 },
   })
 
-  const result = data.value as { _id: ObjectId }
+  const result = data as { _id: ObjectId }
 
   await sendMessageToMongoConsumer({
     collectionName,
@@ -484,6 +484,7 @@ export async function internalMongoUpdateOne<T extends Document>(
     ...(options?.arrayFilters ? { arrayFilters: options.arrayFilters } : {}),
     ...(options?.returnFullDocument ? {} : { projection: { _id: 1 } }),
     ...(options?.session ? { session: options.session } : {}),
+    includeResultMetadata: true,
   })
 
   const result = data.value as { _id: ObjectId }

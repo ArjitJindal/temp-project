@@ -339,7 +339,7 @@ export class SimulationTaskRepository {
     const collection = db.collection<SimulationAllJobs>(
       SIMULATION_TASK_COLLECTION(this.tenantId)
     )
-    const query: Filter<Partial<SimulationAllJobs>> = {
+    const query: Filter<SimulationAllJobs> = {
       type: params.type,
     }
     if (!params.includeInternal) {

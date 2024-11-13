@@ -1488,7 +1488,7 @@ export class AlertsRepository {
       { returnDocument: 'after' }
     )
 
-    return updatedCaseData.value as Case
+    return updatedCaseData as Case
   }
 
   public async getRuleInstanceStats(
