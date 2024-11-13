@@ -5,7 +5,7 @@ import {
   SanctionsSearchResponse,
 } from '@/@types/openapi-internal/all'
 
-export type Action = 'add' | 'remove' | 'chg'
+export type Action = 'add' | 'del' | 'chg'
 
 export type SanctionsProviderResponse = Omit<
   SanctionsSearchResponse,

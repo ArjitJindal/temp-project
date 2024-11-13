@@ -61,7 +61,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
               },
             },
           }
-        case 'remove':
+        case 'del':
           return {
             updateOne: {
               filter: {
