@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, startCase } from 'lodash';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -157,12 +158,12 @@ export default function SanctionsHitsTable(props: Props) {
     helper.derived<string[]>({
       title: 'Relevance',
       value: (entity: SanctionsHit) => {
-        return entity.entity.matchTypes;
+        return entity.entity.types;
       },
       type: {
         defaultWrapMode: 'WRAP',
         render: (matchTypes) => {
-          return <div>{matchTypes?.join(', ')}</div>;
+          return <div>{matchTypes?.map((type) => humanizeAuto(type)).join(', ')}</div>;
         },
       },
     }),

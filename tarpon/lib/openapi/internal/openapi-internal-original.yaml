@@ -11918,6 +11918,8 @@ components:
             type: string
         allowDocumentMatches:
           type: boolean
+        manualSearch:
+          type: boolean
       required:
         - searchTerm
     PepRank:
@@ -12841,6 +12843,12 @@ components:
         - removed_organisation_suffix
         - removed_clerical_mark
         - name_variations_removal
+        - year_of_birth
+        - document_id
+        - nationality
+        - gender
+        - PEP_rank
+        - associate_PEP_rank
     UsersUniquesField:
       title: UsersUniquesField
       type: string

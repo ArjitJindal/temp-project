@@ -1,5 +1,7 @@
 import { MongoClient, Collection } from 'mongodb'
+import { intersection, sample } from 'lodash'
 import { SanctionsDataFetcher } from '../sanctions-data-fetcher'
+import data from './ongoing_search_results.json'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -301,5 +303,86 @@ describe('SanctionsDataFetcher Integration Tests', () => {
       PEPRank: 'LEVEL_1',
     })
     expect(searchResult2.data?.length).toBe(0)
+  })
+
+  test('search should return results with 100 fuzziness', async () => {
+    const screeningEntities = data
+      .map((entity) => JSON.parse(entity.data))
+      .filter(
+        (entity) =>
+          entity.documents?.length && entity.sanctionSearchTypes?.length
+      )
+      .slice(0, 10)
+
+    await sanctionsCollection.insertMany(screeningEntities)
+
+    const randomEntity1 = sample(screeningEntities)
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
+    const searchResult1 = await sanctionsFetcher.searchWithoutMatchingNames({
+      searchTerm: randomEntity1.name,
+      documentId: randomEntity1.documents?.map((doc) => doc.formattedId),
+      types: randomEntity1.sanctionSearchTypes,
+      allowDocumentMatches: true,
+    })
+    expect(searchResult1.data?.length).toBeGreaterThan(0)
+    const resultDocumentIds = searchResult1.data?.map((result) =>
+      result.documents?.map((doc) => doc.formattedId)
+    )
+    expect(
+      resultDocumentIds?.every(
+        (ids) =>
+          intersection(
+            ids,
+            randomEntity1.documents?.map((doc) => doc.formattedId)
+          ).length > 0
+      )
+    ).toBe(true)
+    expect(
+      searchResult1.data?.every(
+        (result) =>
+          intersection(
+            result.sanctionSearchTypes,
+            randomEntity1.sanctionSearchTypes
+          ).length > 0
+      )
+    ).toBe(true)
+
+    const randomEntity2 = sample(screeningEntities)
+    const searchResult2 = await sanctionsFetcher.searchWithoutMatchingNames({
+      searchTerm: randomEntity2.name,
+      documentId: randomEntity2.documents?.map((doc) => doc.formattedId),
+      types: randomEntity2.sanctionSearchTypes,
+      allowDocumentMatches: true,
+    })
+    expect(searchResult2.data?.length).toBeGreaterThan(0)
+    const resultDocumentIds2 = searchResult2.data?.map((result) =>
+      result.documents?.map((doc) => doc.formattedId)
+    )
+    expect(
+      resultDocumentIds2?.every(
+        (ids) =>
+          intersection(
+            ids,
+            randomEntity2.documents?.map((doc) => doc.formattedId)
+          ).length > 0
+      )
+    ).toBe(true)
+    expect(
+      searchResult2.data?.every(
+        (result) =>
+          intersection(
+            result.sanctionSearchTypes,
+            randomEntity2.sanctionSearchTypes
+          ).length > 0
+      )
+    ).toBe(true)
+
+    const searchResult3 = await sanctionsFetcher.searchWithoutMatchingNames({
+      searchTerm: 'Rajesh Kumar',
+      documentId: ['test-to-not-match'],
+      types: ['ADVERSE_MEDIA'],
+      allowDocumentMatches: true,
+    })
+    expect(searchResult3.data?.length).toBe(0)
   })
 })

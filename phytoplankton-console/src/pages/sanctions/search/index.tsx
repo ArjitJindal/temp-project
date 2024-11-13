@@ -88,6 +88,7 @@ export function SearchResultTable(props: Props) {
           nationality: searchParams.nationality,
           occupationCode: searchParams.occupationCode,
           documentId: searchParams.documentId ? [searchParams.documentId] : undefined,
+          manualSearch: true,
         },
       });
     },

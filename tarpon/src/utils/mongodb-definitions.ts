@@ -749,6 +749,41 @@ export const getGlobalCollectionIndexes = (): {
           },
           unique: true,
         },
+        {
+          index: {
+            'documents.formattedId': 1,
+          },
+        },
+        {
+          index: {
+            'documents.id': 1,
+          },
+        },
+        {
+          index: {
+            nationality: 1,
+          },
+        },
+        {
+          index: {
+            gender: 1,
+          },
+        },
+        {
+          index: {
+            'occupations.rank': 1,
+          },
+        },
+        {
+          index: {
+            'associates.ranks': 1,
+          },
+        },
+        {
+          index: {
+            yearOfBirth: 1,
+          },
+        },
       ],
     },
   }
