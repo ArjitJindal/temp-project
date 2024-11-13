@@ -12843,7 +12843,6 @@ components:
         - removed_organisation_suffix
         - removed_clerical_mark
         - name_variations_removal
-        - year_of_birth
         - document_id
         - nationality
         - gender
