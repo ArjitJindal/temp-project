@@ -329,6 +329,9 @@ export function sampleConsumerUser() {
     sourceOfFunds: [pickRandom(SOURCE_OF_FUNDSS)],
     userStateDetails: sampleUserStateDetails(),
     kycStatusDetails: sampleKycStatusDetails(),
+    legalDocuments: Array.from({ length: Math.ceil(randomInt(4)) }, () =>
+      legalDocument(name)
+    ),
     userDetails: {
       dateOfBirth: new Date(generateRandomTimestamp(18)).toISOString(),
       countryOfResidence,

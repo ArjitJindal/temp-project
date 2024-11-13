@@ -60,7 +60,9 @@ export const UserDetails: PropertiesQuestion<{ userId: string }> = {
               },
               {
                 key: 'Legal documents',
-                value: result.legalDocuments?.join(', '),
+                value: result?.legalDocuments
+                  ?.map((doc) => doc.documentType)
+                  .join(', '),
               },
               ...contactDetails(result),
             ]
