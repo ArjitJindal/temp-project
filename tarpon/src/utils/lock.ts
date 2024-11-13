@@ -46,7 +46,14 @@ async function acquireLockInternal(
         SortKeyID: 'default',
         ttl: (nowInSeconds + ttl).toString(),
       },
-      ConditionExpression: 'attribute_not_exists(PartitionKeyID)',
+      ConditionExpression:
+        'attribute_not_exists(PartitionKeyID) OR #ttl < :now',
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
+      },
+      ExpressionAttributeValues: {
+        ':now': nowInSeconds.toString(),
+      },
     })
   )
 }
