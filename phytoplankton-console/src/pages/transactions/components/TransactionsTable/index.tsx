@@ -269,7 +269,16 @@ export default function TransactionsTable(props: Props) {
       helper.simple<'timestamp'>({
         title: 'Timestamp',
         key: 'timestamp',
-        type: DATE,
+        type: {
+          ...DATE,
+          ...(!alert && {
+            autoFilterDataType: {
+              kind: 'dateTimeRange',
+              allowClear: false,
+              clearNotAllowedReason: 'You must select an interval to view transactions',
+            },
+          }),
+        },
         sorting: true,
         filtering: true,
         pinFilterToLeft: true,
@@ -412,7 +421,7 @@ export default function TransactionsTable(props: Props) {
         defaultVisibility: false,
       }),
     ]);
-  }, [alert, showDetailsView, isRiskScoringEnabled, escalatedTransactions]);
+  }, [isRiskScoringEnabled, alert, showDetailsView, escalatedTransactions]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),
