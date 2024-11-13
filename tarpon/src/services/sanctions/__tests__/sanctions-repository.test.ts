@@ -1,6 +1,8 @@
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
-import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository' // Adjust the path
+import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
+import { Action } from '@/services/sanctions/providers/types' // Adjust the path
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 describe('MongoSanctionsRepository', () => {
   let collection: any
@@ -135,6 +137,47 @@ describe('MongoSanctionsRepository', () => {
         expect.objectContaining({ id: '2', name: 'Bob' }),
         expect.objectContaining({ id: '3', name: 'Sam' }),
       ])
+    )
+  })
+
+  it('should update the record when action is "chg"', async () => {
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+
+    // Insert initial entity
+    const initialEntity = {
+      provider: 'dowjones',
+      id: '5',
+      version: '24-08',
+      name: 'Tim',
+      gender: 'test',
+    }
+    await collection.insertOne(initialEntity)
+
+    // Define "change" action data
+    const entities = [
+      [
+        'chg',
+        {
+          id: '5',
+          name: 'Tim Changed',
+          gender: 'Changed',
+        },
+      ],
+    ] as [Action, SanctionsEntity][]
+
+    await repo.save('dowjones', entities, '24-08')
+
+    // Verify that the record was updated
+    const updatedEntity = await collection.findOne({ id: '5' })
+    expect(updatedEntity).toEqual(
+      expect.objectContaining({
+        id: '5',
+        provider: 'dowjones',
+        version: '24-08',
+        name: 'Tim Changed',
+        gender: 'Changed',
+        updatedAt: expect.any(Number),
+      })
     )
   })
 })

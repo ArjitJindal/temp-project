@@ -43,7 +43,7 @@ export class MongoSanctionsRepository implements SanctionsRepository {
               upsert: true,
             },
           }
-        case 'change':
+        case 'chg':
           return {
             updateOne: {
               filter: {
