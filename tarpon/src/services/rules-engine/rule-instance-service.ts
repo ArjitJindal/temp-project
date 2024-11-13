@@ -206,12 +206,16 @@ export class RuleInstanceService {
   async getAllRuleInstances(mode?: RuleRunMode): Promise<RuleInstance[]> {
     const allRuleInstances =
       await this.ruleInstanceRepository.getAllRuleInstances(mode)
-    return allRuleInstances.filter(
-      (ruleInstance) =>
-        !PNB_INTERNAL_RULES.find(
-          (internalRule) => internalRule.id === ruleInstance.id
-        )
-    )
+
+    if (hasFeature('PNB')) {
+      return allRuleInstances.filter(
+        (ruleInstance) =>
+          !PNB_INTERNAL_RULES.find(
+            (internalRule) => internalRule.id === ruleInstance.id
+          )
+      )
+    }
+    return allRuleInstances
   }
 
   async createOrUpdateRuleInstance(

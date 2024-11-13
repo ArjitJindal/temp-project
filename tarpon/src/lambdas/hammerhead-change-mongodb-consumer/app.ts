@@ -14,6 +14,7 @@ import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { sendWebhookTasks } from '@/services/webhook/utils'
 import { hasFeature } from '@/core/utils/context'
 import { getRiskLevelForPNB } from '@/services/rules-engine/pnb-custom-logic'
+import { User } from '@/@types/openapi-internal/User'
 
 export async function arsScoreEventHandler(
   tenantId: string,
@@ -63,7 +64,7 @@ export async function drsScoreEventHandler(
 
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
 
-  if (newDrsScore.triggeredBy !== 'PUBLIC_API') {
+  if (newDrsScore.triggeredBy !== 'PUBLIC_API' && newDrsScore.userId) {
     const riskClassificationValues =
       await riskRepository.getRiskClassificationValues()
 
@@ -71,15 +72,16 @@ export async function drsScoreEventHandler(
       riskClassificationValues,
       oldDrsScore?.drsScore ?? null
     )
-
     const newRiskLevel = getRiskLevelFromScore(
       riskClassificationValues,
       newDrsScore.drsScore
     )
     if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
-      const riskLevel = hasFeature('PNB')
-        ? getRiskLevelForPNB(oldRiskLevel, newRiskLevel)
-        : newRiskLevel
+      let riskLevel = newRiskLevel
+      if (newDrsScore.userId && hasFeature('PNB')) {
+        const user = await userRepository.getUser(newDrsScore.userId)
+        riskLevel = getRiskLevelForPNB(oldRiskLevel, newRiskLevel, user as User)
+      }
       await sendWebhookTasks(tenantId, [
         {
           event: 'CRA_RISK_LEVEL_UPDATED',

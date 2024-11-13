@@ -3,6 +3,7 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { User } from '@/@types/openapi-internal/User'
 
 export const PNB_INTERNAL_RULES: RuleInstance[] = [
   {
@@ -1401,8 +1402,12 @@ export function getTransactionRiskScoreDetailsForPNB(
 
 export function getRiskLevelForPNB(
   oldRiskLevel: RiskLevel | undefined,
-  newRiskLevel: RiskLevel
+  newRiskLevel: RiskLevel,
+  user: User
 ) {
+  const RISK_LEVEL_STATUS = user.tags?.find(
+    (tag) => tag.key === 'RISK_LEVEL_STATUS'
+  )?.value
   if (oldRiskLevel === 'VERY_LOW' && newRiskLevel === 'LOW') {
     return 'HIGH'
   }
@@ -1411,6 +1416,13 @@ export function getRiskLevelForPNB(
     newRiskLevel === 'MEDIUM'
   ) {
     return 'VERY_HIGH'
+  }
+  if (
+    oldRiskLevel === 'MEDIUM' &&
+    newRiskLevel === 'LOW' &&
+    RISK_LEVEL_STATUS === 'Incomplete'
+  ) {
+    return 'HIGH'
   }
   return newRiskLevel
 }
