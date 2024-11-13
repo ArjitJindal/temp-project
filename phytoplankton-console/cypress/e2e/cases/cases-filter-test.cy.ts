@@ -1,7 +1,7 @@
 import { PERMISSIONS } from '../../support/permissions';
 
 describe('Filter according to case id (optimized)', () => {
-  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW];
+  const REQUIRED_PERMISSIONS = [...PERMISSIONS.CASE_OVERVIEW, ...PERMISSIONS.RULES];
 
   beforeEach(() => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
