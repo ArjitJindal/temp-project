@@ -1,4 +1,4 @@
-import { keyBy } from 'lodash'
+import { keyBy, startCase } from 'lodash'
 import { getTimeLabels } from '../../dashboard/utils'
 import {
   GranularityValuesType,
@@ -6,7 +6,6 @@ import {
 } from '../../dashboard/repositories/types'
 import {
   cleanUpStaleData,
-  executeTimeBasedClickhouseQuery,
   getAttributeCountStatsPipeline,
   getAttributeSumStatsDerivedPipeline,
   withUpdatedAt,
@@ -25,6 +24,7 @@ import {
   DASHBOARD_TRANSACTIONS_STATS_COLLECTION_MONTHLY,
   TRANSACTIONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
+
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { traceable } from '@/core/xray'
@@ -32,11 +32,15 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { DEFAULT_RISK_LEVEL } from '@/services/risk-scoring/utils'
 import { hasFeature } from '@/core/utils/context'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { PAYMENT_METHODS } from '@/@types/openapi-public-custom/PaymentMethod'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
+import { logger } from '@/core/logger'
 import { RISK_LEVELS } from '@/@types/openapi-public-custom/RiskLevel'
 async function createInexes(tenantId) {
   const db = await getMongoDbClientDb()
@@ -249,11 +253,21 @@ export class TransactionStatsDashboardMetric {
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number,
-    granularity: GranularityValuesType,
+    granularity?: GranularityValuesType,
     returnDataType: 'TOTAL' | 'DATE_RANGE' = 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
+    const client = await getClickhouseClient(tenantId)
     const tableDefinition = CLICKHOUSE_DEFINITIONS.TRANSACTIONS
     const tableName = tableDefinition.tableName
+
+    const type = granularity?.toLowerCase() ?? 'hour'
+    const timeFormat = type === 'month' ? 'YYYY-MM-DD' : 'YYYY-MM-DD HH:mm:ss'
+    const gte = dayjs(startTimestamp).format(timeFormat)
+    const lte = dayjs(endTimestamp).format(timeFormat)
+
+    function buildTimeQuery(): string {
+      return `toStartOf${startCase(type)}(toDateTime(timestamp / 1000))`
+    }
 
     function buildQueryPart(
       items: string[],
@@ -268,6 +282,21 @@ export class TransactionStatsDashboardMetric {
         )
         .join(', ')
     }
+
+    function buildAggregatorQuery(type: string): string {
+      return `
+    GROUP BY time 
+    ORDER BY time ASC 
+    WITH FILL 
+    FROM toStartOf${startCase(type)}(toDateTime('${gte}')) 
+    TO toStartOf${startCase(
+      type
+    )}(toDateTime('${lte}')) + INTERVAL 1 ${type.toUpperCase()} 
+    STEP INTERVAL 1 ${type.toUpperCase()}
+  `
+    }
+
+    const timeQuery = returnDataType === 'TOTAL' ? "''" : buildTimeQuery()
 
     const paymentMethods = buildQueryPart(
       PAYMENT_METHODS,
@@ -292,26 +321,46 @@ export class TransactionStatsDashboardMetric {
         ? `, ${ruleActions}, ${arsRiskLevels}`
         : ''
 
-    return await executeTimeBasedClickhouseQuery<DashboardStatsTransactionsCountData>(
-      tenantId,
-      tableName,
-      granularity,
-      `
-      ${paymentMethods},
-      ${transactionTypes}
-      ${dateRangeQuery}
-      `,
-      { startTimestamp, endTimestamp },
-      '',
-      { countOnly: returnDataType === 'TOTAL' }
-    )
+    const aggregatorQuery =
+      returnDataType === 'DATE_RANGE' ? buildAggregatorQuery(type) : ''
+
+    const query = `
+    SELECT ${timeQuery} as time, ${paymentMethods}, ${transactionTypes} ${dateRangeQuery}
+    FROM ${tableName}
+    WHERE toDateTime(timestamp / 1000) BETWEEN toDateTime('${gte}') AND toDateTime('${lte}')
+    ${aggregatorQuery}
+    SETTINGS output_format_json_quote_64bit_integers = 0
+  `
+
+    logger.info('Running query', { query })
+
+    const queryResult = await client.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const data = await queryResult.json<DashboardStatsTransactionsCountData>()
+
+    if (returnDataType === 'DATE_RANGE') {
+      data.forEach((item) => {
+        item.time = dayjs(item.time).format(
+          type === 'hour'
+            ? HOUR_DATE_FORMAT_JS
+            : type === 'day'
+            ? DAY_DATE_FORMAT_JS
+            : MONTH_DATE_FORMAT_JS
+        )
+      })
+    }
+
+    return data
   }
 
   public static async get(
     tenantId: string,
     startTimestamp: number,
     endTimestamp: number,
-    granularity: GranularityValuesType,
+    granularity?: GranularityValuesType,
     type?: 'TOTAL' | 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
     if (isClickhouseEnabled()) {

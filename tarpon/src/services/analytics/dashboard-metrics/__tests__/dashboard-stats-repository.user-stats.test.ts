@@ -12,205 +12,197 @@ import { USER_TYPES, UserType } from '@/@types/user/user-type'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
-import { hasFeature } from '@/core/utils/context'
 
 type RiskType = 'KRS' | 'DRS'
-
-withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
-  describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
-    describe.each<UserType>(USER_TYPES)('User type: %s', (userType) => {
-      describe('Env #1 (empty)', () => {
-        let TENANT_ID: string
-        beforeAll(async () => {
-          TENANT_ID = await getTestTenantId()
-        })
-        test(`Empty db`, async () => {
-          if (hasFeature('CLICKHOUSE_ENABLED')) {
-            // ASSUMING USERS TABLE WILL EXIST
-            return
-          }
-          const statsRepository = await getStatsRepo(TENANT_ID)
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            ts('2023-01-01T00:00:00.000Z'),
-            ts('2023-03-01T00:00:00.000Z'),
-            'MONTH'
-          )
-          expect(result).toEqual([
-            expectedStats(riskType, '2023-01', {}),
-            expectedStats(riskType, '2023-02', {}),
-            expectedStats(riskType, '2023-03', {}),
-          ])
-        })
+describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
+  describe.each<UserType>(USER_TYPES)('User type: %s', (userType) => {
+    describe('Env #1 (empty)', () => {
+      let TENANT_ID: string
+      beforeAll(async () => {
+        TENANT_ID = await getTestTenantId()
       })
+      test(`Empty db`, async () => {
+        const statsRepository = await getStatsRepo(TENANT_ID)
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          ts('2023-01-01T00:00:00.000Z'),
+          ts('2023-03-01T00:00:00.000Z'),
+          'MONTH'
+        )
+        expect(result).toEqual([
+          expectedStats(riskType, '2023-01', {}),
+          expectedStats(riskType, '2023-02', {}),
+          expectedStats(riskType, '2023-03', {}),
+        ])
+      })
+    })
 
-      describe('Env #2 (5 users for each risk level in one month)', () => {
-        let TENANT_ID: string
-        let statsRepository: DashboardStatsRepository
-        beforeAll(async () => {
-          TENANT_ID = await getTestTenantId()
-          const usersRepo = await getUserRepo(TENANT_ID)
-          const riskRepo = await getRiskRepo(TENANT_ID)
-          const riskLevels = await getRiskScores(riskRepo)
-          for (let i = 0; i < RISK_LEVELS.length; i += 1) {
-            const riskLevel = RISK_LEVELS[i]
-            for (let j = 0; j < 5; j += 1) {
-              await usersRepo.saveUserMongo(
-                makeUser(userType, ts(`2023-01-01T0${i + 1}:0${j}:00.000Z`), {
-                  riskType,
-                  score: riskLevels[riskLevel],
-                })
-              )
-            }
+    describe('Env #2 (5 users for each risk level in one month)', () => {
+      let TENANT_ID: string
+      let statsRepository: DashboardStatsRepository
+      beforeAll(async () => {
+        TENANT_ID = await getTestTenantId()
+        const usersRepo = await getUserRepo(TENANT_ID)
+        const riskRepo = await getRiskRepo(TENANT_ID)
+        const riskLevels = await getRiskScores(riskRepo)
+        for (let i = 0; i < RISK_LEVELS.length; i += 1) {
+          const riskLevel = RISK_LEVELS[i]
+          for (let j = 0; j < 5; j += 1) {
+            await usersRepo.saveUserMongo(
+              makeUser(userType, ts(`2023-01-01T0${i + 1}:0${j}:00.000Z`), {
+                riskType,
+                score: riskLevels[riskLevel],
+              })
+            )
           }
-          statsRepository = await getStatsRepo(TENANT_ID)
-          await statsRepository.refreshUserStats()
-        })
-        test(`Check by hours`, async () => {
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            dayjs('2023-01-01T00:00:00.000Z').valueOf(),
-            dayjs('2023-01-31T00:00:00.000Z').valueOf(),
-            'HOUR'
-          )
-          expect(result).toEqual(
-            expect.arrayContaining([
-              expectedStats(riskType, '2023-01-01T00', {}),
-              expectedStats(riskType, '2023-01-01T01', {
-                VERY_HIGH: 5,
-              }),
-              expectedStats(riskType, '2023-01-01T02', {
-                HIGH: 5,
-              }),
-              expectedStats(riskType, '2023-01-01T03', {
-                MEDIUM: 5,
-              }),
-              expectedStats(riskType, '2023-01-01T04', {
-                LOW: 5,
-              }),
-              expectedStats(riskType, '2023-01-01T05', {
-                VERY_LOW: 5,
-              }),
-              expectedStats(riskType, '2023-01-01T06', {}),
-            ])
-          )
-        })
-        test(`Check one month`, async () => {
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            dayjs('2023-01-01T00:00:00.000Z').valueOf(),
-            dayjs('2023-01-31T00:00:00.000Z').valueOf(),
-            'MONTH'
-          )
-          expect(result).toEqual([
-            expectedStats(riskType, '2023-01', {
-              VERY_LOW: 5,
-              LOW: 5,
-              MEDIUM: 5,
-              HIGH: 5,
+        }
+        statsRepository = await getStatsRepo(TENANT_ID)
+        await statsRepository.refreshUserStats()
+      })
+      test(`Check by hours`, async () => {
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          dayjs('2023-01-31T00:00:00.000Z').valueOf(),
+          'HOUR'
+        )
+        expect(result).toEqual(
+          expect.arrayContaining([
+            expectedStats(riskType, '2023-01-01T00', {}),
+            expectedStats(riskType, '2023-01-01T01', {
               VERY_HIGH: 5,
             }),
-          ])
-        })
-        test(`Check 3 months`, async () => {
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            dayjs('2023-01-01T00:00:00.000Z').valueOf(),
-            dayjs('2023-03-31T00:00:00.000Z').valueOf(),
-            'MONTH'
-          )
-          expect(result).toEqual([
-            expectedStats(riskType, '2023-01', {
-              VERY_LOW: 5,
-              LOW: 5,
-              MEDIUM: 5,
+            expectedStats(riskType, '2023-01-01T02', {
               HIGH: 5,
-              VERY_HIGH: 5,
             }),
-            expectedStats(riskType, '2023-02', {}),
-            expectedStats(riskType, '2023-03', {}),
+            expectedStats(riskType, '2023-01-01T03', {
+              MEDIUM: 5,
+            }),
+            expectedStats(riskType, '2023-01-01T04', {
+              LOW: 5,
+            }),
+            expectedStats(riskType, '2023-01-01T05', {
+              VERY_LOW: 5,
+            }),
+            expectedStats(riskType, '2023-01-01T06', {}),
           ])
-        })
+        )
       })
-      describe('Env #3 (5 same risk level every month)', () => {
-        let TENANT_ID: string
-        let statsRepository: DashboardStatsRepository
-        beforeAll(async () => {
-          TENANT_ID = await getTestTenantId()
-          const usersRepo = await getUserRepo(TENANT_ID)
-          const riskRepo = await getRiskRepo(TENANT_ID)
-          const riskLevels = await getRiskScores(riskRepo)
-          const users = [
-            makeUser(userType, ts('2023-01-01T00:00:00.000Z'), {
-              riskType,
-              score: riskLevels.VERY_HIGH,
-            }),
-            makeUser(userType, ts('2023-02-01T00:00:00.000Z'), {
-              riskType,
-              score: riskLevels.VERY_HIGH,
-            }),
-            makeUser(userType, ts('2023-03-01T00:00:00.000Z'), {
-              riskType,
-              score: riskLevels.VERY_HIGH,
-            }),
-            makeUser(userType, ts('2023-04-01T00:00:00.000Z'), {
-              riskType,
-              score: riskLevels.VERY_HIGH,
-            }),
-            makeUser(userType, ts('2023-05-01T00:00:00.000Z'), {
-              riskType,
-              score: riskLevels.VERY_HIGH,
-            }),
-          ]
-          for (const user of users) {
-            await usersRepo.saveUserMongo(user)
-          }
-          statsRepository = await getStatsRepo(TENANT_ID)
-          await statsRepository.refreshUserStats()
-        })
-        test(`Check one month`, async () => {
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            dayjs('2023-01-01T00:00:00.000Z').valueOf(),
-            dayjs('2023-01-31T00:00:00.000Z').valueOf(),
-            'MONTH'
-          )
-          expect(result).toEqual([
-            expectedStats(riskType, '2023-01', {
-              VERY_HIGH: 1,
-            }),
-          ])
-        })
-        test(`Check 5 months`, async () => {
-          const result = await statsRepository.getUserTimewindowStats(
-            userType,
-            dayjs('2023-01-01T00:00:00.000Z').valueOf(),
-            dayjs('2023-05-30T00:00:00.000Z').valueOf(),
-            'MONTH'
-          )
-          expect(result).toEqual([
-            expectedStats(riskType, '2023-01', {
-              VERY_HIGH: 1,
-            }),
-            expectedStats(riskType, '2023-02', {
-              VERY_HIGH: 1,
-            }),
-            expectedStats(riskType, '2023-03', {
-              VERY_HIGH: 1,
-            }),
-            expectedStats(riskType, '2023-04', {
-              VERY_HIGH: 1,
-            }),
-            expectedStats(riskType, '2023-05', {
-              VERY_HIGH: 1,
-            }),
-          ])
-        })
+      test(`Check one month`, async () => {
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          dayjs('2023-01-31T00:00:00.000Z').valueOf(),
+          'MONTH'
+        )
+        expect(result).toEqual([
+          expectedStats(riskType, '2023-01', {
+            VERY_LOW: 5,
+            LOW: 5,
+            MEDIUM: 5,
+            HIGH: 5,
+            VERY_HIGH: 5,
+          }),
+        ])
+      })
+      test(`Check 3 months`, async () => {
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          dayjs('2023-03-31T00:00:00.000Z').valueOf(),
+          'MONTH'
+        )
+        expect(result).toEqual([
+          expectedStats(riskType, '2023-01', {
+            VERY_LOW: 5,
+            LOW: 5,
+            MEDIUM: 5,
+            HIGH: 5,
+            VERY_HIGH: 5,
+          }),
+          expectedStats(riskType, '2023-02', {}),
+          expectedStats(riskType, '2023-03', {}),
+        ])
+      })
+    })
+    describe('Env #3 (5 same risk level every month)', () => {
+      let TENANT_ID: string
+      let statsRepository: DashboardStatsRepository
+      beforeAll(async () => {
+        TENANT_ID = await getTestTenantId()
+        const usersRepo = await getUserRepo(TENANT_ID)
+        const riskRepo = await getRiskRepo(TENANT_ID)
+        const riskLevels = await getRiskScores(riskRepo)
+        const users = [
+          makeUser(userType, ts('2023-01-01T00:00:00.000Z'), {
+            riskType,
+            score: riskLevels.VERY_HIGH,
+          }),
+          makeUser(userType, ts('2023-02-01T00:00:00.000Z'), {
+            riskType,
+            score: riskLevels.VERY_HIGH,
+          }),
+          makeUser(userType, ts('2023-03-01T00:00:00.000Z'), {
+            riskType,
+            score: riskLevels.VERY_HIGH,
+          }),
+          makeUser(userType, ts('2023-04-01T00:00:00.000Z'), {
+            riskType,
+            score: riskLevels.VERY_HIGH,
+          }),
+          makeUser(userType, ts('2023-05-01T00:00:00.000Z'), {
+            riskType,
+            score: riskLevels.VERY_HIGH,
+          }),
+        ]
+        for (const user of users) {
+          await usersRepo.saveUserMongo(user)
+        }
+        statsRepository = await getStatsRepo(TENANT_ID)
+        await statsRepository.refreshUserStats()
+      })
+      test(`Check one month`, async () => {
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          dayjs('2023-01-31T00:00:00.000Z').valueOf(),
+          'MONTH'
+        )
+        expect(result).toEqual([
+          expectedStats(riskType, '2023-01', {
+            VERY_HIGH: 1,
+          }),
+        ])
+      })
+      test(`Check 5 months`, async () => {
+        const result = await statsRepository.getUserTimewindowStats(
+          userType,
+          dayjs('2023-01-01T00:00:00.000Z').valueOf(),
+          dayjs('2023-05-30T00:00:00.000Z').valueOf(),
+          'MONTH'
+        )
+        expect(result).toEqual([
+          expectedStats(riskType, '2023-01', {
+            VERY_HIGH: 1,
+          }),
+          expectedStats(riskType, '2023-02', {
+            VERY_HIGH: 1,
+          }),
+          expectedStats(riskType, '2023-03', {
+            VERY_HIGH: 1,
+          }),
+          expectedStats(riskType, '2023-04', {
+            VERY_HIGH: 1,
+          }),
+          expectedStats(riskType, '2023-05', {
+            VERY_HIGH: 1,
+          }),
+        ])
       })
     })
   })
 })
+
 /*
   Helpers
  */

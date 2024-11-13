@@ -182,7 +182,7 @@ export class DashboardStatsRepository {
   public async getTransactionCountStats(
     startTimestamp: number,
     endTimestamp: number,
-    granularity: GranularityValuesType,
+    granularity?: GranularityValuesType,
     type?: 'TOTAL' | 'DATE_RANGE'
   ): Promise<DashboardStatsTransactionsCountData[]> {
     return TransactionStatsDashboardMetric.get(

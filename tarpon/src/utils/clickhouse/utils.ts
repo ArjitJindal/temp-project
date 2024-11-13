@@ -12,12 +12,6 @@ import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { envIs, envIsNot } from '../env'
 import {
-  DATE_TIME_FORMAT_JS,
-  DAY_DATE_FORMAT_JS,
-  HOUR_DATE_FORMAT_JS,
-  MONTH_DATE_FORMAT_JS,
-} from '../mongodb-utils'
-import {
   ClickHouseTables,
   MaterializedViewDefinition,
   ProjectionsDefinition,
@@ -626,35 +620,4 @@ export const sendMessageToMongoConsumer = async (
       QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
     })
   )
-}
-
-type TimeFormat = {
-  timestampFormat: string
-  clickhouseTimeMethod: string
-  dateFormatJs: string
-}
-
-export const getTimeformatsByGranularity = (
-  granularity: 'HOUR' | 'DAY' | 'MONTH'
-): TimeFormat => {
-  switch (granularity) {
-    case 'HOUR':
-      return {
-        timestampFormat: DATE_TIME_FORMAT_JS,
-        clickhouseTimeMethod: 'toStartOfHour',
-        dateFormatJs: HOUR_DATE_FORMAT_JS,
-      }
-    case 'DAY':
-      return {
-        timestampFormat: DATE_TIME_FORMAT_JS,
-        clickhouseTimeMethod: 'toStartOfDay',
-        dateFormatJs: DAY_DATE_FORMAT_JS,
-      }
-    case 'MONTH':
-      return {
-        timestampFormat: DAY_DATE_FORMAT_JS,
-        clickhouseTimeMethod: 'toStartOfMonth',
-        dateFormatJs: MONTH_DATE_FORMAT_JS,
-      }
-  }
 }

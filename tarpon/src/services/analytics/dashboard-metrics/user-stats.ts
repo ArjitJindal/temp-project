@@ -6,7 +6,6 @@ import {
 } from '../../dashboard/repositories/types'
 import {
   cleanUpStaleData,
-  executeTimeBasedClickhouseQuery,
   getAttributeCountStatsPipeline,
   getAttributeSumStatsDerivedPipeline,
   withUpdatedAt,
@@ -34,9 +33,6 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { traceable } from '@/core/xray'
 import { USER_TYPES, UserType } from '@/@types/user/user-type'
-import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
-import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
-import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 
 function getCollectionsByUserType(
   tenantId: string,
@@ -129,7 +125,6 @@ export class UserStats {
           default: 'LOW',
         },
       }
-
       await usersCollection
         .aggregate(
           withUpdatedAt(
@@ -274,72 +269,13 @@ export class UserStats {
     }
   }
 
-  private static async getFromClickhouse(
-    tenantId: string,
-    userType: UserType,
-    startTimestamp: number,
-    endTimestamp: number,
-    granularity: GranularityValuesType = 'HOUR'
-  ): Promise<DashboardStatsUsersStats[]> {
-    const riskRepository = new RiskRepository(tenantId, {
-      dynamoDb: getDynamoDbClient(),
-    })
-
-    const riskClassifications =
-      await riskRepository.getRiskClassificationValues()
-
-    const riskClassificationQuery = (type: 'krs' | 'drs') =>
-      riskClassifications
-        .map(
-          (item) =>
-            `COUNTIf(${type}Score_${type}Score >= ${item.lowerBoundRiskScore} AND ${type}Score_${type}Score < ${item.upperBoundRiskScore}) AS ${type}RiskLevel_${item.riskLevel}`
-        )
-        .join(',\n')
-
-    const userStateQuery = USER_STATES.map(
-      (item) =>
-        `COUNTIf(userStateDetails_state = '${item}') AS userState_${item}`
-    ).join(',\n')
-
-    const kycStatusQuery = KYC_STATUSS.map(
-      (item) =>
-        `COUNTIf(kycStatusDetails_status = '${item}') AS kycStatus_${item}`
-    ).join(',\n')
-
-    const data = await executeTimeBasedClickhouseQuery(
-      tenantId,
-      'users',
-      granularity,
-      `
-      ${riskClassificationQuery('krs')},
-      ${riskClassificationQuery('drs')},
-      ${userStateQuery},
-      ${kycStatusQuery}
-    `,
-      { startTimestamp, endTimestamp },
-      `type = '${userType}'`
-    )
-
-    return data
-  }
-
   public static async get(
     tenantId: string,
     userType: UserType,
     startTimestamp: number,
     endTimestamp: number,
-    granularity: GranularityValuesType
+    granularity?: GranularityValuesType
   ): Promise<DashboardStatsUsersStats[]> {
-    if (isClickhouseEnabled()) {
-      return this.getFromClickhouse(
-        tenantId,
-        userType,
-        startTimestamp,
-        endTimestamp,
-        granularity
-      )
-    }
-
     const db = await getMongoDbClientDb()
     const { hourlyCollectionName, dailyCollectionName, monthlyCollectionName } =
       getCollectionsByUserType(tenantId, userType)
