@@ -1,4 +1,5 @@
 import { ClickHouseClient } from '@clickhouse/client'
+import { compact } from 'lodash'
 import { traceable } from '../../../core/xray'
 import { offsetPaginateClickhouse } from '../../../utils/pagination'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
@@ -193,10 +194,15 @@ export class ClickhouseTransactionsRepository {
     })
 
     const finalTransactions = sortedTransactions.map((transaction) => {
+      if (!transaction) {
+        return null
+      }
+
       delete (transaction as any)?.executedRules
       delete (transaction as any)?.arsScore?.components
       delete (transaction as any)?.originDeviceData
       delete (transaction as any)?.destinationDeviceData
+
       const originPaymentDetails = transaction.originPaymentDetails
       const destinationPaymentDetails = transaction.destinationPaymentDetails
 
@@ -212,7 +218,7 @@ export class ClickhouseTransactionsRepository {
     }) as InternalTransaction[]
 
     return {
-      items: finalTransactions,
+      items: compact(finalTransactions),
       count: data.count,
     }
   }
