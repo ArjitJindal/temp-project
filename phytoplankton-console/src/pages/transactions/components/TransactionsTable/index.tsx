@@ -49,11 +49,11 @@ import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { SelectionInfo } from '@/components/library/Table';
 import { dayjs } from '@/utils/dayjs';
-import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 import { useHasPermissions } from '@/utils/user-utils';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
 import Tag from '@/components/library/Tag';
+import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -75,6 +75,8 @@ export interface TransactionsTableParams extends CommonParams {
   productType?: string[];
   'originAmountDetails.country'?: string[];
   'destinationAmountDetails.country'?: string[];
+  status?: RuleAction & 'all';
+  direction?: 'incoming' | 'outgoing' | 'all';
 }
 
 export const transactionParamsToRequest = (
@@ -96,9 +98,12 @@ export const transactionParamsToRequest = (
     transactionStatusFilter,
     ruleInstancesHitFilter,
     productType,
+    direction,
+    status,
+    userId,
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
-  return {
+  const requestParams: DefaultApiGetTransactionsListRequest = {
     page,
     pageSize,
     afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
@@ -118,14 +123,23 @@ export const transactionParamsToRequest = (
     filterRuleInstancesHit: ruleInstancesHitFilter,
     filterTagKey: tagKey,
     filterTagValue: tagValue,
-    filterUserId: params.userId,
     filterOriginPaymentMethodId: params.originPaymentMethodId,
     filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
     filterTransactionStatus: transactionStatusFilter,
     filterProductType: productType,
     filterDestinationCountries: params['destinationAmountDetails.country'],
     filterOriginCountries: params['originAmountDetails.country'],
+    filterStatus: status && status !== 'all' ? [status] : undefined,
   };
+  if (direction === 'outgoing') {
+    requestParams.filterOriginUserId = userId;
+  } else if (direction === 'incoming') {
+    requestParams.filterDestinationUserId = userId;
+  } else {
+    requestParams.filterUserId = userId;
+  }
+
+  return requestParams;
 };
 
 type Props = {

@@ -82,6 +82,7 @@ export function Content(props: { userId: string }) {
     timestamp: [dayjs().subtract(3, 'month').startOf('day'), dayjs().endOf('day')].map((x) =>
       x.format(),
     ),
+    userId,
   });
 
   const cases = useQuery(
@@ -175,7 +176,7 @@ export function Content(props: { userId: string }) {
         key: 'ruleDescription',
       }),
       helper.simple<'transactionState'>({
-        id: 'lastTransactionState',
+        id: 'transactionState',
         title: 'Last transaction state',
         key: 'transactionState',
         type: TRANSACTION_STATE,
