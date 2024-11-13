@@ -38,7 +38,6 @@ import { generateChecksum } from '@/utils/object'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
-import { hasFeature } from '@/core/utils/context'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -254,10 +253,7 @@ export class RuleInstanceService {
         updatedAt
       )
 
-    if (
-      runOnV8Engine(updatedRuleInstance, rule) &&
-      !hasFeature('MANUAL_PRE_AGGREGATION')
-    ) {
+    if (runOnV8Engine(updatedRuleInstance, rule)) {
       await ruleInstanceAggregationVariablesRebuild(
         updatedRuleInstance,
         now,

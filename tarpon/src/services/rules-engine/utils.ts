@@ -255,6 +255,9 @@ export async function ruleInstanceAggregationVariablesRebuild(
   ruleInstanceRepository: RuleInstanceRepository,
   options?: { updateRuleInstanceStatus?: boolean }
 ) {
+  if (hasFeature('MANUAL_PRE_AGGREGATION')) {
+    return
+  }
   const aggVarsToRebuild =
     ruleInstance.logicAggregationVariables?.filter(
       (aggVar) => aggVar.version && aggVar.version >= comparisonTime

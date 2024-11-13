@@ -2,6 +2,7 @@ import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { logger } from '@/core/logger'
+import { hasFeature } from '@/core/utils/context'
 
 // Todo: Make this generic for rules and risk factors
 export async function riskFactorAggregationVariablesRebuild(
@@ -11,6 +12,9 @@ export async function riskFactorAggregationVariablesRebuild(
   riskRepository: RiskRepository,
   options?: { updateRiskFactorStatus?: boolean }
 ) {
+  if (hasFeature('MANUAL_PRE_AGGREGATION')) {
+    return
+  }
   const aggVarsToRebuild =
     riskFactor.logicAggregationVariables?.filter(
       (aggVar) => aggVar.version && aggVar.version >= comparisonTime
