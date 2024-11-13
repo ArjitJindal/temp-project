@@ -38,6 +38,7 @@ import { generateChecksum } from '@/utils/object'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
+import { hasFeature } from '@/core/utils/context'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
