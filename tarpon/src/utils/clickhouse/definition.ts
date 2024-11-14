@@ -197,6 +197,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     )`,
       `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')`,
       `pepDetails Array(Tuple(isPepHit Bool, pepCountry String, pepRank String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'pepStatus'), 'Array(Tuple(isPepHit Bool, pepCountry String, pepRank String))')`,
+      `documentIds Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'documentNumber'), JSONExtractArrayRaw(data, 'legalDocuments'))`,
+      `nationality String MATERIALIZED JSONExtractString(data, '$.userDetails.countryOfNationality')`,
       `userRegistrationStatus Nullable(String) MATERIALIZED 
         CASE
             WHEN JSON_VALUE(data, '$.type') = 'BUSINESS' THEN 
