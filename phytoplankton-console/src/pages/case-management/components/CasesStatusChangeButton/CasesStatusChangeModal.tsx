@@ -39,15 +39,13 @@ export default function CasesStatusChangeModal(props: Props) {
         },
       });
       const assignees = assigneeIds
-        ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
-        .filter((assigneeId) => {
+        ?.filter((assigneeId) => {
           const isL2Escalated = statusEscalatedL2(updates.caseStatus);
-
           return isL2Escalated
             ? users[assigneeId]?.escalationLevel === 'L2'
             : users[assigneeId]?.escalationLevel !== 'L2';
         })
-        .map((name) => `'${name}'`)
+        .map((id) => users[id]?.name ?? users[id]?.email ?? id)
         .join(', ');
 
       if (currentUser?.reviewerId) {
