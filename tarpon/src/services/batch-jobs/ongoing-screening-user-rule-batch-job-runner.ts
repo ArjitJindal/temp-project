@@ -1,6 +1,7 @@
 import pMap from 'p-map'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { backOff } from 'exponential-backoff'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
@@ -197,32 +198,43 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     rules: readonly Rule[],
     ruleInstances: readonly RuleInstance[]
   ) {
-    await pMap(
-      usersChunk,
-      async (user) => {
-        const result = await this.rulesEngineService?.verifyUserByRules(
-          user,
-          ruleInstances,
-          rules,
-          { ongoingScreeningMode: true }
-        )
-        if (result?.hitRules && result.hitRules.length > 0) {
-          await Promise.all([
-            this.createCase(user, result.executedRules ?? [], result.hitRules),
-            this.userService?.handleUserStatusUpdateTrigger(
-              result.hitRules,
-              ruleInstances.filter((ruleInstance) =>
-                result.hitRules?.some(
-                  (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
-                )
-              ),
+    await backOff(
+      async () => {
+        await pMap(
+          usersChunk,
+          async (user) => {
+            const result = await this.rulesEngineService?.verifyUserByRules(
               user,
-              null
-            ),
-          ])
-        }
+              ruleInstances,
+              rules,
+              { ongoingScreeningMode: true }
+            )
+            if (result?.hitRules && result.hitRules.length > 0) {
+              await Promise.all([
+                this.createCase(
+                  user,
+                  result.executedRules ?? [],
+                  result.hitRules
+                ),
+                this.userService?.handleUserStatusUpdateTrigger(
+                  result.hitRules,
+                  ruleInstances.filter((ruleInstance) =>
+                    result.hitRules?.some(
+                      (hitRule) => hitRule.ruleInstanceId === ruleInstance.id
+                    )
+                  ),
+                  user,
+                  null
+                ),
+              ])
+            }
+          },
+          { concurrency: CONCURRENT_BATCH_SIZE }
+        )
       },
-      { concurrency: CONCURRENT_BATCH_SIZE }
+      {
+        numOfAttempts: 5,
+      }
     )
   }
 
