@@ -1,6 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router';
-import { useLocalStorageState } from 'ahooks';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
 import AlertTable from './AlertTable';
 import s from './index.module.less';
@@ -13,8 +12,8 @@ import { TableSearchParams } from '@/pages/case-management/types';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { queryAdapter } from '@/pages/case-management/helpers';
 import { AllParams } from '@/components/library/Table/types';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { useDeepEqualMemo, useIsChanged } from '@/utils/hooks';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { useDeepEqualEffect } from '@/utils/hooks';
 import ScopeSelector, {
   ScopeSelectorValue,
 } from '@/pages/case-management/components/ScopeSelector';
@@ -29,10 +28,6 @@ import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { DerivedStatus } from '@/apis';
 
-type NavigationState = {
-  isInitialised: boolean;
-} | null;
-
 export default function CaseManagementPage() {
   const i18n = useI18n();
   useCloseSidebarByDefault();
@@ -43,21 +38,24 @@ export default function CaseManagementPage() {
     showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
     ...parseQueryString(location.search),
   });
-  const [savedParams, setSavedParams] =
-    useLocalStorageState<AllParams<TableSearchParams>>('CASE_MANAGEMENT_FILTERS');
+  const [params, setParams] = useState<AllParams<TableSearchParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    ...parsedParams,
+    caseStatus: null,
+    alertStatus: null,
+  });
 
-  const params = useDeepEqualMemo(() => {
-    return {
-      ...DEFAULT_PARAMS_STATE,
-      ...parsedParams,
-      caseStatus: !parsedParams.caseStatus
-        ? getDefaultStatus(parsedParams.showCases)
-        : parsedParams.caseStatus,
-      alertStatus: !parsedParams.alertStatus
-        ? getDefaultStatus(parsedParams.showCases)
-        : parsedParams.alertStatus,
-    };
-  }, [qaMode, parsedParams, savedParams]);
+  useEffect(() => {
+    if (qaMode) {
+      setParams((params) => ({ ...params, showCases: 'QA_UNCHECKED_ALERTS' }));
+    } else {
+      setParams((params) => ({ ...params, showCases: 'ALL' }));
+    }
+  }, [qaMode]);
+
+  useEffect(() => {
+    setParams((params) => ({ ...params, alertStatus: null, caseStatus: null }));
+  }, [parsedParams.showCases]);
 
   const pushParamsToNavigation = useCallback(
     (params: TableSearchParams) => {
@@ -70,48 +68,43 @@ export default function CaseManagementPage() {
       if (params.showCases === 'MY_ALERTS' || params.showCases === 'MY') {
         params.assignedTo = undefined;
       }
-      const navigationState: NavigationState = {
-        isInitialised: true,
-      };
       navigate(makeUrl('/case-management/cases', {}, queryAdapter.serializer(params)), {
         replace: true,
-        state: navigationState,
       });
     },
     [navigate],
   );
 
-  const handleChangeParams = useCallback(
-    (newParams: AllParams<TableSearchParams>) => {
-      pushParamsToNavigation(newParams);
-      setSavedParams(newParams);
-    },
-    [pushParamsToNavigation, setSavedParams],
-  );
+  const handleChangeParams = (newParams: AllParams<TableSearchParams>) => {
+    pushParamsToNavigation(newParams);
+  };
 
-  const locationState = useLocation();
-  const isInitialised = (locationState.state as NavigationState)?.isInitialised || false;
-  const isQaChanged = useIsChanged(qaMode);
-  useEffect(() => {
-    if (!isInitialised && savedParams != null) {
-      pushParamsToNavigation(savedParams);
-    } else if (isQaChanged) {
-      handleChangeParams({
-        ...params,
-        showCases: qaMode ? 'QA_UNCHECKED_ALERTS' : 'ALL',
-      });
+  const getDefaultStatus = (param?: ScopeSelectorValue): DerivedStatus[] => {
+    if (param?.includes('QA')) {
+      return ['CLOSED'];
     }
-  }, [
-    params,
-    qaMode,
-    isQaChanged,
-    savedParams,
-    isInitialised,
-    handleChangeParams,
-    pushParamsToNavigation,
-  ]);
+
+    return ['OPEN'];
+  };
 
   const settings = useSettings();
+  useDeepEqualEffect(() => {
+    setParams((prevState: AllParams<TableSearchParams>) => ({
+      ...prevState,
+      ...parsedParams,
+      caseStatus:
+        prevState.caseStatus === null && !parsedParams.caseStatus
+          ? getDefaultStatus(parsedParams.showCases)
+          : parsedParams.caseStatus,
+      alertStatus:
+        prevState.alertStatus === null && !parsedParams.alertStatus
+          ? getDefaultStatus(parsedParams.showCases)
+          : parsedParams.alertStatus,
+      page: parsedParams.page ?? 1,
+      sort: parsedParams.sort ?? [],
+      pageSize: parsedParams.pageSize ?? DEFAULT_PAGE_SIZE,
+    }));
+  }, [parsedParams]);
 
   const normalModeItems: Item<ScopeSelectorValue>[] = [
     { value: 'ALL', label: 'All cases' },
@@ -256,14 +249,3 @@ function getTable(
       );
   }
 }
-
-/*
-  Helpers
- */
-const getDefaultStatus = (param?: ScopeSelectorValue): DerivedStatus[] => {
-  if (param?.includes('QA')) {
-    return ['CLOSED'];
-  }
-
-  return ['OPEN'];
-};
