@@ -1,5 +1,4 @@
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
-import { backOff } from 'exponential-backoff'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetchers } from '@/services/sanctions/data-fetchers'
@@ -8,11 +7,7 @@ import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { TenantService } from '@/services/tenants'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import {
-  NEW_SANCTIONS_COLLECTION,
-  OLD_SANCTIONS_COLLECTION,
-  SANCTIONS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import {
   createGlobalMongoDBCollections,
   getMongoDbClient,
@@ -24,9 +19,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     const runFullLoad = job.parameters?.from
       ? new Date(job.parameters.from).getDay() === 0
       : true
-    const version = job.parameters?.from
-      ? dayjs(job.parameters.from).format('YYYY-MM')
-      : dayjs().format('YYYY-MM')
+    const version = Date.now().toString()
     logger.info(`Running ${runFullLoad ? 'full' : 'delta'} load`)
     const client = await getMongoDbClient()
 
@@ -34,7 +27,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
       logger.info(`Running ${fetcher.constructor.name}`)
       if (runFullLoad) {
         await createGlobalMongoDBCollections(client)
-        const repo = new MongoSanctionsRepository(NEW_SANCTIONS_COLLECTION)
+        const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
         await fetcher.fullLoad(repo, version)
       } else {
         const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
@@ -43,26 +36,10 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     }
 
     if (runFullLoad) {
-      await backOff(() => checkSearchIndexesReady(NEW_SANCTIONS_COLLECTION), {
-        numOfAttempts: 10,
-        maxDelay: 10000,
-        startingDelay: 1000,
-        jitter: 'full',
-      })
-
-      const session = client.startSession()
-      session.startTransaction()
-
-      await client.db().dropCollection(OLD_SANCTIONS_COLLECTION)
       await client
         .db()
-        .renameCollection(SANCTIONS_COLLECTION, OLD_SANCTIONS_COLLECTION)
-      await client
-        .db()
-        .renameCollection(NEW_SANCTIONS_COLLECTION, SANCTIONS_COLLECTION)
-
-      await session.commitTransaction()
-      await session.endSession()
+        .collection(SANCTIONS_COLLECTION)
+        .deleteMany({ version: { $ne: version } })
     }
 
     if (runFullLoad) {
@@ -92,25 +69,6 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
           }
         }
       }
-    }
-  }
-}
-
-async function checkSearchIndexesReady(collectionName: string) {
-  const client = await getMongoDbClient()
-  await client.connect()
-  const db = client.db()
-  const collection = db.collection(collectionName)
-
-  // Retrieve all search indexes using the $listSearchIndexes aggregation stage
-  const indexes = await collection
-    .aggregate([{ $listSearchIndexes: {} }])
-    .toArray()
-
-  for (const index of indexes) {
-    // Check if the index is ready
-    if (index.status !== 'READY' || !index.queryable) {
-      throw new Error('Indexes not ready')
     }
   }
 }

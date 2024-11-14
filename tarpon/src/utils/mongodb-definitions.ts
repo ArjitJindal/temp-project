@@ -278,8 +278,6 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 export const SANCTIONS_COLLECTION = 'sanctions'
-export const NEW_SANCTIONS_COLLECTION = 'sanctions-new'
-export const OLD_SANCTIONS_COLLECTION = 'sanctions-old'
 export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-provider-searches`
 }
@@ -730,65 +728,61 @@ export const getGlobalCollectionIndexes = (): {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
   }
 } => {
-  const sanctionsDefinition = {
-    getIndexes: () => [
-      {
-        index: {
-          provider: 1,
-          version: 1,
-          id: 1,
-          deletedAt: 1,
-        },
-      },
-      {
-        index: {
-          provider: 1,
-          version: 1,
-          id: 1,
-        },
-        unique: true,
-      },
-      {
-        index: {
-          'documents.formattedId': 1,
-        },
-      },
-      {
-        index: {
-          'documents.id': 1,
-        },
-      },
-      {
-        index: {
-          nationality: 1,
-        },
-      },
-      {
-        index: {
-          gender: 1,
-        },
-      },
-      {
-        index: {
-          'occupations.rank': 1,
-        },
-      },
-      {
-        index: {
-          'associates.ranks': 1,
-        },
-      },
-      {
-        index: {
-          yearOfBirth: 1,
-        },
-      },
-    ],
-  }
-
   return {
-    [OLD_SANCTIONS_COLLECTION]: sanctionsDefinition,
-    [SANCTIONS_COLLECTION]: sanctionsDefinition,
-    [NEW_SANCTIONS_COLLECTION]: sanctionsDefinition,
+    [SANCTIONS_COLLECTION]: {
+      getIndexes: () => [
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+            deletedAt: 1,
+          },
+        },
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+          },
+          unique: true,
+        },
+        {
+          index: {
+            'documents.formattedId': 1,
+          },
+        },
+        {
+          index: {
+            'documents.id': 1,
+          },
+        },
+        {
+          index: {
+            nationality: 1,
+          },
+        },
+        {
+          index: {
+            gender: 1,
+          },
+        },
+        {
+          index: {
+            'occupations.rank': 1,
+          },
+        },
+        {
+          index: {
+            'associates.ranks': 1,
+          },
+        },
+        {
+          index: {
+            yearOfBirth: 1,
+          },
+        },
+      ],
+    },
   }
 }

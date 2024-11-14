@@ -7,6 +7,7 @@ import * as clickhouse from '@cdktf/providers/clickhouse'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { getClickhouseTenantConfig } from '@lib/configs/clickhouse/tenant-config'
+import { getAtlasTenantConfig } from '@lib/configs/atlas/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
 
 const CLICKHOUSE_ORGANIZATION_ID = 'c9ccc4d7-3de9-479b-afd6-247a5ac0494e'
@@ -68,76 +69,80 @@ export class CdktfTarponStack extends TerraformStack {
       realmBaseUrl: 'https://services.cloud.mongodb.com/',
     })
 
-    const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
-      this,
-      'tarpon-project',
-      {
-        name: config.application.MONGO_ATLAS_PROJECT,
-      }
-    )
+    const atlasConfigs = getAtlasTenantConfig(config.stage)
 
-    if (config.resource.ATLAS_SEARCH_ENABLED) {
-      new atlas.searchIndex.SearchIndex(this, 'sanctions-search-index', {
-        name: 'sanctions_search_index',
-        projectId: project.projectId,
-        clusterName: config.application.MONGO_ATLAS_CLUSTER || '',
-        analyzer: 'lucene.standard',
-        collectionName: 'sanctions',
-        database: 'tarpon',
-        mappingsFields: JSON.stringify({
-          aka: {
-            type: 'string',
-          },
-          associates: {
-            type: 'document',
-            fields: {
-              ranks: {
-                type: 'string',
-              },
-              sanctionsSearchTypes: {
-                type: 'string',
+    atlasConfigs.map((config, i) => {
+      const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
+        this,
+        `tarpon-project-${i}`,
+        {
+          name: config.project,
+        }
+      )
+
+      if (config.searchEnabled) {
+        new atlas.searchIndex.SearchIndex(this, `sanctions-search-index-${i}`, {
+          name: 'sanctions_search_index',
+          projectId: project.projectId,
+          clusterName: config.cluster || '',
+          analyzer: 'lucene.standard',
+          collectionName: 'sanctions',
+          database: 'tarpon',
+          mappingsFields: JSON.stringify({
+            aka: {
+              type: 'string',
+            },
+            associates: {
+              type: 'document',
+              fields: {
+                ranks: {
+                  type: 'string',
+                },
+                sanctionsSearchTypes: {
+                  type: 'string',
+                },
               },
             },
-          },
-          documents: {
-            type: 'document',
-            fields: {
-              id: {
-                type: 'string',
-              },
-              formattedId: {
-                type: 'string',
-              },
-            },
-          },
-          name: {
-            type: 'string',
-          },
-          gender: {
-            type: 'string',
-          },
-          nationality: {
-            type: 'string',
-          },
-          occupations: {
-            type: 'document',
-            fields: {
-              rank: {
-                type: 'string',
+            documents: {
+              type: 'document',
+              fields: {
+                id: {
+                  type: 'string',
+                },
+                formattedId: {
+                  type: 'string',
+                },
               },
             },
-          },
-          sanctionSearchTypes: {
-            type: 'string',
-          },
-          yearOfBirth: {
-            type: 'string',
-          },
-        }),
-        mappingsDynamic: false,
-        searchAnalyzer: 'lucene.standard',
-      })
-    }
+            name: {
+              type: 'string',
+            },
+            gender: {
+              type: 'string',
+            },
+            nationality: {
+              type: 'string',
+            },
+            occupations: {
+              type: 'document',
+              fields: {
+                rank: {
+                  type: 'string',
+                },
+              },
+            },
+            sanctionSearchTypes: {
+              type: 'string',
+            },
+            yearOfBirth: {
+              type: 'string',
+            },
+          }),
+          mappingsDynamic: false,
+          searchAnalyzer: 'lucene.standard',
+        })
+      }
+    })
 
     const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)
 
