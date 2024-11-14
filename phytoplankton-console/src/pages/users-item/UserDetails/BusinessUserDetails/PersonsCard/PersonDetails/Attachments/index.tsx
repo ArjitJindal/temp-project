@@ -17,7 +17,7 @@ import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-ut
 interface Props {
   attachments: PersonAttachment[];
   userId: string;
-  personId: string;
+  personId?: string;
   currentUserId: string;
   isShareHolder: boolean;
 }
@@ -78,14 +78,16 @@ export default function Attachment(props: Props) {
           : 'No attachment found'}
       </div>
 
-      <AttachmentUploadModal
-        isOpen={modalOpen}
-        handleCancel={handleCancel}
-        userId={userId}
-        personId={personId}
-        currentUserId={currentUserId}
-        isShareHolder={isShareHolder}
-      />
+      {personId != null && (
+        <AttachmentUploadModal
+          isOpen={modalOpen}
+          handleCancel={handleCancel}
+          userId={userId}
+          personId={personId}
+          currentUserId={currentUserId}
+          isShareHolder={isShareHolder}
+        />
+      )}
     </div>
   );
 }

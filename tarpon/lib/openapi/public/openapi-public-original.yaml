@@ -2100,7 +2100,6 @@ components:
           items:
             $ref: '#/components/schemas/PersonAttachment'
       required:
-        - userId
         - generalDetails
       description:
         Model for a generic individual - different from User model by not
