@@ -12927,6 +12927,7 @@ components:
         - ALERT
         - WEBHOOK
         - API-KEY
+        - SAR
     AuditLogActionEnum:
       title: AuditLogActionEnum
       type: string

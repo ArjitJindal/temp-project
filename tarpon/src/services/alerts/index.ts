@@ -60,7 +60,7 @@ import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusU
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
 import { isAlertAvailable } from '@/services/cases/utils'
-import { CasesAlertsAuditLogService } from '@/services/cases/case-alerts-audit-log-service'
+import { CasesAlertsReportAuditLogService } from '@/services/cases/case-alerts-report-audit-log-service'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -90,7 +90,7 @@ import { S3Config } from '@/services/aws/s3-service'
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
   alertsRepository: AlertsRepository
-  auditLogService: CasesAlertsAuditLogService
+  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -127,7 +127,7 @@ export class AlertsService extends CaseAlertsCommonService {
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
     this.dynamoDb = alertsRepository.dynamoDb
-    this.auditLogService = new CasesAlertsAuditLogService(
+    this.auditLogService = new CasesAlertsReportAuditLogService(
       alertsRepository.tenantId,
       { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
     )

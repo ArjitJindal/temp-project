@@ -13,6 +13,7 @@ import { CaseRepository } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
+import { CasesAlertsReportAuditLogService } from '../cases/case-alerts-report-audit-log-service'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import {
@@ -20,7 +21,7 @@ import {
   UNIMPLEMENTED_GENERATORS,
 } from '@/services/sar/generators'
 import { Report } from '@/@types/openapi-internal/Report'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
 import {
   DefaultApiGetReportsRequest,
   DefaultApiDeleteReportsRequest,
@@ -53,6 +54,7 @@ export class ReportService {
   reportRepository!: ReportRepository
   tenantId: string
   mongoDb: MongoClient
+  auditLogService: CasesAlertsReportAuditLogService
   riskScoringService: RiskScoringV8Service
   s3: S3
   s3Config: S3Config
@@ -87,6 +89,10 @@ export class ReportService {
     this.tenantId = tenantId
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
+    this.auditLogService = new CasesAlertsReportAuditLogService(
+      this.reportRepository.tenantId,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+    )
     const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
     this.riskScoringService = new RiskScoringV8Service(
       tenantId,
@@ -284,9 +290,16 @@ export class ReportService {
   }
 
   async deleteReports(params: DefaultApiDeleteReportsRequest) {
-    return await this.reportRepository.deleteReports(
-      params.ReportsDeleteRequest.reportIds
-    )
+    await withTransaction(async () => {
+      await Promise.all([
+        this.reportRepository.deleteReports(
+          params.ReportsDeleteRequest.reportIds
+        ),
+        this.auditLogService.handleSarDeleteAuditLog(
+          params.ReportsDeleteRequest.reportIds
+        ),
+      ])
+    })
   }
 
   async getReport(reportId: string): Promise<Report> {
@@ -351,7 +364,12 @@ export class ReportService {
       logger.info('Submitted report')
     }
 
-    const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+    const savedReport = await withTransaction(async () => {
+      const savedReport = await this.reportRepository.saveOrUpdateReport(report)
+      await this.auditLogService.handleAuditLogForNewSar(savedReport)
+      return savedReport
+    })
+
     await this.riskScoringService.handleReRunTriggers('SAR', {
       userIds: [report.caseUserId],
     }) // To rerun risk scores for user
@@ -387,7 +405,17 @@ export class ReportService {
     status: ReportStatus,
     statusInfo?: string
   ): Promise<void> {
-    await this.reportRepository.updateReportStatus(reportId, status, statusInfo)
+    const report = await this.getReport(reportId)
+    await withTransaction(async () => {
+      await Promise.all([
+        this.reportRepository.updateReportStatus(reportId, status, statusInfo),
+        this.auditLogService.handleSarUpdateAuditLog(
+          report,
+          { status: report.status, statusInfo: report.statusInfo },
+          { status, statusInfo }
+        ),
+      ])
+    })
   }
 
   private getReportGenerator(reportTypeId: string) {

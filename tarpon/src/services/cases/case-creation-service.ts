@@ -29,7 +29,7 @@ import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
 import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
+import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import {
   CaseRepository,
@@ -119,7 +119,7 @@ export class CaseCreationService {
   userRepository: UserRepository
   ruleInstanceRepository: RuleInstanceRepository
   transactionRepository: MongoDbTransactionRepository
-  auditLogService: CasesAlertsAuditLogService
+  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -168,7 +168,10 @@ export class CaseCreationService {
       tenantID,
       connections.mongoDb
     )
-    this.auditLogService = new CasesAlertsAuditLogService(tenantID, connections)
+    this.auditLogService = new CasesAlertsReportAuditLogService(
+      tenantID,
+      connections
+    )
     if (s3 && s3Config) {
       this.caseService = new CaseService(
         this.caseRepository,

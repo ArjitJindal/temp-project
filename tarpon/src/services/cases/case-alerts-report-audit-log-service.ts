@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ReportRepository } from '../sar/repositories/report-repository'
 import { getLatestInvestigationTime } from './utils'
 import {
   AuditLog,
@@ -16,6 +17,7 @@ import { CaseRepository } from '@/services/cases/repository'
 import { traceable } from '@/core/xray'
 import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 import { AlertQaStatusUpdateRequest } from '@/@types/openapi-internal/AlertQaStatusUpdateRequest'
+import { Report } from '@/@types/openapi-internal/Report'
 import {
   AlertUpdateAuditLogImage,
   AlertLogMetaDataType,
@@ -23,6 +25,8 @@ import {
   CaseUpdateAuditLogImage,
   CaseLogMetaDataType,
   CommentAuditLogImage,
+  SarUpdateAuditLogImage,
+  SarLogMetaDataType,
 } from '@/@types/audit-log'
 import { Account } from '@/@types/openapi-internal/Account'
 
@@ -44,8 +48,17 @@ type AlertAuditLogCreateRequest = {
   subtype?: AuditLogSubtypeEnum
 }
 
+type SarAuditLogCreateRequest = {
+  sarId: string
+  logAction: AuditLogActionEnum
+  oldImage?: any
+  newImage?: any
+  sarDetails?: Report | null
+  subtype?: AuditLogSubtypeEnum
+}
+
 @traceable
-export class CasesAlertsAuditLogService {
+export class CasesAlertsReportAuditLogService {
   tenantId: string
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
@@ -391,6 +404,46 @@ export class CasesAlertsAuditLogService {
     })
   }
 
+  public async handleAuditLogForNewSar(
+    sarItem: Report | Partial<Report>,
+    subtype: AuditLogSubtypeEnum = 'CREATION'
+  ) {
+    await this.createSarAuditLog({
+      sarId: sarItem.id ?? '',
+      logAction: 'CREATE',
+      newImage: sarItem,
+      subtype,
+    })
+  }
+
+  public async handleSarUpdateAuditLog(
+    sarItem: Report | Partial<Report>,
+    oldUpdates: SarUpdateAuditLogImage,
+    newUpdates: SarUpdateAuditLogImage
+  ) {
+    await this.createSarAuditLog({
+      sarId: sarItem.id ?? '',
+      logAction: 'UPDATE',
+      oldImage: {
+        ...oldUpdates,
+      },
+      newImage: {
+        ...newUpdates,
+      },
+    })
+  }
+
+  public async handleSarDeleteAuditLog(sarIds: string[]) {
+    await Promise.all(
+      sarIds.map(async (sarId) => {
+        await this.createSarAuditLog({
+          sarId: sarId,
+          logAction: 'DELETE',
+        })
+      })
+    )
+  }
+
   public async createAuditLog(auditLogCreateRequest: AuditLogCreateRequest) {
     const { caseId, logAction, oldImage, newImage, caseDetails, subtype } =
       auditLogCreateRequest
@@ -459,6 +512,54 @@ export class CasesAlertsAuditLogService {
         alertPriority: alertEntity?.priority,
         alertStatus: alertEntity?.alertStatus,
         caseId: alertEntity?.caseId,
+      },
+      ...(subtype?.startsWith('API')
+        ? {
+            user: {
+              id: API_USER,
+            } as Account,
+          }
+        : {}),
+    }
+    await publishAuditLog(this.tenantId, auditLog)
+  }
+
+  public async createSarAuditLog(
+    auditLogCreateRequest: SarAuditLogCreateRequest
+  ) {
+    const { sarId, logAction, oldImage, newImage, subtype, sarDetails } =
+      auditLogCreateRequest
+
+    const reportRepository = new ReportRepository(
+      this.tenantId,
+      this.mongoDb,
+      this.dynamoDb
+    )
+
+    const sarEntity = sarDetails ?? (await reportRepository.getReport(sarId))
+    const auditLog: Omit<AuditLog, 'logMetadata'> & {
+      logMetadata: SarLogMetaDataType
+    } = {
+      type: 'SAR',
+      action: logAction,
+      timestamp: Date.now(),
+      entityId: sarId,
+      subtype: subtype,
+      oldImage: oldImage,
+      newImage: newImage,
+      logMetadata: {
+        name: sarEntity?.name,
+        description: sarEntity?.description,
+        caseId: sarEntity?.caseId,
+        reportTypeId: sarEntity?.reportTypeId,
+        caseUserId: sarEntity?.caseUserId,
+        createdById: sarEntity?.createdById,
+        parameters: sarEntity?.parameters,
+        comments: sarEntity?.comments,
+        revisions: sarEntity?.revisions,
+        attachments: sarEntity?.attachments,
+        caseUser: sarEntity?.caseUser,
+        sarCreationTimestamp: sarEntity?.createdAt,
       },
       ...(subtype?.startsWith('API')
         ? {

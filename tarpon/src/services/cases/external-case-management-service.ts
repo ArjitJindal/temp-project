@@ -9,7 +9,7 @@ import { CaseAlertsCommonService } from '../case-alerts-common'
 import { API_USER } from '../users'
 import { CasesAlertsTransformer } from './cases-alerts-transformer'
 import { CaseRepository } from './repository'
-import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
+import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import { Case } from '@/@types/openapi-public-management/Case'
 import { Case as CaseInternal } from '@/@types/openapi-internal/Case'
@@ -43,7 +43,7 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     mongoDb: MongoClient
     dynamoDb: DynamoDBDocumentClient
   }
-  private casesAlertsAuditLogService: CasesAlertsAuditLogService
+  private casesAlertsReportAuditLogService: CasesAlertsReportAuditLogService
 
   constructor(
     tenantId: string,
@@ -58,10 +58,8 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     this.casesTransformer = new CasesAlertsTransformer(tenantId, connections)
     this.tenantId = tenantId
     this.connections = connections
-    this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-      tenantId,
-      connections
-    )
+    this.casesAlertsReportAuditLogService =
+      new CasesAlertsReportAuditLogService(tenantId, connections)
   }
 
   private async validateCaseCreationRequest(
@@ -255,7 +253,7 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
     const case_ = await this.transformCreationRequestToInternalCase(requestBody)
 
     const createdCase = await this.caseRepository.addExternalCaseMongo(case_)
-    await this.casesAlertsAuditLogService.handleAuditLogForNewCase(
+    await this.casesAlertsReportAuditLogService.handleAuditLogForNewCase(
       case_,
       'API_CREATION'
     )
@@ -334,7 +332,7 @@ export class ExternalCaseManagementService extends CaseAlertsCommonService {
 
     const oldImage = pick(internalCase, Object.keys(caseUpdates))
 
-    await this.casesAlertsAuditLogService.handleAuditLogForCaseUpdateViaApi(
+    await this.casesAlertsReportAuditLogService.handleAuditLogForCaseUpdateViaApi(
       caseId,
       oldImage,
       caseUpdates

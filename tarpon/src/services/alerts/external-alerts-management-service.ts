@@ -17,7 +17,7 @@ import { Credentials } from 'aws-lambda'
 import { CasesAlertsTransformer } from '../cases/cases-alerts-transformer'
 import { CaseRepository, MAX_TRANSACTION_IN_A_CASE } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
-import { CasesAlertsAuditLogService } from '../cases/case-alerts-audit-log-service'
+import { CasesAlertsReportAuditLogService } from '../cases/case-alerts-report-audit-log-service'
 import { AlertsRepository } from './repository'
 import { AlertsService } from '.'
 import { traceable } from '@/core/xray'
@@ -44,7 +44,7 @@ export class ExternalAlertManagementService {
   private caseRepository: CaseRepository
   private transactionRepository: MongoDbTransactionRepository
   private alertsTransformer: CasesAlertsTransformer
-  private casesAlertsAuditLogService: CasesAlertsAuditLogService
+  private casesAlertsReportAuditLogService: CasesAlertsReportAuditLogService
   private alertsInternalService: AlertsService
 
   constructor(
@@ -61,10 +61,8 @@ export class ExternalAlertManagementService {
       connections.mongoDb
     )
     this.alertsTransformer = new CasesAlertsTransformer(tenantId, connections)
-    this.casesAlertsAuditLogService = new CasesAlertsAuditLogService(
-      tenantId,
-      connections
-    )
+    this.casesAlertsReportAuditLogService =
+      new CasesAlertsReportAuditLogService(tenantId, connections)
     this.alertsInternalService = new AlertsService(
       this.alertsRepository,
       s3,
@@ -333,7 +331,7 @@ export class ExternalAlertManagementService {
     const externalAlert = await this.transformInternalAlertToExternalAlert(
       alert
     )
-    await this.casesAlertsAuditLogService.handleAuditLogForNewAlert(
+    await this.casesAlertsReportAuditLogService.handleAuditLogForNewAlert(
       alert,
       'API_CREATION'
     )
@@ -481,7 +479,7 @@ export class ExternalAlertManagementService {
     )
 
     const oldImage = pick(existingAlert, Object.keys(alertUpdate))
-    await this.casesAlertsAuditLogService.handleAuditLogForAlertUpdateViaApi(
+    await this.casesAlertsReportAuditLogService.handleAuditLogForAlertUpdateViaApi(
       alertId,
       oldImage,
       alertUpdate

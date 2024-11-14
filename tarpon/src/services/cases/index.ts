@@ -22,7 +22,7 @@ import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
-import { CasesAlertsAuditLogService } from './case-alerts-audit-log-service'
+import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import {
   DefaultApiGetCaseListRequest,
@@ -91,7 +91,7 @@ export class CaseService extends CaseAlertsCommonService {
   accountsService: AccountsService
   linkerService: LinkerService
   transactionsRepository: MongoDbTransactionRepository
-  auditLogService: CasesAlertsAuditLogService
+  auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
 
@@ -138,7 +138,7 @@ export class CaseService extends CaseAlertsCommonService {
       this.s3Config,
       awsCredentials
     )
-    this.auditLogService = new CasesAlertsAuditLogService(this.tenantId, {
+    this.auditLogService = new CasesAlertsReportAuditLogService(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
