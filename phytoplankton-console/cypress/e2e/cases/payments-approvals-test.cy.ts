@@ -21,7 +21,7 @@ describe('Approval of payments', () => {
     cy.intercept('POST', '**/transactions/action').as('approval-request');
     cy.visit('/case-management/cases');
     cy.contains('Payment approval').click();
-    cy.get('input[data-cy="row-table-checkbox', { timeout: 20000 }).should('exist').first().click();
+    cy.get('input[data-cy="row-table-checkbox', { timeout: 20000 }).first().click();
     cy.contains('Allow').click();
     allowTransaction();
   });

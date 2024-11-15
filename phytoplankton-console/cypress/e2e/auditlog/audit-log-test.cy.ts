@@ -29,7 +29,9 @@ describe('Audit log filter - entity type', () => {
         .first()
         .invoke('text')
         .then((text2) => {
-          cy.get('.ant-popover-inner-content input').eq(8).type(text2);
+          cy.get(
+            '.ant-popover-content:contains("Entity ID") .ant-popover-inner-content input',
+          ).type(text2);
 
           cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
         });
