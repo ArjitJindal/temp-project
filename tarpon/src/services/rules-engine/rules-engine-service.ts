@@ -893,19 +893,19 @@ export class RulesEngineService {
     transactionEvents: TransactionEvent[],
     senderUser: User | Business | null,
     receiverUser: User | Business | null,
-    riskDetails?: TransactionRiskScoringResult
+    riskDetails?: TransactionRiskScoringResult,
+    oldStatusTransactionEvent?: RuleAction
   ): Promise<void> {
     const transactionInDb = await this.transactionRepository.getTransactionById(
       transaction.transactionId,
       { consistentRead: true }
     )
-
     if (!transactionInDb) {
       throw new NotFound(
         `Transaction ${transaction.transactionId} not found when verifying async rules`
       )
     }
-
+    const oldStatus = oldStatusTransactionEvent ?? transactionInDb?.status
     const relatedData = {
       transactionRiskDetails: riskDetails,
       senderUser: senderUser ?? undefined,
@@ -948,6 +948,13 @@ export class RulesEngineService {
         aggregationMessages
       ),
     ])
+    if (status !== oldStatus) {
+      await sendStatusChangeWebhook(
+        this.tenantId,
+        transaction.transactionId,
+        status
+      )
+    }
   }
 
   public async verifyAsyncRulesTransactionEvent(
@@ -971,13 +978,14 @@ export class RulesEngineService {
         `Transaction Event ${transactionEventId} not found when verifying async rules`
       )
     }
-
+    const oldStatus = transactionEventInDb.status
     await this.verifyAsyncRulesTransactionInternal(
       updatedTransaction,
       transactionEvents,
       senderUser,
       receiverUser,
-      transactionEventInDb.riskScoreDetails
+      transactionEventInDb.riskScoreDetails,
+      oldStatus
     )
   }
 
@@ -2044,4 +2052,21 @@ export class RulesEngineService {
         return ['ORIGIN', 'DESTINATION']
     }
   }
+}
+
+const sendStatusChangeWebhook = async (
+  tenantId: string,
+  transactionId: string,
+  newStatus: string | undefined
+) => {
+  const webhookTask: ThinWebhookDeliveryTask = {
+    event: 'TRANSACTION_STATUS_UPDATED',
+    triggeredBy: 'SYSTEM',
+    payload: {
+      transactionId,
+      status: newStatus,
+      reasons: 'Status updated by async rule',
+    },
+  }
+  await sendWebhookTasks(tenantId, [webhookTask])
 }
