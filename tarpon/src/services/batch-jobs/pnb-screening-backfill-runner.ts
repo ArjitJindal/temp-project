@@ -55,7 +55,7 @@ export class PnbScreeningBackfillRunner extends BatchJobRunner {
     logger.warn(`Cursors: ${JSON.stringify(froms)}`)
     for (let i = 0; i < froms.length; i++) {
       const from = froms[i]
-      const to = froms[i + 1] || null // Use `null` as `to` for the last batch
+      const to = froms[i + 1] || undefined // Use `null` as `to` for the last batch
 
       logger.warn(`Sending batch job #${i}`)
       await sendBatchJobCommand({
