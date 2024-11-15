@@ -80,6 +80,25 @@ export async function* iterateItems<T>(
   }
 }
 
+export async function* iterateCursorItems<T>(
+  fn: (pagination: {
+    from: string
+    pageSize: number
+  }) => Promise<CursorPaginationResponse<T>>
+): AsyncGenerator<T> {
+  let from = ''
+  do {
+    const { items, hasNext, next } = await fn({
+      from,
+      pageSize: DEFAULT_PAGE_SIZE,
+    })
+    for (const item of items) {
+      yield item
+    }
+    from = hasNext ? next : ''
+  } while (from !== '' && from != null)
+}
+
 export interface CursorPaginationParams {
   pageSize?: number
   sortField?: string

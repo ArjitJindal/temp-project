@@ -16,6 +16,7 @@ type FormState = NarrativeFormValues<
   SanctionsHitReasons,
   {
     whitelistHits?: boolean;
+    removeHitsFromWhitelist?: boolean;
   }
 >;
 type FormValues = FormState['values'];
@@ -46,6 +47,7 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
         reasonOther: undefined,
         comment: undefined,
         whitelistHits: true,
+        removeHitsFromWhitelist: true,
         files: [],
       },
       isValid: false,
@@ -105,6 +107,23 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
                   formRef?.current?.setValues({
                     ...formState.values,
                     whitelistHits: newValue,
+                  });
+                }}
+              />
+            </Label>
+          )}
+          {newStatus === 'OPEN' && (
+            <Label
+              label={`Remove selected ${pluralize('hit', entityIds.length)} from whitelist`}
+              position="RIGHT"
+              level={2}
+            >
+              <Checkbox
+                value={formState.values.removeHitsFromWhitelist}
+                onChange={(newValue) => {
+                  formRef?.current?.setValues({
+                    ...formState.values,
+                    removeHitsFromWhitelist: newValue,
                   });
                 }}
               />

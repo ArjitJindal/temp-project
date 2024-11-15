@@ -37,6 +37,7 @@ import { SanctionsHitsRepository } from '@/services/sanctions/repositories/sanct
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
+  iterateCursorItems,
 } from '@/utils/pagination'
 import {
   SanctionsDataProviderName,
@@ -428,6 +429,39 @@ export class SanctionsService {
     await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(
       sanctionsWhitelistIds
     )
+  }
+
+  public async deleteWhitelistRecordsByHits(
+    sanctionsHitIds: string[]
+  ): Promise<void> {
+    await this.initialize()
+    const hitsIterator = iterateCursorItems(async ({ from }) =>
+      this.sanctionsHitsRepository.searchHits({
+        fromCursorKey: from,
+        filterHitIds: sanctionsHitIds,
+      })
+    )
+    const ids: string[] = []
+    for await (const hit of hitsIterator) {
+      const whitelistEntriesIterator = iterateCursorItems(async ({ from }) =>
+        this.sanctionsWhitelistEntityRepository.searchWhitelistEntities({
+          fromCursorKey: from,
+          filterUserId: hit.hitContext?.userId
+            ? [hit.hitContext?.userId]
+            : undefined,
+          filterEntity: hit.hitContext?.entity
+            ? [hit.hitContext?.entity]
+            : undefined,
+          filterEntityType: hit.hitContext?.entityType
+            ? [hit.hitContext?.entityType]
+            : undefined,
+        })
+      )
+      for await (const entry of whitelistEntriesIterator) {
+        ids.push(entry.sanctionsWhitelistId)
+      }
+    }
+    await this.sanctionsWhitelistEntityRepository.removeWhitelistEntities(ids)
   }
 
   /*

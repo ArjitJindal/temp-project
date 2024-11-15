@@ -100,7 +100,7 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
       async (_ctx, { SanctionHitsStatusUpdateRequest }) => {
         const { alertId, sanctionHitIds, updates } =
           SanctionHitsStatusUpdateRequest
-        const { whitelistHits } = updates
+        const { whitelistHits, removeHitsFromWhitelist } = updates
         const result = await sanctionsService.updateHits(
           sanctionHitIds,
           updates
@@ -112,8 +112,8 @@ export const sanctionsHandler = lambdaApi({ requiredFeatures: ['SANCTIONS'] })(
         const reasonsComment = AlertsService.formatReasonsComment(updates)
 
         let whitelistUpdateComment: string | null = null
-        if (updates.status === 'OPEN' && whitelistHits) {
-          await sanctionsService.deleteWhitelistRecord(sanctionHitIds)
+        if (updates.status === 'OPEN' && removeHitsFromWhitelist) {
+          await sanctionsService.deleteWhitelistRecordsByHits(sanctionHitIds)
         }
         if (updates.status === 'CLEARED' && whitelistHits) {
           for await (const hit of sanctionsService.sanctionsHitsRepository.iterateHits(

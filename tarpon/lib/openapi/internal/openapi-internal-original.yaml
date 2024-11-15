@@ -11662,6 +11662,8 @@ components:
           type: string
         whitelistHits:
           type: boolean
+        removeHitsFromWhitelist:
+          type: boolean
         comment:
           type: string
         files:

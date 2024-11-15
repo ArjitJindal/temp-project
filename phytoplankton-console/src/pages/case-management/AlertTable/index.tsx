@@ -1680,6 +1680,7 @@ export default function AlertTable(props: Props) {
               files: formValues.files,
               reasons: formValues.reasons,
               whitelistHits: formValues.whitelistHits,
+              removeHitsFromWhitelist: formValues.removeHitsFromWhitelist,
               status: formValues.newStatus,
             },
           };
