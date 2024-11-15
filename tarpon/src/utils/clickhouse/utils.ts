@@ -23,12 +23,19 @@ import {
   ProjectionsDefinition,
   ClickhouseTableDefinition,
   TableName,
+  IndexType,
 } from './definition'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
+
+export type IndexOptions = {
+  granularity?: number
+  type?: string
+  config?: Record<string, any>
+}
 
 const prodRegionsEnabled: FlagrightRegion[] = ['asia-1']
 
@@ -314,10 +321,11 @@ const getAllColumns = (table: ClickhouseTableDefinition) => [
 export const getCreateTableQuery = (table: ClickhouseTableDefinition) => {
   const tableName = table.table
   const columns = getAllColumns(table)
-
+  const indexOptions = createIndexOptions(table)
   return `
     CREATE TABLE IF NOT EXISTS ${tableName} (
       ${columns.join(', ')}
+      ${indexOptions.length ? `, ${indexOptions.join(',\n      ')}` : ''}
     ) ENGINE = ${table.engine}
      ${table.projections?.length ? ',' : ''}
      ${
@@ -368,6 +376,7 @@ export async function createOrUpdateClickHouseTable(
   }
   const client = await getClickhouseClient(tenantId)
   await createTableIfNotExists(client, tableName, table)
+  await addMissingIndexes(client, tableName, table, tenantId)
   await addMissingColumns(client, tableName, table)
   await addMissingProjections(client, tableName, table)
   await createMaterializedViews(client, table)
@@ -626,6 +635,143 @@ export const sendMessageToMongoConsumer = async (
       QueueUrl: process.env.MONGO_DB_CONSUMER_QUEUE_URL,
     })
   )
+}
+
+async function addMissingIndexes(
+  client: ClickHouseClient,
+  tableName: string,
+  table: ClickhouseTableDefinition,
+  tenantId: string
+): Promise<void> {
+  const indexOptions = createIndexOptions(table)
+  if (!indexOptions.length) {
+    return
+  }
+  const existingIndexes = await getExistingIndexes(client, tableName, tenantId)
+  for (const indexDef of indexOptions) {
+    const [_, indexName, ...rest] = indexDef.split(' ')
+    const indexDefinition = rest.join(' ')
+
+    const existingIndex = existingIndexes.find((idx) => idx.name === indexName)
+
+    if (!existingIndex) {
+      await addIndex(client, tableName, indexName, indexDefinition)
+      continue
+    }
+
+    const finalOptions = {
+      granularity: existingIndex?.granularity ?? 1,
+      type: existingIndex.type,
+      config: {},
+    }
+    const normalizedExistingDef = getIndexDefinition(
+      existingIndex.expr,
+      existingIndex.type,
+      finalOptions
+    )
+      .replace(/\s+/g, ' ')
+      .trim()
+    const normalizedNewDef = indexDefinition.replace(/\s+/g, ' ').trim()
+
+    if (normalizedExistingDef !== normalizedNewDef) {
+      await updateIndex(client, tableName, indexName, indexDefinition)
+    }
+  }
+}
+
+async function getExistingIndexes(
+  client: ClickHouseClient,
+  tableName: string,
+  tenantId: string
+): Promise<
+  Array<{
+    name: string
+    expr: string
+    type: IndexType
+    granularity: number
+  }>
+> {
+  const response = await client.query({
+    query: `SELECT name, expr, type, granularity FROM system.data_skipping_indices WHERE table = '${tableName}' AND database='${getClickhouseDbName(
+      tenantId
+    )}'`,
+  })
+  const result = await response.json()
+  if (!result.data || !result.data.length) {
+    return []
+  }
+  return result.data as Array<{
+    name: string
+    expr: string
+    type: IndexType
+    granularity: number
+  }>
+}
+
+async function addIndex(
+  client: ClickHouseClient,
+  tableName: string,
+  indexName: string,
+  indexDefinition: string
+): Promise<void> {
+  const addIndexQuery = `ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexDefinition}`
+  await client.query({ query: addIndexQuery })
+  logger.info(`Added missing index ${indexName} to table ${tableName}.`)
+}
+
+async function updateIndex(
+  client: ClickHouseClient,
+  tableName: string,
+  indexName: string,
+  indexDefinition: string
+): Promise<void> {
+  await client.query({
+    query: `ALTER TABLE ${tableName} DROP INDEX ${indexName}`,
+  })
+  await client.query({
+    query: `ALTER TABLE ${tableName} ADD INDEX ${indexName} ${indexDefinition}`,
+  })
+  logger.info(`Updated index ${indexName} in table ${tableName}.`)
+}
+
+function getIndexDefinition(
+  columnName: string,
+  indexType: IndexType,
+  options: Required<IndexOptions>
+): string {
+  switch (indexType) {
+    case 'inverted':
+      return `(${columnName}) TYPE ${options.type}(${options.granularity})`
+    case 'bloom_filter':
+      return `(${columnName}) TYPE bloom_filter(${options.granularity})`
+    case 'minmax':
+      return `(${columnName}) TYPE minmax GRANULARITY ${options.granularity}`
+    case 'set':
+      return `(${columnName}) TYPE set(${options.granularity})`
+    default:
+      return `(${columnName}) TYPE ${options.type} GRANULARITY ${options.granularity}`
+  }
+}
+
+function createIndexOptions(tableDefinition: ClickhouseTableDefinition) {
+  if (!tableDefinition.indexes) {
+    return []
+  }
+  const indexOptions: string[] = []
+  for (const index of tableDefinition.indexes) {
+    const finalOptions = {
+      granularity: index.options?.granularity ?? 1,
+      type: index.type,
+      config: {},
+    }
+    const indexDefinition = getIndexDefinition(
+      index.column,
+      index.type,
+      finalOptions
+    )
+    indexOptions.push(`INDEX ${index.name} ${indexDefinition}`)
+  }
+  return indexOptions
 }
 
 type TimeFormat = {

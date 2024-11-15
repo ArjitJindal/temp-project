@@ -9,11 +9,27 @@ import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 
+export type IndexType =
+  | 'inverted'
+  | 'normal'
+  | 'bloom_filter'
+  | 'minmax'
+  | 'set'
+  | 'tokenbf_v1'
+
 type BaseTableDefinition = {
   table: string
   idColumn: string
   timestampColumn: string
   materializedColumns?: string[]
+  indexes?: {
+    column: string
+    name: string
+    type: IndexType
+    options: {
+      granularity: number
+    }
+  }[]
   engine: 'ReplacingMergeTree'
   primaryKey: string
   orderBy: string
@@ -221,6 +237,14 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
+    indexes: [
+      {
+        column: 'username',
+        name: 'username_idx',
+        type: 'minmax' as IndexType,
+        options: { granularity: 3 },
+      },
+    ],
     mongoIdColumn: true,
   },
   {
