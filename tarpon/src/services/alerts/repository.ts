@@ -115,6 +115,16 @@ export class AlertsRepository {
       .next()
       .then((item) => item?.count ?? 0)
 
+    const sortedSlaAlerts = await itemsPromise
+    sortedSlaAlerts.forEach((alert) => {
+      if (alert.alert?.slaPolicyDetails) {
+        alert.alert.slaPolicyDetails.sort((a, b) => {
+          const aTime = a?.elapsedTime ?? 0
+          const bTime = b?.elapsedTime ?? 0
+          return bTime - aTime
+        })
+      }
+    })
     return {
       total: await countPromise,
       data: await itemsPromise,
