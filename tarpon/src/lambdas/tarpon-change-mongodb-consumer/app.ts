@@ -20,11 +20,7 @@ import {
   DbClients,
   StreamConsumerBuilder,
 } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
-import {
-  hasFeature,
-  tenantSettings,
-  updateLogMetadata,
-} from '@/core/utils/context'
+import { tenantSettings, updateLogMetadata } from '@/core/utils/context'
 import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { isDemoTenant } from '@/utils/tenant'
 import { DYNAMO_KEYS } from '@/core/seed/dynamodb'
@@ -263,21 +259,16 @@ export const transactionHandler = async (
           (rule) => rule.ruleInstanceId
         )
       ),
-      // NOTE: For async aggregation, it's already handled by sendTransactionAggregationTasks
-      hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')
-        ? []
-        : ruleInstancesRepo.getDeployingRuleInstances(),
+      ruleInstancesRepo.getDeployingRuleInstances(),
     ])
   const riskService = new RiskService(tenantId, {
     dynamoDb,
     mongoDb,
   })
   const deployingFactors = v8RiskScoringEnabled
-    ? hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')
-      ? []
-      : (await riskService.getAllRiskFactors()).filter(
-          (factor) => factor.status === 'DEPLOYING'
-        )
+    ? (await riskService.getAllRiskFactors()).filter(
+        (factor) => factor.status === 'DEPLOYING'
+      )
     : []
 
   // Update rule aggregation data for the transactions created when the rule is still deploying

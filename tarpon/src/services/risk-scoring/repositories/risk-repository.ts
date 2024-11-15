@@ -19,6 +19,11 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils/risk'
+import {
+  hasFeature,
+  getContext,
+  updateTenantRiskClassificationValues,
+} from '@/core/utils/context'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   batchGet,
@@ -46,10 +51,6 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { traceable } from '@/core/xray'
-import {
-  getContext,
-  updateTenantRiskClassificationValues,
-} from '@/core/utils/context'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { AggregationRepository } from '@/services/logic-evaluator/engine/aggregation-repository'
@@ -596,16 +597,47 @@ export class RiskRepository {
   }
 
   async getAverageArsScore(userId: string): Promise<AverageArsScore | null> {
-    const getInput: GetCommandInput = {
-      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
-    }
-    const result = await this.dynamoDb.send(new GetCommand(getInput))
-    if (!result.Item) {
-      return null
-    }
+    if (hasFeature('RISK_SCORING_V8')) {
+      const getInput: GetCommandInput = {
+        TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        Key: DynamoDbKeys.AVG_ARS_VALUE_ITEM(this.tenantId, userId, '1'),
+      }
+      const result = await this.dynamoDb.send(new GetCommand(getInput))
+      if (!result.Item) {
+        return null
+      }
 
-    return omit(result.Item, ['PartitionKeyID', 'SortKeyID']) as AverageArsScore
+      return omit(result.Item, [
+        'PartitionKeyID',
+        'SortKeyID',
+      ]) as AverageArsScore
+    }
+    const db = this.mongoDb.db()
+    const arsScoresCollectionName = ARS_SCORES_COLLECTION(this.tenantId)
+    const arsScoresCollection = db.collection<ArsScore>(arsScoresCollectionName)
+
+    const data = await arsScoresCollection
+      .aggregate<TrsScoresResponse>([
+        {
+          $match: {
+            $or: [{ originUserId: userId }, { destinationUserId: userId }],
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            average: { $avg: '$arsScore' },
+          },
+        },
+      ])
+      .next()
+
+    return {
+      userId,
+      value: data?.average ?? 0,
+      transactionCount: 0, // unused
+      createdAt: Date.now(),
+    }
   }
 
   async updateOrCreateAverageArsScore(
@@ -694,34 +726,6 @@ export class RiskRepository {
       arsScore
     )
     return arsScore
-  }
-
-  public async getAverageArsScoreForUser(
-    userId: string
-  ): Promise<TrsScoresResponse> {
-    const db = this.mongoDb.db()
-    const arsScoresCollectionName = ARS_SCORES_COLLECTION(this.tenantId)
-    const arsScoresCollection = db.collection<ArsScore>(arsScoresCollectionName)
-
-    const data = await arsScoresCollection
-      .aggregate<TrsScoresResponse>([
-        {
-          $match: {
-            $or: [{ originUserId: userId }, { destinationUserId: userId }],
-          },
-        },
-        {
-          $group: {
-            _id: null,
-            average: { $avg: '$arsScore' },
-          },
-        },
-      ])
-      .next()
-
-    return {
-      average: data?.average ?? 0,
-    }
   }
 
   async getArsValueFromMongo(transactionId: string): Promise<ArsScore | null> {

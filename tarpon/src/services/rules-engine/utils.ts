@@ -2,7 +2,6 @@ import createHttpError from 'http-errors'
 import { groupBy, uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
-import { V8TransactionAggregationTask } from './rules-engine-service'
 import { filterOutInternalRules } from './pnb-custom-logic'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -22,7 +21,6 @@ import {
   getSQSClient,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
-import { generateChecksum } from '@/utils/object'
 import { UserTag } from '@/@types/openapi-internal/all'
 
 export function getSenderKeys(
@@ -367,19 +365,6 @@ export async function sendTransactionAggregationTasks(
     }
   } else {
     const finalMessages = [...messages]
-    if (hasFeature('RULES_ENGINE_V8_ASYNC_AGGREGATION')) {
-      const task: V8TransactionAggregationTask = {
-        type: 'TRANSACTION_AGGREGATION',
-        transaction,
-        tenantId,
-      }
-      finalMessages.push({
-        MessageBody: JSON.stringify(task),
-        MessageGroupId: tenantId,
-        MessageDeduplicationId: generateChecksum(transaction),
-      })
-    }
-
     await bulkSendMessages(
       sqs,
       process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,

@@ -180,7 +180,8 @@ export const riskLevelAndScoreHandler = lambdaApi({
     )
 
     handlers.registerGetTrsScores(async (ctx, request) => {
-      return await riskService.getAverageArsScoreForUser(request.userId)
+      const result = await riskService.getAverageArsScore(request.userId)
+      return result ? { average: result.value } : null
     })
 
     handlers.registerGetDrsValue(

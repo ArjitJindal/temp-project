@@ -220,8 +220,8 @@ export class RiskScoringV8Service {
     await this.createOrUpdateArsScore(
       transaction,
       arsScore,
-      originUser,
-      destinationUser
+      transaction.originUserId,
+      transaction.destinationUserId
     )
 
     const { riskScoringCraEnabled = true } = await this.getTenantSettings()
@@ -236,14 +236,14 @@ export class RiskScoringV8Service {
     }
     const [originDrsScore, destinationDrsScore] = await Promise.all([
       this.updateDrsForTransaction(
-        originUser?.userId,
+        transaction.originUserId,
         arsScore.score,
         arsScore.scoreDetails,
         originAvgArs,
         transaction.transactionId
       ),
       this.updateDrsForTransaction(
-        destinationUser?.userId,
+        transaction.destinationUserId,
         arsScore.score,
         arsScore.scoreDetails,
         destinationAvgArs,
@@ -389,14 +389,14 @@ export class RiskScoringV8Service {
   private async createOrUpdateArsScore(
     transaction: Transaction,
     arsScore: RiskFactorsResult,
-    originUser?: User | Business,
-    destinationUser?: User | Business
+    originUserId?: string,
+    destinationUserId?: string
   ) {
     await this.riskRepository.createOrUpdateArsScore(
       transaction.transactionId,
       arsScore.score,
-      originUser?.userId,
-      destinationUser?.userId,
+      originUserId,
+      destinationUserId,
       [],
       arsScore.scoreDetails
     )
