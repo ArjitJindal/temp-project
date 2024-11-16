@@ -35,6 +35,7 @@ type BaseTableDefinition = {
   orderBy: string
   partitionBy?: string
   mongoIdColumn?: boolean
+  optimize?: boolean
 }
 
 export type MaterializedViewDefinition = Omit<
@@ -189,6 +190,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       },
     ],
+    optimize: true,
   },
   {
     table: CLICKHOUSE_DEFINITIONS.USERS.tableName,
@@ -246,6 +248,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       },
     ],
     mongoIdColumn: true,
+    optimize: true,
   },
   {
     table: CLICKHOUSE_DEFINITIONS.TRANSACTION_EVENTS.tableName,

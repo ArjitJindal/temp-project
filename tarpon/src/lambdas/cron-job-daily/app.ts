@@ -13,6 +13,9 @@ import { AccountsService } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { tenantHasFeature } from '@/core/utils/context'
+import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -72,6 +75,16 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
 
   if (envIs('dev')) {
     await cleanUpStaleQaEnvs()
+  }
+
+  // Remove once pick relevant fields is done
+  try {
+    await optimizeClickhouseTables(tenantInfos)
+  } catch (e) {
+    logger.error(
+      `Failed to optimize clickhouse tables: ${(e as Error)?.message}`,
+      e
+    )
   }
 })
 
@@ -150,4 +163,28 @@ async function checkDormantUsers(tenantInfos: TenantInfo[]) {
       }
     }
   }
+}
+
+async function optimizeClickhouseTables(tenantInfos: TenantInfo[]) {
+  for await (const tenant of tenantInfos) {
+    const isPnb = await tenantHasFeature(tenant.tenant.id, 'PNB')
+    if (isPnb) {
+      const tablesToOptimize = ClickHouseTables.filter(
+        (table) => table.optimize
+      )
+
+      for await (const table of tablesToOptimize) {
+        await optimizeClickhouseTable(tenant.tenant.id, table.table)
+      }
+    }
+  }
+}
+
+async function optimizeClickhouseTable(tenantId: string, table: string) {
+  logger.info(`Optimizing ${table} for ${tenantId}`)
+  const clickhouseClient = await getClickhouseClient(tenantId)
+
+  await clickhouseClient.exec({
+    query: `OPTIMIZE TABLE ${table} FINAL`,
+  })
 }
