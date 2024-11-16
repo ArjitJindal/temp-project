@@ -236,6 +236,7 @@ export class SanctionsService {
         orFilters: request.orFilters,
         allowDocumentMatches: request.allowDocumentMatches,
         manualSearch: request.manualSearch,
+        listVersion: request.listVersion,
       })
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {

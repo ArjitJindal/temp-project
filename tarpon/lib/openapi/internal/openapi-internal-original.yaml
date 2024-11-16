@@ -11939,6 +11939,8 @@ components:
           type: boolean
         manualSearch:
           type: boolean
+        listVersion:
+          type: number
       required:
         - searchTerm
     PepRank:

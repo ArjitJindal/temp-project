@@ -10,6 +10,8 @@ import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { User } from '@/@types/openapi-public/User'
+import { ListRepository } from '@/services/list/repositories/list-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 type ScreeningValues = 'NRIC'
 export type ListScreeningConsumerUserRuleParameters = {
@@ -78,12 +80,22 @@ export default class ListScreeningConsumerUser extends UserRule<ListScreeningCon
       isOngoingScreening: this.ongoingScreeningMode,
       searchTerm: name,
     }
+    const listRepository = new ListRepository(
+      this.tenantId,
+      getDynamoDbClient()
+    )
+    const listHeader = await listRepository.getListHeader(listId)
+    if (!listHeader) {
+      return
+    }
+    const listVersion = listHeader.version
     const result = await this.sanctionsService.search(
       {
         searchTerm: name,
         fuzzinessRange,
         fuzziness: undefined,
         monitoring: { enabled: ongoingScreening },
+        listVersion,
         ...(screeningValues?.includes('NRIC')
           ? {
               documentId:
