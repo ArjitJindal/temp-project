@@ -77,6 +77,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
   '/files/getPresignedDownloadUrl/{bucket}/{key}':
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
+  '/lists': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/whitelist': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/whitelist/{listId}': StackConstants.CONSOLE_API_LISTS_FUNCTION_NAME,
   '/whitelist/{listId}/import-csv':

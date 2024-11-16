@@ -550,6 +550,23 @@ paths:
               schema:
                 $ref: '#/components/schemas/PresignedUrlResponse'
       description: Get a presigned URL for uploading a file
+  /lists:
+    get:
+      summary: Get all lists
+      tags: []
+      x-flagright:
+        permissions:
+          - lists:whitelist:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: ../public/openapi-public-original.yaml#/components/schemas/ListHeader
+      operationId: get-lists
   /whitelist:
     get:
       summary: White Lists - Get All By Type
