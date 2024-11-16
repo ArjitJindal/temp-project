@@ -22,7 +22,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
 import {
-  hasFeature,
+  tenantHasFeature,
   updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
@@ -121,7 +121,7 @@ async function deliverWebhookEvent(
           `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_HOURS} hours. Will not retry`
         )
 
-        if (hasFeature('PNB')) {
+        if (await tenantHasFeature(webhookDeliveryTask.tenantId, 'PNB')) {
           // Don't disable webhooks for PNB
           logger.error(
             `Webhook task for PNB failed with ID ${webhookDeliveryTask._id}`
