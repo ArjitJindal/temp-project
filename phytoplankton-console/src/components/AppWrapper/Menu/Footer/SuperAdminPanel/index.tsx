@@ -100,10 +100,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Async rules',
     description: 'Enables async rules',
   },
-  RULES_ENGINE_V8_ASYNC_AGGREGATION: {
-    title: 'Rules engine V8 async aggregation',
-    description: 'Enables Rules engine V8 async aggregation',
-  },
   RULES_ENGINE_V8_SYNC_REBUILD: {
     title: 'Rules engine V8 sync rebuild ',
     description: 'Enables Rules engine V8 sync rebuild',
