@@ -15,6 +15,8 @@ import { sendWebhookTasks } from '@/services/webhook/utils'
 import { hasFeature } from '@/core/utils/context'
 import { getRiskLevelForPNB } from '@/services/rules-engine/pnb-custom-logic'
 import { User } from '@/@types/openapi-internal/User'
+import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+import { mergeUserTags } from '@/services/rules-engine/utils'
 
 export async function arsScoreEventHandler(
   tenantId: string,
@@ -79,8 +81,33 @@ export async function drsScoreEventHandler(
     if (!oldDrsScore || oldRiskLevel !== newRiskLevel) {
       let riskLevel = newRiskLevel
       if (newDrsScore.userId && hasFeature('PNB')) {
-        const user = await userRepository.getUser(newDrsScore.userId)
+        const user = await userRepository.getUser<UserWithRulesResult>(
+          newDrsScore.userId
+        )
         riskLevel = getRiskLevelForPNB(oldRiskLevel, newRiskLevel, user as User)
+        const riskLevelStatus =
+          riskLevel === 'HIGH' || riskLevel === 'VERY_HIGH'
+            ? 'Incomplete'
+            : 'Complete'
+        if (
+          user &&
+          riskLevelStatus !==
+            user.tags?.find((tag) => tag.key === 'RISK_LEVEL_STATUS')?.value
+        ) {
+          await userRepository.saveUser(
+            {
+              ...user,
+              tags: mergeUserTags(user.tags, [
+                {
+                  isEditable: true,
+                  value: riskLevelStatus,
+                  key: 'RISK_LEVEL_STATUS',
+                },
+              ]),
+            },
+            'CONSUMER'
+          )
+        }
       }
       await sendWebhookTasks(tenantId, [
         {

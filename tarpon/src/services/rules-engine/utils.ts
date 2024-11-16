@@ -378,8 +378,8 @@ export function mergeUserTags(
   previousTags?: UserTag[],
   updatedTags?: UserTag[]
 ) {
-  if (!previousTags && !updatedTags) {
-    return undefined
+  if (!previousTags || !updatedTags) {
+    return previousTags ?? updatedTags
   }
   let newTagsToUpdate: UserTag[] = []
   const prevTags = groupBy(previousTags ?? [], 'key')
