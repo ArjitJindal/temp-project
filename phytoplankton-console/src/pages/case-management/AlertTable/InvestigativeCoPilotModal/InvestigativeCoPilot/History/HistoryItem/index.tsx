@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
+import HistoryItemRuleHit from 'src/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemRuleHit';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
@@ -142,6 +143,9 @@ function renderItem(
   }
   if (item.questionType === 'SCREENING_COMPARISON') {
     return <HistoryItemScreeningComparison item={item} />;
+  }
+  if (item.questionType === 'RULE_HIT') {
+    return <HistoryItemRuleHit item={item} />;
   }
   return neverReturn(item, <>{JSON.stringify(item)}</>);
 }

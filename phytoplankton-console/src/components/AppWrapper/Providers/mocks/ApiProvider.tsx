@@ -23,7 +23,7 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
         return Promise.resolve([]);
       };
     }
-    if (prop === 'getRuleLogicConfig') {
+    if (prop === 'getLogicConfig') {
       return (): Promise<LogicConfig> => {
         return Promise.resolve(MOCKED_RULE_CONFIG as unknown as LogicConfig);
       };

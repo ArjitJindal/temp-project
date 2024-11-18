@@ -22291,10 +22291,13 @@
   ],
   "aggregationVariables": [
     {
-      "key": "agg:ad53fdeb",
+      "key": "agg:1ee80dbd",
+      "name": "Average transaction amount",
       "type": "USER_TRANSACTIONS",
       "userDirection": "SENDER",
-      "transactionDirection": "RECEIVING",
+      "transactionDirection": "SENDING",
+      "aggregationFieldKey": "TRANSACTION:originAmountDetails-transactionAmount",
+      "aggregationFunc": "AVG",
       "baseCurrency": "USD",
       "timeWindow": {
         "start": {
@@ -22306,150 +22309,18 @@
           "granularity": "now"
         }
       },
-      "aggregationFieldKey": "TRANSACTION:originAmountDetails-transactionAmount",
-      "aggregationFunc": "MAX",
-      "aggregationGroupByFieldKey": "TRANSACTION:originAmountDetails-transactionCurrency",
-      "filtersLogic": {
-        "and": [
-          {
-            "==": [
-              {
-                "var": "TRANSACTION:type"
-              },
-              "TRANSFER"
-            ]
-          },
-          {
-            "<": [
-              {
-                "var": "TRANSACTION:timestamp"
-              },
-              1726934915163
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "key": "agg:b4b8bc21",
-      "type": "USER_TRANSACTIONS",
-      "userDirection": "SENDER",
-      "transactionDirection": "SENDING",
-      "timeWindow": {
-        "start": {
-          "units": 1,
-          "granularity": "day"
-        },
-        "end": {
-          "units": 0,
-          "granularity": "now"
-        }
-      },
-      "aggregationFieldKey": "TRANSACTION:timestamp",
-      "aggregationFunc": "MAX",
-      "aggregationGroupByFieldKey": "TRANSACTION:type",
-      "filtersLogic": {
-        "and": [
-          {
-            "==": [
-              {
-                "var": "TRANSACTION:type"
-              },
-              "TRANSFER"
-            ]
-          },
-          {
-            "<": [
-              {
-                "var": "TRANSACTION:timestamp"
-              },
-              1726934915163
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "key": "agg:a3ecb74e$1",
-      "type": "USER_TRANSACTIONS",
-      "userDirection": "RECEIVER",
-      "transactionDirection": "SENDING",
-      "timeWindow": {
-        "start": {
-          "units": 1,
-          "granularity": "day"
-        },
-        "end": {
-          "units": 0,
-          "granularity": "now"
-        }
-      },
-      "aggregationFieldKey": "TRANSACTION:originAmountDetails-transactionCurrency",
-      "aggregationFunc": "UNIQUE_VALUES",
-      "aggregationGroupByFieldKey": "TRANSACTION:transactionState",
-      "filtersLogic": {
-        "and": [
-          {
-            "==": [
-              {
-                "var": "TRANSACTION:type"
-              },
-              "TRANSFER"
-            ]
-          },
-          {
-            "<": [
-              {
-                "var": "TRANSACTION:timestamp"
-              },
-              1726934915163
-            ]
-          }
-        ]
-      }
-    },
-    {
-      "key": "agg:a3ecb74e$2",
-      "type": "USER_TRANSACTIONS",
-      "userDirection": "RECEIVER",
-      "transactionDirection": "SENDING",
-      "aggregationFieldKey": "TRANSACTION:originAmountDetails-transactionCurrency",
-      "aggregationFunc": "UNIQUE_VALUES",
-      "aggregationGroupByFieldKey": "TRANSACTION:transactionState",
-      "filtersLogic": {
-        "and": [
-          {
-            "==": [
-              {
-                "var": "TRANSACTION:type"
-              },
-              "TRANSFER"
-            ]
-          },
-          {
-            "<": [
-              {
-                "var": "TRANSACTION:timestamp"
-              },
-              1726934915163
-            ]
-          }
-        ]
-      }
+      "includeCurrentEntity": true,
+      "version": 1731513893003
     }
   ],
   "entityVariablesInUse": [
     {
-      "key": "entity:b0ffbee3",
+      "key": "entity:2fd99444",
       "entityKey": "TRANSACTION:type"
     },
     {
-      "key": "entity:d38e6d30",
-      "entityKey": "TRANSACTION:amountDetails-country__BOTH"
-    },
-    {
-      "key": "entity:e893de09",
-      "entityKey": "BUSINESS_USER:legalEntity-companyGeneralDetails-userRegistrationStatus__BOTH"
+      "key": "entity:c152f75e",
+      "entityKey": "TRANSACTION:originAmountDetails-country"
     }
   ],
   "fields": {
@@ -25637,41 +25508,39 @@
   "logic": {
     "and": [
       {
-        "==": [
+        "in": [
           {
-            "var": "entity:b0ffbee3"
+            "var": "entity:2fd99444"
           },
-          "DEPOSIT"
+          ["TRANSFER", "DEPOSIT", "EXTERNAL_PAYMENT"]
         ]
       },
       {
-        "or": [
+        "and": [
           {
-            "==": [
+            ">": [
               {
-                "+": [1100, 22]
+                "var": "agg:1ee80dbd"
               },
-              1122
+              500
             ]
           },
           {
-            "==": [
+            "<": [
               {
-                "var": "agg:ad53fdeb"
+                "var": "agg:1ee80dbd"
               },
-              {
-                "var": "agg:b4b8bc21"
-              }
+              200
             ]
           }
         ]
       },
       {
-        "==": [
+        "!=": [
           {
-            "var": "entity:e893de09"
+            "var": "entity:c152f75e"
           },
-          "DZ"
+          null
         ]
       }
     ]

@@ -566,7 +566,7 @@ export const MOCKED_ACCOUNTS: Account[] = [
 
 export const MOCKED_RULE_CONFIG = {
   s3Url: '',
-  ruleLogicConfig: {
+  logicConfig: {
     variables: [
       {
         key: 'TRANSACTION:type',

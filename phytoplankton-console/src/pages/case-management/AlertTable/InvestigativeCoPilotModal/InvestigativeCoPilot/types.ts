@@ -1,4 +1,11 @@
 import * as Api from '@/apis';
+import {
+  HitRulesDetails,
+  LogicAggregationVariable,
+  LogicEntityVariableInUse,
+  RuleMachineLearningVariable,
+  RuleType,
+} from '@/apis';
 
 export type QuestionResponseBase = Pick<
   Api.QuestionResponse,
@@ -32,6 +39,17 @@ export interface QuestionResponseEmbedded extends QuestionResponseBase {
   questionType: 'EMBEDDED';
 }
 
+export interface QuestionResponseRuleHit extends QuestionResponseBase {
+  questionType: 'RULE_HIT';
+  hitRulesDetails: HitRulesDetails;
+  ruleType: RuleType;
+  ruleLogic?: any;
+  ruleSummary?: string;
+  logicAggregationVariables?: LogicAggregationVariable[];
+  logicEntityVariables?: LogicEntityVariableInUse[];
+  logicMlVariables?: RuleMachineLearningVariable[];
+}
+
 export interface QuestionResponseStackedBarchart extends QuestionResponseBase, Api.StackedBarchart {
   questionType: 'STACKED_BARCHART';
 }
@@ -56,7 +74,8 @@ export type QuestionResponse =
   | QuestionResponseBarchart
   | QuestionResponseProperties
   | QuestionResponseEmbedded
-  | QuestionResponseScreeningComparison;
+  | QuestionResponseScreeningComparison
+  | QuestionResponseRuleHit;
 
 export function parseQuestionResponse(responses: Api.GetQuestionsResponse): QuestionResponse[] {
   return (

@@ -9,11 +9,11 @@ import { useIsChanged } from '@/utils/hooks';
 import { makeConfig } from '@/components/ui/LogicBuilder/helpers';
 import {
   LogicAggregationVariable,
+  LogicConfig,
   LogicEntityVariableEntityEnum,
   LogicEntityVariableInUse,
   RuleMachineLearningVariable,
   RuleType,
-  LogicConfig,
 } from '@/apis';
 import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigurationV2/steps/RuleParametersStep/utils';
@@ -43,10 +43,20 @@ export function useRuleLogicConfig(ruleType: RuleType) {
         return response.logicConfig;
       }
 
-      const ruleLogicConfig = (await fetch(response.s3Url).then((res) =>
-        res.json(),
-      )) as LogicConfig;
-      return ruleLogicConfig;
+      let s3response: Response;
+      try {
+        s3response = await fetch(response.s3Url);
+      } catch (e) {
+        console.error(e);
+        throw new Error(`Unable to fetch config file by S3 url: ${response.s3Url}`);
+      }
+      try {
+        const ruleLogicConfig = (await s3response.json()) as LogicConfig;
+        return ruleLogicConfig;
+      } catch (e) {
+        console.error(e);
+        throw new Error(`Unable to parse S3 response as logic config`);
+      }
     },
     { refetchOnMount: false, enabled: v8Enabled },
   );

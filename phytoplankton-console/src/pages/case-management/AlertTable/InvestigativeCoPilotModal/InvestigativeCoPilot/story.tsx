@@ -1,12 +1,37 @@
 import React from 'react';
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils';
+import { LogicAggregationVariable } from '@/apis';
 import { UseCase } from '@/pages/storybook/components';
 import HistoryItem from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem';
 import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 import { QuestionResponse } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
+import fixture from '@/components/ui/LogicBuilder/story-fixture.json';
 
 export default function (): JSX.Element {
   const items: { [key in QuestionResponse['questionType']]: QuestionResponse } = {
+    RULE_HIT: {
+      questionType: 'RULE_HIT',
+      title: 'Some title',
+      questionId: 'test2',
+      variables: [],
+      variableOptions: [],
+      createdById: 'test-user-id',
+      createdAt: new Date().getDate(),
+      ruleType: 'TRANSACTION',
+      hitRulesDetails: {
+        ruleId: 'RC-102',
+        ruleInstanceId: 'h4b18fnrh3',
+        ruleName: 'Transaction amount too high',
+        ruleDescription:
+          'Unique transaction’s origin email id’s of a specific payment method and transaction state in the last 30 days',
+        ruleAction: 'SUSPEND',
+      },
+      ruleLogic: fixture.logic,
+      ruleSummary:
+        'This rule checks for mentioned user’s transactions origin Email ID in the last 10 days with transaction time stamp recorded at 2024-04-01, 19:48:33 and used payment method is card or transaction state is blocked. ',
+      logicAggregationVariables: fixture.aggregationVariables as LogicAggregationVariable[],
+      logicEntityVariables: fixture.entityVariablesInUse,
+    },
     SCREENING_COMPARISON: {
       questionType: 'SCREENING_COMPARISON',
       title: 'SCREENING_COMPARISON answer title',
