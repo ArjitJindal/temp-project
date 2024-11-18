@@ -3837,7 +3837,7 @@ paths:
       operationId: pulse-manual-risk-assignment
       x-flagright:
         permissions:
-          - risk-scoring:risk-levels:write
+          - users:user-manual-risk-levels:write
       requestBody:
         content:
           application/json:
