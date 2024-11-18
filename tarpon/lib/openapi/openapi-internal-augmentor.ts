@@ -73,6 +73,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/rule-instances/{ruleInstanceId}/transaction-users-hit':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
+  '/rule-instances/rules-with-alerts':
+    StackConstants.CONSOLE_API_RULE_INSTANCE_FUNCTION_NAME,
   '/files/getPresignedUrl':
     StackConstants.CONSOLE_API_GET_PRESIGNED_URL_FUNCTION_NAME,
   '/files/getPresignedDownloadUrl/{bucket}/{key}':

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { keyBy } from 'lodash';
 import { useQuery } from './queries/hooks';
-import { RULE_INSTANCES, RULES } from './queries/keys';
+import { RULE_INSTANCES, RULES, RULES_WITH_ALERTS } from './queries/keys';
 import { Rule, RuleAction, RuleInstance, TransactionState } from '@/apis';
 import { neverReturn } from '@/utils/lang';
 import COLORS, {
@@ -81,6 +81,10 @@ export function getRuleActionColor(ruleAction: RuleAction): string {
 export type RuleInstanceMap = { [key: string]: RuleInstance };
 export type RulesMap = { [key: string]: Rule };
 
+interface UseRuleOptionsParams {
+  onlyWithAlerts?: boolean;
+}
+
 export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } {
   const api = useApi();
   const rulesResults = useQuery(RULES(), (): Promise<Rule[]> => api.getRules({}));
@@ -106,10 +110,27 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
   return { rules: rulesMap, ruleInstances: ruleInstancesMap };
 }
 
-export function useRuleOptions() {
+export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams = {}) {
+  const api = useApi();
   const rules = useRules();
+
+  const { data: rulesWithAlertsData } = useQuery<string[]>(
+    RULES_WITH_ALERTS(),
+    () => api.getRulesWithAlerts({}),
+    {
+      enabled: onlyWithAlerts,
+    },
+  );
   return useMemo(() => {
-    return Object.values(rules.ruleInstances).map((rulesInstance: RuleInstance) => {
+    let relevantRuleInstances: RuleInstance[] = Object.values(rules.ruleInstances);
+
+    if (onlyWithAlerts && rulesWithAlertsData.kind === 'SUCCESS') {
+      const rulesWithAlertsSet = new Set<string>(rulesWithAlertsData.value);
+      relevantRuleInstances = relevantRuleInstances.filter((instance) =>
+        rulesWithAlertsSet.has(instance.id as string),
+      );
+    }
+    return relevantRuleInstances.map((rulesInstance: RuleInstance) => {
       const ruleName =
         rulesInstance.ruleNameAlias ||
         (rulesInstance.ruleId && rules.rules[rulesInstance.ruleId]?.name);
@@ -120,5 +141,5 @@ export function useRuleOptions() {
           .join(' '),
       };
     });
-  }, [rules.ruleInstances, rules.rules]);
+  }, [rules.ruleInstances, rules.rules, onlyWithAlerts, rulesWithAlertsData]);
 }

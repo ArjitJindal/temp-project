@@ -29,7 +29,10 @@ import {
 } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
-import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  AUDITLOG_COLLECTION,
+  CASES_COLLECTION,
+} from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 import { RuleStats } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -105,7 +108,6 @@ export class RuleInstanceRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
   aggregationRepository: AggregationRepository
-
   constructor(
     tenantId: string,
     connections: {
@@ -569,5 +571,17 @@ export class RuleInstanceRepository {
       ])
       .toArray()
     return uniq(data.map((d) => d.date))
+  }
+
+  public async getDistinctRuleInstanceIdsWithAlerts() {
+    const db = await getMongoDbClientDb()
+    const casesCollection = db.collection(CASES_COLLECTION(this.tenantId))
+    const distinctRuleInstanceIds: string[] = await casesCollection.distinct(
+      'alerts.ruleInstanceId',
+      {
+        'alerts.ruleInstanceId': { $exists: true, $ne: null },
+      }
+    )
+    return distinctRuleInstanceIds
   }
 }

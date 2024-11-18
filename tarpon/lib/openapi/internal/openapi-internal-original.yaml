@@ -497,6 +497,22 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllUsersListResponse'
+  /rule-instances/rules-with-alerts:
+    get:
+      summary: Get Distinct Rule Instance IDs with Alerts
+      operationId: get-rules-with-alerts
+      x-flagright:
+        permissions:
+          - rules:my-rules:read
+      responses:
+        '200':
+          description: A list of distinct ruleInstanceIds with associated alerts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
   /files/getPresignedDownloadUrl/{bucket}/{key}:
     parameters: []
     get:

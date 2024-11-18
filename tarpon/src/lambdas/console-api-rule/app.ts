@@ -156,6 +156,10 @@ export const ruleInstanceHandler = lambdaApi()(
       }
     )
 
+    handlers.registerGetRulesWithAlerts(async () => {
+      return await ruleInstanceService.getDistinctRuleInstanceIdsWithAlerts()
+    })
+
     return await handlers.handle(event)
   }
 )

@@ -150,7 +150,7 @@ export const useCaseAlertFilters = (
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const isAlertSlaEnabled = useFeatureEnabled('ALERT_SLA');
   const isCaseSlaEnabled = useFeatureEnabled('PNB');
-  const ruleOptions = useRuleOptions();
+  const ruleOptions = useRuleOptions({ onlyWithAlerts: true });
   const ruleQueues = useRuleQueues();
   const businessIndustries = useBusinessIndustries();
 

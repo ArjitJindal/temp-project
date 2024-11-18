@@ -480,4 +480,10 @@ export class RuleInstanceService {
       }
     }
   }
+
+  public async getDistinctRuleInstanceIdsWithAlerts(): Promise<string[]> {
+    const distinctIds =
+      await this.ruleInstanceRepository.getDistinctRuleInstanceIdsWithAlerts()
+    return distinctIds
+  }
 }
