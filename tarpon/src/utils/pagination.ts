@@ -12,7 +12,6 @@ import {
 import { ClickHouseClient } from '@clickhouse/client'
 import { addNewSubsegment } from '@/core/xray'
 import { logger } from '@/core/logger'
-import { getContext } from '@/core/utils/context'
 
 export type PageSize = number
 export const DEFAULT_PAGE_SIZE = 20
@@ -253,9 +252,9 @@ export async function offsetPaginateClickhouse<T>(
   const page = query.page || 1
   const offset = (page - 1) * pageSize
 
-  const direction = sortOrder === 'ascend' ? 'ASC' : 'DESC'
-  let findSql = `SELECT data, NULL as count FROM ${dataTableName} WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE ${where}` : ''
+  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+  let findSql = `SELECT data, NULL as count FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ${
     excludeSortField
       ? `LIMIT ${pageSize} OFFSET ${offset}`
@@ -263,19 +262,17 @@ export async function offsetPaginateClickhouse<T>(
   })
   `
 
-  const tenantName = getContext()?.tenantName?.toLowerCase()
-
   if (options?.bypassNestedQuery) {
     // Temporary fix while removing final so that queries atleast work (Only for PNB)
-    findSql = `SELECT data, NULL as count FROM ${queryTableName} ${
-      !tenantName?.includes('pnb') ? 'FINAL ' : ''
-    } ${where ? `WHERE ${where}` : ''} ${
+    findSql = `SELECT data, NULL as count FROM ${queryTableName} FINAL ${
+      where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
+    } ${
       excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`
     } LIMIT ${pageSize} OFFSET ${offset}`
   }
 
   const countQuery = `SELECT NULL as data, COUNT(*) as count FROM ${queryTableName} FINAL ${
-    where ? `WHERE ${where}` : ''
+    where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
 
   const combinedQuery = `WITH query1 AS (${findSql}), query2 AS (${countQuery}) SELECT * from query1 UNION ALL SELECT * from query2`

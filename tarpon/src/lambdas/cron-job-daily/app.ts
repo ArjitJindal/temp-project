@@ -14,7 +14,10 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { tenantHasFeature } from '@/core/utils/context'
-import { ClickHouseTables } from '@/utils/clickhouse/definition'
+import {
+  ClickhouseTableDefinition,
+  ClickHouseTables,
+} from '@/utils/clickhouse/definition'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
@@ -174,17 +177,42 @@ async function optimizeClickhouseTables(tenantInfos: TenantInfo[]) {
       )
 
       for await (const table of tablesToOptimize) {
-        await optimizeClickhouseTable(tenant.tenant.id, table.table)
+        await optimizeClickhouseTable(tenant.tenant.id, table)
       }
     }
   }
 }
 
-async function optimizeClickhouseTable(tenantId: string, table: string) {
-  logger.info(`Optimizing ${table} for ${tenantId}`)
+async function optimizeClickhouseTable(
+  tenantId: string,
+  table: ClickhouseTableDefinition
+) {
+  const tableName = table.table
+  logger.info(`Optimizing ${tableName} for ${tenantId}`)
   const clickhouseClient = await getClickhouseClient(tenantId)
 
-  await clickhouseClient.exec({
-    query: `OPTIMIZE TABLE ${table} FINAL`,
-  })
+  try {
+    await Promise.all([
+      clickhouseClient.exec({
+        query: `OPTIMIZE TABLE ${tableName} FINAL`,
+      }),
+      clickhouseClient.exec({
+        query: `DELETE FROM ${tableName} WHERE timestamp = 0`,
+      }),
+      ...(table.materializedViews
+        ? Object.values(table.materializedViews).flatMap((view) => [
+            clickhouseClient.exec({
+              query: `OPTIMIZE TABLE ${view.table} FINAL`,
+            }),
+          ]) // If Risk Scores are updated before the user then timestamp might be 0 hence fixing that
+        : []),
+    ])
+  } catch (error) {
+    logger.info(
+      `Failed to optimize ${tableName} for ${tenantId}: ${
+        (error as Error)?.message
+      }`,
+      error
+    )
+  }
 }

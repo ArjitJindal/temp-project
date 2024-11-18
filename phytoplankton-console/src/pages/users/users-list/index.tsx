@@ -102,7 +102,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           filterUserRegistrationStatus: params.userRegistrationStatus,
         }),
         sortField: sort[0]?.[0] ?? 'createdTimestamp',
-        sortOrder: sort[0]?.[1] ?? 'descend',
+        sortOrder: sort[0]?.[1] ?? 'ascend',
         filterIsPepHit: isPepHit,
         filterPepRank: pepRank,
         filterRiskLevelLocked: riskLevelLocked,

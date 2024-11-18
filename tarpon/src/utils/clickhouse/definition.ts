@@ -107,6 +107,16 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   USERS: {
     tableName: 'users',
+    definition: {
+      idColumn: 'userId',
+      timestampColumn: 'createdTimestamp',
+    },
+    materializedViews: {
+      BY_ID: {
+        viewName: 'users_by_id_mv',
+        table: 'users_by_id',
+      },
+    },
   },
   TRANSACTION_EVENTS: {
     tableName: 'transaction_events',
@@ -194,8 +204,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
   },
   {
     table: CLICKHOUSE_DEFINITIONS.USERS.tableName,
-    idColumn: 'userId',
-    timestampColumn: 'createdTimestamp',
+    idColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.idColumn,
+    timestampColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.timestampColumn,
     materializedColumns: [
       enumFields(USER_TYPES, 'type', 'type'),
       `username String MATERIALIZED 
@@ -245,6 +255,16 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         name: 'username_idx',
         type: 'minmax' as IndexType,
         options: { granularity: 3 },
+      },
+    ],
+    materializedViews: [
+      {
+        viewName: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
+        columns: ['id String', 'data String'],
+        table: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
+        engine: 'ReplacingMergeTree',
+        primaryKey: 'id',
+        orderBy: 'id',
       },
     ],
     mongoIdColumn: true,

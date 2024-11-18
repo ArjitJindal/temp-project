@@ -178,11 +178,7 @@ export class ClickhouseTransactionsRepository {
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
       { page, pageSize, sortField, sortOrder },
       whereClause,
-      {
-        excludeSortField: sortField === 'timestamp' && sortOrder === 'ascend',
-        bypassNestedQuery:
-          sortField === 'timestamp' && sortOrder === 'ascend' && page <= 20,
-      }
+      { excludeSortField: false, bypassNestedQuery: false }
     )
 
     const sortedTransactions = getSortedData<InternalTransaction>({

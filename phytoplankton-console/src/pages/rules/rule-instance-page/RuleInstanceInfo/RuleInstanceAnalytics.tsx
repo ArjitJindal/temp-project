@@ -388,7 +388,7 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
   const [params, setParams] = useState<UserSearchParams>({
     ...DEFAULT_PARAMS_STATE,
     pageSize: 10,
-    sort: [['timestamp', 'descend']],
+    sort: [['timestamp', 'ascend']],
     createdTimestamp,
   });
   useEffect(() => {
@@ -423,7 +423,7 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
       filterTagValue: tagValue,
       filterRiskLevel: riskLevels,
       sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'descend',
+      sortOrder: sort[0]?.[1] ?? 'ascend',
       filterRiskLevelLocked: riskLevelLocked,
       filterRuleInstancesHit: [ruleInstance.id as string],
       filterShadowHit: true,
@@ -446,7 +446,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
   const [params, setParams] = useState<UserSearchParams>({
     ...DEFAULT_PARAMS_STATE,
     pageSize: 10,
-    sort: [['timestamp', 'descend']],
+    sort: [['timestamp', 'ascend']],
   });
   const api = useApi();
 
@@ -482,7 +482,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
       filterTagValue: tagValue,
       filterRiskLevel: riskLevels,
       sortField: sort[0]?.[0] ?? 'createdTimestamp',
-      sortOrder: sort[0]?.[1] ?? 'descend',
+      sortOrder: sort[0]?.[1] ?? 'ascend',
       filterRiskLevelLocked: riskLevelLocked,
       ruleInstanceId: ruleInstance.id as string,
       filterShadowHit: checkShadowRule(ruleInstance),

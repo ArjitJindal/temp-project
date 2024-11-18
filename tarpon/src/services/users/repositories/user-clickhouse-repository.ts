@@ -63,18 +63,15 @@ export class UserClickhouseRepository {
     const [data, riskClassificationValues] = await Promise.all([
       offsetPaginateClickhouse<T>(
         this.clickhouseClient,
-        CLICKHOUSE_DEFINITIONS.USERS.tableName,
+        CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
         CLICKHOUSE_DEFINITIONS.USERS.tableName,
         { page, pageSize, sortField, sortOrder },
         whereClause,
-        {
-          excludeSortField: sortField === 'timestamp' && sortOrder === 'ascend',
-          bypassNestedQuery:
-            sortField === 'timestamp' && sortOrder === 'ascend' && page <= 20,
-        }
+        { excludeSortField: false, bypassNestedQuery: false }
       ),
       riskRepository.getRiskClassificationValues(),
     ])
+
     const sortFieldInItem =
       sortField === 'timestamp' ? 'createdTimestamp' : sortField
     let sortedUsers = getSortedData<T>({
