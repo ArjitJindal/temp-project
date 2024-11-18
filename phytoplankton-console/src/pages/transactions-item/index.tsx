@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 //components
@@ -14,16 +14,8 @@ import Button from '@/components/library/Button';
 
 //utils and hooks
 import { makeUrl } from '@/utils/routing';
-import {
-  AsyncResource,
-  failed,
-  getOr,
-  init,
-  isSuccess,
-  loading,
-  success,
-} from '@/utils/asyncResource';
-import { Alert, AlertListResponseItem, ApiException, InternalTransaction } from '@/apis';
+import { getOr } from '@/utils/asyncResource';
+import { InternalTransaction } from '@/apis';
 import { useApi } from '@/api';
 import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
@@ -36,13 +28,12 @@ import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import TransactionTags from '@/pages/transactions-item/TransactionTags';
+import { useQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_ALERTS_LIST, TRANSACTIONS_ITEM } from '@/utils/queries/keys';
 
 export type RuleAlertMap = Map<string, { alertId: string; caseId: string }>;
 
 export default function TransactionsItem() {
-  const [currentItem, setCurrentItem] = useState<AsyncResource<InternalTransaction>>(init());
-  const currentTransactionId = isSuccess(currentItem) ? currentItem.value.transactionId : null;
-  // const { id: transactionId } = useParams<'id'>();
   const { tab = 'transaction-details' } = useParams<'tab'>();
   const { id: transactionId } = useParams<'id'>();
   const api = useApi();
@@ -50,75 +41,39 @@ export default function TransactionsItem() {
   const tenantSettings = useSettings();
   const riskClassificationValues = useRiskClassificationScores();
 
-  useEffect(() => {
+  const queryResult = useQuery(TRANSACTIONS_ITEM(transactionId ?? ''), () => {
     if (transactionId == null || transactionId === 'all') {
-      setCurrentItem(init());
-      return function () {};
+      throw new Error('Transaction id is not defined');
     }
-    if (currentTransactionId === transactionId) {
-      return function () {};
+    return api.getTransaction({ transactionId });
+  });
+
+  const alertsQueryResult = useQuery(TRANSACTIONS_ALERTS_LIST(transactionId ?? ''), () => {
+    if (transactionId == null || transactionId === 'all') {
+      throw new Error('Transaction id is not defined');
     }
-    setCurrentItem(loading());
-    let isCanceled = false;
-
-    api
-      .getTransaction({
-        transactionId,
-      })
-      .then((transaction) => {
-        if (isCanceled) {
-          return;
-        }
-        setCurrentItem(success(transaction));
-      })
-      .catch((e) => {
-        if (isCanceled) {
-          return;
-        }
-        // todo: i18n
-        let message = 'Unknown error';
-        if (e instanceof ApiException && e.code === 404) {
-          message = `Unable to find transaction by id "${transactionId}"`;
-        } else if (e instanceof Error && e.message) {
-          message = e.message;
-        }
-        setCurrentItem(failed(message));
-      });
-    return () => {
-      isCanceled = true;
-    };
-  }, [currentTransactionId, transactionId, api]);
-
-  const [transactionAlertsQueryResult, setTransactionAlertQueryResult] = useState<Alert[] | null>(
-    null,
-  );
-
-  useEffect(() => {
-    if (currentTransactionId) {
-      api
-        .getAlertList({
-          ...DEFAULT_PARAMS_STATE,
-          pageSize: 100,
-          filterTransactionIds: [currentTransactionId],
-        })
-        .then((res) => {
-          setTransactionAlertQueryResult(res.data.map((item: AlertListResponseItem) => item.alert));
-        });
-    }
-  }, [currentTransactionId, api]);
+    return api.getAlertList({
+      ...DEFAULT_PARAMS_STATE,
+      pageSize: 100,
+      filterTransactionIds: [transactionId],
+    });
+  });
 
   const ruleAlertMap: RuleAlertMap = useMemo(() => {
     const alertDetails = new Map<string, { alertId: string; caseId: string }>();
 
-    return (transactionAlertsQueryResult ?? []).reduce((alertDetails, alert) => {
-      alertDetails.set(alert.ruleInstanceId, {
-        alertId: alert.alertId as string,
-        caseId: alert.caseId as string,
+    return getOr(alertsQueryResult.data, {
+      data: [],
+      total: 0,
+    }).data.reduce((alertDetails, alert) => {
+      alertDetails.set(alert.alert.ruleInstanceId, {
+        alertId: alert.alert.alertId as string,
+        caseId: alert.alert.caseId as string,
       });
 
       return alertDetails;
     }, alertDetails);
-  }, [transactionAlertsQueryResult]);
+  }, [alertsQueryResult.data]);
 
   const [isLoading, setLoading] = useState(false);
 
@@ -151,7 +106,7 @@ export default function TransactionsItem() {
   const entityHeaderHeight = rect?.height ?? 0;
 
   return (
-    <AsyncResourceRenderer resource={currentItem}>
+    <AsyncResourceRenderer<InternalTransaction> resource={queryResult.data}>
       {(transaction) => (
         <PageWrapper
           disableHeaderPadding
@@ -160,13 +115,8 @@ export default function TransactionsItem() {
               <EntityHeader
                 stickyElRef={setHeaderStickyElRef}
                 breadcrumbItems={[
-                  {
-                    title: 'Transactions',
-                    to: '/transactions',
-                  },
-                  {
-                    title: transaction.transactionId,
-                  },
+                  { title: 'Transactions', to: '/transactions' },
+                  { title: transaction.transactionId },
                 ]}
                 subHeader={<SubHeader transaction={transaction} />}
                 buttons={[
@@ -192,9 +142,7 @@ export default function TransactionsItem() {
                 keepBackUrl(
                   makeUrl('/transactions/item/:id/:tab', { id: transactionId, tab: newTab }),
                 ),
-                {
-                  replace: true,
-                },
+                { replace: true },
               );
             }}
             items={[

@@ -501,7 +501,7 @@ export default function TransactionsTable(props: Props) {
       isExpandable={
         isExpandable ? (row) => isTransactionHasDetails(row.content, settings) : () => false
       }
-      renderExpanded={(entity) => <ExpandedRowRenderer transaction={entity} />}
+      renderExpanded={(entity) => <ExpandedRowRenderer transactionId={entity.transactionId} />}
       extraTools={[
         () => (
           <>
