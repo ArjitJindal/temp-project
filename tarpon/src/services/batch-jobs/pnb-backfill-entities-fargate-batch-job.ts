@@ -1,5 +1,3 @@
-import * as readline from 'readline'
-import { Readable } from 'stream'
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import pMap from 'p-map'
 import { chunk, last, uniqBy } from 'lodash'
@@ -47,7 +45,6 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
   private mongoDb!: MongoClient
   private dynamoDb!: DynamoDBDocumentClient
   private tenantId!: string
-  private progressKey!: string
 
   protected async run(job: PnbBackfillEntities): Promise<void> {
     const { tenantId } = job
@@ -79,15 +76,33 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         Key: importFileS3Key,
       })
     )
-    const stream = Body instanceof Readable ? Body : Readable.from(Body as any)
-    const rl = readline.createInterface({
-      input: stream,
-      crlfDelay: Infinity,
-    })
-
-    this.progressKey = `pnb-backfill-entities-${importFileS3Key}`
+    const stream = (Body as any)?.transformToWebStream()
+    const reader = stream.getReader()
+    const decoder = new TextDecoder()
+    const rl = {
+      async *[Symbol.asyncIterator]() {
+        let leftover = ''
+        while (true) {
+          const { done, value } = await reader.read()
+          if (done) {
+            if (leftover) {
+              yield leftover
+            }
+            break
+          }
+          const chunk = decoder.decode(value, { stream: true })
+          const lines = (leftover + chunk).split('\n')
+          leftover = lines.pop() || ''
+          for (const line of lines) {
+            if (line) {
+              yield line
+            }
+          }
+        }
+      },
+    }
     const lastCompletedTimestamp = await getMigrationLastCompletedTimestamp(
-      this.progressKey
+      this.jobId
     )
 
     let batchEntities: any[] = []
@@ -124,7 +139,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       }
       const entity = last(entityChunk)
       await updateMigrationLastCompletedTimestamp(
-        this.progressKey,
+        this.jobId,
         entity.timestamp || entity.createdTimestamp
       )
     }
@@ -191,7 +206,10 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         optionalPromise,
       ])
     } catch (e) {
-      if (e instanceof Error && e.message.includes('duplicate key error')) {
+      if (
+        e instanceof Error &&
+        (e as Error).message.includes('duplicate key error')
+      ) {
         return
       }
       logger.error(e)
