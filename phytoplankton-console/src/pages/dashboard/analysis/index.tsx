@@ -127,7 +127,7 @@ interface Widgets {
   RULES: WidgetGroup;
   CASE_MANAGEMENT: WidgetGroup;
   TEAM_MANAGEMENT: WidgetGroup;
-  QA: WidgetGroup;
+  QUALITY_ASSURANCE: WidgetGroup;
 }
 
 const WIDGETS: Widgets = {
@@ -318,8 +318,8 @@ const WIDGETS: Widgets = {
       },
     ],
   },
-  QA: {
-    groupTitle: 'QA',
+  QUALITY_ASSURANCE: {
+    groupTitle: 'Quality assurance',
     items: [
       {
         id: 'QA_OVERVIEW',

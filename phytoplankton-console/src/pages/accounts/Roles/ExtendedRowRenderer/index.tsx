@@ -1,5 +1,6 @@
 import { startCase } from 'lodash';
 import React from 'react';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { PermissionRow, PermissionSubsection } from '@/pages/accounts/Roles/types';
@@ -28,7 +29,7 @@ export default function ExtendedRowRenderer(props: Props) {
             key={subsection.name}
             className={featureEnabled(features, subsection.section) ? undefined : s.disabled}
           >
-            {startCase(subsection.name)}
+            {humanizeAuto(subsection.name)}
           </span>
         );
       },
