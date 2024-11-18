@@ -327,16 +327,28 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
-            and: [
+            or: [
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_wealth',
-                },
+                and: [
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_wealth',
+                    },
+                  },
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_funds',
+                    },
+                  },
+                ],
               },
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_funds',
-                },
+                '!=': [
+                  {
+                    var: 'entity:transaction_state',
+                  },
+                  'SUCCESSFUL',
+                ],
               },
             ],
           },
@@ -424,16 +436,28 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
-            and: [
+            or: [
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_wealth',
-                },
+                and: [
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_wealth',
+                    },
+                  },
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_funds',
+                    },
+                  },
+                ],
               },
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_funds',
-                },
+                '!=': [
+                  {
+                    var: 'entity:transaction_state',
+                  },
+                  'SUCCESSFUL',
+                ],
               },
             ],
           },
@@ -507,6 +531,10 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
       {
         key: 'entity:consumer_user_tags__sender',
         entityKey: 'CONSUMER_USER:tags__SENDER',
+      },
+      {
+        key: 'entity:transaction_state',
+        entityKey: 'TRANSACTION:transactionState',
       },
       {
         key: 'entity:transaction_type',
@@ -651,16 +679,28 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
-            and: [
+            or: [
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_wealth',
-                },
+                and: [
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_wealth',
+                    },
+                  },
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_funds',
+                    },
+                  },
+                ],
               },
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_funds',
-                },
+                '!=': [
+                  {
+                    var: 'entity:transaction_state',
+                  },
+                  'SUCCESSFUL',
+                ],
               },
             ],
           },
@@ -748,16 +788,28 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
-            and: [
+            or: [
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_wealth',
-                },
+                and: [
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_wealth',
+                    },
+                  },
+                  {
+                    '!': {
+                      var: 'entity:transaction_origin_funds_info_source_of_funds',
+                    },
+                  },
+                ],
               },
               {
-                '!': {
-                  var: 'entity:transaction_origin_funds_info_source_of_funds',
-                },
+                '!=': [
+                  {
+                    var: 'entity:transaction_state',
+                  },
+                  'SUCCESSFUL',
+                ],
               },
             ],
           },
@@ -831,6 +883,10 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
       {
         key: 'entity:consumer_user_tags__receiver',
         entityKey: 'CONSUMER_USER:tags__RECEIVER',
+      },
+      {
+        key: 'entity:transaction_state',
+        entityKey: 'TRANSACTION:transactionState',
       },
       {
         key: 'entity:transaction_type',
@@ -972,6 +1028,14 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
+            '==': [
+              {
+                var: 'entity:transaction_state',
+              },
+              'SUCCESSFUL',
+            ],
+          },
+          {
             or: [
               {
                 '!!': {
@@ -1006,6 +1070,14 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
+            '==': [
+              {
+                var: 'entity:transaction_state',
+              },
+              'SUCCESSFUL',
+            ],
+          },
+          {
             or: [
               {
                 '!!': {
@@ -1031,6 +1103,10 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
       },
     },
     logicEntityVariables: [
+      {
+        key: 'entity:transaction_state',
+        entityKey: 'TRANSACTION:transactionState',
+      },
       {
         key: 'entity:transaction_type',
         entityKey: 'TRANSACTION:type',
@@ -1170,6 +1246,14 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
+            '==': [
+              {
+                var: 'entity:transaction_state',
+              },
+              'SUCCESSFUL',
+            ],
+          },
+          {
             or: [
               {
                 '!!': {
@@ -1204,6 +1288,14 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
             ],
           },
           {
+            '==': [
+              {
+                var: 'entity:transaction_state',
+              },
+              'SUCCESSFUL',
+            ],
+          },
+          {
             or: [
               {
                 '!!': {
@@ -1229,6 +1321,10 @@ export const PNB_INTERNAL_RULES: RuleInstance[] = [
       },
     },
     logicEntityVariables: [
+      {
+        key: 'entity:transaction_state',
+        entityKey: 'TRANSACTION:transactionState',
+      },
       {
         key: 'entity:transaction_type',
         entityKey: 'TRANSACTION:type',
