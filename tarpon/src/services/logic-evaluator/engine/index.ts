@@ -546,19 +546,39 @@ export class LogicEvaluator {
     async (
       aggregationVariable: LogicAggregationVariable,
       direction: 'origin' | 'destination',
-      transactionId: string
+      transaction: Transaction
     ): Promise<boolean> => {
       if (this.mode !== 'DYNAMODB') {
         return false
       }
-      return await this.aggregationRepository.isTransactionApplied(
-        aggregationVariable,
+      const userKeyId = this.getUserKeyId(
+        transaction,
         direction,
-        transactionId
+        aggregationVariable.type
+      )
+      const [
+        isTransactionApplied,
+        { lastTransactionTimestamp: lastRebuiltTransactionTimestamp },
+      ] = await Promise.all([
+        this.aggregationRepository.isTransactionApplied(
+          aggregationVariable,
+          direction,
+          transaction.transactionId
+        ),
+        this.aggregationRepository.isAggregationVariableReady(
+          aggregationVariable,
+          userKeyId as string
+        ),
+      ])
+      return (
+        isTransactionApplied ||
+        lastRebuiltTransactionTimestamp >= transaction.timestamp
       )
     },
-    (aggregationVariable, direction, transactionId) =>
-      `${getAggVarHash(aggregationVariable)}-${direction}-${transactionId}`
+    (aggregationVariable, direction, transaction) =>
+      `${getAggVarHash(aggregationVariable)}-${direction}-${
+        transaction.transactionId
+      }`
   )
 
   private userLoader = memoize(
@@ -1101,7 +1121,7 @@ export class LogicEvaluator {
     const shouldSkipUpdateAggregation = await this.isTransactionApplied(
       aggregationVariable,
       direction,
-      transaction.transactionId
+      transaction
     )
     if (shouldSkipUpdateAggregation) {
       logger.warn('Skip updating aggregations.')
@@ -1485,7 +1505,7 @@ export class LogicEvaluator {
           this.isTransactionApplied(
             aggregationVariable,
             direction,
-            data.transaction.transactionId
+            data.transaction
           ),
         ])
       if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {

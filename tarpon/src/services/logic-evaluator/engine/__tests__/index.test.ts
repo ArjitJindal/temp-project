@@ -2727,6 +2727,51 @@ describe('V8 aggregator', () => {
       { time: '2023-01-02', value: 1 },
     ])
   })
+  test('Skip updating a transaction if it was applied during the last aggregation rebuild', async () => {
+    const tenantId = getTestTenantId()
+    const dynamoDb = getDynamoDbClient()
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const afterTimestamp = dayjs('2023-01-01T12:00:00.000Z').valueOf()
+    const beforeTimestamp = dayjs('2023-01-01T14:00:10.000Z').valueOf()
+    const AGG_VARIABLE = getAggVar('TRANSACTION:originUserId', 'COUNT', 'hour')
+    const transactions = [
+      getTestTransaction({
+        originUserId: '1',
+        originAmountDetails: {
+          transactionAmount: 100,
+          transactionCurrency: 'EUR',
+        },
+        destinationUserId: undefined,
+        timestamp: afterTimestamp,
+      }),
+    ]
+    await bulkVerifyTransactions(tenantId, transactions)
+
+    await logicEvaluator.rebuildAggregationVariable(
+      AGG_VARIABLE,
+      beforeTimestamp + 1,
+      '1',
+      undefined
+    )
+    await logicEvaluator.updateAggregationVariable(
+      AGG_VARIABLE,
+      {
+        transaction: transactions[0],
+        type: 'TRANSACTION',
+        senderUser: getTestUser({ userId: '1' }),
+      },
+      'origin'
+    )
+    const aggregationRepository = new AggregationRepository(tenantId, dynamoDb)
+    const aggData = await aggregationRepository.getUserLogicTimeAggregations(
+      '1',
+      AGG_VARIABLE,
+      afterTimestamp - 1,
+      beforeTimestamp + 1,
+      'hour'
+    )
+    expect(aggData).toEqual([{ time: '2023-01-01-12', value: 1 }])
+  })
 })
 
 describe('Aggregation variable with user filter tests', () => {
@@ -2854,7 +2899,7 @@ describe('V8 aggregator with transaction count', () => {
     await aggregationRepository.setAggregationVariableReady(
       AGG_VARIABLE,
       '1',
-      beforeTimestamp
+      afterTimestamp
     )
     const transactions = [
       getTestTransaction({
@@ -2941,7 +2986,7 @@ describe('V8 aggregator with transaction count', () => {
     await aggregationRepository.setAggregationVariableReady(
       AGG_VARIABLE,
       '1',
-      beforeTimestamp
+      afterTimestamp
     )
     const transactions = [
       getTestTransaction({
