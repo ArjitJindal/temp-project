@@ -139,7 +139,14 @@ export const getCreateStatement = (
         return null;
       }
       if (entityStatus.includes('ESCALATED') && log.action !== 'ESCALATE') {
-        return handleEscalatedStatus(entityStatus, log, makerUserName, checkerUserName, type);
+        return handleEscalatedStatus(
+          entityStatus,
+          log,
+          makerUserName,
+          checkerUserName,
+          type,
+          users,
+        );
       } else if (entityStatus.includes('REOPENED')) {
         return handleReopenedStatus(entityStatus, log, makerUserName, checkerUserName);
       } else if (entityStatus.includes('CLOSED')) {
@@ -291,6 +298,7 @@ export const handleEscalatedStatus = (
   makerUserName: string,
   checkerUserName: string,
   type: 'USER' | 'CASE',
+  users: { [userId: string]: Account },
 ) => {
   const entityType = log.type === 'ALERT' ? checkIfTransactions(log) : log.type;
   const entityId = entityType === 'TRANSACTION' ? getEscalatedTransactions(log) : [log.entityId];
@@ -300,6 +308,10 @@ export const handleEscalatedStatus = (
 
   switch (entityStatus) {
     case 'ESCALATED_L2': {
+      const assignedTo =
+        log?.newImage?.reviewAssignments?.[log?.newImage?.reviewAssignments?.length - 1]
+          ?.assigneeUserId;
+      const assignedToUser = getDisplayedUserInfo(users[assignedTo]).name ?? checkerUserName;
       if (
         statusEscalatedL2(log?.newImage?.alertStatus) ||
         statusEscalatedL2(log?.newImage?.caseStatus)
@@ -309,7 +321,7 @@ export const handleEscalatedStatus = (
             {escalatedToLogMessage({
               entityType,
               entityId,
-              checkerUserName,
+              checkerUserName: assignedToUser,
               escalationLevel: 'L2',
             })}
           </>
