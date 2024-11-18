@@ -67,7 +67,7 @@ export type OngoingScreeningUserRuleBatchJob = {
   type: 'ONGOING_SCREENING_USER_RULE'
   tenantId: string
   from?: string // Optionally process a batch of users from this ID
-  to?: string // Optionally process a batch of users from to ID
+  to?: string // Optionally process a batch of users to this ID
 }
 /* Multi-job Sanctions Screening Rule */
 export type PnbScreeningBackfillJob = {
