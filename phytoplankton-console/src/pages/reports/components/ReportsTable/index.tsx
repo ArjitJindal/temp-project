@@ -1,6 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import { Space } from 'antd';
-import cn from 'clsx';
+import { useCallback, useMemo, useState } from 'react';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { uniqBy } from 'lodash';
 import { useLocation, useNavigate } from 'react-router';
@@ -9,7 +7,9 @@ import { useQueryClient } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import s from './index.module.less';
 import { sarQueryAdapter } from './helper';
-import Modal from '@/components/library/Modal';
+import ReportStatusChangeModal from './ReportStatusChangeModal';
+import ReportStatusTag from './ReportStatusTag';
+import { Option } from '@/components/library/Select';
 import { CountryCode, Report, ReportStatus, ReportTypesResponse } from '@/apis';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DATE, ID, LONG_TEXT, STRING } from '@/components/library/Table/standardDataTypes';
@@ -23,13 +23,8 @@ import { useApi } from '@/api';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { usePaginatedQuery, useQuery } from '@/utils/queries/hooks';
 import { REPORT_SCHEMAS, REPORTS_LIST } from '@/utils/queries/keys';
-import { message } from '@/components/library/Message';
-import Select, { Option } from '@/components/library/Select';
-import MarkdownViewer from '@/components/markdown/MarkdownViewer';
-import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import { getUserLink, getUserName } from '@/utils/api/users';
-import Tag from '@/components/library/Tag';
 import { getOr } from '@/utils/asyncResource';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
 import { useDeepEqualEffect } from '@/utils/hooks';
@@ -39,6 +34,7 @@ import Confirm from '@/components/utils/Confirm';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { getErrorMessage } from '@/utils/lang';
 import { notEmpty } from '@/utils/array';
+import { message } from '@/components/library/Message';
 
 interface TableSearchParams extends CommonParams {
   id?: string;
@@ -51,8 +47,6 @@ interface TableSearchParams extends CommonParams {
 }
 
 export type TableParams = AllParams<TableSearchParams>;
-
-type StatusUpdate = { status: ReportStatus; statusInfo: string };
 
 export default function ReportsTable() {
   const location = useLocation();
@@ -80,8 +74,6 @@ export default function ReportsTable() {
   };
 
   const [displayStatusInfoReport, setDisplayStatusInfoReport] = useState<Report | undefined>();
-  const [statusInfoEditing, setStatusInfoEditing] = useState<boolean>(false);
-  const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
 
   const queryClient = useQueryClient();
   const canWrite = useHasPermissions(['reports:generated:write']);
@@ -226,11 +218,7 @@ export default function ReportsTable() {
             render: (report) => {
               return (
                 <div className={s.status}>
-                  {report?.status && (
-                    <Tag className={cn(s.tag, s[`status-${report.status}`])}>
-                      {humanizeConstant(report.status)}
-                    </Tag>
-                  )}
+                  {report?.status && <ReportStatusTag status={report.status} />}
                 </div>
               );
             },
@@ -299,7 +287,7 @@ export default function ReportsTable() {
           }),
       ].filter(notEmpty),
     );
-  }, [canWrite, deleteMutation, reportTypes, loadingUsers, users]);
+  }, [canWrite, deleteMutation, reportTypes, loadingUsers, users, setDisplayStatusInfoReport]);
 
   return (
     <>
@@ -354,89 +342,10 @@ export default function ReportsTable() {
           },
         ]}
       />
-      <Modal
-        title={
-          displayStatusInfoReport &&
-          `Report ${displayStatusInfoReport.id} status information (${humanizeConstant(
-            displayStatusInfoReport.status,
-          )})`
-        }
-        isOpen={Boolean(displayStatusInfoReport)}
-        onCancel={() => {
-          setDisplayStatusInfoReport(undefined);
-          setStatusInfoEditing(false);
-        }}
-        onOk={async () => {
-          if (!displayStatusInfoReport) {
-            return;
-          }
-          if (!statusInfoEditing) {
-            setStatusInfoEditing(true);
-            setStatusUpdate({
-              status: displayStatusInfoReport.status,
-              statusInfo: displayStatusInfoReport.statusInfo || '',
-            });
-          } else {
-            if (displayStatusInfoReport.id == null) {
-              throw new Error(`displayStatusInfoReport.id can not be null`);
-            }
-            if (statusUpdate == null) {
-              throw new Error(`statusUpdate can not be null`);
-            }
-            try {
-              await api.postReportsReportIdStatus({
-                reportId: displayStatusInfoReport.id,
-                ReportStatusUpdateRequest: statusUpdate,
-              });
-              message.success('Saved');
-            } catch (e) {
-              message.error(`Failed to save: ${e}`);
-            }
-          }
-        }}
-        okText={statusInfoEditing ? 'Save' : 'Edit'}
-        hideFooter={!canWrite}
-      >
-        {statusInfoEditing && canWrite ? (
-          <Space direction="vertical" style={{ width: '100%' }}>
-            <Select
-              mode="SINGLE"
-              style={{ width: 200 }}
-              value={statusUpdate?.status}
-              options={REPORT_STATUSS.map((v) => ({ label: humanizeConstant(v), value: v }))}
-              onChange={(v) => {
-                if (v != null) {
-                  setStatusUpdate(
-                    (prev) =>
-                      prev && {
-                        ...prev,
-                        status: v,
-                      },
-                  );
-                }
-              }}
-            />
-            <MarkdownEditor
-              key={displayStatusInfoReport?.id}
-              initialValue={statusUpdate?.statusInfo || ''}
-              onChange={(v) =>
-                setStatusUpdate(
-                  (prev) =>
-                    prev && {
-                      ...prev,
-                      statusInfo: v || '',
-                    },
-                )
-              }
-            />
-          </Space>
-        ) : (
-          <MarkdownViewer
-            key={displayStatusInfoReport?.id}
-            value={displayStatusInfoReport?.statusInfo || 'No additional information'}
-          />
-        )}
-      </Modal>
+      <ReportStatusChangeModal
+        report={displayStatusInfoReport}
+        onClose={() => setDisplayStatusInfoReport(undefined)}
+      />
     </>
   );
 }

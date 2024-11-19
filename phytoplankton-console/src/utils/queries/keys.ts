@@ -1,5 +1,6 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
+import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
 import { ListType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
@@ -86,7 +87,8 @@ export const TRANSACTIONS_LIST = (searchParams: AnyParameters): QueryKey => [
 ];
 
 export const REPORTS_ITEM = (id: string): QueryKey => ['reports', 'item', id];
-export const REPORTS_LIST = (params: AnyParameters): QueryKey => ['reports', 'list', params];
+export const REPORTS_LIST = (params?: AnyParameters): QueryKey =>
+  compact(['reports', 'list', params]);
 export const TRANSACTIONS_ITEM_RISKS_ARS = (transactionId: string): QueryKey => [
   'transactions',
   'list',
