@@ -139,14 +139,20 @@ export function DeleteUser(props: DeleteUserProps) {
       >
         <div>
           <P grey variant="m" style={{ marginBottom: 16 }}>
-            Deleted users will not be able to login to console and perform any relevant actions.
-            Please make sure to re-assign the open cases/alerts of the deleted user to an account.
+            Deleted users will no longer be able to log in to the console or perform any actions.
+            <br />
+            <b>
+              Please select an account to reassign the open cases and alerts associated with the
+              deleted user.
+            </b>
           </P>
           <Select
-            options={accounts.map((account) => ({
-              label: account.email,
-              value: account.id,
-            }))}
+            options={accounts
+              .filter((account) => account.id !== item.id)
+              .map((account) => ({
+                label: account.email,
+                value: account.id,
+              }))}
             placeholder="Select an account Email ID"
             style={{ width: 300, marginBottom: 16 }}
             mode="SINGLE"
