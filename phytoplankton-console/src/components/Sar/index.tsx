@@ -76,7 +76,7 @@ export function SarButton(props: UserProps | CaseProps) {
         testName="sar-button"
         requiredPermissions={['case-management:case-details:write']}
       >
-        Generate report
+        Generate SAR
       </Button>
       <Modal
         title="Generate report"
