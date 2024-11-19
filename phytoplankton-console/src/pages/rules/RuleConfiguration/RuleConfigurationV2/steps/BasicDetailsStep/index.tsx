@@ -217,7 +217,7 @@ function RuleDetails(props: Props) {
             {(inputProps) => (
               <Toggle
                 {...inputProps}
-                value={inputProps.value}
+                value={inputProps.value ?? true}
                 onChange={(value) => {
                   inputProps.onChange?.(value);
                 }}
