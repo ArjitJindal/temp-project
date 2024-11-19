@@ -14,6 +14,7 @@ import { DefaultApiGetAlertListRequest } from '@/apis/types/ObjectParamAPI';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useRuleOptions } from '@/utils/rules';
+import { PRIORITY } from '@/components/library/Table/standardDataTypes';
 
 type TableParams = AllParams<DefaultApiGetAlertListRequest>;
 
@@ -78,6 +79,7 @@ export default function RuleAndCaseDetails(props: Props) {
 const columnHelper = new ColumnHelper<Alert>();
 
 const columns = columnHelper.list([
+  columnHelper.simple({ title: 'Priority', key: 'priority', defaultWidth: 40, type: PRIORITY }),
   columnHelper.simple({ key: 'ruleName', title: 'Rule name', defaultWidth: 300 }),
   columnHelper.simple({ key: 'ruleDescription', title: 'Rule description', defaultWidth: 400 }),
   columnHelper.derived({
