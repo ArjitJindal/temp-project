@@ -19,7 +19,7 @@
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.441.0",
     "@tsconfig/node18": "^18.2.1",
-    "constructs": "^10.3.0",
+    "constructs": "^10.4.2",
     "husky": "^8.0.1",
     "prettier": "^3.1.1",
     "slackify-markdown": "^4.4.0",

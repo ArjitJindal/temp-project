@@ -1057,7 +1057,7 @@ __metadata:
     "@typescript-eslint/eslint-plugin": "npm:^7.0.1"
     "@typescript-eslint/parser": "npm:^7.0.1"
     aws-cdk-lib: "npm:~2.162.1"
-    constructs: "npm:^10.3.0"
+    constructs: "npm:^10.4.2"
     dayjs: "npm:^1.11.12"
     eslint: "npm:^8.56.0"
     eslint-config-prettier: "npm:^9.1.0"
@@ -2976,10 +2976,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"constructs@npm:^10.3.0":
-  version: 10.3.0
-  resolution: "constructs@npm:10.3.0"
-  checksum: be93ff934f28f2226a674dc18cd608dc7543e2cd6e17e4fbbb55faf80a5ab30b5346bdb18f266ea9b9192438debaafa0b65cad09d67a33a9f84fd8919200ee79
+"constructs@npm:^10.4.2":
+  version: 10.4.2
+  resolution: "constructs@npm:10.4.2"
+  checksum: dcd5edd631c7313964f89fffb7365e1eebaede16cbc9ae69eab5337710353913684b860ccc4b2a3dfaf147656f48f0ae7853ca94cb51833e152b46047ac7a4ff
   languageName: node
   linkType: hard
 

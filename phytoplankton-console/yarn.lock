@@ -9195,10 +9195,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"constructs@npm:^10.0.75":
-  version: 10.0.127
-  resolution: "constructs@npm:10.0.127"
-  checksum: bbe3b6b6f5db34e7632035d9ba0a84a87aa9f406a9cead82acdb251932e0e26a673170192734fcaf96c7724faf4b20f4e2c03d80cf7ee3d030560263200343b2
+"constructs@npm:^10.4.2":
+  version: 10.4.2
+  resolution: "constructs@npm:10.4.2"
+  checksum: dcd5edd631c7313964f89fffb7365e1eebaede16cbc9ae69eab5337710353913684b860ccc4b2a3dfaf147656f48f0ae7853ca94cb51833e152b46047ac7a4ff
   languageName: node
   linkType: hard
 
@@ -17305,7 +17305,7 @@ __metadata:
     carlo: "npm:^0.9.46"
     cheerio: "npm:^1.0.0"
     clsx: "npm:^1.2.1"
-    constructs: "npm:^10.0.75"
+    constructs: "npm:^10.4.2"
     cross-env: "npm:^7.0.0"
     cross-port-killer: "npm:^1.1.1"
     css-tree: "npm:^2.1.0"

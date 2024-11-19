@@ -156,7 +156,7 @@
     "aws-cdk-lib": "~2.162.1",
     "carlo": "^0.9.46",
     "cheerio": "^1.0.0",
-    "constructs": "^10.0.75",
+    "constructs": "^10.4.2",
     "cross-env": "^7.0.0",
     "cross-port-killer": "^1.1.1",
     "css-tree": "^2.1.0",

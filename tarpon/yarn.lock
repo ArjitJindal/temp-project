@@ -8643,10 +8643,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"constructs@npm:10.3.0, constructs@npm:^10.3.0":
+"constructs@npm:10.3.0":
   version: 10.3.0
   resolution: "constructs@npm:10.3.0"
   checksum: f42a40653ee6972f452c9962d1e75008afb605e96b276919b31294553335a2b306218fd23a7dede2c98401f614380be14afdfdfc6c1f2506d64506c9a5d05d73
+  languageName: node
+  linkType: hard
+
+"constructs@npm:^10.4.2":
+  version: 10.4.2
+  resolution: "constructs@npm:10.4.2"
+  checksum: 0322de2ff7bca27dc71419b0437e2bcabc572bdce565b6cc0a34d12c74b32a27c69431975f2947503cbd31166f08ce3c98d1904fe469005b23c95fc2f5cef829
   languageName: node
   linkType: hard
 
@@ -16984,7 +16991,7 @@ __metadata:
     chalk: "npm:^4.1.2"
     command-line-args: "npm:^5.2.0"
     commander: "npm:^9.2.0"
-    constructs: "npm:^10.3.0"
+    constructs: "npm:^10.4.2"
     coverage-diff: "npm:^3.2.0"
     currency-symbol-map: "npm:^5.1.0"
     dataloader: "npm:^2.2.2"
