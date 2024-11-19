@@ -35,6 +35,7 @@ import COLORS from '@/components/ui/colors';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Progress } from '@/components/Simulation/Progress';
+import { formatNumber } from '@/utils/number';
 
 type Props = {
   onClose: (toClose: boolean) => void;
@@ -207,12 +208,12 @@ const IterationComponent = (props: IterationProps) => {
         graphData.push({
           name: label,
           label: 'Before',
-          value: beforeCount > 1000 ? beforeCount.toLocaleString() : beforeCount,
+          value: formatNumber(beforeCount),
         });
         graphData.push({
           name: label,
           label: 'After',
-          value: afterCount > 1000 ? afterCount.toLocaleString() : afterCount,
+          value: formatNumber(afterCount),
         });
       });
       return { graphData, max };

@@ -1,11 +1,12 @@
 import { Pie as AntPie, PieConfig } from '@ant-design/plots';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
 import { COLORS_V2_SKELETON_COLOR, COLORS_V2_GRAY_11 } from '@/components/ui/colors';
 import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
 import { makeRandomNumberGenerator } from '@/utils/prng';
-
+import { formatNumber } from '@/utils/number';
 const random = makeRandomNumberGenerator(999999);
 const SKELETON_DATA: DonutData<string> = [...new Array(10)].map((_, column) => ({
   value: 1 + 29 * random(),
@@ -58,7 +59,7 @@ function Donut<Series extends string>(props: Props<Series>) {
     label: {
       type: 'inner',
       offset: '-50%',
-      content: (item: any) => (showSkeleton ? '' : item.value),
+      content: (item: any) => (showSkeleton ? '' : formatNumber(item.value)),
       autoRotate: false,
       style: {
         textAlign: 'center',
@@ -86,6 +87,13 @@ function Donut<Series extends string>(props: Props<Series>) {
         },
         content: '',
       },
+    },
+    tooltip: {
+      showTitle: false,
+      formatter: (dataItem: any) => ({
+        name: humanizeAuto(dataItem.series),
+        value: formatNumber(dataItem.value),
+      }),
     },
     legend: {
       position: legendPositionFixed,

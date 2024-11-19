@@ -30,6 +30,7 @@ import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import AccountTag from '@/components/AccountTag';
 import DirectionLine from '@/components/ui/icons/Remix/map/direction-line.react.svg';
 import Tooltip from '@/components/library/Tooltip';
+import { formatNumber } from '@/utils/number';
 
 interface Props {
   ruleInstance: RuleInstance;
@@ -120,6 +121,8 @@ export const RuleInstanceInfo = (props: Props) => {
   const formatDate = (timestamp?: number): string => {
     return dayjs(timestamp).format(DEFAULT_DATE_TIME_FORMAT);
   };
+  const displayHitCount = formatNumber(ruleInstance.hitCount ?? 0);
+  const displayRunCount = formatNumber(ruleInstance.runCount ?? 0);
 
   const handleActivationChange = useCallback(
     async (ruleInstance: RuleInstance, activated: boolean) => {
@@ -157,9 +160,7 @@ export const RuleInstanceInfo = (props: Props) => {
               {humanizeAuto(ruleInstance.type)}
             </Form.Layout.Label>
             <Form.Layout.Label title={'Hit rate'}>
-              <Tooltip
-                title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
-              >
+              <Tooltip title={<>{`Hit: ${displayHitCount} / Run: ${displayRunCount}`}</>}>
                 {(percent ?? 0.0)?.toFixed(2)}%
               </Tooltip>
               <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />

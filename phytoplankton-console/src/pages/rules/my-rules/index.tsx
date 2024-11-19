@@ -33,6 +33,7 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import RuleHitInsightsTag from '@/components/library/Tag/RuleHitInsightsTag';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
+import { formatNumber } from '@/utils/number';
 
 const DEFAULT_SORTING: SortingParamsItem = ['ruleId', 'ascend'];
 
@@ -248,6 +249,8 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         sorting: true,
         type: {
           render: (_value, { item: ruleInstance }) => {
+            const displayHitCount = formatNumber(ruleInstance.hitCount ?? 0);
+            const displayRunCount = formatNumber(ruleInstance.runCount ?? 0);
             const percent =
               ruleInstance.hitCount && ruleInstance.runCount
                 ? (ruleInstance.hitCount / ruleInstance.runCount) * 100
@@ -255,9 +258,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
             return (
               <>
                 <div className={s.tag}>
-                  <Tooltip
-                    title={<>{`Hit: ${ruleInstance.hitCount} / Run: ${ruleInstance.runCount}`}</>}
-                  >
+                  <Tooltip title={<>{`Hit: ${displayHitCount} / Run: ${displayRunCount}`}</>}>
                     {(percent ?? 0.0)?.toFixed(2)}%
                   </Tooltip>
                   <RuleHitInsightsTag percentage={percent} runs={ruleInstance.runCount} />
