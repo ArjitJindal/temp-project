@@ -229,7 +229,13 @@ export type PnbBackfillEntities = {
   tenantId: string
   parameters: {
     importFileS3Key: string
-    type: 'TRANSACTION' | 'CONSUMER' | 'BUSINESS'
+    type:
+      | 'TRANSACTION'
+      | 'CONSUMER'
+      | 'BUSINESS'
+      | 'TRANSACTION_EVENT'
+      | 'CONSUMER_EVENT'
+      | 'BUSINESS_EVENT'
     dynamoDbOnly: boolean
   }
 }

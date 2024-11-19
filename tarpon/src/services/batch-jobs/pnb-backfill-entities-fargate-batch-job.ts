@@ -4,9 +4,15 @@ import { chunk, last, uniqBy } from 'lodash'
 import { MongoClient, ObjectId } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { v4 as uuidv4 } from 'uuid'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
+import { UserRepository } from '../users/repositories/user-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
-import { generateChecksum } from '@/utils/object'
+import {
+  generateChecksum,
+  mergeEntities,
+  pickKnownEntityFields,
+} from '@/utils/object'
 import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
@@ -31,6 +37,12 @@ import {
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { logger } from '@/core/logger'
 import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
+import { ConsumerUserEvent } from '@/@types/openapi-internal/ConsumerUserEvent'
+import { UserOptional } from '@/@types/openapi-internal/UserOptional'
+import { BusinessUserEvent } from '@/@types/openapi-internal/BusinessUserEvent'
+import { BusinessOptional } from '@/@types/openapi-internal/BusinessOptional'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { TransactionWithRulesResult } from '@/@types/openapi-internal/TransactionWithRulesResult'
 
 const RULES_RESULT = {
   executedRules: [] as any,
@@ -45,6 +57,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
   private mongoDb!: MongoClient
   private dynamoDb!: DynamoDBDocumentClient
   private tenantId!: string
+  private userRepository!: UserRepository
 
   protected async run(job: PnbBackfillEntities): Promise<void> {
     const { tenantId } = job
@@ -59,6 +72,10 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
       this.dynamoDb
     )
     this.mongoDbConsumer = new MongoDbConsumer(this.mongoDb)
+    this.userRepository = new UserRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
+    })
 
     await this.mongoDb
       .db()
@@ -129,13 +146,25 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
 
   private async processBatch(
     batchEntities: any[],
-    type: 'TRANSACTION' | 'CONSUMER' | 'BUSINESS'
+    type:
+      | 'TRANSACTION'
+      | 'CONSUMER'
+      | 'BUSINESS'
+      | 'TRANSACTION_EVENT'
+      | 'CONSUMER_EVENT'
+      | 'BUSINESS_EVENT'
   ) {
     for (const entityChunk of chunk(batchEntities, 150)) {
       if (type === 'TRANSACTION') {
         await this.saveTransactions(entityChunk as Transaction[])
-      } else {
+      } else if (type === 'CONSUMER' || type === 'BUSINESS') {
         await this.saveUsers(entityChunk as Array<User | Business>, type)
+      } else if (type === 'CONSUMER_EVENT' || type === 'BUSINESS_EVENT') {
+        await this.saveUserEvents(
+          entityChunk as (ConsumerUserEvent | BusinessUserEvent)[]
+        )
+      } else if (type === 'TRANSACTION_EVENT') {
+        await this.updateTransactionEvents(entityChunk as TransactionEvent[])
       }
       const entity = last(entityChunk)
       await updateMigrationLastCompletedTimestamp(
@@ -226,6 +255,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
         )
     }
   }
+
   private async saveUsers(
     users: Array<User | Business>,
     type: 'CONSUMER' | 'BUSINESS'
@@ -316,5 +346,172 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
           }))
         )
     }
+  }
+
+  private mergeConsumerUserAttributes = (
+    user: User,
+    userEvent: UserOptional
+  ) => {
+    return mergeEntities(
+      user,
+      pickKnownEntityFields<UserOptional>(userEvent, UserOptional)
+    )
+  }
+
+  private mergeBusinessUserAttributes = (
+    user: Business,
+    userEvent: BusinessOptional
+  ) => {
+    return mergeEntities(
+      user,
+      pickKnownEntityFields<BusinessOptional>(userEvent, BusinessOptional)
+    )
+  }
+
+  private async saveUserEvents(
+    userEvents: (ConsumerUserEvent | BusinessUserEvent)[]
+  ) {
+    userEvents = uniqBy(userEvents, 'eventId')
+
+    const batchWriteRequests: BatchWriteRequestInternal[] = []
+
+    await pMap(
+      userEvents,
+      async (userEvent) => {
+        const eventId = userEvent.eventId || uuidv4()
+        const userId = userEvent.userId
+        const user = await this.userRepository.getUser(userId)
+
+        if (!user) {
+          logger.warn(`User ${userId} not found`)
+          return
+        }
+
+        let updatedUser: User | Business | undefined
+
+        if (
+          'updatedConsumerUserAttributes' in userEvent &&
+          userEvent.updatedConsumerUserAttributes
+        ) {
+          updatedUser = this.mergeConsumerUserAttributes(
+            user as User,
+            userEvent.updatedConsumerUserAttributes
+          )
+        } else if (
+          'updatedBusinessUserAttributes' in userEvent &&
+          userEvent.updatedBusinessUserAttributes
+        ) {
+          updatedUser = this.mergeBusinessUserAttributes(
+            user as Business,
+            userEvent.updatedBusinessUserAttributes
+          )
+        }
+
+        if (updatedUser) {
+          batchWriteRequests.push({
+            PutRequest: {
+              Item: {
+                ...DynamoDbKeys.USER(this.tenantId, userId),
+                ...updatedUser,
+              },
+            },
+          })
+        }
+
+        batchWriteRequests.push({
+          PutRequest: {
+            Item: {
+              ...('updatedConsumerUserAttributes' in userEvent
+                ? DynamoDbKeys.CONSUMER_USER_EVENT(
+                    this.tenantId,
+                    userId,
+                    userEvent.timestamp
+                  )
+                : DynamoDbKeys.BUSINESS_USER_EVENT(
+                    this.tenantId,
+                    userId,
+                    userEvent.timestamp
+                  )),
+              ...userEvent,
+              eventId,
+            },
+          },
+        })
+      },
+      { concurrency: 100 }
+    )
+
+    await batchWrite(
+      this.dynamoDb,
+      batchWriteRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
+  }
+
+  private async updateTransactionEvents(transactionEvents: TransactionEvent[]) {
+    transactionEvents = uniqBy(transactionEvents, 'eventId')
+
+    const batchWriteRequests: BatchWriteRequestInternal[] = []
+
+    await pMap(
+      transactionEvents,
+      async (transactionEvent) => {
+        const eventId = transactionEvent.eventId || uuidv4()
+        const transaction =
+          await this.dynamoDbTransactionRepository.getTransactionById(
+            transactionEvent.transactionId
+          )
+        if (!transaction) {
+          logger.warn(`Transaction ${transactionEvent.transactionId} not found`)
+          return
+        }
+
+        const updatedTransaction = mergeEntities(
+          {
+            ...transaction,
+            transactionState: transactionEvent.transactionState,
+          },
+          transactionEvent.updatedTransactionAttributes || {}
+        ) as TransactionWithRulesResult
+
+        batchWriteRequests.push({
+          PutRequest: {
+            Item: {
+              ...DynamoDbKeys.TRANSACTION(
+                this.tenantId,
+                transactionEvent.transactionId
+              ),
+              ...updatedTransaction,
+            },
+          },
+        })
+
+        batchWriteRequests.push({
+          PutRequest: {
+            Item: {
+              ...DynamoDbKeys.TRANSACTION_EVENT(
+                this.tenantId,
+                transactionEvent.transactionId,
+                {
+                  timestamp: transactionEvent.timestamp,
+                  eventId,
+                }
+              ),
+              ...transactionEvent,
+              eventId,
+            },
+          },
+        })
+      },
+      {
+        concurrency: 100,
+      }
+    )
+
+    await batchWrite(
+      this.dynamoDb,
+      batchWriteRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
   }
 }
