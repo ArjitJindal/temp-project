@@ -154,7 +154,7 @@ const RuleConfigurationForm = (
   const [formState, setFormState] = useState<RuleConfigurationFormValues>(initialValues);
 
   const isAlertCreationEnabled = useMemo(() => {
-    return formState.basicDetailsStep.alertCreationOnHit;
+    return formState.basicDetailsStep.alertCreationOnHit !== false;
   }, [formState.basicDetailsStep.alertCreationOnHit]);
 
   const STEPS = useMemo(
