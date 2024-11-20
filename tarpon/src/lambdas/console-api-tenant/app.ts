@@ -236,17 +236,10 @@ export const tenantsHandler = lambdaApi()(
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
-          if (ctx.tenantId.toLowerCase().indexOf('pnb') > -1) {
-            await sendBatchJobCommand({
-              type: 'PNB_SCREENING_BACKFILL',
-              tenantId,
-            })
-          } else {
-            await sendBatchJobCommand({
-              type: 'ONGOING_SCREENING_USER_RULE',
-              tenantId,
-            })
-          }
+          await sendBatchJobCommand({
+            type: 'ONGOING_SCREENING_USER_RULE',
+            tenantId,
+          })
           break
         }
         case 'PULSE_USERS_BACKFILL_RISK_SCORE': {

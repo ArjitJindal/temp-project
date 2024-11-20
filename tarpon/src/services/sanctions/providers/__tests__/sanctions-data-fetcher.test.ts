@@ -190,7 +190,6 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     const searchResult = await sanctionsFetcher.searchInMemory({
       searchTerm,
       types: ['ADVERSE_MEDIA'],
-      ongoingSearchUserId: '000007733052',
       fuzzinessRange,
       yearOfBirth,
       documentId,
@@ -227,7 +226,6 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     const searchResult = await sanctionsFetcher.searchInMemory({
       searchTerm,
       types: ['ADVERSE_MEDIA'],
-      ongoingSearchUserId: '000007733052',
       fuzzinessRange,
     })
     expect(searchResult.data?.length).toBe(0)

@@ -220,24 +220,7 @@ export class SanctionsService {
 
     if (!existedSearch?.response) {
       const provider = await this.getProvider(providerName, providerOverrides)
-      sanctionsSearchResponse = await provider.search({
-        ongoingSearchUserId: request.ongoingSearchUserId,
-        searchTerm: request.searchTerm,
-        fuzziness: request.fuzziness,
-        countryCodes: request.countryCodes,
-        yearOfBirth: request.yearOfBirth,
-        types: request.types,
-        documentId: request.documentId,
-        nationality: request.nationality,
-        occupationCode: request.occupationCode,
-        fuzzinessRange: request.fuzzinessRange,
-        PEPRank: request.PEPRank,
-        gender: request.gender,
-        orFilters: request.orFilters,
-        allowDocumentMatches: request.allowDocumentMatches,
-        manualSearch: request.manualSearch,
-        listVersion: request.listVersion,
-      })
+      sanctionsSearchResponse = await provider.search(request)
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {
       createdAt = existedSearch?.createdAt

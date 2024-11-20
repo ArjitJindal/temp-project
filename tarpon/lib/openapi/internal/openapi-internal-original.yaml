@@ -11898,8 +11898,6 @@ components:
           type: string
         monitored:
           type: boolean
-        ongoingSearchUserId:
-          type: string
         searchTerm:
           type: string
         existingProviderId:

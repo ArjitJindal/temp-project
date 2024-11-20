@@ -56,19 +56,10 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         // Once lists are updated, run the ongoing screening jobs
         for await (const tenant of tenantInfos) {
           const tenantId = tenant.tenant.id
-
-          if (tenant.tenant.name.toLowerCase().indexOf('pnb') > -1) {
-            // TODO: disabled until scalability sorted
-            // await sendBatchJobCommand({
-            //   type: 'PNB_SCREENING_BACKFILL',
-            //   tenantId,
-            // })
-          } else {
-            await sendBatchJobCommand({
-              type: 'ONGOING_SCREENING_USER_RULE',
-              tenantId,
-            })
-          }
+          await sendBatchJobCommand({
+            type: 'ONGOING_SCREENING_USER_RULE',
+            tenantId,
+          })
         }
       }
     }

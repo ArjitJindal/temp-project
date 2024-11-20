@@ -754,6 +754,11 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         },
         {
           index: {
+            updatedAt: 1,
+          },
+        },
+        {
+          index: {
             nationality: 1,
           },
         },

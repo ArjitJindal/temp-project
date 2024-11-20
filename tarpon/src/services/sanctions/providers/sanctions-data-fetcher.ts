@@ -1,5 +1,3 @@
-import path from 'path'
-import fs from 'fs'
 import { uniq } from 'lodash'
 import {
   SanctionsDataProvider,
@@ -14,109 +12,57 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { logger } from '@/core/logger'
-import { executeClickhouseQuery } from '@/utils/clickhouse/utils'
-import { getS3Client, readFileFromS3 } from '@/utils/s3'
-import { envIs } from '@/utils/env'
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
 const documentIdToIds = new Map<string, string[]>()
 const nameToIds = new Map<string, string[]>()
 const sanctionEntities = new Map<string, SanctionsEntity>()
 const namesByLength = new Map<number, string[]>()
-let userMatches: Record<string, string[]> = {}
 
 let fetchPromise: Promise<any> | undefined
 let dataLoaded = false
-
-export async function getUserMatches() {
-  // Read the file contents
-  const s3Client = getS3Client()
-  let fileContent
-  if (envIs('test')) {
-    const filePath = path.join(__dirname, './__tests__/matched_user_ids.csv')
-    fileContent = fs.readFileSync(filePath, 'utf-8')
-  } else {
-    fileContent = await readFileFromS3(
-      s3Client,
-      `flagright-datalake-prod-asia-1-bucket`,
-      'matched_user_ids.csv'
-    )
-  }
-
-  // Split the file content by lines
-  const lines = fileContent.trim().split('\n')
-
-  const userMatches: Record<string, string[]> = {}
-  // Process each line
-  lines.forEach((line) => {
-    const row = line.split(',')
-    const userId = row[0]
-    const matchIds = row.slice(1)
-
-    if (!userMatches[userId]) {
-      userMatches[userId] = []
-    }
-
-    // Append match IDs to the user's entry in the map
-    userMatches[userId].push(...matchIds)
-  })
-  return userMatches
-}
 
 const fetchData = async function () {
   if (!dataLoaded) {
     if (!fetchPromise) {
       const load = async () => {
         logger.warn('Fetching sanctions data to store in memory')
-        const query = `
-        SELECT id, documentIds, arrayConcat([name], aka) AS names, data
-        FROM sanctions_data 
-        WHERE 
-            # Hack for PNB
-            (arrayCount(x -> x IN ('MY','ZZ', 'XX'), nationality) > 0) 
-            OR nationality IS NULL 
-            OR length(nationality) = 0`
-        let results: {
-          id: string
-          documentIds: string[]
-          names: string[]
-          data: string
-        }[] = []
-        if (envIs('test')) {
-          const filePath = path.join(
-            __dirname,
-            './__tests__/ongoing_search_results.json'
-          )
-          const fileContent = fs.readFileSync(filePath, 'utf-8')
-          results = JSON.parse(fileContent)
-        } else {
-          results = await executeClickhouseQuery<{
-            id: string
-            documentIds: string[]
-            names: string[]
-            data: string
-          }>('flagright', query, {})
-        }
+        const client = await getMongoDbClient()
+        const sanctions = client
+          .db()
+          .collection<SanctionsEntity>(SANCTIONS_COLLECTION)
+        const now = Date.now()
+        const oneDayAgo = now - 86400000 // 86,400,000 ms = 24 hours
+        const updatedSanctions = await sanctions
+          .find({
+            updatedAt: {
+              $gte: oneDayAgo,
+            },
+          })
+          .toArray()
         // Store data into maps
-        results.forEach((result) => {
-          sanctionEntities.set(result.id, JSON.parse(result.data))
-          result.names.forEach((upperCaseName) => {
+        updatedSanctions.forEach((sanctionsEntity) => {
+          sanctionEntities.set(sanctionsEntity.id, sanctionsEntity)
+          const names = [sanctionsEntity.name, ...(sanctionsEntity.aka || [])]
+          names.forEach((upperCaseName) => {
             const name = upperCaseName.toLowerCase()
             const ids = nameToIds.get(name) || []
-            ids.push(result.id)
+            ids.push(sanctionsEntity.id)
             nameToIds.set(name, ids)
 
             const names = namesByLength.get(name.length) || []
             names.push(name)
             namesByLength.set(name.length, names)
           })
-          result.documentIds.forEach((documentId) => {
-            const ids = documentIdToIds.get(documentId) || []
-            ids.push(result.id)
-            documentIdToIds.set(documentId, ids)
-          })
+          sanctionsEntity.documents
+            ?.flatMap((d) => [d.formattedId, d.id])
+            .forEach((documentId) => {
+              if (documentId) {
+                const ids = documentIdToIds.get(documentId) || []
+                ids.push(sanctionsEntity.id)
+                documentIdToIds.set(documentId, ids)
+              }
+            })
         })
-
-        userMatches = await getUserMatches()
       }
       fetchPromise = load()
     }
@@ -687,7 +633,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    if (request.ongoingSearchUserId) {
+    if (request.monitoring?.enabled) {
       return this.searchInMemory(request)
     }
     if (
@@ -714,8 +660,30 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
     const allowedDifference = fuzzinessThreshold / 100
 
-    const matchingIds: string[] =
-      userMatches[request.ongoingSearchUserId || ''] || []
+    const matchingIds: string[] = []
+
+    // Get name matches
+    const minLength = Math.floor(
+      request.searchTerm.length - request.searchTerm.length * allowedDifference
+    )
+    const maxLength = Math.ceil(
+      request.searchTerm.length + request.searchTerm.length * allowedDifference
+    )
+    for (let i = minLength; i <= maxLength; i++) {
+      const names = namesByLength.get(i)
+      names?.forEach((n) => {
+        const percentageDifference =
+          100 - calculateLevenshteinDistancePercentage(n, request.searchTerm)
+        if (percentageDifference < allowedDifference * 100) {
+          matchingIds.concat(...(nameToIds.get(n) || []))
+        }
+      })
+    }
+
+    // Get document matches
+    request.documentId?.forEach((documentId) => {
+      matchingIds.concat(...(documentIdToIds.get(documentId) || []))
+    })
 
     for (const entityId of uniq(matchingIds)) {
       const entity = sanctionEntities.get(entityId)
