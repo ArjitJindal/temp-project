@@ -8,7 +8,6 @@
 
 import {
   GoogleSpreadsheet,
-  GoogleSpreadsheetRow,
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet'
 import { JWT } from 'google-auth-library'
@@ -18,7 +17,6 @@ import { DailyMetricStats, MonthlyMetricStats } from './utils'
 import { CUSTOM_API_USAGE_METRIC_NAMES } from '@/core/cloudwatch/metrics'
 import { TenantBasic } from '@/services/accounts'
 import { getSecretByName } from '@/utils/secrets-manager'
-import { mergeObjects } from '@/utils/object'
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
 
@@ -228,7 +226,7 @@ export class SheetsApiUsageMetricsService {
     )
 
     if (row > -1) {
-      rows[row] = mergeObjects(rows[row], newRow as GoogleSpreadsheetRow)
+      rows[row].assign(newRow)
       await rows[row].save()
     } else {
       await this.dailyUsageMetricsSheet.addRow(newRow)
@@ -266,11 +264,7 @@ export class SheetsApiUsageMetricsService {
     )
 
     if (tenantRow > -1) {
-      tenantRows[tenantRow] = mergeObjects(
-        tenantRows[tenantRow],
-        newRow as GoogleSpreadsheetRow
-      )
-
+      tenantRows[tenantRow].assign(newRow)
       await tenantRows[tenantRow].save()
     } else {
       await this.monthlyUsageMetricsSheet.addRow(newRow)
