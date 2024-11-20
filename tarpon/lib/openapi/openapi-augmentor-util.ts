@@ -105,6 +105,10 @@ export function getAugmentedOpenapi(
       validateRequestBody: true,
       validateRequestParameters: true,
     },
+    paramsOnly: {
+      validateRequestBody: false,
+      validateRequestParameters: true,
+    },
   }
 
   if (authorization === 'API_KEY') {
@@ -181,7 +185,9 @@ export function getAugmentedOpenapi(
 
       // Lambda integration
       const lambdaFunctionName = pathToLambda[path]
-      methodSetting['x-amazon-apigateway-request-validator'] = 'all'
+      if (!methodSetting['x-amazon-apigateway-request-validator']) {
+        methodSetting['x-amazon-apigateway-request-validator'] = 'all'
+      }
       methodSetting['x-amazon-apigateway-integration'] = {
         uri: `arn:aws:apigateway:{{region}}:lambda:path/2015-03-31/functions/arn:aws:lambda:{{region}}:{{accountId}}:function:{{${lambdaFunctionName}}}:${StackConstants.LAMBDA_LATEST_ALIAS_NAME}/invocations`,
         httpMethod: 'POST',

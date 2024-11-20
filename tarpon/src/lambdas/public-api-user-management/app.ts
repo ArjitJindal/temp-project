@@ -3,7 +3,7 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
+import { BadRequest, NotFound } from 'http-errors'
 import { v4 as uuid4 } from 'uuid'
 import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -16,7 +16,10 @@ import { hasFeature, updateLogMetadata } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
 import { ConsumerUserMonitoringResult } from '@/@types/openapi-public/ConsumerUserMonitoringResult'
-import { filterLiveRules } from '@/services/rules-engine/utils'
+import {
+  filterLiveRules,
+  sendAsyncRuleTasks,
+} from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
@@ -27,6 +30,8 @@ import {
 } from '@/@types/openapi-public/RequestParameters'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { getUserRiskScoreDetailsForPNB } from '@/services/rules-engine/pnb-custom-logic'
+
+const MAX_BATCH_IMPORT_COUNT = 200
 
 export const userHandler = lambdaApi()(
   async (
@@ -206,36 +211,52 @@ export const userHandler = lambdaApi()(
     })
 
     handlers.registerPostBatchConsumerUsers(async (ctx, request) => {
+      if (request.UserBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
+
       const batchId = request.UserBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importConsumerUsers(
-        batchId,
-        request.UserBatchRequest.data
-      )
-      try {
-        // TODO do this in a queue
-        await Promise.all(
-          request.UserBatchRequest.data.map((user) => createUser(user))
+      const { response, validatedUsers } =
+        await batchImportService.importConsumerUsers(
+          batchId,
+          request.UserBatchRequest.data
         )
-      } catch (error) {
-        logger.error(`Error verifying transactions: ${error}`)
-      }
+      await sendAsyncRuleTasks(
+        validatedUsers.map((v) => ({
+          type: 'USER_BATCH',
+          userType: 'CONSUMER',
+          user: v,
+          tenantId,
+        }))
+      )
       return response
     })
     handlers.registerPostBatchBusinessUsers(async (ctx, request) => {
+      if (request.BusinessBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
+
       const batchId = request.BusinessBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importBusinessUsers(
-        batchId,
-        request.BusinessBatchRequest.data
+      const { response, validatedUsers } =
+        await batchImportService.importBusinessUsers(
+          batchId,
+          request.BusinessBatchRequest.data
+        )
+      await sendAsyncRuleTasks(
+        validatedUsers.map((v) => ({
+          type: 'USER_BATCH',
+          userType: 'BUSINESS',
+          user: v,
+          tenantId,
+        }))
       )
       return response
     })

@@ -1,55 +1,13 @@
 import { SQSEvent } from 'aws-lambda'
-import { TransactionRiskScoringResult } from '@/@types/openapi-internal/TransactionRiskScoringResult'
-import { User } from '@/@types/openapi-internal/User'
-import { Business } from '@/@types/openapi-public/Business'
-import { Transaction } from '@/@types/openapi-public/Transaction'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { initializeTenantContext, withContext } from '@/core/utils/context'
 import { RulesEngineService } from '@/services/rules-engine'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserManagementService } from '@/services/rules-engine/user-rules-engine-service'
-import { UserType } from '@/@types/user/user-type'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { logger } from '@/core/logger'
-
-type AsyncRuleRecordTransaction = {
-  type: 'TRANSACTION'
-  transaction: Transaction
-  senderUser: User | Business | null
-  receiverUser: User | Business | null
-  riskDetails?: TransactionRiskScoringResult
-}
-
-type AsyncRuleRecordTransactionEvent = {
-  type: 'TRANSACTION_EVENT'
-  updatedTransaction: Transaction
-  senderUser: User | Business | null
-  receiverUser: User | Business | null
-  transactionEventId: string
-}
-
-type AsyncRuleRecordUser = {
-  type: 'USER'
-  userType: UserType
-  user: User | Business
-}
-
-type AsyncRuleRecordUserEvent = {
-  type: 'USER_EVENT'
-  updatedUser: User | Business
-  userEventTimestamp: number
-  userType: UserType
-}
-
-export type AsyncRuleRecord = (
-  | AsyncRuleRecordTransaction
-  | AsyncRuleRecordTransactionEvent
-  | AsyncRuleRecordUser
-  | AsyncRuleRecordUserEvent
-) & {
-  tenantId: string
-}
+import { AsyncRuleRecord } from '@/services/rules-engine/utils'
 
 export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { tenantId } = record
@@ -118,6 +76,26 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
         record.updatedUser,
         record.userEventTimestamp
       )
+    }
+
+    // Batch import
+    if (type === 'TRANSACTION_BATCH') {
+      await rulesEngineService.verifyTransaction(record.transaction, {
+        // Already validated. Skip validation.
+        validateDestinationUserId: false,
+        validateOriginUserId: false,
+        validateTransactionId: false,
+      })
+    } else if (type === 'TRANSACTION_EVENT_BATCH') {
+      await rulesEngineService.verifyTransactionEvent(record.transactionEvent)
+    } else if (type === 'USER_BATCH') {
+      await userRulesEngineService.verifyUser(record.user, record.userType)
+    } else if (type === 'USER_EVENT_BATCH') {
+      if (record.userType === 'CONSUMER') {
+        await userRulesEngineService.verifyConsumerUserEvent(record.userEvent)
+      } else {
+        await userRulesEngineService.verifyBusinessUserEvent(record.userEvent)
+      }
     }
   })
 }

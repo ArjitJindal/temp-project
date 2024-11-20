@@ -88,6 +88,7 @@ import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
+import { batchGet } from '@/utils/dynamodb'
 
 @traceable
 export class UserRepository {
@@ -857,14 +858,11 @@ export class UserRepository {
     })
   }
 
-  public async getUser<T>(
-    userId: string,
-    options?: { consistentRead?: boolean }
-  ): Promise<T | undefined> {
+  public async getUser<T>(userId: string): Promise<T | undefined> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.USER(this.tenantId, userId),
-      ...(options?.consistentRead && { ConsistentRead: true }),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     if (!result.Item) {
@@ -886,6 +884,17 @@ export class UserRepository {
     }
 
     return user as T
+  }
+
+  public async getUsersByIds(
+    userIds: string[]
+  ): Promise<UserWithRulesResult[]> {
+    return await batchGet<UserWithRulesResult | BusinessWithRulesResult>(
+      this.dynamoDb,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      userIds.map((userId) => DynamoDbKeys.USER(this.tenantId, userId)),
+      { ConsistentRead: true }
+    )
   }
 
   public async updateUserWithExecutedRules(

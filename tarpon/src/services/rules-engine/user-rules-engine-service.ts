@@ -10,7 +10,7 @@ import { UserEventRepository } from './repositories/user-event-repository'
 import { isBusinessUser } from './utils/user-rule-utils'
 import { mergeRules } from './utils/rule-utils'
 import { getUserRiskScoreDetailsForPNB } from './pnb-custom-logic'
-import { mergeUserTags } from './utils'
+import { mergeUserTags, sendAsyncRuleTasks } from './utils'
 import { RulesEngineService } from '.'
 import { logger } from '@/core/logger'
 import { Business } from '@/@types/openapi-public/Business'
@@ -124,12 +124,14 @@ export class UserManagementService {
 
     const asyncRulesPromises = isAnyAsyncRules
       ? [
-          this.rulesEngineService.sendAsyncRuleTask({
-            type: 'USER',
-            user: userPayload,
-            tenantId: this.tenantId,
-            userType: type,
-          }),
+          sendAsyncRuleTasks([
+            {
+              type: 'USER',
+              user: userPayload,
+              tenantId: this.tenantId,
+              userType: type,
+            },
+          ]),
         ]
       : []
 
@@ -348,16 +350,18 @@ export class UserManagementService {
         monitoringResult
       ),
       isAnyAsyncRules &&
-        this.rulesEngineService.sendAsyncRuleTask({
-          type: 'USER_EVENT',
-          tenantId: this.tenantId,
-          updatedUser: omit<User | Business>(updatedUserResult, [
-            'executedRules',
-            'hitRules',
-          ]) as User | Business,
-          userType,
-          userEventTimestamp: userEvent.timestamp,
-        }),
+        sendAsyncRuleTasks([
+          {
+            type: 'USER_EVENT',
+            tenantId: this.tenantId,
+            updatedUser: omit<User | Business>(updatedUserResult, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business,
+            userType,
+            userEventTimestamp: userEvent.timestamp,
+          },
+        ]),
     ])
 
     return {
@@ -411,7 +415,7 @@ export class UserManagementService {
 
     const user = await this.userRepository.getUser<
       UserWithRulesResult | BusinessWithRulesResult
-    >(userId, { consistentRead: true })
+    >(userId)
 
     if (!user) {
       throw new NotFound(`User ${userId} not found`)
@@ -456,8 +460,7 @@ export class UserManagementService {
     const userEvent = await this.userEventRepository.getUserEvent(
       userType,
       userId,
-      userEventTimestamp,
-      { consistentRead: true }
+      userEventTimestamp
     )
 
     if (!userEvent) {

@@ -29,6 +29,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import {
+  batchGet,
   batchWrite,
   dynamoDbQueryHelper,
   paginateQuery,
@@ -279,13 +280,12 @@ export class DynamoDbTransactionRepository
   }
 
   public async getTransactionById(
-    transactionId: string,
-    options?: { consistentRead?: boolean }
+    transactionId: string
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
-      ...(options?.consistentRead && { ConsistentRead: true }),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 
@@ -306,17 +306,30 @@ export class DynamoDbTransactionRepository
 
   public async getTransactionsByIds(
     transactionIds: string[]
-  ): Promise<Transaction[]> {
-    return (
-      await Promise.all(
-        chunk(transactionIds, 100).map((transactionIdsChunk) =>
-          this.getTransactionsByIdsChunk(transactionIdsChunk)
-        )
+  ): Promise<TransactionWithRulesResult[]> {
+    const transactionAttributeNames =
+      TransactionWithRulesResult.getAttributeTypeMap().map(
+        (attribute) => attribute.name
       )
-    ).flatMap((e) => e)
+    return await batchGet<TransactionWithRulesResult>(
+      this.dynamoDb,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      transactionIds.map((transactionId) =>
+        DynamoDbKeys.TRANSACTION(this.tenantId, transactionId)
+      ),
+      {
+        ProjectionExpression: transactionAttributeNames
+          .map((name) => `#${name}`)
+          .join(', '),
+        ExpressionAttributeNames: Object.fromEntries(
+          transactionAttributeNames.map((name) => [`#${name}`, name])
+        ),
+        ConsistentRead: true,
+      }
+    )
   }
 
-  public async checkTransactionStatusByChunk(
+  public async checkTransactionStatus(
     transactionIds: string[],
     checkStatus: (txns: TransactionWithRulesResult[]) => boolean
   ): Promise<boolean> {

@@ -1,6 +1,5 @@
 import { BatchImportService } from '../index'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import {
   createTransaction,
@@ -28,7 +27,6 @@ describe('BatchImportService', () => {
 
   beforeAll(async () => {
     batchImportService = new BatchImportService(TEST_TENANT_ID, {
-      mongoDb: await getMongoDbClient(),
       dynamoDb: getDynamoDbClient(),
     })
   })
@@ -39,7 +37,7 @@ describe('BatchImportService', () => {
   ])
   describe('importTransactions', () => {
     it('success', async () => {
-      const result = await batchImportService.importTransactions(
+      const { response } = await batchImportService.importTransactions(
         'test-batch-id',
         [
           getTestTransaction({
@@ -53,7 +51,7 @@ describe('BatchImportService', () => {
         ],
         { validateOriginUserId: true, validateDestinationUserId: true }
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -62,7 +60,7 @@ describe('BatchImportService', () => {
     })
 
     it('success (without user validation)', async () => {
-      const result = await batchImportService.importTransactions(
+      const { response } = await batchImportService.importTransactions(
         'test-batch-id',
         [
           getTestTransaction({
@@ -75,7 +73,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -91,12 +89,12 @@ describe('BatchImportService', () => {
         originUserId: 'U-3',
         destinationUserId: 'U-1',
       })
-      const result = await batchImportService.importTransactions(
+      const { response } = await batchImportService.importTransactions(
         'test-batch-id',
         [testTransaction1, testTransaction2],
         { validateOriginUserId: true, validateDestinationUserId: true }
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -121,12 +119,12 @@ describe('BatchImportService', () => {
         destinationUserId: 'U-2',
         relatedTransactionIds: ['unknown-transaction-id'],
       })
-      const result = await batchImportService.importTransactions(
+      const { response } = await batchImportService.importTransactions(
         'test-batch-id',
         [testTransaction1, testTransaction2],
         { validateOriginUserId: true, validateDestinationUserId: true }
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,
@@ -155,14 +153,14 @@ describe('BatchImportService', () => {
         TEST_TENANT_ID,
         getTestTransaction({ transactionId: 'T-2' })
       )
-      const result = await batchImportService.importTransactionEvents(
+      const { response } = await batchImportService.importTransactionEvents(
         'test-batch-id',
         [
           getTestTransactionEvent({ transactionId: 'T-1' }),
           getTestTransactionEvent({ transactionId: 'T-2' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -170,7 +168,7 @@ describe('BatchImportService', () => {
       })
     })
     it('partial failure', async () => {
-      const result = await batchImportService.importTransactionEvents(
+      const { response } = await batchImportService.importTransactionEvents(
         'test-batch-id',
         [
           getTestTransactionEvent({
@@ -180,7 +178,7 @@ describe('BatchImportService', () => {
           getTestTransactionEvent({ eventId: 'E-2', transactionId: 'T-2' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -195,7 +193,7 @@ describe('BatchImportService', () => {
       })
     })
     it('all failure', async () => {
-      const result = await batchImportService.importTransactionEvents(
+      const { response } = await batchImportService.importTransactionEvents(
         'test-batch-id',
         [
           getTestTransactionEvent({
@@ -208,7 +206,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,
@@ -229,11 +227,11 @@ describe('BatchImportService', () => {
   })
   describe('importConsumerUsers', () => {
     it('success', async () => {
-      const result = await batchImportService.importConsumerUsers(
+      const { response } = await batchImportService.importConsumerUsers(
         'test-batch-id',
         [getTestUser({ userId: 'U-3' }), getTestUser({ userId: 'U-4' })]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -241,11 +239,11 @@ describe('BatchImportService', () => {
       })
     })
     it('partial failure', async () => {
-      const result = await batchImportService.importConsumerUsers(
+      const { response } = await batchImportService.importConsumerUsers(
         'test-batch-id',
         [getTestUser({ userId: 'U-1' }), getTestUser({ userId: 'U-4' })]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -260,7 +258,7 @@ describe('BatchImportService', () => {
       })
     })
     it('all failure', async () => {
-      const result = await batchImportService.importConsumerUsers(
+      const { response } = await batchImportService.importConsumerUsers(
         'test-batch-id',
         [
           getTestUser({ userId: 'U-1' }),
@@ -270,7 +268,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,
@@ -291,14 +289,14 @@ describe('BatchImportService', () => {
   })
   describe('importConsumerUserEvents', () => {
     it('success', async () => {
-      const result = await batchImportService.importConsumerUserEvents(
+      const { response } = await batchImportService.importConsumerUserEvents(
         'test-batch-id',
         [
           getTestUserEvent({ userId: 'U-1' }),
           getTestUserEvent({ userId: 'U-2' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -306,14 +304,14 @@ describe('BatchImportService', () => {
       })
     })
     it('partial failure', async () => {
-      const result = await batchImportService.importConsumerUserEvents(
+      const { response } = await batchImportService.importConsumerUserEvents(
         'test-batch-id',
         [
           getTestUserEvent({ eventId: 'E-1', userId: 'U-1' }),
           getTestUserEvent({ eventId: 'E-2', userId: 'U-4' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -328,7 +326,7 @@ describe('BatchImportService', () => {
       })
     })
     it('all failure', async () => {
-      const result = await batchImportService.importConsumerUserEvents(
+      const { response } = await batchImportService.importConsumerUserEvents(
         'test-batch-id',
         [
           getTestUserEvent({ eventId: 'E-1', userId: 'U-unknown-1' }),
@@ -341,7 +339,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,
@@ -362,11 +360,11 @@ describe('BatchImportService', () => {
   })
   describe('importBusinessUsers', () => {
     it('success', async () => {
-      const result = await batchImportService.importBusinessUsers(
+      const { response } = await batchImportService.importBusinessUsers(
         'test-batch-id',
         [getTestBusiness({ userId: 'U-3' }), getTestBusiness({ userId: 'U-4' })]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -374,11 +372,11 @@ describe('BatchImportService', () => {
       })
     })
     it('partial failure', async () => {
-      const result = await batchImportService.importBusinessUsers(
+      const { response } = await batchImportService.importBusinessUsers(
         'test-batch-id',
         [getTestBusiness({ userId: 'U-1' }), getTestBusiness({ userId: 'U-4' })]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -393,7 +391,7 @@ describe('BatchImportService', () => {
       })
     })
     it('all failure', async () => {
-      const result = await batchImportService.importBusinessUsers(
+      const { response } = await batchImportService.importBusinessUsers(
         'test-batch-id',
         [
           getTestBusiness({ userId: 'U-1' }),
@@ -403,7 +401,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,
@@ -424,14 +422,14 @@ describe('BatchImportService', () => {
   })
   describe('importBusinessUserEvents', () => {
     it('success', async () => {
-      const result = await batchImportService.importBusinessUserEvents(
+      const { response } = await batchImportService.importBusinessUserEvents(
         'test-batch-id',
         [
           getTestUserEvent({ userId: 'U-1' }),
           getTestUserEvent({ userId: 'U-2' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'SUCCESS',
         batchId: 'test-batch-id',
         successful: 2,
@@ -439,14 +437,14 @@ describe('BatchImportService', () => {
       })
     })
     it('partial failure', async () => {
-      const result = await batchImportService.importBusinessUserEvents(
+      const { response } = await batchImportService.importBusinessUserEvents(
         'test-batch-id',
         [
           getTestBusinessEvent({ eventId: 'E-1', userId: 'U-1' }),
           getTestBusinessEvent({ eventId: 'E-2', userId: 'U-4' }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'PARTIAL_FAILURE',
         batchId: 'test-batch-id',
         successful: 1,
@@ -461,7 +459,7 @@ describe('BatchImportService', () => {
       })
     })
     it('all failure', async () => {
-      const result = await batchImportService.importBusinessUserEvents(
+      const { response } = await batchImportService.importBusinessUserEvents(
         'test-batch-id',
         [
           getTestBusinessEvent({ eventId: 'E-1', userId: 'U-unknown-1' }),
@@ -474,7 +472,7 @@ describe('BatchImportService', () => {
           }),
         ]
       )
-      expect(result).toEqual({
+      expect(response).toEqual({
         status: 'FAILURE',
         batchId: 'test-batch-id',
         successful: 0,

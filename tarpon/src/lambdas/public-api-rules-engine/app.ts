@@ -24,12 +24,17 @@ import { BusinessOptional } from '@/@types/openapi-public/BusinessOptional'
 import { TransactionUpdatable } from '@/@types/openapi-public/TransactionUpdatable'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
 import { UserEventRepository } from '@/services/rules-engine/repositories/user-event-repository'
-import { filterLiveRules } from '@/services/rules-engine/utils'
+import {
+  filterLiveRules,
+  sendAsyncRuleTasks,
+} from '@/services/rules-engine/utils'
 import { Handlers } from '@/@types/openapi-public-custom/DefaultApi'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { BatchImportService } from '@/services/batch-import'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
+
+const MAX_BATCH_IMPORT_COUNT = 200
 
 async function getMissingRelatedTransactions(
   relatedTransactionIds: string[],
@@ -177,38 +182,36 @@ export const transactionHandler = lambdaApi()(
       return verifyTransaction(request)
     })
     handlers.registerPostBatchTransactions(async (ctx, request) => {
+      if (
+        request.TransactionBatchRequest.data.length > MAX_BATCH_IMPORT_COUNT
+      ) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
       const batchId = request.TransactionBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importTransactions(
-        batchId,
-        request.TransactionBatchRequest.data,
-        {
-          validateOriginUserId:
-            !request.validateOriginUserId ||
-            request.validateOriginUserId === 'true',
-          validateDestinationUserId:
-            !request.validateDestinationUserId ||
-            request.validateDestinationUserId === 'true',
-        }
-      )
-      try {
-        // TODO do this in a queue
-        await Promise.all(
-          request.TransactionBatchRequest.data.map((transaction) =>
-            verifyTransaction({
-              Transaction: transaction,
-              validateOriginUserId: request.validateOriginUserId,
-              validateDestinationUserId: request.validateDestinationUserId,
-            })
-          )
+      const { response, validatedTransactions } =
+        await batchImportService.importTransactions(
+          batchId,
+          request.TransactionBatchRequest.data,
+          {
+            validateOriginUserId:
+              !request.validateOriginUserId ||
+              request.validateOriginUserId === 'true',
+            validateDestinationUserId:
+              !request.validateDestinationUserId ||
+              request.validateDestinationUserId === 'true',
+          }
         )
-      } catch (error) {
-        logger.error(`Error verifying transactions: ${error}`)
-      }
+      await sendAsyncRuleTasks(
+        validatedTransactions.map((v) => ({
+          type: 'TRANSACTION_BATCH',
+          transaction: v,
+          tenantId,
+        }))
+      )
       return response
     })
     return await handlers.handle(event)
@@ -258,26 +261,29 @@ export const transactionEventHandler = lambdaApi()(
         await createTransactionEvent(transactionEvent)
     )
     handlers.registerPostBatchTransactionEvents(async (ctx, request) => {
+      if (
+        request.TransactionEventBatchRequest.data.length >
+        MAX_BATCH_IMPORT_COUNT
+      ) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
       const batchId = request.TransactionEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importTransactionEvents(
-        batchId,
-        request.TransactionEventBatchRequest.data
-      )
-      try {
-        // TODO do this in a queue
-        await Promise.all(
-          request.TransactionEventBatchRequest.data.map((event) =>
-            createTransactionEvent(event)
-          )
+      const { response, validatedTransactionEvents } =
+        await batchImportService.importTransactionEvents(
+          batchId,
+          request.TransactionEventBatchRequest.data
         )
-      } catch (error) {
-        logger.error(`Error verifying transactions: ${error}`)
-      }
+      await sendAsyncRuleTasks(
+        validatedTransactionEvents.map((v) => ({
+          type: 'TRANSACTION_EVENT_BATCH',
+          transactionEvent: v,
+          tenantId,
+        }))
+      )
       return response
     })
     handlers.registerGetTransactionEvent(async (_ctx, { eventId }) => {
@@ -371,38 +377,56 @@ export const userEventsHandler = lambdaApi()(
       }
     )
     handlers.registerPostBatchConsumerUserEvents(async (ctx, request) => {
+      if (
+        request.ConsumerUserEventBatchRequest.data.length >
+        MAX_BATCH_IMPORT_COUNT
+      ) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
       const batchId = request.ConsumerUserEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importConsumerUserEvents(
-        batchId,
-        request.ConsumerUserEventBatchRequest.data
-      )
-      try {
-        // TODO do this in a queue
-        await Promise.all(
-          request.ConsumerUserEventBatchRequest.data.map((userEvent) => {
-            return createUserEvent(userEvent)
-          })
+      const { response, validatedUserEvents } =
+        await batchImportService.importConsumerUserEvents(
+          batchId,
+          request.ConsumerUserEventBatchRequest.data
         )
-      } catch (error) {
-        logger.error(`Error verifying users: ${error}`)
-      }
+      await sendAsyncRuleTasks(
+        validatedUserEvents.map((v) => ({
+          type: 'USER_EVENT_BATCH',
+          userType: 'CONSUMER',
+          userEvent: v,
+          tenantId,
+        }))
+      )
       return response
     })
     handlers.registerPostBatchBusinessUserEvents(async (ctx, request) => {
+      if (
+        request.BusinessUserEventBatchRequest.data.length >
+        MAX_BATCH_IMPORT_COUNT
+      ) {
+        throw new BadRequest(`Batch import limit is ${MAX_BATCH_IMPORT_COUNT}.`)
+      }
       const batchId = request.BusinessUserEventBatchRequest.batchId || uuid4()
       logger.info(`Processing batch ${batchId}`)
       const batchImportService = new BatchImportService(ctx.tenantId, {
-        mongoDb: await getMongoDbClient(),
         dynamoDb,
       })
-      const response = await batchImportService.importBusinessUserEvents(
-        batchId,
-        request.BusinessUserEventBatchRequest.data
+      const { response, validatedUserEvents } =
+        await batchImportService.importBusinessUserEvents(
+          batchId,
+          request.BusinessUserEventBatchRequest.data
+        )
+      await sendAsyncRuleTasks(
+        validatedUserEvents.map((v) => ({
+          type: 'USER_EVENT_BATCH',
+          userType: 'BUSINESS',
+          userEvent: v,
+          tenantId,
+        }))
       )
       return response
     })

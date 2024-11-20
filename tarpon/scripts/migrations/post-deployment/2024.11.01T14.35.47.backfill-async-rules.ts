@@ -3,14 +3,12 @@ import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { Tenant } from '@/services/accounts'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { LogicEvaluator } from '@/services/logic-evaluator/engine'
-import { RulesEngineService } from '@/services/rules-engine'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { pickKnownEntityFields } from '@/utils/object'
@@ -25,6 +23,7 @@ import {
   getMigrationLastCompletedTimestamp,
   updateMigrationLastCompletedTimestamp,
 } from '@/utils/migration-progress'
+import { sendAsyncRuleTasks } from '@/services/rules-engine/utils'
 
 const ASYNC_RULE_STOPPED_RUNNING_TIME = dayjs(
   '2024-10-31T13:00:00.000Z'
@@ -38,13 +37,6 @@ async function migrateTenant(tenant: Tenant) {
 
   const dynamoDb = getDynamoDbClient()
   const db = await getMongoDbClientDb()
-  const logicEvaluator = new LogicEvaluator(tenant.id, dynamoDb)
-  const rulesEngineService = new RulesEngineService(
-    tenant.id,
-    dynamoDb,
-    logicEvaluator,
-    await getMongoDbClient()
-  )
   const userRepository = new UserRepository(tenant.id, { dynamoDb })
   const ruleInstanceRepository = new RuleInstanceRepository(tenant.id, {
     dynamoDb,
@@ -95,21 +87,23 @@ async function migrateTenant(tenant: Tenant) {
           ? getUser<User | Business>(tx.destinationUserId)
           : undefined,
       ])
-      await rulesEngineService.sendAsyncRuleTask({
-        tenantId: tenant.id,
-        type: 'TRANSACTION',
-        transaction: pickKnownEntityFields(tx, Transaction),
-        senderUser: omit<User | Business>(senderUser, [
-          'executedRules',
-          'hitRules',
-          'status',
-        ]) as User | Business | null,
-        receiverUser: omit<User | Business>(receiverUser, [
-          'executedRules',
-          'hitRules',
-          'status',
-        ]) as User | Business | null,
-      })
+      await sendAsyncRuleTasks([
+        {
+          tenantId: tenant.id,
+          type: 'TRANSACTION',
+          transaction: pickKnownEntityFields(tx, Transaction),
+          senderUser: omit<User | Business>(senderUser, [
+            'executedRules',
+            'hitRules',
+            'status',
+          ]) as User | Business,
+          receiverUser: omit<User | Business>(receiverUser, [
+            'executedRules',
+            'hitRules',
+            'status',
+          ]) as User | Business,
+        },
+      ])
       await updateMigrationLastCompletedTimestamp(
         migrationKey,
         tx.updatedAt as number
@@ -147,15 +141,17 @@ async function migrateTenant(tenant: Tenant) {
     let count = 0
     for await (const user of userCursor) {
       count++
-      await rulesEngineService.sendAsyncRuleTask({
-        type: 'USER',
-        user:
-          user.type === 'CONSUMER'
-            ? pickKnownEntityFields(user, User)
-            : pickKnownEntityFields(user, Business),
-        tenantId: tenant.id,
-        userType: user.type,
-      })
+      await sendAsyncRuleTasks([
+        {
+          type: 'USER',
+          user:
+            user.type === 'CONSUMER'
+              ? pickKnownEntityFields(user, User)
+              : pickKnownEntityFields(user, Business),
+          tenantId: tenant.id,
+          userType: user.type,
+        },
+      ])
       await updateMigrationLastCompletedTimestamp(
         migrationKey,
         user.updatedAt as number

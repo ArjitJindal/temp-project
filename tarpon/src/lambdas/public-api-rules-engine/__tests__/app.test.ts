@@ -10,7 +10,10 @@ import {
   getApiGatewayPostEvent,
 } from '@/test-utils/apigateway-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
-import { getTestTransaction } from '@/test-utils/transaction-test-utils'
+import {
+  getTestTransaction,
+  withAsyncRulesSync,
+} from '@/test-utils/transaction-test-utils'
 import {
   createConsumerUser,
   createConsumerUsers,
@@ -60,6 +63,7 @@ const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 withFeatureHook(features)
 dynamoDbSetupHook()
 withLocalChangeHandler()
+withAsyncRulesSync()
 
 describe('Public API - Verify a transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()

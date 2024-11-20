@@ -1,10 +1,9 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { MongoClient } from 'mongodb'
 import { compact, uniqBy } from 'lodash'
-import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { UserEventRepository } from '../rules-engine/repositories/user-event-repository'
 import { TransactionEventRepository } from '../rules-engine/repositories/transaction-event-repository'
+import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { TransactionEvent } from '@/@types/openapi-internal/TransactionEvent'
 import { BatchResponse } from '@/@types/openapi-public/BatchResponse'
 import { Business } from '@/@types/openapi-public/Business'
@@ -12,13 +11,14 @@ import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { BatchResponseFailedRecord } from '@/@types/openapi-public/BatchResponseFailedRecord'
 import { BatchResponseStatus } from '@/@types/openapi-public/BatchResponseStatus'
 import { ConsumerUserEventWithRulesResult } from '@/@types/openapi-public/ConsumerUserEventWithRulesResult'
 import { BusinessUserEventWithRulesResult } from '@/@types/openapi-public/BusinessUserEventWithRulesResult'
 import { UserType } from '@/@types/user/user-type'
+import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
+import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 const ID_ALREADY_EXISTS = 'ID_ALREADY_EXISTS'
 const ID_NOT_FOUND = 'ID_NOT_FOUND'
@@ -42,7 +42,7 @@ type TransactionValidationOptions = {
 }
 
 export class BatchImportService {
-  private readonly transactionRepository: MongoDbTransactionRepository
+  private readonly transactionRepository: DynamoDbTransactionRepository
   private readonly userRepository: UserRepository
   private readonly userEventRepository: UserEventRepository
   private readonly transactionEventRepository: TransactionEventRepository
@@ -50,26 +50,22 @@ export class BatchImportService {
   constructor(
     private readonly tenantId: string,
     readonly connections: {
-      mongoDb: MongoClient
       dynamoDb: DynamoDBDocumentClient
     }
   ) {
-    this.transactionRepository = new MongoDbTransactionRepository(
+    this.transactionRepository = new DynamoDbTransactionRepository(
       this.tenantId,
-      connections.mongoDb
+      connections.dynamoDb
     )
     this.userRepository = new UserRepository(this.tenantId, {
-      mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
     this.userEventRepository = new UserEventRepository(this.tenantId, {
-      mongoDb: connections.mongoDb,
       dynamoDb: connections.dynamoDb,
     })
     this.transactionEventRepository = new TransactionEventRepository(
       this.tenantId,
       {
-        mongoDb: connections.mongoDb,
         dynamoDb: connections.dynamoDb,
       }
     )
@@ -79,7 +75,10 @@ export class BatchImportService {
     batchId: string,
     transactions: Transaction[],
     validationOptions?: TransactionValidationOptions
-  ): Promise<BatchResponse> {
+  ): Promise<{
+    response: BatchResponse
+    validatedTransactions: Transaction[]
+  }> {
     const existingTransactions =
       await this.transactionRepository.getTransactionsByIds(
         transactions.map((transaction) => transaction.transactionId)
@@ -97,9 +96,7 @@ export class BatchImportService {
         transaction.destinationUserId,
       ])
     )
-    const existingUsers = await this.userRepository.getMongoUsersByIds(
-      allUserIds
-    )
+    const existingUsers = await this.userRepository.getUsersByIds(allUserIds)
     const failedRecords: BatchResponseFailedRecord[] = []
     const idsCountMap = new Map<string, number>()
     for (const transaction of transactions) {
@@ -108,6 +105,7 @@ export class BatchImportService {
         (idsCountMap.get(transaction.transactionId) ?? 0) + 1
       )
     }
+    const validatedTransactions: Transaction[] = []
     for (const transaction of transactions) {
       const validationError = this.validateTransaction(
         transaction,
@@ -124,31 +122,36 @@ export class BatchImportService {
           id: transaction.transactionId,
           reasonCode: validationError,
         })
+      } else {
+        validatedTransactions.push(transaction)
       }
     }
     return {
-      status: this.getBatchResponseStatus(
-        transactions.length,
-        failedRecords.length
-      ),
-      batchId,
-      successful: transactions.length - failedRecords.length,
-      failed: failedRecords.length,
-      failedRecords:
-        failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
-      message: this.getBatchResponseMessage(
-        transactions.length,
-        failedRecords.length
-      ),
+      response: {
+        status: this.getBatchResponseStatus(
+          transactions.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: transactions.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords:
+          failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
+        message: this.getBatchResponseMessage(
+          transactions.length,
+          failedRecords.length
+        ),
+      },
+      validatedTransactions,
     }
   }
 
   private validateTransaction(
     transaction: Transaction,
     data: {
-      existingTransactions: InternalTransaction[]
-      existingRelatedTransactions: InternalTransaction[]
-      existingUsers: InternalUser[]
+      existingTransactions: TransactionWithRulesResult[]
+      existingRelatedTransactions: TransactionWithRulesResult[]
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
       idsCountMap: Map<string, number>
     },
     validationOptions?: TransactionValidationOptions
@@ -212,7 +215,10 @@ export class BatchImportService {
   public async importTransactionEvents(
     batchId: string,
     transactionEvents: TransactionEvent[]
-  ): Promise<BatchResponse> {
+  ): Promise<{
+    response: BatchResponse
+    validatedTransactionEvents: TransactionEvent[]
+  }> {
     const relatedTransactionIds = compact(
       transactionEvents.flatMap(
         (t) => t.updatedTransactionAttributes?.relatedTransactionIds
@@ -231,6 +237,7 @@ export class BatchImportService {
       this.getTransactionEvents(transactionEvents),
     ])
 
+    const validatedTransactionEvents: TransactionEvent[] = []
     const failedRecords: BatchResponseFailedRecord[] = []
     for (const transactionEvent of transactionEvents) {
       const validationError = this.validateTransactionEvent(transactionEvent, {
@@ -246,28 +253,33 @@ export class BatchImportService {
               : transactionEvent.eventId,
           reasonCode: validationError,
         })
+      } else {
+        validatedTransactionEvents.push(transactionEvent)
       }
     }
     return {
-      status: this.getBatchResponseStatus(
-        transactionEvents.length,
-        failedRecords.length
-      ),
-      batchId,
-      successful: transactionEvents.length - failedRecords.length,
-      failed: failedRecords.length,
-      failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
-      message: this.getBatchResponseMessage(
-        transactionEvents.length,
-        failedRecords.length
-      ),
+      response: {
+        status: this.getBatchResponseStatus(
+          transactionEvents.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: transactionEvents.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
+        message: this.getBatchResponseMessage(
+          transactionEvents.length,
+          failedRecords.length
+        ),
+      },
+      validatedTransactionEvents,
     }
   }
   private validateTransactionEvent(
     transactionEvent: TransactionEvent,
     data: {
-      existingTransactions: InternalTransaction[]
-      existingRelatedTransactions: InternalTransaction[]
+      existingTransactions: TransactionWithRulesResult[]
+      existingRelatedTransactions: TransactionWithRulesResult[]
       existingTransactionEvents: TransactionEvent[]
     }
   ): BatchImportErrorReason | null {
@@ -282,7 +294,7 @@ export class BatchImportService {
       data.existingTransactionEvents.find(
         (e) =>
           e.transactionId === transactionEvent.transactionId &&
-          e.timestamp === transactionEvent.timestamp
+          e.eventId === transactionEvent.eventId
       )
     ) {
       return EVENT_ALREADY_EXISTS
@@ -301,22 +313,25 @@ export class BatchImportService {
   public async importConsumerUsers(
     batchId: string,
     users: User[]
-  ): Promise<BatchResponse> {
-    return this.importUsers(batchId, users)
+  ): Promise<{ response: BatchResponse; validatedUsers: User[] }> {
+    return this.importUsers<User>(batchId, users)
   }
 
   public async importBusinessUsers(
     batchId: string,
     users: Business[]
-  ): Promise<BatchResponse> {
-    return this.importUsers(batchId, users)
+  ): Promise<{ response: BatchResponse; validatedUsers: Business[] }> {
+    return this.importUsers<Business>(batchId, users)
   }
 
-  private async importUsers(
+  private async importUsers<T extends User | Business>(
     batchId: string,
-    users: Array<User | Business>
-  ): Promise<BatchResponse> {
-    const existingUsers = await this.userRepository.getMongoUsersByIds(
+    users: Array<T>
+  ): Promise<{
+    response: BatchResponse
+    validatedUsers: Array<T>
+  }> {
+    const existingUsers = await this.userRepository.getUsersByIds(
       users.map((user) => user.userId)
     )
     const idsCountMap = new Map<string, number>()
@@ -326,10 +341,11 @@ export class BatchImportService {
     const parentUserIds = compact(
       users.map((user) => user.linkedEntities?.parentUserId)
     )
-    const existingParentUsers = await this.userRepository.getMongoUsersByIds(
+    const existingParentUsers = await this.userRepository.getUsersByIds(
       parentUserIds
     )
     const failedRecords: BatchResponseFailedRecord[] = []
+    const validatedUsers: T[] = []
     for (const user of users) {
       const validationError = this.validateUser(user, {
         existingUsers,
@@ -341,24 +357,32 @@ export class BatchImportService {
           id: user.userId,
           reasonCode: validationError,
         })
+      } else {
+        validatedUsers.push(user)
       }
     }
     return {
-      status: this.getBatchResponseStatus(users.length, failedRecords.length),
-      batchId,
-      successful: users.length - failedRecords.length,
-      failed: failedRecords.length,
-      failedRecords:
-        failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
-      message: this.getBatchResponseMessage(users.length, failedRecords.length),
+      response: {
+        status: this.getBatchResponseStatus(users.length, failedRecords.length),
+        batchId,
+        successful: users.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords:
+          failedRecords.length > 0 ? uniqBy(failedRecords, 'id') : undefined,
+        message: this.getBatchResponseMessage(
+          users.length,
+          failedRecords.length
+        ),
+      },
+      validatedUsers,
     }
   }
 
   private validateUser(
     user: User | Business,
     data: {
-      existingUsers: InternalUser[]
-      existingParentUsers: InternalUser[]
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      existingParentUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
       idsCountMap: Map<string, number>
     }
   ): BatchImportErrorReason | null {
@@ -382,14 +406,20 @@ export class BatchImportService {
   public async importConsumerUserEvents(
     batchId: string,
     userEvents: ConsumerUserEvent[]
-  ): Promise<BatchResponse> {
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: ConsumerUserEvent[]
+  }> {
     return this.importUserEvents(batchId, userEvents, 'CONSUMER')
   }
 
   public async importBusinessUserEvents(
     batchId: string,
     userEvents: BusinessUserEvent[]
-  ): Promise<BatchResponse> {
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: BusinessUserEvent[]
+  }> {
     return this.importUserEvents(batchId, userEvents, 'BUSINESS')
   }
 
@@ -418,7 +448,10 @@ export class BatchImportService {
     batchId: string,
     userEvents: Array<ConsumerUserEvent | BusinessUserEvent>,
     userType: UserType
-  ): Promise<BatchResponse> {
+  ): Promise<{
+    response: BatchResponse
+    validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent>
+  }> {
     const parentUserIds = compact(
       userEvents.map(
         (event) =>
@@ -430,14 +463,15 @@ export class BatchImportService {
     )
     const [existingUsers, existingParentUsers, existingUserEvents] =
       await Promise.all([
-        this.userRepository.getMongoUsersByIds(
+        this.userRepository.getUsersByIds(
           userEvents.map((event) => event.userId)
         ),
-        this.userRepository.getMongoUsersByIds(parentUserIds),
+        this.userRepository.getUsersByIds(parentUserIds),
         this.getUserEvents(userEvents, userType),
       ])
 
     const failedRecords: BatchResponseFailedRecord[] = []
+    const validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent> = []
     for (const userEvent of userEvents) {
       const validationError = this.validateUserEvent(userEvent, {
         existingUsers,
@@ -452,28 +486,33 @@ export class BatchImportService {
               : userEvent.eventId,
           reasonCode: validationError,
         })
+      } else {
+        validatedUserEvents.push(userEvent)
       }
     }
     return {
-      status: this.getBatchResponseStatus(
-        userEvents.length,
-        failedRecords.length
-      ),
-      batchId,
-      successful: userEvents.length - failedRecords.length,
-      failed: failedRecords.length,
-      failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
-      message: this.getBatchResponseMessage(
-        userEvents.length,
-        failedRecords.length
-      ),
+      response: {
+        status: this.getBatchResponseStatus(
+          userEvents.length,
+          failedRecords.length
+        ),
+        batchId,
+        successful: userEvents.length - failedRecords.length,
+        failed: failedRecords.length,
+        failedRecords: failedRecords.length > 0 ? failedRecords : undefined,
+        message: this.getBatchResponseMessage(
+          userEvents.length,
+          failedRecords.length
+        ),
+      },
+      validatedUserEvents,
     }
   }
   private validateUserEvent(
     userEvent: ConsumerUserEvent | BusinessUserEvent,
     data: {
-      existingUsers: InternalUser[]
-      existingParentUsers: InternalUser[]
+      existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
+      existingParentUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
       existingUserEvents: (
         | ConsumerUserEventWithRulesResult
         | BusinessUserEventWithRulesResult

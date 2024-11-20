@@ -4,7 +4,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
   Credentials as LambdaCredentials,
 } from 'aws-lambda'
-import { chunk, isNil, omitBy, wrap, omit } from 'lodash'
+import { chunk, isNil, omitBy, wrap, omit, uniqBy } from 'lodash'
 import {
   BatchGetCommand,
   BatchGetCommandInput,
@@ -31,6 +31,7 @@ import { NativeAttributeValue } from '@aws-sdk/util-dynamodb'
 import { ConfiguredRetryStrategy } from '@smithy/util-retry'
 import { NodeHttpHandler } from '@smithy/node-http-handler'
 import { getCredentialsFromEvent } from './credentials'
+import { generateChecksum } from './object'
 import { addNewSubsegment } from '@/core/xray'
 import {
   DYNAMODB_READ_CAPACITY_METRIC,
@@ -442,6 +443,7 @@ export async function batchGet<T>(
   attributes: Omit<KeysAndAttributes, 'Keys'> = {}
 ): Promise<T[]> {
   const finalResult: T[] = []
+  keys = uniqBy(keys, generateChecksum)
   for (const batchKeys of chunk(keys, 100)) {
     let retryDelay = 100
     let retryCount = 0

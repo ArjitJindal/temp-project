@@ -19,7 +19,6 @@ import {
 } from 'aws-lambda'
 import { Subsegment } from 'aws-xray-sdk-core'
 import pMap from 'p-map'
-import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -30,7 +29,6 @@ import { RiskScoringService } from '../risk-scoring'
 import { SanctionsService } from '../sanctions'
 import { IBANService } from '../iban'
 import { GeoIPService } from '../geo-ip'
-import { sanitizeDeduplicationId } from '../../utils/sns-sqs-client'
 import {
   LogicEvaluator,
   TransactionLogicData,
@@ -102,6 +100,7 @@ import {
   isSyncRule,
   isV8RuleInstance,
   runOnV8Engine,
+  sendAsyncRuleTasks,
   sendTransactionAggregationTasks,
 } from '@/services/rules-engine/utils'
 import { TransactionStatusDetails } from '@/@types/openapi-public/TransactionStatusDetails'
@@ -111,15 +110,13 @@ import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUs
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
-import { FifoSqsMessage, getSQSClient } from '@/utils/sns-sqs-client'
+import { FifoSqsMessage } from '@/utils/sns-sqs-client'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
-import { AsyncRuleRecord, runAsyncRules } from '@/lambdas/async-rule/app'
-import { envIs } from '@/utils/env'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 
 const ruleAscendingComparator = (
@@ -130,8 +127,6 @@ const ruleAscendingComparator = (
 type RiskScoreDetails = TransactionRiskScoringResult & {
   components?: RiskScoreComponent[]
 }
-
-const sqsClient = getSQSClient()
 
 export type TransactionAggregationTask = {
   transactionId: string
@@ -536,22 +531,24 @@ export class RulesEngineService {
         ),
         this.updateGlobalAggregation(savedTransaction, []),
         isAnyAsyncRules &&
-          this.sendAsyncRuleTask({
-            tenantId: this.tenantId,
-            type: 'TRANSACTION',
-            transaction: omit<Transaction>(savedTransaction, [
-              'executedRules',
-              'hitRules',
-            ]) as Transaction,
-            senderUser: omit<User>(senderUser, [
-              'executedRules',
-              'hitRules',
-            ]) as User | Business | null,
-            receiverUser: omit<User>(receiverUser, [
-              'executedRules',
-              'hitRules',
-            ]) as User | Business | null,
-          }),
+          sendAsyncRuleTasks([
+            {
+              tenantId: this.tenantId,
+              type: 'TRANSACTION',
+              transaction: omit<Transaction>(savedTransaction, [
+                'executedRules',
+                'hitRules',
+              ]) as Transaction,
+              senderUser: omit<User>(senderUser, [
+                'executedRules',
+                'hitRules',
+              ]) as User | Business,
+              receiverUser: omit<User>(receiverUser, [
+                'executedRules',
+                'hitRules',
+              ]) as User | Business,
+            },
+          ]),
       ])
     } catch (e) {
       logger.error(e)
@@ -667,23 +664,25 @@ export class RulesEngineService {
       ),
       updateGlobalAggregationPromise,
       isAnyAsyncRules &&
-        this.sendAsyncRuleTask({
-          tenantId: this.tenantId,
-          type: 'TRANSACTION_EVENT',
-          updatedTransaction: omit<Transaction>(updatedTransaction, [
-            'executedRules',
-            'hitRules',
-          ]) as Transaction,
-          senderUser: omit<User>(senderUser, ['executedRules', 'hitRules']) as
-            | User
-            | Business
-            | null,
-          receiverUser: omit<User>(receiverUser, [
-            'executedRules',
-            'hitRules',
-          ]) as User | Business | null,
-          transactionEventId: eventId,
-        }),
+        sendAsyncRuleTasks([
+          {
+            tenantId: this.tenantId,
+            type: 'TRANSACTION_EVENT',
+            updatedTransaction: omit<Transaction>(updatedTransaction, [
+              'executedRules',
+              'hitRules',
+            ]) as Transaction,
+            senderUser: omit<User>(senderUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business,
+            receiverUser: omit<User>(receiverUser, [
+              'executedRules',
+              'hitRules',
+            ]) as User | Business,
+            transactionEventId: eventId,
+          },
+        ]),
       hasFeature('RISK_SCORING') &&
         riskScoreDetails &&
         this.riskRepository.createOrUpdateArsScore(
@@ -723,46 +722,6 @@ export class RulesEngineService {
           }
         : {}),
     }
-  }
-
-  public async sendAsyncRuleTask(task: AsyncRuleRecord): Promise<void> {
-    if (envIs('test')) {
-      if (process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
-        await runAsyncRules(task)
-      }
-      return
-    }
-
-    if (envIs('local')) {
-      await runAsyncRules(task)
-      return
-    }
-
-    const messageGroupId = generateChecksum(this.tenantId, 10)
-    let messageDeduplicationId = ''
-
-    if (task.type === 'TRANSACTION') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        task.transaction.transactionId
-      )
-    } else if (task.type === 'TRANSACTION_EVENT') {
-      messageDeduplicationId = sanitizeDeduplicationId(task.transactionEventId)
-    } else if (task.type === 'USER') {
-      messageDeduplicationId = sanitizeDeduplicationId(task.user.userId)
-    } else if (task.type === 'USER_EVENT') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `${task.updatedUser.userId}-${task.userEventTimestamp}`
-      )
-    }
-
-    const message = new SendMessageCommand({
-      MessageBody: JSON.stringify(task),
-      QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
-      MessageGroupId: messageGroupId,
-      MessageDeduplicationId: messageDeduplicationId,
-    })
-
-    await sqsClient.send(message)
   }
 
   public async verifyTransactionForSimulation(
@@ -891,14 +850,13 @@ export class RulesEngineService {
   private async verifyAsyncRulesTransactionInternal(
     transaction: Transaction,
     transactionEvents: TransactionEvent[],
-    senderUser: User | Business | null,
-    receiverUser: User | Business | null,
+    senderUser?: User | Business,
+    receiverUser?: User | Business,
     riskDetails?: TransactionRiskScoringResult,
     oldStatusTransactionEvent?: RuleAction
   ): Promise<void> {
     const transactionInDb = await this.transactionRepository.getTransactionById(
-      transaction.transactionId,
-      { consistentRead: true }
+      transaction.transactionId
     )
     if (!transactionInDb) {
       throw new NotFound(
@@ -960,13 +918,12 @@ export class RulesEngineService {
   public async verifyAsyncRulesTransactionEvent(
     updatedTransaction: Transaction,
     transactionEventId: string,
-    senderUser: User | Business | null,
-    receiverUser: User | Business | null
+    senderUser?: User | Business,
+    receiverUser?: User | Business
   ): Promise<void> {
     const transactionEvents =
       await this.transactionEventRepository.getTransactionEvents(
-        updatedTransaction.transactionId,
-        { consistentRead: true }
+        updatedTransaction.transactionId
       )
 
     const transactionEventInDb = transactionEvents.find(
@@ -991,8 +948,8 @@ export class RulesEngineService {
 
   public async verifyAsyncRulesTransaction(
     transaction: Transaction,
-    senderUser: User | Business | null,
-    receiverUser: User | Business | null,
+    senderUser?: User | Business,
+    receiverUser?: User | Business,
     riskDetails?: TransactionRiskScoringResult
   ): Promise<void> {
     const initialTransactionEvent = this.getInitialTransactionEvent(transaction)

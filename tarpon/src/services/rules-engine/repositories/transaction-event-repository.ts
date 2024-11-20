@@ -107,8 +107,7 @@ export class TransactionEventRepository {
   }
 
   public async getTransactionEvents(
-    transactionId: string,
-    options?: { consistentRead?: boolean }
+    transactionId: string
   ): Promise<TransactionEventWithRulesResult[]> {
     const PartitionKeyID = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,
@@ -121,7 +120,7 @@ export class TransactionEventRepository {
       ExpressionAttributeValues: {
         ':PartitionKeyID': PartitionKeyID,
       },
-      ...(options?.consistentRead && { ConsistentRead: true }),
+      ConsistentRead: true,
     }
 
     const { Items } = await this.dynamoDb.send(new QueryCommand(queryInput))

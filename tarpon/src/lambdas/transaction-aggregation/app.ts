@@ -254,8 +254,7 @@ export async function handleTransactionAggregationTask(
   })
 
   const transaction = await transactionRepository.getTransactionById(
-    task.transactionId,
-    { consistentRead: true }
+    task.transactionId
   )
 
   if (!transaction) {

@@ -223,8 +223,7 @@ export class UserEventRepository {
   public async getUserEvent(
     type: UserType,
     userId: string,
-    timestamp: number,
-    options?: { consistentRead?: boolean }
+    timestamp: number
   ): Promise<
     ConsumerUserEventWithRulesResult | BusinessUserEventWithRulesResult | null
   > {
@@ -237,7 +236,7 @@ export class UserEventRepository {
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: primaryKey,
-        ...(options?.consistentRead && { ConsistentRead: true }),
+        ConsistentRead: true,
       })
     )
 

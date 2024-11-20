@@ -1593,13 +1593,12 @@ export class AlertsService extends CaseAlertsCommonService {
       newlyApprovedTxIds
     )
 
-    const allAllowed =
-      await transactionRepository.checkTransactionStatusByChunk(
-        filteredTransactionIds,
-        (txns) => {
-          return txns.every((txn) => txn.status === 'ALLOW')
-        }
-      )
+    const allAllowed = await transactionRepository.checkTransactionStatus(
+      filteredTransactionIds,
+      (txns) => {
+        return txns.every((txn) => txn.status === 'ALLOW')
+      }
+    )
     if (allAllowed && alert.alertId) {
       await this.updateStatus(
         [alert.alertId],

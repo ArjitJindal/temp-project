@@ -19,9 +19,18 @@ import {
   bulkSendMessages,
   FifoSqsMessage,
   getSQSClient,
+  sanitizeDeduplicationId,
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { UserTag } from '@/@types/openapi-internal/all'
+import { generateChecksum } from '@/utils/object'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+import { UserType } from '@/@types/user/user-type'
+import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
+import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
+import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 
 export function getSenderKeys(
   tenantId: string,
@@ -372,6 +381,129 @@ export async function sendTransactionAggregationTasks(
     )
     logger.info(`Sent transaction aggregation tasks to SQS`)
   }
+}
+
+type AsyncRuleRecordTransaction = {
+  type: 'TRANSACTION'
+  transaction: Transaction
+  senderUser?: User | Business
+  receiverUser?: User | Business
+  riskDetails?: TransactionRiskScoringResult
+}
+type AsyncRuleRecordTransactionBatch = {
+  type: 'TRANSACTION_BATCH'
+  transaction: Transaction
+}
+
+type AsyncRuleRecordTransactionEvent = {
+  type: 'TRANSACTION_EVENT'
+  updatedTransaction: Transaction
+  senderUser?: User | Business
+  receiverUser?: User | Business
+  transactionEventId: string
+}
+
+type AsyncRuleRecordTransactionEventBatch = {
+  type: 'TRANSACTION_EVENT_BATCH'
+  transactionEvent: TransactionEvent
+}
+
+type AsyncRuleRecordUser = {
+  type: 'USER'
+  userType: UserType
+  user: User | Business
+}
+type AsyncRuleRecordUserBatch = {
+  type: 'USER_BATCH'
+  userType: UserType
+  user: User | Business
+}
+
+type AsyncRuleRecordUserEvent = {
+  type: 'USER_EVENT'
+  updatedUser: User | Business
+  userEventTimestamp: number
+  userType: UserType
+}
+type AsyncRuleRecordUserEventBatch = {
+  type: 'USER_EVENT_BATCH'
+  userType: UserType
+  userEvent: ConsumerUserEvent | BusinessUserEvent
+}
+export type AsyncRuleRecord = (
+  | AsyncRuleRecordTransaction
+  | AsyncRuleRecordTransactionEvent
+  | AsyncRuleRecordUser
+  | AsyncRuleRecordUserEvent
+  | AsyncRuleRecordTransactionBatch
+  | AsyncRuleRecordTransactionEventBatch
+  | AsyncRuleRecordUserBatch
+  | AsyncRuleRecordUserEventBatch
+) & {
+  tenantId: string
+}
+export async function sendAsyncRuleTasks(
+  tasks: AsyncRuleRecord[]
+): Promise<void> {
+  if (envIs('test', 'local')) {
+    const { runAsyncRules } = await import('@/lambdas/async-rule/app')
+    if (envIs('local') || process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
+      for (const task of tasks) {
+        await runAsyncRules(task)
+      }
+    }
+    return
+  }
+
+  const messages = tasks.map((task) => {
+    const messageGroupId = generateChecksum(task.tenantId, 10)
+    let messageDeduplicationId = ''
+    if (task.type === 'TRANSACTION') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `T-${task.transaction.transactionId}`
+      )
+    } else if (task.type === 'TRANSACTION_EVENT') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `TE-${task.transactionEventId}`
+      )
+    } else if (task.type === 'USER') {
+      messageDeduplicationId = sanitizeDeduplicationId(`U-${task.user.userId}`)
+    } else if (task.type === 'USER_EVENT') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `UE-${task.updatedUser.userId}-${task.userEventTimestamp}`
+      )
+    } else if (task.type === 'TRANSACTION_BATCH') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `T-${task.transaction.transactionId}`
+      )
+    } else if (task.type === 'TRANSACTION_EVENT_BATCH') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `TE-${task.transactionEvent.transactionId}-${
+          task.transactionEvent.eventId ?? task.transactionEvent.timestamp
+        }`
+      )
+    } else if (task.type === 'USER_BATCH') {
+      messageDeduplicationId = sanitizeDeduplicationId(`U-${task.user.userId}`)
+    } else if (task.type === 'USER_EVENT_BATCH') {
+      messageDeduplicationId = sanitizeDeduplicationId(
+        `UE-${task.userEvent.userId}-${
+          task.userEvent.eventId ?? task.userEvent.timestamp
+        }`
+      )
+    }
+    return {
+      MessageBody: JSON.stringify(task),
+      QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+      MessageGroupId: messageGroupId,
+      MessageDeduplicationId: messageDeduplicationId,
+    }
+  })
+
+  await bulkSendMessages(
+    sqs,
+    process.env.ASYNC_RULE_QUEUE_URL as string,
+    messages
+  )
 }
 
 export function mergeUserTags(
