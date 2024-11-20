@@ -37,6 +37,7 @@ import {
   TRANSACTIONS_COLLECTION,
   TRANSACTION_EVENTS_COLLECTION,
   USERS_COLLECTION,
+  USER_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
@@ -50,6 +51,7 @@ import {
   TENANT_SEATS_COUNT_METRIC,
   IBAN_RESOLUTION_COUNT_METRIC,
   Metric,
+  USER_EVENTS_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
 import { AccountsService, TenantBasic } from '@/services/accounts'
 import dayjs from '@/utils/dayjs'
@@ -103,6 +105,11 @@ export class ApiUsageMetricsService {
       'createdAt',
       timeRange
     )
+    const userEventsCounts = await this.getDailyUserEventsCounts(
+      tenantInfo,
+      timeRange,
+      usersCounts
+    )
     const sanctionsChecksCounts = await this.getDailySanctionSearchsCount(
       tenantInfo,
       timeRange
@@ -134,6 +141,12 @@ export class ApiUsageMetricsService {
       mapValues(usersCounts, (v) => [
         {
           metric: USERS_COUNT_METRIC,
+          value: v,
+        },
+      ]),
+      mapValues(userEventsCounts, (v) => [
+        {
+          metric: USER_EVENTS_COUNT_METRIC,
           value: v,
         },
       ]),
@@ -294,6 +307,21 @@ export class ApiUsageMetricsService {
     )
     return mapValues(transactionEventsCounts, (value, key) =>
       Math.max(value - (dailyTransactionsCountsStats[key] ?? 0), 0)
+    )
+  }
+
+  private async getDailyUserEventsCounts(
+    tenantInfo: TenantBasic,
+    timeRange: TimeRange,
+    dailyUsersCountsStats: DailyStats
+  ): Promise<DailyStats> {
+    const userEventsCounts = await getDailyUsage(
+      USER_EVENTS_COLLECTION(tenantInfo.id),
+      'createdAt',
+      timeRange
+    )
+    return mapValues(userEventsCounts, (value, key) =>
+      Math.max(value - (dailyUsersCountsStats[key] ?? 0), 0)
     )
   }
 

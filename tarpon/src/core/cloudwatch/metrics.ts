@@ -50,6 +50,7 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
   TRANSACTION_COUNT_METRIC_NAME: 'TransactionsCount',
   TRANSACTION_EVENTS_COUNT_METRIC_NAME: 'TransactionEventsCount',
   USERS_COUNT_METRIC_NAME: 'UsersCount',
+  USER_EVENTS_COUNT_METRIC_NAME: 'UserEventsCount',
   ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME: 'ActiveRuleInstancesCount',
   SANCTIONS_SEARCHES_COUNT_METRIC_NAME: 'SanctionsSearchesCount',
   TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
@@ -89,6 +90,12 @@ export const TRANSACTION_EVENTS_COUNT_METRIC: Metric = {
 export const USERS_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
   name: CUSTOM_API_USAGE_METRIC_NAMES.USERS_COUNT_METRIC_NAME,
+  kind: 'CULMULATIVE',
+}
+
+export const USER_EVENTS_COUNT_METRIC: Metric = {
+  namespace: 'flagright/ApiUsageMetrics',
+  name: CUSTOM_API_USAGE_METRIC_NAMES.USER_EVENTS_COUNT_METRIC_NAME,
   kind: 'CULMULATIVE',
 }
 
