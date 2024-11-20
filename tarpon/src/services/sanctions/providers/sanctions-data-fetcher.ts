@@ -21,7 +21,7 @@ const namesByLength = new Map<number, string[]>()
 let fetchPromise: Promise<any> | undefined
 let dataLoaded = false
 
-const fetchData = async function () {
+const fetchData = async function (tenantId: string) {
   if (!dataLoaded) {
     if (!fetchPromise) {
       const load = async () => {
@@ -29,7 +29,7 @@ const fetchData = async function () {
         const client = await getMongoDbClient()
         const sanctions = client
           .db()
-          .collection<SanctionsEntity>(SANCTIONS_COLLECTION)
+          .collection<SanctionsEntity>(SANCTIONS_COLLECTION(tenantId))
         const now = Date.now()
         const oneDayAgo = now - 86400000 // 86,400,000 ms = 24 hours
         const updatedSanctions = await sanctions
@@ -649,7 +649,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async searchInMemory(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    await fetchData()
+    await fetchData(this.tenantId)
     const results: SanctionsEntity[] = []
 
     let fuzzinessThreshold = 0
