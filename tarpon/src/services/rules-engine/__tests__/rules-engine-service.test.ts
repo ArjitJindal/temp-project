@@ -3572,3 +3572,139 @@ describe('Verify Transction and Transaction Event with V8 Risk scoring', () => {
     expect(dynamoDbTransactionAfterEvent).toMatchObject(toMatchObject)
   })
 })
+
+describe('transaction event for last N entities', () => {
+  withFeatureHook(['RULES_ENGINE_V8'])
+  const TEST_TENANT_ID = getTestTenantId()
+  setUpUsersHooks(TEST_TENANT_ID, [
+    getTestUser({
+      userId: '1',
+    }),
+  ])
+  setUpRulesHooks(TEST_TENANT_ID, [
+    {
+      id: 'RC-V8-R-121',
+      defaultLogic: {
+        and: [
+          {
+            '==': [{ var: 'agg:seis-test' }, 1],
+          },
+        ],
+      },
+      defaultLogicAggregationVariables: [
+        {
+          key: 'agg:seis-test',
+          type: 'USER_TRANSACTIONS',
+          userDirection: 'SENDER',
+          transactionDirection: 'SENDING',
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          aggregationFunc: 'UNIQUE_COUNT',
+          timeWindow: {
+            start: { units: 0, granularity: 'all_time' },
+            end: { units: 0, granularity: 'now' },
+          },
+          includeCurrentEntity: true,
+          lastNEntities: 2,
+        },
+      ],
+      type: 'TRANSACTION',
+    },
+  ])
+  test('testing', async () => {
+    const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+    const rulesEngine = new RulesEngineService(
+      TEST_TENANT_ID,
+      dynamoDb,
+      logicEvaluator
+    )
+    const timestamp = Date.now()
+    const x1 = await rulesEngine.verifyTransaction({
+      transactionId: 't-1',
+      originUserId: '1',
+      originAmountDetails: {
+        transactionAmount: 6.69,
+        transactionCurrency: 'USD',
+      },
+      timestamp,
+      type: 'TRANSFER',
+    })
+    const x2 = await rulesEngine.verifyTransactionEvent({
+      transactionId: 't-1',
+      timestamp: timestamp + 1,
+      transactionState: 'SUCCESSFUL',
+    })
+    const x3 = await rulesEngine.verifyTransaction({
+      transactionId: 't-2',
+      originUserId: '1',
+      originAmountDetails: {
+        transactionAmount: 6.89,
+        transactionCurrency: 'USD',
+      },
+      timestamp: timestamp + 3,
+      type: 'TRANSFER',
+    })
+    const x4 = await rulesEngine.verifyTransactionEvent({
+      transactionId: 't-2',
+      transactionState: 'SUCCESSFUL',
+      timestamp: timestamp + 4,
+    })
+    const x5 = await rulesEngine.verifyTransaction({
+      transactionId: 't-3',
+      originUserId: '1',
+      originAmountDetails: {
+        transactionAmount: 6.89,
+        transactionCurrency: 'USD',
+      },
+      timestamp: timestamp + 5,
+      type: 'TRANSFER',
+    })
+    const x6 = await rulesEngine.verifyTransactionEvent({
+      transactionId: 't-3',
+      transactionState: 'SUCCESSFUL',
+      timestamp: timestamp + 6,
+    })
+    expect(x1.hitRules).toEqual([]) // Should not be flagged as it is the first transaction
+    expect(x2.hitRules).toEqual([]) // Should not be flagged as it is transaction event
+    expect(x3.hitRules).toEqual([]) // Should not be flagged as it has different origin transaction amount
+    expect(x4.hitRules).toEqual([]) // Should not be flagged as it is transaction event for t-2
+    expect(x5.hitRules).toEqual([
+      {
+        executedAt: expect.any(Number),
+        isShadow: false,
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+        ruleId: 'RC-V8-R-121',
+        ruleInstanceId: 'RC-V8-R-121',
+        ruleName: 'test rule name',
+      },
+    ])
+    expect(x6.hitRules).toEqual([
+      {
+        isShadow: false,
+        executedAt: expect.any(Number),
+        labels: [],
+        nature: 'AML',
+        ruleAction: 'FLAG',
+        ruleDescription: '',
+        ruleHitMeta: {
+          falsePositiveDetails: undefined,
+          hitDirections: ['ORIGIN'],
+          isOngoingScreeningHit: undefined,
+          sanctionsDetails: undefined,
+        },
+        ruleId: 'RC-V8-R-121',
+        ruleInstanceId: 'RC-V8-R-121',
+        ruleName: 'test rule name',
+      },
+    ])
+  })
+})

@@ -1473,11 +1473,44 @@ export class LogicEvaluator {
       },
       0
     )
+    const newTransactionIsTargetDirection =
+      (direction === 'origin' &&
+        aggregationVariable.transactionDirection !== 'RECEIVING') ||
+      (direction === 'destination' &&
+        aggregationVariable.transactionDirection !== 'SENDING')
     let result = aggregator.init()
+    let shouldIncludeNewData = false
+    let shouldSkipUpdateAggregation = false
+    let newDataValue: any | undefined
+    if (
+      data.type === 'TRANSACTION' &&
+      aggregationVariable.includeCurrentEntity &&
+      newTransactionIsTargetDirection &&
+      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
+    ) {
+      ;[shouldIncludeNewData, shouldSkipUpdateAggregation] = await Promise.all([
+        this.isDataIncludedInAggregationVariable(aggregationVariable, data),
+        this.isTransactionApplied(
+          aggregationVariable,
+          direction,
+          data.transaction
+        ),
+      ])
+
+      if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {
+        newDataValue = await this.getNewDataValueForAggregation(
+          aggregationVariable,
+          entityVarDataloader,
+          direction
+        )
+      }
+    }
     if (
       aggregationVariable.lastNEntities &&
       aggregationEntitiesCount === aggregationVariable.lastNEntities &&
-      aggregationVariable.includeCurrentEntity
+      aggregationVariable.includeCurrentEntity &&
+      !shouldSkipUpdateAggregation && // Skip removing the last entity in the N entity aggregation if we are not adding a new entity
+      shouldIncludeNewData
     ) {
       const aggResult = this.getLastNMinusOneAggregationResult(aggData)
       result =
@@ -1488,39 +1521,13 @@ export class LogicEvaluator {
         return mergeValues(aggregator, acc, cur.value ?? aggregator.init())
       }, aggregator.init())
     }
-    const newTransactionIsTargetDirection =
-      (direction === 'origin' &&
-        aggregationVariable.transactionDirection !== 'RECEIVING') ||
-      (direction === 'destination' &&
-        aggregationVariable.transactionDirection !== 'SENDING')
-    if (
-      data.type === 'TRANSACTION' &&
-      aggregationVariable.includeCurrentEntity &&
-      newTransactionIsTargetDirection &&
-      this.isNewDataWithinTimeWindow(data, afterTimestamp, beforeTimestamp)
-    ) {
-      const [shouldIncludeNewData, shouldSkipUpdateAggregation] =
-        await Promise.all([
-          this.isDataIncludedInAggregationVariable(aggregationVariable, data),
-          this.isTransactionApplied(
-            aggregationVariable,
-            direction,
-            data.transaction
-          ),
-        ])
-      if (shouldIncludeNewData && !shouldSkipUpdateAggregation) {
-        const newDataValue = await this.getNewDataValueForAggregation(
-          aggregationVariable,
-          entityVarDataloader,
-          direction
-        )
-        // NOTE: Merge the incoming transaction/user into the aggregation result
-        if (newDataValue) {
-          result = aggregator.reduce(result, newDataValue)
-          aggregationEntitiesCount++
-        }
-      }
+
+    // NOTE: Merge the incoming transaction/user into the aggregation result
+    if (newDataValue) {
+      result = aggregator.reduce(result, newDataValue)
+      aggregationEntitiesCount++
     }
+
     if (aggregationEntitiesCount < (aggregationVariable.lastNEntities ?? 0)) {
       return null
     }
