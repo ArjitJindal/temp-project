@@ -244,31 +244,37 @@ export default function AlertTable(props: Props) {
     },
   );
 
-  const changeStatusMutation = useMutation<
+  const changeHitsStatusMutation = useMutation<
     unknown,
     unknown,
     {
-      alertId: string;
-      sanctionHitIds: string[];
+      toChange: {
+        alertId: string;
+        sanctionHitIds: string[];
+      }[];
       updates: SanctionHitStatusUpdateRequest;
     },
     unknown
   >(
     async (variables: {
-      alertId: string;
-      sanctionHitIds: string[];
+      toChange: {
+        alertId: string;
+        sanctionHitIds: string[];
+      }[];
       updates: SanctionHitStatusUpdateRequest;
     }) => {
-      const { alertId, sanctionHitIds, updates } = variables;
       const hideMessage = message.loading(`Saving...`);
+      const { toChange, updates } = variables;
       try {
-        await api.changeSanctionsHitsStatus({
-          SanctionHitsStatusUpdateRequest: {
-            alertId,
-            sanctionHitIds,
-            updates,
-          },
-        });
+        for (const { alertId, sanctionHitIds } of toChange) {
+          await api.changeSanctionsHitsStatus({
+            SanctionHitsStatusUpdateRequest: {
+              alertId,
+              sanctionHitIds,
+              updates,
+            },
+          });
+        }
       } finally {
         hideMessage();
       }
@@ -280,7 +286,9 @@ export default function AlertTable(props: Props) {
       onSuccess: async (_, variables) => {
         message.success(`Done!`);
         await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
-        await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(variables.alertId));
+        for (const { alertId } of variables.toChange) {
+          await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
+        }
         setSelectedSanctionHits({});
       },
     },
@@ -1600,7 +1608,7 @@ export default function AlertTable(props: Props) {
                     }));
                   }}
                   onSanctionsHitSelect={(alertId, sanctionsHitsIds, status) => {
-                    resetSelection({ keepSanctionHits: true });
+                    resetSelection({});
                     setSelectedSanctionHits((prevState) => ({
                       ...prevState,
                       [alertId]: sanctionsHitsIds.map((id) => ({ id, status })),
@@ -1663,19 +1671,13 @@ export default function AlertTable(props: Props) {
         isVisible={isStatusChangeModalVisible}
         onClose={() => setStatusChangeModalVisible(false)}
         newStatus={statusChangeModalState ?? 'CLEARED'}
-        updateMutation={adaptMutationVariables(changeStatusMutation, (formValues) => {
-          const alertIds = Object.entries(selectedSanctionHits)
-            .filter(([_, values]) => values != null && values.length > 0)
-            .map(([key]) => key);
-          if (alertIds.length !== 1) {
-            throw new Error(`Its only possible to change status for a single alert`);
-          }
-          const [alertId] = alertIds;
+        updateMutation={adaptMutationVariables(changeHitsStatusMutation, (formValues) => {
           return {
-            alertId: alertId,
-            sanctionHitIds: selectedSanctionHitsIds,
+            toChange: Object.entries(selectedSanctionHits).map(([alertId, sanctionHitIds]) => ({
+              alertId,
+              sanctionHitIds: sanctionHitIds.map(({ id }) => id),
+            })),
             updates: {
-              alertId: alertId,
               comment: formValues.comment,
               files: formValues.files,
               reasons: formValues.reasons,
