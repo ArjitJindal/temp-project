@@ -9,6 +9,7 @@ import { getQASamples } from './samplers/qa-samples'
 import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import { getCounterCollectionData } from './data/counter'
+import { getRandomRuleQueues } from './data/rule-queue'
 import {
   batchInsertToClickhouse,
   createTenantDatabase,
@@ -50,6 +51,7 @@ import {
   ML_MODELS_COLLECTION,
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
+  RULE_QUEUES_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { getUsers } from '@/core/seed/data/users'
@@ -108,6 +110,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [SLA_POLICIES_COLLECTION, () => getSLAPolicies()],
   [ML_MODELS_COLLECTION, () => getMlModels()],
   [UNIQUE_TAGS_COLLECTION, () => allUniqueTags()],
+  [RULE_QUEUES_COLLECTION, () => getRandomRuleQueues()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {
