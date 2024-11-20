@@ -29,7 +29,7 @@ export default function Footer<Item extends object, Params extends object>(
   const tooltipProps: TooltipProps = {
     title: `You can select a maximum of ${DEFAULT_BULK_ACTIONS_LIMIT} rows`,
     ...((selectionInfo?.entityCount ?? 0) >= DEFAULT_BULK_ACTIONS_LIMIT && {
-      visible: true,
+      defaultVisible: true,
     }),
   };
 
@@ -51,7 +51,7 @@ export default function Footer<Item extends object, Params extends object>(
           <span data-cy="selection-info-text">
             {pluralize(selectionInfo.entityName, selectionInfo.entityCount, true)} selected{' '}
           </span>
-          <Tooltip {...tooltipProps}>
+          <Tooltip {...tooltipProps} trigger="click">
             <InformationLineIcon className={s.tooltipIcon} />
           </Tooltip>
         </div>
