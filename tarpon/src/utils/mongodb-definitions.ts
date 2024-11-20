@@ -2,6 +2,8 @@ import { Document } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
+export const SANCTIONS_SEARCH_INDEX = 'sanctions_search_index'
+
 export const MONGO_TABLE_SUFFIX_MAP = {
   TRANSACTIONS: 'transactions',
   USERS: 'users',
@@ -277,7 +279,9 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 }
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
-export const SANCTIONS_COLLECTION = 'sanctions'
+export const SANCTIONS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-sanctions`
+}
 export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-provider-searches`
 }
@@ -720,16 +724,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         { index: { 'latestStatus.timestamp': 1 } },
       ],
     },
-  }
-}
-
-export const getGlobalCollectionIndexes = (): {
-  [collectionName: string]: {
-    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
-  }
-} => {
-  return {
-    [SANCTIONS_COLLECTION]: {
+    [SANCTIONS_COLLECTION(tenantId)]: {
       getIndexes: () => [
         {
           index: {
@@ -785,4 +780,12 @@ export const getGlobalCollectionIndexes = (): {
       ],
     },
   }
+}
+
+export const getGlobalCollectionIndexes = (): {
+  [collectionName: string]: {
+    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+  }
+} => {
+  return {}
 }

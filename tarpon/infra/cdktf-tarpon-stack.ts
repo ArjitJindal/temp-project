@@ -2,12 +2,10 @@ import { Fn, TerraformStack } from 'cdktf'
 import { Construct } from 'constructs'
 import * as cdktf from 'cdktf'
 import * as aws from '@cdktf/providers/aws'
-import * as atlas from '@cdktf/providers/mongodbatlas'
 import * as clickhouse from '@cdktf/providers/clickhouse'
 import { Config } from '@flagright/lib/config/config'
 import { getAuth0TenantConfigs } from '@lib/configs/auth0/tenant-config'
 import { getClickhouseTenantConfig } from '@lib/configs/clickhouse/tenant-config'
-import { getAtlasTenantConfig } from '@lib/configs/atlas/tenant-config'
 import { createAuth0TenantResources } from './auth0/cdktf-auth0-resources'
 
 const CLICKHOUSE_ORGANIZATION_ID = 'c9ccc4d7-3de9-479b-afd6-247a5ac0494e'
@@ -46,103 +44,6 @@ export class CdktfTarponStack extends TerraformStack {
     auth0TenantConfigs.forEach((auth0TenantConfig) =>
       createAuth0TenantResources(this, config, auth0TenantConfig)
     )
-
-    const mongoSecret =
-      new aws.dataAwsSecretsmanagerSecretVersion.DataAwsSecretsmanagerSecretVersion(
-        this,
-        'atlas-secret',
-        {
-          secretId: `arn:aws:secretsmanager:${config.env.region}:${config.env.account}:secret:atlasManagementApi`,
-        }
-      )
-
-    new atlas.provider.MongodbatlasProvider(this, 'atlas-provider', {
-      publicKey: Fn.lookup(
-        Fn.jsondecode(mongoSecret.secretString),
-        'public_key'
-      ),
-      privateKey: Fn.lookup(
-        Fn.jsondecode(mongoSecret.secretString),
-        'private_key'
-      ),
-      baseUrl: 'https://cloud.mongodb.com/',
-      realmBaseUrl: 'https://services.cloud.mongodb.com/',
-    })
-
-    const atlasConfigs = getAtlasTenantConfig(config.stage)
-
-    atlasConfigs.map((config, i) => {
-      const project = new atlas.dataMongodbatlasProject.DataMongodbatlasProject(
-        this,
-        `tarpon-project-${i}`,
-        {
-          name: config.project,
-        }
-      )
-
-      if (config.searchEnabled) {
-        new atlas.searchIndex.SearchIndex(this, `sanctions-search-index-${i}`, {
-          name: 'sanctions_search_index',
-          projectId: project.projectId,
-          clusterName: config.cluster || '',
-          analyzer: 'lucene.standard',
-          collectionName: 'sanctions',
-          database: 'tarpon',
-          mappingsFields: JSON.stringify({
-            aka: {
-              type: 'string',
-            },
-            associates: {
-              type: 'document',
-              fields: {
-                ranks: {
-                  type: 'string',
-                },
-                sanctionsSearchTypes: {
-                  type: 'string',
-                },
-              },
-            },
-            documents: {
-              type: 'document',
-              fields: {
-                id: {
-                  type: 'string',
-                },
-                formattedId: {
-                  type: 'string',
-                },
-              },
-            },
-            name: {
-              type: 'string',
-            },
-            gender: {
-              type: 'string',
-            },
-            nationality: {
-              type: 'string',
-            },
-            occupations: {
-              type: 'document',
-              fields: {
-                rank: {
-                  type: 'string',
-                },
-              },
-            },
-            sanctionSearchTypes: {
-              type: 'string',
-            },
-            yearOfBirth: {
-              type: 'string',
-            },
-          }),
-          mappingsDynamic: false,
-          searchAnalyzer: 'lucene.standard',
-        })
-      }
-    })
 
     const clickhouseTenantConfigs = getClickhouseTenantConfig(config.stage)
 

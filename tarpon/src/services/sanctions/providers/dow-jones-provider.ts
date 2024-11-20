@@ -14,7 +14,6 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { getSecretByName } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
@@ -36,6 +35,8 @@ import {
   SanctionsNameMatched,
   SanctionsNameMatchedMatchTypesEnum,
 } from '@/@types/openapi-internal/SanctionsNameMatched'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -216,13 +217,28 @@ const pipelineAsync = promisify(pipeline)
 export class DowJonesProvider extends SanctionsDataFetcher {
   authHeader: string
 
-  static async build() {
-    const dowJones = await getSecretByName('dowjones')
-    return new DowJonesProvider(dowJones.username, dowJones.password)
+  static async build(tenantId: string) {
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const { sanctions } = await tenantRepository.getTenantSettings([
+      'sanctions',
+    ])
+    if (
+      sanctions?.dowjonesCreds?.password &&
+      sanctions?.dowjonesCreds?.username
+    ) {
+      return new DowJonesProvider(
+        sanctions.dowjonesCreds.username,
+        sanctions.dowjonesCreds.password,
+        tenantId
+      )
+    }
+    throw new Error(`No credentials found for Dow Jones for tenant ${tenantId}`)
   }
 
-  constructor(username: string, password: string) {
-    super('dowjones')
+  constructor(username: string, password: string, tenantId: string) {
+    super('dowjones', tenantId)
     this.authHeader =
       'Basic ' + Buffer.from(`${username}:${password}`).toString('base64')
   }

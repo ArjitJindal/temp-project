@@ -128,10 +128,12 @@ const fetchData = async function () {
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository
+  private readonly tenantId: string
 
-  constructor(provider: SanctionsDataProviderName) {
+  constructor(provider: SanctionsDataProviderName, tenantId: string) {
     this.providerName = provider
     this.searchRepository = new SanctionsProviderSearchRepository()
+    this.tenantId = tenantId
   }
 
   abstract fullLoad(repo: SanctionsRepository, version: string): Promise<void>
@@ -352,7 +354,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     const results = await db
-      .collection(SANCTIONS_COLLECTION)
+      .collection(SANCTIONS_COLLECTION(this.tenantId))
       .find<SanctionsEntity>(match)
       .toArray()
 
@@ -587,7 +589,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       request.fuzzinessRange?.upperBound === 100 ? 3 : 7
     const results = await client
       .db()
-      .collection(SANCTIONS_COLLECTION)
+      .collection(SANCTIONS_COLLECTION(this.tenantId))
       .aggregate<SanctionsEntity>([
         {
           $search: {

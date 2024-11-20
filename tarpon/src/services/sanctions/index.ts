@@ -106,7 +106,7 @@ export class SanctionsService {
       case 'comply-advantage':
         return await ComplyAdvantageDataProvider.build(this.tenantId)
       case 'dowjones':
-        return await DowJonesProvider.build()
+        return await DowJonesProvider.build(this.tenantId)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)
