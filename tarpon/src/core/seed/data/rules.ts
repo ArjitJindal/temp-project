@@ -227,8 +227,288 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 1848,
+      runCount: 0,
       hitCount: 1434,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r3RuleInstance: RuleInstance[] = [
+    {
+      id: 'Eh780h',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-3',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High risk country transactions (shadow)',
+      ruleDescriptionAlias: 'Transactions from high risk countries',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1672531200000,
+      updatedAt: 1704067200000,
+      createdBy: getRandomUser().assigneeUserId,
+      runCount: 2000,
+      hitCount: 100,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r4RuleInstance: RuleInstance[] = [
+    {
+      id: 'Ek983h',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-4',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Velocity check (shadow)',
+      ruleDescriptionAlias: 'Velocity check',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1677628800000,
+      updatedAt: 1706745600000,
+      createdBy: getRandomUser().assigneeUserId,
+      runCount: 1000,
+      hitCount: 130,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r5RuleInstance: RuleInstance[] = [
+    {
+      id: 'Ek457g',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-5',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Structured transactions detection (shadow)',
+      ruleDescriptionAlias: 'Structured transactions detection',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1682899200000,
+      updatedAt: 1709251200000,
+      createdBy: getRandomUser().assigneeUserId,
+      runCount: 1000,
+      hitCount: 100,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r6RuleInstance: RuleInstance[] = [
+    {
+      id: 'Ek555a',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-6',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      casePriority: 'P1',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
+      parameters: {
+        transactionAmountThreshold: {
+          USD: 10000,
+        },
+      } as TransactionAmountRuleParameters,
+      checksFor: ['Transaction amount'],
+      action: 'SUSPEND',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Suspicious patterns detection (shadow)',
+      ruleDescriptionAlias: 'Suspicious patterns detection',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        HIGH: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        MEDIUM: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+          },
+        } as TransactionAmountRuleParameters,
+        VERY_LOW: {
+          transactionAmountThreshold: {
+            USD: 10000,
+            ADA: 1000,
+          },
+        } as TransactionAmountRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'SUSPEND',
+        HIGH: 'SUSPEND',
+        MEDIUM: 'SUSPEND',
+        LOW: 'SUSPEND',
+        VERY_LOW: 'SUSPEND',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1688169600000,
+      updatedAt: 1711929600000,
+      createdBy: getRandomUser().assigneeUserId,
+      runCount: 5000,
+      hitCount: 100,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -1147,6 +1427,10 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   const data = [
     ...r1RuleInstance,
     ...r2RuleInstance,
+    ...r3RuleInstance,
+    ...r4RuleInstance,
+    ...r5RuleInstance,
+    ...r6RuleInstance,
     ...r8RuleInstance,
     ...r16RuleInstance,
     ...r18RuleInstance,
