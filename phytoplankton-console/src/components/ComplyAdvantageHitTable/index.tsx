@@ -152,7 +152,7 @@ export default function SanctionsSearchTable(props: Props) {
       key: 'yearOfBirth',
       renderer: {
         kind: 'number',
-        min: 1900,
+        min: undefined,
       },
     },
     {
