@@ -123,6 +123,7 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
     )
 
     let batchEntities: any[] = []
+    let count = 0
     for await (const line of rl) {
       const jsonData = JSON.parse(line)
       const timestamp = jsonData.timestamp ?? jsonData.createdTimestamp
@@ -136,12 +137,17 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
 
       batchEntities.push(jsonData)
       if (batchEntities.length === 10000) {
+        count += batchEntities.length
         await this.processBatch(batchEntities, type)
-        logger.warn(`Processed ${batchEntities.length} entities`)
+        logger.warn(`Processed ${count} entities`)
         batchEntities = []
       }
     }
-    await this.processBatch(batchEntities, type)
+    if (batchEntities.length > 0) {
+      count += batchEntities.length
+      await this.processBatch(batchEntities, type)
+      logger.warn(`Processed ${count} entities`)
+    }
   }
 
   private async processBatch(
@@ -371,6 +377,11 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
   private async saveUserEvents(
     userEvents: (ConsumerUserEvent | BusinessUserEvent)[]
   ) {
+    userEvents.forEach((userEvent) => {
+      if (!userEvent.eventId) {
+        userEvent.eventId = uuidv4()
+      }
+    })
     userEvents = uniqBy(userEvents, 'eventId')
 
     const batchWriteRequests: BatchWriteRequestInternal[] = []
@@ -449,6 +460,11 @@ export class PnbBackfillEntitiesBatchJobRunner extends BatchJobRunner {
   }
 
   private async updateTransactionEvents(transactionEvents: TransactionEvent[]) {
+    transactionEvents.forEach((transactionEvent) => {
+      if (!transactionEvent.eventId) {
+        transactionEvent.eventId = uuidv4()
+      }
+    })
     transactionEvents = uniqBy(transactionEvents, 'eventId')
 
     const batchWriteRequests: BatchWriteRequestInternal[] = []
