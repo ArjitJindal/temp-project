@@ -4,7 +4,10 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  SANCTIONS_COLLECTION,
+  SANCTIONS_SEARCH_INDEX,
+} from '@/utils/mongodb-definitions'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -539,7 +542,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       .aggregate<SanctionsEntity>([
         {
           $search: {
-            index: 'sanctions_search_index',
+            index: SANCTIONS_SEARCH_INDEX.name,
             concurrent: true,
             compound: {
               must: [

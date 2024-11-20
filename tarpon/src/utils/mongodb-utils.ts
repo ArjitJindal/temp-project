@@ -317,6 +317,7 @@ const createMongoDBCollectionsInternal = async (
   for (const collectionName in indexDefinitions) {
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
+    console.log(collectionName)
     await Promise.all([
       syncIndexes(collection, definition.getIndexes()),
       createSearchIndex(collection, collectionName),
@@ -329,69 +330,17 @@ export async function createSearchIndex(
   collectionName: string
 ) {
   if (envIsNot('local', 'test') && collectionName.endsWith('-sanctions')) {
-    const indexes = await collection.listSearchIndexes().toArray()
-    const existingIndex = indexes.find((i) => i.name === SANCTIONS_SEARCH_INDEX)
-    if (existingIndex) {
-      await collection.dropSearchIndex(existingIndex.name)
+    const indexes = await collection
+      .listSearchIndexes(SANCTIONS_SEARCH_INDEX.name)
+      .toArray()
+    if (indexes.length > 0) {
+      await collection.updateSearchIndex(
+        SANCTIONS_SEARCH_INDEX.name,
+        SANCTIONS_SEARCH_INDEX.definition
+      )
+    } else {
+      await collection.createSearchIndex(SANCTIONS_SEARCH_INDEX)
     }
-    await collection.createSearchIndex({
-      name: SANCTIONS_SEARCH_INDEX,
-      definition: {
-        mappings: {
-          dynamic: false,
-          fields: {
-            aka: {
-              type: 'string',
-            },
-            associates: {
-              type: 'document',
-              fields: {
-                ranks: {
-                  type: 'string',
-                },
-                sanctionsSearchTypes: {
-                  type: 'string',
-                },
-              },
-            },
-            documents: {
-              type: 'document',
-              fields: {
-                id: {
-                  type: 'string',
-                },
-                formattedId: {
-                  type: 'string',
-                },
-              },
-            },
-            name: {
-              type: 'string',
-            },
-            gender: {
-              type: 'string',
-            },
-            nationality: {
-              type: 'string',
-            },
-            occupations: {
-              type: 'document',
-              fields: {
-                rank: {
-                  type: 'string',
-                },
-              },
-            },
-            sanctionSearchTypes: {
-              type: 'string',
-            },
-            yearOfBirth: {
-              type: 'string',
-            },
-          },
-        },
-      },
-    })
   }
 }
 
