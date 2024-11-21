@@ -23,6 +23,7 @@ import {
 } from '@/apis';
 import { clearAuth0LocalStorage, useAccountRole, useAuth0User } from '@/utils/user-utils';
 import {
+  useFeatureEnabled,
   useFeatures,
   useSettings,
   useUpdateTenantSettings,
@@ -139,14 +140,14 @@ export default function SuperAdminPanel() {
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const settings = useSettings();
   const initialFeatures = useFeatures();
-  const [features, setFeatures] = useState<Feature[] | undefined>(settings.features);
+  const [features, setFeatures] = useState<Feature[] | undefined>(undefined);
   const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
   const [tenantIdToDelete, setTenantIdToDelete] = useState<string | undefined>(undefined);
   const [instantDelete, setInstantDelete] = useState<boolean>(false);
 
-  const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
-  const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
-  const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
+  const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
+  const isSanctionsToBeEnabled = isSanctionsEnabled || features?.includes('SANCTIONS');
+  const [caSettings, setCaSettings] = useState(settings.sanctions);
 
   const [batchJobName, setBatchJobName] = useState<BatchJobNames>('DEMO_MODE_DATA_LOAD');
   const user = useAuth0User();
@@ -255,14 +256,14 @@ export default function SuperAdminPanel() {
   const handleSave = async () => {
     // Sanctions settings validation
     if (isSanctionsToBeEnabled) {
-      if (!isDowJonesToBeEnabled && !sanctionsSettings?.marketType) {
+      if (!caSettings?.marketType) {
         message.fatal('ComplyAdvantage market type must be set');
         return;
       }
       if (
-        sanctionsSettings?.customSearchProfileId &&
-        sanctionsSettings.customSearchProfileId.length > 0 &&
-        !validate(sanctionsSettings.customSearchProfileId)
+        caSettings?.customSearchProfileId &&
+        caSettings.customSearchProfileId.length > 0 &&
+        !validate(caSettings.customSearchProfileId)
       ) {
         message.fatal('Comply Advantage Search profile ID must be a valid UUID');
         return;
@@ -271,7 +272,7 @@ export default function SuperAdminPanel() {
     mutateTenantSettings.mutate({
       ...(features && { features }),
       ...(limits && { limits }),
-      sanctions: sanctionsSettings,
+      sanctions: caSettings,
     });
   };
   const showModal = () => {
@@ -426,14 +427,14 @@ export default function SuperAdminPanel() {
             >
               Reset current API key view count
             </Button>
-            {isSanctionsToBeEnabled && !isDowJonesToBeEnabled ? (
+            {isSanctionsToBeEnabled && (
               <Label label="ComplyAdvantage settings">
                 <Label level={2} label="Market type" required={{ value: true, showHint: true }}>
                   <SelectionGroup
-                    value={sanctionsSettings?.marketType}
+                    value={caSettings?.marketType}
                     onChange={(v) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
+                      setCaSettings({
+                        ...caSettings,
                         marketType: v as SanctionsSettingsMarketType,
                       });
                     }}
@@ -450,50 +451,17 @@ export default function SuperAdminPanel() {
                   description="If being set, we'll only use this search profile ID for ComplyAdvantage searches, and users won't be able to select different search types"
                 >
                   <Input
-                    value={sanctionsSettings?.customSearchProfileId}
+                    value={caSettings?.customSearchProfileId}
                     onChange={(event) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        marketType: sanctionsSettings?.marketType ?? 'EMERGING',
+                      setCaSettings({
+                        ...caSettings,
+                        marketType: caSettings?.marketType ?? 'EMERGING',
                         customSearchProfileId: event.target.value.trim(),
                       });
                     }}
                   />
                 </Label>
               </Label>
-            ) : isDowJonesToBeEnabled ? (
-              <Label label="Dow Jones settings">
-                <Label level={2} label="Username" required={{ value: true, showHint: true }}>
-                  <Input
-                    value={sanctionsSettings?.dowjonesCreds?.username}
-                    onChange={(event) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        dowjonesCreds: {
-                          ...sanctionsSettings?.dowjonesCreds,
-                          username: event.target.value,
-                        },
-                      });
-                    }}
-                  />
-                </Label>
-                <Label level={2} label="Password" required={{ value: true, showHint: true }}>
-                  <Input
-                    value={sanctionsSettings?.dowjonesCreds?.password}
-                    onChange={(event) => {
-                      setSanctionsSettings({
-                        ...sanctionsSettings,
-                        dowjonesCreds: {
-                          ...sanctionsSettings?.dowjonesCreds,
-                          password: event.target.value,
-                        },
-                      });
-                    }}
-                  />
-                </Label>
-              </Label>
-            ) : (
-              <></>
             )}
             <Divider />
             <Label label="Run batch job">

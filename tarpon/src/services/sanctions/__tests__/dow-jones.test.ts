@@ -13,7 +13,7 @@ describe('DowJonesProvider', () => {
   let repo: SanctionsRepository
 
   beforeEach(async () => {
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     repo = {
       save: jest.fn(),
       saveAssociations: jest.fn(),
@@ -40,7 +40,7 @@ describe('DowJonesProvider', () => {
   it('should process single file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_single')
     await fetcher.processSingleFile(repo, '2024-02', filePath)
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [
@@ -119,7 +119,7 @@ Jubilant Pharmova Ltd.`,
   it('should process split file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_splits')
     await fetcher.processSplitArchive(repo, '2024-02', filePath)
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider('testuser', 'testpass')
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [

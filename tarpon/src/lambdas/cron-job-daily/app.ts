@@ -31,26 +31,13 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
   } catch (e) {
     logger.error(`Failed to create API usage jobs: ${(e as Error)?.message}`, e)
   }
-  await Promise.all(
-    tenantInfos.map(async (tenant) => {
-      const tenantRepository = new TenantRepository(tenant.tenant.id, {
-        dynamoDb: getDynamoDbClient(),
-      })
-      const { features } = await tenantRepository.getTenantSettings([
-        'features',
-      ])
-      if (features?.includes('DOW_JONES')) {
-        return sendBatchJobCommand({
-          type: 'SANCTIONS_DATA_FETCH',
-          tenantId: tenant.tenant.id,
-          parameters: {
-            from: dayjs().subtract(1, 'day').toISOString(),
-          },
-        })
-      }
-    })
-  )
-
+  await sendBatchJobCommand({
+    type: 'SANCTIONS_DATA_FETCH',
+    tenantId: 'flagright',
+    parameters: {
+      from: dayjs().subtract(1, 'day').toISOString(),
+    },
+  })
   try {
     const tenantsToDeactivate = await TenantService.getTenantsToDelete()
     for (const tenant of tenantsToDeactivate) {

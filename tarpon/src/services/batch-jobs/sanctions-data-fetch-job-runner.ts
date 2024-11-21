@@ -15,24 +15,22 @@ import {
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
-    const { tenantId } = job
-    const fetchers = await sanctionsDataFetchers(tenantId)
+    const fetchers = await sanctionsDataFetchers()
     const runFullLoad = job.parameters?.from
       ? new Date(job.parameters.from).getDay() === 0
       : true
     const version = Date.now().toString()
     logger.info(`Running ${runFullLoad ? 'full' : 'delta'} load`)
-    const sanctionsCollectionName = SANCTIONS_COLLECTION(tenantId)
     const client = await getMongoDbClient()
 
     for (const fetcher of fetchers) {
       logger.info(`Running ${fetcher.constructor.name}`)
       if (runFullLoad) {
         await createGlobalMongoDBCollections(client)
-        const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+        const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
         await fetcher.fullLoad(repo, version)
       } else {
-        const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+        const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
         await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
       }
     }
@@ -40,7 +38,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     if (runFullLoad) {
       await client
         .db()
-        .collection(sanctionsCollectionName)
+        .collection(SANCTIONS_COLLECTION)
         .deleteMany({ version: { $ne: version } })
     }
 

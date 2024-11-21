@@ -2,65 +2,6 @@ import { Document } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
-export const SANCTIONS_SEARCH_INDEX = {
-  name: 'sanctions_search_index',
-  definition: {
-    mappings: {
-      dynamic: false,
-      fields: {
-        aka: {
-          type: 'string',
-        },
-        associates: {
-          type: 'document',
-          fields: {
-            ranks: {
-              type: 'string',
-            },
-            sanctionsSearchTypes: {
-              type: 'string',
-            },
-          },
-        },
-        documents: {
-          type: 'document',
-          fields: {
-            id: {
-              type: 'string',
-            },
-            formattedId: {
-              type: 'string',
-            },
-          },
-        },
-        name: {
-          type: 'string',
-        },
-        gender: {
-          type: 'string',
-        },
-        nationality: {
-          type: 'string',
-        },
-        occupations: {
-          type: 'document',
-          fields: {
-            rank: {
-              type: 'string',
-            },
-          },
-        },
-        sanctionSearchTypes: {
-          type: 'string',
-        },
-        yearOfBirth: {
-          type: 'string',
-        },
-      },
-    },
-  },
-}
-
 export const MONGO_TABLE_SUFFIX_MAP = {
   TRANSACTIONS: 'transactions',
   USERS: 'users',
@@ -336,9 +277,7 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 }
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
-export const SANCTIONS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-sanctions`
-}
+export const SANCTIONS_COLLECTION = 'sanctions'
 export const SANCTIONS_PROVIDER_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-provider-searches`
 }
@@ -781,7 +720,16 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         { index: { 'latestStatus.timestamp': 1 } },
       ],
     },
-    [SANCTIONS_COLLECTION(tenantId)]: {
+  }
+}
+
+export const getGlobalCollectionIndexes = (): {
+  [collectionName: string]: {
+    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+  }
+} => {
+  return {
+    [SANCTIONS_COLLECTION]: {
       getIndexes: () => [
         {
           index: {
@@ -842,12 +790,4 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       ],
     },
   }
-}
-
-export const getGlobalCollectionIndexes = (): {
-  [collectionName: string]: {
-    getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
-  }
-} => {
-  return {}
 }

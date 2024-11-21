@@ -38,7 +38,6 @@ import {
   tenantSettings,
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -229,10 +228,6 @@ export const tenantsHandler = lambdaApi()(
     handlers.registerPostTenantsTriggerBatchJob(async (ctx, request) => {
       assertCurrentUserRole('root')
       const tenantId = ctx.tenantId
-      const tenantRepository = new TenantRepository(tenantId, {
-        dynamoDb: getDynamoDbClientByEvent(event),
-      })
-      const settings = await tenantRepository.getTenantSettings(['sanctions'])
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
@@ -275,9 +270,7 @@ export const tenantsHandler = lambdaApi()(
         case 'SANCTIONS_DATA_FETCH': {
           await sendBatchJobCommand({
             type: 'SANCTIONS_DATA_FETCH',
-            tenantId: settings.sanctions?.dowjonesCreds
-              ? tenantId
-              : 'flagright',
+            tenantId: 'flagright',
             parameters: {},
           })
           break

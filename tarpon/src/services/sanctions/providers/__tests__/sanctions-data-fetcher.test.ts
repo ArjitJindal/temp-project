@@ -20,8 +20,8 @@ jest.mock('@/core/utils/context', () => ({
 
 // Extend the SanctionsDataFetcher for testing purposes
 class TestSanctionsDataFetcher extends SanctionsDataFetcher {
-  constructor(tenantId: string) {
-    super('dowjones', tenantId)
+  constructor() {
+    super('dowjones')
   }
   // Implement abstract methods as no-op for this test
   async fullLoad() {}
@@ -60,7 +60,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     client = await getMongoDbClient()
     const db = client.db()
 
-    sanctionsCollection = db.collection(SANCTIONS_COLLECTION('test-tenant'))
+    sanctionsCollection = db.collection(SANCTIONS_COLLECTION)
     searchCollection = db.collection(
       SANCTIONS_PROVIDER_SEARCHES_COLLECTION('test-tenant')
     )
@@ -89,7 +89,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('getSearch should return stored search result', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
 
     const providerSearchId = 'test-provider-id'
 
@@ -107,7 +107,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('deleteSearch should remove the search from the collection', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
 
     const providerSearchId = 'delete-test-id'
     await searchCollection.insertOne({
@@ -131,7 +131,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('setMonitoring should update the monitoring field', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
 
     const providerSearchId = 'monitoring-test-id'
     await searchCollection.insertOne({
@@ -150,7 +150,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('updateMonitoredSearches should trigger searches for monitored items', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
 
     // Insert a monitored search
     await searchCollection.insertOne({
@@ -179,7 +179,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('in memory search should return results - 1', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
     const searchTerm = 'Amir Bin Mohamed'
     const fuzzinessRange = {
       lowerBound: 1,
@@ -217,7 +217,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('in memory search should return results - 2', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
     const searchTerm = 'John Doe'
     const fuzzinessRange = {
       lowerBound: 1,
@@ -232,7 +232,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('in memory search should return results - 3', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
     const searchTerm = 'Hassan Bin Abdul Karim'
     const fuzzinessRange = {
       lowerBound: 1,
@@ -267,7 +267,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
   })
 
   test('in memory search should return results - 4', async () => {
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
     const searchTerm = 'Mohd Nasir Ahmad'
     const fuzzinessRange = {
       lowerBound: 1,
@@ -315,7 +315,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     await sanctionsCollection.insertMany(screeningEntities)
 
     const randomEntity1 = sample(screeningEntities)
-    const sanctionsFetcher = new TestSanctionsDataFetcher('test-tenant')
+    const sanctionsFetcher = new TestSanctionsDataFetcher()
     const searchResult1 = await sanctionsFetcher.searchWithoutMatchingNames({
       searchTerm: randomEntity1.name,
       documentId: randomEntity1.documents?.map((doc) => doc.formattedId),

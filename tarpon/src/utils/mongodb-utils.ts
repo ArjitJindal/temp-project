@@ -22,10 +22,8 @@ import { getSecretByName } from './secrets-manager'
 import {
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
-  SANCTIONS_SEARCH_INDEX,
 } from './mongodb-definitions'
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
-import { envIsNot } from './env'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -317,30 +315,7 @@ const createMongoDBCollectionsInternal = async (
   for (const collectionName in indexDefinitions) {
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
-    console.log(collectionName)
-    await Promise.all([
-      syncIndexes(collection, definition.getIndexes()),
-      createSearchIndex(collection, collectionName),
-    ])
-  }
-}
-
-export async function createSearchIndex(
-  collection: Collection,
-  collectionName: string
-) {
-  if (envIsNot('local', 'test') && collectionName.endsWith('-sanctions')) {
-    const indexes = await collection
-      .listSearchIndexes(SANCTIONS_SEARCH_INDEX.name)
-      .toArray()
-    if (indexes.length > 0) {
-      await collection.updateSearchIndex(
-        SANCTIONS_SEARCH_INDEX.name,
-        SANCTIONS_SEARCH_INDEX.definition
-      )
-    } else {
-      await collection.createSearchIndex(SANCTIONS_SEARCH_INDEX)
-    }
+    await syncIndexes(collection, definition.getIndexes())
   }
 }
 
