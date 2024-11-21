@@ -262,6 +262,7 @@ export type PnbBackfillKrs = {
     concurrency: number
     publicApiEndpoint: string
     publicApiKey: string
+    startTimestamp?: number
   }
 }
 export type PnbBackfillCra = {
@@ -269,6 +270,7 @@ export type PnbBackfillCra = {
   tenantId: string
   parameters: {
     concurrency: number
+    startTimestamp?: number
   }
 }
 

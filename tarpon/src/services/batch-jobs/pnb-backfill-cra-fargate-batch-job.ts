@@ -30,7 +30,7 @@ export class PnbBackfillCraBatchJobRunner extends BatchJobRunner {
 
   protected async run(job: PnbBackfillCra): Promise<void> {
     const { tenantId } = job
-    const { concurrency } = job.parameters
+    const { concurrency, startTimestamp = 0 } = job.parameters
 
     this.tenantId = tenantId
     this.mongoDb = await getMongoDbClientDb()
@@ -49,7 +49,11 @@ export class PnbBackfillCraBatchJobRunner extends BatchJobRunner {
       (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
     const cursor = this.mongoDb
       .collection<InternalUser>(USERS_COLLECTION(tenantId))
-      .find({ createdTimestamp: { $gte: lastCompletedTimestamp } })
+      .find({
+        createdTimestamp: {
+          $gte: Math.max(lastCompletedTimestamp, startTimestamp),
+        },
+      })
       .sort({ createdTimestamp: 1 })
       .addCursorFlag('noCursorTimeout', true)
 
