@@ -6,7 +6,12 @@ import {
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
 import { useHasPermissions } from '@/utils/user-utils';
-import SelectionGroup from '@/components/library/SelectionGroup';
+import Select from '@/components/library/Select';
+
+type SelectOption = {
+  value: number;
+  label: string;
+};
 
 export const SecuritySettings = () => {
   const settings = useSettings();
@@ -19,6 +24,42 @@ export const SecuritySettings = () => {
   const handleEnable = () => {
     mutateTenantSettings.mutate({ mfaEnabled: true });
   };
+
+  const maxActiveSessionsOptions: SelectOption[] = [
+    { value: 0, label: 'No limit' },
+    { value: 1, label: '1' },
+    { value: 2, label: '2' },
+    { value: 3, label: '3' },
+  ];
+  const passwordResetDaysOptions: SelectOption[] = [
+    { value: 0, label: 'No limit' },
+    { value: 1, label: '1 day' },
+    { value: 30, label: '30 days' },
+    { value: 45, label: '45 days' },
+    { value: 60, label: '2 months' },
+    { value: 90, label: '3 months' },
+    { value: 180, label: '6 months' },
+    { value: 365, label: '1 year' },
+  ];
+  const accountDormancyAllowedDaysOptions: SelectOption[] = [
+    { value: 0, label: 'No limit' },
+    { value: 1, label: '1 day' },
+    { value: 45, label: '45 days' },
+    { value: 60, label: '2 months' },
+    { value: 90, label: '3 months' },
+    { value: 180, label: '6 months' },
+    { value: 365, label: '1 year' },
+  ];
+
+  const sessionTimeoutOptions: SelectOption[] = [
+    { value: 0, label: 'Default' },
+    { value: 15, label: '15 minutes' },
+    { value: 30, label: '30 minutes' },
+    { value: 45, label: '45 minutes' },
+    { value: 60, label: '1 hour' },
+    { value: 1440, label: '24 hours' },
+    { value: 2880, label: '48 hours' },
+  ];
 
   const isLoading = useCallback(
     (variable) => {
@@ -58,23 +99,15 @@ export const SecuritySettings = () => {
         title="Password expiration policy"
         description="Select when the password of a user should expire."
       >
-        <SelectionGroup<number>
-          mode={'SINGLE'}
-          value={settings.passwordResetDays ?? 0}
-          onChange={(value) => {
-            mutateTenantSettings.mutate({ passwordResetDays: value });
+        <Select
+          value={settings.passwordResetDays}
+          onChange={(selectedValue) => {
+            mutateTenantSettings.mutate({ passwordResetDays: selectedValue });
           }}
+          options={passwordResetDaysOptions}
+          allowClear={false}
           isLoading={mutateTenantSettings.isLoading}
-          options={[
-            { label: 'No limit', value: 0, tooltip: 'Password will never expire' },
-            { label: '1 day', value: 1 }, // Just for Testing
-            { label: '30 days', value: 30 },
-            { label: '45 days', value: 45 },
-            { label: '2 months', value: 60 },
-            { label: '3 months', value: 90 },
-            { label: '6 months', value: 180 },
-            { label: '1 year', value: 365 },
-          ]}
+          style={{ width: '40%' }}
           isDisabled={!permissions || isLoading('passwordResetDays')}
         />
       </SettingsCard>
@@ -83,44 +116,30 @@ export const SecuritySettings = () => {
         title="Account dormancy period"
         description="The account will be suspended if no activity is detected for the selected number of days."
       >
-        <SelectionGroup<number>
-          mode={'SINGLE'}
-          value={settings.accountDormancyAllowedDays ?? 0}
-          onChange={(value) => mutateTenantSettings.mutate({ accountDormancyAllowedDays: value })}
+        <Select
+          value={settings.accountDormancyAllowedDays}
+          onChange={(selectedValue) => {
+            mutateTenantSettings.mutate({ accountDormancyAllowedDays: selectedValue });
+          }}
+          options={accountDormancyAllowedDaysOptions}
           isLoading={mutateTenantSettings.isLoading}
-          options={[
-            {
-              label: 'No limit',
-              value: 0,
-              tooltip: 'Accounts will not be suspended due to dormancy.',
-            },
-            { label: '1 day', value: 1 }, // Just for Testing
-            { label: '45 days', value: 45 },
-            { label: '2 months', value: 60 },
-            { label: '3 months', value: 90 },
-            { label: '6 months', value: 180 },
-            { label: '1 year', value: 365 },
-          ]}
+          allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!permissions || isLoading('accountDormancyAllowedDays')}
         />
       </SettingsCard>
+
       <SettingsCard
         title="Session timeout"
         description="The time period after which a user's session will timeout if they are inactive."
       >
-        <SelectionGroup<number>
-          mode={'SINGLE'}
+        <Select
           value={settings.sessionTimeoutMinutes}
-          onChange={(value) => handleSessionTimeoutChange(value)}
-          options={[
-            { label: 'Default', value: 0 },
-            { label: '15 minutes', value: 15 },
-            { label: '30 minutes', value: 30 },
-            { label: '45 minutes', value: 45 },
-            { label: '1 hour', value: 60 },
-            { label: '24 hours', value: 1440 },
-            { label: '48 hours', value: 2880 },
-          ]}
+          onChange={handleSessionTimeoutChange}
+          options={sessionTimeoutOptions}
+          isLoading={mutateTenantSettings.isLoading}
+          allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!permissions || isLoading('sessionTimeoutMinutes')}
         />
       </SettingsCard>
@@ -128,19 +147,15 @@ export const SecuritySettings = () => {
         title="Max concurrent sessions"
         description="The maximum number of concurrent sessions a user can have."
       >
-        <SelectionGroup<number>
-          mode={'SINGLE'}
-          value={settings.maxActiveSessions ?? 0}
-          onChange={(value) => {
-            mutateTenantSettings.mutate({ maxActiveSessions: value });
+        <Select
+          value={settings.maxActiveSessions}
+          onChange={(selectedValue) => {
+            mutateTenantSettings.mutate({ maxActiveSessions: selectedValue });
           }}
+          options={maxActiveSessionsOptions}
           isLoading={mutateTenantSettings.isLoading}
-          options={[
-            { label: 'No limit', value: 0 },
-            { label: '1', value: 1 },
-            { label: '2', value: 2 },
-            { label: '3', value: 3 },
-          ]}
+          allowClear={false}
+          style={{ width: '40%' }}
           isDisabled={!permissions || isLoading('maxActiveSessions')}
         />
       </SettingsCard>
