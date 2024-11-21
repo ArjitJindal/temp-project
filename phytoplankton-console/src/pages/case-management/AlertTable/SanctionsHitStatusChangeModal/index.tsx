@@ -29,9 +29,7 @@ interface Props {
   updateMutation: Mutation<
     unknown,
     unknown,
-    FormValues & {
-      newStatus: SanctionsHitStatus;
-    },
+    FormValues & { newStatus: SanctionsHitStatus },
     unknown
   >;
 }

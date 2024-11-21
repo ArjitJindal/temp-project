@@ -1,12 +1,8 @@
 import React, { useMemo, useState } from 'react';
-import SanctionsHitsTable, { TableSearchParams } from 'src/components/SanctionsHitsTable';
+import SanctionsHitsTable from 'src/components/SanctionsHitsTable';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
-import {
-  SanctionsDetails,
-  SanctionsHit,
-  SanctionsHitListResponse,
-  SanctionsHitStatus,
-} from '@/apis';
+import { SanctionsHitsTableParams, useSanctionHitsQuery } from './helpers';
+import { SanctionsDetails, SanctionsHitStatus } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { getOr, map } from '@/utils/asyncResource';
 import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
@@ -14,10 +10,9 @@ import Comments from '@/pages/case-management/AlertTable/ExpandedRowRenderer/Ale
 import TransactionsTab from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/TransactionsTab';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { notEmpty } from '@/utils/array';
-import { QueryResult } from '@/utils/queries/types';
 import { useApi } from '@/api';
-import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, SANCTIONS_HITS_SEARCH } from '@/utils/queries/keys';
+import { useQuery } from '@/utils/queries/hooks';
+import { ALERT_ITEM } from '@/utils/queries/keys';
 import { AllParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Select from '@/components/library/Select';
@@ -65,14 +60,16 @@ export default function ScreeningMatchList(props: Props) {
     return api.getAlert({ alertId });
   });
 
-  const [openTableParams, setOpenTableParams] = useState<AllParams<TableSearchParams>>({
+  const [openTableParams, setOpenTableParams] = useState<AllParams<SanctionsHitsTableParams>>({
     ...DEFAULT_PARAMS_STATE,
     statuses: ['OPEN'],
   });
-  const [clearedTableParams, setClearedTableParams] = useState<AllParams<TableSearchParams>>({
-    ...DEFAULT_PARAMS_STATE,
-    statuses: ['CLEARED'],
-  });
+  const [clearedTableParams, setClearedTableParams] = useState<AllParams<SanctionsHitsTableParams>>(
+    {
+      ...DEFAULT_PARAMS_STATE,
+      statuses: ['CLEARED'],
+    },
+  );
 
   const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
     details[0]?.searchId,
@@ -223,42 +220,6 @@ export default function ScreeningMatchList(props: Props) {
 /*
   Helpers
  */
-function useSanctionHitsQuery(
-  params: AllParams<TableSearchParams>,
-  alertId?: string,
-): QueryResult<CursorPaginatedData<SanctionsHit>> {
-  const api = useApi();
-  const filters = {
-    alertId: alertId,
-    filterStatus: params.statuses ?? ['OPEN' as const],
-  };
-  return useCursorQuery(
-    SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
-    async (paginationParams): Promise<SanctionsHitListResponse> => {
-      if (!filters.alertId) {
-        return {
-          items: [],
-          next: '',
-          prev: '',
-          last: '',
-          hasNext: false,
-          hasPrev: false,
-          count: 0,
-          limit: 100000,
-        };
-      }
-      const request = {
-        ...filters,
-        ...params,
-        ...paginationParams,
-      };
-      return await api.searchSanctionsHits({
-        ...request,
-        start: request.from,
-      });
-    },
-  );
-}
 
 function getOptionName(details: SanctionsDetails) {
   let result = details.name;

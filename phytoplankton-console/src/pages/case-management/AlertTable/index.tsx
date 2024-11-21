@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
 import SanctionsHitStatusChangeModal from 'src/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
@@ -21,7 +20,6 @@ import {
   AlertStatus,
   Assignment,
   ChecklistStatus,
-  SanctionHitStatusUpdateRequest,
   SanctionsHitStatus,
 } from '@/apis';
 import { useApi } from '@/api';
@@ -88,16 +86,20 @@ import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
-import { denseArray, getErrorMessage } from '@/utils/lang';
+import { denseArray } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
-import { ALERT_ITEM_COMMENTS, SANCTIONS_HITS_ALL, SLA_POLICY_LIST } from '@/utils/queries/keys';
+import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Tag from '@/components/library/Tag';
+import {
+  updateSanctionsData,
+  useChangeSanctionsHitsStatusMutation,
+} from '@/components/ScreeningMatchList/helpers';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -158,7 +160,6 @@ export default function AlertTable(props: Props) {
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
   const api = useApi();
-  const queryClient = useQueryClient();
   const user = useAuth0User();
   const [users, loadingUsers] = useUsers({ includeRootUsers: true, includeBlockedUsers: true });
   const userAccount = users[user.userId];
@@ -244,57 +245,8 @@ export default function AlertTable(props: Props) {
     },
   );
 
-  const changeHitsStatusMutation = useMutation<
-    unknown,
-    unknown,
-    {
-      toChange: {
-        alertId: string;
-        sanctionHitIds: string[];
-      }[];
-      updates: SanctionHitStatusUpdateRequest;
-    },
-    unknown
-  >(
-    async (variables: {
-      toChange: {
-        alertId: string;
-        sanctionHitIds: string[];
-      }[];
-      updates: SanctionHitStatusUpdateRequest;
-    }) => {
-      const hideMessage = message.loading(`Saving...`);
-      const { toChange, updates } = variables;
-      try {
-        for (const { alertId, sanctionHitIds } of toChange) {
-          await api.changeSanctionsHitsStatus({
-            SanctionHitsStatusUpdateRequest: {
-              alertId,
-              sanctionHitIds,
-              updates,
-            },
-          });
-        }
-      } finally {
-        hideMessage();
-      }
-    },
-    {
-      onError: (e) => {
-        message.error(`Failed to update hits! ${getErrorMessage(e)}`);
-      },
-      onSuccess: async (_, variables) => {
-        message.success(`Done!`);
-        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
-        for (const { alertId } of variables.toChange) {
-          await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
-        }
-        setSelectedSanctionHits({});
-      },
-    },
-  );
-
   const isFalsePositiveEnabled = useFeatureEnabled('FALSE_POSITIVE_CHECK');
+  const { changeHitsStatusMutation } = useChangeSanctionsHitsStatusMutation();
 
   const queryResults: QueryResult<TableData<TableAlertItem>> = useAlertQuery(params);
 
@@ -1671,22 +1623,9 @@ export default function AlertTable(props: Props) {
         isVisible={isStatusChangeModalVisible}
         onClose={() => setStatusChangeModalVisible(false)}
         newStatus={statusChangeModalState ?? 'CLEARED'}
-        updateMutation={adaptMutationVariables(changeHitsStatusMutation, (formValues) => {
-          return {
-            toChange: Object.entries(selectedSanctionHits).map(([alertId, sanctionHitIds]) => ({
-              alertId,
-              sanctionHitIds: sanctionHitIds.map(({ id }) => id),
-            })),
-            updates: {
-              comment: formValues.comment,
-              files: formValues.files,
-              reasons: formValues.reasons,
-              whitelistHits: formValues.whitelistHits,
-              removeHitsFromWhitelist: formValues.removeHitsFromWhitelist,
-              status: formValues.newStatus,
-            },
-          };
-        })}
+        updateMutation={adaptMutationVariables(changeHitsStatusMutation, (formValues) =>
+          updateSanctionsData(formValues, selectedSanctionHits),
+        )}
       />
     </>
   );

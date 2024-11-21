@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, startCase } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { SanctionsHitsTableParams } from '../ScreeningMatchList/helpers';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -23,6 +24,7 @@ import {
   ID,
   SANCTIONS_CLEAR_REASON,
   SANCTIONS_HIT_STATUS,
+  STRING,
 } from '@/components/library/Table/standardDataTypes';
 import Id from '@/components/ui/Id';
 import {
@@ -37,27 +39,22 @@ import {
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 import { SanctionsHit } from '@/apis';
 
-export interface TableSearchParams {
-  statuses?: SanctionsHitStatus[];
-  searchTerm?: string;
-  fuzziness?: number;
-}
-
 interface Props {
   tableRef?: React.Ref<TableRefType>;
   hideCleaningReason?: boolean;
   searchIds?: string;
   queryResult: QueryResult<TableData<SanctionsHit>>;
   extraTools?: ToolRenderer[];
-  params?: AllParams<TableSearchParams>;
-  onChangeParams?: (newParams: AllParams<TableSearchParams>) => void;
+  params?: AllParams<SanctionsHitsTableParams>;
+  onChangeParams?: (newParams: AllParams<SanctionsHitsTableParams>) => void;
   selection?: boolean;
   selectedIds?: string[];
   onSelect?: (sanctionHitsIds: string[]) => void;
   searchedAt?: number;
-  selectionActions?: SelectionAction<SanctionsHit, TableSearchParams>[];
+  selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   alertCreatedAt?: number;
+  showComment?: boolean;
 }
 
 // todo: delete when have information in sanction hit
@@ -78,6 +75,7 @@ export default function SanctionsHitsTable(props: Props) {
     onSelect,
     onSanctionsHitsChangeStatus,
     alertCreatedAt,
+    showComment,
   } = props;
   const [selectedSearchHit, setSelectedSearchHit] = useState<
     AsyncResource<SanctionsHit | undefined>
@@ -178,11 +176,22 @@ export default function SanctionsHitsTable(props: Props) {
         key: 'clearingReason',
         type: SANCTIONS_CLEAR_REASON,
       }),
+    showComment &&
+      helper.simple<'comment'>({
+        title: 'Comment',
+        key: 'comment',
+        type: {
+          ...STRING,
+          defaultWrapMode: 'WRAP',
+        },
+        defaultWidth: 500,
+        enableResizing: false,
+      }),
   ]);
 
   return (
     <>
-      <QueryResultsTable<SanctionsHit, TableSearchParams>
+      <QueryResultsTable<SanctionsHit, SanctionsHitsTableParams>
         innerRef={tableRef}
         tableId="sanctions-search-results"
         onSelect={onSelect}
