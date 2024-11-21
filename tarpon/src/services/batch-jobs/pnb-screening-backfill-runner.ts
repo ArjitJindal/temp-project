@@ -63,6 +63,7 @@ export class PnbScreeningBackfillRunner extends BatchJobRunner {
         tenantId: job.tenantId,
         from,
         to,
+        userUpdatedFrom: job.userUpdatedFrom,
       })
     }
     return

@@ -35,6 +35,7 @@ export abstract class UserOngoingRule<P> extends Rule {
   riskRepository: RiskRepository
   from?: string
   to?: string
+  fromTimestamp?: number
 
   constructor(
     tenantId: string,
@@ -44,7 +45,8 @@ export abstract class UserOngoingRule<P> extends Rule {
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient,
     from?: string,
-    to?: string
+    to?: string,
+    fromTimestamp?: number
   ) {
     super()
     this.tenantId = tenantId
@@ -57,6 +59,7 @@ export abstract class UserOngoingRule<P> extends Rule {
     this.riskRepository = services.riskRepository
     this.from = from
     this.to = to
+    this.fromTimestamp = fromTimestamp
   }
 
   public getUserOngoingVars(): UserOngoingVars<P> {
@@ -79,6 +82,7 @@ export abstract class UserOngoingRule<P> extends Rule {
           let cursorMatchStage: any = {}
           const from = this.from
           const to = this.to
+          const fromTimestamp = this.fromTimestamp
 
           if (from) {
             cursorMatchStage = {
@@ -89,6 +93,16 @@ export abstract class UserOngoingRule<P> extends Rule {
           if (to) {
             cursorMatchStage = {
               userId: { ...cursorMatchStage.userId, $lte: to },
+            }
+          }
+
+          if (fromTimestamp) {
+            cursorMatchStage = {
+              $or: [
+                { createdAt: { $gte: fromTimestamp } },
+                { updatedAt: { $gte: fromTimestamp } },
+              ],
+              ...cursorMatchStage,
             }
           }
 

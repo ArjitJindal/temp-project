@@ -289,7 +289,8 @@ export class RulesEngineService {
 
   public async verifyAllUsersRules(
     from?: string,
-    to?: string
+    to?: string,
+    fromTimestamp?: number
   ): Promise<
     Record<string, ConsumerUserMonitoringResult | BusinessUserMonitoringResult>
   > {
@@ -313,7 +314,7 @@ export class RulesEngineService {
               ruleInstance,
               rule: rulesByIds[ruleInstance.ruleId ?? ''],
             },
-            { from, to }
+            { from, to, fromTimestamp }
           )
           logger.info(`Completed rule`)
           return result
@@ -350,6 +351,7 @@ export class RulesEngineService {
     cursors?: {
       from?: string
       to?: string
+      fromTimestamp?: number
     }
   ) {
     const { ruleInstance, rule } = data
