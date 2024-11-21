@@ -12286,6 +12286,8 @@ components:
           $ref: '#/components/schemas/SanctionsEntity'
         comment:
           type: string
+        score:
+          type: number
       required:
         - sanctionsHitId
         - searchId
@@ -12491,6 +12493,22 @@ components:
             $ref: '#/components/schemas/SanctionsMatchTypeDetails'
         rawResponse:
           $ref: '#/components/schemas/RawSanctionsResponse'
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        keywords:
+          type: array
+          items:
+            type: string
+        citizenship:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        pepStatus:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
       required:
         - id
         - name

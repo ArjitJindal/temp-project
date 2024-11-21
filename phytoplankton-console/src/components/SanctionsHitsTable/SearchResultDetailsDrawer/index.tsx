@@ -8,6 +8,7 @@ import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
 import s from './index.module.less';
 import ListingCard from './ListingCard';
 import Section from './Section';
+import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import {
   CountryCode,
   SanctionsEntity,
@@ -37,6 +38,7 @@ import SanctionsComparison, {
 } from '@/components/SanctionsHitsTable/SearchResultDetailsDrawer/SanctionsComparison';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
+import Tags from '@/pages/users-item/UserDetails/shared/Tags';
 
 interface Props {
   hitRes: AsyncResource<SanctionsHit | undefined>;
@@ -204,7 +206,13 @@ function Content(props: {
       ) : (
         <></>
       )}
-      {hit.status === 'OPEN' && <AISummary text={makeStubAiText(hit)} />}
+
+      {hit.score != null && (
+        <AISummarySection score={hit.score} comment={hit.comment ?? makeStubAiText(hit)} />
+      )}
+      {(hit.comment || hit.status === 'OPEN') && hit.score == null && (
+        <AISummary text={hit.comment ?? makeStubAiText(hit)} />
+      )}
       {searchedAt && (
         <Section title={'Searched at'}>
           {searchedAt ? <TimestampDisplay timestamp={searchedAt} /> : 'N/A'}
@@ -216,6 +224,26 @@ function Content(props: {
   );
 }
 
+export function AISummarySection(props: { score: number; comment: string }) {
+  const { score, comment } = props;
+  return (
+    <div className={s.aiScore}>
+      <div className={s.aiScoreHeader}>
+        <div className={s.aiScoreTitle}>
+          <div className={s.icon}>
+            <BrainIcon />
+          </div>
+          AI Score
+        </div>
+        <div className={s.currentValue}>
+          <span>{(score ?? 0.0)?.toFixed(2) ?? 'N/A'}</span>
+        </div>
+      </div>
+      <AISummary text={comment} />
+    </div>
+  );
+}
+
 export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: boolean }) {
   const { entity, pdfMode = false } = props;
   const tabItems = useTabs(entity, pdfMode);
@@ -224,12 +252,17 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
     : [];
 
   const countryCodesMap = compact(entity.countries)?.reduce((acc, countryName) => {
-    let code = Object.entries(COUNTRIES).find(([_, name]) => name === countryName)?.[0];
+    const country = COUNTRIES[countryName as CountryCode];
+    let code = country
+      ? countryName
+      : Object.entries(COUNTRIES).find(([_, name]) => name === countryName)?.[0];
+
     if (!code) {
       code = Object.entries(COUNTRY_ALIASES).find(([_, aliases]) =>
         aliases?.includes(countryName),
       )?.[0];
     }
+
     if (code) {
       acc[code] = countryName;
     }
@@ -342,6 +375,14 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               {paragraph}
             </>
           ))}
+        </Section>
+      )}
+      {entity.keywords && entity.keywords?.length > 0 && (
+        <Section title={'Keywords'}>{entity.keywords.join(', ')}</Section>
+      )}
+      {entity.tags && entity.tags?.length > 0 && (
+        <Section title={'Additional information'}>
+          <Tags tags={entity.tags} hideTitle={true} />
         </Section>
       )}
       {pdfMode ? (

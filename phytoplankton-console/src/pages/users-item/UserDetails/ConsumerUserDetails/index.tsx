@@ -25,7 +25,7 @@ export default function ConsumerUserDetails(props: Props) {
         <LegalDocuments legalDocuments={user.legalDocuments} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell>
-        <Tags user={user} />
+        <Tags tags={user.tags ?? []} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell>
         <SavedPaymentDetails user={user} />

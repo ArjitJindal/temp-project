@@ -1,19 +1,19 @@
 import React from 'react';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { Tag as ApiTag } from '@/apis/models/Tag';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 
 interface Props {
-  user: InternalBusinessUser | InternalConsumerUser;
+  tags: ApiTag[];
+  hideTitle?: boolean;
 }
 
 export default function Tags(props: Props) {
-  const { user } = props;
+  const { tags, hideTitle } = props;
 
   return (
     <EntityPropertiesCard
-      title={'Tags'}
-      items={user.tags?.map((tag: ApiTag) => ({ label: tag.key, value: tag.value })) ?? []}
+      title={!hideTitle ? 'Tags' : undefined}
+      items={tags?.map((tag: ApiTag) => ({ label: tag.key, value: tag.value })) ?? []}
     />
   );
 }

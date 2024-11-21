@@ -6,7 +6,7 @@ interface Item {
 }
 
 interface Props {
-  title: string;
+  title?: string;
   extraControls?: React.ReactNode;
   items?: Item[];
   columns?: number;
@@ -19,7 +19,7 @@ export default function EntityPropertiesCard(props: Props) {
   return (
     <div className={s.root}>
       <div className={s.header}>
-        <div className={s.title}>{title}</div>
+        {title && <div className={s.title}>{title}</div>}
         {extraControls}
       </div>
       {

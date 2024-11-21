@@ -31,7 +31,7 @@ export default function LegalEntityDetails(props: Props) {
         <RegistrationDetailsCard user={user} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell rowSpan={2}>
-        <Tags user={user} />
+        <Tags tags={user.tags ?? []} />
       </EntityInfoGrid.Cell>
       <EntityInfoGrid.Cell>
         <FinancialDetailsCard user={user} />
