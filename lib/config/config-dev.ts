@@ -99,7 +99,7 @@ export const config: Config = {
   },
   application: {
     MONGO_ATLAS_PROJECT: 'Tarpon-Dev',
-    MONGO_ATLAS_CLUSTER: 'Cluster0',
+    MONGO_ATLAS_CLUSTER: 'Dev-FRA',
     DEV_CERTIFICATE_ARN:
       'arn:aws:acm:eu-central-1:911899431626:certificate/18e81dca-c35a-453c-a566-9f2d9bfa0d98',
     AUTH0_CUSTOM_CNAME:
