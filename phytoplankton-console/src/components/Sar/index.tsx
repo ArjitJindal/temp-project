@@ -79,7 +79,7 @@ export function SarButton(props: UserProps | CaseProps) {
         Generate SAR
       </Button>
       <Modal
-        title="Generate report"
+        title="Generate SAR"
         isOpen={isModalVisible}
         onCancel={() => setIsModalVisible(false)}
         okText="Generate"
