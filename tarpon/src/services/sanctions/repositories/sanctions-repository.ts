@@ -14,7 +14,6 @@ import { SanctionsAssociate } from '@/@types/openapi-internal/SanctionsAssociate
 
 export class MongoSanctionsRepository implements SanctionsRepository {
   collectionName: string
-
   constructor(collectionName: string) {
     this.collectionName = collectionName
   }

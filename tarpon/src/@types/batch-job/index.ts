@@ -193,7 +193,7 @@ export type ReverifyTransactionsBatchJob = {
 
 export type SanctionsDataFetchBatchJob = {
   type: 'SANCTIONS_DATA_FETCH'
-  tenantId: 'flagright'
+  tenantId: string
   parameters: {
     from?: string
   }

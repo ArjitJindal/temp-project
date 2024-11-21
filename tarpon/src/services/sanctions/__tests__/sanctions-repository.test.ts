@@ -10,15 +10,15 @@ describe('MongoSanctionsRepository', () => {
   beforeAll(async () => {
     // Connect to an in-memory or test MongoDB instance
     const mongoDb = await getMongoDbClient()
-    collection = mongoDb.db().collection(SANCTIONS_COLLECTION)
+    collection = mongoDb.db().collection(SANCTIONS_COLLECTION('test'))
     // create collection if it doesn't exist
     const listCollections = await mongoDb.db().listCollections().toArray()
     if (
       !listCollections.find(
-        (collection) => collection.name === SANCTIONS_COLLECTION
+        (collection) => collection.name === SANCTIONS_COLLECTION('test')
       )
     ) {
-      await mongoDb.db().createCollection(SANCTIONS_COLLECTION)
+      await mongoDb.db().createCollection(SANCTIONS_COLLECTION('test'))
     }
 
     // create index if it doesn't exist
@@ -56,7 +56,7 @@ describe('MongoSanctionsRepository', () => {
       ],
     ]
 
-    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION('test'))
     await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
@@ -91,7 +91,7 @@ describe('MongoSanctionsRepository', () => {
       ['2', []],
     ]
 
-    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION('test'))
     await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
@@ -110,7 +110,7 @@ describe('MongoSanctionsRepository', () => {
       ['1', [{ id: '2', association: '2' }]],
     ]
 
-    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION('test'))
     await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.findOne({ id: '3' })
@@ -126,7 +126,7 @@ describe('MongoSanctionsRepository', () => {
   it('should not fail if there are no associates to update', async () => {
     const associates: [string, { id: string; association: string }[]][] = []
 
-    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION('test'))
     await repo.saveAssociations('dowjones', associates, '24-08')
 
     const result = await collection.find({}).toArray()
@@ -141,7 +141,7 @@ describe('MongoSanctionsRepository', () => {
   })
 
   it('should update the record when action is "chg"', async () => {
-    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION)
+    const repo = new MongoSanctionsRepository(SANCTIONS_COLLECTION('test'))
 
     // Insert initial entity
     const initialEntity = {

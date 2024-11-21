@@ -22,8 +22,11 @@ import { getSecretByName } from './secrets-manager'
 import {
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
+  SANCTIONS_SEARCH_INDEX,
 } from './mongodb-definitions'
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
+import { envIsNot } from './env'
+import { isDemoTenant } from './tenant'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -34,6 +37,7 @@ import {
 } from '@/utils/pagination'
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
+import { hasFeature } from '@/core/utils/context'
 
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
@@ -287,7 +291,11 @@ export const createMongoDBCollections = async (
   tenantId: string
 ) => {
   const indexDefinitions = getMongoDbIndexDefinitions(tenantId)
-  await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
+  await createMongoDBCollectionsInternal(
+    mongoClient,
+    indexDefinitions,
+    tenantId
+  )
   await new CounterRepository(tenantId, mongoClient).initialize()
 }
 
@@ -309,13 +317,51 @@ const createMongoDBCollectionsInternal = async (
         unique?: boolean
       }>
     }
-  }
+  },
+  tenantId?: string
 ) => {
   const db = mongoClient.db()
   for (const collectionName in indexDefinitions) {
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
-    await syncIndexes(collection, definition.getIndexes())
+    await Promise.all([
+      syncIndexes(collection, definition.getIndexes()),
+      tenantId
+        ? createSearchIndex(collection, collectionName, tenantId)
+        : Promise.resolve(),
+    ])
+  }
+}
+
+export async function createSearchIndex(
+  collection: Collection,
+  collectionName: string,
+  tenantId: string
+) {
+  if (
+    envIsNot('local', 'test') &&
+    !isDemoTenant(tenantId) &&
+    collectionName.endsWith('-sanctions')
+  ) {
+    const indexes = await collection
+      .listSearchIndexes(SANCTIONS_SEARCH_INDEX.name)
+      .toArray()
+    if (hasFeature('DOW_JONES')) {
+      console.log(`Creating search index for sanctions - ${tenantId}`)
+      if (indexes.length > 0) {
+        await collection.updateSearchIndex(
+          SANCTIONS_SEARCH_INDEX.name,
+          SANCTIONS_SEARCH_INDEX.definition
+        )
+      } else {
+        await collection.createSearchIndex(SANCTIONS_SEARCH_INDEX)
+      }
+    } else {
+      console.log(`Dropping search index for sanctions - ${tenantId}`)
+      if (indexes.length > 0) {
+        await collection.dropSearchIndex(SANCTIONS_SEARCH_INDEX.name)
+      }
+    }
   }
 }
 

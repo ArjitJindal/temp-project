@@ -4,7 +4,10 @@ import {
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
-import { SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
+import {
+  SANCTIONS_COLLECTION,
+  SANCTIONS_SEARCH_INDEX,
+} from '@/utils/mongodb-definitions'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
@@ -21,7 +24,7 @@ const namesByLength = new Map<number, string[]>()
 let fetchPromise: Promise<any> | undefined
 let dataLoaded = false
 
-const fetchData = async function () {
+const fetchData = async function (tenantId: string) {
   if (!dataLoaded) {
     if (!fetchPromise) {
       const load = async () => {
@@ -29,7 +32,7 @@ const fetchData = async function () {
         const client = await getMongoDbClient()
         const sanctions = client
           .db()
-          .collection<SanctionsEntity>(SANCTIONS_COLLECTION)
+          .collection<SanctionsEntity>(SANCTIONS_COLLECTION(tenantId))
         const now = Date.now()
         const oneDayAgo = now - 86400000 // 86,400,000 ms = 24 hours
         const updatedSanctions = await sanctions
@@ -74,10 +77,12 @@ const fetchData = async function () {
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository
+  private readonly tenantId: string
 
-  constructor(provider: SanctionsDataProviderName) {
+  constructor(provider: SanctionsDataProviderName, tenantId: string) {
     this.providerName = provider
     this.searchRepository = new SanctionsProviderSearchRepository()
+    this.tenantId = tenantId
   }
 
   abstract fullLoad(repo: SanctionsRepository, version: string): Promise<void>
@@ -298,7 +303,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     const results = await db
-      .collection(SANCTIONS_COLLECTION)
+      .collection(SANCTIONS_COLLECTION(this.tenantId))
       .find<SanctionsEntity>(match)
       .toArray()
 
@@ -533,11 +538,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       request.fuzzinessRange?.upperBound === 100 ? 3 : 7
     const results = await client
       .db()
-      .collection(SANCTIONS_COLLECTION)
+      .collection(SANCTIONS_COLLECTION(this.tenantId))
       .aggregate<SanctionsEntity>([
         {
           $search: {
-            index: 'sanctions_search_index',
+            index: SANCTIONS_SEARCH_INDEX.name,
             concurrent: true,
             compound: {
               must: [
@@ -647,7 +652,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async searchInMemory(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    await fetchData()
+    await fetchData(this.tenantId)
     const results: SanctionsEntity[] = []
 
     let fuzzinessThreshold = 0
