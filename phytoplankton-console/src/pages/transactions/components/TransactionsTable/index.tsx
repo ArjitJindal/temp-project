@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { memoize } from 'lodash';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
@@ -79,6 +80,11 @@ export interface TransactionsTableParams extends CommonParams {
   direction?: 'incoming' | 'outgoing' | 'all';
 }
 
+export const defaultTimestamps = memoize(() => ({
+  afterTimestamp: dayjs().subtract(3, 'month').startOf('day').valueOf(),
+  beforeTimestamp: dayjs().endOf('day').valueOf(),
+}));
+
 export const transactionParamsToRequest = (
   params: TransactionsTableParams,
 ): DefaultApiGetTransactionsListRequest => {
@@ -106,8 +112,10 @@ export const transactionParamsToRequest = (
   const requestParams: DefaultApiGetTransactionsListRequest = {
     page,
     pageSize,
-    afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : 0,
-    beforeTimestamp: timestamp ? dayjs(timestamp[1]).valueOf() : undefined,
+    afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : defaultTimestamps().afterTimestamp,
+    beforeTimestamp: timestamp
+      ? dayjs(timestamp[1]).valueOf()
+      : defaultTimestamps().beforeTimestamp,
     filterId: transactionId,
     filterOriginCurrencies: originCurrenciesFilter,
     filterDestinationCurrencies: destinationCurrenciesFilter,

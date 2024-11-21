@@ -15,6 +15,7 @@ import TransactionsIcon from './icons/transactions.react.svg';
 import Header from './Header';
 import Footer from './Footer';
 import { Notifications } from './Notifications';
+import { SubMenuItem } from './TopLevelLink/SubMenu';
 import Article from '@/components/ui/icons/Remix/document/article-line.react.svg';
 import StackLineIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import BarChartFillIcon from '@/components/ui/icons/Remix/business/bar-chart-fill.react.svg';
@@ -152,7 +153,7 @@ function RenderItem(props: {
   const fullKey = `${parentTranslationKey}.${item.name}`;
   const icon = item.icon ? icons[item.icon] : undefined;
 
-  const submenu =
+  const submenu: SubMenuItem[] | undefined =
     'routes' in item && !item.hideChildrenInMenu && !item.disabled
       ? item.routes
           .filter(isLeaf)
@@ -162,6 +163,7 @@ function RenderItem(props: {
             title: i18n(`${fullKey}.${x.name}` as TranslationId),
           }))
       : undefined;
+
   return (
     <TopLevelLink
       key={item.name}

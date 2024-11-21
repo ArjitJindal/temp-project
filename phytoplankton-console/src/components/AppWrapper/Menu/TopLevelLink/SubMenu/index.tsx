@@ -14,6 +14,7 @@ interface Props {
 
 export default function SubMenu(props: Props) {
   const { items } = props;
+
   return (
     <div className={cn(s.root)}>
       {items.map((x) => (

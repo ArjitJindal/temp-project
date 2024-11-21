@@ -7,6 +7,7 @@ import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapp
 import { useI18n } from '@/locales';
 import '../../components/ui/colors';
 import TransactionsTable, {
+  defaultTimestamps,
   transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
@@ -52,8 +53,8 @@ const TableList = () => {
       pushParamsToNavigation({
         ...parsedParams,
         timestamp: [
-          dayjs().subtract(3, 'month').startOf('day').format(),
-          dayjs().endOf('day').format(),
+          dayjs(defaultTimestamps().afterTimestamp).format(),
+          dayjs(defaultTimestamps().beforeTimestamp).format(),
         ],
       });
     }
