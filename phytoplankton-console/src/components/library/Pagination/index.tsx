@@ -7,6 +7,7 @@ import COLORS from '@/components/ui/colors';
 import { formatNumber } from '@/utils/number';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50, 100];
+const COUNT_QUERY_LIMIT = 100000;
 
 interface Props {
   isDisabled?: boolean;
@@ -60,6 +61,7 @@ export default function Pagination(props: Props) {
                       <>
                         Showing {formatNumber(pageSize * (current - 1) + 1)} -{' '}
                         {formatNumber(Math.min(pageSize * current, total))} of {formatNumber(total)}
+                        {total >= COUNT_QUERY_LIMIT ? '+' : ''}
                       </>
                     )}
                   </span>

@@ -18,6 +18,7 @@ type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
 
 // todo: move to config
 const CUSTOM_CLAIMS_NS = 'https://flagright.com'
+const AWS_API_GATEWAY_TIMEOUT = 30 * 1000
 
 export const localDev =
   () =>
@@ -96,5 +97,11 @@ export const localDev =
         event.requestContext.authorizer = jwtAuthorizerResult
       }
     }
-    return handler(event, context, callback)
+    const result = await Promise.race([
+      handler(event, context, callback),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Timeout')), AWS_API_GATEWAY_TIMEOUT)
+      ),
+    ])
+    return result
   }

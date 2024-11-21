@@ -2,20 +2,19 @@ import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
-import { compact, difference, intersection, isEmpty } from 'lodash'
+import { cloneDeep, compact, difference, intersection, isEmpty } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
   DAY_DATE_FORMAT,
+  getSkipAndLimit,
   internalMongoUpdateMany,
   internalMongoUpdateOne,
-  lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
 } from '@/utils/mongodb-utils'
 import {
-  ACCOUNTS_COLLECTION,
   ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
 } from '@/utils/mongodb-definitions'
@@ -87,36 +86,92 @@ export class AlertsRepository {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
-    const pipeline = await this.getAlertsPipeline(params, {
-      hideTransactionIds: options?.hideTransactionIds,
-      countOnly: false,
-    })
-    const countPipelineResp = await this.getAlertsPipeline(params, {
-      hideTransactionIds: options?.hideTransactionIds,
-      countOnly: true,
-    })
-
-    pipeline.push(...paginatePipeline(params))
-
-    const itemsPipeline = [...pipeline]
-    const countPipeline = [...countPipelineResp]
-
-    countPipeline.push({
-      $limit: COUNT_QUERY_LIMIT,
-    })
-    countPipeline.push({
-      $count: 'count',
-    })
-
-    const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
-    const itemsPromise = cursor.toArray()
+    /* Getting count */
+    const countPipeline = [
+      ...(await this.getAlertsPipeline(params, {
+        hideTransactionIds: options?.hideTransactionIds,
+        countOnly: true,
+      })),
+      {
+        $limit: COUNT_QUERY_LIMIT,
+      },
+      {
+        $count: 'count',
+      },
+    ]
+    // Don't await count here
     const countPromise = collection
       .aggregate<{ count: number }>(countPipeline)
       .next()
       .then((item) => item?.count ?? 0)
 
-    const sortedSlaAlerts = await itemsPromise
-    sortedSlaAlerts.forEach((alert) => {
+    /* Get paginated alerts */
+    const { skip, limit } = getSkipAndLimit(params)
+    if (
+      !params.sortField &&
+      params.filterAlertStatus &&
+      !params.filterAlertStatus?.includes('CLOSED')
+    ) {
+      params.sortField = 'createdTimestamp'
+    }
+    const pipeline = await this.getAlertsPipeline(params, {
+      hideTransactionIds: options?.hideTransactionIds,
+      countOnly: false,
+    })
+    /**
+     * We're being "creative" here to get around the query performance issue
+     * if sorting is applied, as index cannot be used after $unwind.
+     * Steps:
+     * 1. Sort the cases before unwind
+     * 2. Do skip/limit before unwind (case level)
+     * 3. unwind alerts
+     * 4. Sort the alerts again (alert level)
+     * 5. As the first page alerts could contain the ones we don't want,
+     *    we get the first alert of the next page and use it as the boundary
+     *    to filter out the alerts in the first page that we don't want.
+     *
+     * By using this way, we can still use the index created for `alerts` fields.
+     * The downside is that we could have more than pageSize alerts in the result
+     * (we cannot just cut the extra ones, otherwise the next page could be incorrect)
+     */
+    pipeline.splice(
+      pipeline.findIndex((stage) => stage.$unwind),
+      0,
+      { $skip: skip },
+      { $limit: limit }
+    )
+    const alertsPromise = collection
+      .aggregate<AlertListResponseItem>(pipeline)
+      .toArray()
+    let nextPageAlertsPromise: Promise<AlertListResponseItem[]> | undefined
+    if (params.sortField) {
+      const pipeline2 = cloneDeep(pipeline)
+      pipeline2[pipeline2.findIndex((stage) => '$skip' in stage)].$skip += limit
+      pipeline2[pipeline2.findIndex((stage) => '$limit' in stage)].$limit = 1
+      nextPageAlertsPromise = collection
+        .aggregate<AlertListResponseItem>(pipeline2)
+        .toArray()
+    } else {
+      pipeline.push(...paginatePipeline(params))
+    }
+    const [alerts, nextPageAlerts] = await Promise.all([
+      alertsPromise,
+      nextPageAlertsPromise,
+    ])
+    let filteredAlerts = alerts
+    if (nextPageAlerts && nextPageAlerts.length > 0 && params.sortField) {
+      const sortField = params.sortField
+      const nextPageSortFieldValue = nextPageAlerts[0].alert[sortField]
+      if (nextPageSortFieldValue) {
+        filteredAlerts = alerts.filter((alert) =>
+          params.sortOrder === 'ascend'
+            ? alert.alert[sortField] <= nextPageSortFieldValue
+            : alert.alert[sortField] >= nextPageSortFieldValue
+        )
+      }
+    }
+
+    filteredAlerts.forEach((alert) => {
       if (alert.alert?.slaPolicyDetails) {
         alert.alert.slaPolicyDetails.sort((a, b) => {
           const aTime = a?.elapsedTime ?? 0
@@ -127,7 +182,7 @@ export class AlertsRepository {
     })
     return {
       total: await countPromise,
-      data: await itemsPromise,
+      data: filteredAlerts,
     }
   }
 
@@ -212,11 +267,23 @@ export class AlertsRepository {
       excludeProject?: boolean
     }
   ): Promise<Document[]> {
+    const sortField = params?.sortField
+      ? params.sortField === 'caseCreatedTimestamp'
+        ? 'createdTimestamp'
+        : `alerts.${params.sortField}`
+      : undefined
+    const sortStage = sortField
+      ? {
+          $sort: {
+            [sortField]: params?.sortOrder === 'ascend' ? 1 : -1,
+          },
+        }
+      : undefined
+
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-    const hasFeaturePNB = hasFeature('PNB')
     const caseConditions: Filter<Case>[] =
       await caseRepository.getCasesConditions(params, false)
 
@@ -524,6 +591,9 @@ export class AlertsRepository {
       })
     }
 
+    if (sortStage) {
+      pipeline.push(sortStage)
+    }
     pipeline.push({
       $unwind: {
         path: '$alerts',
@@ -539,42 +609,15 @@ export class AlertsRepository {
     }
 
     if (!options?.countOnly) {
-      pipeline.push(
-        ...[
-          lookupPipelineStage({
-            from: ACCOUNTS_COLLECTION(this.tenantId),
-            localField: 'alerts.assignments.assigneeUserId',
-            foreignField: 'id',
-            as: '_assignee',
-          }),
-          {
-            $set: {
-              'alerts._assigneeName': {
-                $toLower: { $first: '$_assignee.name' },
-              },
-            },
-          },
-          ...(!hasFeaturePNB
-            ? [
-                {
-                  $sort: {
-                    [params?.sortField === 'caseCreatedTimestamp'
-                      ? 'createdTimestamp'
-                      : `alerts.${params?.sortField ?? '_id'}`]:
-                      params?.sortOrder === 'ascend' ? 1 : -1,
-                    [`alerts._id`]: 1,
-                  },
-                },
-              ]
-            : []),
-          {
-            $set: {
-              alert: '$alerts',
-              caseCreatedTimestamp: '$createdTimestamp',
-            },
-          },
-        ]
-      )
+      if (sortStage) {
+        pipeline.push(sortStage)
+      }
+      pipeline.push({
+        $set: {
+          alert: '$alerts',
+          caseCreatedTimestamp: '$createdTimestamp',
+        },
+      })
 
       if (!options?.excludeProject) {
         pipeline.push({

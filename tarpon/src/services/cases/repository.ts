@@ -15,17 +15,13 @@ import { TimeRange } from '../rules-engine/repositories/transaction-repository-i
 import {
   internalMongoInsert,
   internalMongoReplace,
-  lookupPipelineStage,
   paginatePipeline,
   prefixRegexMatchFilter,
   internalMongoUpdateMany,
   internalMongoUpdateOne,
   withTransaction,
 } from '@/utils/mongodb-utils'
-import {
-  ACCOUNTS_COLLECTION,
-  CASES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -657,7 +653,6 @@ export class CaseRepository {
     preLimitPipeline.push({ $match: filter })
 
     const sortUserCaseUserName = params.sortField === '_userName'
-    const sortAssignments = params.sortField === '_assignmentsName'
 
     if (sortUserCaseUserName) {
       preLimitPipeline.push(
@@ -692,23 +687,6 @@ export class CaseRepository {
                   },
                 ],
               },
-            },
-          },
-        ]
-      )
-    } else if (sortAssignments) {
-      preLimitPipeline.push(
-        ...[
-          lookupPipelineStage({
-            from: ACCOUNTS_COLLECTION(this.tenantId),
-            localField: 'assignments.assigneeUserId',
-            foreignField: 'id',
-            as: '_assignments',
-          }),
-          {
-            $set: {
-              _assignmentName: { $toLower: { $first: '$_assignments.name' } },
-              _assignments: false,
             },
           },
         ]

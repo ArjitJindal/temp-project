@@ -134,6 +134,13 @@ export function getSkipAndLimit<Params extends OptionalPaginationParams>(
   limit: number
   skip: number
 } {
+  if (params.pageSize === 'DISABLED') {
+    return {
+      limit: Number.MAX_SAFE_INTEGER,
+      skip: 0,
+    }
+  }
+
   let pageSize: PageSize | 'DISABLED' = DEFAULT_PAGE_SIZE
   let page = 1
 
