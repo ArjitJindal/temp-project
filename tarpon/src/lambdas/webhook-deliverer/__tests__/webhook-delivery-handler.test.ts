@@ -444,7 +444,7 @@ describe('Webhook delivery', () => {
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           'ghost-webhook-id',
-          1
+          { page: 1, pageSize: 20, webhookId: 'ghost-webhook-id' }
         )
       ).toHaveLength(0)
     })
@@ -476,7 +476,7 @@ describe('Webhook delivery', () => {
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           INACTIVE_WEBHOOK_ID,
-          1
+          { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
         )
       ).toHaveLength(0)
     })
@@ -508,7 +508,7 @@ describe('Webhook delivery', () => {
       expect(
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           INACTIVE_WEBHOOK_ID,
-          1
+          { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
         )
       ).toHaveLength(0)
     })

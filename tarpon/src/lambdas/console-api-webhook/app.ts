@@ -17,6 +17,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookSecrets } from '@/@types/openapi-internal/WebhookSecrets'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { envIs } from '@/utils/env'
 
 export const webhookConfigurationHandler = lambdaApi()(
   async (
@@ -43,11 +44,16 @@ export const webhookConfigurationHandler = lambdaApi()(
       const webhook = request.WebhookConfiguration
       const newWebhook = await webhookRepository.saveWebhook(webhook)
       const secret = uuidv4()
-      await createWebhookSecret(tenantId, newWebhook._id as string, secret)
+
+      if (!envIs('local')) {
+        await createWebhookSecret(tenantId, newWebhook._id as string, secret)
+      }
+
       const response = {
         ...newWebhook,
         secret,
       }
+
       const webhookAuditLogService = new WebhookAuditLogService(tenantId)
       await webhookAuditLogService.handleAuditLogForWebhookCreated(
         newWebhook._id as string
@@ -108,7 +114,7 @@ export const webhookConfigurationHandler = lambdaApi()(
       async (ctx, request) =>
         await webhookDeliveryRepository.getWebhookDeliveryAttempts(
           request.webhookId,
-          request.pageSize ?? 100
+          request
         )
     )
 

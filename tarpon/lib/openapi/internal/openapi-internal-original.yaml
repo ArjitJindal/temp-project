@@ -4445,6 +4445,38 @@ paths:
             $ref: '#/components/schemas/Page'
           in: query
           name: page
+        - schema:
+            type: string
+          in: query
+          name: sortField
+        - schema:
+            $ref: '#/components/schemas/SortOrder'
+          in: query
+          name: sortOrder
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: filterStatus
+        - schema:
+            type: number
+          in: query
+          name: filterEventCreatedAtBeforeTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterEventCreatedAtAfterTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterEventDeliveredAtBeforeTimestamp
+        - schema:
+            type: number
+          in: query
+          name: filterEventDeliveredAtAfterTimestamp
+        - schema:
+            type: string
+          in: query
+          name: filterEventType
   /transactions/action:
     post:
       summary: Apply an action on transactions

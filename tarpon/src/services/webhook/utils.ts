@@ -9,6 +9,11 @@ import { WebhookRepository } from '@/services/webhook/repositories/webhook-repos
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { logger } from '@/core/logger'
 import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
+import { envIs } from '@/utils/env'
+import dayjs from '@/utils/dayjs'
+import { handleWebhookDeliveryTask } from '@/lambdas/webhook-deliverer/utils'
+
+const LOCAL_SECRET_KEY = 'test-secret'
 
 export function getWebhookSecretKey(tenantId: string, webhookId: string) {
   return `${tenantId}/webhooks/${webhookId}`
@@ -26,6 +31,10 @@ export async function createWebhookSecret(
   webhookId: string,
   secret: string
 ): Promise<void> {
+  if (envIs('local')) {
+    return
+  }
+
   const secretsManagerSecrets: SecretsManagerWebhookSecrets = {
     [secret]: null,
   }
@@ -39,6 +48,12 @@ export async function getWebhookSecrets(
   tenantId: string,
   webhookId: string
 ): Promise<SecretsManagerWebhookSecrets> {
+  if (envIs('local')) {
+    return {
+      [LOCAL_SECRET_KEY]: dayjs().add(1, 'day').valueOf(),
+    }
+  }
+
   return (await getSecret<SecretsManagerWebhookSecrets>(
     getWebhookSecretKey(tenantId, webhookId)
   )) as SecretsManagerWebhookSecrets
@@ -84,6 +99,19 @@ export async function sendWebhookTasks<T extends object = object>(
     }
   }
 
+  if (envIs('local')) {
+    logger.info(`Sending ${entries.length} webhooks to local queue`)
+    await Promise.all(
+      entries.map((entry) =>
+        handleWebhookDeliveryTask(
+          JSON.parse(entry.MessageBody as string) as WebhookDeliveryTask
+        )
+      )
+    )
+
+    return
+  }
+
   await bulkSendMessages(
     sqs,
     process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
@@ -93,4 +121,12 @@ export async function sendWebhookTasks<T extends object = object>(
   if (entries.length > 0) {
     logger.info(`${entries.length} webhooks sent`)
   }
+}
+
+export function getNotExpiredSecrets(
+  keys: SecretsManagerWebhookSecrets
+): string[] {
+  return Object.keys(keys).filter(
+    (secret) => (keys?.[secret] || Number.MAX_SAFE_INTEGER) > Date.now()
+  )
 }

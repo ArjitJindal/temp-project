@@ -191,7 +191,8 @@ export const GET_RULE_INSTANCE = (ruleInstanceId: string): QueryKey => [
   ruleInstanceId,
 ];
 export const RULES_WITH_ALERTS = (): QueryKey => ['rules', 'with-alerts'];
-export const WEBHOOKS = (id?: string): QueryKey => ['webhooks', id].filter(Boolean);
+export const WEBHOOKS = (id?: string, params?: AnyParameters): QueryKey =>
+  ['webhooks', id, params].filter(Boolean);
 export const WEBHOOKS_LIST = (): QueryKey => ['webhooks', 'list'];
 export const USERS = (type: string, params?: AnyParameters): QueryKey =>
   ['users', type, params].filter(Boolean);

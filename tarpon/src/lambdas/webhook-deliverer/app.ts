@@ -1,6 +1,6 @@
 import { createHmac } from 'node:crypto'
 import { BadRequest } from 'http-errors'
-import { SQSEvent, SQSRecord } from 'aws-lambda'
+import { SQSEvent } from 'aws-lambda'
 // No types defined for this polyfill
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -8,24 +8,16 @@ import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
 import fetch, { FetchError, Response } from 'node-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
-
-import { getWebhookSecrets } from '../../services/webhook/utils'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
-import {
-  WebhookDeliveryTask,
-  SecretsManagerWebhookSecrets,
-} from '@/@types/webhook'
+import { handleWebhookDeliveryTask } from './utils'
+import { WebhookDeliveryTask } from '@/@types/webhook'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
-import {
-  tenantHasFeature,
-  updateLogMetadata,
-  withContext,
-} from '@/core/utils/context'
+import { tenantHasFeature, withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
 import { isTenantWhitelabeled } from '@/utils/tenant'
@@ -35,13 +27,7 @@ export class ClientServerError extends Error {}
 // For non-production env, we only retry up to 1 day
 const MAX_RETRY_HOURS = envIs('prod') ? 4 * 24 : 24
 
-function getNotExpiredSecrets(keys: SecretsManagerWebhookSecrets): string[] {
-  return Object.keys(keys).filter(
-    (secret) => (keys?.[secret] || Number.MAX_SAFE_INTEGER) > Date.now()
-  )
-}
-
-async function deliverWebhookEvent(
+export async function deliverWebhookEvent(
   webhook: WebhookConfiguration,
   secrets: string[],
   webhookDeliveryTask: WebhookDeliveryTask
@@ -56,7 +42,6 @@ async function deliverWebhookEvent(
     mongoDb
   )
 
-  const hmacs = secrets.map((secret) => createHmac('sha256', secret))
   const postPayload: WebhookEvent = {
     id: webhookDeliveryTask._id,
     type: webhookDeliveryTask.event,
@@ -65,6 +50,7 @@ async function deliverWebhookEvent(
     triggeredBy: webhookDeliveryTask.triggeredBy,
   }
 
+  const hmacs = secrets.map((secret) => createHmac('sha256', secret))
   const postPayloadString = JSON.stringify(postPayload)
   const hmacSignatures = hmacs
     .map((hmac) => {
@@ -186,58 +172,16 @@ async function deliverWebhookEvent(
   }
 }
 
-async function handleWebhookDeliveryTask(record: SQSRecord) {
-  const webhookDeliveryTask = JSON.parse(record.body) as WebhookDeliveryTask
-  updateLogMetadata({
-    tenantId: webhookDeliveryTask.tenantId,
-    event: webhookDeliveryTask.event,
-    webhookId: webhookDeliveryTask.webhookId,
-  })
-
-  const mongoClient = await getMongoDbClient()
-  const webhookRepository = new WebhookRepository(
-    webhookDeliveryTask.tenantId,
-    mongoClient
-  )
-  const webhook = await webhookRepository.getWebhook(
-    webhookDeliveryTask.webhookId
-  )
-  if (
-    !webhook?.enabled ||
-    !webhook.events.includes(webhookDeliveryTask.event)
-  ) {
-    return
-  }
-
-  const webhookDeliveryRepository = new WebhookDeliveryRepository(
-    webhookDeliveryTask.tenantId,
-    mongoClient
-  )
-  const latestAttempt =
-    await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
-      webhookDeliveryTask._id
-    )
-  if (latestAttempt?.success) {
-    return
-  }
-  const secretKeys = await getWebhookSecrets(
-    webhookDeliveryTask.tenantId,
-    webhookDeliveryTask.webhookId
-  )
-  await deliverWebhookEvent(
-    webhook,
-    getNotExpiredSecrets(secretKeys),
-    webhookDeliveryTask
-  )
-}
-
 export const webhookDeliveryHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const results = await Promise.allSettled(
       event.Records.map(async (record) => {
         try {
           await withContext(async () => {
-            await handleWebhookDeliveryTask(record)
+            const webhookDeliveryTask = JSON.parse(
+              record.body
+            ) as WebhookDeliveryTask
+            await handleWebhookDeliveryTask(webhookDeliveryTask)
           })
         } catch (e) {
           if (!(e instanceof ClientServerError)) {

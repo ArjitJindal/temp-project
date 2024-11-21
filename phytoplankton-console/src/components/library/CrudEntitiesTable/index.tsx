@@ -64,6 +64,7 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   formWidth?: string;
   extraInfo?: { label: string; redirectUrl: string };
   onChange?: (formState: Entity) => void;
+  portal?: boolean;
 }
 
 export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any }>(
@@ -280,6 +281,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         isSaving={updateMutation.isLoading || creationMutation.isLoading}
         extraInfo={props.extraInfo}
         onChange={props.onChange}
+        portal={props.portal}
       />
     </Authorized>
   );

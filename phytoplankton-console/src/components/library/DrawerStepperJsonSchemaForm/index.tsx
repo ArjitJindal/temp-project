@@ -31,10 +31,13 @@ interface Props<Entity> {
   onSubmit: (formState: Entity) => void;
   onChange?: (formState: Entity) => void;
   extraInfo?: { label: string; redirectUrl: string };
+  portal?: boolean;
 }
 
 export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
-  const { title, description, isVisible, steps, onSubmit, onChange, onChangeVisibility } = props;
+  const { title, description, isVisible, steps, onSubmit, onChange, onChangeVisibility, portal } =
+    props;
+
   const [activeStepKey, setActiveStepKey] = useState(steps[0].step.key);
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
@@ -119,6 +122,7 @@ export function DrawerStepperJsonSchemaForm<Entity>(props: Props<Entity>) {
         fieldValidators={fieldValidators}
         initialValues={formInitialValues}
         alwaysShowErrors={alwaysShowErrors}
+        portaled={portal}
         onSubmit={(values, { isValid }) => {
           if (isValid) {
             onSubmit(merge({}, ...Object.values(values)) as Entity);

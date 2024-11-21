@@ -1,6 +1,7 @@
 import { Space, Switch } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { JSONSchemaType } from 'ajv';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import SettingsCard from '@/components/library/SettingsCard';
 import { WebhookConfiguration, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
@@ -72,7 +73,7 @@ export const WebhookSettings: React.FC = () => {
             <>
               {webhook?.events.map((event: WebhookEventType, index) => (
                 <Tag color={'cyan'} key={index}>
-                  {event}
+                  {humanizeConstant(event)}
                 </Tag>
               ))}
             </>
@@ -129,11 +130,11 @@ export const WebhookSettings: React.FC = () => {
           items: {
             type: 'string',
             enum: WEBHOOK_EVENT_TYPES,
+            enumNames: WEBHOOK_EVENT_TYPES.map((event) => humanizeConstant(event)),
           },
         },
         _id: {
-          title: 'Additional Properties',
-          type: 'string',
+          title: 'Additional properties',
           'ui:schema': {
             'ui:subtype': 'WEBHOOK',
           },
@@ -141,6 +142,7 @@ export const WebhookSettings: React.FC = () => {
       },
       required: ['webhookUrl', 'events'],
     };
+
   return (
     <SettingsCard title="Webhooks" description="">
       <CrudEntitiesTable<DefaultApiGetWebhooksRequest, WebhookConfiguration>
@@ -193,6 +195,7 @@ export const WebhookSettings: React.FC = () => {
               }
             : undefined
         }
+        portal={true}
       />
     </SettingsCard>
   );
