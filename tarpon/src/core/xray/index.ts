@@ -6,9 +6,7 @@ import { envIsNot } from '@/utils/env'
 // ref: https://docs.aws.amazon.com/xray/latest/devguide/xray-api-segmentdocuments.html
 const ALLOWED_SPECIAL_CHAR_REGEX = /[`,~!#$^*()|?;'"<>{}[\]/]/g
 
-const xrayDisabled =
-  envIsNot('dev', 'sandbox', 'prod') ||
-  !process.env.AWS_LAMBDA_FUNCTION_NAME?.includes('Api')
+const xrayDisabled = envIsNot('dev', 'sandbox', 'prod')
 
 let xrayInitialized = false
 
