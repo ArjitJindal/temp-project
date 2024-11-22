@@ -26,7 +26,7 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
   ): Promise<void> {
     const { tenantId } = job
     const {
-      startTimestamp,
+      cursor: dataCursor,
       concurrency = 50,
       publicApiKey,
       publicApiEndpoint,
@@ -41,14 +41,18 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
 
     const lastCompletedTimestamp =
       (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
+
     const actualStartTimestamp = Math.max(
       lastCompletedTimestamp,
-      startTimestamp
+      dataCursor.type === 'START_TIMESTAMP' ? dataCursor.value : 0
     )
+
     const cursor = db
       .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
       .find({
-        timestamp: { $gte: actualStartTimestamp },
+        ...(dataCursor.type === 'IDS'
+          ? { transactionId: { $in: dataCursor.value } }
+          : { timestamp: { $gte: actualStartTimestamp } }),
         ...filters,
       })
       .sort({ timestamp: 1 })

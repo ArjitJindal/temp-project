@@ -244,7 +244,9 @@ export type PnbBackfillEntities = {
 type PnbBackfillTransactionsBase = {
   tenantId: string
   parameters: {
-    startTimestamp: number
+    cursor:
+      | { type: 'START_TIMESTAMP'; value: number }
+      | { type: 'IDS'; value: string[] }
     concurrency: number
     publicApiEndpoint: string
     publicApiKey: string
