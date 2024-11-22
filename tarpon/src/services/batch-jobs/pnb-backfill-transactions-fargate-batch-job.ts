@@ -1,5 +1,4 @@
 import pMap from 'p-map'
-import { compact } from 'lodash'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { PnbBackfillTransactions } from '@/@types/batch-job'
 import { Transaction } from '@/@types/openapi-public/Transaction'
@@ -83,9 +82,10 @@ export class PnbBackfillTransactionsBatchJobRunner extends BatchJobRunner {
 
   private async processTransaction(internalTransaction: InternalTransaction) {
     const transaction = pickKnownEntityFields(internalTransaction, Transaction)
-    const releaseLocks = await acquireInMemoryLocks(
-      compact([transaction.originUserId, transaction.destinationUserId])
-    )
+    const releaseLocks = await acquireInMemoryLocks([
+      transaction.originUserId,
+      transaction.destinationUserId,
+    ])
     let url = `${this.publicApiEndpoint}?validateTransactionId=false&validateDestinationUserId=false&validateOriginUserId=false`
     if (this.type === 'ars') {
       url += '&_trsOnly=true'

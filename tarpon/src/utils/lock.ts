@@ -6,6 +6,7 @@ import {
 import { StackConstants } from '@lib/constants'
 import { Mutex, MutexInterface } from 'async-mutex'
 import { backOff } from 'exponential-backoff'
+import { compact } from 'lodash'
 
 const DEFAULT_TTL = 600
 const DEFAULT_DELAY = 5
@@ -81,9 +82,13 @@ const getInMemoryLock = (lockKey: string): Mutex => {
   }
   return inMemoryLocks.get(lockKey) as Mutex
 }
+export const clearInMemoryLocks = () => {
+  inMemoryLocks.clear()
+}
 export const acquireInMemoryLocks = async (
-  lockKeys: string[]
+  rawLockKeys: Array<string | undefined>
 ): Promise<MutexInterface.Releaser> => {
+  const lockKeys = compact(rawLockKeys)
   lockKeys.sort()
   const locks = lockKeys.map(getInMemoryLock)
 
