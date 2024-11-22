@@ -441,6 +441,22 @@ export class RulesEngineService {
     return hitResults
   }
 
+  private getRiskScoreDetails(
+    hitRules: HitRulesDetails[],
+    userRiskScoreDetails,
+    transactionRiskDetails
+  ) {
+    const hasPNBFeature = hasFeature('PNB')
+    const userRiskScoreDetailsToReturn = hasPNBFeature
+      ? getTransactionRiskScoreDetailsForPNB(hitRules, userRiskScoreDetails) ??
+        {}
+      : userRiskScoreDetails
+    return {
+      ...transactionRiskDetails,
+      ...userRiskScoreDetailsToReturn,
+    }
+  }
+
   public async verifyTransaction(
     transaction: Transaction,
     options?: ValidationOptions
@@ -451,6 +467,36 @@ export class RulesEngineService {
           transaction.transactionId
         )
       if (existingTransaction) {
+        const [originUserDrs, destinationUserDrs] = await Promise.all([
+          existingTransaction.originUserId
+            ? this.riskScoringV8Service.getDrsScore(
+                existingTransaction.originUserId
+              )
+            : Promise.resolve(null),
+          existingTransaction.destinationUserId
+            ? this.riskScoringV8Service.getDrsScore(
+                existingTransaction.destinationUserId
+              )
+            : Promise.resolve(null),
+        ])
+        const riskClassificationValues =
+          await this.riskRepository.getRiskClassificationValues()
+        const userRiskScoreDetails = {
+          originUserCraRiskScore: originUserDrs?.drsScore,
+          destinationUserCraRiskScore: destinationUserDrs?.drsScore,
+          originUserCraRiskLevel: originUserDrs?.drsScore
+            ? getRiskLevelFromScore(
+                riskClassificationValues,
+                originUserDrs.drsScore
+              )
+            : undefined,
+          destinationUserCraRiskLevel: destinationUserDrs?.drsScore
+            ? getRiskLevelFromScore(
+                riskClassificationValues,
+                destinationUserDrs.drsScore
+              )
+            : undefined,
+        }
         return {
           transactionId: transaction.transactionId,
           message:
@@ -458,6 +504,13 @@ export class RulesEngineService {
           executedRules: existingTransaction.executedRules,
           hitRules: existingTransaction.hitRules,
           status: existingTransaction.status,
+          riskScoreDetails: existingTransaction.riskScoreDetails
+            ? this.getRiskScoreDetails(
+                existingTransaction.hitRules,
+                userRiskScoreDetails,
+                existingTransaction.riskScoreDetails
+              )
+            : undefined,
         }
       }
     }
@@ -562,18 +615,11 @@ export class RulesEngineService {
       status: getAggregatedRuleStatus(hitRules),
       ...(riskScoreDetails
         ? {
-            riskScoreDetails: hasFeature('PNB')
-              ? {
-                  ...riskScoreDetails,
-                  ...getTransactionRiskScoreDetailsForPNB(
-                    hitRules,
-                    userRiskScoreDetails
-                  ),
-                }
-              : {
-                  ...riskScoreDetails,
-                  ...userRiskScoreDetails,
-                },
+            riskScoreDetails: this.getRiskScoreDetails(
+              hitRules,
+              userRiskScoreDetails,
+              riskScoreDetails
+            ),
           }
         : {}),
     }
