@@ -13,9 +13,6 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
 import { BatchResponseFailedRecord } from '@/@types/openapi-public/BatchResponseFailedRecord'
 import { BatchResponseStatus } from '@/@types/openapi-public/BatchResponseStatus'
-import { ConsumerUserEventWithRulesResult } from '@/@types/openapi-public/ConsumerUserEventWithRulesResult'
-import { BusinessUserEventWithRulesResult } from '@/@types/openapi-public/BusinessUserEventWithRulesResult'
-import { UserType } from '@/@types/user/user-type'
 import { UserWithRulesResult } from '@/@types/openapi-public/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-public/BusinessWithRulesResult'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -26,7 +23,7 @@ const RELATED_ID_NOT_FOUND = 'RELATED_ID_NOT_FOUND'
 const ORIGIN_USER_ID_NOT_FOUND = 'ORIGIN_USER_ID_NOT_FOUND'
 const DESTINATION_USER_ID_NOT_FOUND = 'DESTINATION_USER_ID_NOT_FOUND'
 const DUPLICATE_ID_IN_BATCH = 'DUPLICATE_ID_IN_BATCH'
-const EVENT_ALREADY_EXISTS = 'EVENT_ALREADY_EXISTS_WITH_SAME_TIMESTAMP_AND_ID'
+
 type BatchImportErrorReason =
   | typeof ID_ALREADY_EXISTS
   | typeof DUPLICATE_ID_IN_BATCH
@@ -34,7 +31,6 @@ type BatchImportErrorReason =
   | typeof ID_NOT_FOUND
   | typeof ORIGIN_USER_ID_NOT_FOUND
   | typeof DESTINATION_USER_ID_NOT_FOUND
-  | typeof EVENT_ALREADY_EXISTS
 
 type TransactionValidationOptions = {
   validateOriginUserId?: boolean
@@ -193,25 +189,6 @@ export class BatchImportService {
     return null
   }
 
-  private async getTransactionEvents(transactionEvents: TransactionEvent[]) {
-    const existingTransactionEvents = await Promise.all(
-      transactionEvents.map((event) =>
-        this.transactionEventRepository.getTransactionEvents(
-          event.transactionId
-        )
-      )
-    )
-    return existingTransactionEvents
-      .flatMap((e) => e)
-      .filter((event) =>
-        transactionEvents.find(
-          (e) =>
-            e.transactionId === event.transactionId &&
-            e.timestamp === event.timestamp
-        )
-      )
-  }
-
   public async importTransactionEvents(
     batchId: string,
     transactionEvents: TransactionEvent[]
@@ -225,17 +202,13 @@ export class BatchImportService {
       )
     )
 
-    const [
-      existingTransactions,
-      existingRelatedTransactions,
-      existingTransactionEvents,
-    ] = await Promise.all([
-      this.transactionRepository.getTransactionsByIds(
-        transactionEvents.map((event) => event.transactionId)
-      ),
-      this.transactionRepository.getTransactionsByIds(relatedTransactionIds),
-      this.getTransactionEvents(transactionEvents),
-    ])
+    const [existingTransactions, existingRelatedTransactions] =
+      await Promise.all([
+        this.transactionRepository.getTransactionsByIds(
+          transactionEvents.map((event) => event.transactionId)
+        ),
+        this.transactionRepository.getTransactionsByIds(relatedTransactionIds),
+      ])
 
     const validatedTransactionEvents: TransactionEvent[] = []
     const failedRecords: BatchResponseFailedRecord[] = []
@@ -243,7 +216,6 @@ export class BatchImportService {
       const validationError = this.validateTransactionEvent(transactionEvent, {
         existingTransactions,
         existingRelatedTransactions,
-        existingTransactionEvents,
       })
       if (validationError) {
         failedRecords.push({
@@ -280,7 +252,6 @@ export class BatchImportService {
     data: {
       existingTransactions: TransactionWithRulesResult[]
       existingRelatedTransactions: TransactionWithRulesResult[]
-      existingTransactionEvents: TransactionEvent[]
     }
   ): BatchImportErrorReason | null {
     if (
@@ -289,15 +260,6 @@ export class BatchImportService {
       )
     ) {
       return ID_NOT_FOUND
-    }
-    if (
-      data.existingTransactionEvents.find(
-        (e) =>
-          e.transactionId === transactionEvent.transactionId &&
-          e.eventId === transactionEvent.eventId
-      )
-    ) {
-      return EVENT_ALREADY_EXISTS
     }
     if (
       transactionEvent.updatedTransactionAttributes?.relatedTransactionIds?.some(
@@ -410,7 +372,7 @@ export class BatchImportService {
     response: BatchResponse
     validatedUserEvents: ConsumerUserEvent[]
   }> {
-    return this.importUserEvents(batchId, userEvents, 'CONSUMER')
+    return this.importUserEvents(batchId, userEvents)
   }
 
   public async importBusinessUserEvents(
@@ -420,34 +382,12 @@ export class BatchImportService {
     response: BatchResponse
     validatedUserEvents: BusinessUserEvent[]
   }> {
-    return this.importUserEvents(batchId, userEvents, 'BUSINESS')
-  }
-
-  private async getUserEvents(
-    userEvents: Array<ConsumerUserEvent | BusinessUserEvent>,
-    userType: UserType
-  ): Promise<
-    (
-      | ConsumerUserEventWithRulesResult
-      | BusinessUserEventWithRulesResult
-      | null
-    )[]
-  > {
-    return await Promise.all(
-      userEvents.map((event) =>
-        this.userEventRepository.getUserEvent(
-          userType,
-          event.userId,
-          event.timestamp
-        )
-      )
-    )
+    return this.importUserEvents(batchId, userEvents)
   }
 
   private async importUserEvents(
     batchId: string,
-    userEvents: Array<ConsumerUserEvent | BusinessUserEvent>,
-    userType: UserType
+    userEvents: Array<ConsumerUserEvent | BusinessUserEvent>
   ): Promise<{
     response: BatchResponse
     validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent>
@@ -461,14 +401,12 @@ export class BatchImportService {
             ?.linkedEntities?.parentUserId
       )
     )
-    const [existingUsers, existingParentUsers, existingUserEvents] =
-      await Promise.all([
-        this.userRepository.getUsersByIds(
-          userEvents.map((event) => event.userId)
-        ),
-        this.userRepository.getUsersByIds(parentUserIds),
-        this.getUserEvents(userEvents, userType),
-      ])
+    const [existingUsers, existingParentUsers] = await Promise.all([
+      this.userRepository.getUsersByIds(
+        userEvents.map((event) => event.userId)
+      ),
+      this.userRepository.getUsersByIds(parentUserIds),
+    ])
 
     const failedRecords: BatchResponseFailedRecord[] = []
     const validatedUserEvents: Array<ConsumerUserEvent | BusinessUserEvent> = []
@@ -476,7 +414,6 @@ export class BatchImportService {
       const validationError = this.validateUserEvent(userEvent, {
         existingUsers,
         existingParentUsers,
-        existingUserEvents,
       })
       if (validationError) {
         failedRecords.push({
@@ -513,23 +450,10 @@ export class BatchImportService {
     data: {
       existingUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
       existingParentUsers: (UserWithRulesResult | BusinessWithRulesResult)[]
-      existingUserEvents: (
-        | ConsumerUserEventWithRulesResult
-        | BusinessUserEventWithRulesResult
-        | null
-      )[]
     }
   ): BatchImportErrorReason | null {
     if (!data.existingUsers.find((u) => u.userId === userEvent.userId)) {
       return ID_NOT_FOUND
-    }
-    if (
-      data.existingUserEvents.find(
-        (e) =>
-          e?.userId === userEvent.userId && e?.timestamp === userEvent.timestamp
-      )
-    ) {
-      return EVENT_ALREADY_EXISTS
     }
     const parentId =
       (userEvent as ConsumerUserEvent).updatedConsumerUserAttributes

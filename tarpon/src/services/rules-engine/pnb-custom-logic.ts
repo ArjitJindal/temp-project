@@ -1,9 +1,18 @@
 import { uniqBy } from 'lodash'
+import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
+import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
+import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
+import { UserRepository } from '../users/repositories/user-repository'
+import { sendWebhookTasks } from '../webhook/utils'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { User } from '@/@types/openapi-internal/User'
+import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
+import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 export const PNB_INTERNAL_RULES: RuleInstance[] = [
   {
@@ -1520,6 +1529,7 @@ export function getRiskLevelForPNB(
   ) {
     return 'HIGH'
   }
+
   return newRiskLevel
 }
 
@@ -1540,6 +1550,76 @@ export function mergeRulesForPNB<T extends { ruleInstanceId: string }>(
     ),
     (r) => r.ruleInstanceId
   )
+}
+
+function getRiskLevelForPNBFromTags(riskLevel: RiskLevel, tags: UserTag[]) {
+  const riskLevelStatus = tags.find(
+    (tag) => tag.key === 'RISK_LEVEL_STATUS'
+  )?.value
+  if (riskLevelStatus === 'Incomplete' && riskLevel !== 'VERY_LOW') {
+    return riskLevel === 'LOW' ? 'HIGH' : 'VERY_HIGH'
+  }
+  return riskLevel
+}
+
+export async function handleInternalTagUpdateForPNB({
+  user,
+  updateRequest,
+  userRepository,
+  riskScoringV8Service,
+  mongoDb,
+  dynamoDb,
+}: {
+  user: User
+  updateRequest: UserUpdateRequest
+  userRepository: UserRepository
+  riskScoringV8Service: RiskScoringV8Service
+  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
+}) {
+  const userDrsScore = await riskScoringV8Service.getDrsScore(user.userId)
+  if (userDrsScore && userDrsScore.prevDrsScore) {
+    const riskRepository = new RiskRepository(userRepository.tenantId, {
+      mongoDb: mongoDb,
+      dynamoDb: dynamoDb,
+    })
+    const riskClassificationValues =
+      await riskRepository.getRiskClassificationValues()
+    const currentRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      userDrsScore.drsScore
+    )
+    const previousRiskLevel = getRiskLevelFromScore(
+      riskClassificationValues,
+      userDrsScore.prevDrsScore
+    )
+    const previousRiskLevelForPnb = getRiskLevelForPNBFromTags(
+      previousRiskLevel,
+      user.tags ?? []
+    )
+    const currentRiskLevelForPnb = getRiskLevelForPNBFromTags(
+      currentRiskLevel,
+      updateRequest.tags ?? []
+    )
+    if (
+      currentRiskLevel === previousRiskLevel &&
+      currentRiskLevelForPnb !== previousRiskLevelForPnb
+    ) {
+      await sendWebhookTasks(userRepository.tenantId, [
+        {
+          event: 'CRA_RISK_LEVEL_UPDATED',
+          payload: {
+            riskLevel: getRiskLevelForPNB(previousRiskLevel, currentRiskLevel, {
+              ...user,
+              tags: updateRequest.tags,
+            }),
+            userId: user.userId,
+          },
+          triggeredBy: 'SYSTEM',
+        },
+      ])
+    }
+  }
 }
 
 const CONFLICTING_RULES = {

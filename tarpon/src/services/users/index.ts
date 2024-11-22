@@ -21,7 +21,10 @@ import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { UserManagementService } from '../rules-engine/user-rules-engine-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
-import { PNB_INTERNAL_RULES } from '../rules-engine/pnb-custom-logic'
+import {
+  handleInternalTagUpdateForPNB,
+  PNB_INTERNAL_RULES,
+} from '../rules-engine/pnb-custom-logic'
 import { mergeUserTags } from '../rules-engine/utils'
 import { UserClickhouseRepository } from './repositories/user-clickhouse-repository'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from './utils/user-utils'
@@ -1089,20 +1092,41 @@ export class UserService {
     const commentBody = options?.tagDetailsRuleInstance
       ? `User API tags updated due to hit of rule ${options?.tagDetailsRuleInstance?.id}`
       : 'User API tags updated over the console'
-
-    const [savedComment] = await Promise.all([
-      (!hasFeature('PNB') ||
-        !PNB_INTERNAL_RULES.find(
-          (rule) => options?.tagDetailsRuleInstance?.id === rule.id
-        )) &&
-        this.userRepository.saveUserComment(user.userId, {
-          body: commentBody,
-          createdAt: Date.now(),
-          userId: options?.bySystem
-            ? FLAGRIGHT_SYSTEM_USER
-            : (getContext()?.user?.id as string),
-          updatedAt: Date.now(),
+    const isPnbInternalTagUpdate =
+      hasFeature('PNB') &&
+      PNB_INTERNAL_RULES.find(
+        (rule) => options?.tagDetailsRuleInstance?.id === rule.id
+      )
+    //PNB internal logic to update the risk level status
+    if (
+      isPnbInternalTagUpdate &&
+      newOrUpdatedTags.find((tag) => tag.key === 'RISK_LEVEL_STATUS')
+    ) {
+      await Promise.all([
+        this.userAuditLogService.handleAuditLogForTagsUpdate(
+          user.userId,
+          updateRequest.tags
+        ),
+        handleInternalTagUpdateForPNB({
+          user,
+          updateRequest,
+          userRepository: this.userRepository,
+          riskScoringV8Service: this.riskScoringV8Service,
+          mongoDb: this.mongoDb,
+          dynamoDb: this.dynamoDb,
         }),
+      ])
+      return
+    }
+    const [savedComment] = await Promise.all([
+      this.userRepository.saveUserComment(user.userId, {
+        body: commentBody,
+        createdAt: Date.now(),
+        userId: options?.bySystem
+          ? FLAGRIGHT_SYSTEM_USER
+          : (getContext()?.user?.id as string),
+        updatedAt: Date.now(),
+      }),
       this.userAuditLogService.handleAuditLogForTagsUpdate(
         user.userId,
         updateRequest.tags
