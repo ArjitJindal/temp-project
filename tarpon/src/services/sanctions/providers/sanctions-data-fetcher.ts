@@ -37,9 +37,18 @@ const fetchData = async function (tenantId: string) {
         const oneDayAgo = now - 86400000 // 86,400,000 ms = 24 hours
         const updatedSanctions = await sanctions
           .find({
-            updatedAt: {
-              $gte: oneDayAgo,
-            },
+            $or: [
+              {
+                createdAt: {
+                  $gte: oneDayAgo,
+                },
+              },
+              {
+                updatedAt: {
+                  $gte: oneDayAgo,
+                },
+              },
+            ],
           })
           .toArray()
         // Store data into maps
