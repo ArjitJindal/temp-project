@@ -93,6 +93,11 @@ export const listsHandler = lambdaApi()(
       return null
     })
 
+    handlers.registerClearBlacklistItems(async (ctx, request) => {
+      await listService.clearListItems(request.listId)
+      return null
+    })
+
     const patchList = async (request: DefaultApiPatchBlacklistRequest) => {
       const listId = request.listId
       const body = request.ListData
