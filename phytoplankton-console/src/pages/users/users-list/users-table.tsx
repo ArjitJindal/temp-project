@@ -33,6 +33,7 @@ type Props = {
 const extraFilters = (
   list: 'business' | 'consumer' | 'all',
   params: UserSearchParams,
+  hasFeaturePNB?: boolean,
 ): ExtraFilterProps<UserSearchParams>[] => {
   const extraFilters: ExtraFilterProps<UserSearchParams>[] = [
     {
@@ -69,26 +70,30 @@ const extraFilters = (
         />
       ),
     },
-    {
-      key: 'riskLevels',
-      title: 'CRA',
-      renderer: ({ params, setParams }) => (
-        <RiskLevelButton
-          riskLevels={params.riskLevels ?? []}
-          onConfirm={(riskLevels) => {
-            setParams((state) => ({
-              ...state,
-              riskLevels: riskLevels ?? undefined,
-            }));
-          }}
-        />
-      ),
-    },
-    {
-      key: 'riskLevelLocked',
-      title: 'CRA lock status',
-      renderer: BOOLEAN.autoFilterDataType,
-    },
+    ...(hasFeaturePNB
+      ? []
+      : [
+          {
+            key: 'riskLevels',
+            title: 'CRA',
+            renderer: ({ params, setParams }) => (
+              <RiskLevelButton
+                riskLevels={params.riskLevels ?? []}
+                onConfirm={(riskLevels) => {
+                  setParams((state) => ({
+                    ...state,
+                    riskLevels: riskLevels ?? undefined,
+                  }));
+                }}
+              />
+            ),
+          },
+          {
+            key: 'riskLevelLocked',
+            title: 'CRA lock status',
+            renderer: BOOLEAN.autoFilterDataType,
+          },
+        ]),
   ];
 
   if (list === 'business') {
@@ -204,12 +209,12 @@ export const UsersTable = (props: Props) => {
     columns.push(...getRiskScoringColumns());
   }
   columns.push(getLastUpdatedColumn());
-
+  const hasFeaturePNB = useFeatureEnabled('PNB');
   return (
     <QueryResultsTable<InternalUser, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
-      extraFilters={extraFilters(type, params)}
+      extraFilters={extraFilters(type, params, hasFeaturePNB)}
       columns={columns}
       queryResults={queryResults}
       params={params}

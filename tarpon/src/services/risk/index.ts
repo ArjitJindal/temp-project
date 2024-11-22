@@ -2,7 +2,11 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { MongoClient } from 'mongodb'
 import { BadRequest } from 'http-errors'
-import { DEFAULT_RISK_LEVEL, getRiskScoreFromLevel } from '@flagright/lib/utils'
+import {
+  DEFAULT_RISK_LEVEL,
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@flagright/lib/utils'
 import { CounterRepository } from '../counter/repository'
 import { PulseAuditLogService } from './pulse-audit-log'
 import { riskFactorAggregationVariablesRebuild } from './utils'
@@ -158,6 +162,29 @@ export class RiskService {
     return await this.riskRepository.getArsValueFromMongo(transactionId)
   }
 
+  async getArsScoreFromDynamo(transactionId: string) {
+    return await this.riskRepository.getArsScore(transactionId)
+  }
+
+  async getKrsScoreFromDynamo(userId: string) {
+    let result = await this.riskRepository.getKrsScore(userId)
+    if (result) {
+      delete result['PartitionKeyID']
+      delete result['SortKeyID']
+      const riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+      const riskLevel = getRiskLevelFromScore(
+        riskClassificationValues,
+        result.krsScore
+      )
+      result = {
+        ...result,
+        riskLevel: riskLevel,
+      }
+    }
+    return result
+  }
+
   async getAverageArsScore(userId: string) {
     return await this.riskRepository.getAverageArsScore(userId)
   }
@@ -171,6 +198,28 @@ export class RiskService {
     for (const riskFactor of riskFactors) {
       await this.createOrUpdateRiskFactor(riskFactor)
     }
+  }
+
+  async getDrsScoreFromDynamo(userId: string) {
+    let result = await this.riskRepository.getDrsScore(userId)
+    if (result) {
+      delete result['PartitionKeyID']
+      delete result['SortKeyID']
+      const riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+      const derivedRiskLevel = getRiskLevelFromScore(
+        riskClassificationValues,
+        result.drsScore
+      )
+      result = {
+        ...result,
+        derivedRiskLevel:
+          result?.manualRiskLevel ??
+          result?.derivedRiskLevel ??
+          derivedRiskLevel,
+      }
+    }
+    return result
   }
 
   async createOrUpdateRiskFactor(

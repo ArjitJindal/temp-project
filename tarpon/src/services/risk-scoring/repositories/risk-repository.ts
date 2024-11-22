@@ -956,6 +956,38 @@ export class RiskRepository {
       }
     }
   )
+
+  async getDrsScores(userIds: string[]): Promise<DrsScore[]> {
+    return (
+      await batchGet<DrsScore>(
+        this.dynamoDb,
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        userIds.map((userId) =>
+          DynamoDbKeys.DRS_VALUE_ITEM(this.tenantId, userId, '1')
+        )
+      )
+    ).map((item) => {
+      delete item['PartitionKeyID']
+      delete item['SortKeyID']
+      return item
+    })
+  }
+
+  async getKrsScores(userIds: string[]): Promise<KrsScore[]> {
+    return (
+      await batchGet<KrsScore>(
+        this.dynamoDb,
+        StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+        userIds.map((userId) =>
+          DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
+        )
+      )
+    ).map((item) => {
+      delete item['PartitionKeyID']
+      delete item['SortKeyID']
+      return item
+    })
+  }
 }
 
 /** Kinesis Util */

@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { memoize } from 'lodash';
+import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
 import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
@@ -38,7 +39,6 @@ import {
   MONEY_CURRENCIES,
   MONEY_CURRENCY,
   PAYMENT_METHOD,
-  RISK_LEVEL,
   RULE_ACTION_STATUS,
   STRING,
   TAGS,
@@ -55,6 +55,9 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import { useRuleOptions } from '@/utils/rules';
 import Tag from '@/components/library/Tag';
 import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAPI';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { getOr } from '@/utils/asyncResource';
+import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -215,7 +218,8 @@ export default function TransactionsTable(props: Props) {
     canSelectRow,
   } = props;
   const ruleOptions = useRuleOptions();
-
+  const riskClassificationQuery = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskClassificationQuery, []);
   const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
     const helper = new ColumnHelper<InternalTransaction>();
     return helper.list([
@@ -259,10 +263,21 @@ export default function TransactionsTable(props: Props) {
               tooltip: 'Transaction Risk Score',
               exporting: true,
             }),
-            helper.simple<'arsScore.riskLevel'>({
+            helper.derived({
               title: 'TRS level',
-              type: RISK_LEVEL,
-              key: 'arsScore.riskLevel',
+              value: (entity) => entity.arsScore?.arsScore,
+              type: {
+                render: (value) => {
+                  if (value == null) {
+                    return <>-</>;
+                  }
+                  const riskLevel = getRiskLevelFromScore(riskClassificationValues, value);
+                  return <RiskLevelTag level={riskLevel} />;
+                },
+                stringify: (value) => {
+                  return value ? getRiskLevelFromScore(riskClassificationValues, value) : '-';
+                },
+              },
               tooltip: 'Transaction Risk Score level',
               exporting: false,
             }),
@@ -429,7 +444,13 @@ export default function TransactionsTable(props: Props) {
         defaultVisibility: false,
       }),
     ]);
-  }, [isRiskScoringEnabled, alert, showDetailsView, escalatedTransactions]);
+  }, [
+    isRiskScoringEnabled,
+    alert,
+    showDetailsView,
+    escalatedTransactions,
+    riskClassificationValues,
+  ]);
 
   const fullExtraFilters: ExtraFilterProps<TransactionsTableParams>[] = [
     ...(extraFilters ?? []),

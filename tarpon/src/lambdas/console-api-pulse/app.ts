@@ -171,12 +171,12 @@ export const riskLevelAndScoreHandler = lambdaApi({
 
     handlers.registerGetKrsValue(
       async (ctx, request) =>
-        await riskService.getKrsValueFromMongo(request.userId)
+        await riskService.getKrsScoreFromDynamo(request.userId)
     )
 
     handlers.registerGetArsValue(
       async (ctx, request) =>
-        await riskService.getArsValueFromMongo(request.transactionId)
+        await riskService.getArsScoreFromDynamo(request.transactionId)
     )
 
     handlers.registerGetTrsScores(async (ctx, request) => {
@@ -184,10 +184,15 @@ export const riskLevelAndScoreHandler = lambdaApi({
       return result ? { average: result.value } : { average: 0 }
     })
 
-    handlers.registerGetDrsValue(
-      async (ctx, request) =>
-        await riskService.getDrsValueFromMongo(request.userId)
-    )
+    handlers.registerGetDrsValue(async (ctx, request) => {
+      const dynamoResult = await riskService.getDrsScoreFromDynamo(
+        request.userId
+      )
+      if (dynamoResult) {
+        return [dynamoResult]
+      }
+      return null
+    })
 
     return await handlers.handle(event)
   }

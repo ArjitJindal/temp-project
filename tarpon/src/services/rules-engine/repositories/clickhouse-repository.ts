@@ -8,6 +8,10 @@ import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { getSortedData } from '@/utils/clickhouse/utils'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { ArsScore } from '@/@types/openapi-internal/ArsScore'
+import { hasFeature } from '@/core/utils/context'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -188,22 +192,36 @@ export class ClickhouseTransactionsRepository {
       groupByField: 'transactionId',
       groupBySortField: 'updatedAt',
     })
-
+    const hasFeaturePNB = hasFeature('PNB')
+    let arsScores: ArsScore[] = []
+    if (hasFeaturePNB) {
+      const riskRepository = new RiskRepository(this.tenantId, {
+        dynamoDb: getDynamoDbClient(),
+      })
+      arsScores = await riskRepository.getArsScores(
+        sortedTransactions.map((transaction) => transaction.transactionId)
+      )
+    }
     const finalTransactions = sortedTransactions.map((transaction) => {
       if (!transaction) {
         return null
       }
 
       delete (transaction as any)?.executedRules
-      delete (transaction as any)?.arsScore?.components
       delete (transaction as any)?.originDeviceData
       delete (transaction as any)?.destinationDeviceData
 
       const originPaymentDetails = transaction.originPaymentDetails
       const destinationPaymentDetails = transaction.destinationPaymentDetails
-
+      const arsScore = hasFeaturePNB
+        ? arsScores.find(
+            (arsScore) => arsScore.transactionId === transaction.transactionId
+          )
+        : transaction.arsScore
+      delete arsScore?.components
       return {
         ...transaction,
+        arsScore,
         originPaymentDetails: {
           method: originPaymentDetails?.method,
         },

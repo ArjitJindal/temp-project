@@ -83,10 +83,11 @@ export class UserClickhouseRepository {
     })
 
     if (hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')) {
-      sortedUsers = insertRiskScores(
+      sortedUsers = (await insertRiskScores(
         sortedUsers as WithId<InternalBusinessUser | InternalConsumerUser>[],
-        riskClassificationValues
-      ) as T[]
+        riskClassificationValues,
+        riskRepository
+      )) as T[]
     }
 
     return {

@@ -236,7 +236,10 @@ export class UserRepository {
     }
 
     if (isPulseEnabled) {
-      result.items = insertRiskScores(result.items, riskClassificationValues)
+      result.items = await insertRiskScores(
+        result.items,
+        riskClassificationValues
+      )
     }
 
     return result as AllUsersListResponse
@@ -677,7 +680,7 @@ export class UserRepository {
       ])
       .toArray()
     if (isPulseEnabled) {
-      users = insertRiskScores(users, riskClassificationValues)
+      users = await insertRiskScores(users, riskClassificationValues)
     }
 
     const total = await collection.countDocuments(query, {
