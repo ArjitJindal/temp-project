@@ -515,7 +515,20 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
 
         const uniqueUserIdIndex = { index: { userId: 1 }, unique: true }
 
-        return [...indexes1, ...indexes2, uniqueUserIdIndex]
+        const indexes3 = [
+          { lastTransactionTimestamp: 1 },
+          { userId: 1, createdTimestamp: 1 },
+          { 'userDetails.name.firstName': 1, createdTimestamp: 1 },
+          { 'userDetails.name.middleName': 1, createdTimestamp: 1 },
+          { 'userDetails.name.lastName': 1, createdTimestamp: 1 },
+          {
+            'legalEntity.companyGeneralDetails.legalName': 1,
+            createdTimestamp: 1,
+          },
+          { createdTimestamp: 1 },
+        ].map((index) => ({ index }))
+
+        return [...indexes1, ...indexes2, uniqueUserIdIndex, ...indexes3]
       },
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {
@@ -591,6 +604,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { 'caseAggregates.originPaymentMethods': 1 },
           { 'caseAggregates.destinationPaymentMethods': 1 },
           { 'caseAggregates.tags.key': 1, 'caseAggregates.tags.value': 1 },
+          { caseType: 1, caseStatus: 1 },
           { caseTransactionsIds: 1 },
         ].map((index) => ({ index })),
     },
@@ -600,6 +614,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
           { auditlogId: 1 },
           { timestamp: -1 },
           { type: 1, action: 1 },
+          { entityId: 1, timestamp: -1 },
           { entityId: 1 },
         ].map((index) => ({ index })),
     },
@@ -626,7 +641,10 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ].map((index) => ({ index })),
     },
     [DRS_SCORES_COLLECTION(tenantId)]: {
-      getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
+      getIndexes: () =>
+        [{ userId: 1 }, { userId: 1, createdAt: -1 }].map((index) => ({
+          index,
+        })),
     },
     [WEBHOOK_COLLECTION(tenantId)]: {
       getIndexes: () => [{ events: 1 }].map((index) => ({ index })),
@@ -811,11 +829,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         },
         {
           index: {
-            updatedAt: 1,
-          },
-        },
-        {
-          index: {
             nationality: 1,
           },
         },
@@ -839,6 +852,8 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             yearOfBirth: 1,
           },
         },
+        { index: { version: 1 } },
+        { index: { updatedAt: -1 } },
       ],
     },
   }
