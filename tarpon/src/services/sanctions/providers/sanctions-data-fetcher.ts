@@ -645,7 +645,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    if (request.monitoring?.enabled) {
+    if (request.isOngoingScreening) {
       return this.searchInMemory(request)
     }
     if (

@@ -11930,6 +11930,8 @@ components:
           type: string
         monitored:
           type: boolean
+        isOngoingScreening:
+          type: boolean
         searchTerm:
           type: string
         existingProviderId:

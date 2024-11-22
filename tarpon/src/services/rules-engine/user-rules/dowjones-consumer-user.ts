@@ -108,6 +108,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         types: screeningTypes,
         fuzzinessRange,
         fuzziness: undefined,
+        isOngoingScreening: this.ongoingScreeningMode,
         monitoring: { enabled: ongoingScreening },
         PEPRank,
         documentId: user.legalDocuments?.map((doc) => doc.documentNumber) ?? [],
