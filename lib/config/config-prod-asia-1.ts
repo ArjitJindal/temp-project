@@ -92,6 +92,9 @@ export const config: Config = {
     CRON_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
+    MONGO_DB_TRIGGER_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: false,
     ATLAS_SEARCH_ENABLED: true,

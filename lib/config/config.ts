@@ -103,6 +103,9 @@ export type Config = {
     LAMBDA_VPC_ENABLED?: boolean
     INSPECTOR_ENABLED: boolean
     ATLAS_SEARCH_ENABLED?: boolean
+    MONGO_DB_TRIGGER_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
   }
   viper?: {
     ADMIN_EMAILS: string[]

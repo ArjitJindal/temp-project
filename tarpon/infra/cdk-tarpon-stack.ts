@@ -1338,6 +1338,7 @@ export class CdkTarponStack extends cdk.Stack {
       func: mongoDbTriggerQueueConsumerFunc,
     } = createFunction(this, lambdaExecutionRole, {
       name: StackConstants.MONGO_DB_TRIGGER_QUEUE_CONSUMER_FUNCTION_NAME,
+      memorySize: config.resource.MONGO_DB_TRIGGER_LAMBDA?.MEMORY_SIZE,
     })
 
     this.addTagsToResource(mongoDbTriggerQueueConsumerAlias, {
