@@ -395,7 +395,7 @@ export class UserService {
   ): PEPStatus[] | undefined {
     const pepStatus = triggersOnHit.pepStatus
     if (pepStatus == null) {
-      return undefined
+      return pepStatusDetails
     }
     if (!pepStatusDetails) {
       return [pepStatus]
