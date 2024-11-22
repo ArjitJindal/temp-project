@@ -23,6 +23,7 @@ import {
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
   SANCTIONS_SEARCH_INDEX,
+  SANCTIONS_SEARCH_INDEX_DEFINITION,
 } from './mongodb-definitions'
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
 import { envIsNot } from './env'
@@ -351,17 +352,20 @@ export async function createSearchIndex(
     collectionName.endsWith('-sanctions')
   ) {
     const indexes = await collection
-      .listSearchIndexes(SANCTIONS_SEARCH_INDEX.name)
+      .listSearchIndexes(SANCTIONS_SEARCH_INDEX(tenantId))
       .toArray()
     if (hasFeature('DOW_JONES')) {
       console.log(`Creating search index for sanctions - ${tenantId}`)
       if (indexes.length > 0) {
         await collection.updateSearchIndex(
-          SANCTIONS_SEARCH_INDEX.name,
-          SANCTIONS_SEARCH_INDEX.definition
+          SANCTIONS_SEARCH_INDEX(tenantId),
+          SANCTIONS_SEARCH_INDEX_DEFINITION
         )
       } else {
-        await collection.createSearchIndex(SANCTIONS_SEARCH_INDEX)
+        await collection.createSearchIndex({
+          name: SANCTIONS_SEARCH_INDEX(tenantId),
+          definition: SANCTIONS_SEARCH_INDEX_DEFINITION,
+        })
       }
     } else {
       console.log(`Dropping search index for sanctions - ${tenantId}`)

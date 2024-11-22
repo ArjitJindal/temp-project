@@ -551,7 +551,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       .aggregate<SanctionsEntity>([
         {
           $search: {
-            index: SANCTIONS_SEARCH_INDEX.name,
+            index: SANCTIONS_SEARCH_INDEX(this.tenantId),
             concurrent: true,
             compound: {
               must: [
