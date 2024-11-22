@@ -302,6 +302,21 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     primaryKey: '(timestamp, id)',
     orderBy: '(timestamp, id)',
     mongoIdColumn: true,
+    materializedColumns: [
+      `alerts Array(Tuple(
+        ruleId String,
+        ruleInstanceId String, 
+        alertStatus String,
+        numberOfTransactionsHit Int32
+      )) MATERIALIZED 
+        arrayMap(x -> CAST((
+          JSONExtractString(x, 'ruleId'),
+          JSONExtractString(x, 'ruleInstanceId'),
+          JSONExtractString(x, 'alertStatus'),
+          JSONExtractInt(x, 'numberOfTransactionsHit')
+        ), 'Tuple(ruleId String, ruleInstanceId String, alertStatus String, numberOfTransactionsHit Int32)'),
+        JSONExtractArrayRaw(data, 'alerts'))`,
+    ],
   },
   {
     table: CLICKHOUSE_DEFINITIONS.KRS_SCORE.tableName,

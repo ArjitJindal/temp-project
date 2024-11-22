@@ -21,6 +21,13 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { traceable } from '@/core/xray'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { DashboardStatsRulesCount } from '@/@types/openapi-internal/DashboardStatsRulesCount'
 
 function getRuleStatsConditions(startDateText: string, endDateText: string) {
   return [
@@ -270,6 +277,9 @@ export class RuleHitsStatsDashboardMetric {
       updatedAt: 1,
       date: 1,
     })
+    await db.collection(aggregationCollection).createIndex({
+      date: -1,
+    })
   }
 
   public static async get(
@@ -279,6 +289,16 @@ export class RuleHitsStatsDashboardMetric {
     pageSize?: number | 'DISABLED',
     page?: number
   ): Promise<DashboardStatsRulesCountResponse> {
+    if (isClickhouseEnabled()) {
+      return this.getFromClickhouse(
+        tenantId,
+        startTimestamp,
+        endTimestamp,
+        pageSize,
+        page
+      )
+    }
+
     const db = await getMongoDbClientDb()
     const collection = db.collection<DashboardStatsRiskLevelDistributionData>(
       DASHBOARD_RULE_HIT_STATS_COLLECTION_HOURLY(tenantId)
@@ -287,33 +307,141 @@ export class RuleHitsStatsDashboardMetric {
     const endDateText: string = endDate.format(HOUR_DATE_FORMAT_JS)
     const startDateText: string =
       dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)
-    const result = await collection
+    const [result] = await collection
       .aggregate<{
-        _id: { ruleId: string; ruleInstanceId: string }
-        hitCount: number
-        openAlertsCount: number
+        paginatedData: {
+          _id: { ruleId: string; ruleInstanceId: string }
+          hitCount: number
+          openAlertsCount: number
+        }[]
+        totalCount: { count: number }[]
       }>(
         [
           ...getRuleStatsConditions(startDateText, endDateText),
-          { $sort: { hitCount: -1 } },
-          ...paginatePipeline({ page, pageSize }),
+          {
+            $facet: {
+              paginatedData: [
+                { $sort: { hitCount: -1 } },
+                ...paginatePipeline({ page, pageSize }),
+              ],
+              totalCount: [{ $count: 'count' }],
+            },
+          },
         ],
         { allowDiskUse: true }
       )
       .toArray()
-    const resultCount = (
-      await collection
-        .aggregate([...getRuleStatsConditions(startDateText, endDateText)])
-        .toArray()
-    ).length
+
     return {
-      data: result.map((x) => ({
+      data: result.paginatedData.map((x) => ({
         ruleId: x._id.ruleId,
         ruleInstanceId: x._id.ruleInstanceId,
         hitCount: x.hitCount,
         openAlertsCount: x.openAlertsCount,
       })),
-      total: resultCount,
+      total: result.totalCount[0]?.count ?? 0,
+    }
+  }
+
+  private static async getFromClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number,
+    pageSize?: number | 'DISABLED',
+    page?: number
+  ): Promise<DashboardStatsRulesCountResponse> {
+    const client = await getClickhouseClient(tenantId)
+    const limit =
+      pageSize === 'DISABLED' ? 'NULL' : pageSize ?? DEFAULT_PAGE_SIZE
+    const offset =
+      page && pageSize !== 'DISABLED'
+        ? (page - 1) * (pageSize ?? DEFAULT_PAGE_SIZE)
+        : 0
+
+    // compiling the data as we do in the refreshstats above for mongo. Doing it once for clickhouse without storing the
+    // data in a new table
+    const transactionsQuery = `
+    WITH
+      arrayJoin(ruleInstancesHit) as ruleInstanceId,
+      JSONExtractString(data, 'hitRules') as hitRules
+    SELECT 
+      ruleInstanceId,
+      JSONExtractString(arrayFirst(x -> JSONExtractString(x, 'ruleInstanceId') = ruleInstanceId, JSONExtractArrayRaw(data, 'hitRules')), 'ruleId') as ruleId,
+      count() as hitCount
+    FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
+    WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+      AND JSONExtractBool(arrayFirst(x -> JSONExtractString(x, 'ruleInstanceId') = ruleInstanceId, JSONExtractArrayRaw(data, 'hitRules')), 'isShadow') != true
+    GROUP BY ruleInstanceId, ruleId
+  `
+
+    const alertsQuery = `
+    WITH
+      arrayJoin(alerts) as alert
+  SELECT 
+    alert.2 as ruleInstanceId,
+    alert.1 as ruleId,
+    countIf(alert.3 != 'CLOSED') as openAlertsCount,
+    countIf(alert.4 = 0) as hitCount
+  FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+  WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
+  GROUP BY ruleInstanceId, ruleId
+  `
+
+    const finalQuery = `
+  WITH 
+    transactions AS (${transactionsQuery}),
+    alerts AS (${alertsQuery})
+  SELECT 
+    if(t.ruleId != '', t.ruleId, a.ruleId) as ruleId,
+    if(t.ruleInstanceId != '', t.ruleInstanceId, a.ruleInstanceId) as ruleInstanceId,
+    coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
+    a.openAlertsCount
+  FROM transactions t
+  FULL OUTER JOIN alerts a ON t.ruleInstanceId = a.ruleInstanceId
+  ORDER BY hitCount DESC
+  LIMIT ${limit}
+  OFFSET ${offset}
+  SETTINGS join_use_nulls = 1, output_format_json_quote_64bit_integers = 0
+`
+
+    const countQuery = `
+    WITH 
+      transactions AS (${transactionsQuery}),
+      alerts AS (${alertsQuery})
+    SELECT count() as total
+    FROM (
+      SELECT ruleInstanceId
+      FROM transactions
+      UNION DISTINCT
+      SELECT ruleInstanceId
+      FROM alerts
+      WHERE ruleInstanceId != ''
+    )
+  `
+
+    const [data, totalCount] = await Promise.all([
+      client
+        .query({
+          query: finalQuery,
+          format: 'JSONEachRow',
+        })
+        .then((res) => res.json<DashboardStatsRulesCount>()),
+      client
+        .query({
+          query: countQuery,
+          format: 'JSONEachRow',
+        })
+        .then((res) => res.json<{ total: number }>()),
+    ])
+
+    return {
+      data: data.map((row) => ({
+        ruleId: row.ruleId,
+        ruleInstanceId: row.ruleInstanceId,
+        hitCount: Number(row.hitCount ?? 0),
+        openAlertsCount: Number(row.openAlertsCount ?? 0),
+      })),
+      total: Number(totalCount[0]?.total ?? 0),
     }
   }
 }
