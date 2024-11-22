@@ -260,6 +260,7 @@ export function RiskFactors(props: { type: string }) {
                     values: item.riskLevelAssignmentValues,
                     defaultValue: item.defaultValue,
                     weight: item.weight,
+                    parameterType: item.parameterType,
                   }),
                 };
               });

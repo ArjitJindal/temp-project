@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import {
+  ALL_RISK_PARAMETERS,
   BUSINESS_RISK_PARAMETERS,
   TRANSACTION_RISK_PARAMETERS,
   USER_RISK_PARAMETERS,
@@ -174,6 +175,7 @@ export function RiskFactorsSimulation(props: Props) {
                 entity as Entity,
                 parameter as ParameterAttributeRiskValuesParameterEnum,
               ),
+              parameterType: value.parameterType,
               riskLevelAssignmentValues: value.values,
               weight: value.weight,
               defaultValue: value.defaultValue,
@@ -257,6 +259,7 @@ export function RiskFactorsSimulation(props: Props) {
     defaultValue: RiskScoreValueScore | RiskScoreValueLevel,
     weight: number,
   ) => {
+    const parameterSettings = ALL_RISK_PARAMETERS.find((param) => param.parameter === parameter);
     setValuesResources((prevValuesResources) => {
       return prevValuesResources.map((prevValuesResource, index) => {
         if (index === activeIterationIndex - 1) {
@@ -269,6 +272,8 @@ export function RiskFactorsSimulation(props: Props) {
                 values: newValues,
                 defaultValue,
                 weight,
+                parameterType: parameterSettings?.parameterType,
+                isDerived: parameterSettings?.isDerived,
               }),
             },
           };
@@ -287,6 +292,7 @@ export function RiskFactorsSimulation(props: Props) {
       defaultValue: { type: 'RISK_LEVEL', value: 'VERY_HIGH' },
       weight: 1,
     };
+    const parameterSettings = ALL_RISK_PARAMETERS.find((param) => param.parameter === parameter);
     setValuesResources((prevValuesResources) => {
       return prevValuesResources.map((prevValuesResource, index) => {
         if (index === activeIterationIndex - 1) {
@@ -298,6 +304,8 @@ export function RiskFactorsSimulation(props: Props) {
                 ...((prevValuesResource[entityType]?.[parameter] as Success<ParameterSettings>)
                   ?.value ?? defaultRiskFactorValue),
                 isActive: isActive,
+                parameterType: parameterSettings?.parameterType,
+                isDerived: parameterSettings?.isDerived,
               }),
             },
           };
