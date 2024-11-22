@@ -17,7 +17,9 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
   private publicApiKey!: string
   private publicApiEndpoint!: string
-  private startTimestamp?: number
+  private cursor!:
+    | { type: 'START_TIMESTAMP'; value: number }
+    | { type: 'IDS'; value: string[] }
 
   protected async run(job: PnbBackfillKrs): Promise<void> {
     const { tenantId } = job
@@ -25,8 +27,9 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
       concurrency = 50,
       publicApiKey,
       publicApiEndpoint,
-      startTimestamp = 0,
+      cursor: dataCursor,
     } = job.parameters
+    this.cursor = dataCursor
 
     const db = await getMongoDbClientDb()
     this.publicApiKey = publicApiKey
@@ -35,12 +38,20 @@ export class PnbBackfillKrsBatchJobRunner extends BatchJobRunner {
 
     const lastCompletedTimestamp =
       (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
+
     const cursor = db
       .collection<InternalUser>(USERS_COLLECTION(tenantId))
       .find({
-        createdTimestamp: {
-          $gte: Math.max(lastCompletedTimestamp, startTimestamp),
-        },
+        ...(this.cursor.type === 'START_TIMESTAMP'
+          ? {
+              createdTimestamp: {
+                $gte: Math.max(lastCompletedTimestamp, this.cursor.value),
+              },
+            }
+          : {}),
+        ...(this.cursor.type === 'IDS'
+          ? { userId: { $in: this.cursor.value } }
+          : {}),
       })
       .sort({ createdTimestamp: 1 })
       .addCursorFlag('noCursorTimeout', true)

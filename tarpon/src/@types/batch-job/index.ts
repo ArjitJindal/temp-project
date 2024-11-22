@@ -266,7 +266,9 @@ export type PnbBackfillKrs = {
     concurrency: number
     publicApiEndpoint: string
     publicApiKey: string
-    startTimestamp?: number
+    cursor:
+      | { type: 'START_TIMESTAMP'; value: number }
+      | { type: 'IDS'; value: string[] }
   }
 }
 export type PnbBackfillCra = {
