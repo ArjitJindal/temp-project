@@ -15,6 +15,7 @@ import { ManualRulePreAggregationBatchJobRunner } from './manual-rule-pre-aggreg
 import { PnbBackfillKrsBatchJobRunner } from './pnb-backfill-krs-fargate-batch-job'
 import { PnbBackfillArsBatchJobRunner } from './pnb-backfill-ars-fargate-batch-job'
 import { PnbBackfillCraBatchJobRunner } from './pnb-backfill-cra-fargate-batch-job'
+import { PnbBackfillHammerheadBatchJobRunner } from './pnb-backfill-hammerhead-fargate-batch-job'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -74,6 +75,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new PnbBackfillTransactionsBatchJobRunner(jobId),
     PNB_BACKFILL_KRS: (jobId) => new PnbBackfillKrsBatchJobRunner(jobId),
     PNB_BACKFILL_CRA: (jobId) => new PnbBackfillCraBatchJobRunner(jobId),
+    PNB_BACKFILL_HAMMERHEAD: (jobId) =>
+      new PnbBackfillHammerheadBatchJobRunner(jobId),
     PNB_BACKFILL_ARS: (jobId) => new PnbBackfillArsBatchJobRunner(jobId),
     CASE_SLA_STATUS_REFRESH: (jobId) =>
       new CaseSLAStatusRefreshBatchJobRunner(jobId),

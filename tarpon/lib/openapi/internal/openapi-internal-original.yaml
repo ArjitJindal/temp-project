@@ -9278,7 +9278,7 @@ components:
               $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
-            averageArsScore:
+            avgArsScore:
               $ref: '#/components/schemas/AverageArsScore'
             casesCount:
               type: number
@@ -9305,7 +9305,7 @@ components:
               $ref: '#/components/schemas/KrsScore'
             drsScore:
               $ref: '#/components/schemas/DrsScore'
-            averageArsScore:
+            avgArsScore:
               $ref: '#/components/schemas/AverageArsScore'
             casesCount:
               type: number

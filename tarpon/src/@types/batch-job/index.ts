@@ -277,6 +277,14 @@ export type PnbBackfillCra = {
     startTimestamp?: number
   }
 }
+export type PnbBackfillHammerhead = {
+  type: 'PNB_BACKFILL_HAMMERHEAD'
+  tenantId: string
+  parameters: {
+    type: 'TRANSACTION' | 'USER'
+    concurrency: number
+  }
+}
 
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
@@ -306,6 +314,7 @@ export type BatchJob =
   | PnbBackfillKrs
   | PnbBackfillArs
   | PnbBackfillCra
+  | PnbBackfillHammerhead
   | CaseSLAStatusRefreshBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string

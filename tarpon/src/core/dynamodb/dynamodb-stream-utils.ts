@@ -55,7 +55,7 @@ function unMarshallDynamoDBStream(dataString: string) {
   return unmarshall(parserd_json)
 }
 
-function getDynamoDbEntityMetadata(
+export function getDynamoDbEntityMetadata(
   partitionKeyId: string,
   entity: any
 ): { type: DynamoDbEntityType; entityId: string } | null {
