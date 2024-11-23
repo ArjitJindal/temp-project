@@ -751,7 +751,7 @@ export class CdkTarponStack extends cdk.Stack {
     )
 
     asyncRuleAlias.addEventSource(
-      new SqsEventSource(asyncRuleQueue, { batchSize: 10 })
+      new SqsEventSource(asyncRuleQueue, { maxConcurrency: 100, batchSize: 10 })
     )
 
     /* Transaction Aggregation */
