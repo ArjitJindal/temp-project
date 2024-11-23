@@ -68,13 +68,6 @@ export type OngoingScreeningUserRuleBatchJob = {
   tenantId: string
   from?: string // Optionally process a batch of users from this ID
   to?: string // Optionally process a batch of users to this ID
-  userUpdatedFrom?: number
-}
-/* Multi-job Sanctions Screening Rule */
-export type PnbScreeningBackfillJob = {
-  type: 'PNB_SCREENING_BACKFILL'
-  tenantId: string
-  userUpdatedFrom?: number
 }
 
 /* Pulse Backfill */
@@ -295,7 +288,6 @@ export type BatchJob =
   | SimulationRiskFactorsV8BatchJob
   | DemoModeDataLoadBatchJob
   | OngoingScreeningUserRuleBatchJob
-  | PnbScreeningBackfillJob
   | PulseDataLoadBatchJob
   | ApiUsageMetricsBatchJob
   | GlobalRuleAggregationRebuildBatchJob

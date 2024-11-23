@@ -123,8 +123,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
       },
       hitContext,
-      undefined,
-      this.ongoingScreeningMode
+      undefined
     )
     if (result.hitsCount > 0) {
       hitResult.push({

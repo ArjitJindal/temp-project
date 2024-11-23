@@ -8,61 +8,47 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 
 export class SanctionsProviderSearchRepository {
-  async updateMonitoredSearches(
-    searchFunction: (
-      request: SanctionsSearchRequest
-    ) => Promise<SanctionsProviderResponse>
-  ) {
-    const sanctionsProviderCollection =
-      await this.getSanctionProviderCollection()
-
-    for await (const monitoredSearch of sanctionsProviderCollection.find({
-      monitor: true,
-    })) {
-      if (monitoredSearch.providerSearchId && monitoredSearch.request) {
-        await searchFunction({
-          existingProviderId: monitoredSearch.providerSearchId,
-          ...monitoredSearch.request,
-        })
-      }
-    }
-  }
-
   async saveSearch(
     results: Array<SanctionsEntity>,
     request: SanctionsSearchRequest
   ) {
     const providerSearchId = request.existingProviderId || uuidv4()
-    const sanctionsProviderCollection =
-      await this.getSanctionProviderCollection()
-    await sanctionsProviderCollection.updateOne(
-      { providerSearchId },
-      { $set: request },
-      {
-        upsert: true,
-      }
-    )
-    return {
+    const object = {
       providerSearchId,
       hitsCount: results.length,
       data: results,
       createdAt: new Date().getTime(),
+      request,
     }
+    // TODO disabling this for the time being
+    // const sanctionsProviderCollection =
+    //   await this.getSanctionProviderCollection()
+    // await sanctionsProviderCollection.updateOne(
+    //   { providerSearchId },
+    //   { $set: object },
+    //   {
+    //     upsert: true,
+    //   }
+    // )
+    return object
   }
 
   async getSearchResult(
     providerSearchId: string
   ): Promise<SanctionsProviderResponse> {
-    const result = await (
-      await this.getSanctionProviderCollection()
-    ).findOne({
-      providerSearchId: providerSearchId,
-    })
-
-    if (!result) {
-      throw new Error(`Search not found for ${providerSearchId}`)
-    }
-    return result
+    // TODO disabling this for the time being
+    throw new Error(`Search not found for ${providerSearchId}`)
+    //
+    // const result = await (
+    //   await this.getSanctionProviderCollection()
+    // ).findOne({
+    //   providerSearchId: providerSearchId,
+    // })
+    //
+    // if (!result) {
+    //   throw new Error(`Search not found for ${providerSearchId}`)
+    // }
+    // return result
   }
   async deleteSearchResult(providerSearchId: string): Promise<void> {
     const sanctionsProviderCollection =

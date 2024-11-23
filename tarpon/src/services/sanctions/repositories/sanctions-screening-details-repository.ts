@@ -1,5 +1,5 @@
 import { MongoClient, Document } from 'mongodb'
-import { isNil, omitBy, sum, uniq } from 'lodash'
+import { isNil, omitBy, sum } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SANCTIONS_SCREENING_DETAILS_COLLECTION } from '@/utils/mongodb-definitions'
 import { traceable } from '@/core/xray'
@@ -7,11 +7,14 @@ import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsSc
 import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
-import { internalMongoReplace, paginatePipeline } from '@/utils/mongodb-utils'
+import { paginatePipeline } from '@/utils/mongodb-utils'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import {
+  getClickhouseClient,
+  sendMessageToMongoConsumer,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
@@ -28,8 +31,7 @@ export class SanctionsScreeningDetailsRepository {
 
   public async addSanctionsScreeningDetails(
     details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'>,
-    screenedAt = Date.now(),
-    backfill = false
+    screenedAt = Date.now()
   ): Promise<void> {
     const db = this.mongoDb.db()
     const sanctionsScreeningCollectionName =
@@ -39,63 +41,44 @@ export class SanctionsScreeningDetailsRepository {
       sanctionsScreeningCollectionName
     )
 
-    if (backfill) {
-      try {
-        const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
-        await collection.insertOne({
-          ...details,
-          ruleInstanceIds: details.ruleInstanceIds,
-          userIds: details.userIds,
-          transactionIds: details.transactionIds,
-          lastScreenedAt: roundedScreenedAt,
-          isNew: true,
-        })
-      } catch (e) {
-        // Do nothing
-      }
-
-      return
-    }
-
-    const previousScreenResult = await collection.findOne({
-      lastScreenedAt: { $lt: screenedAt },
-      name: details.name,
-      entity: details.entity,
-    })
-
-    // NOTE: Round the timestamp to the nearest hour to avoid having too many records
     const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
+
     const filter = {
       name: details.name,
       entity: details.entity,
       lastScreenedAt: roundedScreenedAt,
     }
-    const existingRecord = await collection.findOne(filter)
 
-    await internalMongoReplace(
-      this.mongoDb,
-      sanctionsScreeningCollectionName,
-      filter,
-      {
-        ...existingRecord,
-        ...details,
-        ruleInstanceIds: uniq(
-          (existingRecord?.ruleInstanceIds ?? []).concat(
-            details.ruleInstanceIds ?? []
-          )
-        ),
-        userIds: uniq(
-          (existingRecord?.userIds ?? []).concat(details.userIds ?? [])
-        ),
-        transactionIds: uniq(
-          (existingRecord?.transactionIds ?? []).concat(
-            details.transactionIds ?? []
-          )
-        ),
+    const {
+      ruleInstanceIds = [],
+      userIds = [],
+      transactionIds = [],
+      ...detailsWithoutSets
+    } = details
+    const update = {
+      $set: {
+        ...detailsWithoutSets,
         lastScreenedAt: roundedScreenedAt,
-        isNew: !previousScreenResult,
-      }
-    )
+      },
+      $setOnInsert: {
+        isNew: true,
+      },
+      $addToSet: {
+        ruleInstanceIds: { $each: ruleInstanceIds },
+        userIds: { $each: userIds },
+        transactionIds: { $each: transactionIds },
+      },
+    }
+
+    const options = { upsert: true }
+
+    const result = await collection.updateOne(filter, update, options)
+    await sendMessageToMongoConsumer({
+      collectionName: sanctionsScreeningCollectionName,
+      documentKey: { type: 'id', value: String(result.upsertedId) },
+      operationType: 'replace',
+      clusterTime: Date.now(),
+    })
   }
 
   private async getSanctionsScreeningStatsClickhouse(timestampRange?: {

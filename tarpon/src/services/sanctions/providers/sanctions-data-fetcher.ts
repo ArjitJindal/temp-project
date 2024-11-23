@@ -1,10 +1,11 @@
-import { uniq } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import {
+  DELTA_SANCTIONS_COLLECTION,
+  DELTA_SANCTIONS_SEARCH_INDEX,
   SANCTIONS_COLLECTION,
   SANCTIONS_SEARCH_INDEX,
 } from '@/utils/mongodb-definitions'
@@ -14,74 +15,7 @@ import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
-import { logger } from '@/core/logger'
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
-const documentIdToIds = new Map<string, string[]>()
-const nameToIds = new Map<string, string[]>()
-const sanctionEntities = new Map<string, SanctionsEntity>()
-const namesByLength = new Map<number, string[]>()
-
-let fetchPromise: Promise<any> | undefined
-let dataLoaded = false
-
-const fetchData = async function (tenantId: string) {
-  if (!dataLoaded) {
-    if (!fetchPromise) {
-      const load = async () => {
-        logger.warn('Fetching sanctions data to store in memory')
-        const client = await getMongoDbClient()
-        const sanctions = client
-          .db()
-          .collection<SanctionsEntity>(SANCTIONS_COLLECTION(tenantId))
-        const now = Date.now()
-        const oneDayAgo = now - 86400000 // 86,400,000 ms = 24 hours
-        const updatedSanctions = await sanctions
-          .find({
-            $or: [
-              {
-                createdAt: {
-                  $gte: oneDayAgo,
-                },
-              },
-              {
-                updatedAt: {
-                  $gte: oneDayAgo,
-                },
-              },
-            ],
-          })
-          .toArray()
-        // Store data into maps
-        updatedSanctions.forEach((sanctionsEntity) => {
-          sanctionEntities.set(sanctionsEntity.id, sanctionsEntity)
-          const names = [sanctionsEntity.name, ...(sanctionsEntity.aka || [])]
-          names.forEach((upperCaseName) => {
-            const name = upperCaseName.toLowerCase()
-            const ids = nameToIds.get(name) || []
-            ids.push(sanctionsEntity.id)
-            nameToIds.set(name, ids)
-
-            const names = namesByLength.get(name.length) || []
-            names.push(name)
-            namesByLength.set(name.length, names)
-          })
-          sanctionsEntity.documents
-            ?.flatMap((d) => [d.formattedId, d.id])
-            .forEach((documentId) => {
-              if (documentId) {
-                const ids = documentIdToIds.get(documentId) || []
-                ids.push(sanctionsEntity.id)
-                documentIdToIds.set(documentId, ids)
-              }
-            })
-        })
-      }
-      fetchPromise = load()
-    }
-    await fetchPromise
-    dataLoaded = true
-  }
-}
 
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
@@ -101,11 +35,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     version: string,
     from: Date
   ): Promise<void>
-
-  async updateMonitoredSearches() {
-    await this.searchRepository.updateMonitoredSearches(this.search.bind(this))
-    return
-  }
 
   public static getFuzzinessEvaluationResult(
     request: SanctionsSearchRequest,
@@ -312,7 +241,11 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     }
 
     const results = await db
-      .collection(SANCTIONS_COLLECTION(this.tenantId))
+      .collection(
+        request.isOngoingScreening
+          ? DELTA_SANCTIONS_COLLECTION(this.tenantId)
+          : SANCTIONS_COLLECTION(this.tenantId)
+      )
       .find<SanctionsEntity>(match)
       .toArray()
 
@@ -547,11 +480,17 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       request.fuzzinessRange?.upperBound === 100 ? 3 : 7
     const results = await client
       .db()
-      .collection(SANCTIONS_COLLECTION(this.tenantId))
+      .collection(
+        request.isOngoingScreening
+          ? DELTA_SANCTIONS_COLLECTION(this.tenantId)
+          : SANCTIONS_COLLECTION(this.tenantId)
+      )
       .aggregate<SanctionsEntity>([
         {
           $search: {
-            index: SANCTIONS_SEARCH_INDEX(this.tenantId),
+            index: request.isOngoingScreening
+              ? DELTA_SANCTIONS_SEARCH_INDEX(this.tenantId)
+              : SANCTIONS_SEARCH_INDEX(this.tenantId),
             concurrent: true,
             compound: {
               must: [
@@ -645,9 +584,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
-    if (request.isOngoingScreening) {
-      return this.searchInMemory(request)
-    }
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||
@@ -656,186 +592,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       return this.searchWithoutMatchingNames(request)
     }
     return this.searchWithMatchingNames(request)
-  }
-
-  async searchInMemory(
-    request: SanctionsSearchRequest
-  ): Promise<SanctionsProviderResponse> {
-    await fetchData(this.tenantId)
-    const results: SanctionsEntity[] = []
-
-    let fuzzinessThreshold = 0
-    if (request.fuzzinessRange?.upperBound) {
-      fuzzinessThreshold = request.fuzzinessRange?.upperBound
-    } else if (request.fuzziness) {
-      fuzzinessThreshold = request.fuzziness * 100
-    }
-    const allowedDifference = fuzzinessThreshold / 100
-
-    const matchingIds: string[] = []
-
-    // Get name matches
-    const minLength = Math.floor(
-      request.searchTerm.length - request.searchTerm.length * allowedDifference
-    )
-    const maxLength = Math.ceil(
-      request.searchTerm.length + request.searchTerm.length * allowedDifference
-    )
-    for (let i = minLength; i <= maxLength; i++) {
-      const names = namesByLength.get(i)
-      names?.forEach((n) => {
-        const percentageDifference =
-          100 - calculateLevenshteinDistancePercentage(n, request.searchTerm)
-        if (percentageDifference < allowedDifference * 100) {
-          matchingIds.concat(...(nameToIds.get(n) || []))
-        }
-      })
-    }
-
-    // Get document matches
-    request.documentId?.forEach((documentId) => {
-      matchingIds.concat(...(documentIdToIds.get(documentId) || []))
-    })
-
-    for (const entityId of uniq(matchingIds)) {
-      const entity = sanctionEntities.get(entityId)
-      if (!entity) {
-        continue
-      }
-      const andConditions: boolean[] = []
-      const orConditions: boolean[] = []
-
-      const searchTerm = request.searchTerm.toLowerCase()
-      if (allowedDifference === 0) {
-        andConditions.push(entity.name.toLowerCase() === searchTerm)
-      } else {
-        const allNames = [entity?.name || '', ...(entity?.aka || [])].map((n) =>
-          n.toLowerCase()
-        )
-        andConditions.push(
-          allNames.some((n) => {
-            const percentageDifference =
-              100 - calculateLevenshteinDistancePercentage(n, searchTerm)
-            return percentageDifference < allowedDifference * 100
-          })
-        )
-      }
-
-      // Country Codes
-      if (request.countryCodes) {
-        andConditions.push(
-          entity.countryCodes?.some((code: string) =>
-            request.countryCodes?.includes(code)
-          ) ?? false
-        )
-      }
-
-      // Year of Birth
-      const yearOfBirthMatch =
-        !request.yearOfBirth ||
-        entity.yearOfBirth === `${request.yearOfBirth}` ||
-        !entity.yearOfBirth
-      ;(request.orFilters?.includes('yearOfBirth')
-        ? orConditions
-        : andConditions
-      ).push(yearOfBirthMatch)
-
-      // Types
-      if (request.types) {
-        const typeMatch =
-          (entity.sanctionSearchTypes?.some((type) =>
-            request.types?.includes(type)
-          ) ||
-            entity.associates?.some((associate) =>
-              associate.sanctionsSearchTypes?.some((type) =>
-                request.types?.includes(type)
-              )
-            )) ??
-          false
-        ;(request.orFilters?.includes('types')
-          ? orConditions
-          : andConditions
-        ).push(typeMatch)
-      }
-
-      // Document ID
-      if (request.documentId) {
-        const documentIdMatch =
-          request.documentId.length > 0
-            ? request.documentId.some((docId) =>
-                entity.documents?.some(
-                  (doc) => doc.id === docId || doc.formattedId === docId
-                )
-              )
-            : false
-
-        ;(request.orFilters?.includes('documentId')
-          ? orConditions
-          : andConditions
-        ).push(request.allowDocumentMatches === documentIdMatch)
-      }
-
-      // Nationality
-      const nationality = request.nationality
-      if (nationality) {
-        const nationalityMatch =
-          entity.nationality?.some((nat: string) =>
-            [...nationality, 'XX', 'ZZ'].includes(nat)
-          ) ?? false
-        ;(request.orFilters?.includes('nationality')
-          ? orConditions
-          : andConditions
-        ).push(
-          nationalityMatch ||
-            !entity.nationality ||
-            entity.nationality.length === 0
-        )
-      }
-
-      // Occupation Code
-      if (request.occupationCode) {
-        andConditions.push(
-          entity.occupations?.some(
-            (occupation) =>
-              occupation.occupationCode &&
-              request.occupationCode?.includes(occupation.occupationCode)
-          ) ?? false
-        )
-      }
-
-      // PEP Rank
-      if (request.PEPRank) {
-        andConditions.push(
-          entity.occupations?.some(
-            (occupation) => occupation.rank == request.PEPRank
-          ) ?? false
-        )
-      }
-
-      // Gender
-      if (request.gender) {
-        const genderMatch =
-          entity.gender === request.gender ||
-          !entity.gender ||
-          entity.gender === 'Unknown'
-        ;(request.orFilters?.includes('gender')
-          ? orConditions
-          : andConditions
-        ).push(genderMatch)
-      }
-
-      // Combine Conditions
-      const isMatch =
-        andConditions.every(Boolean) &&
-        (orConditions.length === 0 || orConditions.some(Boolean))
-      if (isMatch) {
-        results.push(entity)
-      }
-    }
-    return this.searchRepository.saveSearch(
-      this.hydrateHitsWithMatchTypes(results, request),
-      request
-    )
   }
 
   provider(): SanctionsDataProviderName {

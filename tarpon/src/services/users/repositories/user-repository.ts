@@ -785,8 +785,7 @@ export class UserRepository {
 
   public getAllUsersCursor(
     from?: string,
-    to?: string,
-    fromTimestamp?: number
+    to?: string
   ): FindCursor<WithId<InternalUser>> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalUser>(
@@ -799,15 +798,6 @@ export class UserRepository {
     }
     if (to) {
       match = { userId: { ...match.userId, $lte: to } }
-    }
-    if (fromTimestamp) {
-      match = {
-        $or: [
-          { createdAt: { $gte: fromTimestamp } },
-          { updatedAt: { $gte: fromTimestamp } },
-        ],
-        ...match,
-      }
     }
     return collection.find(match, { sort: { userId: 1 } })
   }

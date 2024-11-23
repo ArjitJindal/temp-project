@@ -5,6 +5,9 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 export const SANCTIONS_SEARCH_INDEX = (tenantId: string) =>
   `${tenantId}_sanctions_search_index`
 
+export const DELTA_SANCTIONS_SEARCH_INDEX = (tenantId: string) =>
+  `${tenantId}_delta_sanctions_search_index`
+
 export const SANCTIONS_SEARCH_INDEX_DEFINITION = {
   mappings: {
     dynamic: false,
@@ -336,6 +339,9 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
 }
 
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
+export const DELTA_SANCTIONS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-delta-sanctions`
+}
 export const SANCTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions`
 }

@@ -77,7 +77,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   userService?: UserService
   from?: string
   to?: string
-  fromTimestamp?: number
 
   public async init(job: OngoingScreeningUserRuleBatchJob) {
     const tenantId = job.tenantId
@@ -111,7 +110,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       mongoDb,
     })
     this.userRepository = this.userService.userRepository
-    this.fromTimestamp = job.userUpdatedFrom
   }
 
   protected async run(job: OngoingScreeningUserRuleBatchJob): Promise<void> {
@@ -140,8 +138,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 
     const usersCursor = this.userRepository?.getAllUsersCursor(
       this.from,
-      this.to,
-      this.fromTimestamp
+      this.to
     )
 
     if (usersCursor) {
@@ -167,8 +164,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     }
     const data = await this.rulesEngineService.verifyAllUsersRules(
       this.from,
-      this.to,
-      this.fromTimestamp
+      this.to
     )
     if (!this.userRepository) {
       throw new Error('User Repository is not initialized')

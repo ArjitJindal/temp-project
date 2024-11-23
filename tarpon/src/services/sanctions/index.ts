@@ -175,8 +175,7 @@ export class SanctionsService {
     context?: SanctionsHitContext & {
       isOngoingScreening?: boolean
     },
-    providerOverrides?: ProviderConfig,
-    backfill = false
+    providerOverrides?: ProviderConfig
   ): Promise<SanctionsSearchResponse> {
     await this.initialize()
 
@@ -208,17 +207,16 @@ export class SanctionsService {
     let createdAt: number | undefined = undefined
 
     let existedSearch: SanctionsSearchHistory | null = null
-    if (!backfill) {
-      existedSearch =
-        await this.sanctionsSearchRepository.getSearchResultByParams(
-          providerName,
-          request
-        )
-    }
+    existedSearch =
+      await this.sanctionsSearchRepository.getSearchResultByParams(
+        providerName,
+        request
+      )
 
     let sanctionsSearchResponse: SanctionsProviderResponse
 
-    if (!existedSearch?.response) {
+    // Only cache results from comply advantage
+    if (!existedSearch?.response || providerName !== 'comply-advantage') {
       const provider = await this.getProvider(providerName, providerOverrides)
       sanctionsSearchResponse = await provider.search(request)
       providerSearchId = sanctionsSearchResponse.providerSearchId
@@ -274,8 +272,7 @@ export class SanctionsService {
       }
       await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
         details,
-        Date.now(),
-        backfill
+        Date.now()
       )
       if (context.iban) {
         await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
@@ -284,8 +281,7 @@ export class SanctionsService {
             name: context.iban,
             entity: 'IBAN',
           },
-          Date.now(),
-          backfill
+          Date.now()
         )
       }
     }
