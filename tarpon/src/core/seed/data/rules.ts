@@ -1,6 +1,5 @@
 import { cloneDeep, memoize, random } from 'lodash'
 import { getRandomUser } from '../samplers/accounts'
-import { sampleTimestamp } from '../samplers/timestamp'
 import { getSLAPolicies } from './sla'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import {
@@ -20,8 +19,6 @@ import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/tran
 import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
 import { isShadowRule } from '@/services/rules-engine/utils'
-import { RiskLevelsTriggersOnHit } from '@/@types/openapi-internal/RiskLevelsTriggersOnHit'
-import { TriggersOnHit } from '@/@types/openapi-internal/TriggersOnHit'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -100,65 +97,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       },
       checksFor: ['1st transaction'],
       createdBy: 'auth0|6214112c1f466500695754f9',
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-    },
-    {
-      id: 'R-1.8',
-      type: 'TRANSACTION',
-      ruleId: 'R-1',
-      ruleNameAlias: 'First transaction of a user',
-      ruleDescriptionAlias: 'First transaction of a user',
-      filters: getRuleFilter(),
-      parameters: {
-        transactionAmountThreshold: {
-          USD: getRandomIntInclusive(1000, 10000),
-        },
-      } as TransactionAmountRuleParameters,
-      riskLevelParameters: {
-        VERY_LOW: getRuleFilter(),
-        VERY_HIGH: getRuleFilter(),
-        HIGH: getRuleFilter(),
-        MEDIUM: getRuleFilter(),
-        LOW: getRuleFilter(),
-      },
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'INACTIVE',
-      createdAt: 1729185468830,
-      updatedAt: 1729655560146,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        } as TriggersOnHit,
-        VERY_HIGH: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        } as TriggersOnHit,
-        HIGH: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        } as TriggersOnHit,
-        MEDIUM: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        } as TriggersOnHit,
-        LOW: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        } as TriggersOnHit,
-      } as RiskLevelsTriggersOnHit,
-      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
-      checksFor: ['1st transaction'],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     },
@@ -402,266 +340,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       checksFor: ['Username', 'User’s Y.O.B'],
       types: [],
       typologies: [],
-    } as RuleInstance,
-    {
-      id: 'R-1.8',
-      type: 'TRANSACTION',
-      ruleId: 'R-1',
-      ruleNameAlias: 'First transaction of a user',
-      ruleDescriptionAlias: 'First transaction of a user',
-      filters: getRuleFilter(),
-      parameters: {
-        transactionAmountThreshold: {
-          USD: getRandomIntInclusive(1000, 10000),
-        },
-      } as TransactionAmountRuleParameters,
-      riskLevelParameters: {
-        VERY_LOW: getRuleFilter(),
-        VERY_HIGH: getRuleFilter(),
-        HIGH: getRuleFilter(),
-        MEDIUM: getRuleFilter(),
-        LOW: getRuleFilter(),
-      },
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'INACTIVE',
-      createdAt: 1729185468830,
-      updatedAt: 1729655560146,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        },
-        VERY_HIGH: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        },
-        HIGH: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        },
-        MEDIUM: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        },
-        LOW: {
-          kycStatusDetails: { reason: 'Blurry document', status: 'SUCCESSFUL' },
-        },
-      },
-      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
-      checksFor: ['1st transaction'],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-    } as RuleInstance,
-    {
-      id: 'R-16.9',
-      type: 'USER',
-      ruleId: 'R-16',
-      ruleNameAlias: 'Screening consumer users',
-      ruleDescriptionAlias:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
-      filters: getRuleFilter(),
-      parameters: { fuzziness: 20, screeningTypes: ['SANCTIONS'] },
-      riskLevelParameters: {
-        VERY_LOW: { fuzziness: 50, screeningTypes: ['SANCTIONS'] },
-        VERY_HIGH: { fuzziness: 50, screeningTypes: ['SANCTIONS'] },
-        HIGH: { fuzziness: 50, screeningTypes: ['SANCTIONS'] },
-        MEDIUM: { fuzziness: 50, screeningTypes: ['SANCTIONS'] },
-        LOW: { fuzziness: 50, screeningTypes: ['SANCTIONS'] },
-      },
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'INACTIVE',
-      createdAt: 1729057931061,
-      updatedAt: 1729072492379,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'SCREENING',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: { usersToCheck: 'ALL' },
-        VERY_HIGH: { usersToCheck: 'ALL' },
-        HIGH: { usersToCheck: 'ALL' },
-        MEDIUM: { usersToCheck: 'ALL' },
-        LOW: { usersToCheck: 'ALL' },
-      },
-      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
-      checksFor: ['Username', 'User details', 'User’s Y.O.B'],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-    } as RuleInstance,
-  ]
-
-  const r18RuleInstance: RuleInstance[] = [
-    {
-      id: 'R-18.1',
-      type: 'USER',
-      ruleId: 'R-18',
-      ruleNameAlias: 'Screening consumer users with Dow Jones',
-      ruleDescriptionAlias:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
-      filters: {},
-      parameters: {
-        screeningValues: ['NRIC', 'NATIONALITY'],
-        screeningTypes: ['SANCTIONS'],
-        fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-      },
-      riskLevelParameters: {
-        VERY_LOW: {
-          PEPRank: 'LEVEL_1',
-          screeningTypes: ['PEP'],
-          fuzzinessRange: { upperBound: 15, lowerBound: 0 },
-          screeningValues: ['NRIC'],
-        },
-        VERY_HIGH: {
-          PEPRank: 'LEVEL_1',
-          screeningTypes: ['PEP'],
-          fuzzinessRange: { upperBound: 15, lowerBound: 0 },
-          screeningValues: ['NRIC'],
-        },
-        HIGH: {
-          PEPRank: 'LEVEL_1',
-          screeningTypes: ['PEP'],
-          fuzzinessRange: { upperBound: 15, lowerBound: 0 },
-          screeningValues: ['NRIC'],
-        },
-        MEDIUM: {
-          PEPRank: 'LEVEL_1',
-          screeningTypes: ['PEP'],
-          fuzzinessRange: { upperBound: 15, lowerBound: 0 },
-          screeningValues: ['NRIC'],
-        },
-        LOW: {
-          PEPRank: 'LEVEL_1',
-          screeningTypes: ['PEP'],
-          fuzzinessRange: { upperBound: 15, lowerBound: 0 },
-          screeningValues: ['NRIC'],
-        },
-      },
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'BLOCK',
-        VERY_HIGH: 'BLOCK',
-        HIGH: 'BLOCK',
-        MEDIUM: 'BLOCK',
-        LOW: 'BLOCK',
-      },
-      status: 'ACTIVE',
-      createdAt: 1728470053713,
-      updatedAt: 1731147248769,
-      runCount: 605,
-      hitCount: 336,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'SCREENING',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          tags: [{ isEditable: true, value: 'Y', key: 'AdverseMedia' }],
-        },
-        VERY_HIGH: {
-          tags: [{ isEditable: true, value: 'Y', key: 'AdverseMedia' }],
-        },
-        HIGH: { tags: [{ isEditable: true, value: 'Y', key: 'AdverseMedia' }] },
-        MEDIUM: {
-          tags: [{ isEditable: true, value: 'Y', key: 'AdverseMedia' }],
-        },
-        LOW: { tags: [{ isEditable: true, value: 'Y', key: 'AdverseMedia' }] },
-      },
-      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
-      checksFor: ['Username', 'User details', 'User’s Y.O.B'],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-    } as RuleInstance,
-    {
-      id: 'R-18.2',
-      type: 'USER',
-      ruleId: 'R-18',
-      ruleNameAlias: 'Screening consumer users with Dow Jones',
-      ruleDescriptionAlias:
-        'Screening on consumer users name and Y.O.B for Sanctions/PEP/Adverse media',
-      filters: {},
-      parameters: {
-        PEPRank: 'LEVEL_1',
-        screeningTypes: ['PEP'],
-        fuzzinessRange: { upperBound: 25, lowerBound: 0 },
-        screeningValues: ['NATIONALITY'],
-      },
-      riskLevelParameters: {
-        VERY_LOW: {
-          screeningValues: ['NRIC'],
-          screeningTypes: ['SANCTIONS'],
-          fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-        },
-        VERY_HIGH: {
-          screeningValues: ['NRIC'],
-          screeningTypes: ['SANCTIONS'],
-          fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-        },
-        HIGH: {
-          screeningValues: ['NRIC'],
-          screeningTypes: ['SANCTIONS'],
-          fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-        },
-        MEDIUM: {
-          screeningValues: ['NRIC'],
-          screeningTypes: ['SANCTIONS'],
-          fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-        },
-        LOW: {
-          screeningValues: ['NRIC'],
-          screeningTypes: ['SANCTIONS'],
-          fuzzinessRange: { upperBound: 100, lowerBound: 0 },
-        },
-      },
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'FLAG',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'INACTIVE',
-      createdAt: 1728621622314,
-      updatedAt: 1730824601273,
-      runCount: 654,
-      hitCount: 60,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'SCREENING',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: { pepStatus: { isPepHit: true, pepRank: 'LEVEL_1' } },
-        VERY_HIGH: { pepStatus: { isPepHit: true, pepRank: 'LEVEL_1' } },
-        HIGH: { pepStatus: { isPepHit: true, pepRank: 'LEVEL_1' } },
-        MEDIUM: { pepStatus: { isPepHit: true, pepRank: 'LEVEL_1' } },
-        LOW: { pepStatus: { isPepHit: true, pepRank: 'LEVEL_1' } },
-      },
-      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
-      checksFor: ['Username', 'User details', 'User’s Y.O.B'],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
     } as RuleInstance,
   ]
 
@@ -920,41 +598,388 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
   ]
 
-  const r58RuleInstance: RuleInstance[] = [
+  const r120RuleInstance: RuleInstance[] = [
     {
-      id: 'RC-58',
+      id: 'R-120.1',
       type: 'TRANSACTION',
-      ruleId: 'RC-58',
-      ruleNameAlias: 'test tags',
-      ruleDescriptionAlias: 'test',
-      logic: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
-      riskLevelLogic: {
-        VERY_LOW: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
-        VERY_HIGH: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
-        HIGH: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
-        MEDIUM: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
-        LOW: { and: [{ '==': [{ var: 'agg:67194eba' }, 3] }] },
+      ruleId: 'R-120',
+      ruleNameAlias: 'Average transaction amount exceed past period average',
+      ruleDescriptionAlias: 'Chaning ',
+      filters: {},
+      logic: {
+        or: [
+          {
+            and: [
+              { '>': [{ var: 'agg:sending-b106f' }, 0] },
+              {
+                '>': [
+                  {
+                    '/': [
+                      { var: 'agg:sending-93285' },
+                      { var: 'agg:sending-b106f' },
+                    ],
+                  },
+                  2,
+                ],
+              },
+              { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+            ],
+          },
+          {
+            and: [
+              { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+              {
+                '>': [
+                  {
+                    '/': [
+                      { var: 'agg:receiving-93285' },
+                      { var: 'agg:receiving-b106f' },
+                    ],
+                  },
+                  2,
+                ],
+              },
+              { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+            ],
+          },
+        ],
       },
-      logicEntityVariables: [],
+      riskLevelLogic: {
+        VERY_LOW: {
+          or: [
+            {
+              and: [
+                { '>': [{ var: 'agg:sending-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:sending-93285' },
+                        { var: 'agg:sending-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:receiving-93285' },
+                        { var: 'agg:receiving-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          or: [
+            {
+              and: [
+                { '>': [{ var: 'agg:sending-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:sending-93285' },
+                        { var: 'agg:sending-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:receiving-93285' },
+                        { var: 'agg:receiving-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          or: [
+            {
+              and: [
+                { '>': [{ var: 'agg:sending-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:sending-93285' },
+                        { var: 'agg:sending-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:receiving-93285' },
+                        { var: 'agg:receiving-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          or: [
+            {
+              and: [
+                { '>': [{ var: 'agg:sending-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:sending-93285' },
+                        { var: 'agg:sending-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:receiving-93285' },
+                        { var: 'agg:receiving-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        LOW: {
+          or: [
+            {
+              and: [
+                { '>': [{ var: 'agg:sending-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:sending-93285' },
+                        { var: 'agg:sending-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ var: 'agg:receiving-b106f' }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { var: 'agg:receiving-93285' },
+                        { var: 'agg:receiving-b106f' },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+      },
       logicAggregationVariables: [
         {
-          aggregationFieldKey: 'TRANSACTION:tags',
-          aggregationFunc: 'UNIQUE_COUNT',
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
           timeWindow: {
-            start: { granularity: 'all_time', units: 0 },
+            start: { granularity: 'day', units: 1 },
             end: { granularity: 'now', units: 0 },
           },
           userDirection: 'SENDER',
-          aggregationFilterFieldKey: 'key',
           type: 'USER_TRANSACTIONS',
           transactionDirection: 'SENDING',
-          version: 1728958835680,
           includeCurrentEntity: true,
-          key: 'agg:67194eba',
+          version: 1729169864383,
+          key: 'agg:sending-93285',
           baseCurrency: 'EUR',
-          aggregationFilterFieldValue: 'customKey',
+        },
+        {
+          aggregationFieldKey:
+            'TRANSACTION:destinationAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
+          timeWindow: {
+            start: { granularity: 'day', units: 1 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'RECEIVING',
+          includeCurrentEntity: true,
+          version: 1729169864383,
+          key: 'agg:receiving-93285',
+          baseCurrency: 'EUR',
+        },
+        {
+          aggregationFieldKey:
+            'TRANSACTION:originAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1729169864384,
+          key: 'agg:sending-b106f',
+          baseCurrency: 'EUR',
+        },
+        {
+          aggregationFieldKey:
+            'TRANSACTION:destinationAmountDetails-transactionAmount',
+          aggregationFunc: 'AVG',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'RECEIVING',
+          includeCurrentEntity: true,
+          version: 1729169864396,
+          key: 'agg:receiving-b106f',
+          baseCurrency: 'EUR',
+        },
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1729169864397,
+          key: 'agg:sending-6bb6c',
+        },
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'RECEIVING',
+          includeCurrentEntity: true,
+          version: 1729169864397,
+          key: 'agg:receiving-6bb6c',
         },
       ],
+      parameters: {
+        period2: { granularity: 'day', units: 2 },
+        period1: { granularity: 'day', units: 1 },
+        transactionsNumberThreshold2: { min: 5 },
+        multiplierThreshold: { value: 200, currency: 'EUR' },
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      },
+      riskLevelParameters: {
+        VERY_LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        VERY_HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        MEDIUM: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: { value: 200, currency: 'EUR' },
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+      },
       action: 'FLAG',
       riskLevelActions: {
         VERY_LOW: 'FLAG',
@@ -964,28 +989,17 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         LOW: 'FLAG',
       },
       status: 'INACTIVE',
-      createdAt: 1728958835679,
-      updatedAt: 1728987789091,
-      runCount: 0,
+      createdAt: 1729169864382,
+      updatedAt: 1731388464109,
+      runCount: 968,
       hitCount: 0,
       casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
+      falsePositiveCheckEnabled: true,
+      nature: 'FRAUD',
       labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: { usersToCheck: 'ALL' },
-        VERY_HIGH: { usersToCheck: 'ALL' },
-        HIGH: { usersToCheck: 'ALL' },
-        MEDIUM: { usersToCheck: 'ALL' },
-        LOW: { usersToCheck: 'ALL' },
-      },
-      alertConfig: {
-        frozenStatuses: [],
-        alertCreationInterval: { type: 'INSTANTLY' },
-        alertCreatedFor: ['USER'],
-      },
-      checksFor: [],
-      createdBy: 'auth0|66f2d806c6322e76088b490e',
+      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
+      checksFor: ['Transaction amount', 'Time'],
+      createdBy: 'auth0|66f2d81023d5f39e3b818be3',
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
@@ -1071,6 +1085,378 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
   ]
 
+  const r121RuleInstance: RuleInstance[] = [
+    {
+      id: 'R-121.1',
+      type: 'TRANSACTION',
+      ruleId: 'R-121',
+      ruleNameAlias:
+        'Average transactions number exceed past period average number',
+      ruleDescriptionAlias: 'Testing',
+      filters: {},
+      logic: {
+        or: [
+          {
+            and: [
+              { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+              {
+                '>': [
+                  {
+                    '/': [
+                      { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                      { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                    ],
+                  },
+                  2,
+                ],
+              },
+              { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+            ],
+          },
+          {
+            and: [
+              { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+              {
+                '>': [
+                  {
+                    '/': [
+                      { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                      { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                    ],
+                  },
+                  2,
+                ],
+              },
+              { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+            ],
+          },
+        ],
+      },
+      riskLevelLogic: {
+        VERY_LOW: {
+          or: [
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                        { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                        { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        VERY_HIGH: {
+          or: [
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                        { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                        { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        HIGH: {
+          or: [
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                        { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                        { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        MEDIUM: {
+          or: [
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                        { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                        { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+        LOW: {
+          or: [
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:sending-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:sending-542c1' }, 1] },
+                        { '/': [{ var: 'agg:sending-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:sending-6bb6c' }, 9007199254740991] },
+              ],
+            },
+            {
+              and: [
+                { '>': [{ '/': [{ var: 'agg:receiving-e9545' }, 2] }, 0] },
+                {
+                  '>': [
+                    {
+                      '/': [
+                        { '/': [{ var: 'agg:receiving-542c1' }, 1] },
+                        { '/': [{ var: 'agg:receiving-e9545' }, 2] },
+                      ],
+                    },
+                    2,
+                  ],
+                },
+                { '<=': [5, { var: 'agg:receiving-6bb6c' }, 9007199254740991] },
+              ],
+            },
+          ],
+        },
+      },
+      logicAggregationVariables: [
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 1 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1729498903540,
+          key: 'agg:sending-542c1',
+        },
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 1 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'RECEIVING',
+          includeCurrentEntity: true,
+          version: 1729498903541,
+          key: 'agg:receiving-542c1',
+        },
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'SENDER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'SENDING',
+          includeCurrentEntity: true,
+          version: 1729169864397,
+          key: 'agg:sending-e9545',
+        },
+        {
+          aggregationFieldKey: 'TRANSACTION:transactionId',
+          aggregationFunc: 'COUNT',
+          timeWindow: {
+            start: { granularity: 'day', units: 2 },
+            end: { granularity: 'now', units: 0 },
+          },
+          userDirection: 'RECEIVER',
+          type: 'USER_TRANSACTIONS',
+          transactionDirection: 'RECEIVING',
+          includeCurrentEntity: true,
+          version: 1729169864397,
+          key: 'agg:receiving-e9545',
+        },
+      ],
+      parameters: {
+        period2: { granularity: 'day', units: 2 },
+        period1: { granularity: 'day', units: 1 },
+        transactionsNumberThreshold2: { min: 5 },
+        multiplierThreshold: 200,
+        checkSender: 'sending',
+        checkReceiver: 'receiving',
+      },
+      riskLevelParameters: {
+        VERY_LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        VERY_HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        HIGH: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        MEDIUM: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+        LOW: {
+          period2: { granularity: 'day', units: 2 },
+          period1: { granularity: 'day', units: 1 },
+          transactionsNumberThreshold2: { min: 5 },
+          multiplierThreshold: 200,
+          checkSender: 'sending',
+          checkReceiver: 'receiving',
+        },
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'INACTIVE',
+      createdAt: 1729498903527,
+      updatedAt: 1730824618379,
+      runCount: 968,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'FRAUD',
+      labels: [],
+      alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
+      checksFor: ['No. of transactions', 'Time'],
+      createdBy: 'auth0|66f2d81023d5f39e3b818be3',
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+    } as RuleInstance,
+  ]
+
   const r169RuleInstance: RuleInstance[] = [
     {
       id: '0a1QSr',
@@ -1144,18 +1530,156 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     } as RuleInstance,
   ]
 
+  const r652RuleInstance = [
+    {
+      id: 'pnb-internal-trigger-incomplete-risk-levels',
+      type: 'USER',
+      ruleId: 'RC-652',
+      ruleNameAlias: 'PNB - Trigger to return incomplete risk levels',
+      ruleDescriptionAlias: 'Trigger to return incomplete risk levels',
+      logic: { and: [{ '!': { var: 'entity:user_id' } }] },
+      riskLevelLogic: {
+        VERY_LOW: { and: [{ '!': { var: 'entity:user_id' } }] },
+        VERY_HIGH: { and: [{ '!': { var: 'entity:user_id' } }] },
+        HIGH: { and: [{ '!': { var: 'entity:user_id' } }] },
+        MEDIUM: {
+          and: [
+            {
+              or: [
+                { '==': [{ var: 'entity:user_previous_cra_level' }, null] },
+                { '==': [{ var: 'entity:user_previous_cra_level' }, 'LOW'] },
+                {
+                  '==': [{ var: 'entity:user_previous_cra_level' }, 'VERY_LOW'],
+                },
+                {
+                  some: [
+                    { var: 'entity:consumer_user_tags__sender' },
+                    {
+                      and: [
+                        { '==': [{ var: 'key' }, 'RISK_LEVEL_STATUS'] },
+                        { '==': [{ var: 'value' }, 'Incomplete'] },
+                        { '==': [{ var: 'isEditable' }, true] },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        LOW: {
+          and: [
+            {
+              or: [
+                { '==': [{ var: 'entity:user_previous_cra_level' }, null] },
+                {
+                  '==': [{ var: 'entity:user_previous_cra_level' }, 'VERY_LOW'],
+                },
+                {
+                  some: [
+                    { var: 'entity:consumer_user_tags__sender' },
+                    {
+                      and: [
+                        { '==': [{ var: 'key' }, 'RISK_LEVEL_STATUS'] },
+                        { '==': [{ var: 'value' }, 'Incomplete'] },
+                        { '==': [{ var: 'isEditable' }, true] },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      },
+      logicEntityVariables: [
+        {
+          key: 'entity:consumer_user_tags__sender',
+          entityKey: 'CONSUMER_USER:tags__SENDER',
+        },
+        {
+          key: 'entity:user_previous_cra_level',
+          entityKey: 'USER:userPreviousCRALevel__SENDER',
+        },
+        { key: 'entity:user_id', entityKey: 'CONSUMER_USER:userId__SENDER' },
+      ],
+      logicAggregationVariables: [],
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1732028340085,
+      updatedAt: 1732028351636,
+      runCount: 0,
+      hitCount: 0,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+          tags: [
+            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
+          ],
+        },
+        VERY_HIGH: {
+          usersToCheck: 'ALL',
+          tags: [
+            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
+          ],
+        },
+        HIGH: {
+          usersToCheck: 'ALL',
+          tags: [
+            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
+          ],
+        },
+        MEDIUM: {
+          usersToCheck: 'ALL',
+          tags: [
+            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
+          ],
+        },
+        LOW: {
+          usersToCheck: 'ALL',
+          tags: [
+            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
+          ],
+        },
+      },
+      alertConfig: {
+        frozenStatuses: [],
+        alertCreationInterval: { type: 'INSTANTLY' },
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: [],
+      userRuleRunCondition: { entityUpdated: true },
+      logicMachineLearningVariables: [],
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'LIVE',
+      alertCreationOnHit: false,
+    } as RuleInstance,
+  ]
+
   const data = [
     ...r1RuleInstance,
     ...r2RuleInstance,
     ...r8RuleInstance,
     ...r16RuleInstance,
-    ...r18RuleInstance,
     ...r30RuleInstance,
     ...r32RuleInstance,
     ...r56RuleInstance,
-    ...r58RuleInstance,
+    ...r120RuleInstance,
+    ...r121RuleInstance,
     ...r128RuleInstance,
     ...r169RuleInstance,
+    ...r652RuleInstance,
   ]
 
   return data
@@ -1175,7 +1699,6 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
         nature: ri.nature,
         ruleDescription: ri.ruleDescriptionAlias as string,
         ruleHit: true,
-        executedAt: sampleTimestamp(),
         ruleHitMeta: {
           falsePositiveDetails:
             random(0, 10) < 4
@@ -1202,7 +1725,6 @@ export const userRules: () => ExecutedRulesResult[] = memoize(() => {
         nature: ri.nature,
         ruleDescription: ri.ruleDescriptionAlias as string,
         ruleHit: true,
-        executedAt: sampleTimestamp(),
         ruleHitMeta: {
           falsePositiveDetails:
             random(0, 10) < 2
