@@ -744,8 +744,6 @@ export class CdkTarponStack extends cdk.Stack {
       lambdaExecutionRole,
       {
         name: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
-        provisionedConcurrency:
-          config.resource.ASYNC_RULES_LAMBDA?.PROVISIONED_CONCURRENCY,
         memorySize: config.resource.ASYNC_RULES_LAMBDA?.MEMORY_SIZE,
       }
     )

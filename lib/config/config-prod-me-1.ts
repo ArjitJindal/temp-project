@@ -56,6 +56,9 @@ export const config: Config = {
       MIN_PROVISIONED_CONCURRENCY: 1,
       MEMORY_SIZE: 1024,
     },
+    ASYNC_RULES_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     REQUEST_LOGGER_LAMBDA: {
       MEMORY_SIZE: 512,
     },

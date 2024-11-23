@@ -44,7 +44,6 @@ export type Config = {
     }
     ASYNC_RULES_LAMBDA?: {
       MEMORY_SIZE?: number
-      PROVISIONED_CONCURRENCY?: number
     }
     // Also used in sandbox for initial setup
     API_KEY_GENERATOR_LAMBDA?: {

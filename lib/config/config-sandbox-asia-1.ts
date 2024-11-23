@@ -17,11 +17,6 @@ export const config: Config = {
   },
   resource: {
     ...sandboxbaseConfig.resource,
-    TRANSACTION_LAMBDA: {
-      MAX_PROVISIONED_CONCURRENCY: 20,
-      MIN_PROVISIONED_CONCURRENCY: 2,
-      MEMORY_SIZE: 1024,
-    },
   },
   clickhouse: {
     privateEndpoint: {
