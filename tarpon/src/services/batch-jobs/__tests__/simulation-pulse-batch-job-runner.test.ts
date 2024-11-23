@@ -139,53 +139,28 @@ describe('Simulation (Pulse) batch job runner', () => {
       defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
       createdBy: 'test',
     })
-    expect(
-      await simulationResultRepository.getSimulationResults({
-        taskId: taskIds[0],
-      })
-    ).toEqual({
+    const result = await simulationResultRepository.getSimulationResults({
+      taskId: taskIds[0],
+    })
+    expect(result).toEqual({
       items: [
         {
-          current: {
-            drs: {
-              riskLevel: 'MEDIUM',
-              riskScore: 80,
-            },
-            krs: null,
-          },
-          simulated: {
-            drs: {
-              riskLevel: 'MEDIUM',
-              riskScore: 80,
-            },
-            krs: null,
-          },
           taskId: taskIds[0],
           type: 'PULSE',
           userId: 'test-user-id-2',
           userType: 'CONSUMER',
           userName: 'Baran Realblood Ozkan',
+          current: { krs: null, drs: { riskScore: 80, riskLevel: 'MEDIUM' } },
+          simulated: { krs: null, drs: { riskScore: 80, riskLevel: 'MEDIUM' } },
         },
         {
-          current: {
-            drs: {
-              riskLevel: 'LOW',
-              riskScore: 30,
-            },
-            krs: null,
-          },
-          simulated: {
-            drs: {
-              riskLevel: 'MEDIUM',
-              riskScore: 30,
-            },
-            krs: null,
-          },
           taskId: taskIds[0],
           type: 'PULSE',
           userId: 'test-user-id-1',
           userType: 'CONSUMER',
           userName: 'Baran Realblood Ozkan',
+          current: { krs: null, drs: { riskScore: 30, riskLevel: 'LOW' } },
+          simulated: { krs: null, drs: { riskScore: 30, riskLevel: 'MEDIUM' } },
         },
       ],
       total: 2,
@@ -467,11 +442,10 @@ describe('Simulation (Pulse) batch job runner', () => {
       defaultRiskClassifications: DEFAULT_CLASSIFICATION_SETTINGS,
       createdBy: 'test',
     })
-    expect(
-      await simulationResultRepository.getSimulationResults({
-        taskId: taskIds[0],
-      })
-    ).toEqual({
+    const result = await simulationResultRepository.getSimulationResults({
+      taskId: taskIds[0],
+    })
+    expect(result).toEqual({
       items: [
         {
           current: {

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { isEmpty } from 'lodash';
-import { capitalizeWords } from '@flagright/lib/utils/humanize';
+import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize';
 import cn from 'clsx';
 import { ParametersTableTabs } from '../ParametersTableTabs';
 import SimulationCustomRiskFactorsTable from '../SimulationCustomRiskFactors/SimulationCustomRiskFactorsTable';
@@ -39,10 +39,12 @@ import Button from '@/components/library/Button';
 import Confirm from '@/components/utils/Confirm';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
-import { getErrorMessage } from '@/utils/lang';
+import { denseArray, getErrorMessage } from '@/utils/lang';
 import Tabs from '@/components/library/Tabs';
 import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { Progress } from '@/components/Simulation/Progress';
+import { ExtraFilterProps } from '@/components/library/Filter/types';
+import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { formatNumber } from '@/utils/number';
 interface Props {
   jobId: string;
@@ -187,11 +189,17 @@ export type RiskFactorsSettings = {
   };
 };
 
+type TableSearchParams = CommonParams & {
+  currentKrsLevel?: RiskLevel[];
+  simulatedKrsLevel?: RiskLevel[];
+  userId?: string;
+};
+
 const SimulationResultWidgets = (props: WidgetProps) => {
   const settings = useSettings();
   const { iteration, isCustomRiskFactors, activeIterationIndex, jobId } = props;
   const { pathname } = useLocation();
-  const [params, setParams] = useState<CommonParams>({
+  const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
     sort: [['userId', 'ascend']],
   });
@@ -210,6 +218,11 @@ const SimulationResultWidgets = (props: WidgetProps) => {
           pageSize: params.pageSize,
           sortField: params.sort?.[0]?.[0] ?? 'userId',
           sortOrder: params.sort?.[0]?.[1] ?? 'ascend',
+          filterCurrentKrsLevel: params['current.krs.riskLevel'],
+          filterSimulationKrsLevel: params['simulated.krs.riskLevel'],
+          filterCurrentDrsLevel: params['current.drs.riskLevel'],
+          filterSimulationDrsLevel: params['simulated.drs.riskLevel'],
+          filterId: params.userId,
         });
       } else {
         return {
@@ -221,6 +234,25 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   );
   const helper = new ColumnHelper<SimulationRiskLevelsAndRiskFactorsResult>();
   const columns: TableColumn<SimulationRiskLevelsAndRiskFactorsResult>[] = helper.list([
+    helper.simple<'userId'>({
+      title: 'User ID',
+      key: 'userId',
+      defaultWidth: 200,
+      type: {
+        render: (userId, { item: entity }) => {
+          return (
+            <Link
+              to={makeUrl(`/users/list/${entity?.userType?.toLowerCase()}/${userId}`)}
+              target="_blank"
+              rel="noreferrer"
+              style={{ color: COLORS.brandBlue.base }}
+            >
+              {userId}
+            </Link>
+          );
+        },
+      },
+    }),
     helper.simple<'userName'>({
       title: 'User name',
       key: 'userName',
@@ -395,6 +427,73 @@ const SimulationResultWidgets = (props: WidgetProps) => {
     return {};
   }, [iteration.parameters, iteration.type]);
 
+  const filter: ExtraFilterProps<TableSearchParams>[] = denseArray([
+    {
+      key: 'userId',
+      title: 'User ID',
+      showFilterByDefault: true,
+      renderer: ({ params, setParams }) => (
+        <UserSearchButton
+          userId={params.userId ? String(params.userId) : null}
+          onConfirm={(userId) => {
+            setParams((state) => ({
+              ...state,
+              userId: userId ?? undefined,
+            }));
+          }}
+        />
+      ),
+    },
+    {
+      title: 'Current KRS level',
+      key: 'current.krs.riskLevel',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: RISK_LEVELS.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
+      showFilterByDefault: true,
+    },
+    {
+      title: 'Simulated KRS level',
+      key: 'simulated.krs.riskLevel',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: RISK_LEVELS.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
+      showFilterByDefault: true,
+    },
+  ]);
+
+  if (isCustomRiskFactors) {
+    filter.push({
+      title: 'Current CRA level',
+      key: 'current.drs.riskLevel',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: RISK_LEVELS.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
+      showFilterByDefault: true,
+    });
+
+    filter.push({
+      title: 'Simulated CRA level',
+      key: 'simulated.drs.riskLevel',
+      renderer: {
+        kind: 'select',
+        mode: 'MULTIPLE',
+        displayMode: 'list',
+        options: RISK_LEVELS.map((x) => ({ value: x, label: humanizeConstant(x) })),
+      },
+      showFilterByDefault: true,
+    });
+  }
+
   return showResults ? (
     <div className={s.root}>
       <Card.Root noBorder>
@@ -449,8 +548,8 @@ const SimulationResultWidgets = (props: WidgetProps) => {
             rowKey="userId"
             params={params}
             onChangeParams={setParams}
-            hideFilters={true}
             toolsOptions={false}
+            extraFilters={filter}
           />
         </Card.Section>
       </Card.Root>

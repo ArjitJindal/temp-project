@@ -6438,6 +6438,34 @@ paths:
           $ref: '#/components/schemas/Page'
         in: query
         name: page
+      - schema:
+          type: string
+        in: query
+        name: filterId
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+        in: query
+        name: filterCurrentKrsLevel
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+        in: query
+        name: filterSimulationKrsLevel
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+        in: query
+        name: filterCurrentDrsLevel
+      - schema:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+        in: query
+        name: filterSimulationDrsLevel
   /simulation/stats:
     get:
       summary: Get simulation tasks count
