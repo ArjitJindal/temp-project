@@ -74,7 +74,10 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     let areSLAJobsRunning: boolean | undefined
 
     // TODO: Remove this once we have a proper way to handle this in FR-5951
-    if (job.tenantId === 'pnb-uat' && job.type === 'ALERT_SLA_STATUS_REFRESH') {
+    if (
+      job.tenantId?.startsWith('pnb') &&
+      job.type === 'ALERT_SLA_STATUS_REFRESH'
+    ) {
       areSLAJobsRunning =
         areSLAJobsRunning ??
         (await getRunningJobs(
