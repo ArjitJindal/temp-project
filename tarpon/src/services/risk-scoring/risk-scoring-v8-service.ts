@@ -733,7 +733,7 @@ export class RiskScoringV8Service {
           jobId: uuidv4(),
           type: 'RISK_SCORING_RECALCULATION',
           parameters: {
-            userIds,
+            userIds: userIds ?? [],
             clearedListIds: clearedListId ? [clearedListId] : undefined,
           },
         },
