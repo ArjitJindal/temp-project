@@ -1,6 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { mean } from 'lodash'
+import { mean, uniq } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -36,6 +36,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReRunTrigger } from '@/@types/openapi-internal/ReRunTrigger'
 import dayjs from '@/utils/dayjs'
+import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
 
 const DEFAULT_RISK_LEVEL = 'HIGH'
 const DEFAULT_RISK_SCORE = 75
@@ -699,12 +700,14 @@ export class RiskScoringV8Service {
         (jobA.latestStatus.scheduledAt ?? 0)
       )
     })
+
     if (
       jobsToCheck.length > 0 &&
       jobsToCheck[0].latestStatus.scheduledAt &&
       jobsToCheck[0].latestStatus.scheduledAt - Date.now() > 5 * 1000 // Adding this to not update the job that might have been sent in the batch job queue already.
     ) {
-      const targetJob = jobsToCheck[0]
+      const targetJob = jobsToCheck[0] as RiskScoringTriggersBatchJob &
+        BatchJobInDb
       const updateData: any = {
         $set: {
           'latestStatus.scheduledAt': {
@@ -719,12 +722,16 @@ export class RiskScoringV8Service {
         }
       }
 
-      if (userIds && userIds.length > 0) {
+      if (userIds && userIds.length) {
         updateData.$push = {
           ...updateData.$push,
-          'parameters.userIds': { $each: userIds },
+          'parameters.userIds': uniq([
+            ...(targetJob.parameters?.userIds ?? []),
+            ...userIds,
+          ]),
         }
       }
+
       await this.batchJobRepository.updateJob(targetJob.jobId, updateData)
     } else {
       await this.batchJobRepository.insertJob(
