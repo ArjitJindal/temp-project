@@ -231,6 +231,7 @@ export class AggregationRepository {
         getAggVarHash(aggregationVariable),
         transactionId
       ),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return Boolean(result.Item)
@@ -267,6 +268,7 @@ export class AggregationRepository {
         userKeyId,
         getAggVarHash(aggregationVariable)
       ),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     const lastTransactionTimestamp = result.Item?.lastTransactionTimestamp ?? 0
@@ -401,6 +403,7 @@ export class AggregationRepository {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.AGGREGATION_VARIABLE(this.tenantId, aggVarHash),
+      ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return (

@@ -512,22 +512,26 @@ export class LogicEvaluator {
         ) => {
           return Promise.all(
             variableKeys.map(async ({ direction, aggVariable }) => {
-              try {
-                return await this.loadAggregationData(
-                  direction,
-                  aggVariable,
-                  data
-                )
-              } catch (e) {
-                if (e instanceof RebuildSyncRetryError) {
-                  // try one more time after the rebuild is done
+              for (let i = 0; i < 2; i++) {
+                try {
                   return await this.loadAggregationData(
                     direction,
                     aggVariable,
                     data
                   )
+                } catch (e) {
+                  if (e instanceof RebuildSyncRetryError) {
+                    // try one more time after the rebuild is done
+                    if (i === 0) {
+                      continue
+                    }
+                    logger.error(
+                      'Still get RebuildSyncRetryError after rebuild'
+                    )
+                    return null
+                  }
+                  throw e
                 }
-                throw e
               }
             })
           )
