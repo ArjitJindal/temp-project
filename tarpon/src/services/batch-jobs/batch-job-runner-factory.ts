@@ -16,6 +16,7 @@ import { PnbBackfillKrsBatchJobRunner } from './pnb-backfill-krs-fargate-batch-j
 import { PnbBackfillArsBatchJobRunner } from './pnb-backfill-ars-fargate-batch-job'
 import { PnbBackfillCraBatchJobRunner } from './pnb-backfill-cra-fargate-batch-job'
 import { PnbBackfillHammerheadBatchJobRunner } from './pnb-backfill-hammerhead-fargate-batch-job'
+import { PnbBackfillWebhookDeliveriesBatchJobRunner } from './pnb-backfill-webhook-deliveries'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -78,6 +79,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     PNB_BACKFILL_ARS: (jobId) => new PnbBackfillArsBatchJobRunner(jobId),
     CASE_SLA_STATUS_REFRESH: (jobId) =>
       new CaseSLAStatusRefreshBatchJobRunner(jobId),
+    PNB_BACKFILL_WEBHOOK_DELIVERIES: (jobId) =>
+      new PnbBackfillWebhookDeliveriesBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

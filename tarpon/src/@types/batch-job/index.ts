@@ -281,6 +281,14 @@ export type PnbBackfillHammerhead = {
   }
 }
 
+export type PnbBackfillWebhookDeliveries = {
+  type: 'PNB_BACKFILL_WEBHOOK_DELIVERIES'
+  tenantId: string
+  parameters: {
+    s3Key: string
+  }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -310,6 +318,8 @@ export type BatchJob =
   | PnbBackfillCra
   | PnbBackfillHammerhead
   | CaseSLAStatusRefreshBatchJob
+  | PnbBackfillWebhookDeliveries
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }
