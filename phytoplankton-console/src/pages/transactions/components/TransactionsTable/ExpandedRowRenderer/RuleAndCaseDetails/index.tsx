@@ -79,7 +79,7 @@ export default function RuleAndCaseDetails(props: Props) {
 const columnHelper = new ColumnHelper<Alert>();
 
 const columns = columnHelper.list([
-  columnHelper.simple({ title: 'Priority', key: 'priority', defaultWidth: 40, type: PRIORITY }),
+  columnHelper.simple({ title: '', key: 'priority', defaultWidth: 40, type: PRIORITY }),
   columnHelper.simple({ key: 'ruleName', title: 'Rule name', defaultWidth: 300 }),
   columnHelper.simple({ key: 'ruleDescription', title: 'Rule description', defaultWidth: 400 }),
   columnHelper.derived({
