@@ -2695,6 +2695,8 @@ components:
           description:
             IP address of the device at a given timestamp for an event or
             transaction
+        ipCountry:
+          $ref: '#/components/schemas/CountryCode'
         deviceIdentifier:
           minLength: 1
           type: string

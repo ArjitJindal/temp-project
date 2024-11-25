@@ -18,12 +18,15 @@ import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { GeoIPService } from '@/services/geo-ip'
+import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
 
 @traceable
 export class TransactionEventRepository {
   dynamoDb: DynamoDBDocumentClient
   mongoDb: MongoClient
   tenantId: string
+  private geoService: GeoIPService
 
   constructor(
     tenantId: string,
@@ -35,6 +38,7 @@ export class TransactionEventRepository {
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.mongoDb = connections.mongoDb as MongoClient
     this.tenantId = tenantId
+    this.geoService = new GeoIPService(tenantId, this.dynamoDb)
   }
 
   public async saveTransactionEvent(
@@ -42,6 +46,11 @@ export class TransactionEventRepository {
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<string> {
     const eventId = transactionEvent.eventId || uuidv4()
+
+    await hydrateIpInfo(
+      this.geoService,
+      transactionEvent.updatedTransactionAttributes
+    )
 
     const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
       this.tenantId,

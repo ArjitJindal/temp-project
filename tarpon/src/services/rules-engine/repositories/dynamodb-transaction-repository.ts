@@ -41,6 +41,8 @@ import { TransactionMonitoringResult } from '@/@types/openapi-public/Transaction
 import { Undefined } from '@/utils/lang'
 import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
+import { GeoIPService } from '@/services/geo-ip'
+import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
 
 @traceable
 export class DynamoDbTransactionRepository
@@ -48,10 +50,12 @@ export class DynamoDbTransactionRepository
 {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
+  private geoService: GeoIPService
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+    this.geoService = new GeoIPService(tenantId, dynamoDb)
   }
 
   private sanitizeTransactionInPlace(transaction: Transaction) {
@@ -74,6 +78,8 @@ export class DynamoDbTransactionRepository
   ): Promise<Transaction> {
     this.sanitizeTransactionInPlace(transaction)
     transaction.timestamp = transaction.timestamp || Date.now()
+
+    await hydrateIpInfo(this.geoService, transaction)
 
     const primaryKey = DynamoDbKeys.TRANSACTION(
       this.tenantId,

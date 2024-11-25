@@ -31,6 +31,7 @@ const DEVICE_DATA_FIELDS: CsvHeaderSettings<
   deviceLatitude: 'INCLUDE',
   deviceLongitude: 'INCLUDE',
   ipAddress: 'INCLUDE',
+  ipCountry: 'INCLUDE',
   deviceIdentifier: 'INCLUDE',
   vpnUsed: 'INCLUDE',
   operatingSystem: 'INCLUDE',

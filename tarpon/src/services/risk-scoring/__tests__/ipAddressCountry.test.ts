@@ -23,6 +23,7 @@ jest.mock('@/services/geo-ip', () => ({
     resolveIpAddress: jest.fn((ip: string) => {
       return Promise.resolve({ country: TEST_IP_LOOKUPS[ip] })
     }),
+    hydrateIpInfo: jest.fn((_transaction: any) => undefined),
   })),
 }))
 

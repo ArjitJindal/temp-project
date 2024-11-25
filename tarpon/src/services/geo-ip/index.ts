@@ -29,13 +29,25 @@ export class GeoIPService {
 
   public async resolveIpAddress(
     ipAddress: string,
-    resolutionType: ResolutionType = 'COUNTRY'
-  ): Promise<IpLocation | null> {
+    resolutionType: ResolutionType = 'COUNTRY',
+    cacheOnly = false
+  ) {
+    const cachedResult = await this.getCache(ipAddress)
+    if (cacheOnly) {
+      if (
+        cachedResult &&
+        (cachedResult.city ||
+          (resolutionType === 'COUNTRY' && cachedResult.country))
+      ) {
+        return cachedResult
+      }
+      return null
+    }
+
     if (ip.isPrivate(ipAddress) || !isIP(ipAddress)) {
       return { country: '', continent: '', city: '' }
     }
     try {
-      const cachedResult = await this.getCache(ipAddress)
       if (
         cachedResult &&
         (cachedResult.city ||

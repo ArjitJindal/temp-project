@@ -21,6 +21,7 @@ jest.mock('@/services/geo-ip', () => ({
     resolveIpAddress: jest.fn((ip: string) => {
       return TEST_IP_LOOKUPS[ip]
     }),
+    hydrateIpInfo: jest.fn((_transaction: any) => undefined),
   })),
 }))
 const TEST_TENANT_ID = getTestTenantId()
