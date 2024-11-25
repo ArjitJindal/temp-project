@@ -382,7 +382,11 @@ async function createSearchIndex(
   indexName: string
 ) {
   const collection = db.collection(collectionName)
-  await createIndex(collection, indexName, definition)
+  if (
+    (await db.listCollections({ name: collectionName }).toArray()).length > 1
+  ) {
+    await createIndex(collection, indexName, definition)
+  }
 }
 
 async function createIndex(
@@ -403,10 +407,14 @@ async function createIndex(
 async function deleteIndex(db: Db, collectionName: string, index: string) {
   const collection = db.collection(collectionName)
 
-  const indexes = await collection.listSearchIndexes(index).toArray()
-  if (indexes.length > 0) {
-    console.log(`Dropping search index for sanctions - ${index}`)
-    await collection.dropSearchIndex(index)
+  if (
+    (await db.listCollections({ name: collectionName }).toArray()).length > 1
+  ) {
+    const indexes = await collection.listSearchIndexes(index).toArray()
+    if (indexes.length > 0) {
+      console.log(`Dropping search index for sanctions - ${index}`)
+      await collection.dropSearchIndex(index)
+    }
   }
 }
 
