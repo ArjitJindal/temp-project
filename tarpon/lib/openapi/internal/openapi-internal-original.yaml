@@ -15061,6 +15061,8 @@ components:
           $ref: '#/components/schemas/SanctionsSettingsMarketType'
         customSearchProfileId:
           type: string
+        customInitialSearchProfileId:
+          type: string
         dowjonesCreds:
           type: object
           properties:

@@ -104,7 +104,7 @@ export default class ListScreeningConsumerUser extends UserRule<ListScreeningCon
           : {}),
       },
       hitContext,
-      { providerName: 'list', listId }
+      { providerName: 'list', listId, stage: this.stage }
     )
     if (result.hitsCount > 0) {
       hitResult.push({

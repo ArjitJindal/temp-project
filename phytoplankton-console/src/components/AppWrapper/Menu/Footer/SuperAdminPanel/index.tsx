@@ -460,6 +460,22 @@ export default function SuperAdminPanel() {
                     }}
                   />
                 </Label>
+                <Label
+                  level={2}
+                  label="Custom initial search profile ID"
+                  description="If being set, we'll use this search profile for all initial screenings"
+                >
+                  <Input
+                    value={sanctionsSettings?.customInitialSearchProfileId}
+                    onChange={(event) => {
+                      setSanctionsSettings({
+                        ...sanctionsSettings,
+                        marketType: sanctionsSettings?.marketType ?? 'EMERGING',
+                        customInitialSearchProfileId: event.target.value.trim(),
+                      });
+                    }}
+                  />
+                </Label>
               </Label>
             ) : isDowJonesToBeEnabled ? (
               <Label label="Dow Jones settings">

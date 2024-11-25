@@ -24,6 +24,7 @@ import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMa
 import { removeUndefinedFields } from '@/utils/object'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -240,10 +241,18 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
     this.complyAdvantageSearchProfileId = complyAdvantageSearchProfileId
   }
 
-  static async build(tenantId: string) {
+  static async build(tenantId: string, stage?: RuleStage) {
     const settings = await tenantSettings(tenantId)
-    const complyAdvantageSearchProfileId =
+    let complyAdvantageSearchProfileId =
       settings.sanctions?.customSearchProfileId
+
+    if (
+      settings.sanctions?.customInitialSearchProfileId &&
+      stage === 'INITIAL'
+    ) {
+      complyAdvantageSearchProfileId =
+        settings.sanctions?.customInitialSearchProfileId
+    }
     if (!settings.sanctions?.marketType) {
       logger.error('Tenant market type is not set')
     }

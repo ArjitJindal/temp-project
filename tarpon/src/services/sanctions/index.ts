@@ -40,6 +40,7 @@ import {
   iterateCursorItems,
 } from '@/utils/pagination'
 import {
+  RuleStage,
   SanctionsDataProviderName,
   SanctionsEntity,
   SanctionsHit,
@@ -59,6 +60,7 @@ const DEFAULT_FUZZINESS = 0.5
 
 type ProviderConfig = {
   providerName: SanctionsDataProviderName
+  stage: RuleStage
   listId: string
 }
 
@@ -104,7 +106,10 @@ export class SanctionsService {
   ): Promise<SanctionsDataProvider> {
     switch (provider) {
       case 'comply-advantage':
-        return await ComplyAdvantageDataProvider.build(this.tenantId)
+        return await ComplyAdvantageDataProvider.build(
+          this.tenantId,
+          providerConfig?.stage
+        )
       case 'dowjones':
         return await DowJonesProvider.build(this.tenantId)
       case 'list':
