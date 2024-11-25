@@ -8292,6 +8292,13 @@ components:
         - WEEK
         - MONTH
         - YEAR
+    RuleStage:
+      title: RuleStage
+      type: string
+      enum:
+        - INITIAL
+        - UPDATE
+        - ONGOING
     RuleInstanceStatus:
       title: RuleInstanceStatus
       type: string

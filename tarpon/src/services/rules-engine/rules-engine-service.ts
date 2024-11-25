@@ -118,6 +118,7 @@ import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -313,6 +314,7 @@ export class RulesEngineService {
               ruleInstance,
               rule: rulesByIds[ruleInstance.ruleId ?? ''],
             },
+            'ONGOING',
             { from, to }
           )
           logger.info(`Completed rule`)
@@ -347,6 +349,7 @@ export class RulesEngineService {
       ruleInstance: RuleInstance
       rule: Rule
     },
+    stage: RuleStage,
     cursors?: {
       from?: string
       to?: string
@@ -375,6 +378,7 @@ export class RulesEngineService {
         { riskRepository: this.riskRepository },
         await getMongoDbClient(),
         this.dynamoDb,
+        stage,
         cursors?.from,
         cursors?.to
       )
@@ -528,6 +532,7 @@ export class RulesEngineService {
     } = await this.verifyTransactionInternal(
       transaction,
       [initialTransactionEvent],
+      'INITIAL',
       undefined,
       options
     )
@@ -662,7 +667,8 @@ export class RulesEngineService {
       updatedTransaction,
       previousTransactionEvents.concat(
         transactionEvent as TransactionEventWithRulesResult
-      )
+      ),
+      'UPDATE'
     )
 
     const saveTransactionSegment = await addNewSubsegment(
@@ -772,7 +778,8 @@ export class RulesEngineService {
 
   public async verifyTransactionForSimulation(
     transaction: Transaction,
-    ruleInstance: RuleInstance
+    ruleInstance: RuleInstance,
+    stage: RuleStage
   ): Promise<ExecutedRulesResult> {
     const rule = ruleInstance.ruleId
       ? await this.ruleRepository.getRuleById(ruleInstance.ruleId)
@@ -792,6 +799,7 @@ export class RulesEngineService {
       transaction,
       senderUser,
       receiverUser,
+      stage,
       database: 'MONGODB',
     })
     return result
@@ -799,7 +807,8 @@ export class RulesEngineService {
 
   public async verifyUser(
     user: UserWithRulesResult | BusinessWithRulesResult,
-    options?: { ongoingScreeningMode?: boolean; async?: boolean }
+    stage: RuleStage,
+    options?: { async?: boolean }
   ): Promise<{
     monitoringResult:
       | ConsumerUserMonitoringResult
@@ -811,7 +820,7 @@ export class RulesEngineService {
       await this.ruleInstanceRepository.getActiveRuleInstances('USER')
     const targetRuleInstances = ruleInstances.filter(
       (r) =>
-        (options?.ongoingScreeningMode ||
+        (stage === 'ONGOING' ||
           r.userRuleRunCondition?.entityUpdated !== false) &&
         (async ? isAsyncRule(r) : isSyncRule(r))
     )
@@ -826,7 +835,7 @@ export class RulesEngineService {
         user,
         targetRuleInstances,
         rules,
-        options
+        stage
       ),
       isAnyAsyncRules: ruleInstances.some(isAsyncRule),
     }
@@ -836,7 +845,7 @@ export class RulesEngineService {
     user: UserWithRulesResult | BusinessWithRulesResult,
     ruleInstances: readonly RuleInstance[],
     rules: readonly Rule[],
-    options?: { ongoingScreeningMode?: boolean }
+    stage: RuleStage
   ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const rulesById = keyBy(rules, 'id')
     logger.info(`Running rules`)
@@ -853,7 +862,7 @@ export class RulesEngineService {
             ruleInstance,
             user,
             userRiskLevel,
-            ongoingScreeningMode: options?.ongoingScreeningMode,
+            stage,
           })
         )
       )
@@ -896,6 +905,7 @@ export class RulesEngineService {
   private async verifyAsyncRulesTransactionInternal(
     transaction: Transaction,
     transactionEvents: TransactionEvent[],
+    ruleStage: RuleStage,
     senderUser?: User | Business,
     receiverUser?: User | Business,
     riskDetails?: TransactionRiskScoringResult,
@@ -919,6 +929,7 @@ export class RulesEngineService {
     const data = await this.verifyTransactionInternal(
       transaction,
       transactionEvents,
+      ruleStage,
       relatedData
     )
 
@@ -985,6 +996,7 @@ export class RulesEngineService {
     await this.verifyAsyncRulesTransactionInternal(
       updatedTransaction,
       transactionEvents,
+      'UPDATE',
       senderUser,
       receiverUser,
       transactionEventInDb.riskScoreDetails,
@@ -1003,6 +1015,7 @@ export class RulesEngineService {
     await this.verifyAsyncRulesTransactionInternal(
       transaction,
       [initialTransactionEvent],
+      'INITIAL',
       senderUser,
       receiverUser,
       riskDetails
@@ -1026,6 +1039,7 @@ export class RulesEngineService {
   private async verifyTransactionInternal(
     transaction: Transaction,
     transactionEvents: TransactionEventWithRulesResult[],
+    stage: RuleStage,
     relatedData?: {
       transactionRiskDetails?: TransactionRiskScoringResult
       senderUser?: User | Business | undefined
@@ -1166,6 +1180,7 @@ export class RulesEngineService {
             receiverUser,
             transactionRiskScore: riskScoreDetails?.trsScore,
             receiverUserRiskLevel,
+            stage,
           })
         )
       ),
@@ -1291,9 +1306,9 @@ export class RulesEngineService {
     database: 'MONGODB' | 'DYNAMODB'
     senderUser?: User | Business
     receiverUser?: User | Business
-    ongoingScreeningMode?: boolean
     tracing?: boolean
     transactionRiskScore?: number
+    stage: RuleStage
   }): Promise<{
     ruleClassInstance: TransactionRuleBase | UserRuleBase | undefined
     isTransactionHistoricalFiltered: boolean
@@ -1309,7 +1324,6 @@ export class RulesEngineService {
       senderUser,
       receiverUser,
       database,
-      ongoingScreeningMode,
       tracing,
       transactionRiskScore,
     } = options
@@ -1320,6 +1334,8 @@ export class RulesEngineService {
         : senderUserRiskLevel,
       ruleInstance
     )
+
+    const ongoingScreeningMode = options.stage === 'ONGOING' ? true : undefined
     const ruleFilters = ruleInstance.filters as TransactionFilters & UserFilters
     const mode =
       database === 'MONGODB' || process.env.__INTERNAL_MONGODB_MIRROR__
@@ -1423,7 +1439,7 @@ export class RulesEngineService {
           )
         : new (RuleClass as typeof UserRuleBase)(
             this.tenantId,
-            { user: senderUser ?? ({} as User), ongoingScreeningMode },
+            { user: senderUser ?? ({} as User), stage: options.stage },
             { parameters, filters: ruleFilters },
             { ruleInstance, rule: rule },
             {
@@ -1553,6 +1569,7 @@ export class RulesEngineService {
     senderUser?: User | Business
     receiverUser?: User | Business
     transactionRiskScore?: number
+    stage: RuleStage
   }): Promise<
     | {
         result?: ExecutedRulesResult | undefined
@@ -1688,7 +1705,7 @@ export class RulesEngineService {
     ruleInstance: RuleInstance
     userRiskLevel: RiskLevel | undefined
     user: User | Business
-    ongoingScreeningMode?: boolean
+    stage: RuleStage
   }) {
     return withContext(async () => {
       try {
@@ -1705,7 +1722,7 @@ export class RulesEngineService {
           senderUser: options.user,
           senderUserRiskLevel: options.userRiskLevel,
           database: 'MONGODB',
-          ongoingScreeningMode: options.ongoingScreeningMode,
+          stage: options.stage,
         })
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric

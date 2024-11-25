@@ -147,7 +147,8 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
               try {
                 return rulesEngine.verifyTransactionForSimulation(
                   txEventInfo.transaction,
-                  ruleInstance
+                  ruleInstance,
+                  updatedEventsCount == 0 ? 'INITIAL' : 'UPDATE'
                 )
               } catch (e) {
                 logger.error(e)

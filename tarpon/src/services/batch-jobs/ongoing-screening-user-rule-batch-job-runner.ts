@@ -199,7 +199,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
               user,
               ruleInstances,
               rules,
-              { ongoingScreeningMode: true }
+              'ONGOING'
             )
             if (result?.hitRules && result.hitRules.length > 0) {
               await Promise.all([

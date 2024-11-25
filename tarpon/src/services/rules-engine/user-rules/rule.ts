@@ -14,6 +14,7 @@ import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { hasFeature } from '@/core/utils/context'
 import { getUsersFilterByRiskLevel } from '@/services/users/utils/user-utils'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 export interface UserVars<P> extends Vars {
   user: User | Business
@@ -31,6 +32,7 @@ export abstract class UserOngoingRule<P> extends Rule {
   dynamoDb: DynamoDBDocumentClient
   ruleInstance: RuleInstance
   rule: RuleModel
+  stage: RuleStage
   riskLevelParameters: Record<RiskLevel, P>
   riskRepository: RiskRepository
   from?: string
@@ -44,6 +46,7 @@ export abstract class UserOngoingRule<P> extends Rule {
     services: { riskRepository: RiskRepository },
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient,
+    stage: RuleStage,
     from?: string,
     to?: string,
     fromTimestamp?: number
@@ -53,6 +56,7 @@ export abstract class UserOngoingRule<P> extends Rule {
     this.parameters = params.parameters
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
+    this.stage = stage
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
     this.riskLevelParameters = params.riskLevelParameters
@@ -155,12 +159,13 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   rule: RuleModel
   sanctionsService: SanctionsService
   ibanService: IBANService
+  stage: RuleStage
 
   constructor(
     tenantId: string,
     data: {
       user: User | Business
-      ongoingScreeningMode?: boolean
+      stage: RuleStage
     },
     params: {
       parameters: P
@@ -180,7 +185,8 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     super()
     this.tenantId = tenantId
     this.user = data.user
-    this.ongoingScreeningMode = data.ongoingScreeningMode ?? false
+    this.stage = data.stage
+    this.ongoingScreeningMode = data.stage === 'ONGOING'
     this.parameters = params.parameters
     this.filters = params.filters || {}
     this.ruleInstance = context.ruleInstance

@@ -18,6 +18,7 @@ import { KYC_STATUSS } from '@/@types/openapi-public-custom/KYCStatus'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
+import { RULE_STAGES } from '@/@types/openapi-internal-custom/RuleStage'
 
 type SchemaOptions = {
   title?: string
@@ -266,6 +267,19 @@ export const COUNTRIES_SCHEMA = (options?: SchemaOptions) =>
     description: options?.description,
     items: { type: 'string', enum: COUNTRY_CODES },
     uniqueItems: true,
+  } as const)
+
+export const RULE_STAGE_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'RULE_STAGES',
+    }),
+    type: 'array',
+    title: options?.title || 'User rule stage',
+    description: options?.description,
+    items: { type: 'string', enum: RULE_STAGES },
+    uniqueItems: true,
+    nullable: true,
   } as const)
 
 export const COUNTRIES_OPTIONAL_SCHEMA = (options?: SchemaOptions) =>

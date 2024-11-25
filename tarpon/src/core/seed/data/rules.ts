@@ -286,7 +286,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       casePriority: 'P1',
       parameters: {
         fuzziness: 20,
-        ongoingScreening: false,
         screeningTypes: ['PEP'],
       } as SanctionsConsumerUserRuleParameters,
       action: 'BLOCK',
@@ -298,7 +297,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       riskLevelParameters: {
         VERY_HIGH: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         HIGH: {
@@ -308,17 +306,14 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         } as SanctionsConsumerUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
-          ongoingScreening: false,
           screeningTypes: ['PEP'],
         } as SanctionsConsumerUserRuleParameters,
       },

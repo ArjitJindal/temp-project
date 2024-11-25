@@ -181,9 +181,10 @@ export async function bulkVerifyUsers(
     mongoDb
   )
   for (const user of users) {
-    const { monitoringResult } = await rulesEngine.verifyUser(user, {
-      ongoingScreeningMode,
-    })
+    const { monitoringResult } = await rulesEngine.verifyUser(
+      user,
+      ongoingScreeningMode ? 'ONGOING' : 'INITIAL'
+    )
     results.push(monitoringResult)
   }
   return results

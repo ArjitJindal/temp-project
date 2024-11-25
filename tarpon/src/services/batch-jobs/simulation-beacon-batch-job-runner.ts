@@ -458,7 +458,8 @@ export class SimulationBeaconBatchJobRunner extends BatchJobRunner {
         const executedRules =
           await rulesEngineService.verifyTransactionForSimulation(
             transaction,
-            ruleInstance
+            ruleInstance,
+            transaction.updatedAt ? 'UPDATE' : 'INITIAL'
           )
         if (executedRules) {
           this.executionDetails.push({ transaction, executedRules })

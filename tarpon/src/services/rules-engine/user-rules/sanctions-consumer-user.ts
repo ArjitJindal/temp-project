@@ -1,8 +1,8 @@
 import { JSONSchemaType } from 'ajv'
 import {
-  ENABLE_ONGOING_SCREENING_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   FUZZINESS_SCHEMA,
+  RULE_STAGE_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { isConsumerUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
@@ -11,11 +11,12 @@ import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { User } from '@/@types/openapi-public/User'
+import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 
 export type SanctionsConsumerUserRuleParameters = {
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
-  ongoingScreening: boolean
+  ruleStages?: RuleStage[]
 }
 
 export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsumerUserRuleParameters> {
@@ -25,9 +26,9 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       properties: {
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
-        ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
+        ruleStages: RULE_STAGE_SCHEMA({
           description:
-            'It will do a screening every 24hrs of all the existing consumer users after it is enabled.',
+            'Select specific stage(s) of the user lifecycle that this rule will run for',
         }),
       },
       required: ['fuzziness'],
@@ -35,13 +36,21 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
   }
 
   public async computeRule() {
-    const { fuzziness, screeningTypes, ongoingScreening } = this.parameters
+    const { fuzziness, screeningTypes, ruleStages } = this.parameters
+
+    if (
+      ruleStages &&
+      ruleStages.length > 0 &&
+      !ruleStages.includes(this.stage)
+    ) {
+      return
+    }
+
     const user = this.user as User
     if (
       !isConsumerUser(this.user) ||
       !user.userDetails ||
-      !user.userDetails.name ||
-      (this.ongoingScreeningMode && !ongoingScreening)
+      !user.userDetails.name
     ) {
       return
     }
@@ -60,7 +69,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
       userId: this.user.userId,
       entityType: 'CONSUMER_NAME' as const,
       ruleInstanceId: this.ruleInstance.id ?? '',
-      isOngoingScreening: this.ongoingScreeningMode,
+      isOngoingScreening: this.stage === 'ONGOING',
       searchTerm: name,
     }
     const result = await this.sanctionsService.search(
@@ -69,7 +78,7 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         yearOfBirth,
         types: screeningTypes,
         fuzziness: fuzziness / 100,
-        monitoring: { enabled: ongoingScreening },
+        monitoring: { enabled: this.stage === 'ONGOING' },
       },
       hitContext
     )

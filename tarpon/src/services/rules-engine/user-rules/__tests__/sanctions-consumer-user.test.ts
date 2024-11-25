@@ -61,7 +61,7 @@ describe('Core logic', () => {
           lowerBound: 50,
           upperBound: 50,
         },
-        ongoingScreening: false,
+        ruleStages: ['INITIAL', 'UPDATE', 'ONGOING'],
       } as SanctionsConsumerUserRuleParameters,
     },
   ])
@@ -121,7 +121,7 @@ describe('Skip if ongoing screening mode if on but ongoingScreening is false', (
           lowerBound: 50,
           upperBound: 50,
         },
-        ongoingScreening: false,
+        ruleStages: ['INITIAL', 'UPDATE'],
       } as SanctionsConsumerUserRuleParameters,
     },
   ])

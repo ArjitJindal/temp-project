@@ -956,7 +956,8 @@ describe('Verify Transaction for Simulation', () => {
         checksFor: [],
         ruleRunMode: 'LIVE',
         ruleExecutionMode: 'SYNC',
-      }
+      },
+      'INITIAL'
     )
     expect(result).toEqual({
       ruleId: 'TEST-R-1',

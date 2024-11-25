@@ -115,7 +115,7 @@ export class UserManagementService {
     }
 
     const { monitoringResult, isAnyAsyncRules } =
-      await this.rulesEngineService.verifyUser(userPayload)
+      await this.rulesEngineService.verifyUser(userPayload, 'INITIAL')
 
     const userResult = {
       ...userPayload,
@@ -333,7 +333,7 @@ export class UserManagementService {
     }
 
     const { monitoringResult, isAnyAsyncRules } =
-      await this.rulesEngineService.verifyUser(updatedUser)
+      await this.rulesEngineService.verifyUser(updatedUser, 'UPDATE')
 
     const updatedUserResult = {
       ...updatedUser,
@@ -423,6 +423,7 @@ export class UserManagementService {
 
     const { monitoringResult } = await this.rulesEngineService.verifyUser(
       userPayload,
+      'INITIAL',
       { async: true }
     )
 
@@ -469,6 +470,7 @@ export class UserManagementService {
 
     const { monitoringResult } = await this.rulesEngineService.verifyUser(
       updatedUser,
+      'UPDATE',
       { async: true }
     )
 

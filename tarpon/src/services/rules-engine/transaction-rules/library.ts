@@ -1801,7 +1801,6 @@ const _RULES_LIBRARY: Array<
   () => {
     const defaultParameters: SanctionsConsumerUserRuleParameters = {
       fuzziness: 20,
-      ongoingScreening: false,
       screeningTypes: [],
     }
 
