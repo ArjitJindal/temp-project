@@ -58,7 +58,7 @@ function renderValue(key: PaymentDetailsKey, value: unknown): React.ReactNode {
   if (key === 'cardIssuedCountry' || key === 'country') {
     return <CountryDisplay isoCode={value as string} />;
   }
-  if (key === 'cardBalance') {
+  if (key === 'cardBalance' || key === 'walletBalance' || key === 'accountBalance') {
     const cardBalance = value as {
       amountValue?: number;
       amountCurrency?: string;
