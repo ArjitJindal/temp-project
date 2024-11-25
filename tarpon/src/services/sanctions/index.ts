@@ -216,15 +216,18 @@ export class SanctionsService {
     let sanctionsSearchResponse: SanctionsProviderResponse
 
     // Only cache results from comply advantage
-    if (!existedSearch?.response || providerName !== 'comply-advantage') {
+    const shouldSearch =
+      !existedSearch?.response || providerName !== 'comply-advantage'
+    if (shouldSearch) {
       const provider = await this.getProvider(providerName, providerOverrides)
       sanctionsSearchResponse = await provider.search(request)
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {
       createdAt = existedSearch?.createdAt
-      searchId = existedSearch?.response.searchId
-      providerSearchId = existedSearch?.response.providerSearchId
-      sanctionsSearchResponse = existedSearch?.response
+      searchId = existedSearch?.response?.searchId || ''
+      providerSearchId = existedSearch?.response?.providerSearchId || ''
+      sanctionsSearchResponse =
+        existedSearch?.response as SanctionsSearchResponse
     }
 
     const filteredHits =
@@ -241,7 +244,7 @@ export class SanctionsService {
       createdAt: createdAt ?? Date.now(),
     }
 
-    if (!existedSearch) {
+    if (shouldSearch) {
       await this.sanctionsSearchRepository.saveSearchResult({
         provider: providerName,
         createdAt: createdAt,
@@ -252,7 +255,11 @@ export class SanctionsService {
       })
     }
 
-    if (!existedSearch?.response && request.monitoring) {
+    if (
+      !existedSearch?.response &&
+      providerName === 'comply-advantage' &&
+      request.monitoring
+    ) {
       await this.updateSearch(searchId, request.monitoring, providerOverrides)
     }
 

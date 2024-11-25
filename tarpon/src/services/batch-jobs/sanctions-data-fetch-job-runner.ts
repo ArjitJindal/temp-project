@@ -38,25 +38,22 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
         const repo = new MongoSanctionsRepository(sanctionsCollectionName)
         await fetcher.fullLoad(repo, version)
         await checkSearchIndexesReady(sanctionsCollectionName)
-      } else {
-        const repo = new MongoSanctionsRepository(sanctionsCollectionName)
-        await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
-
-        await client
-          .db()
-          .collection(deltaSanctionsCollectionName)
-          .deleteMany({})
-        const deltaRepo = new MongoSanctionsRepository(
-          deltaSanctionsCollectionName
-        )
-        await fetcher.delta(
-          deltaRepo,
-          version,
-          dayjs(job.parameters.from).toDate()
-        )
-
-        await checkSearchIndexesReady(deltaSanctionsCollectionName)
       }
+
+      const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+      await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
+
+      await client.db().collection(deltaSanctionsCollectionName).deleteMany({})
+      const deltaRepo = new MongoSanctionsRepository(
+        deltaSanctionsCollectionName
+      )
+      await fetcher.delta(
+        deltaRepo,
+        version,
+        dayjs(job.parameters.from).toDate()
+      )
+
+      await checkSearchIndexesReady(deltaSanctionsCollectionName)
     }
 
     if (runFullLoad) {

@@ -1,19 +1,20 @@
 import { Collection } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
 import { SanctionsProviderResponse } from '@/services/sanctions/providers/types'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getContext } from '@/core/utils/context'
 import { SANCTIONS_PROVIDER_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { generateChecksum } from '@/utils/object'
 
 export class SanctionsProviderSearchRepository {
   async saveSearch(
     results: Array<SanctionsEntity>,
     request: SanctionsSearchRequest
   ) {
-    const providerSearchId = request.existingProviderId || uuidv4()
-    const object = {
+    const providerSearchId =
+      request.existingProviderId || generateChecksum(request, 36)
+    return {
       providerSearchId,
       hitsCount: results.length,
       data: results,
@@ -30,7 +31,6 @@ export class SanctionsProviderSearchRepository {
     //     upsert: true,
     //   }
     // )
-    return object
   }
 
   async getSearchResult(
