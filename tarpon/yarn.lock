@@ -14685,9 +14685,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"openai@npm:4.55.4":
-  version: 4.55.4
-  resolution: "openai@npm:4.55.4"
+"openai@npm:4.70.2":
+  version: 4.70.2
+  resolution: "openai@npm:4.70.2"
   dependencies:
     "@types/node": "npm:^18.11.18"
     "@types/node-fetch": "npm:^2.6.4"
@@ -14703,7 +14703,7 @@ __metadata:
       optional: true
   bin:
     openai: bin/cli
-  checksum: d4f537682619c818345bfdf278feceabfd2d25c655fec962d973fa7dcc3c08490b81af759b3a4400efc945d36f3b26e8819c08bbe5126fbf7a313eb5f4f72cfb
+  checksum: 28a1e65b4996fb34c1db02ac5eb94c1b09002cab6aa5dbbb1268155357f22c93abb34d859768b64ccb3bc8f9073be882565d87b1013f27617a2480b63faf9bc9
   languageName: node
   linkType: hard
 
@@ -17048,7 +17048,7 @@ __metadata:
     node-fetch: "npm:^2.6.12"
     npm-run-all: "npm:^4.1.5"
     octokit: "npm:^3.2.1"
-    openai: "npm:4.55.4"
+    openai: "npm:4.70.2"
     p-limit: "npm:^3.0.0"
     p-map: "npm:^4.0.0"
     p-queue: "npm:^6.6.2"
