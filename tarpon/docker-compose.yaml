@@ -11,7 +11,7 @@ services:
       - 8000:8000
     command: '-jar DynamoDBLocal.jar -sharedDb -dbPath /home/dynamodblocal/data/'
   mongodb:
-    image: mongo:5.0.18
+    image: mongodb/mongodb-atlas-local:8.0
     container_name: local-mongodb
     hostname: mongodb
     restart: always

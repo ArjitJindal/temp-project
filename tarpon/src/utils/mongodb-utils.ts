@@ -46,12 +46,13 @@ import { hasFeature } from '@/core/utils/context'
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
     return await MongoClient.connect(
-      process.env.MONGO_URI || `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}`
+      process.env.MONGO_URI ||
+        `mongodb://localhost:27018/${MONGO_TEST_DB_NAME}?directConnection=true`
     )
   }
   if (process.env.ENV?.includes('local')) {
     return await MongoClient.connect(
-      `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}`
+      `mongodb://localhost:27018/${StackConstants.MONGO_DB_DATABASE_NAME}?directConnection=true`
     )
   }
   const credentials = await getSecretByName('mongoAtlasCreds', useCache)
