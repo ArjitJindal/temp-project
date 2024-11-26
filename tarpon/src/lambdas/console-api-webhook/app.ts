@@ -110,13 +110,23 @@ export const webhookConfigurationHandler = lambdaApi()(
       return response
     })
 
-    handlers.registerGetWebhooksWebhookIdDeliveries(
-      async (ctx, request) =>
-        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+    handlers.registerGetWebhooksWebhookIdDeliveries(async (ctx, request) => {
+      const [items, total] = await Promise.all([
+        webhookDeliveryRepository.getWebhookDeliveryAttempts(
           request.webhookId,
           request
-        )
-    )
+        ),
+        webhookDeliveryRepository.getWebhookDeliveryCount(
+          request.webhookId,
+          request
+        ),
+      ])
+
+      return {
+        items,
+        total,
+      }
+    })
 
     return await handlers.handle(event)
   }

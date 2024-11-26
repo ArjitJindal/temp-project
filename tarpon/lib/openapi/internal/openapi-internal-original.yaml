@@ -4432,9 +4432,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/WebhookDeliveryAttempt'
+                $ref: '#/components/schemas/WebhookDeliveryAttemptPaginated'
       operationId: get-webhooks-webhook_id-deliveries
       parameters:
         - schema:
@@ -10834,6 +10832,19 @@ components:
           type: string
       required:
         - secret
+    WebhookDeliveryAttemptPaginated:
+      title: WebhookDeliveryAttemptPaginated
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookDeliveryAttempt'
+        total:
+          type: number
+      required:
+        - items
+        - total
     WebhookDeliveryAttempt:
       title: WebhookDeliveryAttempt
       type: object

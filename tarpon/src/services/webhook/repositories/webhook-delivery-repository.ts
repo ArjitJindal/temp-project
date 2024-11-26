@@ -48,15 +48,10 @@ export class WebhookDeliveryRepository {
       .next()
   }
 
-  public async getWebhookDeliveryAttempts(
+  private async getWebhookDeliveryAttemptsFilter(
     webhookId: string,
     params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
-  ): Promise<WebhookDeliveryAttempt[]> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<WebhookDeliveryAttempt>(
-      WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
-    )
-
+  ): Promise<Filter<WebhookDeliveryAttempt>> {
     const query: Filter<WebhookDeliveryAttempt> = {
       webhookId,
     }
@@ -89,6 +84,20 @@ export class WebhookDeliveryRepository {
       query.event = params.filterEventType as WebhookEventType
     }
 
+    return query
+  }
+
+  public async getWebhookDeliveryAttempts(
+    webhookId: string,
+    params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
+  ): Promise<WebhookDeliveryAttempt[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<WebhookDeliveryAttempt>(
+      WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
+    )
+
+    const query = await this.getWebhookDeliveryAttemptsFilter(webhookId, params)
+
     const skip =
       ((params.page || 1) - 1) * (params.pageSize || DEFAULT_PAGE_SIZE)
 
@@ -100,6 +109,19 @@ export class WebhookDeliveryRepository {
       .limit(limit)
       .skip(skip)
       .toArray()
+  }
+
+  public async getWebhookDeliveryCount(
+    webhookId: string,
+    params: DefaultApiGetWebhooksWebhookIdDeliveriesRequest
+  ): Promise<number> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<WebhookDeliveryAttempt>(
+      WEBHOOK_DELIVERY_COLLECTION(this.tenantId)
+    )
+    const query = await this.getWebhookDeliveryAttemptsFilter(webhookId, params)
+
+    return collection.countDocuments(query)
   }
 
   public async addWebhookDeliveryAttempt(

@@ -673,6 +673,13 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         [
           { webhookId: 1, requestStartedAt: -1 },
           { deliveryTaskId: 1, deliveredAt: 1 },
+          { eventCreatedAt: 1 },
+          { deliveredAt: 1 },
+          { success: 1 },
+          { webhookId: 1 },
+          { webhookId: 1, success: 1 },
+          { webhookId: 1, eventCreatedAt: 1 },
+          { webhookId: 1, deliveredAt: 1 },
         ].map((index) => ({ index })),
     },
     [SANCTIONS_SEARCHES_COLLECTION(tenantId)]: {

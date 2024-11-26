@@ -61,10 +61,7 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
           : undefined,
       });
 
-      return {
-        total: attempts.length,
-        items: attempts,
-      };
+      return attempts;
     },
   );
 
