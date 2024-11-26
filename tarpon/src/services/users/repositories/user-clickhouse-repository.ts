@@ -63,7 +63,7 @@ export class UserClickhouseRepository {
     const [data, riskClassificationValues] = await Promise.all([
       offsetPaginateClickhouse<T>(
         this.clickhouseClient,
-        CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
+        CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
         CLICKHOUSE_DEFINITIONS.USERS.tableName,
         { page, pageSize, sortField, sortOrder },
         whereClause,

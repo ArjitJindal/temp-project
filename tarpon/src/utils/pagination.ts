@@ -253,7 +253,7 @@ export async function offsetPaginateClickhouse<T>(
   const offset = (page - 1) * pageSize
 
   const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  let findSql = `SELECT data, NULL as count FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
+  let findSql = `SELECT data FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
     where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
   } ${
     excludeSortField
@@ -264,18 +264,16 @@ export async function offsetPaginateClickhouse<T>(
 
   if (options?.bypassNestedQuery) {
     // Temporary fix while removing final so that queries atleast work (Only for PNB)
-    findSql = `SELECT data, NULL as count FROM ${queryTableName} FINAL ${
+    findSql = `SELECT data FROM ${queryTableName} FINAL ${
       where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
     } ${
       excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`
     } LIMIT ${pageSize} OFFSET ${offset}`
   }
 
-  const countQuery = `SELECT NULL as data, COUNT(*) as count FROM ${queryTableName} FINAL ${
+  const countQuery = `SELECT COUNT(*) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
   }`
-
-  const combinedQuery = `WITH query1 AS (${findSql}), query2 AS (${countQuery}) SELECT * from query1 UNION ALL SELECT * from query2`
 
   const [segment, segment2] = await Promise.all([
     addNewSubsegment('Query time for clickhouse', 'find'),
@@ -284,14 +282,13 @@ export async function offsetPaginateClickhouse<T>(
 
   const start = Date.now()
 
-  logger.info('Running query', {
-    query: combinedQuery,
-  })
+  logger.info('Running query', { countQuery, findQuery: findSql })
 
-  const result = await client.query({
-    query: combinedQuery,
-    format: 'JSONEachRow',
-  })
+  const [result, countResult] = await Promise.all([
+    client.query({ query: findSql, format: 'JSONEachRow' }),
+    client.query({ query: countQuery, format: 'JSONEachRow' }),
+  ])
+
   const end = Date.now()
 
   const clickHouseSummary = JSON.parse(
@@ -310,21 +307,10 @@ export async function offsetPaginateClickhouse<T>(
   segment?.addMetadata('Query time data', queryTimeData)
   segment?.close()
 
-  const data = result.stream()
-
-  let count = 0
-  const items: T[] = []
-
-  for await (const rows of data) {
-    for (const row of rows) {
-      const jsonData = row.json() as { data?: string; count?: number }
-      if (jsonData.count) {
-        count = jsonData.count
-      } else {
-        items.push(JSON.parse(jsonData.data as string))
-      }
-    }
-  }
+  const [items, count] = await Promise.all([
+    result.json<{ data: string }>(),
+    countResult.json<{ count: number }>(),
+  ])
 
   const end2 = Date.now()
 
@@ -342,8 +328,8 @@ export async function offsetPaginateClickhouse<T>(
   logger.info('Overall stats', overallStats)
 
   return {
-    items: items as T[],
-    count: count,
+    items: items.map((item) => JSON.parse(item.data)) as T[],
+    count: count[0].count,
   }
 }
 
