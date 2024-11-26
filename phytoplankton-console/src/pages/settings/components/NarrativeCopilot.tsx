@@ -5,13 +5,13 @@ import {
 import SelectionGroup from '@/components/library/SelectionGroup';
 import SettingsCard from '@/components/library/SettingsCard';
 import Tooltip from '@/components/library/Tooltip';
-import { useAuth0User, UserRole } from '@/utils/user-utils';
+import { isAtLeastAdmin, useAuth0User } from '@/utils/user-utils';
 
 export const NarrativeCopilot = () => {
   const settings = useSettings();
   const settingsMutaion = useUpdateTenantSettings();
   const user = useAuth0User();
-
+  const isComponentAccessible = isAtLeastAdmin(user);
   if (!settings.isAiEnabled) {
     return <></>;
   }
@@ -21,9 +21,7 @@ export const NarrativeCopilot = () => {
       title="Narrative copilot"
       description="Configure how you want Flagright AI to write your narratives."
     >
-      <Tooltip
-        title={user.role !== UserRole.ADMIN ? 'User must be an admin to perform this action' : ''}
-      >
+      <Tooltip title={!isComponentAccessible ? 'User must be an admin to perform this action' : ''}>
         <SelectionGroup
           mode="SINGLE"
           value={settings.narrativeMode ?? 'STANDARD'}
@@ -32,7 +30,7 @@ export const NarrativeCopilot = () => {
               narrativeMode: newValue,
             });
           }}
-          isDisabled={user.role !== UserRole.ADMIN}
+          isDisabled={!isComponentAccessible}
           options={[
             {
               value: 'STANDARD',
