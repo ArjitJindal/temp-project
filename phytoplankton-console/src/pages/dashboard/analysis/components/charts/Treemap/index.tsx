@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/colors';
 import { AsyncResource, getOr, isLoading } from '@/utils/asyncResource';
 import { makeRandomNumberGenerator } from '@/utils/prng';
+import { formatNumber } from '@/utils/number';
 
 const random = makeRandomNumberGenerator(999999);
 const SKELETON_DATA: TreemapData<string> = [...new Array(10)].map((_, column) => ({
@@ -78,7 +79,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
                   formatTitle && treemapItem.name != null
                     ? formatTitle(treemapItem.name)
                     : item.name,
-                value: treemapItem.value,
+                value: formatNumber(treemapItem.value),
               };
             });
           },
@@ -108,7 +109,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
       label={{
         content: (item: Datum, positionData: any) => {
           const treemapItem = item.data as TreemapItem<Name>;
-          const value = treemapItem.value;
+          const value = formatNumber(treemapItem.value);
           const title = formatTitle ? formatTitle(treemapItem.name) : treemapItem.name;
           const name = `${title} (${value})`;
           const nameLength = estimateWordWidth(name, 10, 600);
