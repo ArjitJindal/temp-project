@@ -80,7 +80,10 @@ export default class SanctionsConsumerUserRule extends UserRule<SanctionsConsume
         fuzziness: fuzziness / 100,
         monitoring: { enabled: this.stage === 'ONGOING' },
       },
-      hitContext
+      hitContext,
+      {
+        stage: this.stage,
+      }
     )
     if (result.hitsCount > 0) {
       hitResult.push({

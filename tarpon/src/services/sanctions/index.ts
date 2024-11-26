@@ -59,9 +59,9 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 const DEFAULT_FUZZINESS = 0.5
 
 type ProviderConfig = {
-  providerName: SanctionsDataProviderName
+  providerName?: SanctionsDataProviderName
   stage: RuleStage
-  listId: string
+  listId?: string
 }
 
 @traceable
