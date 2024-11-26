@@ -326,7 +326,10 @@ function getNamespacedRoleName(namespace: string, roleName?: string) {
 
 function getRoleDisplayName(roleName?: string) {
   if (roleName == 'root') {
-    return 'Root'
+    return 'root'
+  }
+  if (roleName == 'whitelabel-root') {
+    return 'whitelabel-root'
   }
   return roleName && roleName.split(':')[1]
 }
