@@ -96,6 +96,7 @@ import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import Tag from '@/components/library/Tag';
+import { useDeepEqualEffect } from '@/utils/hooks';
 import {
   updateSanctionsData,
   useChangeSanctionsHitsStatusMutation,
@@ -299,6 +300,10 @@ export default function AlertTable(props: Props) {
   const showClosingReason =
     params.caseStatus?.includes('CLOSED') || params.alertStatus?.includes('CLOSED') || false;
   const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
+
+  useDeepEqualEffect(() => {
+    reloadTable();
+  }, [params.caseStatus, reloadTable]);
 
   const columns = useMemo(() => {
     const mergedColumns = (
