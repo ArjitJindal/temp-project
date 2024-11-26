@@ -86,6 +86,7 @@ export const MONGO_TABLE_SUFFIX_MAP = {
   DRS_SCORE: 'dynamic-risk-values',
   ARS_SCORE: 'action-risk-values',
   SANCTIONS_SCREENING_DETAILS: 'sanctions-screening-details',
+  REPORTS: 'report',
 }
 
 export const TRANSACTIONS_COLLECTION = (tenantId: string) => {

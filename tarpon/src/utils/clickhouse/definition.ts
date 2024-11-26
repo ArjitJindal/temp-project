@@ -44,6 +44,7 @@ export type MaterializedViewDefinition = Omit<
 > & {
   viewName: string
   columns: string[]
+  query?: string
 }
 
 export type ProjectionsDefinition = {
@@ -126,6 +127,19 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   CASES: {
     tableName: 'cases',
+    materializedViews: {
+      CASE_INVESTIGATION_STATS: {
+        viewName: 'case_investigation_stats_mv',
+        table: 'case_investigation_stats',
+      },
+      ALERT_INVESTIGATION_STATS: {
+        viewName: 'alert_investigation_stats_mv',
+        table: 'alert_investigation_stats',
+      },
+    },
+  },
+  REPORTS: {
+    tableName: 'reports',
   },
   KRS_SCORE: {
     tableName: 'krs_score',
@@ -303,19 +317,151 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     orderBy: '(timestamp, id)',
     mongoIdColumn: true,
     materializedColumns: [
+      "caseId String MATERIALIZED JSONExtractString(data, '_id')",
+      "caseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseStatus')",
+      "statusChanges Array(Tuple(timestamp UInt64, caseStatus String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String))')",
+      "assignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
+      "reviewAssignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
       `alerts Array(Tuple(
+        alertId String, 
+        alertStatus String, 
+        statusChanges String, 
+        assignments String, 
+        reviewAssignments String,
         ruleId String,
-        ruleInstanceId String, 
-        alertStatus String,
+        ruleInstanceId String,
         numberOfTransactionsHit Int32
-      )) MATERIALIZED 
+      )) MATERIALIZED
         arrayMap(x -> CAST((
+          JSONExtractString(x, 'alertId'),
+          JSONExtractString(x, 'alertStatus'),
+          JSONExtractString(x, 'statusChanges'),
+          JSONExtractString(x, 'assignments'),
+          JSONExtractString(x, 'reviewAssignments'),
           JSONExtractString(x, 'ruleId'),
           JSONExtractString(x, 'ruleInstanceId'),
-          JSONExtractString(x, 'alertStatus'),
           JSONExtractInt(x, 'numberOfTransactionsHit')
-        ), 'Tuple(ruleId String, ruleInstanceId String, alertStatus String, numberOfTransactionsHit Int32)'),
+        ), 'Tuple(alertId String, alertStatus String, statusChanges String, assignments String, reviewAssignments String, ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32)'),
         JSONExtractArrayRaw(data, 'alerts'))`,
+    ],
+    materializedViews: [
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .CASE_INVESTIGATION_STATS.viewName,
+        columns: [
+          'accountId String',
+          'hour String',
+          'investigationTime UInt64',
+          'caseIds Array(String)',
+          'status String',
+        ],
+        engine: 'ReplacingMergeTree',
+        primaryKey: '(hour, accountId, status)',
+        orderBy: '(hour, accountId, status)',
+        table:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .CASE_INVESTIGATION_STATS.table,
+        query: `
+          SELECT
+            assignment.1 as accountId,
+            formatDateTime(toDateTime(end_timestamp/1000), '%Y-%m-%d %H:00:00') as hour,
+            toUInt64(end_timestamp - start_timestamp) as investigationTime,
+            [caseId] as caseIds,
+            multiIf(
+              caseStatus IN ('OPEN_IN_PROGRESS', 'OPEN_ON_HOLD'), 'OPEN',
+              caseStatus IN ('ESCALATED_IN_PROGRESS', 'ESCALATED_ON_HOLD'), 'ESCALATED',
+              caseStatus
+            ) as status
+          FROM (
+            SELECT
+              id,
+              caseId,
+              caseStatus,
+              statusChanges[idx].1 as start_timestamp,
+              statusChanges[idx + 1].1 as end_timestamp,
+              if(statusChanges[idx].2 = 'ESCALATED_IN_PROGRESS',
+                 reviewAssignments,
+                 assignments) as relevant_assignments
+            FROM cases
+            ARRAY JOIN arrayEnumerate(statusChanges) as idx
+            WHERE length(statusChanges) > 1
+              AND idx < length(statusChanges)
+          )
+          ARRAY JOIN relevant_assignments AS assignment
+          WHERE assignment.1 != ''
+        `,
+      },
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .ALERT_INVESTIGATION_STATS.viewName,
+        columns: [
+          'accountId String',
+          'hour String',
+          'investigationTime UInt64',
+          'caseIds Array(String)',
+          'status String',
+        ],
+        engine: 'ReplacingMergeTree',
+        primaryKey: '(hour, accountId, status)',
+        orderBy: '(hour, accountId, status)',
+        table:
+          CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .ALERT_INVESTIGATION_STATS.table,
+        query: `
+          WITH 
+            status_times AS (
+              SELECT
+                id,
+                alertId,
+                alertStatus,
+                start_timestamp,
+                end_timestamp,
+                is_escalated,
+                JSONExtract(alert_assignments, 'Array(Tuple(String, String))') as parsed_alert_assignments,
+                JSONExtract(alert_review_assignments, 'Array(Tuple(String, String))') as parsed_alert_review_assignments
+              FROM (
+                SELECT
+                  id,
+                  alertId,
+                  alertStatus,
+                  JSONExtractFloat(JSONExtractRaw(status_changes, toString(idx)), 'timestamp') as start_timestamp,
+                  JSONExtractFloat(JSONExtractRaw(status_changes, toString(idx + 1)), 'timestamp') as end_timestamp,
+                  JSONExtractString(JSONExtractRaw(status_changes, toString(idx)), 'alertStatus') = 'ESCALATED_IN_PROGRESS' as is_escalated,
+                  alert_assignments,
+                  alert_review_assignments
+                FROM (
+                  SELECT
+                    id,
+                    alert.1 as alertId,
+                    alert.2 as alertStatus,
+                    alert.3 as status_changes,
+                    alert.4 as alert_assignments,
+                    alert.5 as alert_review_assignments,
+                    JSONLength(alert.3) as length
+                  FROM cases
+                  ARRAY JOIN alerts AS alert
+                  WHERE JSONLength(alert.3) > 1
+                )
+                ARRAY JOIN range(length - 1) as idx
+              )
+            )
+          SELECT
+            assignment.1 as accountId,
+            formatDateTime(toDateTime(end_timestamp/1000), '%Y-%m-%d %H:00:00') as hour,
+            toUInt64(end_timestamp - start_timestamp) as investigationTime,
+            [alertId] as caseIds,
+            multiIf(
+              alertStatus IN ('OPEN_IN_PROGRESS', 'OPEN_ON_HOLD'), 'OPEN',
+              alertStatus IN ('ESCALATED_IN_PROGRESS', 'ESCALATED_ON_HOLD'), 'ESCALATED',
+              alertStatus
+            ) as status
+          FROM status_times
+          ARRAY JOIN (if(is_escalated, parsed_alert_review_assignments, parsed_alert_assignments)) as assignment
+          WHERE assignment.1 != ''
+        `,
+      },
     ],
   },
   {
@@ -368,6 +514,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
     ],
   },
+  {
+    table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
+    idColumn: '_id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "status String MATERIALIZED JSONExtractString(data, 'status')",
+    ],
+  },
 ] as const
 
 export type TableName = (typeof ClickHouseTables)[number]['table']
@@ -389,6 +547,7 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
     CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>

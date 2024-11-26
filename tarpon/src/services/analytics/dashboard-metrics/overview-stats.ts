@@ -11,6 +11,11 @@ import { DashboardStatsOverview } from '@/@types/openapi-internal/DashboardStats
 import { hasFeature } from '@/core/utils/context'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { traceable } from '@/core/xray'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class OverviewStatsDashboardMetric {
@@ -78,11 +83,14 @@ export class OverviewStatsDashboardMetric {
 
     return dashboardStats[0]?.avgInvestigationTime ?? 0
   }
-
   public static async get(
     tenantId: string,
     accountIds: string[]
   ): Promise<DashboardStatsOverview> {
+    if (isClickhouseEnabled()) {
+      return this.getClickhouse(tenantId, accountIds)
+    }
+
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const reportsCollection = db.collection<Report>(REPORT_COLLECTION(tenantId))
@@ -139,5 +147,112 @@ export class OverviewStatsDashboardMetric {
       averageInvestigationTimeAlerts,
       totalSarReported,
     }
+  }
+
+  public static async getClickhouse(
+    tenantId: string,
+    accountIds: string[]
+  ): Promise<DashboardStatsOverview> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+
+    const casesCountQuery = `
+      SELECT count(*) as count
+      FROM cases FINAL
+      WHERE caseStatus IN ('OPEN', 'REOPENED')
+    `
+    const alertsCountQuery = `
+      SELECT count(*) as count
+      FROM cases FINAL
+      ARRAY JOIN alerts as alert
+      WHERE alert.2 IN ('OPEN', 'REOPENED')
+    `
+    const sarReportsQuery = `
+      SELECT count(*) as count
+      FROM reports FINAL
+      WHERE status = 'COMPLETE'
+    `
+
+    const [
+      casesCountResult,
+      alertsCountResult,
+      sarReportsResult,
+      averageInvestigationTimeCases,
+      averageInvestigationTimeAlerts,
+    ] = await Promise.all([
+      clickhouseClient
+        .query({
+          query: casesCountQuery,
+          format: 'JSONEachRow',
+        })
+        .then((r) => r.json<{ count: number }>()),
+
+      clickhouseClient
+        .query({
+          query: alertsCountQuery,
+          format: 'JSONEachRow',
+        })
+        .then((r) => r.json<{ count: number }>()),
+
+      hasFeature('SAR')
+        ? clickhouseClient
+            .query({
+              query: sarReportsQuery,
+              format: 'JSONEachRow',
+            })
+            .then((r) => r.json<{ count: number }>())
+        : Promise.resolve([{ count: 0 }]),
+
+      this.getAverageInvestigationTimeClickhouse(tenantId, 'cases', accountIds),
+      this.getAverageInvestigationTimeClickhouse(
+        tenantId,
+        'alerts',
+        accountIds
+      ),
+    ])
+
+    return {
+      totalOpenCases: casesCountResult[0]?.count ?? 0,
+      totalOpenAlerts: alertsCountResult[0]?.count ?? 0,
+      averageInvestigationTimeCases,
+      averageInvestigationTimeAlerts,
+      totalSarReported: sarReportsResult[0]?.count ?? 0,
+    }
+  }
+
+  public static async getAverageInvestigationTimeClickhouse(
+    tenantId: string,
+    type: 'cases' | 'alerts',
+    accountIds?: string[]
+  ): Promise<number> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const tableName =
+      type === 'cases'
+        ? CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .CASE_INVESTIGATION_STATS.table
+        : CLICKHOUSE_DEFINITIONS.CASES.materializedViews
+            .ALERT_INVESTIGATION_STATS.table
+
+    const query = `
+      SELECT 
+        if(count(DISTINCT arrayJoin(caseIds)) > 0,
+           sum(investigationTime) / count(DISTINCT arrayJoin(caseIds)),
+           0) as avgInvestigationTime
+      FROM ${tableName} FINAL
+      ${
+        accountIds?.length
+          ? `WHERE accountId IN (${accountIds
+              .map((id) => `'${id}'`)
+              .join(',')})`
+          : ''
+      }
+    `
+
+    const queryResult = await clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const result = await queryResult.json<{ avgInvestigationTime: number }>()
+    return result[0]?.avgInvestigationTime ?? 0
   }
 }

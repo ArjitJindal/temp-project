@@ -378,10 +378,10 @@ export class RuleHitsStatsDashboardMetric {
     WITH
       arrayJoin(alerts) as alert
   SELECT 
-    alert.2 as ruleInstanceId,
-    alert.1 as ruleId,
-    countIf(alert.3 != 'CLOSED') as openAlertsCount,
-    countIf(alert.4 = 0) as hitCount
+    alert.7 as ruleInstanceId,
+    alert.6 as ruleId,
+    countIf(alert.2 != 'CLOSED') as openAlertsCount,
+    countIf(alert.8 = 0) as hitCount
   FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
   WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
   GROUP BY ruleInstanceId, ruleId
