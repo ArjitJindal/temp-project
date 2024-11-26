@@ -557,25 +557,33 @@ export const AggregationVariableFormContent: React.FC<
             </Label>
           )}
         </>
-        <Label
-          label="Aggregate function"
-          required={{ value: true, showHint: !readOnly }}
-          testId="variable-aggregate-function-v8"
-        >
-          <Select<LogicAggregationFunc>
-            isDisabled={readOnly}
-            value={formValues.aggregationFunc}
-            onChange={(aggregationFunc) =>
-              handleUpdateForm(
-                aggregationFunc === 'UNIQUE_VALUES'
-                  ? { aggregationFunc, includeCurrentEntity: false }
-                  : { aggregationFunc },
-              )
-            }
-            mode="SINGLE"
-            options={aggregateFunctionOptions}
-          />
-        </Label>
+        <div>
+          <Label
+            label="Aggregate function"
+            required={{ value: true, showHint: !readOnly }}
+            testId="variable-aggregate-function-v8"
+          >
+            <Select<LogicAggregationFunc>
+              isDisabled={readOnly}
+              value={formValues.aggregationFunc}
+              onChange={(aggregationFunc) =>
+                handleUpdateForm(
+                  aggregationFunc === 'UNIQUE_VALUES'
+                    ? { aggregationFunc, includeCurrentEntity: false }
+                    : { aggregationFunc },
+                )
+              }
+              mode="SINGLE"
+              options={aggregateFunctionOptions}
+            />
+          </Label>
+          {(formValues.aggregationFunc === 'UNIQUE_COUNT' ||
+            formValues.aggregationFunc === 'UNIQUE_VALUES') && (
+            <div className={s.hint}>
+              Please note that unique count aggregation is limited to 25,000.
+            </div>
+          )}
+        </div>
         {selectedArrayOfObjectsVar && (
           <Label label="Filter key" required={{ value: true, showHint: true }}>
             <Select<string>

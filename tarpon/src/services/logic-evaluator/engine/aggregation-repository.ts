@@ -84,8 +84,13 @@ export class AggregationRepository {
     groupValue: string | undefined
   ): BatchWriteRequestInternal[] {
     const aggregationDataWithTtl = mapValues(aggregationData, (data) => {
+      const truncatedValue = Array.isArray(data.value)
+        ? this.truncateArray(data.value)
+        : data.value
+
       return {
         ...data,
+        value: truncatedValue,
         ttl: this.getUpdatedTtlAttribute(aggregationVariable),
       }
     })
@@ -431,5 +436,27 @@ export class AggregationRepository {
       } as UsedAggregationVariable,
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
+  }
+
+  private truncateArray<T>(arr: T[]): T[] {
+    const MAX_SIZE = 380 * 1024 // 380KB
+    const totalSize = new TextEncoder().encode(JSON.stringify(arr)).length
+    const ratio = totalSize / MAX_SIZE
+
+    if (ratio <= 1) {
+      return arr
+    }
+
+    let truncatedLength = Math.floor(arr.length / ratio)
+    let truncatedArray = arr.slice(0, truncatedLength)
+
+    while (
+      new TextEncoder().encode(JSON.stringify(truncatedArray)).length > MAX_SIZE
+    ) {
+      truncatedLength--
+      truncatedArray = arr.slice(0, truncatedLength)
+    }
+
+    return truncatedArray
   }
 }
