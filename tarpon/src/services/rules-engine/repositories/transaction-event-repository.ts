@@ -18,6 +18,7 @@ import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
 
@@ -211,5 +212,36 @@ export class TransactionEventRepository {
       return null
     }
     return pickKnownEntityFields(result, TransactionEvent)
+  }
+
+  public async getTransactionEventsPaginatedMongo(
+    transactionId: string,
+    params: { page: number; pageSize: number }
+  ): Promise<TransactionsEventResponse> {
+    const db = this.mongoDb.db()
+    const eventsPromise = db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .find({ transactionId })
+      .sort({ timestamp: -1 })
+      .skip((params.page - 1) * params.pageSize)
+      .limit(params.pageSize)
+
+    const countPromise = db
+      .collection<TransactionEvent>(
+        TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+      )
+      .countDocuments({ transactionId })
+
+    const [events, count] = await Promise.all([
+      eventsPromise.toArray(),
+      countPromise,
+    ])
+
+    return {
+      items: events,
+      count,
+    }
   }
 }

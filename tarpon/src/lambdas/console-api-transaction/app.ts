@@ -17,6 +17,8 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/services/cases'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 export type TransactionViewConfig = {
   TMP_BUCKET: string
@@ -262,6 +264,19 @@ export const transactionsViewHandler = lambdaApi()(
       )
       return response
     })
+
+    handlers.registerGetTransactionEvents(async (ctx, req) => {
+      const transactionEventsRepository = new TransactionEventRepository(
+        tenantId,
+        { dynamoDb, mongoDb }
+      )
+
+      return await transactionEventsRepository.getTransactionEventsPaginatedMongo(
+        req.transactionId,
+        { page: req.page || 1, pageSize: req.pageSize || DEFAULT_PAGE_SIZE }
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

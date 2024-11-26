@@ -365,7 +365,9 @@ export function Content(props: { userId: string }) {
       queryResults={responseRes}
       rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
       columns={columns}
-      renderExpanded={(item) => <TransactionEventsTable events={item.events} />}
+      renderExpanded={(item) => (
+        <TransactionEventsTable transactionId={item.transactionId as string} />
+      )}
       fixedExpandedContainer={true}
       fitHeight={true}
       selectionActions={[

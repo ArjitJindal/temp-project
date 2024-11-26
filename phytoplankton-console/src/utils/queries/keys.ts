@@ -65,6 +65,13 @@ export const TRANSACTIONS_FIND = (search: string): QueryKey => [
   'search',
   search,
 ];
+export const TRANSACTIONS_EVENTS_FIND = (transactionId: string, params: any): QueryKey => [
+  'transactions',
+  'events',
+  'list',
+  transactionId,
+  params,
+];
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const CRM_ACCOUNT = (userId: string): QueryKey => ['crmaccount', userId];

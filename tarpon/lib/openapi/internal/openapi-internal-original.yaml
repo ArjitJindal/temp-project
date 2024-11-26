@@ -1444,6 +1444,34 @@ paths:
             type: string
           in: query
           name: alertId
+  /transactions/{transactionId}/events:
+    parameters:
+      - schema:
+          type: string
+        in: path
+        name: transactionId
+        required: true
+    get:
+      summary: Transaction - Events
+      tags: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionsEventResponse'
+      operationId: get-transaction-events
+      description: ''
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /transactions/export:
     get:
       summary: Transaction - Export
@@ -8452,6 +8480,19 @@ components:
         - items
         - hasNext
         - hasPrev
+    TransactionsEventResponse:
+      title: TransactionsEventResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalTransactionEvent'
+        count:
+          type: number
+      required:
+        - items
+        - count
     TransactionsResponseOffsetPaginated:
       title: TransactionsResponseOffsetPaginated
       type: object

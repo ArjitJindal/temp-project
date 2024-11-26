@@ -1,18 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { TransactionEvent } from '@/apis';
-import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE_TIME, ID, TRANSACTION_STATE } from '@/components/library/Table/standardDataTypes';
+import { useApi } from '@/api';
+import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { TRANSACTIONS_EVENTS_FIND } from '@/utils/queries/keys';
+import { DEFAULT_PAGE_SIZE } from '@/components/library/Table/consts';
+import QueryResultsTable from '@/components/shared/QueryResultsTable';
+import { CommonParams } from '@/components/library/Table/types';
 
 interface Props {
-  events: Array<TransactionEvent>;
+  transactionId: string;
 }
 
-export default function TransactionEventsTable({ events }: Props) {
+interface Params extends CommonParams {}
+
+export default function TransactionEventsTable(props: Props) {
+  const { transactionId } = props;
+  const [params, setParams] = useState<Params>({
+    pageSize: DEFAULT_PAGE_SIZE,
+    page: 1,
+    sort: [],
+  });
+  const api = useApi();
+
+  const queryResults = usePaginatedQuery(
+    TRANSACTIONS_EVENTS_FIND(transactionId, params),
+    (params) =>
+      api.getTransactionEvents({
+        transactionId,
+        page: params.page,
+        pageSize: params.pageSize,
+      }),
+  );
+
   const columnHelper = new ColumnHelper<TransactionEvent>();
   return (
-    <Table<TransactionEvent>
-      rowKey="transactionId"
+    <QueryResultsTable<TransactionEvent, Params>
+      queryResults={queryResults}
+      rowKey="eventId"
+      params={params}
+      onChangeParams={setParams}
       columns={columnHelper.list([
         columnHelper.simple({
           title: 'Event ID',
@@ -38,10 +66,7 @@ export default function TransactionEventsTable({ events }: Props) {
           key: 'reason',
         }),
       ])}
-      data={{
-        items: events,
-      }}
-      pagination={false}
+      pagination={'HIDE_FOR_ONE_PAGE'}
       toolsOptions={false}
     />
   );

@@ -161,7 +161,7 @@ export default function TransactionsItem() {
               {
                 title: 'Transaction events',
                 key: 'transaction-events',
-                children: <TransactionEventsCard events={transaction.events ?? []} />,
+                children: <TransactionEventsCard transactionId={transaction.transactionId} />,
                 isClosable: false,
                 isDisabled: false,
               },
