@@ -758,6 +758,9 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ...[{ index: { name: 1, entity: 1, lastScreenedAt: 1 }, unique: true }],
       ],
     },
+    [DELTA_SANCTIONS_COLLECTION(tenantId)]: {
+      getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
+    },
     [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: {
       getIndexes: () =>
         [{ id: 1 }, { name: 1 }, { description: 1 }, { createdAt: 1 }].map(
