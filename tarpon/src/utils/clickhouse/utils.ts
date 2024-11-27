@@ -565,13 +565,10 @@ export const createMaterializedViewQuery = (
 ) => {
   return `
     CREATE MATERIALIZED VIEW IF NOT EXISTS ${view.viewName} TO ${view.table}
-    AS ${
-      view.query ||
-      `(
+    AS (
       SELECT ${view.columns.map((col) => col.split(' ')[0]).join(', ')}
       FROM ${tableName}
-    )`
-    }
+    )
   `
 }
 

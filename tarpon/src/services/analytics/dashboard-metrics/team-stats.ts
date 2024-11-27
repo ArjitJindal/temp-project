@@ -19,11 +19,6 @@ import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamS
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { traceable } from '@/core/xray'
-import {
-  getClickhouseClient,
-  isClickhouseEnabled,
-} from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 interface TimestampCondition {
   $gte?: number
@@ -898,16 +893,6 @@ export class TeamStatsDashboardMetric {
     status?: (CaseStatus | AlertStatus)[],
     accountIds?: Array<string>
   ): Promise<DashboardTeamStatsItem[]> {
-    if (isClickhouseEnabled()) {
-      return this.getClickhouse(
-        tenantId,
-        scope,
-        startTimestamp,
-        endTimestamp,
-        status,
-        accountIds
-      )
-    }
     const db = await getMongoDbClientDb()
     const collectionName =
       scope === 'ALERTS'
@@ -1010,82 +995,5 @@ export class TeamStatsDashboardMetric {
       .toArray()
 
     return result
-  }
-
-  public static async getClickhouse(
-    tenantId: string,
-    scope: 'CASES' | 'ALERTS',
-    startTimestamp?: number,
-    endTimestamp?: number,
-    status?: (CaseStatus | AlertStatus)[],
-    accountIds?: Array<string>
-  ): Promise<DashboardTeamStatsItem[]> {
-    const clickhouseClient = await getClickhouseClient(tenantId)
-    const tableName =
-      scope === 'CASES'
-        ? CLICKHOUSE_DEFINITIONS.CASES.materializedViews
-            .CASE_INVESTIGATION_STATS.table
-        : CLICKHOUSE_DEFINITIONS.CASES.materializedViews
-            .ALERT_INVESTIGATION_STATS.table
-
-    const dateConditions: string[] = []
-    if (startTimestamp) {
-      dateConditions.push(
-        `hour >= '${dayjs(startTimestamp).format(HOUR_DATE_FORMAT_JS)}'`
-      )
-    }
-    if (endTimestamp) {
-      dateConditions.push(
-        `hour <= '${dayjs(endTimestamp).format(HOUR_DATE_FORMAT_JS)}'`
-      )
-    }
-
-    const conditions = [
-      ...(status?.length
-        ? [`status IN (${status.map((s) => `'${s}'`).join(',')})`]
-        : []),
-      ...(accountIds?.length
-        ? [`accountId IN (${accountIds.map((id) => `'${id}'`).join(',')})`]
-        : []),
-      ...dateConditions,
-    ]
-
-    const query = `
-      SELECT
-        accountId,
-        sum(if(status = 'CLOSED', 1, 0)) as closedBy,
-        count(DISTINCT arrayJoin(caseIds)) as assignedTo,
-        sum(investigationTime) as investigationTime,
-        groupArray(caseIds) as allCaseIds,
-        sum(if(status = 'CLOSED_BY_SYSTEM', 1, 0)) as closedBySystem,
-        sum(if(status IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS'), 1, 0)) as inProgress,
-        sum(if(status = 'ESCALATED', 1, 0)) as escalatedBy
-      FROM ${tableName} FINAL
-      ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
-      GROUP BY accountId
-      ORDER BY hour DESC
-    `
-
-    const result = await clickhouseClient
-      .query({
-        query,
-        format: 'JSONEachRow',
-      })
-      .then((r) =>
-        r.json<{
-          accountId: string
-          closedBy: number
-          assignedTo: number
-          allCaseIds: string[][]
-          closedBySystem: number
-          inProgress: number
-          escalatedBy: number
-        }>()
-      )
-
-    return result.map((row) => ({
-      ...row,
-      caseIds: Array.from(new Set(row.allCaseIds.flat())),
-    }))
   }
 }
