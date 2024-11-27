@@ -90,7 +90,11 @@ export const defaultTimestamps = memoize(() => ({
 
 export const transactionParamsToRequest = (
   params: TransactionsTableParams,
+  options?: {
+    ignoreDefaultTimestamps?: boolean;
+  },
 ): DefaultApiGetTransactionsListRequest => {
+  const { ignoreDefaultTimestamps = false } = options ?? {};
   const {
     pageSize,
     page,
@@ -115,9 +119,15 @@ export const transactionParamsToRequest = (
   const requestParams: DefaultApiGetTransactionsListRequest = {
     page,
     pageSize,
-    afterTimestamp: timestamp ? dayjs(timestamp[0]).valueOf() : defaultTimestamps().afterTimestamp,
+    afterTimestamp: timestamp
+      ? dayjs(timestamp[0]).valueOf()
+      : ignoreDefaultTimestamps
+      ? undefined
+      : defaultTimestamps().afterTimestamp,
     beforeTimestamp: timestamp
       ? dayjs(timestamp[1]).valueOf()
+      : ignoreDefaultTimestamps
+      ? undefined
       : defaultTimestamps().beforeTimestamp,
     filterId: transactionId,
     filterOriginCurrencies: originCurrenciesFilter,

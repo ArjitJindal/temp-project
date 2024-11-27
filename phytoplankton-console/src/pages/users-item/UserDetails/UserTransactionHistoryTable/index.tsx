@@ -104,7 +104,7 @@ export function Content(props: { userId: string }) {
     USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
     async ({ from }) => {
       const requestParams = {
-        ...transactionParamsToRequest(params),
+        ...transactionParamsToRequest(params, { ignoreDefaultTimestamps: true }),
         start: from || params.from,
         includeEvents: true,
         includeUsers: false,
