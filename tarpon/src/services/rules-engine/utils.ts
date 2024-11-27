@@ -23,7 +23,6 @@ import {
 } from '@/utils/sns-sqs-client'
 import { envIs } from '@/utils/env'
 import { UserTag } from '@/@types/openapi-internal/all'
-import { generateChecksum } from '@/utils/object'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { UserType } from '@/@types/user/user-type'
@@ -31,6 +30,7 @@ import { ConsumerUserEvent } from '@/@types/openapi-public/ConsumerUserEvent'
 import { BusinessUserEvent } from '@/@types/openapi-public/BusinessUserEvent'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
+import { generateChecksum } from '@/utils/object'
 
 export function getSenderKeys(
   tenantId: string,
@@ -442,6 +442,41 @@ export type AsyncRuleRecord = (
 ) & {
   tenantId: string
 }
+
+function getMessageGroupId(record: AsyncRuleRecord): string {
+  switch (record.type) {
+    case 'TRANSACTION':
+      return record.transaction.originUserId
+        ? `${record.transaction.originUserId}`
+        : record.transaction.destinationUserId
+        ? `${record.transaction.destinationUserId}`
+        : `${record.transaction.transactionId}`
+    case 'TRANSACTION_EVENT':
+      return record.updatedTransaction.originUserId
+        ? `${record.updatedTransaction.originUserId}`
+        : record.updatedTransaction.destinationUserId
+        ? `${record.updatedTransaction.destinationUserId}`
+        : `${record.updatedTransaction.transactionId}`
+    case 'TRANSACTION_BATCH':
+      return record.transaction.originUserId
+        ? `${record.transaction.originUserId}`
+        : record.transaction.destinationUserId
+        ? `${record.transaction.destinationUserId}`
+        : `${record.transaction.transactionId}`
+    case 'TRANSACTION_EVENT_BATCH':
+      // TODO: To improve this
+      return record.tenantId
+    case 'USER':
+      return record.user.userId
+    case 'USER_EVENT':
+      return record.updatedUser.userId
+    case 'USER_BATCH':
+      return record.user.userId
+    case 'USER_EVENT_BATCH':
+      return record.userEvent.userId
+  }
+}
+
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[]
 ): Promise<void> {
@@ -454,9 +489,10 @@ export async function sendAsyncRuleTasks(
     }
     return
   }
+  const hasPnbFeature = hasFeature('PNB')
 
   const messages = tasks.map((task) => {
-    const messageGroupId = generateChecksum(task.tenantId, 10)
+    const defaultMessageGroupId = generateChecksum(task.tenantId, 10)
     let messageDeduplicationId = ''
     if (task.type === 'TRANSACTION') {
       messageDeduplicationId = sanitizeDeduplicationId(
@@ -494,7 +530,9 @@ export async function sendAsyncRuleTasks(
     return {
       MessageBody: JSON.stringify(task),
       QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
-      MessageGroupId: messageGroupId,
+      MessageGroupId: hasPnbFeature
+        ? getMessageGroupId(task)
+        : defaultMessageGroupId,
       MessageDeduplicationId: messageDeduplicationId,
     }
   })
