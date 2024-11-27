@@ -12156,6 +12156,8 @@ components:
           type: string
         provider:
           $ref: '#/components/schemas/SanctionsDataProviderName'
+        providerConfigHash:
+          type: string
         request:
           $ref: '#/components/schemas/SanctionsSearchRequest'
         response:

@@ -58,7 +58,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const DEFAULT_FUZZINESS = 0.5
 
-type ProviderConfig = {
+export type ProviderConfig = {
   providerName?: SanctionsDataProviderName
   stage: RuleStage
   listId?: string
@@ -215,7 +215,8 @@ export class SanctionsService {
     existedSearch = !hasFeature('PNB')
       ? await this.sanctionsSearchRepository.getSearchResultByParams(
           providerName,
-          request
+          request,
+          providerOverrides
         )
       : null
 

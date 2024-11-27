@@ -14,6 +14,8 @@ import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { ProviderConfig } from '@/services/sanctions'
+import { generateChecksum } from '@/utils/object'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -74,7 +76,8 @@ export class SanctionsSearchRepository {
 
   public async getSearchResultByParams(
     provider: SanctionsDataProviderName,
-    request: SanctionsSearchRequest
+    request: SanctionsSearchRequest,
+    providerConfig: ProviderConfig
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
@@ -113,6 +116,10 @@ export class SanctionsSearchRepository {
           },
         ],
       })
+    }
+
+    if (this.tenantId === '8e0e970c86') {
+      filters.push({ providerConfigHash: generateChecksum(providerConfig) })
     }
 
     filters.push({
