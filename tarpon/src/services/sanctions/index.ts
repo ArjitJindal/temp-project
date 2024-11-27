@@ -28,7 +28,7 @@ import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScre
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhitelistEntity'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { getContext } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsHitListResponse } from '@/@types/openapi-internal/SanctionsHitListResponse'
 import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsScreeningDetails'
@@ -212,11 +212,12 @@ export class SanctionsService {
     let createdAt: number | undefined = undefined
 
     let existedSearch: SanctionsSearchHistory | null = null
-    existedSearch =
-      await this.sanctionsSearchRepository.getSearchResultByParams(
-        providerName,
-        request
-      )
+    existedSearch = !hasFeature('PNB')
+      ? await this.sanctionsSearchRepository.getSearchResultByParams(
+          providerName,
+          request
+        )
+      : null
 
     let sanctionsSearchResponse: SanctionsProviderResponse
 
