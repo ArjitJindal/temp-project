@@ -77,7 +77,7 @@ export class SanctionsSearchRepository {
   public async getSearchResultByParams(
     provider: SanctionsDataProviderName,
     request: SanctionsSearchRequest,
-    providerConfig: ProviderConfig
+    providerConfig?: ProviderConfig
   ): Promise<SanctionsSearchHistory | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsSearchHistory>(
@@ -118,7 +118,10 @@ export class SanctionsSearchRepository {
       })
     }
 
-    if (this.tenantId === '8e0e970c86') {
+    if (
+      providerConfig &&
+      (this.tenantId === '8e0e970c86' || this.tenantId.includes('flagright'))
+    ) {
       filters.push({ providerConfigHash: generateChecksum(providerConfig) })
     }
 
