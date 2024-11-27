@@ -1,5 +1,5 @@
 import { TransactionsTableParams } from '..';
-import { PaymentMethod, TransactionState } from '@/apis';
+import { PaymentMethod, RuleAction, TransactionState } from '@/apis';
 import { defaultQueryAdapter } from '@/components/library/Table/queryAdapter';
 import { dayjs } from '@/utils/dayjs';
 import { Adapter } from '@/utils/routing';
@@ -17,6 +17,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       destinationCurrenciesFilter: params.destinationCurrenciesFilter?.join(',') ?? '',
       userId: params.userId,
       tagKey: params.tagKey,
+      status: params.status,
       tagValue: params.tagValue,
       originMethodFilter: params.originMethodFilter,
       destinationMethodFilter: params.destinationMethodFilter,
@@ -50,6 +51,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       userId: raw.userId,
       tagKey: raw.tagKey,
       tagValue: raw.tagValue,
+      status: raw.status as RuleAction & 'all',
       originMethodFilter: raw.originMethodFilter as PaymentMethod,
       destinationMethodFilter: raw.destinationMethodFilter as PaymentMethod,
       originPaymentMethodId: raw.originPaymentMethodId,

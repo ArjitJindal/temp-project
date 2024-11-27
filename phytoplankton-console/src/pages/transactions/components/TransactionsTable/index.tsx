@@ -330,6 +330,7 @@ export default function TransactionsTable(props: Props) {
               key: 'executedRules.ruleAction',
               value: (entity) => getStatus(entity.executedRules, alert, entity.status),
               type: RULE_ACTION_STATUS,
+              filtering: true,
             } as DerivedColumn<InternalTransaction, RuleAction>,
           ]
         : [
@@ -337,6 +338,7 @@ export default function TransactionsTable(props: Props) {
               title: 'Status',
               key: 'status',
               type: RULE_ACTION_STATUS,
+              filtering: true,
             }),
           ]),
       helper.simple<'originUserId'>({
