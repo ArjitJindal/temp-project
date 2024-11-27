@@ -31,7 +31,7 @@ export const OverviewCardSection = (props: SectionProps) => {
       <div className={s.body}>
         <div className={s.value}>
           <Skeleton res={value} length={5}>
-            {(v) => formatNumber(v)}
+            {(v) => (typeof v === 'string' ? v : formatNumber(v))}
           </Skeleton>
         </div>
         {description && <div className={s.description}>{description}</div>}

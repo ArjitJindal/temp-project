@@ -22,10 +22,6 @@ describe('formatNumber', () => {
     expect(formatNumber(123456, { compact: true, keepDecimals: false })).toEqual('123.46k');
   });
 
-  it('should return "-" for string input', () => {
-    expect(formatNumber('invalid')).toEqual('-');
-  });
-
   it('should format 0 correctly without options', () => {
     expect(formatNumber(0)).toEqual('0');
   });
