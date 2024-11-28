@@ -147,7 +147,9 @@ export class SanctionsSearchRepository {
 
     if (
       providerConfig &&
-      (this.tenantId === '8e0e970c86' || this.tenantId.includes('flagright'))
+      (this.tenantId === '78c5a44b9b' ||
+        this.tenantId === '8e0e970c86' ||
+        this.tenantId.includes('flagright'))
     ) {
       filters.push({ providerConfigHash: generateChecksum(providerConfig) })
     }
