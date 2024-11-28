@@ -60,7 +60,8 @@ export default function Pagination(props: Props) {
                     {showResultsInfo && pageSize && current && (
                       <>
                         Showing {formatNumber(pageSize * (current - 1) + 1)} -{' '}
-                        {formatNumber(Math.min(pageSize * current, total))} of {formatNumber(total)}
+                        {formatNumber(Math.min(pageSize * current, total))} of{' '}
+                        {formatNumber(Number(total ?? 0))}
                         {total >= COUNT_QUERY_LIMIT ? '+' : ''}
                       </>
                     )}
