@@ -20,6 +20,11 @@ import { RulesEngineService } from '@/services/rules-engine'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import dayjs from '@/utils/dayjs'
+import {
+  DELTA_SANCTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { preprocessUsers } from '@/services/batch-jobs/ongoing-screening-user-rule-batch-job-runner'
 
 dynamoDbSetupHook()
 withFeatureHook(['SANCTIONS'])
@@ -441,5 +446,87 @@ describe('V8 ongoing screening', () => {
     }
     await jobRunnerHandler(testJob)
     expect(spy).toBeCalledTimes(1)
+  })
+})
+
+describe('preprocessUsers', () => {
+  it('should match users based on name similarity and document IDs', async () => {
+    const tenantId = getTestTenantId()
+    const client = await getMongoDbClient()
+    const sanctionsCollection = client
+      .db()
+      .collection(DELTA_SANCTIONS_COLLECTION(tenantId))
+    const usersCollection = client.db().collection(USERS_COLLECTION(tenantId))
+
+    // Seed sanctions data
+    await sanctionsCollection.insertMany([
+      {
+        id: 's1',
+        name: 'John Doe',
+        aka: ['Jonathan Doe'],
+        documents: [{ id: 'doc1', formattedId: 'doc001' }],
+      },
+      {
+        id: 's2',
+        name: 'Jane Smith',
+        aka: [],
+        documents: [{ id: 'doc2' }],
+      },
+    ])
+
+    // Seed users data
+    await usersCollection.insertMany([
+      {
+        userId: 'u1',
+        legalDocuments: [{ documentNumber: 'doc001' }],
+        username: 'Jon Doe',
+      },
+      {
+        userId: 'u2',
+        legalDocuments: [{ documentNumber: 'doc3' }],
+        username: 'Jane Smithy',
+      },
+      {
+        userId: 'u3',
+        legalDocuments: [{ documentNumber: 'doc2' }],
+        username: 'Mary Johnson',
+      },
+    ])
+
+    const result = await preprocessUsers(tenantId, 25)
+
+    expect(result).toEqual(new Set(['u1', 'u3']))
+  })
+
+  it('should return an empty set if no matches are found', async () => {
+    const tenantId = getTestTenantId()
+    const client = await getMongoDbClient()
+    const sanctionsCollection = client
+      .db()
+      .collection(DELTA_SANCTIONS_COLLECTION(tenantId))
+    const usersCollection = client.db().collection(USERS_COLLECTION(tenantId))
+
+    // Seed sanctions data
+    await sanctionsCollection.insertMany([
+      {
+        id: 's1',
+        name: 'Nonexistent Name',
+        aka: [],
+        documents: [],
+      },
+    ])
+
+    // Seed users data
+    await usersCollection.insertMany([
+      {
+        userId: 'u1',
+        legalDocuments: [],
+        username: 'Another User',
+      },
+    ])
+
+    const result = await preprocessUsers(tenantId, 25)
+
+    expect(result).toEqual(new Set())
   })
 })

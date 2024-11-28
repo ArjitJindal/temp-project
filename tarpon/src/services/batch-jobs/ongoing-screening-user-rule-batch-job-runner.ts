@@ -23,6 +23,13 @@ import { CaseCreationService } from '@/services/cases/case-creation-service'
 import dayjs from '@/utils/dayjs'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
+import {
+  DELTA_SANCTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { calculateLevenshteinDistancePercentage } from '@/utils/search'
+import { getUserName } from '@/utils/helpers'
 
 const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
   ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
@@ -141,11 +148,49 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       this.to
     )
 
+    let preprocessedMatches: Set<string>
+    if (await tenantHasFeature(this.tenantId as string, 'PNB')) {
+      let maxFuzziness = 0
+      ruleInstances.forEach((r) => {
+        const parameters: {
+          fuzziness: number
+          fuzzinessRange: {
+            lowerBound: number
+            upperBound: number
+          }
+        } = r.parameters
+        if (parameters.fuzziness) {
+          if (parameters.fuzziness > maxFuzziness) {
+            maxFuzziness = parameters.fuzziness
+          }
+        }
+        if (
+          parameters.fuzzinessRange &&
+          parameters.fuzzinessRange.upperBound &&
+          parameters.fuzzinessRange.upperBound > maxFuzziness
+        ) {
+          maxFuzziness = parameters.fuzzinessRange.upperBound
+        }
+      })
+      preprocessedMatches = await preprocessUsers(
+        this.tenantId as string,
+        maxFuzziness,
+        this.from,
+        this.to
+      )
+    }
+
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
         usersCursor,
         async (usersChunk) => {
-          await this.runUsersBatch(usersChunk, rules, ruleInstances)
+          let filteredUsers = usersChunk
+          if (preprocessedMatches) {
+            filteredUsers = usersChunk.filter((u) =>
+              preprocessedMatches.has(u.userId)
+            )
+          }
+          await this.runUsersBatch(filteredUsers, rules, ruleInstances)
         },
         { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
       )
@@ -249,4 +294,68 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       cases ?? []
     )
   }
+}
+
+export async function preprocessUsers(
+  tenantId: string,
+  fuzziness: number,
+  from?: string,
+  to?: string
+) {
+  const client = await getMongoDbClient()
+  const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
+  const allNames: Set<string> = new Set()
+  const documentIds: Set<string> = new Set()
+  const matches: Set<string> = new Set()
+  const sanctionsCollection = client
+    .db()
+    .collection<SanctionsEntity>(deltaSanctionsCollectionName)
+  const usersCollection = client
+    .db()
+    .collection<InternalUser>(USERS_COLLECTION(tenantId))
+
+  let filters = {}
+  if (from) {
+    filters = { $gte: from }
+  }
+  if (to) {
+    filters = { ...filters, $lte: to }
+  }
+
+  for await (const sanctionsEntity of sanctionsCollection.find(filters)) {
+    const names: string[] = [
+      sanctionsEntity.name,
+      ...(sanctionsEntity.aka || []),
+    ]
+    names.forEach((n) => {
+      allNames.add(n)
+    })
+    sanctionsEntity.documents?.forEach((d) => {
+      if (d.id) {
+        documentIds.add(d.id)
+      }
+      if (d.formattedId) {
+        documentIds.add(d.formattedId)
+      }
+    })
+  }
+  for await (const user of usersCollection.find({})) {
+    allNames.forEach((n) => {
+      const percentageSimilarity = calculateLevenshteinDistancePercentage(
+        n.toLowerCase(),
+        getUserName(user).toLowerCase()
+      )
+      const percentageDifference = 100 - percentageSimilarity
+      if (percentageDifference <= fuzziness) {
+        matches.add(user.userId)
+      }
+    })
+    user.legalDocuments?.forEach((d) => {
+      if (documentIds.has(d.documentNumber)) {
+        matches.add(user.userId)
+      }
+    })
+  }
+
+  return matches
 }
