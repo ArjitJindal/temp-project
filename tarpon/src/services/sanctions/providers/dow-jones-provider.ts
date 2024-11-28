@@ -37,6 +37,7 @@ import {
 } from '@/@types/openapi-internal/SanctionsNameMatched'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { traceable } from '@/core/xray'
 
 // Define the API endpoint
 const apiEndpoint = 'https://djrcfeed.dowjones.com/xml'
@@ -214,6 +215,7 @@ const parser = new XMLParser({
 
 const pipelineAsync = promisify(pipeline)
 
+@traceable
 export class DowJonesProvider extends SanctionsDataFetcher {
   authHeader: string
 

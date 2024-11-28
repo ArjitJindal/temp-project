@@ -12,11 +12,13 @@ import {
   MongoClient,
   ObjectId,
   OptionalUnlessRequiredId,
+  UpdateFilter,
   UpdateResult,
   WithId,
 } from 'mongodb'
 
 import { isEqual, memoize } from 'lodash'
+import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
@@ -31,6 +33,8 @@ import {
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
 import { envIsNot } from './env'
 import { isDemoTenant } from './tenant'
+import { getSQSClient } from './sns-sqs-client'
+import { generateChecksum } from './object'
 import { MONGO_TEST_DB_NAME } from '@/test-utils/mongo-test-utils'
 import {
   DEFAULT_PAGE_SIZE,
@@ -634,4 +638,28 @@ export async function internalMongoInsert<T extends Document>(
     operationType: 'insert',
     clusterTime: Date.now(),
   })
+}
+
+export interface MongoUpdateMessage<T extends Document = Document> {
+  filter: Filter<T>
+  operationType: 'updateOne'
+  updateMessage: UpdateFilter<T>
+  sendToClickhouse: boolean
+  collectionName: string
+  upsert?: boolean
+}
+
+export async function sendMessageToMongoUpdateConsumer<
+  T extends Document = Document
+>(message: MongoUpdateMessage<T>) {
+  const sqs = getSQSClient()
+
+  await sqs.send(
+    new SendMessageCommand({
+      QueueUrl: process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL,
+      MessageBody: JSON.stringify(message),
+      MessageGroupId: generateChecksum(message.filter, 10),
+      MessageDeduplicationId: generateChecksum(message, 10),
+    })
+  )
 }

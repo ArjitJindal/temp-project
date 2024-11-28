@@ -25,6 +25,7 @@ import { removeUndefinedFields } from '@/utils/object'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { traceable } from '@/core/xray'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -226,6 +227,7 @@ const SEARCH_PROFILE_IDS: Record<
   },
 }
 
+@traceable
 export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
   private complyAdvantageMarketType: string
   private complyAdvantageApi: ComplyAdvantageApi

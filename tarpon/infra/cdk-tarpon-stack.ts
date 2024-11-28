@@ -237,6 +237,16 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const mongoUpdateConsumerQueue = this.createQueue(
+      SQSQueues.MONGO_UPDATE_CONSUMER_QUEUE_NAME.name,
+      {
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        fifo: true,
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const mongoDbConsumerQueue = this.createQueue(
       SQSQueues.MONGO_DB_CONSUMER_QUEUE_NAME.name,
       {
@@ -481,6 +491,7 @@ export class CdkTarponStack extends cdk.Stack {
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
+        MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
       },
     }
 
@@ -559,6 +570,7 @@ export class CdkTarponStack extends cdk.Stack {
             tarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
+            mongoUpdateConsumerQueue.queueArn,
           ],
         }),
         new PolicyStatement({
@@ -750,6 +762,22 @@ export class CdkTarponStack extends cdk.Stack {
 
     asyncRuleAlias.addEventSource(
       new SqsEventSource(asyncRuleQueue, { maxConcurrency: 100, batchSize: 10 })
+    )
+
+    /* Mongo Update */
+    const { alias: mongoUpdateConsumerAlias } = createFunction(
+      this,
+      lambdaExecutionRole,
+      {
+        name: StackConstants.MONGO_UPDATE_CONSUMER_FUNCTION_NAME,
+      }
+    )
+
+    mongoUpdateConsumerAlias.addEventSource(
+      new SqsEventSource(mongoUpdateConsumerQueue, {
+        batchSize: 10,
+        maxConcurrency: 100,
+      })
     )
 
     /* Transaction Aggregation */

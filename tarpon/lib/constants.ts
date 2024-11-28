@@ -204,6 +204,9 @@ export const StackConstants = {
   AUDIT_LOG_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
     'AuditLogConsumerFunction'
   ),
+  MONGO_UPDATE_CONSUMER_FUNCTION_NAME: getResourceNameForTarpon(
+    'MongoUpdateConsumerFunction'
+  ),
   AUDIT_LOG_TOPIC_NAME: getResourceName('AuditLogTopic'),
   BETTER_UPTIME_CLOUD_WATCH_TOPIC_NAME: getResourceName(
     'BetterUptimeCloudWatchTopic'
@@ -340,6 +343,9 @@ export const SQSQueues: {
   },
   MONGO_DB_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoDbConsumerQueue'),
+  },
+  MONGO_UPDATE_CONSUMER_QUEUE_NAME: {
+    name: getResourceName('MongoUpdateConsumerQueue') + '.fifo',
   },
 }
 

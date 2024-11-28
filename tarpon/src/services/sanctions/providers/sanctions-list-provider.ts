@@ -10,9 +10,11 @@ import { ListItem } from '@/@types/openapi-public/ListItem'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { traceable } from '@/core/xray'
 
 const cachedLists: Map<string, [Date, ListItem[]]> = new Map()
 
+@traceable
 export class SanctionsListProvider implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository

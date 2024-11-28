@@ -1,4 +1,4 @@
-import { MongoClient, Document } from 'mongodb'
+import { MongoClient, Document, UpdateFilter, Filter } from 'mongodb'
 import { isNil, omitBy, sum } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { SANCTIONS_SCREENING_DETAILS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -7,7 +7,11 @@ import { SanctionsScreeningDetails } from '@/@types/openapi-internal/SanctionsSc
 import { DefaultApiGetSanctionsScreeningActivityDetailsRequest } from '@/@types/openapi-internal/RequestParameters'
 import { SanctionsScreeningDetailsResponse } from '@/@types/openapi-internal/SanctionsScreeningDetailsResponse'
 import { SanctionsScreeningStats } from '@/@types/openapi-internal/SanctionsScreeningStats'
-import { paginatePipeline } from '@/utils/mongodb-utils'
+import {
+  MongoUpdateMessage,
+  paginatePipeline,
+  sendMessageToMongoUpdateConsumer,
+} from '@/utils/mongodb-utils'
 import { COUNT_QUERY_LIMIT, offsetPaginateClickhouse } from '@/utils/pagination'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 import { BooleanString } from '@/@types/openapi-internal/BooleanString'
@@ -18,6 +22,8 @@ import {
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
+import { envIs } from '@/utils/env'
+import { logger } from '@/core/logger'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
@@ -37,10 +43,6 @@ export class SanctionsScreeningDetailsRepository {
     const sanctionsScreeningCollectionName =
       SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
 
-    const collection = db.collection<SanctionsScreeningDetails>(
-      sanctionsScreeningCollectionName
-    )
-
     const roundedScreenedAt = dayjs(screenedAt).startOf('hour').valueOf()
 
     const filter = {
@@ -55,14 +57,10 @@ export class SanctionsScreeningDetailsRepository {
       transactionIds = [],
       ...detailsWithoutSets
     } = details
-    const update = {
-      $set: {
-        ...detailsWithoutSets,
-        lastScreenedAt: roundedScreenedAt,
-      },
-      $setOnInsert: {
-        isNew: true,
-      },
+
+    const update: UpdateFilter<SanctionsScreeningDetails> = {
+      $set: { ...detailsWithoutSets, lastScreenedAt: roundedScreenedAt },
+      $setOnInsert: { isNew: true },
       $addToSet: {
         ruleInstanceIds: { $each: ruleInstanceIds },
         userIds: { $each: userIds },
@@ -70,13 +68,49 @@ export class SanctionsScreeningDetailsRepository {
       },
     }
 
-    const options = { upsert: true }
+    const messageBody: MongoUpdateMessage<SanctionsScreeningDetails> = {
+      filter,
+      operationType: 'updateOne',
+      updateMessage: update,
+      sendToClickhouse: true,
+      collectionName: sanctionsScreeningCollectionName,
+      upsert: true,
+    }
 
-    const result = await collection.updateOne(filter, update, options)
+    if (envIs('local') || envIs('test') || !hasFeature('PNB')) {
+      await this.callMongoDatabase(filter, update)
+      return
+    }
+
+    try {
+      await sendMessageToMongoUpdateConsumer(messageBody)
+    } catch (e) {
+      logger.error(
+        `Failed to send message to mongo update consumer for sanctions screening details: ${e}`
+      )
+
+      await db
+        .collection<SanctionsScreeningDetails>(sanctionsScreeningCollectionName)
+        .updateOne(filter, update, { upsert: true })
+    }
+  }
+
+  private async callMongoDatabase(
+    filter: Filter<SanctionsScreeningDetails>,
+    update: UpdateFilter<SanctionsScreeningDetails>
+  ) {
+    const db = this.mongoDb.db()
+    const sanctionsScreeningCollectionName =
+      SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
+
+    const updatedData = await db
+      .collection<SanctionsScreeningDetails>(sanctionsScreeningCollectionName)
+      .updateOne(filter, update, { upsert: true })
+
     await sendMessageToMongoConsumer({
       collectionName: sanctionsScreeningCollectionName,
-      documentKey: { type: 'id', value: String(result.upsertedId) },
-      operationType: 'replace',
+      documentKey: { type: 'id', value: String(updatedData.upsertedId) },
+      operationType: 'update',
       clusterTime: Date.now(),
     })
   }

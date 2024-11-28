@@ -1,7 +1,10 @@
-import { MongoClient, Filter } from 'mongodb'
+import { MongoClient, Filter, UpdateFilter } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
-import { prefixRegexMatchFilter } from '@/utils/mongodb-utils'
+import {
+  prefixRegexMatchFilter,
+  sendMessageToMongoUpdateConsumer,
+} from '@/utils/mongodb-utils'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsSearchResponse } from '@/@types/openapi-internal/SanctionsSearchResponse'
@@ -16,6 +19,9 @@ import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchTy
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { ProviderConfig } from '@/services/sanctions'
 import { generateChecksum } from '@/utils/object'
+import { envIs } from '@/utils/env'
+import { hasFeature } from '@/core/utils/context'
+import { logger } from '@/core/logger'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -51,27 +57,48 @@ export class SanctionsSearchRepository {
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
     const db = this.mongoDb.db()
-    const collection = db.collection<SanctionsSearchHistory>(
-      SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
-    )
-
-    await collection.updateOne(
-      { _id: response.searchId },
-      {
-        $set: {
-          provider,
-          request,
-          response,
-          createdAt: createdAt ?? Date.now(),
-          updatedAt: updatedAt ?? Date.now(), // Always set to the current time when updating
-          ...(!request.monitoring?.enabled && {
-            expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
-          }),
-          ...(props.searchedBy && { searchedBy: props.searchedBy }),
-        },
+    const collectionName = SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
+    const updateMessage: UpdateFilter<SanctionsSearchHistory> = {
+      $set: {
+        provider,
+        request,
+        response,
+        createdAt: createdAt ?? Date.now(),
+        updatedAt: updatedAt ?? Date.now(),
+        ...(!request.monitoring?.enabled && {
+          expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
+        }),
+        ...(props.searchedBy && { searchedBy: props.searchedBy }),
       },
-      { upsert: true }
-    )
+    }
+
+    if (envIs('local') || envIs('test') || !hasFeature('PNB')) {
+      await db
+        .collection<SanctionsSearchHistory>(collectionName)
+        .updateOne(filter, updateMessage, { upsert: true })
+
+      return
+    }
+
+    try {
+      await sendMessageToMongoUpdateConsumer({
+        filter: { _id: response.searchId },
+        updateMessage,
+        collectionName: SANCTIONS_SEARCHES_COLLECTION(this.tenantId),
+        upsert: true,
+        operationType: 'updateOne',
+        sendToClickhouse: false,
+      })
+    } catch (e) {
+      logger.error(
+        `Failed to send message to mongo update consumer for sanctions search: ${e}`
+      )
+
+      await db
+        .collection<SanctionsSearchHistory>(collectionName)
+        .updateOne(filter, updateMessage, { upsert: true })
+    }
   }
 
   public async getSearchResultByParams(

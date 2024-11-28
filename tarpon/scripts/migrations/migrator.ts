@@ -81,6 +81,8 @@ function initializeEnvVars() {
   const batchJobQueueName: string = SQSQueues.BATCH_JOB_QUEUE_NAME.name
   const asyncRuleQueueName: string = SQSQueues.ASYNC_RULE_QUEUE_NAME.name
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
+  const mongoUpdateConsumerQueueName: string =
+    SQSQueues.MONGO_UPDATE_CONSUMER_QUEUE_NAME.name
   const mongoDbConsumerQueueName: string =
     SQSQueues.MONGO_DB_CONSUMER_QUEUE_NAME.name
   process.env.BATCH_JOB_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${batchJobQueueName}`
@@ -91,6 +93,7 @@ function initializeEnvVars() {
     getConfig()
   )
   process.env.MONGO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoDbConsumerQueueName}`
+  process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoUpdateConsumerQueueName}`
 }
 
 async function main() {

@@ -16,7 +16,9 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsProviderSearchRepository } from '@/services/sanctions/repositories/sanctions-provider-searches-repository'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
+import { traceable } from '@/core/xray'
 
+@traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   private readonly providerName: SanctionsDataProviderName
   private readonly searchRepository: SanctionsProviderSearchRepository
