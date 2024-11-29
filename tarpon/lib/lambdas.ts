@@ -296,7 +296,7 @@ export const LAMBDAS: {
   [StackConstants.BATCH_JOB_TRIGGER_CONSUMER_FUNCTION_NAME]: {
     codePath: 'batch-job',
     handlerName: 'jobTriggerHandler',
-    expectedMaxSeconds: DEFAULT_LAMBDA_EXPECTED_MAX_SECONDS,
+    expectedMaxSeconds: ASYNC_JOB_LAMBDA_EXPECTED_MAX_SECONDS,
     timeoutSeconds: DEFAULT_ASYNC_JOB_LAMBDA_TIMEOUT_SECONDS,
   },
   [StackConstants.BATCH_JOB_DECISION_FUNCTION_NAME]: {

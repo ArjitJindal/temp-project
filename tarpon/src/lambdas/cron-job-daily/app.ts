@@ -208,14 +208,20 @@ async function optimizeClickhouseTable(
     await Promise.all([
       clickhouseClient.exec({
         query: `OPTIMIZE TABLE ${tableName} FINAL`,
+        clickhouse_settings: { wait_end_of_query: 0, wait_for_async_insert: 0 },
       }),
       clickhouseClient.exec({
         query: `DELETE FROM ${tableName} WHERE timestamp = 0`,
+        clickhouse_settings: { wait_end_of_query: 0, wait_for_async_insert: 0 },
       }),
       ...(table.materializedViews
         ? Object.values(table.materializedViews).flatMap((view) => [
             clickhouseClient.exec({
               query: `OPTIMIZE TABLE ${view.table} FINAL`,
+              clickhouse_settings: {
+                wait_end_of_query: 0,
+                wait_for_async_insert: 0,
+              },
             }),
           ]) // If Risk Scores are updated before the user then timestamp might be 0 hence fixing that
         : []),
