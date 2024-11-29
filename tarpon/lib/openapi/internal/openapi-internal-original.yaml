@@ -14856,13 +14856,9 @@ components:
               type: number
             p2Errors:
               type: number
-          required:
-            - p1Errors
-            - p2Errors
       required:
         - name
         - categories
-        - qaPassCriteria
       title: ChecklistTemplate
     ChecklistTemplatesResponse:
       type: object
