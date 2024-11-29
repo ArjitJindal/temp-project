@@ -134,6 +134,7 @@ export function useAlertQuery(
       return {
         items: presentAlertData(result.data),
         total: result.total,
+        totalPages: result.totalPages,
       };
     },
   );

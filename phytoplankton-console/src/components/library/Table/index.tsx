@@ -471,6 +471,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
               handleChangeParamsPaginated({ ...params, page, pageSize })
             }
             total={data.total ?? data.items.length}
+            totalPages={data.totalPages}
+            currentItems={data.items.length}
             paginationBorder={paginationBorder}
           />
         )}

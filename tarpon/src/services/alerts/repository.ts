@@ -2,8 +2,17 @@ import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
-import { cloneDeep, compact, difference, intersection, isEmpty } from 'lodash'
+import {
+  cloneDeep,
+  compact,
+  difference,
+  intersection,
+  isEmpty,
+  last,
+  uniqBy,
+} from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
+import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
@@ -87,7 +96,7 @@ export class AlertsRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
     /* Getting count */
-    const countPipeline = [
+    const alertsCountPipeline = [
       ...(await this.getAlertsPipeline(params, {
         hideTransactionIds: options?.hideTransactionIds,
         countOnly: true,
@@ -99,9 +108,25 @@ export class AlertsRepository {
         $count: 'count',
       },
     ]
+    const casesCountPipeline = [
+      ...alertsCountPipeline.slice(
+        0,
+        alertsCountPipeline.findIndex((stage) => stage.$unwind)
+      ),
+      {
+        $limit: COUNT_QUERY_LIMIT,
+      },
+      {
+        $count: 'count',
+      },
+    ]
     // Don't await count here
-    const countPromise = collection
-      .aggregate<{ count: number }>(countPipeline)
+    const alertsCountPromise = collection
+      .aggregate<{ count: number }>(alertsCountPipeline)
+      .next()
+      .then((item) => item?.count ?? 0)
+    const casesCountPromise = collection
+      .aggregate<{ count: number }>(casesCountPipeline)
       .next()
       .then((item) => item?.count ?? 0)
 
@@ -170,6 +195,34 @@ export class AlertsRepository {
         )
       }
     }
+    // As we paginate the cases not alerts, the previous pages could contain the alerts that should be in the current page
+    // Find them and add them to the current page
+    if (params.sortField && skip > 0) {
+      const firstSortFieldValue = filteredAlerts[0].alert[params.sortField]
+      const lastSortFieldValue = last(filteredAlerts)?.alert[params.sortField]
+      const gte =
+        params.sortOrder === 'ascend' ? firstSortFieldValue : lastSortFieldValue
+      const lte =
+        params.sortOrder === 'ascend' ? lastSortFieldValue : firstSortFieldValue
+      const pipeline3 = await this.getAlertsPipeline(params, {
+        hideTransactionIds: options?.hideTransactionIds,
+        countOnly: false,
+        extraAlertsFilterConditions: [
+          {
+            [`alerts.${params.sortField}`]: {
+              $gte: gte,
+              $lte: lte,
+            },
+          },
+        ],
+      })
+      const unwindIndex = pipeline3.findIndex((stage) => stage.$unwind)
+      pipeline3.splice(unwindIndex - 1, 0, { $limit: skip })
+      const missedPrevAlerts = await collection
+        .aggregate<AlertListResponseItem>(pipeline3)
+        .toArray()
+      filteredAlerts = filteredAlerts.concat(missedPrevAlerts)
+    }
 
     filteredAlerts.forEach((alert) => {
       if (alert.alert?.slaPolicyDetails) {
@@ -181,8 +234,9 @@ export class AlertsRepository {
       }
     })
     return {
-      total: await countPromise,
-      data: filteredAlerts,
+      total: await alertsCountPromise,
+      totalPages: Math.ceil((await casesCountPromise) / limit),
+      data: uniqBy(filteredAlerts, (v) => v.alert.alertId),
     }
   }
 
@@ -265,6 +319,7 @@ export class AlertsRepository {
       hideTransactionIds?: boolean
       countOnly?: boolean
       excludeProject?: boolean
+      extraAlertsFilterConditions?: Document[]
     }
   ): Promise<Document[]> {
     const sortField = params?.sortField
@@ -586,14 +641,28 @@ export class AlertsRepository {
     if (alertConditions.length > 0) {
       pipeline.push({
         $match: {
-          $and: alertConditions,
+          alerts: {
+            $elemMatch: {
+              $and: replaceMagicKeyword(alertConditions, 'alerts.', ''),
+            },
+          },
         },
       })
     }
 
-    if (sortStage) {
+    if (!options?.countOnly && sortStage) {
       pipeline.push(sortStage)
     }
+
+    if (options?.extraAlertsFilterConditions?.length) {
+      pipeline.push({
+        $match: {
+          $and: options.extraAlertsFilterConditions,
+        },
+      })
+      alertConditions.push(...options.extraAlertsFilterConditions)
+    }
+
     pipeline.push({
       $unwind: {
         path: '$alerts',

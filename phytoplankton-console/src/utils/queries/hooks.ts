@@ -83,6 +83,7 @@ function convertQueryResult<TQueryFnData = unknown, TData = TQueryFnData>(
 export type PaginatedData<T> = {
   success?: boolean;
   total?: number;
+  totalPages?: number;
   items: Array<T>;
   next?: string;
 };

@@ -16,6 +16,11 @@ interface Props {
   onChange: (page: number, pageSize: number) => void;
   total: number;
   current?: number;
+
+  // Special props for table with dynamic number of items per page
+  totalPages?: number;
+  currentItems?: number;
+
   adjustPagination?: boolean;
   paginationBorder?: boolean;
 }
@@ -24,7 +29,9 @@ export default function Pagination(props: Props) {
   const {
     isDisabled,
     total,
+    totalPages,
     current = 1,
+    currentItems,
     pageSize = DEFAULT_PAGE_SIZE,
     showResultsInfo = true,
     onChange,
@@ -55,22 +62,28 @@ export default function Pagination(props: Props) {
           showSizeChanger={false}
           showTotal={
             showResultsInfo
-              ? (total) => (
-                  <span>
-                    {showResultsInfo && pageSize && current && (
-                      <>
-                        Showing {formatNumber(pageSize * (current - 1) + 1)} -{' '}
-                        {formatNumber(Math.min(pageSize * current, total))} of{' '}
-                        {formatNumber(Number(total ?? 0))}
-                        {total >= COUNT_QUERY_LIMIT ? '+' : ''}
-                      </>
-                    )}
-                  </span>
-                )
+              ? () => {
+                  const currentPageCountInfo =
+                    totalPages && currentItems
+                      ? `${currentItems}`
+                      : `${formatNumber(pageSize * (current - 1) + 1)} - ${formatNumber(
+                          Math.min(pageSize * current, total),
+                        )}`;
+                  return (
+                    <span>
+                      {showResultsInfo && pageSize && current && (
+                        <>
+                          Showing {currentPageCountInfo} of {formatNumber(Number(total ?? 0))}
+                          {total >= COUNT_QUERY_LIMIT ? '+' : ''}
+                        </>
+                      )}
+                    </span>
+                  );
+                }
               : undefined
           }
-          total={total}
-          pageSize={pageSize ?? DEFAULT_PAGE_SIZE}
+          total={totalPages ? totalPages * pageSize : total}
+          pageSize={pageSize}
           current={current}
           onChange={onChange}
         />
