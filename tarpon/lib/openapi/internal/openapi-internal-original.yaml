@@ -10591,6 +10591,7 @@ components:
         - RISK_SCORING_V8
         - DOW_JONES
         - ASYNC_RULES
+        - CONCURRENT_ASYNC_RULES
         - PNB
         - MULTI_LEVEL_ESCALATION
         - SALES_RISK_SCORING

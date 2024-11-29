@@ -1,6 +1,11 @@
-import { SQSEvent } from 'aws-lambda'
+import { SQSBatchItemFailure, SQSEvent } from 'aws-lambda'
+import { groupBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
-import { initializeTenantContext, withContext } from '@/core/utils/context'
+import {
+  hasFeature,
+  initializeTenantContext,
+  withContext,
+} from '@/core/utils/context'
 import { RulesEngineService } from '@/services/rules-engine'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -10,7 +15,6 @@ import { logger } from '@/core/logger'
 import { AsyncRuleRecord } from '@/services/rules-engine/utils'
 import { envIsNot } from '@/utils/env'
 import { acquireLock, releaseLock } from '@/utils/lock'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 
 function getLockKeys(record: AsyncRuleRecord): string[] {
   switch (record.type) {
@@ -43,130 +47,139 @@ function getLockKeys(record: AsyncRuleRecord): string[] {
 }
 export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { tenantId } = record
-  await withContext(async () => {
-    await initializeTenantContext(record.tenantId)
-    const dynamoDb = getDynamoDbClient()
-    const mongoDb = await getMongoDbClient()
-    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    const rulesEngineService = new RulesEngineService(
-      tenantId,
-      dynamoDb,
-      logicEvaluator,
-      mongoDb
+  const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
+  const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  const rulesEngineService = new RulesEngineService(
+    tenantId,
+    dynamoDb,
+    logicEvaluator,
+    mongoDb
+  )
+  const userRulesEngineService = new UserManagementService(
+    tenantId,
+    dynamoDb,
+    mongoDb,
+    logicEvaluator
+  )
+  const { type } = record
+
+  if (type === 'TRANSACTION') {
+    const { transaction, senderUser, receiverUser, riskDetails } = record
+    logger.info(
+      `Running async rule for transaction ${transaction.transactionId} for tenant ${tenantId}`
     )
-    const userRulesEngineService = new UserManagementService(
-      tenantId,
-      dynamoDb,
-      mongoDb,
-      logicEvaluator
+    await rulesEngineService.verifyAsyncRulesTransaction(
+      transaction,
+      senderUser,
+      receiverUser,
+      riskDetails
     )
-    const { type } = record
-    if (type === 'TRANSACTION') {
-      const { transaction, senderUser, receiverUser, riskDetails } = record
-      logger.info(
-        `Running async rule for transaction ${transaction.transactionId} for tenant ${tenantId}`
-      )
-      await rulesEngineService.verifyAsyncRulesTransaction(
-        transaction,
-        senderUser,
-        receiverUser,
-        riskDetails
-      )
-    } else if (type === 'TRANSACTION_EVENT') {
-      const {
-        senderUser,
-        receiverUser,
-        updatedTransaction,
-        transactionEventId,
-      } = record
+  } else if (type === 'TRANSACTION_EVENT') {
+    const { senderUser, receiverUser, updatedTransaction, transactionEventId } =
+      record
 
-      logger.info(
-        `Running async rule for transaction event ${transactionEventId} for tenant ${tenantId}`
-      )
+    logger.info(
+      `Running async rule for transaction event ${transactionEventId} for tenant ${tenantId}`
+    )
 
-      await rulesEngineService.verifyAsyncRulesTransactionEvent(
-        updatedTransaction,
-        transactionEventId,
-        senderUser,
-        receiverUser
-      )
-    } else if (type === 'USER') {
-      logger.info(
-        `Running async rule for user ${record.user.userId} for tenant ${tenantId}`
-      )
-      await userRulesEngineService.verifyAsyncRulesUser(
-        record.userType,
-        record.user
-      )
-    } else if (type === 'USER_EVENT') {
-      logger.info(
-        `Running async rule for user event ${record.userEventTimestamp} for tenant ${tenantId}`
-      )
-      await userRulesEngineService.verifyAsyncRulesUserEvent(
-        record.userType,
-        record.updatedUser,
-        record.userEventTimestamp
-      )
+    await rulesEngineService.verifyAsyncRulesTransactionEvent(
+      updatedTransaction,
+      transactionEventId,
+      senderUser,
+      receiverUser
+    )
+  } else if (type === 'USER') {
+    logger.info(
+      `Running async rule for user ${record.user.userId} for tenant ${tenantId}`
+    )
+    await userRulesEngineService.verifyAsyncRulesUser(
+      record.userType,
+      record.user
+    )
+  } else if (type === 'USER_EVENT') {
+    logger.info(
+      `Running async rule for user event ${record.userEventTimestamp} for tenant ${tenantId}`
+    )
+    await userRulesEngineService.verifyAsyncRulesUserEvent(
+      record.userType,
+      record.updatedUser,
+      record.userEventTimestamp
+    )
+  }
+
+  // Batch import
+  if (type === 'TRANSACTION_BATCH') {
+    await rulesEngineService.verifyTransaction(record.transaction, {
+      // Already validated. Skip validation.
+      validateDestinationUserId: false,
+      validateOriginUserId: false,
+      validateTransactionId: false,
+    })
+  } else if (type === 'TRANSACTION_EVENT_BATCH') {
+    await rulesEngineService.verifyTransactionEvent(record.transactionEvent)
+  } else if (type === 'USER_BATCH') {
+    await userRulesEngineService.verifyUser(record.user, record.userType)
+  } else if (type === 'USER_EVENT_BATCH') {
+    if (record.userType === 'CONSUMER') {
+      await userRulesEngineService.verifyConsumerUserEvent(record.userEvent)
+    } else {
+      await userRulesEngineService.verifyBusinessUserEvent(record.userEvent)
     }
-
-    // Batch import
-    if (type === 'TRANSACTION_BATCH') {
-      await rulesEngineService.verifyTransaction(record.transaction, {
-        // Already validated. Skip validation.
-        validateDestinationUserId: false,
-        validateOriginUserId: false,
-        validateTransactionId: false,
-      })
-    } else if (type === 'TRANSACTION_EVENT_BATCH') {
-      await rulesEngineService.verifyTransactionEvent(record.transactionEvent)
-    } else if (type === 'USER_BATCH') {
-      await userRulesEngineService.verifyUser(record.user, record.userType)
-    } else if (type === 'USER_EVENT_BATCH') {
-      if (record.userType === 'CONSUMER') {
-        await userRulesEngineService.verifyConsumerUserEvent(record.userEvent)
-      } else {
-        await userRulesEngineService.verifyBusinessUserEvent(record.userEvent)
-      }
-    }
-  })
+  }
 }
 
 export const asyncRuleRunnerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const { Records } = event
+
+    const batchItemFailures: SQSBatchItemFailure[] = []
+    const records = Records.map((record) => ({
+      messageId: record.messageId,
+      body: JSON.parse(record.body) as AsyncRuleRecord,
+    }))
+    const tenantGroupRecords = groupBy(records, (v) => v.body.tenantId)
     const dynamoDb = getDynamoDbClient()
-    // We can do this as default group ID is tenant ID checksum so for a singe lambda invocation all messages will be from same tenant
-    const tenantId = JSON.parse(Records[0].body).tenantId
-    const tenantRepository = new TenantRepository(tenantId, {
-      dynamoDb,
-    })
-    const tenantSettings = await tenantRepository.getTenantSettings()
-    if (!tenantSettings.features?.includes('PNB')) {
-      for await (const record of Records) {
-        const sqsMessage = JSON.parse(record.body) as AsyncRuleRecord
-        logger.info(`Running async rule for ${sqsMessage.tenantId}`)
-        await runAsyncRules(sqsMessage)
-      }
-    } else {
-      await Promise.all(
-        Records.map(async (record) => {
-          const sqsMessage = JSON.parse(record.body) as AsyncRuleRecord
-          const lockKeys = getLockKeys(sqsMessage)
-          if (lockKeys.length > 0 && envIsNot('test', 'local')) {
-            await Promise.all(lockKeys.map((key) => acquireLock(dynamoDb, key)))
-          }
-          try {
-            logger.info(`Running async rule for ${sqsMessage.tenantId}`)
-            await runAsyncRules(sqsMessage)
-          } finally {
-            if (lockKeys.length > 0 && envIsNot('test', 'local')) {
-              await Promise.all(
-                lockKeys.map((key) => releaseLock(dynamoDb, key))
-              )
+
+    await Promise.all(
+      Object.entries(tenantGroupRecords).map(async ([tenantId, records]) => {
+        await withContext(async () => {
+          await initializeTenantContext(tenantId)
+          const isConcurrentAsyncRulesEnabled = hasFeature(
+            'CONCURRENT_ASYNC_RULES'
+          )
+          for await (const record of records) {
+            try {
+              const lockKeys =
+                isConcurrentAsyncRulesEnabled && envIsNot('test', 'local')
+                  ? getLockKeys(record.body)
+                  : []
+
+              // Acquire locks
+              if (lockKeys.length > 0) {
+                await Promise.all(
+                  lockKeys.map((key) =>
+                    acquireLock(dynamoDb, key, { numOfAttempts: 1 })
+                  )
+                )
+              }
+
+              await runAsyncRules(record.body)
+
+              // Release locks
+              if (lockKeys.length > 0) {
+                await Promise.all(
+                  lockKeys.map((key) => releaseLock(dynamoDb, key))
+                )
+              }
+            } catch (e) {
+              logger.error(e)
+              batchItemFailures.push({ itemIdentifier: record.messageId })
             }
           }
         })
-      )
-    }
+      })
+    )
+    return { batchItemFailures }
   }
 )

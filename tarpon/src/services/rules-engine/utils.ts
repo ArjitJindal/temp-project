@@ -1,5 +1,5 @@
 import createHttpError from 'http-errors'
-import { groupBy, uniqBy } from 'lodash'
+import { compact, groupBy, uniqBy } from 'lodash'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { RuleInstanceRepository } from './repositories/rule-instance-repository'
 import { filterOutInternalRules } from './pnb-custom-logic'
@@ -442,27 +442,26 @@ export type AsyncRuleRecord = (
 ) & {
   tenantId: string
 }
-
-function getMessageGroupId(record: AsyncRuleRecord): string {
+function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
   switch (record.type) {
     case 'TRANSACTION':
-      return record.transaction.originUserId
-        ? `${record.transaction.originUserId}`
-        : record.transaction.destinationUserId
-        ? `${record.transaction.destinationUserId}`
-        : `${record.transaction.transactionId}`
+      return compact([
+        record.transaction.originUserId,
+        record.transaction.destinationUserId,
+        record.tenantId,
+      ])[0]
     case 'TRANSACTION_EVENT':
-      return record.updatedTransaction.originUserId
-        ? `${record.updatedTransaction.originUserId}`
-        : record.updatedTransaction.destinationUserId
-        ? `${record.updatedTransaction.destinationUserId}`
-        : `${record.updatedTransaction.transactionId}`
+      return compact([
+        record.updatedTransaction.originUserId,
+        record.updatedTransaction.destinationUserId,
+        record.tenantId,
+      ])[0]
     case 'TRANSACTION_BATCH':
-      return record.transaction.originUserId
-        ? `${record.transaction.originUserId}`
-        : record.transaction.destinationUserId
-        ? `${record.transaction.destinationUserId}`
-        : `${record.transaction.transactionId}`
+      return compact([
+        record.transaction.originUserId,
+        record.transaction.destinationUserId,
+        record.tenantId,
+      ])[0]
     case 'TRANSACTION_EVENT_BATCH':
       // TODO: To improve this
       return record.tenantId
@@ -476,23 +475,23 @@ function getMessageGroupId(record: AsyncRuleRecord): string {
       return record.userEvent.userId
   }
 }
-
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[]
 ): Promise<void> {
   if (envIs('test', 'local')) {
-    const { runAsyncRules } = await import('@/lambdas/async-rule/app')
+    const { asyncRuleRunnerHandler } = await import('@/lambdas/async-rule/app')
     if (envIs('local') || process.env.__ASYNC_RULES_IN_SYNC_TEST__ === 'true') {
-      for (const task of tasks) {
-        await runAsyncRules(task)
-      }
+      await asyncRuleRunnerHandler({
+        Records: tasks.map((task) => ({
+          body: JSON.stringify(task),
+        })),
+      })
     }
     return
   }
-  const hasPnbFeature = hasFeature('PNB')
 
+  const isConcurrentAsyncRulesEnabled = hasFeature('CONCURRENT_ASYNC_RULES')
   const messages = tasks.map((task) => {
-    const defaultMessageGroupId = generateChecksum(task.tenantId, 10)
     let messageDeduplicationId = ''
     if (task.type === 'TRANSACTION') {
       messageDeduplicationId = sanitizeDeduplicationId(
@@ -530,9 +529,12 @@ export async function sendAsyncRuleTasks(
     return {
       MessageBody: JSON.stringify(task),
       QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
-      MessageGroupId: hasPnbFeature
-        ? getMessageGroupId(task)
-        : defaultMessageGroupId,
+      MessageGroupId: generateChecksum(
+        isConcurrentAsyncRulesEnabled
+          ? getAsyncRuleMessageGroupId(task)
+          : task.tenantId,
+        10
+      ),
       MessageDeduplicationId: messageDeduplicationId,
     }
   })

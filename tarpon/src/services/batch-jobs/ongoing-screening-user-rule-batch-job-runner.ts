@@ -5,6 +5,7 @@ import { backOff } from 'exponential-backoff'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
+import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -57,15 +58,7 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
       )
       return diffTime % schedule.value === 0
     }
-
-    if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
-      return Boolean(
-        Object.values(ruleInstance.riskLevelParameters).find(
-          (parameters) => parameters?.ongoingScreening
-        )
-      )
-    }
-    return Boolean(ruleInstance.parameters?.ongoingScreening)
+    return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
   })
 
   return ruleInstances

@@ -1068,12 +1068,14 @@ export class RulesEngineService {
     )
     const isV8RiskScoring = hasFeature('RISK_SCORING_V8')
 
-    const userPromise = relatedData
-      ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
-      : this.getTransactionUsers(transaction, options)
+    const userPromise =
+      relatedData &&
+      ('senderUser' in relatedData || 'receiverUser' in relatedData)
+        ? Promise.resolve(pick(relatedData, ['senderUser', 'receiverUser']))
+        : this.getTransactionUsers(transaction, options)
     const riskScoringPromise = isV8RiskScoring
       ? Promise.resolve(undefined)
-      : relatedData
+      : relatedData && 'transactionRiskDetails' in relatedData
       ? Promise.resolve(relatedData.transactionRiskDetails as RiskScoreDetails)
       : this.getTransactionRiskScoreDetails(transaction)
 

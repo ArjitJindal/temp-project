@@ -17,6 +17,7 @@ import { PnbBackfillArsBatchJobRunner } from './pnb-backfill-ars-fargate-batch-j
 import { PnbBackfillCraBatchJobRunner } from './pnb-backfill-cra-fargate-batch-job'
 import { PnbBackfillHammerheadBatchJobRunner } from './pnb-backfill-hammerhead-fargate-batch-job'
 import { PnbBackfillWebhookDeliveriesBatchJobRunner } from './pnb-backfill-webhook-deliveries'
+import { BackfillAsyncRuleRunsBatchJobRunner } from './backfill-async-rule-runs-batch-job'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -68,6 +69,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new RiskScoringRecalculationBatchJobRunner(jobId),
     SIMULATION_RISK_FACTORS_V8: (jobId) =>
       new SimulationV8RiskFactorsBatchJobRunner(jobId),
+    BACKFILL_ASYNC_RULE_RUNS: (jobId) =>
+      new BackfillAsyncRuleRunsBatchJobRunner(jobId),
     PNB_BACKFILL_ENTITIES: (jobId) =>
       new PnbBackfillEntitiesBatchJobRunner(jobId),
     PNB_BACKFILL_TRANSACTIONS: (jobId) =>

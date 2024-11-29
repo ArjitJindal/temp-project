@@ -219,6 +219,18 @@ export type RiskScoringTriggersBatchJob = {
     clearedListIds?: string[]
   }
 }
+
+export type BackfillAsyncRuleRuns = {
+  type: 'BACKFILL_ASYNC_RULE_RUNS'
+  tenantId: string
+  parameters: {
+    concurrency: number
+    type: 'TRANSACTION' | 'USER'
+    startTimestamp?: number
+  }
+}
+
+/* PNB specific jobs */
 export type PnbBackfillEntities = {
   type: 'PNB_BACKFILL_ENTITIES'
   tenantId: string
@@ -310,6 +322,7 @@ export type BatchJob =
   | ReverifyTransactionsBatchJob
   | SanctionsDataFetchBatchJob
   | BackFillAvgTrs
+  | BackfillAsyncRuleRuns
   | RiskScoringTriggersBatchJob
   | PnbBackfillEntities
   | PnbBackfillTransactions

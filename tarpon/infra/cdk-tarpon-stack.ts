@@ -616,6 +616,11 @@ export class CdkTarponStack extends cdk.Stack {
           actions: ['sts:AssumeRole'],
           resources: ['*'],
         }),
+        new PolicyStatement({
+          effect: Effect.ALLOW,
+          actions: ['lambda:InvokeFunction'],
+          resources: ['*'],
+        }),
       ],
     })
 

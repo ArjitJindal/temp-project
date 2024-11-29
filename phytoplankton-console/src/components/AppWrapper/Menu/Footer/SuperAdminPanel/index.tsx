@@ -99,6 +99,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Async rules',
     description: 'Enables async rules',
   },
+  CONCURRENT_ASYNC_RULES: {
+    title: 'Concurrent async rules',
+    description: 'Enables concurrent async rules',
+  },
   RULES_ENGINE_V8_SYNC_REBUILD: {
     title: 'Rules engine V8 sync rebuild ',
     description: 'Enables Rules engine V8 sync rebuild',
