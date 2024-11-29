@@ -17,6 +17,14 @@ export const checkMultipleEmails = (emails: string[]) => {
   return emails.every(checkEmail)
 }
 
+export const handleSmallNumber = (value: number) => {
+  const EPSILON = 1e-12
+  if (Math.abs(value) < EPSILON) {
+    return 0.001 // Treat as 0.001
+  }
+  return value // Keep the original value
+}
+
 export function formatConsumerName(
   name: ConsumerName | undefined,
   ignoreMiddleName = false

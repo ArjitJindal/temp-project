@@ -65,6 +65,7 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
+import { handleSmallNumber } from '@/utils/helpers'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -172,7 +173,7 @@ export class RiskRepository {
   ): Promise<KrsScore> {
     logger.info(`Updating KRS score for user ${userId} to ${score}`)
     const newKrsScoreItem: KrsScore = {
-      krsScore: score,
+      krsScore: handleSmallNumber(score),
       createdAt: Date.now(),
       userId: userId,
       components,
@@ -209,7 +210,7 @@ export class RiskRepository {
       `Updating ARS score for transaction ${transactionId} to ${score}`
     )
     const newArsScoreItem: ArsScore = {
-      arsScore: score,
+      arsScore: handleSmallNumber(score),
       createdAt: Date.now(),
       originUserId,
       destinationUserId,
@@ -302,8 +303,9 @@ export class RiskRepository {
       `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
     )
     const prevDrsScore = await this.getDrsScore(userId)
+
     const newDrsScoreItem: DrsScore = {
-      drsScore,
+      drsScore: handleSmallNumber(drsScore),
       transactionId,
       createdAt: Date.now(),
       isUpdatable: isUpdatable ?? true,
