@@ -8236,6 +8236,7 @@ components:
                 - $ref: '#/components/schemas/AlertCreationIntervalInstantly'
                 - $ref: '#/components/schemas/AlertCreationIntervalWeekly'
                 - $ref: '#/components/schemas/AlertCreationIntervalMonthly'
+                - $ref: '#/components/schemas/AlertCreationIntervalDaily'
             alertAssignees:
               type: array
               items:
@@ -14637,6 +14638,46 @@ components:
             - INSTANTLY
       required:
         - type
+    DailyTime:
+      type: string
+      enum:
+        - 0
+        - 1
+        - 2
+        - 3
+        - 4
+        - 5
+        - 6
+        - 7
+        - 8
+        - 9
+        - 10
+        - 11
+        - 12
+        - 13
+        - 14
+        - 15
+        - 16
+        - 17
+        - 18
+        - 19
+        - 20
+        - 21
+        - 22
+        - 23
+    AlertCreationIntervalDaily:
+      title: AlertCreationIntervalDaily
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - DAILY
+        time:
+          $ref: '#/components/schemas/DailyTime'
+      required:
+        - type
+        - time
     AlertCreationIntervalWeekly:
       title: AlertCreationIntervalWeekly
       type: object

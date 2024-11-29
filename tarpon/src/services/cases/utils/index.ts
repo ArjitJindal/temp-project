@@ -8,19 +8,22 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DerivedStatus } from '@/@types/openapi-internal/DerivedStatus'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
+import { AlertCreationIntervalDaily } from '@/@types/openapi-internal/AlertCreationIntervalDaily'
 
 export function calculateCaseAvailableDate(
   now: number,
   alertCreationInterval:
     | AlertCreationIntervalInstantly
     | AlertCreationIntervalWeekly
-    | AlertCreationIntervalMonthly,
+    | AlertCreationIntervalMonthly
+    | AlertCreationIntervalDaily,
   timezone: Timezone
 ): number | undefined {
   if (alertCreationInterval.type === 'INSTANTLY') {
     return undefined
   }
   let d = dayjs(now).tz(timezone)
+
   if (alertCreationInterval.type === 'MONTHLY') {
     const newDayOfMonth = alertCreationInterval.day
     const currentDayOfMonth = d.date()
@@ -39,8 +42,21 @@ export function calculateCaseAvailableDate(
         .week(d.week() + 1)
         .day(newDayOfWeek)
     }
+  } else if (alertCreationInterval.type === 'DAILY') {
+    const hour = parseInt(alertCreationInterval.time)
+    const currentHour = d.tz(timezone).hour()
+
+    if (currentHour < hour) {
+      d = d.hour(hour)
+    } else {
+      d = d.add(1, 'day').hour(hour)
+    }
   }
-  d = d.startOf('day')
+
+  if (alertCreationInterval.type !== 'DAILY') {
+    d = d.startOf('day')
+  }
+
   return d.valueOf()
 }
 

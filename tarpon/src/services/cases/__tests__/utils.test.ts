@@ -18,6 +18,62 @@ describe('Case service utils', () => {
         expect(result).toBeUndefined()
       })
     })
+
+    describe('DAILY mode', () => {
+      test('Day after today', () => {
+        const now = '2023-06-01T12:00:00Z'
+        const result = calculateCaseAvailableDate(
+          dayjs(now).valueOf(),
+          { type: 'DAILY', time: '1' },
+          DEFAULT_TIMEZONE
+        )
+
+        expect(dayjs(result).format(DATE_FORMAT)).toEqual(
+          '2023-06-02 01:00:00.000 +00:00'
+        )
+      })
+
+      test('Same day', () => {
+        const now = '2023-06-01T12:00:00Z'
+        const result = calculateCaseAvailableDate(
+          dayjs(now).valueOf(),
+          { type: 'DAILY', time: '13' },
+          DEFAULT_TIMEZONE
+        )
+
+        expect(dayjs(result).format(DATE_FORMAT)).toEqual(
+          '2023-06-01 13:00:00.000 +00:00'
+        )
+      })
+
+      test('Different timezone', () => {
+        const now = '2023-06-01T12:00:00Z'
+        const timezone = 'Europe/Berlin'
+        const result = calculateCaseAvailableDate(
+          dayjs(now).valueOf(),
+          { type: 'DAILY', time: '13' },
+          timezone
+        )
+
+        expect(dayjs(result).tz(timezone).format(DATE_FORMAT)).toEqual(
+          '2023-06-02 13:00:00.000 +02:00'
+        )
+      })
+    })
+
+    test('Under 24 hours', () => {
+      const now = '2023-06-01T12:00:00Z'
+      const timezone = 'Europe/Berlin'
+      const result = calculateCaseAvailableDate(
+        dayjs(now).valueOf(),
+        { type: 'DAILY', time: '23' },
+        timezone
+      )
+      expect(dayjs(result).tz(timezone).format(DATE_FORMAT)).toEqual(
+        '2023-06-01 23:00:00.000 +02:00'
+      )
+    })
+
     describe('WEEKLY mode', () => {
       test('Day after today', () => {
         const now = '2023-06-01T12:00:00Z'

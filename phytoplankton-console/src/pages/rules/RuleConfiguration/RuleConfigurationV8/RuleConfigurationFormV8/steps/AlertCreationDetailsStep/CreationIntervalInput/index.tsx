@@ -4,16 +4,20 @@ import { neverReturn } from '@/utils/lang';
 import NumberInput from '@/components/library/NumberInput';
 import { InputProps } from '@/components/library/Form';
 import {
+  AlertCreationIntervalDaily,
   AlertCreationIntervalInstantly,
   AlertCreationIntervalMonthly,
   AlertCreationIntervalWeekly,
   AlertCreationIntervalWeeklyDayEnum,
+  DailyTime,
 } from '@/apis';
+import { DAILY_TIMES } from '@/apis/models-custom/DailyTime';
 
 export type AlertCreationInterval =
   | AlertCreationIntervalInstantly
   | AlertCreationIntervalMonthly
-  | AlertCreationIntervalWeekly;
+  | AlertCreationIntervalWeekly
+  | AlertCreationIntervalDaily;
 
 export type CreationIntervalType = AlertCreationInterval['type'];
 
@@ -32,6 +36,12 @@ export default function CreationIntervalInput(props: Props) {
       case 'INSTANTLY':
         newValue = {
           type: 'INSTANTLY',
+        };
+        break;
+      case 'DAILY':
+        newValue = {
+          type: 'DAILY',
+          time: '0',
         };
         break;
       case 'WEEKLY':
@@ -57,6 +67,7 @@ export default function CreationIntervalInput(props: Props) {
       <Select<CreationIntervalType>
         options={[
           { value: 'INSTANTLY', label: 'Instantly' },
+          { value: 'DAILY', label: 'Daily' },
           { value: 'WEEKLY', label: 'Weekly' },
           { value: 'MONTHLY', label: 'Monthly' },
         ]}
@@ -66,6 +77,26 @@ export default function CreationIntervalInput(props: Props) {
         onChange={handleChangeType}
         style={{ width: 150 }}
       />
+      {value?.type === 'DAILY' && (
+        <>
+          <div>At</div>
+          <Select<DailyTime>
+            options={DAILY_TIMES.map((time) => ({
+              value: time,
+              label: `${time.padStart(2, '0')}:00`,
+            }))}
+            mode="SINGLE"
+            size="LARGE"
+            value={value.time}
+            onChange={(time) => {
+              if (time != null) {
+                onChange?.({ ...value, time });
+              }
+            }}
+            style={{ width: 80 }}
+          />
+        </>
+      )}
       {value?.type === 'MONTHLY' && (
         <>
           <div>On</div>
