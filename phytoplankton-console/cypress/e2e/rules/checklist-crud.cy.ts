@@ -22,6 +22,8 @@ describe('Checklkist Crud', () => {
     cy.get('div[data-cy="checklist-item-text-area"]').type('Test');
     cy.get('button[data-cy="check-button"]').click();
     cy.get('button[data-cy="next-button"]').click();
+    cy.get('label[data-cy="Property/p1Errors"]').find('input').type('0');
+    cy.get('label[data-cy="Property/p2Errors"]').find('input').type('0');
     cy.get('button[data-cy="action-button"]').contains('Create').click({ force: true });
     cy.wait(`@checklist-templates-post`, { timeout: 30000 })
       .its('response.statusCode')
