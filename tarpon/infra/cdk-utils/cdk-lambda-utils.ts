@@ -31,6 +31,8 @@ const LAMBDA_LAYER_ARN_BY_REGION: Record<FlagrightRegion, string> = {
     'arn:aws:lambda:ap-southeast-1:580247275435:layer:LambdaInsightsExtension:38',
   'asia-2':
     'arn:aws:lambda:ap-south-1:580247275435:layer:LambdaInsightsExtension:36',
+  'asia-3':
+    'arn:aws:lambda:ap-east-1:519774774795:layer:LambdaInsightsExtension:28',
   'au-1':
     'arn:aws:lambda:ap-southeast-2:580247275435:layer:LambdaInsightsExtension:38',
   'eu-1':

@@ -1082,6 +1082,7 @@ export class CdkTarponStack extends cdk.Stack {
           'us-1': { hour: '21', minute: '15' },
           'me-1': { hour: '21', minute: '30' },
           'asia-1': { hour: '23', minute: '00' },
+          'asia-3': { hour: '23', minute: '15' },
         }
 
         triggerHour = triggerTime[config.region].hour
@@ -1314,7 +1315,7 @@ export class CdkTarponStack extends cdk.Stack {
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
       })
 
-      if (this.config.region !== 'me-1') {
+      if (this.config.region !== 'me-1' && this.config.region !== 'asia-3') {
         new CdkBudgetStack(this, `${config.stage}-tarpon-budget`, {
           config,
         })
