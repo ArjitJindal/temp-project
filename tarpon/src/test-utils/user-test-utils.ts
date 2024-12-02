@@ -1,6 +1,8 @@
 import { uniq } from 'lodash'
 import { v4 as uuidv4 } from 'uuid'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { Business } from '@/@types/openapi-public/Business'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
@@ -9,13 +11,12 @@ import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
 
 export function getTestUser(
-  user: Partial<User | InternalUser> = {}
-): User | InternalUser {
+  user: Partial<User | InternalUser | InternalConsumerUser> = {}
+): User | InternalUser | InternalConsumerUser {
   return {
     createdTimestamp: 1641654664,
     userId: uuidv4(),

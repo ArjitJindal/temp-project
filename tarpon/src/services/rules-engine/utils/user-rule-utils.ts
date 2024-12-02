@@ -2,11 +2,11 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 
-export function isConsumerUser(user: User | Business) {
+export function isConsumerUser(user: User | Business): user is User {
   return !isBusinessUser(user)
 }
 
-export function isBusinessUser(user: User | Business) {
+export function isBusinessUser(user: User | Business): user is Business {
   return (user as Business).legalEntity !== undefined
 }
 

@@ -28,6 +28,7 @@ import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
 import { UserEntityLink } from '@/@types/openapi-public/UserEntityLink'
 import { CaseRepository } from '@/services/cases/repository'
+import { ListService } from '@/services/list'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 
 type ConsumerUser = User & { type: 'CONSUMER' }
@@ -55,6 +56,7 @@ export class UserManagementService {
   riskScoringService: RiskScoringService
   riskScoringV8Service: RiskScoringV8Service
   caseRepository: CaseRepository
+  listService: ListService
 
   constructor(
     tenantId: string,
@@ -91,6 +93,10 @@ export class UserManagementService {
     this.caseRepository = new CaseRepository(tenantId, {
       dynamoDb,
       mongoDb,
+    })
+    this.listService = new ListService(tenantId, {
+      mongoDb: mongoDb,
+      dynamoDb: dynamoDb,
     })
   }
 
@@ -166,6 +172,9 @@ export class UserManagementService {
         ...asyncRulesPromises,
       ])
     }
+    await this.listService.syncListsMetadata({
+      keys: [userResult.userId],
+    })
 
     return userResult
   }

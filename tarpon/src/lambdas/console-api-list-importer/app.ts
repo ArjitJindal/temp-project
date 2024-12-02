@@ -11,6 +11,7 @@ import { ListService } from '@/services/list'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { DefaultApiPatchBlacklistRequest } from '@/@types/openapi-internal/RequestParameters'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const listsHandler = lambdaApi()(
   async (
@@ -21,10 +22,11 @@ export const listsHandler = lambdaApi()(
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
     const s3 = getS3ClientByEvent(event)
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
 
-    const listService = new ListService(tenantId, { dynamoDb }, s3, {
+    const listService = new ListService(tenantId, { dynamoDb, mongoDb }, s3, {
       documentBucketName: DOCUMENT_BUCKET,
       tmpBucketName: TMP_BUCKET,
     })
@@ -157,14 +159,14 @@ export const listsHandler = lambdaApi()(
     )
 
     handlers.registerWhiteListImportCsv(async (ctx, request) => {
-      return await listService.importFromCSV(
+      return await listService.importCsvfromS3(
         request.listId,
         request.InlineObject.file
       )
     })
 
     handlers.registerBlacklistImportCsv(async (ctx, request) => {
-      return await listService.importFromCSV(
+      return await listService.importCsvfromS3(
         request.listId,
         request.InlineObject1.file
       )

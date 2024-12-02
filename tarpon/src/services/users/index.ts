@@ -87,6 +87,7 @@ import { S3Service } from '@/services/aws/s3-service'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { UserTagsUpdate } from '@/@types/openapi-public/UserTagsUpdate'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
+import { ListService } from '@/services/list'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
@@ -147,6 +148,7 @@ export class UserService {
   userClickhouseRepository: UserClickhouseRepository
   userManagementService: UserManagementService
   riskScoringV8Service: RiskScoringV8Service
+  listService: ListService
   private s3Service: S3Service
   constructor(
     tenantId: string,
@@ -202,6 +204,18 @@ export class UserService {
       this.dynamoDb,
       this.mongoDb,
       logicEvaluator
+    )
+    this.listService = new ListService(
+      tenantId,
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
+      },
+      s3,
+      {
+        documentBucketName: this.documentBucketName,
+        tmpBucketName: this.tmpBucketName,
+      }
     )
   }
 

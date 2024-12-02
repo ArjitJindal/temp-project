@@ -6,9 +6,9 @@ import { Credentials as STSCredentials } from '@aws-sdk/client-sts'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
-  Credentials,
 } from 'aws-lambda'
 import { NodeJsRuntimeStreamingBlobPayloadOutputTypes } from '@smithy/types/dist-types/streaming-payload/streaming-blob-payload-output-types'
+import { MongoClient } from 'mongodb'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { ListRepository } from './repositories/list-repository'
@@ -22,6 +22,7 @@ import { traceable } from '@/core/xray'
 import {
   CursorPaginationParams,
   CursorPaginationResponse,
+  iteratePages,
 } from '@/utils/pagination'
 import { S3Config } from '@/services/aws/s3-service'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -30,26 +31,32 @@ import { ListImportResponse } from '@/@types/openapi-internal/ListImportResponse
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getUserName } from '@/utils/helpers'
+import { User } from '@/@types/openapi-public/User'
+import { Business } from '@/@types/openapi-public/Business'
+
+export const METADATA_USER_FULL_NAME = 'userFullName'
 
 @traceable
 export class ListService {
   listRepository: ListRepository
+  userRepository: UserRepository
   riskScoringService: RiskScoringV8Service
-  protected s3: S3
-  protected s3Config: S3Config
-  protected awsCredentials?: Credentials
+  protected s3: S3 | undefined
+  protected s3Config: S3Config | undefined
 
   constructor(
     tenantId: string,
-    connections: { dynamoDb: DynamoDBDocumentClient },
-    s3: S3,
-    s3Config: S3Config,
-    awsCredentials?: Credentials
+    connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient },
+    s3?: S3,
+    s3Config?: S3Config
   ) {
     this.s3 = s3
     this.s3Config = s3Config
-    this.awsCredentials = awsCredentials
     this.listRepository = new ListRepository(tenantId, connections.dynamoDb)
+    this.userRepository = new UserRepository(tenantId, connections)
     const logicEvaluator = new LogicEvaluator(tenantId, connections.dynamoDb)
     this.riskScoringService = new RiskScoringV8Service(
       tenantId,
@@ -64,11 +71,12 @@ export class ListService {
     >
   ) {
     const dynamoDb = getDynamoDbClientByEvent(event)
+    const mongoDb = await getMongoDbClient()
     const s3 = getS3ClientByEvent(event)
     const { principalId: tenantId } = event.requestContext.authorizer
 
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig
-    return new ListService(tenantId, { dynamoDb }, s3, {
+    return new ListService(tenantId, { dynamoDb, mongoDb }, s3, {
       documentBucketName: DOCUMENT_BUCKET,
       tmpBucketName: TMP_BUCKET,
     })
@@ -167,23 +175,21 @@ export class ListService {
     return await this.listRepository.getListItems(listId, params)
   }
 
-  public async importFromCSV(
+  public async getListItem(
     listId: string,
-    file: FileInfo
-  ): Promise<ListImportResponse> {
-    const object = await this.s3.getObject({
-      Bucket: this.s3Config.tmpBucketName,
-      Key: file.s3Key,
-    })
+    key: string
+  ): Promise<ListItem | null> {
+    return await this.listRepository.getListItem(listId, key)
+  }
 
+  public async importCsvFromStream(
+    listId: string,
+    input: NodeJS.ReadableStream
+  ): Promise<ListImportResponse> {
     const BATCH_SIZE = 25
 
-    if (object.Body == null) {
-      throw new Error(`S3 response is empty`)
-    }
-
     const rl = readline.createInterface({
-      input: object.Body as NodeJsRuntimeStreamingBlobPayloadOutputTypes,
+      input: input,
       crlfDelay: Infinity,
     })
     let lineNumber = 0
@@ -191,6 +197,7 @@ export class ListService {
     const failedRows: ListImportResponse['failedRows'] = []
     let batch: ListItem[] = []
     const uniqueItems = new Set<string>()
+
     for await (const line of rl) {
       try {
         const parsedRow: string[] = await new Promise((resolve, reject) => {
@@ -206,6 +213,7 @@ export class ListService {
           )
         }
         const [key, reason] = parsedRow
+
         const item = {
           key,
           metadata: reason ? { reason } : undefined,
@@ -230,10 +238,105 @@ export class ListService {
     if (batch.length > 0) {
       await this.setListItems(listId, batch)
     }
+
+    await this.syncListMetadata(listId)
+
     return {
       totalRows: lineNumber,
       successRows: successRows,
       failedRows: failedRows,
     }
+  }
+
+  public async syncListsMetadata(
+    providedData: {
+      listIds?: string[]
+      keys?: string[]
+    } = {}
+  ) {
+    const { listIds, keys } = providedData
+    const listIdsToSync =
+      listIds != null
+        ? listIds
+        : (await this.listRepository.getListHeaders()).map((x) => x.listId)
+    await Promise.all(
+      listIdsToSync.map((listId) =>
+        keys != null
+          ? this.syncListItemsMetadata(listId, keys)
+          : this.syncListMetadata(listId)
+      )
+    )
+  }
+
+  public async syncListItemsMetadata(listId: string, keys: string[]) {
+    const listHeader = await this.getListHeader(listId)
+    if (listHeader?.subtype === 'USER_ID') {
+      await Promise.all(
+        keys.map(async (key) => {
+          const item = await this.listRepository.getListItem(listId, key)
+          if (item) {
+            const user = await this.userRepository.getUser<User | Business>(key)
+            await this.listRepository.updateListItems(listId, [
+              {
+                ...item,
+                metadata: {
+                  ...item.metadata,
+                  [METADATA_USER_FULL_NAME]: user
+                    ? getUserName(user)
+                    : undefined,
+                },
+              },
+            ])
+          }
+        })
+      )
+    }
+  }
+
+  public async syncListMetadata(listId: string) {
+    const listHeader = await this.getListHeader(listId)
+    if (listHeader?.subtype === 'USER_ID') {
+      for await (const items of iteratePages((pagination) =>
+        this.listRepository.getListItems(listId, pagination)
+      )) {
+        const userIds = items.map((x) => x.key)
+        const users = await this.userRepository.getMongoUsersByIds(userIds)
+        const newItems = items.map((item): ListItem => {
+          const itemUser = users.find((x) => x.userId === item.key)
+          return {
+            ...item,
+            metadata: {
+              ...item.metadata,
+              [METADATA_USER_FULL_NAME]: itemUser
+                ? getUserName(itemUser)
+                : undefined,
+            },
+          }
+        })
+        await this.updateListItems(listId, newItems)
+      }
+    }
+  }
+
+  public async importCsvfromS3(
+    listId: string,
+    file: FileInfo
+  ): Promise<ListImportResponse> {
+    if (this.s3 == null || this.s3Config == null) {
+      throw new Error(`ListService is not configured to work with S3`)
+    }
+    const object = await this.s3.getObject({
+      Bucket: this.s3Config.tmpBucketName,
+      Key: file.s3Key,
+    })
+
+    if (object.Body == null) {
+      throw new Error(`S3 response is empty`)
+    }
+
+    return this.importCsvFromStream(
+      listId,
+      object.Body as NodeJsRuntimeStreamingBlobPayloadOutputTypes
+    )
   }
 }

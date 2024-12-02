@@ -58,22 +58,12 @@ export function getPageSizeNumber(pageSize: PageSize | 'DISABLED'): number {
 }
 
 export async function* iterateItems<T>(
-  fn: (pagination: {
-    page: number
-    pageSize: number
-  }) => Promise<{ total: number; data: T[] }>
+  fn: (
+    pagination: Pick<CursorPaginationParams, 'fromCursorKey'>
+  ) => Promise<CursorPaginationResponse<T>>
 ): AsyncGenerator<T> {
-  let totalPages = 1
-  let page = 1
-  while (page <= totalPages) {
-    const { total, data } = await fn({
-      page: page,
-      pageSize: DEFAULT_PAGE_SIZE,
-    })
-    totalPages = Math.ceil(total / DEFAULT_PAGE_SIZE)
-    page++
-
-    for (const item of data) {
+  for await (const page of iteratePages(fn)) {
+    for (const item of page) {
       yield item
     }
   }
@@ -96,6 +86,19 @@ export async function* iterateCursorItems<T>(
     }
     from = hasNext ? next : ''
   } while (from !== '' && from != null)
+}
+
+export async function* iteratePages<T>(
+  fn: (
+    pagination: Pick<CursorPaginationParams, 'fromCursorKey'>
+  ) => Promise<CursorPaginationResponse<T>>
+): AsyncGenerator<T[]> {
+  let nextCursor: string | undefined = undefined
+  do {
+    const page = await fn({ fromCursorKey: nextCursor })
+    nextCursor = page.next
+    yield page.items
+  } while (nextCursor != undefined && nextCursor !== '')
 }
 
 export interface CursorPaginationParams {
