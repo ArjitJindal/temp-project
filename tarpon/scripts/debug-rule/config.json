@@ -3,5 +3,7 @@
   "jwt": "Get your jwt from Console",
   "transactionIds": [],
   "userIds": [],
-  "ruleInstanceIds": []
+  "ruleInstanceIds": [],
+  "user-agent": "set it when 'Max concurrent sessions' is enabled",
+  "x-fingerprint": "set it when 'Max concurrent sessions' is enabled"
 }

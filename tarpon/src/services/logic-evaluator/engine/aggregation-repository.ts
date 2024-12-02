@@ -256,7 +256,7 @@ export class AggregationRepository {
           getAggVarHash(aggregationVariable)
         ),
         lastTransactionTimestamp,
-        ttl: duration(1, 'year').asSeconds(),
+        ttl: Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))

@@ -4,6 +4,7 @@ import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,
   initializeTenantContext,
+  updateLogMetadata,
   withContext,
 } from '@/core/utils/context'
 import { RulesEngineService } from '@/services/rules-engine'
@@ -66,6 +67,7 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
 
   if (type === 'TRANSACTION') {
     const { transaction, senderUser, receiverUser, riskDetails } = record
+    updateLogMetadata({ transactionId: transaction.transactionId })
     logger.info(
       `Running async rule for transaction ${transaction.transactionId} for tenant ${tenantId}`
     )
@@ -78,7 +80,7 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
   } else if (type === 'TRANSACTION_EVENT') {
     const { senderUser, receiverUser, updatedTransaction, transactionEventId } =
       record
-
+    updateLogMetadata({ transactionId: updatedTransaction.transactionId })
     logger.info(
       `Running async rule for transaction event ${transactionEventId} for tenant ${tenantId}`
     )
@@ -90,6 +92,7 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
       receiverUser
     )
   } else if (type === 'USER') {
+    updateLogMetadata({ userId: record.user.userId })
     logger.info(
       `Running async rule for user ${record.user.userId} for tenant ${tenantId}`
     )
@@ -98,6 +101,7 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
       record.user
     )
   } else if (type === 'USER_EVENT') {
+    updateLogMetadata({ userId: record.updatedUser.userId })
     logger.info(
       `Running async rule for user event ${record.userEventTimestamp} for tenant ${tenantId}`
     )
@@ -110,6 +114,7 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
 
   // Batch import
   if (type === 'TRANSACTION_BATCH') {
+    updateLogMetadata({ transactionId: record.transaction.transactionId })
     await rulesEngineService.verifyTransaction(record.transaction, {
       // Already validated. Skip validation.
       validateDestinationUserId: false,
@@ -117,13 +122,17 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
       validateTransactionId: false,
     })
   } else if (type === 'TRANSACTION_EVENT_BATCH') {
+    updateLogMetadata({ transactionId: record.transactionEvent.transactionId })
     await rulesEngineService.verifyTransactionEvent(record.transactionEvent)
   } else if (type === 'USER_BATCH') {
+    updateLogMetadata({ userId: record.user.userId })
     await userRulesEngineService.verifyUser(record.user, record.userType)
   } else if (type === 'USER_EVENT_BATCH') {
     if (record.userType === 'CONSUMER') {
+      updateLogMetadata({ userId: record.userEvent.userId })
       await userRulesEngineService.verifyConsumerUserEvent(record.userEvent)
     } else {
+      updateLogMetadata({ userId: record.userEvent.userId })
       await userRulesEngineService.verifyBusinessUserEvent(record.userEvent)
     }
   }

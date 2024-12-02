@@ -30,12 +30,16 @@ const {
   transactionIds,
   userIds,
   ruleInstanceIds,
+  'user-agent': userAgent,
+  'x-fingerprint': xFingerprint,
 } = fs.readJSONSync(configPath, 'utf-8') as {
   api: string
   jwt: string
   transactionIds: string[]
   userIds: string[]
   ruleInstanceIds: string[]
+  'user-agent': string
+  'x-fingerprint': string
 }
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from ${api}`)
@@ -43,6 +47,10 @@ console.info(`Will get ${userIds.length} users from ${api}`)
 
 const createdUsers = new Set<string>()
 const jwt = rawJwt.replace(/^Bearer\s+/, '')
+const EXTRA_HEADERS = {
+  'user-agent': userAgent,
+  'x-fingerprint': xFingerprint,
+}
 
 async function getRemoteSettings() {
   return (
@@ -50,6 +58,7 @@ async function getRemoteSettings() {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${jwt}`,
+        ...EXTRA_HEADERS,
       },
     })
   ).result
@@ -63,6 +72,7 @@ async function getRemoteRuleInstances(
       method: 'GET',
       headers: {
         Authorization: `Bearer ${jwt}`,
+        ...EXTRA_HEADERS,
       },
     })
   ).result
@@ -86,6 +96,7 @@ async function getRemoteTransaction(transactionId: string) {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${jwt}`,
+          ...EXTRA_HEADERS,
         },
       }
     )
@@ -100,6 +111,7 @@ async function getRemoteUser(userId: string) {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${jwt}`,
+          ...EXTRA_HEADERS,
         },
       }
     )
@@ -121,6 +133,7 @@ async function createRuleInstancesLocally(ruleInstanceIds: string[]) {
       Item: {
         ...DynamoDbKeys.RULE_INSTANCE('flagright', ruleInstance.id),
         ...ruleInstance,
+        ruleExecutionMode: 'SYNC',
       },
     }
     await dynamoDb.send(new PutCommand(putItemInput))
@@ -276,9 +289,12 @@ async function main() {
       const txOrEvent = transactionsOrEvents[i]
       const isTxEvent = !!(txOrEvent as TransactionEventWithRulesResult).eventId
       const time = dayjs(txOrEvent.timestamp).toISOString()
-      const remoteRuleHit = !!(
-        isTxEvent ? txOrEvent : initialEvents[txOrEvent.transactionId]
-      ).hitRules?.find((v) => ruleInstanceIds.includes(v.ruleInstanceId))
+      const value = isTxEvent
+        ? txOrEvent
+        : initialEvents[txOrEvent.transactionId] ?? txOrEvent
+      const remoteRuleHit = !!value.hitRules?.find((v) =>
+        ruleInstanceIds.includes(v.ruleInstanceId)
+      )
       let result: any
       if (isTxEvent) {
         const txEvent = txOrEvent as TransactionEventWithRulesResult
