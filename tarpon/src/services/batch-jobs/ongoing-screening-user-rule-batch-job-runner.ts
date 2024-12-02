@@ -307,15 +307,15 @@ export async function preprocessUsers(
     .db()
     .collection<InternalUser>(USERS_COLLECTION(tenantId))
 
-  let filters = {}
+  let match: any = {}
   if (from) {
-    filters = { $gte: from }
+    match = { userId: { $gte: from } }
   }
   if (to) {
-    filters = { ...filters, $lte: to }
+    match = { userId: { ...match.userId, $lte: to } }
   }
 
-  for await (const sanctionsEntity of sanctionsCollection.find(filters)) {
+  for await (const sanctionsEntity of sanctionsCollection.find({})) {
     const names: string[] = [
       sanctionsEntity.name,
       ...(sanctionsEntity.aka || []),
@@ -332,7 +332,7 @@ export async function preprocessUsers(
       }
     })
   }
-  for await (const user of usersCollection.find({})) {
+  for await (const user of usersCollection.find(match)) {
     allNames.forEach((n) => {
       const percentageSimilarity = calculateLevenshteinDistancePercentage(
         n.toLowerCase(),
