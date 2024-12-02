@@ -12,7 +12,7 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { OTHER_REASON } from '@/components/Narrative';
-import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
+import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
@@ -38,15 +38,7 @@ export default function CasesStatusChangeModal(props: Props) {
           caseUpdateRequest: updates,
         },
       });
-      const assignees = assigneeIds
-        ?.filter((assigneeId) => {
-          const isL2Escalated = statusEscalatedL2(updates.caseStatus);
-          return isL2Escalated
-            ? users[assigneeId]?.escalationLevel === 'L2'
-            : users[assigneeId]?.escalationLevel !== 'L2';
-        })
-        .map((id) => users[id]?.name ?? users[id]?.email ?? id)
-        .join(', ');
+      const assignees = getAssigneeName(users, assigneeIds, updates.caseStatus);
 
       if (currentUser?.reviewerId) {
         return;

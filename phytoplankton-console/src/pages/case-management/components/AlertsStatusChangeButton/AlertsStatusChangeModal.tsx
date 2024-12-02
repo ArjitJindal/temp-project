@@ -13,7 +13,7 @@ import { getErrorMessage } from '@/utils/lang';
 import { useCurrentUser, useUsers } from '@/utils/user-utils';
 import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
-import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
+import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 
 interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
@@ -46,34 +46,39 @@ export default function AlertsStatusChangeModal(props: Props) {
           }),
         },
       });
+
       const transactionIds = Object.values(props.transactionIds ?? {})
         .flatMap((v) => v)
         .filter(Boolean);
 
-      const assignees = assigneeIds
-        ?.map((assigneeId) => users[assigneeId]?.name || assigneeId)
-        .filter((assigneeId) => {
-          const isl2Escalated = statusEscalatedL2(updates.alertStatus);
-
-          return isl2Escalated
-            ? users[assigneeId]?.escalationLevel === 'L2'
-            : users[assigneeId]?.escalationLevel !== 'L2';
-        })
-        .map((name) => `'${name}'`)
-        .join(', ');
+      const assignees = getAssigneeName(users, assigneeIds, updates.alertStatus);
 
       const entities = props.entityIds.join(', ');
       if (!currentUser?.reviewerId) {
         if (isEmpty(transactionIds)) {
-          message.success(
-            `Alerts '${entities}' are added to a new child case '${childCaseId}' and ${
-              statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
-            } successfully to ${assignees}`,
-          );
+          if (childCaseId) {
+            message.success(
+              `Alerts '${entities}' are added to a new child case '${childCaseId}' and ${
+                statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
+              } successfully to ${assignees}`,
+            );
+          } else {
+            message.success(
+              `Alerts '${entities}' ${
+                statusEscalatedL2(updates.alertStatus) ? 'escalated l2' : 'escalated'
+              } successfully to ${assignees}`,
+            );
+          }
         } else {
-          message.success(
-            `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
-          );
+          if (childCaseId) {
+            message.success(
+              `Selected transactions from alerts are added to new child case '${childCaseId}' with respective child alerts and escalated successfully to ${assignees}.`,
+            );
+          } else {
+            message.success(
+              `Selected transactions from alerts are escalated successfully to ${assignees}.`,
+            );
+          }
         }
       }
       await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId as string) });

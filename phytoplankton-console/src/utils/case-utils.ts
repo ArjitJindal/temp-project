@@ -41,6 +41,24 @@ export const statusEscalatedL2 = (
   return status?.startsWith('ESCALATED_L2') ?? false;
 };
 
+export const getAssigneeName = (
+  users: {
+    [userId: string]: Account;
+  },
+  assigneeIds: string[] | undefined,
+  caseStatus: CaseStatus | undefined,
+) => {
+  return assigneeIds
+    ?.filter((assigneeId) => {
+      const isL2Escalated = statusEscalatedL2(caseStatus);
+      return isL2Escalated
+        ? users[assigneeId]?.escalationLevel === 'L2'
+        : users[assigneeId]?.escalationLevel !== 'L2';
+    })
+    .map((id) => users[id]?.name ?? users[id]?.email ?? id)
+    .join(', ');
+};
+
 export const findLastStatusForInReview = (statusChanges: CaseStatusChange[]): CaseStatus => {
   const latestStatus = statusChanges
     .filter((statusChanges) => statusChanges?.caseStatus)
@@ -205,7 +223,6 @@ export const getDerivedStatus = (s: CaseStatus | AlertStatus | DerivedStatus): D
     case 'ESCALATED_L2_ON_HOLD':
       return 'ESCALATED_L2';
   }
-  return s;
 };
 
 // Explodes derived statuses to all their available statuses, for example "IN_REVIEW" becomes "IN_REVIEW_OPEN", "IN_REVIEW_CLOSED", "IN_REVIEW_ESCALATED"...
