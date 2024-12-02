@@ -111,7 +111,11 @@ export class AccountsService {
 
   public static async getInstance() {
     return new AccountsService(
-      { auth0Domain: getContext()?.auth0Domain as string },
+      {
+        auth0Domain:
+          (getContext()?.auth0Domain as string) ??
+          (process.env.AUTH0_DOMAIN as string), // to get auth0 credentials for dashboard widget in demo mode.
+      },
       { mongoDb: await getMongoDbClient() }
     )
   }

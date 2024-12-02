@@ -272,16 +272,11 @@ export const updateRoles = async (db: Db, collectionName: string) => {
   const accounts = await collection.distinct('accountId')
 
   for (const accountId of accounts) {
+    let role: string = 'Deleted roles' // default role for the case no account is found
     try {
-      let role: string
       if (accountId.startsWith('auth0')) {
         const account = await accountsService.getAccount(accountId)
-        if (account === null) {
-          continue
-        }
-        role = account.role
-      } else {
-        role = 'other'
+        role = account ? account.role : 'Deleted roles'
       }
 
       await collection.updateOne(
@@ -294,6 +289,18 @@ export const updateRoles = async (db: Db, collectionName: string) => {
         `Failed to fetch or update role for account ${accountId}:`,
         error
       )
+      try {
+        await collection.updateOne(
+          { accountId },
+          { $set: { role: 'other' } },
+          { upsert: true }
+        )
+      } catch (updateError) {
+        console.error(
+          `Failed to set role to 'other' for account ${accountId}:`,
+          updateError
+        )
+      }
     }
   }
 }

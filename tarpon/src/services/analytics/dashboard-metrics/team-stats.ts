@@ -970,6 +970,7 @@ export class TeamStatsDashboardMetric {
         $project: {
           _id: false,
           accountId: '$_id',
+          role: true,
           closedBy: true,
           assignedTo: true,
           caseIds: true,
@@ -984,6 +985,7 @@ export class TeamStatsDashboardMetric {
     const result = await collection
       .aggregate<{
         accountId: string
+        role: string
         closedBy: number
         assignedTo: number
         caseIds: string[]

@@ -453,6 +453,7 @@ export class LatestTeamStatsDashboardMetric {
       {
         $project: {
           accountId: true,
+          role: true,
           open: true,
           inReview: true,
           inProgress: {
@@ -468,6 +469,7 @@ export class LatestTeamStatsDashboardMetric {
 
     const result = await collection
       .aggregate<{
+        role: string
         accountId: string
         open: number
         inReview: number
