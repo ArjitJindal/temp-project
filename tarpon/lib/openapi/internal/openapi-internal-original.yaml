@@ -10221,9 +10221,19 @@ components:
           type: string
         createdAt:
           type: number
+        type:
+          type: string
+          enum:
+            - STRING
+            - ENUM
+        options:
+          type: array
+          items:
+            type: string
       required:
         - key
         - createdAt
+        - type
     TenantCreationResponse:
       title: TenantCreationResponse
       type: object
@@ -14930,23 +14940,6 @@ components:
       required:
         - type
         - day
-    TenantCustomTag:
-      title: TenantCustomTag
-      type: object
-      properties:
-        key:
-          type: string
-        valueType:
-          type: string
-          enum:
-            - BOOLEAN
-            - STRING
-            - NUMERIC
-        createdAt:
-          type: number
-      required:
-        - key
-        - valueType
     WebhookUserStateDetails:
       title: WebhookUserStateDetails
       type: object

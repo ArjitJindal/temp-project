@@ -72,28 +72,56 @@ const columns = helper.list([
   helper.display({
     title: 'Value',
     render: (item, context) => {
-      const { editStateDetails, newStateDetails } = context.external as ExternalState;
+      const { editStateDetails, newStateDetails, consoleTags } = context.external as ExternalState;
       const [editState, setEditState] = editStateDetails;
       const [newState, setNewState] = newStateDetails;
       if (item.type === 'NEW') {
-        return (
+        const tagDetails = consoleTags?.find((tag) => tag.key === newState.key);
+        return tagDetails?.type === 'ENUM' ? (
+          <Select
+            className={s.options}
+            value={newState.value}
+            mode="SINGLE"
+            options={tagDetails?.options?.map((option) => ({ label: option, value: option })) ?? []}
+            onChange={(e) => setNewState({ ...newState, value: e ?? '' })}
+          />
+        ) : (
           <TextInput
             value={newState.value}
             onChange={(e) => setNewState({ ...newState, value: e ?? '' })}
           />
         );
       } else {
+        const tagDetails = consoleTags?.find((tag) => tag.key === editState?.key);
         return editState?.key === item.key ? (
-          <TextInput
-            value={editState.value}
-            onChange={(e) =>
-              setEditState({
-                key: editState.key,
-                value: e ?? '',
-                isEditable: true,
-              })
-            }
-          />
+          tagDetails?.type === 'ENUM' ? (
+            <Select
+              className={s.options}
+              value={editState.value}
+              mode="SINGLE"
+              options={
+                tagDetails?.options?.map((option) => ({ label: option, value: option })) ?? []
+              }
+              onChange={(e) =>
+                setEditState({
+                  key: editState.key,
+                  value: e ?? '',
+                  isEditable: true,
+                })
+              }
+            />
+          ) : (
+            <TextInput
+              value={editState.value}
+              onChange={(e) =>
+                setEditState({
+                  key: editState.key,
+                  value: e ?? '',
+                  isEditable: true,
+                })
+              }
+            />
+          )
         ) : (
           <>{item.value}</>
         );
