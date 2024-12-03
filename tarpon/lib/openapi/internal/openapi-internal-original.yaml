@@ -10588,12 +10588,23 @@ components:
           type: string
         baseCurrency:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
-        parametersSchema:
-          type: object
-        riskLevelParameters:
-          $ref: '#/components/schemas/RiskLevelRiskFactorParameters'
         type:
           $ref: '#/components/schemas/RiskEntityType'
+        riskLevelAssignmentValues:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskParameterLevelKeyValue'
+        parameter:
+          $ref: '#/components/schemas/RiskFactorParameter'
+        valueType:
+          type: string
+          enum:
+            - LITERAL
+            - RANGE
+            - MULTIPLE
+            - TIME_RANGE
+            - DAY_RANGE
+            - AMOUNT_RANGE
     RiskFactorsPostRequest:
       title: RiskFactorsPostRequest
       type: object
@@ -10628,6 +10639,51 @@ components:
         - logicEntityVariables
         - logicAggregationVariables
         - defaultWeight
+    RiskFactorParameter:
+      title: RiskFactorParameter
+      type: string
+      enum:
+        - userDetails.countryOfResidence
+        - userDetails.countryOfNationality
+        - originPaymentDetails.method
+        - destinationPaymentDetails.method
+        - originAmountDetails.country
+        - destinationAmountDetails.country
+        - originAmountDetails.transactionCurrency
+        - destinationAmountDetails.transactionCurrency
+        - ipAddressCountry
+        - type
+        - legalEntity.companyRegistrationDetails.registrationCountry
+        - shareHolders
+        - directors
+        - legalEntity.companyGeneralDetails.businessIndustry
+        - userDetails.dateOfBirth
+        - legalEntity.companyRegistrationDetails.dateOfRegistration
+        - consumerCreatedTimestamp
+        - businessCreatedTimestamp
+        - createdTimestamp
+        - timestamp
+        - domesticOrForeignOriginCountryConsumer
+        - domesticOrForeignDestinationCountryConsumer
+        - domesticOrForeignOriginCountryBusiness
+        - domesticOrForeignDestinationCountryBusiness
+        - 3dsDone
+        - cardIssuedCountry
+        - legalEntity.companyGeneralDetails.userRegistrationStatus
+        - legalEntity.companyGeneralDetails.userSegment
+        - userSegment
+        - originPaymentDetails.bankName
+        - destinationPaymentDetails.bankName
+        - originUserSarFiled
+        - destinationUserSarFiled
+        - employmentStatus
+        - occupation
+        - reasonForAccountOpening
+        - sourceOfFunds
+        - originAmountDetails.transactionAmount
+        - destinationAmountDetails.transactionAmount
+        - originMccCode
+        - destinationMccCode
     RiskFactorScoreDetails:
       title: RiskFactorScoreDetails
       type: object
@@ -10673,49 +10729,7 @@ components:
       type: object
       properties:
         parameter:
-          type: string
-          enum:
-            - userDetails.countryOfResidence
-            - userDetails.countryOfNationality
-            - originPaymentDetails.method
-            - destinationPaymentDetails.method
-            - originAmountDetails.country
-            - destinationAmountDetails.country
-            - originAmountDetails.transactionCurrency
-            - destinationAmountDetails.transactionCurrency
-            - ipAddressCountry
-            - type
-            - legalEntity.companyRegistrationDetails.registrationCountry
-            - shareHolders
-            - directors
-            - legalEntity.companyGeneralDetails.businessIndustry
-            - userDetails.dateOfBirth
-            - legalEntity.companyRegistrationDetails.dateOfRegistration
-            - consumerCreatedTimestamp
-            - businessCreatedTimestamp
-            - createdTimestamp
-            - timestamp
-            - domesticOrForeignOriginCountryConsumer
-            - domesticOrForeignDestinationCountryConsumer
-            - domesticOrForeignOriginCountryBusiness
-            - domesticOrForeignDestinationCountryBusiness
-            - 3dsDone
-            - cardIssuedCountry
-            - legalEntity.companyGeneralDetails.userRegistrationStatus
-            - legalEntity.companyGeneralDetails.userSegment
-            - userSegment
-            - originPaymentDetails.bankName
-            - destinationPaymentDetails.bankName
-            - originUserSarFiled
-            - destinationUserSarFiled
-            - employmentStatus
-            - occupation
-            - reasonForAccountOpening
-            - sourceOfFunds
-            - originAmountDetails.transactionAmount
-            - destinationAmountDetails.transactionAmount
-            - originMccCode
-            - destinationMccCode
+          $ref: '#/components/schemas/RiskFactorParameter'
         isActive:
           type: boolean
         isDerived:

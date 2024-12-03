@@ -6,16 +6,16 @@ import {
 } from '.'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import dayjs from '@/utils/dayjs'
 import {
   isBusinessUser,
   isConsumerUser,
 } from '@/services/rules-engine/utils/user-rule-utils'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 function getDerivedAge(
   user: User | Business,
-  parameter: ParameterAttributeRiskValuesParameterEnum | 'createdTimestamp',
+  parameter: RiskFactorParameter | 'createdTimestamp',
   granularity = 'YEAR'
 ): number | undefined {
   const endValue = get(user, parameter)

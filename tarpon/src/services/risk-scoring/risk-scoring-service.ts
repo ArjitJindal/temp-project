@@ -25,7 +25,6 @@ import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import {
   ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
 } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
@@ -46,6 +45,7 @@ import { hasFeature } from '@/core/utils/context'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -246,7 +246,7 @@ async function getDerivedAttributeRiskLevel(
 
 async function getSchemaAttributeRiskLevel(
   paramName:
-    | ParameterAttributeRiskValuesParameterEnum
+    | RiskFactorParameter
     | ParameterAttributeRiskValuesTargetIterableParameterEnum,
   entity: User | Business | Transaction,
   riskLevelAssignmentValues: Array<RiskParameterLevelKeyValue>,

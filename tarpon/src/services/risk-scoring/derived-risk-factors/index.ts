@@ -14,36 +14,36 @@ import { ARS_TRANSACTION_AMOUNT_RISK_HANDLERS } from './transaction-amount'
 import { ARS_MCC_CODE_RISK_HANDLERS } from './mcc-code'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { Transaction } from '@/@types/openapi-public/Transaction'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 function getRiskFactorKey(
   entityType: RiskEntityType,
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
 ) {
   return `${entityType}:${parameter}`
 }
 
 export type UserRiskFactorValueHandler<T> = {
   entityType: RiskEntityType
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
   handler: (
     user: Business | User,
-    parameter: ParameterAttributeRiskValuesParameterEnum
+    parameter: RiskFactorParameter
   ) => Promise<Array<T | undefined>>
 }
 
 export type TransactionRiskFactorValueHandler<T> = {
   entityType: RiskEntityType
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
   handler: (
     transaction: Transaction,
     users: {
       originUser: Business | User | null
       destinationUser: Business | User | null
     },
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     tenantId: string
   ) => Promise<Array<T | undefined>>
 }
@@ -79,7 +79,7 @@ const TRANSACTION_RISK_FACTOR_HANDLERS_MAP = keyBy(
 
 export function getUserDerivedRiskFactorHandler(
   entityType: RiskEntityType,
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
 ) {
   const handler =
     USER_RISK_FACTOR_HANDLERS_MAP[getRiskFactorKey(entityType, parameter)]
@@ -88,7 +88,7 @@ export function getUserDerivedRiskFactorHandler(
 
 export function getTransactionDerivedRiskFactorHandler(
   entityType: RiskEntityType,
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
 ) {
   const handler =
     TRANSACTION_RISK_FACTOR_HANDLERS_MAP[

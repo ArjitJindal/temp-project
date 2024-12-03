@@ -4,10 +4,8 @@ import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { createArsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 withFeatureHook(['RISK_SCORING', 'RISK_LEVELS'])
 dynamoDbSetupHook()
@@ -26,7 +24,7 @@ const CLASSFICATIONS: RiskClassificationScore[] = [
 ]
 
 const RISK_FACTOR: (
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
 ) => ParameterAttributeRiskValues = (parameter) => ({
   parameter,
   isActive: true,

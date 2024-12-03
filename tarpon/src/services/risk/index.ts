@@ -12,16 +12,14 @@ import { PulseAuditLogService } from './pulse-audit-log'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { traceable } from '@/core/xray'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -85,7 +83,7 @@ export class RiskService {
   }
 
   async getRiskParameter(
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     entityType: RiskEntityType
   ) {
     if (parameter == null || entityType == null) {
@@ -94,7 +92,7 @@ export class RiskService {
       )
     }
     return await this.riskRepository.getParameterRiskItem(
-      parameter as ParameterAttributeRiskValuesParameterEnum,
+      parameter as RiskFactorParameter,
       entityType
     )
   }

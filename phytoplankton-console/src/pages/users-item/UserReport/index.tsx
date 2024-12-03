@@ -5,8 +5,8 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
   LegalEntity,
-  ParameterAttributeRiskValuesParameterEnum,
   Person,
+  RiskFactorParameter,
   RiskScoreComponent,
   TenantSettings,
 } from '@/apis';
@@ -221,10 +221,7 @@ const getValue = (entity: RiskScoreComponent) => {
   if (value == null) {
     return '-';
   }
-  const parameterDescription = findParameter(
-    entityType,
-    parameter as ParameterAttributeRiskValuesParameterEnum,
-  );
+  const parameterDescription = findParameter(entityType, parameter as RiskFactorParameter);
   if (parameterDescription == null) {
     return JSON.stringify(value);
   }
@@ -244,10 +241,8 @@ const getUserSupportTables = (
       rows:
         riskScores.kycRiskScore?.components?.map((component) => {
           const parameterName =
-            findParameter(
-              component.entityType,
-              component.parameter as ParameterAttributeRiskValuesParameterEnum,
-            )?.title ?? component.parameter;
+            findParameter(component.entityType, component.parameter as RiskFactorParameter)
+              ?.title ?? component.parameter;
           const parameterValue = getValue(component);
           return [
             parameterName,

@@ -1,7 +1,13 @@
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@flagright/lib/utils'
 import dayjs from '@/utils/dayjs'
 import { RiskLevel } from '@/@types/openapi-public/RiskLevel'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
+import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 
 type OptionRequirements = Record<RiskLevel, number>
 
@@ -55,4 +61,23 @@ export const weightedRiskScoreCalculation = (
   })
 
   return weightedRiskScore / totalWeight
+}
+
+export const getRiskLevelAndScore = (
+  riskValue: RiskScoreValueLevel | RiskScoreValueScore,
+  riskClassificationValues: RiskClassificationScore[]
+) => {
+  if (riskValue.type === 'RISK_LEVEL') {
+    return {
+      riskLevel: riskValue.value,
+      riskScore: getRiskScoreFromLevel(
+        riskClassificationValues,
+        riskValue.value
+      ),
+    }
+  }
+  return {
+    riskLevel: getRiskLevelFromScore(riskClassificationValues, riskValue.value),
+    riskScore: riskValue.value,
+  }
 }

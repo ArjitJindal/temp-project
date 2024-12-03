@@ -34,10 +34,7 @@ import {
 } from '@/utils/dynamodb'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { logger } from '@/core/logger'
 import {
@@ -65,6 +62,7 @@ import {
   getInMemoryCacheKey,
 } from '@/utils/memory-cache'
 import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { handleSmallNumber } from '@/utils/helpers'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
@@ -494,7 +492,7 @@ export class RiskRepository {
   }
 
   async deleteParameterRiskItem(
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     entityType: RiskEntityType
   ) {
     logger.info(`Deleting parameter risk item.`)
@@ -514,7 +512,7 @@ export class RiskRepository {
   }
 
   async getParameterRiskItem(
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     entityType: RiskEntityType
   ): Promise<ParameterAttributeRiskValues | null> {
     const keyConditionExpr = 'PartitionKeyID = :pk AND SortKeyID = :sk'

@@ -3,7 +3,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 export type ParameterNewFieldRequest = {
   parameterName: string
@@ -43,7 +43,7 @@ async function addNewPulseRiskParameterFieldPrivate(
 }
 
 export async function removePulseRiskParameterField(
-  parameterField: ParameterAttributeRiskValuesParameterEnum,
+  parameterField: RiskFactorParameter,
   entityType: RiskEntityType
 ) {
   await migrateAllTenants((tenant) =>
@@ -52,7 +52,7 @@ export async function removePulseRiskParameterField(
 }
 
 async function removePulseRiskParameterFieldPrivate(
-  parameterField: ParameterAttributeRiskValuesParameterEnum,
+  parameterField: RiskFactorParameter,
   entityType: RiskEntityType,
   tenantId: string
 ) {
@@ -64,9 +64,9 @@ async function removePulseRiskParameterFieldPrivate(
 }
 
 export async function renamePulseRiskParameterField(
-  parameterField: ParameterAttributeRiskValuesParameterEnum,
+  parameterField: RiskFactorParameter,
   entityType: RiskEntityType,
-  newParameterName: ParameterAttributeRiskValuesParameterEnum
+  newParameterName: RiskFactorParameter
 ) {
   await migrateAllTenants((tenant) =>
     renamePulseRiskParameterFieldPrivate(
@@ -79,9 +79,9 @@ export async function renamePulseRiskParameterField(
 }
 
 async function renamePulseRiskParameterFieldPrivate(
-  parameterField: ParameterAttributeRiskValuesParameterEnum,
+  parameterField: RiskFactorParameter,
   entityType: RiskEntityType,
-  newParameterName: ParameterAttributeRiskValuesParameterEnum,
+  newParameterName: RiskFactorParameter,
   tenantId: string
 ) {
   const dynamoDb = await getDynamoDbClient()

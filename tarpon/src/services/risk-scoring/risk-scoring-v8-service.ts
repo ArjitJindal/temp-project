@@ -74,6 +74,61 @@ export class RiskScoringV8Service {
     return this.mongoDb
   }
 
+  public async calculateRiskFactorScore(
+    factor: RiskFactor,
+    riskData: LogicData
+  ): Promise<RiskFactorScoreDetails> {
+    let result: RiskFactorScoreDetails | undefined
+    const logicDetailsArray = (factor.riskLevelLogic ?? []).sort(
+      (a, b) => a.riskScore - b.riskScore
+    )
+    for (const logicDetails of logicDetailsArray) {
+      const logic = logicDetails.logic
+      const { hit, vars } = await this.logicEvaluator.evaluate(
+        logic,
+        {
+          agg: factor.logicAggregationVariables,
+          entity: factor.logicEntityVariables,
+        },
+        {
+          tenantId: this.tenantId,
+          baseCurrency: factor.baseCurrency ?? 'USD',
+        },
+        riskData
+      )
+      if (hit) {
+        result = {
+          riskFactorId: factor.id,
+          vars: vars,
+          riskLevel: logicDetails.riskLevel,
+          score: logicDetails.riskScore,
+          hit: true,
+          weight: logicDetails.weight,
+        }
+        break
+      }
+    }
+    // Handle Aggregation for Transaction factors
+    if (riskData.type === 'TRANSACTION' && factor.logicAggregationVariables) {
+      await this.logicEvaluator.handleV8Aggregation(
+        'RISK',
+        factor.logicAggregationVariables ?? [],
+        riskData.transaction,
+        riskData.transactionEvents
+      )
+    }
+    return (
+      result ?? {
+        riskFactorId: factor.id,
+        vars: [],
+        riskLevel: factor.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
+        score: factor.defaultRiskScore ?? DEFAULT_RISK_SCORE,
+        hit: false,
+        weight: factor.defaultWeight ?? 0,
+      }
+    )
+  }
+
   public async calculateRiskFactorsScore(
     riskData: LogicData,
     riskFactor: RiskFactor[]
@@ -81,57 +136,9 @@ export class RiskScoringV8Service {
     riskFactorsResult: RiskFactorsResult
   }> {
     const result = await Promise.all(
-      riskFactor.map(async (factor): Promise<RiskFactorScoreDetails> => {
-        let result: RiskFactorScoreDetails | undefined
-        const logicDetailsArray = (factor.riskLevelLogic ?? []).sort(
-          (a, b) => a.riskScore - b.riskScore
-        )
-        for (const logicDetails of logicDetailsArray) {
-          const logic = logicDetails.logic
-          const { hit, vars } = await this.logicEvaluator.evaluate(
-            logic,
-            {
-              agg: factor.logicAggregationVariables,
-              entity: factor.logicEntityVariables,
-            },
-            {
-              tenantId: this.tenantId,
-              baseCurrency: factor.baseCurrency ?? 'USD', // ToDo: Check if this is correct
-            },
-            riskData
-          )
-          if (hit) {
-            result = {
-              riskFactorId: factor.id,
-              vars: vars,
-              riskLevel: logicDetails.riskLevel,
-              score: logicDetails.riskScore,
-              hit: true,
-              weight: logicDetails.weight,
-            }
-            break
-          }
-        }
-        // Handle Aggregation for Transaction factors
-        if (riskData.type === 'TRANSACTION') {
-          await this.logicEvaluator.handleV8Aggregation(
-            'RISK',
-            factor.logicAggregationVariables ?? [],
-            riskData.transaction,
-            riskData.transactionEvents
-          )
-        }
-        return (
-          result ?? {
-            riskFactorId: factor.id,
-            vars: [],
-            riskLevel: factor.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
-            score: factor.defaultRiskScore ?? DEFAULT_RISK_SCORE,
-            hit: false,
-            weight: factor.defaultWeight ?? 0,
-          }
-        )
-      })
+      riskFactor.map((factor) =>
+        this.calculateRiskFactorScore(factor, riskData)
+      )
     )
     if (!result || result.length === 0) {
       return {

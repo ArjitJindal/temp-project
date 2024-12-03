@@ -34,7 +34,7 @@ import {
   TEST_CONSUMER_USER_RISK_PARAMETER,
   TEST_VARIABLE_RISK_ITEM,
 } from '@/test-utils/pulse-test-utils'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { RiskScoringService } from '@/services/risk-scoring'
@@ -57,6 +57,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
 import { RiskService } from '@/services/risk'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 const features: Feature[] = ['RISK_LEVELS', 'RISK_SCORING']
 
@@ -1306,7 +1307,7 @@ describe('Risk Scoring Tests', () => {
     })
     await riskScoringService.updateInitialRiskScores(testUser1)
     const riskScore = await riskRepository.getParameterRiskItem(
-      'originAmountDetails.country' as ParameterAttributeRiskValuesParameterEnum,
+      'originAmountDetails.country' as RiskFactorParameter,
       'TRANSACTION'
     )
 

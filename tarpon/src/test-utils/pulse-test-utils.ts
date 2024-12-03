@@ -3,10 +3,7 @@ import { getTestTenantId } from './tenant-test-utils'
 import { setUpUsersHooks } from './user-test-utils'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-internal/Business'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -15,6 +12,7 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DEFAULT_RISK_VALUE } from '@/services/risk-scoring/utils'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 export const TEST_CONSUMER_USER_RISK_PARAMETER: ParameterAttributeRiskValues = {
   parameter: 'type',
@@ -385,7 +383,7 @@ type KrsTestCase = {
   expectedScore: number
 }
 export function createKrsRiskFactorTestCases(
-  parameter: ParameterAttributeRiskValuesParameterEnum,
+  parameter: RiskFactorParameter,
   riskClassificationValues: RiskClassificationScore[],
   parameterRiskLevels: ParameterAttributeRiskValues,
   testCases: Array<KrsTestCase>
@@ -436,7 +434,7 @@ type ArsTestCase = {
 }
 
 export function createArsRiskFactorTestCases(
-  parameter: ParameterAttributeRiskValuesParameterEnum,
+  parameter: RiskFactorParameter,
   riskClassificationValues: RiskClassificationScore[],
   parameterRiskLevels: ParameterAttributeRiskValues,
   testCases: Array<ArsTestCase>,

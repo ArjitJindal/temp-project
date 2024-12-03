@@ -34,9 +34,9 @@ import Tooltip from '@/components/library/Tooltip';
 import AddLineIcon from '@/components/ui/icons/Remix/system/add-line.react.svg';
 import {
   ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
   RiskEntityType,
   RiskFactor,
+  RiskFactorParameter,
   RiskScoreValueLevel,
   RiskScoreValueScore,
   SimulationPostResponse,
@@ -171,10 +171,7 @@ export function RiskFactorsSimulation(props: Props) {
               parameter,
               riskEntityType: entity,
               isActive: value.isActive,
-              isDerived: fetchIsDerived(
-                entity as Entity,
-                parameter as ParameterAttributeRiskValuesParameterEnum,
-              ),
+              isDerived: fetchIsDerived(entity as Entity, parameter as RiskFactorParameter),
               parameterType: value.parameterType,
               riskLevelAssignmentValues: value.values,
               weight: value.weight,
@@ -213,7 +210,7 @@ export function RiskFactorsSimulation(props: Props) {
     });
   };
 
-  const fetchIsDerived = (entity: Entity, parameter: ParameterAttributeRiskValuesParameterEnum) => {
+  const fetchIsDerived = (entity: Entity, parameter: RiskFactorParameter) => {
     switch (entity) {
       case 'CONSUMER_USER':
         return USER_RISK_PARAMETERS.find((param) => param.parameter === parameter)?.isDerived;
@@ -253,7 +250,7 @@ export function RiskFactorsSimulation(props: Props) {
   };
 
   const onSaveValues = (
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     newValues: ParameterValues,
     entityType: RiskEntityType,
     defaultValue: RiskScoreValueScore | RiskScoreValueLevel,
@@ -284,7 +281,7 @@ export function RiskFactorsSimulation(props: Props) {
   };
   const onActivate = (
     entityType: RiskEntityType,
-    parameter: ParameterAttributeRiskValuesParameterEnum,
+    parameter: RiskFactorParameter,
     isActive: boolean,
   ) => {
     const defaultRiskFactorValue = {

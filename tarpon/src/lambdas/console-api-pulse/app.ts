@@ -8,8 +8,8 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ParameterAttributeRiskValuesParameterEnum } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 export const riskClassificationHandler = lambdaApi({
   requiredFeatures: ['RISK_SCORING'],
@@ -58,7 +58,7 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     handlers.registerGetPulseRiskParameter(
       async (ctx, request) =>
         await riskService.getRiskParameter(
-          request.parameter as ParameterAttributeRiskValuesParameterEnum,
+          request.parameter as RiskFactorParameter,
           request.entityType as RiskEntityType
         )
     )

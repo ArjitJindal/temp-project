@@ -5,10 +5,8 @@ import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { createArsRiskFactorTestCases } from '@/test-utils/pulse-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
-import {
-  ParameterAttributeRiskValues,
-  ParameterAttributeRiskValuesParameterEnum,
-} from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 
 withFeatureHook(['RISK_LEVELS', 'RISK_SCORING'])
 dynamoDbSetupHook()
@@ -28,7 +26,7 @@ jest.mock('@/services/geo-ip', () => ({
 }))
 
 const RISK_FACTOR: (
-  parameter: ParameterAttributeRiskValuesParameterEnum
+  parameter: RiskFactorParameter
 ) => ParameterAttributeRiskValues = (parameter) => ({
   parameter,
   isActive: true,

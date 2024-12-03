@@ -1,5 +1,4 @@
 import {
-  ParameterAttributeRiskValuesParameterEnum,
   ParameterAttributeRiskValuesParameterTypeEnum,
   RiskEntityType,
   ParameterAttributeRiskValuesTargetIterableParameterEnum,
@@ -15,6 +14,7 @@ import {
   Feature,
   RiskScoreValueLevel,
   RiskScoreValueScore,
+  RiskFactorParameter,
 } from '@/apis';
 
 export type RiskValueContent = RiskParameterValue['content'];
@@ -91,7 +91,7 @@ export function riskValueTimeRange(
   };
 }
 
-export type ParameterName = ParameterAttributeRiskValuesParameterEnum;
+export type ParameterName = RiskFactorParameter;
 export type Entity = RiskEntityType;
 export type ParameterValues = RiskParameterLevelKeyValue[];
 export type ParameterValueContent = RiskParameterValue['content'];
