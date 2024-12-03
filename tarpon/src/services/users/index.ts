@@ -69,7 +69,7 @@ import { CommentRequest } from '@/@types/openapi-public-management/CommentReques
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
-import { getParsedCommentBody } from '@/utils/helpers'
+import { getParsedCommentBody, getUserName } from '@/utils/helpers'
 import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
 import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
@@ -89,6 +89,14 @@ import { UserTagsUpdate } from '@/@types/openapi-public/UserTagsUpdate'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ListService } from '@/services/list'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
+import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
+import { UserType } from '@/@types/openapi-internal/UserType'
+import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
+import { ConsumerUserTableItem } from '@/@types/openapi-internal/ConsumerUserTableItem'
+import { CountryCode } from '@/@types/openapi-public/CountryCode'
+import { BusinessUserTableItem } from '@/@types/openapi-internal/BusinessUserTableItem'
+import { Amount } from '@/@types/openapi-public/Amount'
+import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -250,44 +258,175 @@ export class UserService {
   ): Promise<BusinessUsersListResponse> {
     const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
+      this.mapBusinessUserToTableItem,
       'BUSINESS'
     )
-    const items = await Promise.all(
-      result.items.map(
-        async (user) => await this.getAugmentedUser<InternalBusinessUser>(user)
-      )
-    )
-    return {
-      ...result,
-      items,
-    }
+
+    return result
   }
 
   public async getBusinessUsersV2(
     params: DefaultApiGetBusinessUsersListV2Request
   ): Promise<BusinessUsersOffsetPaginateListResponse> {
-    return this.userClickhouseRepository.getUsersV2<InternalBusinessUser>(
+    const columns = {
+      ...this.getUserCommonColumns(),
+      industry:
+        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'businessIndustry')",
+      expectedTransactionAmountPerMonth:
+        "JSONExtractString(data, 'legalEntity', 'companyFinancialDetails', 'expectedTransactionAmountPerMonth')",
+      expectedTurnoverPerMonth:
+        "JSONExtractString(data, 'legalEntity', 'companyFinancialDetails', 'expectedTurnoverPerMonth')",
+      maximumDailyTransactionLimit:
+        "JSONExtractString(data, 'transactionLimits', 'maximumDailyTransactionLimit')",
+      registrationIdentifier:
+        "JSONExtractString(data, 'legalEntity', 'companyRegistrationDetails', 'registrationIdentifier')",
+      registrationCountry:
+        "JSONExtractString(data, 'legalEntity', 'companyRegistrationDetails', 'registrationCountry')",
+      userRegistrationStatus:
+        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'userRegistrationStatus')",
+    }
+
+    const callback = (
+      data: Record<string, string | number>
+    ): BusinessUserTableItem => {
+      return {
+        industry: data.industry ? JSON.parse(data.industry as string) : [],
+        name: data.name as string,
+        createdTimestamp: data.createdTimestamp as number,
+        type: data.type as UserType,
+        updatedAt: data.updatedAt as number,
+        tags: data.tags ? JSON.parse(data.tags as string) : [],
+        krsScore: data.krsScore as number,
+        drsScore: data.drsScore as number,
+        isRiskLevelLocked: !data.isRiskLevelLocked,
+        manualRiskLevel: data.manualRiskLevel as RiskLevel,
+        userId: data.userId as string,
+        userRegistrationStatus:
+          data.userRegistrationStatus as UserRegistrationStatus,
+        expectedVolumes: {
+          expectedTransactionAmountPerMonth:
+            data.expectedTransactionAmountPerMonth
+              ? (JSON.parse(
+                  data.expectedTransactionAmountPerMonth as string
+                ) as Amount)
+              : undefined,
+          transactionVolumePerMonth: data.expectedTurnoverPerMonth
+            ? (JSON.parse(data.expectedTurnoverPerMonth as string) as Amount)
+            : undefined,
+          maximumDailyTransactionLimit: data.maximumDailyTransactionLimit
+            ? (JSON.parse(
+                data.maximumDailyTransactionLimit as string
+              ) as Amount)
+            : undefined,
+        },
+        registrationCountry: data.registrationCountry as CountryCode,
+        registrationIdentifier: data.registrationIdentifier as string,
+      }
+    }
+
+    return this.userClickhouseRepository.getUsersV2<BusinessUserTableItem>(
       params,
+      columns,
+      callback,
       'BUSINESS'
     )
+  }
+
+  private getUserCommonColumns(): Record<string, string> {
+    return {
+      userId: 'id',
+      name: 'username',
+      createdTimestamp: "JSONExtractFloat(data, 'createdTimestamp')",
+      type: "JSONExtractString(data, 'type')",
+      updatedAt: "JSONExtractFloat(data, 'updatedAt')",
+      tags: "JSONExtractString(data, 'tags')",
+      krsScore: "JSONExtractFloat(data, 'krsScore', 'krsScore')",
+      drsScore: "JSONExtractFloat(data, 'drsScore', 'drsScore')",
+      isRiskLevelLocked: "JSONExtractBool(data, 'drsScore', 'isUpdatable')",
+      kycStatus: "JSONExtractString(data, 'kycStatusDetails', 'status')",
+      userState: "JSONExtractString(data, 'userStateDetails', 'state')",
+      manualRiskLevel: "JSONExtractString(data, 'drsScore', 'manualRiskLevel')",
+      riskLevel: "JSONExtractString(data, 'riskLevel')",
+    }
   }
 
   public async getConsumerUsersV2(
     params: DefaultApiGetConsumerUsersListV2Request
   ): Promise<ConsumerUsersOffsetPaginateListResponse> {
-    return this.userClickhouseRepository.getUsersV2<InternalConsumerUser>(
+    const columns = {
+      ...this.getUserCommonColumns(),
+      pepDetails: "JSONExtractString(data, 'pepStatus')",
+      kycStatusReason: "JSONExtractString(data, 'kycStatusDetails', 'reason')",
+      countryOfResidence:
+        "JSONExtractString(data, 'userDetails', 'countryOfResidence')",
+      countryOfNationality:
+        "JSONExtractString(data, 'userDetails', 'countryOfNationality')",
+      dateOfBirth: "JSONExtractString(data, 'userDetails', 'dateOfBirth')",
+    }
+
+    const callback = (
+      data: Record<string, string | number>
+    ): ConsumerUserTableItem => {
+      return {
+        userId: data.userId as string,
+        createdTimestamp: data.createdTimestamp as number,
+        type: data.type as UserType,
+        name: data.name as string,
+        pepDetails: (data.pepDetails as string).length
+          ? (JSON.parse(data.pepDetails as string) as PEPStatus[])
+          : [],
+        kycStatus: data.kycStatus as KYCStatus,
+        kycStatusReason: data.kycStatusReason as string,
+        countryOfResidence: data.countryOfResidence as CountryCode,
+        countryOfNationality: data.countryOfNationality as CountryCode,
+        userState: data.userState as UserState,
+        dateOfBirth: data.dateOfBirth as string,
+        tags: data.tags ? JSON.parse(data.tags as string) : [],
+        drsScore: data.drsScore as number,
+        krsScore: data.krsScore as number,
+        isRiskLevelLocked: !data.isRiskLevelLocked,
+        manualRiskLevel: data.manualRiskLevel as RiskLevel,
+        updatedAt: data.updatedAt as number,
+      }
+    }
+
+    return this.userClickhouseRepository.getUsersV2<ConsumerUserTableItem>(
       params,
+      columns,
+      callback,
       'CONSUMER'
     )
   }
 
   public async getUsersV2(
-    params: DefaultApiGetAllUsersListV2Request,
-    userType?: 'BUSINESS' | 'CONSUMER'
+    params: DefaultApiGetAllUsersListV2Request
   ): Promise<AllUsersOffsetPaginateListResponse> {
-    return this.userClickhouseRepository.getUsersV2<InternalUser>(
+    const columns = this.getUserCommonColumns()
+
+    const callback = (
+      data: Record<string, string | number>
+    ): AllUsersTableItem => {
+      return {
+        userId: data.userId as string,
+        name: data.name as string,
+        type: data.type as UserType,
+        kycStatus: data.kycStatus as KYCStatus,
+        userState: data.userState as UserState,
+        tags: data.tags ? JSON.parse(data.tags as string) : [],
+        createdTimestamp: data.createdTimestamp as number,
+        updatedAt: data.updatedAt as number,
+        drsScore: data.drsScore as number,
+        krsScore: data.krsScore as number,
+        isRiskLevelLocked: !data.isRiskLevelLocked,
+        manualRiskLevel: data.manualRiskLevel as RiskLevel,
+        riskLevel: data.riskLevel as RiskLevel,
+      }
+    }
+
+    return this.userClickhouseRepository.getUsersV2<AllUsersTableItem>(
       params,
-      userType
+      columns,
+      callback
     )
   }
 
@@ -715,54 +854,119 @@ export class UserService {
     return
   }
 
+  private mapAllUserToTableItem(
+    user: InternalUser | InternalBusinessUser | InternalConsumerUser
+  ): AllUsersTableItem {
+    return {
+      isRiskLevelLocked: !user.drsScore?.isUpdatable,
+      manualRiskLevel: user.drsScore?.manualRiskLevel,
+      kycStatus: user.kycStatusDetails?.status,
+      krsScore: user.krsScore?.krsScore,
+      createdTimestamp: user.createdTimestamp,
+      name: getUserName(user),
+      userState: user.userStateDetails?.state,
+      type: user.type,
+      drsScore: user.drsScore?.drsScore,
+      userId: user.userId,
+      tags: user.tags,
+      updatedAt: user.updatedAt,
+      casesCount: user.casesCount,
+      riskLevel: user.riskLevel,
+    }
+  }
+
+  private mapBusinessUserToTableItem(
+    user: InternalUser
+  ): BusinessUserTableItem {
+    return {
+      createdTimestamp: user.createdTimestamp,
+      name: getUserName(user),
+      type: 'BUSINESS',
+      userId: user.userId,
+      updatedAt: user.updatedAt,
+      drsScore: user.drsScore?.drsScore,
+      expectedVolumes: {
+        expectedTransactionAmountPerMonth:
+          user.legalEntity.companyFinancialDetails
+            ?.expectedTransactionAmountPerMonth,
+        transactionVolumePerMonth:
+          user.legalEntity.companyFinancialDetails?.expectedTurnoverPerMonth,
+        maximumDailyTransactionLimit:
+          user.transactionLimits?.maximumDailyTransactionLimit,
+      },
+      industry: user.legalEntity.companyGeneralDetails.businessIndustry,
+      isRiskLevelLocked: !user.drsScore?.isUpdatable,
+      manualRiskLevel: user.drsScore?.manualRiskLevel,
+      krsScore: user.krsScore?.krsScore,
+      registrationCountry:
+        user.legalEntity.companyRegistrationDetails?.registrationCountry,
+      tags: user.tags,
+      registrationIdentifier:
+        user.legalEntity.companyRegistrationDetails?.registrationIdentifier,
+      userRegistrationStatus:
+        user.legalEntity.companyGeneralDetails.userRegistrationStatus,
+    }
+  }
+
+  private mapConsumerUserToTableItem(
+    user: InternalUser
+  ): ConsumerUserTableItem {
+    return {
+      createdTimestamp: user.createdTimestamp,
+      name: getUserName(user),
+      type: 'CONSUMER',
+      userId: user.userId,
+      updatedAt: user.updatedAt,
+      countryOfNationality: user.userDetails?.countryOfNationality,
+      dateOfBirth: user.userDetails?.dateOfBirth,
+      tags: user.tags,
+      countryOfResidence: user.userDetails?.countryOfResidence,
+      drsScore: user.drsScore?.drsScore,
+      krsScore: user.krsScore?.krsScore,
+      kycStatus: user.kycStatusDetails?.status,
+      userState: user.userStateDetails?.state,
+      isRiskLevelLocked: !user.drsScore?.isUpdatable,
+      manualRiskLevel: user.drsScore?.manualRiskLevel,
+      kycStatusReason: user.kycStatusDetails?.reason,
+      pepDetails: user.pepStatus,
+    }
+  }
+
   public async getConsumerUsers(
     params: DefaultApiGetConsumerUsersListRequest
   ): Promise<ConsumerUsersListResponse> {
     const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
+      this.mapConsumerUserToTableItem,
       'CONSUMER'
     )
-    const items = await Promise.all(
-      result.items.map(
-        async (user) => await this.getAugmentedUser<InternalConsumerUser>(user)
-      )
-    )
-    return {
-      ...result,
-      items,
-    }
+
+    return result
   }
 
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersListResponse> {
-    return await this.augmentUsers(
-      await this.userRepository.getMongoUsersCursorsPaginate(params)
-    )
-  }
-
-  private async augmentUsers(
-    data: AllUsersListResponse
-  ): Promise<AllUsersListResponse> {
-    const items = await Promise.all(
-      data.items.map(async (user) => {
-        return await this.getAugmentedUser<InternalUser>(user)
-      })
+    const result = await this.userRepository.getMongoUsersCursorsPaginate(
+      params,
+      this.mapAllUserToTableItem
     )
 
-    return { ...data, items }
+    return result
   }
 
   public async getRuleInstancesTransactionUsersHit(
     ruleInstanceId: string,
     params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
   ): Promise<AllUsersListResponse> {
-    return await this.augmentUsers(
+    const result =
       await this.userRepository.getRuleInstancesTransactionUsersHit(
         ruleInstanceId,
-        params
+        params,
+        this.mapAllUserToTableItem
       )
-    )
+
+    return result
   }
 
   public async updateMointoringStatus(userId: string, isEnabled: boolean) {

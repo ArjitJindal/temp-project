@@ -24,7 +24,6 @@ import {
   CurrencyCode,
   InternalBusinessUser,
   InternalConsumerUser,
-  KYCStatusDetails,
   RuleAction,
   RuleNature,
   Tag as ApiTag,
@@ -37,6 +36,7 @@ import {
   Alert,
   AlertsQaSampling,
   PepRank,
+  KYCStatus,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -727,11 +727,11 @@ export const ASSIGNMENTS: ColumnDataType<Assignment[]> = {
   stringify: (value) => `${value?.map((x) => x.assigneeUserId).join(',') ?? ''}`,
 };
 
-export const USER_KYC_STATUS_TAG: ColumnDataType<KYCStatusDetails> = {
-  render: (kycStatusDetails) => {
-    return kycStatusDetails ? <UserKycStatusTag kycStatusDetails={kycStatusDetails} /> : <></>;
+export const USER_KYC_STATUS_TAG: ColumnDataType<KYCStatus> = {
+  render: (kycStatus) => {
+    return kycStatus ? <UserKycStatusTag kycStatusDetails={{ status: kycStatus }} /> : <></>;
   },
-  stringify: (kycStatusDetails) => kycStatusDetails?.status ?? '',
+  stringify: (kycStatus) => kycStatus ?? '',
 };
 
 export const USER_STATE_TAG: ColumnDataType<UserState> = {

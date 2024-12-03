@@ -93,27 +93,23 @@ export const transactionsViewHandler = lambdaApi()(
     >
   ) => {
     const { principalId: tenantId } = event.requestContext.authorizer
-    const { DOCUMENT_BUCKET, TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
+    const { TMP_BUCKET, MAXIMUM_ALLOWED_EXPORT_SIZE } =
       process.env as TransactionViewConfig
     const s3 = getS3ClientByEvent(event)
     const mongoDb = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClient()
-    const rulesEngineService = await RulesEngineService.fromEvent(event)
-    const alertService = await AlertsService.fromEvent(event)
-    const caseService = await CaseService.fromEvent(event)
-    const transactionService = new TransactionService(
-      tenantId,
-      { mongoDb, dynamoDb },
-      s3,
-      TMP_BUCKET,
-      DOCUMENT_BUCKET
-    )
+    const [rulesEngineService, alertService, caseService, transactionService] =
+      await Promise.all([
+        RulesEngineService.fromEvent(event),
+        AlertsService.fromEvent(event),
+        CaseService.fromEvent(event),
+        TransactionService.fromEvent(event),
+      ])
 
     const handlers = new Handlers()
 
     handlers.registerGetTransactionsList(async (context, request) => {
       return await transactionService.getTransactionsList(request, {
-        includeEvents: request.includeEvents,
         includeUsers: request.includeUsers,
       })
     })
@@ -179,11 +175,7 @@ export const transactionsViewHandler = lambdaApi()(
       const { field, filter } = request
 
       const [originResult, destinationResult] = await Promise.all([
-        transactionService.getUniques({
-          field,
-          direction: 'origin',
-          filter,
-        }),
+        transactionService.getUniques({ field, direction: 'origin', filter }),
         transactionService.getUniques({
           field,
           direction: 'destination',

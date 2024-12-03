@@ -1,18 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { Input } from 'antd';
 import { useDebounce } from 'ahooks';
-import { User } from '../types';
 import { useLastSearches, useUsers } from '../helpers';
 import s from './style.module.less';
 import UserList from './UserList';
 import LastSearchList from './LastSearchList';
 import SearchLineIcon from '@/components/ui/icons/Remix/system/search-line.react.svg';
 import { isSuccess } from '@/utils/asyncResource';
+import { AllUsersTableItem } from '@/apis';
 
 interface Props {
   initialSearch: string;
   isVisible: boolean;
-  onConfirm: (user: User) => void;
+  onConfirm: (user: AllUsersTableItem) => void;
   onCancel: () => void;
   onEnterInput: (userId: string) => void;
 }
@@ -41,7 +41,7 @@ export default function PopupContent(props: Props) {
     }
   }, [isVisible, initialSearch]);
 
-  function handleSelectUser(user: User) {
+  function handleSelectUser(user: AllUsersTableItem) {
     onConfirm(user);
     onAdd(debouncedSearch);
     setSearch('');

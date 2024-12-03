@@ -3,13 +3,13 @@ import { Popover } from 'antd';
 import { TooltipPlacement } from 'antd/lib/tooltip';
 import PopupContent from './PopupContent';
 import s from './style.module.less';
-import { User } from './types';
+import { AllUsersTableItem } from '@/apis';
 
 interface Props {
   children: React.ReactNode;
   placement?: TooltipPlacement;
   initialSearch: string | null;
-  onConfirm: (user: User) => void;
+  onConfirm: (user: AllUsersTableItem) => void;
   onEnterInput: (userId: string) => void;
 }
 

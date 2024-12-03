@@ -1,16 +1,22 @@
 import React from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
-import { InternalConsumerUser } from '@/apis';
+import { ConsumerUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
-import { COUNTRY, DATE, TAGS } from '@/components/library/Table/standardDataTypes';
-import { getFullName, getUserLink } from '@/utils/api/users';
+import {
+  COUNTRY,
+  DATE,
+  TAGS,
+  USER_KYC_STATUS_TAG,
+  USER_STATE_TAG,
+} from '@/components/library/Table/standardDataTypes';
+import { getUserLink } from '@/utils/api/users';
 import Id from '@/components/ui/Id';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 
-export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
-  const helper = new ColumnHelper<InternalConsumerUser>();
+export function getConsumerUserColumns(): TableColumn<ConsumerUserTableItem>[] {
+  const helper = new ColumnHelper<ConsumerUserTableItem>();
 
   return helper.list([
     helper.simple<'userId'>({
@@ -30,48 +36,55 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
         },
       },
     }),
-    helper.simple<'userDetails'>({
+    helper.simple<'name'>({
       title: 'Name',
-      key: 'userDetails',
+      key: 'name',
       type: {
-        render: (userDetails) => <>{getFullName(userDetails)}</>,
-        stringify: (userDetails) => getFullName(userDetails),
+        render: (name) => <>{name}</>,
+        stringify: (name) => name ?? '',
       },
     }),
-    helper.simple<'userDetails.dateOfBirth'>({
+    helper.simple<'dateOfBirth'>({
       title: 'Date of birth',
-      key: 'userDetails.dateOfBirth',
+      key: 'dateOfBirth',
       type: {
         render: (dateOfBirth) => {
           return <>{dateOfBirth ? dayjs(dateOfBirth).format(DEFAULT_DATE_FORMAT) : ''}</>;
         },
       },
     }),
-    helper.simple<'userDetails.countryOfResidence'>({
+    helper.simple<'countryOfResidence'>({
       title: 'Country of residence',
-      key: 'userDetails.countryOfResidence',
+      key: 'countryOfResidence',
       type: COUNTRY,
     }),
-    helper.simple<'userDetails.countryOfNationality'>({
+    helper.simple<'countryOfNationality'>({
       title: 'Country of nationality',
-      key: 'userDetails.countryOfNationality',
+      key: 'countryOfNationality',
       type: COUNTRY,
     }),
-    helper.simple<'kycStatusDetails.status'>({
+    helper.simple<'kycStatus'>({
       title: 'KYC status',
-      key: 'kycStatusDetails.status',
+      id: 'kycStatus',
+      type: USER_KYC_STATUS_TAG,
+      key: 'kycStatus',
+      tooltip: 'KYC status of user.',
     }),
-    helper.simple<'kycStatusDetails.reason'>({
+
+    helper.simple<'kycStatusReason'>({
       title: 'KYC status reason',
-      key: 'kycStatusDetails.reason',
+      key: 'kycStatusReason',
     }),
-    helper.simple<'userStateDetails.state'>({
-      title: 'User state',
-      key: 'userStateDetails.state',
+    helper.simple<'userState'>({
+      title: 'User status',
+      type: USER_STATE_TAG,
+      key: 'userState',
+      id: 'userStatus',
+      tooltip: 'Status of user.',
     }),
-    helper.simple<'pepStatus'>({
+    helper.simple<'pepDetails'>({
       title: 'PEP status',
-      key: 'pepStatus',
+      key: 'pepDetails',
       type: {
         render: (pepStatus) => <>{pepStatus?.some((status) => status.isPepHit) ? 'Yes' : 'No'}</>,
       },
@@ -79,7 +92,7 @@ export function getConsumerUserColumns(): TableColumn<InternalConsumerUser>[] {
     }),
     helper.derived({
       title: 'PEP hit status details',
-      value: (item) => item?.pepStatus,
+      value: (item) => item?.pepDetails,
       id: 'pep-details',
       exporting: false,
       type: {

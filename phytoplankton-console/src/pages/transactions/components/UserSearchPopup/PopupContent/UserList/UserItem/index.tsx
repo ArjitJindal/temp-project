@@ -2,14 +2,14 @@ import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
 import pluralize from 'pluralize';
-import { User } from '../../../types';
 import s from './style.module.less';
 import { getUserName } from '@/utils/api/users';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
+import { AllUsersTableItem } from '@/apis';
 
 interface Props {
   isActive: boolean;
-  user: User;
+  user: AllUsersTableItem;
   onClick: () => void;
 }
 

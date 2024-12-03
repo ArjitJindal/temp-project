@@ -1,21 +1,20 @@
 import React from 'react';
 import pluralize from 'pluralize';
 import { List } from 'antd';
-import { User } from '../../types';
 import s from './style.module.less';
 import UserItem from './UserItem';
 import { AsyncResource } from '@/utils/asyncResource';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { AllUsersTableItem } from '@/apis';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Spinner from '@/components/library/Spinner';
 
 interface Props {
-  selectedUser: User | null;
-  onSelectUser: (user: User) => void;
+  selectedUser: AllUsersTableItem | null;
+  onSelectUser: (user: AllUsersTableItem) => void;
   search: string;
   usersRes: AsyncResource<{
     total: number;
-    users: User[];
+    users: AllUsersTableItem[];
   }>;
 }
 
@@ -44,7 +43,7 @@ export default function UserList(props: Props) {
             <>
               {renderMessage(users, total, search)}
               {users.length > 0 && (
-                <List<InternalBusinessUser | InternalConsumerUser>
+                <List<AllUsersTableItem>
                   dataSource={users}
                   renderItem={(nextUser) => (
                     <UserItem
@@ -66,7 +65,7 @@ export default function UserList(props: Props) {
   );
 }
 
-function renderMessage(users: User[], total: number, search: string) {
+function renderMessage(users: AllUsersTableItem[], total: number, search: string) {
   const length = users.length;
   if (length === 0) {
     return (

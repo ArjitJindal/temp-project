@@ -40,7 +40,7 @@ export function getUserName(user?: TableUser | MissingUser | null): string {
   return neverReturn(user, '-');
 }
 
-export function getUserLink(user?: TableUser | null): string | undefined {
+export function getUserLink(user?: Pick<TableUser, 'type' | 'userId'> | null): string | undefined {
   if (user == null || !('type' in user)) {
     return undefined;
   }

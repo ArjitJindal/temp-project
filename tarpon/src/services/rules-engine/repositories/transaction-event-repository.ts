@@ -18,6 +18,9 @@ import { runLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { traceable } from '@/core/xray'
 import { pickKnownEntityFields } from '@/utils/object'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { TransactionEventsResponse } from '@/@types/openapi-internal/TransactionEventsResponse'
+import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTransactionEvent'
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
@@ -196,6 +199,41 @@ export class TransactionEventRepository {
       )
     })
     return events
+  }
+
+  public async getMongoTransactionEventsForTransaction(
+    transactionId: string,
+    options?: {
+      pageSize?: number
+      page?: number
+    }
+  ): Promise<TransactionEventsResponse> {
+    const db = this.mongoDb.db()
+    const transactionEventCollection = db.collection<TransactionEvent>(
+      TRANSACTION_EVENTS_COLLECTION(this.tenantId)
+    )
+
+    const cursor = transactionEventCollection.find({ transactionId })
+
+    if (options?.pageSize) {
+      cursor.limit(options.pageSize)
+    }
+
+    if (options?.page) {
+      cursor.skip((options.page - 1) * (options.pageSize || DEFAULT_PAGE_SIZE))
+    }
+
+    const [total, events] = await Promise.all([
+      transactionEventCollection.countDocuments({
+        transactionId,
+      }),
+      cursor.toArray(),
+    ])
+
+    return {
+      items: pickKnownEntityFields(events, InternalTransactionEvent),
+      total: total,
+    }
   }
 
   public async getMongoTransactionEvent(

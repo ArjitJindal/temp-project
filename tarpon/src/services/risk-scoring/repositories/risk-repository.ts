@@ -1002,5 +1002,5 @@ const handleLocalChangeCapture = async (
     '@/utils/local-dynamodb-change-handler'
   )
 
-  await localTarponChangeCaptureHandler(tenantId, primaryKey)
+  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'HAMMERHEAD')
 }

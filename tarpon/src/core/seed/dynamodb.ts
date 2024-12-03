@@ -23,7 +23,11 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { isDemoTenant } from '@/utils/tenant'
-import { getArsScores } from '@/core/seed/data/ars_scores'
+import {
+  getArsScores,
+  getDrsScores,
+  getKrsScores,
+} from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 
@@ -106,6 +110,25 @@ export async function seedDynamo(
       arsScore.components
     )
   }
+
+  for (const krsScore of getKrsScores()) {
+    await riskRepo.createOrUpdateKrsScore(
+      krsScore.userId as string,
+      krsScore.krsScore
+    )
+  }
+
+  for (const drsScore of getDrsScores()) {
+    await riskRepo.createOrUpdateDrsScore(
+      drsScore.userId as string,
+      drsScore.drsScore,
+      drsScore.transactionId as string,
+      drsScore.components ?? [],
+      drsScore.isUpdatable,
+      drsScore.factorScoreDetails
+    )
+  }
+
   logger.info('Create risk factors')
   for (const riskFactor of riskFactors()) {
     await riskRepo.createOrUpdateRiskFactor(riskFactor)

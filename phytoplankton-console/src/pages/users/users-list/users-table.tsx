@@ -1,3 +1,5 @@
+import { getRiskLevelFromScore, getRiskScoreFromLevel } from '@flagright/lib/utils';
+import { isEmpty } from 'lodash';
 import { getBusinessUserColumns } from './business-user-columns';
 import { getConsumerUserColumns } from './consumer-users-columns';
 import { getAllUserColumns } from './all-user-columns';
@@ -5,7 +7,7 @@ import { RiskLevelButton } from './RiskLevelFilterButton';
 import { UserRegistrationStatusFilterButton } from './UserRegistrationStatusFilterButton';
 import { UserSearchParams } from '.';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
-import { InternalUser, RiskLevel } from '@/apis';
+import { AllUsersTableItem, RiskClassificationScore, RiskLevel } from '@/apis';
 import { TableColumn, TableData } from '@/components/library/Table/types';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -21,10 +23,12 @@ import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import UserTagSearchButton from '@/pages/transactions/components/UserTagSearchButton';
 import { QueryResult } from '@/utils/queries/types';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { getOr } from '@/utils/asyncResource';
 
 type Props = {
   type: 'all' | 'business' | 'consumer';
-  queryResults: QueryResult<TableData<InternalUser>>;
+  queryResults: QueryResult<TableData<AllUsersTableItem>>;
   params: UserSearchParams;
   handleChangeParams: (params: UserSearchParams) => void;
   fitHeight?: boolean;
@@ -142,8 +146,10 @@ const extraFilters = (
   return extraFilters;
 };
 
-function getRiskScoringColumns(): TableColumn<InternalUser>[] {
-  const helper = new ColumnHelper<InternalUser>();
+function getRiskScoringColumns(
+  riskClassificationValuesMap: RiskClassificationScore[],
+): TableColumn<AllUsersTableItem>[] {
+  const helper = new ColumnHelper<AllUsersTableItem>();
 
   return helper.list([
     helper.derived<RiskLevel>({
@@ -151,31 +157,39 @@ function getRiskScoringColumns(): TableColumn<InternalUser>[] {
       type: RISK_LEVEL,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
       value: (entity): RiskLevel | undefined => {
-        return entity?.drsScore?.manualRiskLevel ?? entity?.drsScore?.derivedRiskLevel;
+        return !isEmpty(entity.manualRiskLevel)
+          ? entity.manualRiskLevel
+          : getRiskLevelFromScore(riskClassificationValuesMap, entity.drsScore || null);
       },
     }),
-    helper.simple<'drsScore.drsScore'>({
-      key: 'drsScore.drsScore',
+    helper.derived({
       title: 'CRA risk score',
       type: FLOAT,
       tooltip: 'Customer risk assessment - accounts for both Base risk and action risk scores.',
+      value: (entity) =>
+        !isEmpty(entity.manualRiskLevel) && entity.manualRiskLevel != null
+          ? getRiskScoreFromLevel(riskClassificationValuesMap, entity.manualRiskLevel)
+          : entity.drsScore,
     }),
-    helper.simple<'drsScore.isUpdatable'>({
-      key: 'drsScore.isUpdatable',
+    helper.simple<'isRiskLevelLocked'>({
+      key: 'isRiskLevelLocked',
       title: 'Is locked',
       type: {
-        render: (value) => <>{!value ? 'Yes' : 'No'}</>,
+        render: (value) => <>{value ? 'Yes' : 'No'}</>,
       },
       tooltip: 'Whether customer risk assessment score is locked',
     }),
-    helper.simple<'krsScore.riskLevel'>({
-      key: 'krsScore.riskLevel',
+    helper.derived({
       title: 'KRS risk level',
+      value: (entity) => {
+        const score = entity.krsScore;
+        return getRiskLevelFromScore(riskClassificationValuesMap, score || null);
+      },
       type: RISK_LEVEL,
       tooltip: 'Know your customer - accounts for KYC Risk Level',
     }),
-    helper.simple<'krsScore.krsScore'>({
-      key: 'krsScore.krsScore',
+    helper.simple<'krsScore'>({
+      key: 'krsScore',
       title: 'KRS risk score',
       type: FLOAT,
       tooltip: 'Know your customer - accounts for KYC Risk Score',
@@ -187,9 +201,11 @@ export const UsersTable = (props: Props) => {
   const { type, queryResults, params, handleChangeParams, fitHeight = false } = props;
 
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const riskClassificationValues = useRiskClassificationScores();
+  const riskClassificationValuesMap = getOr(riskClassificationValues, []);
 
-  function getLastUpdatedColumn(): TableColumn<InternalUser> {
-    const helper = new ColumnHelper<InternalUser>();
+  function getLastUpdatedColumn(): TableColumn<AllUsersTableItem> {
+    const helper = new ColumnHelper<AllUsersTableItem>();
     return helper.simple<'updatedAt'>({
       key: 'updatedAt',
       title: 'Last updated',
@@ -198,20 +214,22 @@ export const UsersTable = (props: Props) => {
     });
   }
 
-  const columns: TableColumn<InternalUser>[] =
+  const columns: TableColumn<AllUsersTableItem>[] =
     type === 'business'
-      ? (getBusinessUserColumns() as TableColumn<InternalUser>[])
+      ? (getBusinessUserColumns() as TableColumn<AllUsersTableItem>[])
       : type === 'consumer'
-      ? (getConsumerUserColumns() as TableColumn<InternalUser>[])
-      : (getAllUserColumns() as TableColumn<InternalUser>[]);
+      ? (getConsumerUserColumns() as TableColumn<AllUsersTableItem>[])
+      : (getAllUserColumns() as TableColumn<AllUsersTableItem>[]);
 
   if (isRiskScoringEnabled) {
-    columns.push(...getRiskScoringColumns());
+    columns.push(...getRiskScoringColumns(riskClassificationValuesMap));
   }
+
   columns.push(getLastUpdatedColumn());
+
   const hasFeaturePNB = useFeatureEnabled('PNB');
   return (
-    <QueryResultsTable<InternalUser, UserSearchParams>
+    <QueryResultsTable<AllUsersTableItem, UserSearchParams>
       tableId={`users-list/${type}`}
       rowKey={'userId'}
       extraFilters={extraFilters(type, params, hasFeaturePNB)}

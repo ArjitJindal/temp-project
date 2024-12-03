@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Params } from '../TransactionsSelector';
 import { FIXED_API_PARAMS } from '..';
 import TransactionsTable, {
+  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
 import { useApi } from '@/api';
@@ -31,22 +32,17 @@ export default function TransactionsList(props: Props) {
 
   const api = useApi();
   const queryResult = useCursorQuery(
-    TRANSACTIONS_LIST({
-      ...tableParams,
-      ...selectorParams,
-      userId,
-    }),
+    TRANSACTIONS_LIST({ ...tableParams, ...selectorParams, userId }),
 
     async ({ from }) => {
       return await api.getTransactionsList({
         ...FIXED_API_PARAMS,
-        ...tableParams,
+        ...transactionParamsToRequest(tableParams),
         pageSize: tableParams.pageSize,
-        start: from,
+        start: from || tableParams.from,
         filterUserId: userId,
         filterStatus: selectorParams.selectedRuleActions,
         filterTransactionState: selectorParams.selectedTransactionStates,
-        includeEvents: true,
         includeUsers: true,
       });
     },

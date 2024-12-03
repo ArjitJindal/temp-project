@@ -28,11 +28,7 @@ export const CaseTransactionsCard = (props: Props) => {
   const { caseTransactionsCount, caseType, caseId, user } = props;
   const [tableParams, setTableParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
   const queryResults = useQuery(
-    TRANSACTIONS_LIST({
-      ...tableParams,
-      filterCaseId: caseId,
-      type: 'case-transactions',
-    }),
+    TRANSACTIONS_LIST({ ...tableParams, filterCaseId: caseId, type: 'case-transactions' }),
     () =>
       api.getCaseTransactions({
         ...tableParams,

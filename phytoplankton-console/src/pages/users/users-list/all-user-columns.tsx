@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import React from 'react';
 import { capitalize } from 'lodash';
 import s from './styles.module.less';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
+import { AllUsersTableItem, UserType } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import UserTypeIcon from '@/components/ui/UserTypeIcon';
@@ -13,10 +13,9 @@ import {
   USER_KYC_STATUS_TAG,
   USER_STATE_TAG,
 } from '@/components/library/Table/standardDataTypes';
-import UserLink from '@/components/UserLink';
 
-export function getAllUserColumns(): TableColumn<InternalConsumerUser | InternalBusinessUser>[] {
-  const helper = new ColumnHelper<InternalConsumerUser | InternalBusinessUser>();
+export function getAllUserColumns(): TableColumn<AllUsersTableItem>[] {
+  const helper = new ColumnHelper<AllUsersTableItem>();
 
   return [
     helper.simple<'userId'>({
@@ -25,21 +24,21 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       tooltip: 'Unique identification of user.',
       type: {
         render: (userId, { item: entity }) => {
-          return <UserLink user={entity}>{userId}</UserLink>;
+          return <Link to={getUserLink(entity) ?? '#'}>{userId}</Link>;
         },
         link: (userId, entity) => {
           return getUserLink(entity) ?? '#';
         },
       },
     }),
-    helper.simple<'userDetails'>({
+    helper.simple<'name'>({
       title: 'Name',
-      key: 'userDetails',
+      key: 'name',
       id: 'userName',
       type: {
-        render: (userDetails, { item: entity }) => (
-          <Link to={`/users/list/${entity.type?.toLowerCase()}/${entity.userId}`} replace>
-            {getUserName(entity)}
+        render: (name, { item: entity }) => (
+          <Link to={getUserLink(entity) ?? '#'} replace>
+            {name}
           </Link>
         ),
         stringify: (_value, entity) => getUserName(entity),
@@ -50,10 +49,11 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
       key: 'type',
       tooltip: 'Type of user.',
       type: {
-        render: (type: 'BUSINESS' | 'CONSUMER' | undefined) => {
+        render: (type: UserType | undefined) => {
           if (type == null) {
             return <></>;
           }
+
           return (
             <div className={s.userType}>
               <UserTypeIcon type={type} /> <span>{capitalize(type)}</span>
@@ -62,17 +62,17 @@ export function getAllUserColumns(): TableColumn<InternalConsumerUser | Internal
         },
       },
     }),
-    helper.simple<'kycStatusDetails'>({
+    helper.simple<'kycStatus'>({
       title: 'KYC status',
       id: 'kycStatus',
       type: USER_KYC_STATUS_TAG,
-      key: 'kycStatusDetails',
+      key: 'kycStatus',
       tooltip: 'KYC status of user.',
     }),
-    helper.simple<'userStateDetails.state'>({
+    helper.simple<'userState'>({
       title: 'User status',
       type: USER_STATE_TAG,
-      key: 'userStateDetails.state',
+      key: 'userState',
       id: 'userStatus',
       tooltip: 'Status of user.',
     }),

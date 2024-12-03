@@ -1,14 +1,14 @@
 import { useCallback } from 'react';
 import { useLocalStorageState } from 'ahooks';
-import { User } from './types';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_FIND } from '@/utils/queries/keys';
 import { QueryResult } from '@/utils/queries/types';
+import { AllUsersTableItem } from '@/apis';
 
 type UsersResponse = {
   total: number;
-  users: User[];
+  users: AllUsersTableItem[];
 };
 
 const LOCAL_STORAGE_KEY = 'FIND_USER_LAST_SEARCHES';

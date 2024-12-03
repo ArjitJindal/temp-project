@@ -1,6 +1,6 @@
 import React from 'react';
 import { capitalizeWords } from '@flagright/lib/utils/humanize';
-import { InternalBusinessUser } from '@/apis';
+import { BusinessUserTableItem } from '@/apis';
 import { TableColumn } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE, MONEY, TAGS } from '@/components/library/Table/standardDataTypes';
@@ -8,8 +8,8 @@ import Id from '@/components/ui/Id';
 import { getUserLink } from '@/utils/api/users';
 import Tag from '@/components/library/Tag';
 
-export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
-  const helper = new ColumnHelper<InternalBusinessUser>();
+export function getBusinessUserColumns(): TableColumn<BusinessUserTableItem>[] {
+  const helper = new ColumnHelper<BusinessUserTableItem>();
 
   return [
     helper.simple<'userId'>({
@@ -29,13 +29,13 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
         },
       },
     }),
-    helper.simple<'legalEntity.companyGeneralDetails.legalName'>({
+    helper.simple<'name'>({
       title: 'Legal name',
-      key: 'legalEntity.companyGeneralDetails.legalName',
+      key: 'name',
     }),
-    helper.simple<'legalEntity.companyGeneralDetails.businessIndustry'>({
+    helper.simple<'industry'>({
       title: 'Industry',
-      key: 'legalEntity.companyGeneralDetails.businessIndustry',
+      key: 'industry',
       type: {
         render: (businessIndustry) => {
           return (
@@ -48,9 +48,9 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
         },
       },
     }),
-    helper.simple<'legalEntity.companyGeneralDetails.userRegistrationStatus'>({
+    helper.simple<'userRegistrationStatus'>({
       title: 'User registration status',
-      key: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+      key: 'userRegistrationStatus',
       type: {
         render: (status) => {
           return (
@@ -67,29 +67,29 @@ export function getBusinessUserColumns(): TableColumn<InternalBusinessUser>[] {
         },
       },
     }),
-    helper.simple<'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth'>({
+    helper.simple<'expectedVolumes.transactionVolumePerMonth'>({
       title: 'Expected total transaction volume per month',
-      key: 'legalEntity.companyFinancialDetails.expectedTransactionAmountPerMonth',
+      key: 'expectedVolumes.transactionVolumePerMonth',
       type: MONEY,
       defaultWidth: 200,
     }),
-    helper.simple<'legalEntity.companyFinancialDetails.expectedTurnoverPerMonth'>({
+    helper.simple<'expectedVolumes.expectedTransactionAmountPerMonth'>({
       title: 'Expected turnover amount per month',
-      key: 'legalEntity.companyFinancialDetails.expectedTurnoverPerMonth',
+      key: 'expectedVolumes.expectedTransactionAmountPerMonth',
       type: MONEY,
     }),
-    helper.simple<'transactionLimits.maximumDailyTransactionLimit'>({
+    helper.simple<'expectedVolumes.maximumDailyTransactionLimit'>({
       title: 'Maximum daily transaction limit',
-      key: 'transactionLimits.maximumDailyTransactionLimit',
+      key: 'expectedVolumes.maximumDailyTransactionLimit',
       type: MONEY,
     }),
-    helper.simple<'legalEntity.companyRegistrationDetails.registrationIdentifier'>({
+    helper.simple<'registrationIdentifier'>({
       title: 'Registration identifier',
-      key: 'legalEntity.companyRegistrationDetails.registrationIdentifier',
+      key: 'registrationIdentifier',
     }),
-    helper.simple<'legalEntity.companyRegistrationDetails.registrationCountry'>({
+    helper.simple<'registrationCountry'>({
       title: 'Registration country',
-      key: 'legalEntity.companyRegistrationDetails.registrationCountry',
+      key: 'registrationCountry',
     }),
     helper.simple<'tags'>({
       title: 'Tags',

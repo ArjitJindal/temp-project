@@ -29,7 +29,7 @@ export default function PaymentApprovalsTable(props: Props) {
     return await api.getTransactionsList({
       ...transactionParamsToRequest(params),
       filterStatus,
-      start: from,
+      start: from || params.from,
     });
   });
 
@@ -63,10 +63,7 @@ export default function PaymentApprovalsTable(props: Props) {
       paginationBorder
       selectionInfo={
         selectedIds.length
-          ? {
-              entityCount: selectedIds.length,
-              entityName: 'transactions',
-            }
+          ? { entityCount: selectedIds.length, entityName: 'transactions' }
           : undefined
       }
       selectionActions={[

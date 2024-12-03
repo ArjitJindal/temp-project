@@ -46,7 +46,6 @@ import {
   prefixRegexMatchFilter,
 } from '@/utils/mongodb-utils'
 import {
-  TRANSACTION_EVENTS_COLLECTION,
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
@@ -568,29 +567,7 @@ export class MongoDbTransactionRepository
         ]
       )
     }
-    if (params?.includeEvents) {
-      pipeline.push(
-        ...[
-          lookupPipelineStage({
-            from: TRANSACTION_EVENTS_COLLECTION(this.tenantId),
-            localField: 'transactionId',
-            foreignField: 'transactionId',
-            as: 'events',
-            pipeline: [
-              {
-                $match: {
-                  $expr: { $eq: ['$transactionId', '$$eventTransactionId'] },
-                },
-              },
-              {
-                $sort: { timestamp: 1 },
-              },
-            ],
-            _let: { eventTransactionId: '$transactionId' },
-          }),
-        ]
-      )
-    }
+
     return collection.aggregate<InternalTransaction>(pipeline)
   }
 
@@ -711,14 +688,8 @@ export class MongoDbTransactionRepository
     transactionId: string
   ): Promise<InternalTransaction | null> {
     return this.getDenormalizedTransactions(
-      {
-        transactionId,
-      },
-      {
-        includeUsers: true,
-        includeEvents: true,
-        beforeTimestamp: Date.now(),
-      }
+      { transactionId },
+      { includeUsers: true, beforeTimestamp: Date.now() }
     ).next()
   }
 
@@ -1740,8 +1711,8 @@ export class MongoDbTransactionRepository
 
     const userField =
       direction === 'ORIGIN' ? 'originUserId' : 'destinationUserId'
-    const result = await (
-      await collection.aggregate([
+    const result = await collection
+      .aggregate([
         {
           $match: {
             timestamp: {
@@ -1757,7 +1728,7 @@ export class MongoDbTransactionRepository
           },
         },
       ])
-    ).toArray()
+      .toArray()
     return result.map((v) => v._id)
   }
 
@@ -1778,8 +1749,8 @@ export class MongoDbTransactionRepository
     for (const paymentMethod in PAYMENT_METHOD_IDENTIFIER_FIELDS) {
       const paymentIdentifiers =
         PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentMethod as PaymentMethod]
-      const result = await (
-        await collection.aggregate([
+      const result = await collection
+        .aggregate([
           {
             $match: {
               timestamp: {
@@ -1798,7 +1769,7 @@ export class MongoDbTransactionRepository
             },
           },
         ])
-      ).toArray()
+        .toArray()
 
       allResult = allResult.concat(
         result.map((v) => ({
@@ -1918,7 +1889,7 @@ export class MongoDbTransactionRepository
       UNIQUE_TAGS_COLLECTION(this.tenantId)
     )
 
-    const uniqueTags = transaction.tags.map((tag) => tag.key)
+    const uniqueTags = uniq(transaction.tags.map((tag) => tag.key))
 
     await Promise.all(
       uniqueTags.map((tag) =>

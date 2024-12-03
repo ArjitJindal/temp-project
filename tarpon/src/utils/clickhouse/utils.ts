@@ -377,7 +377,7 @@ export async function createOrUpdateClickHouseTable(
   const client = await getClickhouseClient(tenantId)
   await createTableIfNotExists(client, tableName, table)
   await addMissingIndexes(client, tableName, table, tenantId)
-  await addMissingColumns(client, tableName, table)
+  await addMissingColumnsTable(client, tableName, table)
   await addMissingProjections(client, tableName, table)
   await createMaterializedViews(client, table)
 }
@@ -408,10 +408,9 @@ async function checkTableExists(
 async function addMissingColumns(
   client: ClickHouseClient,
   tableName: string,
-  table: ClickhouseTableDefinition
+  columns: string[]
 ): Promise<void> {
   const existingColumns = await getExistingColumns(client, tableName)
-  const columns = getAllColumns(table)
   for (const col of columns) {
     const { colName, colType, expr = '' } = parseColumnDefinition(col)
     const existingColumn = existingColumns.find((c) => c.name === colName)
@@ -433,6 +432,14 @@ async function addMissingColumns(
       await updateColumn(client, tableName, colName, colType, expr)
     }
   }
+}
+async function addMissingColumnsTable(
+  client: ClickHouseClient,
+  tableName: string,
+  table: ClickhouseTableDefinition
+): Promise<void> {
+  const columns = getAllColumns(table)
+  await addMissingColumns(client, tableName, columns)
 }
 
 async function getExistingColumns(client: ClickHouseClient, tableName: string) {
@@ -566,7 +573,10 @@ export const createMaterializedViewQuery = (
   return `
     CREATE MATERIALIZED VIEW IF NOT EXISTS ${view.viewName} TO ${view.table}
     AS (
-      SELECT ${view.columns.map((col) => col.split(' ')[0]).join(', ')}
+      SELECT ${view.columns
+        ?.filter((col) => !col.includes(' MATERIALIZED '))
+        ?.map((col) => col.split(' ')[0])
+        ?.join(', ')}
       FROM ${tableName}
     )
   `
@@ -585,6 +595,8 @@ async function createMaterializedViews(
     await client.query({ query: createViewQuery })
     const matQuery = createMaterializedViewQuery(view, table.table)
     await client.query({ query: matQuery })
+
+    await addMissingColumns(client, view.table, view.columns)
   }
 }
 
@@ -679,18 +691,18 @@ async function addMissingIndexes(
   }
 }
 
+type Index = {
+  name: string
+  expr: string
+  type: IndexType
+  granularity: number
+}
+
 async function getExistingIndexes(
   client: ClickHouseClient,
   tableName: string,
   tenantId: string
-): Promise<
-  Array<{
-    name: string
-    expr: string
-    type: IndexType
-    granularity: number
-  }>
-> {
+): Promise<Index[]> {
   const response = await client.query({
     query: `SELECT name, expr, type, granularity FROM system.data_skipping_indices WHERE table = '${tableName}' AND database='${getClickhouseDbName(
       tenantId

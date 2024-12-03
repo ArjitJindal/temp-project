@@ -1,15 +1,15 @@
 import { uniqBy } from 'lodash';
-import { InternalTransaction, TenantSettings } from '@/apis';
+import { InternalTransaction, TenantSettings, TransactionTableItem } from '@/apis';
 
 export function isTransactionHasDetails(
-  transaction: InternalTransaction,
+  transaction: TransactionTableItem,
   settings: TenantSettings,
 ) {
   if (settings.isPaymentApprovalEnabled && transaction.status === 'SUSPEND') {
     return true;
   }
-  const detailsList = getFlatSanctionsDetails(transaction);
-  return detailsList.length > 0;
+
+  return !!transaction.isAnySanctionsExecutedRules;
 }
 
 export function getFlatSanctionsDetails(transaction: InternalTransaction) {

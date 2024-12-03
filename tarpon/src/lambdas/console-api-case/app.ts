@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
 import { CaseService } from '../../services/cases'
+import { TransactionService } from '../console-api-transaction/services/transaction-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -23,9 +24,13 @@ export const casesHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const alertsService = await AlertsService.fromEvent(event)
-    const caseService = await CaseService.fromEvent(event)
-    const caseCreationService = await CaseCreationService.fromEvent(event)
+    const [alertsService, caseService, caseCreationService] = await Promise.all(
+      [
+        AlertsService.fromEvent(event),
+        CaseService.fromEvent(event),
+        CaseCreationService.fromEvent(event),
+      ]
+    )
 
     const handlers = new Handlers()
 
@@ -158,9 +163,10 @@ export const casesHandler = lambdaApi()(
         })
     )
 
-    handlers.registerGetCaseTransactions(
-      async (ctx, request) => await caseService.getCasesTransactions(request)
-    )
+    handlers.registerGetCaseTransactions(async (ctx, request) => {
+      const transactionService = await TransactionService.fromEvent(event)
+      return await transactionService.getCasesTransactions(request)
+    })
 
     handlers.registerGetAlert(
       async (ctx, request) =>
@@ -183,10 +189,14 @@ export const casesHandler = lambdaApi()(
       return caseResponse(newCase)
     })
 
-    handlers.registerGetAlertTransactionList(
-      async (ctx, request) =>
-        await alertsService.getAlertTransactions(request.alertId, request)
-    )
+    handlers.registerGetAlertTransactionList(async (ctx, request) => {
+      const transactionService = await TransactionService.fromEvent(event)
+
+      return await transactionService.getTransactionsList(
+        { ...request, alertId: request.alertId },
+        { includeUsers: true }
+      )
+    })
 
     /** Escalation */
     handlers.registerPostCasesCaseIdEscalate(async (ctx, request) => {

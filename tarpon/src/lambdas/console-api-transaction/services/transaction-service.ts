@@ -1,8 +1,16 @@
 import { S3 } from '@aws-sdk/client-s3'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { NotFound } from 'http-errors'
+import { compact } from 'lodash'
 import {
+  APIGatewayEventLambdaAuthorizerContext,
+  APIGatewayProxyWithLambdaAuthorizerEvent,
+} from 'aws-lambda'
+import { Credentials } from '@aws-sdk/client-sts'
+import { TransactionViewConfig } from '../app'
+import {
+  DefaultApiGetCaseTransactionsRequest,
   DefaultApiGetTransactionsListRequest,
   DefaultApiGetTransactionsV2ListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
@@ -13,7 +21,10 @@ import { TransactionsStatsByTimeResponse } from '@/@types/openapi-internal/Trans
 import { TransactionsUniquesField } from '@/@types/openapi-internal/TransactionsUniquesField'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { traceable } from '@/core/xray'
-import { OptionalPagination } from '@/utils/pagination'
+import {
+  CursorPaginationResponse,
+  OptionalPagination,
+} from '@/utils/pagination'
 import { Currency } from '@/services/currency'
 import { TransactionsResponse } from '@/@types/openapi-internal/TransactionsResponse'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -21,6 +32,13 @@ import { TransactionEventRepository } from '@/services/rules-engine/repositories
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { ClickhouseTransactionsRepository } from '@/services/rules-engine/repositories/clickhouse-repository'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
+import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
+import { getUserName } from '@/utils/helpers'
+import { AlertsRepository } from '@/services/alerts/repository'
+import { CaseRepository } from '@/services/cases/repository'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { getS3ClientByEvent } from '@/utils/s3'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 @traceable
 export class TransactionService {
@@ -60,6 +78,26 @@ export class TransactionService {
     this.userRepository = new UserRepository(tenantId, connections)
   }
 
+  public static async fromEvent(
+    event: APIGatewayProxyWithLambdaAuthorizerEvent<
+      APIGatewayEventLambdaAuthorizerContext<Credentials>
+    >
+  ) {
+    const { principalId: tenantId } = event.requestContext.authorizer
+    const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as TransactionViewConfig
+    const s3 = getS3ClientByEvent(event)
+    const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClientByEvent(event)
+
+    return new TransactionService(
+      tenantId,
+      { mongoDb: client, dynamoDb },
+      s3,
+      TMP_BUCKET,
+      DOCUMENT_BUCKET
+    )
+  }
+
   public async getTransactionsCount(
     params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<number> {
@@ -82,38 +120,124 @@ export class TransactionService {
     return data
   }
 
+  public async getCasesTransactions(
+    params: DefaultApiGetCaseTransactionsRequest
+  ): Promise<CursorPaginationResponse<TransactionTableItem>> {
+    const { caseId, ...rest } = params
+    const caseRepository = new CaseRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+    })
+
+    const case_ = await caseRepository.getCaseById(caseId)
+
+    if (!case_) {
+      throw new NotFound(`Case ${caseId} not found`)
+    }
+
+    const caseTransactionsIds = case_.caseTransactionsIds ?? []
+
+    const data = await this.getTransactionsList(
+      { ...rest, filterIdList: caseTransactionsIds },
+      { includeUsers: true }
+    )
+
+    return data
+  }
+
+  private mongoTransactionMapper(
+    transaction: InternalTransaction
+  ): TransactionTableItem {
+    return {
+      transactionId: transaction.transactionId,
+      timestamp: transaction.timestamp,
+      ars: {
+        score: transaction.arsScore?.arsScore,
+      },
+      destinationPayment: {
+        amount: transaction.destinationAmountDetails?.transactionAmount,
+        currency: transaction.destinationAmountDetails?.transactionCurrency,
+        country: transaction.destinationAmountDetails?.country,
+        paymentMethodId: transaction.destinationPaymentMethodId,
+        paymentDetails: transaction.destinationPaymentDetails,
+      },
+      originPayment: {
+        amount: transaction.originAmountDetails?.transactionAmount,
+        currency: transaction.originAmountDetails?.transactionCurrency,
+        country: transaction.originAmountDetails?.country,
+        paymentMethodId: transaction.originPaymentMethodId,
+        paymentDetails: transaction.originPaymentDetails,
+      },
+      isAnySanctionsExecutedRules: !!transaction.executedRules
+        .map((rule) =>
+          rule.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
+        )
+        .flat().length,
+      destinationUser: { id: transaction.originUserId },
+      originUser: { id: transaction.destinationUserId },
+      productType: transaction.productType,
+      reference: transaction.reference,
+      status: transaction.status,
+      tags: transaction.tags,
+      transactionState: transaction.transactionState,
+      type: transaction.type,
+      hitRules: transaction.hitRules.map((rule) => ({
+        ruleName: rule.ruleName,
+        ruleDescription: rule.ruleDescription,
+      })),
+    }
+  }
+
   public async getTransactionsList(
     params: DefaultApiGetTransactionsListRequest,
-    options: { includeEvents?: boolean; includeUsers?: boolean }
+    options: { includeUsers?: boolean }
   ): Promise<TransactionsResponse> {
-    const { includeEvents, includeUsers } = options
-    const response = await this.getTransactions(params)
+    const { includeUsers } = options
+    let response = await this.getTransactions(params)
+
+    if (params.alertId != null) {
+      const alertRepository = new AlertsRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
+      })
+
+      const alert = await alertRepository.getAlertById(params.alertId)
+
+      response = {
+        ...response,
+        items: response.items.map((transaction) => {
+          const executedRule = alert?.ruleInstanceId
+            ? transaction.executedRules.find(
+                (rule) => rule.ruleInstanceId === alert?.ruleInstanceId
+              )
+            : undefined
+
+          return {
+            ...transaction,
+            status: executedRule?.ruleHit
+              ? executedRule?.ruleAction
+              : transaction.status,
+          }
+        }),
+      }
+    }
+
+    let mappedTransactions = response.items.map((transaction) =>
+      this.mongoTransactionMapper(transaction)
+    )
 
     if (includeUsers) {
-      response.items = await this.getTransactionUsers(response.items)
+      mappedTransactions = await this.getTransactionUsers(mappedTransactions)
     }
 
-    if (includeEvents) {
-      const events =
-        await this.transactionEventsRepository.getMongoTransactionEvents(
-          response.items.map((t) => t.transactionId)
-        )
-      response.items.map((t) => {
-        t.events = events.get(t.transactionId)
-        return t
-      })
-    }
-    return response
+    return { ...response, items: mappedTransactions }
   }
 
   private async getTransactionUsers(
-    transaction: InternalTransaction[]
-  ): Promise<InternalTransaction[]> {
-    const userIds = Array.from(
-      new Set<string>(
-        transaction.flatMap(
-          (t) =>
-            [t.originUserId, t.destinationUserId].filter(Boolean) as string[]
+    transaction: TransactionTableItem[]
+  ): Promise<TransactionTableItem[]> {
+    const userIds = compact(
+      Array.from(
+        new Set<string | undefined>(
+          transaction.flatMap((t) => [t.originUser?.id, t.destinationUser?.id])
         )
       )
     )
@@ -131,8 +255,14 @@ export class TransactionService {
     users.forEach((u) => userMap.set(u.userId, u))
 
     transaction.map((t) => {
-      t.originUser = userMap.get(t.originUserId)
-      t.destinationUser = userMap.get(t.destinationUserId)
+      if (t.originUser) {
+        t.originUser.name = getUserName(userMap.get(t.originUser.id))
+        t.originUser.type = userMap.get(t.originUser.id)?.type
+      }
+      if (t.destinationUser) {
+        t.destinationUser.name = getUserName(userMap.get(t.destinationUser.id))
+        t.destinationUser.type = userMap.get(t.destinationUser.id)?.type
+      }
       return t
     })
 
@@ -142,19 +272,6 @@ export class TransactionService {
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
     const result =
       await this.transactionRepository.getTransactionsCursorPaginate(params)
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
-
-    result.items = result.items.map((transaction) => {
-      if (transaction?.arsScore?.arsScore != null) {
-        transaction.arsScore.riskLevel = getRiskLevelFromScore(
-          riskClassificationValues,
-          transaction.arsScore.arsScore
-        )
-      }
-
-      return transaction
-    })
 
     return result
   }

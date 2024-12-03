@@ -40,7 +40,7 @@ const DisplayCheckedTransactions = (props: Props) => {
       const hitDirections = props.alert.ruleHitMeta?.hitDirections;
       return await api.getTransactionsList({
         ...transactionParamsToRequest(params),
-        start: from,
+        start: from || params.from,
         ...(hitDirections?.length === 1
           ? {
               filterDestinationUserId: hitDirections?.includes('DESTINATION')
@@ -48,10 +48,7 @@ const DisplayCheckedTransactions = (props: Props) => {
                 : undefined,
               filterOriginUserId: hitDirections?.includes('ORIGIN') ? caseUserId : undefined,
             }
-          : {
-              filterUserId: caseUserId,
-            }),
-
+          : { filterUserId: caseUserId }),
         filterRuleInstancesExecuted: [alert.ruleInstanceId],
       });
     },

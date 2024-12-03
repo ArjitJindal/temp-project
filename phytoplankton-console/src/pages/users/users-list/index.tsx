@@ -5,7 +5,7 @@ import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { CountryCode, InternalUser, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
+import { AllUsersTableItem, CountryCode, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
@@ -60,7 +60,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
     }));
   }, [parsedParams]);
 
-  const queryResults = useCursorQuery<InternalUser>(
+  const queryResults = useCursorQuery<AllUsersTableItem>(
     USERS(type, { ...params, isClickhouseEnabled }),
     async ({ from }) => {
       if (isClickhouseEnabled) {
@@ -123,12 +123,12 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       return {
         ...response,
         from: from || params.from,
-        items: response.items as InternalUser[],
+        items: response.items,
       };
     },
   );
 
-  const offsetPaginateQueryResult = usePaginatedQuery<InternalUser>(
+  const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
     USERS(type, params),
     async (paginationParams) => {
       if (!isClickhouseEnabled) {
@@ -168,7 +168,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           : await api.getAllUsersListV2({ ...queryObj });
       return {
         total: response.count,
-        items: response.items as InternalUser[],
+        items: response.items,
       };
     },
   );

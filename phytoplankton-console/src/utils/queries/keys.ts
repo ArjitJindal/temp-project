@@ -51,6 +51,7 @@ export const TRANSACTIONS_ITEM = (transactionId: string): QueryKey => [
   'item',
   transactionId,
 ];
+
 export const TRANSACTIONS_ALERTS_LIST = (transactionId: string): QueryKey => [
   'transactions',
   'item',

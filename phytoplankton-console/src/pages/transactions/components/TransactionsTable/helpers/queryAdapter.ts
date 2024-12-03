@@ -28,6 +28,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       'originAmountDetails.country': params['originAmountDetails.country']?.join(',') ?? '',
       'destinationAmountDetails.country':
         params['destinationAmountDetails.country']?.join(',') ?? '',
+      includePaymentDetails: params.showDetailedView ? 'true' : 'false',
     };
   },
   deserializer: (raw): TransactionsTableParams => {
@@ -60,6 +61,7 @@ export const queryAdapter: Adapter<TransactionsTableParams> = {
       productType: raw.productType?.split(','),
       'originAmountDetails.country': raw['originAmountDetails.country']?.split(','),
       'destinationAmountDetails.country': raw['destinationAmountDetails.country']?.split(','),
+      showDetailedView: raw.includePaymentDetails === 'true',
     };
   },
 };

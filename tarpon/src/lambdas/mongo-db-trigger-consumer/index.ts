@@ -93,6 +93,7 @@ export class MongoDbConsumer {
             tableDetails
 
           const isTenantDeleted = await this.isTenantDeleted(tenantId)
+
           if (isTenantDeleted) {
             return
           }

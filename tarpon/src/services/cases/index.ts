@@ -24,10 +24,7 @@ import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import {
-  DefaultApiGetCaseListRequest,
-  DefaultApiGetCaseTransactionsRequest,
-} from '@/@types/openapi-internal/RequestParameters'
+import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
 import {
   CaseRepository,
   MAX_TRANSACTION_IN_A_CASE,
@@ -67,9 +64,7 @@ import {
 } from '@/utils/helpers'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
-import { CursorPaginationResponse } from '@/utils/pagination'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { ManualCasePatchRequest } from '@/@types/openapi-internal/ManualCasePatchRequest'
 import { API_USER, UserService } from '@/services/users'
@@ -188,30 +183,6 @@ export class CaseService extends CaseAlertsCommonService {
     return {
       caseIds: compact(cases.map((c) => c.caseId)),
     }
-  }
-
-  public async getCasesTransactions(
-    params: DefaultApiGetCaseTransactionsRequest
-  ): Promise<CursorPaginationResponse<InternalTransaction>> {
-    const { caseId, ...rest } = params
-    const case_ = await this.caseRepository.getCaseById(caseId)
-
-    if (!case_) {
-      throw new NotFound(`Case ${caseId} not found`)
-    }
-
-    const mongoDb = this.caseRepository.mongoDb
-    const transactionRepository = new MongoDbTransactionRepository(
-      this.tenantId,
-      mongoDb
-    )
-
-    const caseTransactionsIds = case_.caseTransactionsIds ?? []
-
-    return await transactionRepository.getTransactionsCursorPaginate({
-      ...rest,
-      filterIdList: caseTransactionsIds,
-    })
   }
 
   public async updateManualCase(

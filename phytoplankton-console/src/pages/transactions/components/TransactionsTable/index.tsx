@@ -3,23 +3,24 @@ import { memoize } from 'lodash';
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import DetailsViewButton from '../DetailsViewButton';
 import ExpandedRowRenderer from './ExpandedRowRenderer';
-import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
 import { PAYMENT_DETAILS_OR_METHOD } from './helpers/tableDataTypes';
+import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import {
   Alert,
   ExecutedRulesResult,
-  InternalTransaction,
   PaymentMethod,
   RuleAction,
   TransactionState,
+  TransactionTableItem,
+  TransactionTableItemUser,
+  UserType,
 } from '@/apis';
 import {
   AllParams,
   CommonParams,
   DerivedColumn,
   SelectionAction,
-  SimpleColumn,
   TableColumn,
   TableData,
   TableRefType,
@@ -44,7 +45,6 @@ import {
   TAGS,
   TRANSACTION_STATE,
   TRANSACTION_TYPE,
-  TRANSACTION_USER_NAME,
 } from '@/components/library/Table/standardDataTypes';
 import Button from '@/components/library/Button';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
@@ -81,8 +81,19 @@ export interface TransactionsTableParams extends CommonParams {
   'destinationAmountDetails.country'?: string[];
   status?: RuleAction & 'all';
   direction?: 'incoming' | 'outgoing' | 'all';
+  showDetailedView?: boolean;
 }
 
+const getUserLinkObject = (user?: TransactionTableItemUser) => {
+  if (!user?.id || !user?.type) {
+    return;
+  }
+
+  return {
+    type: user.type as UserType,
+    userId: user.id,
+  };
+};
 export const defaultTimestamps = memoize(() => ({
   afterTimestamp: dayjs().subtract(3, 'month').startOf('day').valueOf(),
   beforeTimestamp: dayjs().endOf('day').valueOf(),
@@ -151,6 +162,7 @@ export const transactionParamsToRequest = (
     filterDestinationCountries: params['destinationAmountDetails.country'],
     filterOriginCountries: params['originAmountDetails.country'],
     filterStatus: status && status !== 'all' ? [status] : undefined,
+    includePaymentDetails: params.showDetailedView,
   };
   if (direction === 'outgoing') {
     requestParams.filterOriginUserId = userId;
@@ -166,8 +178,8 @@ export const transactionParamsToRequest = (
 type Props = {
   tableRef?: React.Ref<TableRefType>;
   extraFilters?: ExtraFilterProps<TransactionsTableParams>[];
-  queryResult: QueryResult<TableData<InternalTransaction>>;
-  params?: TransactionsTableParams;
+  queryResult: QueryResult<TableData<TransactionTableItem>>;
+  params?: AllParams<TransactionsTableParams>;
   onChangeParams?: (newState: AllParams<TransactionsTableParams>) => void;
   selectedIds?: string[];
   onSelect?: (ids: string[]) => void;
@@ -183,10 +195,10 @@ type Props = {
   setIsModalVisible?: React.Dispatch<React.SetStateAction<boolean>>;
   paginationBorder?: boolean;
   escalatedTransactions?: string[];
-  selectionActions?: SelectionAction<InternalTransaction, TransactionsTableParams>[];
+  selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
   selectionInfo?: SelectionInfo;
   isExpandable?: boolean;
-  canSelectRow?: (row: TableRow<InternalTransaction>) => boolean;
+  canSelectRow?: (row: TableRow<TransactionTableItem>) => boolean;
 };
 
 export const getStatus = (
@@ -227,11 +239,12 @@ export default function TransactionsTable(props: Props) {
     isExpandable = false,
     canSelectRow,
   } = props;
+
   const ruleOptions = useRuleOptions();
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
-  const columns: TableColumn<InternalTransaction>[] = useMemo(() => {
-    const helper = new ColumnHelper<InternalTransaction>();
+  const columns: TableColumn<TransactionTableItem>[] = useMemo(() => {
+    const helper = new ColumnHelper<TransactionTableItem>();
     return helper.list([
       helper.simple<'transactionId'>({
         title: 'Transaction ID',
@@ -263,11 +276,12 @@ export default function TransactionsTable(props: Props) {
           },
         },
       }),
+
       ...(isRiskScoringEnabled
         ? [
-            helper.simple<'arsScore.arsScore'>({
+            helper.simple<'ars.score'>({
               title: 'TRS score',
-              key: 'arsScore.arsScore',
+              key: 'ars.score',
               type: FLOAT,
               sorting: true,
               tooltip: 'Transaction Risk Score',
@@ -275,7 +289,7 @@ export default function TransactionsTable(props: Props) {
             }),
             helper.derived({
               title: 'TRS level',
-              value: (entity) => entity.arsScore?.arsScore,
+              value: (entity) => entity.ars?.score,
               type: {
                 render: (value) => {
                   if (value == null) {
@@ -327,11 +341,11 @@ export default function TransactionsTable(props: Props) {
             {
               title: 'Status',
               defaultWidth: 80,
-              key: 'executedRules.ruleAction',
-              value: (entity) => getStatus(entity.executedRules, alert, entity.status),
+              key: 'status',
+              value: (entity) => entity.status,
               type: RULE_ACTION_STATUS,
               filtering: true,
-            } as DerivedColumn<InternalTransaction, RuleAction>,
+            } as DerivedColumn<TransactionTableItem, RuleAction>,
           ]
         : [
             helper.simple<'status'>({
@@ -341,101 +355,101 @@ export default function TransactionsTable(props: Props) {
               filtering: true,
             }),
           ]),
-      helper.simple<'originUserId'>({
-        key: 'originUserId',
+      helper.simple<'originUser.id'>({
+        key: 'originUser.id',
         title: 'Origin user ID',
         tooltip: 'Origin is the Sender in a transaction',
         type: {
           ...STRING,
           render: (value, { item: entity }) => {
-            return <Id to={getUserLink(entity.originUser)}>{value}</Id>;
+            return <Id to={getUserLink(getUserLinkObject(entity.originUser))}>{value}</Id>;
           },
           stringify(value) {
             return `${value}`;
           },
-          link: (value, item) => getUserLink(item.originUser) ?? '',
+          link: (value, item) => getUserLink(getUserLinkObject(item.originUser)) ?? '',
         },
       }),
-      helper.simple<'originUser'>({
-        key: 'originUser',
+      helper.simple<'originUser.name'>({
+        key: 'originUser.name',
         title: 'Origin user name',
-        type: TRANSACTION_USER_NAME,
+        type: STRING,
         tooltip: 'Origin is the Sender in a transaction',
       }),
-      {
+      helper.simple<'originPayment.paymentDetails'>({
         title: showDetailsView ? 'Origin payment details' : 'Origin method',
-        key: 'originPaymentDetails',
+        key: 'originPayment.paymentDetails',
         type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
-      } as SimpleColumn<InternalTransaction, 'originPaymentDetails'>,
-      {
+      }),
+      helper.simple<'originPayment.paymentMethodId'>({
         title: 'Origin payment identifier',
-        key: 'originPaymentMethodId',
+        key: 'originPayment.paymentMethodId',
         type: STRING,
         filtering: true,
-      } as SimpleColumn<InternalTransaction, 'originPaymentMethodId'>,
-      helper.simple<'originAmountDetails.transactionAmount'>({
+      }),
+      helper.simple<'originPayment.amount'>({
         title: 'Origin amount',
         type: MONEY_AMOUNT,
-        key: 'originAmountDetails.transactionAmount',
+        key: 'originPayment.amount',
         sorting: true,
       }),
-      helper.simple<'originAmountDetails.transactionCurrency'>({
+      helper.simple<'originPayment.currency'>({
         title: 'Origin currency',
-        key: 'originAmountDetails.transactionCurrency',
+        key: 'originPayment.currency',
         type: MONEY_CURRENCY,
       }),
-      helper.simple<'originAmountDetails.country'>({
+      helper.simple<'originPayment.country'>({
         title: 'Origin country',
-        key: 'originAmountDetails.country',
+        key: 'originPayment.country',
         type: COUNTRY,
         filtering: true,
       }),
-      helper.simple<'destinationUserId'>({
-        key: 'destinationUserId',
+      helper.simple<'destinationUser.id'>({
+        key: 'destinationUser.id',
         title: 'Destination user ID',
         tooltip: 'Destination is the Receiver in a transaction',
         type: {
           ...STRING,
           render: (value, { item: entity }) => {
-            return <Id to={getUserLink(entity.destinationUser)}>{value}</Id>;
+            return <Id to={getUserLink(getUserLinkObject(entity.destinationUser))}>{value}</Id>;
           },
-          link: (value, item) => getUserLink(item.destinationUser) ?? '',
+          link: (value, item) => getUserLink(getUserLinkObject(item.destinationUser)) ?? '',
           stringify(value) {
             return `${value}`;
           },
         },
       }),
-      helper.simple<'destinationUser'>({
+      helper.simple<'destinationUser.name'>({
         title: 'Destination user name',
-        key: 'destinationUser',
-        type: TRANSACTION_USER_NAME,
+        key: 'destinationUser.name',
+        type: STRING,
         tooltip: 'Destination is the Receiver in a transaction',
       }),
-      helper.simple<'destinationPaymentDetails'>({
+      helper.simple<'destinationPayment.paymentDetails'>({
         title: showDetailsView ? 'Destination payment details' : 'Destination method',
-        key: 'destinationPaymentDetails',
+        key: 'destinationPayment.paymentDetails',
         type: PAYMENT_DETAILS_OR_METHOD(showDetailsView),
       }),
-      {
+      helper.simple<'destinationPayment.paymentMethodId'>({
         title: 'Destination payment identifier',
-        key: 'destinationPaymentMethodId',
+        key: 'destinationPayment.paymentMethodId',
         type: STRING,
         filtering: true,
-      } as SimpleColumn<InternalTransaction, 'destinationPaymentMethodId'>,
-      helper.simple<'destinationAmountDetails.transactionAmount'>({
+      }),
+      helper.simple<'destinationPayment.amount'>({
         title: 'Destination amount',
         type: MONEY_AMOUNT,
-        key: 'destinationAmountDetails.transactionAmount',
+        key: 'destinationPayment.amount',
         sorting: true,
       }),
-      helper.simple<'destinationAmountDetails.transactionCurrency'>({
+      helper.simple<'destinationPayment.currency'>({
         title: 'Destination currency',
         type: MONEY_CURRENCY,
-        key: 'destinationAmountDetails.transactionCurrency',
+        key: 'destinationPayment.currency',
       }),
-      helper.simple<'destinationAmountDetails.country'>({
+      helper.simple<'destinationPayment.country'>({
         title: 'Destination country',
-        key: 'destinationAmountDetails.country',
+        key: 'destinationPayment.country',
         type: COUNTRY,
         filtering: true,
       }),
@@ -510,7 +524,7 @@ export default function TransactionsTable(props: Props) {
   const isTransactionsDownloadEnabled = useHasPermissions(['transactions:export:read']);
 
   return (
-    <QueryResultsTable<InternalTransaction, TransactionsTableParams>
+    <QueryResultsTable<TransactionTableItem, TransactionsTableParams>
       innerRef={tableRef}
       tableId={'transactions-list'}
       selection={(row) => {
@@ -563,6 +577,10 @@ export default function TransactionsTable(props: Props) {
             <DetailsViewButton
               onConfirm={(value) => {
                 setShowDetailsView(value);
+
+                if (onChangeParams && params) {
+                  onChangeParams({ ...params, showDetailedView: value });
+                }
               }}
             />
           </>

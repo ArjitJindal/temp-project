@@ -72,24 +72,32 @@ export function createKinesisStreamEvent<T>(
 
 export async function localTarponChangeCaptureHandler(
   tenantId: string,
-  key: { PartitionKeyID: string; SortKeyID?: string }
+  key: { PartitionKeyID: string; SortKeyID?: string },
+  table: 'TARPON' | 'HAMMERHEAD' = 'TARPON'
 ) {
   const dynamoDb = getDynamoDbClientByEvent(null as any)
+
   const entity = await dynamoDb.send(
     new GetCommand({
-      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      TableName:
+        table === 'TARPON'
+          ? StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+          : StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId),
       Key: key,
     })
   )
+
   const kinesisEvent = createKinesisStreamEvent(
     key.PartitionKeyID,
     key.SortKeyID,
     undefined,
     entity.Item
   )
+
   const { tarponChangeMongoDbHandler } = await import(
     '@/lambdas/tarpon-change-mongodb-consumer/app'
   )
+
   await (
     tarponChangeMongoDbHandler as any as (
       event: KinesisStreamEvent

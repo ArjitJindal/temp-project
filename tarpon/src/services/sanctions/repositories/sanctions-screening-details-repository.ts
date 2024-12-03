@@ -391,7 +391,8 @@ export class SanctionsScreeningDetailsRepository {
         sortOrder: 'descend',
       },
       query,
-      { bypassNestedQuery: true }
+      { data: 'data' },
+      (item) => JSON.parse(item.data as string) as SanctionsScreeningDetails
     )
 
     return { total: data.count, data: data.items }

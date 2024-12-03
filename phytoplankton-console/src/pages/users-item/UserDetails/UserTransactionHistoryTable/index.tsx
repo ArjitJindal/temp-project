@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { ManualCaseCreationButton } from '../../ManualCaseCreationButton';
 import style from './style.module.less';
 import { prepareTableData } from './helpers';
@@ -10,7 +11,6 @@ import {
   RiskLevel,
   RuleAction,
   TransactionAmountDetails,
-  TransactionEvent,
   TransactionState,
 } from '@/apis';
 import { useApi } from '@/api';
@@ -48,17 +48,18 @@ import {
 import { useRuleOptions } from '@/utils/rules';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import ProductTypeSearchButton from '@/pages/transactions/components/ProductTypeSearchButton';
+import { useRiskClassificationScores } from '@/utils/risk-levels';
+import { DefaultApiGetCaseListRequest } from '@/apis/types/ObjectParamAPI';
 
 export type DataItem = {
   index: number;
   status?: RuleAction;
   rowKey: string;
-  transactionId?: string;
+  transactionId: string;
   timestamp?: number;
   originAmountDetails?: TransactionAmountDetails;
   destinationAmountDetails?: TransactionAmountDetails;
   direction?: 'Incoming' | 'Outgoing';
-  events: Array<TransactionEvent>;
   ruleName: string | null;
   ruleDescription: string | null;
   arsRiskLevel?: RiskLevel;
@@ -68,14 +69,14 @@ export type DataItem = {
   destinationPaymentDetails?: PaymentDetails;
 };
 
-type TableParams = TransactionsTableParams & {
-  // includeEvents: boolean;
-};
+type TableParams = TransactionsTableParams;
 
 export function Content(props: { userId: string }) {
   const { userId } = props;
   const api = useApi();
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
+  const riskScores = useRiskClassificationScores();
+  const riskClassificationValues = getOr(riskScores, []);
 
   const [params, setParams] = useState<TableParams>({
     ...DEFAULT_PARAMS_STATE,
@@ -85,18 +86,12 @@ export function Content(props: { userId: string }) {
     userId,
   });
 
-  const cases = useQuery(
-    CASES_LIST({
-      filterCaseTypes: ['MANUAL'],
-      filterUserId: userId,
-    }),
-    async () => {
-      return api.getCaseList({
-        filterCaseTypes: ['MANUAL'],
-        filterUserId: userId,
-      });
-    },
-  );
+  const filter: DefaultApiGetCaseListRequest = {
+    filterCaseTypes: ['MANUAL'],
+    filterUserId: userId,
+  };
+
+  const cases = useQuery(CASES_LIST(filter), async () => api.getCaseList(filter));
 
   const [showDetailsView, setShowDetailsView] = useState(false);
 
@@ -106,20 +101,25 @@ export function Content(props: { userId: string }) {
       const requestParams = {
         ...transactionParamsToRequest(params, { ignoreDefaultTimestamps: true }),
         start: from || params.from,
-        includeEvents: true,
         includeUsers: false,
       };
 
-      return api.getTransactionsList(requestParams).then((result) => ({
-        next: result.next,
-        prev: result.prev,
-        last: result.last,
-        hasNext: result.hasNext,
-        hasPrev: result.hasPrev,
-        count: result.count,
-        limit: result.limit,
-        items: prepareTableData(userId, result.items ?? []),
-      }));
+      const data = await api.getTransactionsList({
+        ...requestParams,
+        includeRuleHitDetails: true,
+        includePaymentDetails: showDetailsView,
+      });
+
+      return {
+        next: data.next,
+        prev: data.prev,
+        last: data.last,
+        hasNext: data.hasNext,
+        hasPrev: data.hasPrev,
+        count: data.count,
+        limit: data.limit,
+        items: prepareTableData(userId, data.items ?? [], riskClassificationValues),
+      };
     },
   );
 
@@ -150,18 +150,20 @@ export function Content(props: { userId: string }) {
       }),
       ...(isRiskScoringEnabled
         ? [
-            helper.simple({
+            helper.simple<'arsScore'>({
               title: 'TRS score',
               key: 'arsScore',
-              id: 'arsScore.arsScore',
+              id: 'arsScore',
               type: FLOAT,
               sorting: true,
               tooltip: 'Transaction Risk Score',
             }),
-            helper.simple<'arsRiskLevel'>({
+            helper.derived<RiskLevel>({
               title: 'TRS level',
+              id: 'arsRiskLevel',
+              value: (entity) =>
+                getRiskLevelFromScore(riskClassificationValues, entity.arsScore ?? null),
               type: RISK_LEVEL,
-              key: 'arsRiskLevel',
               tooltip: 'Transaction Risk Score level',
             }),
           ]
@@ -222,8 +224,9 @@ export function Content(props: { userId: string }) {
             title: 'Origin amount',
             value: (entity): Amount | undefined => {
               if (entity.originAmountDetails == null) {
-                return undefined;
+                return;
               }
+
               return {
                 amountValue: entity.originAmountDetails?.transactionAmount,
                 amountCurrency: entity.originAmountDetails?.transactionCurrency,
@@ -276,7 +279,7 @@ export function Content(props: { userId: string }) {
         ]),
       }),
     ]);
-  }, [isRiskScoringEnabled, showDetailsView]);
+  }, [isRiskScoringEnabled, showDetailsView, riskClassificationValues]);
 
   const ruleOptions = useRuleOptions();
 
@@ -309,10 +312,7 @@ export function Content(props: { userId: string }) {
             productTypes: params.productType ?? undefined,
           }}
           onConfirm={(value) => {
-            setParams((state) => ({
-              ...state,
-              productType: value.productTypes,
-            }));
+            setParams((state) => ({ ...state, productType: value.productTypes }));
           }}
         />
       ),
@@ -365,15 +365,13 @@ export function Content(props: { userId: string }) {
       queryResults={responseRes}
       rowHeightMode={showDetailsView ? 'AUTO' : 'FIXED'}
       columns={columns}
-      renderExpanded={(item) => (
-        <TransactionEventsTable transactionId={item.transactionId as string} />
-      )}
+      renderExpanded={(item) => <TransactionEventsTable transactionId={item.transactionId} />}
       fixedExpandedContainer={true}
       fitHeight={true}
       selectionActions={[
         ({ selectedIds }) => {
           return (
-            casesList.total > 0 && (
+            !!casesList.total && (
               <ManualCaseCreationButton userId={userId} transactionIds={selectedIds} type="EDIT" />
             )
           );
@@ -383,11 +381,8 @@ export function Content(props: { userId: string }) {
         ),
       ]}
       selectionInfo={
-        selectedIds.length > 0
-          ? {
-              entityCount: selectedIds.length,
-              entityName: 'transactions',
-            }
+        selectedIds.length
+          ? { entityCount: selectedIds.length, entityName: 'transactions' }
           : undefined
       }
       selection={true}

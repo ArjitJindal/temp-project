@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import UserProfileIcon from './user_profile.react.svg';
 import { AsyncResource, failed, getOr, init, loading, success } from '@/utils/asyncResource';
-import { InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { useApi } from '@/api';
 import { getUserName } from '@/utils/api/users';
 import { getErrorMessage } from '@/utils/lang';
@@ -16,12 +15,11 @@ interface Props {
 
 export default function UserSearchButton(props: Props) {
   const { userId, onConfirm, onUpdateFilterClose } = props;
-  const [userRest, setUserRest] = useState<
-    AsyncResource<InternalConsumerUser | InternalBusinessUser>
-  >(init());
+  const [userRest, setUserRest] = useState<AsyncResource<{ userId: string; name: string }>>(init());
   const user = getOr(userRest, null);
   const currentUserId = user?.userId ?? null;
   const api = useApi();
+
   useEffect(() => {
     if (userId == null || userId === 'all') {
       setUserRest(init());
@@ -38,10 +36,11 @@ export default function UserSearchButton(props: Props) {
         if (isCanceled) {
           return;
         }
+
         if (consumerUser.userDetails != null) {
-          setUserRest(success(consumerUser));
+          setUserRest(success({ userId: consumerUser.userId, name: getUserName(consumerUser) }));
         } else {
-          setUserRest(success(businessUser));
+          setUserRest(success({ userId: businessUser.userId, name: getUserName(businessUser) }));
         }
       })
       .catch((e) => {
@@ -51,6 +50,7 @@ export default function UserSearchButton(props: Props) {
         // todo: i18n
         setUserRest(failed(`Unable to find user by id "${userId}". ${getErrorMessage(e)}`));
       });
+
     return () => {
       isCanceled = true;
     };
@@ -62,7 +62,7 @@ export default function UserSearchButton(props: Props) {
     <QuickFilterBase
       title={'User ID/Name'}
       icon={<UserProfileIcon />}
-      buttonText={user ? getUserName(user) : userId}
+      buttonText={user?.name ?? userId}
       onClear={
         isEmpty
           ? undefined
@@ -77,7 +77,7 @@ export default function UserSearchButton(props: Props) {
           initialSearch={userId ?? ''}
           isVisible={isOpen}
           onConfirm={(user) => {
-            setUserRest(success(user));
+            setUserRest(success({ userId: user.userId, name: user.name ?? '' }));
             onConfirm(user?.userId ?? null);
             setOpen(false);
           }}

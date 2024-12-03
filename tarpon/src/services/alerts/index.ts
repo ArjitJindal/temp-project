@@ -36,11 +36,9 @@ import {
 } from './repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetAlertsQaSamplingRequest,
-  DefaultApiGetAlertTransactionListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { addNewSubsegment, traceable } from '@/core/xray'
 import { CaseEscalationRequest } from '@/@types/openapi-internal/CaseEscalationRequest'
@@ -52,10 +50,6 @@ import { Comment } from '@/@types/openapi-internal/Comment'
 import { CaseHierarchyDetails } from '@/@types/openapi-internal/CaseHierarchyDetails'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { AlertClosedDetails } from '@/@types/openapi-public/AlertClosedDetails'
-import {
-  CursorPaginationResponse,
-  OptionalPagination,
-} from '@/utils/pagination'
 import { AlertStatusUpdateRequest } from '@/@types/openapi-internal/AlertStatusUpdateRequest'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
@@ -1167,36 +1161,6 @@ export class AlertsService extends CaseAlertsCommonService {
     await sendWebhookTasks<AlertClosedDetails>(this.tenantId, webhookTasks)
   }
 
-  public async getAlertTransactions(
-    alertId: string,
-    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<CursorPaginationResponse<InternalTransaction>> {
-    return await this.alertsRepository.getAlertTransactionsHit({
-      alertId,
-      pageSize: params?.pageSize,
-      page: params?.page,
-      userId: params?.userId,
-      originUserId: params?.originUserId,
-      destinationUserId: params?.destinationUserId,
-      start: params?.start,
-      sortOrder: params?.sortOrder,
-      sortField: params?.sortField,
-      filterOriginPaymentMethodId: params?.filterOriginPaymentMethodId,
-      filterDestinationPaymentMethodId:
-        params?.filterDestinationPaymentMethodId,
-      filterTransactionId: params?.filterTransactionId,
-      filterTransactionType: params?.filterTransactionType,
-      filterOriginPaymentMethods: params?.filterOriginPaymentMethods,
-      filterDestinationPaymentMethods: params?.filterDestinationPaymentMethods,
-      filterDestinationCurrencies: params?.filterDestinationCurrencies,
-      filterOriginCurrencies: params?.filterOriginCurrencies,
-      beforeTimestamp: params?.beforeTimestamp,
-      afterTimestamp: params?.afterTimestamp,
-      filterDestinationCountries: params?.filterDestinationCountries,
-      filterOriginCountries: params?.filterOriginCountries,
-    })
-  }
-
   async updateAlertChecklistStatus(
     alertId: string,
     checklistItemIds: string[],
@@ -1206,6 +1170,7 @@ export class AlertsService extends CaseAlertsCommonService {
     if (!alert) {
       throw new NotFound('No alert')
     }
+
     if (!alert.ruleChecklistTemplateId) {
       throw new NotFound('Alert has no checklist')
     }

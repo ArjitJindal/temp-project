@@ -17,7 +17,7 @@ import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { makeUrl, parseQueryString } from '@/utils/routing';
 import { useDeepEqualEffect } from '@/utils/hooks';
-import { InternalTransaction } from '@/apis';
+import { TransactionTableItem } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { dayjs } from '@/utils/dayjs';
 
@@ -71,7 +71,7 @@ const TableList = () => {
     }));
   }, [parsedParams]);
 
-  const queryResult = useCursorQuery<InternalTransaction>(
+  const queryResult = useCursorQuery<TransactionTableItem>(
     TRANSACTIONS_LIST(parsedParams),
     async ({ from }) => {
       if (isClickhouseEnabled) {
@@ -94,7 +94,7 @@ const TableList = () => {
     },
   );
 
-  const queryResultOffset = usePaginatedQuery<InternalTransaction>(
+  const queryResultOffset = usePaginatedQuery<TransactionTableItem>(
     TRANSACTIONS_LIST({ ...parsedParams, offset: true }),
     async (paginationParams) => {
       if (!isClickhouseEnabled) {

@@ -246,33 +246,25 @@ export async function offsetPaginateClickhouse<T>(
   queryTableName: string,
   query: ClickhousePaginationParams,
   where = '1',
-  options?: { excludeSortField?: boolean; bypassNestedQuery?: boolean }
+  columnsProjection: Record<string, string>,
+  callbackMap?: (item: Record<string, string | number>) => T
 ): Promise<{ items: T[]; count: number }> {
-  const { excludeSortField = false } = options ?? {}
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
   const sortField = (query.sortField || 'id').replace(/\./g, '_')
   const sortOrder = query.sortOrder || 'ascend'
   const page = query.page || 1
   const offset = (page - 1) * pageSize
 
-  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
-  let findSql = `SELECT data FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
-    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
-  } ${
-    excludeSortField
-      ? `LIMIT ${pageSize} OFFSET ${offset}`
-      : `ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY`
-  })
-  `
+  const columnsProjectionString = Object.entries(columnsProjection)
+    .map(([key, value]) => `${value} AS ${key}`)
+    .join(', ')
 
-  if (options?.bypassNestedQuery) {
-    // Temporary fix while removing final so that queries atleast work (Only for PNB)
-    findSql = `SELECT data FROM ${queryTableName} FINAL ${
-      where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
-    } ${
-      excludeSortField ? '' : `ORDER BY ${sortField} ${direction}`
-    } LIMIT ${pageSize} OFFSET ${offset}`
-  }
+  const direction = sortOrder === 'descend' ? 'DESC' : 'ASC'
+  const findSql = `SELECT ${
+    columnsProjectionString.length > 0 ? columnsProjectionString : '*'
+  } FROM ${dataTableName} FINAL WHERE id IN (SELECT id FROM ${queryTableName} FINAL ${
+    where ? `WHERE timestamp != 0 AND ${where}` : 'WHERE timestamp != 0'
+  } ORDER BY ${sortField} ${direction} OFFSET ${offset} ROWS FETCH FIRST ${pageSize} ROWS ONLY)`
 
   const countQuery = `SELECT COUNT(*) as count FROM ${queryTableName} FINAL ${
     where ? `WHERE ${where} AND timestamp != 0` : 'WHERE timestamp != 0'
@@ -311,7 +303,7 @@ export async function offsetPaginateClickhouse<T>(
   segment?.close()
 
   const [items, count] = await Promise.all([
-    result.json<{ data: string }>(),
+    result.json<Record<string, string | number>>(),
     countResult.json<{ count: number }>(),
   ])
 
@@ -331,7 +323,9 @@ export async function offsetPaginateClickhouse<T>(
   logger.info('Overall stats', overallStats)
 
   return {
-    items: items.map((item) => JSON.parse(item.data)) as T[],
+    items: callbackMap
+      ? items.map((item) => callbackMap(item))
+      : (items as unknown as T[]),
     count: count[0].count,
   }
 }

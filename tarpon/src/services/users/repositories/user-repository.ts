@@ -89,6 +89,7 @@ import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { filterOutInternalRules } from '@/services/rules-engine/pnb-custom-logic'
 import { batchGet } from '@/utils/dynamodb'
+import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 
 @traceable
 export class UserRepository {
@@ -149,6 +150,7 @@ export class UserRepository {
     params: OptionalPagination<
       DefaultApiGetAllUsersListRequest & { filterUserIds?: string[] }
     >,
+    mapper: (user: InternalUser) => AllUsersTableItem,
     userType?: UserType
   ): Promise<AllUsersListResponse> {
     const db = this.mongoDb.db()
@@ -220,6 +222,7 @@ export class UserRepository {
     const casesCount = await casesCollection
       .aggregate(casesCountPipeline)
       .toArray()
+
     result = {
       ...result,
       items: params.includeCasesCount
@@ -235,14 +238,14 @@ export class UserRepository {
         : result.items,
     }
 
-    if (isPulseEnabled) {
-      result.items = await insertRiskScores(
-        result.items,
-        riskClassificationValues
-      )
-    }
+    const updatedItems = result.items.map((user) =>
+      mapper(user as InternalUser)
+    )
 
-    return result as AllUsersListResponse
+    return {
+      ...result,
+      items: updatedItems,
+    } as AllUsersListResponse
   }
 
   public async getMongoAllUsers(
@@ -1405,7 +1408,8 @@ export class UserRepository {
 
   public async getRuleInstancesTransactionUsersHit(
     ruleInstanceId: string,
-    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest
+    params: DefaultApiGetRuleInstancesTransactionUsersHitRequest,
+    mapper: (user: InternalUser) => AllUsersTableItem
   ): Promise<AllUsersListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<InternalTransaction>(
@@ -1498,10 +1502,13 @@ export class UserRepository {
 
     const data = await result.next()
 
-    return this.getMongoUsersCursorsPaginate({
-      ...params,
-      filterUserIds: uniq(data?.userIds.flat()),
-    })
+    return this.getMongoUsersCursorsPaginate(
+      {
+        ...params,
+        filterUserIds: uniq(data?.userIds.flat()),
+      },
+      mapper
+    )
   }
 
   public async getRuleInstanceStats(

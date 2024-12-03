@@ -1227,7 +1227,11 @@ paths:
         - schema:
             type: boolean
           in: query
-          name: includeEvents
+          name: includePaymentDetails
+        - schema:
+            type: boolean
+          in: query
+          name: includeRuleHitDetails
   /transactions:
     get:
       summary: Transaction - List
@@ -1393,10 +1397,6 @@ paths:
           in: query
           name: includeUsers
         - schema:
-            type: boolean
-          in: query
-          name: includeEvents
-        - schema:
             type: array
             items:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/PaymentMethod
@@ -1444,6 +1444,14 @@ paths:
             type: string
           in: query
           name: alertId
+        - schema:
+            type: boolean
+          in: query
+          name: includePaymentDetails
+        - schema:
+            type: boolean
+          in: query
+          name: includeRuleHitDetails
   /transactions/{transactionId}/events:
     parameters:
       - schema:
@@ -8473,7 +8481,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalTransaction'
+            $ref: '#/components/schemas/TransactionTableItem'
       required:
         - prev
         - next
@@ -8506,10 +8514,23 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalTransaction'
+            $ref: '#/components/schemas/TransactionTableItem'
       required:
         - count
         - items
+    TransactionEventsResponse:
+      title: TransactionEventsResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalTransactionEvent'
+        total:
+          type: number
+      required:
+        - items
+        - total
     TenantApiKey:
       title: TenantApiKey
       type: object
@@ -8789,6 +8810,196 @@ components:
               items:
                 type: string
       title: InternalTransaction
+    TransactionTableItemUser:
+      title: TransactionTableItemUser
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          $ref: '#/components/schemas/UserType'
+    TransactionTableItemPayment:
+      title: TransactionTableItemPaymentDetails
+      type: object
+      properties:
+        paymentDetails:
+          oneOf:
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CardDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/GenericBankAccountDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/IBANDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/ACHDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/SWIFTDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/MpesaDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/UPIDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/WalletDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CheckDetails
+            - $ref: ../public/openapi-public-original.yaml#/components/schemas/CashDetails
+        amount:
+          type: number
+        currency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        country:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        paymentMethodId:
+          type: string
+    TransactionTableItemARS:
+      title: TransactionTableItemARS
+      type: object
+      properties:
+        score:
+          type: number
+        riskLevel:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+    UserCommonTableItem:
+      title: UserRiskScoreTableItem
+      type: object
+      properties:
+        userId:
+          type: string
+        createdTimestamp:
+          type: number
+        updatedAt:
+          type: number
+        drsScore:
+          type: number
+        krsScore:
+          type: number
+        isRiskLevelLocked:
+          type: boolean
+        manualRiskLevel:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/UserTag
+        type:
+          $ref: '#/components/schemas/UserType'
+        name:
+          type: string
+      required:
+        - userId
+        - createdTimestamp
+        - type
+    AllUsersTableItem:
+      title: AllUsersTableItem
+      allOf:
+        - $ref: '#/components/schemas/UserCommonTableItem'
+        - type: object
+          additionalProperties: false
+          properties:
+            kycStatus:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+            userState:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+            createdTimestamp:
+              type: number
+            casesCount:
+              type: number
+            riskLevel:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
+    ConsumerUserTableItem:
+      title: ConsumerUserTableItem
+      allOf:
+        - $ref: '#/components/schemas/UserCommonTableItem'
+        - type: object
+          additionalProperties: false
+          properties:
+            dateOfBirth:
+              type: string
+            countryOfResidence:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+            countryOfNationality:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+            pepDetails:
+              type: array
+              items:
+                $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+            kycStatusReason:
+              type: string
+            kycStatus:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/KYCStatus
+            userState:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserState
+    BusinessUserTableItem:
+      title: BusinessUserTableItem
+      allOf:
+        - $ref: '#/components/schemas/UserCommonTableItem'
+        - type: object
+          additionalProperties: false
+          properties:
+            industry:
+              type: array
+              items:
+                type: string
+            userRegistrationStatus:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/UserRegistrationStatus
+            expectedVolumes:
+              $ref: '#/components/schemas/BusinessUserExpectedVolumes'
+            registrationIdentifier:
+              type: string
+            registrationCountry:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+    BusinessUserExpectedVolumes:
+      title: BusinessUserExpectedVolumes
+      type: object
+      properties:
+        transactionVolumePerMonth:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/Amount
+        expectedTransactionAmountPerMonth:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/Amount
+        maximumDailyTransactionLimit:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/Amount
+    TransactionTableHitResponse:
+      title: TransactionTableHitResponse
+      type: object
+      properties:
+        ruleName:
+          type: string
+        ruleDescription:
+          type: string
+    TransactionTableItem:
+      title: TransactionTableItem
+      type: object
+      properties:
+        transactionId:
+          type: string
+        type:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionType
+        status:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/RuleAction
+        originUser:
+          $ref: '#/components/schemas/TransactionTableItemUser'
+        destinationUser:
+          $ref: '#/components/schemas/TransactionTableItemUser'
+        timestamp:
+          type: number
+        originPayment:
+          $ref: '#/components/schemas/TransactionTableItemPayment'
+        destinationPayment:
+          $ref: '#/components/schemas/TransactionTableItemPayment'
+        productType:
+          type: string
+        ars:
+          $ref: '#/components/schemas/TransactionTableItemARS'
+        transactionState:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState
+        tags:
+          type: array
+          items:
+            $ref: ../public/openapi-public-original.yaml#/components/schemas/Tag
+        reference:
+          type: string
+        isAnySanctionsExecutedRules:
+          type: boolean
+        hitRules:
+          type: array
+          items:
+            $ref: '#/components/schemas/TransactionTableHitResponse'
+      required:
+        - transactionId
+        - timestamp
     ConsumerUsersListResponse:
       title: ConsumerUsersListResponse
       type: object
@@ -8810,7 +9021,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalConsumerUser'
+            $ref: '#/components/schemas/ConsumerUserTableItem'
       required:
         - hasPrev
         - prev
@@ -8829,7 +9040,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalConsumerUser'
+            $ref: '#/components/schemas/ConsumerUserTableItem'
       required:
         - count
         - items
@@ -8854,7 +9065,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalBusinessUser'
+            $ref: '#/components/schemas/BusinessUserTableItem'
       required:
         - hasPrev
         - prev
@@ -8873,7 +9084,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalBusinessUser'
+            $ref: '#/components/schemas/BusinessUserTableItem'
       required:
         - count
         - items
@@ -8898,7 +9109,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalUser'
+            $ref: '#/components/schemas/AllUsersTableItem'
       required:
         - hasPrev
         - prev
@@ -8917,7 +9128,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/InternalUser'
+            $ref: '#/components/schemas/AllUsersTableItem'
       required:
         - count
         - items
@@ -15080,6 +15291,12 @@ components:
         - status
         - stausUpdatedAt
         - recieverUserId
+    UserType:
+      title: UserType
+      type: string
+      enum:
+        - BUSINESS
+        - CONSUMER
     Notification:
       title: Notification
       type: object
@@ -15119,10 +15336,7 @@ components:
               type: object
               properties:
                 userType:
-                  type: string
-                  enum:
-                    - BUSINESS
-                    - CONSUMER
+                  $ref: '#/components/schemas/UserType'
             alert:
               type: object
               properties:

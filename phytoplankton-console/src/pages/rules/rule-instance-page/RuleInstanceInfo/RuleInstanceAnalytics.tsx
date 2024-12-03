@@ -348,6 +348,7 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
     ruleInstanceId: ruleInstance.id,
     isShadowHit: true,
   });
+
   useEffect(() => {
     if (!isEqual(params.timestamp, timestamp)) {
       setParams({
@@ -360,9 +361,10 @@ const HitTransactionTable = (props: { ruleInstance: RuleInstance; timeRange: Tim
   const queryResult = useCursorQuery(queryKey, async ({ from }) => {
     return await api.getTransactionsList({
       ...transactionParamsToRequest(params),
-      start: from,
+      start: from || params.from,
       filterShadowHit: checkShadowRule(ruleInstance),
       filterRuleInstancesHit: [ruleInstance.id as string],
+      includeUsers: true,
     });
   });
 
@@ -414,7 +416,7 @@ const HitUsersTable = (props: { ruleInstance: RuleInstance; timeRange: TimeRange
     } = params;
 
     return await api.getAllUsersList({
-      start: from,
+      start: params.from || from,
       pageSize,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
       beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,

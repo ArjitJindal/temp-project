@@ -1,7 +1,6 @@
 import { AggregationCursor, Document, Filter, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { v4 as uuidv4 } from 'uuid'
-import { NotFound } from 'http-errors'
 import {
   cloneDeep,
   compact,
@@ -14,7 +13,6 @@ import {
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
-import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import {
   DAY_DATE_FORMAT,
   getSkipAndLimit,
@@ -27,26 +25,19 @@ import {
   ALERTS_QA_SAMPLING_COLLECTION,
   CASES_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import {
-  COUNT_QUERY_LIMIT,
-  CursorPaginationResponse,
-  OptionalPagination,
-} from '@/utils/pagination'
+import { COUNT_QUERY_LIMIT, OptionalPagination } from '@/utils/pagination'
 import {
   DefaultApiGetAlertListRequest,
   DefaultApiGetAlertsQaSamplingRequest,
-  DefaultApiGetAlertTransactionListRequest,
 } from '@/@types/openapi-internal/RequestParameters'
 import { Case } from '@/@types/openapi-internal/Case'
 import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListResponseItem'
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { getContext, hasFeature } from '@/core/utils/context'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { getContext } from '@/core/utils/context'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
-import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { traceable } from '@/core/xray'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
@@ -1091,57 +1082,6 @@ export class AlertsRepository {
       caseIdsWithAllAlertsSameStatus: compact(caseIdsWithAllAlertsSameStatus),
       caseStatusToChange: caseStatusToCheck,
     }
-  }
-
-  public async getAlertTransactionsHit(
-    params: OptionalPagination<DefaultApiGetAlertTransactionListRequest>
-  ): Promise<CursorPaginationResponse<InternalTransaction>> {
-    const alert = await this.getAlertById(params.alertId)
-
-    if (alert == null) {
-      throw new NotFound(`Alert "${params.alertId}" not found`)
-    }
-    if (alert.transactionIds == null) {
-      throw new NotFound(`Alert "${params.alertId}" does not have transactions`)
-    }
-
-    const transactionsRepo = new MongoDbTransactionRepository(
-      this.tenantId,
-      this.mongoDb
-    )
-
-    const result = await transactionsRepo.getTransactionsCursorPaginate({
-      alertId: alert.alertId,
-      pageSize: params.pageSize,
-      afterTimestamp: params.afterTimestamp || 0,
-      beforeTimestamp: params.beforeTimestamp || Number.MAX_SAFE_INTEGER,
-      filterOriginUserId: params.originUserId,
-      filterDestinationUserId: params.destinationUserId,
-      filterUserId: params.userId,
-      start: params.start,
-      sortOrder: params.sortOrder,
-      sortField: params.sortField,
-      filterOriginPaymentMethodId: params.filterOriginPaymentMethodId,
-      filterDestinationPaymentMethodId: params.filterDestinationPaymentMethodId,
-      filterId: params.filterTransactionId,
-      transactionType: params.filterTransactionType,
-      filterOriginCurrencies: params.filterOriginCurrencies,
-      filterDestinationCurrencies: params.filterDestinationCurrencies,
-      filterOriginPaymentMethods: params.filterOriginPaymentMethods,
-      filterDestinationPaymentMethods: params.filterDestinationPaymentMethods,
-      filterDestinationCountries: params.filterDestinationCountries,
-      filterOriginCountries: params.filterOriginCountries,
-    })
-
-    const riskRepository = new RiskRepository(this.tenantId, {
-      dynamoDb: this.dynamoDb,
-    })
-
-    if (hasFeature('RISK_SCORING')) {
-      result.items = await riskRepository.augmentRiskLevel(result.items)
-    }
-
-    return result
   }
 
   public async updateAssignments(

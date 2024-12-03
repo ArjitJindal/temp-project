@@ -5,11 +5,9 @@ import { DefaultOptionType } from 'antd/es/select';
 import { COUNTRIES, COUNTRY_ALIASES } from '@flagright/lib/constants';
 import { Metadata } from '../../helpers';
 import s from './index.module.less';
-import { ListSubtype, TransactionsUniquesField } from '@/apis';
+import { AllUsersTableItem, ListSubtype, TransactionsUniquesField } from '@/apis';
 import Button from '@/components/library/Button';
 import UserSearchPopup from '@/pages/transactions/components/UserSearchPopup';
-import { User } from '@/pages/transactions/components/UserSearchPopup/types';
-import { getUserName } from '@/utils/api/users';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { QueryResult } from '@/utils/queries/types';
@@ -54,16 +52,14 @@ function UserIdInput(props: Omit<Props, 'listSubtype'>) {
   });
 
   const handleChooseUser = useCallback(
-    (user: User) => {
+    (user: AllUsersTableItem) => {
       setNewUserData((state) => ({
         ...state,
         userId: user.userId,
-        userFullName: getUserName(user),
+        userFullName: user.name ?? '',
       }));
       onChange?.([user.userId]);
-      onChangeMeta?.({
-        userFullName: getUserName(user),
-      });
+      onChangeMeta?.({ userFullName: user.name ?? '' });
     },
     [onChangeMeta, onChange],
   );

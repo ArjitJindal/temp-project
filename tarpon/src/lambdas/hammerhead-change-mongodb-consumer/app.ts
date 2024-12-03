@@ -58,7 +58,7 @@ export async function drsScoreEventHandler(
   if (!newDrsScore) {
     return
   }
-  logger.info(`Processing DRS Score`)
+
   const { mongoDb, dynamoDb } = dbClients
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })

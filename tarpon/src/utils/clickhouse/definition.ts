@@ -91,6 +91,22 @@ const generatePaymentDetailColumns = (prefix: string) =>
       )
   )
 
+const userNameMaterilizedColumn = `username String MATERIALIZED 
+        IF(
+        JSON_VALUE(data, '$.type') = 'CONSUMER', 
+        COALESCE(
+            CONCAT(
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.firstName'), ''),
+                ' ',
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.middleName'), ''),
+                ' ',
+                COALESCE(JSON_VALUE(data, '$.userDetails.name.lastName'), '')
+            ),
+            ''
+        ),
+        JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
+    )`
+
 export const CLICKHOUSE_DEFINITIONS = {
   TRANSACTIONS: {
     tableName: 'transactions',
@@ -208,21 +224,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     timestampColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.timestampColumn,
     materializedColumns: [
       enumFields(USER_TYPES, 'type', 'type'),
-      `username String MATERIALIZED 
-        IF(
-        JSON_VALUE(data, '$.type') = 'CONSUMER', 
-        COALESCE(
-            CONCAT(
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.firstName'), ''),
-                ' ',
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.middleName'), ''),
-                ' ',
-                COALESCE(JSON_VALUE(data, '$.userDetails.name.lastName'), '')
-            ),
-            ''
-        ),
-        JSON_VALUE(data, '$.legalEntity.companyGeneralDetails.legalName')
-    )`,
+      userNameMaterilizedColumn,
       `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')`,
       `pepDetails Array(Tuple(isPepHit Bool, pepCountry String, pepRank String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'pepStatus'), 'Array(Tuple(isPepHit Bool, pepCountry String, pepRank String))')`,
       `documentIds Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'documentNumber'), JSONExtractArrayRaw(data, 'legalDocuments'))`,
@@ -260,7 +262,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedViews: [
       {
         viewName: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
-        columns: ['id String', 'data String'],
+        columns: ['id String', 'data String', userNameMaterilizedColumn],
         table: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
         engine: 'ReplacingMergeTree',
         primaryKey: 'id',

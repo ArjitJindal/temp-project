@@ -23,7 +23,7 @@ withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
       describe('Env #1 (empty)', () => {
         let TENANT_ID: string
         beforeAll(async () => {
-          TENANT_ID = await getTestTenantId()
+          TENANT_ID = getTestTenantId()
         })
         test(`Empty db`, async () => {
           if (hasFeature('CLICKHOUSE_ENABLED')) {
