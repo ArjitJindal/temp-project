@@ -57,7 +57,7 @@ async function handleRiskScoringTriggerBatchJob(tenantIds: string[]) {
             job.latestStatus.scheduledAt &&
             job.latestStatus.scheduledAt <= Date.now()
           ) {
-            await sendBatchJobCommand(job)
+            await sendBatchJobCommand(job, job.jobId)
           }
         }
       })
