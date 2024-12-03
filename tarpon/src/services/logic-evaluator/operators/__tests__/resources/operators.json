@@ -9,6 +9,8 @@
   "op:!similarto",
   "op:similartowords",
   "op:!similartowords",
+  "op:regexmatch",
+  "op:!regexmatch",
   "op:between_time",
   "op:!between_time"
 ]

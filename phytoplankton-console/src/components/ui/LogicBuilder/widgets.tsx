@@ -38,8 +38,10 @@ import {
   isCustomOperator,
   MULTI_SELECT_BUILTIN_OPERATORS,
   MULTI_SELECT_LIST_OPERATORS,
+  REGEX_MATCH_OPERATORS,
 } from './operators';
 import { FieldInput, isViewMode, LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from './helpers';
+import { isValidRegex } from './functions';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
@@ -55,6 +57,7 @@ import Slider from '@/components/library/Slider';
 import { QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import ViewModeTags from '@/components/ui/LogicBuilder/ViewModeTags';
 import VariableInfoPopover from '@/components/ui/LogicBuilder/VariableInfoPopover';
+import { message } from '@/components/library/Message';
 
 function getOperator(props: any) {
   const operator = props.config.operators[props.operator];
@@ -220,7 +223,20 @@ const customTextWidget: TextWidget<QueryBuilderConfig> = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <TextInput value={props.value ?? undefined} onChange={props.setValue} allowClear={true} />
+        <TextInput
+          value={props.value ?? undefined}
+          onChange={props.setValue}
+          allowClear={true}
+          onBlur={() => {
+            if (REGEX_MATCH_OPERATORS.includes(operator) && props.value) {
+              const isValid = isValidRegex(props.value);
+              if (!isValid) {
+                message.error('Invalid regular expression to match');
+                props.setValue(undefined);
+              }
+            }
+          }}
+        />
       </WidgetWrapper>
     );
   },

@@ -7770,6 +7770,8 @@ components:
         - op:!similartowords
         - op:between_time
         - op:!between_time
+        - op:regexmatch
+        - op:!regexmatch
     LogicFunction:
       title: LogicFunction
       type: object

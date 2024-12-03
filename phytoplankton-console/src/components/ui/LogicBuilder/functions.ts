@@ -55,3 +55,12 @@ export const JSON_LOGIC_FUNCTIONS: LogicFunction[] = [
     uiDefinition: getArithmeticFunc('Modulo (%)', '%'),
   },
 ];
+
+export const isValidRegex = (value: string) => {
+  try {
+    new RegExp(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
