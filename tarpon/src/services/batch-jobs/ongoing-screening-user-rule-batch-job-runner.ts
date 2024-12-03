@@ -58,7 +58,11 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
       )
       return diffTime % schedule.value === 0
     }
-    return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
+    return isOngoingUserRuleInstance(
+      ruleInstance,
+      isRiskLevelsEnabled,
+      'SCREENING'
+    )
   })
 
   return ruleInstances
