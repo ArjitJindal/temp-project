@@ -1,33 +1,59 @@
 export function formatNumber(
-  rawAmount: number,
+  rawAmount: number | string | undefined,
   options?: { compact?: boolean; keepDecimals?: boolean },
 ): string {
-  const compact = options?.compact ?? false;
-  let formattedNumber = `${rawAmount.toFixed(2)}`;
-  if (formattedNumber === '-') {
+  try {
+    if (rawAmount == null) {
+      return '-';
+    }
+
+    const compact = options?.compact ?? false;
+    let amount = 0;
+
+    try {
+      amount = typeof rawAmount === 'string' ? parseFloat(rawAmount) : rawAmount;
+    } catch (error) {
+      return '-';
+    }
+
+    if (isNaN(amount)) {
+      return '-';
+    }
+
+    let formattedNumber = amount.toFixed(2);
+
+    if (formattedNumber === '-') {
+      return formattedNumber;
+    }
+
+    if (compact) {
+      const absAmount = Math.abs(amount);
+      if (absAmount >= 1000000) {
+        formattedNumber = `${Math.round(amount / 10000) / 100}`;
+      } else if (absAmount >= 1000) {
+        formattedNumber = `${Math.round(amount / 10) / 100}`;
+      }
+    }
+
+    try {
+      formattedNumber = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: options?.keepDecimals ? 2 : 0,
+      }).format(Number(formattedNumber));
+    } catch (error) {
+      return '-';
+    }
+
+    if (compact) {
+      const absAmount = Math.abs(amount);
+      if (absAmount >= 1000000) {
+        formattedNumber = `${formattedNumber}m`;
+      } else if (absAmount >= 1000) {
+        formattedNumber = `${formattedNumber}k`;
+      }
+    }
+
     return formattedNumber;
+  } catch (error) {
+    return '-';
   }
-  if (compact) {
-    if (rawAmount >= 1000) {
-      formattedNumber = `${Math.round(rawAmount / 10) / 100}`;
-    }
-    if (rawAmount >= 1000000) {
-      formattedNumber = `${Math.round(rawAmount / 10000) / 100}`;
-    }
-  }
-
-  formattedNumber = new Intl.NumberFormat('en-US', {
-    minimumFractionDigits: options?.keepDecimals ? 2 : 0,
-  }).format(Number(formattedNumber));
-
-  if (compact) {
-    if (rawAmount >= 1000 && rawAmount < 1000000) {
-      formattedNumber = `${formattedNumber}k`;
-    }
-    if (rawAmount >= 1000000) {
-      formattedNumber = `${formattedNumber}m`;
-    }
-  }
-
-  return formattedNumber;
 }
