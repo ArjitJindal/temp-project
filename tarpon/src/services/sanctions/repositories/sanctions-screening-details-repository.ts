@@ -24,7 +24,7 @@ import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
-import { isLambdaFunction } from '@/utils/lambda'
+import { getTriggerSource } from '@/utils/lambda'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
@@ -82,7 +82,7 @@ export class SanctionsScreeningDetailsRepository {
       return
     }
 
-    if (!isLambdaFunction()) {
+    if (getTriggerSource() !== 'PUBLIC_API') {
       await this.callMongoDatabase(filter, update)
       return
     }

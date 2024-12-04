@@ -21,7 +21,7 @@ import { ProviderConfig } from '@/services/sanctions'
 import { generateChecksum } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
-import { isLambdaFunction } from '@/utils/lambda'
+import { getTriggerSource } from '@/utils/lambda'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -76,7 +76,7 @@ export class SanctionsSearchRepository {
       return
     }
 
-    if (!isLambdaFunction()) {
+    if (getTriggerSource() !== 'PUBLIC_API') {
       await this.updateMessageSync(filter, updateMessage)
       return
     }

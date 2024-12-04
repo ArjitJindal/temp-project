@@ -15,24 +15,9 @@ export function getTriggerSource(): DrsScoreTriggeredByEnum {
     return 'CONSOLE'
   }
 
-  if (
-    lambdaName?.includes('PublicApi') &&
-    !process.env.SOURCE?.includes('/batch/')
-  ) {
+  if (lambdaName?.includes('PublicApi')) {
     return 'PUBLIC_API'
   }
 
   return 'BATCH'
-}
-
-export function isLambdaFunction() {
-  if (process.env.AWS_LAMBDA_FUNCTION_NAME == null) {
-    return false
-  }
-
-  if (process.env.AWS_LAMBDA_FUNCTION_NAME == '') {
-    return false
-  }
-
-  return true
 }

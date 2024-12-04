@@ -189,7 +189,7 @@ export class AlertsRepository {
     // As we paginate the cases not alerts, the previous pages could contain the alerts that should be in the current page
     // Find them and add them to the current page
     if (params.sortField && skip > 0) {
-      const firstSortFieldValue = filteredAlerts[0].alert[params.sortField]
+      const firstSortFieldValue = filteredAlerts[0]?.alert[params.sortField]
       const lastSortFieldValue = last(filteredAlerts)?.alert[params.sortField]
       const gte =
         params.sortOrder === 'ascend' ? firstSortFieldValue : lastSortFieldValue
