@@ -649,11 +649,11 @@ export interface MongoUpdateMessage<T extends Document = Document> {
   upsert?: boolean
 }
 
+const sqs = getSQSClient()
+
 export async function sendMessageToMongoUpdateConsumer<
   T extends Document = Document
 >(message: MongoUpdateMessage<T>) {
-  const sqs = getSQSClient()
-
   await sqs.send(
     new SendMessageCommand({
       QueueUrl: process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL,
