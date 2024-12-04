@@ -29,6 +29,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { acquireLock, releaseLock } from '@/utils/lock'
+import { generateChecksum } from '@/utils/object'
 
 export type DbClients = {
   dynamoDb: DynamoDBDocumentClient
@@ -431,9 +432,12 @@ export class StreamConsumerBuilder {
         .map((update) => ({
           MessageBody: JSON.stringify(update),
           MessageGroupId: hasFeature('CONCURRENT_DYNAMODB_CONSUMER')
-            ? update.entityId
-            : update.tenantId,
-          MessageDeduplicationId: `${update.entityId}-${update.sequenceNumber}`,
+            ? generateChecksum(update.entityId, 10)
+            : generateChecksum(update.tenantId, 10),
+          MessageDeduplicationId: `${generateChecksum(
+            update.entityId,
+            10
+          )}-${generateChecksum(update.sequenceNumber, 10)}`,
         }))
       await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
     })
