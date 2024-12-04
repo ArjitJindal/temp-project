@@ -27,7 +27,7 @@ describe('Close Alerts from Table', () => {
     cy.multiSelect('.ant-modal', 'False positive');
     cy.get('.ant-modal-root .ant-modal-title').click();
     cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-    cy.get('.ant-modal-footer button').eq(1).click();
+    cy.get('.ant-modal-footer button').eq(0).click();
     cy.get('button[data-cy="modal-ok"]').eq(1).click();
     cy.wait('@alert').its('response.statusCode').should('eq', 200);
 

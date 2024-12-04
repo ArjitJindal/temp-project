@@ -24,8 +24,8 @@ describe('Escalating and Sending back the cases', () => {
         cy.multiSelect('.ant-modal', 'Fraud');
         cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
         cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-        cy.get('.ant-modal-footer button').eq(1).click();
-        cy.get('.ant-modal-footer button').eq(3).click();
+        cy.get('.ant-modal-footer button').eq(0).click();
+        cy.get('.ant-modal-footer button').eq(2).click();
         cy.wait('@escalate').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
         });
@@ -37,8 +37,8 @@ describe('Escalating and Sending back the cases', () => {
         cy.multiSelect('.ant-modal', 'False positive');
         cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
         cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-        cy.get('.ant-modal-footer button').eq(1).click();
-        cy.get('.ant-modal-footer button').eq(3).click();
+        cy.get('.ant-modal-footer button').eq(0).click();
+        cy.get('.ant-modal-footer button').eq(2).click();
         cy.wait('@case').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
         });

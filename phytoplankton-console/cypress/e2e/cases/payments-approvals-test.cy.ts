@@ -52,7 +52,7 @@ function allowTransaction() {
   cy.multiSelect('.ant-modal', 'False positive');
   cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
   cy.get('.ant-modal-root textarea').eq(0).type('This is a test');
-  cy.get('.ant-modal-footer button').eq(1).click();
+  cy.get('.ant-modal-footer button').eq(0).click();
   cy.wait('@approval-request', { timeout: 15000 })
     .its('response.statusCode')
     .should('be.oneOf', [200, 304]);

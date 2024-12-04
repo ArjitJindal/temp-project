@@ -34,7 +34,7 @@ describe('Closing and Re-Opening the cases', () => {
         cy.visit('/case-management/cases?sort=-updatedAt&showCases=ALL&caseStatus=CLOSED');
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Re-Open');
-        cy.get('.ant-modal-footer button').eq(1).click();
+        cy.get('.ant-modal-footer button').eq(0).click();
         cy.wait('@case').then((interception) => {
           expect(interception.response?.statusCode).to.eq(200);
         });
@@ -49,7 +49,7 @@ describe('Closing and Re-Opening the cases', () => {
         cy.get('input[data-cy="row-table-checkbox"]', { timeout: 15000 }).eq(0);
         cy.get('input[data-cy="header-table-checkbox"]', { timeout: 15000 }).eq(0).click();
         cy.caseAlertAction('Re-Open');
-        cy.get('.ant-modal-footer button').eq(1).click();
+        cy.get('.ant-modal-footer button').eq(0).click();
         cy.checkNotification([
           `‘cypress+custom@flagright.com’ changed status of a case ‘${caseId}’`,
         ]);
@@ -110,7 +110,7 @@ function closeCase() {
   cy.multiSelect('.ant-modal', 'False positive');
   cy.get('.ant-modal-root .ant-modal-title', { timeout: 8000 }).click();
   cy.get('.ant-modal-root .toastui-editor-ww-container').type('This is a test');
-  cy.get('.ant-modal-footer button').eq(1).click();
-  cy.get('.ant-modal-footer button').eq(3).click();
+  cy.get('.ant-modal-footer button').eq(0).click();
+  cy.get('.ant-modal-footer button').eq(2).click();
   cy.wait('@case', { timeout: 15000 }).its('response.statusCode').should('be.oneOf', [200, 304]);
 }
