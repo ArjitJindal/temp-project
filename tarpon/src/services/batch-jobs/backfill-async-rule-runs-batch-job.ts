@@ -1,18 +1,16 @@
-import { last } from 'lodash'
+import { last, memoize } from 'lodash'
 import pMap from 'p-map'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import { StackConstants } from '@lib/constants'
 import { SQSBatchItemFailure } from 'aws-lambda'
+import { MongoClient } from 'mongodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
-import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
+import { UserRepository } from '../users/repositories/user-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BackfillAsyncRuleRuns } from '@/@types/batch-job'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import {
-  TRANSACTIONS_COLLECTION,
-  USERS_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { TRANSACTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {
   getMigrationLastCompletedTimestamp,
@@ -21,20 +19,27 @@ import {
 import { pickKnownEntityFields } from '@/utils/object'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { acquireInMemoryLocks } from '@/utils/lock'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
-import { Business } from '@/@types/openapi-public/Business'
-import { User } from '@/@types/openapi-public/User'
 import { logger } from '@/core/logger'
-import { tenantHasFeature } from '@/core/utils/context'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 const lambdaClient = new LambdaClient()
+
+const FIRST_RUNTIMSTAMPS = {
+  // Taken from first run logs
+  start: 1732823070692,
+  end: 1732830723777,
+}
+const SECOND_RUNTIMSTAMPS = {
+  // Taken from second run logs
+  start: 1733133446585,
+  end: 1733137749632,
+}
 
 export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
   private startTimestamp?: number
   private concurrency!: number
-
+  private mongoDb!: MongoClient
   protected async run(
     job: BackfillAsyncRuleRuns & { jobId: string }
   ): Promise<void> {
@@ -51,31 +56,15 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
-    const isRiskLevelsEnabled = await tenantHasFeature(tenantId, 'RISK_LEVELS')
     const ruleInstances = await ruleInstanceRepository.getActiveRuleInstances()
     const activeTxAsyncRuleIds = ruleInstances
       .filter(
         (v) => v.type === 'TRANSACTION' && v.ruleExecutionMode === 'ASYNC'
       )
       .map((v) => v.id as string)
-    const activeUserAsyncRuleIds = ruleInstances
-      .filter(
-        (v) =>
-          v.type === 'USER' &&
-          v.ruleExecutionMode === 'ASYNC' &&
-          !isOngoingUserRuleInstance(v, isRiskLevelsEnabled)
-      )
-      .map((v) => v.id as string)
     if (type === 'TRANSACTION' && activeTxAsyncRuleIds.length > 0) {
       await this.backfillTxAsyncRuleRuns(
         activeTxAsyncRuleIds,
-        lastCompletedTimestamp
-      )
-      return
-    }
-    if (type === 'USER' && activeUserAsyncRuleIds.length > 0) {
-      await this.backfillUserAsyncRuleRuns(
-        activeUserAsyncRuleIds,
         lastCompletedTimestamp
       )
       return
@@ -86,15 +75,34 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     asyncRuleInstanceIds: string[],
     lastCompletedTimestamp: number
   ): Promise<void> {
-    const db = await getMongoDbClientDb()
+    this.mongoDb = await getMongoDbClient()
+    const db = this.mongoDb.db()
     const collection = db.collection(TRANSACTIONS_COLLECTION(this.tenantId))
     const match = {
       createdAt: {
         $gte: Math.max(this.startTimestamp ?? 0, lastCompletedTimestamp),
       },
       executedRules: {
-        $not: {
-          $elemMatch: { ruleInstanceId: { $in: asyncRuleInstanceIds } },
+        $elemMatch: {
+          $and: [
+            { ruleInstanceId: { $in: asyncRuleInstanceIds } },
+            {
+              $or: [
+                {
+                  executedAt: {
+                    $gte: FIRST_RUNTIMSTAMPS.start,
+                    $lte: FIRST_RUNTIMSTAMPS.end,
+                  },
+                },
+                {
+                  executedAt: {
+                    $gte: SECOND_RUNTIMSTAMPS.start,
+                    $lte: SECOND_RUNTIMSTAMPS.end,
+                  },
+                },
+              ],
+            },
+          ],
         },
       },
     }
@@ -155,7 +163,10 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       transaction.originUserId,
       transaction.destinationUserId,
     ])
-
+    const [originUser, destinationUser] = await Promise.all([
+      this.userLoader(transaction.originUserId),
+      this.userLoader(transaction.destinationUserId),
+    ])
     const response = await lambdaClient.send(
       new InvokeCommand({
         FunctionName: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
@@ -166,6 +177,8 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
                 tenantId: this.tenantId,
                 type: 'TRANSACTION',
                 transaction,
+                originUser,
+                destinationUser,
               }),
             },
           ],
@@ -184,95 +197,16 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     }
     releaseLocks()
   }
-
-  private async backfillUserAsyncRuleRuns(
-    asyncRuleInstanceIds: string[],
-    lastCompletedTimestamp: number
-  ): Promise<void> {
-    const db = await getMongoDbClientDb()
-    const collection = db.collection(USERS_COLLECTION(this.tenantId))
-    const match = {
-      createdAt: {
-        $gte: Math.max(this.startTimestamp ?? 0, lastCompletedTimestamp),
-      },
-      executedRules: {
-        $not: {
-          $elemMatch: { ruleInstanceId: { $in: asyncRuleInstanceIds } },
-        },
-      },
-    }
-    const pendingUsers = await collection.find(match).limit(1).toArray()
-    if (pendingUsers.length === 0) {
-      return
-    }
-    const targetUsers = collection
-      .find<InternalUser | InternalBusinessUser>(match)
-      .sort({ createdAt: 1 })
-
-    let batchUsers: (InternalUser | InternalBusinessUser)[] = []
-    let count = 0
-    for await (const user of targetUsers) {
-      batchUsers.push(user)
-      count++
-      if (batchUsers.length >= 10000) {
-        await this.processBatchUsers(batchUsers)
-        batchUsers = []
+  private userLoader = memoize(
+    async (userId: string | undefined): Promise<InternalUser | null> => {
+      if (!userId) {
+        return null
       }
-    }
-    if (batchUsers.length > 0) {
-      await this.processBatchUsers(batchUsers)
-    }
-    logger.warn(`Processed total ${count} users`)
-    throw new Error('To be retried')
-  }
-
-  private async processBatchUsers(
-    users: (InternalUser | InternalBusinessUser)[]
-  ): Promise<void> {
-    await pMap(
-      users,
-      async (user) => {
-        await this.processUser(user)
-      },
-      {
-        concurrency: this.concurrency,
-      }
-    )
-    const progress = last(users)?.createdAt
-    if (progress) {
-      await updateMigrationLastCompletedTimestamp(this.jobId, progress)
-    }
-    logger.warn(`Processed ${users.length} users`)
-  }
-
-  private async processUser(
-    internalUser: InternalUser | InternalBusinessUser
-  ): Promise<void> {
-    const user =
-      internalUser.type === 'BUSINESS'
-        ? pickKnownEntityFields(internalUser, Business)
-        : pickKnownEntityFields(internalUser, User)
-    const response = await lambdaClient.send(
-      new InvokeCommand({
-        FunctionName: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
-        Payload: JSON.stringify({
-          Records: [
-            JSON.stringify({
-              type: 'USER',
-              userType: internalUser.type,
-              user,
-            }),
-          ],
-        }),
+      const userRepository = new UserRepository(this.tenantId, {
+        mongoDb: this.mongoDb,
       })
-    )
-    const decodedPayload = new TextDecoder().decode(
-      response.Payload
-    ) as unknown as {
-      batchItemFailures: SQSBatchItemFailure[]
-    }
-    if (decodedPayload?.batchItemFailures?.length > 0) {
-      throw new Error(`Error processing user ${user.userId}`)
-    }
-  }
+      return await userRepository.getMongoUser(userId)
+    },
+    (userId: string | undefined) => userId ?? ''
+  )
 }

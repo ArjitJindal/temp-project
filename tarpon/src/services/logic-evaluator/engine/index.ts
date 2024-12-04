@@ -70,7 +70,7 @@ import { getContext, hasFeature } from '@/core/utils/context'
 import { TransactionEventWithRulesResult } from '@/@types/openapi-public/TransactionEventWithRulesResult'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { batchWrite, BatchWriteRequestInternal } from '@/utils/dynamodb'
-import { addNewSubsegment } from '@/core/xray'
+import { addNewSubsegment, traceable } from '@/core/xray'
 import {
   AuxiliaryIndexTransaction,
   TransactionWithRiskDetails,
@@ -169,6 +169,8 @@ function getEntityVariableLoaderKey(
 }
 
 type Mode = 'MONGODB' | 'DYNAMODB'
+
+@traceable
 export class LogicEvaluator {
   private tenantId: string
   private dynamoDb: DynamoDBDocumentClient
