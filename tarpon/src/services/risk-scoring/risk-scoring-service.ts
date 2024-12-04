@@ -358,7 +358,7 @@ export class RiskScoringService {
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
   ): Promise<RiskScoreDetails> {
-    logger.info(`Calculating KRS score for user ${user.userId}`)
+    logger.debug(`Calculating KRS score for user ${user.userId}`)
     const isUserConsumerUser = isConsumerUser(user)
     const allComponents = await Promise.all([
       this.getRiskFactorScores(
@@ -371,7 +371,7 @@ export class RiskScoringService {
 
     const components = allComponents.flat()
 
-    logger.info(`Calculated KRS score for user ${user.userId}`)
+    logger.debug(`Calculated KRS score for user ${user.userId}`)
     return {
       score: components.length
         ? weightedRiskScoreCalculation(components)
@@ -433,7 +433,7 @@ export class RiskScoringService {
     riskClassificationValues: RiskClassificationScore[],
     riskFactors: ParameterAttributeRiskValues[]
   ): Promise<RiskScoreDetails> {
-    logger.info(
+    logger.debug(
       `Calculating ARS score for transaction ${transaction.transactionId}`
     )
     const allComponents = await Promise.all([
@@ -447,7 +447,7 @@ export class RiskScoringService {
 
     const components = allComponents.flat()
 
-    logger.info(
+    logger.debug(
       `Calculated ARS score for transaction ${transaction.transactionId}`
     )
     return {
@@ -462,7 +462,9 @@ export class RiskScoringService {
     userId: string,
     krsScore: number
   ): Promise<RiskScoreDetails & { transactionId?: string }> {
-    logger.info(`Recalculating DRS score from ond ARS score for user ${userId}`)
+    logger.debug(
+      `Recalculating DRS score from ond ARS score for user ${userId}`
+    )
     const cursor = await this.riskRepository.allArsScoresForUser(userId)
     let score = krsScore
     let components: RiskScoreComponent[] = []
@@ -473,7 +475,7 @@ export class RiskScoringService {
       components = arsScore.components ?? []
       transactionId = arsScore.transactionId
     }
-    logger.info(`Calculated DRS score from ond KRS score for user ${userId}`)
+    logger.debug(`Calculated DRS score from ond KRS score for user ${userId}`)
 
     return {
       score,
@@ -484,13 +486,13 @@ export class RiskScoringService {
 
   public async reCalculateKrsAndDrsScores(userId: string): Promise<void> {
     const user = await this.userRepository.getUserById(userId)
-    logger.info(`Recalculating KRS and DRS scores for user ${userId}`)
+    logger.debug(`Recalculating KRS and DRS scores for user ${userId}`)
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
     if (!user) {
       logger.warn(`User ${userId} not found`)
       return
     }
-    logger.info(`Recalculating KRS score for user ${userId}`)
+    logger.debug(`Recalculating KRS score for user ${userId}`)
     // Calculate the KRS score
     const { components: krsComponennts, score: krsScore } =
       await this.calculateKrsScore(
@@ -498,14 +500,14 @@ export class RiskScoringService {
         riskClassificationValues,
         riskFactors || []
       )
-    logger.info(`Calculated KRS score for user ${userId} is ${krsScore}`, {
+    logger.debug(`Calculated KRS score for user ${userId} is ${krsScore}`, {
       krsComponennts,
     })
-    logger.info(`Recalculating DRS score for user ${userId}`)
+    logger.debug(`Recalculating DRS score for user ${userId}`)
     // Calculate the DRS score from the old ARS scores
     const { components, score, transactionId } =
       await this.reCalculateDrsScoreFromOldArsScores(user.userId, krsScore)
-    logger.info(`Calculated DRS score for user ${userId} is ${score}`, {
+    logger.debug(`Calculated DRS score for user ${userId} is ${score}`, {
       components,
       transactionId,
     })
@@ -548,7 +550,7 @@ export class RiskScoringService {
       )
     }
 
-    logger.info(`Updated KRS and DRS scores for user ${userId}`)
+    logger.debug(`Updated KRS and DRS scores for user ${userId}`)
   }
 
   public calculateDrsScore(
@@ -562,7 +564,7 @@ export class RiskScoringService {
     user: User | Business,
     isDrsUpdatable?: boolean
   ): Promise<number> {
-    logger.info(`Updating initial risk score for user ${user.userId}`)
+    logger.debug(`Updating initial risk score for user ${user.userId}`)
 
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
     const { score, components } = await this.calculateKrsScore(
@@ -586,7 +588,7 @@ export class RiskScoringService {
       ),
     ])
 
-    logger.info(`Updated initial risk score for user ${user.userId}`)
+    logger.debug(`Updated initial risk score for user ${user.userId}`)
 
     return score
   }
@@ -939,7 +941,7 @@ export class RiskScoringService {
         beforeCreatedAt,
       })
 
-    logger.info(
+    logger.debug(
       `Found ${await transactions.count()} transactions for tenant ${
         this.tenantId
       }`
@@ -951,7 +953,7 @@ export class RiskScoringService {
     })
 
     for await (const transaction of transactions) {
-      logger.info(
+      logger.debug(
         `Updating ARS score for transaction ${transaction.transactionId}`
       )
 
@@ -964,7 +966,7 @@ export class RiskScoringService {
         destinationDrsScore
       )
 
-      logger.info(
+      logger.debug(
         `Updated ARS score for transaction ${transaction.transactionId}`
       )
     }

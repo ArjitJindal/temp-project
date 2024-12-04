@@ -41,7 +41,7 @@ export class HighRiskIpAddressCountries extends TransactionRule<HighRiskIpAddres
         ? this.geoIpService.resolveIpAddress(destinationIpAddress)
         : null,
     ])
-    logger.info(
+    logger.debug(
       `originIpInfo (${originIpAddress}): ${JSON.stringify(originIpInfo)}`
     )
 

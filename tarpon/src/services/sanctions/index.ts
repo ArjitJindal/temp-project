@@ -168,7 +168,7 @@ export class SanctionsService {
       hitContext: result.hitContext,
     })
 
-    logger.info(
+    logger.debug(
       `Updated monitored search (search ID: ${providerSearchId}) for tenant ${this.tenantId}`
     )
 

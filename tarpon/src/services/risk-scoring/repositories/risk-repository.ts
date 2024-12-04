@@ -169,7 +169,7 @@ export class RiskRepository {
     components?: RiskScoreComponent[],
     factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<KrsScore> {
-    logger.info(`Updating KRS score for user ${userId} to ${score}`)
+    logger.debug(`Updating KRS score for user ${userId} to ${score}`)
     const newKrsScoreItem: KrsScore = {
       krsScore: handleSmallNumber(score),
       createdAt: Date.now(),
@@ -192,7 +192,7 @@ export class RiskRepository {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
-    logger.info(`Updated KRS score for user ${userId} to ${score}`)
+    logger.debug(`Updated KRS score for user ${userId} to ${score}`)
     return newKrsScoreItem
   }
 
@@ -204,7 +204,7 @@ export class RiskRepository {
     components?: RiskScoreComponent[],
     factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<ArsScore> {
-    logger.info(
+    logger.debug(
       `Updating ARS score for transaction ${transactionId} to ${score}`
     )
     const newArsScoreItem: ArsScore = {
@@ -235,7 +235,7 @@ export class RiskRepository {
     if (process.env.NODE_ENV === 'development') {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
-    logger.info(
+    logger.debug(
       `Updated ARS score for transaction ${transactionId} to ${score}`
     )
     return newArsScoreItem
@@ -297,7 +297,7 @@ export class RiskRepository {
     isUpdatable?: boolean,
     factorScoreDetails?: RiskFactorScoreDetails[]
   ): Promise<DrsScore> {
-    logger.info(
+    logger.debug(
       `Updating DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
     )
     const prevDrsScore = await this.getDrsScore(userId)
@@ -329,7 +329,7 @@ export class RiskRepository {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
-    logger.info(
+    logger.debug(
       `Updated DRS score for user ${userId} to ${drsScore} with transaction ${transactionId}`
     )
     return newDrsScoreItem
@@ -389,7 +389,7 @@ export class RiskRepository {
   async createOrUpdateRiskClassificationConfig(
     riskClassificationValues: RiskClassificationScore[]
   ): Promise<RiskClassificationConfig> {
-    logger.info(`Updating risk classification config.`)
+    logger.debug(`Updating risk classification config.`)
     const now = Date.now()
     const newRiskClassificationValues: RiskClassificationConfig = {
       classificationValues: riskClassificationValues,
@@ -403,7 +403,7 @@ export class RiskRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
-    logger.info(`Updated risk classification config.`)
+    logger.debug(`Updated risk classification config.`)
 
     updateTenantRiskClassificationValues(riskClassificationValues)
 
@@ -433,7 +433,9 @@ export class RiskRepository {
     riskLevel: RiskLevel,
     isUpdatable?: boolean
   ) {
-    logger.info(`Updating manual risk level for user ${userId} to ${riskLevel}`)
+    logger.debug(
+      `Updating manual risk level for user ${userId} to ${riskLevel}`
+    )
     const now = Date.now()
     const [riskClassificationValues, previousDrsScore] = await Promise.all([
       this.getRiskClassificationValues(),
@@ -465,7 +467,7 @@ export class RiskRepository {
       await handleLocalChangeCapture(this.tenantId, primaryKey)
     }
 
-    logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
+    logger.debug(`Manual risk level updated for user ${userId} to ${riskLevel}`)
 
     return newDrsRiskValue
   }
@@ -473,7 +475,7 @@ export class RiskRepository {
   async createOrUpdateParameterRiskItem(
     parameterRiskLevels: ParameterAttributeRiskValues
   ) {
-    logger.info(`Updating parameter risk levels.`)
+    logger.debug(`Updating parameter risk levels.`)
     const putItemInput: PutCommandInput = {
       TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
       Item: {
@@ -487,7 +489,7 @@ export class RiskRepository {
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
-    logger.info(`Updated parameter risk levels.`)
+    logger.debug(`Updated parameter risk levels.`)
     return parameterRiskLevels
   }
 
@@ -495,7 +497,7 @@ export class RiskRepository {
     parameter: RiskFactorParameter,
     entityType: RiskEntityType
   ) {
-    logger.info(`Deleting parameter risk item.`)
+    logger.debug(`Deleting parameter risk item.`)
     const primaryKey = DynamoDbKeys.PARAMETER_RISK_SCORES_DETAILS(
       this.tenantId,
       parameter,
@@ -508,7 +510,7 @@ export class RiskRepository {
     }
 
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
-    logger.info(`Deleted parameter risk item.`)
+    logger.debug(`Deleted parameter risk item.`)
   }
 
   async getParameterRiskItem(
@@ -644,7 +646,7 @@ export class RiskRepository {
     userId: string,
     averageArsScore: AverageArsScore
   ): Promise<AverageArsScore> {
-    logger.info(`Updating average ARS score for user ${userId}`)
+    logger.debug(`Updating average ARS score for user ${userId}`)
     const primaryKey = DynamoDbKeys.AVG_ARS_VALUE_ITEM(
       this.tenantId,
       userId,
@@ -773,7 +775,7 @@ export class RiskRepository {
   }
 
   async createOrUpdateRiskFactor(riskFactor: RiskFactor) {
-    logger.info(`Updating risk factor for V8.`)
+    logger.debug(`Updating risk factor for V8.`)
 
     const now = Date.now()
     const oldRiskFactor = await this.getRiskFactor(riskFactor.id)
@@ -798,7 +800,7 @@ export class RiskRepository {
     }
 
     await this.dynamoDb.send(new PutCommand(putItemInput))
-    logger.info(`Updated risk factor for V8`)
+    logger.debug(`Updated risk factor for V8`)
 
     return riskFactor
   }
@@ -859,7 +861,7 @@ export class RiskRepository {
   }
 
   async deleteAllRiskFactors() {
-    logger.info(`Deleting all risk factors.`)
+    logger.debug(`Deleting all risk factors.`)
 
     try {
       // Query to get all risk factor keys
@@ -900,11 +902,11 @@ export class RiskRepository {
     } catch (e) {
       logger.error(e)
     }
-    logger.info(`Deleted all risk factors.`)
+    logger.debug(`Deleted all risk factors.`)
   }
 
   async deleteRiskFactor(riskFactorId: string) {
-    logger.info(`Deleting risk factor.`)
+    logger.debug(`Deleting risk factor.`)
     const key = DynamoDbKeys.RISK_FACTOR(this.tenantId, riskFactorId)
 
     const deleteItemInput: DeleteCommandInput = {
@@ -913,7 +915,7 @@ export class RiskRepository {
     }
 
     await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
-    logger.info(`Deleted risk factor.`)
+    logger.debug(`Deleted risk factor.`)
     await this.removeRiskFactorFromUsedAggVar(riskFactorId)
   }
 

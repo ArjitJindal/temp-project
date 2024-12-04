@@ -98,8 +98,8 @@ async function dispatchOngoingScreeningJobs(tenantId: string) {
   const totalDocs = await users.estimatedDocumentCount()
   const batchSize = 1_000_000
   const numberOfJobs = Math.ceil(totalDocs / batchSize)
-  logger.warn(`${totalDocs} users for screening`)
-  logger.warn(`Creating batches of ${batchSize} size`)
+  logger.info(`${totalDocs} users for screening`)
+  logger.info(`Creating batches of ${batchSize} size`)
   const froms = (
     await Promise.all(
       range(numberOfJobs).map(async (i): Promise<string | null> => {
@@ -120,12 +120,12 @@ async function dispatchOngoingScreeningJobs(tenantId: string) {
     )
   ).filter((p): p is string => Boolean(p))
 
-  logger.warn(`Cursors: ${JSON.stringify(froms)}`)
+  logger.info(`Cursors: ${JSON.stringify(froms)}`)
   for (let i = 0; i < froms.length; i++) {
     const from = froms[i]
     const to = froms[i + 1] || undefined // Use `null` as `to` for the last batch
 
-    logger.warn(`Sending batch job #${i}`)
+    logger.info(`Sending batch job #${i}`)
     await sendBatchJobCommand({
       type: 'ONGOING_SCREENING_USER_RULE',
       tenantId: tenantId,

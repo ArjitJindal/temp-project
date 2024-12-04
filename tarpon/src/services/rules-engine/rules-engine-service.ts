@@ -308,7 +308,7 @@ export class RulesEngineService {
             ruleId: ruleInstance.ruleId,
             ruleInstanceId: ruleInstance.id,
           })
-          logger.info(`Running rule`)
+          logger.debug(`Running rule`)
           const result = await this.verifyAllUsersRule(
             {
               ruleInstance,
@@ -317,7 +317,7 @@ export class RulesEngineService {
             'ONGOING',
             { from, to }
           )
-          logger.info(`Completed rule`)
+          logger.debug(`Completed rule`)
           return result
         })
       })
@@ -848,7 +848,7 @@ export class RulesEngineService {
     stage: RuleStage
   ): Promise<ConsumerUserMonitoringResult | BusinessUserMonitoringResult> {
     const rulesById = keyBy(rules, 'id')
-    logger.info(`Running rules`)
+    logger.debug(`Running rules`)
     const { riskLevel: userRiskLevel } = await this.getUserRiskLevelAndScore(
       user?.userId
     )
@@ -1165,7 +1165,7 @@ export class RulesEngineService {
     getInitialDataSegment?.close()
 
     const runRulesSegment = await addNewSubsegment('Rules Engine', 'Run Rules')
-    logger.info(`Running rules`)
+    logger.debug(`Running rules`)
 
     const [originalVerifyTransactionResults] = await Promise.all([
       Promise.all(
@@ -1588,7 +1588,7 @@ export class RulesEngineService {
             ruleId: ruleInstance.ruleId,
             ruleInstanceId: ruleInstance.id,
           })
-          logger.info(`Running rule`)
+          logger.debug(`Running rule`)
           const startTime = Date.now()
           const { ruleClassInstance, isTransactionHistoricalFiltered, result } =
             await this.verifyRuleIdempotent({
@@ -1599,7 +1599,7 @@ export class RulesEngineService {
           const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
           // Don't await publishing metric
           publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
-          logger.info(`Completed rule`)
+          logger.debug(`Completed rule`)
 
           let aggregationMessages: FifoSqsMessage[] = []
           if (runOnV8Engine(ruleInstance, options.rule)) {
@@ -1716,7 +1716,7 @@ export class RulesEngineService {
           ruleInstanceId: options.ruleInstance.id,
           userId: options.user.userId,
         })
-        logger.info(`Running rule`)
+        logger.debug(`Running rule`)
         const startTime = Date.now()
         const { result } = await this.verifyRuleIdempotent({
           rule: options.rule,
@@ -1729,7 +1729,7 @@ export class RulesEngineService {
         const ruleExecutionTimeMs = Date.now().valueOf() - startTime.valueOf()
         // Don't await publishing metric
         publishMetric(RULE_EXECUTION_TIME_MS_METRIC, ruleExecutionTimeMs)
-        logger.info(`Completed rule`)
+        logger.debug(`Completed rule`)
         return result
       } catch (e) {
         logger.error(e)
@@ -1953,7 +1953,7 @@ export class RulesEngineService {
       'Rules Engine',
       'Update Global Aggregations'
     )
-    logger.info(`Updating global aggregations`)
+    logger.debug(`Updating global aggregations`)
 
     await Promise.all(
       Aggregators.map(async (Aggregator) => {
@@ -1979,7 +1979,7 @@ export class RulesEngineService {
         }
       })
     )
-    logger.info(`Updated global aggregations`)
+    logger.debug(`Updated global aggregations`)
     updateAggregationsSegment?.close()
   }
 

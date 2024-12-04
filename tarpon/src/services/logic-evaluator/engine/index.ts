@@ -687,7 +687,7 @@ export class LogicEvaluator {
       return false
     }
 
-    logger.info('Rebuilding aggregation...')
+    logger.debug('Rebuilding aggregation...')
     const { afterTimestamp } = getTimeRangeByTimeWindows(
       currentTimestamp,
       aggregationVariable.timeWindow.start as TimeWindow,
@@ -705,7 +705,7 @@ export class LogicEvaluator {
           beforeTimestamp: currentTimestamp,
         }
       )
-    logger.info('Prepared rebuild result')
+    logger.debug('Prepared rebuild result')
     if (aggregationVariable.aggregationGroupByFieldKey) {
       const groups = uniq(
         Object.values(aggregationResult).flatMap((v) =>
@@ -736,7 +736,7 @@ export class LogicEvaluator {
           )
         writeRequests.push(...groupWriteRequests)
       }
-      logger.info(`Saving aggregation for ${groups.length} groups`)
+      logger.debug(`Saving aggregation for ${groups.length} groups`)
       await batchWrite(
         this.dynamoDb,
         writeRequests,
@@ -755,7 +755,7 @@ export class LogicEvaluator {
       userKeyId,
       lastTransactionTimestamp
     )
-    logger.info('Rebuilt aggregation')
+    logger.debug('Rebuilt aggregation')
     return true
   }
 
@@ -1097,7 +1097,7 @@ export class LogicEvaluator {
     }
     const { transaction } = data
 
-    logger.info('Updating aggregation...')
+    logger.debug('Updating aggregation...')
     const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
       aggregationVariable,
       data
@@ -1246,7 +1246,7 @@ export class LogicEvaluator {
       direction,
       transaction.transactionId
     )
-    logger.info('Updated aggregation')
+    logger.debug('Updated aggregation')
   }
 
   private async getNewDataValueForAggregation(

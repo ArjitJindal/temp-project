@@ -107,7 +107,7 @@ export class RiskScoringRecalculationBatchJobRunner extends BatchJobRunner {
       await pMap(
         users,
         async (user) => {
-          logger.info(`Processing user: ${user.userId}`)
+          logger.debug(`Processing user: ${user.userId}`)
           await this.riskScoringV8Service?.handleUserUpdate(user)
         },
         { concurrency: MAX_CONCURRENCY }

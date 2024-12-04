@@ -112,7 +112,7 @@ export class AuditLogService {
   public async saveAuditLog(auditlog: AuditLog): Promise<AuditLog> {
     const savedAuditLog = await this.auditLogRepository.saveAuditLog(auditlog)
 
-    logger.info(
+    logger.debug(
       `Saved audit log: ${savedAuditLog.action}, ${savedAuditLog.type}`,
       {
         tenantId: this.tenantId,

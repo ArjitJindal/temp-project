@@ -190,7 +190,7 @@ export class ReverifyTransactionsBatchJobRunner extends BatchJobRunner {
       }
 
       processedTransactionCount += 1
-      logger.info(
+      logger.debug(
         `Processed tx ${transaction.transactionId} (tx updated: ${isTransactionUpdated}, events updated: ${updatedEventsCount}) (${processedTransactionCount} / ${totalTransactionsCount})`
       )
 

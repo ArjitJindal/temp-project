@@ -142,7 +142,7 @@ export class SLAService {
     await processCursorInBatch(
       cursor,
       async (entities) => {
-        logger.info(`Updating SLA Statuses for ${entities.length} ${type}s`)
+        logger.debug(`Updating SLA Statuses for ${entities.length} ${type}s`)
         await pMap(
           entities,
           async (entity) => {
@@ -178,7 +178,7 @@ export class SLAService {
             concurrency: CONCURRENCY,
           }
         )
-        logger.info(`SLA Statuses updated for ${entities.length} ${type}s`)
+        logger.debug(`SLA Statuses updated for ${entities.length} ${type}s`)
       },
       { mongoBatchSize: BATCH_SIZE, processBatchSize: BATCH_SIZE }
     )
@@ -201,7 +201,7 @@ export class SLAService {
         })
       }
     )
-    logger.info('SLA Statuses updated for all alerts')
+    logger.debug('SLA Statuses updated for all alerts')
   }
 
   public async calculateAndUpdateSLAStatusesForCases() {
@@ -221,7 +221,7 @@ export class SLAService {
         })
       }
     )
-    logger.info('SLA Statuses updated for all manual cases')
+    logger.debug('SLA Statuses updated for all manual cases')
   }
 
   private async getSLAPolicy(slaPolicyId: string) {

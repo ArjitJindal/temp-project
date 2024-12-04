@@ -379,7 +379,7 @@ export async function sendTransactionAggregationTasks(
       process.env.TRANSACTION_AGGREGATION_QUEUE_URL as string,
       uniqBy(finalMessages, 'MessageDeduplicationId')
     )
-    logger.info(`Sent transaction aggregation tasks to SQS`)
+    logger.debug(`Sent transaction aggregation tasks to SQS`)
   }
 }
 

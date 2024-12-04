@@ -84,7 +84,7 @@ export class WhitelistUsersRuleFilter extends UserRuleFilter<WhitelistUsersRuleF
       ).then((results) => results.flat())
       const match = result.find((item) => item.match)
       if (match) {
-        logger.info(`Found user ${match.userId} in list ${match.listId}`)
+        logger.debug(`Found user ${match.userId} in list ${match.listId}`)
         return false
       }
     }

@@ -100,7 +100,7 @@ export abstract class TransactionAggregationRule<
         this.transaction.transactionId
       )
     if (shouldSkipUpdateAggregation) {
-      logger.info('Skip updating aggregations.')
+      logger.debug('Skip updating aggregations.')
       return
     }
 
@@ -173,7 +173,7 @@ export abstract class TransactionAggregationRule<
       return
     }
 
-    logger.info('Saving rebuilt aggregations...')
+    logger.debug('Saving rebuilt aggregations...')
     const ttl = this.getUpdatedTTLAttribute()
     const version = this.getLatestAggregationVersion()
     await this.aggregationRepository.rebuildUserRuleTimeAggregations(
@@ -187,7 +187,7 @@ export abstract class TransactionAggregationRule<
       this.ruleInstance.id as string,
       version
     )
-    logger.info('Saved rebuilt aggregations')
+    logger.debug('Saved rebuilt aggregations')
   }
 
   public async getRuleAggregations<A>(

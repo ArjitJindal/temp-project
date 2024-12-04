@@ -422,7 +422,7 @@ export class CaseCreationService {
         hitRule.ruleHitMeta?.hitDirections?.includes('ORIGIN') ?? false
     )
 
-    logger.info(`Fetching case users by ids`, {
+    logger.debug(`Fetching case users by ids`, {
       destinationUserId,
       originUserId,
     })
@@ -1020,7 +1020,7 @@ export class CaseCreationService {
     },
     hitRuleInstances: ReadonlyArray<RuleInstance>
   ): Promise<Case[]> {
-    logger.info(`Hit directions to create or update cases`, {
+    logger.debug(`Hit directions to create or update cases`, {
       hitDirections: hitSubjects.map((hitUser) => hitUser.direction),
     })
     const ruleInstances = hitRuleInstances.filter(
@@ -1150,7 +1150,7 @@ export class CaseCreationService {
           )
 
           if (existedCase) {
-            logger.info(`Existed case for user`, {
+            logger.debug(`Existed case for user`, {
               existedCaseId: existedCase?.caseId ?? null,
               existedCaseTransactionsIdsLength: (
                 existedCase?.caseTransactionsIds || []
@@ -1180,7 +1180,7 @@ export class CaseCreationService {
               ].filter(Boolean)
             )
 
-            logger.info('Update existed case with transaction')
+            logger.debug('Update existed case with transaction')
             result.push({
               ...existedCase,
               latestTransactionArrivalTimestamp:
@@ -1204,7 +1204,7 @@ export class CaseCreationService {
               params.transaction,
               params.checkListTemplates
             )
-            logger.info('Create a new case for a transaction')
+            logger.debug('Create a new case for a transaction')
             result.push({
               ...(subject.type === 'USER'
                 ? this.getNewUserCase(direction, subject.user)
@@ -1262,7 +1262,7 @@ export class CaseCreationService {
     ruleInstances: RuleInstance[],
     transactionSubjects: Record<RuleHitDirection, CaseSubject | undefined>
   ): Promise<Case[]> {
-    logger.info(`Handling transaction for case creation`, {
+    logger.debug(`Handling transaction for case creation`, {
       transactionId: transaction.transactionId,
     })
     const result: Case[] = []
@@ -1273,7 +1273,7 @@ export class CaseCreationService {
 
     const now = Date.now()
 
-    logger.info(`Updating cases`, {
+    logger.debug(`Updating cases`, {
       transactionId: transaction.transactionId,
     })
     const hitSubjects: Array<{
@@ -1341,7 +1341,7 @@ export class CaseCreationService {
       )
     }
 
-    logger.info(`Updated/created cases count`, {
+    logger.debug(`Updated/created cases count`, {
       count: savedCases.length,
     })
 
@@ -1371,7 +1371,7 @@ export class CaseCreationService {
         if (caseItem.availableAfterTimestamp) {
           continue
         }
-        logger.info(
+        logger.debug(
           `Sending slack alert SQS message for case ${caseItem.caseId}`
         )
         const payload: NewCaseAlertPayload = {
@@ -1437,7 +1437,7 @@ export class CaseCreationService {
   }
 
   async handleUser(user: InternalUser): Promise<Case[]> {
-    logger.info(`Handling user for case creation`, {
+    logger.debug(`Handling user for case creation`, {
       userId: user.userId,
     })
     const hitRules = user.hitRules ?? []
@@ -1460,7 +1460,7 @@ export class CaseCreationService {
       ruleInstances,
       hitRules
     )
-    logger.info(`Updating cases`, {
+    logger.debug(`Updating cases`, {
       userId: user.userId,
     })
 
@@ -1488,7 +1488,7 @@ export class CaseCreationService {
       }
     }
 
-    logger.info(`Updated/created cases count`, {
+    logger.debug(`Updated/created cases count`, {
       count: savedCases.length,
     })
 
