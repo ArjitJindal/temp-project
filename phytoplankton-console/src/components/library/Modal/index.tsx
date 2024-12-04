@@ -119,9 +119,6 @@ export default function Modal(props: Props) {
           <div className={s.footer}>
             {footerExtra && <div className={s.footerSection}>{footerExtra}</div>}
             <div className={s.footerSection}>
-              <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
-                {cancelText ?? 'Cancel'}
-              </Button>
               {!hideOk && (
                 <Button
                   type="PRIMARY"
@@ -134,6 +131,9 @@ export default function Modal(props: Props) {
                   {okText ?? 'OK'}
                 </Button>
               )}
+              <Button type="TETRIARY" htmlType="button" onClick={onCancel} {...cancelProps}>
+                {cancelText ?? 'Cancel'}
+              </Button>
             </div>
           </div>
         )
