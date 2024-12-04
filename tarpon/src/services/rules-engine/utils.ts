@@ -354,9 +354,8 @@ export function isSyncRule(ruleInstance: RuleInstance): boolean {
 }
 
 const sqs = getSQSClient()
+
 export async function sendTransactionAggregationTasks(
-  tenantId: string,
-  transaction: Transaction,
   messages: FifoSqsMessage[]
 ) {
   if (envIs('local', 'test')) {

@@ -20,8 +20,8 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { ProviderConfig } from '@/services/sanctions'
 import { generateChecksum } from '@/utils/object'
 import { envIs } from '@/utils/env'
-import { hasFeature } from '@/core/utils/context'
 import { logger } from '@/core/logger'
+import { isLambdaFunction } from '@/utils/lambda'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -56,8 +56,6 @@ export class SanctionsSearchRepository {
     hitContext: SanctionsHitContext | undefined
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
-    const db = this.mongoDb.db()
-    const collectionName = SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
     const updateMessage: UpdateFilter<SanctionsSearchHistory> = {
       $set: {
@@ -73,11 +71,13 @@ export class SanctionsSearchRepository {
       },
     }
 
-    if (envIs('local') || envIs('test') || !hasFeature('PNB')) {
-      await db
-        .collection<SanctionsSearchHistory>(collectionName)
-        .updateOne(filter, updateMessage, { upsert: true })
+    if (envIs('local') || envIs('test')) {
+      await this.updateMessageSync(filter, updateMessage)
+      return
+    }
 
+    if (!isLambdaFunction()) {
+      await this.updateMessageSync(filter, updateMessage)
       return
     }
 
@@ -95,10 +95,19 @@ export class SanctionsSearchRepository {
         `Failed to send message to mongo update consumer for sanctions search: ${e}`
       )
 
-      await db
-        .collection<SanctionsSearchHistory>(collectionName)
-        .updateOne(filter, updateMessage, { upsert: true })
+      await this.updateMessageSync(filter, updateMessage)
     }
+  }
+
+  private async updateMessageSync(
+    filter: Filter<SanctionsSearchHistory>,
+    updateMessage: UpdateFilter<SanctionsSearchHistory>
+  ) {
+    const collectionName = SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
+    const db = this.mongoDb.db()
+    await db
+      .collection<SanctionsSearchHistory>(collectionName)
+      .updateOne(filter, updateMessage, { upsert: true })
   }
 
   public async getSearchResultByParams(

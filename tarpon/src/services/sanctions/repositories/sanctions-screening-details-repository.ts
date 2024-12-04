@@ -24,6 +24,7 @@ import { hasFeature } from '@/core/utils/context'
 import { SanctionsScreeningEntityStats } from '@/@types/openapi-internal/SanctionsScreeningEntityStats'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
+import { isLambdaFunction } from '@/utils/lambda'
 
 @traceable
 export class SanctionsScreeningDetailsRepository {
@@ -39,7 +40,6 @@ export class SanctionsScreeningDetailsRepository {
     details: Omit<SanctionsScreeningDetails, 'lastScreenedAt'>,
     screenedAt = Date.now()
   ): Promise<void> {
-    const db = this.mongoDb.db()
     const sanctionsScreeningCollectionName =
       SANCTIONS_SCREENING_DETAILS_COLLECTION(this.tenantId)
 
@@ -77,7 +77,12 @@ export class SanctionsScreeningDetailsRepository {
       upsert: true,
     }
 
-    if (envIs('local') || envIs('test') || !hasFeature('PNB')) {
+    if (envIs('local') || envIs('test')) {
+      await this.callMongoDatabase(filter, update)
+      return
+    }
+
+    if (!isLambdaFunction()) {
       await this.callMongoDatabase(filter, update)
       return
     }
@@ -89,9 +94,7 @@ export class SanctionsScreeningDetailsRepository {
         `Failed to send message to mongo update consumer for sanctions screening details: ${e}`
       )
 
-      await db
-        .collection<SanctionsScreeningDetails>(sanctionsScreeningCollectionName)
-        .updateOne(filter, update, { upsert: true })
+      await this.callMongoDatabase(filter, update)
     }
   }
 

@@ -24,3 +24,15 @@ export function getTriggerSource(): DrsScoreTriggeredByEnum {
 
   return 'BATCH'
 }
+
+export function isLambdaFunction() {
+  if (process.env.AWS_LAMBDA_FUNCTION_NAME == null) {
+    return false
+  }
+
+  if (process.env.AWS_LAMBDA_FUNCTION_NAME == '') {
+    return false
+  }
+
+  return true
+}

@@ -582,11 +582,7 @@ export class RulesEngineService {
 
     try {
       await Promise.all([
-        sendTransactionAggregationTasks(
-          this.tenantId,
-          transaction,
-          aggregationMessages
-        ),
+        sendTransactionAggregationTasks(aggregationMessages),
         this.updateGlobalAggregation(savedTransaction, []),
         isAnyAsyncRules &&
           sendAsyncRuleTasks([
@@ -709,11 +705,7 @@ export class RulesEngineService {
     }
 
     await Promise.all([
-      sendTransactionAggregationTasks(
-        this.tenantId,
-        updatedTransaction,
-        aggregationMessages
-      ),
+      sendTransactionAggregationTasks(aggregationMessages),
       updateGlobalAggregationPromise,
       isAnyAsyncRules &&
         sendAsyncRuleTasks([
@@ -957,11 +949,7 @@ export class RulesEngineService {
         last(transactionEventsSorted) as TransactionEvent,
         { executedRules: mergedExecutedRules, hitRules: mergedHitRules, status }
       ),
-      sendTransactionAggregationTasks(
-        this.tenantId,
-        transaction,
-        aggregationMessages
-      ),
+      sendTransactionAggregationTasks(aggregationMessages),
     ])
     if (status !== oldStatus) {
       await sendStatusChangeWebhook(
