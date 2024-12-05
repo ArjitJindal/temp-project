@@ -50,6 +50,8 @@ export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? 200
   : 50
 
+const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
+
 const generator = function* (): Generator<InternalTransaction> {
   const userTransactionMap = new Map<string, string[]>()
   getUsers().forEach((u) => {
@@ -68,10 +70,17 @@ const generator = function* (): Generator<InternalTransaction> {
 
     // Hack in some suspended transactions for payment approvals
     const hitRules: ExecutedRulesResult[] =
-      randomNumberGenerator() < 0.75
+      randomNumberGenerator() < 0.3
         ? randomTransactionRules()
-        : transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
-
+        : randomNumberGenerator() < 0.9 && randomNumberGenerator() > 0.8
+        ? transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
+        : []
+    const numberoShadowRulesHit = (i % 3) + 1
+    const shadowRulesHit = hitRules
+      .filter(
+        (r) => r.isShadow && !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId)
+      )
+      .slice(0, numberoShadowRulesHit)
     const transaction = sampleTransaction({})
     const originUser = getUsers()[i % getUsers().length]
     const originUserId = originUser.userId
@@ -121,42 +130,53 @@ const generator = function* (): Generator<InternalTransaction> {
       }
     }
     const transactionId = `T-${i + 1}`
-    const randomHitRules = hitRules.map((hitRule) => {
-      if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
-        const sanctionsDetails = [
-          getSanctionsSearch(originUser, hitRule.ruleInstanceId, transactionId),
-          getSanctionsSearch(
-            destinationUser,
-            hitRule.ruleInstanceId,
-            transactionId
-          ),
-        ]
+    const randomHitRules = [
+      ...hitRules.filter((r) => !r.isShadow),
+      ...shadowRulesHit,
+    ]
+      .filter((r) => !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId))
+      .map((hitRule) => {
+        if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
+          const sanctionsDetails = [
+            getSanctionsSearch(
+              originUser,
+              hitRule.ruleInstanceId,
+              transactionId
+            ),
+            getSanctionsSearch(
+              destinationUser,
+              hitRule.ruleInstanceId,
+              transactionId
+            ),
+          ]
 
-        return {
-          ...hitRule,
-          ruleHitMeta: {
-            ...hitRule.ruleHitMeta,
-            sanctionsDetails,
-          },
-        }
-      }
-
-      if (hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true) {
-        const modifiedHitRule = {
-          ...hitRule,
-          ruleHitMeta: {
-            ...hitRule.ruleHitMeta,
-            falsePositiveDetails: {
-              ...hitRule.ruleHitMeta.falsePositiveDetails,
-              confidenceScore: random(59, 82),
+          return {
+            ...hitRule,
+            ruleHitMeta: {
+              ...hitRule.ruleHitMeta,
+              sanctionsDetails,
             },
-          },
+          }
         }
-        return modifiedHitRule
-      }
 
-      return hitRule
-    })
+        if (
+          hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true
+        ) {
+          const modifiedHitRule = {
+            ...hitRule,
+            ruleHitMeta: {
+              ...hitRule.ruleHitMeta,
+              falsePositiveDetails: {
+                ...hitRule.ruleHitMeta.falsePositiveDetails,
+                confidenceScore: random(59, 82),
+              },
+            },
+          }
+          return modifiedHitRule
+        }
+
+        return hitRule
+      })
 
     const timestamp = sampleTimestamp()
 
@@ -188,7 +208,9 @@ const generator = function* (): Generator<InternalTransaction> {
         arsScore: Number(randomFloat(100).toFixed(2)),
         components: sampleTransactionRiskScoreComponents(transaction),
       },
-      executedRules: transactionRules(),
+      executedRules: transactionRules(
+        randomHitRules.map((r) => r.ruleInstanceId)
+      ),
       originAmountDetails: {
         country: sampleCountry(),
         transactionCurrency: sampleCurrency(),

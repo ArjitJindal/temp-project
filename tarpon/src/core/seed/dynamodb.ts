@@ -30,6 +30,8 @@ import {
 } from '@/core/seed/data/ars_scores'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { dangerouslyDeletePartition } from '@/utils/dynamodb'
+import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
+import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -56,7 +58,8 @@ export async function seedDynamo(
     StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME
   )
   logger.info('Create rule instances')
-  for (const ruleInstance of ruleInstances()) {
+  const allRuleInstances = ruleInstances()
+  for (const ruleInstance of allRuleInstances) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)
   }
 
@@ -70,6 +73,10 @@ export async function seedDynamo(
     ) as UserWithRulesResult | BusinessWithRulesResult
 
     await userRepo.saveUser(dynamoUser, type)
+    await ruleStatsHandler(tenantId, user?.executedRules ?? [], {
+      dynamoDb,
+      mongoDb: await getMongoDbClient(),
+    })
   }
 
   logger.info('Creating lists...')
@@ -89,6 +96,10 @@ export async function seedDynamo(
       status: getAggregatedRuleStatus(publicTxn.hitRules),
       executedRules: publicTxn.executedRules,
       hitRules: publicTxn.hitRules,
+    })
+    await ruleStatsHandler(tenantId, txn?.executedRules ?? [], {
+      dynamoDb,
+      mongoDb: await getMongoDbClient(),
     })
   }
   logger.info('Clear risk factors')

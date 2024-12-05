@@ -70,8 +70,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'INACTIVE',
       createdAt: 1726843563672,
       updatedAt: 1729057178462,
-      runCount: 8,
-      hitCount: 2,
       casePriority: 'P1',
       falsePositiveCheckEnabled: false,
       nature: 'AML',
@@ -96,12 +94,71 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         alertCreatedFor: ['USER'],
       },
       checksFor: ['1st transaction'],
-      createdBy: 'auth0|6214112c1f466500695754f9',
+      createdBy: getRandomUser().assigneeUserId,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     },
   ]
-
+  const r1RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-1.8',
+      type: 'TRANSACTION',
+      ruleId: 'R-1',
+      ruleNameAlias: 'First transaction of a user (shadow)',
+      ruleDescriptionAlias: 'First transaction of a user (shadow)',
+      filters: getRuleFilter(),
+      parameters: {
+        transactionAmountThreshold: {
+          USD: getRandomIntInclusive(100, 50000),
+        },
+      } as TransactionAmountRuleParameters,
+      riskLevelParameters: {
+        VERY_LOW: getRuleFilter(),
+        VERY_HIGH: getRuleFilter(),
+        HIGH: getRuleFilter(),
+        MEDIUM: getRuleFilter(),
+        LOW: getRuleFilter(),
+      },
+      action: 'FLAG',
+      riskLevelActions: {
+        VERY_LOW: 'FLAG',
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+      },
+      status: 'ACTIVE',
+      createdAt: 1726843563672,
+      updatedAt: 1729057178462,
+      casePriority: 'P1',
+      falsePositiveCheckEnabled: false,
+      nature: 'AML',
+      labels: [],
+      riskLevelsTriggersOnHit: {
+        VERY_LOW: {
+          usersToCheck: 'ALL',
+          kycStatusDetails: { reason: 'Fake document', status: 'SUCCESSFUL' },
+        },
+        VERY_HIGH: { usersToCheck: 'ALL' },
+        HIGH: { usersToCheck: 'ALL' },
+        MEDIUM: { usersToCheck: 'ALL' },
+        LOW: { usersToCheck: 'ALL' },
+      },
+      alertConfig: {
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
+        frozenStatuses: [],
+        alertCreatedFor: ['USER'],
+      },
+      checksFor: ['1st transaction'],
+      createdBy: getRandomUser().assigneeUserId,
+      ruleExecutionMode: 'SYNC',
+      ruleRunMode: 'SHADOW',
+    },
+  ]
   const r2RuleInstance: RuleInstance[] = [
     {
       id: 'Es4Zmo',
@@ -165,8 +222,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 1848,
-      hitCount: 1434,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -262,8 +317,102 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604237253,
       updatedAt: 1688115753059,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 1848,
-      hitCount: 8,
+      checksFor: ['Transaction amount', 'No. of transactions'],
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r8RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-8.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
+      },
+      ruleId: 'R-8',
+      casePriority: 'P2',
+      parameters: {},
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias:
+        'Too many transactions under reporting limit sent by a user.',
+      ruleDescriptionAlias:
+        '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
+      filters: {
+        lowTransactionCount: 10,
+        lowTransactionValues: {
+          USD: {
+            max: 1000,
+            min: 100,
+          },
+        },
+      } as LowValueTransactionsRuleParameters,
+      riskLevelParameters: {
+        VERY_HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        HIGH: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        MEDIUM: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+        VERY_LOW: {
+          lowTransactionCount: 10,
+          lowTransactionValues: {
+            USD: {
+              max: 10000,
+              min: 1000,
+            },
+          },
+        } as LowValueTransactionsRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604237253,
+      updatedAt: 1688115753059,
+      createdBy: getRandomUser().assigneeUserId,
       checksFor: ['Transaction amount', 'No. of transactions'],
       types: [],
       typologies: [],
@@ -330,8 +479,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 295,
-      hitCount: 102,
       checksFor: ['Username', 'User’s Y.O.B'],
       types: [],
       typologies: [],
@@ -418,8 +565,91 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 1848,
-      hitCount: 1434,
+      types: [],
+      typologies: [],
+    } as RuleInstance,
+  ]
+
+  const r30RuleInstanceShadow: RuleInstance[] = [
+    {
+      id: 'R-30.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      ruleId: 'R-30',
+      casePriority: 'P1',
+      checksFor: ['No. of transactions', 'Time'],
+      parameters: {
+        transactionsLimit: 10,
+        timeWindow: {
+          units: 1,
+          granularity: 'day',
+        },
+        uniqueUsersCountThreshold: 10,
+      } as TransactionsVelocityRuleParameters,
+      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'High velocity user',
+      ruleDescriptionAlias: 'High velocity user',
+      alertConfig: {
+        slaPolicies: [pickRandom(getSLAPolicies()).id],
+      },
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        HIGH: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        MEDIUM: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        LOW: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+        VERY_LOW: {
+          transactionsLimit: 15,
+          timeWindow: {
+            units: 1,
+            granularity: 'day',
+          },
+          uniqueUsersCountThreshold: 15,
+        } as TransactionsVelocityRuleParameters,
+      },
+      riskLevelActions: {
+        VERY_HIGH: 'FLAG',
+        HIGH: 'FLAG',
+        MEDIUM: 'FLAG',
+        LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
+      },
+      nature: 'AML',
+      labels: [],
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -494,8 +724,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 603,
-      hitCount: 340,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -568,8 +796,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'INACTIVE',
       createdAt: 1727965523023,
       updatedAt: 1728987799955,
-      runCount: 28,
-      hitCount: 0,
       casePriority: 'P1',
       falsePositiveCheckEnabled: false,
       nature: 'AML',
@@ -587,7 +813,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         alertCreatedFor: ['USER'],
       },
       checksFor: [],
-      createdBy: 'auth0|66f2d6922602064b5b571da7',
+      createdBy: getRandomUser().assigneeUserId,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
@@ -986,15 +1212,13 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'INACTIVE',
       createdAt: 1729169864382,
       updatedAt: 1731388464109,
-      runCount: 968,
-      hitCount: 0,
       casePriority: 'P1',
       falsePositiveCheckEnabled: true,
       nature: 'FRAUD',
       labels: [],
       alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
       checksFor: ['Transaction amount', 'Time'],
-      createdBy: 'auth0|66f2d81023d5f39e3b818be3',
+      createdBy: getRandomUser().assigneeUserId,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
@@ -1073,8 +1297,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 340,
-      hitCount: 240,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -1438,15 +1660,13 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'INACTIVE',
       createdAt: 1729498903527,
       updatedAt: 1730824618379,
-      runCount: 968,
-      hitCount: 0,
       casePriority: 'P1',
       falsePositiveCheckEnabled: false,
       nature: 'FRAUD',
       labels: [],
       alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
       checksFor: ['No. of transactions', 'Time'],
-      createdBy: 'auth0|66f2d81023d5f39e3b818be3',
+      createdBy: getRandomUser().assigneeUserId,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
@@ -1518,147 +1738,79 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
       createdBy: getRandomUser().assigneeUserId,
-      runCount: 340,
-      hitCount: 240,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
 
-  const r652RuleInstance = [
+  const r169RuleInstanceShadow: RuleInstance[] = [
     {
-      id: 'pnb-internal-trigger-incomplete-risk-levels',
-      type: 'USER',
-      ruleId: 'RC-652',
-      ruleNameAlias: 'PNB - Trigger to return incomplete risk levels',
-      ruleDescriptionAlias: 'Trigger to return incomplete risk levels',
-      logic: { and: [{ '!': { var: 'entity:user_id' } }] },
-      riskLevelLogic: {
-        VERY_LOW: { and: [{ '!': { var: 'entity:user_id' } }] },
-        VERY_HIGH: { and: [{ '!': { var: 'entity:user_id' } }] },
-        HIGH: { and: [{ '!': { var: 'entity:user_id' } }] },
-        MEDIUM: {
-          and: [
-            {
-              or: [
-                { '==': [{ var: 'entity:user_previous_cra_level' }, null] },
-                { '==': [{ var: 'entity:user_previous_cra_level' }, 'LOW'] },
-                {
-                  '==': [{ var: 'entity:user_previous_cra_level' }, 'VERY_LOW'],
-                },
-                {
-                  some: [
-                    { var: 'entity:consumer_user_tags__sender' },
-                    {
-                      and: [
-                        { '==': [{ var: 'key' }, 'RISK_LEVEL_STATUS'] },
-                        { '==': [{ var: 'value' }, 'Incomplete'] },
-                        { '==': [{ var: 'isEditable' }, true] },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        LOW: {
-          and: [
-            {
-              or: [
-                { '==': [{ var: 'entity:user_previous_cra_level' }, null] },
-                {
-                  '==': [{ var: 'entity:user_previous_cra_level' }, 'VERY_LOW'],
-                },
-                {
-                  some: [
-                    { var: 'entity:consumer_user_tags__sender' },
-                    {
-                      and: [
-                        { '==': [{ var: 'key' }, 'RISK_LEVEL_STATUS'] },
-                        { '==': [{ var: 'value' }, 'Incomplete'] },
-                        { '==': [{ var: 'isEditable' }, true] },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
+      id: 'R-169.1',
+      ruleRunMode: 'SHADOW',
+      ruleExecutionMode: 'SYNC',
+      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      alertConfig: {
+        slaPolicies: [
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+          pickRandom(getSLAPolicies()).id,
+        ],
       },
-      logicEntityVariables: [
-        {
-          key: 'entity:consumer_user_tags__sender',
-          entityKey: 'CONSUMER_USER:tags__SENDER',
-        },
-        {
-          key: 'entity:user_previous_cra_level',
-          entityKey: 'USER:userPreviousCRALevel__SENDER',
-        },
-        { key: 'entity:user_id', entityKey: 'CONSUMER_USER:userId__SENDER' },
+      ruleId: 'R-169',
+      casePriority: 'P1',
+      parameters: {
+        fuzziness: 20,
+        ongoingScreening: false,
+        screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        resolveIban: false,
+      } as SanctionsCounterPartyRuleParameters,
+      action: 'SUSPEND',
+      checksFor: [
+        RuleChecksForField.CounterpartyUsername,
+        RuleChecksForField.CounterpartyBankName,
       ],
-      logicAggregationVariables: [],
-      action: 'FLAG',
+      type: 'TRANSACTION',
+      ruleNameAlias: 'Tx’s counterparty screening',
+      ruleDescriptionAlias:
+        'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
+      filters: {},
+      riskLevelParameters: {
+        VERY_HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+        HIGH: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+        MEDIUM: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+        LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+        VERY_LOW: {
+          fuzziness: 20,
+          screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
+        } as SanctionsCounterPartyRuleParameters,
+      },
       riskLevelActions: {
-        VERY_LOW: 'FLAG',
         VERY_HIGH: 'FLAG',
         HIGH: 'FLAG',
         MEDIUM: 'FLAG',
         LOW: 'FLAG',
+        VERY_LOW: 'FLAG',
       },
-      status: 'ACTIVE',
-      createdAt: 1732028340085,
-      updatedAt: 1732028351636,
-      runCount: 0,
-      hitCount: 0,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
+      nature: 'SCREENING',
       labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: {
-          usersToCheck: 'ALL',
-          tags: [
-            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
-          ],
-        },
-        VERY_HIGH: {
-          usersToCheck: 'ALL',
-          tags: [
-            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
-          ],
-        },
-        HIGH: {
-          usersToCheck: 'ALL',
-          tags: [
-            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
-          ],
-        },
-        MEDIUM: {
-          usersToCheck: 'ALL',
-          tags: [
-            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
-          ],
-        },
-        LOW: {
-          usersToCheck: 'ALL',
-          tags: [
-            { isEditable: true, value: 'Incomplete', key: 'RISK_LEVEL_STATUS' },
-          ],
-        },
-      },
-      alertConfig: {
-        frozenStatuses: [],
-        alertCreationInterval: { type: 'INSTANTLY' },
-        alertCreatedFor: ['USER'],
-      },
-      checksFor: [],
-      userRuleRunCondition: { entityUpdated: true },
-      logicMachineLearningVariables: [],
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-      alertCreationOnHit: false,
+      status: 'ACTIVE',
+      createdAt: 1685604282954,
+      updatedAt: 1688114634781,
+      createdBy: getRandomUser().assigneeUserId,
+      types: [],
+      typologies: [],
     } as RuleInstance,
   ]
 
@@ -1674,13 +1826,18 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r121RuleInstance,
     ...r128RuleInstance,
     ...r169RuleInstance,
-    ...r652RuleInstance,
+    ...r1RuleInstanceShadow,
+    ...r169RuleInstanceShadow,
+    ...r8RuleInstanceShadow,
+    ...r30RuleInstanceShadow,
   ]
 
   return data
 })
 
-export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
+export const transactionRules: (
+  hitRuleIds?: string[]
+) => ExecutedRulesResult[] = memoize((hitRuleIds) => {
   return ruleInstances()
     .filter((ri) => {
       return ri.type === 'TRANSACTION'
@@ -1693,7 +1850,7 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
         ruleId: ri.ruleId as string,
         nature: ri.nature,
         ruleDescription: ri.ruleDescriptionAlias as string,
-        ruleHit: true,
+        ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
         ruleHitMeta: {
           falsePositiveDetails:
             random(0, 10) < 4
@@ -1706,31 +1863,32 @@ export const transactionRules: () => ExecutedRulesResult[] = memoize(() => {
     )
 })
 
-export const userRules: () => ExecutedRulesResult[] = memoize(() => {
-  return ruleInstances()
-    .filter((ri) => {
-      return ri.type === 'USER'
-    })
-    .map(
-      (ri, i): ExecutedRulesResult => ({
-        ruleInstanceId: ri.id as string,
-        ruleName: ri.ruleNameAlias as string,
-        ruleAction: ri.action as RuleAction,
-        ruleId: ri.ruleId as string,
-        nature: ri.nature,
-        ruleDescription: ri.ruleDescriptionAlias as string,
-        ruleHit: true,
-        ruleHitMeta: {
-          falsePositiveDetails:
-            random(0, 10) < 2
-              ? { isFalsePositive: true, confidenceScore: random(59, 82) }
-              : { isFalsePositive: false, confidenceScore: 100 },
-          hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
-        },
-        isShadow: isShadowRule(ri),
+export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
+  memoize((hitRuleIds) => {
+    return ruleInstances()
+      .filter((ri) => {
+        return ri.type === 'USER'
       })
-    )
-})
+      .map(
+        (ri, i): ExecutedRulesResult => ({
+          ruleInstanceId: ri.id as string,
+          ruleName: ri.ruleNameAlias as string,
+          ruleAction: ri.action as RuleAction,
+          ruleId: ri.ruleId as string,
+          nature: ri.nature,
+          ruleDescription: ri.ruleDescriptionAlias as string,
+          ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
+          ruleHitMeta: {
+            falsePositiveDetails:
+              random(0, 10) < 2
+                ? { isFalsePositive: true, confidenceScore: random(59, 82) }
+                : { isFalsePositive: false, confidenceScore: 100 },
+            hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
+          },
+          isShadow: isShadowRule(ri),
+        })
+      )
+  })
 
 export function randomTransactionRules(): ExecutedRulesResult[] {
   return cloneDeep(randomSubset(transactionRules()))

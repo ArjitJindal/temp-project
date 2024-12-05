@@ -317,6 +317,11 @@ export function sampleConsumerUser() {
   const countryOfNationality = pickRandom(COUNTRY_CODES)
   const timestamp = sampleTimestamp(3600 * 24 * 365 * 1000)
   const domain = name.firstName.toLowerCase().replace(' ', '').replace('&', '')
+  const hitRules = getUserRules(
+    userId,
+    `${name.firstName} ${name.middleName} ${name.lastName}`,
+    'CONSUMER'
+  )
   const user: InternalConsumerUser = {
     type: 'CONSUMER' as const,
     userId,
@@ -362,17 +367,8 @@ export function sampleConsumerUser() {
     pepStatus: Array.from({ length: Math.ceil(randomInt(3)) }).map(() =>
       randomPepStatus()
     ),
-    executedRules: userRules().map((rule) => {
-      return {
-        ...rule,
-        ruleHit: userCounter % 2 ? true : false,
-      }
-    }),
-    hitRules: getUserRules(
-      userId,
-      `${name.firstName} ${name.middleName} ${name.lastName}`,
-      'CONSUMER'
-    ),
+    executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
+    hitRules,
     createdTimestamp: timestamp,
     updatedAt: timestamp,
     createdAt: timestamp,
@@ -450,6 +446,7 @@ export function sampleBusinessUser({
   const paymentMethod = samplePaymentDetails()
 
   const timestamp = sampleTimestamp(3600 * 365 * 24 * 1000)
+  const hitRules = getUserRules(userId, name, 'BUSINESS')
   const user: InternalBusinessUser = {
     type: 'BUSINESS',
     userId: userId,
@@ -461,8 +458,8 @@ export function sampleBusinessUser({
       sampleTag(),
     ],
     userStateDetails: sampleUserStateDetails(),
-    executedRules: userRules(),
-    hitRules: getUserRules(userId, name, 'BUSINESS'),
+    executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
+    hitRules,
     updatedAt: timestamp,
     comments: [],
     kycStatusDetails: sampleKycStatusDetails(),

@@ -451,7 +451,7 @@ async function transactionEventHandler(
   )
 }
 
-async function ruleStatsHandler(
+export async function ruleStatsHandler(
   tenantId: string,
   executedRules: Array<ExecutedRulesResult>,
   dbClients: DbClients
