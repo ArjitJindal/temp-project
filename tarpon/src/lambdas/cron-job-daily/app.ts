@@ -47,6 +47,11 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
             from: dayjs().subtract(1, 'day').toISOString(),
           },
         })
+      } else {
+        return sendBatchJobCommand({
+          type: 'ONGOING_SCREENING_USER_RULE',
+          tenantId: tenant.tenant.id,
+        })
       }
     })
   )
