@@ -71,12 +71,11 @@ export class SanctionsSearchRepository {
       },
     }
 
-    if (envIs('local') || envIs('test')) {
-      await this.updateMessageSync(filter, updateMessage)
-      return
-    }
-
-    if (getTriggerSource() !== 'PUBLIC_API') {
+    if (
+      envIs('local', 'test') ||
+      getTriggerSource() !== 'PUBLIC_API' ||
+      provider === 'comply-advantage'
+    ) {
       await this.updateMessageSync(filter, updateMessage)
       return
     }
