@@ -6,6 +6,7 @@ import { SQSBatchItemFailure } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { UserRepository } from '../users/repositories/user-repository'
+import { AsyncRuleRecord } from '../rules-engine/utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BackfillAsyncRuleRuns } from '@/@types/batch-job'
@@ -21,6 +22,8 @@ import { Transaction } from '@/@types/openapi-public/Transaction'
 import { acquireInMemoryLocks } from '@/utils/lock'
 import { logger } from '@/core/logger'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { Business } from '@/@types/openapi-internal/Business'
+import { User } from '@/@types/openapi-public/User'
 
 const lambdaClient = new LambdaClient()
 
@@ -33,6 +36,12 @@ const SECOND_RUNTIMSTAMPS = {
   // Taken from second run logs
   start: 1733133446585,
   end: 1733137749632,
+}
+
+const THIRD_RUNTIMSTAMPS = {
+  // Taken from third run logs
+  start: 1733413291845,
+  end: 1733419435308,
 }
 
 export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
@@ -100,6 +109,12 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
                     $lte: SECOND_RUNTIMSTAMPS.end,
                   },
                 },
+                {
+                  executedAt: {
+                    $gte: THIRD_RUNTIMSTAMPS.start,
+                    $lte: THIRD_RUNTIMSTAMPS.end,
+                  },
+                },
               ],
             },
           ],
@@ -124,7 +139,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     for await (const transaction of targetTransactions) {
       batchTransactions.push(transaction)
       count++
-      if (batchTransactions.length >= 10000) {
+      if (batchTransactions.length >= 1000) {
         await this.processBatchTransactions(batchTransactions)
         batchTransactions = []
       }
@@ -167,19 +182,20 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       this.userLoader(transaction.originUserId),
       this.userLoader(transaction.destinationUserId),
     ])
+    const payload: AsyncRuleRecord = {
+      tenantId: this.tenantId,
+      type: 'TRANSACTION',
+      transaction,
+      senderUser: originUser as User | Business | undefined,
+      receiverUser: destinationUser as User | Business | undefined,
+    }
     const response = await lambdaClient.send(
       new InvokeCommand({
         FunctionName: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
         Payload: JSON.stringify({
           Records: [
             {
-              body: JSON.stringify({
-                tenantId: this.tenantId,
-                type: 'TRANSACTION',
-                transaction,
-                originUser,
-                destinationUser,
-              }),
+              body: JSON.stringify(payload),
             },
           ],
         }),
