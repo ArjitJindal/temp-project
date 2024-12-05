@@ -1,8 +1,5 @@
 import React from 'react';
-import { getFlatSanctionsDetails } from './helpers';
 import ApprovalDetails from './RuleAndCaseDetails';
-import ScreeningMatchList from '@/components/ScreeningMatchList';
-import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
 import { TRANSACTIONS_ITEM } from '@/utils/queries/keys';
 import { useQuery } from '@/utils/queries/hooks';
@@ -15,7 +12,6 @@ interface Props {
 
 export default function ExpandedRowRenderer(props: Props) {
   const { transactionId } = props;
-  const settings = useSettings();
   const api = useApi();
   const queryResult = useQuery(TRANSACTIONS_ITEM(transactionId), () =>
     api.getTransaction({ transactionId }),
@@ -24,11 +20,7 @@ export default function ExpandedRowRenderer(props: Props) {
   return (
     <AsyncResourceRenderer<InternalTransaction> resource={queryResult.data}>
       {(transaction) => {
-        if (settings.isPaymentApprovalEnabled && transaction?.status === 'SUSPEND') {
-          return <ApprovalDetails transaction={transaction} action={'SUSPEND'} />;
-        }
-
-        return <ScreeningMatchList details={getFlatSanctionsDetails(transaction)} />;
+        return <ApprovalDetails transaction={transaction} action={'SUSPEND'} />;
       }}
     </AsyncResourceRenderer>
   );
