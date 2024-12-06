@@ -87,18 +87,20 @@ export default function Pagination(props: Props) {
           current={current}
           onChange={onChange}
         />
-        <Select<number>
-          mode="SINGLE"
-          onChange={(value) => {
-            onChange(1, value ?? DEFAULT_PAGE_SIZE);
-          }}
-          value={pageSize}
-          options={PAGE_SIZE_OPTIONS.map((pageSize) => ({
-            value: pageSize,
-            label: `${pageSize} / page`,
-          }))}
-          dropdownPlacement="topRight"
-        />
+        {totalPages == null && (
+          <Select<number>
+            mode="SINGLE"
+            onChange={(value) => {
+              onChange(1, value ?? DEFAULT_PAGE_SIZE);
+            }}
+            value={pageSize}
+            options={PAGE_SIZE_OPTIONS.map((pageSize) => ({
+              value: pageSize,
+              label: `${pageSize} / page`,
+            }))}
+            dropdownPlacement="topRight"
+          />
+        )}
       </div>
     </div>
   );
