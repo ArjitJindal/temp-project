@@ -172,8 +172,8 @@ export class TransactionService {
           rule.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
         )
         .flat().length,
-      destinationUser: { id: transaction.originUserId },
-      originUser: { id: transaction.destinationUserId },
+      destinationUser: { id: transaction.destinationUserId },
+      originUser: { id: transaction.originUserId },
       productType: transaction.productType,
       reference: transaction.reference,
       status: transaction.status,
