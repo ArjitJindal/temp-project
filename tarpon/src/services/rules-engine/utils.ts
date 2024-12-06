@@ -508,19 +508,19 @@ export async function sendAsyncRuleTasks(
       )
     } else if (task.type === 'TRANSACTION_BATCH') {
       messageDeduplicationId = sanitizeDeduplicationId(
-        `T-${task.transaction.transactionId}`
+        `TB-${task.transaction.transactionId}`
       )
     } else if (task.type === 'TRANSACTION_EVENT_BATCH') {
       messageDeduplicationId = sanitizeDeduplicationId(
-        `TE-${task.transactionEvent.transactionId}-${
+        `TEB-${task.transactionEvent.transactionId}-${
           task.transactionEvent.eventId ?? task.transactionEvent.timestamp
         }`
       )
     } else if (task.type === 'USER_BATCH') {
-      messageDeduplicationId = sanitizeDeduplicationId(`U-${task.user.userId}`)
+      messageDeduplicationId = sanitizeDeduplicationId(`UB-${task.user.userId}`)
     } else if (task.type === 'USER_EVENT_BATCH') {
       messageDeduplicationId = sanitizeDeduplicationId(
-        `UE-${task.userEvent.userId}-${
+        `UEB-${task.userEvent.userId}-${
           task.userEvent.eventId ?? task.userEvent.timestamp
         }`
       )

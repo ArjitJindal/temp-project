@@ -225,7 +225,7 @@ export type BackfillAsyncRuleRuns = {
   tenantId: string
   parameters: {
     concurrency: number
-    type: 'TRANSACTION' | 'USER'
+    type: 'RERUN' | 'NOT_RUN'
     startTimestamp?: number
     affectedExecutionRanges?: {
       start: number

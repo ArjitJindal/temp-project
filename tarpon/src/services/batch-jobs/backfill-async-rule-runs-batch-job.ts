@@ -32,6 +32,8 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
   private startTimestamp?: number
   private concurrency!: number
   private mongoDb!: MongoClient
+  private type!: 'RERUN' | 'NOT_RUN'
+
   protected async run(
     job: BackfillAsyncRuleRuns & { jobId: string }
   ): Promise<void> {
@@ -42,6 +44,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     this.tenantId = tenantId
     this.startTimestamp = startTimestamp
     this.concurrency = concurrency
+    this.type = type
 
     const lastCompletedTimestamp =
       (await getMigrationLastCompletedTimestamp(this.jobId)) ?? 0
@@ -55,7 +58,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
         (v) => v.type === 'TRANSACTION' && v.ruleExecutionMode === 'ASYNC'
       )
       .map((v) => v.id as string)
-    if (type === 'TRANSACTION' && activeTxAsyncRuleIds.length > 0) {
+    if (activeTxAsyncRuleIds.length > 0) {
       await this.backfillTxAsyncRuleRuns(
         activeTxAsyncRuleIds,
         lastCompletedTimestamp,
@@ -76,25 +79,37 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     this.mongoDb = await getMongoDbClient()
     const db = this.mongoDb.db()
     const collection = db.collection(TRANSACTIONS_COLLECTION(this.tenantId))
+    const executedRules =
+      this.type === 'RERUN'
+        ? {
+            $elemMatch: {
+              $and: [
+                { ruleInstanceId: { $in: asyncRuleInstanceIds } },
+                ...(affectedExecutionRanges
+                  ? [
+                      {
+                        $or: affectedExecutionRanges?.map((range) => ({
+                          executedAt: {
+                            $gte: range.start,
+                            $lte: range.end,
+                          },
+                        })),
+                      },
+                    ]
+                  : []),
+              ],
+            },
+          }
+        : {
+            $not: {
+              $elemMatch: { ruleInstanceId: { $in: asyncRuleInstanceIds } },
+            },
+          }
     const match = {
       createdAt: {
         $gte: Math.max(this.startTimestamp ?? 0, lastCompletedTimestamp),
       },
-      executedRules: {
-        $elemMatch: {
-          $and: [
-            { ruleInstanceId: { $in: asyncRuleInstanceIds } },
-            {
-              $or: affectedExecutionRanges?.map((range) => ({
-                executedAt: {
-                  $gte: range.start,
-                  $lte: range.end,
-                },
-              })),
-            },
-          ],
-        },
-      },
+      executedRules,
     }
 
     const pendingTransactions = await collection
