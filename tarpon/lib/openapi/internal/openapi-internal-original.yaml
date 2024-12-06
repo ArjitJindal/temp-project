@@ -13283,6 +13283,7 @@ components:
         - gender
         - PEP_rank
         - associate_PEP_rank
+        - associate_screening_type
     UsersUniquesField:
       title: UsersUniquesField
       type: string

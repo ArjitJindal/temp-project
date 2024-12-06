@@ -65,6 +65,16 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   ) {
     return hits.map((hit) => {
       const matchTypes: SanctionsMatchType[] = []
+
+      if (
+        hit.associates?.length &&
+        hit.associates.some((a) =>
+          a.sanctionsSearchTypes?.some((t) => request.types?.includes(t))
+        )
+      ) {
+        matchTypes.push('associate_screening_type')
+      }
+
       if (request.documentId?.length && hit.documents?.length) {
         matchTypes.push('document_id')
       }

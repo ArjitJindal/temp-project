@@ -320,20 +320,24 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
-                {entity.associates.filter(Boolean).map(({ association, name, ranks }, i) => (
-                  <React.Fragment key={i}>
-                    {i !== 0 && ', '}
-                    <span>
-                      {name} ({association}
-                      {ranks && ranks.length > 0
-                        ? ` , PEP ranks: ${uniq(ranks)
-                            .map((r) => humanizeSnakeCase(r))
-                            .join(', ')})`
-                        : ''}
-                      )
-                    </span>
-                  </React.Fragment>
-                ))}
+                {entity.associates
+                  .filter(Boolean)
+                  .map(({ association, name, ranks, sanctionsSearchTypes }, i) => (
+                    <React.Fragment key={i}>
+                      {i !== 0 && ', '}
+                      <span>
+                        {name} ({association}
+                        {ranks && ranks.length > 0
+                          ? ` , PEP ranks: ${uniq(ranks)
+                              .map((r) => humanizeSnakeCase(r))
+                              .join(', ')})`
+                          : ''}
+                        {sanctionsSearchTypes?.length &&
+                          `, Screening types: ${sanctionsSearchTypes.join(', ')}`}
+                        )
+                      </span>
+                    </React.Fragment>
+                  ))}
               </div>
             </Form.Layout.Label>
           )}
