@@ -35,7 +35,7 @@ import { AlertListResponseItem } from '@/@types/openapi-internal/AlertListRespon
 import { AlertListResponse } from '@/@types/openapi-internal/AlertListResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
-import { getContext } from '@/core/utils/context'
+import { getContext, hasFeature } from '@/core/utils/context'
 import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
@@ -85,6 +85,47 @@ export class AlertsRepository {
   ): Promise<AlertListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    if (!hasFeature('PNB')) {
+      const pipeline = await this.getAlertsPipeline(params, {
+        hideTransactionIds: options?.hideTransactionIds,
+        countOnly: false,
+      })
+      const countPipelineResp = await this.getAlertsPipeline(params, {
+        hideTransactionIds: options?.hideTransactionIds,
+        countOnly: true,
+      })
+      pipeline.push(...paginatePipeline(params))
+      const itemsPipeline = [...pipeline]
+      const countPipeline = [...countPipelineResp]
+      countPipeline.push({
+        $limit: COUNT_QUERY_LIMIT,
+      })
+      countPipeline.push({
+        $count: 'count',
+      })
+      const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
+      const itemsPromise = cursor.toArray()
+      const countPromise = collection
+        .aggregate<{ count: number }>(countPipeline)
+        .next()
+        .then((item) => item?.count ?? 0)
+
+      const sortedSlaAlerts = await itemsPromise
+      sortedSlaAlerts.forEach((alert) => {
+        if (alert.alert?.slaPolicyDetails) {
+          alert.alert.slaPolicyDetails.sort((a, b) => {
+            const aTime = a?.elapsedTime ?? 0
+            const bTime = b?.elapsedTime ?? 0
+            return bTime - aTime
+          })
+        }
+      })
+      return {
+        total: await countPromise,
+        data: await itemsPromise,
+      }
+    }
 
     /* Getting count */
     const alertsCountPipeline = [
