@@ -64,6 +64,10 @@ describe('Escalate a case from case-details', () => {
 
   it('should escalate a case from case details and send it back', () => {
     cy.loginByRole('admin');
+    selectCase(['OPEN', 'REOPENED']);
+    escalateCase();
+
+    cy.waitNothingLoading();
     cy.visit(
       '/case-management/cases?page=1&pageSize=20&sort=-updatedAt&showCases=ALL&caseStatus=ESCALATED&assignedTo=auth0%7C66f2d9df0b24d36a04cc31a2',
     );
@@ -93,8 +97,6 @@ describe('Escalate a case from case-details', () => {
         cy.message(
           `The case status and all 'Escalated' alert statuses under it are changed to 'Open'.`,
         ).should('not.exist');
-        selectCase(['OPEN', 'REOPENED']);
-        escalateCase();
 
         // cy.checkNotification([
         //   `‘cypress+custom@flagright.com’ escalated a case ‘${caseId}’ to you.`,
