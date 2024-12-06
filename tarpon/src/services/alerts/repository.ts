@@ -208,8 +208,6 @@ export class AlertsRepository {
       nextPageAlertsPromise = collection
         .aggregate<AlertListResponseItem>(pipeline2)
         .toArray()
-    } else {
-      pipeline.push(...paginatePipeline(params))
     }
     const [alerts, nextPageAlerts] = await Promise.all([
       alertsPromise,
