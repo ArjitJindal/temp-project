@@ -2,16 +2,20 @@ import { useMemo } from 'react';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import { DashboardLatestTeamStatsItem } from '@/apis';
-import { map, QueryResult } from '@/utils/queries/types';
+import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
+import { CommonParams } from '@/components/library/Table/types';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 interface Props {
-  queryResult: QueryResult<DashboardLatestTeamStatsItem[]>;
+  queryResult: QueryResult<PaginatedData<DashboardLatestTeamStatsItem>>;
+  paginationParams: CommonParams;
+  setPaginationParams: (params: CommonParams) => void;
 }
 
 export default function LatestOverviewTable(props: Props) {
-  const { queryResult } = props;
+  const { queryResult, paginationParams, setPaginationParams } = props;
   const columns = useMemo(() => {
     const helper = new ColumnHelper<DashboardLatestTeamStatsItem>();
     return helper.list([
@@ -60,14 +64,15 @@ export default function LatestOverviewTable(props: Props) {
       columns={columns}
       rowKey="accountId"
       sizingMode="FULL_WIDTH"
+      pagination={true}
+      params={paginationParams}
+      onChangeParams={setPaginationParams}
       toolsOptions={{
         reload: false,
         setting: false,
         download: false,
       }}
-      queryResults={map(queryResult, (data) => ({
-        items: data,
-      }))}
+      queryResults={queryResult}
     />
   );
 }

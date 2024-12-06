@@ -11,7 +11,6 @@ import { QaOverviewStatsDashboardMetric } from '../../analytics/dashboard-metric
 import { QaAlertsByChecklistReasonStatsDashboardMetric } from '../../analytics/dashboard-metrics/qa-alerts-by-checklist-reason'
 import { QaAlertsByAssigneeStatsDashboardMetric } from '../../analytics/dashboard-metrics/qa-alerts-by-assignee'
 import { GranularityValuesType, TimeRange } from './types'
-import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { DashboardStatsTransactionsCountData } from '@/@types/openapi-internal/DashboardStatsTransactionsCountData'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
@@ -22,7 +21,6 @@ import { DashboardStatsClosingReasonDistributionStats } from '@/@types/openapi-i
 import { DashboardStatsAlertPriorityDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertPriorityDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { UserStats } from '@/services/analytics/dashboard-metrics/user-stats'
-import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
 import { DashboardStatsUsersStats } from '@/@types/openapi-internal/DashboardStatsUsersStats'
 import { DashboardStatsQaAlertsCountByRuleData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByRuleData'
 import { DashboardStatsQaOverview } from '@/@types/openapi-internal/DashboardStatsQaOverview'
@@ -31,7 +29,9 @@ import { DashboardStatsQaAlertsStatsByChecklistReasonData } from '@/@types/opena
 import { DashboardStatsQaAlertsCountByAssigneeData } from '@/@types/openapi-internal/DashboardStatsQaAlertsCountByAssigneeData'
 import { DashboardStatsRulesCountResponse } from '@/@types/openapi-internal/DashboardStatsRulesCountResponse'
 import { TeamSLAStatsDashboardMetric } from '@/services/analytics/dashboard-metrics/sla-team-stats'
-import { DashboardStatsTeamSLAItem } from '@/@types/openapi-internal/DashboardStatsTeamSLAItem'
+import { DashboardStatsTeamSLAItemResponse } from '@/@types/openapi-internal/DashboardStatsTeamSLAItemResponse'
+import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardLatestTeamStatsItemResponse'
+import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 
 @traceable
 export class DashboardStatsRepository {
@@ -122,26 +122,37 @@ export class DashboardStatsRepository {
     startTimestamp?: number,
     endTimestamp?: number,
     status?: (CaseStatus | AlertStatus)[],
-    accountIds?: Array<string>
-  ): Promise<DashboardTeamStatsItem[]> {
+    accountIds?: Array<string>,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardTeamStatsItemResponse> {
     return TeamStatsDashboardMetric.get(
       this.tenantId,
       scope,
       startTimestamp,
       endTimestamp,
       status,
-      accountIds
+      accountIds,
+      pageSize,
+      page
     )
   }
 
   public async getSLATeamStatistics(
     startTimestamp?: number,
-    endTimestamp?: number
-  ): Promise<DashboardStatsTeamSLAItem[]> {
-    return TeamSLAStatsDashboardMetric.get(this.tenantId, {
-      startTimestamp,
-      endTimestamp,
-    })
+    endTimestamp?: number,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardStatsTeamSLAItemResponse> {
+    return TeamSLAStatsDashboardMetric.get(
+      this.tenantId,
+      {
+        startTimestamp,
+        endTimestamp,
+      },
+      pageSize,
+      page
+    )
   }
 
   public async getUserTimewindowStats(
@@ -304,9 +315,17 @@ export class DashboardStatsRepository {
 
   public async getLatestTeamStatistics(
     scope: 'CASES' | 'ALERTS',
-    accountIds?: Array<string>
-  ): Promise<DashboardLatestTeamStatsItem[]> {
-    return LatestTeamStatsDashboardMetric.get(this.tenantId, scope, accountIds)
+    accountIds?: Array<string>,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardLatestTeamStatsItemResponse> {
+    return LatestTeamStatsDashboardMetric.get(
+      this.tenantId,
+      scope,
+      accountIds,
+      pageSize,
+      page
+    )
   }
 
   public async getQaAlertsByRuleHitStats(

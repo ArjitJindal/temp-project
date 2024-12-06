@@ -11,6 +11,7 @@ import { traceable } from '@/core/xray'
 import { DashboardLatestTeamStatsItem } from '@/@types/openapi-internal/DashboardLatestTeamStatsItem'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
+import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardLatestTeamStatsItemResponse'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
 
 @traceable
@@ -430,8 +431,10 @@ export class LatestTeamStatsDashboardMetric {
   public static async get(
     tenantId: string,
     scope: 'CASES' | 'ALERTS',
-    accountIds?: Array<string>
-  ): Promise<DashboardLatestTeamStatsItem[]> {
+    accountIds?: Array<string>,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardLatestTeamStatsItemResponse> {
     const db = await getMongoDbClientDb()
     const collectionName =
       scope === 'ALERTS'
@@ -446,7 +449,7 @@ export class LatestTeamStatsDashboardMetric {
       matchConditions.push({ accountId: { $in: accountIds } })
     }
 
-    const pipeline = [
+    const basePipeline = [
       ...(matchConditions.length > 0
         ? [{ $match: { $and: matchConditions } }]
         : []),
@@ -467,18 +470,39 @@ export class LatestTeamStatsDashboardMetric {
       },
     ]
 
-    const result = await collection
+    const pipeline = [
+      {
+        $facet: {
+          paginatedData: [
+            ...basePipeline,
+            { $sort: { accountId: 1 } },
+            ...(pageSize && page
+              ? [{ $skip: (page - 1) * pageSize }, { $limit: pageSize }]
+              : []),
+          ],
+          totalCount: [...basePipeline, { $count: 'count' }],
+        },
+      },
+    ]
+
+    const [result] = await collection
       .aggregate<{
-        role: string
-        accountId: string
-        open: number
-        inReview: number
-        inProgress: number
-        escalated: number
-        onHold: number
+        paginatedData: {
+          role: string
+          accountId: string
+          open: number
+          inReview: number
+          inProgress: number
+          escalated: number
+          onHold: number
+        }[]
+        totalCount: { count: number }[]
       }>(pipeline, { allowDiskUse: true })
       .toArray()
 
-    return result
+    return {
+      items: result?.paginatedData ?? [],
+      total: result?.totalCount[0]?.count ?? 0,
+    }
   }
 }

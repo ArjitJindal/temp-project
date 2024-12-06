@@ -1,9 +1,11 @@
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
 import { DashboardTeamStatsItem } from '@/apis';
-import { map, QueryResult } from '@/utils/queries/types';
+import { QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
+import { CommonParams } from '@/components/library/Table/types';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 const helper = new ColumnHelper<DashboardTeamStatsItem>();
 
@@ -58,12 +60,14 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
 };
 
 interface Props {
-  queryResult: QueryResult<DashboardTeamStatsItem[]>;
+  queryResult: QueryResult<PaginatedData<DashboardTeamStatsItem>>;
   scope: 'CASES' | 'ALERTS';
+  paginationParams: CommonParams;
+  setPaginationParams: (paginationParams: CommonParams) => void;
 }
 
 export default function AccountsStatisticsTable(props: Props) {
-  const { queryResult, scope } = props;
+  const { queryResult, scope, paginationParams, setPaginationParams } = props;
 
   return (
     <QueryResultsTable<DashboardTeamStatsItem>
@@ -75,9 +79,10 @@ export default function AccountsStatisticsTable(props: Props) {
         setting: false,
         download: false,
       }}
-      queryResults={map(queryResult, (data) => ({
-        items: data,
-      }))}
+      pagination={true}
+      params={paginationParams}
+      onChangeParams={setPaginationParams}
+      queryResults={queryResult}
     />
   );
 }

@@ -6,6 +6,8 @@ import { DashboardLatestTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { NUMBER } from '@/components/library/Table/standardDataTypes';
+import { PaginatedData } from '@/utils/queries/hooks';
+import { CommonParams } from '@/components/library/Table/types';
 
 type AggregatedLatestTeamStats = {
   role: string;
@@ -18,14 +20,16 @@ type AggregatedLatestTeamStats = {
 };
 
 interface Props {
-  queryResult: QueryResult<DashboardLatestTeamStatsItem[]>;
+  queryResult: QueryResult<PaginatedData<DashboardLatestTeamStatsItem>>;
+  paginationParams: CommonParams;
+  setPaginationParams: (paginationParams: CommonParams) => void;
 }
 
 function updateQueryResult(
-  queryResult: QueryResult<DashboardLatestTeamStatsItem[]>,
+  queryResult: QueryResult<PaginatedData<DashboardLatestTeamStatsItem>>,
 ): QueryResult<AggregatedLatestTeamStats[]> {
   return map(queryResult, (data) => {
-    const groupedByRole = groupBy(data, 'role');
+    const groupedByRole = groupBy(data.items, 'role');
 
     return Object.entries(groupedByRole).map(([role, users]) => ({
       role,
@@ -40,7 +44,7 @@ function updateQueryResult(
 }
 
 export default function CompositeLatestTeamOverview(props: Props) {
-  const { queryResult } = props;
+  const { queryResult, paginationParams, setPaginationParams } = props;
   const columns = useMemo(() => {
     const helper = new ColumnHelper<AggregatedLatestTeamStats>();
     return helper.list([
@@ -92,12 +96,20 @@ export default function CompositeLatestTeamOverview(props: Props) {
         setting: false,
         download: false,
       }}
+      pagination={true}
+      params={paginationParams}
+      onChangeParams={setPaginationParams}
       queryResults={map(updateQueryResult(queryResult), (data) => ({
         items: data,
       }))}
       renderExpanded={(item) => (
         <LatestOverviewTable
-          queryResult={map(queryResult, (data) => data.filter((user) => user.role === item.role))}
+          queryResult={map(queryResult, (data) => ({
+            items: data.items.filter((user) => user.role === item.role),
+            total: data.items.filter((user) => user.role === item.role).length,
+          }))}
+          paginationParams={paginationParams}
+          setPaginationParams={setPaginationParams}
         />
       )}
     />

@@ -33,8 +33,9 @@ test('Empty db', async () => {
   const TENANT_ID = getTestTenantId()
   const statsRepository = await getStatsRepo(TENANT_ID)
   await statsRepository.refreshTeamStats()
-  const stats = await statsRepository.getSLATeamStatistics()
-  expect(stats).toEqual([])
+  const { items, total } = await statsRepository.getSLATeamStatistics()
+  expect(items).toEqual([])
+  expect(total).toBe(0)
 })
 
 describe('SLA team stats', () => {
@@ -73,8 +74,8 @@ describe('SLA team stats', () => {
     }
     await caseRepository.addCaseMongo(caseEntity)
     await statsRepository.refreshSLATeamStats()
-    const stats = await statsRepository.getSLATeamStatistics()
-    expect(stats).toEqual(
+    const { items, total } = await statsRepository.getSLATeamStatistics()
+    expect(items).toEqual(
       [
         {
           accountId: TEST_ACCOUNT_ID_1,
@@ -84,6 +85,7 @@ describe('SLA team stats', () => {
         },
       ].sort()
     )
+    expect(total).toBe(1)
   })
   test('SLA stats for multiple alerts and multiple assignee with timeRanges', async () => {
     const TENANT_ID = getTestTenantId()
@@ -194,8 +196,8 @@ describe('SLA team stats', () => {
     }
     await caseRepository.addCaseMongo(caseEntity2)
     await statsRepository.refreshSLATeamStats()
-    const stats = await statsRepository.getSLATeamStatistics()
-    expect(sortBy(stats, 'accountId')).toEqual(
+    const { items, total } = await statsRepository.getSLATeamStatistics()
+    expect(sortBy(items, 'accountId')).toEqual(
       sortBy(
         [
           {
@@ -214,12 +216,14 @@ describe('SLA team stats', () => {
         'accountId'
       )
     )
+    expect(total).toBe(2)
     /* Check Time range query */
-    const timeBoundStats = await statsRepository.getSLATeamStatistics(
-      dayjs('2022-01-31T00:00:00.000Z').valueOf(),
-      dayjs('2022-02-01T00:00:00.000Z').valueOf()
-    )
-    expect(timeBoundStats).toEqual([
+    const { items: timeBoundItems, total: timeBoundTotal } =
+      await statsRepository.getSLATeamStatistics(
+        dayjs('2022-01-31T00:00:00.000Z').valueOf(),
+        dayjs('2022-02-01T00:00:00.000Z').valueOf()
+      )
+    expect(timeBoundItems).toEqual([
       {
         accountId: TEST_ACCOUNT_ID_2,
         BREACHED: 0,
@@ -227,5 +231,6 @@ describe('SLA team stats', () => {
         WARNING: 1,
       },
     ])
+    expect(timeBoundTotal).toBe(1)
   })
 })

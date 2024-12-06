@@ -11,8 +11,9 @@ import {
   getMongoDbClientDb,
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
+  paginatePipeline,
 } from '@/utils/mongodb-utils'
-import { DashboardStatsTeamSLAItem } from '@/@types/openapi-internal/DashboardStatsTeamSLAItem'
+import { DashboardStatsTeamSLAItemResponse } from '@/@types/openapi-internal/all'
 import dayjs from '@/utils/dayjs'
 
 @traceable
@@ -123,8 +124,10 @@ export class TeamSLAStatsDashboardMetric {
   }
   public static async get(
     tenantId: string,
-    timeRange?: TimeRange
-  ): Promise<DashboardStatsTeamSLAItem[]> {
+    timeRange?: TimeRange,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardStatsTeamSLAItemResponse> {
     const db = await getMongoDbClientDb()
     const collection = db.collection(DASHBOARD_SLA_TEAM_STATS_HOURLY(tenantId))
     const { startTimestamp, endTimestamp } = timeRange || {}
@@ -140,7 +143,7 @@ export class TeamSLAStatsDashboardMetric {
       }
     }
 
-    const pipeline = [
+    const basePipeline = [
       ...(Object.keys(dateCondition || {}).length > 0
         ? [
             {
@@ -170,19 +173,40 @@ export class TeamSLAStatsDashboardMetric {
         },
       },
     ]
+    const totalPipeline = [...basePipeline, { $count: 'total' }]
+    const totalResult = await collection
+      .aggregate<{ total: number }>(totalPipeline, { allowDiskUse: true })
+      .toArray()
+    const total = totalResult[0]?.total || 0
+
+    const paginationPipeline = paginatePipeline({
+      page: page,
+      pageSize: pageSize,
+    })
+
+    const paginatedPipeline = [
+      ...basePipeline,
+      { $sort: { '_id.accountId': 1 } },
+      ...paginationPipeline,
+    ]
     const result = await collection
       .aggregate<{
         _id: { accountId: string }
         WARNING: number
         BREACHED: number
         OK: number
-      }>(pipeline, { allowDiskUse: true })
+      }>(paginatedPipeline, { allowDiskUse: true })
       .toArray()
-    return result.map((r) => ({
+    const items = result.map((r) => ({
       accountId: r._id.accountId,
       WARNING: r.WARNING,
       BREACHED: r.BREACHED,
       OK: r.OK,
     }))
+
+    return {
+      items,
+      total,
+    }
   }
 }

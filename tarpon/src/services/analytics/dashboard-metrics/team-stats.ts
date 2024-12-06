@@ -6,6 +6,7 @@ import {
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
   getMongoDbClientDb,
+  paginatePipeline,
 } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
@@ -18,6 +19,7 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 import { DashboardTeamStatsItem } from '@/@types/openapi-internal/DashboardTeamStatsItem'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
+import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 import { traceable } from '@/core/xray'
 
 interface TimestampCondition {
@@ -891,8 +893,10 @@ export class TeamStatsDashboardMetric {
     startTimestamp?: number,
     endTimestamp?: number,
     status?: (CaseStatus | AlertStatus)[],
-    accountIds?: Array<string>
-  ): Promise<DashboardTeamStatsItem[]> {
+    accountIds?: Array<string>,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardTeamStatsItemResponse> {
     const db = await getMongoDbClientDb()
     const collectionName =
       scope === 'ALERTS'
@@ -924,7 +928,7 @@ export class TeamStatsDashboardMetric {
       matchConditions.push({ accountId: { $in: accountIds } })
     }
 
-    const pipeline = [
+    const basePipeline = [
       { $sort: { date: -1 } },
       ...(matchConditions.length > 0
         ? [{ $match: { $and: matchConditions } }]
@@ -982,7 +986,19 @@ export class TeamStatsDashboardMetric {
       },
     ]
 
-    const result = await collection
+    const countPipeline = [...basePipeline, { $count: 'total' }]
+    const countResult = await collection
+      .aggregate(countPipeline, { allowDiskUse: true })
+      .toArray()
+    const total = countResult[0]?.total ?? 0
+
+    const paginationPipeline = paginatePipeline({
+      page: page,
+      pageSize: pageSize,
+    })
+
+    const paginatedPipeline = [...basePipeline, ...paginationPipeline]
+    const data = await collection
       .aggregate<{
         accountId: string
         role: string
@@ -993,9 +1009,12 @@ export class TeamStatsDashboardMetric {
         closedBySystem: number
         inProgress: number
         escalatedBy: number
-      }>(pipeline, { allowDiskUse: true })
+      }>(paginatedPipeline, { allowDiskUse: true })
       .toArray()
 
-    return result
+    return {
+      items: data,
+      total,
+    }
   }
 }

@@ -9,7 +9,11 @@ import CompositeAccountsStatisticsTable from './ComopsiteAccountStatisticsTable'
 import SegmentedControl from '@/components/library/SegmentedControl';
 import DatePicker from '@/components/ui/DatePicker';
 import { dayjs, Dayjs } from '@/utils/dayjs';
-import { AllParams, CommonParams as TableCommonParams } from '@/components/library/Table/types';
+import {
+  AllParams,
+  CommonParams,
+  CommonParams as TableCommonParams,
+} from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -17,8 +21,9 @@ import { DASHBOARD_TEAM_STATS } from '@/utils/queries/keys';
 import {
   AlertStatus,
   CaseStatus,
-  DashboardLatestTeamStatsItem,
+  DashboardLatestTeamStatsItemResponse,
   DashboardTeamStatsItem,
+  DashboardTeamStatsItemResponse,
 } from '@/apis';
 import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
@@ -39,6 +44,12 @@ export default function TeamPerformanceCard(props: WidgetProps) {
     'current',
   );
 
+  const [paginationParams, setPaginationParams] = useState<CommonParams>({
+    page: 1,
+    pageSize: 10,
+    sort: [],
+  });
+
   const [params, setParams] = useState<AllParams<Params>>({
     ...DEFAULT_PARAMS_STATE,
     scope: 'CASES',
@@ -53,22 +64,30 @@ export default function TeamPerformanceCard(props: WidgetProps) {
   const api = useApi();
 
   const dateRangeQueryResult = useQuery(
-    DASHBOARD_TEAM_STATS(params),
-    async (): Promise<DashboardTeamStatsItem[]> => {
+    DASHBOARD_TEAM_STATS({
+      page: paginationParams.page,
+      pageSize: paginationParams.pageSize,
+      scope: params.scope,
+      caseStatus: params.caseStatus,
+      dateRange: params.dateRange,
+    }),
+    async (): Promise<DashboardTeamStatsItemResponse> => {
       const [start, end] = params.dateRange ?? [];
       let startTimestamp, endTimestamp;
       if (start != null && end != null) {
         startTimestamp = start.startOf('day').valueOf();
         endTimestamp = end.endOf('day').valueOf();
       }
-      const data = await api.getDashboardTeamStats({
+      const response = await api.getDashboardTeamStats({
         scope: params.scope,
         startTimestamp,
         endTimestamp,
         caseStatus: params.caseStatus,
+        page: paginationParams.page,
+        pageSize: paginationParams.pageSize,
       });
 
-      const updatedData = data.map((item) => ({
+      const updatedItems = response.items?.map((item: DashboardTeamStatsItem) => ({
         ...item,
         investigationTime:
           item.investigationTime && item.caseIds?.length
@@ -76,16 +95,30 @@ export default function TeamPerformanceCard(props: WidgetProps) {
             : 0,
       }));
 
-      return updatedData;
+      return {
+        total: response.total,
+        items: updatedItems,
+      };
     },
   );
 
-  const latestQueryResut = useQuery(
-    DASHBOARD_TEAM_STATS({ ...params, type }),
-    async (): Promise<DashboardLatestTeamStatsItem[]> => {
-      return await api.getDashboardLatestTeamStats({
+  const latestQueryResult = useQuery(
+    DASHBOARD_TEAM_STATS({
+      page: paginationParams.page,
+      pageSize: paginationParams.pageSize,
+      scope: params.scope,
+    }),
+    async (): Promise<DashboardLatestTeamStatsItemResponse> => {
+      const response = await api.getDashboardLatestTeamStats({
         scope: params.scope,
+        page: paginationParams.page,
+        pageSize: paginationParams.pageSize,
       });
+
+      return {
+        total: response.total,
+        items: response.items,
+      };
     },
   );
 
@@ -149,14 +182,29 @@ export default function TeamPerformanceCard(props: WidgetProps) {
           <CompositeAccountsStatisticsTable
             queryResult={dateRangeQueryResult}
             scope={params.scope}
+            paginationParams={paginationParams}
+            setPaginationParams={setPaginationParams}
           />
         ) : (
-          <AccountsStatisticsTable queryResult={dateRangeQueryResult} scope={params.scope} />
+          <AccountsStatisticsTable
+            queryResult={dateRangeQueryResult}
+            scope={params.scope}
+            paginationParams={paginationParams}
+            setPaginationParams={setPaginationParams}
+          />
         )
       ) : showAggregatedView ? (
-        <CompositeLatestTeamOverview queryResult={latestQueryResut} />
+        <CompositeLatestTeamOverview
+          paginationParams={paginationParams}
+          queryResult={latestQueryResult}
+          setPaginationParams={setPaginationParams}
+        />
       ) : (
-        <LatestOverviewTable queryResult={latestQueryResut} />
+        <LatestOverviewTable
+          paginationParams={paginationParams}
+          queryResult={latestQueryResult}
+          setPaginationParams={setPaginationParams}
+        />
       )}
     </Widget>
   );

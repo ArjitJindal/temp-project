@@ -23,8 +23,9 @@ describe('Team statistic for cases', () => {
     const statsRepository = await getStatsRepo(TENANT_ID)
 
     await statsRepository.refreshTeamStats()
-    const stats = await statsRepository.getTeamStatistics('CASES')
-    expect(stats).toEqual([])
+    const { items, total } = await statsRepository.getTeamStatistics('CASES')
+    expect(items).toEqual([])
+    expect(total).toBe(0)
   })
   describe('closedBy', () => {
     test(`single case with single change`, async () => {
@@ -1509,6 +1510,9 @@ async function expectCaseStats(
     startTimestamp?: number
     endTimestamp?: number
     status?: CaseStatus[]
+    accountIds?: string[]
+    page?: number
+    pageSize?: number
   }
 ) {
   await repo.refreshTeamStats()
@@ -1516,10 +1520,15 @@ async function expectCaseStats(
     'CASES',
     filters?.startTimestamp,
     filters?.endTimestamp,
-    filters?.status
+    filters?.status,
+    filters?.accountIds,
+    filters?.page,
+    filters?.pageSize
   )
-  expect(stats).toHaveLength(toExpect.length)
-  expect(stats).toEqual(expect.arrayContaining(toExpect))
+  const { items, total } = stats
+  expect(total).toBe(toExpect.length)
+  expect(items).toHaveLength(toExpect.length)
+  expect(items).toEqual(expect.arrayContaining(toExpect))
 }
 
 async function expectAlertStats(
@@ -1538,6 +1547,9 @@ async function expectAlertStats(
     startTimestamp?: number
     endTimestamp?: number
     status?: AlertStatus[]
+    accountIds?: string[]
+    page?: number
+    pageSize?: number
   }
 ) {
   await repo.refreshTeamStats()
@@ -1545,10 +1557,15 @@ async function expectAlertStats(
     'ALERTS',
     dateFilter?.startTimestamp,
     dateFilter?.endTimestamp,
-    dateFilter?.status
+    dateFilter?.status,
+    dateFilter?.accountIds,
+    dateFilter?.page,
+    dateFilter?.pageSize
   )
-  expect(stats).toHaveLength(toExpect.length)
-  expect(stats).toEqual(expect.arrayContaining(toExpect))
+  const { items, total } = stats
+  expect(total).toBe(toExpect.length)
+  expect(items).toHaveLength(toExpect.length)
+  expect(items).toEqual(expect.arrayContaining(toExpect))
 }
 
 function assignment(userId: string, timestamp?: number): Assignment {

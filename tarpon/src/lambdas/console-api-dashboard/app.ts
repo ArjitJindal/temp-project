@@ -151,7 +151,14 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardTeamStats(async (ctx, request) => {
       const { auth0Domain } = event.requestContext.authorizer
-      const { scope, startTimestamp, endTimestamp, caseStatus } = request
+      const {
+        scope,
+        startTimestamp,
+        endTimestamp,
+        caseStatus,
+        pageSize,
+        page,
+      } = request
       const { userId } = ctx
       const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       const organization = await accountsService.getAccountTenant(userId)
@@ -168,7 +175,9 @@ export const dashboardStatsHandler = lambdaApi()(
         start,
         end,
         caseStatus,
-        accountIds
+        accountIds,
+        pageSize,
+        page
       )
     })
 
@@ -232,7 +241,7 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
       const { auth0Domain } = event.requestContext.authorizer
-      const { scope } = request
+      const { scope, pageSize, page } = request
       const { userId } = ctx
       const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
       const organization = await accountsService.getAccountTenant(userId)
@@ -248,7 +257,9 @@ export const dashboardStatsHandler = lambdaApi()(
 
       return await dashboardStatsRepository.getLatestTeamStatistics(
         scope,
-        accountIds
+        accountIds,
+        pageSize,
+        page
       )
     })
 
@@ -325,13 +336,18 @@ export const dashboardStatsHandler = lambdaApi()(
     )
 
     handlers.registerGetDashboardTeamSlaStats(async (ctx, request) => {
-      const { startTimestamp, endTimestamp } = request
+      const { startTimestamp, endTimestamp, pageSize, page } = request
       if (shouldRefreshAll(event)) {
         await dashboardStatsRepository.refreshSLATeamStats()
       }
 
       const { start, end } = formatTimestamp(startTimestamp, endTimestamp)
-      return await dashboardStatsRepository.getSLATeamStatistics(start, end)
+      return await dashboardStatsRepository.getSLATeamStatistics(
+        start,
+        end,
+        pageSize,
+        page
+      )
     })
     return await handlers.handle(event)
   }

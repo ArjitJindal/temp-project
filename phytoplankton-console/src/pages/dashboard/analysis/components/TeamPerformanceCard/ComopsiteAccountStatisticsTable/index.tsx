@@ -5,6 +5,8 @@ import { DashboardTeamStatsItem } from '@/apis';
 import { map, QueryResult } from '@/utils/queries/types';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { DURATION } from '@/components/library/Table/standardDataTypes';
+import { CommonParams } from '@/components/library/Table/types';
+import { PaginatedData } from '@/utils/queries/hooks';
 
 type AggregatedDashboardTeamStats = {
   role: string;
@@ -18,10 +20,10 @@ type AggregatedDashboardTeamStats = {
 };
 
 function updateQueryResult(
-  queryResult: QueryResult<DashboardTeamStatsItem[]>,
+  queryResult: QueryResult<PaginatedData<DashboardTeamStatsItem>>,
 ): QueryResult<AggregatedDashboardTeamStats[]> {
   return map(queryResult, (data) => {
-    const groupedByRole = groupBy(data, 'role');
+    const groupedByRole = groupBy(data.items, 'role');
 
     const aggregatedData: AggregatedDashboardTeamStats[] = Object.entries(groupedByRole).map(
       ([role, users]) => ({
@@ -90,18 +92,23 @@ const columns = (scope: 'CASES' | 'ALERTS') => {
 };
 
 interface Props {
-  queryResult: QueryResult<DashboardTeamStatsItem[]>;
+  queryResult: QueryResult<PaginatedData<DashboardTeamStatsItem>>;
   scope: 'CASES' | 'ALERTS';
+  paginationParams: CommonParams;
+  setPaginationParams: (paginationParams: CommonParams) => void;
 }
 
 export default function CompositeAccountsStatisticsTable(props: Props) {
-  const { queryResult, scope } = props;
+  const { queryResult, scope, paginationParams, setPaginationParams } = props;
 
   return (
     <QueryResultsTable<AggregatedDashboardTeamStats>
       columns={columns(scope)}
       rowKey="role"
       sizingMode="FULL_WIDTH"
+      pagination={true}
+      params={paginationParams}
+      onChangeParams={setPaginationParams}
       toolsOptions={{
         reload: false,
         setting: false,
@@ -109,11 +116,17 @@ export default function CompositeAccountsStatisticsTable(props: Props) {
       }}
       queryResults={map(updateQueryResult(queryResult), (data) => ({
         items: data,
+        total: data.length,
       }))}
       renderExpanded={(item) => (
         <AccountsStatisticsTable
-          queryResult={map(queryResult, (data) => data.filter((user) => user.role === item.role))}
+          queryResult={map(queryResult, (data) => ({
+            items: data.items.filter((user) => user.role === item.role),
+            total: data.items.filter((user) => user.role === item.role).length,
+          }))}
           scope={scope}
+          paginationParams={paginationParams}
+          setPaginationParams={setPaginationParams}
         />
       )}
     />

@@ -3061,9 +3061,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardTeamStatsItem'
+                $ref: '#/components/schemas/DashboardTeamStatsItemResponse'
       operationId: get-dashboard-team-stats
       description: ''
       parameters:
@@ -3089,6 +3087,14 @@ paths:
               $ref: '#/components/schemas/CaseStatus'
           in: query
           name: caseStatus
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /dashboard_stats/latest_team:
     get:
       summary: DashboardStats - Latest Team
@@ -3102,9 +3108,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardLatestTeamStatsItem'
+                $ref: '#/components/schemas/DashboardLatestTeamStatsItemResponse'
       operationId: get-dashboard-latest-team-stats
       description: ''
       parameters:
@@ -3116,6 +3120,14 @@ paths:
           in: query
           name: scope
           required: true
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /dashboard_stats/team_sla:
     get:
       summary: DashboardStats - Team SLA
@@ -3129,9 +3141,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/DashboardStatsTeamSLAItem'
+                $ref: '#/components/schemas/DashboardStatsTeamSLAItemResponse'
       operationId: get-dashboard-team-sla-stats
       description: ''
       parameters:
@@ -3143,6 +3153,14 @@ paths:
             type: number
           in: query
           name: endTimestamp
+        - schema:
+            $ref: '#/components/schemas/PageSize'
+          in: query
+          name: pageSize
+        - schema:
+            $ref: '#/components/schemas/Page'
+          in: query
+          name: page
   /dashboard_stats/overview:
     get:
       summary: DashboardStats - Overview
@@ -15542,6 +15560,45 @@ components:
         - WARNING
         - BREACHED
         - OK
+    DashboardTeamStatsItemResponse:
+      title: DashboardTeamStatsItemResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardTeamStatsItem'
+        total:
+          type: number
+      required:
+        - items
+        - total
+    DashboardLatestTeamStatsItemResponse:
+      title: DashboardLatestTeamStatsItemResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardLatestTeamStatsItem'
+        total:
+          type: number
+      required:
+        - items
+        - total
+    DashboardStatsTeamSLAItemResponse:
+      title: DashboardStatsTeamSLAItemResponse
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/DashboardStatsTeamSLAItem'
+        total:
+          type: number
+      required:
+        - items
+        - total
     PolicyStatusDetails:
       title: PolicyStatusDetails
       type: object

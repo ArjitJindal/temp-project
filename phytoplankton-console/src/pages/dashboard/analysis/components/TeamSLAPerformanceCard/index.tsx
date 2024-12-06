@@ -1,18 +1,22 @@
 import React, { useState } from 'react';
 import { RangeValue } from 'rc-picker/es/interface';
-import { AllParams, CommonParams as TableCommonParams } from '@/components/library/Table/types';
+import {
+  AllParams,
+  CommonParams,
+  CommonParams as TableCommonParams,
+} from '@/components/library/Table/types';
 import { Dayjs, dayjs } from '@/utils/dayjs';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TEAM_SLA_STATS } from '@/utils/queries/keys';
 import { DashboardStatsTeamSLAItem } from '@/apis';
+import { DashboardStatsTeamSLAItemResponse } from '@/apis/models/DashboardStatsTeamSLAItemResponse';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import AccountTag from '@/components/AccountTag';
-import { map } from '@/utils/queries/types';
 import { getOr } from '@/utils/asyncResource';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
@@ -30,11 +34,16 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
     ...DEFAULT_PARAMS_STATE,
     dateRange: [startTime, endTime],
   });
+  const [paginationParams, setPaginationParams] = useState<CommonParams>({
+    page: 1,
+    pageSize: 10,
+    sort: [],
+  });
 
   const api = useApi();
   const queryResult = useQuery(
-    DASHBOARD_TEAM_SLA_STATS(params),
-    async (): Promise<DashboardStatsTeamSLAItem[]> => {
+    DASHBOARD_TEAM_SLA_STATS({ ...params, ...paginationParams }),
+    async (): Promise<DashboardStatsTeamSLAItemResponse> => {
       const [start, end] = params.dateRange ?? [];
       let startTimestamp, endTimestamp;
       if (start != null && end != null) {
@@ -44,8 +53,12 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
       const data = await api.getDashboardTeamSlaStats({
         startTimestamp,
         endTimestamp,
+        ...paginationParams,
       });
-      return data;
+      return {
+        items: data.items,
+        total: data.total,
+      };
     },
   );
 
@@ -105,7 +118,7 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
         return new Promise((resolve) => {
           const fileData = {
             fileName: `team-sla-performance-${dayjs().format('YYYY-MM-DD')}.csv`,
-            data: getCsvData(dataToExport(getOr(queryResult.data, []))),
+            data: getCsvData(dataToExport(getOr(queryResult.data, { items: [], total: 0 }).items)),
           };
           resolve(fileData);
         });
@@ -115,14 +128,15 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
         columns={columns}
         rowKey="accountId"
         sizingMode="FULL_WIDTH"
+        pagination={true}
+        params={paginationParams}
+        onChangeParams={setPaginationParams}
         toolsOptions={{
           reload: false,
           setting: false,
           download: true,
         }}
-        queryResults={map(queryResult, (data) => ({
-          items: data,
-        }))}
+        queryResults={queryResult}
       />
     </Widget>
   );
