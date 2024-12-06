@@ -233,11 +233,18 @@ export class ClickhouseTransactionsRepository {
         "length(flatten(arrayMap(y -> y.searchId, arrayMap(x -> x.ruleHitMeta.sanctionsDetails, JSONExtract(data, 'executedRules', 'Array(Tuple(ruleHitMeta Tuple(sanctionsDetails Array(Tuple(searchId String)))))'))))) > 0",
     }
 
+    const sortFieldMapper: Record<string, string> = {
+      'originPayment.amount': 'originAmountDetails.transactionAmount',
+      'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+    }
+
+    const newSortField = sortFieldMapper[sortField] ?? sortField
+
     const data = await offsetPaginateClickhouse<TransactionTableItem>(
       this.clickhouseClient,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
-      { page, pageSize, sortField, sortOrder },
+      { page, pageSize, sortField: newSortField, sortOrder },
       whereClause,
       columnsProjection,
       (item) => {
