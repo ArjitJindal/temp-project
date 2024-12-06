@@ -161,7 +161,8 @@ const customTextWidget: TextWidget<QueryBuilderConfig> = {
 
     // All text-type operators should support multi-values
     const isArrayType =
-      MULTI_SELECT_BUILTIN_OPERATORS.includes(operator) || isCustomOperator(operator);
+      (MULTI_SELECT_BUILTIN_OPERATORS.includes(operator) || isCustomOperator(operator)) &&
+      !REGEX_MATCH_OPERATORS.includes(operator);
 
     // NOTE: As we apply some hacks to allow comparing a text value with multiple text values, we cannot
     // rely on react-awesome-query-builder to clear value when the changed operator is not compatible with
