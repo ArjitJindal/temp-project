@@ -321,6 +321,7 @@
   "TRANSACTION:tags-originatingSystem",
   "TRANSACTION:tags-originProductType",
   "TRANSACTION:tags-originFundId",
+  "TRANSACTION:tags-elliptic_risk_score",
   "TRANSACTION_EVENT:transactionState",
   "TRANSACTION_EVENT:timestamp",
   "TRANSACTION_EVENT:transactionId",

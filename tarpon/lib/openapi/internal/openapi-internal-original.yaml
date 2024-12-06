@@ -7758,6 +7758,10 @@ components:
             - boolean
             - date
             - array
+        tenantIds:
+          type: array
+          items:
+            type: string
         requiredFeatures:
           type: array
           items:

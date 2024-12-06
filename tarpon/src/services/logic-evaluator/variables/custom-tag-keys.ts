@@ -1,7 +1,7 @@
 import { humanizeCamelCase } from '@flagright/lib/utils/humanize'
 import { TransactionLogicVariable } from './types'
 
-export const PNB_TAGS_KEYS = [
+export const PNB_CUSTOM_TAGS_KEYS = [
   'agentCode',
   'branchCode',
   'destinationFundId',
@@ -16,8 +16,12 @@ export const PNB_TAGS_KEYS = [
   'originProductType',
   'originFundId',
 ]
+export const FIRST_DIGITAL_TAG_KEYS = ['elliptic_risk_score']
 
-const getVariable = (key: string): TransactionLogicVariable => ({
+const getVariable = (
+  key: string,
+  tenantIds: string[]
+): TransactionLogicVariable => ({
   key: `tags-${key}`,
   entity: 'TRANSACTION',
   valueType: 'string',
@@ -39,7 +43,12 @@ const getVariable = (key: string): TransactionLogicVariable => ({
     return tag?.value
   },
   sourceField: 'tags',
-  requiredFeatures: ['PNB'],
+  requiredFeatures: tenantIds.includes('pnb') ? ['PNB'] : undefined,
+  tenantIds: tenantIds.concat(['flagright']),
 })
 
-export const PNB_TAGS_KEYS_VARIABLES = PNB_TAGS_KEYS.map(getVariable)
+export const PNB_CUSTOM_TAGS_KEYS_VARIABLES = PNB_CUSTOM_TAGS_KEYS.map((key) =>
+  getVariable(key, ['pnb', 'pnb-stress'])
+)
+export const FIRST_DIGITAL_CUSTOM_TAGS_KEYS_VARIABLES =
+  FIRST_DIGITAL_TAG_KEYS.map((key) => getVariable(key, ['0ee355b0a1']))

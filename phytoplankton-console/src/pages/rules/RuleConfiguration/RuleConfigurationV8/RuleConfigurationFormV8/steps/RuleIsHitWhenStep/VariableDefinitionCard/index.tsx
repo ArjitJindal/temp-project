@@ -26,6 +26,7 @@ import { getAggVarDefinition } from '@/pages/rules/RuleConfiguration/RuleConfigu
 import Dropdown from '@/components/library/Dropdown';
 import Tooltip from '@/components/library/Tooltip';
 import { LHS_ONLY_SYMBOL, RHS_ONLY_SYMBOL } from '@/components/ui/LogicBuilder/helpers';
+import { useAuth0User } from '@/utils/user-utils';
 
 function getNewAggregationVariableKey() {
   return `agg:${shortId()}`;
@@ -112,16 +113,18 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     [aggregationVariables, editingVariable?.variable?.key, entityVariables, mlVariables],
   );
   const ruleLogicConfig = useRuleLogicConfig(ruleType);
+  const user = useAuth0User();
   const entityVariableDefinitions = useMemo(() => {
     if (isSuccess(ruleLogicConfig.data)) {
       return (ruleLogicConfig.data.value.variables ?? []).filter(
         (v) =>
-          !v?.requiredFeatures?.length ||
-          v.requiredFeatures.every((f) => settings.features?.includes(f)),
+          (!v?.requiredFeatures?.length ||
+            v.requiredFeatures.every((f) => settings.features?.includes(f))) &&
+          (!v.tenantIds?.length || v.tenantIds?.includes(user?.tenantId)),
       );
     }
     return [];
-  }, [ruleLogicConfig.data, settings.features]);
+  }, [ruleLogicConfig.data, settings.features, user.tenantId]);
 
   const handleDelete = useCallback(
     (varKey: string) => {

@@ -31,6 +31,7 @@ export interface LogicVariableBase {
   valueType: LogicValueTypesEnum
   sourceField?: string
   requiredFeatures?: Feature[]
+  tenantIds?: string[]
   load: (...args: any[]) => Promise<any>
 }
 
