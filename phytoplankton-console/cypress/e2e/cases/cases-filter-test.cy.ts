@@ -60,7 +60,7 @@ describe('Filter according to case id (optimized)', () => {
     cy.get('[data-cy="rules-filter"]:contains("Add filter")').scrollIntoView().first().click();
     cy.get('[data-cy="rulesHitFilter-checkbox"]').check({ force: true });
     cy.get('[data-cy="rules-filter"]:contains("Rules")').first().click();
-    const ruleName = 'Transaction amount too high';
+    const ruleName = 'First transaction of a user';
     cy.get('.ant-popover .ant-select-selector').first().click().type(`${ruleName}{enter}`);
     cy.get('td[data-cy="ruleName"]')
       .contains(ruleName)
