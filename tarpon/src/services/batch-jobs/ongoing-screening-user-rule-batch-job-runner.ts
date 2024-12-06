@@ -6,6 +6,7 @@ import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
+import { ListRepository } from '../list/repositories/list-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -58,11 +59,7 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
       )
       return diffTime % schedule.value === 0
     }
-    return isOngoingUserRuleInstance(
-      ruleInstance,
-      isRiskLevelsEnabled,
-      'SCREENING'
-    )
+    return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
   })
 
   return ruleInstances
@@ -156,15 +153,15 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
             upperBound: number
           }
         } = r.parameters
-        if (parameters.fuzziness) {
+        if (parameters?.fuzziness) {
           if (parameters.fuzziness > maxFuzziness) {
             maxFuzziness = parameters.fuzziness
           }
         }
         if (
-          parameters.fuzzinessRange &&
-          parameters.fuzzinessRange.upperBound &&
-          parameters.fuzzinessRange.upperBound > maxFuzziness
+          parameters?.fuzzinessRange &&
+          parameters?.fuzzinessRange?.upperBound &&
+          parameters?.fuzzinessRange?.upperBound > maxFuzziness
         ) {
           maxFuzziness = parameters.fuzzinessRange.upperBound
         }
@@ -172,8 +169,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       preprocessedMatches = await preprocessUsers(
         this.tenantId as string,
         maxFuzziness,
+        this.mongoDb as MongoClient,
+        this.dynamoDb as DynamoDBDocumentClient,
         this.from,
-        this.to
+        this.to,
+        ruleInstances
       )
     }
 
@@ -296,10 +296,12 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 export async function preprocessUsers(
   tenantId: string,
   fuzziness: number,
+  client: MongoClient,
+  dynamoDb: DynamoDBDocumentClient,
   from?: string,
-  to?: string
+  to?: string,
+  ruleInstances?: RuleInstance[]
 ) {
-  const client = await getMongoDbClient()
   const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
   const allNames: Set<string> = new Set()
   const documentIds: Set<string> = new Set()
@@ -318,7 +320,18 @@ export async function preprocessUsers(
   if (to) {
     match = { userId: { ...match.userId, $lte: to } }
   }
-
+  const otherTargetUserIds = await getUserIdsForODDRulesForPNB(
+    ruleInstances ?? [],
+    dynamoDb as DynamoDBDocumentClient
+  )
+  const mohaListUsers = await getMOHAListUserNames(
+    dynamoDb,
+    ruleInstances ?? []
+  )
+  for (const user of mohaListUsers) {
+    allNames.add(user.name)
+    documentIds.add(user.documentId)
+  }
   for await (const sanctionsEntity of sanctionsCollection.find({})) {
     const names: string[] = [
       sanctionsEntity.name,
@@ -337,6 +350,10 @@ export async function preprocessUsers(
     })
   }
   for await (const user of usersCollection.find(match)) {
+    if (otherTargetUserIds && otherTargetUserIds.includes(user.userId)) {
+      matches.add(user.userId)
+      continue
+    }
     allNames.forEach((n) => {
       const percentageSimilarity = calculateLevenshteinDistancePercentage(
         n.toLowerCase(),
@@ -355,4 +372,91 @@ export async function preprocessUsers(
   }
 
   return matches
+}
+
+async function getUserIdsForODDRulesForPNB(
+  ruleInstances: RuleInstance[],
+  dynamoDb: DynamoDBDocumentClient
+) {
+  const hasNonScreeningRules =
+    ruleInstances.filter((r) => r.nature !== 'SCREENING').length > 0
+  if (!hasNonScreeningRules) {
+    return []
+  }
+  const listIds = ['06b705b0-66ad-4add-b49c-9457e5fefcce']
+  const listRepository = new ListRepository(
+    'pnb',
+    dynamoDb as DynamoDBDocumentClient
+  )
+  const userIds: string[] = []
+  for await (const listId of listIds) {
+    const listHeader = await listRepository.getListHeader(listId)
+    if (listHeader) {
+      let fromCursorKey: string | undefined
+      let hasNext = true
+      while (hasNext) {
+        const listItems = await listRepository.getListItems(
+          listId,
+          {
+            pageSize: 100,
+            fromCursorKey,
+          },
+          listHeader.version
+        )
+        listItems.items.map((i) => {
+          if (typeof i.key === 'string') {
+            userIds.push(i.key)
+          }
+        })
+        fromCursorKey = listItems.next
+        hasNext = listItems.hasNext
+      }
+    }
+  }
+  return userIds
+}
+
+async function getMOHAListUserNames(
+  dynamoDb: DynamoDBDocumentClient,
+  ruleInstances: RuleInstance[]
+) {
+  const listIds = ruleInstances
+    .map((r) => {
+      if (r.nature === 'SCREENING') {
+        return r.parameters?.listId
+      }
+      return null
+    })
+    .filter(Boolean) as string[]
+  const listRepository = new ListRepository('pnb', dynamoDb)
+  const users: {
+    name: string
+    documentId: string
+  }[] = []
+  for await (const listId of listIds) {
+    const listHeader = await listRepository.getListHeader(listId)
+    if (listHeader) {
+      let fromCursorKey: string | undefined
+      let hasNext = true
+      while (hasNext) {
+        const listItems = await listRepository.getListItems(
+          listId,
+          {
+            pageSize: 100,
+            fromCursorKey,
+          },
+          listHeader.version
+        )
+        fromCursorKey = listItems.next
+        hasNext = listItems.hasNext
+        listItems.items.map((i) =>
+          users.push({
+            name: i.key,
+            documentId: i.metadata?.reason,
+          })
+        )
+      }
+    }
+  }
+  return users
 }

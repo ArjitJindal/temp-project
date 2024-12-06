@@ -453,6 +453,7 @@ describe('preprocessUsers', () => {
   it('should match users based on name similarity and document IDs', async () => {
     const tenantId = getTestTenantId()
     const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const sanctionsCollection = client
       .db()
       .collection(DELTA_SANCTIONS_COLLECTION(tenantId))
@@ -493,7 +494,7 @@ describe('preprocessUsers', () => {
       },
     ])
 
-    const result = await preprocessUsers(tenantId, 25)
+    const result = await preprocessUsers(tenantId, 25, client, dynamoDb)
 
     expect(result).toEqual(new Set(['u1', 'u3']))
   })
@@ -501,6 +502,7 @@ describe('preprocessUsers', () => {
   it('should return an empty set if no matches are found', async () => {
     const tenantId = getTestTenantId()
     const client = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const sanctionsCollection = client
       .db()
       .collection(DELTA_SANCTIONS_COLLECTION(tenantId))
@@ -525,7 +527,7 @@ describe('preprocessUsers', () => {
       },
     ])
 
-    const result = await preprocessUsers(tenantId, 25)
+    const result = await preprocessUsers(tenantId, 25, client, dynamoDb)
 
     expect(result).toEqual(new Set())
   })
