@@ -227,6 +227,10 @@ export type BackfillAsyncRuleRuns = {
     concurrency: number
     type: 'TRANSACTION' | 'USER'
     startTimestamp?: number
+    affectedExecutionRanges?: {
+      start: number
+      end: number
+    }[]
   }
 }
 

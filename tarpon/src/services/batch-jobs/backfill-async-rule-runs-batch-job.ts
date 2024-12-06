@@ -27,23 +27,6 @@ import { User } from '@/@types/openapi-public/User'
 
 const lambdaClient = new LambdaClient()
 
-const FIRST_RUNTIMSTAMPS = {
-  // Taken from first run logs
-  start: 1732823070692,
-  end: 1732830723777,
-}
-const SECOND_RUNTIMSTAMPS = {
-  // Taken from second run logs
-  start: 1733133446585,
-  end: 1733137749632,
-}
-
-const THIRD_RUNTIMSTAMPS = {
-  // Taken from third run logs
-  start: 1733413291845,
-  end: 1733419435308,
-}
-
 export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
   private tenantId!: string
   private startTimestamp?: number
@@ -53,7 +36,8 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     job: BackfillAsyncRuleRuns & { jobId: string }
   ): Promise<void> {
     const { tenantId, parameters } = job
-    const { concurrency, startTimestamp, type } = parameters
+    const { concurrency, startTimestamp, type, affectedExecutionRanges } =
+      parameters
 
     this.tenantId = tenantId
     this.startTimestamp = startTimestamp
@@ -74,7 +58,8 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     if (type === 'TRANSACTION' && activeTxAsyncRuleIds.length > 0) {
       await this.backfillTxAsyncRuleRuns(
         activeTxAsyncRuleIds,
-        lastCompletedTimestamp
+        lastCompletedTimestamp,
+        affectedExecutionRanges
       )
       return
     }
@@ -82,7 +67,11 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
 
   private async backfillTxAsyncRuleRuns(
     asyncRuleInstanceIds: string[],
-    lastCompletedTimestamp: number
+    lastCompletedTimestamp: number,
+    affectedExecutionRanges?: {
+      start: number
+      end: number
+    }[]
   ): Promise<void> {
     this.mongoDb = await getMongoDbClient()
     const db = this.mongoDb.db()
@@ -96,26 +85,12 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
           $and: [
             { ruleInstanceId: { $in: asyncRuleInstanceIds } },
             {
-              $or: [
-                {
-                  executedAt: {
-                    $gte: FIRST_RUNTIMSTAMPS.start,
-                    $lte: FIRST_RUNTIMSTAMPS.end,
-                  },
+              $or: affectedExecutionRanges?.map((range) => ({
+                executedAt: {
+                  $gte: range.start,
+                  $lte: range.end,
                 },
-                {
-                  executedAt: {
-                    $gte: SECOND_RUNTIMSTAMPS.start,
-                    $lte: SECOND_RUNTIMSTAMPS.end,
-                  },
-                },
-                {
-                  executedAt: {
-                    $gte: THIRD_RUNTIMSTAMPS.start,
-                    $lte: THIRD_RUNTIMSTAMPS.end,
-                  },
-                },
-              ],
+              })),
             },
           ],
         },
