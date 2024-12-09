@@ -25,15 +25,23 @@ export class ManualRulePreAggregationBatchJobRunner extends BatchJobRunner {
       ruleInstances.flatMap((v) => v.logicAggregationVariables ?? []),
       (v) => getAggVarHash(v, false)
     )
-    const newJob: RulePreAggregationBatchJob & { jobId: string } = {
-      jobId: (job as BatchJobWithId).jobId,
-      type: 'RULE_PRE_AGGREGATION',
-      tenantId: job.tenantId,
-      parameters: {
-        aggregationVariables: logicAggregationVariables,
-        currentTimestamp: job.currentTimestamp,
-      },
+
+    for (const aggregationVariable of logicAggregationVariables) {
+      const newJob: RulePreAggregationBatchJob & { jobId: string } = {
+        jobId: (job as BatchJobWithId).jobId,
+        type: 'RULE_PRE_AGGREGATION',
+        tenantId: job.tenantId,
+        parameters: {
+          aggregationVariables: [aggregationVariable],
+          currentTimestamp: job.currentTimestamp,
+        },
+      }
+
+      console.info(
+        `Pre-aggregating logic variable ${aggregationVariable.name} for rule ${aggregationVariable.key}`
+      )
+
+      await runner.execute(newJob)
     }
-    await runner.execute(newJob)
   }
 }

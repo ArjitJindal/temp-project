@@ -663,7 +663,7 @@ describe('Rule/Risk Factor pre-aggregation job runner', () => {
     ).toBe(2)
   })
 
-  test("doesn't submits pre-aggregation tasks if already submitted before", async () => {
+  test("doesn't submit pre-aggregation tasks if already submitted before", async () => {
     const aggregationVariables: LogicAggregationVariable[] = [
       {
         key: 'agg:test',

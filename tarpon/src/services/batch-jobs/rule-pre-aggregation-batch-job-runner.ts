@@ -1,4 +1,5 @@
-import { compact, isEmpty, uniq, uniqBy } from 'lodash'
+import { chunk, compact, isEmpty, memoize, uniq, uniqBy } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { getTimeRangeByTimeWindows } from '../rules-engine/utils/time-utils'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
@@ -31,8 +32,11 @@ import { handleV8PreAggregationTask } from '@/lambdas/transaction-aggregation/ap
 import { TransientRepository } from '@/core/repositories/transient-repository'
 import { duration } from '@/utils/dayjs'
 import { generateChecksum } from '@/utils/object'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 const sqs = getSQSClient()
+
+const DEFAULT_CHUNK_SIZE = 1_000
 
 function getAggregationTaskMessage(
   task: TransactionAggregationTaskEntry
@@ -48,8 +52,22 @@ function getAggregationTaskMessage(
   }
 }
 
+type PaymentDetailsUserInfo = {
+  userKeyId: string
+  paymentDetails: PaymentDetails
+}
+
+type PreAggregationTask =
+  | { type: 'USER_TRANSACTIONS'; ids: string[] }
+  | {
+      type: 'PAYMENT_DETAILS_TRANSACTIONS'
+      ids: PaymentDetailsUserInfo[]
+    }
+
 @traceable
 export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
+  private setDeduplicationIds = new Set<string>()
+
   protected async run(job: RulePreAggregationBatchJob): Promise<void> {
     const dynamoDb = getDynamoDbClient()
     const { entity, aggregationVariables, currentTimestamp } = job.parameters
@@ -107,20 +125,128 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       })
     }
 
-    const messages: FifoSqsMessage[] = []
     for (const aggregationVariable of aggregationVariables) {
-      const varMessages = await this.preAggregateVariable(
+      const { ids, type } = await this.preAggregateVariable(
         job.tenantId,
-        entity,
         aggregationVariable,
         currentTimestamp
       )
-      messages.push(...varMessages)
+
+      for (const idsChunk of chunk<PaymentDetailsUserInfo | string>(
+        ids,
+        DEFAULT_CHUNK_SIZE
+      )) {
+        let messages: FifoSqsMessage[] = []
+        if (type === 'USER_TRANSACTIONS') {
+          messages = (idsChunk as string[]).map((userId) =>
+            getAggregationTaskMessage({
+              userKeyId: userId,
+              payload: {
+                type: 'PRE_AGGREGATION',
+                aggregationVariable,
+                tenantId: job.tenantId,
+                userId,
+                currentTimestamp: currentTimestamp ?? Date.now(),
+                jobId: this.jobId,
+                entity,
+              },
+            })
+          )
+        } else if (type === 'PAYMENT_DETAILS_TRANSACTIONS') {
+          messages = (idsChunk as PaymentDetailsUserInfo[]).map(
+            ({ userKeyId, paymentDetails }) =>
+              getAggregationTaskMessage({
+                userKeyId,
+                payload: {
+                  type: 'PRE_AGGREGATION',
+                  paymentDetails,
+                  tenantId: job.tenantId,
+                  currentTimestamp: currentTimestamp ?? Date.now(),
+                  jobId: this.jobId,
+                  entity,
+                  aggregationVariable,
+                },
+              })
+          )
+        }
+
+        await this.internalBulkSendMesasges(dynamoDb, messages)
+      }
     }
-    const dedupMessages = uniqBy(messages, (m) => m.MessageDeduplicationId)
+
+    if (this.setDeduplicationIds.size === 0 && entity?.type === 'RULE') {
+      logger.info(
+        `No tasks to pre-aggregate. Switching rule instance ${entity.ruleInstanceId} to ACTIVE.`
+      )
+      await ruleInstanceRepository.updateRuleInstanceStatus(
+        entity.ruleInstanceId,
+        'ACTIVE'
+      )
+    }
+  }
+
+  private uniqueUserIds = memoize(
+    async (
+      tenantId: string,
+      direction: 'ORIGIN' | 'DESTINATION',
+      timeRange: {
+        afterTimestamp: number
+        beforeTimestamp: number
+      }
+    ) => {
+      const transactionsRepo = new MongoDbTransactionRepository(
+        tenantId,
+        await getMongoDbClient()
+      )
+      return await transactionsRepo.getUniqueUserIds(direction, timeRange)
+    },
+    (tenantId, direction, timeRange) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
+  )
+
+  private uniquePaymentDetails = memoize(
+    async (
+      tenantId: string,
+      direction: 'ORIGIN' | 'DESTINATION',
+      timeRange: { afterTimestamp: number; beforeTimestamp: number }
+    ) => {
+      const transactionsRepo = new MongoDbTransactionRepository(
+        tenantId,
+        await getMongoDbClient()
+      )
+
+      return await transactionsRepo.getUniquePaymentDetails(
+        direction,
+        timeRange
+      )
+    },
+    (tenantId, direction, timeRange) =>
+      `${tenantId}-${direction}-${timeRange.afterTimestamp}-${timeRange.beforeTimestamp}`
+  )
+
+  private async internalBulkSendMesasges(
+    dynamoDb: DynamoDBDocumentClient,
+    messages: FifoSqsMessage[]
+  ) {
+    const messagesToSend: FifoSqsMessage[] = []
+
+    messagesToSend.push(
+      ...messages.filter(
+        (m) => !this.setDeduplicationIds.has(m.MessageDeduplicationId)
+      )
+    )
+
+    messages.forEach((m) =>
+      this.setDeduplicationIds.add(m.MessageDeduplicationId)
+    )
+
+    const dedupMessages = uniqBy(
+      messagesToSend,
+      (m) => m.MessageDeduplicationId
+    )
 
     await this.jobRepository.updateJob(this.jobId, {
-      $set: { 'metadata.tasksCount': dedupMessages.length },
+      $inc: { 'metadata.tasksCount': dedupMessages.length },
     })
 
     if (envIs('local')) {
@@ -134,6 +260,7 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       )
       // Filter the messages that have not been sent yet
       const messagesNotSentYet: FifoSqsMessage[] = []
+
       for (const message of dedupMessages) {
         if (
           !(await transientRepository.hasKey(
@@ -159,30 +286,13 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         }
       )
     }
-
-    logger.info(`Total tasks: ${dedupMessages.length}`)
-
-    if (dedupMessages.length === 0 && entity?.type === 'RULE') {
-      logger.info(
-        `No tasks to pre-aggregate. Switching rule instance ${entity.ruleInstanceId} to ACTIVE.`
-      )
-      await ruleInstanceRepository.updateRuleInstanceStatus(
-        entity.ruleInstanceId,
-        'ACTIVE'
-      )
-    }
   }
 
   private async preAggregateVariable(
     tenantId: string,
-    entity: RulePreAggregationBatchJob['parameters']['entity'],
     aggregationVariable: LogicAggregationVariable,
     currentTimestamp: number = Date.now()
-  ): Promise<Array<FifoSqsMessage>> {
-    const transactionsRepo = new MongoDbTransactionRepository(
-      tenantId,
-      await getMongoDbClient()
-    )
+  ): Promise<PreAggregationTask> {
     const { timeWindow } = aggregationVariable
     const timeRange = getTimeRangeByTimeWindows(
       currentTimestamp,
@@ -193,39 +303,26 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
       const originUserIds =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? []
-          : await transactionsRepo.getUniqueUserIds('ORIGIN', timeRange)
+          : await this.uniqueUserIds(tenantId, 'ORIGIN', timeRange)
       const destinationUserIds =
         aggregationVariable.transactionDirection === 'SENDING'
           ? []
-          : await transactionsRepo.getUniqueUserIds('DESTINATION', timeRange)
+          : await this.uniqueUserIds(tenantId, 'DESTINATION', timeRange)
       const allUserIds = uniq(originUserIds.concat(destinationUserIds))
 
-      return allUserIds.map((userId) =>
-        getAggregationTaskMessage({
-          userKeyId: userId,
-          payload: {
-            type: 'PRE_AGGREGATION',
-            aggregationVariable,
-            tenantId,
-            userId,
-            currentTimestamp,
-            jobId: this.jobId,
-            entity,
-          },
-        })
-      )
+      return {
+        ids: allUserIds,
+        type: 'USER_TRANSACTIONS',
+      }
     } else if (aggregationVariable.type === 'PAYMENT_DETAILS_TRANSACTIONS') {
       const originPaymentDetails =
         aggregationVariable.transactionDirection === 'RECEIVING'
           ? []
-          : await transactionsRepo.getUniquePaymentDetails('ORIGIN', timeRange)
+          : await this.uniquePaymentDetails(tenantId, 'ORIGIN', timeRange)
       const destinationPaymentDetails =
         aggregationVariable.transactionDirection === 'SENDING'
           ? []
-          : await transactionsRepo.getUniquePaymentDetails(
-              'DESTINATION',
-              timeRange
-            )
+          : await this.uniquePaymentDetails(tenantId, 'DESTINATION', timeRange)
       const userInfos = compact(
         uniqBy(
           originPaymentDetails.concat(destinationPaymentDetails),
@@ -237,20 +334,11 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
           }
         })
       )
-      return userInfos.map((userInfo) =>
-        getAggregationTaskMessage({
-          userKeyId: userInfo.userKeyId,
-          payload: {
-            type: 'PRE_AGGREGATION',
-            aggregationVariable,
-            tenantId,
-            paymentDetails: userInfo.paymentDetails,
-            currentTimestamp,
-            jobId: this.jobId,
-            entity,
-          },
-        })
-      )
+
+      return {
+        ids: userInfos,
+        type: 'PAYMENT_DETAILS_TRANSACTIONS',
+      }
     }
 
     throw new Error(
