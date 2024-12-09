@@ -246,7 +246,7 @@
     "ajv": "8.11.0",
     "async-mutex": "^0.5.0",
     "auth0": "^4.4.0",
-    "aws-sdk": "^2.1664.0",
+    "aws-sdk": "^2.1692.0",
     "aws-xray-sdk": "^3.5.0",
     "aws-xray-sdk-core": "^3.3.8",
     "axios": "^1.7.4",
