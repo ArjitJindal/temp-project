@@ -29,10 +29,7 @@ import {
 } from '@/utils/mongodb-utils'
 import { CounterRepository } from '@/services/counter/repository'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
-import {
-  AUDITLOG_COLLECTION,
-  CASES_COLLECTION,
-} from '@/utils/mongodb-definitions'
+import { AUDITLOG_COLLECTION } from '@/utils/mongodb-definitions'
 import { hasFeature } from '@/core/utils/context'
 import { RiskLevelRuleLogic } from '@/@types/openapi-internal/RiskLevelRuleLogic'
 import { RuleStats } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
@@ -47,6 +44,7 @@ import {
   getAggVarHash,
 } from '@/services/logic-evaluator/engine/aggregation-repository'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
+import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 // NOTE: We only cache active rule instances for 10 minutes in production -> After a rule instance
 // is activated, it'll be effective after 10 minutes (worst case).
 const ruleInstancesCache = envIs('prod')
@@ -573,15 +571,34 @@ export class RuleInstanceRepository {
     return uniq(data.map((d) => d.date))
   }
 
-  public async getDistinctRuleInstanceIdsWithAlerts() {
+  public async getDistinctRuleInstanceIdsWithAlerts(): Promise<string[]> {
+    const [liveRuleInstances, shadowRuleInstances] = await Promise.all([
+      this.getAllRuleInstances('LIVE'),
+      this.getAllRuleInstances('SHADOW'),
+    ])
+    const shadowRuleInstanceIds = shadowRuleInstances
+      .filter((ruleInstance) => ruleInstance.id && ruleInstance.hitCount)
+      .map((ruleInstance) => ruleInstance.id)
     const db = await getMongoDbClientDb()
-    const casesCollection = db.collection(CASES_COLLECTION(this.tenantId))
-    const distinctRuleInstanceIds: string[] = await casesCollection.distinct(
-      'alerts.ruleInstanceId',
-      {
-        'alerts.ruleInstanceId': { $exists: true, $ne: null },
-      }
+    const auditLogCollection = db.collection<AuditLog>(
+      AUDITLOG_COLLECTION(this.tenantId)
     )
-    return distinctRuleInstanceIds
+    const auditLogs = await auditLogCollection
+      .find({
+        entityId: { $in: shadowRuleInstanceIds },
+        action: 'UPDATE',
+      })
+      .toArray()
+    const distinctShadowRuleInstanceIds = new Set(
+      liveRuleInstances
+        .filter((r) => r.hitCount)
+        .map((ruleInstance) => ruleInstance.id)
+    )
+    auditLogs.map((auditLog) => {
+      if (auditLog?.oldImage?.ruleRunMode === 'LIVE') {
+        distinctShadowRuleInstanceIds.add(auditLog.entityId)
+      }
+    })
+    return Array.from(distinctShadowRuleInstanceIds).filter(Boolean) as string[]
   }
 }
