@@ -473,7 +473,7 @@ const HitTransactionUsersTable = (props: { ruleInstance: RuleInstance; timeRange
     } = params;
 
     return await api.getRuleInstancesTransactionUsersHit({
-      start: from,
+      start: from || params.from,
       pageSize,
       txAfterTimestamp: timeRange.afterTimestamp,
       txBeforeTimestamp: timeRange.beforeTimestamp,
