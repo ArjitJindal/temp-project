@@ -213,11 +213,6 @@ function RuleConfigurationFormV8(
 
   // After we leave the Basic Details step, we can assume that the rule type is set and it won't be able to be changed
   const [isRuleTypeSet, setIsRuleTypeSet] = useState(mode === 'EDIT');
-  useEffect(() => {
-    if (activeStepKey !== BASIC_DETAILS_STEP) {
-      setIsRuleTypeSet(true);
-    }
-  }, [activeStepKey]);
 
   return (
     <ConfigProvider
@@ -265,6 +260,7 @@ function RuleConfigurationFormV8(
                   readOnly={readOnly}
                   newRuleId={newRuleId}
                   simulationMode={simulationMode}
+                  setRuleTypeSelectionStatus={setIsRuleTypeSet}
                 />
               </NestedForm>
             </div>
@@ -282,8 +278,16 @@ function StepSubform(props: {
   readOnly: boolean;
   newRuleId?: string;
   simulationMode?: boolean;
+  setRuleTypeSelectionStatus: React.Dispatch<React.SetStateAction<boolean>>;
 }) {
-  const { activeStepKey, newRuleId, simulationMode, ruleType, isRuleTypeSet } = props;
+  const {
+    activeStepKey,
+    newRuleId,
+    simulationMode,
+    ruleType,
+    isRuleTypeSet,
+    setRuleTypeSelectionStatus,
+  } = props;
   if (activeStepKey === BASIC_DETAILS_STEP) {
     return (
       <BasicDetailsStep
@@ -294,7 +298,13 @@ function StepSubform(props: {
     );
   }
   if (activeStepKey === RULE_IS_HIT_WHEN_STEP) {
-    return <RuleIsHitWhenStep ruleType={ruleType} readOnly={props.readOnly} />;
+    return (
+      <RuleIsHitWhenStep
+        ruleType={ruleType}
+        readOnly={props.readOnly}
+        setRuleTypeSelectionStatus={setRuleTypeSelectionStatus}
+      />
+    );
   }
   if (activeStepKey === ALERT_CREATION_DETAILS_STEP) {
     return <AlertCreationDetailsStep ruleType={ruleType} />;

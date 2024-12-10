@@ -54,7 +54,11 @@ export const INITIAL_VALUES: Partial<RuleIsHitWhenStepFormValues> = {
   ruleAction: 'FLAG',
 };
 
-export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?: boolean }) {
+export default function RuleIsHitWhenStep(props: {
+  ruleType: RuleType;
+  readOnly?: boolean;
+  setRuleTypeSelectionStatus: React.Dispatch<React.SetStateAction<boolean>>;
+}) {
   const aggVariablesFieldState = useFieldState<
     RuleIsHitWhenStepFormValues,
     'ruleLogicAggregationVariables'
@@ -87,6 +91,12 @@ export default function RuleIsHitWhenStep(props: { ruleType: RuleType; readOnly?
         aggregationVariables={aggVariablesFieldState.value}
         mlVariables={mlVariablesFieldState.value}
         onChange={(v) => {
+          if (v.entityVariables || v.aggregationVariables) {
+            props.setRuleTypeSelectionStatus(true);
+          }
+          if (v.entityVariables?.length === 0 && v.aggregationVariables?.length === 0) {
+            props.setRuleTypeSelectionStatus(false);
+          }
           if (v.aggregationVariables) {
             aggVariablesFieldState.onChange(v.aggregationVariables);
           }
