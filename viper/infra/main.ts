@@ -137,17 +137,6 @@ class DatabricksStack extends TerraformStack {
     if (!config.viper) {
       return
     }
-
-    // Create or retrieve metastores, VPC, users.
-    const { privateSubnetIds, subnetIds, vpcId } = config.viper.CREATE_VPC
-      ? this.createVpc()
-      : this.fetchVpc()
-
-    this.awsWorkspace({
-      vpcId: vpcId,
-      subnetId: Fn.element(subnetIds, 0),
-      privateSubnetId: Fn.element(privateSubnetIds, 0),
-    })
   }
 
   private awsWorkspace(vpc?: {
