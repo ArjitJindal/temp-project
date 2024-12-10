@@ -11201,6 +11201,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"fast-fuzzy@npm:^1.12.0":
+  version: 1.12.0
+  resolution: "fast-fuzzy@npm:1.12.0"
+  dependencies:
+    graphemesplit: "npm:^2.4.1"
+  checksum: fed3af28636f930372270b188ed84f77b24a03f817e0253c5399d5dd74265f0fb79565abcedd283e10bba7cc46a2564c6f359a62335fb06c5d306a3099590e03
+  languageName: node
+  linkType: hard
+
 "fast-glob@npm:^3.2.9, fast-glob@npm:^3.3.2":
   version: 3.3.2
   resolution: "fast-glob@npm:3.3.2"
@@ -12073,6 +12082,16 @@ __metadata:
   version: 1.4.0
   resolution: "graphemer@npm:1.4.0"
   checksum: 6dd60dba97007b21e3a829fab3f771803cc1292977fe610e240ea72afd67e5690ac9eeaafc4a99710e78962e5936ab5a460787c2a1180f1cb0ccfac37d29f897
+  languageName: node
+  linkType: hard
+
+"graphemesplit@npm:^2.4.1":
+  version: 2.4.4
+  resolution: "graphemesplit@npm:2.4.4"
+  dependencies:
+    js-base64: "npm:^3.6.0"
+    unicode-trie: "npm:^2.0.0"
+  checksum: 7084ea17efe86957d2a2a07a651f07b7e698cadca582d5dd304974657a2f010ee02f5ca4775696eb7b07502f79f55661ed04c4c9b71cb73c19537ce9639f306d
   languageName: node
   linkType: hard
 
@@ -13619,6 +13638,13 @@ __metadata:
   version: 4.15.4
   resolution: "jose@npm:4.15.4"
   checksum: 20fa941597150dffc7af3f41d994500cc3e71cd650b755243dbd80d91cf26c1053f95b78af588f05cfc4371e492a67c5c7a48f689b8605145a8fe28b484d725b
+  languageName: node
+  linkType: hard
+
+"js-base64@npm:^3.6.0":
+  version: 3.7.7
+  resolution: "js-base64@npm:3.7.7"
+  checksum: 185e34c536a6b1c4e1ad8bd96d25b49a9ea4e6803e259eaaaca95f1b392a0d590b2933c5ca8580c776f7279507944b81ff1faf889d84baa5e31f026e96d676a5
   languageName: node
   linkType: hard
 
@@ -17919,6 +17945,7 @@ __metadata:
     exponential-backoff: "npm:^3.1.1"
     express: "npm:^4.18.1"
     express-openapi-validator: "npm:^4.13.8"
+    fast-fuzzy: "npm:^1.12.0"
     fast-levenshtein: "npm:^3.0.0"
     fast-xml-parser: "npm:^4.4.1"
     fern-api: "npm:^0.30.3"

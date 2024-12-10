@@ -2,6 +2,7 @@ import pMap from 'p-map'
 import { MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { backOff } from 'exponential-backoff'
+import { search, sortKind } from 'fast-fuzzy'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
@@ -30,7 +31,6 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { calculateLevenshteinDistancePercentage } from '@/utils/search'
 import { getUserName } from '@/utils/helpers'
 
 const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
@@ -293,6 +293,8 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   }
 }
 
+const USER_BATCH_SIZE = 1000
+
 export async function preprocessUsers(
   tenantId: string,
   fuzziness: number,
@@ -318,11 +320,13 @@ export async function preprocessUsers(
     match = { userId: { $gte: from } }
   }
   if (to) {
-    match = { userId: { ...match.userId, $lte: to } }
+    match = { userId: { ...match.userId, $lt: to } }
   }
-  const otherTargetUserIds = await getUserIdsForODDRulesForPNB(
-    ruleInstances ?? [],
-    dynamoDb as DynamoDBDocumentClient
+  const otherTargetUserIds = new Set(
+    await getUserIdsForODDRulesForPNB(
+      ruleInstances ?? [],
+      dynamoDb as DynamoDBDocumentClient
+    )
   )
   const mohaListUsers = await getMOHAListUserNames(
     dynamoDb,
@@ -349,29 +353,67 @@ export async function preprocessUsers(
       }
     })
   }
-  for await (const user of usersCollection.find(match)) {
-    if (otherTargetUserIds && otherTargetUserIds.includes(user.userId)) {
-      matches.add(user.userId)
-      continue
-    }
-    allNames.forEach((n) => {
-      const percentageSimilarity = calculateLevenshteinDistancePercentage(
-        n.toLowerCase(),
-        getUserName(user).toLowerCase()
-      )
-      const percentageDifference = 100 - percentageSimilarity
-      if (percentageDifference <= fuzziness) {
-        matches.add(user.userId)
-      }
-    })
-    user.legalDocuments?.forEach((d) => {
-      if (documentIds.has(d.documentNumber)) {
-        matches.add(user.userId)
-      }
-    })
-  }
+  const usersCursor = usersCollection.find(match)
+  await processCursorInBatch(
+    usersCursor,
+    async (usersChunk) => {
+      await processUsersBatch({
+        usersChunk,
+        allNames: Array.from(allNames),
+        documentIds,
+        otherTargetUserIds,
+        fuzziness,
+        matches,
+      })
+    },
+    { mongoBatchSize: USER_BATCH_SIZE, debug: true }
+  )
 
   return matches
+}
+
+async function processUsersBatch({
+  usersChunk,
+  allNames,
+  documentIds,
+  otherTargetUserIds,
+  fuzziness,
+  matches,
+}: {
+  usersChunk: InternalUser[]
+  allNames: string[]
+  documentIds: Set<string>
+  otherTargetUserIds: Set<string>
+  fuzziness: number
+  matches: Set<string>
+}) {
+  await pMap(
+    usersChunk,
+    (user) => {
+      if (otherTargetUserIds && otherTargetUserIds.has(user.userId)) {
+        matches.add(user.userId)
+        return
+      }
+      const userName = getUserName(user)
+      const fuzzyMatches = search(userName, allNames, {
+        threshold: 1 - fuzziness / 100,
+        limit: 1,
+        sortBy: sortKind.insertOrder,
+        ignoreCase: true,
+      })
+      if (fuzzyMatches.length > 0) {
+        matches.add(user.userId)
+        return
+      }
+      for (const d of user.legalDocuments ?? []) {
+        if (documentIds.has(d.documentNumber)) {
+          matches.add(user.userId)
+          break
+        }
+      }
+    },
+    { concurrency: CONCURRENT_BATCH_SIZE }
+  )
 }
 
 async function getUserIdsForODDRulesForPNB(
