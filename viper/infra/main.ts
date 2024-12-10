@@ -137,22 +137,6 @@ class DatabricksStack extends TerraformStack {
     if (!config.viper) {
       return
     }
-
-    this.awsWorkspace()
-  }
-
-  private awsWorkspace() {
-    new aws.athenaWorkgroup.AthenaWorkgroup(this, 'athena-workgroup', {
-      name: 'datalake',
-      configuration: {
-        enforceWorkgroupConfiguration: true,
-        publishCloudwatchMetricsEnabled: true,
-        resultConfiguration: {
-          outputLocation: `s3://${awsPrefix}-bucket/output/`,
-        },
-      },
-      forceDestroy: true,
-    })
   }
 
   private fetchVpc(): {
