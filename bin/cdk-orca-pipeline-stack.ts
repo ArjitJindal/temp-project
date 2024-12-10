@@ -30,7 +30,6 @@ import {
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
 import { getTarponConfig } from '@flagright/lib/constants/config'
-import { viperDeployStage } from './utils/viper-deploy'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
 import {
   postProdDeployIntegrationsUpdateBuildProject,
@@ -140,11 +139,6 @@ export class CdkOrcaPipelineStack extends Stack {
                 role
               ),
             }),
-            new codepipline_actions.CodeBuildAction({
-              actionName: 'Deploy_Viper',
-              project: viperDeployStage(this, devConfig, role),
-              input: SOURCE_ARTIFACT,
-            }),
           ],
         },
         {
@@ -198,15 +192,6 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (config.viper) {
-                actions.push(
-                  new codepipline_actions.CodeBuildAction({
-                    actionName: getCodeBuildActionName('Deploy_Viper', region),
-                    project: viperDeployStage(this, config, role),
-                    input: SOURCE_ARTIFACT,
-                  })
-                )
-              }
               return actions
             }),
             new codepipline_actions.CodeBuildAction({
@@ -277,15 +262,6 @@ export class CdkOrcaPipelineStack extends Stack {
                   environmentVariables: getSentryReleaseSpec(false).actionEnv,
                 }),
               ]
-              if (config.viper && region !== 'asia-3') {
-                actions.push(
-                  new codepipline_actions.CodeBuildAction({
-                    actionName: getCodeBuildActionName('Deploy_Viper', region),
-                    project: viperDeployStage(this, config, role),
-                    input: SOURCE_ARTIFACT,
-                  })
-                )
-              }
               return actions
             }),
             new codepipline_actions.CodeBuildAction({
