@@ -340,6 +340,7 @@ export const SQSQueues: {
   },
   ASYNC_RULE_QUEUE_NAME: {
     name: getResourceName('AsyncRuleQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 120,
   },
   MONGO_DB_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoDbConsumerQueue'),
