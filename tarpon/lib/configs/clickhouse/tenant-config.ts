@@ -78,7 +78,7 @@ export function getClickhouseTenantConfig(
         ENVIROMENT: {
           type: 'production',
           minTotalMemoryGb: 24,
-          maxTotalMemoryGb: 24,
+          maxTotalMemoryGb: 48,
         },
         region: CONFIG_MAP[stage]['asia-1'].env.region as string,
         idleScaling: true,
