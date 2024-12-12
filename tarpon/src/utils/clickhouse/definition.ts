@@ -291,7 +291,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         },
       },
       {
-        column: '(drsScore_drsScore, craRiskLevel)',
+        column: 'drsScore_drsScore, craRiskLevel',
         name: 'risk_score_idx',
         type: 'minmax',
         options: { granularity: 4 },

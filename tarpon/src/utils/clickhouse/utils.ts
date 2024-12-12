@@ -701,7 +701,7 @@ async function addMissingIndexes(
 type Index = {
   name: string
   expr: string
-  type: IndexType
+  type: IndexType | string
   granularity: number
 }
 
@@ -711,7 +711,7 @@ async function getExistingIndexes(
   tenantId: string
 ): Promise<Index[]> {
   const response = await client.query({
-    query: `SELECT name, expr, type, granularity FROM system.data_skipping_indices WHERE table = '${tableName}' AND database='${getClickhouseDbName(
+    query: `SELECT name, expr, type_full as type, granularity FROM system.data_skipping_indices WHERE table = '${tableName}' AND database='${getClickhouseDbName(
       tenantId
     )}'`,
   })
@@ -722,7 +722,7 @@ async function getExistingIndexes(
   return result.data as Array<{
     name: string
     expr: string
-    type: IndexType
+    type: string
     granularity: number
   }>
 }
@@ -755,7 +755,7 @@ async function updateIndex(
 
 function getIndexDefinition(
   columnName: string,
-  indexType: IndexType,
+  indexType: IndexType | string,
   options: IndexOptions
 ): string {
   switch (indexType) {
