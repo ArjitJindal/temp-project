@@ -43,7 +43,7 @@ export default function TransactionsTab(props: Props) {
         ...FIXED_API_PARAMS,
         ...params,
         alertId: alert.alertId,
-        start: from,
+        start: from || params.from,
         page: params.page,
         pageSize: params.pageSize,
         userId: params.userId,
