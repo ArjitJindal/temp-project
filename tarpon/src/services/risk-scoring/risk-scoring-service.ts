@@ -232,7 +232,7 @@ async function getDerivedAttributeRiskLevel(
   isNullableAllowed: boolean | undefined,
   defaultValue: RiskScoreValueLevel | RiskScoreValueScore = DEFAULT_RISK_VALUE
 ): Promise<RiskScoreValueLevel | RiskScoreValueScore> {
-  if (derivedValue || isNullableAllowed) {
+  if (derivedValue != null || isNullableAllowed) {
     for (const { parameterValue, riskValue } of riskLevelAssignmentValues) {
       const isMatch = await matchParameterValue(derivedValue, parameterValue)
       if (isMatch) {

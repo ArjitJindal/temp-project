@@ -387,3 +387,55 @@ createArsRiskFactorTestCases(
     },
   ]
 )
+
+createArsRiskFactorTestCases(
+  'consumerCreatedTimestamp',
+  DEFAULT_CLASSIFICATION_SETTINGS,
+  {
+    parameter: 'consumerCreatedTimestamp',
+    isActive: true,
+    isDerived: true,
+    riskEntityType: 'TRANSACTION',
+    riskLevelAssignmentValues: [
+      {
+        parameterValue: {
+          content: {
+            kind: 'DAY_RANGE',
+            start: 0,
+            end: 1,
+            startGranularity: 'DAYS',
+            endGranularity: 'DAYS',
+          },
+        },
+        riskValue: {
+          type: 'RISK_LEVEL',
+          value: 'VERY_HIGH',
+        },
+      },
+    ],
+    parameterType: 'VARIABLE',
+    defaultValue: {
+      type: 'RISK_LEVEL',
+      value: 'MEDIUM',
+    },
+    weight: 1,
+  },
+  [
+    {
+      testName: 'Very High Risk',
+      users: [
+        getTestUser({
+          userId: '1-2-4',
+          createdTimestamp: dayjs().subtract(5, 'minutes').valueOf(),
+        }),
+      ],
+      transaction: {
+        type: 'TRANSFER',
+        transactionId: '1-2-4',
+        timestamp: dayjs().valueOf(),
+        originUserId: '1-2-4',
+      },
+      expectedScore: 90,
+    },
+  ]
+)
