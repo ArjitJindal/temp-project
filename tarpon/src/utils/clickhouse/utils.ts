@@ -222,23 +222,37 @@ const clickhouseInsert = async (
   }
 }
 
+const testCache = new Set()
+
+async function prepareClickhouseInsert(tableName: TableName, tenantId: string) {
+  if (!isClickhouseEnabledInRegion()) {
+    return false
+  }
+
+  const tableDefinition = assertTableName(tableName, tenantId)
+  const cacheKey = `${tenantId}-${tableName}`
+
+  if (envIs('test')) {
+    if (!isClickhouseEnabled()) {
+      return false
+    }
+    if (!testCache.has(cacheKey)) {
+      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
+      testCache.add(cacheKey)
+    }
+  }
+
+  return tableDefinition
+}
+
 export async function insertToClickhouse<T extends object>(
   tableName: TableName,
   object: T,
   tenantId: string = getContext()?.tenantId as string
 ) {
-  if (!isClickhouseEnabledInRegion()) {
+  const tableDefinition = await prepareClickhouseInsert(tableName, tenantId)
+  if (!tableDefinition) {
     return
-  }
-
-  const tableDefinition = assertTableName(tableName, tenantId)
-
-  if (envIs('test')) {
-    if (!isClickhouseEnabled()) {
-      return
-    } else {
-      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
-    }
   }
 
   await clickhouseInsert(
@@ -260,14 +274,11 @@ export async function batchInsertToClickhouse(
   table: TableName,
   objects: object[]
 ) {
-  const tableDefinition = assertTableName(table, tenantId)
-  if (envIs('test')) {
-    if (!isClickhouseEnabled()) {
-      return
-    } else {
-      await createOrUpdateClickHouseTable(tenantId, tableDefinition)
-    }
+  const tableDefinition = await prepareClickhouseInsert(table, tenantId)
+  if (!tableDefinition) {
+    return
   }
+
   await clickhouseInsert(
     tenantId,
     sanitizeSqlName(table),
