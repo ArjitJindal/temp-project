@@ -1,5 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
+import { insertRiskScores } from '../utils/user-utils'
 import {
   DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListV2Request,
@@ -8,8 +9,23 @@ import {
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getRiskScoreBoundsFromLevel } from '@/services/risk-scoring/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
-import { getSortedData, isClickhouseEnabled } from '@/utils/clickhouse/utils'
+
+import {
+  COUNT_QUERY_LIMIT,
+  DEFAULT_PAGE_SIZE,
+  offsetPaginateClickhouse,
+} from '@/utils/pagination'
+import {
+  executeClickhouseQuery,
+  getSortedData,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { hasFeature } from '@/core/utils/context'
+import {
+  AllUsersListResponse,
+  AllUsersTableItem,
+  RiskClassificationScore,
+} from '@/@types/openapi-internal/all'
 
 export class UserClickhouseRepository {
   private tenantId: string
@@ -23,6 +39,125 @@ export class UserClickhouseRepository {
     this.tenantId = tenantId
     this.clickhouseClient = clickhouseClient
     this.dynamoDb = dynamoDb
+  }
+
+  private isPulseEnabled() {
+    return hasFeature('RISK_LEVELS') || hasFeature('RISK_SCORING')
+  }
+
+  public async getClickhouseUsersPaginate<T extends AllUsersTableItem>(
+    params: DefaultApiGetAllUsersListV2Request,
+    filterOperator: 'AND' | 'OR',
+    includeCasesCount: boolean,
+    columns: Record<string, string>,
+    callback: (data: Record<string, string | number>) => T,
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<AllUsersListResponse> {
+    if (!this.clickhouseClient) {
+      if (isClickhouseEnabled()) {
+        throw new Error('Clickhouse client is not initialized')
+      }
+      return {
+        hasPrev: false,
+        prev: '',
+        next: '',
+        count: 0,
+        limit: 0,
+        last: '',
+        hasNext: false,
+        items: [],
+      }
+    }
+
+    const isPulseEnabled = this.isPulseEnabled()
+    const riskRepository = new RiskRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+
+    const riskClassificationValues = this.isPulseEnabled()
+      ? await riskRepository.getRiskClassificationValues()
+      : []
+    const whereClause = await this.buildWhereClause(params, userType, {
+      isPulseEnabled,
+      riskClassificationValues,
+      filterOperator,
+    })
+    const sortField =
+      (params.sortField === 'createdTimestamp'
+        ? 'timestamp'
+        : params.sortField) ?? 'timestamp'
+    const sortOrder = params.sortOrder ?? 'ascend'
+    const page = params.page ?? 1
+    const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
+
+    // Get users data
+    let result = await offsetPaginateClickhouse<T>(
+      this.clickhouseClient,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
+      CLICKHOUSE_DEFINITIONS.USERS.tableName,
+      { page, pageSize, sortField, sortOrder },
+      whereClause,
+      columns,
+      callback
+    )
+
+    if (includeCasesCount) {
+      const userIds = result.items.map((user) => user['userId'])
+      const casesCountQuery = `
+        SELECT 
+          userId,
+          count() as casesCount
+        FROM (
+          SELECT originUserId as userId FROM ${
+            CLICKHOUSE_DEFINITIONS.CASES.tableName
+          } FINAL
+          WHERE caseStatus != 'CLOSED' AND originUserId IN ('${userIds.join(
+            "','"
+          )}')
+          UNION ALL
+          SELECT destinationUserId as userId FROM ${
+            CLICKHOUSE_DEFINITIONS.CASES.tableName
+          } FINAL
+          WHERE caseStatus != 'CLOSED' AND destinationUserId IN ('${userIds.join(
+            "','"
+          )}')
+        )
+        GROUP BY userId
+        LIMIT ${COUNT_QUERY_LIMIT}
+      `
+
+      const casesCount = await executeClickhouseQuery<{
+        userId: string
+        casesCount: number
+      }>(this.tenantId, casesCountQuery, {})
+
+      result = {
+        ...result,
+        items: result.items.map((user) => ({
+          ...user,
+          casesCount:
+            casesCount.find((item) => item.userId === user.userId)
+              ?.casesCount || 0,
+        })),
+      }
+    }
+    if (isPulseEnabled) {
+      result.items = await insertRiskScores(
+        result.items,
+        riskClassificationValues
+      )
+    }
+
+    return {
+      items: result.items as AllUsersTableItem[],
+      count: result.count,
+      hasPrev: page > 1,
+      hasNext: result.count > page * pageSize,
+      prev: page > 1 ? (page - 1).toString() : '',
+      next: result.count > page * pageSize ? (page + 1).toString() : '',
+      last: Math.ceil(result.count / pageSize).toString(),
+      limit: pageSize,
+    }
   }
 
   public async getUsersV2<T>(
@@ -88,24 +223,56 @@ export class UserClickhouseRepository {
     params: DefaultApiGetAllUsersListV2Request &
       DefaultApiGetConsumerUsersListV2Request &
       DefaultApiGetBusinessUsersListV2Request,
-    userType?: 'BUSINESS' | 'CONSUMER'
+    userType?: 'BUSINESS' | 'CONSUMER',
+    options?: {
+      isPulseEnabled?: boolean
+      riskClassificationValues?: RiskClassificationScore[]
+      filterOperator?: 'AND' | 'OR'
+    }
   ): Promise<string> {
     const riskRepository = new RiskRepository(this.tenantId, {
       dynamoDb: this.dynamoDb,
     })
     const whereClauses: string[] = []
+    const filterConditions: string[] = []
     const riskClassificationValues =
-      await riskRepository.getRiskClassificationValues()
-    if (params.afterTimestamp != null && params.beforeTimestamp != null) {
-      whereClauses.push(
-        `timestamp > ${params.afterTimestamp} AND timestamp < ${params.beforeTimestamp}`
-      )
-    }
-    if (params.filterId) {
-      whereClauses.push(`id LIKE '${params.filterId}%'`)
-    }
+      options?.riskClassificationValues ??
+      (await riskRepository.getRiskClassificationValues())
+    whereClauses.push(
+      `timestamp >= ${params.afterTimestamp || 0}`,
+      `timestamp <= ${params.beforeTimestamp || Number.MAX_SAFE_INTEGER}`
+    )
+
     if (userType) {
       whereClauses.push(`type = '${userType}'`)
+    }
+
+    // Filter conditions (can be OR-ed or AND-ed)
+    if (params.filterId) {
+      filterConditions.push(`ilike(id, '${params.filterId}%')`)
+    }
+
+    if (params.filterName) {
+      filterConditions.push(`ilike(username, '%${params.filterName}%')`)
+    }
+
+    if ((options?.isPulseEnabled ?? true) && params.filterRiskLevel) {
+      const riskLevelConditions: string[] = [
+        `craRiskLevel IN ('${params.filterRiskLevel.join("','")}')`,
+      ]
+
+      const riskScoreBounds = params.filterRiskLevel
+        .map((riskLevel) =>
+          getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
+        )
+        .map(
+          (bounds) =>
+            `(drsScore_drsScore >= ${bounds.lowerBoundRiskScore} AND drsScore_drsScore < ${bounds.upperBoundRiskScore})`
+        )
+        .join(' OR ')
+
+      riskLevelConditions.push(`(${riskScoreBounds})`)
+      whereClauses.push(`(${riskLevelConditions.join(' OR ')})`)
     }
 
     if (
@@ -113,9 +280,8 @@ export class UserClickhouseRepository {
       params.filterPepCountry != null ||
       params.filterPepRank != null
     ) {
-      // if false check for pepDetails which are empty or all have false
       if (params.filterIsPepHit === 'false') {
-        whereClauses.push(
+        filterConditions.push(
           `(arrayAll(x -> x.isPepHit = false, pepDetails) OR length(pepDetails) = 0)`
         )
       }
@@ -135,53 +301,46 @@ export class UserClickhouseRepository {
           arrayExistsClauses.push(`x.pepRank = '${params.filterPepRank}'`)
         }
 
-        whereClauses.push(
+        filterConditions.push(
           `arrayExists(x -> ${arrayExistsClauses.join(' AND ')}, pepDetails)`
         )
       }
     }
 
-    if (params.filterName) {
-      whereClauses.push(`username LIKE '%${params.filterName}%'`)
-    }
-    if (params.filterRiskLevel) {
-      const riskScoreBounds = params.filterRiskLevel
-        .map((riskLevel) =>
-          getRiskScoreBoundsFromLevel(riskClassificationValues, riskLevel)
-        )
-        .map(
-          (bounds) =>
-            `(drsScore_drsScore >= ${bounds.lowerBoundRiskScore} AND drsScore_drsScore < ${bounds.upperBoundRiskScore})`
-        )
-        .join(' OR ')
-      whereClauses.push(
-        `(craRiskLevel IN ('${params.filterRiskLevel.join(
-          "','"
-        )}') OR (${riskScoreBounds}))`
-      )
-    }
     if (params.filterTagKey || params.filterTagValue) {
       if (!params.filterTagValue) {
-        whereClauses.push(
+        filterConditions.push(
           `arrayExists(x -> x.key = '${params.filterTagKey}', tags)`
         )
       } else {
-        whereClauses.push(
+        filterConditions.push(
           `arrayExists(x -> x.key = '${params.filterTagKey}' AND x.value = '${params.filterTagValue}', tags)`
         )
       }
     }
+
     if (params.filterRiskLevelLocked != null) {
       const isUpdatable = params.filterRiskLevelLocked === 'true' ? 'Yes' : 'No'
-      whereClauses.push(`riskLevelLocked = '${isUpdatable}'`)
+      filterConditions.push(`riskLevelLocked = '${isUpdatable}'`)
     }
+
     if (params.filterUserRegistrationStatus) {
-      whereClauses.push(
+      filterConditions.push(
         `userRegistrationStatus IN ('${params.filterUserRegistrationStatus.join(
           "','"
         )}')`
       )
     }
+
+    // Combine all conditions
+    if (filterConditions.length > 0) {
+      whereClauses.push(
+        `(${filterConditions.join(
+          options?.filterOperator === 'OR' ? ' OR ' : ' AND '
+        )})`
+      )
+    }
+
     return whereClauses.join(' AND ')
   }
 }

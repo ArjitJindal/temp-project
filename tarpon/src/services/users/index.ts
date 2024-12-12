@@ -947,10 +947,49 @@ export class UserService {
   public async getUsers(
     params: DefaultApiGetAllUsersListRequest
   ): Promise<AllUsersListResponse> {
+    if (isClickhouseEnabled()) {
+      return await this.getClickhouseUsers(params)
+    }
     const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapAllUserToTableItem
     )
+
+    return result
+  }
+
+  public async getClickhouseUsers(
+    params: DefaultApiGetAllUsersListRequest
+  ): Promise<AllUsersListResponse> {
+    const columns = this.getUserCommonColumns()
+
+    const callback = (
+      data: Record<string, string | number>
+    ): AllUsersTableItem => {
+      return {
+        userId: data.userId as string,
+        name: data.name as string,
+        type: data.type as UserType,
+        kycStatus: data.kycStatus as KYCStatus,
+        userState: data.userState as UserState,
+        tags: data.tags ? JSON.parse(data.tags as string) : [],
+        createdTimestamp: data.createdTimestamp as number,
+        updatedAt: data.updatedAt as number,
+        drsScore: data.drsScore as number,
+        krsScore: data.krsScore as number,
+        isRiskLevelLocked: !data.isRiskLevelLocked,
+        manualRiskLevel: data.manualRiskLevel as RiskLevel,
+        riskLevel: data.riskLevel as RiskLevel,
+      }
+    }
+    const result =
+      await this.userClickhouseRepository.getClickhouseUsersPaginate<AllUsersTableItem>(
+        params,
+        params.filterOperator ?? 'AND',
+        params.includeCasesCount ?? false,
+        columns,
+        callback
+      )
 
     return result
   }

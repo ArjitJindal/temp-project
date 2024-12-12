@@ -24,18 +24,13 @@ import {
   ClickhouseTableDefinition,
   TableName,
   IndexType,
+  IndexOptions,
 } from './definition'
 import { getContext, hasFeature } from '@/core/utils/context'
 import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
-
-export type IndexOptions = {
-  granularity?: number
-  type?: string
-  config?: Record<string, any>
-}
 
 const prodRegionsEnabled: FlagrightRegion[] = ['asia-1']
 
@@ -387,9 +382,9 @@ export async function createOrUpdateClickHouseTable(
   }
   const client = await getClickhouseClient(tenantId)
   await createTableIfNotExists(client, tableName, table)
-  await addMissingIndexes(client, tableName, table, tenantId)
   await addMissingColumnsTable(client, tableName, table)
   await addMissingProjections(client, tableName, table)
+  await addMissingIndexes(client, tableName, table, tenantId)
   await createMaterializedViews(client, table)
 }
 
@@ -682,10 +677,11 @@ async function addMissingIndexes(
       continue
     }
 
-    const finalOptions = {
-      granularity: existingIndex?.granularity ?? 1,
+    const finalOptions: IndexOptions = {
       type: existingIndex.type,
-      config: {},
+      config: {
+        granularity: existingIndex?.granularity ?? 1,
+      },
     }
     const normalizedExistingDef = getIndexDefinition(
       existingIndex.expr,
@@ -760,19 +756,21 @@ async function updateIndex(
 function getIndexDefinition(
   columnName: string,
   indexType: IndexType,
-  options: Required<IndexOptions>
+  options: IndexOptions
 ): string {
   switch (indexType) {
     case 'inverted':
-      return `(${columnName}) TYPE ${options.type}(${options.granularity})`
+      return `(${columnName}) TYPE ${options.type}(${options.config.granularity})`
     case 'bloom_filter':
-      return `(${columnName}) TYPE bloom_filter(${options.granularity})`
+      return `(${columnName}) TYPE bloom_filter(${options.config.granularity})`
     case 'minmax':
-      return `(${columnName}) TYPE minmax GRANULARITY ${options.granularity}`
+      return `(${columnName}) TYPE minmax GRANULARITY ${options.config.granularity}`
     case 'set':
-      return `(${columnName}) TYPE set(${options.granularity})`
+      return `(${columnName}) TYPE set(${options.config.granularity})`
+    case 'tokenbf_v1':
+      return `(${columnName}) TYPE tokenbf_v1(${options.config.bloomFilterSize}, ${options.config.numHashFunctions}, ${options.config.randomSeed}) GRANULARITY ${options.config.granularity}`
     default:
-      return `(${columnName}) TYPE ${options.type} GRANULARITY ${options.granularity}`
+      return `(${columnName}) TYPE ${options.type} GRANULARITY ${options.config.granularity}`
   }
 }
 
@@ -782,10 +780,11 @@ function createIndexOptions(tableDefinition: ClickhouseTableDefinition) {
   }
   const indexOptions: string[] = []
   for (const index of tableDefinition.indexes) {
-    const finalOptions = {
-      granularity: index.options?.granularity ?? 1,
+    const finalOptions: IndexOptions = {
       type: index.type,
-      config: {},
+      config: {
+        ...index.options,
+      },
     }
     const indexDefinition = getIndexDefinition(
       index.column,

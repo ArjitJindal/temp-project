@@ -14,9 +14,10 @@ import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusiness
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 import { hasFeature } from '@/core/utils/context'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 
 type RiskType = 'KRS' | 'DRS'
-
+dynamoDbSetupHook()
 withFeaturesToggled(['RISK_SCORING'], ['CLICKHOUSE_ENABLED'], () => {
   describe.each<RiskType>(['KRS', 'DRS'])('Risk type: %s', (riskType) => {
     describe.each<UserType>(USER_TYPES)('User type: %s', (userType) => {

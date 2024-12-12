@@ -9,6 +9,11 @@ import { USER_TYPES } from '@/@types/user/user-type'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { SANCTIONS_SCREENING_ENTITYS } from '@/@types/openapi-internal-custom/SanctionsScreeningEntity'
 
+export type IndexOptions = {
+  type: string
+  config: Record<string, any>
+}
+
 export type IndexType =
   | 'inverted'
   | 'normal'
@@ -28,6 +33,10 @@ type BaseTableDefinition = {
     type: IndexType
     options: {
       granularity: number
+      ngramSize?: number
+      bloomFilterSize?: number
+      numHashFunctions?: number
+      randomSeed?: number
     }
   }[]
   engine: 'ReplacingMergeTree'
@@ -224,6 +233,11 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     timestampColumn: CLICKHOUSE_DEFINITIONS.USERS.definition.timestampColumn,
     materializedColumns: [
       enumFields(USER_TYPES, 'type', 'type'),
+      `emailIds Array(String) MATERIALIZED arrayConcat(
+        JSONExtractArrayRaw(data, 'contactDetails', 'emailIds'),
+        JSONExtractArrayRaw(data, 'legalEntity', 'contactDetails', 'emailIds')
+      )`,
+      `emailIds_tokens Array(String) MATERIALIZED arrayMap(x -> lower(x), emailIds)`,
       userNameMaterilizedColumn,
       `tags Array(Tuple(key String, value String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'tags'), 'Array(Tuple(key String, value String))')`,
       `pepDetails Array(Tuple(isPepHit Bool, pepCountry String, pepRank String)) MATERIALIZED JSONExtract(JSONExtractRaw(data, 'pepStatus'), 'Array(Tuple(isPepHit Bool, pepCountry String, pepRank String))')`,
@@ -255,8 +269,32 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       {
         column: 'username',
         name: 'username_idx',
-        type: 'minmax' as IndexType,
-        options: { granularity: 3 },
+        type: 'tokenbf_v1',
+        options: {
+          granularity: 4,
+          ngramSize: 3,
+          bloomFilterSize: 512,
+          numHashFunctions: 5,
+          randomSeed: 1,
+        },
+      },
+      {
+        column: 'emailIds_tokens',
+        name: 'email_tokens_idx',
+        type: 'tokenbf_v1',
+        options: {
+          granularity: 4,
+          ngramSize: 3,
+          bloomFilterSize: 512,
+          numHashFunctions: 5,
+          randomSeed: 1,
+        },
+      },
+      {
+        column: '(drsScore_drsScore, craRiskLevel)',
+        name: 'risk_score_idx',
+        type: 'minmax',
+        options: { granularity: 4 },
       },
     ],
     materializedViews: [
@@ -305,6 +343,14 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     orderBy: '(timestamp, id)',
     mongoIdColumn: true,
     materializedColumns: [
+      "originUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userId')",
+      "destinationUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userId')",
+      "caseId String MATERIALIZED JSONExtractString(data, '_id')",
+      "caseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseStatus')",
+      "statusChanges Array(Tuple(timestamp UInt64, caseStatus String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String))')",
+      "assignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
+      "reviewAssignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
+
       `alerts Array(Tuple(
         ruleId String,
         ruleInstanceId String, 

@@ -13,6 +13,7 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { hasFeature } from '@/core/utils/context'
+import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 const internalUserAttributes = InternalUser.getAttributeTypeMap().map(
   (v) => v.name
 )
@@ -59,7 +60,8 @@ export const getUsersFilterByRiskLevel = (
 export async function insertRiskScores(
   items:
     | WithId<InternalBusinessUser | InternalConsumerUser>[]
-    | (InternalBusinessUser | InternalConsumerUser)[],
+    | (InternalBusinessUser | InternalConsumerUser)[]
+    | AllUsersTableItem[],
   riskClassificationValues: RiskClassificationScore[],
   riskRepository?: RiskRepository
 ) {
