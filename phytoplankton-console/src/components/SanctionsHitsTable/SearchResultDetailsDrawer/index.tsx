@@ -332,8 +332,11 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                               .map((r) => humanizeSnakeCase(r))
                               .join(', ')})`
                           : ''}
-                        {sanctionsSearchTypes?.length &&
-                          `, Screening types: ${sanctionsSearchTypes.join(', ')}`}
+                        {sanctionsSearchTypes?.length
+                          ? `, Screening types: ${sanctionsSearchTypes
+                              .map((type) => humanizeSnakeCase(type))
+                              .join(', ')}`
+                          : ''}
                         )
                       </span>
                     </React.Fragment>
