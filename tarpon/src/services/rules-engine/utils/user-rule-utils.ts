@@ -25,7 +25,8 @@ export function isOngoingUserRuleInstance(
     ruleStages?: RuleStage[]
   }) =>
     Boolean(
-      parameters?.ongoingScreening || parameters.ruleStages?.includes('ONGOING')
+      parameters?.ongoingScreening ||
+        parameters?.ruleStages?.includes('ONGOING')
     )
 
   if (isRiskLevelsEnabled && ruleInstance.riskLevelParameters) {
