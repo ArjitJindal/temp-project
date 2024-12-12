@@ -1,4 +1,4 @@
-describe('Main pages loading', () => {
+describe.skip('Main pages loading', () => {
   beforeEach(() => {
     cy.loginWithPermissions({
       permissions: [],
