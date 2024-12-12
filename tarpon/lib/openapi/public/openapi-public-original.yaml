@@ -1973,6 +1973,11 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/UserTag'
+        attachments:
+          type: array
+          description: Uploaded user's attachment
+          items:
+            $ref: '#/components/schemas/PersonAttachment'
     ConsumerUserSegment:
       title: ConsumerUserSegment
       type: string
@@ -2229,6 +2234,8 @@ components:
         userId:
           type: string
         createdAt:
+          type: number
+        deletedAt:
           type: number
       description: PersonAttachment model generalizes User's uploaded attachments
       example:
@@ -3944,6 +3951,11 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/UserTag'
+        attachments:
+          type: array
+          description: User's attachments uploaded by business user
+          items:
+            $ref: '#/components/schemas/PersonAttachment'
     BusinessUserMonitoringResult:
       title: BusinessUserMonitoringResult
       type: object

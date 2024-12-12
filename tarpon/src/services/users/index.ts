@@ -988,17 +988,20 @@ export class UserService {
   private mergeList(
     comments: Comment[] = [],
     shareHoldersAttachment: PersonAttachment[] = [],
-    directorsAttachment: PersonAttachment[] = []
+    directorsAttachment: PersonAttachment[] = [],
+    userAttachments: PersonAttachment[] = []
   ): Comment[] {
     const mergedComments: Comment[] = []
     let i = 0 // pointer for comments
     let j = 0 // pointer for shareHoldersAttachment
     let k = 0 // pointer for directorsAttachment
+    let l = 0 // pointer for userAttachment
 
     while (
       i < comments.length ||
       j < shareHoldersAttachment.length ||
-      k < directorsAttachment.length
+      k < directorsAttachment.length ||
+      l < userAttachments.length
     ) {
       const commentTime =
         i < comments.length ? comments[i].createdAt ?? Infinity : Infinity
@@ -1010,16 +1013,22 @@ export class UserService {
         k < directorsAttachment.length
           ? directorsAttachment[k].createdAt ?? Infinity
           : Infinity
+      const userTime =
+        l < userAttachments.length
+          ? userAttachments[l].createdAt ?? Infinity
+          : Infinity
 
       if (
         commentTime <= shareHolderTime &&
         commentTime <= directorTime &&
+        commentTime <= userTime &&
         i < comments.length
       ) {
         mergedComments.push(comments[i])
         i++
       } else if (
         shareHolderTime <= directorTime &&
+        shareHolderTime <= userTime &&
         j < shareHoldersAttachment.length
       ) {
         mergedComments.push({
@@ -1031,7 +1040,7 @@ export class UserService {
           isAttachment: true,
         })
         j++
-      } else if (k < directorsAttachment.length) {
+      } else if (directorTime <= userTime && k < directorsAttachment.length) {
         mergedComments.push({
           id: directorsAttachment[k].id,
           body: directorsAttachment[k].comment ?? '-',
@@ -1041,10 +1050,37 @@ export class UserService {
           isAttachment: true,
         })
         k++
+      } else if (l < userAttachments.length) {
+        mergedComments.push({
+          id: userAttachments[l].id,
+          body: userAttachments[l].comment ?? '-',
+          createdAt: userAttachments[l].createdAt,
+          userId: userAttachments[l].userId,
+          files: userAttachments[l].files,
+          isAttachment: true,
+        })
+        l++
       }
     }
 
     return mergedComments
+  }
+
+  private async getDownloadLinks(
+    files: FileInfo[],
+    arrayIndex: number,
+    index: number
+  ) {
+    return {
+      arrayIndex,
+      index,
+      files: await Promise.all(
+        (files ?? []).map(async (file) => ({
+          ...file,
+          downloadLink: await this.getDownloadLink(file),
+        }))
+      ),
+    }
   }
 
   public async getUser(userId: string): Promise<InternalUser> {
@@ -1054,28 +1090,93 @@ export class UserService {
       throw new createError.NotFound(`User ${userId} not found`)
     }
 
-    const comments = user.comments?.filter(
-      (comment) => comment.deletedAt == null
-    )
+    const comments: Comment[] =
+      user.comments?.filter(
+        (comment) => !comment.deletedAt || comment.deletedAt === null
+      ) ?? []
+    const userAttachments: PersonAttachment[] =
+      user.attachments?.filter(
+        (attachment) => !attachment.deletedAt || attachment.deletedAt === null
+      ) ?? []
+    const shareHoldersAttachment: PersonAttachment[] =
+      user.shareHolders?.flatMap(
+        (shareHolder) =>
+          shareHolder.attachments?.filter(
+            (attachment) =>
+              !attachment.deletedAt || attachment.deletedAt === null
+          ) ?? []
+      ) ?? []
+    const directorsAttachment: PersonAttachment[] =
+      user.directors?.flatMap(
+        (director) =>
+          director.attachments?.filter(
+            (attachment) =>
+              !attachment.deletedAt || attachment.deletedAt === null
+          ) ?? []
+      ) ?? []
 
-    const shareHoldersAttachment = user.shareHolders?.flatMap(
-      (shareHolder) => shareHolder.attachments ?? []
-    )
+    const promises: Promise<{
+      files: FileInfo[]
+      arrayIndex: number
+      index: number
+    }>[] = []
 
-    const directorsAttachment = user.directors?.flatMap(
-      (director) => director.attachments ?? []
-    )
+    comments.forEach((comment, i) => {
+      promises.push(this.getDownloadLinks(comment.files ?? [], 0, i))
+    })
+    userAttachments.forEach((attachment, i) => {
+      promises.push(this.getDownloadLinks(attachment.files ?? [], 1, i))
+    })
+    shareHoldersAttachment.forEach((attachment, i) => {
+      promises.push(this.getDownloadLinks(attachment.files ?? [], 2, i))
+    })
+    directorsAttachment.forEach((attachment, i) => {
+      promises.push(this.getDownloadLinks(attachment.files ?? [], 3, i))
+    })
+
+    const result = await Promise.all(promises)
+    result.forEach(({ files, arrayIndex, index }) => {
+      if (arrayIndex === 0) {
+        comments[index].files = files
+      } else if (arrayIndex === 1) {
+        userAttachments[index].files = files
+      } else if (arrayIndex === 2) {
+        shareHoldersAttachment[index].files = files
+      } else if (arrayIndex === 3) {
+        directorsAttachment[index].files = files
+      }
+    })
 
     // merging the three list using three pointer
     const mergedComments = this.mergeList(
       comments,
       shareHoldersAttachment,
-      directorsAttachment
+      directorsAttachment,
+      userAttachments
     )
 
     return {
       ...user,
       comments: mergedComments,
+      attachments: userAttachments,
+      shareHolders: user.shareHolders?.map((shareHolder) => {
+        return {
+          ...shareHolder,
+          attachments: shareHolder.attachments?.filter(
+            (attachment) =>
+              !attachment.deletedAt || attachment.deletedAt === null
+          ),
+        }
+      }),
+      directors: user.directors?.map((director) => {
+        return {
+          ...director,
+          attachments: director.attachments?.filter(
+            (attachment) =>
+              !attachment.deletedAt || attachment.deletedAt === null
+          ),
+        }
+      }),
     }
   }
 
@@ -1482,28 +1583,41 @@ export class UserService {
   public async saveUserAttachment(
     userId: string,
     id: string,
-    isShareHolder: boolean,
+    userType: string,
     attachment: PersonAttachment
   ) {
     const files = await this.s3Service.copyFilesToPermanentBucket(
       attachment.files as FileInfo[]
     )
-
-    if (isShareHolder) {
-      await this.userRepository.saveShareHolderAttachment(userId, id, {
-        ...attachment,
-        files: files,
-      })
+    let savedAttachment: PersonAttachment
+    if (userType === 'SHAREHOLDER') {
+      savedAttachment = await this.userRepository.saveShareHolderAttachment(
+        userId,
+        id,
+        {
+          ...attachment,
+          files: files,
+        }
+      )
+    } else if (userType === 'DIRECTOR') {
+      savedAttachment = await this.userRepository.saveDirectorAttachment(
+        userId,
+        id,
+        {
+          ...attachment,
+          files: files,
+        }
+      )
     } else {
-      await this.userRepository.saveDirectorAttachment(userId, id, {
+      savedAttachment = await this.userRepository.saveUserAttachment(id, {
         ...attachment,
         files: files,
       })
     }
 
     return {
-      ...attachment,
-      file: await this.getUpdatedFiles(files),
+      ...savedAttachment,
+      files: await this.getUpdatedFiles(files),
     }
   }
 
@@ -1582,6 +1696,7 @@ export class UserService {
       files: await this.getUpdatedFiles(savedReply.files),
     }
   }
+
   public async deleteUserComment(userId: string, commentId: string) {
     const user = await this.getUser(userId)
 
@@ -1589,12 +1704,99 @@ export class UserService {
       throw new createError.NotFound(`User ${userId} not found`)
     }
 
+    let deleteObjectsPromise: Promise<any> = Promise.resolve()
+
+    let attachment = user?.attachments?.find(
+      (attachment) => attachment.id === commentId
+    )
+    if (attachment) {
+      if (attachment.files && attachment.files.length > 0) {
+        deleteObjectsPromise = this.s3.deleteObjects({
+          Bucket: this.documentBucketName,
+          Delete: {
+            Objects: attachment.files.map((file) => ({ Key: file.s3Key })),
+          },
+        })
+
+        let deleteCommentPromise: Promise<void> = Promise.resolve()
+
+        deleteCommentPromise = this.userRepository.deleteUserAttachment(
+          userId,
+          commentId
+        )
+
+        await Promise.all([deleteObjectsPromise, deleteCommentPromise])
+
+        return
+      }
+    }
+    let shareHolderId: string | undefined = undefined
+    user?.shareHolders?.forEach((shareHolder) =>
+      shareHolder.attachments?.forEach((a) => {
+        shareHolderId = shareHolder.userId
+        if (a.id === commentId) {
+          attachment = a
+        }
+      })
+    )
+    if (attachment && shareHolderId) {
+      if (attachment.files && attachment.files.length > 0) {
+        deleteObjectsPromise = this.s3.deleteObjects({
+          Bucket: this.documentBucketName,
+          Delete: {
+            Objects: attachment.files.map((file) => ({ Key: file.s3Key })),
+          },
+        })
+
+        let deleteCommentPromise: Promise<void> = Promise.resolve()
+
+        deleteCommentPromise = this.userRepository.deleteShareHolderAttachment(
+          userId,
+          shareHolderId,
+          commentId
+        )
+
+        await Promise.all([deleteObjectsPromise, deleteCommentPromise])
+
+        return
+      }
+    }
+    let directorId: string | undefined = undefined
+    user?.directors?.forEach((director) =>
+      director.attachments?.forEach((a) => {
+        directorId = director.userId
+        if (a.id === commentId) {
+          attachment = a
+        }
+      })
+    )
+    if (attachment && directorId) {
+      if (attachment.files && attachment.files.length > 0) {
+        deleteObjectsPromise = this.s3.deleteObjects({
+          Bucket: this.documentBucketName,
+          Delete: {
+            Objects: attachment.files.map((file) => ({ Key: file.s3Key })),
+          },
+        })
+
+        let deleteCommentPromise: Promise<void> = Promise.resolve()
+
+        deleteCommentPromise = this.userRepository.deleteDirectorAttachment(
+          userId,
+          directorId,
+          commentId
+        )
+
+        await Promise.all([deleteObjectsPromise, deleteCommentPromise])
+
+        return
+      }
+    }
+
     const comment = user?.comments?.find((comment) => comment.id === commentId)
     if (!comment) {
       throw new createError.NotFound(`Comment ${commentId} not found`)
     }
-
-    let deleteObjectsPromise: Promise<any> = Promise.resolve()
 
     if (comment.files && comment.files.length > 0) {
       deleteObjectsPromise = this.s3.deleteObjects({
@@ -1621,6 +1823,7 @@ export class UserService {
       deleteCommentPromise,
       deleteAuditLogPromise,
     ])
+    return
   }
 
   public async searchUsers(

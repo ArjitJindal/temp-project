@@ -17,6 +17,7 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
   RiskClassificationScore,
+  Comment,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -54,7 +55,7 @@ import {
   isActionEscalate,
   isActionUpdate,
 } from '@/components/ActivityCard/helpers';
-import { useUsers } from '@/utils/user-utils';
+import { CommentType, useUsers } from '@/utils/user-utils';
 import Avatar from '@/components/library/Avatar';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
@@ -74,7 +75,12 @@ interface CommentsHandlers {
     commentFormValues: CommentEditorFormValues,
     groupId: string,
   ) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment, groupId: string) => void;
+  onCommentAdded: (
+    newComment: Comment,
+    commentType: CommentType,
+    groupId: string,
+    personId?: string,
+  ) => void;
 }
 
 function CaseDetails(props: Props) {

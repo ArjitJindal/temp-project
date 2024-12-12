@@ -24,6 +24,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { AsyncResource, all, map } from '@/utils/asyncResource';
 import { sortByDate } from '@/components/ui/RiskScoreDisplay';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import { CommentType } from '@/utils/user-utils';
 
 export interface RiskScores {
   kycRiskScore?: RiskScore | null;
@@ -40,7 +41,7 @@ export interface RiskScore {
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   onNewTags: (tags: UserTag[]) => void;
 }
 

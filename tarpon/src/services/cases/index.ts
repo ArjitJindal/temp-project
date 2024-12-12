@@ -85,6 +85,7 @@ export class CaseService extends CaseAlertsCommonService {
   alertsService: AlertsService
   accountsService: AccountsService
   linkerService: LinkerService
+  userService: UserService
   transactionsRepository: MongoDbTransactionRepository
   auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
@@ -140,6 +141,17 @@ export class CaseService extends CaseAlertsCommonService {
     this.accountsService = new AccountsService(
       { auth0Domain: getContext()?.auth0Domain as string },
       { mongoDb: this.mongoDb }
+    )
+    this.userService = new UserService(
+      this.tenantId,
+      {
+        mongoDb: this.mongoDb,
+        dynamoDb: this.caseRepository.dynamoDb,
+      },
+      this.s3,
+      this.s3Config.tmpBucketName,
+      this.s3Config.documentBucketName,
+      this.awsCredentials
     )
     this.transactionsRepository = new MongoDbTransactionRepository(
       this.tenantId,
@@ -696,6 +708,7 @@ export class CaseService extends CaseAlertsCommonService {
     if (case_ == null) {
       throw new NotFound(`Case not found: ${caseId}`)
     }
+
     const paymentDetails =
       case_.paymentDetails?.origin ?? case_.paymentDetails?.destination
     const paymentMethodId = getPaymentMethodId(paymentDetails)
@@ -856,6 +869,28 @@ export class CaseService extends CaseAlertsCommonService {
         files: await this.getUpdatedFiles(comment.files),
       }))
     )
+
+    if (caseEntity.caseUsers?.origin?.userId) {
+      const userId = caseEntity.caseUsers?.origin?.userId
+      caseEntity = {
+        ...caseEntity,
+        caseUsers: {
+          ...caseEntity.caseUsers,
+          origin: await this.userService.getUser(userId),
+        },
+      }
+    }
+
+    if (caseEntity.caseUsers?.destination?.userId) {
+      const userId = caseEntity.caseUsers?.destination?.userId
+      caseEntity = {
+        ...caseEntity,
+        caseUsers: {
+          ...caseEntity.caseUsers,
+          destination: await this.userService.getUser(userId),
+        },
+      }
+    }
 
     return { ...caseEntity, comments: commentsWithUrl, alerts }
   }

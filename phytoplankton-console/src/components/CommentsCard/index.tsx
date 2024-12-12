@@ -4,7 +4,7 @@ import s from './index.module.less';
 import Comment from './Comment';
 import { getCommentsWithReplies } from './utils';
 import * as Card from '@/components/ui/Card';
-import { useAuth0User, useHasPermissions } from '@/utils/user-utils';
+import { CommentType, useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { Comment as ApiComment, Permission } from '@/apis';
 import { P } from '@/components/ui/Typography';
 import { Mutation } from '@/utils/queries/types';
@@ -31,7 +31,12 @@ interface Props {
     commentFormValues: CommentEditorFormValues,
     groupId: string,
   ) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment, groupId: string) => void;
+  onCommentAdded: (
+    newComment: ApiComment,
+    commentType: CommentType,
+    groupId: string,
+    personId?: string,
+  ) => void;
   writePermissions: Permission[];
 }
 
@@ -98,7 +103,9 @@ export default function CommentsCard(props: Props) {
                           hanldeAddComment={(commentFormValues) =>
                             handleAddComment(commentFormValues, group.id)
                           }
-                          onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
+                          onCommentAdded={(newComment) =>
+                            onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                          }
                         />
                       );
                     }
@@ -113,7 +120,9 @@ export default function CommentsCard(props: Props) {
                           hanldeAddComment={(commentFormValues) =>
                             handleAddComment(commentFormValues, group.id)
                           }
-                          onCommentAdded={(newComment) => onCommentAdded(newComment, group.id)}
+                          onCommentAdded={(newComment) =>
+                            onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                          }
                         />
                       </div>
                     );
@@ -134,7 +143,7 @@ function Comments(props: {
   deleteCommentMutation: Mutation<unknown, unknown, { commentId: string }>;
   writePermissions: Permission[];
   hanldeAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment) => void;
+  onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
 }) {
   const {
     comments,

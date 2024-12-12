@@ -5,14 +5,14 @@ import UserChangeModal from './UserChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { InternalBusinessUser, InternalConsumerUser, Comment } from '@/apis';
 import { UserState } from '@/apis/models/UserState';
-import { useHasPermissions } from '@/utils/user-utils';
+import { CommentType, useHasPermissions } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   title: string;
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function UserStateEditor(props: Props) {
@@ -46,7 +46,7 @@ export default function UserStateEditor(props: Props) {
         onOkay={(userStatus: UserState | '', comment: Comment): void => {
           setUserStatusChanged(true);
           setnewUserStatus(userStatus);
-          onNewComment(comment);
+          onNewComment(comment, CommentType.COMMENT);
         }}
         onClose={() => setModalVisible(false)}
         title="Update user status "

@@ -121,9 +121,7 @@ export const ConsoleApiPathToLambda: any = {
   '/questions/{questionId}/{variableKey}/autocomplete':
     StackConstants.CONSOLE_API_COPILOT_FUNCTION_NAME,
   '/users/{userId}': StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/users/shareholder/attachment/{userId}/{shareholderId}':
-    StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
-  '/users/director/attachment/{userId}/{directorId}':
+  '/users/attachment/{personType}/{userId}/{personId}':
     StackConstants.CONSOLE_API_ALL_USERS_VIEW_FUNCTION_NAME,
 
   '/consumer/users':

@@ -9,6 +9,12 @@ import { getBranding } from './branding';
 import { useApi } from '@/api';
 import { Account, AccountRole, Permission } from '@/apis';
 
+export enum CommentType {
+  COMMENT,
+  USER,
+  SHAREHOLDERDIRECTOR,
+}
+
 // todo: rename file and utils to use "account" instead of "user" in names
 export enum UserRole {
   ROOT = 'root',

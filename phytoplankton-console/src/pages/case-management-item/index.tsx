@@ -3,7 +3,13 @@ import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
 import { Authorized } from '@/components/utils/Authorized';
-import { Case, Comment } from '@/apis';
+import {
+  Case,
+  Comment,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  PersonAttachment,
+} from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
@@ -17,6 +23,7 @@ import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { isSuccess, isLoading } from '@/utils/asyncResource';
+import { CommentType } from '@/utils/user-utils';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -41,7 +48,12 @@ function CaseManagementItemPage() {
     { refetchIntervalSeconds: CASE_REFETCH_INTERVAL_SECONDS },
   );
 
-  const handleCommentAdded = async (newComment: Comment, groupId: string) => {
+  const handleCommentAdded = async (
+    newComment: Comment,
+    commentType: CommentType,
+    groupId: string,
+    personId?: string,
+  ) => {
     await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
 
     if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
@@ -67,16 +79,96 @@ function CaseManagementItemPage() {
       return;
     }
 
-    updateCaseQueryData(caseId, (caseItem) => {
-      if (caseItem == null) {
-        return caseItem;
-      }
-      return {
-        ...caseItem,
-        comments: [...(caseItem?.comments ?? []), newComment],
-        updatedAt: Date.now(),
-      };
-    });
+    if (commentType === CommentType.COMMENT) {
+      updateCaseQueryData(caseId, (caseItem) => {
+        if (caseItem == null) {
+          return caseItem;
+        }
+        return {
+          ...caseItem,
+          comments: [...(caseItem?.comments ?? []), newComment],
+          updatedAt: Date.now(),
+        };
+      });
+    }
+
+    if (commentType === CommentType.USER) {
+      updateCaseQueryData(caseId, (caseItem) => {
+        if (caseItem == null) {
+          return caseItem;
+        }
+        if (
+          caseItem.caseUsers?.origin instanceof InternalBusinessUser ||
+          caseItem.caseUsers?.origin instanceof InternalConsumerUser
+        ) {
+          return {
+            ...caseItem,
+            caseUsers: {
+              ...caseItem.caseUsers,
+              origin: {
+                ...caseItem.caseUsers.origin,
+                attachments: [...(caseItem.caseUsers.origin.attachments ?? []), newComment],
+              },
+            },
+          };
+        }
+        if (
+          caseItem.caseUsers?.destination instanceof InternalBusinessUser ||
+          caseItem.caseUsers?.destination instanceof InternalConsumerUser
+        ) {
+          return {
+            ...caseItem,
+            caseUsers: {
+              ...caseItem.caseUsers,
+              destination: {
+                ...caseItem.caseUsers.destination,
+                attachments: [...(caseItem.caseUsers.destination.attachments ?? []), newComment],
+              },
+            },
+          };
+        }
+      });
+    }
+
+    if (commentType === CommentType.SHAREHOLDERDIRECTOR && personId) {
+      updateCaseQueryData(caseId, (caseItem) => {
+        if (caseItem == null) {
+          return caseItem;
+        }
+        if (caseItem.caseUsers?.origin instanceof InternalBusinessUser) {
+          return {
+            ...caseItem,
+            caseUsers: {
+              ...caseItem.caseUsers,
+              origin: {
+                ...caseItem.caseUsers.origin,
+                shareHolders: caseItem.caseUsers.origin.shareHolders?.map((shareHolder) => {
+                  if (shareHolder.userId === personId) {
+                    return shareHolder;
+                  }
+                  return {
+                    ...shareHolder,
+                    attachments: [
+                      ...(shareHolder.attachments ?? []),
+                      newComment as PersonAttachment,
+                    ],
+                  };
+                }),
+                directors: caseItem.caseUsers.origin.directors?.map((director) => {
+                  if (director.userId === personId) {
+                    return director;
+                  }
+                  return {
+                    ...director,
+                    attachments: [...(director.attachments ?? []), newComment as PersonAttachment],
+                  };
+                }),
+              },
+            },
+          };
+        }
+      });
+    }
   };
 
   const handleAddCommentReply = async (commentFormValues: FormValues, groupId: string) => {

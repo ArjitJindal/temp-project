@@ -10,7 +10,13 @@ import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
-import { Comment, InternalBusinessUser, InternalConsumerUser, UserTag } from '@/apis';
+import {
+  Comment,
+  InternalBusinessUser,
+  InternalConsumerUser,
+  PersonAttachment,
+  UserTag,
+} from '@/apis';
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
@@ -27,6 +33,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon.react.svg';
 import UserActivityCard from '@/pages/users-item/UserDetails/UserActivityCard';
 import { FormValues } from '@/components/CommentEditor';
 import SanctionsWhitelist from '@/pages/users-item/UserDetails/SanctionsWhitelist';
+import { CommentType } from '@/utils/user-utils';
 
 export default function UserItem() {
   const { list, id, tab = 'user-details' } = useParams<'list' | 'id' | 'tab'>(); // todo: handle nulls properly
@@ -59,19 +66,68 @@ export default function UserItem() {
     );
   };
 
-  const handleNewComment = (newComment: Comment) => {
-    queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
-      USERS_ITEM(id),
-      (user) => {
-        if (user == null) {
-          return user;
-        }
-        return {
-          ...user,
-          comments: [...(user?.comments ?? []), newComment],
-        };
-      },
-    );
+  const handleNewComment = (newComment: Comment, commentType: CommentType, personId?: string) => {
+    if (commentType === CommentType.COMMENT) {
+      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+        USERS_ITEM(id),
+        (user) => {
+          if (user == null) {
+            return user;
+          }
+          return {
+            ...user,
+            comments: [...(user?.comments ?? []), newComment],
+          };
+        },
+      );
+    }
+    if (commentType === CommentType.USER) {
+      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+        USERS_ITEM(id),
+        (user) => {
+          if (user == null) {
+            return user;
+          }
+          return {
+            ...user,
+            comments: [...(user?.comments ?? []), newComment],
+            attachments: [...(user?.attachments ?? []), newComment as PersonAttachment],
+          };
+        },
+      );
+    }
+    if (commentType === CommentType.SHAREHOLDERDIRECTOR && personId) {
+      queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
+        USERS_ITEM(id),
+        (user) => {
+          if (user == null) {
+            return user;
+          }
+          return {
+            ...user,
+            comments: [...(user?.comments ?? []), newComment],
+            shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
+              if (shareHolder.userId === personId) {
+                return shareHolder;
+              }
+              return {
+                ...shareHolder,
+                attachments: [...(shareHolder.attachments ?? []), newComment as PersonAttachment],
+              };
+            }),
+            directors: (user as InternalBusinessUser).directors?.map((director) => {
+              if (director.userId === personId) {
+                return director;
+              }
+              return {
+                ...director,
+                attachments: [...(director.attachments ?? []), newComment as PersonAttachment],
+              };
+            }),
+          };
+        },
+      );
+    }
   };
 
   const handleAddCommentReply = async (commentFormValues: FormValues) => {
@@ -128,7 +184,7 @@ export default function UserItem() {
               {
                 title: 'User details',
                 key: 'user-details',
-                children: <UserDetails user={user} />,
+                children: <UserDetails user={user} onNewComment={handleNewComment} />,
                 isClosable: false,
                 isDisabled: false,
               },

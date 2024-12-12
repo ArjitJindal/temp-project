@@ -3,7 +3,7 @@ import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import ActivityCard from '@/components/ActivityCard';
 import { useApi } from '@/api';
-import { useUsers } from '@/utils/user-utils';
+import { CommentType, useUsers } from '@/utils/user-utils';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
 import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import Avatar from '@/components/library/Avatar';
@@ -35,7 +35,7 @@ interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
   comments: {
     handleAddComment: (commentFormValues: FormValues) => Promise<Comment>;
-    onCommentAdded: (newComment: Comment) => void;
+    onCommentAdded: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   };
 }
 
@@ -84,6 +84,25 @@ export default function UserActivityCard(props: Props) {
             return {
               ...user,
               comments: (user?.comments ?? []).filter((x) => x.id !== variables.commentId),
+              shareHolders: (user as InternalBusinessUser).shareHolders?.map((shareHolder) => {
+                return {
+                  ...shareHolder,
+                  attachments: shareHolder.attachments?.filter(
+                    (attachment) => attachment.id !== variables.commentId,
+                  ),
+                };
+              }),
+              directors: (user as InternalBusinessUser).directors?.map((director) => {
+                return {
+                  ...director,
+                  attachments: director.attachments?.filter(
+                    (attachment) => attachment.id !== variables.commentId,
+                  ),
+                };
+              }),
+              attachments: user.attachments?.filter(
+                (attachment) => attachment.id != variables.commentId,
+              ),
             };
           },
         );

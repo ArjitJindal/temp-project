@@ -8,11 +8,12 @@ import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import Id from '@/components/ui/Id';
 import { getUserName } from '@/utils/api/users';
 import { SarButton } from '@/components/Sar';
+import { CommentType } from '@/utils/user-utils';
 
 interface Props {
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (newComment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   onNewTags: (tags: UserTag[]) => void;
 }
 
@@ -38,7 +39,7 @@ export default function Header(props: Props) {
       buttons={[
         <SarButton userId={user.userId} />,
         <CommentButton
-          onSuccess={onNewComment}
+          onSuccess={(createdComment) => onNewComment(createdComment, CommentType.COMMENT)}
           submitRequest={async (commentFormValues) => {
             if (userId == null) {
               throw new Error(`User ID is not defined`);

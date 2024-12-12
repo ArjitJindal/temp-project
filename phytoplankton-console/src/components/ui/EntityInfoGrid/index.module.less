@@ -11,7 +11,20 @@
 }
 
 .cell {
-  padding: 12px;
   outline: 1px solid @fr-colors-v2-highlight-stroke;
   overflow: hidden;
+  display: flex;
+}
+
+.columnGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.columnElement {
+  border-bottom: 1px solid @fr-colors-v2-highlight-stroke;
+}
+
+.columnGroup > div:last-child {
+  border-bottom: none;
 }

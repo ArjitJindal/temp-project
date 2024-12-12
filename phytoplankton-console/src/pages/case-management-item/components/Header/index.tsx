@@ -18,7 +18,7 @@ import {
   statusEscalatedL2,
   statusInReview,
 } from '@/utils/case-utils';
-import { useAuth0User, useHasPermissions, useUser } from '@/utils/user-utils';
+import { CommentType, useAuth0User, useHasPermissions, useUser } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
 import CaseGenerationMethodTag from '@/components/library/CaseGenerationMethodTag';
@@ -32,7 +32,12 @@ interface Props {
   isLoading: boolean;
   caseItem: Case;
   onReload: () => void;
-  onCommentAdded: (newComment: Comment, groupId: string) => void;
+  onCommentAdded: (
+    newComment: Comment,
+    commentType: CommentType,
+    groupId: string,
+    personId?: string,
+  ) => void;
   headerStickyElRef?: React.RefCallback<HTMLDivElement>;
 }
 
@@ -235,7 +240,7 @@ export default function Header(props: Props) {
         <CommentButton
           disabled={isLoading}
           onSuccess={(newComment) => {
-            onCommentAdded(newComment, caseId ?? '');
+            onCommentAdded(newComment, CommentType.COMMENT, caseId ?? '');
           }}
           submitRequest={async (commentFormValues) => {
             if (caseId == null) {

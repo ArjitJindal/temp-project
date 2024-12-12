@@ -26,33 +26,34 @@ export default function LegalDocuments(props: Props) {
     });
   };
 
-  if (!legalDocuments?.length) {
-    return <></>;
-  }
   return (
-    <EntityPropertiesCard title={'Legal documents'}>
+    <EntityPropertiesCard title={`Legal documents (${legalDocuments ? legalDocuments.length : 0})`}>
       <div className={s.root}>
-        {legalDocuments.map((x, i) => (
-          <div className={s.subroot} key={i}>
-            <div
-              className={s.header}
-              onClick={() => {
-                onExpandChange(i);
-              }}
-            >
-              <ExpandIcon isExpanded={expandedState[i]} color="BLACK" />
-              {x.documentType}
-              <div className={s.documentNumber}>
-                {maskDocumentNumber(x.documentNumber as string)}
+        {legalDocuments && legalDocuments.length > 0 ? (
+          legalDocuments.map((x, i) => (
+            <div className={s.subroot} key={i}>
+              <div
+                className={s.header}
+                onClick={() => {
+                  onExpandChange(i);
+                }}
+              >
+                <ExpandIcon isExpanded={expandedState[i]} color="BLACK" />
+                {x.documentType}
+                <div className={s.documentNumber}>
+                  {maskDocumentNumber(x.documentNumber as string)}
+                </div>
               </div>
+              <ExpandContainer isCollapsed={!expandedState[i]}>
+                <div className={s.body}>
+                  <LegalDocumentsProps legalDocument={x} />
+                </div>
+              </ExpandContainer>
             </div>
-            <ExpandContainer isCollapsed={!expandedState[i]}>
-              <div className={s.body}>
-                <LegalDocumentsProps legalDocument={x} />
-              </div>
-            </ExpandContainer>
-          </div>
-        ))}
+          ))
+        ) : (
+          <></>
+        )}
       </div>
     </EntityPropertiesCard>
   );

@@ -14,7 +14,11 @@ export default function SavedPaymentDetails(prop: Props) {
   const [expandedItem, setExpandedItem] = useState<number | null>(null);
 
   return (
-    <EntityPropertiesCard title={'Saved payment details'}>
+    <EntityPropertiesCard
+      title={`Saved payment details (${
+        user.savedPaymentDetails ? user.savedPaymentDetails.length : 0
+      })`}
+    >
       <div className={s.root}>
         {user.savedPaymentDetails?.map((x, i) => (
           <PaymentDetailsCard

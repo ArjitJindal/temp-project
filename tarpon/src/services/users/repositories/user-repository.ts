@@ -1212,6 +1212,26 @@ export class UserRepository {
     return commentToSave
   }
 
+  public async saveUserAttachment(
+    consumerId: string,
+    attachment: PersonAttachment
+  ) {
+    const attachmentToSave: PersonAttachment = {
+      ...attachment,
+      id: uuidv4(),
+      createdAt: attachment.createdAt ?? Date.now(),
+    }
+    await this.updateUserAttachment(
+      { userId: consumerId },
+      {
+        $push: {
+          attachments: attachmentToSave,
+        },
+      }
+    )
+    return attachmentToSave
+  }
+
   public async saveShareHolderAttachment(
     userId: string,
     shareHolderId: string,
@@ -1222,15 +1242,16 @@ export class UserRepository {
       id: uuidv4(),
       createdAt: attachment.createdAt ?? Date.now(),
     }
-    console.log(userId, shareHolderId, attachment)
     await this.updateUserAttachment(
       { userId, 'shareHolders.userId': shareHolderId },
       {
         $push: {
-          'shareHolders.$[shareholder].attachments': attachmentToSave,
+          'shareHolders.$[shareHolder].attachments': attachmentToSave,
         },
-      }
+      },
+      [{ 'shareHolder.userId': shareHolderId }]
     )
+    return attachmentToSave
   }
 
   public async saveDirectorAttachment(
@@ -1249,8 +1270,10 @@ export class UserRepository {
         $push: {
           'directors.$[director].attachments': attachmentToSave,
         },
-      }
+      },
+      [{ 'director.userId': directorId }]
     )
+    return attachmentToSave
   }
 
   public async getUserById(userId: string): Promise<InternalUser | null> {
@@ -1290,21 +1313,77 @@ export class UserRepository {
     )
   }
 
+  public async deleteUserAttachment(userId: string, attachmentId: string) {
+    console.info(userId, attachmentId)
+    await this.updateUserAttachment(
+      { userId, 'attachments.id': attachmentId },
+      {
+        $set: {
+          'attachments.$[attachment].deletedAt': Date.now(),
+        },
+      },
+      [{ 'attachment.id': attachmentId }]
+    )
+  }
+
+  public async deleteShareHolderAttachment(
+    userId: string,
+    shareHolderId: string,
+    attachmentId: string
+  ) {
+    console.info(userId, attachmentId, shareHolderId)
+    await this.updateUserAttachment(
+      {
+        userId,
+        'shareHolders.userId': shareHolderId,
+        'shareHolders.attachments.id': attachmentId,
+      },
+      {
+        $set: {
+          'shareHolders.$[shareHolder].attachments.$[attachment].deletedAt':
+            Date.now(),
+        },
+      },
+      [
+        { 'shareHolder.userId': shareHolderId },
+        { 'attachment.id': attachmentId },
+      ]
+    )
+  }
+
+  public async deleteDirectorAttachment(
+    userId: string,
+    directorId: string,
+    attachmentId: string
+  ) {
+    console.info(userId, attachmentId)
+    await this.updateUserAttachment(
+      {
+        userId,
+        'directors.userId': directorId,
+        'directors.attachments.id': attachmentId,
+      },
+      {
+        $set: {
+          'directors.$[director].attachments.$[attachment].deletedAt':
+            Date.now(),
+        },
+      },
+      [{ 'director.userId': directorId }, { 'attachment.id': attachmentId }]
+    )
+  }
+
   public async updateUserAttachment(
     filter: Filter<InternalUser>,
-    updatePipeline: UpdateFilter<InternalUser>
+    updatePipeline: UpdateFilter<InternalUser>,
+    arrayFilters?: Document[]
   ) {
     await internalMongoUpdateOne(
       this.mongoDb,
       USERS_COLLECTION(this.tenantId),
       filter,
       updatePipeline,
-      {
-        arrayFilters: [
-          { 'shareholder.userId': filter['shareHolders.userId'] },
-          { 'director.userId': filter['directors.userId'] },
-        ].filter((filter) => Object.values(filter)[0] !== undefined),
-      }
+      { arrayFilters }
     )
   }
 

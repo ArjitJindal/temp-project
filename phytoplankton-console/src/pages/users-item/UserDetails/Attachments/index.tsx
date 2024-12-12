@@ -1,30 +1,37 @@
-import React, { useState } from 'react';
+import React, { useImperativeHandle, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { PaperClipOutlined, UploadOutlined } from '@ant-design/icons';
 import fileSize from 'filesize';
 import s from './index.module.less';
-import Warning from '@/components/ui/icons/Remix/system/error-warning-line.react.svg';
 import Modal from '@/components/library/Modal';
 import FilesDraggerInput from '@/components/ui/FilesDraggerInput';
-import TextArea from '@/components/library/TextArea';
-import { FileInfo, PersonAttachment } from '@/apis';
+import { AttachmentUserType, Comment, FileInfo, PersonAttachment } from '@/apis';
 import { useApi } from '@/api';
 import { getErrorMessage } from '@/utils/lang';
 import { message } from '@/components/library/Message';
 import COLORS from '@/components/ui/colors';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import MarkdownEditor from '@/components/markdown/MarkdownEditor';
+import { CommentType, useHasPermissions } from '@/utils/user-utils';
 
 interface Props {
   attachments: PersonAttachment[];
   userId: string;
-  personId?: string;
+  personId: string;
   currentUserId: string;
-  isShareHolder: boolean;
+  personType: AttachmentUserType;
+  onNewComment?: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function Attachment(props: Props) {
-  const { userId, personId, currentUserId, isShareHolder, attachments } = props;
+  const { userId, personId, currentUserId, attachments, personType, onNewComment } = props;
   const [modalOpen, setModalOpenStatus] = useState(false);
+  const [userAttachment, setAttachment] = useState(attachments);
+  const hasUserPermissions = useHasPermissions(['users:user-details:read']);
+
+  const updateAttachment = (attachment: PersonAttachment) => {
+    setAttachment((attachments) => [attachment, ...attachments]);
+  };
 
   const handleCancel = () => {
     setModalOpenStatus(false);
@@ -35,9 +42,8 @@ export default function Attachment(props: Props) {
       <div className={s.header}>
         <div className={s.title}>
           Attachments (
-          {attachments.reduce(
-            (total, attachment) =>
-              total + (currentUserId === attachment.userId ? attachment.files.length : 0),
+          {userAttachment.reduce(
+            (total, attachment) => total + (hasUserPermissions ? attachment.files.length : 0),
             0,
           )}
           )
@@ -50,16 +56,16 @@ export default function Attachment(props: Props) {
         </div>
       </div>
       <div className={s.items}>
-        {attachments.length > 0
-          ? attachments.map((attachment) => {
-              if (currentUserId !== attachment.userId) {
+        {userAttachment.length > 0
+          ? userAttachment.map((attachment) => {
+              if (!hasUserPermissions) {
                 return null;
               }
               return attachment.files.map((file) => {
                 return (
                   <div key={file.s3Key} className={s.files}>
                     <div className={s.fileAttachmentButton} data-cy="attached-file">
-                      <a href={file.downloadLink}>
+                      <a href={file.downloadLink ?? ''}>
                         <div className={s.section}>
                           <PaperClipOutlined
                             style={{ color: COLORS.purpleGray.base, flexShrink: 0 }}
@@ -78,16 +84,16 @@ export default function Attachment(props: Props) {
           : 'No attachment found'}
       </div>
 
-      {personId != null && (
-        <AttachmentUploadModal
-          isOpen={modalOpen}
-          handleCancel={handleCancel}
-          userId={userId}
-          personId={personId}
-          currentUserId={currentUserId}
-          isShareHolder={isShareHolder}
-        />
-      )}
+      <AttachmentUploadModal
+        isOpen={modalOpen}
+        handleCancel={handleCancel}
+        userId={userId}
+        personId={personId}
+        currentUserId={currentUserId}
+        personType={personType}
+        updateAttachment={updateAttachment}
+        onNewComment={onNewComment}
+      />
     </div>
   );
 }
@@ -95,14 +101,25 @@ export default function Attachment(props: Props) {
 interface ModalProps {
   isOpen: boolean;
   handleCancel: () => void;
-  isShareHolder: boolean;
   userId: string;
   personId: string;
   currentUserId: string;
+  personType: AttachmentUserType;
+  updateAttachment: (attachment: PersonAttachment) => void;
+  onNewComment?: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 const AttachmentUploadModal = (props: ModalProps) => {
-  const { isOpen, handleCancel, isShareHolder, userId, personId, currentUserId } = props;
+  const {
+    isOpen,
+    handleCancel,
+    userId,
+    personId,
+    currentUserId,
+    personType,
+    updateAttachment,
+    onNewComment,
+  } = props;
   const [comment, setComment] = useState('');
   const [fileList, setFileList] = useState<FileInfo[]>([]);
   const [isUploading, setIsUploading] = useState(false);
@@ -117,38 +134,47 @@ const AttachmentUploadModal = (props: ModalProps) => {
       personId: string;
       files: FileInfo[];
       comment: string;
+      personType: AttachmentUserType;
     }
   >(
-    async ({ userId, personId, files, comment }) => {
-      if (isShareHolder) {
-        return api.postUserShareholderAttachment({
-          userId,
-          shareholderId: personId,
-          UserAttachmentUpdateRequest: {
-            attachment: {
-              files,
-              comment,
-              userId: currentUserId,
-            },
+    async ({ userId, personId, files, comment, personType }) => {
+      return api.postUserAttachment({
+        userId,
+        personId: personId,
+        personType,
+        UserAttachmentUpdateRequest: {
+          attachment: {
+            files,
+            comment,
+            userId: currentUserId,
           },
-        });
-      } else {
-        return api.postUserDirectorAttachment({
-          userId,
-          directorId: personId,
-          UserAttachmentUpdateRequest: {
-            attachment: {
-              files,
-              comment,
-              userId: currentUserId,
-            },
-          },
-        });
-      }
+        },
+      });
     },
     {
-      onSuccess: () => {
+      onSuccess: (data) => {
+        console.info('new attachment', data);
         message.success('Attachment successfully added!');
+        updateAttachment(data);
+        if (onNewComment) {
+          onNewComment(
+            {
+              id: data.id,
+              body: data.comment ?? '-',
+              files: data.files,
+              createdAt: data.createdAt,
+              userId: data.userId,
+              isAttachment: true,
+            },
+            personType === 'CONSUMER' || personType === 'BUSINESS'
+              ? CommentType.USER
+              : CommentType.SHAREHOLDERDIRECTOR,
+            personId === userId ? undefined : personId,
+          );
+        }
+        setFileList([]);
+        setComment('');
+        handleCancel();
       },
       onError: (error) => {
         message.fatal(`Unable to add attachment! ${getErrorMessage(error)}`, error);
@@ -156,11 +182,22 @@ const AttachmentUploadModal = (props: ModalProps) => {
     },
   );
 
+  const editorRef = useRef<MarkdownEditor>(null);
+
+  useImperativeHandle(null, () => ({
+    reset: () => {
+      editorRef.current?.reset();
+    },
+  }));
+
   return (
     <Modal
       isOpen={isOpen}
       cancelText="Cancel"
       okText="Upload"
+      okProps={{
+        isDisabled: fileList.length === 0 || isUploading,
+      }}
       onCancel={handleCancel}
       onOk={() => {
         if (isUploading) {
@@ -174,6 +211,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
           attachmentSubmitMutation.mutate({
             userId,
             personId,
+            personType,
             files: fileList,
             comment: sanitizeComment(comment),
           });
@@ -191,28 +229,25 @@ const AttachmentUploadModal = (props: ModalProps) => {
             onChange={(value) => {
               setFileList(value ?? []);
             }}
-            info={'Supported file types: PDF, JPG, PNG'}
+            info={'Supported file types: PDF, JPG, PNG, xlsx, docx'}
             listType="attachment"
             setUploading={handleUploadingChange}
+            required={true}
           />
 
-          <div>
-            <div className={s.modaltitle}>Comment</div>
-            <TextArea
-              showCount
-              maxLength={100}
+          <div className={s.commentsection}>
+            <div>
+              <div className={s.modaltitle}>Comment</div>
+              <span className={s.modalsubTitle}>
+                The submitted comment will be visible in the 'Activity' section.
+              </span>
+            </div>
+            <MarkdownEditor
+              ref={editorRef}
+              initialValue={comment}
               onChange={(value) => setComment(value ?? '')}
-              value={comment}
               placeholder="Enter your text here"
             />
-          </div>
-
-          <div className={s.modalinfo}>
-            <Warning width={32} />
-            <span className={s.modalsubTitle}>
-              Uploaded document alone can be accessed from here. You can see detailed upload with
-              comments under 'Activity'.
-            </span>
           </div>
         </div>
       </div>

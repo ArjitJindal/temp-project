@@ -19,6 +19,7 @@ import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogI
 import { map, getOr, AsyncResource } from '@/utils/asyncResource';
 import DownloadFilesButton from '@/components/library/DownloadFilesButton';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
+import { CommentType } from '@/utils/user-utils';
 
 export type Tab = ScopeSelectorValue;
 
@@ -34,7 +35,7 @@ interface Props {
       commentFormValues: CommentEditorFormValues,
       groupId: string,
     ) => Promise<Comment>;
-    onCommentAdded: (newComment: Comment, groupId: string) => void;
+    onCommentAdded: (newComment: Comment, commentType: CommentType, groupId: string) => void;
     writePermissions: Permission[];
   };
 }

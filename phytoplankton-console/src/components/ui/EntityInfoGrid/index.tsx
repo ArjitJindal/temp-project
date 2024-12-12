@@ -1,12 +1,26 @@
 import { CSSProperties } from 'react';
 import s from './index.module.less';
 
-interface Props {
+interface InfoGridProps {
   columns?: number;
   children: React.ReactNode;
 }
 
-function EntityInfoGrid(props: Props) {
+interface InfoGridCellProps {
+  rowSpan?: number;
+  columnSpan?: number;
+  maxHeight?: number;
+  children: React.ReactNode;
+}
+
+interface InfoGridColumnGroupProps {
+  rowSpan?: number;
+  columnSpan?: number;
+  maxHeight?: number;
+  childrens: React.ReactNode[];
+}
+
+function EntityInfoGrid(props: InfoGridProps) {
   const { children, columns = 1 } = props;
   return (
     <div className={s.root} style={{ gridTemplateColumns: `repeat(${columns}, 1fr)` }}>
@@ -15,13 +29,13 @@ function EntityInfoGrid(props: Props) {
   );
 }
 
-function EntityInfoGridCell(props: {
-  rowSpan?: number;
-  columnSpan?: number;
-  children: React.ReactNode;
-}) {
-  const { rowSpan, columnSpan, children } = props;
+function EntityInfoGridCell(props: InfoGridCellProps) {
+  const { rowSpan, columnSpan, children, maxHeight } = props;
   let style: CSSProperties | undefined = undefined;
+  const elementStyle: CSSProperties | undefined = {
+    overflow: 'auto',
+    flexGrow: 1,
+  };
   if (rowSpan) {
     style = {
       ...(style ?? {}),
@@ -34,9 +48,55 @@ function EntityInfoGridCell(props: {
       gridColumn: `span ${columnSpan}`,
     };
   }
+  if (maxHeight) {
+    style = {
+      ...(style ?? {}),
+      maxHeight: `${maxHeight}px`,
+      overflow: 'auto',
+    };
+  }
   return (
     <div className={s.cell} style={style}>
-      {children}
+      <div style={elementStyle}>{children}</div>
+    </div>
+  );
+}
+function EntityInfoColumnGroup(props: InfoGridColumnGroupProps) {
+  const { rowSpan, columnSpan, childrens, maxHeight } = props;
+  let style: CSSProperties | undefined = undefined;
+  let elementStyle: CSSProperties | undefined = {
+    overflow: 'auto',
+    flexGrow: 1,
+  };
+  if (rowSpan) {
+    style = {
+      ...(style ?? {}),
+      gridRow: `span ${rowSpan}`,
+    };
+  }
+  if (columnSpan) {
+    style = {
+      ...(style ?? {}),
+      gridColumn: `span ${columnSpan}`,
+    };
+  }
+  if (maxHeight) {
+    style = {
+      ...(style ?? {}),
+      maxHeight: `${maxHeight}px`,
+    };
+    elementStyle = {
+      ...(elementStyle ?? {}),
+      maxHeight: `${maxHeight / childrens.length}px`,
+    };
+  }
+  return (
+    <div className={s.columnGroup} style={style}>
+      {childrens.map((child, index) => (
+        <div className={s.columnElement} key={index} style={elementStyle}>
+          {child}
+        </div>
+      ))}
     </div>
   );
 }
@@ -44,4 +104,5 @@ function EntityInfoGridCell(props: {
 export default {
   Root: EntityInfoGrid,
   Cell: EntityInfoGridCell,
+  ColumnGroup: EntityInfoColumnGroup,
 };

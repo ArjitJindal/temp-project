@@ -5,12 +5,13 @@ import Modal from '@/components/library/Modal';
 import { useApi } from '@/api';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
+import { CommentType } from '@/utils/user-utils';
 
 interface Props {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   onTagsUpdated: (tags: UserTag[]) => void;
 }
 
@@ -44,7 +45,7 @@ const EditTagsModal: React.FC<Props> = ({
         if (updatedTags) {
           onTagsUpdated(updatedTags);
         }
-        onNewComment(comment);
+        onNewComment(comment, CommentType.COMMENT);
       },
       onError: (error) => {
         message.error(error);

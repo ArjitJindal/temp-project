@@ -18,6 +18,7 @@ interface Props extends InputProps<FileInfo[]> {
   info?: string;
   listType?: 'comment' | 'attachment';
   setUploading?: (uploading: boolean) => void;
+  required?: boolean;
 }
 
 export default function FilesDraggerInput(props: Props) {
@@ -28,6 +29,7 @@ export default function FilesDraggerInput(props: Props) {
     size = 'SMALL',
     info = 'Support for a single or bulk upload. Strictly prohibit from uploading company data or other related files.',
     listType = 'comment',
+    required = false,
     setUploading,
   } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
@@ -89,7 +91,10 @@ export default function FilesDraggerInput(props: Props) {
         <div className={cn(s.textRoot, size === 'SMALL' ? s.small : s.large)}>
           <UploadIcon className={s.icon} />
           <div className={cn(s.title, size === 'SMALL' ? s.alignItemsStart : '')}>
-            <div className={s.title1}>Click or drag file to this area to upload</div>
+            <div className={s.title1}>
+              Click or drag file to this area to upload
+              {required && <span className={s.required}>*</span>}
+            </div>
             <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>{info}</div>
           </div>
         </div>

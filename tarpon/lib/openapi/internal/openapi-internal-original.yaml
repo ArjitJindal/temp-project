@@ -2697,9 +2697,9 @@ paths:
         name: userId
         in: path
         required: true
-  /users/shareholder/attachment/{userId}/{shareholderId}:
+  /users/attachment/{personType}/{userId}/{personId}:
     post:
-      summary: Users - Shareholder - Attachment - Post
+      summary: Users - Attachment - Post
       tags: []
       x-flagright:
         permissions:
@@ -2717,9 +2717,14 @@ paths:
             schema:
               $ref: '#/components/schemas/UserAttachmentUpdateRequest'
         required: true
-      operationId: post-user-shareholder-attachment
+      operationId: post-user-attachment
       description: ''
       parameters:
+        - schema:
+            type: string
+          name: personType
+          in: path
+          required: true
         - schema:
             type: string
           name: userId
@@ -2727,40 +2732,7 @@ paths:
           required: true
         - schema:
             type: string
-          name: shareholderId
-          in: path
-          required: true
-  /users/director/attachment/{userId}/{directorId}:
-    post:
-      summary: Users - Director - Attachment - Post
-      tags: []
-      x-flagright:
-        permissions:
-          - users:user-overview:read
-      responses:
-        '200':
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ../public/openapi-public-original.yaml#/components/schemas/PersonAttachment
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/UserAttachmentUpdateRequest'
-        required: true
-      operationId: post-user-director-attachment
-      description: ''
-      parameters:
-        - schema:
-            type: string
-          name: userId
-          in: path
-          required: true
-        - schema:
-            type: string
-          name: directorId
+          name: personId
           in: path
           required: true
   /users/{userId}/events:
@@ -9887,6 +9859,14 @@ components:
         - transactionIds
         - reason
         - action
+    AttachmentUserType:
+      type: string
+      title: AttachmentUserType
+      enum:
+        - CONSUMER
+        - BUSINESS
+        - SHAREHOLDER
+        - DIRECTOR
     UserAttachmentUpdateRequest:
       title: UserAttachmentUpdateRequest
       type: object

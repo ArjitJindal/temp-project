@@ -19,12 +19,12 @@ export default function LegalDocuments(props: Props) {
   const { legalDocuments } = props;
   const [activeIndex, setActiveIndex] = useState(0);
   const activeItem = legalDocuments?.[activeIndex];
-  if (!legalDocuments?.length) {
-    return <></>;
+  if (!legalDocuments || legalDocuments.length == 0) {
+    return <EntityPropertiesCard title={'Legal documents'} />;
   }
   return (
     <EntityPropertiesCard
-      title={'Legal documents'}
+      title={`Legal documents (${legalDocuments ? legalDocuments.length : 0})`}
       extraControls={
         legalDocuments &&
         legalDocuments.length > 1 && (

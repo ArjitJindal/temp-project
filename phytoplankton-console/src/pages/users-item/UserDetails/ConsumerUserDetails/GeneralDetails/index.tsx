@@ -10,6 +10,7 @@ import Tag from '@/components/library/Tag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
 interface Props {
   user: InternalConsumerUser;
+  columns?: number;
 }
 
 const GENDER_MAP = {
@@ -19,11 +20,12 @@ const GENDER_MAP = {
 };
 
 export default function GeneralDetails(props: Props) {
-  const { user } = props;
+  const { user, columns = 1 } = props;
   const [pepStatus, setPepStatus] = useState<PEPStatus[]>(user.pepStatus ?? []);
   return (
     <EntityPropertiesCard
       title={'General details'}
+      columns={columns}
       items={[
         {
           label: 'DOB',

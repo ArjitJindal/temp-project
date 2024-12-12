@@ -5,14 +5,14 @@ import KYCChangeModal from './KYCChangeModal';
 import Icon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import { KYCStatus } from '@/apis/models/KYCStatus';
-import { useHasPermissions } from '@/utils/user-utils';
+import { CommentType, useHasPermissions } from '@/utils/user-utils';
 import Tooltip from '@/components/library/Tooltip';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   title: string;
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function KycStatusEditor(props: Props) {
@@ -47,7 +47,7 @@ export default function KycStatusEditor(props: Props) {
         onOkay={(kycStatus: KYCStatus | '', comment: Comment): void => {
           setKycChanged(true);
           setnewKycStatus(kycStatus);
-          onNewComment(comment);
+          onNewComment(comment, CommentType.COMMENT);
         }}
       />
     </div>

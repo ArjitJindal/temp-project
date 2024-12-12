@@ -8,10 +8,11 @@ import s from './index.module.less';
 import { Comment, InternalBusinessUser, InternalConsumerUser } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { CommentType } from '@/utils/user-utils';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
 }
 
 export default function SubHeader(props: Props) {

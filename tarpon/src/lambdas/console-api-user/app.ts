@@ -139,9 +139,8 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
-      async (ctx, request) => {
+      async (ctx, request) =>
         await userService.deleteUserComment(request.userId, request.commentId)
-      }
     )
 
     handlers.registerGetEventsList(
@@ -207,20 +206,11 @@ export const allUsersViewHandler = lambdaApi()(
       return createdComment
     })
 
-    handlers.registerPostUserShareholderAttachment(async (ctx, request) => {
+    handlers.registerPostUserAttachment(async (ctx, request) => {
       return await userService.saveUserAttachment(
         request.userId,
-        request.shareholderId,
-        true,
-        request.UserAttachmentUpdateRequest.attachment
-      )
-    })
-
-    handlers.registerPostUserDirectorAttachment(async (ctx, request) => {
-      return await userService.saveUserAttachment(
-        request.userId,
-        request.directorId,
-        false,
+        request.personId,
+        request.personType,
         request.UserAttachmentUpdateRequest.attachment
       )
     })

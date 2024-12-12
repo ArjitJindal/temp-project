@@ -5,7 +5,7 @@ import pluralize from 'pluralize';
 import { Reply } from '../Reply';
 import { CommentWithReplies } from '..';
 import styles from './index.module.less';
-import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
+import { CommentType, getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import FilesList from '@/components/files/FilesList';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Avatar from '@/components/library/Avatar';
@@ -22,7 +22,7 @@ interface Props {
   level?: number;
   hasCommentWritePermission: boolean;
   handleAddComment: (commentFormValues: CommentEditorFormValues) => Promise<ApiComment>;
-  onCommentAdded: (newComment: ApiComment) => void;
+  onCommentAdded: (newComment: ApiComment, commentType: CommentType) => void;
 }
 
 export default function Comment(props: Props) {
@@ -127,7 +127,7 @@ export default function Comment(props: Props) {
             <div className={styles.separator}>.</div>
           )}
 
-          {currentUserId === comment.userId && !comment.isAttachment && (
+          {currentUserId === comment.userId && (
             <Ant.Tooltip
               key="delete"
               title="Delete"
@@ -165,7 +165,7 @@ export default function Comment(props: Props) {
                 <Avatar user={currentUser} size={'medium'} isLoading={isLoading} />
                 <Reply
                   submitRequest={handleAddComment}
-                  onSuccess={onCommentAdded}
+                  onSuccess={(newComment) => onCommentAdded(newComment, CommentType.COMMENT)}
                   parentCommentId={comment.id}
                 />
               </div>

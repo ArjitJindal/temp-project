@@ -5,10 +5,11 @@ import DeleteBackLineIcon from '@/components/ui/icons/Remix/system/delete-back-l
 import { InternalBusinessUser } from '@/apis/models/InternalBusinessUser';
 import { InternalConsumerUser } from '@/apis/models/InternalConsumerUser';
 import { Comment, UserTag } from '@/apis';
+import { CommentType } from '@/utils/user-utils';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
-  onNewComment: (comment: Comment) => void;
+  onNewComment: (newComment: Comment, commentType: CommentType, personId?: string) => void;
   onTagsUpdated: (tags: UserTag[]) => void;
   className?: string;
 }

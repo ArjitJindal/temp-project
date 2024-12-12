@@ -27,6 +27,10 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  background: #f8f9fa;
+  position: sticky;
+  top: 0;
+  padding: 12px 12px 0 12px;
 
   .fileAttachmentButton {
     cursor: pointer;
@@ -56,6 +60,12 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+}
+
+.commentsection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .modaltitle {
@@ -114,8 +124,7 @@
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 12px;
   width: 100%;
-  overflow: auto;
-  max-height: 250px;
+  padding: 0 12px 12px 12px;
 }
 
 .files {
@@ -126,7 +135,6 @@
   align-items: center;
   display: flex;
   background-color: @fr-colors-v2-card-background;
-  padding: 8px 12px;
   border-radius: 4px;
   width: 100%;
 
