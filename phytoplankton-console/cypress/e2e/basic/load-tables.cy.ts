@@ -1,6 +1,12 @@
 describe('Main pages loading', () => {
   beforeEach(() => {
-    cy.loginByRole('super_admin');
+    cy.loginWithPermissions({
+      permissions: [],
+      loginWithRole: 'admin',
+      features: {
+        CLICKHOUSE_ENABLED: false,
+      },
+    });
   });
 
   const tables = [
