@@ -121,7 +121,7 @@ export class CaseService extends CaseAlertsCommonService {
     s3Config: S3Config,
     awsCredentials?: LambdaCredentials
   ) {
-    super(s3, s3Config, awsCredentials)
+    super(s3, s3Config, awsCredentials, caseRepository)
     this.caseRepository = caseRepository
     this.tenantId = caseRepository.tenantId
     this.mongoDb = caseRepository.mongoDb
@@ -908,7 +908,7 @@ export class CaseService extends CaseAlertsCommonService {
       throw new NotFound(`Cannot find case ${caseId}`)
     }
 
-    const reviewAssignments = this.getEscalationAssignments(
+    const reviewAssignments = await this.getEscalationAssignments(
       case_.caseStatus as CaseStatus,
       !isStatusInReview(case_.caseStatus) ? case_.reviewAssignments ?? [] : [],
       accounts

@@ -296,6 +296,19 @@ export class AlertsRepository {
     )
   }
 
+  public async getCasesByAssigneeId(assigneeId: string): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return casesCollection
+      .find({
+        'alerts.assignments.assigneeUserId': assigneeId,
+        'alerts.alertStatus': {
+          $nin: ['CLOSED', 'REJECTED', 'ARCHIVED'] as AlertStatus[], // end game statuses
+        },
+      })
+      .toArray()
+  }
+
   private getAssignmentFilter = (
     key: 'reviewAssignments' | 'assignments',
     filterAssignmentsIds: string[]

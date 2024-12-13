@@ -116,7 +116,7 @@ export class AlertsService extends CaseAlertsCommonService {
     s3Config: S3Config,
     awsCredentials?: Credentials
   ) {
-    super(s3, s3Config, awsCredentials)
+    super(s3, s3Config, awsCredentials, alertsRepository)
     this.alertsRepository = alertsRepository
     this.tenantId = alertsRepository.tenantId
     this.mongoDb = alertsRepository.mongoDb
@@ -345,7 +345,7 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     }
 
-    const reviewAssignments = this.getEscalationAssignments(
+    const reviewAssignments = await this.getEscalationAssignments(
       c.caseStatus as CaseStatus,
       [],
       accounts

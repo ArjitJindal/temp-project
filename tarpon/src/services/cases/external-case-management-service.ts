@@ -35,7 +35,7 @@ import { S3Config } from '@/services/aws/s3-service'
 
 @traceable
 export class ExternalCaseManagementService extends CaseAlertsCommonService {
-  private caseRepository: CaseRepository
+  protected caseRepository: CaseRepository
   private userRepository: UserRepository
   private casesTransformer: CasesAlertsTransformer
   private tenantId: string

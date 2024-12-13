@@ -104,6 +104,19 @@ export class CaseRepository {
     }, PRIORITYS[PRIORITYS.length - 1])
   }
 
+  public async getCasesByAssigneeId(assigneeId: string): Promise<Case[]> {
+    const db = this.mongoDb.db()
+    const casesCollection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    return casesCollection
+      .find({
+        'assignments.assigneeUserId': assigneeId,
+        caseStatus: {
+          $nin: ['CLOSED', 'REJECTED', 'ARCHIVED'] as CaseStatus[], // end game statuses
+        },
+      })
+      .toArray()
+  }
+
   public async getCaseIdsByUserId(
     userId: string,
     params?: {

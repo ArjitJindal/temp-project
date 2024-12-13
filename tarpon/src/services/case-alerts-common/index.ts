@@ -2,6 +2,8 @@ import { sample, uniqBy } from 'lodash'
 import { GetObjectCommand, S3 } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { Credentials } from 'aws-lambda'
+import { CaseRepository } from '../cases/repository'
+import { AlertsRepository } from '../alerts/repository'
 import { Account } from '@/@types/openapi-internal/Account'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
@@ -18,12 +20,19 @@ export class CaseAlertsCommonService {
   protected s3Config: S3Config
   protected s3Service: S3Service
   protected awsCredentials?: Credentials
+  protected CaseOrAlertRepository?: CaseRepository | AlertsRepository
 
-  constructor(s3: S3, s3Config: S3Config, awsCredentials?: Credentials) {
+  constructor(
+    s3: S3,
+    s3Config: S3Config,
+    awsCredentials?: Credentials,
+    CaseOrAlertRepository?: CaseRepository | AlertsRepository
+  ) {
     this.s3 = s3
     this.s3Config = s3Config
     this.s3Service = new S3Service(s3, s3Config)
     this.awsCredentials = awsCredentials
+    this.CaseOrAlertRepository = CaseOrAlertRepository
   }
 
   protected async getDownloadLink(file: FileInfo) {
@@ -50,16 +59,14 @@ export class CaseAlertsCommonService {
     )
   }
 
-  protected getEscalationAssignments(
+  protected async getEscalationAssignments(
     caseStatus: CaseStatus,
     existingReviewAssignments: Assignment[],
     accounts: Account[]
-  ): Assignment[] {
+  ): Promise<Assignment[]> {
     const isL2Escalation =
       statusEscalated(caseStatus) && !isStatusInReview(caseStatus)
-
     const currentUserId = getContext()?.user?.id
-
     const isL1Escalation = !isL2Escalation
 
     let allL1EscalationAccounts = accounts.filter(
@@ -86,9 +93,31 @@ export class CaseAlertsCommonService {
         return uniqBy(existingReviewAssignments, 'assigneeUserId')
       }
 
-      const randomL1EscalationReviewer = sample(allL1EscalationAccounts)
+      // Get case counts for each L1 reviewer
+      // Utilising the load balancer concept here.
+      // Get all the agents and the count of cases
+      // they are assigned with, get the min one and
+      // assign the case to one of them.
+      const caseCounts = await Promise.all(
+        allL1EscalationAccounts.map(async (account) => {
+          const activeCases =
+            await this.CaseOrAlertRepository?.getCasesByAssigneeId(account.id)
+          return {
+            account,
+            caseCount: activeCases?.length ?? 0,
+          }
+        })
+      )
+      const minCaseCount = Math.min(...caseCounts.map((c) => c.caseCount))
+      const leastLoadedReviewers = caseCounts
+        .filter((c) => c.caseCount === minCaseCount)
+        .map((c) => c.account)
+      if (!leastLoadedReviewers.length) {
+        throw new Error('No L1 escalation reviewer found')
+      }
+      const selectedReviewer = sample(leastLoadedReviewers)
 
-      if (!randomL1EscalationReviewer) {
+      if (!selectedReviewer) {
         throw new Error('No L1 escalation reviewer found')
       }
 
@@ -98,7 +127,7 @@ export class CaseAlertsCommonService {
             (assignment) => assignment.escalationLevel
           ),
           {
-            assigneeUserId: randomL1EscalationReviewer.id,
+            assigneeUserId: selectedReviewer.id,
             timestamp: Date.now(),
             escalationLevel: 'L1',
             assignedByUserId: currentUserId,
