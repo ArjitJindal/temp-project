@@ -96,7 +96,7 @@ async function dispatchOngoingScreeningJobs(tenantId: string) {
     return
   }
   const totalDocs = await users.estimatedDocumentCount()
-  const batchSize = 1_000_000
+  const batchSize = 500_000 // Reduce to check how fast it works
   const numberOfJobs = Math.ceil(totalDocs / batchSize)
   logger.info(`${totalDocs} users for screening`)
   logger.info(`Creating batches of ${batchSize} size`)

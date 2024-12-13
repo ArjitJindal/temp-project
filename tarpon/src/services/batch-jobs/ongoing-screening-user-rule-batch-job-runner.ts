@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { MongoClient } from 'mongodb'
+import { MongoClient, MongoError } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { backOff } from 'exponential-backoff'
 import { search, sortKind } from 'fast-fuzzy'
@@ -137,11 +137,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances.map((ruleInstance) => ruleInstance.ruleId ?? '')
       )) ?? []
 
-    const usersCursor = this.userRepository?.getAllUsersCursor(
-      this.from,
-      this.to
-    )
-
     let preprocessedMatches: Set<string>
     if (await tenantHasFeature(this.tenantId as string, 'PNB')) {
       let maxFuzziness = 0
@@ -176,6 +171,10 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances
       )
     }
+    const usersCursor = this.userRepository?.getAllUsersCursor(
+      this.from,
+      this.to
+    )
 
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
@@ -353,22 +352,59 @@ export async function preprocessUsers(
       }
     })
   }
-  const usersCursor = usersCollection.find(match)
-  await processCursorInBatch(
-    usersCursor,
-    async (usersChunk) => {
-      await processUsersBatch({
-        usersChunk,
-        allNames: Array.from(allNames),
-        documentIds,
-        otherTargetUserIds,
-        fuzziness,
-        matches,
-      })
-    },
-    { mongoBatchSize: USER_BATCH_SIZE, debug: true }
-  )
-
+  let usersCursor = usersCollection
+    .find(match)
+    .addCursorFlag('noCursorTimeout', true)
+    .batchSize(USER_BATCH_SIZE)
+  let pendingUsers: InternalUser[] = []
+  let lastProcessedId: string | undefined = undefined
+  let isCompleted = false
+  const allNamesArray = Array.from(allNames)
+  while (!isCompleted) {
+    try {
+      for await (const user of usersCursor) {
+        pendingUsers.push(user)
+        lastProcessedId = user.userId
+        if (pendingUsers.length === USER_BATCH_SIZE) {
+          await processUsersBatch({
+            usersChunk: pendingUsers,
+            allNames: allNamesArray,
+            documentIds,
+            otherTargetUserIds,
+            fuzziness,
+            matches,
+          })
+          pendingUsers = []
+        }
+      }
+      if (pendingUsers.length > 0) {
+        await processUsersBatch({
+          usersChunk: pendingUsers,
+          allNames: allNamesArray,
+          documentIds,
+          otherTargetUserIds,
+          fuzziness,
+          matches,
+        })
+      }
+      isCompleted = true
+    } catch (error) {
+      if (error instanceof MongoError && error.code === 43) {
+        logger.info('Cursor expired, retrying...')
+        usersCursor = usersCollection
+          .find({
+            userId: {
+              $gt: lastProcessedId,
+              ...(to ? { $lt: to } : {}),
+            },
+          })
+          .addCursorFlag('noCursorTimeout', true)
+          .batchSize(USER_BATCH_SIZE)
+        continue
+      }
+      throw error
+    }
+  }
   return matches
 }
 
