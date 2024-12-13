@@ -234,11 +234,12 @@ export const transactionHandler = async (
   const settings = await tenantSettings(tenantId)
   const isRiskScoringEnabled = settings.features?.includes('RISK_SCORING')
   const v8RiskScoringEnabled = settings.features?.includes('RISK_SCORING_V8')
-  const arsScore = isRiskScoringEnabled
-    ? await riskScoringService.getArsScore(transaction.transactionId)
-    : undefined
+  const arsScore =
+    isRiskScoringEnabled || v8RiskScoringEnabled
+      ? await riskScoringService.getArsScore(transaction.transactionId)
+      : undefined
 
-  if (v8RiskScoringEnabled && !arsScore) {
+  if ((v8RiskScoringEnabled || isRiskScoringEnabled) && !arsScore) {
     logger.error(`ARS score not found for transaction. Recalculating async`)
   }
 
