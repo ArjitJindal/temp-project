@@ -47,8 +47,10 @@ export default function QuickFilterBase(props: Props) {
 
       setTimeout(() => {
         innerRef.current?.focus();
-        window.scrollTo(0, scrollY);
-      }, 2);
+        setTimeout(() => {
+          window.scrollTo(0, scrollY);
+        }, 100);
+      }, 100);
     }
   };
   return (
