@@ -1,9 +1,7 @@
-import React from 'react';
 import { List } from 'antd';
 import cn from 'clsx';
 import pluralize from 'pluralize';
 import s from './style.module.less';
-import { getUserName } from '@/utils/api/users';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
 import { AllUsersTableItem } from '@/apis';
 
@@ -28,7 +26,7 @@ export default function UserItem(props: Props) {
     >
       <List.Item.Meta
         className={s.meta}
-        title={<span className={s.userName}>{getUserName(user)}</span>}
+        title={<span className={s.userName}>{user.name}</span>}
         description={<span className={s.id}>{user.userId}</span>}
       />
       {user.riskLevel && <RiskLevelTag level={user.riskLevel} />}

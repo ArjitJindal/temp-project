@@ -326,6 +326,7 @@ export class UserRepository {
       const filterNameConditions: Filter<
         InternalBusinessUser | InternalConsumerUser
       >[] = []
+      // Check if each word in the query has a match in the user's name
       for (const part of params.filterName.split(/\s+/)) {
         const regexFilter = useQuickSearch
           ? prefixRegexMatchFilter(part)
@@ -351,8 +352,30 @@ export class UserRepository {
           ],
         })
       }
-
       filterConditions.push({ $and: filterNameConditions })
+
+      if (useQuickSearch) {
+        // As quick search searchs by prefix, if a user's name part contains space, we need to match it
+        filterConditions.push({
+          $or: [
+            {
+              'userDetails.name.firstName': prefixRegexMatchFilter(
+                params.filterName
+              ),
+            },
+            {
+              'userDetails.name.middleName': prefixRegexMatchFilter(
+                params.filterName
+              ),
+            },
+            {
+              'userDetails.name.lastName': prefixRegexMatchFilter(
+                params.filterName
+              ),
+            },
+          ],
+        })
+      }
     }
 
     if (params.filterUserIds != null) {
