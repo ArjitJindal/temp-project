@@ -35,7 +35,11 @@ export default function RuleAndCaseDetails(props: Props) {
       const response = await api.getAlertList({
         ...params,
         page: page ?? params.page,
-        filterAction: action ? action : undefined,
+        filterRuleInstanceId: action
+          ? transaction.hitRules
+              .filter((rule) => rule.ruleInstanceId && rule.ruleAction === action)
+              .map((rule) => rule.ruleInstanceId)
+          : undefined,
         filterTransactionIds: [transaction.transactionId],
       });
 
