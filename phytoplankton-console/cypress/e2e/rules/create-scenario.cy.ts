@@ -18,7 +18,7 @@ describe('Create scenario', () => {
 
     cy.intercept('GET', '**/logic-config').as('ruleLogicConfig');
     //Basic details
-    cy.contains('Create rule').click();
+    cy.contains('Create scenario').click();
     cy.get('input[placeholder="Enter rule name"]').type('Scenario 1');
     cy.get('input[placeholder="Enter rule description"]').type('Description of the scenario');
     cy.get('[data-cy="rule-nature"]').within(() => {
