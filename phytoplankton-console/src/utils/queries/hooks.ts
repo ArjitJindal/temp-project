@@ -245,7 +245,7 @@ export function useNewUpdatesMessage(
     ) {
       if (!newUpdateMessageVisible) {
         message.info(formatMessage(newUpdatedAt), {
-          duration: 24 * 60 * 60,
+          duration: 10,
           onClose: () => setNewUpdateMessageVisible(false),
         });
         setNewUpdateMessageVisible(true);
