@@ -16,7 +16,7 @@ describe('Filter according to case id (optimized)', () => {
     cy.get('[data-cy="caseId"]')
       .first()
       .then(($caseId) => {
-        const caseId = $caseId.text().substring(0, 3);
+        const caseId = $caseId.text();
         cy.get('[data-cy="rules-filter"]').contains('Case ID').click().type(caseId);
         cy.wait('@cases').then((casesInterception) => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
