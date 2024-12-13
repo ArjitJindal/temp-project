@@ -968,7 +968,7 @@ export default function AlertTable(props: Props) {
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
     const data = getOr(queryResults.data, { items: [] });
-    if (data.total === 1 && !isAutoExpand && !expandedAlertId) {
+    if (data.total === 1 && !isAutoExpand && !expandedAlertId && data.items[0]) {
       setIsAutoExpand(true);
       const alertId = (data.items[0] as TableDataSimpleItem<TableAlertItem>).alertId;
       actionRef.current?.expandRow(alertId);
