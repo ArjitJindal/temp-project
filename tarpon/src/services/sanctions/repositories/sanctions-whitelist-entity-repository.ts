@@ -1,4 +1,4 @@
-import { Filter, MongoClient } from 'mongodb'
+import { Filter, MongoClient, ReplaceOneModel } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
@@ -13,7 +13,6 @@ import { SanctionsWhitelistEntity } from '@/@types/openapi-internal/SanctionsWhi
 import { CounterRepository } from '@/services/counter/repository'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { SanctionsScreeningEntity } from '@/@types/openapi-internal/SanctionsScreeningEntity'
-import { notEmpty } from '@/utils/array'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
 const SUBJECT_FIELDS = ['userId', 'entityType', 'searchTerm', 'entity'] as const
@@ -59,35 +58,34 @@ export class SanctionsWhitelistEntityRepository {
 
     const definedFields = omitBy(subject, isNil)
 
-    const results = await withTransaction(async () => {
-      return await Promise.all(
-        entities.map(
-          async (entity, i): Promise<SanctionsWhitelistEntity | null> => {
-            const result = await collection.findOneAndReplace(
-              {
-                'sanctionsEntity.id': entity.id,
-                // TODO uncomment once provider is definitely populated everywhere
-                // provider,
-                ...definedFields,
-              },
-              {
-                provider,
-                sanctionsEntity: entity,
-                sanctionsWhitelistId: `SW-${ids[i]}`,
-                ...definedFields,
-                createdAt: options?.createdAt ?? Date.now(),
-                reason: options?.reason,
-                comment: options?.comment,
-              },
-              { upsert: true, returnDocument: 'after' }
-            )
-            return result.value
-          }
-        )
+    const replaceOneUpdates: ReplaceOneModel<SanctionsWhitelistEntity>[] =
+      entities.map((entity, i) => ({
+        filter: {
+          'sanctionsEntity.id': entity.id,
+          ...definedFields,
+        },
+        replacement: {
+          provider,
+          sanctionsEntity: entity,
+          sanctionsWhitelistId: `SW-${ids[i]}`,
+          ...definedFields,
+          createdAt: options?.createdAt ?? Date.now(),
+          reason: options?.reason,
+          comment: options?.comment,
+        },
+        upsert: true,
+      }))
+
+    await withTransaction(async () => {
+      await collection.bulkWrite(
+        replaceOneUpdates.map((update) => ({
+          replaceOne: update,
+        }))
       )
     })
+
     return {
-      newRecords: results.filter(notEmpty),
+      newRecords: replaceOneUpdates.map((update) => update.replacement),
     }
   }
 
