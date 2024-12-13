@@ -427,7 +427,12 @@ async function addMissingColumns(
       continue
     }
 
-    const updatedColType = colType.split('DEFAULT')[0].trim()
+    const updatedColType = colType
+      .split('DEFAULT')[0]
+      .replace(/\s+/g, ' ')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')')
+      .trim()
     const existingColType = existingColumn.type
       .replace(/\s+/g, ' ')
       .replace(/\(\s+/g, '(')
