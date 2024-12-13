@@ -15,7 +15,7 @@ export class TransactionCountryHistoricalRuleFilter extends TransactionRuleFilte
         transactionCountriesHistorical: COUNTRIES_OPTIONAL_SCHEMA({
           title: 'Transaction countries',
           description:
-            'Filters origin and destination countries indside the payment details on which the rule will be applied',
+            'Filters origin and destination countries inside the payment details on which the rule will be applied',
           uiSchema: {
             group: 'transaction_historical',
           },

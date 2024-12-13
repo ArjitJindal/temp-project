@@ -115,7 +115,7 @@ export abstract class PaymentFilterRuleFilterBase<
           cardIssuedCountries: COUNTRIES_OPTIONAL_SCHEMA({
             title: 'Transaction card issued countries',
             description:
-              'Filters origin and destination card issued countries indside the payment details on which the rule will be applied',
+              'Filters origin and destination card issued countries inside the payment details on which the rule will be applied',
             uiSchema: {
               group: 'transaction',
             },

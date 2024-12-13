@@ -37,7 +37,7 @@ export abstract class TransactionCountryRuleFilterBase<
   >(direction: 'origin' | 'destination'): JSONSchemaType<P> {
     const countriesSchema = COUNTRIES_OPTIONAL_SCHEMA({
       title: `${capitalize(direction)} transaction countries`,
-      description: `Filters ${direction} countries indside the payment details on which the rule will be applied`,
+      description: `Filters ${direction} countries inside the payment details on which the rule will be applied`,
       uiSchema: {
         group: 'transaction',
       },
