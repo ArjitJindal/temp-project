@@ -7,7 +7,7 @@ import {
 } from '@/utils/mongodb-definitions'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
-import { sampleTransaction } from '@/core/seed/samplers/transaction'
+import { TransactionSampler } from '@/core/seed/samplers/transaction'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 
 describe('Linker', () => {
@@ -72,17 +72,14 @@ describe('Linker', () => {
     const txnCollection = db.collection<InternalTransaction>(
       TRANSACTIONS_COLLECTION(tenantId)
     )
+    const transactionSampler = new TransactionSampler(0)
     await txnCollection.insertMany([
       {
-        ...sampleTransaction({
-          originUserId: 'u1',
-        }),
+        ...transactionSampler.getSample(undefined, { originUserId: 'u1' }),
         originPaymentMethodId: 'someiban',
       },
       {
-        ...sampleTransaction({
-          destinationUserId: 'u2',
-        }),
+        ...transactionSampler.getSample(undefined, { destinationUserId: 'u2' }),
         destinationPaymentMethodId: 'someiban',
       },
     ])

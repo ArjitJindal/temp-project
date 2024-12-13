@@ -1,15 +1,23 @@
 import { isNil, omitBy } from 'lodash'
+import {
+  SAMPLE_FINCEN_REPORT_SEED,
+  SAMPLE_KENYA_REPORT_SEED,
+} from '../data/seeds'
+import { RandomNumberGenerator } from './prng'
 import { Report } from '@/@types/openapi-internal/Report'
 import { UsSarReportGenerator } from '@/services/sar/generators/US/SAR'
 import { KenyaSARReportGenerator } from '@/services/sar/generators/KE/SAR'
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
-import { getRandomUser } from '@/core/seed/samplers/accounts'
+import { getAccounts } from '@/core/seed/samplers/accounts'
 
 export function SampleKenyaReport(
   reportId: string,
   caseId: string,
   caseUserId: string
 ): Report & { _id: string } {
+  const accounts = getAccounts()
+  const rng = new RandomNumberGenerator(SAMPLE_KENYA_REPORT_SEED)
+
   return {
     _id: reportId,
     id: reportId,
@@ -18,7 +26,7 @@ export function SampleKenyaReport(
     status: 'COMPLETE',
     caseId,
     reportTypeId: 'KE-SAR',
-    createdById: getRandomUser().assigneeUserId,
+    createdById: rng.pickRandom(accounts).id,
     createdAt: 1690354040584,
     updatedAt: 1690354040584,
     parameters: {
@@ -180,6 +188,7 @@ export function SampleKenyaReport(
     caseUserId,
   }
 }
+
 export function SampleFincenReport(
   reportId: string,
   caseId: string,
@@ -188,6 +197,9 @@ export function SampleFincenReport(
   parentReportId?: string,
   childIds?: string[]
 ): Report & { _id: string } {
+  const accounts = getAccounts()
+  const rng = new RandomNumberGenerator(SAMPLE_FINCEN_REPORT_SEED)
+
   return {
     _id: reportId,
     id: reportId,
@@ -199,7 +211,7 @@ export function SampleFincenReport(
     reportTypeId: 'US-SAR',
     createdAt: 1691431739370,
     updatedAt: 1691431739370,
-    createdById: getRandomUser().assigneeUserId,
+    createdById: rng.pickRandom(accounts).id,
     status,
     parameters: {
       report: {

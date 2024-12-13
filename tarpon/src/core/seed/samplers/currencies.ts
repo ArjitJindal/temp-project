@@ -1,8 +1,4 @@
-import { randomInt } from '@/core/seed/samplers/prng'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 
-const SAMPLE_CURRENCIES = ['USD', 'PHP', 'EUR', 'GBP'] as const
-
-export function sampleCurrency(): CurrencyCode {
-  return SAMPLE_CURRENCIES[randomInt(SAMPLE_CURRENCIES.length)]
-}
+const _SAMPLE_CURRENCIES = ['USD', 'PHP', 'EUR', 'GBP']
+export const SAMPLE_CURRENCIES = _SAMPLE_CURRENCIES as CurrencyCode[]

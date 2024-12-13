@@ -1,40 +1,31 @@
-import { compact, random, memoize, uniq } from 'lodash'
-import { sampleTransactionRiskScoreComponents } from '../samplers/risk_score_components'
+import { compact, random, memoize, uniq, cloneDeep } from 'lodash'
+import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import {
-  businessSanctionsSearch,
-  consumerSanctionsSearch,
+  BusinessSanctionsSearchSampler,
+  ConsumerSanctionsSearchSampler,
 } from '../raw-data/sanctions-search'
+import { BaseSampler } from '../samplers/base'
 import { getUsers, getUserUniqueTags } from './users'
 import {
   getSanctions,
   getSanctionsHits,
   getSanctionsScreeningDetails,
 } from './sanctions'
+import { PAYMENT_METHODS_SEED, TRANSACTIONS_SEED } from './seeds'
 import {
-  samplePaymentDetails,
-  sampleTransaction,
+  PaymentDetailsSampler,
+  TransactionSampler,
 } from '@/core/seed/samplers/transaction'
-import { sampleTag } from '@/core/seed/samplers/tag'
-import { sampleCountry } from '@/core/seed/samplers/countries'
+import { TagSampler } from '@/core/seed/samplers/tag'
+import { COUNTRIES } from '@/core/seed/samplers/countries'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
-import {
-  pickRandom,
-  randomFloat,
-  randomInt,
-  randomNumberGenerator,
-  randomSubsetOfSize,
-} from '@/core/seed/samplers/prng'
-import { sampleCurrency } from '@/core/seed/samplers/currencies'
-import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
+import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { RISK_LEVELS } from '@/@types/openapi-internal-custom/RiskLevel'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
-import {
-  randomTransactionRules,
-  transactionRules,
-} from '@/core/seed/data/rules'
+import { transactionRules } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -52,40 +43,62 @@ export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
 
 const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
 
-const generator = function* (): Generator<InternalTransaction> {
-  const userTransactionMap = new Map<string, string[]>()
-  getUsers().forEach((u) => {
-    const filteredUsers = getUsers().filter(
-      (thisU) => thisU.userId !== u.userId
-    )
-    const usersToTransactWith = randomSubsetOfSize(filteredUsers, 3)
-    userTransactionMap.set(
-      u.userId,
-      usersToTransactWith.map((u) => u.userId)
-    )
-  })
+export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
+  private userTransactionMap: Map<string, string[]>
+  private transactionSampler: TransactionSampler
+  private tagSampler: TagSampler
+  private transactionRiskScoreSampler: TransactionRiskScoreSampler
 
-  for (let i = 0; i < TXN_COUNT; i += 1) {
-    const type = pickRandom(TRANSACTION_TYPES)
+  constructor(seed: number) {
+    super(seed)
+
+    this.userTransactionMap = new Map<string, string[]>()
+
+    // map each user to a random subset of users to transact with excluding themselves
+    getUsers().forEach((u) => {
+      const filteredUsers = getUsers().filter(
+        (thisU) => thisU.userId !== u.userId
+      )
+      const usersToTransactWith = this.rng.randomSubsetOfSize(filteredUsers, 3)
+      this.userTransactionMap.set(
+        u.userId,
+        usersToTransactWith.map((u) => u.userId)
+      )
+    })
+
+    const childSamplerSeed = this.rng.randomInt()
+
+    this.transactionSampler = new TransactionSampler(childSamplerSeed)
+    this.tagSampler = new TagSampler(childSamplerSeed + 1)
+    this.transactionRiskScoreSampler = new TransactionRiskScoreSampler(
+      childSamplerSeed + 2
+    )
+  }
+
+  protected generateSample(): InternalTransaction {
+    const type = this.rng.pickRandom(TRANSACTION_TYPES)
 
     // Hack in some suspended transactions for payment approvals
     const hitRules: ExecutedRulesResult[] =
-      randomNumberGenerator() < 0.3
-        ? randomTransactionRules()
-        : randomNumberGenerator() < 0.9 && randomNumberGenerator() > 0.8
+      this.rng.r(1).randomFloat() < 0.3
+        ? cloneDeep(this.rng.randomSubset(transactionRules()))
+        : this.rng.r(2).randomNumber() < 0.9 &&
+          this.rng.r(2).randomNumber() > 0.8
         ? transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
         : []
-    const numberoShadowRulesHit = (i % 3) + 1
+
+    const numberoShadowRulesHit = (this.counter % 3) + 1
     const shadowRulesHit = hitRules
       .filter(
         (r) => r.isShadow && !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId)
       )
       .slice(0, numberoShadowRulesHit)
-    const transaction = sampleTransaction({})
-    const originUser = getUsers()[i % getUsers().length]
+
+    const transaction = this.transactionSampler.getSample()
+    const originUser = getUsers()[this.counter % getUsers().length]
     const originUserId = originUser.userId
-    const destinationUserId = pickRandom(
-      userTransactionMap.get(originUserId) as string[]
+    const destinationUserId = this.rng.pickRandom(
+      this.userTransactionMap.get(originUserId) as string[]
     )
     const destinationUser = getUsers().find(
       (u) => u.userId === destinationUserId
@@ -103,21 +116,18 @@ const generator = function* (): Generator<InternalTransaction> {
           } ${(user as User).userDetails?.name?.lastName}`.trim()
         : (user as Business).legalEntity?.companyGeneralDetails?.legalName ?? ''
 
-      const data = isConsumer
-        ? consumerSanctionsSearch(
-            name,
-            user.userId,
-            ruleInstanceId,
-            transactionId,
-            'EXTERNAL_USER'
-          )
-        : businessSanctionsSearch(
-            name,
-            user.userId,
-            ruleInstanceId,
-            transactionId,
-            'EXTERNAL_USER'
-          )
+      const sanctionsSearchSampler = isConsumer
+        ? new ConsumerSanctionsSearchSampler(this.rng.randomInt())
+        : new BusinessSanctionsSearchSampler(this.rng.randomInt())
+
+      const data = sanctionsSearchSampler.getSample(
+        undefined, // seed already assigned
+        name,
+        user.userId,
+        ruleInstanceId,
+        transactionId,
+        'EXTERNAL_USER'
+      )
 
       getSanctions().push(data.historyItem)
       getSanctionsHits().push(...data.hits)
@@ -129,7 +139,8 @@ const generator = function* (): Generator<InternalTransaction> {
         sanctionHitIds: data.hits.map((hit) => hit.searchId),
       }
     }
-    const transactionId = `T-${i + 1}`
+
+    const transactionId = `T-${this.counter + 1}`
     const randomHitRules = [
       ...hitRules.filter((r) => !r.isShadow),
       ...shadowRulesHit,
@@ -178,9 +189,9 @@ const generator = function* (): Generator<InternalTransaction> {
         return hitRule
       })
 
-    const timestamp = sampleTimestamp()
+    const timestamp = this.sampleTimestamp()
 
-    const transactionAmount = randomInt(1_00_000)
+    const transactionAmount = this.rng.randomInt(1_00_000)
     const fullTransaction: InternalTransaction = {
       ...transaction,
       type: type,
@@ -198,40 +209,44 @@ const generator = function* (): Generator<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
-      transactionState: pickRandom(TRANSACTION_STATES),
+      transactionState: this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
         createdAt: timestamp,
         originUserId,
         destinationUserId,
-        riskLevel: pickRandom(RISK_LEVELS),
-        arsScore: Number(randomFloat(100).toFixed(2)),
-        components: sampleTransactionRiskScoreComponents(transaction),
+        riskLevel: this.rng.pickRandom(RISK_LEVELS),
+        arsScore: Number(this.rng.randomFloat(100).toFixed(2)),
+        components: this.transactionRiskScoreSampler.getSample(
+          undefined,
+          transaction
+        ),
       },
       executedRules: transactionRules(
         randomHitRules.map((r) => r.ruleInstanceId)
       ),
       originAmountDetails: {
-        country: sampleCountry(),
-        transactionCurrency: sampleCurrency(),
+        country: this.rng.r(2).pickRandom(COUNTRIES),
+        transactionCurrency: this.rng.r(3).pickRandom(SAMPLE_CURRENCIES),
         transactionAmount,
       },
       destinationAmountDetails: {
-        country: sampleCountry(),
-        transactionCurrency: sampleCurrency(),
+        country: this.rng.r(4).pickRandom(COUNTRIES),
+        transactionCurrency: this.rng.r(5).pickRandom(SAMPLE_CURRENCIES),
         transactionAmount,
       },
-      tags: [sampleTag()],
+      tags: [this.tagSampler.getSample()],
     }
-    yield fullTransaction
+    return fullTransaction
   }
 }
 
 export const paymentMethods: () => PaymentDetails[] = memoize(() => {
-  return [...Array(500000)].map(() => samplePaymentDetails() as PaymentDetails)
+  const paymentDetailsSampler = new PaymentDetailsSampler(PAYMENT_METHODS_SEED)
+  return [...Array(500000)].map(
+    () => paymentDetailsSampler.getSample() as PaymentDetails
+  )
 })
-
-const generate: () => Iterable<InternalTransaction> = () => generator()
 
 export function internalToPublic(
   internal: InternalTransaction
@@ -254,7 +269,8 @@ export function internalToPublic(
 }
 
 export const getTransactions: () => InternalTransaction[] = memoize(() => {
-  return [...generate()]
+  const fullTransactionSampler = new FullTransactionSampler(TRANSACTIONS_SEED)
+  return [...Array(TXN_COUNT)].map(() => fullTransactionSampler.getSample())
 })
 
 export const getTransactionUniqueTags = memoize(() => {

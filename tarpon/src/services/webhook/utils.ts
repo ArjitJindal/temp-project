@@ -100,7 +100,7 @@ export async function sendWebhookTasks<T extends object = object>(
   }
 
   if (envIs('local')) {
-    logger.info(`Sending ${entries.length} webhooks to local queue`)
+    logger.debug(`Sending ${entries.length} webhooks to local queue`)
     await Promise.all(
       entries.map((entry) =>
         handleWebhookDeliveryTask(

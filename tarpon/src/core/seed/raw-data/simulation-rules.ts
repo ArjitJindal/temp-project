@@ -1,5 +1,9 @@
-import { getRandomUser } from '../samplers/accounts'
+import { getAccounts } from '../samplers/accounts'
+import { RandomNumberGenerator } from '../samplers/prng'
+import { RULE_SIMULATION_SEED } from '../data/seeds'
 import { SimulationBeaconJob } from '@/@types/openapi-internal/SimulationBeaconJob'
+
+const rng = new RandomNumberGenerator(RULE_SIMULATION_SEED)
 
 export const getRuleSimulation = (): Array<
   SimulationBeaconJob & { _id: string }
@@ -8,7 +12,7 @@ export const getRuleSimulation = (): Array<
     _id: '7a6d4861-d761-46d6-9a37-263ff4066419',
     createdAt: 1691483599102,
     jobId: '7a6d4861-d761-46d6-9a37-263ff4066419',
-    createdBy: getRandomUser().assigneeUserId,
+    createdBy: rng.pickRandom(getAccounts()).id,
     type: 'BEACON',
     defaultRuleInstance: {
       id: '2b9ec5b2',
@@ -184,7 +188,7 @@ export const getRuleSimulation = (): Array<
     _id: '80ba00a4-3bfe-4d20-b9f2-05de8482bc8f',
     createdAt: 1691441270921,
     jobId: '80ba00a4-3bfe-4d20-b9f2-05de8482bc8f',
-    createdBy: getRandomUser().assigneeUserId,
+    createdBy: rng.pickRandom(getAccounts()).id,
     type: 'BEACON',
     defaultRuleInstance: {
       ruleRunMode: 'LIVE',
@@ -311,7 +315,7 @@ export const getRuleSimulation = (): Array<
     _id: '95c2ae52-1476-4df7-88e4-768c3c7e3373',
     createdAt: 1691440136730,
     jobId: '95c2ae52-1476-4df7-88e4-768c3c7e3373',
-    createdBy: getRandomUser().assigneeUserId,
+    createdBy: rng.pickRandom(getAccounts()).id,
     type: 'BEACON',
     defaultRuleInstance: {
       ruleRunMode: 'LIVE',

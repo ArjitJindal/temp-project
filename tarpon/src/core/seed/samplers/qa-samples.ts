@@ -1,11 +1,14 @@
 import { memoize, shuffle } from 'lodash'
-import { getAlerts } from './cases'
-import { getRandomUser } from './accounts'
-import { pickRandom } from './prng'
+import { QA_SAMPLES_SEED } from '../data/seeds'
+import { getAlerts } from '@/core/seed/data/alerts'
+import { getAccounts } from '@/core/seed/samplers/accounts'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { AlertsQaSampling } from '@/@types/openapi-internal/AlertsQaSampling'
 import { PRIORITYS } from '@/@types/openapi-internal-custom/Priority'
 
 export const getQASamples = memoize(() => {
+  const rng = new RandomNumberGenerator(QA_SAMPLES_SEED)
+
   const alerts = getAlerts()
 
   const filteredAlerts = alerts.filter(
@@ -21,9 +24,9 @@ export const getQASamples = memoize(() => {
   let sampleCount = 1
 
   const autoSample: AlertsQaSampling = {
-    createdBy: getRandomUser().assigneeUserId,
+    createdBy: rng.pickRandom(getAccounts()).id,
     createdAt: Date.now(),
-    priority: pickRandom(PRIORITYS),
+    priority: rng.r(1).pickRandom(PRIORITYS),
     samplingName: 'First QA Sample',
     samplingDescription: `This is a QA sample of ${percentage}% of the closed alerts`,
     updatedAt: Date.now(),
@@ -38,9 +41,9 @@ export const getQASamples = memoize(() => {
   ).slice(0, 5)
 
   const manualSample: AlertsQaSampling = {
-    createdBy: getRandomUser().assigneeUserId,
+    createdBy: rng.r(2).pickRandom(getAccounts()).id,
     createdAt: Date.now(),
-    priority: pickRandom(PRIORITYS),
+    priority: rng.r(3).pickRandom(PRIORITYS),
     samplingName: 'Second QA Sample (Manual)',
     samplingDescription: `This is a QA sample of ${percentage}% of the closed alerts`,
     updatedAt: Date.now(),

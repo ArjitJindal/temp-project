@@ -1,7 +1,6 @@
-import { pickRandom, randomSubsetOfSize } from './prng'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 
-const names = [
+export const names = [
   'James',
   'Robert',
   'John',
@@ -116,6 +115,7 @@ export type CompanySeedData = {
   annualRevenue: number
   summaries: string[]
 }
+
 export const companies: CompanySeedData[] = [
   {
     name: 'TechVision',
@@ -1261,20 +1261,3 @@ export const companies: CompanySeedData[] = [
     ],
   },
 ]
-export function randomName(): string {
-  return pickRandom(names)
-}
-export function randomConsumerName(): {
-  firstName: string
-  middleName: string
-  lastName: string
-} {
-  const [firstName, middleName, lastName] = [
-    ...new Set(randomSubsetOfSize(names, 3)),
-  ]
-  return {
-    firstName,
-    middleName,
-    lastName,
-  }
-}

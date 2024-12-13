@@ -1,12 +1,16 @@
 import { memoize } from 'lodash'
+import { TRANSACTION_EVENTS_SEED } from '../data/seeds'
 import { getTransactions } from './transactions'
-import { sampleGuid } from '@/core/seed/samplers/id'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 
-const eventId = sampleGuid()
+const rng = new RandomNumberGenerator(TRANSACTION_EVENTS_SEED)
+
+const eventId = rng.randomGuid()
 
 const data: () => TransactionEvent[] = memoize(() => {
   return getTransactions().flatMap((t): TransactionEvent[] => {
+    rng.setSeed(rng.getSeed() + 1)
     return [
       {
         transactionState: 'CREATED',
@@ -22,7 +26,7 @@ const data: () => TransactionEvent[] = memoize(() => {
         transactionState: 'SUSPENDED',
         timestamp: t.timestamp + 3600000,
         transactionId: t.transactionId,
-        eventId: sampleGuid(),
+        eventId: rng.r(1).randomGuid(),
         reason:
           'Some quite long reason here. It should take several lines to check work wrap',
         eventDescription:
@@ -34,7 +38,7 @@ const data: () => TransactionEvent[] = memoize(() => {
         transactionState: t.transactionState || 'REFUNDED',
         timestamp: t.timestamp + 3600000 + 3600000,
         transactionId: t.transactionId,
-        eventId: sampleGuid(),
+        eventId: rng.r(2).randomGuid(),
         reason: undefined,
         eventDescription: undefined,
         metaData: undefined,

@@ -4,27 +4,30 @@ import { generateNarrative } from '../samplers/cases'
 import { getUsers } from './users'
 import { transactionRules as rules } from './rules'
 import { auditLogForCaseStatusChange } from './cases'
-import { randomInt } from '@/core/seed/samplers/prng'
+import { AUDIT_LOG_SEED } from './seeds'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
-import { getRandomAccount } from '@/core/seed/samplers/accounts'
+import { getAccounts } from '@/core/seed/samplers/accounts'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 
 const AUDIT_LOG_COUNT = 100
+
 const generator = function* (): Generator<AuditLog> {
+  const rng = new RandomNumberGenerator(AUDIT_LOG_SEED)
+
   for (let i = 0; i < AUDIT_LOG_COUNT; i += 1) {
     let fullAuditLog: AuditLog = {
       auditlogId: uuid4(),
-
       type: 'USER',
       action: 'VIEW',
       timestamp: Date.now(),
       entityId: uuid4(),
-      user: getRandomAccount(),
+      user: rng.pickRandom(getAccounts()),
     }
-    // User Viewed
     const allUsers = getUsers()
 
+    // User Viewed
     if (i % 3 === 0) {
-      const userId = allUsers[randomInt(allUsers.length)].userId
+      const userId = allUsers[rng.r(1).randomInt(allUsers.length)].userId
 
       fullAuditLog = {
         type: 'USER',
@@ -32,59 +35,60 @@ const generator = function* (): Generator<AuditLog> {
         action: 'VIEW',
         timestamp: Date.now(),
         entityId: userId,
-        user: getRandomAccount(),
+        user: rng.r(2).pickRandom(getAccounts()),
       }
     }
+
     // Case Comment created
-    if (i % 3 === 1) {
+    else if (i % 3 === 1) {
       fullAuditLog = {
         auditlogId: uuid4(),
         type: 'CASE',
         action: 'CREATE',
         subtype: 'COMMENT',
         timestamp: Date.now(),
-        entityId: `C-${randomInt(25)}`,
+        entityId: `C-${rng.r(1).randomInt(25)}`,
         oldImage: undefined,
         newImage: {
           id: uuid4(),
           body: generateNarrative(
-            [rules()[randomInt(rules().length)].ruleDescription],
+            [rules()[rng.r(2).randomInt(rules().length)].ruleDescription],
             ['Anti-money laundering'],
-            allUsers[randomInt(allUsers.length)]
+            allUsers[rng.r(3).randomInt(allUsers.length)]
           ),
         },
-        user: getRandomAccount(),
-      }
-      // Alert Comment created
-      if (i % 3 === 2) {
-        fullAuditLog = {
-          auditlogId: uuid4(),
-          type: 'ALERT',
-          action: 'UPDATE',
-          timestamp: Date.now(),
-          entityId: `A-${randomInt(25)}`,
-          oldImage: {},
-          newImage: {
-            reason: ['Anti-money laundering'],
-            body: generateNarrative(
-              [rules()[randomInt(rules().length)].ruleDescription],
-              ['Anti-money laundering'],
-              allUsers[randomInt(allUsers.length)]
-            ),
-          },
-          user: getRandomAccount(),
-        }
+        user: rng.r(4).pickRandom(getAccounts()),
       }
     }
 
+    // Alert Comment created
+    else if (i % 3 === 2) {
+      fullAuditLog = {
+        auditlogId: uuid4(),
+        type: 'ALERT',
+        action: 'UPDATE',
+        timestamp: Date.now(),
+        entityId: `A-${rng.r(1).randomInt(25)}`,
+        oldImage: {},
+        newImage: {
+          reason: ['Anti-money laundering'],
+          body: generateNarrative(
+            [rules()[rng.r(2).randomInt(rules().length)].ruleDescription],
+            ['Anti-money laundering'],
+            allUsers[rng.r(3).randomInt(allUsers.length)]
+          ),
+        },
+        user: rng.r(4).pickRandom(getAccounts()),
+      }
+    }
+
+    rng.setSeed(rng.getSeed() + 1)
     yield fullAuditLog
   }
 }
 
 const generate: () => Iterable<AuditLog> = () => generator()
 
-const auditlogs: () => AuditLog[] = memoize(() => {
+export const auditlogs: () => AuditLog[] = memoize(() => {
   return [...auditLogForCaseStatusChange(), ...generate()]
 })
-
-export { generate, auditlogs }

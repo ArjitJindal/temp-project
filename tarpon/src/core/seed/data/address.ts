@@ -1,9 +1,8 @@
 import { memoize } from 'lodash'
-import { mapAddressLineAndPostcode, postCodes } from '../samplers/address'
-import { pickRandom } from '@/core/seed/samplers/prng'
-import { Address } from '@/@types/openapi-internal/Address'
+import { AddressSampler } from '../samplers/address'
+import { Address } from '@/@types/openapi-public/Address'
 
-const getCountriesData = memoize(() => ({
+export const getCountriesData = memoize(() => ({
   'United States': {
     'New York': ['New York City', 'Buffalo'],
     California: ['Los Angeles', 'San Francisco'],
@@ -62,16 +61,61 @@ const getCountriesData = memoize(() => ({
   },
 }))
 
-export const getAddress = (): Address => {
-  const country = pickRandom(Object.keys(getCountriesData()))
-  const state = pickRandom(Object.keys(getCountriesData()[country]))
-  const postcode = pickRandom(postCodes())
-  const addressLine = mapAddressLineAndPostcode()[postcode]
-  return {
-    addressLines: [addressLine],
-    postcode: String(postcode),
-    city: pickRandom(getCountriesData()[country][state]),
-    state,
-    country,
-  }
-}
+export const streets = memoize(() => [
+  'Maple Avenue',
+  'Chestnut Street',
+  'Willow Lane',
+  'Pinecrest Drive',
+  'Oakwood Court',
+  'Hickory Lane',
+  'Birch Street',
+  'Sycamore Avenue',
+  'Cedar Lane',
+  'Elmwood Drive',
+  'Magnolia Street',
+  'Aspen Court',
+  'Juniper Lane',
+  'Poplar Avenue',
+  'Redwood Street',
+  'Beechwood Drive',
+  'Spruce Lane',
+  'Walnut Avenue',
+  'Cherry Street',
+  'Rosewood Court',
+  'Acacia Lane',
+  'Cypress Street',
+  'Mulberry Drive',
+  'Cottonwood Avenue',
+  'Cactus Lane',
+  'Bamboo Street',
+  'Sage Court',
+  'Fernwood Drive',
+  'Palm Lane',
+  'Vine Street',
+  'Heather Avenue',
+  'Daisy Court',
+  'Lilac Lane',
+  'Tulip Street',
+  'Ivy Avenue',
+  'Dandelion Lane',
+  'Lavender Court',
+  'Sunflower Drive',
+  'Meadow Lane',
+  'Orchard Street',
+  'Rose Lane',
+  'Alder Avenue',
+  'Thistle Court',
+  'Wisteria Lane',
+  'Daffodil Street',
+  'Holly Avenue',
+  'Magnolia Court',
+  'Willow Street',
+  'Bluebell Lane',
+])
+
+export const paymentAddresses: () => Address[] = memoize(() => {
+  const sampler = new AddressSampler(101)
+  return [...Array(5000)].map(() => {
+    return sampler.getSample()
+  })
+})

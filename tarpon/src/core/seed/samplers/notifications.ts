@@ -1,6 +1,8 @@
 import { v4 as uuid } from 'uuid'
-import { getRandomUser } from '../samplers/accounts'
+import { getAccounts } from '../samplers/accounts'
 import { getCases } from '../data/cases'
+import { NOTIFICATIONS_SEED } from '../data/seeds'
+import { RandomNumberGenerator } from './prng'
 import { Case } from '@/@types/openapi-internal/Case'
 import { Notification } from '@/@types/openapi-internal/Notification'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -17,13 +19,19 @@ type PartialNotification = Pick<
 export const sampleNotifications = () => {
   const data: Notification[] = []
   const cases = getCases()
+  const accounts = getAccounts()
+
+  const casesRng = new RandomNumberGenerator(NOTIFICATIONS_SEED)
+  const alertsRng = new RandomNumberGenerator(casesRng.randomInt())
 
   cases.forEach((c) => {
-    const userAccount = getRandomUser()
+    const userAccount = casesRng.pickRandom(accounts)
+    casesRng.setSeed(casesRng.getSeed() + 1) // increment seed for next user
+
     if (c.caseStatus === 'OPEN' && c.assignments?.length) {
       data.push(
         createCaseNotification(
-          userAccount.assigneeUserId,
+          userAccount.id,
           c,
           getAssignmentNotification(c, 'CASE')
         )
@@ -31,18 +39,20 @@ export const sampleNotifications = () => {
     } else if (c.caseStatus === 'CLOSED') {
       data.push(
         createCaseNotification(
-          userAccount.assigneeUserId,
+          userAccount.id,
           c,
           getStatusChangeNotification(c, 'CASE')
         )
       )
     }
     c.alerts?.forEach((a) => {
-      const userAccount = getRandomUser()
+      const userAccount = alertsRng.pickRandom(accounts)
+      alertsRng.setSeed(alertsRng.getSeed() + 1) // increment seed for next user
+
       if (a.alertStatus === 'OPEN') {
         data.push(
           createAlertNotification(
-            userAccount.assigneeUserId,
+            userAccount.id,
             a,
             getAssignmentNotification(a, 'ALERT')
           )
@@ -50,7 +60,7 @@ export const sampleNotifications = () => {
       } else if (c.caseStatus === 'CLOSED') {
         data.push(
           createAlertNotification(
-            userAccount.assigneeUserId,
+            userAccount.id,
             a,
             getStatusChangeNotification(c, 'ALERT')
           )

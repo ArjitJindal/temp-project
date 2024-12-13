@@ -2,7 +2,7 @@ import { memoize } from 'lodash'
 import { getCases } from './cases'
 import { getReports } from './reports'
 import { ruleInstances } from './rules'
-import { getAlerts } from '@/core/seed/samplers/cases'
+import { getAlerts } from '@/core/seed/data/alerts'
 import { getQASamples } from '@/core/seed/samplers/qa-samples'
 import { EntityCounter } from '@/services/counter/repository'
 

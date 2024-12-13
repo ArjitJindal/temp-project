@@ -29,6 +29,7 @@ const ruleQueueInstance: () => RuleQueue[] = () => {
   }
   return [highVelocityAlertQueue, sanctionQueue, deviationAlertQueue, pofQueue]
 }
+
 export function getRandomRuleQueues() {
   return cloneDeep(ruleQueueInstance())
 }

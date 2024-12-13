@@ -4,11 +4,16 @@ import {
   Note,
 } from '@mergeapi/merge-sdk-typescript/dist/crm/models'
 import { memoize } from 'lodash'
-import { getUsers as users } from './users'
+import { getUsers } from './users'
+import {
+  CRM_ENGAGEMENTS_SEED,
+  CRM_NOTES_SEED,
+  CRM_TASKS_SEED,
+  CRM_SUMMARY_SEED,
+} from './seeds'
 import { CrmSummary } from '@/@types/openapi-internal/CrmSummary'
-import { randomInt } from '@/core/seed/samplers/prng'
-import { randomName } from '@/core/seed/samplers/dictionary'
-import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
+import { names } from '@/core/seed/samplers/dictionary'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
@@ -79,21 +84,24 @@ const getDomain = (
 }
 
 export const getEngagements: () => Engagement[] = memoize(() => {
-  return users().flatMap((u) => {
+  const rng = new RandomNumberGenerator(CRM_ENGAGEMENTS_SEED)
+
+  return getUsers().flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
     }
     const domain = getDomain(u)
     return emails.map((email) => {
-      const owner = `${randomName()} ${randomName()}`
+      const owner = `${rng.pickRandom(names)} ${rng.r(1).pickRandom(names)}`
+      rng.setSeed(rng.getSeed() + 1) // increment RNG seed by 1
       return {
         content: `${email.content}${owner}`,
         subject: email.subject,
         account: crmAccountId,
         owner,
-        start_time: new Date(sampleTimestamp()),
-        end_time: new Date(sampleTimestamp()),
+        start_time: new Date(rng.r(2).randomTimestamp()),
+        end_time: new Date(rng.r(3).randomTimestamp()),
         contacts: ['john', 'sarah'].map((name) => `${name}@${domain}`),
       }
     })
@@ -101,43 +109,51 @@ export const getEngagements: () => Engagement[] = memoize(() => {
 })
 
 export const getNotes: () => Note[] = memoize(() => {
-  return users().flatMap((u) => {
+  const rng = new RandomNumberGenerator(CRM_NOTES_SEED)
+
+  return getUsers().flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
     }
     return noteContent.map((content) => {
-      const owner = `${randomName()} ${randomName()}`
+      const owner = `${rng.pickRandom(names)} ${rng.r(1).pickRandom(names)}`
+      rng.setSeed(rng.getSeed() + 1) // increment RNG seed by 1
       return {
         content,
         account: crmAccountId,
         owner,
-        remote_created_at: new Date(sampleTimestamp()),
+        remote_created_at: new Date(rng.r(2).randomTimestamp()),
       }
     })
   })
 })
 
 export const getTasks: () => Task[] = memoize(() => {
-  return users().flatMap((u) => {
+  const rng = new RandomNumberGenerator(CRM_TASKS_SEED)
+
+  return getUsers().flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
     }
     return taskContent.map((content) => {
-      const owner = `${randomName()} ${randomName()}`
+      const owner = `${rng.pickRandom(names)} ${rng.r(1).pickRandom(names)}`
+      rng.setSeed(rng.getSeed() + 1) // increment RNG seed by 1
       return {
         content,
         account: crmAccountId,
         owner,
-        completed_date: new Date(sampleTimestamp()),
+        completed_date: new Date(rng.r(2).randomTimestamp()),
       }
     })
   })
 })
 
 export const getSummaries: () => CrmSummary[] = memoize(() => {
-  return users().flatMap((u) => {
+  const rng = new RandomNumberGenerator(CRM_SUMMARY_SEED)
+
+  return getUsers().flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
@@ -149,7 +165,7 @@ export const getSummaries: () => CrmSummary[] = memoize(() => {
       summary: isConsumer
         ? `${name} is a consumer user of our platform.`
         : `${name} is a technology and services company that provides member support solutions utilizing technology, engagement, and analytics. They are located in ${u.legalEntity.companyRegistrationDetails?.registrationCountry} with 5001-10000 employees and a revenue of $500M-1B.`,
-      sentiment: randomInt(100),
+      sentiment: rng.randomInt(100),
       good: isConsumer
         ? `${name} has been a loyal customer for over a year.`
         : `${name} is regularly using the platform and has not missed a subscription payment`,

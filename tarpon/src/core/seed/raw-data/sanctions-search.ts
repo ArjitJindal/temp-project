@@ -1,13 +1,9 @@
 import { v4 as uuid4 } from 'uuid'
 import { compact } from 'lodash'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
-import {
-  getRandomIntInclusive,
-  pickRandom,
-  randomFloat,
-  randomInt,
-  randomSubsetOfSize,
-} from '../samplers/prng'
+import { RandomNumberGenerator } from '../samplers/prng'
+import { SANCTION_SEARCH_SEED } from '../data/seeds'
+import { BaseSampler } from '../samplers/base'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
@@ -19,7 +15,6 @@ import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { SANCTIONS_MATCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsMatchType'
 import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
-import { sampleTimestamp } from '@/core/seed/samplers/timestamp'
 import { SanctionsHitStatus } from '@/@types/openapi-internal/SanctionsHitStatus'
 
 const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
@@ -41,7 +36,9 @@ const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
 
 const COUNTRY_CODES = Object.keys(COUNTRY_MAP) as CountryCode[]
 
-const commentGenerator = (hit: SanctionsHit) => {
+const commentGenerator = (seed: number, hit: SanctionsHit) => {
+  const rng = new RandomNumberGenerator(seed)
+
   const generateOpenComment = (
     matchTypes: SanctionsMatchType[],
     entityName: string,
@@ -55,7 +52,7 @@ const commentGenerator = (hit: SanctionsHit) => {
       `Compliance check required for ${entityName}. Flagged for these match types: `,
     ]
 
-    let comment = `${pickRandom(openingStatements)}${matchTypes
+    let comment = `${rng.pickRandom(openingStatements)}${matchTypes
       .map(humanizeAuto)
       .join(', ')}. `
 
@@ -120,7 +117,7 @@ const commentGenerator = (hit: SanctionsHit) => {
       `Verification complete: ${entityName} is approved. Examined match types: `,
     ]
 
-    let comment = `${pickRandom(clearingStatements)}${matchTypes
+    let comment = `${rng.pickRandom(clearingStatements)}${matchTypes
       .map(humanizeAuto)
       .join(', ')}. `
 
@@ -179,7 +176,9 @@ const commentGenerator = (hit: SanctionsHit) => {
     ? generateOpenComment(matchTypes ?? [], name, countries ?? [])
     : generateClearedComment(matchTypes ?? [], name, countries ?? [])
 }
+
 export const sanctionsSearchHit = (
+  seed: number,
   searchId: string,
   username: string,
   userId: string,
@@ -187,13 +186,15 @@ export const sanctionsSearchHit = (
   transactionId?: string,
   entity?: string
 ): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
+  const rng = new RandomNumberGenerator(seed)
+
   const entityType =
     entity === 'USER' || entity === 'EXTERNAL_USER'
       ? 'individual'
       : 'organisation'
 
   const id = uuid4()
-  const selectedCountryCodes = randomSubsetOfSize(
+  const selectedCountryCodes = rng.randomSubsetOfSize(
     COUNTRY_CODES,
     3
   ) as CountryCode[]
@@ -208,34 +209,40 @@ export const sanctionsSearchHit = (
     source.countryCodes?.some((code) => selectedCountryCodes.includes(code))
   )
 
-  const sanctionsSources = randomSubsetOfSize(
-    relevantSanctionsSources,
-    Math.min(4, relevantSanctionsSources.length)
-  )
-  const pepSources = randomSubsetOfSize(
-    relevantPepSources,
-    Math.min(4, relevantPepSources.length)
-  )
-  const matchTypes: SanctionsMatchType[] = randomSubsetOfSize(
-    SANCTIONS_MATCH_TYPES,
-    getRandomIntInclusive(1, 3)
-  )
+  const sanctionsSources = rng
+    .r(1)
+    .randomSubsetOfSize(
+      relevantSanctionsSources,
+      Math.min(4, relevantSanctionsSources.length)
+    )
+  const pepSources = rng
+    .r(2)
+    .randomSubsetOfSize(
+      relevantPepSources,
+      Math.min(4, relevantPepSources.length)
+    )
+  const matchTypes: SanctionsMatchType[] = rng
+    .r(3)
+    .randomSubsetOfSize(
+      SANCTIONS_MATCH_TYPES,
+      rng.r(2).randomIntInclusive(1, 3)
+    )
 
   const createMediaSource = (name: string) => {
-    const itemCount = randomInt(3) + 1
-    const mediaItems = randomSubsetOfSize(MEDIA, itemCount)
+    const itemCount = rng.r(4).randomInt(3) + 1
+    const mediaItems = rng.r(5).randomSubsetOfSize(MEDIA, itemCount)
     return {
       name,
       media: mediaItems,
     }
   }
-  const name = `${username}#${randomInt(1000)}`
+  const name = `${username}#${rng.r(6).randomInt(1000)}`
   const mediaSources = [
     createMediaSource('Global News Database'),
     createMediaSource('Company Adverse Media'),
   ]
   const sanctionsEntity: SanctionsEntity = {
-    id: Math.random().toString(36).substring(2, 8).toUpperCase(),
+    id: rng.r(7).randomNumber().toString(36).substring(2, 8).toUpperCase(),
     name,
     entityType,
     matchTypes,
@@ -251,14 +258,18 @@ export const sanctionsSearchHit = (
     ]) as string[],
   }
 
-  const status = pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
+  const status = rng.r(8).pickRandom<SanctionsHitStatus>(['OPEN', 'CLEARED'])
 
   const hit: SanctionsHit = {
     provider: 'comply-advantage',
     searchId,
     createdAt: Date.now(),
     updatedAt: Date.now(),
-    sanctionsHitId: `SH-${randomInt(999999).toString().padStart(6, '0')}`,
+    sanctionsHitId: `SH-${rng
+      .r(9)
+      .randomInt(999999)
+      .toString()
+      .padStart(6, '0')}`,
     status,
     hitContext: {
       userId,
@@ -281,17 +292,19 @@ export const sanctionsSearchHit = (
       mediaSources,
       pepSources,
       countries: compact(selectedCountries),
-      gender: pickRandom(['male', 'female']),
+      gender: rng.r(10).pickRandom(['male', 'female']),
       countryCodes: selectedCountryCodes,
-      yearOfBirth: getRandomIntInclusive(1900, 2024).toString(),
-      nationality: randomSubsetOfSize(
-        COUNTRY_CODES,
-        getRandomIntInclusive(1, 3)
-      ) as CountryCode[],
+      yearOfBirth: rng.r(11).randomIntInclusive(1900, 2024).toString(),
+      nationality: rng
+        .r(12)
+        .randomSubsetOfSize(
+          COUNTRY_CODES,
+          rng.r(12).randomIntInclusive(1, 3)
+        ) as CountryCode[],
     },
   }
 
-  const comment = commentGenerator(hit)
+  const comment = commentGenerator(rng.randomInt(), hit)
 
   return {
     hit: { ...hit, comment },
@@ -299,140 +312,151 @@ export const sanctionsSearchHit = (
   }
 }
 
-export const businessSanctionsSearch = (
-  username: string,
-  userId: string,
-  ruleInstanceId?: string,
-  transactionId?: string,
-  entity?: string
-): {
-  historyItem: SanctionsSearchHistory
-  hits: SanctionsHit[]
-  screeningDetails: SanctionsScreeningDetails
-} => {
-  const searchId = uuid4()
-  const screeningDetails: SanctionsScreeningDetails = {
-    searchId,
-    name: username,
-    ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
-    userIds: [userId],
-    transactionIds: transactionId ? [transactionId] : [],
-    isOngoingScreening: false,
-    isHit: true,
-    entity: entity as SanctionsScreeningEntity,
-    lastScreenedAt: sampleTimestamp(),
-    isNew: false,
-  }
-  const hits: SanctionsHit[] = []
-  const sanctionsEntityArray: SanctionsEntity[] = []
-  const hitsCount = getRandomIntInclusive(3, 14)
-  for (let i = 0; i < hitsCount; i++) {
-    const { hit, sanctionsEntity } = sanctionsSearchHit(
-      searchId,
-      username,
-      userId,
-      ruleInstanceId,
-      transactionId,
-      entity
-    )
-    hits.push(hit)
-    sanctionsEntityArray.push(sanctionsEntity)
-  }
+export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
+  protected generateSample(
+    username: string,
+    userId: string,
+    ruleInstanceId?: string,
+    transactionId?: string,
+    entity?: string
+  ): any {
+    const childSeed = this.rng.randomInt()
 
-  const historyItem: SanctionsSearchHistory = {
-    _id: searchId,
-    provider: 'comply-advantage',
-    request: {
-      searchTerm: username,
-      fuzziness: Number(randomFloat(10).toFixed(1)),
-      types: randomSubsetOfSize(
-        SANCTIONS_SEARCH_TYPES,
-        getRandomIntInclusive(1, 3)
-      ),
-    },
-    response: {
-      hitsCount,
-      data: sanctionsEntityArray,
-      searchId: searchId,
-      providerSearchId: `provider-${searchId}`,
+    const searchId = uuid4()
+    const screeningDetails: SanctionsScreeningDetails = {
+      searchId,
+      name: username,
+      ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
+      userIds: [userId],
+      transactionIds: transactionId ? [transactionId] : [],
+      isOngoingScreening: false,
+      isHit: true,
+      entity: entity as SanctionsScreeningEntity,
+      lastScreenedAt: this.sampleTimestamp(),
+      isNew: false,
+    }
+    const hits: SanctionsHit[] = []
+    const sanctionsEntityArray: SanctionsEntity[] = []
+    const hitsCount = this.rng.r(1).randomIntInclusive(3, 14)
+    for (let i = 0; i < hitsCount; i++) {
+      const { hit, sanctionsEntity } = sanctionsSearchHit(
+        childSeed,
+        searchId,
+        username,
+        userId,
+        ruleInstanceId,
+        transactionId,
+        entity
+      )
+      hits.push(hit)
+      sanctionsEntityArray.push(sanctionsEntity)
+    }
+
+    const historyItem: SanctionsSearchHistory = {
+      _id: searchId,
+      provider: 'comply-advantage',
+      request: {
+        searchTerm: username,
+        fuzziness: Number(this.rng.r(2).randomFloat(10).toFixed(1)),
+        types: this.rng
+          .r(3)
+          .randomSubsetOfSize(
+            SANCTIONS_SEARCH_TYPES,
+            this.rng.r(4).randomIntInclusive(1, 3)
+          ),
+      },
+      response: {
+        hitsCount,
+        data: sanctionsEntityArray,
+        searchId: searchId,
+        providerSearchId: `provider-${searchId}`,
+        createdAt: 1683301138980,
+      },
       createdAt: 1683301138980,
-    },
-    createdAt: 1683301138980,
+    }
+    return { historyItem, hits, screeningDetails }
   }
-  return { historyItem, hits, screeningDetails }
 }
 
-export const consumerSanctionsSearch = (
-  username: string,
-  userId: string,
-  ruleInstanceId?: string,
-  transactionId?: string,
-  entity?: string
-): {
-  historyItem: SanctionsSearchHistory
-  hits: SanctionsHit[]
-  screeningDetails: SanctionsScreeningDetails
-} => {
-  const searchId = uuid4()
-  const screeningDetails: SanctionsScreeningDetails = {
-    searchId,
-    name: username,
-    ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
-    userIds: [userId],
-    transactionIds: transactionId ? [transactionId] : [],
-    entity: entity as SanctionsScreeningEntity,
-    isOngoingScreening: false,
-    isHit: true,
-    lastScreenedAt: sampleTimestamp(),
-    isNew: false,
-  }
+export class ConsumerSanctionsSearchSampler extends BaseSampler<any> {
+  protected generateSample(
+    username: string,
+    userId: string,
+    ruleInstanceId?: string,
+    transactionId?: string,
+    entity?: string
+  ) {
+    const childSeed = this.rng.randomInt()
 
-  const hits: SanctionsHit[] = []
-  const sanctionsEntityArray: SanctionsEntity[] = []
-  const hitsCount = getRandomIntInclusive(3, 14)
-  for (let i = 0; i < hitsCount; i++) {
-    const { hit, sanctionsEntity } = sanctionsSearchHit(
+    const searchId = uuid4()
+    const screeningDetails: SanctionsScreeningDetails = {
       searchId,
-      username,
-      userId,
-      ruleInstanceId,
-      transactionId,
-      entity
-    )
-    hits.push(hit)
-    sanctionsEntityArray.push(sanctionsEntity)
-  }
-  const historyItem: SanctionsSearchHistory = {
-    _id: searchId,
-    provider: 'comply-advantage',
-    request: {
-      searchTerm: username,
-      fuzziness: Number(randomFloat(10).toFixed(1)),
-      types: randomSubsetOfSize(
-        SANCTIONS_SEARCH_TYPES,
-        getRandomIntInclusive(1, 3)
-      ),
-    },
-    response: {
-      hitsCount,
-      data: sanctionsEntityArray,
-      searchId: searchId,
-      providerSearchId: searchId,
+      name: username,
+      ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
+      userIds: [userId],
+      transactionIds: transactionId ? [transactionId] : [],
+      entity: entity as SanctionsScreeningEntity,
+      isOngoingScreening: false,
+      isHit: true,
+      lastScreenedAt: this.sampleTimestamp(),
+      isNew: false,
+    }
+
+    const hits: SanctionsHit[] = []
+    const sanctionsEntityArray: SanctionsEntity[] = []
+    const hitsCount = this.rng.r(1).randomIntInclusive(3, 14)
+    for (let i = 0; i < hitsCount; i++) {
+      const { hit, sanctionsEntity } = sanctionsSearchHit(
+        childSeed,
+        searchId,
+        username,
+        userId,
+        ruleInstanceId,
+        transactionId,
+        entity
+      )
+      hits.push(hit)
+      sanctionsEntityArray.push(sanctionsEntity)
+    }
+    const historyItem: SanctionsSearchHistory = {
+      _id: searchId,
+      provider: 'comply-advantage',
+      request: {
+        searchTerm: username,
+        fuzziness: Number(this.rng.r(2).randomFloat(10).toFixed(1)),
+        types: this.rng
+          .r(3)
+          .randomSubsetOfSize(
+            SANCTIONS_SEARCH_TYPES,
+            this.rng.r(4).randomIntInclusive(1, 3)
+          ),
+      },
+      response: {
+        hitsCount,
+        data: sanctionsEntityArray,
+        searchId: searchId,
+        providerSearchId: searchId,
+        createdAt: 1683301138980,
+      },
       createdAt: 1683301138980,
-    },
-    createdAt: 1683301138980,
-  }
-  return {
-    historyItem,
-    hits,
-    screeningDetails,
+    }
+    return {
+      historyItem,
+      hits,
+      screeningDetails,
+    }
   }
 }
+
+const sanctionsSourcesRng = new RandomNumberGenerator(SANCTION_SEARCH_SEED + 1)
+const pepSourcesRng = new RandomNumberGenerator(SANCTION_SEARCH_SEED + 2)
 
 const SANCTIONS_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['BE', 'RU'],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng.randomTimestamp(
+      2 * 365 * 24 * 60 * 60 * 1000
+    ),
     name: 'Belgium Consolidated List of the National and European Sanctions',
     fields: [
       {
@@ -452,7 +476,9 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
   },
   {
     countryCodes: ['AU'],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng
+      .r(1)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'DFAT Australia Consolidated Sanctions List',
     fields: [
       {
@@ -483,13 +509,17 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
   },
   {
     countryCodes: ['RU'],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng
+      .r(3)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'EU External Action Service - Consolidated list of Sanctions',
     url: 'https://webgate.ec.europa.eu/fsd/fsf#!/files',
   },
   {
     countryCodes: ['RU'],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng
+      .r(4)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'United Kingdom HM Treasury Office of Financial Sanctions Implementation Consolidated List',
     fields: [
       {
@@ -505,7 +535,9 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
   },
   {
     countryCodes: ['RU'],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng
+      .r(5)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'Liechtenstein International Sanctions',
     url: 'https://www.gesetze.li/konso/gebietssystematik?lrstart=946',
     fields: [
@@ -520,7 +552,9 @@ const SANCTIONS_SOURCES: SanctionsSource[] = [
     ],
   },
   {
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: sanctionsSourcesRng
+      .r(6)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     name: 'Ministry of Finance Japan Economic Sanctions List',
     url: 'https://www.mof.go.jp/international_policy/gaitame_kawase/gaitame/economic_sanctions/list.html',
     fields: [
@@ -554,7 +588,7 @@ const PEP_SOURCES: SanctionsSource[] = [
         values: ['Russia'],
       },
     ],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng.randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
   },
   {
     countryCodes: ['US', 'CA'],
@@ -569,12 +603,16 @@ const PEP_SOURCES: SanctionsSource[] = [
         values: ['United States', 'Canada'],
       },
     ],
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(1)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
   },
   {
     countryCodes: ['BR'],
     name: 'Brazilian Government PEP Data',
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(2)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     fields: [
       {
         name: 'Country',
@@ -589,7 +627,9 @@ const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['DE', 'FR'],
     name: 'European PEP Records',
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(3)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     fields: [
       {
         name: 'Country',
@@ -604,7 +644,9 @@ const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['IN'],
     name: 'India PEP Watchlist',
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(4)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     fields: [
       {
         name: 'Country',
@@ -619,7 +661,9 @@ const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['CN', 'HK'],
     name: 'Asian PEP List',
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(5)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     fields: [
       {
         name: 'Country',
@@ -634,7 +678,9 @@ const PEP_SOURCES: SanctionsSource[] = [
   {
     countryCodes: ['ZA'],
     name: 'South African PEP Database',
-    createdAt: sampleTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
+    createdAt: pepSourcesRng
+      .r(6)
+      .randomTimestamp(2 * 365 * 24 * 60 * 60 * 1000),
     fields: [
       {
         name: 'Country',
@@ -647,6 +693,7 @@ const PEP_SOURCES: SanctionsSource[] = [
     ],
   },
 ]
+
 const MEDIA: SanctionsMedia[] = [
   {
     date: new Date('2024-05-07T00:00:00Z').getTime(),

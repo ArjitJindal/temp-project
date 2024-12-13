@@ -1,12 +1,10 @@
-import { cloneDeep, memoize, random } from 'lodash'
-import { getRandomUser } from '../samplers/accounts'
+import { memoize } from 'lodash'
+import { getAccounts } from '../samplers/accounts'
+import { BaseSampler } from '../samplers/base'
 import { getSLAPolicies } from './sla'
+import { RULES_SEED, TRANSACTION_RULES_SEED, USER_RULES_SEED } from './seeds'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
-import {
-  getRandomIntInclusive,
-  pickRandom,
-  randomSubset,
-} from '@/core/seed/samplers/prng'
+import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleAction } from '@/@types/openapi-internal/RuleAction'
 import { SanctionsBusinessUserRuleParameters } from '@/services/rules-engine/user-rules/sanctions-business-user'
@@ -24,20 +22,26 @@ export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
 }
 
-export const ruleInstances: () => RuleInstance[] = memoize(() => {
-  const getRuleFilter = () => {
-    const max = getRandomIntInclusive(1000, 10000)
-    const min = getRandomIntInclusive(1, max)
+export class RuleFilterSampler extends BaseSampler<LowValueTransactionsRuleParameters> {
+  generateSample(): LowValueTransactionsRuleParameters {
+    const max = this.rng.randomIntInclusive(1000, 10000)
+    const min = this.rng.r(1).randomIntInclusive(1, max)
     return {
-      lowTransactionCount: getRandomIntInclusive(1, 50),
+      lowTransactionCount: this.rng.r(2).randomIntInclusive(1, 50),
       lowTransactionValues: {
         USD: {
           max,
           min,
         },
       },
-    } as LowValueTransactionsRuleParameters
+    }
   }
+}
+
+export const ruleInstances: () => RuleInstance[] = memoize(() => {
+  // TODO: r*RuleInstance objects can be wrapped in a Sampler class
+  const rng = new RandomNumberGenerator(RULES_SEED)
+  const ruleFilterSampler = new RuleFilterSampler(rng.randomInt())
 
   const r1RuleInstance: RuleInstance[] = [
     {
@@ -46,18 +50,18 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-1',
       ruleNameAlias: 'First transaction of a user',
       ruleDescriptionAlias: 'First transaction of a user',
-      filters: getRuleFilter(),
+      filters: ruleFilterSampler.getSample(),
       parameters: {
         transactionAmountThreshold: {
-          USD: getRandomIntInclusive(1000, 10000),
+          USD: rng.randomIntInclusive(1000, 10000),
         },
       } as TransactionAmountRuleParameters,
       riskLevelParameters: {
-        VERY_LOW: getRuleFilter(),
-        VERY_HIGH: getRuleFilter(),
-        HIGH: getRuleFilter(),
-        MEDIUM: getRuleFilter(),
-        LOW: getRuleFilter(),
+        VERY_LOW: ruleFilterSampler.getSample(),
+        VERY_HIGH: ruleFilterSampler.getSample(),
+        HIGH: ruleFilterSampler.getSample(),
+        MEDIUM: ruleFilterSampler.getSample(),
+        LOW: ruleFilterSampler.getSample(),
       },
       action: 'FLAG',
       riskLevelActions: {
@@ -86,19 +90,22 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       },
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
         ],
         frozenStatuses: [],
         alertCreatedFor: ['USER'],
       },
       checksFor: ['1st transaction'],
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     },
   ]
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 1)
+
   const r1RuleInstanceShadow: RuleInstance[] = [
     {
       id: 'R-1.8',
@@ -106,18 +113,18 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-1',
       ruleNameAlias: 'First transaction of a user (shadow)',
       ruleDescriptionAlias: 'First transaction of a user (shadow)',
-      filters: getRuleFilter(),
+      filters: ruleFilterSampler.getSample(),
       parameters: {
         transactionAmountThreshold: {
-          USD: getRandomIntInclusive(100, 50000),
+          USD: rng.randomIntInclusive(100, 50000),
         },
       } as TransactionAmountRuleParameters,
       riskLevelParameters: {
-        VERY_LOW: getRuleFilter(),
-        VERY_HIGH: getRuleFilter(),
-        HIGH: getRuleFilter(),
-        MEDIUM: getRuleFilter(),
-        LOW: getRuleFilter(),
+        VERY_LOW: ruleFilterSampler.getSample(),
+        VERY_HIGH: ruleFilterSampler.getSample(),
+        HIGH: ruleFilterSampler.getSample(),
+        MEDIUM: ruleFilterSampler.getSample(),
+        LOW: ruleFilterSampler.getSample(),
       },
       action: 'FLAG',
       riskLevelActions: {
@@ -146,29 +153,33 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       },
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
         ],
         frozenStatuses: [],
         alertCreatedFor: ['USER'],
       },
       checksFor: ['1st transaction'],
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'SHADOW',
     },
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 2)
+
   const r2RuleInstance: RuleInstance[] = [
     {
       id: 'Es4Zmo',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-2',
       ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
       casePriority: 'P1',
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
       },
       parameters: {
         transactionAmountThreshold: {
@@ -221,22 +232,25 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(2).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 3)
 
   const r8RuleInstance: RuleInstance[] = [
     {
       id: 'CK4Nh2',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleId: 'R-8',
@@ -316,23 +330,26 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604237253,
       updatedAt: 1688115753059,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
       checksFor: ['Transaction amount', 'No. of transactions'],
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 4)
 
   const r8RuleInstanceShadow: RuleInstance[] = [
     {
       id: 'R-8.1',
       ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleId: 'R-8',
@@ -412,21 +429,24 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604237253,
       updatedAt: 1688115753059,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(3).pickRandom(getAccounts()).id,
       checksFor: ['Transaction amount', 'No. of transactions'],
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
 
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(USER_RULES_SEED + 5)
+
   const r16RuleInstance: RuleInstance[] = [
     {
       id: 'hODvd2',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleRunMode: 'LIVE',
@@ -478,19 +498,22 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
       checksFor: ['Username', 'User’s Y.O.B'],
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
 
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 6)
+
   const r30RuleInstance: RuleInstance[] = [
     {
       id: 'ZnTte8',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-30',
       casePriority: 'P1',
       checksFor: ['No. of transactions', 'Time'],
@@ -507,7 +530,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'High velocity user',
       ruleDescriptionAlias: 'High velocity user',
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
       },
       filters: {},
       riskLevelParameters: {
@@ -564,18 +587,21 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(5).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 7)
 
   const r30RuleInstanceShadow: RuleInstance[] = [
     {
       id: 'R-30.1',
       ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-30',
       casePriority: 'P1',
       checksFor: ['No. of transactions', 'Time'],
@@ -592,7 +618,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleNameAlias: 'High velocity user',
       ruleDescriptionAlias: 'High velocity user',
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
       },
       filters: {},
       riskLevelParameters: {
@@ -649,22 +675,25 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(2).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(USER_RULES_SEED + 7)
 
   const r32RuleInstance: RuleInstance[] = [
     {
       id: 'pLRu4m',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       ruleId: 'R-32',
       casePriority: 'P1',
       alertConfig: {
-        slaPolicies: [pickRandom(getSLAPolicies()).id],
+        slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
       },
       parameters: {
         fuzziness: 20,
@@ -723,11 +752,14 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(6).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 8)
 
   const r56RuleInstance: RuleInstance[] = [
     {
@@ -813,11 +845,14 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         alertCreatedFor: ['USER'],
       },
       checksFor: [],
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.pickRandom(getAccounts()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(TRANSACTION_RULES_SEED + 9)
 
   const r120RuleInstance: RuleInstance[] = [
     {
@@ -1218,22 +1253,25 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       labels: [],
       alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
       checksFor: ['Transaction amount', 'Time'],
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.pickRandom(getAccounts()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 9)
 
   const r128RuleInstance: RuleInstance[] = [
     {
       id: 'FlWDkd',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleId: 'R-128',
@@ -1296,11 +1334,14 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(7).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 10)
 
   const r121RuleInstance: RuleInstance[] = [
     {
@@ -1666,23 +1707,26 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       labels: [],
       alertConfig: { frozenStatuses: [], alertCreatedFor: ['USER'] },
       checksFor: ['No. of transactions', 'Time'],
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.pickRandom(getAccounts()).id,
       ruleExecutionMode: 'SYNC',
       ruleRunMode: 'LIVE',
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 10)
 
   const r169RuleInstance: RuleInstance[] = [
     {
       id: '0a1QSr',
       ruleRunMode: 'LIVE',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleId: 'R-169',
@@ -1737,23 +1781,26 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(8).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
   ]
+
+  // reseed the rng to get different values for the next rule
+  rng.setSeed(RULES_SEED + 11)
 
   const r169RuleInstanceShadow: RuleInstance[] = [
     {
       id: 'R-169.1',
       ruleRunMode: 'SHADOW',
       ruleExecutionMode: 'SYNC',
-      checklistTemplateId: pickRandom(getChecklistTemplates()).id,
+      checklistTemplateId: rng.pickRandom(getChecklistTemplates()).id,
       alertConfig: {
         slaPolicies: [
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
-          pickRandom(getSLAPolicies()).id,
+          rng.r(1).pickRandom(getSLAPolicies()).id,
+          rng.r(2).pickRandom(getSLAPolicies()).id,
+          rng.r(3).pickRandom(getSLAPolicies()).id,
         ],
       },
       ruleId: 'R-169',
@@ -1808,7 +1855,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       status: 'ACTIVE',
       createdAt: 1685604282954,
       updatedAt: 1688114634781,
-      createdBy: getRandomUser().assigneeUserId,
+      createdBy: rng.r(4).pickRandom(getAccounts()).id,
       types: [],
       typologies: [],
     } as RuleInstance,
@@ -1838,12 +1885,16 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
 export const transactionRules: (
   hitRuleIds?: string[]
 ) => ExecutedRulesResult[] = memoize((hitRuleIds) => {
+  const rng = new RandomNumberGenerator(TRANSACTION_RULES_SEED)
+
   return ruleInstances()
     .filter((ri) => {
       return ri.type === 'TRANSACTION'
     })
-    .map(
-      (ri, i): ExecutedRulesResult => ({
+    .map((ri, i): ExecutedRulesResult => {
+      rng.setSeed(TRANSACTION_RULES_SEED + i)
+
+      return {
         ruleInstanceId: ri.id as string,
         ruleName: ri.ruleNameAlias as string,
         ruleAction: ri.action as RuleAction,
@@ -1853,24 +1904,31 @@ export const transactionRules: (
         ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
         ruleHitMeta: {
           falsePositiveDetails:
-            random(0, 10) < 4
-              ? { isFalsePositive: true, confidenceScore: random(59, 82) }
+            rng.randomInt(10) < 4
+              ? {
+                  isFalsePositive: true,
+                  confidenceScore: rng.r(1).randomIntInclusive(59, 82),
+                }
               : { isFalsePositive: false, confidenceScore: 100 },
           hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
         },
         isShadow: isShadowRule(ri),
-      })
-    )
+      }
+    })
 })
 
 export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
   memoize((hitRuleIds) => {
+    const rng = new RandomNumberGenerator(USER_RULES_SEED)
+
     return ruleInstances()
       .filter((ri) => {
         return ri.type === 'USER'
       })
-      .map(
-        (ri, i): ExecutedRulesResult => ({
+      .map((ri, i): ExecutedRulesResult => {
+        rng.setSeed(USER_RULES_SEED + i)
+
+        return {
           ruleInstanceId: ri.id as string,
           ruleName: ri.ruleNameAlias as string,
           ruleAction: ri.action as RuleAction,
@@ -1880,20 +1938,15 @@ export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
           ruleHit: hitRuleIds?.includes(ri.id ?? '') ?? true,
           ruleHitMeta: {
             falsePositiveDetails:
-              random(0, 10) < 2
-                ? { isFalsePositive: true, confidenceScore: random(59, 82) }
+              rng.randomInt(10) < 2
+                ? {
+                    isFalsePositive: true,
+                    confidenceScore: rng.r(1).randomIntInclusive(59, 82),
+                  }
                 : { isFalsePositive: false, confidenceScore: 100 },
             hitDirections: i % 2 ? ['ORIGIN'] : ['DESTINATION'],
           },
           isShadow: isShadowRule(ri),
-        })
-      )
+        }
+      })
   })
-
-export function randomTransactionRules(): ExecutedRulesResult[] {
-  return cloneDeep(randomSubset(transactionRules()))
-}
-
-export function randomUserRules(): ExecutedRulesResult[] {
-  return cloneDeep(randomSubset(userRules()))
-}

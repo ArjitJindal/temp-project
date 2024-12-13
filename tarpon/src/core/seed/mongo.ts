@@ -11,12 +11,6 @@ import { getMlModels } from './data/ml-models'
 import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
 import {
-  batchInsertToClickhouse,
-  createTenantDatabase,
-  getClickhouseClient,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
-import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
@@ -81,6 +75,12 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { SLAService } from '@/services/sla/sla-service'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
+import {
+  batchInsertToClickhouse,
+  createTenantDatabase,
+  getClickhouseClient,
+  isClickhouseEnabledInRegion,
+} from '@/utils/clickhouse/utils'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],

@@ -1,11 +1,13 @@
+import { BaseSampler } from './base'
 import { Tag } from '@/@types/openapi-internal/Tag'
-import { pickRandom } from '@/core/seed/samplers/prng'
 
 const entityValues = ['Capital Markets', 'Securities', 'Onshore', 'Offshore']
 
-export const sampleTag = (): Tag => {
-  return {
-    key: `entity`,
-    value: pickRandom(entityValues),
+export class TagSampler extends BaseSampler<Tag> {
+  protected generateSample(): Tag {
+    return {
+      key: `entity`,
+      value: this.rng.pickRandom(entityValues),
+    }
   }
 }
