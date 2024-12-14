@@ -10,7 +10,7 @@ async function migrateTenant(tenant: Tenant) {
       SANCTIONS_SEARCHES_COLLECTION(tenant.id)
     )
     await sanctionsSearchesCollection.deleteMany({
-      'request.manual': { $ne: true },
+      'request.manualSearch': { $ne: true },
       'response.hitsCount': { $eq: 0 },
     })
   }
