@@ -54,6 +54,7 @@ export class SanctionsSearchRepository {
     updatedAt?: number
     searchedBy?: string
     hitContext: SanctionsHitContext | undefined
+    providerConfigHash?: string
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
     const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
@@ -68,6 +69,9 @@ export class SanctionsSearchRepository {
           expiresAt: dayjs().add(DEFAULT_EXPIRY_TIME, 'hours').valueOf(),
         }),
         ...(props.searchedBy && { searchedBy: props.searchedBy }),
+        ...(props.providerConfigHash && {
+          providerConfigHash: props.providerConfigHash,
+        }),
       },
     }
 
@@ -155,11 +159,17 @@ export class SanctionsSearchRepository {
 
     if (
       providerConfig &&
+      providerConfig.stage &&
       (this.tenantId === '78c5a44b9b' ||
         this.tenantId === '8e0e970c86' ||
         this.tenantId.includes('flagright'))
     ) {
-      filters.push({ providerConfigHash: generateChecksum(providerConfig) })
+      filters.push({
+        providerConfigHash: generateChecksum({
+          ...providerConfig,
+          stage: providerConfig.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
+        }),
+      })
     }
 
     filters.push({

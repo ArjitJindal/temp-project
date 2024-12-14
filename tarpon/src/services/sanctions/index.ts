@@ -55,6 +55,7 @@ import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comp
 import { getDefaultProvider } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { generateChecksum } from '@/utils/object'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -166,6 +167,7 @@ export class SanctionsService {
       createdAt: result.createdAt,
       updatedAt: Date.now(),
       hitContext: result.hitContext,
+      providerConfigHash: result.providerConfigHash,
     })
 
     logger.debug(
@@ -259,6 +261,16 @@ export class SanctionsService {
         response,
         searchedBy: !context ? getContext()?.user?.id : undefined,
         hitContext: context,
+        providerConfigHash:
+          providerOverrides &&
+          providerOverrides.stage &&
+          !hasFeature('DOW_JONES')
+            ? generateChecksum({
+                ...providerOverrides,
+                stage:
+                  providerOverrides.stage === 'INITIAL' ? 'INITIAL' : 'ONGOING',
+              })
+            : undefined,
       })
     }
 
