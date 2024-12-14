@@ -96,6 +96,7 @@ export const SanctionsScreeningActivity = () => {
     },
   );
   const { ruleInstances } = useRules();
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const detailsColumns: TableColumn<SanctionsScreeningDetails>[] = useMemo(() => {
     const helper = new ColumnHelper<SanctionsScreeningDetails>();
     return helper.list([
@@ -136,7 +137,11 @@ export const SanctionsScreeningActivity = () => {
           render: (name, { item: entity }) => (
             <Row align="middle">
               <Space>
-                <Id to={`/screening/search/${entity.searchId}`}>{name}</Id>
+                {!hasFeatureDowJones || entity.isHit ? (
+                  <Id to={`/screening/search/${entity.searchId}`}>{name}</Id>
+                ) : (
+                  <div>{name}</div>
+                )}
                 {entity.isNew ? <b>NEW</b> : null}
               </Space>
             </Row>
@@ -259,7 +264,7 @@ export const SanctionsScreeningActivity = () => {
         },
       }),
     ]);
-  }, [ruleInstances, isIBANResolutionEnabled]);
+  }, [ruleInstances, isIBANResolutionEnabled, hasFeatureDowJones]);
 
   return (
     <>

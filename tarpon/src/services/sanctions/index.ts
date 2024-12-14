@@ -253,7 +253,7 @@ export class SanctionsService {
       createdAt: createdAt ?? Date.now(),
     }
 
-    if (shouldSearch) {
+    if (shouldSearch && (!hasFeature('DOW_JONES') || response.hitsCount > 0)) {
       await this.sanctionsSearchRepository.saveSearchResult({
         provider: providerName,
         createdAt: createdAt,
