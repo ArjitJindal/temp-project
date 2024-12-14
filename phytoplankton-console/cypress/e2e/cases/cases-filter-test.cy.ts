@@ -7,6 +7,7 @@ describe('Filter according to case id (optimized)', () => {
     cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
   });
 
+  /* eslint-disable cypress/no-unnecessary-waiting */
   it('should be able to filter according to case id', () => {
     cy.intercept('GET', '**/cases**').as('cases');
 
@@ -17,7 +18,9 @@ describe('Filter according to case id (optimized)', () => {
       .first()
       .then(($caseId) => {
         const caseId = $caseId.text();
-        cy.get('[data-cy="rules-filter"]').contains('Case ID').click().type(caseId);
+        cy.get('[data-cy="rules-filter"]').contains('Case ID').click();
+        cy.wait(300);
+        cy.focused().type(caseId);
         cy.wait('@cases').then((casesInterception) => {
           expect(casesInterception.response?.statusCode).to.be.oneOf([200, 304]);
           cy.url().should('include', 'caseId');
