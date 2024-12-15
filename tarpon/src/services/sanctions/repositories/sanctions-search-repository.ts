@@ -22,6 +22,8 @@ import { generateChecksum } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -122,6 +124,12 @@ export class SanctionsSearchRepository {
     const collection = db.collection<SanctionsSearchHistory>(
       SANCTIONS_SEARCHES_COLLECTION(this.tenantId)
     )
+    const tenantRepository = new TenantRepository(this.tenantId, {
+      mongoDb: this.mongoDb,
+      dynamoDb: getDynamoDbClient(),
+    })
+    const { sanctions } = await tenantRepository.getTenantSettings()
+    const hasInitialScreeningProfile = !!sanctions?.customInitialSearchProfileId
     const {
       _id,
       monitoring: _monitoring,
@@ -157,13 +165,7 @@ export class SanctionsSearchRepository {
       })
     }
 
-    if (
-      providerConfig &&
-      providerConfig.stage &&
-      (this.tenantId === '78c5a44b9b' ||
-        this.tenantId === '8e0e970c86' ||
-        this.tenantId.includes('flagright'))
-    ) {
+    if (providerConfig && providerConfig.stage && hasInitialScreeningProfile) {
       filters.push({
         providerConfigHash: generateChecksum({
           ...providerConfig,
