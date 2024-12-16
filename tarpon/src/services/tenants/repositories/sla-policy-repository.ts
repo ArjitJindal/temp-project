@@ -72,6 +72,25 @@ export class SLAPolicyRepository {
     )
   }
 
+  public async reassignSLAPolicies(
+    assignmentId: string,
+    reassignToUserId: string
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<SLAPolicy>(
+      SLA_POLICIES_COLLECTION(this.tenantId)
+    )
+    await collection.updateMany(
+      { createdBy: assignmentId },
+      {
+        $set: {
+          createdBy: reassignToUserId,
+          updatedAt: Date.now(),
+        },
+      }
+    )
+  }
+
   public async getNewId(update?: boolean): Promise<string> {
     const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
     const count = await counterRepository[

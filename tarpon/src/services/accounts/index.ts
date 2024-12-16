@@ -24,6 +24,7 @@ import { StackConstants } from '@lib/constants'
 import { memoize, sortBy } from 'lodash'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
+import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
@@ -768,12 +769,14 @@ export class AccountsService {
     const alertRepository = new AlertsRepository(tenant.id, {
       mongoDb: this.mongoDb,
     })
+    const slaPolicyRepository = new SLAPolicyRepository(tenant.id, this.mongoDb)
 
     promises.push(
       ...[
         this.blockAccount(tenant.id, idToDelete, 'DELETED'),
         caseRepository.reassignCases(idToDelete, reassignedTo),
         alertRepository.reassignAlerts(idToDelete, reassignedTo),
+        slaPolicyRepository.reassignSLAPolicies(idToDelete, reassignedTo),
       ]
     )
 

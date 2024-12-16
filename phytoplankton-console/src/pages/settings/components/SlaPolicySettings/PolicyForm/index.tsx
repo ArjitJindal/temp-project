@@ -76,21 +76,6 @@ function PolicyConfigurationForm(props: Props) {
         id: (id) => (!id ? 'ID is required' : null),
         name: (name) => (!name ? 'Name is required' : null),
         description: (description) => (!description ? 'Description is required' : null),
-        policyConfiguration: (policyConfiguration) => {
-          if (!policyConfiguration) {
-            return 'Policy configuration is required';
-          }
-          if (!policyConfiguration.SLATime.breachTime) {
-            return 'Breach time is required';
-          }
-          if (!policyConfiguration.statusDetails.statuses) {
-            return 'Alert statuses is required';
-          }
-          if (!policyConfiguration.workingDays) {
-            return 'Working days is required';
-          }
-          return null;
-        },
       }}
       formValidators={[
         (values) => {
@@ -104,6 +89,19 @@ function PolicyConfigurationForm(props: Props) {
 
           if (warningTimeinHours > breachTimeinHours) {
             return 'Warning time should be less than service level agreement time';
+          }
+          const policyConfiguration = values.policyConfiguration;
+          if (!policyConfiguration) {
+            return 'Policy configuration is required';
+          }
+          if (!policyConfiguration.SLATime.breachTime) {
+            return 'Breach time is required';
+          }
+          if (!policyConfiguration?.statusDetails?.statuses) {
+            return 'Alert statuses is required';
+          }
+          if (!policyConfiguration.workingDays) {
+            return 'Working days is required';
           }
           return null;
         },

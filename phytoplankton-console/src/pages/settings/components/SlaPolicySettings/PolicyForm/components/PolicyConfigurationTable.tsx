@@ -155,7 +155,7 @@ function PolicyConfigurationTable() {
                     labelText: humanizeSnakeCase(status),
                   }))}
                   {...inputProps}
-                  value={inputProps.value ?? ['OPEN']}
+                  value={inputProps.value}
                   onChange={(value) => {
                     inputProps.onChange?.(value);
                   }}
@@ -168,7 +168,7 @@ function PolicyConfigurationTable() {
                   formContext.setValues({
                     ...formContext.values,
                     statusDetails: {
-                      statuses: formContext.values.statusDetails.statuses,
+                      statuses: formContext.values?.statusDetails?.statuses,
                     },
                   });
                 }

@@ -36,6 +36,15 @@ export class SLAPolicyService {
       updatedAt: Date.now(),
     })
   }
+  public async reassignSLAPolicies(
+    assignmentId: string,
+    reassignToUserId: string
+  ): Promise<void> {
+    return await this.slaPolicyRepository.reassignSLAPolicies(
+      assignmentId,
+      reassignToUserId
+    )
+  }
   public async deleteSLAPolicy(id: string): Promise<void> {
     return await this.slaPolicyRepository.deleteSLAPolicy(id)
   }
