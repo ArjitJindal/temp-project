@@ -124,4 +124,5 @@ export const config: Config = {
     POSTHOG_HOST: 'https://eu.i.posthog.com',
     POSTHOG_API_KEY: 'phc_TjqVLBQelI3KfF61sd8iHiA9ThVmjG1k2vJYVcPgCbO',
   },
+  clickhouse: {},
 }

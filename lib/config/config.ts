@@ -127,10 +127,10 @@ export type Config = {
     GLUE: number
   }
   clickhouse?: {
-    privateEndpoint?: {
-      awsPrivateLinkEndpointName: string
-    }
-    enabled: boolean
+    awsPrivateLinkEndpointName?: string
+    ipAccess?: { source: string; description: string }[]
+    minTotalMemoryGb?: number
+    maxTotalMemoryGb?: number
   }
   application: {
     MONGO_ATLAS_PROJECT?: string

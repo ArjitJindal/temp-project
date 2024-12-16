@@ -90,7 +90,7 @@ export const config: Config = {
     ATLAS_SEARCH_ENABLED: true,
   },
   clickhouse: {
-    enabled: true,
+    ipAccess: [{ source: '0.0.0.0/0', description: 'Allow all IP addresses' }],
   },
   viper: {
     ADMIN_EMAILS: ALL_ENGINEERS,

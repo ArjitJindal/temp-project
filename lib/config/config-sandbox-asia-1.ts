@@ -19,10 +19,7 @@ export const config: Config = {
     ...sandboxbaseConfig.resource,
   },
   clickhouse: {
-    privateEndpoint: {
-      awsPrivateLinkEndpointName:
-        'com.amazonaws.vpce.ap-southeast-1.vpce-svc-0a2b4df11b06e4872',
-    },
-    enabled: true,
+    awsPrivateLinkEndpointName:
+      'com.amazonaws.vpce.ap-southeast-1.vpce-svc-0a2b4df11b06e4872',
   },
 }

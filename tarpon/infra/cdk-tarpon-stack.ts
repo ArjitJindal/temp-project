@@ -1392,15 +1392,21 @@ export class CdkTarponStack extends cdk.Stack {
       })
     )
 
-    if (this.config.clickhouse?.privateEndpoint && vpc) {
-      new InterfaceVpcEndpoint(this, 'clickhouse-endpoint', {
-        vpc,
-        service: new InterfaceVpcEndpointService(
-          this.config.clickhouse?.privateEndpoint.awsPrivateLinkEndpointName
-        ),
-        privateDnsEnabled: true,
-        securityGroups: [clickhouseSecurityGroup, securityGroup],
-      })
+    if (this.config.clickhouse?.awsPrivateLinkEndpointName && vpc) {
+      const vpcEndpoint = new InterfaceVpcEndpoint(
+        this,
+        'clickhouse-endpoint',
+        {
+          vpc,
+          service: new InterfaceVpcEndpointService(
+            this.config.clickhouse?.awsPrivateLinkEndpointName
+          ),
+          privateDnsEnabled: true,
+
+          securityGroups: [clickhouseSecurityGroup, securityGroup],
+        }
+      )
+      cdk.Tags.of(vpcEndpoint).add('Name', 'ClickhouseEndpoint')
     }
 
     /**
