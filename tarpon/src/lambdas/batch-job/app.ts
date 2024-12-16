@@ -159,6 +159,7 @@ export const jobDecisionHandler = async (
     RISK_SCORING_RECALCULATION: 'FARGATE',
     SIMULATION_RISK_FACTORS_V8: 'FARGATE',
     CASE_SLA_STATUS_REFRESH: 'LAMBDA',
+    FIX_RISK_SCORES_FOR_PNB_USERS: 'FARGATE',
   }
 
   return {

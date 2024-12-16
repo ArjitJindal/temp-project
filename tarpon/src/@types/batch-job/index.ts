@@ -305,6 +305,14 @@ export type PnbBackfillWebhookDeliveries = {
   }
 }
 
+export type FixRiskScoresForPnbUsers = {
+  type: 'FIX_RISK_SCORES_FOR_PNB_USERS'
+  tenantId: string
+  parameters: {
+    concurrency: number
+  }
+}
+
 export type WebhookRetryBatchJob = {
   type: 'WEBHOOK_RETRY'
   tenantId: string
@@ -341,6 +349,7 @@ export type BatchJob =
   | PnbBackfillHammerhead
   | CaseSLAStatusRefreshBatchJob
   | PnbBackfillWebhookDeliveries
+  | FixRiskScoresForPnbUsers
   | WebhookRetryBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string
