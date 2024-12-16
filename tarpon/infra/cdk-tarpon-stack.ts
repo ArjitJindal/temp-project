@@ -27,7 +27,11 @@ import {
   Period,
   UsagePlan,
 } from 'aws-cdk-lib/aws-apigateway'
-import { Queue } from 'aws-cdk-lib/aws-sqs'
+import {
+  DeduplicationScope,
+  FifoThroughputLimit,
+  Queue,
+} from 'aws-cdk-lib/aws-sqs'
 import { Subscription, SubscriptionProtocol, Topic } from 'aws-cdk-lib/aws-sns'
 import { Alias, FunctionProps, StartingPosition } from 'aws-cdk-lib/aws-lambda'
 import { Rule, Schedule } from 'aws-cdk-lib/aws-events'
@@ -1583,6 +1587,13 @@ export class CdkTarponStack extends cdk.Stack {
         maxReceiveCount,
       },
       retentionPeriod: options?.retentionPeriod,
+      ...(options?.fifo
+        ? {
+            // High throughput for FIFO queues
+            fifoThroughputLimit: FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
+            deduplicationScope: DeduplicationScope.MESSAGE_GROUP,
+          }
+        : {}),
     })
     return queue
   }
