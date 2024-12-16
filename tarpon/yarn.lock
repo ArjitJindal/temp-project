@@ -8418,6 +8418,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"axios@npm:^1.7.8":
+  version: 1.7.9
+  resolution: "axios@npm:1.7.9"
+  dependencies:
+    follow-redirects: "npm:^1.15.6"
+    form-data: "npm:^4.0.0"
+    proxy-from-env: "npm:^1.1.0"
+  checksum: b7a5f660ea53ba9c2a745bf5ad77ad8bf4f1338e13ccc3f9f09f810267d6c638c03dac88b55dae8dc98b79c57d2d6835be651d58d2af97c174f43d289a9fd007
+  languageName: node
+  linkType: hard
+
 "b4a@npm:^1.6.4":
   version: 1.6.6
   resolution: "b4a@npm:1.6.6"
@@ -17920,7 +17931,7 @@ __metadata:
     aws-sdk-client-mock-jest: "npm:^2.0.1"
     aws-xray-sdk: "npm:^3.5.0"
     aws-xray-sdk-core: "npm:^3.3.8"
-    axios: "npm:^1.7.4"
+    axios: "npm:^1.7.8"
     base-x: "npm:^3.0.9"
     body-parser: "npm:^1.20.0"
     builtin-modules: "npm:^3.3.0"
