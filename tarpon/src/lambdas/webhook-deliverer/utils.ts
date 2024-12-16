@@ -8,6 +8,7 @@ import {
   getWebhookSecrets,
 } from '@/services/webhook/utils'
 import { WebhookDeliveryTask } from '@/@types/webhook'
+import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 
 export async function handleWebhookDeliveryTask(
   webhookDeliveryTask: WebhookDeliveryTask
@@ -37,11 +38,20 @@ export async function handleWebhookDeliveryTask(
     webhookDeliveryTask.tenantId,
     mongoClient
   )
+  const webhookRetryRepository = new WebhookRetryRepository(
+    webhookDeliveryTask.tenantId,
+    mongoClient
+  )
   const latestAttempt =
     await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
       webhookDeliveryTask._id
     )
+
   if (latestAttempt?.success) {
+    await webhookRetryRepository.deleteWebhookRetryEvent(
+      webhookDeliveryTask._id
+    )
+
     return
   }
   const secretKeys = await getWebhookSecrets(

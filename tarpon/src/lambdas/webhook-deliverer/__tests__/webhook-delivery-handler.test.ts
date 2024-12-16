@@ -20,11 +20,17 @@ import { WebhookEventType } from '@/@types/openapi-internal/WebhookEventType'
 import { createSqsEvent } from '@/test-utils/sqs-test-utils'
 import dayjs from '@/utils/dayjs'
 import * as TenantUtils from '@/utils/tenant'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { retryWebhookTasks } from '@/services/webhook/utils'
 
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const getPort = require('get-port')
 
 const MOCK_SECRET_KEY = 'MOCK_SECRET_KEY'
+
+dynamoDbSetupHook()
 
 async function startTestWebhookServer(
   response: { status: number; headers: { [key: string]: any }; body: string },
@@ -73,7 +79,10 @@ function getExpectedPayload(deliveryTask: WebhookDeliveryTask): WebhookEvent {
 describe('Webhook delivery', () => {
   const ACTIVE_WEBHOOK_ID = 'ACTIVE_WEBHOOK_ID'
   const INACTIVE_WEBHOOK_ID = 'INACTIVE_WEBHOOK_ID'
-  const webhookDeliveryHandler = handler as any as (event: SQSEvent) => void
+  const webhookDeliveryHandler = handler as any as (
+    event: SQSEvent
+  ) => Promise<void>
+
   let smMock: AwsStub<any, any, any>
 
   beforeEach(() => {
@@ -96,8 +105,8 @@ describe('Webhook delivery', () => {
         )
 
         jest
-          .spyOn(TenantUtils, 'isTenantWhitelabeled')
-          .mockResolvedValue(isWhitelabelAuth0Domain)
+          .spyOn(TenantUtils, 'isWhitelabeledTenantFromSettings')
+          .mockReturnValue(isWhitelabelAuth0Domain)
 
         let receivedPayload = undefined
         let receivedHeaders = undefined
@@ -331,13 +340,10 @@ describe('Webhook delivery', () => {
     test('Stop retrying after 24 hours (96 hours for production)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookUrl = await startTestWebhookServer(
-        {
-          status: 301,
-          headers: {},
-          body: 'ERROR',
-        },
+        { status: 301, headers: {}, body: 'ERROR' },
         async () => null
       )
+
       const deliveryTask = {
         event: 'USER_STATE_UPDATED',
         payload: {},
@@ -346,18 +352,22 @@ describe('Webhook delivery', () => {
         webhookId: ACTIVE_WEBHOOK_ID,
         createdAt: Date.now(),
       }
+
       const mongoDb = await getMongoDbClient()
       const webhookDeliveryRepository = new WebhookDeliveryRepository(
         TEST_TENANT_ID,
         mongoDb
       )
+
       const webhookRepository = new WebhookRepository(TEST_TENANT_ID, mongoDb)
+
       await webhookRepository.saveWebhook({
         _id: ACTIVE_WEBHOOK_ID,
         webhookUrl,
         events: ['USER_STATE_UPDATED'],
         enabled: true,
       })
+
       await webhookDeliveryRepository.addWebhookDeliveryAttempt({
         _id: '1',
         deliveryTaskId: deliveryTask._id,
@@ -370,19 +380,18 @@ describe('Webhook delivery', () => {
         eventCreatedAt: dayjs().subtract(1, 'day').valueOf(),
         request: {},
       })
+
       await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
       expect(
         (await webhookRepository.getWebhook(ACTIVE_WEBHOOK_ID))?.enabled
       ).toBe(false)
     })
+
     test('Keep retrying before 24 hours (96 hours for production)', async () => {
       const TEST_TENANT_ID = getTestTenantId()
       const webhookUrl = await startTestWebhookServer(
-        {
-          status: 301,
-          headers: {},
-          body: 'ERROR',
-        },
+        { status: 301, headers: {}, body: 'ERROR' },
         async () => null
       )
       const deliveryTask = {
@@ -511,6 +520,157 @@ describe('Webhook delivery', () => {
           { page: 1, pageSize: 20, webhookId: INACTIVE_WEBHOOK_ID }
         )
       ).toHaveLength(0)
+    })
+  })
+
+  describe('Webhook delivery attempt when settings are configured on faliure', () => {
+    test('Exponential backoff should add to webhook retry repository', async () => {
+      jest
+        .spyOn(TenantRepository.prototype, 'getTenantSettings')
+        .mockResolvedValue({
+          webhookSettings: {
+            retryBackoffStrategy: 'EXPONENTIAL',
+            maxRetryHours: 24,
+            retryOnlyFor: ['3XX'],
+            maxRetryReachedAction: 'DISABLE_WEBHOOK',
+          },
+        })
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+      const webhookUrl = await startTestWebhookServer(
+        { status: 301, headers: {}, body: 'ERROR' },
+        async () => null
+      )
+
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+
+      await webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
+      const attempts =
+        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+          ACTIVE_WEBHOOK_ID,
+          { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+        )
+
+      expect(attempts).toHaveLength(1)
+
+      const webhookRetryRepository = new WebhookRetryRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      const time = dayjs().add(10, 'minutes').valueOf()
+      const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
+        time
+      )
+
+      expect(retries).toHaveLength(1)
+      expect(retries[0].lastRetryMinutes).toEqual(10)
+
+      await retryWebhookTasks(
+        TEST_TENANT_ID,
+        retries.map((r) => r.task)
+      )
+
+      const time2 = dayjs().add(20, 'minutes').valueOf()
+      const newRetries = await webhookRetryRepository.getAllWebhookRetryEvents(
+        time2
+      )
+
+      expect(newRetries).toHaveLength(1)
+      expect(newRetries[0].lastRetryMinutes).toEqual(20)
+    })
+
+    test('Linear backoff should not add to webhook retry repository', async () => {
+      jest
+        .spyOn(TenantRepository.prototype, 'getTenantSettings')
+        .mockResolvedValue({
+          webhookSettings: {
+            retryBackoffStrategy: 'LINEAR',
+            maxRetryHours: 24,
+            retryOnlyFor: ['3XX'],
+            maxRetryReachedAction: 'DISABLE_WEBHOOK',
+          },
+        })
+
+      const TEST_TENANT_ID = getTestTenantId()
+      const webhookDeliveryRepository = new WebhookDeliveryRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      const webhookUrl = await startTestWebhookServer(
+        { status: 301, headers: {}, body: 'ERROR' },
+        async () => null
+      )
+
+      const webhookRepository = new WebhookRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      await webhookRepository.saveWebhook({
+        _id: ACTIVE_WEBHOOK_ID,
+        webhookUrl,
+        events: ['USER_STATE_UPDATED'],
+        enabled: true,
+      })
+
+      const deliveryTask = {
+        event: 'USER_STATE_UPDATED',
+        payload: {},
+        _id: 'task_id',
+        tenantId: TEST_TENANT_ID,
+        webhookId: ACTIVE_WEBHOOK_ID,
+        createdAt: Date.now(),
+      }
+
+      const result = webhookDeliveryHandler(createSqsEvent([deliveryTask]))
+
+      await expect(result).rejects.toThrow()
+
+      const attempts =
+        await webhookDeliveryRepository.getWebhookDeliveryAttempts(
+          ACTIVE_WEBHOOK_ID,
+          { page: 1, pageSize: 20, webhookId: ACTIVE_WEBHOOK_ID }
+        )
+
+      expect(attempts).toHaveLength(1)
+
+      const webhookRetryRepository = new WebhookRetryRepository(
+        TEST_TENANT_ID,
+        await getMongoDbClient()
+      )
+
+      const time = dayjs().add(10, 'minutes').valueOf()
+
+      const retries = await webhookRetryRepository.getAllWebhookRetryEvents(
+        time
+      )
+
+      expect(retries).toHaveLength(0)
     })
   })
 })

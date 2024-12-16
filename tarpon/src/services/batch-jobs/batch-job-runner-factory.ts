@@ -18,6 +18,7 @@ import { PnbBackfillCraBatchJobRunner } from './pnb-backfill-cra-fargate-batch-j
 import { PnbBackfillHammerheadBatchJobRunner } from './pnb-backfill-hammerhead-fargate-batch-job'
 import { PnbBackfillWebhookDeliveriesBatchJobRunner } from './pnb-backfill-webhook-deliveries'
 import { BackfillAsyncRuleRunsBatchJobRunner } from './backfill-async-rule-runs-batch-job'
+import { WebhookRetryBatchJobRunner } from './webhook-retry-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -84,6 +85,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
       new CaseSLAStatusRefreshBatchJobRunner(jobId),
     PNB_BACKFILL_WEBHOOK_DELIVERIES: (jobId) =>
       new PnbBackfillWebhookDeliveriesBatchJobRunner(jobId),
+    WEBHOOK_RETRY: (jobId) => new WebhookRetryBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

@@ -10209,6 +10209,39 @@ components:
           type: number
         maxActiveSessions:
           type: number
+        webhookSettings:
+          $ref: '#/components/schemas/WebhookSettings'
+    WebhookRetryOnlyFor:
+      type: string
+      enum:
+        - 3XX
+        - 4XX
+        - 5XX
+    WebhookSettings:
+      title: WebhookSettings
+      type: object
+      properties:
+        retryOnlyFor:
+          type: array
+          items:
+            $ref: '#/components/schemas/WebhookRetryOnlyFor'
+        maxRetryHours:
+          type: number
+        retryBackoffStrategy:
+          type: string
+          enum:
+            - LINEAR
+            - EXPONENTIAL
+        maxRetryReachedAction:
+          type: string
+          enum:
+            - DISABLE_WEBHOOK
+            - IGNORE
+      required:
+        - retryOnlyFor
+        - maxRetryHours
+        - retryBackoffStrategy
+        - onFailure
     ReRunTrigger:
       title: ReRunTrigger
       type: string

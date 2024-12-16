@@ -15,7 +15,7 @@ import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { getBranding } from '@/utils/branding';
 import Tag from '@/components/library/Tag';
 
-export const WebhookSettings: React.FC = () => {
+export const WebhookConfigurations: React.FC = () => {
   const api = useApi();
   const [updatedWebhooks, setUpdatedWebhooks] = useState<{ [key: string]: WebhookConfiguration }>(
     {},

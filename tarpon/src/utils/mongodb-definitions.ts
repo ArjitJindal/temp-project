@@ -286,6 +286,10 @@ export const WEBHOOK_DELIVERY_COLLECTION = (tenantId: string) => {
   return `${tenantId}-webhook-deliveries`
 }
 
+export const WEBHOOK_RETRY_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-webhook-retries`
+}
+
 export const SANCTIONS_SEARCHES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-sanctions-searches`
 }

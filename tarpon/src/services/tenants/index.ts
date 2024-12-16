@@ -304,6 +304,12 @@ export class TenantService {
       const newTenantSettings: TenantSettings = {
         limits: { seats: tenantData.seats ?? 5, apiKeyView: 2 },
         features: tenantData.features ?? [],
+        webhookSettings: {
+          retryBackoffStrategy: 'LINEAR',
+          retryOnlyFor: ['3XX', '4XX', '5XX'],
+          maxRetryHours: envIs('prod') ? 96 : 24,
+          maxRetryReachedAction: envIs('prod') ? 'IGNORE' : 'DISABLE_WEBHOOK',
+        },
         auth0Domain: tenantData.auth0Domain,
         ...(tenantData.sanctionsMarketType && {
           sanctions: tenantData.sanctionsMarketType

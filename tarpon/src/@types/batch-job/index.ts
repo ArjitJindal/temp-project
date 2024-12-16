@@ -305,6 +305,11 @@ export type PnbBackfillWebhookDeliveries = {
   }
 }
 
+export type WebhookRetryBatchJob = {
+  type: 'WEBHOOK_RETRY'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -336,7 +341,7 @@ export type BatchJob =
   | PnbBackfillHammerhead
   | CaseSLAStatusRefreshBatchJob
   | PnbBackfillWebhookDeliveries
-
+  | WebhookRetryBatchJob
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

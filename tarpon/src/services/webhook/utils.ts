@@ -66,61 +66,95 @@ export type ThinWebhookDeliveryTask<T extends object = object> = Pick<
   'event' | 'payload' | 'triggeredBy'
 >
 
-export async function sendWebhookTasks<T extends object = object>(
+export async function retryWebhookTasks<T extends object = object>(
   tenantId: string,
-  webhookTasks: ThinWebhookDeliveryTask<T>[]
+  webhookTasks: WebhookDeliveryTask<T>[]
+) {
+  await sendWebhookTasksToWebhooks(tenantId, {
+    type: 'RETRY',
+    tasks: webhookTasks,
+  })
+}
+
+type WebhookTasks<T extends object = object> =
+  | { type: 'RETRY'; tasks: WebhookDeliveryTask<T>[] }
+  | { type: 'CREATE'; tasks: ThinWebhookDeliveryTask<T>[] }
+
+async function sendWebhookTasksToWebhooks<T extends object = object>(
+  tenantId: string,
+  webhookTasks: WebhookTasks<T>
 ) {
   const createdAt = Date.now()
+  const entries: SendMessageBatchRequestEntry[] = []
   const webhookRepository = new WebhookRepository(
     tenantId,
     await getMongoDbClient()
   )
+
   const webhooksByEvent = await webhookRepository.getWebhooksByEvents(
-    webhookTasks.map((task) => task.event)
+    (webhookTasks.tasks as Pick<WebhookDeliveryTask, 'event'>[]).map(
+      (task) => task.event
+    )
   )
 
-  const entries: SendMessageBatchRequestEntry[] = []
-  for (const webhookTask of webhookTasks) {
+  for (const webhookTask of webhookTasks.tasks) {
     for (const webhook of webhooksByEvent.get(webhookTask.event) || []) {
-      const finalWebhookTask: WebhookDeliveryTask<T> = {
-        ...webhookTask,
-        _id: uuidv4(),
-        tenantId,
-        webhookId: webhook._id as string,
-        createdAt,
-      }
-      entries.push({
-        Id: finalWebhookTask._id,
-        MessageBody: JSON.stringify(finalWebhookTask),
-      })
-      logger.info(
-        `Sending webhook delivery task for event type ${webhookTask.event}`
-      )
-    }
-  }
+      if (webhookTasks.type === 'RETRY') {
+        for (const task of webhookTasks.tasks) {
+          entries.push({
+            Id: task._id,
+            MessageBody: JSON.stringify(task),
+          })
+        }
+      } else {
+        const task: WebhookDeliveryTask<T> = {
+          ...webhookTask,
+          _id: uuidv4(),
+          tenantId,
+          createdAt,
+          webhookId: webhook._id as string,
+        }
 
-  if (envIs('local')) {
-    logger.debug(`Sending ${entries.length} webhooks to local queue`)
-    await Promise.all(
-      entries.map((entry) =>
-        handleWebhookDeliveryTask(
-          JSON.parse(entry.MessageBody as string) as WebhookDeliveryTask
+        entries.push({
+          Id: task._id,
+          MessageBody: JSON.stringify(task),
+        })
+      }
+    }
+
+    if (envIs('local') || envIs('test')) {
+      logger.info(`Sending ${entries.length} webhooks to local queue`)
+      await Promise.all(
+        entries.map((entry) =>
+          handleWebhookDeliveryTask(
+            JSON.parse(entry.MessageBody as string) as WebhookDeliveryTask
+          )
         )
       )
+
+      return
+    }
+
+    await bulkSendMessages(
+      sqs,
+      process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
+      entries
     )
 
-    return
+    if (entries.length > 0) {
+      logger.info(`${entries.length} webhooks sent`)
+    }
   }
+}
 
-  await bulkSendMessages(
-    sqs,
-    process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
-    entries
-  )
-
-  if (entries.length > 0) {
-    logger.info(`${entries.length} webhooks sent`)
-  }
+export async function sendWebhookTasks<T extends object = object>(
+  tenantId: string,
+  webhookTasks: ThinWebhookDeliveryTask<T>[]
+) {
+  await sendWebhookTasksToWebhooks(tenantId, {
+    type: 'CREATE',
+    tasks: webhookTasks,
+  })
 }
 
 export function getNotExpiredSecrets(

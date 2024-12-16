@@ -4,11 +4,11 @@ import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { CurrencyService } from '@/services/currency'
-
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { tenantHasFeature } from '@/core/utils/context'
+import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -111,4 +111,29 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   await handleDashboardRefreshBatchJob(tenantIds)
   await handleSlaStatusCalculationBatchJob(tenantIds)
   await handleRiskScoringTriggerBatchJob(tenantIds)
+  await deleteOldWebhookRetryEvents(tenantIds)
 })
+
+async function deleteOldWebhookRetryEvents(tenantIds: string[]) {
+  const mongoDb = await getMongoDbClient()
+  try {
+    await Promise.all(
+      tenantIds.map(async (tenantId) => {
+        const webhookRetryRepository = new WebhookRetryRepository(
+          tenantId,
+          mongoDb
+        )
+        const count = await webhookRetryRepository.countWebhookRetryEvents()
+
+        if (count) {
+          await sendBatchJobCommand({ type: 'WEBHOOK_RETRY', tenantId })
+        }
+      })
+    )
+  } catch (e) {
+    logger.error(
+      `Failed to delete old webhook retry events: ${(e as Error)?.message}`,
+      e
+    )
+  }
+}

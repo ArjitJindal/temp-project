@@ -1,7 +1,7 @@
 import { useNavigate, useParams } from 'react-router';
 import { RuleActionSettings } from './components/RuleActionSettings';
 import { PaymentApprovalSettings } from './components/PaymentApprovalSettings';
-import { WebhookSettings } from './components/WebhookSettings';
+import { WebhookConfigurations } from './components/WebhookConfigurations';
 import { TransactionStateSettings } from './components/TransactionStateSettings';
 import { RiskLevelSettings } from './components/RiskLevelSettings';
 import { FlagrightAISettings } from './components/FlagrightAISettings';
@@ -28,6 +28,7 @@ import CraToggleSettings from './components/CraToggleSettings';
 import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
+import { WebhookSettings } from './components/WebhookSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -190,6 +191,7 @@ export default function SettingsPage() {
                 <ApiKeysSettings />
                 <QuotaSettings />
                 <WebhookSettings />
+                <WebhookConfigurations />
               </>
             ),
           },

@@ -8,6 +8,7 @@ import { abortableFetch } from 'abortcontroller-polyfill/dist/cjs-ponyfill'
 import fetch, { FetchError, Response } from 'node-fetch'
 import timeoutSignal from 'timeout-signal'
 import { v4 as uuidv4 } from 'uuid'
+import { humanizeConstant } from '@flagright/lib/utils/humanize'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
 import { handleWebhookDeliveryTask } from './utils'
@@ -17,10 +18,14 @@ import { logger } from '@/core/logger'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
 import { WebhookEvent } from '@/@types/openapi-public/WebhookEvent'
-import { tenantHasFeature, withContext } from '@/core/utils/context'
+import { withContext } from '@/core/utils/context'
 import dayjs from '@/utils/dayjs'
 import { envIs } from '@/utils/env'
-import { isTenantWhitelabeled } from '@/utils/tenant'
+import { isWhitelabeledTenantFromSettings } from '@/utils/tenant'
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
+import { WebhookRetryOnlyFor } from '@/@types/openapi-internal/WebhookRetryOnlyFor'
 
 export class ClientServerError extends Error {}
 
@@ -32,11 +37,20 @@ export async function deliverWebhookEvent(
   secrets: string[],
   webhookDeliveryTask: WebhookDeliveryTask
 ) {
+  const dynamoDb = getDynamoDbClient()
+  const tenantRepository = new TenantRepository(webhookDeliveryTask.tenantId, {
+    dynamoDb,
+  })
   const mongoDb = await getMongoDbClient()
   const webhookDeliveryRepository = new WebhookDeliveryRepository(
     webhookDeliveryTask.tenantId,
     mongoDb
   )
+  const webhookRetryRepository = new WebhookRetryRepository(
+    webhookDeliveryTask.tenantId,
+    mongoDb
+  )
+
   const webhookRepository = new WebhookRepository(
     webhookDeliveryTask.tenantId,
     mongoDb
@@ -58,15 +72,19 @@ export async function deliverWebhookEvent(
       return hmac.digest('hex')
     })
     .join(',')
+
   const requestTimeoutSec = process.env.WEBHOOK_REQUEST_TIMEOUT_SEC
     ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
     : 10
 
-  const isWhitelabeledTenant = await isTenantWhitelabeled(
-    webhookDeliveryTask.tenantId
-  )
+  const settings = await tenantRepository.getTenantSettings([
+    'webhookSettings',
+    'auth0Domain',
+    'features',
+  ])
+  const webhookSettings = settings.webhookSettings
 
-  const header = isWhitelabeledTenant
+  const header = isWhitelabeledTenantFromSettings(settings)
     ? 'x-webhook-signature'
     : 'x-flagright-signature'
 
@@ -87,11 +105,26 @@ export async function deliverWebhookEvent(
       fetchOptions
     )
     let retryErrorMessage = ''
+
     if (response && response.status >= 300 && response.status < 600) {
       retryErrorMessage = `Client server returned status ${response.status}. Will retry`
     } else if (!response) {
       retryErrorMessage = 'Client server did not respond. Will retry'
     }
+
+    const retryOnlyFor = webhookSettings?.retryOnlyFor ?? []
+
+    if (
+      retryOnlyFor?.length &&
+      !shouldRetryOnStatusCode((response as Response)?.status, retryOnlyFor)
+    ) {
+      logger.warn(
+        `Webhook ${webhookDeliveryTask.webhookId} will not retry as the status code ${response?.status} is not in the retryOnlyFor list`
+      )
+
+      return
+    }
+
     if (retryErrorMessage) {
       const firstAttempt =
         await webhookDeliveryRepository.getFirstWebhookDeliveryAttempt(
@@ -102,32 +135,60 @@ export async function deliverWebhookEvent(
         dayjs(firstAttempt?.requestStartedAt),
         'hour'
       )
-      if (retryHours >= MAX_RETRY_HOURS) {
+
+      const hoursForRetry = webhookSettings?.maxRetryHours ?? MAX_RETRY_HOURS
+
+      if (retryHours >= hoursForRetry) {
         logger.error(
-          `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${MAX_RETRY_HOURS} hours. Will not retry`
+          `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${hoursForRetry} hours. Will not retry`
         )
 
-        if (await tenantHasFeature(webhookDeliveryTask.tenantId, 'PNB')) {
-          // Don't disable webhooks for PNB
-          logger.error(
-            `Webhook task for PNB failed with ID ${webhookDeliveryTask._id}`
-          )
-          return
+        const maxRetryReachedAction =
+          webhookSettings?.maxRetryReachedAction ?? ''
+
+        if (
+          !maxRetryReachedAction ||
+          maxRetryReachedAction === 'DISABLE_WEBHOOK'
+        ) {
+          await Promise.all([
+            webhookRepository.disableWebhook(
+              webhook._id as string,
+              `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${hoursForRetry} hours)`
+            ),
+            webhookRetryRepository.deleteWebhookRetryEvent(
+              webhookDeliveryTask._id
+            ),
+          ])
         }
-        await webhookRepository.disableWebhook(
-          webhook._id as string,
-          `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${MAX_RETRY_HOURS} hours)`
+
+        logger.error(
+          `Failed to deliver event ${webhookDeliveryTask.event} to ${
+            webhook.webhookUrl
+          } after ${hoursForRetry} hours. Will not retry action: ${humanizeConstant(
+            maxRetryReachedAction
+          )}`
         )
       } else {
-        throw new ClientServerError(retryErrorMessage)
+        if (webhookSettings?.retryBackoffStrategy === 'EXPONENTIAL') {
+          // In Exponential we need to retry with a delay so we will add it to the mongo collection
+          await handleExponentialRetry(
+            webhookDeliveryTask,
+            webhookRetryRepository
+          )
+        } else {
+          throw new ClientServerError(retryErrorMessage)
+        }
       }
     }
   } catch (e) {
     logger.warn(`Failed to deliver event: ${(e as Error).message}`)
+
     if ((e as any)?.name === 'AbortError') {
+      // We don't retry if customer server fails to respond before the timeout
       logger.warn(`Request timeout after ${requestTimeoutSec} seconds`)
       return
     }
+
     if ((e as any)?.type === 'aborted') {
       // We don't retry if customer server fails to respond before the timeout
       logger.warn(`Request timeout after ${requestTimeoutSec} seconds`)
@@ -135,7 +196,16 @@ export async function deliverWebhookEvent(
     }
 
     if (e instanceof FetchError) {
-      throw new ClientServerError(`Client server failed to respond. Will retry`)
+      if (webhookSettings?.retryBackoffStrategy === 'EXPONENTIAL') {
+        await handleExponentialRetry(
+          webhookDeliveryTask,
+          webhookRetryRepository
+        )
+      } else {
+        throw new ClientServerError(
+          `Client server failed to respond. Will retry`
+        )
+      }
     } else {
       throw e
     }
@@ -145,6 +215,9 @@ export async function deliverWebhookEvent(
       ? response.status >= 200 && response.status < 300
       : false
     if (success) {
+      await webhookRetryRepository.deleteWebhookRetryEvent(
+        webhookDeliveryTask._id
+      )
       logger.info('Successfully delivered event')
     } else {
       logger.warn(`Failed to deliver event`)
@@ -199,3 +272,52 @@ export const webhookDeliveryHandler = lambdaConsumer()(
     }
   }
 )
+
+async function handleExponentialRetry(
+  webhookDeliveryTask: WebhookDeliveryTask,
+  webhookRetryRepository: WebhookRetryRepository
+) {
+  const webhookRetryEvent = await webhookRetryRepository.getWebhookRetryEvent(
+    webhookDeliveryTask._id
+  )
+
+  const MAX_RETRY_MINUTES = 360 // 6 hours
+
+  const lastRetryMinutes = webhookRetryEvent?.lastRetryMinutes || 0
+  let newRetryMinutes: number = 0
+
+  logger.debug(`Last retry minutes: ${lastRetryMinutes}`)
+
+  if (lastRetryMinutes === 0) {
+    newRetryMinutes = 10
+  } else {
+    const tempNewRetryMinutes = lastRetryMinutes * 2
+    newRetryMinutes = Math.min(MAX_RETRY_MINUTES, tempNewRetryMinutes)
+  }
+
+  const now = Date.now()
+
+  await webhookRetryRepository.addOrUpdateWebhookRetryEvent({
+    eventId: webhookDeliveryTask._id,
+    task: webhookDeliveryTask,
+    lastRetryAt: now,
+    retryAfter: dayjs(now)
+      .add(newRetryMinutes - 1, 'minute')
+      .valueOf(), // -1 because we want cron job doesn't skip the first retry
+    lastRetryMinutes: newRetryMinutes,
+  })
+}
+
+export function shouldRetryOnStatusCode(
+  statusCode: number,
+  retryOnlyFor: WebhookRetryOnlyFor[]
+) {
+  const derivedStatusCode =
+    statusCode >= 300 && statusCode < 400
+      ? '3XX'
+      : statusCode >= 400 && statusCode < 500
+      ? '4XX'
+      : '5XX'
+
+  return retryOnlyFor.includes(derivedStatusCode as WebhookRetryOnlyFor)
+}

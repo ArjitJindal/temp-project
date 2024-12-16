@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useAuth0 } from '@auth0/auth0-react';
-import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { load } from '@fingerprintjs/fingerprintjs';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 import { useAuth0User } from '@/utils/user-utils';
 import {
@@ -45,7 +45,7 @@ interface Props {
 function useFingerprint() {
   const [fingerprint, setFingerprint] = useState<string | undefined>();
   useEffect(() => {
-    FingerprintJS.load()
+    load()
       .then((fp) => fp.get())
       .then((v) => setFingerprint(v.visitorId));
   }, []);
