@@ -58,7 +58,7 @@ export default function DeleteListModal(props: Props) {
       onCancel={onCancel}
       onOk={handleOk}
       okText={'Delete'}
-      okProps={{ isDanger: true, isLoading: isLoading }}
+      okProps={{ type: 'DANGER', isLoading: isLoading }}
       writePermissions={
         listType === 'WHITELIST' ? ['lists:whitelist:write'] : ['lists:blacklist:write']
       }

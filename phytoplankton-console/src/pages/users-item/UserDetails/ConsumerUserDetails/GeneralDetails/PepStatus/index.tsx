@@ -207,7 +207,7 @@ export const PepStatusForm = (props: FormProps) => {
           autoTrim
         />
       </Label>
-      <Button isDanger onClick={onDelete}>
+      <Button type={'DANGER'} onClick={onDelete}>
         Delete
       </Button>
     </div>

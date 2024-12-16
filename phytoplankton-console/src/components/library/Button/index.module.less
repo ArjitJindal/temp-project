@@ -1,14 +1,20 @@
 @import 'src/components/ui/colors.less';
 @import 'src/components/ui/animation.less';
 
+.outline(@color) {
+  &:focus {
+    box-shadow: 0 0 0 3px fade(@color, 30%);
+  }
+}
+
 .root {
   display: flex;
-  gap: 4px;
+  gap: @figma-vars--primitives-spacing3xs;
   align-items: center;
   justify-content: center;
   border-width: 1px;
   border-style: solid;
-  border-radius: 2px;
+  border-radius: @figma-vars--primitives-borderRadiusXs;
   padding: 0 16px;
   cursor: pointer;
   transition-duration: @default-animation-speed;
@@ -16,173 +22,148 @@
   transition-property: box-shadow, border-color, background, color;
   outline: none;
 
-  &:focus {
-    box-shadow: 0 0 0 3px fade(@fr-colors-v2-primary-flagrightBlue, 30%);
-  }
+  .outline(@figma-vars--primitives-colorBrand500);
 
   &:disabled {
     pointer-events: none;
+    color: @figma-vars--tokens-colorTextDisabled;
   }
 
   &.type-PRIMARY {
-    border-color: @fr-colors-v2-primary-flagrightBlue;
-    background: @fr-colors-v2-primary-flagrightBlue;
+    border-color: @figma-vars--tokens-colorButtonFillPrimaryDefault;
+    background: @figma-vars--tokens-colorButtonFillPrimaryDefault;
     color: white;
 
     &:hover,
     &:active {
-      background: @fr-colors-v2-state-hover;
-      border-color: @fr-colors-v2-state-hover;
+      background: @figma-vars--tokens-colorButtonFillPrimaryHover;
+      border-color: @figma-vars--tokens-colorButtonFillPrimaryHover;
     }
 
     &:disabled {
-      border-color: @fr-colors-v2-gray-1;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
+      border-color: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillPrimaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
     }
   }
 
-  &.type-PRIMARY-danger {
-    border-color: @fr-colors-v2-alert-critical;
-    background: @fr-colors-v2-alert-critical;
+  &.type-DANGER {
+    .outline(@figma-vars--primitives-colorRed600);
+
+    border-color: @figma-vars--tokens-colorButtonFillDangerDefault;
+    background: @figma-vars--tokens-colorButtonFillDangerDefault;
     color: white;
 
     &:hover,
     &:active {
-      background: @fr-colors-v2-alert-critical-dark;
-      border-color: @fr-colors-v2-alert-critical-dark;
+      border-color: @figma-vars--tokens-colorButtonFillDangerHover;
+      background: @figma-vars--tokens-colorButtonFillDangerHover;
     }
 
     &:disabled {
-      border-color: @fr-colors-v2-gray-1;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
+      border-color: @figma-vars--tokens-colorButtonFillDangerDisabled;
+      background: @figma-vars--tokens-colorButtonFillDangerDisabled;
+      color: @figma-vars--tokens-colorTextInvert;
     }
   }
 
   &.type-SECONDARY {
-    border-color: @fr-colors-v2-primary-flagrightBlue;
-    background: white;
-    color: @fr-colors-v2-primary-flagrightBlue;
+    border-color: @figma-vars--tokens-colorStrokeAction;
+    background: @figma-vars--tokens-colorButtonFillSecondaryDefault;
+    color: @figma-vars--tokens-colorStrokeAction;
 
     &:hover,
     &:active {
-      border-color: @fr-colors-v2-state-hover;
-      color: @fr-colors-v2-state-hover;
-      background: @fr-colors-v2-highlight-flagrightBlue;
+      border-color: @figma-vars--tokens-colorButtonStrokeSecondaryHover;
+      background: @figma-vars--tokens-colorButtonFillSecondaryHover;
+      color: @figma-vars--tokens-colorTextHover;
     }
 
     &:disabled {
-      border-color: @fr-colors-v2-gray-2;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
-    }
-  }
-
-  &.type-SECONDARY-danger {
-    border-color: @fr-colors-v2-alert-critical;
-    background: white;
-    color: @fr-colors-v2-alert-critical;
-
-    &:hover,
-    &:active {
-      border-color: @fr-colors-v2-alert-critical-dark;
-      color: @fr-colors-v2-alert-critical-dark;
-    }
-
-    &:disabled {
-      border-color: @fr-colors-v2-gray-2;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
+      border-color: @figma-vars--tokens-colorButtonStrokeSecondaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillSecondaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
     }
   }
 
   &.type-TETRIARY {
-    background: white;
-    border-color: @fr-colors-v2-gray-3;
-    color: @fr-colors-v2-gray-10;
+    border-color: @figma-vars--tokens-colorButtonStrokeTertiaryDefault;
+    background: @figma-vars--tokens-colorButtonFillTertiaryDefault;
+    color: @figma-vars--tokens-colorTextPrimary;
 
     &:hover,
     &:active {
-      background: @fr-colors-v2-gray-1;
+      border-color: @figma-vars--tokens-colorButtonFillTertiaryHover;
+      background: @figma-vars--tokens-colorButtonFillTertiaryHover;
+      color: @figma-vars--tokens-colorTextPrimary;
     }
 
     &:disabled {
-      border-color: @fr-colors-v2-gray-2;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
-    }
-  }
-
-  &.type-TETRIARY-danger {
-    border-color: @fr-colors-v2-alert-critical;
-    background: white;
-    color: @fr-colors-v2-alert-critical;
-
-    &:hover,
-    &:active {
-      background: @fr-colors-v2-risk-level-bg-very-high;
-      color: @fr-colors-v2-alert-critical-dark;
-      border-color: @fr-colors-v2-alert-critical-dark;
-    }
-
-    &:disabled {
-      border-color: @fr-colors-v2-gray-2;
-      background: @fr-colors-v2-gray-1;
-      color: @fr-colors-v2-state-disabled;
+      border-color: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
+      background: @figma-vars--tokens-colorButtonFillTertiaryDisabled;
+      color: @figma-vars--tokens-colorTextDisabled;
     }
   }
 
   &.type-TEXT {
     background: transparent;
     border-color: transparent;
-    color: @fr-colors-v2-primary-flagrightBlue;
+    color: @figma-vars--tokens-colorLinkDefault;
 
     &:hover,
     &:active {
-      background: @fr-colors-v2-highlight-flagrightBlue;
+      color: @figma-vars--tokens-colorLinkHover;
     }
 
     &:disabled {
-      color: @fr-colors-v2-state-disabled;
-    }
-  }
-
-  &.type-TEXT-danger {
-    background: transparent;
-    border-color: transparent;
-    color: @fr-colors-v2-alert-critical;
-
-    &:hover,
-    &:active {
-      background: @fr-colors-v2-risk-level-bg-very-high;
-    }
-
-    &:disabled {
-      color: @fr-colors-v2-state-disabled;
+      color: @figma-vars--tokens-colorLinkDisabled;
     }
   }
 
   &.size-SMALL {
-    min-height: 24px;
-    min-width: 24px;
+    padding: @figma-vars--primitives-spacing4xs @figma-vars--primitives-spacingS;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsize2xs;
+      height: @figma-vars--tokens-sizeIconIconsize2xs;
+    }
   }
+
   &.size-MEDIUM {
-    min-height: 32px;
-    min-width: 32px;
+    padding: @figma-vars--primitives-spacing3xs @figma-vars--primitives-spacingM;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsizeS;
+      height: @figma-vars--tokens-sizeIconIconsizeS;
+    }
   }
+
   &.size-LARGE {
-    min-height: 40px;
-    min-width: 40px;
+    padding: @figma-vars--primitives-spacingXs @figma-vars--primitives-spacingM;
+
+    .icon {
+      width: @figma-vars--tokens-sizeIconIconsizeS;
+      height: @figma-vars--tokens-sizeIconIconsizeS;
+    }
   }
 
   &.iconOnly {
     padding: 0;
+
+    &.size-SMALL {
+      padding: @figma-vars--primitives-spacing2xs;
+    }
+
+    &.size-MEDIUM {
+      padding: @figma-vars--primitives-spacing2xs;
+    }
+
+    &.size-LARGE {
+      padding: @figma-vars--primitives-spacingS;
+    }
   }
 }
 
 .icon {
   display: flex;
-  width: 14px;
-  height: 14px;
 }

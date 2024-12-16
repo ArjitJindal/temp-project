@@ -286,8 +286,7 @@ export const RuleInstanceInfo = (props: Props) => {
               {({ onClick }) => (
                 <Button
                   icon={<DeleteIcon />}
-                  type="TETRIARY"
-                  isDanger
+                  type="DANGER"
                   onClick={onClick}
                   isDisabled={!canWriteRules}
                   testName="rule-instance-page-delete-rule-button"

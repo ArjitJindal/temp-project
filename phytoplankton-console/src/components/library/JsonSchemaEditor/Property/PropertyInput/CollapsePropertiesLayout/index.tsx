@@ -38,9 +38,8 @@ export const CollapsePropertiesLayout = (props: Props) => {
         link: arrayItemProps ? (
           <Button
             icon={<DeleteBin7LineIcon />}
-            type="TEXT"
+            type="DANGER"
             size="SMALL"
-            isDanger={true}
             onClick={arrayItemProps.handleDeleteItem}
           />
         ) : null,

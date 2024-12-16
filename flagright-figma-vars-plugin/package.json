@@ -1,6 +1,6 @@
 {
   "name": "flagright-figma-vars-plugin",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "files": [
     "build/main.js",
     "build/ui.js",
@@ -26,6 +26,7 @@
   },
   "scripts": {
     "prepack": "npm run build",
+    "postpack": "mv package.tgz flagright-figma-vars-plugin-$npm_package_version.tgz",
     "build": "build-figma-plugin --typecheck --minify",
     "watch": "build-figma-plugin --typecheck --watch",
     "prepare": "husky"

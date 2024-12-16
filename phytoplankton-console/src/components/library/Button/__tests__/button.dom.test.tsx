@@ -2,7 +2,7 @@ import { test, describe, expect } from '@jest/globals';
 import { render, screen, userEvent } from 'testing-library-wrapper';
 import Button, { ButtonSize, ButtonType } from '..';
 
-const BUTTON_TYPES: ButtonType[] = ['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT'];
+const BUTTON_TYPES: ButtonType[] = ['PRIMARY', 'SECONDARY', 'TETRIARY', 'TEXT', 'DANGER'];
 const BUTTON_SIZES: ButtonSize[] = ['SMALL', 'MEDIUM', 'LARGE'];
 
 describe('Button Component', () => {
@@ -34,20 +34,6 @@ describe('Button Component', () => {
     render(<Button isDisabled={true}>Disabled</Button>);
     const button = getInput('Disabled');
     expect(button).toBeDisabled();
-  });
-
-  test.each(BUTTON_TYPES)('renders correctly for danger type %s', (type) => {
-    render(
-      <Button type={type} isDanger={true}>
-        Test
-      </Button>,
-    );
-    const button = getInput('Test');
-    const classNames = Array.from(button.classList);
-    const hasDangerClass = classNames?.some((className) =>
-      className.includes(`type-${type}-danger`),
-    );
-    expect(hasDangerClass).toBe(true);
   });
 
   test('is disabled when isLoading is true', () => {

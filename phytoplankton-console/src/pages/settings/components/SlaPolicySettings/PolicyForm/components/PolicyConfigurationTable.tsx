@@ -90,8 +90,7 @@ function PolicyConfigurationTable() {
                 }
                 setIsWarningTime((value) => !value);
               }}
-              type="TEXT"
-              isDanger={isWarningTime}
+              type={isWarningTime ? 'DANGER' : 'TEXT'}
             >
               {isWarningTime ? 'Remove' : 'Set warning time'}
             </Button>
@@ -174,8 +173,7 @@ function PolicyConfigurationTable() {
                 }
                 setIsStatusCount((value) => !value);
               }}
-              type="TEXT"
-              isDanger={isStatusCount}
+              type={isStatusCount ? 'DANGER' : 'TEXT'}
             >
               {isStatusCount ? 'Remove' : 'Add status count'}
             </Button>

@@ -2,6 +2,8 @@
 *.log
 *.css.d.ts
 /build/
+/dist/
+/dev/
 /manifest.json
 node_modules/
 !*.tgz

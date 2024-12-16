@@ -4,7 +4,7 @@ import s from './index.module.less';
 import { Permission } from '@/apis';
 import { useHasPermissions } from '@/utils/user-utils';
 
-export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT';
+export type ButtonType = 'PRIMARY' | 'SECONDARY' | 'TETRIARY' | 'TEXT' | 'DANGER';
 
 export type ButtonSize = 'SMALL' | 'MEDIUM' | 'LARGE';
 
@@ -25,7 +25,6 @@ export interface ButtonProps {
   iconRight?: React.ReactNode;
   requiredPermissions?: Permission[];
   isLogout?: boolean;
-  isDanger?: boolean;
 }
 
 interface BaseButtonProps extends Omit<ButtonProps, 'requiredPermissions'> {}
@@ -45,7 +44,6 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
     testName,
     className,
     iconRight,
-    isDanger = false,
     analyticsName,
   } = props;
 
@@ -62,7 +60,7 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
       className={cn(
         s.root,
         s[`size-${size}`],
-        s[`type-${type}${isDanger ? '-danger' : ''}`],
+        s[`type-${type}`],
         (children === '' || children == null) && s.iconOnly,
         className,
       )}

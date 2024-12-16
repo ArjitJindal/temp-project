@@ -27,7 +27,7 @@ export default function ConfirmModal(props: Props) {
       onOk={onConfirm}
       okProps={{
         isLoading: res != null && isLoading(res),
-        isDanger,
+        type: isDanger ? 'DANGER' : undefined,
       }}
       okText="Yes"
       cancelText="No"

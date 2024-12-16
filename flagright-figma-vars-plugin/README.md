@@ -2,6 +2,12 @@
 
 ## Using the plugin
 
+https://www.notion.so/flagright/Figma-Vars-Sync-Plugin-135df89c29098078b553e8dfa137ba79
+
+## Development guide
+
+_This plugin is built with [Create Figma Plugin](https://yuanqing.github.io/create-figma-plugin/)._
+
 1. Unpack the plugin package
 1. In the Figma desktop app, open a Figma document.
 1. Select menu item "Plugins > Development > Import plugin from manifest…", or look for it in the Quick Actions search bar.
@@ -9,10 +15,6 @@
 1. Run the plugin clicking on "Flagright Figma Vars Plugin" in the plugin manager
 1. Generate a GitHub access token at https://github.com/settings/tokens. Required scopes: repo
 1. Copy token to "Settings" plugin's tab
-
-## Development guide
-
-_This plugin is built with [Create Figma Plugin](https://yuanqing.github.io/create-figma-plugin/)._
 
 ### Pre-requisites
 

@@ -77,8 +77,7 @@ export default function TransactionStep(props: Props) {
                 parametersSchema={report?.schema?.transactionSchema}
               />
               <Button
-                type={'SECONDARY'}
-                isDanger={true}
+                type={'DANGER'}
                 onClick={() => {
                   formState.setValues((prevState) => {
                     return prevState.filter((x) => x.id !== activeTransaction);

@@ -420,8 +420,7 @@ export default function SuperAdminPanel() {
               />
             </Label>
             <Button
-              type="PRIMARY"
-              isDanger
+              type="DANGER"
               onClick={() =>
                 mutateTenantSettings.mutate({
                   apiKeyViewData: [],
@@ -550,7 +549,7 @@ export default function SuperAdminPanel() {
               }}
             >
               {(props) => (
-                <Button isDisabled={!batchJobName} isDanger onClick={props.onClick}>
+                <Button isDisabled={!batchJobName} type={'DANGER'} onClick={props.onClick}>
                   Run
                 </Button>
               )}
@@ -630,7 +629,7 @@ export default function SuperAdminPanel() {
                   }}
                 >
                   {(props) => (
-                    <Button isDisabled={!tenantIdToDelete} isDanger onClick={props.onClick}>
+                    <Button isDisabled={!tenantIdToDelete} type={'DANGER'} onClick={props.onClick}>
                       Delete
                     </Button>
                   )}
@@ -657,7 +656,7 @@ export default function SuperAdminPanel() {
                   }}
                 >
                   {(props) => (
-                    <Button isDanger type="TETRIARY" onClick={props.onClick}>
+                    <Button type={'DANGER'} onClick={props.onClick}>
                       {settings.isAccountSuspended ? 'Unsuspend' : 'Suspend'} account
                     </Button>
                   )}

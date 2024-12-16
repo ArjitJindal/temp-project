@@ -276,7 +276,7 @@ export default function ReportsTable() {
                     }}
                   >
                     {({ onClick }) => (
-                      <Button isDanger={true} type={'SECONDARY'} onClick={onClick}>
+                      <Button type={'DANGER'} onClick={onClick}>
                         Delete
                       </Button>
                     )}

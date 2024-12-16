@@ -121,7 +121,7 @@ export default function Modal(props: Props) {
             <div className={s.footerSection}>
               {!hideOk && (
                 <Button
-                  type="PRIMARY"
+                  type={okProps?.type ?? 'PRIMARY'}
                   htmlType="button"
                   onClick={onOk}
                   {...okProps}

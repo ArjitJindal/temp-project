@@ -28,7 +28,12 @@ export const LESS_GENERATOR: CodeGenerator = {
     return `${LESS_NAME_GLOBAL_PREFIX}-${name}`
   },
   generateColorLiteral: getColorString,
-  generateSimpleLiteral: (value) => `${value}`,
+  generateSimpleLiteral: (value) => {
+    if (typeof value === 'number') {
+      return `${value}px`
+    }
+    return `${value}`
+  },
   generateVarReference: (name) => `@${name}`,
   generateVarDefinition(name: string, value: string) {
     return `@${name}: ${value};`
