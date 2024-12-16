@@ -167,9 +167,9 @@ export class TransactionService {
         paymentMethodId: transaction.originPaymentMethodId,
         paymentDetails: transaction.originPaymentDetails,
       },
-      isAnySanctionsExecutedRules: !!transaction.executedRules
-        .map((rule) =>
-          rule.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
+      isAnySanctionsExecutedRules: !!(transaction?.executedRules ?? [])
+        ?.map((rule) =>
+          rule?.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
         )
         .flat().length,
       destinationUser: { id: transaction.destinationUserId },
