@@ -69,11 +69,7 @@ import { CommentRequest } from '@/@types/openapi-public-management/CommentReques
 import { getExternalComment } from '@/utils/external-transformer'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { CaseRepository } from '@/services/cases/repository'
-import {
-  formatConsumerName,
-  getParsedCommentBody,
-  getUserName,
-} from '@/utils/helpers'
+import { getParsedCommentBody, getUserName } from '@/utils/helpers'
 import { WebhookUserStateDetails } from '@/@types/openapi-internal/WebhookUserStateDetails'
 import { WebhookKYCStatusDetails } from '@/@types/openapi-internal/WebhookKYCStatusDetails'
 import { BusinessUsersOffsetPaginateListResponse } from '@/@types/openapi-internal/BusinessUsersOffsetPaginateListResponse'
@@ -101,7 +97,6 @@ import { CountryCode } from '@/@types/openapi-public/CountryCode'
 import { BusinessUserTableItem } from '@/@types/openapi-internal/BusinessUserTableItem'
 import { Amount } from '@/@types/openapi-public/Amount'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
-import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -264,45 +259,7 @@ export class UserService {
     const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapBusinessUserToTableItem,
-      'BUSINESS',
-      {
-        projection: {
-          _id: 1,
-          userId: 1,
-          type: 1,
-          createdTimestamp: 1,
-          legalEntity: {
-            companyGeneralDetails: {
-              legalName: 1,
-              businessIndustry: 1,
-              userRegistrationStatus: 1,
-            },
-            companyFinancialDetails: {
-              expectedTransactionAmountPerMonth: 1,
-              expectedTurnoverPerMonth: 1,
-            },
-            companyRegistrationDetails: {
-              registrationIdentifier: 1,
-              registrationCountry: 1,
-            },
-          },
-          transactionLimits: {
-            maximumDailyTransactionLimit: 1,
-          },
-          krsScore: {
-            krsScore: 1,
-            riskLevel: 1,
-          },
-          drsScore: {
-            drsScore: 1,
-            derivedRiskLevel: 1,
-            manualRiskLevel: 1,
-            isUpdatable: 1,
-          },
-          updatedAt: 1,
-          tags: 1,
-        },
-      }
+      'BUSINESS'
     )
 
     return result
@@ -313,12 +270,8 @@ export class UserService {
   ): Promise<BusinessUsersOffsetPaginateListResponse> {
     const columns = {
       ...this.getUserCommonColumns(),
-      businessUserName:
-        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'legalName')",
       industry:
         "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'businessIndustry')",
-      userRegistrationStatus:
-        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'userRegistrationStatus')",
       expectedTransactionAmountPerMonth:
         "JSONExtractString(data, 'legalEntity', 'companyFinancialDetails', 'expectedTransactionAmountPerMonth')",
       expectedTurnoverPerMonth:
@@ -329,6 +282,8 @@ export class UserService {
         "JSONExtractString(data, 'legalEntity', 'companyRegistrationDetails', 'registrationIdentifier')",
       registrationCountry:
         "JSONExtractString(data, 'legalEntity', 'companyRegistrationDetails', 'registrationCountry')",
+      userRegistrationStatus:
+        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'userRegistrationStatus')",
     }
 
     const callback = (
@@ -336,7 +291,7 @@ export class UserService {
     ): BusinessUserTableItem => {
       return {
         industry: data.industry ? JSON.parse(data.industry as string) : [],
-        name: data.businessUserName as string,
+        name: data.name as string,
         createdTimestamp: data.createdTimestamp as number,
         type: data.type as UserType,
         updatedAt: data.updatedAt as number,
@@ -380,6 +335,7 @@ export class UserService {
   private getUserCommonColumns(): Record<string, string> {
     return {
       userId: 'id',
+      name: 'username',
       createdTimestamp: "JSONExtractFloat(data, 'createdTimestamp')",
       type: "JSONExtractString(data, 'type')",
       updatedAt: "JSONExtractFloat(data, 'updatedAt')",
@@ -399,7 +355,6 @@ export class UserService {
   ): Promise<ConsumerUsersOffsetPaginateListResponse> {
     const columns = {
       ...this.getUserCommonColumns(),
-      consumerUserName: "JSONExtractString(data, 'userDetails', 'name')",
       pepDetails: "JSONExtractString(data, 'pepStatus')",
       kycStatusReason: "JSONExtractString(data, 'kycStatusDetails', 'reason')",
       countryOfResidence:
@@ -416,11 +371,7 @@ export class UserService {
         userId: data.userId as string,
         createdTimestamp: data.createdTimestamp as number,
         type: data.type as UserType,
-        name: data.consumerUserName
-          ? (formatConsumerName(
-              JSON.parse(data.consumerUserName as string) as ConsumerName
-            ) as string)
-          : '',
+        name: data.name as string,
         pepDetails: (data.pepDetails as string).length
           ? (JSON.parse(data.pepDetails as string) as PEPStatus[])
           : [],
@@ -450,25 +401,14 @@ export class UserService {
   public async getUsersV2(
     params: DefaultApiGetAllUsersListV2Request
   ): Promise<AllUsersOffsetPaginateListResponse> {
-    const columns = {
-      ...this.getUserCommonColumns(),
-      consumerUserName: "JSONExtractString(data, 'userDetails', 'name')",
-      businessUserName:
-        "JSONExtractString(data, 'legalEntity', 'companyGeneralDetails', 'legalName')",
-    }
+    const columns = this.getUserCommonColumns()
 
     const callback = (
       data: Record<string, string | number>
     ): AllUsersTableItem => {
       return {
         userId: data.userId as string,
-        name: data.consumerUserName
-          ? (formatConsumerName(
-              JSON.parse(data.consumerUserName as string) as ConsumerName
-            ) as string)
-          : data.businessUserName
-          ? (data.businessUserName as string)
-          : '',
+        name: data.name as string,
         type: data.type as UserType,
         kycStatus: data.kycStatus as KYCStatus,
         userState: data.userState as UserState,
@@ -998,41 +938,7 @@ export class UserService {
     const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
       this.mapConsumerUserToTableItem,
-      'CONSUMER',
-      {
-        projection: {
-          _id: 1,
-          userId: 1,
-          type: 1,
-          createdTimestamp: 1,
-          userDetails: {
-            name: 1,
-            dateOfBirth: 1,
-            countryOfResidence: 1,
-            countryOfNationality: 1,
-          },
-          userStateDetails: {
-            state: 1,
-          },
-          kycStatusDetails: {
-            status: 1,
-            reason: 1,
-          },
-          pepStatus: 1,
-          tags: 1,
-          krsScore: {
-            krsScore: 1,
-            riskLevel: 1,
-          },
-          drsScore: {
-            drsScore: 1,
-            derivedRiskLevel: 1,
-            manualRiskLevel: 1,
-            isUpdatable: 1,
-          },
-          updatedAt: 1,
-        },
-      }
+      'CONSUMER'
     )
 
     return result
@@ -1044,39 +950,12 @@ export class UserService {
     if (isClickhouseEnabled()) {
       return await this.getClickhouseUsers(params)
     }
-    return await this.userRepository.getMongoUsersCursorsPaginate(
+    const result = await this.userRepository.getMongoUsersCursorsPaginate(
       params,
-      this.mapAllUserToTableItem,
-      undefined,
-      {
-        projection: {
-          _id: 1,
-          userId: 1,
-          createdTimestamp: 1,
-          userDetails: {
-            name: 1,
-          },
-          userStateDetails: {
-            state: 1,
-          },
-          kycStatusDetails: 1,
-          pepStatus: 1,
-          tags: 1,
-          type: 1,
-          krsScore: {
-            krsScore: 1,
-            riskLevel: 1,
-          },
-          drsScore: {
-            drsScore: 1,
-            derivedRiskLevel: 1,
-            manualRiskLevel: 1,
-            isUpdatable: 1,
-          },
-          updatedAt: 1,
-        },
-      }
+      this.mapAllUserToTableItem
     )
+
+    return result
   }
 
   public async getClickhouseUsers(

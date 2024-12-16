@@ -39,7 +39,6 @@ import { CaseRepository } from '@/services/cases/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
 @traceable
 export class TransactionService {
@@ -272,46 +271,7 @@ export class TransactionService {
 
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
     const result =
-      await this.transactionRepository.getTransactionsCursorPaginate(params, {
-        projection: {
-          _id: 1,
-          type: 1,
-          transactionId: 1,
-          timestamp: 1,
-          originUserId: 1,
-          destinationUserId: 1,
-          transactionState: 1,
-          originAmountDetails: 1,
-          destinationAmountDetails: 1,
-          originPaymentDetails: 1,
-          destinationPaymentDetails: 1,
-          productType: 1,
-          tags: 1,
-          status: 1,
-          originPaymentMethodId: 1,
-          destinationPaymentMethodId: 1,
-          arsScore: {
-            arsScore: 1,
-          },
-          executedRules:
-            params.view === ('TABLE' as TableListViewEnum)
-              ? {
-                  ruleHitMeta: {
-                    sanctionsDetails: {
-                      searchId: 1,
-                    },
-                  },
-                }
-              : undefined,
-          hitRules:
-            params.view === ('TABLE' as TableListViewEnum)
-              ? {
-                  ruleName: 1,
-                  ruleDescription: 1,
-                }
-              : undefined,
-        },
-      })
+      await this.transactionRepository.getTransactionsCursorPaginate(params)
 
     return result
   }

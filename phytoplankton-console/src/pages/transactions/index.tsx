@@ -20,7 +20,6 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import { TransactionTableItem } from '@/apis';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { dayjs } from '@/utils/dayjs';
-import { DEFAULT_PAGINATION_VIEW } from '@/components/library/Table/consts';
 
 type NavigationState = {
   isInitialised: boolean;
@@ -74,7 +73,7 @@ const TableList = () => {
 
   const queryResult = useCursorQuery<TransactionTableItem>(
     TRANSACTIONS_LIST(parsedParams),
-    async ({ from, view }) => {
+    async ({ from }) => {
       if (isClickhouseEnabled) {
         return {
           count: 0,
@@ -87,10 +86,10 @@ const TableList = () => {
           limit: 0,
         };
       }
+
       return await api.getTransactionsList({
         start: from || parsedParams.from,
         ...transactionParamsToRequest(parsedParams),
-        view: view ?? DEFAULT_PAGINATION_VIEW,
       });
     },
   );
@@ -104,10 +103,10 @@ const TableList = () => {
           total: 0,
         };
       }
+
       const data = await api.getTransactionsV2List({
         ...transactionParamsToRequest(parsedParams),
         ...paginationParams,
-        view: paginationParams.view ?? DEFAULT_PAGINATION_VIEW,
       });
 
       return {

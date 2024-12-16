@@ -14,11 +14,7 @@ import {
   TableData,
   PaginatedParams,
 } from '../../../types';
-import {
-  DEFAULT_DOWNLOAD_VIEW,
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_PAGINATION_ENABLED,
-} from '../../../consts';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PAGINATION_ENABLED } from '../../../consts';
 import s from './styles.module.less';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import Button from '@/components/library/Button';
@@ -187,7 +183,6 @@ export default function DownloadButton<T extends object, Params extends object>(
       pageSize = DEFAULT_PAGE_SIZE,
       pagination = DEFAULT_PAGINATION_ENABLED,
       page: currentPage = 1,
-      view = DEFAULT_DOWNLOAD_VIEW,
     },
     totalPages = 1,
   } = props;
@@ -205,6 +200,7 @@ export default function DownloadButton<T extends object, Params extends object>(
     e.preventDefault();
     try {
       const result: CsvRow[] = [];
+
       const columnsToExport = prepareColumns(columns);
       result.push(
         columnsToExport.map((adjustedColumn) => csvValue(getColumnTitile(adjustedColumn, props))),
@@ -223,11 +219,8 @@ export default function DownloadButton<T extends object, Params extends object>(
           page: pagesMode === 'CURRENT' ? 1 : page,
           totalPages: from ? undefined : totalPages,
         });
-        const {
-          total,
-          items,
-          next: nextCursor,
-        } = await onPaginateData({ from, page, pageSize, view });
+        const { total, items, next: nextCursor } = await onPaginateData({ from, page, pageSize });
+
         // If a cursor is returned, this is cursor paginated.
         cursorPaginated = nextCursor !== undefined;
 
@@ -282,7 +275,8 @@ export default function DownloadButton<T extends object, Params extends object>(
     e.preventDefault();
     try {
       const columnsToExport = prepareColumns(columns);
-      const { total, items } = await onPaginateData({ pageSize, view });
+
+      const { total, items } = await onPaginateData({ pageSize });
       const totalItemsCount = total ?? items.length;
       if (totalItemsCount > MAXIMUM_EXPORT_ITEMS) {
         message.error(

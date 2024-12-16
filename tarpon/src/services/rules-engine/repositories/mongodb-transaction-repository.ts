@@ -668,8 +668,7 @@ export class MongoDbTransactionRepository
   }
 
   public async getTransactionsCursorPaginate(
-    params: OptionalPagination<DefaultApiGetTransactionsListRequest>,
-    options?: { projection?: Document }
+    params: OptionalPagination<DefaultApiGetTransactionsListRequest>
   ): Promise<CursorPaginationResponse<InternalTransaction>> {
     const db = this.mongoDb.db()
     const name = TRANSACTIONS_COLLECTION(this.tenantId)
@@ -677,17 +676,12 @@ export class MongoDbTransactionRepository
 
     const filter = this.getTransactionsMongoQuery(params)
 
-    return await cursorPaginate<InternalTransaction>(
-      collection,
-      filter,
-      {
-        pageSize: params.pageSize ? (params.pageSize as number) : 20,
-        sortField: params.sortField || 'timestamp',
-        fromCursorKey: params.start,
-        sortOrder: params.sortOrder,
-      },
-      options?.projection
-    )
+    return await cursorPaginate<InternalTransaction>(collection, filter, {
+      pageSize: params.pageSize ? (params.pageSize as number) : 20,
+      sortField: params.sortField || 'timestamp',
+      fromCursorKey: params.start,
+      sortOrder: params.sortOrder,
+    })
   }
 
   public async getInternalTransaction(

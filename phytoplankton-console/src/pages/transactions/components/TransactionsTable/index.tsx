@@ -107,7 +107,6 @@ export const transactionParamsToRequest = (
 ): DefaultApiGetTransactionsListRequest => {
   const { ignoreDefaultTimestamps = false } = options ?? {};
   const {
-    view,
     pageSize,
     page,
     timestamp,
@@ -129,7 +128,6 @@ export const transactionParamsToRequest = (
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
-    view,
     page,
     pageSize,
     afterTimestamp: timestamp
@@ -173,6 +171,7 @@ export const transactionParamsToRequest = (
   } else {
     requestParams.filterUserId = userId;
   }
+
   return requestParams;
 };
 

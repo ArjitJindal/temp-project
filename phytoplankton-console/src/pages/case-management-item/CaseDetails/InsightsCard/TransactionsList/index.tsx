@@ -8,11 +8,7 @@ import TransactionsTable, {
 import { useApi } from '@/api';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
-import {
-  DEFAULT_PAGE_SIZE,
-  DEFAULT_PAGINATION_VIEW,
-  DEFAULT_PARAMS_STATE,
-} from '@/components/library/Table/consts';
+import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import { dayjs } from '@/utils/dayjs';
@@ -46,7 +42,7 @@ export default function TransactionsList(props: Props) {
   const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({ ...tableParams, ...selectorParams, userId }),
 
-    async ({ from, view }) => {
+    async ({ from }) => {
       return await api.getTransactionsList({
         ...FIXED_API_PARAMS,
         ...transactionParamsToRequest(tableParams),
@@ -56,7 +52,6 @@ export default function TransactionsList(props: Props) {
         filterStatus: selectorParams.selectedRuleActions,
         filterTransactionState: selectorParams.selectedTransactionStates,
         includeUsers: true,
-        view: view ?? DEFAULT_PAGINATION_VIEW,
       });
     },
   );

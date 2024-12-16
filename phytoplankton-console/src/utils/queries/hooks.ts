@@ -14,7 +14,6 @@ import { getErrorMessage, neverThrow } from '@/utils/lang';
 import { AsyncResource, failed, init, loading, map, success } from '@/utils/asyncResource';
 import { Cursor, QueryResult } from '@/utils/queries/types';
 import { message } from '@/components/library/Message';
-import { TableListViewEnum } from '@/apis';
 
 export function useQuery<
   TQueryFnData = unknown,
@@ -104,12 +103,10 @@ export type PaginationParams = {
   page?: number;
   from?: string;
   pagination?: boolean;
-  view?: TableListViewEnum;
 };
 
 export type CursorPaginationParams = {
   from?: string;
-  view?: TableListViewEnum;
 };
 
 export type PaginatedQueryFunction<T = unknown> = (

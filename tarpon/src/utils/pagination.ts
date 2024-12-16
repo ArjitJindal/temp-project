@@ -113,8 +113,7 @@ const PAGINATION_CURSOR_KEY_SEPERATOR = '___'
 export async function cursorPaginate<T extends Document>(
   collection: Collection<T>,
   filter: Filter<WithId<T>>,
-  query: CursorPaginationParams,
-  projection?: Document
+  query: CursorPaginationParams
 ): Promise<CursorPaginationResponse<WithId<T>>> {
   const field = query.sortField || '_id'
   const fromRaw: any = query.fromCursorKey || ''
@@ -177,15 +176,13 @@ export async function cursorPaginate<T extends Document>(
   const findCursor = collection
     .find({ $and: findFilters })
     .sort({ [field]: direction })
-    .project(projection ?? {}) as FindCursor<WithId<T>>
   const prevFindCursor = collection
     .find({ $and: prevFindFilters })
     .sort({ [field]: prevDirection })
-    .project(projection ?? {}) as FindCursor<WithId<T>>
   const lastFindCursor = collection
     .find({ $and: lastFindFilters })
     .sort({ [field]: prevDirection })
-    .project(projection ?? {}) as FindCursor<WithId<T>>
+
   const pageSize = query.pageSize ?? DEFAULT_PAGE_SIZE
 
   const [count, items, { hasPrev, prev }, lastItems] = await Promise.all([
