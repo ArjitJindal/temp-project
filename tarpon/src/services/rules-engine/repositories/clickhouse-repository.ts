@@ -236,6 +236,7 @@ export class ClickhouseTransactionsRepository {
     const sortFieldMapper: Record<string, string> = {
       'originPayment.amount': 'originAmountDetails.transactionAmount',
       'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
+      'ars.score': 'arsScore.arsScore',
     }
 
     const newSortField = sortFieldMapper[sortField] ?? sortField
