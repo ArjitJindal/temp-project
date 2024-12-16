@@ -1,6 +1,7 @@
 import React from 'react';
 import * as TanTable from '@tanstack/react-table';
 import { TableColumn, TableData, TableRow, ToolRenderer, PaginatedParams } from '../../types';
+import { DEFAULT_DOWNLOAD_VIEW } from '../../consts';
 import SettingsButton from './SettingsButton';
 import DownloadButton from './DownloadButton';
 import ReloadButton from './ReloadButton';
@@ -33,7 +34,7 @@ export default function Tools<Item extends object, Params>(props: Props<Item, Pa
       ))}
       {options?.download !== false && onPaginateData && (
         <DownloadButton
-          params={params}
+          params={{ ...params, view: DEFAULT_DOWNLOAD_VIEW }}
           onPaginateData={onPaginateData}
           columns={columns}
           cursorPagination={props.cursorPagination}

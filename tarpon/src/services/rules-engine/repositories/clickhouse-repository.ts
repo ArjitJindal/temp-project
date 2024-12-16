@@ -7,7 +7,6 @@ import { DEFAULT_PAGE_SIZE, OptionalPagination } from '@/utils/pagination'
 import { TransactionsResponseOffsetPaginated } from '@/@types/openapi-internal/TransactionsResponseOffsetPaginated'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { getSortedData } from '@/utils/clickhouse/utils'
-import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { TransactionType } from '@/@types/openapi-public/TransactionType'
 import { Tag } from '@/@types/openapi-public/Tag'
@@ -18,6 +17,8 @@ import {
 } from '@/@types/tranasction/payment-type'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
+import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
+import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
 @traceable
 export class ClickhouseTransactionsRepository {
@@ -223,7 +224,8 @@ export class ClickhouseTransactionsRepository {
       state: "JSONExtractString(data, 'transactionState')",
       status: "JSONExtractString(data, 'status')",
       reference: "JSONExtractString(data, 'reference')",
-      ...(params.includeRuleHitDetails
+      ...(params.includeRuleHitDetails &&
+      params.view === ('TABLE' as TableListViewEnum)
         ? {
             hitRules:
               "toJSONString(JSONExtract(data, 'hitRules', 'Array(Tuple(ruleName String, ruleDescription String))'))",

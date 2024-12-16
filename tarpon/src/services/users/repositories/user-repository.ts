@@ -151,7 +151,8 @@ export class UserRepository {
       DefaultApiGetAllUsersListRequest & { filterUserIds?: string[] }
     >,
     mapper: (user: InternalUser) => AllUsersTableItem,
-    userType?: UserType
+    userType?: UserType,
+    options?: { projection?: Document }
   ): Promise<AllUsersListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<
@@ -170,13 +171,16 @@ export class UserRepository {
       InternalBusinessUser | InternalConsumerUser
     >(
       collection,
-      { $and: query },
+      {
+        $and: query,
+      },
       {
         pageSize: params.pageSize ? (params.pageSize as number) : 20,
         sortField: params.sortField || 'createdTimestamp',
         fromCursorKey: params.start,
         sortOrder: params.sortOrder,
-      }
+      },
+      options?.projection
     )
     const userIds = result.items.map((user) => user.userId)
     const casesCountPipeline = [

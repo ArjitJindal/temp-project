@@ -6,9 +6,12 @@ import ExpandIcon from '@/components/library/ExpandIcon';
 import { PaginationParams } from '@/utils/queries/hooks';
 import { AdditionalContext } from '@/components/library/Table/internal/partialySelectedRows';
 import { DEFAULT_BULK_ACTIONS_LIMIT } from '@/utils/table-utils';
+import { TableListViewEnum } from '@/apis';
 
 export const DEFAULT_PAGE_SIZE = 20;
 export const DEFAULT_PAGINATION_ENABLED = true;
+export const DEFAULT_PAGINATION_VIEW: TableListViewEnum = 'TABLE';
+export const DEFAULT_DOWNLOAD_VIEW: TableListViewEnum = 'DOWNLOAD';
 
 export const DEFAULT_SORT_STATE: SortingParams = {
   sort: [],
@@ -18,6 +21,7 @@ export const DEFAULT_PAGINATION_STATE: PaginationParams = {
   page: 1,
   pageSize: DEFAULT_PAGE_SIZE,
   pagination: DEFAULT_PAGINATION_ENABLED,
+  view: DEFAULT_PAGINATION_VIEW,
 };
 
 export const DEFAULT_PARAMS_STATE: CommonParams = {

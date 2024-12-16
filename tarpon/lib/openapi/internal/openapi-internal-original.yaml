@@ -1079,6 +1079,10 @@ paths:
       description: ''
       parameters:
         - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -1249,6 +1253,10 @@ paths:
       operationId: get-transactions-list
       description: ''
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             type: string
           in: query
@@ -2030,6 +2038,10 @@ paths:
       description: ''
       parameters:
         - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -2123,6 +2135,10 @@ paths:
       description: ''
       parameters:
         - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -2203,6 +2219,10 @@ paths:
       operationId: get-all-users-list
       description: ''
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
@@ -2296,6 +2316,10 @@ paths:
       operationId: get-all-users-list-v2
       description: ''
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
@@ -2528,6 +2552,10 @@ paths:
       description: ''
       parameters:
         - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
+        - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
           name: pageSize
@@ -2618,6 +2646,10 @@ paths:
       operationId: get-business-users-list-v2
       description: ''
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
@@ -5318,6 +5350,10 @@ paths:
       operationId: get-case-list
       description: ''
       parameters:
+        - schema:
+            $ref: '#/components/schemas/TableListViewEnum'
+          in: query
+          name: view
         - schema:
             $ref: '#/components/schemas/PageSize'
           in: query
@@ -13401,6 +13437,12 @@ components:
       type: number
       minimum: 1
       maximum: 1000
+    TableListViewEnum:
+      title: TableListViewEnum
+      type: string
+      enum:
+        - TABLE
+        - DOWNLOAD
     AuditLog:
       title: AuditLog
       type: object

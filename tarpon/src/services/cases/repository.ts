@@ -46,6 +46,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { CounterRepository } from '@/services/counter/repository'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
+import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -718,16 +719,48 @@ export class CaseRepository {
         caseStatus: 1,
         createdTimestamp: 1,
         priority: 1,
-        caseUsers: 1,
+        caseUsers: {
+          origin: {
+            userId: 1,
+            userDetails: {
+              name: 1,
+            },
+            type: 1,
+            userStateDetails: {
+              state: 1,
+            },
+            kycStatusDetails: 1,
+          },
+          destination: {
+            userId: 1,
+            userDetails: {
+              name: 1,
+            },
+            type: 1,
+            userStateDetails: {
+              state: 1,
+            },
+            kycStatusDetails: 1,
+          },
+          originUserDrsScore: 1,
+          destinationUserDrsScore: 1,
+          originUserRiskLevel: 1,
+          destinationUserRiskLevel: 1,
+        },
         caseTransactionsCount: 1,
         lastStatusChange: 1,
         statusChanges: 1,
-        comments: 1,
-        falsePositiveDetails: 1,
-        alerts: 1,
+        alerts: { comments: 1 },
         caseType: 1,
-        caseHierarchyDetails: 1,
-        slaPolicyDetails: 1,
+        comments:
+          params.view === ('TABLE' as TableListViewEnum) ? undefined : 1,
+        slaPolicyDetails:
+          params.view === ('TABLE' as TableListViewEnum)
+            ? {
+                policyStatus: 1,
+                elapsedTime: 1,
+              }
+            : undefined,
         ...(options.includeCaseTransactionIds
           ? { caseTransactionsIds: 1 }
           : {}),
