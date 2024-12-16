@@ -382,6 +382,7 @@ export class AlertsRepository {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
+
     const caseConditions: Filter<Case>[] =
       await caseRepository.getCasesConditions(params, false)
 
@@ -390,9 +391,16 @@ export class AlertsRepository {
         caseStatus: { $nin: params.filterOutCaseStatus },
       })
     }
+
     if (params.filterCaseStatus != null) {
       caseConditions.push({
         caseStatus: { $in: params.filterCaseStatus },
+      })
+    }
+
+    if (params.filterCaseId != null) {
+      caseConditions.push({
+        caseId: params.filterCaseId,
       })
     }
 
@@ -428,11 +436,6 @@ export class AlertsRepository {
       })
     }
 
-    if (params.filterCaseId != null) {
-      alertConditions.push({
-        'alerts.caseId': params.filterCaseId,
-      })
-    }
     if (params.filterAction != null) {
       alertConditions.push({
         'alerts.ruleAction': params.filterAction,
