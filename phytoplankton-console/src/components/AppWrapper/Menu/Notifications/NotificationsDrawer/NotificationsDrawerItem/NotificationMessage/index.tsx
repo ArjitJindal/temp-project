@@ -2,6 +2,7 @@ import React from 'react';
 import { getDisplayedUserInfo, useUsers } from '@/utils/user-utils';
 import { neverReturn } from '@/utils/lang';
 import { Notification } from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/NotificationsDrawerItem';
+import { getNextStatus, statusEscalated, statusInReview } from '@/utils/case-utils';
 
 interface Props {
   notification: Notification;
@@ -77,16 +78,26 @@ export default function NotificationMessage(props: Props) {
         <Author {...props} />
         {' moved '}
         <Entity {...props} />
-        {' to review'}
+        {' for you to review'}
       </>
     );
   } else if (
     notification.notificationType === 'ALERT_STATUS_UPDATE' ||
     notification.notificationType === 'CASE_STATUS_UPDATE'
   ) {
+    const oldStatus = notification.notificationData.oldStatus;
+    const newStatus = notification.notificationData.status;
+    let message: string = '';
+    if (statusInReview(oldStatus)) {
+      message = getNextStatus(oldStatus) === newStatus ? ' approved and' : ' rejected and';
+    }
+    if (statusEscalated(oldStatus)) {
+      message = getNextStatus(oldStatus) === newStatus ? '' : ' sent back and';
+    }
     return (
       <>
         <Author {...props} />
+        {message}
         {' changed status of '}
         <Entity {...props} />
       </>

@@ -31,7 +31,10 @@ export const getStatusUpdateNotification = (
     type === 'CASE'
       ? (payload as CaseStatusUpdatePayload)?.newImage?.caseStatus
       : (payload as AlertStatusUpdatePayload)?.newImage?.alertStatus
-
+  const oldStatus =
+    type === 'CASE'
+      ? (payload as CaseStatusUpdatePayload)?.oldImage?.caseStatus
+      : (payload as AlertStatusUpdatePayload)?.oldImage?.alertStatus
   if (!status) {
     return
   }
@@ -49,7 +52,7 @@ export const getStatusUpdateNotification = (
     notificationType: `${type}_STATUS_UPDATE`,
     recievers,
     triggeredBy: payload.user?.id || FLAGRIGHT_SYSTEM_USER,
-    notificationData: { type: 'UPDATE', status },
+    notificationData: { type: 'UPDATE', status, oldStatus },
     metadata: getEntityMetadata(type, payload.logMetadata),
   }
 }
