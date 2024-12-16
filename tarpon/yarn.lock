@@ -11980,7 +11980,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"glob@npm:^8.0.0, glob@npm:^8.0.3":
+"glob@npm:^8.0.0":
   version: 8.1.0
   resolution: "glob@npm:8.1.0"
   dependencies:
@@ -18024,7 +18024,7 @@ __metadata:
     tsconfig-paths: "npm:^4.1.2"
     typescript: "npm:^5.2.2"
     typescript-json-schema: "npm:^0.58.1"
-    umzug: "npm:^3.2.1"
+    umzug: "npm:^3.8.0"
     unidecode: "npm:^0.1.8"
     unique-names-generator: "npm:^4.6.0"
     unzipper: "npm:^0.12.3"
@@ -18458,10 +18458,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"type-fest@npm:^3.0.0":
-  version: 3.13.1
-  resolution: "type-fest@npm:3.13.1"
-  checksum: 9a8a2359ada34c9b3affcaf3a8f73ee14c52779e89950db337ce66fb74c3399776c697c99f2532e9b16e10e61cfdba3b1c19daffb93b338b742f0acd0117ce12
+"type-fest@npm:^4.0.0":
+  version: 4.30.1
+  resolution: "type-fest@npm:4.30.1"
+  checksum: 0a2af4d096053b89f6c4323108feeee1865a77f7440b16e2cafef8429afa28539ff1cb99fb8703f07c3893530b1f27e9b51f344dc1ff627d7d2fe2b7c07cc6f6
   languageName: node
   linkType: hard
 
@@ -18666,16 +18666,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"umzug@npm:^3.2.1":
-  version: 3.5.1
-  resolution: "umzug@npm:3.5.1"
+"umzug@npm:^3.8.0":
+  version: 3.8.2
+  resolution: "umzug@npm:3.8.2"
   dependencies:
     "@rushstack/ts-command-line": "npm:^4.12.2"
     emittery: "npm:^0.13.0"
-    glob: "npm:^8.0.3"
+    fast-glob: "npm:^3.3.2"
     pony-cause: "npm:^2.1.4"
-    type-fest: "npm:^3.0.0"
-  checksum: 697dfb961aa108dd7cc2cd0bc9745b70e07d7bfb2e674b42ba060bbbff2ff5111e1dc04cc9767e87f14eca3c1543ee0632c8b9a1a30ff6583302621b8a9a0ae3
+    type-fest: "npm:^4.0.0"
+  checksum: d9bf83e30a434a1c991828b165d54655ca865ebd4becc6e31de6cfd99565e94f81b96710c13343b36b8f87cd43c5815166c160ea069ee9f1d3f1513ef4f31eb3
   languageName: node
   linkType: hard
 

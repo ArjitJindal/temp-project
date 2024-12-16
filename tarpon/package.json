@@ -303,7 +303,7 @@
     "ssh2-sftp-client": "^10.0.3",
     "stopword": "^3.0.1",
     "timeout-signal": "^1.1.0",
-    "umzug": "^3.2.1",
+    "umzug": "^3.8.0",
     "unidecode": "^0.1.8",
     "unique-names-generator": "^4.6.0",
     "unzipper": "^0.12.3",
