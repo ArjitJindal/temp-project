@@ -12,6 +12,7 @@ import {
 import NewTransactionForm from '@/components/Sar/SarReportDrawer/SarReportDrawerForm/TransactionStep/NewTransactionForm';
 import { useFormState } from '@/components/library/Form/utils/hooks';
 import Button from '@/components/library/Button';
+import { Option } from '@/components/library/Select';
 
 interface Props {
   settings: Partial<JsonSchemaEditorSettings>;
@@ -30,12 +31,23 @@ export default function TransactionStep(props: Props) {
   );
   const [activeTransaction, setActiveTransaction] = useState<string>(transactionIds[0] ?? 'ADD');
   const activeTransactionIndex = transactionIds.findIndex((id) => id === activeTransaction);
-
   useEffect(() => {
     if (activeTransaction != 'ADD' && !transactionIds.includes(activeTransaction)) {
       setActiveTransaction(transactionIds[0] ?? 'ADD');
     }
   }, [activeTransaction, transactionIds]);
+
+  const selectableTransactionIds = useMemo(() => {
+    const options: Option<string>[] = [];
+    report.parameters.transactions?.forEach((tx) => {
+      options.push({
+        label: tx.id,
+        value: tx.id,
+        isDisabled: transactionIds.includes(tx.id),
+      });
+    });
+    return options;
+  }, [transactionIds, report.parameters.transactions]);
 
   const menuItems = transactionIds.map((tid, i) => {
     const validationResultElement = validationResult?.[i];
@@ -64,9 +76,16 @@ export default function TransactionStep(props: Props) {
             if (transactionId == null) {
               return;
             }
-            formState.setValues((prevState) => [...prevState, { id: transactionId }]);
+            formState.setValues((prevState) => [
+              ...prevState,
+              {
+                id: transactionId,
+                ...report.parameters.transactions?.find((x) => x.id === transactionId)?.transaction,
+              },
+            ]);
             setActiveTransaction(transactionId);
           }}
+          transactionIds={selectableTransactionIds}
         />
       ) : (
         activeTransactionIndex >= 0 && (

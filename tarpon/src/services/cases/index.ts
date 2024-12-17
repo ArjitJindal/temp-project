@@ -284,6 +284,14 @@ export class CaseService extends CaseAlertsCommonService {
     return result
   }
 
+  public async getCaseTransactions(caseId: string) {
+    return await this.caseRepository.getCasesTransactions(caseId)
+  }
+
+  public async getUserTransactions(userId: string) {
+    return await this.caseRepository.getUserTransaction(userId)
+  }
+
   public async createReport(params: {
     caseId: string
     afterTimestamp: number

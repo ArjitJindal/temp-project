@@ -853,6 +853,54 @@ export class CaseRepository {
     return [...new Set(count.map((item) => item._id))]
   }
 
+  public async getCasesTransactions(caseId: string): Promise<string[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const caseItem = await collection.findOne(
+      { caseId },
+      { projection: { alerts: { transactionIds: 1 } } }
+    )
+    if (!caseItem || !caseItem.alerts) {
+      return []
+    }
+    return [
+      ...new Set(
+        caseItem.alerts.flatMap((alert) => alert.transactionIds ?? [])
+      ),
+    ]
+  }
+
+  public async getUserTransaction(userId: string) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const caseItem = await collection.find(
+      {
+        $or: [
+          { 'caseUsers.origin.userId': userId },
+          { 'caseUsers.destination.userId': userId },
+        ],
+      },
+      {
+        projection: {
+          alerts: { alertId: 1, transactionIds: 1 },
+          caseUsers: 1,
+          caseId: 1,
+        },
+      }
+    )
+    if (!caseItem) {
+      return []
+    }
+    return [
+      ...new Set(
+        (await caseItem.toArray()).flatMap(
+          (caseDoc) =>
+            caseDoc.alerts?.flatMap((alert) => alert.transactionIds ?? []) ?? []
+        )
+      ),
+    ]
+  }
+
   public async getCases(
     params: DefaultApiGetCaseListRequest,
     options: CaseListOptions = {}

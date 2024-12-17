@@ -1,19 +1,20 @@
 import s from './index.module.less';
-import TextInput from '@/components/library/TextInput';
 import Button from '@/components/library/Button';
 import Form from '@/components/library/Form';
 import InputField from '@/components/library/Form/InputField';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { useId } from '@/utils/hooks';
+import Select, { Option } from '@/components/library/Select';
 
 type FormValues = { transactionId?: string };
 
 interface Props {
   onSubmit: (formValues: FormValues) => void;
+  transactionIds: Option<string>[];
 }
 
 export default function NewTransactionForm(props: Props) {
-  const { onSubmit } = props;
+  const { onSubmit, transactionIds } = props;
   const formId = useId(`new-transaction-form-`);
   return (
     <Form<FormValues>
@@ -28,7 +29,14 @@ export default function NewTransactionForm(props: Props) {
       {({ validationResult }) => (
         <div className={s.root}>
           <InputField<FormValues, 'transactionId'> name={'transactionId'} label={'Transaction ID'}>
-            {(props) => <TextInput {...props} htmlAttrs={{ form: formId }} />}
+            {(props) => (
+              <Select<string>
+                {...props}
+                portaled={true}
+                allowClear={true}
+                options={transactionIds}
+              />
+            )}
           </InputField>
           <Button
             isDisabled={validationResult != null}

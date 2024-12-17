@@ -14,6 +14,7 @@ import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongo
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { CasesAlertsReportAuditLogService } from '../cases/case-alerts-report-audit-log-service'
+import { CaseService } from '../cases'
 import { ReportRepository } from './repositories/report-repository'
 import { ReportType } from '@/@types/openapi-internal/ReportType'
 import {
@@ -56,6 +57,7 @@ export class ReportService {
   mongoDb: MongoClient
   auditLogService: CasesAlertsReportAuditLogService
   riskScoringService: RiskScoringV8Service
+  caseService: CaseService
   s3: S3
   s3Config: S3Config
   dynamoDb: DynamoDBDocumentClient
@@ -101,6 +103,11 @@ export class ReportService {
     )
     this.s3 = s3
     this.s3Config = s3Config
+    const caseRepository = new CaseRepository(tenantId, { mongoDb })
+    this.caseService = new CaseService(caseRepository, s3, {
+      tmpBucketName: this.s3Config.documentBucket,
+      documentBucketName: this.s3Config.documentBucket,
+    })
   }
 
   public getTypes(): ReportType[] {
@@ -198,6 +205,10 @@ export class ReportService {
       revisions: [],
       caseUserId: userId,
     }
+    const userTransactions = await this.caseService.getUserTransactions(userId)
+    report.parameters.transactions = report.parameters.transactions?.filter(
+      (tx) => userTransactions.includes(tx.id)
+    )
     const savedReport = await this.reportRepository.saveOrUpdateReport(report)
     await this.riskScoringService.handleReRunTriggers('SAR', {
       userIds: [report.caseUserId],
@@ -214,6 +225,7 @@ export class ReportService {
     if (transactionIds != null && transactionIds.length > 20) {
       throw new NotFound(`Cant select more than 20 transactions`)
     }
+
     const caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })
@@ -278,6 +290,10 @@ export class ReportService {
       caseUserId:
         c.caseUsers?.origin?.userId ?? c.caseUsers?.destination?.userId ?? '',
     }
+    const caseTransactions = await this.caseService.getCaseTransactions(caseId)
+    report.parameters.transactions = report.parameters.transactions?.filter(
+      (tx) => caseTransactions.includes(tx.id)
+    )
     const savedReport = await this.reportRepository.saveOrUpdateReport(report)
     await this.riskScoringService.handleReRunTriggers('SAR', {
       userIds: [report.caseUserId],
