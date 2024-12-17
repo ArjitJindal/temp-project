@@ -39,7 +39,10 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       const { features } = await tenantRepository.getTenantSettings([
         'features',
       ])
-      if (features?.includes('DOW_JONES')) {
+      if (
+        features?.includes('DOW_JONES') ||
+        features?.includes('OPEN_SANCTIONS')
+      ) {
         return sendBatchJobCommand({
           type: 'SANCTIONS_DATA_FETCH',
           tenantId: tenant.tenant.id,

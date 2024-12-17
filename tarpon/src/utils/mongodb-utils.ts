@@ -348,7 +348,7 @@ const createMongoDBCollectionsInternal = async (
   if (
     envIsNot('local', 'test') &&
     !isDemoTenant(tenantId) &&
-    hasFeature('DOW_JONES')
+    (hasFeature('DOW_JONES') || hasFeature('OPEN_SANCTIONS'))
   ) {
     await createSanctionSearchIndexes(db, tenantId)
   } else {

@@ -55,6 +55,7 @@ import { ComplyAdvantageDataProvider } from '@/services/sanctions/providers/comp
 import { getDefaultProvider } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { generateChecksum } from '@/utils/object'
 
 const DEFAULT_FUZZINESS = 0.5
@@ -113,6 +114,8 @@ export class SanctionsService {
         )
       case 'dowjones':
         return await DowJonesProvider.build(this.tenantId)
+      case 'open-sanctions':
+        return OpenSanctionsProvider.build(this.tenantId)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)

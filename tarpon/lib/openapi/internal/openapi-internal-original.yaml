@@ -10862,6 +10862,7 @@ components:
         - MACHINE_LEARNING
         - RISK_SCORING_V8
         - DOW_JONES
+        - OPEN_SANCTIONS
         - ASYNC_RULES
         - CONCURRENT_ASYNC_RULES
         - PNB
@@ -12076,6 +12077,7 @@ components:
         - dowjones
         - comply-advantage
         - list
+        - open-sanctions
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
