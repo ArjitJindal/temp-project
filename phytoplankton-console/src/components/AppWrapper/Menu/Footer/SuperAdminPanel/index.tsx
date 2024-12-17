@@ -95,6 +95,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Dow Jones',
     description: 'Enables using Dow Jones for sanctions',
   },
+  OPEN_SANCTIONS: {
+    title: 'Open sanctions',
+    description: 'Enables using Open sanctions for sanctions',
+  },
   ASYNC_RULES: {
     title: 'Async rules',
     description: 'Enables async rules',
