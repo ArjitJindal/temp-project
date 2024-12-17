@@ -13837,10 +13837,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"json-logic-engine@npm:^4.0.2":
-  version: 4.0.2
-  resolution: "json-logic-engine@npm:4.0.2"
-  checksum: 94937415f23d54bc1436d54b7fc240cdba0fa1f2d057bae7db282b9b8f8dfe8a5dbf324376e81d20962fea96a324679963a4cccf9a8f06b8d32032b6602eb821
+"json-logic-engine@npm:^1.3.1":
+  version: 1.3.1
+  resolution: "json-logic-engine@npm:1.3.1"
+  checksum: b61535773caeedac8affa916fd437644e1897faa4f4cea092c068a3470f4e69e04b4d0da6c0513e933ce480c37797f4f4fac16f398aadf5cb3fe917da7d05c47
   languageName: node
   linkType: hard
 
@@ -17981,7 +17981,7 @@ __metadata:
     isomorphic-fetch: "npm:^3.0.0"
     jest: "npm:^28.1.3"
     js-yaml: "npm:^4.1.0"
-    json-logic-engine: "npm:^4.0.2"
+    json-logic-engine: "npm:^1.3.1"
     json-schema-to-typescript: "npm:^13.0.1"
     jsonpath-plus: "npm:^10.2.0"
     jsonwebtoken: "npm:^9.0.2"

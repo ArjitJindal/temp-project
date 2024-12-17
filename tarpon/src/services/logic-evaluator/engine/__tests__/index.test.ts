@@ -65,75 +65,7 @@ describe('Entity variable', () => {
       hitDirections: ['ORIGIN', 'DESTINATION'],
     })
   })
-  test('executes the json logic with all updated logic - not hit', async () => {
-    const tenantId = 'tenant-id'
-    const dynamoDbClient = getDynamoDbClient()
-    const evaluator = new LogicEvaluator(tenantId, dynamoDbClient)
-    const logic = {
-      and: [
-        {
-          all: [
-            {
-              var: 'CONSUMER_USER:employmentDetails-businessIndustry__SENDER',
-            },
-            {
-              in: [
-                {
-                  var: '',
-                },
-                [
-                  'Money Service Business / Money Changer / Money Lender / Financial Market Provider',
-                  'Healthcare Services & Products / Traditional Medicine Practitioner',
-                  'Educational Services / Child Care Centre / Babysitting Services',
-                  'Property / Rental / Leasing',
-                  'Not Applicable',
-                  'General Workers/ General Labourer / Farmer / Fisherman ',
-                  'IT / Telecommunication / Networking / Robotic and Automation',
-                  'Beauty Saloon or Parlour / Bridal Services / Fitness',
-                ],
-              ],
-            },
-          ],
-        },
-      ],
-    }
-    // undefined array
-    const result = await evaluator.evaluate(
-      logic,
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'USER',
-        transaction: getTestUser({
-          employmentDetails: {},
-        }),
-      }
-    )
-    expect(result).toEqual({
-      hit: false,
-      vars: [{ direction: 'ORIGIN', value: {} }],
-      hitDirections: [],
-    })
-    // empty array
-    const result2 = await evaluator.evaluate(
-      logic,
-      {},
-      { baseCurrency: 'EUR', tenantId },
-      {
-        type: 'USER',
-        transaction: getTestUser({
-          employmentDetails: {
-            businessIndustry: [],
-          },
-        }),
-      }
-    )
-    expect(result2).toEqual({
-      hit: false,
-      vars: [{ direction: 'ORIGIN', value: {} }],
-      hitDirections: [],
-    })
-  })
+
   test('executes the json logic - hit (tx directionless - 1)', async () => {
     const tenantId = 'tenant-id'
     const dynamoDbClient = getDynamoDbClient()

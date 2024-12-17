@@ -128,9 +128,7 @@ const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
 
 export const getJsonLogicEngine = memoizeOne(
   (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
-    const jsonLogicEngine = new AsyncLogicEngine(undefined, {
-      compatible: true,
-    })
+    const jsonLogicEngine = new AsyncLogicEngine()
     LOGIC_FUNCTIONS.filter((v) => v.run).forEach((v) =>
       jsonLogicEngine.addMethod(v.key, v.run)
     )
