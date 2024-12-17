@@ -193,7 +193,11 @@ export const casesHandler = lambdaApi()(
       const transactionService = await TransactionService.fromEvent(event)
 
       return await transactionService.getTransactionsList(
-        { ...request, alertId: request.alertId },
+        {
+          ...request,
+          alertId: request.alertId,
+          filterId: request.filterTransactionId,
+        },
         { includeUsers: true }
       )
     })
