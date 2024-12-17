@@ -144,13 +144,18 @@ export class ClickhouseTransactionsRepository {
 
     if (params.filterRuleInstancesHit?.length) {
       whereConditions.push(
-        `arrayExists(x -> has(${params.filterRuleInstancesHit}, x), ruleInstancesHit)`
+        `arrayExists(x -> has([${params.filterRuleInstancesHit
+          .map((ruleInstanceHit) => `'${ruleInstanceHit}'`)
+          .join(',')}], x), ruleInstancesHit)`
       )
     }
 
     if (params.filterRuleInstancesExecuted?.length) {
       whereConditions.push(
-        `arrayExists(x -> has(${params.filterRuleInstancesExecuted}, x), ruleInstancesExecuted)`
+        `arrayExists(x -> has([
+        ${params.filterRuleInstancesExecuted
+          .map((ruleInstanceExecuted) => `'${ruleInstanceExecuted}'`)
+          .join(',')}], x), ruleInstancesExecuted)`
       )
     }
 
