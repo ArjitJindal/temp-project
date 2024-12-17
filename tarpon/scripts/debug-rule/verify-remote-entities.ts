@@ -103,6 +103,21 @@ async function getRemoteTransaction(transactionId: string) {
   ).result
 }
 
+async function getRemoteTransactionEvents(transactionId: string) {
+  return (
+    await apiFetch<{ items: TransactionEventWithRulesResult[] }>(
+      `${api}/console/transactions/${encodeURIComponent(transactionId)}/events`,
+      {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${jwt}`,
+          ...EXTRA_HEADERS,
+        },
+      }
+    )
+  ).result.items
+}
+
 async function getRemoteUser(userId: string) {
   try {
     const result = await apiFetch<InternalBusinessUser>(
@@ -275,9 +290,10 @@ async function main() {
     await Promise.all(
       transactionIds.map(async (transactionId) => {
         const transaction = await getRemoteTransaction(transactionId)
-        initialEvents[transactionId] = transaction
-          .events?.[0] as TransactionEventWithRulesResult
-        transactionsOrEvents.push(...(transaction.events?.slice(1) ?? []))
+        const events = await getRemoteTransactionEvents(transactionId)
+        initialEvents[transactionId] =
+          events?.[0] as TransactionEventWithRulesResult
+        transactionsOrEvents.push(...(events?.slice(1) ?? []))
         transactionsOrEvents.push(transaction)
       })
     )

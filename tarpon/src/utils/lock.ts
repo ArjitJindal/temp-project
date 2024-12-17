@@ -19,11 +19,16 @@ export async function acquireLock(
     startingDelay?: number
     maxDelay?: number
     numOfAttempts?: number
+    ttlSeconds?: number
   }
 ): Promise<void> {
   await backOff(
     async () => {
-      await acquireLockInternal(client, lockKey, DEFAULT_TTL)
+      await acquireLockInternal(
+        client,
+        lockKey,
+        retryOptions?.ttlSeconds ?? DEFAULT_TTL
+      )
     },
     {
       startingDelay: retryOptions?.startingDelay ?? DEFAULT_DELAY * 1000,

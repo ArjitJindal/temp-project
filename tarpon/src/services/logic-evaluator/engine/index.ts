@@ -93,6 +93,7 @@ import { LogicAggregationType } from '@/@types/openapi-internal/LogicAggregation
 import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
+import { acquireLock, releaseLock } from '@/utils/lock'
 
 class RebuildSyncRetryError extends Error {
   constructor() {
@@ -657,7 +658,7 @@ export class LogicEvaluator {
         : transaction.destinationPaymentDetails
     )
 
-    await this.updateAggregationVariableInternal(
+    await this.updateAggregationVariableInternalIfNeeded(
       aggregationVariable,
       data,
       direction,
@@ -1078,7 +1079,7 @@ export class LogicEvaluator {
             return
           }
         }
-        await this.updateAggregationVariableInternal(
+        await this.updateAggregationVariableInternalIfNeeded(
           aggregationVariable,
           data,
           direction,
@@ -1088,7 +1089,7 @@ export class LogicEvaluator {
     )
   }
 
-  private async updateAggregationVariableInternal(
+  private async updateAggregationVariableInternalIfNeeded(
     aggregationVariable: LogicAggregationVariable,
     data: TransactionLogicData,
     direction: 'origin' | 'destination',
@@ -1097,9 +1098,6 @@ export class LogicEvaluator {
     if (this.mode !== 'DYNAMODB') {
       return
     }
-    const { transaction } = data
-
-    logger.debug('Updating aggregation...')
     const isNewDataFiltered = await this.isDataIncludedInAggregationVariable(
       aggregationVariable,
       data
@@ -1124,6 +1122,39 @@ export class LogicEvaluator {
     if (!isNewDataFiltered || !newDataValue || (hasGroups && !newGroupValue)) {
       return
     }
+
+    const { transaction } = data
+    // Acquire lock before updating the aggregation data to avoid double-counting issue
+    // when multiple events are processed at the same time.
+    const lockKey = generateChecksum(`agg:${transaction.transactionId}`)
+    await acquireLock(this.dynamoDb, lockKey, {
+      startingDelay: 500,
+      maxDelay: 500,
+      ttlSeconds: 15,
+    })
+    await this.updateAggregationVariableInternal(
+      aggregationVariable,
+      data,
+      direction,
+      userKeyId,
+      {
+        newGroupValue,
+        newDataValue,
+      }
+    )
+    await releaseLock(this.dynamoDb, lockKey)
+  }
+  private async updateAggregationVariableInternal(
+    aggregationVariable: LogicAggregationVariable,
+    data: TransactionLogicData,
+    direction: 'origin' | 'destination',
+    userKeyId: string,
+    newData: {
+      newGroupValue?: any
+      newDataValue?: any
+    }
+  ) {
+    const { transaction } = data
     const shouldSkipUpdateAggregation = await this.isTransactionApplied(
       aggregationVariable,
       direction,
@@ -1134,6 +1165,7 @@ export class LogicEvaluator {
       return
     }
 
+    logger.debug('Updating aggregation...')
     const aggregator = getLogicVariableAggregator(
       aggregationVariable.aggregationFunc
     )
@@ -1158,7 +1190,7 @@ export class LogicEvaluator {
           0,
           transaction.timestamp + 1,
           aggregationGranularity,
-          newGroupValue
+          newData.newGroupValue
         )
       const entitiesCountInAggregation =
         aggregations?.reduce(
@@ -1207,7 +1239,7 @@ export class LogicEvaluator {
           transaction.timestamp,
           transaction.timestamp + 1,
           aggregationGranularity,
-          newGroupValue
+          newData.newGroupValue
         )
       if (size(targetAggregations) > 1) {
         throw new Error('Should only get one target aggregation')
@@ -1224,10 +1256,10 @@ export class LogicEvaluator {
     }
 
     const newTargetAggregation: AggregationData = {
-      value: aggregator.reduce(targetAggregation.value, newDataValue),
+      value: aggregator.reduce(targetAggregation.value, newData.newDataValue),
       entities: (targetAggregation.entities ?? []).concat({
         timestamp: transaction.timestamp,
-        value: newDataValue,
+        value: newData.newDataValue,
       }),
     }
     if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
@@ -1240,7 +1272,7 @@ export class LogicEvaluator {
             ? { [updatedAggregationData.time]: updatedAggregationData }
             : {}),
         },
-        newGroupValue
+        newData.newGroupValue
       )
     }
     await this.aggregationRepository.setTransactionApplied(
