@@ -162,6 +162,7 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
       const newTenantSettings = request.TenantSettings
+      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const changedTenantSettings: TenantSettings = Object.fromEntries(
         Object.entries(newTenantSettings).filter(
           ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
@@ -169,7 +170,6 @@ export const tenantsHandler = lambdaApi()(
       )
       assertSettings(changedTenantSettings)
       const dynamoDb = getDynamoDbClientByEvent(event)
-      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
 
       if (isEmpty(changedTenantSettings)) {
         return tenantSettingsCurrent
