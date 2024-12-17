@@ -144,13 +144,13 @@ export class ClickhouseTransactionsRepository {
 
     if (params.filterRuleInstancesHit?.length) {
       whereConditions.push(
-        `arrayExists(x -> x = '${params.filterRuleInstancesHit}', ruleInstancesHit)`
+        `arrayExists(x -> has(${params.filterRuleInstancesHit}, x), ruleInstancesHit)`
       )
     }
 
     if (params.filterRuleInstancesExecuted?.length) {
       whereConditions.push(
-        `arrayExists(x -> x = '${params.filterRuleInstancesExecuted}', ruleInstancesExecuted)`
+        `arrayExists(x -> has(${params.filterRuleInstancesExecuted}, x), ruleInstancesExecuted)`
       )
     }
 
