@@ -39,12 +39,69 @@ import {
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { Permission } from '@/@types/openapi-internal/Permission'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
   'limits',
   'isAccountSuspended',
 ]
+
+const assertSettings = (settings: TenantSettings) => {
+  const settingsKeys = Object.keys(settings).filter(
+    (key) => settings[key as keyof TenantSettings] != null
+  )
+
+  const userPermissions: Permission[] = Array.from(
+    getContext()?.authz?.permissions.keys() ?? []
+  )
+
+  // We cannot make new api for every settings page hence we are using this
+  const settingPermissions: Partial<
+    Record<keyof TenantSettings, Permission[]>
+  > = {
+    defaultValues: ['settings:system-config:write'],
+    isProductionAccessEnabled: ['settings:system-config:write'],
+    mfaEnabled: ['settings:security:write'],
+    passwordResetDays: ['settings:security:write'],
+    accountDormancyAllowedDays: ['settings:security:write'],
+    sessionTimeoutMinutes: ['settings:security:write'],
+    maxActiveSessions: ['settings:security:write'],
+    isPaymentApprovalEnabled: ['settings:transactions:write'],
+    transactionStateAlias: ['settings:transactions:write'],
+    kycUserStatusLock: ['settings:transactions:write'],
+    pepStatusLock: ['settings:transactions:write'],
+    consoleTags: ['settings:transactions:write'],
+    ruleActionAliases: ['settings:rules:write'],
+    riskLevelAlias: ['settings:risk-scoring:write'],
+    notificationsSubscriptions: ['settings:notifications:write'],
+    isAiEnabled: ['settings:add-ons:write'],
+    isMlEnabled: ['settings:add-ons:write'],
+    webhookSettings: ['settings:developers:write'],
+  }
+
+  let hasPermission = true
+
+  for (const setting of settingsKeys) {
+    if (!settingPermissions[setting]?.length) {
+      continue
+    }
+
+    if (
+      !settingPermissions[setting]?.every((permission) =>
+        userPermissions.includes(permission)
+      )
+    ) {
+      hasPermission = false
+    }
+  }
+
+  if (!hasPermission) {
+    throw new createHttpError.Forbidden(
+      `User does not have permission to change settings`
+    )
+  }
+}
 
 export const tenantsHandler = lambdaApi()(
   async (
@@ -104,16 +161,15 @@ export const tenantsHandler = lambdaApi()(
     )
 
     handlers.registerPostTenantsSettings(async (ctx, request) => {
-      assertCurrentUserRole('admin')
-      const dynamoDb = getDynamoDbClientByEvent(event)
-      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
       const newTenantSettings = request.TenantSettings
-
-      const changedTenantSettings = Object.fromEntries(
+      const changedTenantSettings: TenantSettings = Object.fromEntries(
         Object.entries(newTenantSettings).filter(
           ([key, value]) => !isEqual(value, tenantSettingsCurrent[key])
         )
-      ) as TenantSettings
+      )
+      assertSettings(changedTenantSettings)
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const tenantSettingsCurrent = await tenantSettings(ctx.tenantId)
 
       if (isEmpty(changedTenantSettings)) {
         return tenantSettingsCurrent
