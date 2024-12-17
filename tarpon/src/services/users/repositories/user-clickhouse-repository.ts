@@ -93,7 +93,7 @@ export class UserClickhouseRepository {
     // Get users data
     let result = await offsetPaginateClickhouse<T>(
       this.clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
+      CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.USERS.tableName,
       { page, pageSize, sortField, sortOrder },
       whereClause,
