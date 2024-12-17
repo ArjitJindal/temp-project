@@ -14,11 +14,10 @@ export const initSentryNode =
 
     Sentry.init(SENTRY_INIT_CONFIG)
 
-    return Sentry.withScope(async () => {
-      const scope = Sentry.getCurrentScope()
+    return Sentry.withScope((scope) => {
       scope.clear()
-      Sentry.setTags(getContext()?.logMetadata || {})
-      Sentry.setExtras(getContext()?.sentryExtras || {})
+      scope.setTags(getContext()?.logMetadata || {})
+      scope.setExtras(getContext()?.sentryExtras || {})
       return handler()
     })
   }
