@@ -82,6 +82,10 @@ export default function NumberInput(props: Props) {
       onBlur={handleBlur}
       htmlAttrs={{
         inputMode: 'numeric',
+        style: {
+          overflow: 'hidden',
+          maxWidth: '100%',
+        },
         step,
         ...rest.htmlAttrs,
       }}
