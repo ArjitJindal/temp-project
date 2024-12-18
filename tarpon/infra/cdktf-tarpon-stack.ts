@@ -141,6 +141,7 @@ export class CdktfTarponStack extends TerraformStack {
     if (!config.resource.LAMBDA_VPC_ENABLED) {
       return
     }
+    return
     const endpoint = new aws.dataAwsVpcEndpoint.DataAwsVpcEndpoint(
       this,
       getClickhouseName('clickhouse-vpc-endpoint', regionOrDefault),
