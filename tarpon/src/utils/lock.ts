@@ -7,6 +7,7 @@ import { StackConstants } from '@lib/constants'
 import { Mutex, MutexInterface } from 'async-mutex'
 import { backOff } from 'exponential-backoff'
 import { compact } from 'lodash'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 const DEFAULT_TTL = 600
 const DEFAULT_DELAY = 5
@@ -44,11 +45,12 @@ async function acquireLockInternal(
   ttl = 60
 ): Promise<void> {
   const nowInSeconds = Math.floor(Date.now() / 1000)
+  const partitionKey = DynamoDbKeys.SHARED_LOCKS(lockKey).PartitionKeyID
   await client.send(
     new PutCommand({
       TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
       Item: {
-        PartitionKeyID: lockKey,
+        PartitionKeyID: partitionKey,
         SortKeyID: 'default',
         ttl: (nowInSeconds + ttl).toString(),
       },
@@ -68,11 +70,12 @@ export async function releaseLock(
   client: DynamoDBDocumentClient,
   lockKey: string
 ): Promise<void> {
+  const partitionKey = DynamoDbKeys.SHARED_LOCKS(lockKey).PartitionKeyID
   await client.send(
     new DeleteCommand({
       TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
       Key: {
-        PartitionKeyID: lockKey,
+        PartitionKeyID: partitionKey,
         SortKeyID: 'default',
       },
     })

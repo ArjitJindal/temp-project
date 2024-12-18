@@ -207,6 +207,11 @@ export const DynamoDbKeys = {
     SortKeyID: '',
   }),
 
+  SHARED_LOCKS: (lockKey: string) => ({
+    PartitionKeyID: `${SHARED_PARTITION_KEY_PREFIX}#lock#${lockKey}`,
+    SortKeyID: '',
+  }),
+
   // Attributes: refer to UserAggregationAttributes
   USER_AGGREGATION: (tenantId: string, userId: string) => ({
     PartitionKeyID: `${tenantId}#aggregation#${USER_ID_PREFIX}${userId}`,
