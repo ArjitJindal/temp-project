@@ -46,7 +46,7 @@ const onFailureWebhookActionOptions: SelectionGroupOption<
 export const WebhookSettings: React.FC = () => {
   const [webhookSettings, setWebhookSettings] = useState<WebhookSettingsType>({
     maxRetryHours: 24,
-    retryOnlyFor: ['4XX'],
+    retryOnlyFor: ['3XX', '4XX', '5XX'],
     retryBackoffStrategy: 'LINEAR',
     maxRetryReachedAction: 'DISABLE_WEBHOOK',
   });

@@ -10241,7 +10241,7 @@ components:
         - retryOnlyFor
         - maxRetryHours
         - retryBackoffStrategy
-        - onFailure
+        - maxRetryReachedAction
     ReRunTrigger:
       title: ReRunTrigger
       type: string
