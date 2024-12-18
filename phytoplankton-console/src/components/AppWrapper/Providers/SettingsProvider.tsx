@@ -131,6 +131,16 @@ export function Feature(props: {
   const isEnabled = useFeatureEnabled(props.name);
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
 }
+
+export function FeatureEnabled(props: {
+  name: FeatureName;
+  children: (isEnabled: boolean) => React.ReactNode;
+  fallback?: React.ReactNode;
+}) {
+  const isEnabled = useFeatureEnabled(props.name);
+  return <>{props.children(isEnabled)}</>;
+}
+
 export function Roles(props: {
   roles: ManagedRoleName[];
   children: React.ReactNode;

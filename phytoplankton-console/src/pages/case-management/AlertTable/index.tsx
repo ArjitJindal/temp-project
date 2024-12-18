@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useLocation } from 'react-router';
-import SanctionsHitStatusChangeModal from 'src/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import { AssigneesDropdown } from '../components/AssigneesDropdown';
 import { ApproveSendBackButton } from '../components/ApproveSendBackButton';
 import { useAlertQuery } from '../common';
@@ -10,9 +9,11 @@ import { ConsoleUserAvatar } from '../components/ConsoleUserAvatar';
 import SlaStatus from '../components/SlaStatus';
 import { getSlaColumnsForExport } from '../helpers';
 import { ActionLabel } from '../components/StatusChangeModal';
+import ExpandedRowRenderer from './ExpandedRowRenderer';
 import s from './index.module.less';
 import CreateCaseConfirmModal from './CreateCaseConfirmModal';
 import { FalsePositiveTag } from './FalsePositiveTag';
+import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 import {
   AlertsAssignmentsUpdateRequest,
@@ -39,7 +40,6 @@ import { QueryResult } from '@/utils/queries/types';
 import Id from '@/components/ui/Id';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import { getAlertUrl, makeUrl } from '@/utils/routing';
-import ExpandedRowRenderer from '@/pages/case-management/AlertTable/ExpandedRowRenderer';
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
 import AssignToButton from '@/pages/case-management/components/AssignToButton';
@@ -293,6 +293,7 @@ export default function AlertTable(props: Props) {
   );
 
   const icpFeatureEnabled = useFeatureEnabled('AI_FORENSICS');
+  const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
   const icpEnabled = icpFeatureEnabled || user.role === 'root'; // TODO remove this after testing
 
   const ruleQueues = useRuleQueues();
@@ -342,7 +343,7 @@ export default function AlertTable(props: Props) {
           type: {
             render: (alertId, { item: entity }) => {
               const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
-              if (caseId !== undefined) {
+              if (caseId !== undefined && !alertDetailsPageEnabled) {
                 return <div>{alertId}</div>;
               }
               return (
@@ -350,7 +351,9 @@ export default function AlertTable(props: Props) {
                   <Id
                     to={
                       entity?.caseId != null && alertId != null
-                        ? addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))
+                        ? addBackUrlToRoute(
+                            getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
+                          )
                         : '#'
                     }
                     testName="alert-id"
@@ -375,7 +378,9 @@ export default function AlertTable(props: Props) {
               return item.alertId ?? '';
             },
             link: (value, item) => {
-              return item?.caseId && value ? getAlertUrl(item.caseId, value) : undefined;
+              return item?.caseId && value
+                ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
+                : undefined;
             },
           },
         }),
@@ -939,6 +944,7 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
+    alertDetailsPageEnabled,
     showUserFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,

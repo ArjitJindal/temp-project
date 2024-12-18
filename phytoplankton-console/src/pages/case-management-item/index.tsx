@@ -53,7 +53,7 @@ function CaseManagementItemPage() {
     commentType: CommentType,
     groupId: string,
     personId?: string,
-  ) => {
+  ): Promise<void> => {
     await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
 
     if (groupId.startsWith(ALERT_GROUP_PREFIX)) {

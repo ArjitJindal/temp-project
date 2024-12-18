@@ -37,6 +37,10 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { isSuccess } from '@/utils/asyncResource';
 
 const featureDescriptions: Record<Feature, { title: string; description: string }> = {
+  ALERT_DETAILS_PAGE: {
+    title: 'Alert details page',
+    description: 'Enable showing alert details on a separate page',
+  },
   RISK_LEVELS: { title: 'Risk levels', description: 'Enable risk levels' },
   RISK_SCORING: { title: ' Risk scoring', description: 'Enables risk scoring' },
   AUDIT_LOGS: { title: 'Audit logs', description: 'Enables audit log' },

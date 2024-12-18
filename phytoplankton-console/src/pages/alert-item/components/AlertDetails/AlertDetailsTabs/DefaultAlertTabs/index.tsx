@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { TableAlertItem } from '../../types';
 import Comments from './Comments';
 import Checklist from './Checklist';
 import TransactionsTab from './TransactionsTab';
@@ -7,6 +6,7 @@ import { useQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import Tabs, { TabItem } from '@/components/library/Tabs';
+import { Alert } from '@/apis';
 
 enum AlertExpandedTabs {
   TRANSACTIONS = 'transactions',
@@ -15,14 +15,21 @@ enum AlertExpandedTabs {
 }
 
 interface Props {
-  alert: TableAlertItem;
+  alert: Alert;
+  caseUserId: string;
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
 }
 
-export default function AlertExpanded(props: Props) {
-  const { selectedTransactionIds, alert, onTransactionSelect, escalatedTransactionIds } = props;
+export default function DefaultAlertTabs(props: Props) {
+  const {
+    caseUserId,
+    selectedTransactionIds,
+    alert,
+    onTransactionSelect,
+    escalatedTransactionIds,
+  } = props;
   const alertId = alert.alertId;
   const api = useApi();
 
@@ -44,6 +51,7 @@ export default function AlertExpanded(props: Props) {
       children: (
         <TransactionsTab
           alert={alert}
+          caseUserId={caseUserId}
           selectedTransactionIds={selectedTransactionIds}
           onTransactionSelect={onTransactionSelect}
           escalatedTransactionIds={escalatedTransactionIds}
@@ -64,6 +72,7 @@ export default function AlertExpanded(props: Props) {
     });
     return tabs;
   }, [
+    caseUserId,
     alert,
     alertId,
     alertResponse.data,

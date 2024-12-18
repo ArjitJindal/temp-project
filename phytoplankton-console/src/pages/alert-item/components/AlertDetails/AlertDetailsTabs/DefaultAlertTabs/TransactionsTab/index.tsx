@@ -4,7 +4,6 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
-import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
@@ -12,17 +11,24 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import { dayjs } from '@/utils/dayjs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
-import { CurrencyCode, TransactionType } from '@/apis';
+import { Alert, CurrencyCode, TransactionType } from '@/apis';
 
 interface Props {
-  alert: TableAlertItem;
+  alert: Alert;
+  caseUserId: string;
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
 }
 
 export default function TransactionsTab(props: Props) {
-  const { alert, escalatedTransactionIds, onTransactionSelect, selectedTransactionIds } = props;
+  const {
+    caseUserId,
+    alert,
+    escalatedTransactionIds,
+    onTransactionSelect,
+    selectedTransactionIds,
+  } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
 
@@ -123,7 +129,7 @@ export default function TransactionsTab(props: Props) {
           visible={isModalVisible}
           setVisible={setIsModalVisible}
           alert={alert}
-          caseUserId={alert.caseUserId}
+          caseUserId={caseUserId}
         />
       )}
     </>

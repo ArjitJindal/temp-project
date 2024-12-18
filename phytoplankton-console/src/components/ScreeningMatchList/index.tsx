@@ -2,13 +2,12 @@ import React, { useMemo, useState } from 'react';
 import SanctionsHitsTable from 'src/components/SanctionsHitsTable';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { SanctionsHitsTableParams, useSanctionHitsQuery } from './helpers';
-import { SanctionsDetails, SanctionsHitStatus } from '@/apis';
+import { Alert, SanctionsDetails, SanctionsHitStatus } from '@/apis';
 import Tabs, { TabItem } from '@/components/library/Tabs';
 import { getOr, map } from '@/utils/asyncResource';
-import Checklist from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Checklist';
-import Comments from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/Comments';
-import TransactionsTab from '@/pages/case-management/AlertTable/ExpandedRowRenderer/AlertExpanded/TransactionsTab';
-import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
+import Checklist from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/DefaultAlertTabs/Checklist';
+import Comments from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/DefaultAlertTabs/Comments';
+import TransactionsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/DefaultAlertTabs/TransactionsTab';
 import { notEmpty } from '@/utils/array';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -25,7 +24,8 @@ const TRANSACTIONS_TAB_KEY = 'transactions';
 
 interface Props {
   details: SanctionsDetails[];
-  alert?: TableAlertItem;
+  alert?: Alert;
+  caseUserId: string;
   escalatedTransactionIds?: string[];
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
@@ -42,6 +42,7 @@ export default function ScreeningMatchList(props: Props) {
   const {
     details,
     alert,
+    caseUserId,
     selectedSanctionsHitsIds,
     onSanctionsHitSelect,
     escalatedTransactionIds,
@@ -149,6 +150,7 @@ export default function ScreeningMatchList(props: Props) {
                 children: (
                   <TransactionsTab
                     alert={alert}
+                    caseUserId={caseUserId}
                     selectedTransactionIds={selectedTransactionIds}
                     onTransactionSelect={onTransactionSelect}
                     escalatedTransactionIds={escalatedTransactionIds}
@@ -164,6 +166,7 @@ export default function ScreeningMatchList(props: Props) {
           : []),
       ].filter(notEmpty),
     [
+      caseUserId,
       openHitsCount,
       openHitsQueryResults,
       selectedSanctionsHitsIds,

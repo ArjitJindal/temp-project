@@ -17,26 +17,25 @@ import UserStateTag from '@/components/library/Tag/UserStateTag';
 import { RiskLevel } from '@/utils/risk-levels';
 import {
   Address,
+  AlertsQaSampling,
   Amount,
   Assignment,
+  Case,
   CaseStatus,
   CountryCode as ApiCountryCode,
   CurrencyCode,
   InternalBusinessUser,
   InternalConsumerUser,
+  KYCStatus,
+  PepRank,
+  Priority,
   RuleAction,
   RuleNature,
+  SanctionsHitStatus as ApiSanctionsHitStatus,
   Tag as ApiTag,
   TransactionState as ApiTransactionState,
-  SanctionsHitStatus as ApiSanctionsHitStatus,
   TransactionType,
   UserState,
-  Case,
-  Priority,
-  Alert,
-  AlertsQaSampling,
-  PepRank,
-  KYCStatus,
 } from '@/apis';
 import { getUserLink, getUserName } from '@/utils/api/users';
 import TransactionTypeDisplay from '@/components/library/TransactionTypeDisplay';
@@ -63,7 +62,7 @@ import { CaseStatusWithDropDown } from '@/pages/case-management-item/CaseStatusW
 import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { TableItem, TableUser } from '@/pages/case-management/CaseTable/types';
 import { DurationDisplay } from '@/components/ui/DurationDisplay';
-import { getDuration, formatDuration } from '@/utils/time-utils';
+import { formatDuration, getDuration } from '@/utils/time-utils';
 import { SANCTIONS_HIT_STATUSS } from '@/apis/models-custom/SanctionsHitStatus';
 import { TRANSACTION_STATES } from '@/apis/models-custom/TransactionState';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
@@ -73,6 +72,7 @@ import { ALERT_ITEM } from '@/utils/queries/keys';
 import Tag from '@/components/library/Tag';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 import { PEP_RANKS } from '@/apis/models-custom/PepRank';
+import { FeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -441,26 +441,6 @@ export const QA_SAMPLE_ID: ColumnDataType<
   },
   link(value, item) {
     return item?.samplingId ? `/case-management/qa-samples/${item.samplingId}` : '';
-  },
-};
-
-export const ALERT_ID: ColumnDataType<string, Pick<Alert, 'caseId'>> = {
-  render: (alertId, { item: entity }) => {
-    return (
-      <>
-        {entity?.caseId && alertId && (
-          <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
-            {alertId}
-          </Id>
-        )}
-      </>
-    );
-  },
-  stringify(value, item) {
-    return `${item?.caseId ?? ''}`;
-  },
-  link(value, item) {
-    return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
   },
 };
 
@@ -870,9 +850,18 @@ export const FORENSICS_ENTITY_ID: ColumnDataType<string> = {
         );
       case 'Alert ID':
         return (
-          <Id to={addBackUrlToRoute(getAlertUrl(entity?.['Case ID'], value ?? '#'))} toNewTab>
-            {value}
-          </Id>
+          <FeatureEnabled name={'ALERT_DETAILS_PAGE'}>
+            {(alertPageEnabled) => (
+              <Id
+                to={addBackUrlToRoute(
+                  getAlertUrl(entity?.['Case ID'], value ?? '#', alertPageEnabled),
+                )}
+                toNewTab
+              >
+                {value}
+              </Id>
+            )}
+          </FeatureEnabled>
         );
       case 'Case ID':
       case 'Related case':

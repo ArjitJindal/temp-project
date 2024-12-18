@@ -7,6 +7,7 @@ import DashboardAnalysisPage from '@/pages/dashboard/analysis';
 import Page404 from '@/pages/404';
 import CaseManagementPage from '@/pages/case-management';
 import CaseManagementItemPage from '@/pages/case-management-item';
+import AlertItemPage from '@/pages/alert-item';
 import RiskLevelsConfigurePage from '@/pages/risk-levels/configure';
 import RiskLevelPage from '@/pages/risk-levels/risk-factors';
 import CustomRiskFactorsPage from '@/pages/risk-levels/custom-risk-factors';
@@ -26,9 +27,9 @@ import SettingsPage from '@/pages/settings';
 import SanctionsPage from '@/pages/sanctions';
 import AuditLogPage from '@/pages/auditlog';
 import {
-  useHasPermissions,
   isAtLeastAdmin,
   useAuth0User,
+  useHasPermissions,
   usePermissions,
 } from '@/utils/user-utils';
 import { Permission } from '@/apis';
@@ -98,6 +99,12 @@ export function useRoutes(): RouteItem[] {
             path: '/case-management/case/:id',
             component: CaseManagementItemPage,
             name: 'item',
+            permissions: ['case-management:case-details:read'],
+          },
+          {
+            path: '/case-management/alerts/:id',
+            component: AlertItemPage,
+            name: 'alert-item',
             permissions: ['case-management:case-details:read'],
           },
           {

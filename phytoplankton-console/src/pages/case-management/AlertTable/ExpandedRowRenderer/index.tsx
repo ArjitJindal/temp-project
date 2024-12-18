@@ -1,7 +1,5 @@
-import React from 'react';
-import { TableAlertItem } from '../types';
-import AlertExpanded from './AlertExpanded';
-import ScreeningMatchList from '@/components/ScreeningMatchList';
+import AlertDetailsTabs from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs';
+import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { SanctionsHitStatus } from '@/apis';
 
 interface Props {
@@ -19,37 +17,5 @@ interface Props {
 }
 
 export default function ExpandedRowRenderer(props: Props) {
-  const {
-    alert,
-    selectedTransactionIds,
-    selectedSanctionsHitsIds,
-    onTransactionSelect,
-    onSanctionsHitSelect,
-    escalatedTransactionIds,
-    onSanctionsHitsChangeStatus,
-  } = props;
-
-  if (alert.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId) {
-    return (
-      <ScreeningMatchList
-        alert={alert}
-        selectedTransactionIds={selectedTransactionIds}
-        onTransactionSelect={onTransactionSelect}
-        details={alert.ruleHitMeta?.sanctionsDetails ?? []}
-        escalatedTransactionIds={escalatedTransactionIds}
-        selectedSanctionsHitsIds={selectedSanctionsHitsIds}
-        onSanctionsHitSelect={onSanctionsHitSelect}
-        onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
-      />
-    );
-  }
-
-  return (
-    <AlertExpanded
-      alert={alert}
-      selectedTransactionIds={selectedTransactionIds}
-      onTransactionSelect={onTransactionSelect}
-      escalatedTransactionIds={escalatedTransactionIds}
-    />
-  );
+  return <AlertDetailsTabs {...props} caseUserId={props.alert.caseUserId} />;
 }

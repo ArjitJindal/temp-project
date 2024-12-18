@@ -36,6 +36,7 @@ import { getAlertUrl } from '@/utils/routing';
 import Tag from '@/components/library/Tag';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -52,6 +53,7 @@ export default function QaTable(props: Props) {
   const tableRef = useRef<TableRefType>(null);
   const qaAssigneesUpdateMutation = useAlertQaAssignmentUpdateMutation(tableRef);
   const [selectedAlerts, setSelectedAlerts] = useState<string[]>([]);
+  const alertDetailsPageEnabled = useFeatureEnabled('ALERT_DETAILS_PAGE');
 
   const helper = new ColumnHelper<TableAlertItem>();
   const columns = helper.list([
@@ -76,7 +78,12 @@ export default function QaTable(props: Props) {
           return (
             <>
               {entity?.caseId && alertId && (
-                <Id to={addBackUrlToRoute(getAlertUrl(entity.caseId, alertId))} testName="alert-id">
+                <Id
+                  to={addBackUrlToRoute(
+                    getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
+                  )}
+                  testName="alert-id"
+                >
                   {alertId}
                 </Id>
               )}
@@ -90,7 +97,9 @@ export default function QaTable(props: Props) {
           return `${item?.caseId ?? ''}`;
         },
         link(value, item) {
-          return item?.caseId && value ? getAlertUrl(item.caseId, value) : '';
+          return item?.caseId && value
+            ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
+            : '';
         },
       },
     }),
@@ -211,7 +220,7 @@ export default function QaTable(props: Props) {
                 return null;
               }
               return (
-                <Link to={getAlertUrl(caseId, alertId)}>
+                <Link to={getAlertUrl(caseId, alertId, alertDetailsPageEnabled)}>
                   <>
                     <Button type="PRIMARY">View</Button>
                   </>
