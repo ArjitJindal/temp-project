@@ -1,3 +1,4 @@
+import { v4 as uuidv4 } from 'uuid'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { BadRequest, NotFound } from 'http-errors'
 import {
@@ -998,8 +999,8 @@ export class RulesEngineService {
     receiverUser?: User | Business,
     riskDetails?: TransactionRiskScoringResult
   ): Promise<void> {
-    const initialTransactionEvent = this.getInitialTransactionEvent(transaction)
-
+    const initialTransactionEvent =
+      await this.getOrCreateInitialTransactionEvent(transaction)
     await this.verifyAsyncRulesTransactionInternal(
       transaction,
       [initialTransactionEvent],
@@ -2060,6 +2061,24 @@ export class RulesEngineService {
         return ['DESTINATION']
       case 'ALL':
         return ['ORIGIN', 'DESTINATION']
+    }
+  }
+
+  private async getOrCreateInitialTransactionEvent(
+    transaction: Transaction
+  ): Promise<TransactionEventWithRulesResult> {
+    const lastEvent =
+      await this.transactionEventRepository.getLastTransactionEvent(
+        transaction.transactionId
+      )
+
+    if (lastEvent) {
+      return lastEvent
+    }
+
+    return {
+      ...this.getInitialTransactionEvent(transaction),
+      eventId: uuidv4(),
     }
   }
 }
