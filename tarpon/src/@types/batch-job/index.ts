@@ -227,10 +227,10 @@ export type BackfillAsyncRuleRuns = {
     concurrency: number
     type: 'RERUN' | 'NOT_RUN'
     startTimestamp?: number
-    affectedExecutionRanges?: {
+    affectedExecutionRange?: {
       start: number
       end: number
-    }[]
+    }
   }
 }
 

@@ -11,7 +11,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 
 import { keyBy, mapValues, pick, uniq } from 'lodash'
-import { duration } from '@/utils/dayjs'
+import dayjs, { duration } from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import {
   BatchWriteRequestInternal,
@@ -27,6 +27,7 @@ import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal
 import { UsedAggregationVariable } from '@/@types/openapi-internal/UsedAggregationVariable'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { getContext } from '@/core/utils/context'
 
 export type AggregationData<T = unknown> = {
   value: T | { [group: string]: T }
@@ -69,10 +70,15 @@ export function getAggVarHash(
 export class AggregationRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
+  isBackfillMode: boolean = false
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
+  }
+
+  public setIsBackfillMode(isBackfillMode: boolean) {
+    this.isBackfillMode = isBackfillMode
   }
 
   public getUserTimeAggregationsRebuildWriteRequests(
@@ -99,7 +105,7 @@ export class AggregationRepository {
         const keys = DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION(
           this.tenantId,
           userKeyId,
-          getAggVarHash(aggregationVariable),
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
           groupValue,
           entry[0]
         )
@@ -120,7 +126,7 @@ export class AggregationRepository {
         const keys = DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION(
           this.tenantId,
           userKeyId,
-          getAggVarHash(aggregationVariable),
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
           groupValue,
           entry[0]
         )
@@ -175,11 +181,24 @@ export class AggregationRepository {
       partitionKey: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION(
         this.tenantId,
         userKeyId,
-        getAggVarHash(aggregationVariable),
+        getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
         groupValue
       ).PartitionKeyID,
       consistentRead: true,
     })
+
+    if (this.isBackfillMode) {
+      // In the backfill mode (for rerunning rules for past transactions), we always rebuild once
+      // when we encounter the first transaction of a user. We return undefined here if the aggregation
+      // variable is not ready to trigger the rebuild.
+      const { ready } = await this.isAggregationVariableReady(
+        aggregationVariable,
+        userKeyId
+      )
+      if (!ready) {
+        return
+      }
+    }
 
     const result = await paginateQuery(this.dynamoDb, queryInput)
     const hasData = (result?.Items?.length || 0) > 0
@@ -214,7 +233,7 @@ export class AggregationRepository {
         ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
           this.tenantId,
           direction,
-          getAggVarHash(aggregationVariable),
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
           transactionId
         ),
         ttl: this.getUpdatedTtlAttribute(aggregationVariable),
@@ -233,13 +252,24 @@ export class AggregationRepository {
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
         this.tenantId,
         direction,
-        getAggVarHash(aggregationVariable),
+        getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
         transactionId
       ),
       ConsistentRead: true,
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
     return Boolean(result.Item)
+  }
+
+  private getBackfillVersionSuffix(): string {
+    if (!this.isBackfillMode) {
+      return ''
+    }
+    const context = getContext()
+    return generateChecksum(context?.logMetadata?.jobId ?? '', 5)
+  }
+  private getBackfillTTL(): number {
+    return Math.floor(dayjs().add(1, 'week').valueOf() / 1000)
   }
 
   public async setAggregationVariableReady(
@@ -253,10 +283,12 @@ export class AggregationRepository {
         ...DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
           this.tenantId,
           userKeyId,
-          getAggVarHash(aggregationVariable)
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
         ),
         lastTransactionTimestamp,
-        ttl: Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
+        ttl: this.isBackfillMode
+          ? this.getBackfillTTL()
+          : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
       },
     }
     await this.dynamoDb.send(new PutCommand(putItemInput))
@@ -271,7 +303,7 @@ export class AggregationRepository {
       Key: DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_READY_MARKER(
         this.tenantId,
         userKeyId,
-        getAggVarHash(aggregationVariable)
+        getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
       ),
       ConsistentRead: true,
     }
@@ -283,6 +315,10 @@ export class AggregationRepository {
   private getUpdatedTtlAttribute(
     aggregationVariable: LogicAggregationVariable
   ): number {
+    if (this.isBackfillMode) {
+      return this.getBackfillTTL()
+    }
+
     let { units, granularity } = aggregationVariable.timeWindow.start
 
     if (granularity === 'now') {

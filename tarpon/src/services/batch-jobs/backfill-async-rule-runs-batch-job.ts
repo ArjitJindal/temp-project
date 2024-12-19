@@ -38,7 +38,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
     job: BackfillAsyncRuleRuns & { jobId: string }
   ): Promise<void> {
     const { tenantId, parameters } = job
-    const { concurrency, startTimestamp, type, affectedExecutionRanges } =
+    const { concurrency, startTimestamp, type, affectedExecutionRange } =
       parameters
 
     this.tenantId = tenantId
@@ -62,7 +62,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       await this.backfillTxAsyncRuleRuns(
         activeTxAsyncRuleIds,
         lastCompletedTimestamp,
-        affectedExecutionRanges
+        affectedExecutionRange
       )
       return
     }
@@ -71,10 +71,10 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
   private async backfillTxAsyncRuleRuns(
     asyncRuleInstanceIds: string[],
     lastCompletedTimestamp: number,
-    affectedExecutionRanges?: {
+    affectedExecutionRange?: {
       start: number
       end: number
-    }[]
+    }
   ): Promise<void> {
     this.mongoDb = await getMongoDbClient()
     const db = this.mongoDb.db()
@@ -85,15 +85,13 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
             $elemMatch: {
               $and: [
                 { ruleInstanceId: { $in: asyncRuleInstanceIds } },
-                ...(affectedExecutionRanges
+                ...(affectedExecutionRange
                   ? [
                       {
-                        $or: affectedExecutionRanges?.map((range) => ({
-                          executedAt: {
-                            $gte: range.start,
-                            $lte: range.end,
-                          },
-                        })),
+                        executedAt: {
+                          $gte: affectedExecutionRange.start,
+                          $lte: affectedExecutionRange.end,
+                        },
                       },
                     ]
                   : []),
@@ -122,7 +120,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
 
     const targetTransactions = collection
       .find<InternalTransaction>(match)
-      .sort({ createdAt: 1 })
+      .sort({ timestamp: 1 })
 
     let batchTransactions: InternalTransaction[] = []
     let count = 0
@@ -138,7 +136,6 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       await this.processBatchTransactions(batchTransactions)
     }
     logger.warn(`Processed total ${count} transactions`)
-    throw new Error('To be retried')
   }
 
   private async processBatchTransactions(
@@ -178,6 +175,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       transaction,
       senderUser: originUser as User | Business | undefined,
       receiverUser: destinationUser as User | Business | undefined,
+      isBackfill: true,
     }
     const response = await lambdaClient.send(
       new InvokeCommand({

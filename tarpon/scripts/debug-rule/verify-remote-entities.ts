@@ -32,6 +32,7 @@ const {
   ruleInstanceIds,
   'user-agent': userAgent,
   'x-fingerprint': xFingerprint,
+  resetDb = true,
 } = fs.readJSONSync(configPath, 'utf-8') as {
   api: string
   jwt: string
@@ -40,6 +41,7 @@ const {
   ruleInstanceIds: string[]
   'user-agent': string
   'x-fingerprint': string
+  resetDb: boolean
 }
 console.info(`Using config from "${configPath}"`)
 console.info(`Will get ${transactionIds.length} transactions from ${api}`)
@@ -193,7 +195,7 @@ async function verifyTransactionLocally(transaction: InternalTransaction) {
 
   return (
     await apiFetch<TransactionWithRulesResult>(
-      `http://localhost:3000/transactions?validateOriginUserId=false&validateDestinationUserId=false`,
+      `http://localhost:3000/transactions?validateOriginUserId=false&validateDestinationUserId=false&validateTransactionId=false`,
       {
         method: 'POST',
         headers: {
@@ -254,18 +256,20 @@ async function main() {
     return
   }
 
-  execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
-  console.info('Recreated Tarpon DynamoDB table')
+  if (resetDb) {
+    execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
+    console.info('Recreated Tarpon DynamoDB table')
 
-  const tenantRepo = new TenantRepository('flagright', {
-    dynamoDb: getDynamoDbClient(),
-  })
-  const settings = await getRemoteSettings()
-  await tenantRepo.createOrUpdateTenantSettings(settings)
+    const tenantRepo = new TenantRepository('flagright', {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const settings = await getRemoteSettings()
+    await tenantRepo.createOrUpdateTenantSettings(settings)
 
-  execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
-  console.info('Recreated TarponRule DynamoDB table')
-  await RuleService.syncRulesLibrary()
+    execSync('npm run recreate-local-ddb --table=TarponRule >/dev/null 2>&1')
+    console.info('Recreated TarponRule DynamoDB table')
+    await RuleService.syncRulesLibrary()
+  }
   await createRuleInstancesLocally(ruleInstanceIds)
 
   const results: any[] = []
@@ -329,12 +333,12 @@ async function main() {
       const hit = result?.hitRules?.length > 0
       results.push(result)
       const entity = isTxEvent
-        ? `tx event ${(
-            txOrEvent as TransactionEventWithRulesResult
-          ).eventId?.slice(-5)} (tx: ${txOrEvent.transactionId.slice(-5)})`
-        : `tx ${txOrEvent.transactionId.slice(-5)}`
+        ? `tx event ${
+            (txOrEvent as TransactionEventWithRulesResult).eventId
+          } (tx: ${txOrEvent.transactionId})`
+        : `tx ${txOrEvent.transactionId}`
       console.info(
-        `[${time}] Verified ${entity} - Hit: ${hit} (local) / ${remoteRuleHit} (remote)`
+        `Verified ${entity} (${time}) - Hit: ${hit} (local) / ${remoteRuleHit} (remote)`
       )
     }
   }

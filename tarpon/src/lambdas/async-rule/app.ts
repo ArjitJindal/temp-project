@@ -66,17 +66,20 @@ export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { type } = record
 
   if (type === 'TRANSACTION') {
-    const { transaction, senderUser, receiverUser, riskDetails } = record
+    const { transaction, senderUser, receiverUser, riskDetails, isBackfill } =
+      record
     updateLogMetadata({ transactionId: transaction.transactionId })
     logger.info(
       `Running async rule for transaction ${transaction.transactionId} for tenant ${tenantId}`
     )
+    logicEvaluator.setIsBackfillMode(!!isBackfill)
     await rulesEngineService.verifyAsyncRulesTransaction(
       transaction,
       senderUser,
       receiverUser,
       riskDetails
     )
+    logicEvaluator.setIsBackfillMode(false)
   } else if (type === 'TRANSACTION_EVENT') {
     const { senderUser, receiverUser, updatedTransaction, transactionEventId } =
       record

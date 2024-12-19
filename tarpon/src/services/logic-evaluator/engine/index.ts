@@ -178,6 +178,7 @@ export class LogicEvaluator {
   private aggregationRepository: AggregationRepository
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
+  private isBackfillMode: boolean = false
 
   constructor(
     tenantId: string,
@@ -191,6 +192,11 @@ export class LogicEvaluator {
       this.dynamoDb
     )
     this.mode = mode
+  }
+
+  public setIsBackfillMode(isBackfillMode: boolean) {
+    this.isBackfillMode = isBackfillMode
+    this.aggregationRepository.setIsBackfillMode(isBackfillMode)
   }
 
   private async initialize() {
@@ -1475,7 +1481,7 @@ export class LogicEvaluator {
 
       if (!userAggData) {
         if (
-          hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') &&
+          (hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') || this.isBackfillMode) &&
           data.type === 'TRANSACTION'
         ) {
           const isRebuilt = await this.rebuildAggregationVariable(
