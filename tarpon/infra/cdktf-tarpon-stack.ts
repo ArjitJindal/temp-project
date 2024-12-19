@@ -17,6 +17,18 @@ const codebuildIps = ['3.72.188.71', '18.157.106.33', '18.153.172.163'].map(
   })
 )
 
+const flagrightVPNIp = [
+  {
+    source: '217.180.56.115',
+    description: 'Flagright VPN IP',
+  },
+]
+
+const allIps: { source: string; description: string }[] = [
+  ...codebuildIps,
+  ...flagrightVPNIp,
+]
+
 export class CdktfTarponStack extends TerraformStack {
   constructor(scope: Construct, id: string, config: Config) {
     super(scope, id)
@@ -121,7 +133,7 @@ export class CdktfTarponStack extends TerraformStack {
       {
         provider: clickhouseProvider,
         cloudProvider: 'aws',
-        ipAccess: config.clickhouse?.ipAccess || codebuildIps,
+        ipAccess: config.clickhouse?.ipAccess || allIps,
         name: `Flagright ${config.stage} (${clickhouseAwsRegion})`,
         region: clickhouseAwsRegion,
         tier: config.stage === 'dev' ? 'development' : 'production',
