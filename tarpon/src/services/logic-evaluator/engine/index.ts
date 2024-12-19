@@ -42,8 +42,7 @@ import {
   TransactionLogicVariable,
 } from '../variables/types'
 import { getPaymentDetailsIdentifiersKey } from '../variables/payment-details'
-import { CUSTOM_BUILT_IN_LOGIC_OPERATORS } from '../operators/custom-built-in-operators'
-import { LOGIC_OPERATORS } from '../operators'
+import { CUSTOM_INTERNAL_OPERATORS, LOGIC_OPERATORS } from '../operators'
 import {
   AggregationData,
   AggregationRepository,
@@ -133,7 +132,7 @@ export const getJsonLogicEngine = memoizeOne(
     LOGIC_FUNCTIONS.filter((v) => v.run).forEach((v) =>
       jsonLogicEngine.addMethod(v.key, v.run)
     )
-    CUSTOM_BUILT_IN_LOGIC_OPERATORS.concat(LOGIC_OPERATORS).forEach((v) =>
+    CUSTOM_INTERNAL_OPERATORS.concat(LOGIC_OPERATORS).forEach((v) =>
       jsonLogicEngine.addMethod(
         v.key,
         memoize(

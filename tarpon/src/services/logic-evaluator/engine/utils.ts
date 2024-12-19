@@ -83,30 +83,44 @@ export function transformJsonLogic(
       entityVariables.find((e) => e.key === v)?.entityKey ?? v
     )
   )
-  if (!hasDirectionLessEntityVariables) {
+  const hasAllOperator = getAllValuesByKey('all', rawJsonLogic)
+  if (!hasDirectionLessEntityVariables && !hasAllOperator) {
     return rawJsonLogic
   }
   const updatedLogic = cloneDeep(rawJsonLogic)
   traverse(rawJsonLogic, (key, value, path) => {
-    if (key !== 'var') {
-      return
+    if (key === 'all') {
+      // Retrieve the original "all" block
+      const originalAll = get(rawJsonLogic, path)
+      if (Array.isArray(originalAll) && originalAll.length > 0) {
+        // Build the "and" block
+        const hasItemsCheck = {
+          'op:hasItems': [originalAll[0], true],
+        }
+        const wrappedLogic = {
+          and: [hasItemsCheck, { all: originalAll }],
+        }
+        const parentPath = path.slice(0, -1) // Remove the last part of the path to get the parent
+        set(updatedLogic, parentPath, wrappedLogic)
+      }
     }
-    const isDirectionLessVar = isDirectionLessVariable(
-      entityVariables.find((e) => e.key === value)?.entityKey ?? value
-    )
-    if (isDirectionLessVar) {
-      const nearestOperatorIndex =
-        path.length -
-        path
-          .slice()
-          .reverse()
-          .findIndex((v) => OPERATOR_KEYS.has(v)) -
-        1
-      const leafLogic = cloneDeep(
-        get(rawJsonLogic, path.slice(0, nearestOperatorIndex))
+    if (key === 'var' && hasDirectionLessEntityVariables) {
+      const isDirectionLessVar = isDirectionLessVariable(
+        entityVariables.find((e) => e.key === value)?.entityKey ?? value
       )
-      unset(updatedLogic, path.slice(0, nearestOperatorIndex + 1))
-      /*
+      if (isDirectionLessVar) {
+        const nearestOperatorIndex =
+          path.length -
+          path
+            .slice()
+            .reverse()
+            .findIndex((v) => OPERATOR_KEYS.has(v)) -
+          1
+        const leafLogic = cloneDeep(
+          get(rawJsonLogic, path.slice(0, nearestOperatorIndex))
+        )
+        unset(updatedLogic, path.slice(0, nearestOperatorIndex + 1))
+        /*
         Transforms
         {
           "==": [
@@ -138,16 +152,17 @@ export function transformJsonLogic(
           ]
         }
       */
-      const directionalVariableKeys = isDirectionLessVariable(value)
-        ? getDirectionalVariableKeys(value).map((v) => v.key)
-        : [`${value}__SENDER`, `${value}__RECEIVER`]
-      set(
-        updatedLogic,
-        [...path.slice(0, nearestOperatorIndex), 'or'],
-        directionalVariableKeys.map((directionVarKey) =>
-          replaceMagicKeyword(leafLogic, value, directionVarKey)
+        const directionalVariableKeys = isDirectionLessVariable(value)
+          ? getDirectionalVariableKeys(value).map((v) => v.key)
+          : [`${value}__SENDER`, `${value}__RECEIVER`]
+        set(
+          updatedLogic,
+          [...path.slice(0, nearestOperatorIndex), 'or'],
+          directionalVariableKeys.map((directionVarKey) =>
+            replaceMagicKeyword(leafLogic, value, directionVarKey)
+          )
         )
-      )
+      }
     }
   })
   const { entityVariableKeys: newEntityVariableKeys } =

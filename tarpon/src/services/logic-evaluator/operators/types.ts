@@ -9,9 +9,11 @@ export type TextLogicOperator = LogicOperator<
   // string: for RHS as field; string[]: for RHS as value
   string[] | string | null | undefined
 >
-
+export type InternalCustomOperatorKeys =
+  | CustomBuiltInLogicOperatorKeyType
+  | 'op:hasItems'
 export type LogicOperator<LHS = any, RHS = any> = {
-  key: LogicOperatorType | CustomBuiltInLogicOperatorKeyType
+  key: LogicOperatorType | InternalCustomOperatorKeys
   uiDefinition: Operator<Config>
   // NOTE: The order of the parameters is important. Same order will be used in the UI
   // and the same order will be used in the run function

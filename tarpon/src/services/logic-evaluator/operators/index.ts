@@ -12,6 +12,8 @@ import {
 } from './between-time'
 import { LogicOperator } from './types'
 import { NOT_REGEX_MATCH_OPERATOR, REGEX_MATCH_OPERATOR } from './regex-match'
+import { HAS_ITEMS_OPERATOR } from './hasItems'
+import { CUSTOM_BUILT_IN_LOGIC_OPERATORS } from './custom-built-in-operators'
 
 const _LOGIC_OPERATORS: LogicOperator[] = [
   MATCH_LIST_OPERATOR,
@@ -53,4 +55,9 @@ export const JSON_LOGIC_BUILT_IN_OPERATORS = [
   'some',
   'all',
   'none',
+]
+
+export const CUSTOM_INTERNAL_OPERATORS = [
+  ...CUSTOM_BUILT_IN_LOGIC_OPERATORS,
+  HAS_ITEMS_OPERATOR,
 ]
