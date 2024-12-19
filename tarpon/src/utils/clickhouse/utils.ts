@@ -31,16 +31,16 @@ import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
+import { stageAndRegion } from '@flagright/lib/utils/env'
 
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
     return true
   }
 
-  const config = getTarponConfig(
-    process.env.ENV || '',
-    process.env.REGION || ''
-  )
+  const [stage, region] = stageAndRegion()
+
+  const config = getTarponConfig(stage, region)
   return !!config.clickhouse
 }
 
