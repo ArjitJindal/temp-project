@@ -10,6 +10,7 @@ import { chain, maxBy } from 'lodash'
 import { backOff } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
+import { stageAndRegion } from '@flagright/lib/utils/env'
 import { envIs, envIsNot } from '../env'
 import {
   DATE_TIME_FORMAT_JS,
@@ -31,7 +32,6 @@ import { getSecret } from '@/utils/secrets-manager'
 import { logger } from '@/core/logger'
 import { handleMongoConsumerSQSMessage } from '@/lambdas/mongo-db-trigger-consumer/app'
 import { MongoConsumerMessage } from '@/lambdas/mongo-db-trigger-consumer'
-import { stageAndRegion } from '@flagright/lib/utils/env'
 
 export const isClickhouseEnabledInRegion = () => {
   if (envIsNot('prod')) {
