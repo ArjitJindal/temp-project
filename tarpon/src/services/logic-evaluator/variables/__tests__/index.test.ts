@@ -5,6 +5,7 @@ import { getTransactionLogicEntityVariables, getLogicVariableByKey } from '..'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
+import { SourceOfFunds } from '@/@types/openapi-public/SourceOfFunds'
 
 describe('List of entity variables', () => {
   test('schema', async () => {
@@ -373,5 +374,20 @@ describe('Auto-created entity variables', () => {
         })
       )
     ).toBe(savedPaymentDetails)
+  })
+  test('CONSUMER_USER:sourceOfFunds__SENDER', async () => {
+    const variable = getLogicVariableByKey(
+      'CONSUMER_USER:sourceOfFunds__SENDER'
+    )
+
+    const sourceOfFunds: SourceOfFunds[] = ['Business', 'Benefits']
+
+    expect(
+      await variable?.load(
+        getTestUser({
+          sourceOfFunds: sourceOfFunds,
+        })
+      )
+    ).toBe(sourceOfFunds)
   })
 })

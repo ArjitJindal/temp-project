@@ -540,6 +540,13 @@ function getLeafArrayEntityVariables(
     uiDefinition: {
       label,
       type: 'multiselect',
+      fieldSettings:
+        info.options && info.options.length > 0
+          ? {
+              listValues: info.options,
+              allowCustomValues: true,
+            }
+          : undefined,
       preferWidgets: ['multiselect'],
       valueSources: ['value', 'field', 'func'] as ValueSource[],
       allowCustomValues: true,

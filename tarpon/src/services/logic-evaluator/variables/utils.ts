@@ -153,6 +153,8 @@ function handleArrayTypes(
     const arrayModel = Models[arrayType]
     if (arrayModel) {
       result.push(...getPublicModelLeafAttrs(arrayModel, arrayPath))
+    } else {
+      handleEnumTypes(arrayType, arrayPath, result)
     }
   } else {
     const oneOfResult = arrayType.split(' | ').flatMap((type) => {
