@@ -1,4 +1,5 @@
 import { Account } from '@/services/accounts'
+import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 
 let accounts: Account[] = []
 
@@ -7,5 +8,17 @@ export const setAccounts = (accountsToSet: Account[]) => {
 }
 
 export const getAccounts = () => {
+  if (accounts.length === 0) {
+    accounts = [
+      {
+        id: FLAGRIGHT_SYSTEM_USER,
+        role: 'ADMIN',
+        email: 'system@flagright.com',
+        emailVerified: true,
+        name: 'Flagright System',
+        blocked: false,
+      },
+    ]
+  }
   return accounts
 }
