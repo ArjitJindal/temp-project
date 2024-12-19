@@ -26,21 +26,21 @@ const backoffTypeOptions: SelectionGroupOption<WebhookSettingsType['retryBackoff
     value: 'LINEAR',
     label: 'Linear',
     description:
-      'Retry with a consistent 10-minute interval between each attempt. Each retry will wait the same fixed 10 minutes, providing a steady and predictable backoff strategy.',
+      'Retry at a consistent 10-minute interval, ensuring predictable timing and steady retry attempts.',
   },
   {
     value: 'EXPONENTIAL',
     label: 'Exponential',
     description:
-      'Implement a dynamic retry strategy with an exponential series of wait times: 10 minutes, 20 minutes, 40 minutes... up to a maximum of 360 minutes. Each subsequent retry extends the wait time, helping to prevent overwhelming temporary system issues.',
+      'Retry with increasing wait times (10, 20, 40 minutes) up to 360 minutes, reducing load on systems experiencing temporary issues.',
   },
 ];
 
 const onFailureWebhookActionOptions: SelectionGroupOption<
   WebhookSettingsType['maxRetryReachedAction']
 >[] = [
-  { value: 'DISABLE_WEBHOOK', label: 'Disable webhook' },
-  { value: 'IGNORE', label: 'Ignore failure' },
+  { value: 'DISABLE_WEBHOOK', label: 'Yes' },
+  { value: 'IGNORE', label: 'No' },
 ];
 
 export const WebhookSettings: React.FC = () => {
@@ -57,8 +57,8 @@ export const WebhookSettings: React.FC = () => {
     <SettingsCard title="Webhook settings">
       <div className={s.webhookSettings}>
         <Label
-          label="How long to retry for"
-          description="How long to retry failed webhook requests"
+          label="Retry duration"
+          description="Set the duration for retrying failed webhook requests"
         >
           <SelectionGroup<number>
             options={howLongToRetryForOptions}
@@ -71,7 +71,10 @@ export const WebhookSettings: React.FC = () => {
             mode="SINGLE"
           />
         </Label>
-        <Label label="Retry only for" description="Retry only for specific status codes">
+        <Label
+          label="Retry conditions"
+          description="Select the HTTP status codes that trigger retries"
+        >
           <SelectionGroup<WebhookRetryOnlyFor>
             options={retryOnlyForOptions}
             value={webhookSettings.retryOnlyFor}
@@ -83,7 +86,7 @@ export const WebhookSettings: React.FC = () => {
             mode="MULTIPLE"
           />
         </Label>
-        <Label label="Backoff type" description="Backoff type">
+        <Label label="Backoff type">
           <SelectionGroup<WebhookSettingsType['retryBackoffStrategy']>
             options={backoffTypeOptions}
             value={webhookSettings.retryBackoffStrategy}
@@ -95,7 +98,10 @@ export const WebhookSettings: React.FC = () => {
             mode="SINGLE"
           />
         </Label>
-        <Label label="On failure webhook action" description="On failure webhook action">
+        <Label
+          label="Webhook disabling"
+          description="Automatically disable the webhook after repeated failures to prevent continued errors."
+        >
           <SelectionGroup<WebhookSettingsType['maxRetryReachedAction']>
             options={onFailureWebhookActionOptions}
             value={webhookSettings.maxRetryReachedAction}
