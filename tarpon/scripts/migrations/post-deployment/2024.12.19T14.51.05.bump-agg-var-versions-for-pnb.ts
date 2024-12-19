@@ -20,6 +20,7 @@ async function migrateTenant(tenant: Tenant) {
   const ruleInstanceRepository = new RuleInstanceRepository(tenant.id, {
     dynamoDb,
   })
+  const version = Date.now()
   const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
   for (const ruleInstance of ruleInstances) {
     const aggVars = ruleInstance.logicAggregationVariables
@@ -35,7 +36,7 @@ async function migrateTenant(tenant: Tenant) {
           ...ruleInstance,
           logicAggregationVariables: aggVars.map((aggVar) => ({
             ...aggVar,
-            version: aggVar.version ? aggVar.version + 1 : 1,
+            version: version,
           })),
         },
       },
@@ -50,7 +51,7 @@ async function migrateTenant(tenant: Tenant) {
         ),
         UpdateExpression: 'set version = :version',
         ExpressionAttributeValues: {
-          ':version': aggVar.version ? aggVar.version + 1 : 1,
+          ':version': version,
         },
       }
       await dynamoDb.send(new UpdateCommand(updateItemInput))
