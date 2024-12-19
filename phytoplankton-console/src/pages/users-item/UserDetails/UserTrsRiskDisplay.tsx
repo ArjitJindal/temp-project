@@ -24,6 +24,7 @@ export const UserTrsRiskDisplay: React.FC<Props> = ({ userId }) => {
           riskScoreName="Average TRS risk score"
           showFormulaBackLink
           riskScoreAlgo={() => result.average}
+          hideInfo={true}
         />
       )}
     </AsyncResourceRenderer>
