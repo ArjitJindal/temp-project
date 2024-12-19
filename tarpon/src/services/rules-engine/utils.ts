@@ -388,7 +388,7 @@ type AsyncRuleRecordTransaction = {
   senderUser?: User | Business
   receiverUser?: User | Business
   riskDetails?: TransactionRiskScoringResult
-  isBackfill?: boolean
+  backfillNamespace?: string
 }
 type AsyncRuleRecordTransactionBatch = {
   type: 'TRANSACTION_BATCH'

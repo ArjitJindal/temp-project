@@ -27,7 +27,6 @@ import { LogicAggregationTimeWindowGranularity } from '@/@types/openapi-internal
 import { UsedAggregationVariable } from '@/@types/openapi-internal/UsedAggregationVariable'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { getContext } from '@/core/utils/context'
 
 export type AggregationData<T = unknown> = {
   value: T | { [group: string]: T }
@@ -70,15 +69,15 @@ export function getAggVarHash(
 export class AggregationRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
-  isBackfillMode: boolean = false
+  backfillNamespace: string | undefined
 
   constructor(tenantId: string, dynamoDb: DynamoDBDocumentClient) {
     this.dynamoDb = dynamoDb
     this.tenantId = tenantId
   }
 
-  public setIsBackfillMode(isBackfillMode: boolean) {
-    this.isBackfillMode = isBackfillMode
+  public setBackfillNamespace(backfillNamespace: string | undefined) {
+    this.backfillNamespace = backfillNamespace
   }
 
   public getUserTimeAggregationsRebuildWriteRequests(
@@ -187,7 +186,7 @@ export class AggregationRepository {
       consistentRead: true,
     })
 
-    if (this.isBackfillMode) {
+    if (this.backfillNamespace) {
       // In the backfill mode (for rerunning rules for past transactions), we always rebuild once
       // when we encounter the first transaction of a user. We return undefined here if the aggregation
       // variable is not ready to trigger the rebuild.
@@ -262,11 +261,9 @@ export class AggregationRepository {
   }
 
   private getBackfillVersionSuffix(): string {
-    if (!this.isBackfillMode) {
-      return ''
-    }
-    const context = getContext()
-    return generateChecksum(context?.logMetadata?.jobId ?? '', 5)
+    return this.backfillNamespace
+      ? generateChecksum(this.backfillNamespace, 5)
+      : ''
   }
   private getBackfillTTL(): number {
     return Math.floor(dayjs().add(1, 'week').valueOf() / 1000)
@@ -286,7 +283,7 @@ export class AggregationRepository {
           getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix()
         ),
         lastTransactionTimestamp,
-        ttl: this.isBackfillMode
+        ttl: this.backfillNamespace
           ? this.getBackfillTTL()
           : Math.floor(Date.now() / 1000) + duration(1, 'year').asSeconds(),
       },
@@ -315,7 +312,7 @@ export class AggregationRepository {
   private getUpdatedTtlAttribute(
     aggregationVariable: LogicAggregationVariable
   ): number {
-    if (this.isBackfillMode) {
+    if (this.backfillNamespace) {
       return this.getBackfillTTL()
     }
 

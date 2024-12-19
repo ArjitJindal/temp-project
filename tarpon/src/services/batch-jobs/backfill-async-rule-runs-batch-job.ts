@@ -175,7 +175,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       transaction,
       senderUser: originUser as User | Business | undefined,
       receiverUser: destinationUser as User | Business | undefined,
-      isBackfill: true,
+      backfillNamespace: this.jobId,
     }
     const response = await lambdaClient.send(
       new InvokeCommand({

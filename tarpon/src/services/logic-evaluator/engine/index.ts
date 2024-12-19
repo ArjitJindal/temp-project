@@ -178,7 +178,7 @@ export class LogicEvaluator {
   private aggregationRepository: AggregationRepository
   private mode: Mode
   private transactionEventRepository?: TransactionEventRepository
-  private isBackfillMode: boolean = false
+  private backfillNamespace: string | undefined
 
   constructor(
     tenantId: string,
@@ -194,9 +194,9 @@ export class LogicEvaluator {
     this.mode = mode
   }
 
-  public setIsBackfillMode(isBackfillMode: boolean) {
-    this.isBackfillMode = isBackfillMode
-    this.aggregationRepository.setIsBackfillMode(isBackfillMode)
+  public setBackfillNamespace(backfillNamespace: string | undefined) {
+    this.backfillNamespace = backfillNamespace
+    this.aggregationRepository.setBackfillNamespace(backfillNamespace)
   }
 
   private async initialize() {
@@ -1481,7 +1481,8 @@ export class LogicEvaluator {
 
       if (!userAggData) {
         if (
-          (hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') || this.isBackfillMode) &&
+          (hasFeature('RULES_ENGINE_V8_SYNC_REBUILD') ||
+            this.backfillNamespace) &&
           data.type === 'TRANSACTION'
         ) {
           const isRebuilt = await this.rebuildAggregationVariable(
