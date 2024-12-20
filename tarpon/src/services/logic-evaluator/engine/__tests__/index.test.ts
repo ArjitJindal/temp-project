@@ -3550,7 +3550,7 @@ describe('V8 aggregator for array of objects', () => {
       {
         time: '2023-01-01',
         value: expect.arrayContaining(['value-1a', 'value-1b']),
-        entities: expect.any(Array),
+        entities: undefined,
       },
     ])
   })

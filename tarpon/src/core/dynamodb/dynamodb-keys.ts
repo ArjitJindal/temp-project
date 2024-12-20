@@ -391,7 +391,7 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#${USER_ID_PREFIX}${userId}${AVG_ARS_KEY_IDENTIFIER}`,
     SortKeyID: version,
   }),
-  AGGREGATION_VARIABLE: (tenantId: string, aggHash: string) => ({
+  AGGREGATION_VARIABLE: (tenantId: string, aggHash?: string) => ({
     PartitionKeyID: `${tenantId}#aggvar`,
     SortKeyID: aggHash,
   }),

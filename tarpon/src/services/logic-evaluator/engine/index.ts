@@ -1262,11 +1262,17 @@ export class LogicEvaluator {
 
     const newTargetAggregation: AggregationData = {
       value: aggregator.reduce(targetAggregation.value, newData.newDataValue),
-      entities: (targetAggregation.entities ?? []).concat({
-        timestamp: transaction.timestamp,
-        value: newData.newDataValue,
-      }),
     }
+
+    if (aggregationVariable.lastNEntities) {
+      newTargetAggregation.entities = (targetAggregation.entities ?? []).concat(
+        {
+          timestamp: transaction.timestamp,
+          value: newData.newDataValue,
+        }
+      )
+    }
+
     if (!isEqual(newTargetAggregation, omit(targetAggregation, 'time'))) {
       await this.aggregationRepository.rebuildUserTimeAggregations(
         userKeyId,
