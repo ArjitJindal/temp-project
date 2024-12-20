@@ -716,6 +716,13 @@ paths:
         - schema:
             $ref: '#/components/schemas/BooleanString'
           in: query
+          name: lockKycRiskLevel
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
           name: validateUserId
           description: Boolean string whether Flagright should validate the userId
         - schema:
@@ -997,6 +1004,13 @@ paths:
           name: lockCraRiskLevel
           description:
             Boolean string whether Flagright should lock the CRA risk level for
+            the user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockKycRiskLevel
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
             the user.
         - schema:
             $ref: '#/components/schemas/BooleanString'
@@ -1322,6 +1336,13 @@ paths:
         - schema:
             $ref: '#/components/schemas/BooleanString'
           in: query
+          name: lockKycRiskLevel
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
           name: lockCraRiskLevel
           description:
             Boolean string whether Flagright should lock the CRA risk level for
@@ -1518,6 +1539,13 @@ paths:
             Boolean string whether Flagright should allow a Business user event
             to be applied to a Consumer user with the same user ID. This will
             converts a Consumer user to a Business user.
+        - schema:
+            $ref: '#/components/schemas/BooleanString'
+          in: query
+          name: lockKycRiskLevel
+          description:
+            Boolean string whether Flagright should lock the KYC risk level for
+            the user.
         - schema:
             $ref: '#/components/schemas/BooleanString'
           in: query
@@ -1932,6 +1960,8 @@ components:
         expectedIncome:
           $ref: '#/components/schemas/ExpectedIncome'
         riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        kycRiskLevel:
           $ref: '#/components/schemas/RiskLevel'
         acquisitionChannel:
           $ref: '#/components/schemas/AcquisitionChannel'
@@ -3918,6 +3948,8 @@ components:
         transactionLimits:
           $ref: '#/components/schemas/TransactionLimits'
         riskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        kycRiskLevel:
           $ref: '#/components/schemas/RiskLevel'
         allowedPaymentMethods:
           type: array

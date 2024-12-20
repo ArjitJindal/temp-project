@@ -316,7 +316,8 @@ export const userEventsHandler = lambdaApi()(
     const createUserEvent = async (
       userEvent: ConsumerUserEvent,
       allowUserTypeConversion?: string,
-      lockCraRiskLevel?: string
+      lockCraRiskLevel?: string,
+      lockKycRiskLevel?: string
     ) => {
       userEvent.updatedConsumerUserAttributes =
         userEvent.updatedConsumerUserAttributes &&
@@ -347,11 +348,13 @@ export const userEventsHandler = lambdaApi()(
       const isDrsUpdatable = lockCraRiskLevel
         ? lockCraRiskLevel !== 'true'
         : undefined
+      const lockKrs = lockKycRiskLevel ? lockKycRiskLevel !== 'true' : undefined
       const result: UserWithRulesResult =
         await userManagementService.verifyConsumerUserEvent(
           userEvent,
           allowUserTypeConversion === 'true',
-          isDrsUpdatable
+          isDrsUpdatable,
+          lockKrs
         )
 
       return {

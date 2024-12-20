@@ -38,7 +38,7 @@ export default function RiskScoreDisplay(props: Props) {
   const lastItem = sortedItems[values.length - 1];
   const components = lastItem?.components;
   const factorScoreDetails = lastItem?.factorScoreDetails;
-  const isManualUpdate = lastItem?.transactionId === 'MANUAL_UPDATE' && lastItem?.manualRiskLevel;
+  const isManualUpdate = lastItem?.manualRiskLevel;
 
   return (
     <>

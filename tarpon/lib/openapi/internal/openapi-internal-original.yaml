@@ -7580,6 +7580,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskFactorScoreDetails'
+        manualRiskLevel:
+          $ref: '#/components/schemas/RiskLevel'
+        isLocked:
+          type: boolean
       required:
         - createdAt
         - krsScore

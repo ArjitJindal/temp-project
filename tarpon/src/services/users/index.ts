@@ -1301,7 +1301,7 @@ export class UserService {
     )
 
     // Handle risk scoring update
-    await this.riskScoringV8Service.handleUserUpdate(updatedUser)
+    await this.riskScoringV8Service.handleUserUpdate({ user: updatedUser })
 
     // Handle post-update actions
     const [_, comment] = await Promise.all([

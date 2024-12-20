@@ -155,7 +155,9 @@ export async function createConsumerUser(
       })
   if (calculateRiskScores) {
     if (useV8RiskScoring) {
-      await (riskScoringService as RiskScoringV8Service).handleUserUpdate(user)
+      await (riskScoringService as RiskScoringV8Service).handleUserUpdate({
+        user,
+      })
     } else {
       await (riskScoringService as RiskScoringService).updateInitialRiskScores(
         user

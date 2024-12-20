@@ -167,7 +167,8 @@ export class RiskRepository {
     userId: string,
     score: number,
     components?: RiskScoreComponent[],
-    factorScoreDetails?: RiskFactorScoreDetails[]
+    factorScoreDetails?: RiskFactorScoreDetails[],
+    lockKrs?: boolean
   ): Promise<KrsScore> {
     logger.debug(`Updating KRS score for user ${userId} to ${score}`)
     const newKrsScoreItem: KrsScore = {
@@ -176,6 +177,7 @@ export class RiskRepository {
       userId: userId,
       components,
       factorScoreDetails,
+      isLocked: lockKrs ?? false,
     }
     const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
 
@@ -426,6 +428,35 @@ export class RiskRepository {
       derivedRiskLevel,
     }
     return result
+  }
+
+  async createOrUpdateManualKrsRiskItem(
+    userId: string,
+    riskLevel: RiskLevel,
+    isLocked?: boolean
+  ) {
+    const primaryKey = DynamoDbKeys.KRS_VALUE_ITEM(this.tenantId, userId, '1')
+    const riskClassificationValues = await this.getRiskClassificationValues()
+    const newKrsScoreItem: KrsScore = {
+      krsScore: getRiskScoreFromLevel(riskClassificationValues, riskLevel),
+      createdAt: Date.now(),
+      userId,
+      isLocked: isLocked ?? false,
+      manualRiskLevel: riskLevel,
+    }
+    const putItemInput: PutCommandInput = {
+      TableName: StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(this.tenantId),
+      Item: {
+        ...primaryKey,
+        ...newKrsScoreItem,
+      },
+    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+    if (process.env.NODE_ENV === 'development') {
+      await handleLocalChangeCapture(this.tenantId, primaryKey)
+    }
+    logger.info(`Manual risk level updated for user ${userId} to ${riskLevel}`)
+    return newKrsScoreItem
   }
 
   async createOrUpdateManualDRSRiskItem(

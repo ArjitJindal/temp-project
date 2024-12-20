@@ -304,7 +304,8 @@ export class RiskScoringService {
 
   public async runRiskScoresForUser(
     userPayload: User | Business,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    lockKrs?: boolean
   ): Promise<UserRiskScoreDetails> {
     let krsScore: number | undefined
     let krsRiskLevel: RiskLevel | undefined
@@ -318,7 +319,8 @@ export class RiskScoringService {
       if (hasFeature('RISK_SCORING')) {
         const score = await this.updateInitialRiskScores(
           userPayload as User | Business,
-          isDrsUpdatable
+          isDrsUpdatable,
+          lockKrs
         )
 
         krsScore = craScore = score
@@ -329,7 +331,6 @@ export class RiskScoringService {
       }
 
       const preDefinedRiskLevel = userPayload.riskLevel
-
       if (preDefinedRiskLevel) {
         await this.handleManualRiskLevel(
           userPayload as User | Business,
@@ -342,6 +343,19 @@ export class RiskScoringService {
         )
 
         craRiskLevel = preDefinedRiskLevel
+      }
+      const preDefinedKrsRiskLevel = userPayload.kycRiskLevel
+      if (preDefinedKrsRiskLevel) {
+        await this.handleManualKrsRiskLevelUpdate(
+          userPayload as User | Business,
+          preDefinedKrsRiskLevel,
+          lockKrs
+        )
+        krsScore = getRiskScoreFromLevel(
+          riskClassificationValues,
+          preDefinedKrsRiskLevel
+        )
+        krsRiskLevel = preDefinedKrsRiskLevel
       }
     }
 
@@ -562,7 +576,8 @@ export class RiskScoringService {
 
   public async updateInitialRiskScores(
     user: User | Business,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    lockKrs?: boolean
   ): Promise<number> {
     logger.debug(`Updating initial risk score for user ${user.userId}`)
 
@@ -577,7 +592,9 @@ export class RiskScoringService {
       this.riskRepository.createOrUpdateKrsScore(
         user.userId,
         score,
-        components
+        components,
+        undefined,
+        lockKrs
       ),
       this.riskRepository.createOrUpdateDrsScore(
         user.userId,
@@ -836,18 +853,40 @@ export class RiskScoringService {
 
   public async calculateAndUpdateKRSAndDRS(
     user: User | Business,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    lockKrs?: boolean
   ): Promise<UserRiskScoreDetails> {
     const { riskFactors, riskClassificationValues } = await this.getRiskConfig()
 
-    const oldKrsScore = (await this.riskRepository.getKrsScore(user.userId))
-      ?.krsScore
+    const oldKrs = await this.riskRepository.getKrsScore(user.userId)
+    const isKrsLocked = oldKrs?.isLocked ?? false
+    const oldKrsScore = oldKrs?.krsScore
     const oldDrs = await this.riskRepository.getDrsScore(user.userId)
-    const { score: newKrsScore, components } = await this.calculateKrsScore(
-      user,
-      riskClassificationValues,
-      riskFactors || []
-    )
+    let newKrsScore: number, components: RiskScoreComponent[]
+    if (isKrsLocked && oldKrsScore && lockKrs !== false) {
+      newKrsScore = oldKrsScore
+      components = oldKrs?.components ?? []
+    } else if (user.kycRiskLevel) {
+      await this.handleManualKrsRiskLevelUpdate(
+        user,
+        user.kycRiskLevel,
+        lockKrs
+      )
+      newKrsScore = getRiskScoreFromLevel(
+        riskClassificationValues,
+        user.kycRiskLevel
+      )
+      components = []
+    } else {
+      const { score: krsScore, components: newComponents } =
+        await this.calculateKrsScore(
+          user,
+          riskClassificationValues,
+          riskFactors || []
+        )
+      newKrsScore = krsScore
+      components = newComponents
+    }
 
     const newRiskData: UserRiskScoreDetails = {
       craRiskLevel: getRiskLevelFromScore(
@@ -861,7 +900,6 @@ export class RiskScoringService {
       ),
       kycRiskScore: newKrsScore,
     }
-
     if (newKrsScore === oldKrsScore) {
       // Additional update in case of just locking and unlocking CRA risk level without user details update
       if (
@@ -876,14 +914,28 @@ export class RiskScoringService {
           isDrsUpdatable
         )
       }
+      // Additional update in case of just locking and unlocking CRA risk level without user details update
+      if (lockKrs === false && isKrsLocked) {
+        await this.riskRepository.createOrUpdateKrsScore(
+          user.userId,
+          oldKrs?.krsScore ?? newKrsScore,
+          components,
+          undefined,
+          false
+        )
+      }
 
       return newRiskData
     }
-    await this.riskRepository.createOrUpdateKrsScore(
-      user.userId,
-      newKrsScore,
-      components
-    )
+    if (!user.kycRiskLevel) {
+      await this.riskRepository.createOrUpdateKrsScore(
+        user.userId,
+        newKrsScore,
+        components,
+        undefined,
+        lockKrs
+      )
+    }
 
     if (oldDrs && !oldDrs.isUpdatable && !isDrsUpdatable) {
       // To override the DRS score lock
@@ -913,6 +965,18 @@ export class RiskScoringService {
       ),
       kycRiskScore: newKrsScore,
     }
+  }
+
+  public async handleManualKrsRiskLevelUpdate(
+    user: User | Business,
+    manualKrsRiskLevel: RiskLevel,
+    lockKrs?: boolean
+  ): Promise<void> {
+    await this.riskRepository.createOrUpdateManualKrsRiskItem(
+      user.userId,
+      manualKrsRiskLevel,
+      lockKrs
+    )
   }
 
   public async backfillUserRiskScores(userIds: string[] = []): Promise<void> {

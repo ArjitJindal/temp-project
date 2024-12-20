@@ -678,7 +678,7 @@ describe('V8 Risk scoring ', () => {
           acquisitionChannel: 'REFERRAL',
         })
 
-        const result = await riskScoringService.handleUserUpdate(user)
+        const result = await riskScoringService.handleUserUpdate({ user })
         expect(result).toEqual({
           kycRiskScore: 44,
           kycRiskLevel: 'MEDIUM',
@@ -703,22 +703,22 @@ describe('V8 Risk scoring ', () => {
         ])
       })
       test('simple user only KRS (low)', async () => {
-        const result = await riskScoringService.handleUserUpdate(
-          getTestUser({
+        const result = await riskScoringService.handleUserUpdate({
+          user: getTestUser({
             acquisitionChannel: 'PAID',
-          })
-        )
+          }),
+        })
         expect(result).toEqual({
           kycRiskScore: 25,
           kycRiskLevel: 'LOW',
         })
       })
       test('simple user only KRS (default)', async () => {
-        const result = await riskScoringService.handleUserUpdate(
-          getTestUser({
+        const result = await riskScoringService.handleUserUpdate({
+          user: getTestUser({
             acquisitionChannel: 'GATHERING',
-          })
-        )
+          }),
+        })
         expect(result).toEqual({
           kycRiskScore: 75,
           kycRiskLevel: 'HIGH',
@@ -771,24 +771,24 @@ describe('V8 Risk scoring ', () => {
         }),
       ])
       test('simple user only one of two condition matches KRS (medium)', async () => {
-        const result = await riskScoringService.handleUserUpdate(
-          getTestUser({
+        const result = await riskScoringService.handleUserUpdate({
+          user: getTestUser({
             kycStatusDetails: {
               status: 'FAILED',
             },
-          })
-        )
+          }),
+        })
         expect(result).toEqual({
           kycRiskScore: 59.5,
           kycRiskLevel: 'MEDIUM',
         })
       })
       test('simple user only one of two condition matches KRS (medium)', async () => {
-        const result = await riskScoringService.handleUserUpdate(
-          getTestUser({
+        const result = await riskScoringService.handleUserUpdate({
+          user: getTestUser({
             acquisitionChannel: 'PAID',
-          })
-        )
+          }),
+        })
         expect(result).toEqual({
           kycRiskScore: 50,
           kycRiskLevel: 'MEDIUM',
@@ -801,7 +801,7 @@ describe('V8 Risk scoring ', () => {
             status: 'FAILED',
           },
         })
-        const result = await riskScoringService.handleUserUpdate(user)
+        const result = await riskScoringService.handleUserUpdate({ user })
         expect(result).toEqual({
           kycRiskScore: 34.5,
           kycRiskLevel: 'LOW',
@@ -1274,14 +1274,16 @@ describe('complete risk scoring flow (DRS)', () => {
       ])
 
       test('should calculate initial KRS score', async () => {
-        const result1 = await riskScoringService.handleUserUpdate(TEST_USER_1)
+        const result1 = await riskScoringService.handleUserUpdate({
+          user: TEST_USER_1,
+        })
         expect(result1).toEqual(results[index][0])
-        const result2 = await riskScoringService.handleUserUpdate(
-          getTestUser({
+        const result2 = await riskScoringService.handleUserUpdate({
+          user: getTestUser({
             userId: TEST_USER_2.userId,
             acquisitionChannel: 'REFERRAL',
-          })
-        )
+          }),
+        })
         expect(result2).toEqual(results[index][1])
       })
 
@@ -1322,8 +1324,10 @@ describe('complete risk scoring flow (DRS)', () => {
           acquisitionChannel: 'OFFLINE',
         })
         const result5 = await riskScoringService.handleUserUpdate({
-          ...TEST_USER_1,
-          acquisitionChannel: 'OFFLINE',
+          user: {
+            ...TEST_USER_1,
+            acquisitionChannel: 'OFFLINE',
+          },
         })
         expect(result5).toEqual(results[index][4])
       })
@@ -1382,11 +1386,12 @@ describe('complete risk scoring flow (DRS)', () => {
       },
     })
     test('should lock and unlock DRS for manual risk level update', async () => {
-      const result = await riskScoringService.handleUserUpdate(
-        TEST_USER_1,
-        'HIGH',
-        false
-      )
+      const result = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualRiskLevel: 'HIGH',
+        isDrsUpdatable: false,
+      })
+
       expect(result).toEqual({
         craRiskLevel: 'HIGH',
         craRiskScore: 70,
@@ -1394,10 +1399,10 @@ describe('complete risk scoring flow (DRS)', () => {
         kycRiskLevel: 'HIGH',
       })
 
-      const result2 = await riskScoringService.handleUserUpdate(
-        TEST_USER_1,
-        'MEDIUM'
-      )
+      const result2 = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualRiskLevel: 'MEDIUM',
+      })
       expect(result2).toEqual({
         // No change as it is locked
         craRiskLevel: 'HIGH',
@@ -1406,11 +1411,11 @@ describe('complete risk scoring flow (DRS)', () => {
         kycRiskLevel: 'HIGH',
       })
 
-      const result3 = await riskScoringService.handleUserUpdate(
-        TEST_USER_1,
-        'LOW',
-        true
-      )
+      const result3 = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualRiskLevel: 'LOW',
+        isDrsUpdatable: true,
+      })
       expect(result3).toEqual({
         craRiskLevel: 'LOW',
         craRiskScore: 30,
@@ -1419,11 +1424,11 @@ describe('complete risk scoring flow (DRS)', () => {
       })
     })
     test('should not update DRS for user if it is not updatable', async () => {
-      const result = await riskScoringService.handleUserUpdate(
-        TEST_USER_1,
-        undefined,
-        false
-      )
+      const result = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualRiskLevel: undefined,
+        isDrsUpdatable: false,
+      })
       expect(result).toEqual({
         craRiskLevel: 'HIGH',
         craRiskScore: 75,
@@ -1431,9 +1436,11 @@ describe('complete risk scoring flow (DRS)', () => {
         kycRiskLevel: 'HIGH',
       })
       const result2 = await riskScoringService.handleUserUpdate({
-        ...TEST_USER_1,
-        kycStatusDetails: {
-          status: 'SUCCESSFUL',
+        user: {
+          ...TEST_USER_1,
+          kycStatusDetails: {
+            status: 'SUCCESSFUL',
+          },
         },
       })
       expect(result2).toEqual({
@@ -1443,18 +1450,151 @@ describe('complete risk scoring flow (DRS)', () => {
         craRiskLevel: 'HIGH',
         craRiskScore: 75,
       })
-      const result3 = await riskScoringService.handleUserUpdate(
-        {
+      const result3 = await riskScoringService.handleUserUpdate({
+        user: {
           ...TEST_USER_1,
           kycStatusDetails: {
             status: 'SUCCESSFUL',
           },
         },
-        undefined,
-        true
-      )
+        manualRiskLevel: undefined,
+        isDrsUpdatable: true,
+      })
       expect(result3).toEqual({
         // CRA unlocked
+        kycRiskLevel: 'LOW',
+        kycRiskScore: 30,
+        craRiskLevel: 'LOW',
+        craRiskScore: 30,
+      })
+    })
+  })
+  describe('Locking and unlocking KRS and manual update', () => {
+    beforeAll(async () => {
+      const mongoDb = await getMongoDbClient()
+      const dynamoDb = getDynamoDbClient()
+      const tenantService = new TenantService(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
+      await tenantService.createOrUpdateTenantSettings({
+        riskScoringCraEnabled: true,
+        riskScoringAlgorithm: {
+          type: 'FORMULA_SIMPLE_AVG',
+        },
+      })
+    })
+    const riskScoringService = new RiskScoringV8Service(
+      tenantId,
+      new LogicEvaluator(tenantId, getDynamoDbClient()),
+      {
+        dynamoDb: getDynamoDbClient(),
+      }
+    )
+    setUpRiskFactorsHook(tenantId, [
+      getTestRiskFactor({
+        id: 'RF1',
+        type: 'CONSUMER_USER',
+        riskLevelLogic: [
+          {
+            logic: {
+              and: [
+                {
+                  '==': [
+                    { var: 'CONSUMER_USER:kycStatusDetails-status__SENDER' },
+                    'SUCCESSFUL',
+                  ],
+                },
+              ],
+            },
+            riskLevel: 'LOW',
+            riskScore: 30,
+            weight: 1,
+          },
+        ],
+      }),
+    ])
+    const TEST_USER_1 = getTestUser({
+      userId: 'USER6',
+      acquisitionChannel: 'PAID',
+      kycStatusDetails: {
+        status: 'FAILED',
+      },
+    })
+    test('should lock and unlock KRS for manual KRS risk level update', async () => {
+      const result = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualKrsRiskLevel: 'HIGH',
+        lockKrs: true,
+      })
+      expect(result).toEqual({
+        craRiskLevel: 'HIGH',
+        craRiskScore: 70,
+        kycRiskScore: 70,
+        kycRiskLevel: 'HIGH',
+      })
+
+      const result2 = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualKrsRiskLevel: 'VERY_LOW',
+      })
+      expect(result2).toEqual({
+        // No change as it is locked
+        craRiskLevel: 'HIGH',
+        craRiskScore: 70,
+        kycRiskScore: 70,
+        kycRiskLevel: 'HIGH',
+      })
+
+      const result3 = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        manualKrsRiskLevel: 'VERY_LOW',
+        lockKrs: false,
+      })
+      expect(result3).toEqual({
+        craRiskLevel: 'VERY_LOW',
+        craRiskScore: 10,
+        kycRiskScore: 10,
+        kycRiskLevel: 'VERY_LOW',
+      })
+    })
+    test('should not update KRS for user if it is not updatable', async () => {
+      const result = await riskScoringService.handleUserUpdate({
+        user: TEST_USER_1,
+        lockKrs: true,
+      })
+      expect(result).toEqual({
+        craRiskLevel: 'HIGH',
+        craRiskScore: 75,
+        kycRiskScore: 75,
+        kycRiskLevel: 'HIGH',
+      })
+      const result2 = await riskScoringService.handleUserUpdate({
+        user: {
+          ...TEST_USER_1,
+          kycStatusDetails: {
+            status: 'SUCCESSFUL',
+          },
+        },
+      })
+      expect(result2).toEqual({
+        // KRS is locked
+        kycRiskLevel: 'HIGH',
+        kycRiskScore: 75,
+        craRiskLevel: 'HIGH',
+        craRiskScore: 75,
+      })
+      const result3 = await riskScoringService.handleUserUpdate({
+        user: {
+          ...TEST_USER_1,
+          kycStatusDetails: {
+            status: 'SUCCESSFUL',
+          },
+        },
+        lockKrs: false,
+      })
+      expect(result3).toEqual({
+        // KRS is unlocked
         kycRiskLevel: 'LOW',
         kycRiskScore: 30,
         craRiskLevel: 'LOW',

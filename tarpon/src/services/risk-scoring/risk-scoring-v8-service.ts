@@ -37,6 +37,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { ReRunTrigger } from '@/@types/openapi-internal/ReRunTrigger'
 import dayjs from '@/utils/dayjs'
 import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
+import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
 const DEFAULT_RISK_LEVEL = 'HIGH'
 const DEFAULT_RISK_SCORE = 75
@@ -454,32 +455,86 @@ export class RiskScoringV8Service {
     return updatedArsScore
   }
 
-  public async handleUserUpdate(
+  public async calculateKrsScore(
     user: User | Business,
-    manualRiskLevel?: RiskLevel,
-    isDrsUpdatable?: boolean
-  ): Promise<UserRiskScoreDetails> {
-    const userId = user.userId
-    const krsScore = await this.getKrsScoreValue(userId)
-    const riskClassificationValues =
-      await this.riskRepository.getRiskClassificationValues()
+    riskFactors: RiskFactor[]
+  ): Promise<RiskFactorsResult> {
+    const { riskFactorsResult: newKrsScore } =
+      await this.calculateRiskFactorsScore({ user, type: 'USER' }, riskFactors)
+    return newKrsScore
+  }
+
+  public async calculateAndUpdateKrsScore(
+    user: User | Business,
+    riskClassificationValues: RiskClassificationScore[],
+    manualKrsRiskLevel?: RiskLevel,
+    existingKrs?: KrsScore | null,
+    lockKrs?: boolean
+  ): Promise<RiskFactorsResult> {
+    const isLocked = existingKrs?.isLocked ?? false
     const riskFactors = await this.getActiveRiskFactors(
       isConsumerUser(user) ? 'CONSUMER_USER' : 'BUSINESS'
     )
+    if (isLocked && lockKrs !== false) {
+      return {
+        score: existingKrs?.krsScore ?? DEFAULT_RISK_SCORE,
+        scoreDetails: existingKrs?.factorScoreDetails ?? [],
+      }
+    }
 
-    const { riskFactorsResult: newKrsScore } =
-      await this.calculateRiskFactorsScore({ user, type: 'USER' }, riskFactors)
+    if (manualKrsRiskLevel) {
+      await this.handleManualKrsRiskLevelUpdate(
+        user,
+        manualKrsRiskLevel,
+        lockKrs
+      )
+      return {
+        score: getRiskScoreFromLevel(
+          riskClassificationValues,
+          manualKrsRiskLevel
+        ),
+        scoreDetails: [],
+      }
+    }
+    const newKrsScore = await this.calculateKrsScore(user, riskFactors)
     await this.riskRepository.createOrUpdateKrsScore(
-      userId,
+      user.userId,
       newKrsScore.score,
       [],
-      newKrsScore.scoreDetails
+      newKrsScore.scoreDetails,
+      lockKrs
     )
+    return newKrsScore
+  }
 
+  public async handleUserUpdate(params: {
+    user: User | Business
+    manualRiskLevel?: RiskLevel
+    isDrsUpdatable?: boolean
+    manualKrsRiskLevel?: RiskLevel
+    lockKrs?: boolean
+  }): Promise<UserRiskScoreDetails> {
+    const {
+      user,
+      manualRiskLevel,
+      isDrsUpdatable,
+      manualKrsRiskLevel,
+      lockKrs,
+    } = params
+    const riskClassificationValues =
+      await this.riskRepository.getRiskClassificationValues()
+    const userId = user.userId
+    const krsScore = await this.getKrsScore(userId)
     const { riskScoringCraEnabled = true } = await this.getTenantSettings()
-
+    const newKrsScore = await this.calculateAndUpdateKrsScore(
+      user,
+      riskClassificationValues,
+      manualKrsRiskLevel,
+      krsScore,
+      lockKrs
+    )
     let craRiskScore: number | undefined = newKrsScore.score
-    if (riskScoringCraEnabled) {
+    if (riskScoringCraEnabled && !manualRiskLevel) {
       if (!krsScore) {
         await this.updateDrsScore(
           userId,
@@ -764,17 +819,29 @@ export class RiskScoringV8Service {
     return settings
   }
 
+  public async handleManualKrsRiskLevelUpdate(
+    user: User | Business,
+    manualKrsRiskLevel?: RiskLevel,
+    lockKrs?: boolean
+  ) {
+    return await this.riskRepository.createOrUpdateManualKrsRiskItem(
+      user.userId,
+      manualKrsRiskLevel ?? DEFAULT_RISK_LEVEL,
+      lockKrs
+    )
+  }
+
   public async handleManualRiskLevelUpdate(
     user: User | Business,
     isUpdatable?: boolean
   ) {
     const drsScore = await this.getDrsScore(user.userId)
-    if (drsScore?.isUpdatable === false && !isUpdatable) {
+    if (drsScore && drsScore.isUpdatable === false && !isUpdatable) {
       return drsScore
     }
     return await this.riskRepository.createOrUpdateManualDRSRiskItem(
       user.userId,
-      user.riskLevel ?? 'VERY_HIGH',
+      user.riskLevel ?? DEFAULT_RISK_LEVEL,
       isUpdatable
     )
   }

@@ -69,6 +69,7 @@ export const userHandler = lambdaApi()(
       userPayload: T,
       options?: {
         lockCraRiskLevel?: boolean
+        lockKycRiskLevel?: boolean
         validateUserId?: boolean
         krsOnly?: boolean
       }
@@ -95,7 +96,7 @@ export const userHandler = lambdaApi()(
       const isV8RiskScoringEnabled = hasFeature('RISK_SCORING_V8')
 
       const isDrsUpdatable = options?.lockCraRiskLevel !== true
-
+      const lockKycRiskLevel = options?.lockKycRiskLevel !== true
       const riskScoringService = isV8RiskScoringEnabled
         ? new RiskScoringV8Service(tenantId, logicEvaluator, {
             dynamoDb,
@@ -107,7 +108,13 @@ export const userHandler = lambdaApi()(
       if (isV8RiskScoringEnabled) {
         riskScoreResult = await (
           riskScoringService as RiskScoringV8Service
-        ).handleUserUpdate(userPayload, userPayload.riskLevel, isDrsUpdatable)
+        ).handleUserUpdate({
+          user: userPayload,
+          manualRiskLevel: userPayload.riskLevel,
+          isDrsUpdatable,
+          manualKrsRiskLevel: userPayload.kycRiskLevel,
+          lockKrs: lockKycRiskLevel,
+        })
       } else {
         riskScoreResult = await (
           riskScoringService as RiskScoringService
@@ -202,6 +209,7 @@ export const userHandler = lambdaApi()(
       validateUserId:
         !request.validateUserId || request.validateUserId === 'true',
       krsOnly: request._krsOnly === 'true',
+      lockKrsRiskLevel: request.lockKycRiskLevel === 'true',
     })
     handlers.registerPostConsumerUser(async (_ctx, request) => {
       return createUser(request.User, getCreateUserOptions(request))

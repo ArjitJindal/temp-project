@@ -261,7 +261,8 @@ export class UserManagementService {
       userId: string
     ) => Promise<(UserResultType<T> & { type: UserType }) | undefined>,
     saveUser: (user: UserResultType<T>) => Promise<UserResultType<T>>,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    isKrsLocked?: boolean
   ): Promise<UserResultType<T>> {
     let user = await getUser(userEvent.userId)
     if (!user) {
@@ -327,11 +328,13 @@ export class UserManagementService {
 
     if (hasFeature('RISK_SCORING')) {
       if (hasFeature('RISK_SCORING_V8')) {
-        riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate(
-          updatedUser,
-          updatedAttributes.riskLevel,
-          isDrsUpdatable
-        )
+        riskScoreDetails = await this.riskScoringV8Service.handleUserUpdate({
+          user: updatedUser,
+          manualRiskLevel: updatedAttributes.riskLevel,
+          isDrsUpdatable,
+          manualKrsRiskLevel: updatedAttributes.kycRiskLevel,
+          lockKrs: isKrsLocked,
+        })
       } else {
         riskScoreDetails =
           await this.riskScoringService.calculateAndUpdateKRSAndDRS(
@@ -404,7 +407,8 @@ export class UserManagementService {
   public async verifyConsumerUserEvent(
     userEvent: ConsumerUserEvent,
     allowUserTypeConversion = false,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    isKrsLocked?: boolean
   ): Promise<UserWithRulesResult> {
     return this.verifyUserEvent<'CONSUMER'>(
       'CONSUMER',
@@ -412,7 +416,8 @@ export class UserManagementService {
       allowUserTypeConversion,
       this.userRepository.getConsumerUser.bind(this.userRepository),
       this.userRepository.saveConsumerUser.bind(this.userRepository),
-      isDrsUpdatable
+      isDrsUpdatable,
+      isKrsLocked
     )
   }
 
