@@ -243,8 +243,33 @@ export default function TransactionsTable(props: Props) {
   const ruleOptions = useRuleOptions();
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
+
   const columns: TableColumn<TransactionTableItem>[] = useMemo(() => {
     const helper = new ColumnHelper<TransactionTableItem>();
+
+    let alertColumns: DerivedColumn<any, any>[] = [];
+    if (alert) {
+      alertColumns = [
+        helper.derived<string>({
+          title: 'Alert ID',
+          value: (): string => alert.alertId || '',
+          hideInTable: true,
+          exporting: true,
+        }),
+        helper.derived<string>({
+          title: 'Rule name',
+          value: (): string => alert.ruleName,
+          hideInTable: true,
+          exporting: true,
+        }),
+        helper.derived<string>({
+          title: 'Rule description',
+          value: (): string => alert.ruleDescription,
+          hideInTable: true,
+          exporting: true,
+        }),
+      ];
+    }
     return helper.list([
       helper.simple<'transactionId'>({
         title: 'Transaction ID',
@@ -276,7 +301,7 @@ export default function TransactionsTable(props: Props) {
           },
         },
       }),
-
+      ...alertColumns,
       ...(isRiskScoringEnabled
         ? [
             helper.simple<'ars.score'>({
