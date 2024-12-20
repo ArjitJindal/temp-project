@@ -57,7 +57,7 @@ export class FixRiskScoresForPnbUsersBatchJobRunner extends BatchJobRunner {
         await pMap(
           users,
           async (user) => {
-            await riskScoringV8Service.handleUserUpdate(user)
+            await riskScoringV8Service.handleUserUpdate({ user })
           },
           { concurrency: parameters.concurrency }
         )
