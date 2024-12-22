@@ -284,7 +284,7 @@
     "lru-cache": "^11.0.0",
     "memoize-one": "^6.0.0",
     "mongodb": "5.9.2",
-    "nanoid": "^3.3.4",
+    "nanoid": "^3.3.8",
     "node-fetch": "^2.6.12",
     "openai": "4.70.2",
     "p-limit": "^3.0.0",
