@@ -30,13 +30,7 @@ export default function BusinessUserDetails(props: Props) {
           { label: `Directors (${user.directors?.length ?? 0})`, value: 'DIRECTORS' },
         ]}
       />
-      {activeTab === 'LEGAL_ENTITY' && (
-        <LegalEntityDetails
-          user={user}
-          currentUserId={currentUser.userId}
-          onNewComment={onNewComment}
-        />
-      )}
+      {activeTab === 'LEGAL_ENTITY' && <LegalEntityDetails user={user} />}
       {activeTab === 'SHAREHOLDERS' && (
         <Persons
           persons={user.shareHolders}

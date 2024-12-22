@@ -64,7 +64,13 @@ export default function FilesDraggerInput(props: Props) {
           const hideMessage = message.loading('Uploading...');
           try {
             if (listType === 'attachment') {
-              const allowedTypes = ['image/jpeg', 'image/png', 'application/pdf'];
+              const allowedTypes = [
+                'image/jpeg',
+                'image/png',
+                'application/pdf',
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+              ];
               if (!allowedTypes.includes(file.type)) {
                 throw new Error('Unsupported file type');
               }
@@ -93,7 +99,7 @@ export default function FilesDraggerInput(props: Props) {
           <div className={cn(s.title, size === 'SMALL' ? s.alignItemsStart : '')}>
             <div className={s.title1}>
               Click or drag file to this area to upload
-              {required && <span className={s.required}>*</span>}
+              {required && <span className={s.required}> *</span>}
             </div>
             <div className={cn(s.title2, size === 'SMALL' ? s.textAlignStart : '')}>{info}</div>
           </div>

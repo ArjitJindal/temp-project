@@ -195,6 +195,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
       isOpen={isOpen}
       cancelText="Cancel"
       okText="Upload"
+      width="M"
       okProps={{
         isDisabled: fileList.length === 0 || isUploading,
       }}
@@ -218,8 +219,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
         }
       }}
       title="Upload documents"
-      maskClosable={false}
-      width="S"
+      maskClosable={true}
     >
       <div className={s.modalroot}>
         <div className={s.modalbody}>
@@ -229,7 +229,7 @@ const AttachmentUploadModal = (props: ModalProps) => {
             onChange={(value) => {
               setFileList(value ?? []);
             }}
-            info={'Supported file types: PDF, JPG, PNG, xlsx, docx'}
+            info={'Supported file types: PDF, JPG, PNG, XLSX, DOCX'}
             listType="attachment"
             setUploading={handleUploadingChange}
             required={true}
