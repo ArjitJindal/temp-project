@@ -34,9 +34,7 @@ export class Request {
     if (response.status >= 400) {
       const details = await response.text()
       throw new RequestError(
-        `Error while communicating with the server. Code: (${
-          response.status
-        }), body: ${details}`,
+        `Error while communicating with the server. Code: (${response.status}), body: ${details}`,
         response.status
       )
     }
