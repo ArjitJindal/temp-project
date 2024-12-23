@@ -10877,6 +10877,7 @@ components:
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH
         - CONCURRENT_DYNAMODB_CONSUMER
+        - ALERTS_DYNAMO_POC
       description: ''
     ManagedRoleName:
       type: string

@@ -8,11 +8,14 @@ import {
   intersection,
   isEmpty,
   last,
+  uniq,
   uniqBy,
 } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
+import { DynamoAlertRepository } from './dynamo-repository'
+import { ClickhouseAlertRepository } from './clickhouse-repository'
 import {
   DAY_DATE_FORMAT,
   getSkipAndLimit,
@@ -52,6 +55,12 @@ import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { RuleInstanceAlertsStats } from '@/@types/openapi-internal/RuleInstanceAlertsStats'
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { AccountsService } from '@/services/accounts'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
+import { CaseType } from '@/@types/openapi-internal/CaseType'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 export const API_USER = 'API'
@@ -69,6 +78,7 @@ export class AlertsRepository {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
+  dynamoAlertRepository: DynamoAlertRepository
 
   constructor(
     tenantId: string,
@@ -77,6 +87,10 @@ export class AlertsRepository {
     this.mongoDb = connections.mongoDb as MongoClient
     this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
     this.tenantId = tenantId
+    this.dynamoAlertRepository = new DynamoAlertRepository(
+      tenantId,
+      this.dynamoDb
+    )
   }
 
   public async getAlerts(
@@ -85,6 +99,45 @@ export class AlertsRepository {
   ): Promise<AlertListResponse> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+
+    if (isClickhouseEnabled() && hasFeature('ALERTS_DYNAMO_POC')) {
+      const clickhouseRepository = new ClickhouseAlertRepository(
+        await getClickhouseClient(this.tenantId)
+      )
+
+      const { data, total } = await clickhouseRepository.getAlerts(params)
+
+      const alerts = await this.dynamoAlertRepository.getAlerts(
+        data.map((alert) => alert.id as string)
+      )
+
+      const alertMap = new Map<string, Alert>()
+
+      alerts.forEach((a) => alertMap.set(a.alertId as string, a))
+
+      const caseIds = alerts.map((alert) => alert.caseId)
+
+      // TODO: We should get rid of this as soon as possible
+      const cases = await collection
+        .find({ caseId: { $in: uniq(caseIds) } })
+        .toArray()
+
+      const caseMap = new Map<string, Case>()
+
+      cases.forEach((c) => caseMap.set(c.caseId as string, c))
+
+      return {
+        total,
+        data: alerts.map((alert) => ({
+          alert,
+          caseType: caseMap.get(alert.caseId as string)?.caseType as CaseType,
+          caseCreatedTimestamp: caseMap.get(alert.caseId as string)
+            ?.createdTimestamp as number,
+          caseUsers: caseMap.get(alert.caseId as string)
+            ?.caseUsers as CaseCaseUsers,
+        })),
+      }
+    }
 
     if (!hasFeature('PNB')) {
       const pipeline = await this.getAlertsPipeline(params, {
@@ -270,13 +323,22 @@ export class AlertsRepository {
     }
   }
 
-  public updateAISummary(
+  public async updateAISummary(
     alertId: string,
     commentId: string,
     fileS3Key: string,
     summary: string
   ) {
-    return this.updateOneAlert(
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateAISummary(
+        alertId,
+        commentId,
+        fileS3Key,
+        summary
+      )
+    }
+
+    await this.updateOneAlert(
       { 'alerts.alertId': alertId },
       {
         $set: {
@@ -908,6 +970,7 @@ export class AlertsRepository {
   }
 
   public async markAllChecklistItemsAsDone(alertIds: string[]): Promise<void> {
+    // TODO: Add dynamo update
     await this.updateManyAlerts(
       {
         'alerts.alertId': {
@@ -951,6 +1014,10 @@ export class AlertsRepository {
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     const now = Date.now()
     alert.updatedAt = now
+
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.saveAlert(alert)
+    }
 
     await collection.findOneAndUpdate(
       { caseId },
@@ -997,6 +1064,13 @@ export class AlertsRepository {
       updatedAt: now,
     }
 
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.saveAlertsComment(
+        alertIds,
+        commentToSave
+      )
+    }
+
     await this.updateManyAlerts(
       { caseId: { $in: caseIds } },
       {
@@ -1015,6 +1089,10 @@ export class AlertsRepository {
     commentId: string
   ): Promise<void> {
     const now = Date.now()
+
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.deleteComment(alertId, commentId)
+    }
 
     await this.updateOneAlert(
       { caseId, 'alerts.alertId': alertId },
@@ -1061,14 +1139,18 @@ export class AlertsRepository {
       reviewerId: isLastInReview ? statusChange.userId : undefined,
     }
 
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateStatus(
+        alertIds,
+        statusChange,
+        isLastInReview
+      )
+    }
+
     await this.updateManyAlerts(
       {
-        caseId: {
-          $in: caseIds,
-        },
-        'alerts.alertId': {
-          $in: alertIds,
-        },
+        caseId: { $in: caseIds },
+        'alerts.alertId': { $in: alertIds },
       },
       [
         {
@@ -1110,9 +1192,7 @@ export class AlertsRepository {
     )
 
     const caseItems = await collection
-      .find({
-        caseId: { $in: caseIds },
-      })
+      .find({ caseId: { $in: caseIds } })
       .toArray()
 
     const caseStatusToCheck = ['ESCALATED', 'CLOSED'].includes(
@@ -1144,6 +1224,11 @@ export class AlertsRepository {
     assignments: Assignment[]
   ): Promise<void> {
     const now = Date.now()
+
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateAssignments(alertIds, assignments)
+    }
+
     await this.updateManyAlerts(
       {
         'alerts.alertId': {
@@ -1173,6 +1258,13 @@ export class AlertsRepository {
     alertIds: string[]
   ): Promise<void> {
     const now = Date.now()
+
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateReviewAssignmentsToAssignments(
+        alertIds
+      )
+    }
+
     await this.updateManyAlerts(
       {
         'alerts.alertId': {
@@ -1217,6 +1309,14 @@ export class AlertsRepository {
     assignments: Assignment[],
     reviewAssignments: Assignment[]
   ) {
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateInReviewAssignments(
+        alertIds,
+        assignments,
+        reviewAssignments
+      )
+    }
+
     await this.updateManyAlerts(
       {
         'alerts.alertId': {
@@ -1240,6 +1340,14 @@ export class AlertsRepository {
     reviewAssignments: Assignment[]
   ): Promise<void> {
     const now = Date.now()
+
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.updateReviewAssignments(
+        alertIds,
+        reviewAssignments
+      )
+    }
+
     await this.updateManyAlerts(
       {
         'alerts.alertId': {
@@ -1269,6 +1377,7 @@ export class AlertsRepository {
     assignmentId: string,
     reassignToUserId: string
   ): Promise<void> {
+    // TODO: FETCH FROM CLICKHOUSE AND UPDATE IN DYNAMODB RESPECTIVELY
     const user = getContext()?.user as Account
 
     const now = Date.now()
@@ -1339,6 +1448,7 @@ export class AlertsRepository {
   }
 
   public async updateRuleQueue(ruleInstanceId: string, ruleQueueId?: string) {
+    // TODO: FETCH FROM CLICKHOUSE AND UPDATE IN DYNAMODB RESPECTIVELY
     await this.updateManyAlerts(
       { 'alerts.ruleInstanceId': { $eq: ruleInstanceId } },
       {
@@ -1353,6 +1463,7 @@ export class AlertsRepository {
   }
 
   public async deleteRuleQueue(ruleQueueId: string) {
+    // TODO: FETCH FROM CLICKHOUSE AND UPDATE IN DYNAMODB RESPECTIVELY
     await this.updateManyAlerts(
       { 'alerts.ruleQueueId': { $eq: ruleQueueId } },
       {

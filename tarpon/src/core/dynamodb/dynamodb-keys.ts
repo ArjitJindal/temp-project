@@ -30,6 +30,7 @@ const USER_ID_PREFIX = 'user:'
 const TYPE_PREFIX = 'type:'
 const RULE_INSTANCE_PREFIX = 'rule:'
 const QUESTION_ID_PREFIX = 'question:'
+export const ALERT_ID_PREFIX = 'alert:'
 
 export type TimeGranularity = 'day' | 'month' | 'year'
 export type TenantSettingName = keyof TenantSettings
@@ -44,6 +45,9 @@ export const AVG_ARS_KEY_IDENTIFIER = '#avg-ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 export const SHARED_PARTITION_KEY_PREFIX = 'shared'
+export const ALERT_KEY_IDENTIFIER = '#alert-data'
+export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
+export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -60,6 +64,24 @@ function getAuxiliaryIndexTransactionSortKey(
 }
 
 export const DynamoDbKeys = {
+  // Attributes: refer to Alert
+  ALERT: (tenantId: string, alertId: string) => ({
+    PartitionKeyID: `${tenantId}${ALERT_KEY_IDENTIFIER}`,
+    SortKeyID: alertId,
+  }),
+  ALERT_COMMENT: (tenantId: string, alertId: string, commentId: string) => ({
+    PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_COMMENT_KEY_IDENTIFIER}`,
+    SortKeyID: commentId,
+  }),
+  ALERT_COMMENT_FILE: (
+    tenantId: string,
+    alertId: string,
+    commentId?: string,
+    fileS3Key?: string
+  ) => ({
+    PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_FILE_ID_IDENTIFIER}`,
+    SortKeyID: `${commentId}#${fileS3Key}`,
+  }),
   // Attributes: refer to Transaction
   TRANSACTION: (tenantId: string, transactionId?: string) => ({
     PartitionKeyID: `${tenantId}#${TRANSACTION_PRIMARY_KEY_IDENTIFIER}`,

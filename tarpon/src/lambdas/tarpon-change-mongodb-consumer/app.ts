@@ -53,6 +53,12 @@ import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-se
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { envIsNot } from '@/utils/env'
+import { Alert } from '@/@types/openapi-internal/Alert'
+import { Comment } from '@/@types/openapi-internal/Comment'
+import { FileInfo } from '@/@types/openapi-internal/FileInfo'
+import { insertToClickhouse } from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -426,6 +432,58 @@ async function userEventHandler(
   )
 }
 
+async function alertHandler(
+  tenantId: string,
+  alert: Alert | undefined,
+  dbClients: DbClients
+) {
+  if (!alert || !alert.alertId) {
+    return
+  }
+
+  const caseRepository = new CaseRepository(tenantId, {
+    mongoDb: dbClients.mongoDb,
+    dynamoDb: dbClients.dynamoDb,
+  })
+
+  const case_ = await caseRepository.getCaseById(alert.caseId as string)
+
+  if (!case_) {
+    return
+  }
+
+  await insertToClickhouse<AlertClickhouse>(
+    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+    { ...alert, caseStatus: case_.caseStatus },
+    tenantId
+  )
+}
+
+async function alertCommentHandler(
+  tenantId: string,
+  alertId: string,
+  alertComment: Comment | undefined
+) {
+  if (!alertComment || !alertComment.id) {
+    return
+  }
+
+  // TODO: Implement if required
+}
+
+async function alertFileHandler(
+  tenantId: string,
+  alertId: string,
+  commentId: string,
+  alertFile: FileInfo | undefined
+) {
+  if (!alertFile || !alertFile.s3Key) {
+    return
+  }
+
+  // TODO: Implement if required
+}
+
 async function transactionEventHandler(
   tenantId: string,
   transactionEvent: TransactionEvent | undefined,
@@ -524,6 +582,16 @@ const tarponBuilder = new StreamConsumerBuilder(
   )
   .setAvgArsScoreEventHandler((tenantId, oldAvgArs, newAvgArs, dbClients) =>
     avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
+  )
+  .setAlertHandler((tenantId, oldAlert, newAlert, dbClients) =>
+    alertHandler(tenantId, newAlert, dbClients)
+  )
+  .setAlertCommentHandler((tenantId, alertId, oldComment, newComment) =>
+    alertCommentHandler(tenantId, alertId, newComment)
+  )
+  .setAlertFileHandler(
+    (tenantId, alertId, commentId, oldAlertFile, newAlertFile) =>
+      alertFileHandler(tenantId, alertId, commentId, newAlertFile)
   )
 
 // NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding

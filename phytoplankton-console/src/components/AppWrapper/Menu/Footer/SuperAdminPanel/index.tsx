@@ -144,6 +144,10 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
     title: 'Concurrent DynamoDB consumer',
     description: 'Enables concurrent DynamoDB consumer',
   },
+  ALERTS_DYNAMO_POC: {
+    title: 'Alerts Dynamo POC (Experimental)',
+    description: 'Enables alerts Dynamo POC (Experimental)',
+  },
 };
 
 export default function SuperAdminPanel() {

@@ -40,8 +40,10 @@ export async function getTransactionsRepo(tenantId: string) {
 
 export async function getCaseRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = await getDynamoDbClient()
   return new CaseRepository(tenantId, {
     mongoDb,
+    dynamoDb,
   })
 }
 export async function getAlertRepo(tenantId: string) {

@@ -4,6 +4,7 @@ import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
 import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
 import { riskFactors } from './data/risk-factors'
+import { getCases } from './data/cases'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUsers } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -16,7 +17,10 @@ import {
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { ruleInstances } from '@/core/seed/data/rules'
-import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import {
+  disableLocalChangeHandler,
+  enableLocalChangeHandler,
+} from '@/utils/local-dynamodb-change-handler'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -32,6 +36,7 @@ import { RiskRepository } from '@/services/risk-scoring/repositories/risk-reposi
 import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -138,6 +143,15 @@ export async function seedDynamo(
       drsScore.isUpdatable,
       drsScore.factorScoreDetails
     )
+  }
+
+  console.log('Creating alerts...')
+  const dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
+
+  for (const caseItem of getCases()) {
+    enableLocalChangeHandler()
+    await dynamoAlertRepository.saveAlerts(caseItem.alerts ?? [])
+    disableLocalChangeHandler()
   }
 
   logger.info('Create risk factors')

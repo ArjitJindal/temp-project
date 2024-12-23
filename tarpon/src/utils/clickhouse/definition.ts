@@ -164,6 +164,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   SANCTIONS_SCREENING_DETAILS: {
     tableName: 'sanctions_screening_details',
   },
+  ALERTS: {
+    tableName: 'alerts',
+  },
 }
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
@@ -414,6 +417,20 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "transactionIds Array(String) MATERIALIZED JSONExtract(data, 'transactionIds', 'Array(String)')",
       "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
       "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+    idColumn: 'alertId',
+    timestampColumn: 'createdTimestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(caseId, id)',
+    orderBy: '(caseId, id)',
+    materializedColumns: [
+      "caseId String MATERIALIZED JSON_VALUE(data, '$.caseId')",
+      "caseStatus String MATERIALIZED JSON_VALUE(data, '$.caseStatus')",
+      "alertStatus String MATERIALIZED JSON_VALUE(data, '$.alertStatus')",
+      "updatedAt UInt64 MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))",
     ],
   },
 ] as const

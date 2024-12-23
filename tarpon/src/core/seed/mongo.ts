@@ -77,7 +77,7 @@ import { SLAService } from '@/services/sla/sla-service'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import {
   batchInsertToClickhouse,
-  getClickhouseClient,
+  createTenantDatabase,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
 
@@ -205,15 +205,11 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   if (isClickhouseEnabledInRegion()) {
     const mongoConsumerService = new MongoDbConsumer(client)
-    const clickhouseClient = await getClickhouseClient(tenantId)
+    await createTenantDatabase(tenantId)
     await Promise.all(
       ClickHouseTables.map(async (table) => {
         const clickhouseTable = table.table
         // clear everything clickhouse table
-        await clickhouseClient.exec({
-          query: `DELETE FROM ${clickhouseTable} WHERE 1=1`,
-        })
-
         const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
         const mongoCollectionName = `${tenantId}-${mongoTable}`
         const data = db.collection(mongoCollectionName).find().batchSize(100)

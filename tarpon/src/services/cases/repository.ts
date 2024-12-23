@@ -12,6 +12,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { difference, intersection, isEmpty, isNil, omitBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
 import { TimeRange } from '../rules-engine/repositories/transaction-repository-interface'
+import { DynamoAlertRepository } from '../alerts/dynamo-repository'
 import {
   internalMongoInsert,
   internalMongoReplace,
@@ -182,6 +183,10 @@ export class CaseRepository {
 
   async addCaseMongo(caseEntity: Case): Promise<Case> {
     const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
+    const dynamoDbAlertRepository = new DynamoAlertRepository(
+      this.tenantId,
+      this.dynamoDb
+    )
     await withTransaction(async () => {
       const casesCollectionName = CASES_COLLECTION(this.tenantId)
 
@@ -222,6 +227,10 @@ export class CaseRepository {
         { caseId: caseEntity.caseId },
         caseEntity
       )
+
+      if (hasFeature('ALERTS_DYNAMO_POC')) {
+        await dynamoDbAlertRepository.saveAlerts(caseEntity.alerts ?? [])
+      }
     })
 
     return caseEntity
@@ -1156,13 +1165,13 @@ export class CaseRepository {
 
   public async getCaseById(
     caseId: string,
-    getAggregates = false
+    getCaseAggregates = false
   ): Promise<CaseWithoutCaseTransactions | null> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
     return await collection.findOne<Case>(
       { caseId },
-      !getAggregates ? { projection: { caseAggregates: 0 } } : undefined
+      !getCaseAggregates ? { projection: { caseAggregates: 0 } } : undefined
     )
   }
 

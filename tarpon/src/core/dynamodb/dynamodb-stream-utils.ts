@@ -16,6 +16,9 @@ import {
   DRS_KEY_IDENTIFIER,
   RULE_INSTANCE_IDENTIFIER,
   AVG_ARS_KEY_IDENTIFIER,
+  ALERT_KEY_IDENTIFIER,
+  ALERT_COMMENT_KEY_IDENTIFIER,
+  ALERT_FILE_ID_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -38,6 +41,9 @@ export type DynamoDbEntityType =
   | 'ARS_VALUE'
   | 'DRS_VALUE'
   | 'AVG_ARS_VALUE'
+  | 'ALERT'
+  | 'ALERT_COMMENT'
+  | 'ALERT_FILE'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -47,6 +53,7 @@ export type DynamoDbEntityUpdate = {
   NewImage?: { [key: string]: any }
   OldImage?: { [key: string]: any }
   partitionKeyId: string
+  sortKeyId?: string
 }
 
 function unMarshallDynamoDBStream(dataString: string) {
@@ -57,6 +64,7 @@ function unMarshallDynamoDBStream(dataString: string) {
 
 export function getDynamoDbEntityMetadata(
   partitionKeyId: string,
+  sortKeyId: string,
   entity: any
 ): { type: DynamoDbEntityType; entityId: string } | null {
   if (!entity) {
@@ -153,6 +161,39 @@ export function getDynamoDbEntityMetadata(
       type: 'RULE_INSTANCE',
       entityId: `RULE_INSTANCE:${entityId}`,
     }
+  } else if (partitionKeyId.includes(ALERT_KEY_IDENTIFIER)) {
+    const entityId = entity.alertId
+
+    if (!entityId) {
+      return null
+    }
+
+    return {
+      type: 'ALERT',
+      entityId: `ALERT:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(ALERT_COMMENT_KEY_IDENTIFIER)) {
+    const entityId = entity.commentId
+
+    if (!entityId) {
+      return null
+    }
+
+    return {
+      type: 'ALERT_COMMENT',
+      entityId: `ALERT:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(ALERT_FILE_ID_IDENTIFIER)) {
+    const entityId = entity.fileId
+
+    if (!entityId) {
+      return null
+    }
+
+    return {
+      type: 'ALERT_FILE',
+      entityId: `ALERT:${entityId}`,
+    }
   }
   return null
 }
@@ -161,6 +202,7 @@ function getDynamoDbEntity(
   dynamoDBStreamRecord: StreamRecord
 ): DynamoDbEntityUpdate | null {
   const partitionKeyId = dynamoDBStreamRecord.Keys?.PartitionKeyID?.S as string
+  const sortKeyId = dynamoDBStreamRecord.Keys?.SortKeyID?.S as string
   const tenantId = partitionKeyId?.split('#')[0] as string
   let NewImage =
     dynamoDBStreamRecord.NewImage &&
@@ -175,8 +217,8 @@ function getDynamoDbEntity(
     return null
   }
   const metadata =
-    getDynamoDbEntityMetadata(partitionKeyId, NewImage) ??
-    getDynamoDbEntityMetadata(partitionKeyId, OldImage)
+    getDynamoDbEntityMetadata(partitionKeyId, sortKeyId, NewImage) ??
+    getDynamoDbEntityMetadata(partitionKeyId, sortKeyId, OldImage)
 
   // Quick fix for b4bpayments
   if (metadata?.type === 'USER' && tenantId.toLowerCase() === '0789ad73b8') {
@@ -231,6 +273,7 @@ function getDynamoDbEntity(
     NewImage,
     OldImage,
     partitionKeyId,
+    sortKeyId,
   }
 }
 

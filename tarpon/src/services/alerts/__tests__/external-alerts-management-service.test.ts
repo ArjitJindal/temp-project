@@ -39,10 +39,7 @@ describe('End to End External Alerts Management Service', () => {
 
     const alertsExternalService = new ExternalAlertManagementService(
       tenantId,
-      {
-        mongoDb,
-        dynamoDb,
-      },
+      { mongoDb, dynamoDb },
       s3,
       { documentBucketName: 'test-bucket', tmpBucketName: 'test-bucket' }
     )

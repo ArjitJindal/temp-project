@@ -57,6 +57,7 @@ import dayjs from '@/utils/dayjs'
 import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
 import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -98,6 +99,8 @@ type ExcludedDynamoDbKey = Exclude<
   | 'AVG_ARS_VALUE_ITEM'
   | 'AVG_ARS_READY_MARKER'
   | 'ACTIVE_SESSIONS'
+  | 'ALERT_COMMENT'
+  | 'ALERT_COMMENT_FILE'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
@@ -367,6 +370,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteSarItems.bind(this),
         order: 14,
       },
+      ALERT: {
+        method: this.deleteAlertsData.bind(this),
+        order: 15,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -392,6 +399,53 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
       'Aggregation Variable'
     )
+  }
+
+  private async deleteAlertsData(tenantId: string) {
+    const partitionKeyId = DynamoDbKeys.ALERT(tenantId, '').PartitionKeyID
+    const queryInput: QueryCommandInput = {
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pk',
+      ExpressionAttributeValues: {
+        ':pk': partitionKeyId,
+      },
+    }
+
+    await dangerouslyQueryPaginateDelete<Alert>(
+      this.dynamoDb(),
+      tenantId,
+      queryInput,
+      (tenantId, alert) => {
+        return this.deleteAlert(tenantId, alert)
+      }
+    )
+  }
+
+  private async deleteAlert(tenantId: string, alert: Alert) {
+    const alertId = alert.alertId as string
+
+    await Promise.all([
+      dangerouslyDeletePartition(
+        this.dynamoDb(),
+        tenantId,
+        DynamoDbKeys.ALERT_COMMENT(tenantId, alertId, '').PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        'Alert Comment'
+      ),
+      dangerouslyDeletePartition(
+        this.dynamoDb(),
+        tenantId,
+        DynamoDbKeys.ALERT_COMMENT_FILE(tenantId, alertId, '', '')
+          .PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        'Alert Comment File'
+      ),
+      dangerouslyDeletePartitionKey(
+        this.dynamoDb(),
+        DynamoDbKeys.ALERT(tenantId, alertId),
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId)
+      ),
+    ])
   }
 
   private async deleteListHeaders(tenantId: string) {
