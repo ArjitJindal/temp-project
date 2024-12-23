@@ -183,7 +183,9 @@ function ExportButton(props: Props) {
       }
     >
       <div ref={popoverTargetRef}>
-        <Button type="TETRIARY">Export</Button>
+        <Button type="TETRIARY" requiredPermissions={['case-management:case-details:write']}>
+          Export
+        </Button>
       </div>
     </Popover>
   );
