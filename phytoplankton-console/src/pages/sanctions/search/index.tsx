@@ -22,6 +22,7 @@ import { isSuperAdmin, useAuth0User } from '@/utils/user-utils';
 import { makeUrl } from '@/utils/routing';
 import { QueryResult } from '@/utils/queries/types';
 import { notEmpty } from '@/utils/array';
+import { message } from '@/components/library/Message';
 
 interface TableSearchParams {
   searchTerm?: string;
@@ -124,7 +125,10 @@ export function SearchResultTable(props: Props) {
       items = newSearchQueryResults.data.value.data;
       refetch = newSearchQueryResults.refetch;
     } else if (isSuccess(historyItemQueryResults.data)) {
-      items = historyItemQueryResults.data.value.response?.data;
+      if (!historyItemQueryResults.data.value) {
+        message.error('No search results found for this search id');
+      }
+      items = historyItemQueryResults.data.value?.response?.data;
       refetch = historyItemQueryResults.refetch;
     }
     const dataRes: AsyncResource<TableData<SanctionsEntity>> =
