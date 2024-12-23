@@ -4,7 +4,7 @@ import TransactionsTable, {
 } from '@/pages/transactions/components/TransactionsTable';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import DisplayCheckedTransactions from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions';
-import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { DEFAULT_PAGINATION_VIEW, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { useCursorQuery } from '@/utils/queries/hooks';
 import { ALERT_ITEM_TRANSACTION_LIST } from '@/utils/queries/keys';
 import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/InsightsCard';
@@ -39,7 +39,7 @@ export default function TransactionsTab(props: Props) {
 
   const transactionsResponse = useCursorQuery(
     ALERT_ITEM_TRANSACTION_LIST(alert.alertId ?? '', { ...params }),
-    async ({ from }) => {
+    async ({ from, view }) => {
       if (alert.alertId == null) {
         throw new Error(`Unable to fetch transactions for alert, it's id is empty`);
       }
@@ -52,6 +52,7 @@ export default function TransactionsTab(props: Props) {
         start: from || params.from,
         page: params.page,
         pageSize: params.pageSize,
+        view: view ?? DEFAULT_PAGINATION_VIEW,
         userId: params.userId,
         sortField: sortField ?? undefined,
         sortOrder: sortOrder ?? undefined,

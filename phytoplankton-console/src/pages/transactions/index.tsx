@@ -73,7 +73,7 @@ const TableList = () => {
 
   const queryResult = useCursorQuery<TransactionTableItem>(
     TRANSACTIONS_LIST(parsedParams),
-    async ({ from }) => {
+    async ({ from, view }) => {
       if (isClickhouseEnabled) {
         return {
           count: 0,
@@ -86,10 +86,9 @@ const TableList = () => {
           limit: 0,
         };
       }
-
       return await api.getTransactionsList({
         start: from || parsedParams.from,
-        ...transactionParamsToRequest(parsedParams),
+        ...transactionParamsToRequest({ ...parsedParams, view }),
       });
     },
   );
@@ -103,9 +102,8 @@ const TableList = () => {
           total: 0,
         };
       }
-
       const data = await api.getTransactionsV2List({
-        ...transactionParamsToRequest(parsedParams),
+        ...transactionParamsToRequest({ ...parsedParams, view: paginationParams.view }),
         ...paginationParams,
       });
 

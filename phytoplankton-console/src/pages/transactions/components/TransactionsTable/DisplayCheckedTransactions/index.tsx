@@ -36,10 +36,10 @@ const DisplayCheckedTransactions = (props: Props) => {
 
   const queryResult = useCursorQuery(
     TRANSACTIONS_LIST({ ...params, caseUserId }),
-    async ({ from }) => {
+    async ({ from, view }) => {
       const hitDirections = props.alert.ruleHitMeta?.hitDirections;
       return await api.getTransactionsList({
-        ...transactionParamsToRequest(params),
+        ...transactionParamsToRequest({ ...params, view }),
         start: from || params.from,
         ...(hitDirections?.length === 1
           ? {

@@ -1,7 +1,7 @@
 const EXCEL_CHAR_LIMIT = Math.pow(2, 15) - 1;
 
 export function xlsxValue(value: unknown): string {
-  if (value === null || value === '') {
+  if (value === null || value === '' || value === undefined) {
     return '-';
   }
 

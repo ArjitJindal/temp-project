@@ -5,7 +5,14 @@ import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import { AllUsersTableItem, CountryCode, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
+import {
+  AllUsersTableItem,
+  CountryCode,
+  PepRank,
+  RiskLevel,
+  TableListViewEnum,
+  UserRegistrationStatus,
+} from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
@@ -37,7 +44,11 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [params, setParams] = useState<UserSearchParams>({ sort: [], pageSize: 20 });
+  const [params, setParams] = useState<UserSearchParams>({
+    sort: [],
+    pageSize: 20,
+    view: 'TABLE' as TableListViewEnum,
+  });
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const pushParamsToNavigation = useCallback(
@@ -62,7 +73,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
 
   const queryResults = useCursorQuery<AllUsersTableItem>(
     USERS(type, { ...params, isClickhouseEnabled }),
-    async ({ from }) => {
+    async ({ from, view: tableView }) => {
       if (isClickhouseEnabled) {
         return {
           from: from || params.from,
@@ -77,6 +88,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         };
       }
       const {
+        view,
         userId,
         createdTimestamp,
         riskLevels,
@@ -89,8 +101,8 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         pepCountry,
         pepRank,
       } = params;
-
       const queryObj = {
+        view: tableView ?? view,
         pageSize,
         afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
         beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
@@ -108,7 +120,6 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         filterRiskLevelLocked: riskLevelLocked,
         filterPepCountry: pepCountry,
       };
-
       const queryParam = {
         start: from || params.from,
         ...queryObj,

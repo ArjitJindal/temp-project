@@ -11,6 +11,7 @@ import {
   ExecutedRulesResult,
   PaymentMethod,
   RuleAction,
+  TableListViewEnum,
   TransactionState,
   TransactionTableItem,
   TransactionTableItemUser,
@@ -58,6 +59,7 @@ import { DefaultApiGetTransactionsListRequest } from '@/apis/types/ObjectParamAP
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
+import { DEFAULT_PAGINATION_VIEW } from '@/components/library/Table/consts';
 
 export interface TransactionsTableParams extends CommonParams {
   current?: string;
@@ -82,6 +84,7 @@ export interface TransactionsTableParams extends CommonParams {
   status?: RuleAction & 'all';
   direction?: 'incoming' | 'outgoing' | 'all';
   showDetailedView?: boolean;
+  view?: TableListViewEnum;
 }
 
 const getUserLinkObject = (user?: TransactionTableItemUser) => {
@@ -107,6 +110,7 @@ export const transactionParamsToRequest = (
 ): DefaultApiGetTransactionsListRequest => {
   const { ignoreDefaultTimestamps = false } = options ?? {};
   const {
+    view,
     pageSize,
     page,
     timestamp,
@@ -128,6 +132,7 @@ export const transactionParamsToRequest = (
   } = params;
   const [sortField, sortOrder] = params.sort[0] ?? [];
   const requestParams: DefaultApiGetTransactionsListRequest = {
+    view: view ?? DEFAULT_PAGINATION_VIEW,
     page,
     pageSize,
     afterTimestamp: timestamp
@@ -171,7 +176,6 @@ export const transactionParamsToRequest = (
   } else {
     requestParams.filterUserId = userId;
   }
-
   return requestParams;
 };
 

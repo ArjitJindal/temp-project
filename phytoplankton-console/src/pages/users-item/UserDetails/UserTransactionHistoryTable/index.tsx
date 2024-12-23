@@ -97,9 +97,9 @@ export function Content(props: { userId: string }) {
 
   const responseRes = useCursorQuery(
     USERS_ITEM_TRANSACTIONS_HISTORY(userId, params),
-    async ({ from }) => {
+    async ({ from, view }) => {
       const requestParams = {
-        ...transactionParamsToRequest(params, { ignoreDefaultTimestamps: true }),
+        ...transactionParamsToRequest({ ...params, view }, { ignoreDefaultTimestamps: true }),
         start: from || params.from,
         includeUsers: false,
       };

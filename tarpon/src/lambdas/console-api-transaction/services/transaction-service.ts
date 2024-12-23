@@ -39,6 +39,7 @@ import { CaseRepository } from '@/services/cases/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
 @traceable
 export class TransactionService {
@@ -157,30 +158,30 @@ export class TransactionService {
         amount: transaction.destinationAmountDetails?.transactionAmount,
         currency: transaction.destinationAmountDetails?.transactionCurrency,
         country: transaction.destinationAmountDetails?.country,
-        paymentMethodId: transaction.destinationPaymentMethodId,
-        paymentDetails: transaction.destinationPaymentDetails,
+        paymentMethodId: transaction?.destinationPaymentMethodId,
+        paymentDetails: transaction?.destinationPaymentDetails,
       },
       originPayment: {
         amount: transaction.originAmountDetails?.transactionAmount,
         currency: transaction.originAmountDetails?.transactionCurrency,
         country: transaction.originAmountDetails?.country,
-        paymentMethodId: transaction.originPaymentMethodId,
-        paymentDetails: transaction.originPaymentDetails,
+        paymentMethodId: transaction?.originPaymentMethodId,
+        paymentDetails: transaction?.originPaymentDetails,
       },
       isAnySanctionsExecutedRules: !!(transaction?.executedRules ?? [])
         ?.map((rule) =>
           rule?.ruleHitMeta?.sanctionsDetails?.map((r) => r?.sanctionHitIds)
         )
         .flat().length,
-      destinationUser: { id: transaction.destinationUserId },
-      originUser: { id: transaction.originUserId },
-      productType: transaction.productType,
-      reference: transaction.reference,
-      status: transaction.status,
-      tags: transaction.tags,
-      transactionState: transaction.transactionState,
+      destinationUser: { id: transaction?.destinationUserId },
+      originUser: { id: transaction?.originUserId },
+      productType: transaction?.productType,
+      reference: transaction?.reference,
+      status: transaction?.status,
+      tags: transaction?.tags,
+      transactionState: transaction?.transactionState,
       type: transaction.type,
-      hitRules: transaction.hitRules.map((rule) => ({
+      hitRules: transaction.hitRules?.map((rule) => ({
         ruleName: rule.ruleName,
         ruleDescription: rule.ruleDescription,
       })),
@@ -205,7 +206,7 @@ export class TransactionService {
         ...response,
         items: response.items.map((transaction) => {
           const executedRule = alert?.ruleInstanceId
-            ? transaction.executedRules.find(
+            ? transaction.executedRules?.find(
                 (rule) => rule.ruleInstanceId === alert?.ruleInstanceId
               )
             : undefined
@@ -271,8 +272,47 @@ export class TransactionService {
 
   public async getTransactions(params: DefaultApiGetTransactionsListRequest) {
     const result =
-      await this.transactionRepository.getTransactionsCursorPaginate(params)
-
+      await this.transactionRepository.getTransactionsCursorPaginate(params, {
+        projection: {
+          _id: 1,
+          type: 1,
+          transactionId: 1,
+          timestamp: 1,
+          originUserId: 1,
+          destinationUserId: 1,
+          transactionState: 1,
+          originAmountDetails: 1,
+          destinationAmountDetails: 1,
+          originPaymentDetails: 1,
+          destinationPaymentDetails: 1,
+          productType: 1,
+          tags: 1,
+          status: 1,
+          originPaymentMethodId: 1,
+          destinationPaymentMethodId: 1,
+          arsScore: {
+            arsScore: 1,
+          },
+          executedRules:
+            params.view === ('TABLE' as TableListViewEnum)
+              ? {
+                  ruleInstanceId: 1,
+                  ruleHitMeta: {
+                    sanctionsDetails: {
+                      searchId: 1,
+                    },
+                  },
+                }
+              : [],
+          hitRules:
+            params.view === ('TABLE' as TableListViewEnum)
+              ? {
+                  ruleName: 1,
+                  ruleDescription: 1,
+                }
+              : [],
+        },
+      })
     return result
   }
 

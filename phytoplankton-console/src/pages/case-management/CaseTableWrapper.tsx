@@ -22,6 +22,7 @@ export default function CaseTableWrapper(props: {
       sort,
       page,
       pageSize,
+      view,
       createdTimestamp,
       caseId,
       rulesHitFilter,
@@ -52,6 +53,7 @@ export default function CaseTableWrapper(props: {
     const response = await api.getCaseList({
       page,
       pageSize,
+      view,
       ...paginationParams,
       afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
       beforeTimestamp: createdTimestamp

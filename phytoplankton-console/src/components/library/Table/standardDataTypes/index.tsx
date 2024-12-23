@@ -391,7 +391,10 @@ export const MONEY: ColumnDataType<Amount> = {
   render: (value) => {
     return <Money amount={value} />;
   },
-  stringify: (value) => (value ? `${value.amountCurrency} ${value.amountValue.toFixed(2)}` : ''),
+  stringify: (value) =>
+    value && value.amountCurrency && value.amountCurrency
+      ? `${value.amountCurrency} ${value.amountValue.toFixed(2)}`
+      : '',
   autoFilterDataType: { kind: 'dateTimeRange' },
 };
 

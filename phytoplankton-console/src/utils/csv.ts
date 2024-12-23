@@ -7,7 +7,7 @@ export interface CsvValue {
 export type CsvRow = CsvValue[];
 
 export function csvValue(value: unknown, link?: string): CsvValue {
-  if (value === null || value === '') {
+  if (value === null || value === '' || value === undefined) {
     return { escaped: '"-"' };
   }
 
