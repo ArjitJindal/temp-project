@@ -81,3 +81,17 @@ export function removeUndefinedFields<T>(obj: T): T {
     return obj
   }
 }
+
+export function removeEmptyKeys<T>(obj: T): T {
+  if (typeof obj !== 'object' || obj === null) {
+    return obj
+  }
+  for (const key in obj) {
+    if (key === '') {
+      delete obj[key]
+    } else if (typeof obj[key] === 'object') {
+      removeEmptyKeys(obj[key])
+    }
+  }
+  return obj
+}

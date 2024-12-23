@@ -32,6 +32,7 @@ import { getTimeRangeByTimeWindows } from '@/services/rules-engine/utils/time-ut
 import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
 import { LogicAggregationVariable } from '@/@types/openapi-internal/LogicAggregationVariable'
 import { LogicAggregationVariableTimeWindow } from '@/@types/openapi-internal/LogicAggregationVariableTimeWindow'
+import { removeEmptyKeys } from '@/utils/object'
 
 export function isChildVariable(varKey: string) {
   return varKey.length > 0 && !varKey.includes(VARIABLE_NAMESPACE_SEPARATOR)
@@ -273,14 +274,16 @@ export function transformJsonLogicVars(
       )
     })
   }
-  return omitBy(
-    mapValues(newVarData, (value) => {
-      if (isArray(value)) {
-        return value.slice(0, maxVarDataLength)
-      }
-      return value
-    }),
-    (v) => isNil(v) || isNaN(v)
+  return removeEmptyKeys(
+    omitBy(
+      mapValues(newVarData, (value) => {
+        if (isArray(value)) {
+          return value.slice(0, maxVarDataLength)
+        }
+        return value
+      }),
+      (v) => isNil(v) || isNaN(v)
+    )
   )
 }
 
