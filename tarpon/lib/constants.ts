@@ -327,6 +327,7 @@ export const SQSQueues: {
   BATCH_JOB_QUEUE_NAME: { name: getResourceName('BatchJobQueue') },
   TARPON_QUEUE_NAME: {
     name: getResourceName('TarponQueue') + '.fifo',
+    oldestMsgAgeAlarmThresholdMinutes: 45, // Lets do 45 Minutes it should not be more then that ideally
   },
   REQUEST_LOGGER_QUEUE_NAME: {
     name: getResourceName('RequestLoggerQueue'),
@@ -340,7 +341,7 @@ export const SQSQueues: {
   },
   ASYNC_RULE_QUEUE_NAME: {
     name: getResourceName('AsyncRuleQueue') + '.fifo',
-    oldestMsgAgeAlarmThresholdMinutes: 120,
+    oldestMsgAgeAlarmThresholdMinutes: 180, // Lets do 3 Hours it should not be more then that ideally
   },
   MONGO_DB_CONSUMER_QUEUE_NAME: {
     name: getResourceName('MongoDbConsumerQueue'),
