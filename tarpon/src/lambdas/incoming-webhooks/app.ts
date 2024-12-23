@@ -120,7 +120,7 @@ export const webhooksHandler = lambdaApi()(
     handlers.registerPostWebhookAuth0(async (ctx, request) => {
       const webhookEvent = request.Auth0WebhookEvent
       if (!webhookEvent.logs) {
-        logger.error(`Received unhandled Auth0 webhook event: ${event.body}`)
+        logger.warn(`Received unhandled Auth0 webhook event: ${event.body}`)
         return
       }
       // check if bearer contains `somerandomstrig`
@@ -148,7 +148,7 @@ export const webhooksHandler = lambdaApi()(
           log,
         })
         if (!log.data?.tenant_name || !log.data?.user_name) {
-          logger.error(
+          logger.warn(
             `Received unhandled Auth0 webhook event for unknown tenant or user: ${log.data?.tenant_name} ${log.data?.user_name}`
           )
           continue
@@ -168,7 +168,7 @@ export const webhooksHandler = lambdaApi()(
         )
         logger.info(`Account: ${account}`, { account })
         if (!account) {
-          logger.error(
+          logger.warn(
             `Received unhandled Auth0 webhook event for unknown account: ${log.data.user_name}`
           )
           continue
