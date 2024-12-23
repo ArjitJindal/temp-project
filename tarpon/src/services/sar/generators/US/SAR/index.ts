@@ -142,8 +142,8 @@ export class UsSarReportGenerator implements ReportGenerator {
     for (const user of users) {
       const contactDetails =
         user.type === 'CONSUMER'
-          ? user.contactDetails
-          : user.legalEntity.contactDetails
+          ? user?.contactDetails
+          : user?.legalEntity?.contactDetails
 
       const sharedDetails: Partial<Party> = {
         Address: contactDetails?.addresses?.map(address),
