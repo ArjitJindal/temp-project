@@ -1399,14 +1399,16 @@ export class CdkTarponStack extends cdk.Stack {
         {
           vpc,
           service: new InterfaceVpcEndpointService(
-            this.config.clickhouse?.awsPrivateLinkEndpointName
+            this.config.clickhouse.awsPrivateLinkEndpointName
           ),
           privateDnsEnabled: true,
 
           securityGroups: [clickhouseSecurityGroup, securityGroup],
         }
       )
-      cdk.Tags.of(vpcEndpoint).add('Name', 'ClickhouseEndpoint')
+      this.addTagsToResource(vpcEndpoint, {
+        'Name': 'ClickhouseEndpoint'
+      })
     }
 
     /**
