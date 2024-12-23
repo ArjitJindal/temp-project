@@ -120,7 +120,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
 
     const targetTransactions = collection
       .find<InternalTransaction>(match)
-      .sort({ timestamp: 1 })
+      .sort({ createdAt: 1 })
 
     let batchTransactions: InternalTransaction[] = []
     let count = 0
