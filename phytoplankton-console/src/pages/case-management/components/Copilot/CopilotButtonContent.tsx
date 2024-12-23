@@ -3,7 +3,7 @@ import { Progress } from 'antd';
 import s from './index.module.less';
 import CopilotSources from './CopilotSources';
 import Button from '@/components/library/Button';
-import BrainLineIcon from '@/components/ui/icons/Remix/health/brain-line.react.svg';
+import BrainLineIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import MagicLineIcon from '@/components/ui/icons/Remix/design/magic-line.react.svg';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
 import { CaseReasons, NarrativeResponseAttributes } from '@/apis';
@@ -14,6 +14,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { EntityType } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
+import AnimatedButton from '@/components/Narrative/AnimatedButton';
 
 type CopilotButtonProps = {
   askLoading: boolean;
@@ -43,18 +44,17 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
         }
       >
         <span>
-          <Button
+          <AnimatedButton
             isLoading={askLoading}
             className={s.copilotAskButton}
             onClick={onAskClick}
-            type={'TEXT'}
             icon={<BrainLineIcon />}
             isDisabled={!settings?.isAiEnabled || askLoading}
             testName="ask-copilot"
             requiredPermissions={['copilot:narrative:write']}
           >
             Ask copilot
-          </Button>
+          </AnimatedButton>
         </span>
       </Tooltip>
       <Tooltip
