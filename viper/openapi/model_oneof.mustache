@@ -1,6 +1,0 @@
-{{#imports}}
-{{import}}
-{{/imports}}
-
-{{classname}} = StructType(list({obj.name: obj for l in [{{#oneOf}}{{.}}{{^-last}}, {{/-last}}{{/oneOf}}] for obj in l}.values()))
-

@@ -1,4 +1,0 @@
-*.whl
-src/openapi
-__pycache__
-.coverage
