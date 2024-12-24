@@ -348,24 +348,31 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedColumns: [
       "originUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'origin', 'userId')",
       "destinationUserId String MATERIALIZED JSONExtractString(data, 'caseUsers', 'destination', 'userId')",
-      "caseId String MATERIALIZED JSONExtractString(data, '_id')",
+      "caseId String MATERIALIZED JSONExtractString(data, 'caseId')",
       "caseStatus LowCardinality(String) MATERIALIZED JSONExtractString(data, 'caseStatus')",
-      "statusChanges Array(Tuple(timestamp UInt64, caseStatus String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String))')",
-      "assignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
-      "reviewAssignments Array(Tuple(assigneeUserId String, assignedAt UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, assignedAt UInt64))')",
-
+      "statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))')",
+      "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+      "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
       `alerts Array(Tuple(
+        alertId String, 
+        alertStatus String, 
+        statusChanges String, 
+        assignments String, 
+        reviewAssignments String,
         ruleId String,
-        ruleInstanceId String, 
-        alertStatus String,
+        ruleInstanceId String,
         numberOfTransactionsHit Int32
-      )) MATERIALIZED 
+      )) MATERIALIZED
         arrayMap(x -> CAST((
+          JSONExtractString(x, 'alertId'),
+          JSONExtractString(x, 'alertStatus'),
+          JSONExtractString(x, 'statusChanges'),
+          JSONExtractString(x, 'assignments'),
+          JSONExtractString(x, 'reviewAssignments'),
           JSONExtractString(x, 'ruleId'),
           JSONExtractString(x, 'ruleInstanceId'),
-          JSONExtractString(x, 'alertStatus'),
           JSONExtractInt(x, 'numberOfTransactionsHit')
-        ), 'Tuple(ruleId String, ruleInstanceId String, alertStatus String, numberOfTransactionsHit Int32)'),
+        ), 'Tuple(alertId String, alertStatus String, statusChanges String, assignments String, reviewAssignments String, ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32)'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
   },
@@ -431,6 +438,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "caseStatus String MATERIALIZED JSON_VALUE(data, '$.caseStatus')",
       "alertStatus String MATERIALIZED JSON_VALUE(data, '$.alertStatus')",
       "updatedAt UInt64 MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))",
+      "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+      "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
     ],
   },
 ] as const
