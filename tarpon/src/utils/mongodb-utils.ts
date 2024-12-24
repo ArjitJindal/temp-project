@@ -663,3 +663,62 @@ export async function sendMessageToMongoUpdateConsumer<
 
   await sqs.send(messageCommand)
 }
+
+// Convert query -
+// { $and: [{ field1: { $gte: value, $lte: value } }, { field2: { $lte: value } }] }
+// to aggregation expression -
+// { $and: [{ $and: [ {$gte: [$$field1, value]}, {$lte: [$$field1, value]} ] }, { $lte: [$$field2, value] }] }
+export function convertQueryToAggregationExpression(query: Document) {
+  if (typeof query !== 'object' || query === null) {
+    // Return primitive values (like numbers, strings, etc.) as is
+    return query
+  }
+
+  if (Array.isArray(query)) {
+    // Recursively process array elements
+    return query.map((item) => convertQueryToAggregationExpression(item))
+  }
+
+  const keys = Object.keys(query)
+
+  // Handle logical operators like $and, $or
+  if (keys.length === 1 && keys[0].startsWith('$')) {
+    const operator = keys[0]
+    if (operator === '$and' || operator === '$or') {
+      return {
+        [operator]: query[operator].map((item) =>
+          convertQueryToAggregationExpression(item)
+        ),
+      }
+    }
+  }
+
+  // Handle conditions like {"field": { "$gte": value, "$lte": value }}
+  if (!keys[0].startsWith('$')) {
+    const field = keys[0]
+    const condition = query[field]
+
+    if (typeof condition === 'object' && condition !== null) {
+      const expressions = Object.entries(condition).map(([op, val]) => ({
+        [op]: [
+          `$$${field}`,
+          convertQueryToAggregationExpression(val as Document),
+        ],
+      }))
+
+      // Combine multiple conditions into $and
+      if (expressions.length > 1) {
+        return { $and: expressions }
+      }
+      return expressions[0] // Single condition
+    }
+  }
+
+  // Recursively process for nested objects
+  return Object.fromEntries(
+    Object.entries(query).map(([key, value]) => [
+      key,
+      convertQueryToAggregationExpression(value),
+    ])
+  )
+}

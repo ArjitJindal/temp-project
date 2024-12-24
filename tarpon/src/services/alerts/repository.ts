@@ -17,6 +17,7 @@ import { CaseRepository, getRuleQueueFilter } from '../cases/repository'
 import { DynamoAlertRepository } from './dynamo-repository'
 import { ClickhouseAlertRepository } from './clickhouse-repository'
 import {
+  convertQueryToAggregationExpression,
   DAY_DATE_FORMAT,
   getSkipAndLimit,
   internalMongoUpdateMany,
@@ -157,7 +158,12 @@ export class AlertsRepository {
       countPipeline.push({
         $count: 'count',
       })
-      const cursor = collection.aggregate<AlertListResponseItem>(itemsPipeline)
+      const cursor = collection.aggregate<AlertListResponseItem>(
+        itemsPipeline,
+        {
+          allowDiskUse: true,
+        }
+      )
       const itemsPromise = cursor.toArray()
       const countPromise = collection
         .aggregate<{ count: number }>(countPipeline)
@@ -185,6 +191,7 @@ export class AlertsRepository {
       ...(await this.getAlertsPipeline(params, {
         hideTransactionIds: options?.hideTransactionIds,
         countOnly: true,
+        enablePerformanceWorkaround: true,
       })),
       {
         $limit: COUNT_QUERY_LIMIT,
@@ -227,6 +234,7 @@ export class AlertsRepository {
     const pipeline = await this.getAlertsPipeline(params, {
       hideTransactionIds: options?.hideTransactionIds,
       countOnly: false,
+      enablePerformanceWorkaround: true,
     })
     /**
      * We're being "creative" here to get around the query performance issue
@@ -251,7 +259,7 @@ export class AlertsRepository {
       { $limit: limit }
     )
     const alertsPromise = collection
-      .aggregate<AlertListResponseItem>(pipeline)
+      .aggregate<AlertListResponseItem>(pipeline, { allowDiskUse: true })
       .toArray()
     let nextPageAlertsPromise: Promise<AlertListResponseItem[]> | undefined
     if (params.sortField) {
@@ -259,7 +267,7 @@ export class AlertsRepository {
       pipeline2[pipeline2.findIndex((stage) => '$skip' in stage)].$skip += limit
       pipeline2[pipeline2.findIndex((stage) => '$limit' in stage)].$limit = 1
       nextPageAlertsPromise = collection
-        .aggregate<AlertListResponseItem>(pipeline2)
+        .aggregate<AlertListResponseItem>(pipeline2, { allowDiskUse: true })
         .toArray()
     }
     const [alerts, nextPageAlerts] = await Promise.all([
@@ -298,11 +306,12 @@ export class AlertsRepository {
             },
           },
         ],
+        enablePerformanceWorkaround: true,
       })
       const unwindIndex = pipeline3.findIndex((stage) => stage.$unwind)
       pipeline3.splice(unwindIndex - 1, 0, { $limit: skip })
       const missedPrevAlerts = await collection
-        .aggregate<AlertListResponseItem>(pipeline3)
+        .aggregate<AlertListResponseItem>(pipeline3, { allowDiskUse: true })
         .toArray()
       filteredAlerts = filteredAlerts.concat(missedPrevAlerts)
     }
@@ -425,6 +434,7 @@ export class AlertsRepository {
       countOnly?: boolean
       excludeProject?: boolean
       extraAlertsFilterConditions?: Document[]
+      enablePerformanceWorkaround?: boolean
     }
   ): Promise<Document[]> {
     const sortField = params?.sortField
@@ -756,6 +766,25 @@ export class AlertsRepository {
           },
         },
       })
+      if (options?.enablePerformanceWorkaround) {
+        pipeline.push({
+          $addFields: {
+            alerts: {
+              $filter: {
+                input: '$alerts',
+                as: 'alert',
+                cond: convertQueryToAggregationExpression({
+                  $and: replaceMagicKeyword(
+                    alertConditions,
+                    'alerts.',
+                    'alert.'
+                  ),
+                }),
+              },
+            },
+          },
+        })
+      }
     }
 
     if (!options?.countOnly && sortStage) {
