@@ -1062,11 +1062,8 @@ export class UserRepository {
       },
     }
 
-    try {
-      await this.dynamoDb.send(new PutCommand(putItemInput))
-    } catch (error) {
-      console.log('Full error:', JSON.stringify(error, null, 2)) // Log full error details
-    }
+    await this.dynamoDb.send(new PutCommand(putItemInput))
+
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'

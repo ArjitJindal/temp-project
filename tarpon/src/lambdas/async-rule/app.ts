@@ -1,4 +1,4 @@
-import { SQSBatchItemFailure, SQSEvent } from 'aws-lambda'
+import { SQSEvent } from 'aws-lambda'
 import { groupBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
@@ -150,7 +150,6 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const { Records } = event
 
-    const batchItemFailures: SQSBatchItemFailure[] = []
     const records = Records.map((record) => ({
       messageId: record.messageId,
       body: JSON.parse(record.body) as AsyncRuleRecord,
@@ -166,37 +165,35 @@ export const asyncRuleRunnerHandler = lambdaConsumer()(
             'CONCURRENT_ASYNC_RULES'
           )
           for await (const record of records) {
-            try {
-              const lockKeys =
-                isConcurrentAsyncRulesEnabled && envIsNot('test', 'local')
-                  ? getLockKeys(record.body)
-                  : []
+            const lockKeys =
+              isConcurrentAsyncRulesEnabled && envIsNot('test', 'local')
+                ? getLockKeys(record.body)
+                : []
 
-              // Acquire locks
-              if (lockKeys.length > 0) {
-                await Promise.all(
-                  lockKeys.map((key) =>
-                    acquireLock(dynamoDb, key, { numOfAttempts: 1 })
-                  )
+            // Acquire locks
+            if (lockKeys.length > 0) {
+              await Promise.all(
+                lockKeys.map((key) =>
+                  acquireLock(dynamoDb, key, {
+                    startingDelay: 500,
+                    maxDelay: 500,
+                    ttlSeconds: 15,
+                  })
                 )
-              }
+              )
+            }
 
-              await runAsyncRules(record.body)
+            await runAsyncRules(record.body)
 
-              // Release locks
-              if (lockKeys.length > 0) {
-                await Promise.all(
-                  lockKeys.map((key) => releaseLock(dynamoDb, key))
-                )
-              }
-            } catch (e) {
-              logger.error(e)
-              batchItemFailures.push({ itemIdentifier: record.messageId })
+            // Release locks
+            if (lockKeys.length > 0) {
+              await Promise.all(
+                lockKeys.map((key) => releaseLock(dynamoDb, key))
+              )
             }
           }
         })
       })
     )
-    return { batchItemFailures }
   }
 )

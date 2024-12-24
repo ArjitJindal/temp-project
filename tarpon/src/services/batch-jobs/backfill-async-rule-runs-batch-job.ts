@@ -2,7 +2,6 @@ import { last, memoize } from 'lodash'
 import pMap from 'p-map'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import { StackConstants } from '@lib/constants'
-import { SQSBatchItemFailure } from 'aws-lambda'
 import { MongoClient } from 'mongodb'
 import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import { UserRepository } from '../users/repositories/user-repository'
@@ -177,7 +176,7 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
       receiverUser: destinationUser as User | Business | undefined,
       backfillNamespace: this.jobId,
     }
-    const response = await lambdaClient.send(
+    await lambdaClient.send(
       new InvokeCommand({
         FunctionName: StackConstants.ASYNC_RULE_RUNNER_FUNCTION_NAME,
         Payload: JSON.stringify({
@@ -189,16 +188,6 @@ export class BackfillAsyncRuleRunsBatchJobRunner extends BatchJobRunner {
         }),
       })
     )
-    const decodedPayload = new TextDecoder().decode(
-      response.Payload
-    ) as unknown as {
-      batchItemFailures: SQSBatchItemFailure[]
-    }
-    if (decodedPayload?.batchItemFailures?.length > 0) {
-      throw new Error(
-        `Error processing transaction ${transaction.transactionId}`
-      )
-    }
     releaseLocks()
   }
   private userLoader = memoize(
