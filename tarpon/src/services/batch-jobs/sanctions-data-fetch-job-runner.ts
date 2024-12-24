@@ -64,7 +64,9 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     }
 
     // Once lists are updated, run the ongoing screening jobs
-    await dispatchOngoingScreeningJobs(tenantId)
+    if (!tenantId?.startsWith('pnb')) {
+      await dispatchOngoingScreeningJobs(tenantId)
+    }
   }
 }
 
