@@ -36,6 +36,9 @@ export type Config = {
     BATCH_JOB_LAMBDA?: {
       MEMORY_SIZE?: number
     }
+    INCOMING_WEBHOOK_LAMBDA?: {
+      MEMORY_SIZE?: number
+    }
     SANCTIONS_LAMBDA?: {
       MEMORY_SIZE?: number
     }

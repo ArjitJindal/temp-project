@@ -94,6 +94,9 @@ export const config: Config = {
     CRON_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
     },
+    INCOMING_WEBHOOK_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     LAMBDA_VPC_ENABLED: true,
     INSPECTOR_ENABLED: true,
   },

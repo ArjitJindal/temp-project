@@ -45,6 +45,9 @@ export const config: Config = {
     LAMBDA_DEFAULT: {
       MEMORY_SIZE: 512,
     },
+    INCOMING_WEBHOOK_LAMBDA: {
+      MEMORY_SIZE: 1024,
+    },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 3,
     },

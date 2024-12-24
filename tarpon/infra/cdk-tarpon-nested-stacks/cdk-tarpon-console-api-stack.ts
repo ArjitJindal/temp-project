@@ -247,6 +247,7 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
     })
     createFunction(this, lambdaExecutionRole, {
       name: StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+      memorySize: this.config.resource.INCOMING_WEBHOOK_LAMBDA?.MEMORY_SIZE,
     })
 
     /* Simulation */
