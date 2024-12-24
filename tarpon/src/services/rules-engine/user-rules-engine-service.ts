@@ -479,7 +479,9 @@ export class UserManagementService {
     )
 
     if (!userEvent) {
-      throw new NotFound(`User Event ${userId} not found`)
+      throw new NotFound(
+        `User Event with ${userEventTimestamp} timestamp not found for user:${userId} `
+      )
     }
 
     const { monitoringResult } = await this.rulesEngineService.verifyUser(

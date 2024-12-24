@@ -1407,7 +1407,7 @@ export class CdkTarponStack extends cdk.Stack {
         }
       )
       this.addTagsToResource(vpcEndpoint, {
-        'Name': 'ClickhouseEndpoint'
+        Name: 'ClickhouseEndpoint',
       })
     }
 
