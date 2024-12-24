@@ -150,8 +150,9 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
       }
       const queryObj = {
         ...paginationParams,
+        start: paginationParams.from || params.from,
         pageSize: params.pageSize,
-        page: params.page,
+        page: paginationParams.page || params.page,
         sortField: params.sort[0]?.[0],
         sortOrder: params.sort[0]?.[1] ?? 'ascend',
         afterTimestamp: params.createdTimestamp ? dayjs(params.createdTimestamp[0]).valueOf() : 0,
