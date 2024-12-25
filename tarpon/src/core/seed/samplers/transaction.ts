@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid'
+import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { BaseSampler } from './base'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
@@ -79,19 +80,31 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
     destinationUserId,
     originCountry,
     destinationCountry,
+    originUserPaymentDetails,
+    destinationUserPaymentDetails,
   }: {
     originUserId?: string
     destinationUserId?: string
     originCountry?: CountryCode
     destinationCountry?: CountryCode
-  } = {}): InternalTransaction {
-    // use different seeds for origin and destination to generate different payment details
-    const origSeed = this.rng.randomInt() + 1
-    const destSeed = this.rng.randomInt() - 1
-    const originPaymentDetails = new PaymentDetailsSampler(origSeed).getSample()
-    const destinationPaymentDetails = new PaymentDetailsSampler(
-      destSeed
-    ).getSample()
+    originUserPaymentDetails?: {
+      [key: string]: PaymentDetails
+    }
+    destinationUserPaymentDetails?: {
+      [key: string]: PaymentDetails
+    }
+  }): InternalTransaction {
+    // populating if null
+    originUserPaymentDetails =
+      originUserPaymentDetails ||
+      new UserPaymentDetailsSampler(this.rng.randomInt()).getSample()
+    destinationUserPaymentDetails =
+      destinationUserPaymentDetails ||
+      new UserPaymentDetailsSampler(this.rng.randomInt()).getSample()
+    // there are 0...8 payment method thus getting a random int to get user patyment details
+    const originPaymentDetails = originUserPaymentDetails[this.rng.randomInt(9)]
+    const destinationPaymentDetails =
+      destinationUserPaymentDetails[this.rng.randomInt(9)]
 
     return {
       transactionId: `sample_transaction_${uuid()}`,
@@ -131,30 +144,29 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
   }
 }
 
-export class PaymentDetailsSampler extends BaseSampler<
-  PaymentDetails | undefined
-> {
-  protected generateSample(): PaymentDetails | undefined {
-    const seed = this.rng.randomNumber()
+export class PaymentDetailsSampler extends BaseSampler<PaymentDetails> {
+  protected generateSample(): PaymentDetails {
     switch (this.rng.randomInt(9)) {
       case 0:
-        return new CardDetailsSampler(seed).getSample()
+        return new CardDetailsSampler().getSample()
       case 1:
-        return new IBANDetailsSampler(seed).getSample()
+        return new IBANDetailsSampler().getSample()
       case 2:
-        return new GenericBankAccountDetailsSampler(seed).getSample()
+        return new GenericBankAccountDetailsSampler().getSample()
       case 3:
-        return new ACHDetailsSampler(seed).getSample()
+        return new ACHDetailsSampler().getSample()
       case 4:
-        return new WalletDetailsSampler(seed).getSample()
+        return new WalletDetailsSampler().getSample()
       case 5:
-        return new MpesaDetailsSampler(seed).getSample()
+        return new MpesaDetailsSampler().getSample()
       case 6:
-        return new UPIDetailsSampler(seed).getSample()
+        return new UPIDetailsSampler().getSample()
       case 7:
-        return new SWIFTDetailsSampler(seed).getSample()
+        return new SWIFTDetailsSampler().getSample()
       case 8:
-        return new CheckDetailsSampler(seed).getSample()
+        return new CheckDetailsSampler().getSample()
+      default:
+        return new CardDetailsSampler().getSample()
     }
   }
 }
@@ -164,7 +176,7 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
     return {
       method: 'CARD' as const,
       cardFingerprint: 'FNGR' + this.rng.randomInt(),
-      cardIssuedCountry: 'RU',
+      cardIssuedCountry: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
       transactionReferenceField: 'transactionReferenceField',
       nameOnCard: {
         firstName: 'very long firstName here',
@@ -175,21 +187,26 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
         month: 3,
         year: 2043,
       },
-      cardLast4Digits: 'cardLast4Digits',
-      cardBrand: 'VISA',
-      cardFunding: 'PREPAID',
-      cardAuthenticated: true,
-      cardTokenized: false,
-      paymentChannel: 'paymentChannel',
-      cardType: 'VIRTUAL',
+      cardLast4Digits: this.rng.randomIntInclusive(1000, 9999).toString(),
+      cardBrand: this.rng.pickRandom(['VISA', 'MASTERCARD']),
+      cardFunding: this.rng.pickRandom(['PREPAID', 'DEBIT', 'CREDIT']),
+      cardAuthenticated: this.rng.randomBool(),
+      cardTokenized: this.rng.randomBool(),
+      paymentChannel: this.rng.pickRandom(['WEB', 'MOBILE', 'POS']),
+      cardType: this.rng.pickRandom(['VIRTUAL', 'PHYSICAL']),
       merchantDetails: {
         id: 'id',
-        category: 'category',
-        MCC: 'MCC',
-        city: 'city',
-        country: 'US',
-        state: 'state',
-        postCode: 'postCode',
+        category: this.rng.pickRandom([
+          'RETAIL',
+          'GROCERY',
+          'GAS',
+          'ECOMMERCE',
+        ]),
+        MCC: this.rng.randomIntInclusive(1000, 9999).toString(),
+        city: this.rng.pickRandom(['NEW YORK', 'LOS ANGELES', 'CHICAGO']),
+        country: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
+        state: this.rng.pickRandom(['NY', 'CA', 'IL', 'ON']),
+        postCode: this.rng.randomIntInclusive(10000, 99999).toString(),
       },
     }
   }
@@ -295,6 +312,24 @@ export class CheckDetailsSampler extends BaseSampler<CheckDetails> {
       method: 'CHECK',
       checkIdentifier: `${this.rng.randomInt()}`,
       checkNumber: `${this.rng.randomInt()}`,
+    }
+  }
+}
+
+export class UserPaymentDetailsSampler extends BaseSampler<{
+  [key: string]: PaymentDetails
+}> {
+  protected generateSample() {
+    return {
+      0: new CardDetailsSampler().getSample(),
+      1: new IBANDetailsSampler().getSample(),
+      2: new GenericBankAccountDetailsSampler().getSample(),
+      3: new ACHDetailsSampler().getSample(),
+      4: new WalletDetailsSampler().getSample(),
+      5: new MpesaDetailsSampler().getSample(),
+      6: new UPIDetailsSampler().getSample(),
+      7: new SWIFTDetailsSampler().getSample(),
+      8: new CheckDetailsSampler().getSample(),
     }
   }
 }

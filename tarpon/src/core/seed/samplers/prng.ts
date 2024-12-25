@@ -15,7 +15,7 @@ export class RandomNumberGenerator {
   private seed: number
   private number: number
 
-  constructor(seed: number = 0.1) {
+  constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
     this.seed = seed
     this.number = RandomNumberGenerator.generateNumber(seed)
   }
@@ -58,6 +58,7 @@ export class RandomNumberGenerator {
   randomNumber(): number {
     // return this.next();
     // return RandomNumberGenerator.generateNumber(this.seed)
+    this.next()
     return this.number
   }
 
@@ -96,7 +97,7 @@ export class RandomNumberGenerator {
 
     const output = [...variants]
     const seed = convertToInt(this.number)
-    let number = RandomNumberGenerator.generateNumber(seed)
+    let number = this.randomNumber()
     const index = convertToInt(number, output.length)
 
     for (let i = 0; i < index; i++) {

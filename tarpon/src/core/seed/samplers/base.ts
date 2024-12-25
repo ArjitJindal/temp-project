@@ -5,7 +5,10 @@ export abstract class BaseSampler<T> {
   protected rng: RandomNumberGenerator
   protected counter: number
 
-  constructor(seed: number = 0.1, counter?: number) {
+  constructor(
+    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    counter?: number
+  ) {
     this.rng = new RandomNumberGenerator(seed)
     this.counter = counter ?? 1
   }

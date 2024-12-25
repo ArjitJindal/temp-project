@@ -50,6 +50,7 @@ import { MARITAL_STATUSS } from '@/@types/openapi-public-custom/MaritalStatus'
 import { GENDERS } from '@/@types/openapi-public-custom/Gender'
 import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentStatus'
 import { PEP_RANKS } from '@/@types/openapi-public-custom/PepRank'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
 
@@ -411,16 +412,16 @@ export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
     const userId = `U-${this.counter}`
     const timestamp = this.sampleTimestamp(3600 * 365 * 24 * 1000)
 
-    const tagSampler = new TagSampler(this.rng.randomNumber())
-    const transactionLimitSampler = new ExpectedTransactionLimitSampler(
-      this.rng.randomNumber()
-    )
-    const paymentMethodSampler = new PaymentDetailsSampler(
-      this.rng.randomNumber()
-    )
+    const tagSampler = new TagSampler()
+    const transactionLimitSampler = new ExpectedTransactionLimitSampler()
+    const paymentMethodSampler = new PaymentDetailsSampler()
 
     const hitRules = this.sampleUserRules(userId, name, 'BUSINESS')
-    const paymentMethod = paymentMethodSampler.getSample()
+    const paymentMethod: PaymentDetails[] = []
+
+    for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
+      paymentMethod.push(paymentMethodSampler.getSample())
+    }
 
     const user: InternalBusinessUser = {
       type: 'BUSINESS',
@@ -440,7 +441,7 @@ export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
       kycStatusDetails: this.sampleKycStatusDetails(),
       createdTimestamp: timestamp,
       allowedPaymentMethods: this.rng.randomSubset(PAYMENT_METHODS),
-      savedPaymentDetails: paymentMethod ? [paymentMethod] : [],
+      savedPaymentDetails: paymentMethod,
       legalEntity: {
         contactDetails: {
           emailIds: company?.contactEmails || [this.randomEmail()],
@@ -586,16 +587,22 @@ export class ConsumerUserSampler extends UserSampler<InternalConsumerUser> {
       .replace(' ', '')
       .replace('&', '')
 
-    const tagSampler = new TagSampler(this.rng.randomNumber()) // TODO: find a better seed
-    const transactionLimitSampler = new ExpectedTransactionLimitSampler(
-      this.rng.randomNumber()
-    )
+    const tagSampler = new TagSampler() // TODO: find a better seed
+    const transactionLimitSampler = new ExpectedTransactionLimitSampler()
 
     const hitRules = this.sampleUserRules(
       userId,
       `${name.firstName} ${name.middleName} ${name.lastName}`,
       'CONSUMER'
     )
+
+    const paymentMethodSampler = new PaymentDetailsSampler()
+
+    const paymentMethod: PaymentDetails[] = []
+
+    for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
+      paymentMethod.push(paymentMethodSampler.getSample())
+    }
 
     const user: InternalConsumerUser = {
       type: 'CONSUMER' as const,
@@ -656,6 +663,7 @@ export class ConsumerUserSampler extends UserSampler<InternalConsumerUser> {
         tagSampler.getSample(),
       ],
       transactionLimits: transactionLimitSampler.getSample(),
+      savedPaymentDetails: paymentMethod,
     }
 
     this.assignKrsAndDrsScores(user)

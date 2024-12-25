@@ -1,4 +1,4 @@
-import { compact, random, memoize, uniq, cloneDeep } from 'lodash'
+import { compact, random, memoize, uniq, cloneDeep, shuffle } from 'lodash'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import {
   BusinessSanctionsSearchSampler,
@@ -15,6 +15,7 @@ import { PAYMENT_METHODS_SEED, TRANSACTIONS_SEED } from './seeds'
 import {
   PaymentDetailsSampler,
   TransactionSampler,
+  UserPaymentDetailsSampler,
 } from '@/core/seed/samplers/transaction'
 import { TagSampler } from '@/core/seed/samplers/tag'
 import { COUNTRIES } from '@/core/seed/samplers/countries'
@@ -43,36 +44,84 @@ export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
 
 const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
 
+interface TransactionPair {
+  originUserId: string
+  destinationUserId: string
+}
+
 export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
   private userTransactionMap: Map<string, string[]>
+  private userAccountMap: Map<
+    string,
+    {
+      [key: string]: PaymentDetails
+    }
+  >
   private transactionSampler: TransactionSampler
   private tagSampler: TagSampler
   private transactionRiskScoreSampler: TransactionRiskScoreSampler
+  private transactionPairs: TransactionPair[]
+  private userTransactionCount: Map<string, number>
+  private transactionIndex: number
 
   constructor(seed: number) {
     super(seed)
 
     this.userTransactionMap = new Map<string, string[]>()
+    this.userAccountMap = new Map<
+      string,
+      {
+        [key: string]: PaymentDetails
+      }
+    >()
+    this.transactionPairs = []
+    this.userTransactionCount = new Map<string, number>()
+    this.transactionIndex = 0
 
-    // map each user to a random subset of users to transact with excluding themselves
-    getUsers().forEach((u) => {
-      const filteredUsers = getUsers().filter(
-        (thisU) => thisU.userId !== u.userId
+    const userIds = getUsers().map((u) => u.userId)
+
+    // Initialize transaction count for each user
+    userIds.forEach((id) => this.userTransactionCount.set(id, 0))
+
+    let attempts = 0
+    const maxAttempts = (TXN_COUNT + 10) * 5 // Safety limit to prevent infinite loops
+
+    while (
+      this.transactionPairs.length < TXN_COUNT + 10 &&
+      attempts < maxAttempts
+    ) {
+      attempts++
+
+      // Get users who have less than 6 transactions
+      const availableUsers = shuffle(
+        userIds.filter((id) => (this.userTransactionCount.get(id) || 0) < 6)
       )
-      const usersToTransactWith = this.rng.randomSubsetOfSize(filteredUsers, 3)
-      this.userTransactionMap.set(
-        u.userId,
-        usersToTransactWith.map((u) => u.userId)
+
+      if (availableUsers.length < 2) {
+        break // Not enough users with remaining transaction capacity
+      }
+
+      // Pick first two users from shuffled list
+      const originUserId = availableUsers[0]
+      const destinationUserId = availableUsers[1]
+
+      // Add transaction pair
+      this.transactionPairs.push({ originUserId, destinationUserId })
+
+      // Update transaction counts
+      this.userTransactionCount.set(
+        originUserId,
+        (this.userTransactionCount.get(originUserId) || 0) + 1
       )
-    })
+      this.userTransactionCount.set(
+        destinationUserId,
+        (this.userTransactionCount.get(destinationUserId) || 0) + 1
+      )
+    }
 
-    const childSamplerSeed = this.rng.randomInt()
-
-    this.transactionSampler = new TransactionSampler(childSamplerSeed)
-    this.tagSampler = new TagSampler(childSamplerSeed + 1)
-    this.transactionRiskScoreSampler = new TransactionRiskScoreSampler(
-      childSamplerSeed + 2
-    )
+    this.transactionSampler = new TransactionSampler()
+    this.tagSampler = new TagSampler()
+    this.transactionRiskScoreSampler = new TransactionRiskScoreSampler()
   }
 
   protected generateSample(): InternalTransaction {
@@ -94,16 +143,41 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       )
       .slice(0, numberoShadowRulesHit)
 
-    const transaction = this.transactionSampler.getSample()
-    const originUser = getUsers()[this.counter % getUsers().length]
-    const originUserId = originUser.userId
-    const destinationUserId = this.rng.pickRandom(
-      this.userTransactionMap.get(originUserId) as string[]
-    )
+    const { originUserId, destinationUserId } =
+      this.transactionPairs[this.transactionIndex++]
+
+    let originUserPaymentDetails = this.userAccountMap.get(originUserId)
+    let destinationUserPaymentDetails =
+      this.userAccountMap.get(destinationUserId)
+
+    // storing for future use
+    if (!this.userAccountMap.get(originUserId)) {
+      originUserPaymentDetails = new UserPaymentDetailsSampler().getSample()
+      this.userAccountMap.set(originUserId, originUserPaymentDetails)
+    }
+    if (!this.userAccountMap.get(destinationUserId)) {
+      destinationUserPaymentDetails =
+        new UserPaymentDetailsSampler().getSample()
+      this.userAccountMap.set(destinationUserId, destinationUserPaymentDetails)
+    }
+
+    const originUser = getUsers().find((u) => u.userId === originUserId) as
+      | User
+      | Business
+
     const destinationUser = getUsers().find(
       (u) => u.userId === destinationUserId
     ) as User | Business
 
+    const transaction = this.transactionSampler.getSample(
+      this.rng.randomInt(),
+      {
+        originUserId,
+        destinationUserId,
+        originUserPaymentDetails,
+        destinationUserPaymentDetails,
+      }
+    )
     const getSanctionsSearch = (
       user: User | Business,
       ruleInstanceId: string,
