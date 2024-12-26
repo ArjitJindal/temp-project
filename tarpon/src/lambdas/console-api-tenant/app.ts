@@ -35,6 +35,7 @@ import { getFullTenantId } from '@/utils/tenant'
 import {
   addSentryExtras,
   getContext,
+  hasFeature,
   tenantSettings,
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
@@ -329,12 +330,16 @@ export const tenantsHandler = lambdaApi()(
           break
         }
         case 'SANCTIONS_DATA_FETCH': {
+          const provider = hasFeature('DOW_JONES')
+            ? 'dowjones'
+            : 'open-sanctions'
           await sendBatchJobCommand({
             type: 'SANCTIONS_DATA_FETCH',
             tenantId: settings.sanctions?.dowjonesCreds
               ? tenantId
               : 'flagright',
             parameters: {},
+            provider,
           })
           break
         }

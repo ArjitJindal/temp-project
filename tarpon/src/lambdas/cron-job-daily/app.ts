@@ -43,9 +43,13 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
         features?.includes('DOW_JONES') ||
         features?.includes('OPEN_SANCTIONS')
       ) {
+        const provider = features?.includes('DOW_JONES')
+          ? 'dowjones'
+          : 'open-sanctions'
         return sendBatchJobCommand({
           type: 'SANCTIONS_DATA_FETCH',
           tenantId: tenant.tenant.id,
+          provider,
           parameters: {
             from: dayjs().subtract(1, 'day').toISOString(),
           },

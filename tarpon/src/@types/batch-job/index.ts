@@ -7,6 +7,7 @@ import { SimulationRiskFactorsSampling } from '../openapi-internal/SimulationRis
 import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVariable'
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
+import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -189,6 +190,7 @@ export type ReverifyTransactionsBatchJob = {
 export type SanctionsDataFetchBatchJob = {
   type: 'SANCTIONS_DATA_FETCH'
   tenantId: string
+  provider: SanctionsDataProviderName
   parameters: {
     from?: string
   }

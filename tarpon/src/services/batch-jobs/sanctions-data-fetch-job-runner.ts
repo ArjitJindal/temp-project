@@ -13,15 +13,15 @@ import {
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import {
-  createGlobalMongoDBCollections,
+  createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
-    const { tenantId } = job
-    const fetchers = await sanctionsDataFetchers(tenantId)
+    const { tenantId, provider } = job
+    const fetcher = await sanctionsDataFetchers(tenantId, provider)
     const runFullLoad = job.parameters?.from
       ? new Date(job.parameters.from).getDay() === 0
       : true
@@ -31,30 +31,22 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
     const client = await getMongoDbClient()
 
-    for (const fetcher of fetchers) {
-      logger.info(`Running ${fetcher.constructor.name}`)
-      if (runFullLoad) {
-        await createGlobalMongoDBCollections(client)
-        const repo = new MongoSanctionsRepository(sanctionsCollectionName)
-        await fetcher.fullLoad(repo, version)
-        await checkSearchIndexesReady(sanctionsCollectionName)
-      }
-
+    logger.info(`Running ${fetcher.constructor.name}`)
+    if (runFullLoad) {
+      await createMongoDBCollections(client, tenantId)
       const repo = new MongoSanctionsRepository(sanctionsCollectionName)
-      await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
-
-      await client.db().collection(deltaSanctionsCollectionName).deleteMany({})
-      const deltaRepo = new MongoSanctionsRepository(
-        deltaSanctionsCollectionName
-      )
-      await fetcher.delta(
-        deltaRepo,
-        version,
-        dayjs(job.parameters.from).toDate()
-      )
-
-      await checkSearchIndexesReady(deltaSanctionsCollectionName)
+      await fetcher.fullLoad(repo, version)
+      await checkSearchIndexesReady(sanctionsCollectionName)
     }
+
+    const repo = new MongoSanctionsRepository(sanctionsCollectionName)
+    await fetcher.delta(repo, version, dayjs(job.parameters.from).toDate())
+
+    await client.db().collection(deltaSanctionsCollectionName).deleteMany({})
+    const deltaRepo = new MongoSanctionsRepository(deltaSanctionsCollectionName)
+    await fetcher.delta(deltaRepo, version, dayjs(job.parameters.from).toDate())
+
+    await checkSearchIndexesReady(deltaSanctionsCollectionName)
 
     if (runFullLoad) {
       await client

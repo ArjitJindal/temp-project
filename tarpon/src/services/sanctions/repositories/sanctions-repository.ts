@@ -35,8 +35,10 @@ export class MongoSanctionsRepository implements SanctionsRepository {
                 $setOnInsert: {
                   ...entity,
                   provider,
-                  version,
                   createdAt: Date.now(),
+                },
+                $set: {
+                  version,
                 },
               },
               upsert: true,
