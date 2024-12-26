@@ -15,8 +15,8 @@ export class ConsumerUserRiskScoreSampler extends BaseSampler<
 > {
   generateSample(consumer?: InternalConsumerUser): RiskScoreComponent[] {
     // generate 4 random scores
-    const scores = [...new Array(4)].map((_, i) =>
-      this.rng.r(i + 1).randomFloat()
+    const scores = [...new Array(4)].map(() =>
+      this.rng.randomIntInclusive(0, 100)
     )
 
     return [
@@ -73,8 +73,8 @@ export class BusinessUserRiskScoreSampler extends BaseSampler<
 > {
   generateSample(business?: InternalBusinessUser): RiskScoreComponent[] {
     // generate 4 random scores
-    const scores = [...new Array(4)].map((_, i) =>
-      this.rng.r(i + 1).randomFloat()
+    const scores = [...new Array(4)].map(() =>
+      this.rng.randomIntInclusive(0, 100)
     )
 
     return [
@@ -134,8 +134,8 @@ export class TransactionRiskScoreSampler extends BaseSampler<
 > {
   generateSample(transaction?: InternalTransaction): RiskScoreComponent[] {
     // generate 4 random scores
-    const scores = [...new Array(4)].map((_, i) =>
-      this.rng.r(i + 1).randomFloat()
+    const scores = [...new Array(4)].map(() =>
+      this.rng.randomIntInclusive(0, 100)
     )
 
     return [

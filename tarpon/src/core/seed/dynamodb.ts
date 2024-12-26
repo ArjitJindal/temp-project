@@ -67,7 +67,9 @@ export async function seedDynamo(
   for (const ruleInstance of allRuleInstances) {
     await ruleRepo.createOrUpdateRuleInstance(ruleInstance)
   }
-
+  const riskRepo = new RiskRepository(tenantId, {
+    dynamoDb,
+  })
   logger.info('Creating users...')
   const users = getUsers()
   for (const user of users) {
@@ -81,6 +83,33 @@ export async function seedDynamo(
     await ruleStatsHandler(tenantId, user?.executedRules ?? [], {
       dynamoDb,
       mongoDb: await getMongoDbClient(),
+    })
+
+    let transactionCount = 0,
+      arsScoreSummation = 0
+    getTransactions().forEach((tx) => {
+      if (
+        tx.originUserId === user.userId ||
+        tx.destinationUserId === user.userId
+      ) {
+        if (tx.arsScore) {
+          transactionCount++
+          arsScoreSummation += tx.arsScore.arsScore
+        }
+      }
+    })
+    let userAvgArsScore = 0
+    if (transactionCount == 0) {
+      userAvgArsScore = 0
+    } else {
+      userAvgArsScore = arsScoreSummation / transactionCount
+    }
+    logger.info(`Updating average ARS score for user ${user.userId}`)
+    await riskRepo.updateOrCreateAverageArsScore(user.userId, {
+      userId: user.userId,
+      value: userAvgArsScore,
+      transactionCount: transactionCount,
+      createdAt: Date.now(),
     })
   }
 
@@ -107,6 +136,37 @@ export async function seedDynamo(
       mongoDb: await getMongoDbClient(),
     })
   }
+
+  logger.info('Updating average ARS score for users...')
+  const transactions = getTransactions()
+  for (const user of users) {
+    let transactionCount = 0,
+      arsScoreSummation = 0
+    transactions.forEach((tx) => {
+      if (
+        tx.originUserId === user.userId ||
+        tx.destinationUserId === user.userId
+      ) {
+        if (tx.arsScore) {
+          transactionCount++
+          arsScoreSummation += tx.arsScore.arsScore
+        }
+      }
+    })
+    let userAvgArsScore = 0
+    if (transactionCount == 0) {
+      userAvgArsScore = 0
+    } else {
+      userAvgArsScore = arsScoreSummation / transactionCount
+    }
+    await riskRepo.updateOrCreateAverageArsScore(user.userId, {
+      userId: user.userId,
+      value: userAvgArsScore,
+      transactionCount: transactionCount,
+      createdAt: Date.now(),
+    })
+  }
+
   logger.info('Clear risk factors')
   await dangerouslyDeletePartition(
     dynamoDb,
@@ -114,9 +174,7 @@ export async function seedDynamo(
     DynamoDbKeys.RISK_FACTOR(tenantId).PartitionKeyID,
     StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
   )
-  const riskRepo = new RiskRepository(tenantId, {
-    dynamoDb,
-  })
+
   for (const arsScore of getArsScores()) {
     await riskRepo.createOrUpdateArsScore(
       arsScore.transactionId as string,

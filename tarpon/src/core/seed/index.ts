@@ -3,9 +3,11 @@ import { seedMongo } from './mongo'
 import { fetchAndSetAccounts } from './account-setup'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { ClickHouseTables } from '@/utils/clickhouse/definition'
-import { createTenantDatabase } from '@/utils/clickhouse/utils'
+import {
+  createTenantDatabase,
+  getClickhouseClient,
+} from '@/utils/clickhouse/utils'
 
 export async function seedDemoData(tenantId: string) {
   const dynamo = getDynamoDbClient()

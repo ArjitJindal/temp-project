@@ -353,14 +353,12 @@ abstract class UserSampler<T> extends BaseSampler<T> {
     user: InternalConsumerUser | InternalBusinessUser
   ) {
     const krsScoreSampler = isBusinessUser(user)
-      ? new BusinessUserRiskScoreSampler(this.rng.randomInt())
-      : new ConsumerUserRiskScoreSampler(this.rng.randomInt())
-    const arsScoreSampler = new TransactionRiskScoreSampler(
-      this.rng.r(1).randomInt()
-    )
+      ? new BusinessUserRiskScoreSampler()
+      : new ConsumerUserRiskScoreSampler()
+    const arsScoreSampler = new TransactionRiskScoreSampler()
 
     const krsScoreComponents = krsScoreSampler.getSample(undefined, user)
-    const arsScoreComponents = arsScoreSampler.getSample(undefined)
+    const arsScoreComponents = arsScoreSampler.getSample(undefined, user)
 
     const krsScore =
       krsScoreComponents.reduce((acc, curr) => acc + curr.score, 0) /
@@ -377,12 +375,7 @@ abstract class UserSampler<T> extends BaseSampler<T> {
       userId: user.userId,
     }
 
-    const drsScoreComponent = this.rng.pickRandom([
-      krsScoreComponents,
-      arsScoreComponents,
-      arsScoreComponents,
-      arsScoreComponents,
-    ])
+    const drsScoreComponent = arsScoreComponents
 
     const drsScore =
       drsScoreComponent.reduce((acc, curr) => acc + curr.score, 0) /
