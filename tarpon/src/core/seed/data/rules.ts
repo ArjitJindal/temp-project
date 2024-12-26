@@ -14,9 +14,9 @@ import { getChecklistTemplates } from '@/core/seed/data/checklists'
 import { TransactionsVelocityRuleParameters } from '@/services/rules-engine/transaction-rules/transactions-velocity'
 import { TransactionAmountRuleParameters } from '@/services/rules-engine/transaction-rules/transaction-amount'
 import { LowValueTransactionsRuleParameters } from '@/services/rules-engine/transaction-rules/low-value-transactions-base'
-import { SanctionsCounterPartyRuleParameters } from '@/services/rules-engine/transaction-rules/sanctions-counterparty'
 import { RuleChecksForField } from '@/services/rules-engine/transaction-rules/library'
 import { isShadowRule } from '@/services/rules-engine/utils'
+import { PaymentDetailsScreeningRuleParameters } from '@/services/rules-engine/transaction-rules/payment-details-screening-base'
 
 export const getRuleInstance = (ruleInstanceId: string): RuleInstance => {
   return ruleInstances().find((ri) => ri.id === ruleInstanceId) as RuleInstance
@@ -1736,7 +1736,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         resolveIban: false,
-      } as SanctionsCounterPartyRuleParameters,
+      } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [
         RuleChecksForField.CounterpartyUsername,
@@ -1751,23 +1751,23 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'FLAG',
@@ -1810,7 +1810,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
         resolveIban: false,
-      } as SanctionsCounterPartyRuleParameters,
+      } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [
         RuleChecksForField.CounterpartyUsername,
@@ -1825,23 +1825,23 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         VERY_HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         HIGH: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
       riskLevelActions: {
         VERY_HIGH: 'FLAG',

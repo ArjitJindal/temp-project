@@ -1,4 +1,4 @@
-import { SanctionsCounterPartyRuleParameters } from '../sanctions-counterparty'
+import { PaymentDetailsScreeningRuleParameters } from '../payment-details-screening-base'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
@@ -141,7 +141,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
           resolveIban: true,
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
     ])
 
@@ -197,7 +197,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
           resolveIban: false,
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
     ])
 
@@ -266,7 +266,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
           resolveIban: true,
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
     ])
 
@@ -334,7 +334,7 @@ ruleVariantsTest({ aggregation: false }, () => {
           transactionAmountThreshold: {
             EUR: 1000,
           },
-        } as SanctionsCounterPartyRuleParameters,
+        } as PaymentDetailsScreeningRuleParameters,
       },
     ])
 

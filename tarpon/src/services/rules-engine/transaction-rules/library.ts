@@ -47,7 +47,6 @@ import { TransactionsRoundValueVelocityRuleParameters } from './transactions-rou
 import { BlacklistPaymentdetailsRuleParameters } from './blacklist-payment-details'
 import { TransactionsExceedPastPeriodRuleParameters } from './transactions-exceed-past-period'
 import { TransactionsOutflowInflowVolumeRuleParameters } from './transactions-outflow-inflow-volume'
-import { SanctionsCounterPartyRuleParameters } from './sanctions-counterparty'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transactions-volume-exceeds'
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
@@ -55,6 +54,7 @@ import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-cou
 import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from './same-user-using-too-many-payment-identifiers'
 import { PaymentDetailChangeRuleParameters } from './payment-detail-change-base'
+import { PaymentDetailsScreeningRuleParameters } from './payment-details-screening-base'
 import { TRANSACTION_RULES, TransactionRuleImplementationName } from './index'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { HighUnsuccessfullStateRateParameters } from '@/services/rules-engine/transaction-rules/high-unsuccessfull-state-rate'
@@ -98,6 +98,7 @@ export enum RuleChecksForField {
   TransactionDetails = 'Transaction details',
   Keywords = 'Keywords',
   accountHolderName = 'Account holder name',
+  ScreeningPaymentDetails = 'Screening payment details',
 }
 
 export enum RuleTypeField {
@@ -1768,7 +1769,7 @@ const _RULES_LIBRARY: Array<
     }
   },
   () => {
-    const defaultParameters: SanctionsCounterPartyRuleParameters = {
+    const defaultParameters: PaymentDetailsScreeningRuleParameters = {
       fuzziness: 20,
       screeningTypes: [],
     }
@@ -1950,6 +1951,34 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.UnusualBehaviour],
       sampleUseCases:
         'A user updated their bank details four times in a month, indicating possible account takeover or fraud.',
+    }
+  },
+  () => {
+    const defaultParameters: PaymentDetailsScreeningRuleParameters = {
+      fuzziness: 20,
+      screeningTypes: [],
+    }
+
+    return {
+      id: 'R-170',
+      name: 'Payment details screening',
+      type: 'TRANSACTION',
+      description:
+        'Screening transaction’s payment details for Sanctions/PEP/Adverse media',
+      descriptionTemplate:
+        'Screening transaction’s payment details for Sanctions/PEP/Adverse media',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'payment-details-screening',
+      labels: [],
+      checksFor: [RuleChecksForField.ScreeningPaymentDetails],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A transaction’s payment details are checked if userId not metioned against Sanctions/ PEP/ AM sanctions list, prompting further investigation.',
     }
   },
 ]

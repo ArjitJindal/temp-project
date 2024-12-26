@@ -4,13 +4,9 @@ import { checkTransactionAmountBetweenThreshold } from '../utils/transaction-rul
 import { PaymentDetailsScreeningRuleBase } from './payment-details-screening-base'
 import { traceable } from '@/core/xray'
 @traceable
-export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
+export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase {
   public async computeRule() {
     const hitRules: RuleHitResult = []
-
-    if (this.senderUser && this.receiverUser) {
-      return hitRules
-    }
 
     const isThresholdHit = this.parameters?.transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
@@ -30,13 +26,12 @@ export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
 
     if (!this.senderUser && this.transaction.originPaymentDetails) {
       const sanctionsDetails = await this.checkCounterPartyTransaction(
-        this.transaction.originPaymentDetails,
-        this.receiverUser
+        this.transaction.originPaymentDetails
       )
       if (sanctionsDetails.length > 0) {
         hitRules.push({
-          direction: 'DESTINATION',
-          vars: super.getTransactionVars('destination'),
+          direction: 'ORIGIN',
+          vars: super.getTransactionVars('origin'),
           sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
         })
       }
@@ -44,13 +39,12 @@ export class SanctionsCounterPartyRule extends PaymentDetailsScreeningRuleBase {
 
     if (!this.receiverUser && this.transaction.destinationPaymentDetails) {
       const sanctionsDetails = await this.checkCounterPartyTransaction(
-        this.transaction.destinationPaymentDetails,
-        this.senderUser
+        this.transaction.destinationPaymentDetails
       )
       if (sanctionsDetails.length > 0) {
         hitRules.push({
-          direction: 'ORIGIN',
-          vars: super.getTransactionVars('origin'),
+          direction: 'DESTINATION',
+          vars: super.getTransactionVars('destination'),
           sanctionsDetails: uniqBy(sanctionsDetails, (detail) => detail.name),
         })
       }

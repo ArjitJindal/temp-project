@@ -12,7 +12,6 @@ import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import {
   DATE_TIME,
   ENUM,
-  ID,
   SANCTIONS_CLEAR_REASON,
   STRING,
 } from '@/components/library/Table/standardDataTypes';
@@ -169,13 +168,15 @@ export function useColumns(
     const columns: TableColumn<SanctionsWhitelistEntity>[] = [
       !singleUserMode &&
         helper.simple<'userId'>({
-          title: 'User',
+          title: 'User / Payment details identifier',
           key: 'userId',
           type: {
-            ...ID,
-            render: (value) => (
-              <Id to={makeUrl('/users/list/all/:userId', { userId: value })}>{value}</Id>
-            ),
+            render: (value, { item }) => {
+              if (item.entity === 'EXTERNAL_USER') {
+                return <span>{value}</span>;
+              }
+              return <Id to={makeUrl('/users/list/all/:userId', { userId: value })}>{value}</Id>;
+            },
           },
         }),
       helper.simple<'sanctionsEntity.name'>({
