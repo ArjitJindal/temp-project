@@ -22,13 +22,9 @@ import { SendMessageCommand } from '@aws-sdk/client-sqs'
 import { escapeStringRegexp } from './regex'
 import { getSecretByName } from './secrets-manager'
 import {
-  DELTA_SANCTIONS_COLLECTION,
-  DELTA_SANCTIONS_SEARCH_INDEX,
   getGlobalCollectionIndexes,
   getMongoDbIndexDefinitions,
-  SANCTIONS_COLLECTION,
-  SANCTIONS_SEARCH_INDEX,
-  SANCTIONS_SEARCH_INDEX_DEFINITION,
+  getSearchIndexName,
 } from './mongodb-definitions'
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
 import { envIsNot } from './env'
@@ -332,6 +328,7 @@ const createMongoDBCollectionsInternal = async (
         }
         unique?: boolean
       }>
+      getSearchIndex?: () => Document
     }
   },
   tenantId?: string
@@ -341,43 +338,21 @@ const createMongoDBCollectionsInternal = async (
     const collection = await createCollectionIfNotExist(db, collectionName)
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
+    if (tenantId && definition.getSearchIndex) {
+      if (
+        envIsNot('local', 'test') &&
+        !isDemoTenant(tenantId) &&
+        (hasFeature('DOW_JONES') || hasFeature('OPEN_SANCTIONS'))
+      ) {
+        await createSearchIndex(
+          db,
+          collectionName,
+          definition.getSearchIndex(),
+          getSearchIndexName(collectionName)
+        )
+      }
+    }
   }
-  if (!tenantId) {
-    return
-  }
-  if (
-    envIsNot('local', 'test') &&
-    !isDemoTenant(tenantId) &&
-    (hasFeature('DOW_JONES') || hasFeature('OPEN_SANCTIONS'))
-  ) {
-    await createSanctionSearchIndexes(db, tenantId)
-  } else {
-    await deleteIndex(
-      db,
-      SANCTIONS_COLLECTION(tenantId),
-      SANCTIONS_SEARCH_INDEX(tenantId)
-    )
-    await deleteIndex(
-      db,
-      SANCTIONS_COLLECTION(tenantId),
-      DELTA_SANCTIONS_SEARCH_INDEX(tenantId)
-    )
-  }
-}
-
-async function createSanctionSearchIndexes(db: Db, tenantId: string) {
-  await createSearchIndex(
-    db,
-    SANCTIONS_COLLECTION(tenantId),
-    SANCTIONS_SEARCH_INDEX_DEFINITION,
-    SANCTIONS_SEARCH_INDEX(tenantId)
-  )
-  await createSearchIndex(
-    db,
-    DELTA_SANCTIONS_COLLECTION(tenantId),
-    SANCTIONS_SEARCH_INDEX_DEFINITION,
-    DELTA_SANCTIONS_COLLECTION(tenantId)
-  )
 }
 
 async function createSearchIndex(
@@ -399,27 +374,30 @@ async function createIndex(
   index: string,
   definition: Document
 ) {
-  const indexes = await collection.listSearchIndexes(index).toArray()
-  if (indexes.length > 0) {
+  const indexes = await collection.listSearchIndexes().toArray()
+  const indexesToDrop = indexes.filter((i) => i.name !== index)
+  for (const indexToDrop of indexesToDrop) {
+    await deleteIndex(collection, indexToDrop.name)
+    logger.info(`Dropped search index for ${indexToDrop.name}`)
+  }
+
+  if (indexes.find((i) => i.name === index)) {
     await collection.updateSearchIndex(index, definition)
+    logger.info(`Updated search index for ${index}`)
   } else {
     await collection.createSearchIndex({
       name: index,
       definition: definition,
     })
+    logger.info(`Created search index for ${index}`)
   }
 }
-async function deleteIndex(db: Db, collectionName: string, index: string) {
-  const collection = db.collection(collectionName)
 
-  if (
-    (await db.listCollections({ name: collectionName }).toArray()).length > 1
-  ) {
-    const indexes = await collection.listSearchIndexes(index).toArray()
-    if (indexes.length > 0) {
-      console.log(`Dropping search index for sanctions - ${index}`)
-      await collection.dropSearchIndex(index)
-    }
+async function deleteIndex(collection: Collection, index: string) {
+  const indexes = await collection.listSearchIndexes().toArray()
+  if (indexes.find((i) => i.name === index)) {
+    await collection.dropSearchIndex(index)
+    logger.info(`Dropped search index for ${index}`)
   }
 }
 

@@ -46,10 +46,7 @@ export abstract class UserOngoingRule<P> extends Rule {
     services: { riskRepository: RiskRepository },
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient,
-    stage: RuleStage,
-    from?: string,
-    to?: string,
-    fromTimestamp?: number
+    stage: RuleStage
   ) {
     super()
     this.tenantId = tenantId
@@ -61,9 +58,6 @@ export abstract class UserOngoingRule<P> extends Rule {
     this.dynamoDb = dynamoDb
     this.riskLevelParameters = params.riskLevelParameters
     this.riskRepository = services.riskRepository
-    this.from = from
-    this.to = to
-    this.fromTimestamp = fromTimestamp
   }
 
   public getUserOngoingVars(): UserOngoingVars<P> {
@@ -83,33 +77,6 @@ export abstract class UserOngoingRule<P> extends Rule {
 
     const hitUsersCursors = hasFeature('RISK_LEVELS')
       ? Object.entries(this.riskLevelParameters).map(([key, params]) => {
-          let cursorMatchStage: any = {}
-          const from = this.from
-          const to = this.to
-          const fromTimestamp = this.fromTimestamp
-
-          if (from) {
-            cursorMatchStage = {
-              userId: { $gte: from },
-            }
-          }
-
-          if (to) {
-            cursorMatchStage = {
-              userId: { ...cursorMatchStage.userId, $lte: to },
-            }
-          }
-
-          if (fromTimestamp) {
-            cursorMatchStage = {
-              $or: [
-                { createdAt: { $gte: fromTimestamp } },
-                { updatedAt: { $gte: fromTimestamp } },
-              ],
-              ...cursorMatchStage,
-            }
-          }
-
           const pipeline = [
             {
               $match: getUsersFilterByRiskLevel(
@@ -122,7 +89,6 @@ export abstract class UserOngoingRule<P> extends Rule {
                 userId: 1,
               },
             },
-            { $match: cursorMatchStage },
             ...this.getHitRulePipline(params),
           ]
 

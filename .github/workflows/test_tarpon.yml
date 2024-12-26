@@ -76,7 +76,7 @@ jobs:
       - name: Start MongoDB localy
         uses: supercharge/mongodb-github-action@1.7.0
         with:
-          mongodb-version: 5.0.18
+          mongodb-version: 8.0.4
           mongodb-port: 27018
       - name: Run Tests
         run: yarn run test:ci

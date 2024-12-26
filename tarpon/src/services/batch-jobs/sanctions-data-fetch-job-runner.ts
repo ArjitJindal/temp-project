@@ -1,5 +1,6 @@
 import { range } from 'lodash'
 import { backOff } from 'exponential-backoff'
+import { MongoClient } from 'mongodb'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SanctionsDataFetchBatchJob } from '@/@types/batch-job'
 import { sanctionsDataFetchers } from '@/services/sanctions/data-fetchers'
@@ -9,14 +10,13 @@ import { logger } from '@/core/logger'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import {
   DELTA_SANCTIONS_COLLECTION,
+  getSearchIndexName,
   SANCTIONS_COLLECTION,
-  USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import {
   createMongoDBCollections,
   getMongoDbClient,
 } from '@/utils/mongodb-utils'
-import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
   protected async run(job: SanctionsDataFetchBatchJob): Promise<void> {
@@ -31,9 +31,9 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
     const client = await getMongoDbClient()
 
+    await createMongoDBCollections(client, tenantId)
     logger.info(`Running ${fetcher.constructor.name}`)
     if (runFullLoad) {
-      await createMongoDBCollections(client, tenantId)
       const repo = new MongoSanctionsRepository(sanctionsCollectionName)
       await fetcher.fullLoad(repo, version)
       await checkSearchIndexesReady(sanctionsCollectionName)
@@ -56,9 +56,7 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     }
 
     // Once lists are updated, run the ongoing screening jobs
-    if (!tenantId?.startsWith('pnb')) {
-      await dispatchOngoingScreeningJobs(tenantId)
-    }
+    await dispatchOngoingScreeningJobs(tenantId, client)
   }
 }
 
@@ -70,7 +68,13 @@ async function checkSearchIndexesReady(collectionName: string) {
   // Retrieve all search indexes using the $listSearchIndexes aggregation stage
   await backOff(async () => {
     const indexes = await collection
-      .aggregate([{ $listSearchIndexes: {} }])
+      .aggregate([
+        {
+          $listSearchIndexes: {
+            name: getSearchIndexName(collectionName),
+          },
+        },
+      ])
       .toArray()
     for (const index of indexes) {
       // Check if the index is ready
@@ -81,33 +85,56 @@ async function checkSearchIndexesReady(collectionName: string) {
   })
 }
 
-async function dispatchOngoingScreeningJobs(tenantId: string) {
-  const mongoDB = await getMongoDbClient()
-  const users = mongoDB
-    ?.db()
-    .collection<InternalUser>(USERS_COLLECTION(tenantId as string))
-  if (!users) {
+function getFiltersForScreening(tenantId: string) {
+  const defaultFilter = {
+    sanctionsSearchTypes: {
+      $ne: [],
+    },
+  }
+  const filters = {
+    pnb: {
+      nationality: {
+        $in: ['MY', null],
+      },
+    },
+  }
+  return {
+    ...defaultFilter,
+    ...(filters[tenantId] ?? {}),
+  }
+}
+
+async function dispatchOngoingScreeningJobs(
+  tenantId: string,
+  mongoDB: MongoClient
+) {
+  const deltaCollection = mongoDB
+    .db()
+    .collection(DELTA_SANCTIONS_COLLECTION(tenantId as string))
+
+  if (!deltaCollection) {
     return
   }
-  const totalDocs = await users.estimatedDocumentCount()
-  const batchSize = 500_000 // Reduce to check how fast it works
+  const totalDocs = await deltaCollection.estimatedDocumentCount()
+  const batchSize = 10_000
   const numberOfJobs = Math.ceil(totalDocs / batchSize)
   logger.info(`${totalDocs} users for screening`)
   logger.info(`Creating batches of ${batchSize} size`)
+  const filters = getFiltersForScreening(tenantId)
   const froms = (
     await Promise.all(
       range(numberOfJobs).map(async (i): Promise<string | null> => {
-        const user = (
-          await users
-            .find({})
-            .sort({ userId: 1 })
+        const entity = (
+          await deltaCollection
+            .find(filters)
+            .sort({ id: 1 })
             .skip(i * batchSize)
             .limit(1)
             .toArray()
         )[0]
 
-        if (user) {
-          return user.userId
+        if (entity) {
+          return entity.id
         }
         return null
       })

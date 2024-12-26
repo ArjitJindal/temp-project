@@ -5,9 +5,8 @@ import {
 } from '@/services/sanctions/providers/types'
 import {
   DELTA_SANCTIONS_COLLECTION,
-  DELTA_SANCTIONS_SEARCH_INDEX,
   SANCTIONS_COLLECTION,
-  SANCTIONS_SEARCH_INDEX,
+  getSearchIndexName,
 } from '@/utils/mongodb-definitions'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -501,8 +500,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           $search: {
             index: request.isOngoingScreening
-              ? DELTA_SANCTIONS_SEARCH_INDEX(this.tenantId)
-              : SANCTIONS_SEARCH_INDEX(this.tenantId),
+              ? getSearchIndexName(DELTA_SANCTIONS_COLLECTION(this.tenantId))
+              : getSearchIndexName(SANCTIONS_COLLECTION(this.tenantId)),
             concurrent: true,
             compound: {
               must: [

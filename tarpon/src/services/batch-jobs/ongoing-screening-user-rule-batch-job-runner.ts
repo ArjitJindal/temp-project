@@ -1,8 +1,7 @@
 import pMap from 'p-map'
-import { MongoClient, MongoError } from 'mongodb'
+import { Collection, MongoClient } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { backOff } from 'exponential-backoff'
-import { search, sortKind } from 'fast-fuzzy'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
 import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
@@ -28,10 +27,10 @@ import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import {
   DELTA_SANCTIONS_COLLECTION,
+  getSearchIndexName,
   USERS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
-import { getUserName } from '@/utils/helpers'
 
 const CONCURRENT_BATCH_SIZE = process.env.SCREENING_CONCURRENT_BATCH_SIZE
   ? parseInt(process.env.SCREENING_CONCURRENT_BATCH_SIZE)
@@ -179,10 +178,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         ruleInstances
       )
     }
-    const usersCursor = this.userRepository?.getAllUsersCursor(
-      this.from,
-      this.to
-    )
+    const usersCursor = this.userRepository?.getAllUsersCursor()
 
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
@@ -211,10 +207,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     if (!this.rulesEngineService) {
       throw new Error('Rules Engine Service is not initialized')
     }
-    const data = await this.rulesEngineService.verifyAllUsersRules(
-      this.from,
-      this.to
-    )
+    const data = await this.rulesEngineService.verifyAllUsersRules()
     if (!this.userRepository) {
       throw new Error('User Repository is not initialized')
     }
@@ -300,8 +293,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   }
 }
 
-const USER_BATCH_SIZE = 1000
-
 export async function preprocessUsers(
   tenantId: string,
   fuzziness: number,
@@ -313,8 +304,6 @@ export async function preprocessUsers(
 ) {
   const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
   const allNames: Set<string> = new Set()
-  const documentIds: Set<string> = new Set()
-  const matches: Set<string> = new Set()
   const sanctionsCollection = client
     .db()
     .collection<SanctionsEntity>(deltaSanctionsCollectionName)
@@ -324,139 +313,138 @@ export async function preprocessUsers(
 
   let match: any = {}
   if (from) {
-    match = { userId: { $gte: from } }
+    match = { id: { $gte: from } }
   }
   if (to) {
-    match = { userId: { ...match.userId, $lt: to } }
+    match = { id: { ...match.id, $lt: to } }
   }
-  const otherTargetUserIds = new Set(
+  const targetUserIds = new Set<string>()
+  ;(
     await getUserIdsForODDRulesForPNB(
       ruleInstances ?? [],
       dynamoDb as DynamoDBDocumentClient
     )
-  )
+  ).forEach((u) => {
+    targetUserIds.add(u)
+  })
+
   const mohaListUsers = await getMOHAListUserNames(
     dynamoDb,
     ruleInstances ?? []
   )
-  for (const user of mohaListUsers) {
-    allNames.add(user.name)
-    documentIds.add(user.documentId)
-  }
-  for await (const sanctionsEntity of sanctionsCollection.find({})) {
-    const names: string[] = [
-      sanctionsEntity.name,
-      ...(sanctionsEntity.aka || []),
-    ]
-    names.forEach((n) => {
-      allNames.add(n)
+
+  const matchedMohaUsers = await usersCollection
+    .find({
+      'legalDocuments.documentNumber': {
+        $in: mohaListUsers.filter((u) => u.documentId).map((u) => u.documentId),
+      },
     })
+    .toArray()
+
+  matchedMohaUsers.forEach((u) => {
+    targetUserIds.add(u.userId)
+  })
+
+  mohaListUsers.forEach((m) => {
+    const isMatched = Boolean(
+      matchedMohaUsers.find((u) =>
+        u.legalDocuments?.find((d) => d.documentNumber === m.documentId)
+      )
+    )
+    if (!isMatched) {
+      allNames.add(m.name)
+    }
+  })
+
+  for await (const sanctionsEntity of sanctionsCollection.find(match)) {
+    const docIds = new Set<string>()
+
     sanctionsEntity.documents?.forEach((d) => {
-      if (d.id) {
-        documentIds.add(d.id)
-      }
       if (d.formattedId) {
-        documentIds.add(d.formattedId)
+        docIds.add(d.formattedId)
+      }
+      if (d.id) {
+        docIds.add(d.id)
       }
     })
-  }
-  let usersCursor = usersCollection
-    .find(match)
-    .addCursorFlag('noCursorTimeout', true)
-    .batchSize(USER_BATCH_SIZE)
-  let pendingUsers: InternalUser[] = []
-  let lastProcessedId: string | undefined = undefined
-  let isCompleted = false
-  const allNamesArray = Array.from(allNames)
-  while (!isCompleted) {
-    try {
-      for await (const user of usersCursor) {
-        pendingUsers.push(user)
-        lastProcessedId = user.userId
-        if (pendingUsers.length === USER_BATCH_SIZE) {
-          await processUsersBatch({
-            usersChunk: pendingUsers,
-            allNames: allNamesArray,
-            documentIds,
-            otherTargetUserIds,
-            fuzziness,
-            matches,
-          })
-          pendingUsers = []
-        }
-      }
-      if (pendingUsers.length > 0) {
-        await processUsersBatch({
-          usersChunk: pendingUsers,
-          allNames: allNamesArray,
-          documentIds,
-          otherTargetUserIds,
-          fuzziness,
-          matches,
-        })
-      }
-      isCompleted = true
-    } catch (error) {
-      if (error instanceof MongoError && error.code === 43) {
-        logger.info('Cursor expired, retrying...')
-        usersCursor = usersCollection
-          .find({
-            userId: {
-              $gt: lastProcessedId,
-              ...(to ? { $lt: to } : {}),
-            },
-          })
-          .addCursorFlag('noCursorTimeout', true)
-          .batchSize(USER_BATCH_SIZE)
-        continue
-      }
-      throw error
+    const docIdMatchedUsers = await usersCollection
+      .find({
+        'legalDocuments.documentNumber': { $in: Array.from(docIds) },
+      })
+      .toArray()
+    docIdMatchedUsers.forEach((d) => {
+      targetUserIds.add(d.userId)
+    })
+    if (!docIdMatchedUsers.length) {
+      const names: string[] = [
+        sanctionsEntity.name,
+        ...(sanctionsEntity.aka || []),
+      ]
+      names.forEach((n) => {
+        allNames.add(n)
+      })
     }
   }
-  return matches
+
+  const allNamesArray = Array.from(allNames)
+  await processNames(allNamesArray, targetUserIds, usersCollection, tenantId)
+
+  return targetUserIds
 }
 
-async function processUsersBatch({
-  usersChunk,
-  allNames,
-  documentIds,
-  otherTargetUserIds,
-  fuzziness,
-  matches,
-}: {
-  usersChunk: InternalUser[]
-  allNames: string[]
-  documentIds: Set<string>
-  otherTargetUserIds: Set<string>
-  fuzziness: number
-  matches: Set<string>
-}) {
+async function processNames(
+  allNames: string[],
+  targetUserIds: Set<string>,
+  usersCollection: Collection<InternalUser>,
+  tenantId: string
+) {
+  const searchScoreThreshold = 7
   await pMap(
-    usersChunk,
-    (user) => {
-      if (otherTargetUserIds && otherTargetUserIds.has(user.userId)) {
-        matches.add(user.userId)
-        return
-      }
-      const userName = getUserName(user)
-      const fuzzyMatches = search(userName, allNames, {
-        threshold: 1 - fuzziness / 100,
-        limit: 1,
-        sortBy: sortKind.insertOrder,
-        ignoreCase: true,
+    allNames,
+    async (name) => {
+      const users = await usersCollection
+        .aggregate([
+          {
+            $search: {
+              index: getSearchIndexName(USERS_COLLECTION(tenantId)),
+              text: {
+                query: name,
+                path: [
+                  'userDetails.name.firstName',
+                  'userDetails.name.middleName',
+                  'userDetails.name.lastName',
+                ],
+                fuzzy: {
+                  maxEdits: 2,
+                  maxExpansions: 100,
+                  prefixLength: 0,
+                },
+              },
+            },
+          },
+          {
+            $limit: 100,
+          },
+          {
+            $addFields: {
+              searchScore: { $meta: 'searchScore' },
+            },
+          },
+          {
+            $match: { searchScore: { $gt: searchScoreThreshold } },
+          },
+          {
+            $project: {
+              userId: 1,
+            },
+          },
+        ])
+        .toArray()
+      users.forEach((u) => {
+        targetUserIds.add(u.userId)
       })
-      if (fuzzyMatches.length > 0) {
-        matches.add(user.userId)
-        return
-      }
-      for (const d of user.legalDocuments ?? []) {
-        if (documentIds.has(d.documentNumber)) {
-          matches.add(user.userId)
-          break
-        }
-      }
     },
-    { concurrency: CONCURRENT_BATCH_SIZE }
+    { concurrency: 10 }
   )
 }
 

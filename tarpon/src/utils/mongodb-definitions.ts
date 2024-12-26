@@ -2,13 +2,7 @@ import { Document } from 'mongodb'
 import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
-export const SANCTIONS_SEARCH_INDEX = (tenantId: string) =>
-  `${tenantId}_sanctions_search_index`
-
-export const DELTA_SANCTIONS_SEARCH_INDEX = (tenantId: string) =>
-  `${tenantId}_delta_sanctions_search_index`
-
-export const SANCTIONS_SEARCH_INDEX_DEFINITION = {
+export const SANCTIONS_SEARCH_INDEX_DEFINITION: Document = {
   mappings: {
     dynamic: false,
     fields: {
@@ -390,6 +384,7 @@ export const UNIQUE_TAGS_COLLECTION = (tenantId: string) => {
 export function getMongoDbIndexDefinitions(tenantId: string): {
   [collectionName: string]: {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+    getSearchIndex?: () => Document
   }
 } {
   return {
@@ -540,6 +535,35 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
 
         return [...indexes1, ...indexes2, uniqueUserIdIndex, ...indexes3]
       },
+      getSearchIndex:
+        tenantId === 'pnb'
+          ? () => ({
+              mappings: {
+                dynamic: false,
+                fields: {
+                  userDetails: {
+                    type: 'document',
+                    fields: {
+                      name: {
+                        type: 'document',
+                        fields: {
+                          firstName: {
+                            type: 'string',
+                          },
+                          middleName: {
+                            type: 'string',
+                          },
+                          lastName: {
+                            type: 'string',
+                          },
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            })
+          : undefined,
     },
     [USER_EVENTS_COLLECTION(tenantId)]: {
       getIndexes: () =>
@@ -763,7 +787,62 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
       ],
     },
     [DELTA_SANCTIONS_COLLECTION(tenantId)]: {
-      getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
+      getIndexes: () => [
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+            deletedAt: 1,
+          },
+        },
+        {
+          index: {
+            provider: 1,
+            version: 1,
+            id: 1,
+          },
+          unique: true,
+        },
+        {
+          index: {
+            'documents.formattedId': 1,
+          },
+        },
+        {
+          index: {
+            'documents.id': 1,
+          },
+        },
+        {
+          index: {
+            nationality: 1,
+          },
+        },
+        {
+          index: {
+            gender: 1,
+          },
+        },
+        {
+          index: {
+            'occupations.rank': 1,
+          },
+        },
+        {
+          index: {
+            'associates.ranks': 1,
+          },
+        },
+        {
+          index: {
+            yearOfBirth: 1,
+          },
+        },
+        { index: { version: 1 } },
+        { index: { updatedAt: -1 } },
+      ],
+      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION,
     },
     [NARRATIVE_TEMPLATE_COLLECTION(tenantId)]: {
       getIndexes: () =>
@@ -919,6 +998,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         { index: { version: 1 } },
         { index: { updatedAt: -1 } },
       ],
+      getSearchIndex: () => SANCTIONS_SEARCH_INDEX_DEFINITION,
     },
   }
 }
@@ -926,7 +1006,12 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
 export const getGlobalCollectionIndexes = (): {
   [collectionName: string]: {
     getIndexes: () => Array<{ index: { [key: string]: any }; unique?: boolean }>
+    getSearchIndex?: () => Document
   }
 } => {
   return {}
+}
+
+export const getSearchIndexName = (collectionName: string) => {
+  return `${collectionName}_search_index`
 }
