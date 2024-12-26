@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import Modal from '../../../../components/library/Modal/index';
+import NarrativesSelectStatusChange from '../NarrativesSelectStatusChange';
 import s from './index.module.less';
 import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { and } from '@/components/library/Form/utils/validation/combinators';
@@ -141,11 +142,19 @@ export default function PaymentApprovalModal({
             }}
           >
             {(inputProps) => (
-              <TextArea
-                {...inputProps}
-                rows={4}
-                placeholder={`Enter your additional comment here, if any.`}
-              />
+              <>
+                <NarrativesSelectStatusChange
+                  templateValue={null}
+                  setTemplateValue={(value) => {
+                    inputProps?.onChange?.(value);
+                  }}
+                />
+                <TextArea
+                  {...inputProps}
+                  rows={4}
+                  placeholder={`Write a narrative explaining the reason and findings, if any.`}
+                />
+              </>
             )}
           </InputField>
         </div>
