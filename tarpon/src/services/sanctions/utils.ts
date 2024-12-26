@@ -2,5 +2,11 @@ import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDa
 import { hasFeature } from '@/core/utils/context'
 
 export function getDefaultProvider(): SanctionsDataProviderName {
-  return hasFeature('DOW_JONES') ? 'dowjones' : 'comply-advantage'
+  if (hasFeature('DOW_JONES')) {
+    return 'dowjones'
+  }
+  if (hasFeature('OPEN_SANCTIONS')) {
+    return 'open-sanctions'
+  }
+  return 'comply-advantage'
 }
