@@ -57,7 +57,15 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
         dayjs(ruleInstance.createdAt),
         schedule.unit.toLowerCase() as any
       )
-      return diffTime % schedule.value === 0
+      const diffTimeInDays = getTimeDiff(
+        dayjs(),
+        dayjs(ruleInstance.createdAt),
+        'day'
+      )
+      return (
+        diffTime % schedule.value === 0 ||
+        (diffTimeInDays === 1 && !ruleInstance.runCount) // if the rule is created after starting the cron job but on the same day,
+      )
     }
     return isOngoingUserRuleInstance(ruleInstance, isRiskLevelsEnabled)
   })
