@@ -78,6 +78,7 @@ import { S3Config } from '@/services/aws/s3-service'
 import { createReport } from '@/services/cases/utils/report'
 import * as XlsxGenerator from '@/services/cases/utils/xlsx-generator'
 import { LinkerService } from '@/services/linker'
+import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -695,6 +696,64 @@ export class CaseService extends CaseAlertsCommonService {
     if (!externalRequest && updates.caseStatus === 'CLOSED') {
       await this.sendCasesClosedWebhook(cases, updates)
     }
+  }
+
+  public async applyTransactionAction(transactionAction: TransactionAction) {
+    const cases = await this.getCases({
+      filterTransactionIds: transactionAction.transactionIds,
+    })
+    if (!cases) {
+      throw new NotFound('Case(s) not found for transactions')
+    }
+    // NOTE: this piece of code performs a lot of separate requests to the database
+    //       however attempts at optimizing it proved no real performance improvements
+    //       if futher performance improvements are needed, we should consider moving
+    //       this logic into the consumer and executing it asynchronously
+    await Promise.all(
+      cases.data.flatMap((c) => {
+        if (!c.alerts) {
+          return []
+        }
+        return c.alerts.flatMap((alert) => {
+          const txnIds = transactionAction.transactionIds.filter((tid) =>
+            alert.transactionIds?.includes(tid)
+          )
+
+          if (txnIds.length > 0 && alert.alertId) {
+            const promises: Promise<any>[] = []
+
+            if (alert.ruleAction === 'SUSPEND') {
+              const commentBody: string =
+                txnIds.join(', ') +
+                ` set to ` +
+                transactionAction.action +
+                `. Reasons: ` +
+                transactionAction.reason.join(', ') +
+                `. Comment: ` +
+                transactionAction.comment
+              promises.push(
+                this.alertsService.saveComment(alert.alertId, {
+                  body: commentBody,
+                  files: transactionAction.files,
+                })
+              )
+            }
+
+            if (transactionAction.action === 'ALLOW') {
+              promises.push(
+                this.alertsService.closeAlertIfAllTransactionsApproved(
+                  alert,
+                  txnIds
+                )
+              )
+            }
+
+            return promises
+          }
+          return []
+        })
+      })
+    )
   }
 
   public async getCase(

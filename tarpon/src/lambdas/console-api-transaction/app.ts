@@ -14,7 +14,6 @@ import { InternalTransaction } from '@/@types/openapi-internal/InternalTransacti
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { RulesEngineService } from '@/services/rules-engine'
-import { AlertsService } from '@/services/alerts'
 import { CaseService } from '@/services/cases'
 import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
@@ -98,10 +97,9 @@ export const transactionsViewHandler = lambdaApi()(
     const s3 = getS3ClientByEvent(event)
     const mongoDb = await getMongoDbClient()
     const dynamoDb = await getDynamoDbClient()
-    const [rulesEngineService, alertService, caseService, transactionService] =
+    const [rulesEngineService, caseService, transactionService] =
       await Promise.all([
         RulesEngineService.fromEvent(event),
-        AlertsService.fromEvent(event),
         CaseService.fromEvent(event),
         TransactionService.fromEvent(event),
       ])
@@ -203,57 +201,7 @@ export const transactionsViewHandler = lambdaApi()(
         req.TransactionAction,
         ctx.userId
       )
-      const cases = await caseService.getCases({
-        filterTransactionIds: req.TransactionAction.transactionIds,
-      })
-      if (!cases) {
-        throw new NotFound('Case(s) not found for transactions')
-      }
-      await Promise.all(
-        cases.data.flatMap((c) => {
-          if (!c.alerts) {
-            return []
-          }
-          return c.alerts.flatMap((alert) => {
-            const txnIds = req.TransactionAction.transactionIds.filter((tid) =>
-              alert.transactionIds?.includes(tid)
-            )
-
-            if (txnIds.length > 0 && alert.alertId) {
-              const promises: Promise<any>[] = []
-
-              if (alert.ruleAction === 'SUSPEND') {
-                const commentBody: string =
-                  txnIds.join(', ') +
-                  ` set to ` +
-                  req.TransactionAction.action +
-                  `. Reasons: ` +
-                  req.TransactionAction.reason.join(', ') +
-                  `. Comment: ` +
-                  req.TransactionAction.comment
-                promises.push(
-                  alertService.saveComment(alert.alertId, {
-                    body: commentBody,
-                    files: req.TransactionAction.files,
-                  })
-                )
-              }
-
-              if (req.TransactionAction.action === 'ALLOW') {
-                promises.push(
-                  alertService.closeAlertIfAllTransactionsApproved(
-                    alert,
-                    txnIds
-                  )
-                )
-              }
-
-              return promises
-            }
-            return []
-          })
-        })
-      )
+      await caseService.applyTransactionAction(req.TransactionAction)
       return response
     })
 

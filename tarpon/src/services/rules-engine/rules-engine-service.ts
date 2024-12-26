@@ -1977,11 +1977,10 @@ export class RulesEngineService {
     userId: string
   ): Promise<void> {
     const { transactionIds, action, reason, comment } = data
-    const txns = await Promise.all(
-      transactionIds.map((txnId) => {
-        return this.transactionRepository.getTransactionById(txnId)
-      })
+    const txns = await this.transactionRepository.getTransactionsByIds(
+      transactionIds
     )
+
     if (txns.length === 0) {
       throw new Error('No transactions')
     }
@@ -1996,14 +1995,15 @@ export class RulesEngineService {
       )
     }
 
-    await Promise.all(
-      txns.flatMap((transaction) => {
-        if (!transaction) {
-          return
-        }
-        return [
-          this.transactionEventRepository.saveTransactionEvent(
-            {
+    const promises = [
+      this.transactionEventRepository.saveTransactionEvents(
+        txns
+          .filter(
+            (transaction): transaction is NonNullable<typeof transaction> =>
+              !!transaction
+          )
+          .map((transaction) => ({
+            transactionEvent: {
               transactionState:
                 transaction.transactionState as TransactionState,
               timestamp: Date.now(),
@@ -2011,20 +2011,31 @@ export class RulesEngineService {
               eventDescription: `Transaction status was manually changed to ${action} by ${userId}`,
               reason: reason.join(', '),
             },
-            {
+            rulesResult: {
               status: action,
               hitRules: transaction.hitRules,
               executedRules: transaction.executedRules,
-            }
-          ),
-          this.transactionRepository.saveTransaction(transaction, {
-            status: action,
-            hitRules: transaction.hitRules,
-            executedRules: transaction.executedRules,
-          }),
-        ]
-      })
-    )
+            },
+          }))
+      ),
+      this.transactionRepository.saveTransactions(
+        txns
+          .filter(
+            (transaction): transaction is NonNullable<typeof transaction> =>
+              !!transaction
+          )
+          .map((transaction) => ({
+            transaction,
+            rulesResult: {
+              status: action,
+              hitRules: transaction.hitRules,
+              executedRules: transaction.executedRules,
+            },
+          }))
+      ),
+    ]
+
+    await Promise.all(promises)
 
     const webhooksData: ThinWebhookDeliveryTask<TransactionStatusDetails>[] =
       txns.map((txn) => ({

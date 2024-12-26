@@ -3,7 +3,6 @@ import { MongoClient } from 'mongodb'
 import { StackConstants } from '@lib/constants'
 import {
   DynamoDBDocumentClient,
-  PutCommand,
   QueryCommand,
   QueryCommandInput,
   UpdateCommand,
@@ -24,6 +23,7 @@ import { InternalTransactionEvent } from '@/@types/openapi-internal/InternalTran
 import { TransactionsEventResponse } from '@/@types/openapi-internal/TransactionsEventResponse'
 import { GeoIPService } from '@/services/geo-ip'
 import { hydrateIpInfo } from '@/services/rules-engine/utils/geo-utils'
+import { batchWrite } from '@/utils/dynamodb'
 
 @traceable
 export class TransactionEventRepository {
@@ -49,39 +49,75 @@ export class TransactionEventRepository {
     transactionEvent: TransactionEvent,
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<string> {
-    const eventId = transactionEvent.eventId || uuidv4()
+    const eventIds = await this.saveTransactionEvents([
+      { transactionEvent, rulesResult },
+    ])
+    return eventIds[0]
+  }
 
-    await hydrateIpInfo(
-      this.geoService,
-      transactionEvent.updatedTransactionAttributes
-    )
+  public async saveTransactionEvents(
+    transactionEvents: Array<{
+      transactionEvent: TransactionEvent
+      rulesResult?: Undefined<TransactionMonitoringResult>
+    }>
+  ): Promise<string[]> {
+    const tableName = StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    const primaryKeys: {
+      PartitionKeyID: string
+      SortKeyID: string | undefined
+    }[] = []
 
-    const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
-      this.tenantId,
-      transactionEvent.transactionId,
-      {
-        timestamp: transactionEvent.timestamp,
-        eventId,
-      }
-    )
-    await this.dynamoDb.send(
-      new PutCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Item: {
-          ...primaryKey,
-          eventId,
-          ...transactionEvent,
-          ...rulesResult,
-        },
+    // Process each event and prepare write requests
+    const writeRequests = await Promise.all(
+      transactionEvents.map(async (e) => {
+        const eventId = e.transactionEvent.eventId || uuidv4()
+
+        await hydrateIpInfo(
+          this.geoService,
+          e.transactionEvent.updatedTransactionAttributes
+        )
+
+        const primaryKey = DynamoDbKeys.TRANSACTION_EVENT(
+          this.tenantId,
+          e.transactionEvent.transactionId,
+          {
+            timestamp: e.transactionEvent.timestamp,
+            eventId,
+          }
+        )
+        primaryKeys.push(primaryKey)
+
+        return {
+          PutRequest: {
+            Item: {
+              ...primaryKey,
+              eventId,
+              ...e.transactionEvent,
+              ...e.rulesResult,
+            },
+          },
+        }
       })
     )
+
+    // Batch write all items in a single db operation
+    await batchWrite(this.dynamoDb, writeRequests, tableName)
+
+    // Handle local changes if needed
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await Promise.all(
+        primaryKeys
+          .filter((primaryKey) => primaryKey !== undefined)
+          .map((primaryKey) =>
+            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+          )
+      )
     }
-    return eventId
+
+    return writeRequests.map((request) => request.PutRequest.Item.eventId)
   }
 
   public async updateTransactionEventRulesResult(

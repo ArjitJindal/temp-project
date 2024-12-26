@@ -76,35 +76,63 @@ export class DynamoDbTransactionRepository
     transaction: Transaction,
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<Transaction> {
-    this.sanitizeTransactionInPlace(transaction)
-    transaction.timestamp = transaction.timestamp || Date.now()
+    const transactions = await this.saveTransactions([
+      { transaction, rulesResult },
+    ])
+    return transactions[0]
+  }
 
-    await hydrateIpInfo(this.geoService, transaction)
+  public async saveTransactions(
+    transactions: Array<{
+      transaction: Transaction
+      rulesResult?: Undefined<TransactionMonitoringResult>
+    }>
+  ): Promise<Transaction[]> {
+    const primaryKeys: {
+      PartitionKeyID: string
+      SortKeyID: string | undefined
+    }[] = []
 
-    const primaryKey = DynamoDbKeys.TRANSACTION(
-      this.tenantId,
-      transaction.transactionId
-    )
+    const writeRequests = await Promise.all(
+      transactions.map(async ({ transaction, rulesResult = {} }) => {
+        this.sanitizeTransactionInPlace(transaction)
+        transaction.timestamp = transaction.timestamp || Date.now()
 
-    const auxiliaryIndexes = this.getTransactionAuxiliaryIndexes(transaction)
-    await batchWrite(
-      this.dynamoDb,
-      [
-        {
-          PutRequest: {
-            Item: {
-              ...primaryKey,
-              ...transaction,
-              ...rulesResult,
+        await hydrateIpInfo(this.geoService, transaction)
+
+        const primaryKey = DynamoDbKeys.TRANSACTION(
+          this.tenantId,
+          transaction.transactionId
+        )
+        primaryKeys.push(primaryKey)
+
+        const auxiliaryIndexes =
+          this.getTransactionAuxiliaryIndexes(transaction)
+
+        const requests = [
+          {
+            PutRequest: {
+              Item: {
+                ...primaryKey,
+                ...transaction,
+                ...rulesResult,
+              },
             },
           },
-        },
-        ...auxiliaryIndexes.map((item) => ({
-          PutRequest: {
-            Item: item,
-          },
-        })),
-      ],
+          ...auxiliaryIndexes.map((item) => ({
+            PutRequest: {
+              Item: item,
+            },
+          })),
+        ]
+
+        return requests
+      })
+    )
+
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests.flat(),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     )
 
@@ -112,9 +140,16 @@ export class DynamoDbTransactionRepository
       const { localTarponChangeCaptureHandler } = await import(
         '@/utils/local-dynamodb-change-handler'
       )
-      await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+      await Promise.all(
+        primaryKeys
+          .filter((primaryKey) => primaryKey !== undefined)
+          .map((primaryKey) =>
+            localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+          )
+      )
     }
-    return transaction
+
+    return transactions.map(({ transaction }) => transaction)
   }
 
   public async updateTransactionRulesResult(
@@ -395,6 +430,7 @@ export class DynamoDbTransactionRepository
       ] as Transaction[]) || []
     )
   }
+
   public async hasAnySendingTransaction(
     userId: string,
     filterOptions: TransactionsFilterOptions
