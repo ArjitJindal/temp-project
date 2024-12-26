@@ -20,9 +20,14 @@ export const getCases: () => Case[] = memoize(() => {
   )
 
   const data: Case[] = []
+  const processedUsers = new Set()
 
   for (let i = 0; i < getUsers().length; i += 1) {
     const user = getUsers()[i]
+    if (processedUsers.has(user.userId)) {
+      continue
+    }
+    processedUsers.add(user.userId)
     const transactionsForUserAsOrigin: InternalTransaction[] =
       getTransactions().filter((t) => {
         return t.originUserId === user.userId
@@ -57,7 +62,6 @@ export const getCases: () => Case[] = memoize(() => {
   }
 
   const uniqueCases = uniqBy(data, 'caseId')
-
   return uniqueCases
 })
 
