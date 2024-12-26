@@ -363,7 +363,7 @@ async function createSearchIndex(
 ) {
   const collection = db.collection(collectionName)
   if (
-    (await db.listCollections({ name: collectionName }).toArray()).length > 1
+    (await db.listCollections({ name: collectionName }).toArray()).length > 0
   ) {
     await createIndex(collection, indexName, definition)
   }
