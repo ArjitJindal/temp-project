@@ -8,6 +8,7 @@ import {
   drsScoreEventHandler,
   krsScoreEventHandler,
 } from '../hammerhead-change-mongodb-consumer/app'
+import { NangoRepository } from '../../services/nango/repository'
 import {
   TRANSACTION_EVENTS_COLLECTION,
   USER_EVENTS_COLLECTION,
@@ -59,6 +60,7 @@ import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { insertToClickhouse } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
+import { NangoRecord } from '@/@types/nango'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -484,6 +486,17 @@ async function alertFileHandler(
   // TODO: Implement if required
 }
 
+async function nangoRecordHandler(
+  tenantId: string,
+  newNangoRecord: Omit<NangoRecord & object, 'data'>,
+  dbClients: DbClients
+) {
+  await new NangoRepository(
+    tenantId,
+    dbClients.dynamoDb
+  ).storeRecordsClickhouse([newNangoRecord])
+}
+
 async function transactionEventHandler(
   tenantId: string,
   transactionEvent: TransactionEvent | undefined,
@@ -592,6 +605,9 @@ const tarponBuilder = new StreamConsumerBuilder(
   .setAlertFileHandler(
     (tenantId, alertId, commentId, oldAlertFile, newAlertFile) =>
       alertFileHandler(tenantId, alertId, commentId, newAlertFile)
+  )
+  .setNangoRecordHandler((tenantId, newNangoRecords, dbClients) =>
+    nangoRecordHandler(tenantId, newNangoRecords, dbClients)
   )
 
 // NOTE: If we handle more entites, please add `localDynamoDbChangeCaptureHandler(...)` to the corresponding

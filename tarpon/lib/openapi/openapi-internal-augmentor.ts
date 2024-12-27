@@ -18,6 +18,7 @@ const env = (process.env.ENV || 'prod').split(':')[0]
 export const ConsoleApiPathToLambda: any = {
   '/tenants': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/crm-integrations': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/narrative-template':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/narrative-template/{narrativeTemplateId}':
@@ -250,6 +251,7 @@ export const ConsoleApiPathToLambda: any = {
   '/webhooks/complyadvantage':
     StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/webhooks/auth0': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
+  '/webhooks/nango': StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
   '/sanctions/search': StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
   '/sanctions/search/{searchId}':
     StackConstants.CONSOLE_API_SANCTIONS_FUNCTION_NAME,
@@ -295,6 +297,7 @@ const openapi = getAugmentedOpenapi(
       '/slack/oauth_redirect',
       '/webhooks/complyadvantage',
       '/webhooks/auth0',
+      '/webhooks/nango',
     ],
     allowedOrigins: getAllowedOrigins(),
   }

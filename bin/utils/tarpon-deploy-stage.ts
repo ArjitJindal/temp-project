@@ -60,6 +60,15 @@ export const tarponDeployStage = (
             ...installTerraform,
             `yarn run synth:${env}`,
             `yarn run deploy:${env}`,
+            ...(config.region === 'eu-1'
+              ? [
+                  'yarn add -g nango',
+                  'cd ../nango-integrations',
+                  'yarn install',
+                  'npm run generate',
+                  `npm run deploy:${config.stage}`,
+                ]
+              : []),
           ],
         },
       },

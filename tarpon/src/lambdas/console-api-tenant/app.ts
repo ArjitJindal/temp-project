@@ -41,6 +41,8 @@ import {
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { CrmService } from '@/services/crm'
+import { NangoService } from '@/services/nango'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -465,6 +467,32 @@ export const tenantsHandler = lambdaApi()(
       const slaPolicyService = new SLAPolicyService(ctx.tenantId, mongoDb)
       return await slaPolicyService.getSLAPolicyId()
     })
+
+    handlers.registerPostTenantsCrmIntegrations(async (ctx, request) => {
+      const crmService = new CrmService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
+      return await crmService.manageIntegrations(request.CRMIntegrations)
+    })
+
+    handlers.registerGetTenantsCrmIntegrations(async (ctx) => {
+      const crmService = new CrmService(
+        ctx.tenantId,
+        getDynamoDbClientByEvent(event)
+      )
+      return await crmService.getIntegrations()
+    })
+
+    handlers.registerPatchTenantsCrmIntegrations(async (ctx, request) => {
+      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+
+      await nangoService.deleteCredentials(
+        ctx.tenantId,
+        request.CRMIntegrationsPatchPayload.integrationsToDelete ?? []
+      )
+    })
+
     return await handlers.handle(event)
   }
 )

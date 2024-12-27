@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden } from 'http-errors'
+import { NangoService } from '../../services/nango'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { SanctionsService } from '@/services/sanctions'
@@ -11,10 +12,12 @@ import { logger } from '@/core/logger'
 import { ComplyAdvantageMonitoredSearchUpdated } from '@/@types/openapi-internal/ComplyAdvantageMonitoredSearchUpdated'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { updateLogMetadata } from '@/core/utils/context'
 import { AccountsService } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { envIs } from '@/utils/env'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -176,6 +179,33 @@ export const webhooksHandler = lambdaApi()(
 
         await accountsService.blockAccountBruteForce(account)
       }
+    })
+
+    handlers.registerPostWebhookNango(async (ctx, request) => {
+      if (!envIs('dev')) {
+        return
+      }
+
+      const dynamoDb = getDynamoDbClientByEvent(event)
+
+      logger.info(`Received Nango webhook event: ${JSON.stringify(request)}`)
+
+      const nangoService = new NangoService(dynamoDb)
+
+      const { tenantId, region } = await nangoService.getConnectionMetadata(
+        request.NangoWebhookEvent
+      )
+
+      await sendBatchJobCommand({
+        tenantId,
+        type: 'NANGO_DATA_FETCH',
+        parameters: {
+          webhookData: request.NangoWebhookEvent,
+          region,
+        },
+      })
+
+      return
     })
 
     return await handlers.handle(event)

@@ -167,6 +167,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   ALERTS: {
     tableName: 'alerts',
   },
+  NANGO_RECORDS: {
+    tableName: 'nango_records',
+  },
 }
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
@@ -440,6 +443,17 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "updatedAt UInt64 MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))",
       "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
       "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+    ],
+  },
+  {
+    table: CLICKHOUSE_DEFINITIONS.NANGO_RECORDS.tableName,
+    idColumn: 'id',
+    timestampColumn: 'timestamp',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(modelName, id)',
+    orderBy: '(modelName, id)',
+    materializedColumns: [
+      "model String MATERIALIZED JSON_VALUE(data, '$.model')",
     ],
   },
 ] as const

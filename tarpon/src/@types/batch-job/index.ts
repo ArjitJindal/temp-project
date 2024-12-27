@@ -8,6 +8,7 @@ import { LogicAggregationVariable } from '../openapi-internal/LogicAggregationVa
 import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
+import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -315,6 +316,15 @@ export type FixRiskScoresForPnbUsers = {
   }
 }
 
+export type NangoDataFetchBatchJob = {
+  type: 'NANGO_DATA_FETCH'
+  tenantId: string
+  parameters: {
+    webhookData: NangoWebhookEvent
+    region: string
+  }
+}
+
 export type WebhookRetryBatchJob = {
   type: 'WEBHOOK_RETRY'
   tenantId: string
@@ -353,6 +363,8 @@ export type BatchJob =
   | PnbBackfillWebhookDeliveries
   | FixRiskScoresForPnbUsers
   | WebhookRetryBatchJob
+  | NangoDataFetchBatchJob
+
 export type BatchJobWithId = BatchJob & {
   jobId: string
 }

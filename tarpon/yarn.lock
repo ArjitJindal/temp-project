@@ -4074,6 +4074,22 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@nangohq/node@npm:^0.48.1":
+  version: 0.48.1
+  resolution: "@nangohq/node@npm:0.48.1"
+  dependencies:
+    axios: "npm:^1.7.4"
+  checksum: 6915d5769a5acf98d120ab46f5bae4f4937a515aa2b05cb4bc5ad15c8d05d661a75eff2ef7ce07af17b9a3f4d38851d532632febec1c0104453a521c47b76ddc
+  languageName: node
+  linkType: hard
+
+"@nangohq/types@npm:^0.48.1":
+  version: 0.48.1
+  resolution: "@nangohq/types@npm:0.48.1"
+  checksum: ed19baeda5ebaa815f5df6ecaa07301e555a56247e9104c10f889ff800a470d832dcdaff08a5cbf852fd3dcd703442e33f9e3a682e6c9c43f2d35cd3f630c6c8
+  languageName: node
+  linkType: hard
+
 "@nestjs/axios@npm:3.0.1":
   version: 3.0.1
   resolution: "@nestjs/axios@npm:3.0.1"
@@ -17850,6 +17866,8 @@ __metadata:
     "@flagright/lib": "link:../lib"
     "@maxmind/geoip2-node": "npm:^5.0.0"
     "@mergeapi/merge-sdk-typescript": "npm:^3.0.10"
+    "@nangohq/node": "npm:^0.48.1"
+    "@nangohq/types": "npm:^0.48.1"
     "@openapitools/openapi-generator-cli": "npm:^2.7.0"
     "@react-awesome-query-builder/core": "npm:^6.6.0"
     "@sentry/cli": "npm:^2.28.6"

@@ -20,6 +20,7 @@ import { PnbBackfillWebhookDeliveriesBatchJobRunner } from './pnb-backfill-webho
 import { BackfillAsyncRuleRunsBatchJobRunner } from './backfill-async-rule-runs-batch-job'
 import { FixRiskScoresForPnbUsersBatchJobRunner } from './fix-risk-scores-for-pnb-users'
 import { WebhookRetryBatchJobRunner } from './webhook-retry-batch-job-runner'
+import { NangoDataFetchBatchJobRunner } from './nango-data-fetch'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -89,6 +90,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     FIX_RISK_SCORES_FOR_PNB_USERS: (jobId) =>
       new FixRiskScoresForPnbUsersBatchJobRunner(jobId),
     WEBHOOK_RETRY: (jobId) => new WebhookRetryBatchJobRunner(jobId),
+    NANGO_DATA_FETCH: (jobId) => new NangoDataFetchBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

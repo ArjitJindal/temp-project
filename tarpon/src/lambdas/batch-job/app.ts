@@ -160,6 +160,7 @@ export const jobDecisionHandler = async (
     SIMULATION_RISK_FACTORS_V8: 'FARGATE',
     CASE_SLA_STATUS_REFRESH: 'LAMBDA',
     FIX_RISK_SCORES_FOR_PNB_USERS: 'FARGATE',
+    NANGO_DATA_FETCH: 'LAMBDA',
   }
 
   return {

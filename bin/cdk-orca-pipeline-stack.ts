@@ -29,12 +29,12 @@ import {
   PRODUCTION_REGIONS,
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
-import { getTarponConfig } from '@flagright/lib/constants/config'
 import { BudgetServiceTypes, createBudget } from '@flagright/lib/cdk-utils'
 import {
   postProdDeployIntegrationsUpdateBuildProject,
   postSandboxDeployIntegrationsUpdateBuildProject,
 } from './utils/integrations-update'
+import { getTarponConfig } from '@flagright/lib/constants/config'
 const PIPLINE_NAME = 'orca-pipeline'
 
 function getCodeBuildActionName(actionName: string, region: string) {

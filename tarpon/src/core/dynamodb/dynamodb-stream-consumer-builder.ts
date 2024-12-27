@@ -9,6 +9,7 @@ import {
   withContext,
 } from '../utils/context'
 import { logger } from '../logger'
+import { NangoRecord } from '../../@types/nango'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
@@ -57,7 +58,11 @@ type TransactionsHandler = (
   newTransactions: TransactionWithRulesResult[],
   dbClients: DbClients
 ) => Promise<void>
-
+type NangoRecordHandler = (
+  tenantId: string,
+  newNangoRecords: Omit<NangoRecord & object, 'data'>,
+  dbClients: DbClients
+) => Promise<void>
 type TransactionEventHandler = (
   tenantId: string,
   oldTransactionEvent: TransactionEvent | undefined,
@@ -155,6 +160,7 @@ export class StreamConsumerBuilder {
   alertHandler?: AlertHandler
   alertCommentHandler?: AlertCommentHandler
   alertFileHandler?: AlertFileHandler
+  nangoRecordHandler?: NangoRecordHandler
 
   constructor(
     name: string,
@@ -253,6 +259,13 @@ export class StreamConsumerBuilder {
     alertFileHandler: AlertFileHandler
   ): StreamConsumerBuilder {
     this.alertFileHandler = alertFileHandler
+    return this
+  }
+
+  public setNangoRecordHandler(
+    nangoRecordHandler: NangoRecordHandler
+  ): StreamConsumerBuilder {
+    this.nangoRecordHandler = nangoRecordHandler
     return this
   }
 
@@ -435,6 +448,12 @@ export class StreamConsumerBuilder {
         commentId,
         update.OldImage as FileInfo,
         update.NewImage as FileInfo,
+        dbClients
+      )
+    } else if (update.type === 'NANGO_RECORD' && this.nangoRecordHandler) {
+      await this.nangoRecordHandler(
+        update.tenantId,
+        update.NewImage as NangoRecord,
         dbClients
       )
     }

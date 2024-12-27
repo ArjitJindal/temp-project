@@ -223,6 +223,8 @@
     "@flagright/lib": "link:../lib",
     "@maxmind/geoip2-node": "^5.0.0",
     "@mergeapi/merge-sdk-typescript": "^3.0.10",
+    "@nangohq/node": "^0.48.1",
+    "@nangohq/types": "^0.48.1",
     "@react-awesome-query-builder/core": "^6.6.0",
     "@sentry/esbuild-plugin": "^2.16.0",
     "@sentry/integrations": "^7.118.0",

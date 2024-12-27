@@ -58,6 +58,7 @@ import { DeleteTenant } from '@/@types/openapi-internal/DeleteTenant'
 import { DeleteTenantStatusEnum } from '@/@types/openapi-internal/DeleteTenantStatusEnum'
 import { DeleteTenantStatus } from '@/@types/openapi-internal/DeleteTenantStatus'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { NangoRecord } from '@/@types/nango'
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -374,6 +375,14 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
         method: this.deleteAlertsData.bind(this),
         order: 15,
       },
+      NANGO_RECORD: {
+        method: this.deleteNangoRecords.bind(this),
+        order: 16,
+      },
+      CRM_INTEGRATIONS: {
+        method: this.deleteCRMCredentials.bind(this),
+        order: 17,
+      },
     }
 
     const dynamoDbKeysToDeleteArray = orderBy(
@@ -385,6 +394,30 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     for (const key of dynamoDbKeysToDeleteArray) {
       await key.method(tenantId)
     }
+  }
+
+  private async deleteNangoRecords(tenantId: string) {
+    const data: NangoRecord['model'][] = ['FreshDeskTicket']
+
+    for await (const model of data) {
+      await dangerouslyDeletePartition(
+        this.dynamoDb(),
+        tenantId,
+        DynamoDbKeys.NANGO_RECORD(tenantId, model, '').PartitionKeyID,
+        StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        'Nango Record'
+      )
+    }
+  }
+
+  private async deleteCRMCredentials(tenantId: string) {
+    await dangerouslyDeletePartition(
+      this.dynamoDb(),
+      tenantId,
+      DynamoDbKeys.CRM_INTEGRATIONS(tenantId).PartitionKeyID,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      'CRM Integrations'
+    )
   }
 
   private async deleteAggregationVariables(tenantId: string) {

@@ -24,6 +24,7 @@ import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import { getPaymentDetailsIdentifiersKey } from '@/services/logic-evaluator/variables/payment-details'
 import { generateChecksum } from '@/utils/object'
 import dayjs from '@/utils/dayjs'
+import { NangoModels } from '@/@types/nango'
 
 const TRANSACTION_ID_PREFIX = 'transaction:'
 const USER_ID_PREFIX = 'user:'
@@ -48,6 +49,8 @@ export const SHARED_PARTITION_KEY_PREFIX = 'shared'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
+export const NANGO_RECORD_KEY_IDENTIFIER = '#nango-record'
+export const NANGO_RECORD_MODEL_KEY_IDENTIFIER = '#nango-record-model'
 
 type AuxiliaryIndexTransactionSortKeyData = {
   timestamp: number
@@ -68,6 +71,10 @@ export const DynamoDbKeys = {
   ALERT: (tenantId: string, alertId: string) => ({
     PartitionKeyID: `${tenantId}${ALERT_KEY_IDENTIFIER}`,
     SortKeyID: alertId,
+  }),
+  NANGO_RECORD: (tenantId: string, modelName: NangoModels, id: string) => ({
+    PartitionKeyID: `${tenantId}${NANGO_RECORD_KEY_IDENTIFIER}${NANGO_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
+    SortKeyID: id,
   }),
   ALERT_COMMENT: (tenantId: string, alertId: string, commentId: string) => ({
     PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_COMMENT_KEY_IDENTIFIER}`,
@@ -355,6 +362,10 @@ export const DynamoDbKeys = {
   TENANT_SETTINGS: (tenantId: string) => ({
     PartitionKeyID: `${tenantId}#settings`,
     SortKeyID: 'settings',
+  }),
+  CRM_INTEGRATIONS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#crm-integrations`,
+    SortKeyID: 'integrations',
   }),
   /** Hammerhead keys */
   // Attributes: refer to Rule

@@ -1,0 +1,39 @@
+integrations:
+  freshdesk:
+    syncs:
+      freshdesk_tickets:
+        description: |
+          Fetches the tickets from a Freshdesk account.
+          Details: full sync, doesn't track deletes, metadata is not required.
+        endpoint:
+          method: GET
+          path: /freshdesk/tickets
+        sync_type: incremental
+        runs: every 10 mins
+        output: FreshDeskTicket
+models:
+  FreshDeskTicket:
+    id: string
+    type: string | null
+    priority: number
+    email: string | null
+    requester_id: number | null
+    responder_id: number | null
+    source: number | null
+    subject: string | null
+    to_emails: string[] | null
+    created_at: string | null
+    updated_at: string | null
+    is_escalated: boolean | null
+    cc_emails: string[] | null
+    fwd_emails: string[] | null
+    reply_cc_emails: string[] | null
+    tags: string[] | null
+    description_text: string | null
+    conversations: Conversation[] | null
+  Conversation:
+    body_text: string | null
+    from_email: string | null
+    to_email: string | null
+    created_at: string | null
+    updated_at: string | null

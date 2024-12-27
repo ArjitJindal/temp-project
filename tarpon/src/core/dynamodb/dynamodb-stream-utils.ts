@@ -19,6 +19,7 @@ import {
   ALERT_KEY_IDENTIFIER,
   ALERT_COMMENT_KEY_IDENTIFIER,
   ALERT_FILE_ID_IDENTIFIER,
+  NANGO_RECORD_KEY_IDENTIFIER,
 } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { TransactionEvent } from '@/@types/openapi-public/TransactionEvent'
@@ -44,6 +45,7 @@ export type DynamoDbEntityType =
   | 'ALERT'
   | 'ALERT_COMMENT'
   | 'ALERT_FILE'
+  | 'NANGO_RECORD'
 
 export type DynamoDbEntityUpdate = {
   tenantId: string
@@ -193,6 +195,15 @@ export function getDynamoDbEntityMetadata(
     return {
       type: 'ALERT_FILE',
       entityId: `ALERT:${entityId}`,
+    }
+  } else if (partitionKeyId.includes(NANGO_RECORD_KEY_IDENTIFIER)) {
+    const entityId = entity.id
+    if (!entityId) {
+      return null
+    }
+    return {
+      type: 'NANGO_RECORD',
+      entityId: `NANGO_RECORD:${entityId}`,
     }
   }
   return null
