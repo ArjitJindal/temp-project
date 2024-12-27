@@ -2,6 +2,7 @@ import { Column } from '@ant-design/charts';
 import React from 'react';
 import s from './styles.module.less';
 import COLORS from '@/components/ui/colors';
+import { formatNumber } from '@/utils/number';
 
 export interface Props {
   data: Record<string, any>[];
@@ -26,13 +27,25 @@ const GroupedColumn = React.memo((props: Props) => {
       data={data}
       dodgePadding={0}
       seriesField="label"
-      yAxis={{ grid: null, minLimit: 0, maxLimit: props.max }}
+      yAxis={{
+        grid: null,
+        minLimit: 0,
+        maxLimit: props.max,
+        label: {
+          formatter: (text) => {
+            return formatNumber(text);
+          },
+        },
+      }}
       label={{
         position: 'top',
         style: {
           fontStyle: 'bold',
           fontSize: 12,
           fill: '#000',
+        },
+        content: (data) => {
+          return formatNumber(data.value);
         },
       }}
       minColumnWidth={32}

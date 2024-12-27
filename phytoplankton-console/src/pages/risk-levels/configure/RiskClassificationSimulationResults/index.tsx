@@ -35,7 +35,6 @@ import COLORS from '@/components/ui/colors';
 import { isLoading, isSuccess } from '@/utils/asyncResource';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { Progress } from '@/components/Simulation/Progress';
-import { formatNumber } from '@/utils/number';
 
 type Props = {
   onClose: (toClose: boolean) => void;
@@ -199,7 +198,7 @@ const IterationComponent = (props: IterationProps) => {
   const getGraphData = useCallback(
     (graphType: 'DRS' | 'ARS') => {
       let max = 0;
-      const graphData: { name: string; label: string; value: string | number }[] = [];
+      const graphData: { name: string; label: string; value: number }[] = [];
       RISK_LEVELS.forEach((label) => {
         const beforeCount = getCount('Before', graphType, label) ?? 0;
         const afterCount = getCount('After', graphType, label) ?? 0;
@@ -208,12 +207,12 @@ const IterationComponent = (props: IterationProps) => {
         graphData.push({
           name: label,
           label: 'Before',
-          value: formatNumber(beforeCount),
+          value: beforeCount,
         });
         graphData.push({
           name: label,
           label: 'After',
-          value: formatNumber(afterCount),
+          value: afterCount,
         });
       });
       return { graphData, max };

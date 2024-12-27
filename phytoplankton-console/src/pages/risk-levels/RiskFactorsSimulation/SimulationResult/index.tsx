@@ -45,7 +45,7 @@ import { getRiskLevelLabel, useSettings } from '@/components/AppWrapper/Provider
 import { Progress } from '@/components/Simulation/Progress';
 import { ExtraFilterProps } from '@/components/library/Filter/types';
 import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
-import { formatNumber } from '@/utils/number';
+
 interface Props {
   jobId: string;
 }
@@ -362,7 +362,7 @@ const SimulationResultWidgets = (props: WidgetProps) => {
   const getGraphData = useCallback(
     (graphType: SimulationV8RiskFactorsStatisticsRiskTypeEnum) => {
       let max = 0;
-      const graphData: { name: string; label: string; value: string | number }[] = [];
+      const graphData: { name: string; label: string; value: number }[] = [];
       RISK_LEVELS.forEach((label) => {
         const beforeCount = getCount('Before', graphType, label) ?? 0;
         const afterCount = getCount('After', graphType, label) ?? 0;
@@ -371,12 +371,12 @@ const SimulationResultWidgets = (props: WidgetProps) => {
         graphData.push({
           name: label,
           label: 'Before',
-          value: formatNumber(beforeCount),
+          value: beforeCount,
         });
         graphData.push({
           name: label,
           label: 'After',
-          value: formatNumber(afterCount),
+          value: afterCount,
         });
       });
       return { graphData, max };
