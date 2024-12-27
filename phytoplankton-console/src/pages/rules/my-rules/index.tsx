@@ -279,6 +279,21 @@ const MyRule = (props: { simulationMode?: boolean }) => {
           stringify: (queueId) => queueId ?? 'default',
         },
       }),
+      helper.simple<'ruleExecutionMode'>({
+        title: 'Execution Mode',
+        key: 'ruleExecutionMode',
+        defaultVisibility: true,
+        sorting: true,
+        type: {
+          render: (ruleExecutionMode) => {
+            const text = ruleExecutionMode === 'SYNC' ? 'Real time' : 'Post processing';
+            return <span>{text}</span>;
+          },
+          stringify: (ruleExecutionMode) => {
+            return ruleExecutionMode === 'SYNC' ? 'Real time' : 'Post processing';
+          },
+        },
+      }),
       helper.simple<'createdAt'>({
         key: 'createdAt',
         title: 'Created at',

@@ -168,15 +168,15 @@ function RuleDetails(props: Props) {
                   options={[
                     {
                       value: 'SYNC',
-                      label: 'Synchronous',
+                      label: 'Real time',
                       description:
-                        'The rule will run synchronously allowing the rule to be executed in real-time with the transaction',
+                        'The rule executes in real-time after a transaction, ideal for use cases such as blocking high-value transactions and sanction screening.',
                     },
                     {
                       value: 'ASYNC',
-                      label: 'Asynchronous',
+                      label: 'Post processing',
                       description:
-                        'The rule will run asynchronously allowing the rule to be executed in the background. This reduces the load on the system and allows for more complex rules to be executed',
+                        'The rule executes with a delay after a transaction event, reducing system load and enabling complex rule processing.',
                     },
                   ]}
                   {...inputProps}
