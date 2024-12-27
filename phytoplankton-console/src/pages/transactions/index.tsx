@@ -33,7 +33,14 @@ const TableList = () => {
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
   const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
-  const [params, setParams] = useState<TransactionsTableParams>({ sort: [], pageSize: 20 });
+  const [params, setParams] = useState<TransactionsTableParams>({
+    sort: [],
+    pageSize: 20,
+    timestamp: [
+      dayjs(defaultTimestamps().afterTimestamp).format(),
+      dayjs(defaultTimestamps().beforeTimestamp).format(),
+    ],
+  });
 
   const pushParamsToNavigation = useCallback(
     (params: TransactionsTableParams) => {
@@ -51,14 +58,14 @@ const TableList = () => {
   useEffect(() => {
     if ((location.state as NavigationState)?.isInitialised !== true) {
       pushParamsToNavigation({
-        ...parsedParams,
+        ...params,
         timestamp: [
           dayjs(defaultTimestamps().afterTimestamp).format(),
           dayjs(defaultTimestamps().beforeTimestamp).format(),
         ],
       });
     }
-  }, [location.state, parsedParams, pushParamsToNavigation]);
+  }, [location.state, params, pushParamsToNavigation]);
 
   const handleChangeParams = (newParams: TransactionsTableParams) => {
     pushParamsToNavigation(newParams);
@@ -88,13 +95,13 @@ const TableList = () => {
       }
       return await api.getTransactionsList({
         start: from || parsedParams.from,
-        ...transactionParamsToRequest({ ...parsedParams, view }),
+        ...transactionParamsToRequest({ ...parsedParams, view }, { ignoreDefaultTimestamps: true }),
       });
     },
   );
 
   const queryResultOffset = usePaginatedQuery<TransactionTableItem>(
-    TRANSACTIONS_LIST({ ...parsedParams, offset: true }),
+    TRANSACTIONS_LIST({ ...params, offset: true }),
     async (paginationParams) => {
       if (!isClickhouseEnabled) {
         return {
@@ -103,7 +110,10 @@ const TableList = () => {
         };
       }
       const data = await api.getTransactionsV2List({
-        ...transactionParamsToRequest({ ...parsedParams, view: paginationParams.view }),
+        ...transactionParamsToRequest(
+          { ...parsedParams, view: paginationParams.view },
+          { ignoreDefaultTimestamps: true },
+        ),
         ...paginationParams,
       });
 
