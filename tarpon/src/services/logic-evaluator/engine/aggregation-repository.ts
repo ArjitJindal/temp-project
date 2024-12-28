@@ -36,6 +36,11 @@ export type AggregationData<T = unknown> = {
   }[]
 }
 
+export type BulkApplyMarkerTransactionData = {
+  transactionId: string
+  direction: 'origin' | 'destination'
+}[]
+
 // Increment this version when we need to invalidate all existing aggregations.
 const GLOBAL_AGG_VERSION = 'v1'
 const RULE_AGG_VAR_CHECKSUM_FIELDS: Array<keyof LogicAggregationVariable> = [
@@ -219,6 +224,35 @@ export class AggregationRepository {
           entities: item.entities,
         }))
       : undefined
+  }
+
+  public async bulkMarkTransactionApplied(
+    aggregationVariable: LogicAggregationVariable,
+    applyMarkerTransactionData: BulkApplyMarkerTransactionData
+  ) {
+    const writeRequests: BatchWriteRequestInternal[] =
+      applyMarkerTransactionData.map((data) => {
+        const keys = DynamoDbKeys.V8_LOGIC_USER_TIME_AGGREGATION_TX_MARKER(
+          this.tenantId,
+          data.direction,
+          getAggVarHash(aggregationVariable) + this.getBackfillVersionSuffix(),
+          data.transactionId
+        )
+        const request = {
+          PutRequest: {
+            Item: {
+              ...keys,
+              ttl: this.getUpdatedTtlAttribute(aggregationVariable),
+            },
+          },
+        }
+        return request
+      })
+    await batchWrite(
+      this.dynamoDb,
+      writeRequests,
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
+    )
   }
 
   public async setTransactionApplied(

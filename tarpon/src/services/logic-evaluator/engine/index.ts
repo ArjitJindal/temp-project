@@ -46,6 +46,7 @@ import { CUSTOM_INTERNAL_OPERATORS, LOGIC_OPERATORS } from '../operators'
 import {
   AggregationData,
   AggregationRepository,
+  BulkApplyMarkerTransactionData,
   getAggVarHash,
 } from './aggregation-repository'
 import {
@@ -81,7 +82,10 @@ import {
   groupTransactionsByGranularity,
   hydrateTransactionEvents,
 } from '@/services/rules-engine/utils/transaction-rule-utils'
-import { getTimeRangeByTimeWindows } from '@/services/rules-engine/utils/time-utils'
+import {
+  getTimeRangeByTimeWindows,
+  subtractTime,
+} from '@/services/rules-engine/utils/time-utils'
 import { TimeWindow } from '@/services/rules-engine/utils/rule-parameter-schemas'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -93,6 +97,7 @@ import { ExecutedLogicVars } from '@/@types/openapi-internal/ExecutedLogicVars'
 import { LogicConfig } from '@/@types/openapi-internal/LogicConfig'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { acquireLock, releaseLock } from '@/utils/lock'
+import dayjs from '@/utils/dayjs'
 
 class RebuildSyncRetryError extends Error {
   constructor() {
@@ -563,29 +568,14 @@ export class LogicEvaluator {
       if (this.mode !== 'DYNAMODB') {
         return false
       }
-      const userKeyId = this.getUserKeyId(
-        transaction,
-        direction,
-        aggregationVariable.type
-      )
-      const [
-        isTransactionApplied,
-        { lastTransactionTimestamp: lastRebuiltTransactionTimestamp },
-      ] = await Promise.all([
-        this.aggregationRepository.isTransactionApplied(
+      const isTransactionApplied =
+        await this.aggregationRepository.isTransactionApplied(
           aggregationVariable,
           direction,
           transaction.transactionId
-        ),
-        this.aggregationRepository.isAggregationVariableReady(
-          aggregationVariable,
-          userKeyId as string
-        ),
-      ])
-      return (
-        isTransactionApplied ||
-        lastRebuiltTransactionTimestamp >= transaction.timestamp
-      )
+        )
+
+      return isTransactionApplied
     },
     (aggregationVariable, direction, transaction) =>
       `${getAggVarHash(aggregationVariable)}-${direction}-${
@@ -701,18 +691,21 @@ export class LogicEvaluator {
       aggregationVariable.timeWindow.start as TimeWindow,
       aggregationVariable.timeWindow.end as TimeWindow
     )
-    const { result: aggregationResult, lastTransactionTimestamp } =
-      await this.getRebuiltAggregationVariableResult(
-        aggregationVariable,
-        {
-          userId,
-          paymentDetails,
-        },
-        {
-          afterTimestamp,
-          beforeTimestamp: currentTimestamp,
-        }
-      )
+    const {
+      result: aggregationResult,
+      lastTransactionTimestamp,
+      applyMarkerTransactionData,
+    } = await this.getRebuiltAggregationVariableResult(
+      aggregationVariable,
+      {
+        userId,
+        paymentDetails,
+      },
+      {
+        afterTimestamp,
+        beforeTimestamp: currentTimestamp,
+      }
+    )
     logger.debug('Prepared rebuild result')
     if (aggregationVariable.aggregationGroupByFieldKey) {
       const groups = uniq(
@@ -758,6 +751,10 @@ export class LogicEvaluator {
         undefined
       )
     }
+    await this.aggregationRepository.bulkMarkTransactionApplied(
+      aggregationVariable,
+      applyMarkerTransactionData
+    )
     await this.aggregationRepository.setAggregationVariableReady(
       aggregationVariable,
       userKeyId,
@@ -774,6 +771,7 @@ export class LogicEvaluator {
   ): Promise<{
     result: { [time: string]: AggregationData }
     lastTransactionTimestamp: number
+    applyMarkerTransactionData: BulkApplyMarkerTransactionData
   }> {
     const aggregator = getLogicVariableAggregator(
       aggregationVariable.aggregationFunc
@@ -815,6 +813,14 @@ export class LogicEvaluator {
       fieldsToFetch as Array<keyof Transaction>
     )
 
+    const threeDaysBeforeTimestamp = subtractTime(
+      dayjs(timeRange.beforeTimestamp),
+      {
+        granularity: 'day',
+        units: 3,
+      }
+    )
+    const applyMarkerTransactionData: BulkApplyMarkerTransactionData = []
     // NOTE: As we're still using lambda to rebuild aggregation, there's a hard 15 minuites timeout.
     // As we support 'all time' time window, it's possible that it takes more than 15 minutes to rebuild as
     // we need to fetch all the transaction of a user.
@@ -871,6 +877,21 @@ export class LogicEvaluator {
         if (isTransactionFiltered) {
           targetTransactionsCount++
           targetTransactions.push(transaction)
+          if (
+            (transaction.timestamp ?? 0) >= threeDaysBeforeTimestamp &&
+            transaction.transactionId &&
+            transaction.direction
+          ) {
+            /*
+            To use only transaction applied marker to check if transaction is applied, 
+            Note: Only marking last 3 days transaction in the rebuild which are applied.
+             */
+
+            applyMarkerTransactionData.push({
+              transactionId: transaction.transactionId,
+              direction: transaction.direction,
+            })
+          }
           if (
             !aggregationVariable.aggregationGroupByFieldKey &&
             aggregationVariable.lastNEntities &&
@@ -1039,7 +1060,11 @@ export class LogicEvaluator {
       }
     }
     clearTimeout(timeout)
-    return { result: timeAggregatedResult, lastTransactionTimestamp }
+    return {
+      result: timeAggregatedResult,
+      lastTransactionTimestamp,
+      applyMarkerTransactionData,
+    }
   }
 
   public async updateAggregationVariable(
@@ -1075,12 +1100,18 @@ export class LogicEvaluator {
           return
         }
         if (options?.skipIfNotReady) {
-          const { ready, lastTransactionTimestamp } =
-            await this.aggregationRepository.isAggregationVariableReady(
+          const [{ ready }, isApplied] = await Promise.all([
+            this.aggregationRepository.isAggregationVariableReady(
               aggregationVariable,
               userKeyId
-            )
-          if (!ready || lastTransactionTimestamp >= transaction.timestamp) {
+            ),
+            this.aggregationRepository.isTransactionApplied(
+              aggregationVariable,
+              direction,
+              transaction.transactionId
+            ),
+          ])
+          if (!ready || isApplied) {
             return
           }
         }
@@ -1166,7 +1197,9 @@ export class LogicEvaluator {
       transaction
     )
     if (shouldSkipUpdateAggregation) {
-      logger.warn('Skip updating aggregations.')
+      logger.warn(
+        `Skip updating aggregations for user:${userKeyId} for aggvarKey: ${aggregationVariable.key}.`
+      )
       return
     }
 
@@ -1383,6 +1416,7 @@ export class LogicEvaluator {
       'senderKeyId',
       'receiverKeyId',
       'timestamp',
+      'transactionId',
     ])
   }
 
