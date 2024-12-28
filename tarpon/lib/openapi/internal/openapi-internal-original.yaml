@@ -9085,6 +9085,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/TransactionTableHitResponse'
+        originFundsInfo:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/OriginFundsInfo
       required:
         - transactionId
         - timestamp

@@ -17,6 +17,7 @@ import {
 } from '@/@types/tranasction/payment-type'
 import { RuleAction } from '@/@types/openapi-public/RuleAction'
 import { TransactionState } from '@/@types/openapi-internal/TransactionState'
+import { OriginFundsInfo } from '@/@types/openapi-internal/OriginFundsInfo'
 import { TransactionTableItem } from '@/@types/openapi-internal/TransactionTableItem'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 
@@ -238,6 +239,8 @@ export class ClickhouseTransactionsRepository {
         : {}),
       isAnySanctionsExecutedRules:
         "length(flatten(arrayMap(y -> y.searchId, arrayMap(x -> x.ruleHitMeta.sanctionsDetails, JSONExtract(data, 'executedRules', 'Array(Tuple(ruleHitMeta Tuple(sanctionsDetails Array(Tuple(searchId String)))))'))))) > 0",
+      originFundsInfo:
+        "JSONExtract(data, 'originFundsInfo', 'Tuple(sourceOfFunds String, sourceOfWealth String)')",
     }
 
     const sortFieldMapper: Record<string, string> = {
@@ -314,6 +317,7 @@ export class ClickhouseTransactionsRepository {
                 ruleDescription: string
               }[])
             : undefined,
+          originFundsInfo: item.originFundsInfo as OriginFundsInfo,
         }
       }
     )

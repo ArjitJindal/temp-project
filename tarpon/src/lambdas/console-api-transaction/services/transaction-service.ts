@@ -185,6 +185,7 @@ export class TransactionService {
         ruleName: rule.ruleName,
         ruleDescription: rule.ruleDescription,
       })),
+      originFundsInfo: transaction.originFundsInfo,
     }
   }
 
@@ -293,6 +294,7 @@ export class TransactionService {
           arsScore: {
             arsScore: 1,
           },
+          originFundsInfo: 1,
           executedRules:
             params.view === ('TABLE' as TableListViewEnum)
               ? {

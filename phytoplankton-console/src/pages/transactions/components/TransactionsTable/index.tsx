@@ -433,6 +433,18 @@ export default function TransactionsTable(props: Props) {
         type: COUNTRY,
         filtering: true,
       }),
+      helper.simple<'originFundsInfo.sourceOfFunds'>({
+        title: 'Source of funds',
+        key: 'originFundsInfo.sourceOfFunds',
+        type: STRING,
+        defaultVisibility: false,
+      }),
+      helper.simple<'originFundsInfo.sourceOfWealth'>({
+        title: 'Source of wealth',
+        key: 'originFundsInfo.sourceOfWealth',
+        type: STRING,
+        defaultVisibility: false,
+      }),
       helper.simple<'destinationUser.id'>({
         key: 'destinationUser.id',
         title: 'Destination user ID',
