@@ -145,6 +145,8 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       )) ?? []
 
     let preprocessedMatches: Set<string>
+
+    let usersCursor = this.userRepository?.getAllUsersCursor()
     if (await tenantHasFeature(this.tenantId as string, 'PNB')) {
       let maxFuzziness = 0
       ruleInstances.forEach((r) => {
@@ -177,20 +179,19 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         this.to,
         ruleInstances
       )
+      usersCursor = this.userRepository?.getUsersCursor({
+        userId: { $in: Array.from(preprocessedMatches) },
+      })
+      logger.warn(
+        `preprocessedMatches: ${Array.from(preprocessedMatches).length}`
+      )
     }
-    const usersCursor = this.userRepository?.getAllUsersCursor()
 
     if (usersCursor) {
       await processCursorInBatch<InternalUser>(
         usersCursor,
         async (usersChunk) => {
-          let filteredUsers = usersChunk
-          if (preprocessedMatches) {
-            filteredUsers = usersChunk.filter((u) =>
-              preprocessedMatches.has(u.userId)
-            )
-          }
-          await this.runUsersBatch(filteredUsers, rules, ruleInstances)
+          await this.runUsersBatch(usersChunk, rules, ruleInstances)
         },
         { mongoBatchSize: 1000, processBatchSize: 1000, debug: true }
       )

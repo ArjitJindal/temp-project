@@ -1720,4 +1720,13 @@ export class UserRepository {
       { $set: update }
     )
   }
+
+  public getUsersCursor(
+    filter: Filter<InternalUser> = {}
+  ): FindCursor<WithId<InternalUser>> {
+    return this.mongoDb
+      .db()
+      .collection<InternalUser>(USERS_COLLECTION(this.tenantId))
+      .find(filter)
+  }
 }
