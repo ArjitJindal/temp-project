@@ -39,10 +39,12 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
   const webhookResults = usePaginatedQuery(
     WEBHOOKS(webhookId, params),
     async (paginationParams) => {
+      const { page = 1, pageSize = DEFAULT_PAGE_SIZE } = params;
       const attempts = await api.getWebhooksWebhookIdDeliveries({
         webhookId,
-        page: paginationParams.page ?? 1,
-        pageSize: paginationParams.pageSize ?? DEFAULT_PAGE_SIZE,
+        page,
+        pageSize,
+        ...paginationParams,
         ...(params.success != null && {
           filterStatus: params.success === 'Success' ? 'true' : 'false',
         }),
@@ -83,8 +85,8 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
         autoFilterDataType: {
           kind: 'select',
           options: [
-            { value: 'true', label: 'Success' },
-            { value: 'false', label: 'Failed' },
+            { value: 'Success', label: 'Success' },
+            { value: 'Failed', label: 'Failed' },
           ],
           mode: 'SINGLE',
           displayMode: 'select',
