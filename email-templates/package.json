@@ -10,6 +10,6 @@
   "author": "",
   "dependencies": {
     "@react-email/components": "0.0.31",
-    "react-email": "3.0.2"
+    "react-email": "3.0.3"
   }
 }
