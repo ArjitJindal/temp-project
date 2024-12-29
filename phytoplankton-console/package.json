@@ -152,7 +152,7 @@
     "@types/uuid": "^9.0.1",
     "@typescript-eslint/eslint-plugin": "^6.13.2",
     "@typescript-eslint/parser": "^6.13.2",
-    "aws-cdk": "~2.165.0",
+    "aws-cdk": "~2.171.1",
     "aws-cdk-lib": "~2.171.1",
     "cheerio": "^1.0.0",
     "constructs": "^10.4.2",
