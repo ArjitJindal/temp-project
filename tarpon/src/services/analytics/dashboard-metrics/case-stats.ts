@@ -19,6 +19,11 @@ import { notEmpty, notNullish } from '@/utils/array'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStatsData } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStatsData'
 import { traceable } from '@/core/xray'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class CaseStatsDashboardMetric {
@@ -221,6 +226,15 @@ export class CaseStatsDashboardMetric {
     granularity?: GranularityValuesType,
     entity?: 'CASE' | 'ALERT'
   ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
+    if (isClickhouseEnabled()) {
+      return this.getAlertAndCaseStatusDistributionStatisticsClickhouse(
+        tenantId,
+        startTimestamp,
+        endTimestamp,
+        granularity,
+        entity
+      )
+    }
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     let mongoTimeFormat: string
@@ -421,6 +435,113 @@ export class CaseStatsDashboardMetric {
             stats?.IN_REVIEW_ESCALATED ?? 0,
             stats?.IN_REVIEW_CLOSED ?? 0,
             stats?.IN_REVIEW_REOPENED ?? 0,
+          ]),
+        } as DashboardStatsAlertAndCaseStatusDistributionStatsData
+      }),
+    }
+  }
+  public static async getAlertAndCaseStatusDistributionStatisticsClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number,
+    granularity: GranularityValuesType = 'HOUR',
+    entity: 'CASE' | 'ALERT' = 'CASE'
+  ): Promise<DashboardStatsAlertAndCaseStatusDistributionStats> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    let timeFormat: string
+    let timeLabels: string[]
+    switch (granularity) {
+      case 'DAY': {
+        timeLabels = getTimeLabels(
+          DAY_DATE_FORMAT_JS,
+          startTimestamp,
+          endTimestamp,
+          'DAY'
+        )
+        timeFormat = DAY_DATE_FORMAT
+        break
+      }
+      case 'MONTH': {
+        timeLabels = getTimeLabels(
+          MONTH_DATE_FORMAT_JS,
+          startTimestamp,
+          endTimestamp,
+          'MONTH'
+        )
+        timeFormat = MONTH_DATE_FORMAT
+        break
+      }
+      default: {
+        timeLabels = getTimeLabels(
+          HOUR_DATE_FORMAT_JS,
+          startTimestamp,
+          endTimestamp,
+          'HOUR'
+        )
+        timeFormat = HOUR_DATE_FORMAT
+      }
+    }
+    const statusField = entity === 'CASE' ? 'caseStatus' : 'alerts.alertStatus'
+    const timestampField =
+      entity === 'CASE' ? 'timestamp' : 'alerts.createdTimestamp'
+
+    const query = `
+      SELECT 
+        formatDateTime(fromUnixTimestamp64Milli(${timestampField}), '${timeFormat}') as time_label,
+        ${statusField} as status,
+        count(*) as count
+      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+      ${entity === 'ALERT' ? 'ARRAY JOIN alerts' : ''}
+      WHERE ${timestampField} >= ${startTimestamp}
+        AND ${timestampField} < ${endTimestamp}
+      GROUP BY 
+        time_label,
+        status
+      ORDER BY time_label
+    `
+    const response = await clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+    const statusDistributionData = await response.json<{
+      time_label: string
+      status: string
+      count: number
+    }>()
+
+    const statusByTimeLabel = statusDistributionData.reduce((acc, row) => {
+      if (!acc[row.time_label]) {
+        acc[row.time_label] = {}
+      }
+      acc[row.time_label][row.status] = Number(row.count)
+      return acc
+    }, {} as Record<string, Record<string, number>>)
+
+    return {
+      data: timeLabels.map((label) => {
+        const stats = statusByTimeLabel[label] || {}
+        return {
+          _id: label,
+          count_OPEN: sum([stats.OPEN ?? 0]),
+          count_IN_PROGRESS: sum([
+            stats.OPEN_IN_PROGRESS ?? 0,
+            stats.ESCALATED_IN_PROGRESS ?? 0,
+            stats.ESCALATED_L2_IN_PROGRESS ?? 0,
+          ]),
+          count_ON_HOLD: sum([
+            stats.OPEN_ON_HOLD ?? 0,
+            stats.ESCALATED_ON_HOLD ?? 0,
+            stats.ESCALATED_L2_ON_HOLD ?? 0,
+          ]),
+          count_ESCALATED: sum([stats.ESCALATED ?? 0]),
+          count_ESCALATED_L2: sum([stats.ESCALATED_L2 ?? 0]),
+          count_CLOSED: sum([stats.CLOSED ?? 0]),
+          count_REOPENED: sum([stats.REOPENED ?? 0]),
+          count_IN_REVIEW: sum([
+            stats.IN_REVIEW_OPEN ?? 0,
+            stats.IN_REVIEW_ESCALATED ?? 0,
+            stats.IN_REVIEW_CLOSED ?? 0,
+            stats.IN_REVIEW_REOPENED ?? 0,
           ]),
         } as DashboardStatsAlertAndCaseStatusDistributionStatsData
       }),

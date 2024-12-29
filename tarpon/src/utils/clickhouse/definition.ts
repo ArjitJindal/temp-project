@@ -356,6 +356,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)) MATERIALIZED JSONExtract(data, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))')",
       "assignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
       "reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)) MATERIALIZED JSONExtract(data, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')",
+      "lastStatusChangeReasons Array(String) MATERIALIZED JSONExtractArrayRaw(data, 'lastStatusChange', 'reason')",
       `alerts Array(Tuple(
         alertId String, 
         alertStatus String, 
@@ -364,7 +365,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
         reviewAssignments String,
         ruleId String,
         ruleInstanceId String,
-        numberOfTransactionsHit Int32
+        numberOfTransactionsHit Int32,
+        createdTimestamp UInt64,
+        priority String,
+        lastStatusChangeReasons Array(String)
       )) MATERIALIZED
         arrayMap(x -> CAST((
           JSONExtractString(x, 'alertId'),
@@ -374,8 +378,11 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractString(x, 'reviewAssignments'),
           JSONExtractString(x, 'ruleId'),
           JSONExtractString(x, 'ruleInstanceId'),
-          JSONExtractInt(x, 'numberOfTransactionsHit')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges String, assignments String, reviewAssignments String, ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32)'),
+          JSONExtractInt(x, 'numberOfTransactionsHit'),
+          JSONExtractUInt(x, 'createdTimestamp'),
+          JSONExtractString(x, 'priority'),
+          JSONExtractArrayRaw(x, 'lastStatusChange', 'reason')
+        ), 'Tuple(alertId String, alertStatus String, statusChanges String, assignments String, reviewAssignments String, ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String))'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
   },
