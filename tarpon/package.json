@@ -226,7 +226,7 @@
     "@nangohq/node": "^0.48.1",
     "@nangohq/types": "^0.48.1",
     "@react-awesome-query-builder/core": "^6.6.0",
-    "@sentry/esbuild-plugin": "^2.16.0",
+    "@sentry/esbuild-plugin": "^2.22.7",
     "@sentry/integrations": "^7.118.0",
     "@sentry/node": "^7.118.0",
     "@sentry/serverless": "^7.118.0",
