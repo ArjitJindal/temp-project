@@ -233,6 +233,12 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     rules: readonly Rule[],
     ruleInstances: readonly RuleInstance[]
   ) {
+    const updates: {
+      [key: string]: {
+        hitCountDelta: number
+        runCountDelta: number
+      }
+    } = {}
     await backOff(
       async () => {
         await pMap(
@@ -244,6 +250,24 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
               rules,
               'ONGOING'
             )
+            result?.executedRules
+              ?.filter(
+                (executedRule) =>
+                  ruleInstances.find(
+                    (ruleInstance) =>
+                      ruleInstance.id === executedRule.ruleInstanceId
+                  )?.userRuleRunCondition?.schedule
+              )
+              .forEach((executedRule) => {
+                updates[executedRule.ruleInstanceId] = {
+                  hitCountDelta:
+                    (updates[executedRule.ruleInstanceId]?.hitCountDelta ?? 0) +
+                    (executedRule.ruleHit ? 1 : 0),
+                  runCountDelta:
+                    (updates[executedRule.ruleInstanceId]?.runCountDelta ?? 0) +
+                    1,
+                }
+              })
             if (result?.hitRules && result.hitRules.length > 0) {
               await Promise.all([
                 this.createCase(
@@ -271,6 +295,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
         numOfAttempts: 5,
       }
     )
+    await this.ruleInstanceRepository?.updateRuleInstanceStatsCount(updates)
   }
 
   private async createCase(
