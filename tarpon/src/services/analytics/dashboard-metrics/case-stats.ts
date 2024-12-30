@@ -19,11 +19,11 @@ import { notEmpty, notNullish } from '@/utils/array'
 import { DashboardStatsAlertAndCaseStatusDistributionStats } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStats'
 import { DashboardStatsAlertAndCaseStatusDistributionStatsData } from '@/@types/openapi-internal/DashboardStatsAlertAndCaseStatusDistributionStatsData'
 import { traceable } from '@/core/xray'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import {
   getClickhouseClient,
   isClickhouseEnabled,
 } from '@/utils/clickhouse/utils'
-import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class CaseStatsDashboardMetric {
@@ -35,6 +35,13 @@ export class CaseStatsDashboardMetric {
       endTimestamp: number | undefined
     }
   ): Promise<DashboardStatsClosingReasonDistributionStats> {
+    if (isClickhouseEnabled()) {
+      return this.getClosingReasonDistributionStatisticsClickhouse(
+        tenantId,
+        entity,
+        params
+      )
+    }
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     let closingReasonsData: DashboardStatsClosingReasonDistributionStatsClosingReasonsData[] =
@@ -108,13 +115,13 @@ export class CaseStatsDashboardMetric {
                 }
               : null,
             {
+              $unwind: '$alerts',
+            },
+            {
               $match: {
                 'alerts.alertStatus': 'CLOSED',
                 'alerts.lastStatusChange': { $ne: null },
               },
-            },
-            {
-              $unwind: '$alerts',
             },
             {
               $project: {
@@ -143,6 +150,78 @@ export class CaseStatsDashboardMetric {
     }
     return {
       closingReasonsData: sortBy(closingReasonsData, 'reason'),
+    }
+  }
+
+  private static async getClosingReasonDistributionStatisticsClickhouse(
+    tenantId: string,
+    entity?: 'CASE' | 'ALERT',
+    params?: {
+      startTimestamp: number | undefined
+      endTimestamp: number | undefined
+    }
+  ): Promise<DashboardStatsClosingReasonDistributionStats> {
+    const clickhouse = await getClickhouseClient(tenantId)
+    let closingReasonsData: DashboardStatsClosingReasonDistributionStatsClosingReasonsData[] =
+      []
+
+    if (entity === 'CASE') {
+      const query = `
+        SELECT 
+          reason,
+          count(*) as value
+        FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+        ARRAY JOIN lastStatusChangeReasons as reason
+        WHERE caseStatus = 'CLOSED'
+        ${
+          params?.startTimestamp
+            ? `AND timestamp >= ${params.startTimestamp}`
+            : ''
+        }
+        ${params?.endTimestamp ? `AND timestamp <= ${params.endTimestamp}` : ''}
+        GROUP BY reason
+        ORDER BY reason ASC
+      `
+
+      const results = await clickhouse.query({ query, format: 'JSONEachRow' })
+      closingReasonsData = await results.json<{
+        reason: string
+        value: number
+      }>()
+    } else if (entity === 'ALERT') {
+      const query = `
+        SELECT 
+          reason,
+          count(*) as value
+        FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+        ARRAY JOIN alerts AS alert
+        ARRAY JOIN alert.lastStatusChangeReasons AS reason
+        WHERE alert.alertStatus = 'CLOSED'
+        ${
+          params?.startTimestamp
+            ? `AND alert.createdTimestamp >= ${params.startTimestamp}`
+            : ''
+        }
+        ${
+          params?.endTimestamp
+            ? `AND alert.createdTimestamp <= ${params.endTimestamp}`
+            : ''
+        }
+        GROUP BY reason
+        ORDER BY reason ASC
+      `
+      const results = await clickhouse.query({ query, format: 'JSONEachRow' })
+      closingReasonsData = await results.json<{
+        reason: string
+        value: number
+      }>()
+    }
+
+    return {
+      closingReasonsData: closingReasonsData.map((reason) => ({
+        reason: reason.reason?.replace(/"/g, ''),
+        value: Number(reason.value),
+      })),
     }
   }
 
