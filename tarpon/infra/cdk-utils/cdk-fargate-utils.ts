@@ -1,6 +1,6 @@
 import { Config } from '@flagright/lib/config/config'
 import { RemovalPolicy } from 'aws-cdk-lib'
-import { DockerImageAsset } from 'aws-cdk-lib/aws-ecr-assets'
+import { DockerImageAsset, Platform } from 'aws-cdk-lib/aws-ecr-assets'
 import {
   ContainerImage,
   FargateTaskDefinition,
@@ -37,6 +37,10 @@ export const createDockerImage = (
   return new DockerImageAsset(scope, name, {
     directory,
     invalidation: { buildArgs: false },
+    buildArgs: {
+      PLATFORM: 'linux/amd64',
+    },
+    platform: Platform.LINUX_AMD64,
   })
 }
 
