@@ -1,4 +1,4 @@
-import { BasicConfig } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Settings } from '@react-awesome-query-builder/ui';
 import { useEffect, useMemo, useState } from 'react';
 import { compact } from 'lodash';
 import { AsyncResource, init, isSuccess, map } from '@/utils/asyncResource';
@@ -124,6 +124,7 @@ export function useLogicBuilderConfig(
   aggregationVariables: LogicAggregationVariable[],
   configParams: Partial<LogicBuilderConfig>,
   mlVariables: RuleMachineLearningVariable[],
+  settings?: Partial<Settings>,
 ): AsyncResource<QueryBuilderConfig> {
   const [result, setResult] = useState<AsyncResource<QueryBuilderConfig>>(init());
   const ruleLogicConfigResult = useRuleLogicConfig(ruleType);
@@ -260,25 +261,28 @@ export function useLogicBuilderConfig(
         //       subfields: Object.fromEntries(value.map((f) => [f.key, f.uiDefinition])),
         //     } as FuncGroup),
         // );
-        const config = makeConfig({
-          ...configParams,
-          types,
-          operators: {
-            ...Object.fromEntries(
-              operatorsWithParameters
-                .concat(operatorsWithoutParameters)
-                .map((v) => [v.key, v.uiDefinition]),
-            ),
+        const config = makeConfig(
+          {
+            ...configParams,
+            types,
+            operators: {
+              ...Object.fromEntries(
+                operatorsWithParameters
+                  .concat(operatorsWithoutParameters)
+                  .map((v) => [v.key, v.uiDefinition]),
+              ),
+            },
+            funcs: {
+              ...Object.fromEntries(
+                functions.concat(JSON_LOGIC_FUNCTIONS).map((v) => [v.key, v.uiDefinition]),
+              ),
+            },
+            fields: {
+              ...Object.fromEntries(variables.map((v) => [v.key, v.uiDefinition])),
+            },
           },
-          funcs: {
-            ...Object.fromEntries(
-              functions.concat(JSON_LOGIC_FUNCTIONS).map((v) => [v.key, v.uiDefinition]),
-            ),
-          },
-          fields: {
-            ...Object.fromEntries(variables.map((v) => [v.key, v.uiDefinition])),
-          },
-        });
+          settings,
+        );
 
         return config;
       }),
@@ -293,6 +297,7 @@ export function useLogicBuilderConfig(
     configParams,
     entityVariablesInUse,
     mlVariables,
+    settings,
   ]);
 
   return result;

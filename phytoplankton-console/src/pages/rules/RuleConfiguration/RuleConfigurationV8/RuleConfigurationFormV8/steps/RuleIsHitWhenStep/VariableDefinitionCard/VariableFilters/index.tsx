@@ -1,5 +1,6 @@
 import React, { useCallback } from 'react';
 import { isEqual } from 'lodash';
+import { Settings } from '@react-awesome-query-builder/ui';
 import { RuleLogicBuilder } from '../../RuleLogicBuilder';
 import { FormRuleAggregationVariable } from '../helpers';
 import { LogicEntityVariableEntityEnum, RuleType } from '@/apis';
@@ -16,13 +17,14 @@ interface Props<
   formValuesState: StatePair<FormState>;
   ruleType: RuleType;
   readOnly?: boolean;
+  settings?: Partial<Settings>;
 }
 
 export default function VariableFilters<
   FormState extends {
     filtersLogic?: any;
   },
->({ formValuesState, ruleType, readOnly, entityVariableTypes }: Props<FormState>) {
+>({ formValuesState, ruleType, readOnly, entityVariableTypes, settings }: Props<FormState>) {
   const [formValues, setFormValues] = formValuesState;
 
   const handleUpdateForm = useCallback(
@@ -51,6 +53,7 @@ export default function VariableFilters<
           handleUpdateForm({ filtersLogic: jsonLogic });
         }
       }}
+      settings={settings}
     />
   );
 }

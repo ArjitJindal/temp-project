@@ -752,6 +752,9 @@ export const AggregationVariableFormContent: React.FC<
                 formValuesState={[formValues, setFormValues]}
                 ruleType={ruleType}
                 readOnly={readOnly}
+                settings={{
+                  removeEmptyRulesOnLoad: true,
+                }}
               />
             </Label>
           )}

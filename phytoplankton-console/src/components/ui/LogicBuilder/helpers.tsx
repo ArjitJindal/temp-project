@@ -1,4 +1,4 @@
-import { BasicConfig, Empty } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Empty, Settings } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import { isEmpty } from 'lodash';
@@ -21,7 +21,10 @@ const InitialConfig = BasicConfig;
 export const LHS_ONLY_SYMBOL = '$1';
 export const RHS_ONLY_SYMBOL = '$2';
 
-export function makeConfig(params: LogicBuilderConfig): QueryBuilderConfig {
+export function makeConfig(
+  params: LogicBuilderConfig,
+  settings?: Partial<Settings>,
+): QueryBuilderConfig {
   const variableColors: { [variableName: string]: TagColor | undefined } = Object.keys(
     params.fields,
   ).reduce((acc, x) => ({ ...acc, [x]: x.startsWith('agg:') ? 'action' : 'gray' }), {});
@@ -268,6 +271,7 @@ export function makeConfig(params: LogicBuilderConfig): QueryBuilderConfig {
           </Button>
         );
       },
+      ...(settings ?? {}),
     },
   };
 }

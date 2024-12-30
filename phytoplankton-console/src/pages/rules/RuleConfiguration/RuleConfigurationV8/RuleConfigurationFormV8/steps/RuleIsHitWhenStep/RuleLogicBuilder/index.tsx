@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Utils as QbUtils } from '@react-awesome-query-builder/ui';
+import { Utils as QbUtils, Settings } from '@react-awesome-query-builder/ui';
 import { isEqual } from 'lodash';
 import { useLogicBuilderConfig } from '../helpers';
 import LogicBuilder, { Props as LogicBuilderProps } from '@/components/ui/LogicBuilder';
@@ -19,6 +19,7 @@ import {
   RuleType,
 } from '@/apis';
 import { RuleLogic } from '@/pages/rules/RuleConfiguration/RuleConfigurationV8/RuleConfigurationFormV8/types';
+import Spinner from '@/components/library/Spinner';
 
 interface Props {
   ruleType: RuleType;
@@ -30,11 +31,12 @@ interface Props {
   onChange?: (jsonLogic: RuleLogic | undefined) => void;
   configParams?: Partial<LogicBuilderConfig>;
   logicBuilderProps?: Partial<LogicBuilderProps>;
+  settings?: Partial<Settings>;
 }
 type State = { tree: LogicBuilderValue; config: QueryBuilderConfig } | null;
 
 export function RuleLogicBuilder(props: Props) {
-  const { jsonLogic, logicBuilderProps, configParams, ruleType, onChange } = props;
+  const { jsonLogic, logicBuilderProps, configParams, ruleType, onChange, settings } = props;
   const [state, setState] = useState<State>(null);
 
   // Initialize state when config is loaded or changed
@@ -45,6 +47,7 @@ export function RuleLogicBuilder(props: Props) {
     props.aggregationVariables ?? [],
     configParams ?? {},
     props.mlVariables ?? [],
+    settings,
   );
 
   const isConfigChanged = useIsChanged(configRes);
@@ -127,7 +130,7 @@ export function RuleLogicBuilder(props: Props) {
             {...logicBuilderProps}
           />
         ) : (
-          <></>
+          <Spinner />
         )
       }
     </AsyncResourceRenderer>
