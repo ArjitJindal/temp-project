@@ -232,6 +232,12 @@ export class CaseStatsDashboardMetric {
       endTimestamp: number | undefined
     }
   ): Promise<DashboardStatsAlertPriorityDistributionStats> {
+    if (isClickhouseEnabled()) {
+      return this.getAlertPriorityDistributionStatisticsClickhouse(
+        tenantId,
+        params
+      )
+    }
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const priorities = await casesCollection
@@ -297,7 +303,54 @@ export class CaseStatsDashboardMetric {
       alertPriorityData: sortBy(alertPriorityData, 'priority'),
     }
   }
+  private static async getAlertPriorityDistributionStatisticsClickhouse(
+    tenantId: string,
+    params?: {
+      startTimestamp: number | undefined
+      endTimestamp: number | undefined
+    }
+  ): Promise<DashboardStatsAlertPriorityDistributionStats> {
+    const clickhouse = await getClickhouseClient(tenantId)
+    let timeFilter = ''
+    if (params?.startTimestamp != null || params?.endTimestamp != null) {
+      const conditions: string[] = []
+      if (params?.startTimestamp != null) {
+        conditions.push(`alert.createdTimestamp >= ${params.startTimestamp}`)
+      }
+      if (params?.endTimestamp != null) {
+        conditions.push(`alert.createdTimestamp <= ${params.endTimestamp}`)
+      }
+      timeFilter = `AND ${conditions.join(' AND ')}`
+    }
 
+    const query = `
+      SELECT
+        alert.priority as priority,
+        count(*) as value
+      FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+      ARRAY JOIN alerts AS alert
+      WHERE alert.alertStatus IN ('OPEN', 'REOPENED')
+      ${timeFilter}
+      GROUP BY priority
+      ORDER BY priority
+    `
+    const result = await clickhouse.query({
+      query,
+      format: 'JSONEachRow',
+    })
+
+    const alertPriorityData = await result.json<{
+      priority: string
+      value: number
+    }>()
+
+    return {
+      alertPriorityData: alertPriorityData.map((row) => ({
+        priority: row.priority,
+        value: Number(row.value),
+      })),
+    } as unknown as DashboardStatsAlertPriorityDistributionStats
+  }
   public static async getAlertAndCaseStatusDistributionStatistics(
     tenantId: string,
     startTimestamp: number,
