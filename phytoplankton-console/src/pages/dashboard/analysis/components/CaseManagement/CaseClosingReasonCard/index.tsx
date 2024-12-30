@@ -147,7 +147,9 @@ const CaseClosingReasonCard = (props: Props) => {
           });
         }}
         resizing="AUTO"
-        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        extraControls={[
+          <WidgetRangePicker value={dateRange} onChange={setDateRange} key="widget-range-picker" />,
+        ]}
         {...props}
       >
         <div className={s.root}>

@@ -105,6 +105,7 @@ export default function DistributionByStatus(props: WidgetProps) {
           setGranularity={setGranularity}
           dateRange={dateRange}
           setDateRange={setDateRange}
+          key="granular-date-picker"
         />,
       ]}
     >

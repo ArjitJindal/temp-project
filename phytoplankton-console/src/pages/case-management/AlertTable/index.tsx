@@ -900,8 +900,8 @@ export default function AlertTable(props: Props) {
               return (
                 <div className={s.escalation}>
                   <div className={s.tag}>
-                    {lastStatusChangeReasons.reasons.map((reason) => {
-                      return <Tag>{reason}</Tag>;
+                    {lastStatusChangeReasons.reasons.map((reason, index) => {
+                      return <Tag key={index}>{reason}</Tag>;
                     })}
                   </div>
                   {lastStatusChangeReasons.otherReason && (

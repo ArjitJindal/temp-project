@@ -101,8 +101,8 @@ export function getConsumerUserColumns(): TableColumn<ConsumerUserTableItem>[] {
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               {value
                 ?.filter((part) => part.isPepHit)
-                .map((part) => (
-                  <div style={{ display: 'flex', flexDirection: 'row' }}>
+                .map((part, index) => (
+                  <div style={{ display: 'flex', flexDirection: 'row' }} key={index}>
                     {part.pepCountry && <CountryDisplay isoCode={part.pepCountry} />}
                     {part.pepRank && part.pepCountry ? <>{','}&nbsp;</> : ''}
                     {part.pepRank && humanizeConstant(part.pepRank)}

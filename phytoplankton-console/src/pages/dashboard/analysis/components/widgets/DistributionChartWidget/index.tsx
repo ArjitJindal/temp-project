@@ -120,6 +120,7 @@ export default function DistributionChartWidget<
                 setDateRange={(value) => {
                   onTimeRangeChange(value);
                 }}
+                key="granular-date-picker"
               />,
             ]
           : [
@@ -128,6 +129,7 @@ export default function DistributionChartWidget<
                 onChange={(value) => {
                   onTimeRangeChange(value);
                 }}
+                key="date-range-picker"
               />,
             ]
       }

@@ -92,7 +92,7 @@ export const SecuritySettings = () => {
           onChange={!settings.mfaEnabled ? handleEnable : handleDisable}
           value={settings.mfaEnabled}
           loading={mutateTenantSettings.isLoading || isLoading('mfaEnabled')}
-          isDisabled={!permissions}
+          disabled={!permissions}
         />
       </SettingsCard>
       <SettingsCard

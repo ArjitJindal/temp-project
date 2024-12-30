@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { humanizeAuto, humanizeCamelCase } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import { AIAttribute, AiSourcesResponse } from '@/apis';
@@ -35,19 +35,20 @@ export const AISources = () => {
             description="Select the data sources to be used by the AI engine while generating narratives"
           >
             <>
-              {AI_ATTRIBUTE_CATEGORYS.map((category) => (
-                <div key={category} className={s.categoryDiv}>
+              {AI_ATTRIBUTE_CATEGORYS.map((category, index) => (
+                <div key={index} className={s.categoryDiv}>
                   <P bold className={s.paragraph}>
                     {humanizeAuto(category)}
                   </P>
                   {aiSources
                     .filter((source) => source.category === category)
-                    .map(({ sourceName: key, isPii }) => (
-                      <>
+                    .map(({ sourceName: key, isPii }, index) => (
+                      <React.Fragment key={index}>
                         {isPii ? (
                           <Tooltip
                             title="We do not send this data to our AI engine as it may contain personally identifiable information (PII) we obfuscate this data before sending it to our AI engine."
                             placement="top"
+                            key={key}
                           >
                             <div className={s.checkboxDiv}>
                               <Label
@@ -87,7 +88,7 @@ export const AISources = () => {
                             />
                           </Label>
                         )}
-                      </>
+                      </React.Fragment>
                     ))}
                 </div>
               ))}

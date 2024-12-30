@@ -126,6 +126,7 @@ export default function TransactionsItem() {
                     onClick={async () => {
                       await handleReportDownload(transaction, ruleAlertMap);
                     }}
+                    key="transactions-download-button"
                   >
                     <DownloadLineIcon height={16} /> Export
                   </Button>,

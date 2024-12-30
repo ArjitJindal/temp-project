@@ -1,3 +1,4 @@
+import React from 'react';
 import { OverviewCardSection, SectionProps } from './OverviewCardSection';
 import s from './styles.module.less';
 
@@ -9,10 +10,10 @@ export const OverviewCard = (props: Props) => {
   return (
     <div className={s.root}>
       {sections.map((section, index) => (
-        <>
-          <OverviewCardSection key={index} {...section} />
+        <React.Fragment key={index}>
+          <OverviewCardSection {...section} />
           {index < sections.length - 1 && <div className={s.divider} />}
-        </>
+        </React.Fragment>
       ))}
     </div>
   );

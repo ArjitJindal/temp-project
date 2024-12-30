@@ -360,8 +360,8 @@ export default function SuperAdminPanel() {
                 label={`Tenants recently deleted in last 30 days (${tenantsDeletedRecently.length})`}
               >
                 <Space direction={'horizontal'} wrap={true}>
-                  {tenantsDeletedRecently.map((tenant) => (
-                    <Tag color={'success'}>
+                  {tenantsDeletedRecently.map((tenant, index) => (
+                    <Tag color={'success'} key={index}>
                       {tenant.tenantName} ({tenant.tenantId})
                     </Tag>
                   ))}
@@ -373,8 +373,8 @@ export default function SuperAdminPanel() {
             {tenantsMarkedForDelete?.length ? (
               <Label label={`Tenants marked for delete (${tenantsMarkedForDelete.length})`}>
                 <Space direction={'horizontal'} wrap={true}>
-                  {tenantsMarkedForDelete.map((tenant) => (
-                    <Tag color={'warning'}>
+                  {tenantsMarkedForDelete.map((tenant, index) => (
+                    <Tag color={'warning'} key={index}>
                       {tenant.tenantName} ({tenant.tenantId})
                     </Tag>
                   ))}
@@ -386,8 +386,8 @@ export default function SuperAdminPanel() {
             {tenantsFailedToDelete?.length ? (
               <Label label={`Tenants failed to delete (${tenantsFailedToDelete.length})`}>
                 <Space direction={'horizontal'} wrap={true}>
-                  {tenantsFailedToDelete.map((tenant) => (
-                    <Tag color={'error'}>
+                  {tenantsFailedToDelete.map((tenant, index) => (
+                    <Tag color={'error'} key={index}>
                       {tenant.tenantName} ({tenant.tenantId})
                     </Tag>
                   ))}

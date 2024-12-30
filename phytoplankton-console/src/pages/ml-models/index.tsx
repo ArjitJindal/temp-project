@@ -113,8 +113,12 @@ export const MlModelsPage = () => {
           render: (checksFor) => {
             return (
               <div className={s.checksFor}>
-                {checksFor?.map((check) => {
-                  return <Tag color="action">{check}</Tag>;
+                {checksFor?.map((check, index) => {
+                  return (
+                    <Tag color="action" key={index}>
+                      {check}
+                    </Tag>
+                  );
                 })}
               </div>
             );

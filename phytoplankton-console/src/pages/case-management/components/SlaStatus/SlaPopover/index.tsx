@@ -25,6 +25,7 @@ function SlaPopover(props: Props) {
       content={<SlaPolicyDetails slaPolicyDetail={slaPolicyDetail} policy={policy} />}
       trigger="click"
       getPopupContainer={(triggerNode: HTMLElement) => triggerNode.parentElement as HTMLElement}
+      key={`SlaPopover-${index}`}
     >
       <div
         key={index}

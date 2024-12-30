@@ -172,16 +172,16 @@ const getLogData = (
   riskLevelAlias: AliasMapping,
 ): LogItemData[] => {
   const logItemData: LogItemData[] = logs
-    .map((log) => {
+    .map((log, index) => {
       let currentUser: Account | null = null;
       if (log?.user?.id && users[log?.user?.id]) {
         currentUser = users[log?.user?.id];
       }
       const getIcon = (type: string) => {
         return type === 'CASE' ? (
-          <CaseIcon width={20} height={20} />
+          <CaseIcon width={20} height={20} key={index} />
         ) : (
-          <Avatar size="small" user={currentUser} />
+          <Avatar size="small" user={currentUser} key={index} />
         );
       };
 

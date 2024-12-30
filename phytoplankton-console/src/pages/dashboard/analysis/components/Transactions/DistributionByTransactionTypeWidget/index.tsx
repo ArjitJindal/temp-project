@@ -60,7 +60,11 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
     <div ref={pdfRef}>
       <Widget
         extraControls={[
-          <DatePicker.RangePicker value={dateRange} onChange={(e) => setDateRange(e)} />,
+          <DatePicker.RangePicker
+            value={dateRange}
+            onChange={(e) => setDateRange(e)}
+            key="date-picker"
+          />,
         ]}
         onDownload={(): Promise<{
           fileName: string;

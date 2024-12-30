@@ -379,7 +379,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                         </td>
                       </tr>
                     )}
-                    {rows.map((row) => {
+                    {rows.map((row, index) => {
                       const visibleCells = row.getVisibleCells();
 
                       const leftPinned = visibleCells
@@ -390,8 +390,8 @@ function Table<Item extends object, Params extends object = CommonParams>(
                         .map((cell) => ({ id: cell.id, size: cell.column.getSize() }));
 
                       return (
-                        <React.Fragment key={row.id}>
-                          <tr id={`row_${row.id}`} data-cy={`${cyId}-data-row`}>
+                        <React.Fragment key={index}>
+                          <tr id={`row_${index}`} data-cy={`${cyId}-data-row`}>
                             {visibleCells.map((cell, i) => {
                               const isPinned = cell.column.getIsPinned();
                               let offset = 0;
@@ -415,7 +415,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                                 <React.Fragment key={cell.id}></React.Fragment>
                               ) : (
                                 <Td<Item>
-                                  key={cell.id}
+                                  key={i}
                                   index={i}
                                   cell={cell}
                                   offset={offset}

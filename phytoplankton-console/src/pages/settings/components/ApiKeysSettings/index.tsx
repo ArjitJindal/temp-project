@@ -156,7 +156,7 @@ export const ApiKeysSettings = () => {
             />
             <br />
             <br />
-            {apiKeys.map((apiKey) => {
+            {apiKeys.map((apiKey, index) => {
               const timesLeft = Math.max(
                 (settings.limits?.apiKeyView ?? 0) -
                   (settings?.apiKeyViewData?.find((d) => d.apiKey === apiKey.id)?.count ?? 0),
@@ -164,7 +164,10 @@ export const ApiKeysSettings = () => {
               );
 
               return timesLeft === 1 ? (
-                <Alert type="error">{`You can view API key ${timesLeft} more time`}</Alert>
+                <Alert
+                  type="error"
+                  key={index}
+                >{`You can view API key ${timesLeft} more time`}</Alert>
               ) : null;
             })}
           </>

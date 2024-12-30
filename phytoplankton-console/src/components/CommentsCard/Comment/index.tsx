@@ -156,6 +156,7 @@ export default function Comment(props: Props) {
                     hasCommentWritePermission={hasCommentWritePermission}
                     handleAddComment={handleAddComment}
                     onCommentAdded={onCommentAdded}
+                    key={reply.id}
                   />
                 ))}
               </div>

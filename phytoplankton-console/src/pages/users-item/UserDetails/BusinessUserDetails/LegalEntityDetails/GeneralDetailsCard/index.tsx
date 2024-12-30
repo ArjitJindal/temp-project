@@ -94,7 +94,12 @@ export default function GeneralDetailsCard(props: Props) {
             <TagList>
               {user.allowedPaymentMethods
                 ? user.allowedPaymentMethods.map((paymentMethod) => {
-                    return <PaymentMethodTag paymentMethod={paymentMethod}></PaymentMethodTag>;
+                    return (
+                      <PaymentMethodTag
+                        paymentMethod={paymentMethod}
+                        key={paymentMethod}
+                      ></PaymentMethodTag>
+                    );
                   })
                 : '-'}
             </TagList>

@@ -52,17 +52,17 @@ export const NotificationsSettings = () => {
               <H5 className={s.heading}>Console</H5>
             </div>
           </div>
-          {types.map((type) => {
+          {types.map((type, i) => {
             const notificationTypes = NOTIFICATION_TYPES[type];
 
             return (
-              <div className={s.section}>
+              <div className={s.section} key={i}>
                 <H4 className={s.heading}>{humanizeAuto(type)}</H4>
-                {notificationTypes.map((notificationType) => {
+                {notificationTypes.map((notificationType, j) => {
                   const value = notificationType.value;
                   const isChecked = isSubset(consoleNotificationSettings, value);
                   return (
-                    <div className={s.row}>
+                    <div className={s.row} key={j}>
                       <div>
                         <span>{notificationType.label}</span>
                       </div>

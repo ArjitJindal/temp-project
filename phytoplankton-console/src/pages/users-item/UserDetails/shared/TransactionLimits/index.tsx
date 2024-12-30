@@ -186,8 +186,8 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               showSearch={true}
             >
               {PAYMENT_METHODS.filter((option) => !existingPaymentMethods?.includes(option)).map(
-                (option) => (
-                  <Select.Option key={option} value={option}>
+                (option, index) => (
+                  <Select.Option key={index} value={option}>
                     <PaymentMethodTag paymentMethod={option} />
                   </Select.Option>
                 ),
@@ -203,8 +203,11 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               showSearch
             />
           </Label>
-          {timeFrames.map((timeFrame) => (
-            <Label key={`count-${timeFrame}`} label={`Max transaction count / ${timeFrame}`}>
+          {timeFrames.map((timeFrame, index) => (
+            <Label
+              key={`count-${timeFrame}-${index}`}
+              label={`Max transaction count / ${timeFrame}`}
+            >
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -220,8 +223,11 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               </div>
             </Label>
           ))}
-          {timeFrames.map((timeFrame) => (
-            <Label key={`amount-${timeFrame}`} label={`Max transaction amount / ${timeFrame}`}>
+          {timeFrames.map((timeFrame, index) => (
+            <Label
+              key={`amount-${timeFrame}-${index}`}
+              label={`Max transaction amount / ${timeFrame}`}
+            >
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -243,8 +249,11 @@ const PaymentMethodLimitsEditor: React.FC<PaymentMethodLimitsEditorProps> = ({
               </div>
             </Label>
           ))}
-          {timeFrames.map((timeFrame) => (
-            <Label key={`avg-amount-${timeFrame}`} label={`Avg transaction amount / ${timeFrame}`}>
+          {timeFrames.map((timeFrame, index) => (
+            <Label
+              key={`avg-amount-${timeFrame}-${index}`}
+              label={`Avg transaction amount / ${timeFrame}`}
+            >
               <div className={s.numberInput}>
                 <NumberInput
                   min={0}
@@ -378,8 +387,8 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                   <Space direction="vertical">
                     {Object.entries(transactionLimit?.transactionAmountLimit || {})
                       .filter((entry) => entry[1])
-                      .map((entry) => (
-                        <Space>
+                      .map((entry, index) => (
+                        <Space key={index}>
                           <Money amount={entry[1]} /> / {entry[0]}
                         </Space>
                       ))}
@@ -398,8 +407,8 @@ const PaymentMethodLimitsTable: React.FC<PaymentMethodLimitsTableProps> = ({
                   <Space direction="vertical">
                     {Object.entries(transactionLimit?.averageTransactionAmountLimit || {})
                       .filter((entry) => entry[1])
-                      .map((entry) => (
-                        <Space>
+                      .map((entry, index) => (
+                        <Space key={index}>
                           <Money amount={entry[1]} /> / {entry[0]}
                         </Space>
                       ))}

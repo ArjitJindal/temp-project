@@ -52,7 +52,13 @@ const QaAlertsByAssignee = (props: Props) => {
       {...props}
       resizing="AUTO"
       width="FULL"
-      extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      extraControls={[
+        <DatePicker.RangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          key="date-picker-range"
+        />,
+      ]}
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         const dataToExport = getOr(itemsRes, []).map((item) => {
           return {

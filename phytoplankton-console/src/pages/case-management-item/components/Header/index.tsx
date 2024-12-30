@@ -219,7 +219,12 @@ export default function Header(props: Props) {
       ]}
       chips={[
         ...(caseItem.caseType === 'MANUAL' || caseItem.caseType === 'EXTERNAL'
-          ? [<CaseGenerationMethodTag method={caseItem.caseType} />]
+          ? [
+              <CaseGenerationMethodTag
+                method={caseItem.caseType}
+                key={`case-generation-method-tag-${caseItem.caseId}`}
+              />,
+            ]
           : []),
         ...(caseItem.caseStatus
           ? [
@@ -231,6 +236,7 @@ export default function Header(props: Props) {
                 onSelect={(newStatus) => {
                   statusChangeMutation.mutate(newStatus);
                 }}
+                key={`case-status-drop-down-${caseItem.caseId}`}
                 reviewAssignments={caseItem.reviewAssignments ?? []}
               />,
             ]
@@ -238,6 +244,7 @@ export default function Header(props: Props) {
       ]}
       buttons={[
         <CommentButton
+          key={`comment-button-${caseItem.caseId}`}
           disabled={isLoading}
           onSuccess={(newComment) => {
             onCommentAdded(newComment, CommentType.COMMENT, caseId ?? '');
@@ -256,9 +263,16 @@ export default function Header(props: Props) {
           }}
           requiredPermissions={['case-management:case-overview:write']}
         />,
-        <ExportButton caseItem={caseItem} />,
+        <ExportButton caseItem={caseItem} key={`export-button-${caseItem.caseId}`} />,
         ...(caseId != null
-          ? [<SarButton caseId={caseId} alertIds={[]} transactionIds={[]} />]
+          ? [
+              <SarButton
+                caseId={caseId}
+                alertIds={[]}
+                transactionIds={[]}
+                key={`sar-button-${caseItem.caseId}`}
+              />,
+            ]
           : []),
         ...(!isReview && caseId
           ? [
@@ -272,6 +286,7 @@ export default function Header(props: Props) {
                 handleStatusChangeSuccess={handleStatusChangeSuccess}
                 isEscalated={isEscalated}
                 isEscalatedL2={isEscalatedL2}
+                key={`status-change-button-${caseItem.caseId}`}
               />,
             ]
           : []),
@@ -279,9 +294,10 @@ export default function Header(props: Props) {
           isDisabled={isLoading}
           caseItem={caseItem}
           onReload={handleStatusChangeSuccess}
+          key={`status-change-menu-${caseItem.caseId}`}
         />,
       ]}
-      subHeader={<SubHeader caseItem={caseItem} />}
+      subHeader={<SubHeader caseItem={caseItem} key={`sub-header-${caseItem.caseId}`} />}
     />
   );
 }

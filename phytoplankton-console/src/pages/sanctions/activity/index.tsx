@@ -183,7 +183,7 @@ export const SanctionsScreeningActivity = () => {
                         {id + (ruleInstances[id].ruleId ? ` (${ruleInstances[id].ruleId})` : '')}
                       </Id>
                     ) : (
-                      <div>id</div>
+                      <div key={id}>id</div>
                     ),
                   )
                 : '-'}

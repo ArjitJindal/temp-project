@@ -78,29 +78,29 @@ export default function AggregationVariableSummary({
   const filtersCount = filtersLogic?.and?.length ?? filtersLogic?.or?.length ?? 0;
 
   const textComponents = [
-    <b>{aggFuncLabel}</b>,
+    <b key="agg-func-label">{aggFuncLabel}</b>,
     'of',
-    aggFieldLabel ? <b>{aggFieldLabel}</b> : undefined,
+    aggFieldLabel ? <b key="agg-field-label">{aggFieldLabel}</b> : undefined,
     aggFieldLabel ? 'in' : undefined,
-    <b>{txDirectionLabel} transactions</b>,
+    <b key="text-direction-label">{txDirectionLabel} transactions</b>,
     aggGroupByFieldLabel ? (
-      <span>
+      <span key="agg-group-by-field-label">
         (with the same <b>{aggGroupByFieldLabel}</b>)
       </span>
     ) : undefined,
     'by a',
-    <b>
+    <b key="user-direction-label">
       {userDirectionLabel}
       {userLabel}
     </b>,
     lastNEntities ? (
       <>
-        for last <b> {lastNEntities} transactions</b>
+        for last <b key="last-n-entities"> {lastNEntities} transactions</b>
       </>
     ) : (
       <>
-        from <b>{formatTimeWindow(timeWindow.end)}</b> to{' '}
-        <b>{formatTimeWindow(timeWindow.start)}</b>
+        from <b key="time-window-start">{formatTimeWindow(timeWindow.end)}</b> to{' '}
+        <b key="time-window-end">{formatTimeWindow(timeWindow.start)}</b>
       </>
     ),
     filtersLogic

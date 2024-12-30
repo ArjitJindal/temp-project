@@ -83,7 +83,13 @@ const TopUsersHitCard = (props: Props) => {
     <Widget
       {...props}
       resizing="AUTO"
-      extraControls={[<DatePicker.RangePicker value={dateRange} onChange={setDateRange} />]}
+      extraControls={[
+        <DatePicker.RangePicker
+          value={dateRange}
+          onChange={setDateRange}
+          key="date-range-picker"
+        />,
+      ]}
       onDownload={(): Promise<{ fileName: string; data: string }> => {
         return new Promise((resolve, _reject) => {
           const fileData = {

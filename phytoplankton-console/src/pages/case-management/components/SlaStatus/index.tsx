@@ -15,7 +15,11 @@ function SlaStatus(props: Props) {
       {slaPolicyDetails?.map((slaPolicyDetail, index) => {
         if (slaPolicyDetail.policyStatus) {
           return (
-            <SlaPopover slaPolicyDetail={slaPolicyDetail as SLAPolicyStatusDetails} index={index} />
+            <SlaPopover
+              slaPolicyDetail={slaPolicyDetail as SLAPolicyStatusDetails}
+              index={index}
+              key={slaPolicyDetail.slaPolicyId}
+            />
           );
         }
       })}

@@ -1,3 +1,4 @@
+import React from 'react';
 import s from './index.module.less';
 
 interface Item {
@@ -29,11 +30,11 @@ export default function EntityPropertiesCard(props: Props) {
               className={s.items}
               style={{ gridTemplateColumns: columnTemplate || `repeat(${columns * 2}, auto)` }}
             >
-              {items.map(({ label, value }) => (
-                <>
+              {items.map(({ label, value }, index) => (
+                <React.Fragment key={index}>
                   <div className={s.itemLabel}>{label}</div>
                   <div className={s.itemValue}>{value ?? '-'}</div>
-                </>
+                </React.Fragment>
               ))}
             </div>
           )}

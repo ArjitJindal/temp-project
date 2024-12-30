@@ -106,6 +106,7 @@ export default function CommentsCard(props: Props) {
                           onCommentAdded={(newComment) =>
                             onCommentAdded(newComment, CommentType.COMMENT, group.id)
                           }
+                          key="comments-component"
                         />
                       );
                     }

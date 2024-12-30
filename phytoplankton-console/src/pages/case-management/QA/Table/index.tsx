@@ -145,8 +145,8 @@ export default function QaTable(props: Props) {
       render: (entity) => {
         return (
           <>
-            {entity.lastStatusChange?.reason?.map((reason) => (
-              <Tag>{reason}</Tag>
+            {entity.lastStatusChange?.reason?.map((reason, index) => (
+              <Tag key={index}>{reason}</Tag>
             ))}
           </>
         );

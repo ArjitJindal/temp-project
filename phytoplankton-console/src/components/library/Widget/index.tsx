@@ -18,7 +18,7 @@ function Widget(props: WidgetProps, ref: React.Ref<HTMLInputElement>) {
   const { id, title, extraControls, onDownload, children, width, resizing = 'AUTO' } = props;
   const controls = [
     ...(extraControls ?? []),
-    ...(onDownload ? [<DownloadButton onDownload={onDownload} />] : []),
+    ...(onDownload ? [<DownloadButton onDownload={onDownload} key="download-button" />] : []),
   ];
 
   return (

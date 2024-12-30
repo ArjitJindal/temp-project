@@ -1,6 +1,7 @@
 import { Datum, Treemap as AntTreemap } from '@ant-design/charts';
 import { Tooltip } from '@ant-design/plots';
 import { useMemo } from 'react';
+import cn from 'clsx';
 import s from './index.module.less';
 import {
   ALL_CHART_COLORS,
@@ -55,7 +56,7 @@ export default function Treemap<Name extends string = string>(props: Props<Name>
 
   return (
     <AntTreemap
-      className={showSkeleton && s.disabled}
+      className={cn(showSkeleton && s.disabled)}
       animation={false}
       data={{
         name: 'root',

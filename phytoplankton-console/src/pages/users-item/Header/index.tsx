@@ -26,7 +26,11 @@ export default function Header(props: Props) {
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
-      chips={[<Id alwaysShowCopy>{userId}</Id>]}
+      chips={[
+        <Id alwaysShowCopy key="id-component">
+          {userId}
+        </Id>,
+      ]}
       breadcrumbItems={[
         {
           title: 'Users',
@@ -37,7 +41,7 @@ export default function Header(props: Props) {
         },
       ]}
       buttons={[
-        <SarButton userId={user.userId} />,
+        <SarButton userId={user.userId} key="sar-button" />,
         <CommentButton
           onSuccess={(createdComment) => onNewComment(createdComment, CommentType.COMMENT)}
           submitRequest={async (commentFormValues) => {
@@ -53,8 +57,14 @@ export default function Header(props: Props) {
             });
           }}
           requiredPermissions={['users:user-comments:write']}
+          key="comment-button"
         />,
-        <HeaderMenu onNewTags={onNewTags} onNewComment={onNewComment} user={user} />,
+        <HeaderMenu
+          onNewTags={onNewTags}
+          onNewComment={onNewComment}
+          user={user}
+          key="header-menu"
+        />,
       ]}
       subHeader={<SubHeader onNewComment={onNewComment} user={user} />}
     />

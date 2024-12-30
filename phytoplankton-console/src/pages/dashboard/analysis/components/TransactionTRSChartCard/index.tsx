@@ -75,6 +75,7 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
           setGranularity={setGranularity}
           dateRange={dateRange}
           setDateRange={setDateRange}
+          key="granular-date-picker"
         />,
       ]}
     >

@@ -210,12 +210,13 @@ export default function SubHeader(props: Props) {
 
         {caseItem.caseHierarchyDetails?.childCaseIds && (
           <Form.Layout.Label title={'Child case ID(s)'}>
-            {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId) => (
+            {caseItem.caseHierarchyDetails?.childCaseIds.map((caseId, index) => (
               <Id
                 to={makeUrl(`/case-management/case/:caseId`, {
                   caseId,
                 })}
                 alwaysShowCopy
+                key={index}
               >
                 {caseId}
               </Id>

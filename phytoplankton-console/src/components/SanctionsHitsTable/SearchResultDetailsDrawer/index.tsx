@@ -291,7 +291,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
               <div className={s.countryList}>
                 {Object.entries(countryCodesMap).map(([code, countryName], i) => (
-                  <div>
+                  <div key={i}>
                     <CountryFlag key={code} code={code as CountryCode} svg={!pdfMode} />{' '}
                     <span>{countryName}</span>
                     {i < Object.entries(countryCodesMap).length - 1 && ', '}{' '}

@@ -532,7 +532,7 @@ function makeDerivedColumnCellComponent<Item extends object>(options: {
       external: externalState?.value ?? null,
     };
     return (
-      <div className={s.columnCellComponentContainer}>
+      <div className={s.columnCellComponentContainer} key={`${props.row.id}-${columnValue}`}>
         {editContext.isEditing && columnDataType.renderEdit
           ? columnDataType.renderEdit(cellContext)
           : columnDataType.render?.(columnValue, cellContext)}

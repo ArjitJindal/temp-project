@@ -108,8 +108,10 @@ export const MlVariableForm: React.FC<MlVariableFormProps> = ({
                             <div className={s.optionLabel}>
                               <span className={s.optionHeader}>{model.name}</span>
                               <div className={s.tags}>
-                                {model.checksFor?.map((check) => {
-                                  <Tag color="action">{check}</Tag>;
+                                {model.checksFor?.map((check, index) => {
+                                  <Tag color="action" key={index}>
+                                    {check}
+                                  </Tag>;
                                 })}
                               </div>
                               <Tag color="blue">

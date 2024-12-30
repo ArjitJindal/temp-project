@@ -77,7 +77,9 @@ export default function RuleActionSplitCard(props: Props) {
           });
         }}
         resizing="AUTO"
-        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        extraControls={[
+          <WidgetRangePicker value={dateRange} onChange={setDateRange} key="widget-range-picker" />,
+        ]}
         {...props}
       >
         <Donut<RuleAction>

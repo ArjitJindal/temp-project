@@ -112,6 +112,7 @@ function TeamSLAPerformanceCard(props: WidgetProps) {
               };
             });
           }}
+          key="date-range-picker"
         />,
       ]}
       onDownload={(): Promise<{ fileName: string; data: string }> => {

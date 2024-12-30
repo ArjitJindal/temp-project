@@ -12,8 +12,8 @@ export default function LogContainer(props: Props) {
     <div className={s.root}>
       <div className={s.date}>{date}</div>
       <div className={s.logItems}>
-        {logItems.map((logItem) => (
-          <LogItem logItem={logItem} />
+        {logItems.map((logItem, index) => (
+          <LogItem key={index} logItem={logItem} />
         ))}
       </div>
     </div>

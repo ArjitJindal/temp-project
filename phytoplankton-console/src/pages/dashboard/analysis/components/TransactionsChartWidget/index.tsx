@@ -86,6 +86,7 @@ export default function TransactionsChartWidget(props: WidgetProps) {
           setGranularity={setGranularity}
           dateRange={dateRange}
           setDateRange={setDateRange}
+          key="granular-date-picker"
         />,
       ]}
       resizing="AUTO"

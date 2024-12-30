@@ -50,10 +50,10 @@ export default function SelectionGroup<
 
   return (
     <div className={cn(s.root, mode === 'MULTIPLE' ? s.modeMultiple : s.modeSingle)}>
-      {options.map((option) => {
+      {options.map((option, index) => {
         const isActive = values.includes(option.value);
         return (
-          <Tooltip title={option.tooltip}>
+          <Tooltip title={option.tooltip} key={index}>
             <label
               key={String(option.value)}
               className={cn(

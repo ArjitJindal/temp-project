@@ -1,5 +1,6 @@
 import { Pie as AntPie, PieConfig } from '@ant-design/plots';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import cn from 'clsx';
 import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
 import NoData from '@/pages/case-management-item/CaseDetails/InsightsCard/components/NoData';
@@ -119,7 +120,7 @@ function Donut<Series extends string>(props: Props<Series>) {
     },
   };
 
-  return <AntPie className={showSkeleton && s.disabled} {...config} />;
+  return <AntPie className={cn(showSkeleton && s.disabled)} {...config} />;
 }
 
 export default Donut;

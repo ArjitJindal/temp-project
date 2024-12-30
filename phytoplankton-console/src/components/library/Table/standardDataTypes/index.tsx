@@ -512,7 +512,7 @@ export const COUNTRIES_MULTIPLE: ColumnDataType<ApiCountryCode | ApiCountryCode[
     return (
       <>
         {Array.isArray(value) ? (
-          value.map((isoCode) => <CountryDisplay isoCode={isoCode} />)
+          value.map((isoCode, index) => <CountryDisplay isoCode={isoCode} key={index} />)
         ) : (
           <CountryDisplay isoCode={value} />
         )}
@@ -729,8 +729,8 @@ export const TAG: ColumnDataType<string | string[] | undefined> = {
     if (Array.isArray(value)) {
       return (
         <>
-          {value.map((x) => (
-            <Tag>{capitalize(x)}</Tag>
+          {value.map((x, index) => (
+            <Tag key={index}>{capitalize(x)}</Tag>
           ))}
         </>
       );

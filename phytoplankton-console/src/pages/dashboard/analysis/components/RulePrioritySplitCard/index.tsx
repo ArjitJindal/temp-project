@@ -84,7 +84,9 @@ export default function RulePrioritySplitCard(props: Props) {
           });
         }}
         resizing="AUTO"
-        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        extraControls={[
+          <WidgetRangePicker value={dateRange} onChange={setDateRange} key="widget-range-picker" />,
+        ]}
         {...props}
       >
         <Donut<Priority> data={dataResource} colors={gaugeColors} legendPosition="RIGHT" />

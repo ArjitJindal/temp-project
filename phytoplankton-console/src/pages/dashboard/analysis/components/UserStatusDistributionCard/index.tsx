@@ -103,6 +103,7 @@ export default function UserStatusDistributionCard(props: Props) {
               setDateRange(e);
               usersResult.refetch();
             }}
+            key="widget-range-picker"
           />,
         ]}
         {...props}

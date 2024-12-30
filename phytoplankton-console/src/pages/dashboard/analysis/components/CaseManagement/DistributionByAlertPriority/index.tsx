@@ -68,7 +68,9 @@ const DistributionByAlertPriority = (props: Props) => {
         }}
         width="HALF"
         resizing="AUTO"
-        extraControls={[<WidgetRangePicker value={dateRange} onChange={setDateRange} />]}
+        extraControls={[
+          <WidgetRangePicker value={dateRange} onChange={setDateRange} key="widget-range-picker" />,
+        ]}
         {...props}
       >
         <Donut

@@ -1218,7 +1218,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
     }
     return (
       <TagList>
-        {value.values.map((item) => (
+        {value.values.map((item, index) => (
           <Tag
             actions={[
               {
@@ -1232,6 +1232,7 @@ export const VALUE_RENDERERS: { [key in DataType]: ValueRenderer<any> } = {
                 },
               },
             ]}
+            key={index}
           >
             <CountryDisplay key={`${item.content}`} isoCode={`${item.content}`} />
           </Tag>

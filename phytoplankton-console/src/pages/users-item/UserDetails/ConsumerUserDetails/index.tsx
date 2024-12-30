@@ -42,8 +42,9 @@ export default function ConsumerUserDetails(props: Props) {
             currentUserId={currentUser.userId}
             personType="CONSUMER"
             onNewComment={onNewComment}
+            key="attachments"
           />,
-          <ExpectedIncome expectedIncome={user.expectedIncome} />,
+          <ExpectedIncome expectedIncome={user.expectedIncome} key="expected-income" />,
         ]}
       />
       <EntityInfoGrid.Cell columnSpan={3}>

@@ -2,6 +2,7 @@ import { Column as AntColumn } from '@ant-design/charts';
 import { Annotation } from '@antv/g2plot';
 import { each, groupBy } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import cn from 'clsx';
 import s from './index.module.less';
 import { escapeHtml } from '@/utils/browser';
 import { AsyncResource, isLoading, getOr } from '@/utils/asyncResource';
@@ -73,7 +74,7 @@ export default function Column<Series = string, X = string>(props: Props<X, numb
 
   return (
     <AntColumn
-      className={showSkeleton && s.disabled}
+      className={cn(showSkeleton && s.disabled)}
       animation={false}
       height={height}
       isStack={true}

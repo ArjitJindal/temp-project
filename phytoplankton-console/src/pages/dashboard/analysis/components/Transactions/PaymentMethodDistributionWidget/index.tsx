@@ -91,6 +91,7 @@ export default function PaymentMethodDistributionWidget(props: Props) {
             onChange={(val) => {
               setDateRange(val);
             }}
+            key="widget-range-picker"
           />,
         ]}
         onDownload={(): Promise<{

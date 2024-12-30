@@ -112,6 +112,7 @@ export function GenericArrayPropertyInput(props: Props) {
               }}
               testId={`Property/${propertyContext?.item.name}/card`}
               headerClassName={s.cardHeader}
+              key="collapse-properties-layout"
             >
               {schema.items && (
                 <PropertyInput

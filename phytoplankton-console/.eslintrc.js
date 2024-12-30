@@ -13,7 +13,7 @@ module.exports = {
     'plugin:react-hooks/recommended',
     'plugin:cypress/recommended',
   ],
-  plugins: ['custom-rules'],
+  plugins: ['custom-rules', 'eslint-plugin-react'],
   ignorePatterns: ['.eslintrc.js', 'build', 'node_modules', 'jest.config.js', 'cypress-run.js'],
   rules: {
     'no-console': ['error', { allow: ['error', 'warn', 'info'] }],
@@ -35,6 +35,7 @@ module.exports = {
     'custom-rules/enforce-paginated-query-params': 'error',
     'cypress/no-async-tests': 'off',
     curly: 'error',
+    'react/jsx-key': 'error',
   },
   parserOptions: {
     parser: '@typescript-eslint/parser',

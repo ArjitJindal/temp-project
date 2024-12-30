@@ -147,8 +147,13 @@ export const ChecklistChart = (props: ParamsProps) => {
                 ?.name,
             }));
           }}
+          key="widget-select"
         />,
-        <DatePicker.RangePicker value={params.dateRange} onChange={setDateRange} />,
+        <DatePicker.RangePicker
+          value={params.dateRange}
+          onChange={setDateRange}
+          key="date-range-pick"
+        />,
       ]}
       onDownload={(): Promise<{
         fileName: string;

@@ -28,8 +28,8 @@ export const UserCard = (props: UserProps) => {
         <Form.Layout.Label icon={<GovernmentLineIcon />} title={'Business industry'}>
           <div>
             {user.legalEntity?.companyGeneralDetails?.businessIndustry
-              ? user.legalEntity?.companyGeneralDetails?.businessIndustry.map((industry) => {
-                  return <Tag>{industry}</Tag>;
+              ? user.legalEntity?.companyGeneralDetails?.businessIndustry.map((industry, index) => {
+                  return <Tag key={index}>{industry}</Tag>;
                 })
               : '-'}
           </div>

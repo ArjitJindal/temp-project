@@ -31,8 +31,8 @@ export default function CRMCommunicationCard(props: Props) {
             {tab === 'emails' && (
               <span className={styles.greyText}>
                 to{' '}
-                {to?.map((receiver) => (
-                  <a>{receiver}, </a>
+                {to?.map((receiver, index) => (
+                  <a key={index}>{receiver}, </a>
                 ))}
               </span>
             )}
@@ -45,7 +45,7 @@ export default function CRMCommunicationCard(props: Props) {
       {attachments && (
         <div className={styles.attachments}>
           {attachments.map((attachment, i) => (
-            <a href="#">
+            <a href="#" key={i}>
               {' '}
               <PaperClipOutlined /> Attachment {i}{' '}
             </a>

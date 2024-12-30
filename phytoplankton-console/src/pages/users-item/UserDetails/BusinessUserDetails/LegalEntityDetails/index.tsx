@@ -41,14 +41,17 @@ export default function LegalEntityDetails(props: Props) {
           columnSpan={1}
           rowSpan={2}
           maxHeight={350}
-          childrens={[<LinkedEntitiesCard user={user} />, <MerchantCategoryCodeCard user={user} />]}
+          childrens={[
+            <LinkedEntitiesCard user={user} key="linked-entities-card" />,
+            <MerchantCategoryCodeCard user={user} key="merchant-category-code-card" />,
+          ]}
         />
       ) : (
         <EntityInfoGrid.ColumnGroup
           columnSpan={1}
           rowSpan={2}
           maxHeight={350}
-          childrens={[<MerchantCategoryCodeCard user={user} />]}
+          childrens={[<MerchantCategoryCodeCard user={user} key="merchant-category-code-card" />]}
         />
       )}
 

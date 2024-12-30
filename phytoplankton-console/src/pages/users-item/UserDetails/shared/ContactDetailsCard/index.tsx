@@ -24,31 +24,51 @@ export default function ContactDetails(props: Props) {
         {
           label: 'Email',
           value: contactDetails?.emailIds?.length && (
-            <div>{contactDetails?.emailIds?.map((x) => callRender(EMAIL, x))}</div>
+            <div>
+              {contactDetails?.emailIds?.map((x, index) => (
+                <div key={`email-${index}`}>{callRender(EMAIL, x)}</div>
+              ))}
+            </div>
           ),
         },
         {
           label: 'Tel.',
           value: contactDetails?.contactNumbers?.length && (
-            <div>{contactDetails?.contactNumbers?.map((x) => callRender(PHONE, x))}</div>
+            <div>
+              {contactDetails?.contactNumbers?.map((x, index) => (
+                <div key={`phone-${index}`}>{callRender(PHONE, x)}</div>
+              ))}
+            </div>
           ),
         },
         {
           label: 'Fax',
           value: contactDetails?.faxNumbers?.length && (
-            <div>{contactDetails?.faxNumbers?.map((x) => callRender(FAX, x))}</div>
+            <div>
+              {contactDetails?.faxNumbers?.map((x, index) => (
+                <div key={`fax-${index}`}>{callRender(FAX, x)}</div>
+              ))}
+            </div>
           ),
         },
         {
           label: 'Website',
           value: contactDetails?.websites?.length && (
-            <div>{contactDetails?.websites?.map((x) => callRender(EXTERNAL_LINK, x))}</div>
+            <div>
+              {contactDetails?.websites?.map((x, index) => (
+                <div key={`external-link-${index}`}>{callRender(EXTERNAL_LINK, x)}</div>
+              ))}
+            </div>
           ),
         },
         {
           label: 'Address',
           value: contactDetails?.addresses?.length && (
-            <div>{contactDetails?.addresses?.map((x) => callRender(ADDRESS, x))}</div>
+            <div>
+              {contactDetails?.addresses?.map((x, index) => (
+                <div key={`address-${index}`}>{callRender(ADDRESS, x)}</div>
+              ))}
+            </div>
           ),
         },
       ]}
