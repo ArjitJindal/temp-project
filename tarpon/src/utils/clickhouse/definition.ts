@@ -201,6 +201,20 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "arsScore_arsScore Float32 MATERIALIZED JSONExtractFloat(data, 'arsScore', 'arsScore')",
       "ruleInstancesHit Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'hitRules'))",
       "ruleInstancesExecuted Array(String) MATERIALIZED arrayMap(x -> JSONExtractString(x, 'ruleInstanceId'), JSONExtractArrayRaw(data, 'executedRules'))",
+      `nonShadowHitRules Array(String) MATERIALIZED arrayMap(
+        x -> JSONExtractString(x, 'ruleInstanceId'),
+        arrayFilter(
+          x -> JSONExtractBool(x, 'isShadow') != true,
+          JSONExtractArrayRaw(data, 'hitRules')
+        )
+      )`,
+      `nonShadowExecutedRules Array(String) MATERIALIZED arrayMap(
+        x -> JSONExtractString(x, 'ruleInstanceId'),
+        arrayFilter(
+          x -> JSONExtractBool(x, 'isShadow') != true,
+          JSONExtractArrayRaw(data, 'executedRules')
+        )
+      )`,
       "originAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'transactionAmount')",
       "originAmountDetails_transactionCurrency LowCardinality(String) MATERIALIZED JSONExtract(data, 'originAmountDetails', 'transactionCurrency', 'LowCardinality(FixedString(3))')",
       "destinationAmountDetails_transactionAmount Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'transactionAmount')",
@@ -360,29 +374,43 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `alerts Array(Tuple(
         alertId String, 
         alertStatus String, 
-        statusChanges String, 
-        assignments String, 
-        reviewAssignments String,
+        statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), 
+        assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), 
+        reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)),
         ruleId String,
         ruleInstanceId String,
         numberOfTransactionsHit Int32,
         createdTimestamp UInt64,
         priority String,
-        lastStatusChangeReasons Array(String)
+        lastStatusChangeReasons Array(String),
+        lastStatusChangeTimestamp UInt64,
+        slaPolicyDetails Array(Tuple(slaPolicyId String, slaPolicyStatus String, elapsedTime UInt64)),
+        updatedAt UInt64,
+        ruleQaStatus String,
+        ruleChecklistTemplateId String,
+        ruleChecklistItemId Array(String),
+        qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64))
       )) MATERIALIZED
         arrayMap(x -> CAST((
           JSONExtractString(x, 'alertId'),
           JSONExtractString(x, 'alertStatus'),
-          JSONExtractString(x, 'statusChanges'),
-          JSONExtractString(x, 'assignments'),
-          JSONExtractString(x, 'reviewAssignments'),
+          JSONExtract(x, 'statusChanges', 'Array(Tuple(timestamp UInt64, caseStatus String, userId String))'),
+          JSONExtract(x, 'assignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
+          JSONExtract(x, 'reviewAssignments', 'Array(Tuple(assigneeUserId String, timestamp UInt64))'),
           JSONExtractString(x, 'ruleId'),
           JSONExtractString(x, 'ruleInstanceId'),
           JSONExtractInt(x, 'numberOfTransactionsHit'),
           JSONExtractUInt(x, 'createdTimestamp'),
           JSONExtractString(x, 'priority'),
-          JSONExtractArrayRaw(x, 'lastStatusChange', 'reason')
-        ), 'Tuple(alertId String, alertStatus String, statusChanges String, assignments String, reviewAssignments String, ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String))'),
+          JSONExtractArrayRaw(x, 'lastStatusChange', 'reason'),
+          JSONExtractUInt(x, 'lastStatusChange', 'timestamp'),
+          JSONExtract(x, 'slaPolicyDetails', 'Array(Tuple(slaPolicyId String, slaPolicyStatus String, elapsedTime UInt64))'),
+          JSONExtractUInt(x, 'updatedAt'),
+          JSONExtractString(x, 'ruleQaStatus'),
+          JSONExtractString(x, 'ruleChecklistTemplateId'),
+          JSONExtractArrayRaw(x, 'ruleChecklist', 'checklistItemId'),
+          JSONExtract(x, 'qaAssignment', 'Array(Tuple(assigneeUserId String, timestamp UInt64))')
+        ), 'Tuple(alertId String, alertStatus String, statusChanges Array(Tuple(timestamp UInt64, caseStatus String, userId String)), assignments Array(Tuple(assigneeUserId String, timestamp UInt64)), reviewAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)), ruleId String, ruleInstanceId String, numberOfTransactionsHit Int32, createdTimestamp UInt64, priority String, lastStatusChangeReasons Array(String), lastStatusChangeTimestamp UInt64, slaPolicyDetails Array(Tuple(slaPolicyId String, slaPolicyStatus String, elapsedTime UInt64)), updatedAt UInt64, ruleQaStatus String, ruleChecklistTemplateId String, ruleChecklistItemId Array(String), qaAssignments Array(Tuple(assigneeUserId String, timestamp UInt64)))'),
         JSONExtractArrayRaw(data, 'alerts'))`,
     ],
   },
@@ -457,8 +485,8 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     idColumn: 'id',
     timestampColumn: 'timestamp',
     engine: 'ReplacingMergeTree',
-    primaryKey: '(modelName, id)',
-    orderBy: '(modelName, id)',
+    primaryKey: '(model, id)',
+    orderBy: '(model, id)',
     materializedColumns: [
       "model String MATERIALIZED JSON_VALUE(data, '$.model')",
     ],

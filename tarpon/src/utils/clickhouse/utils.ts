@@ -433,6 +433,7 @@ async function addMissingColumns(
       .replace(/\(\s+/g, '(')
       .replace(/\s+\)/g, ')')
       .trim()
+      .split(' MATERIALIZED ')[0]
     const existingColType = existingColumn.type
       .replace(/\s+/g, ' ')
       .replace(/\(\s+/g, '(')
