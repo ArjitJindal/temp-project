@@ -13,6 +13,11 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { CASE_STATUSS } from '@/@types/openapi-internal-custom/CaseStatus'
 import { DashboardLatestTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardLatestTeamStatsItemResponse'
 import { shouldUseReviewAssignments } from '@/utils/helpers'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { getLatestTeamStatsClickhouseQuery } from '@/utils/clickhouse/queries/latest-team-stats-clickhouse'
 
 @traceable
 export class LatestTeamStatsDashboardMetric {
@@ -435,6 +440,9 @@ export class LatestTeamStatsDashboardMetric {
     pageSize?: number,
     page?: number
   ): Promise<DashboardLatestTeamStatsItemResponse> {
+    if (isClickhouseEnabled()) {
+      return this.getClickhouse(tenantId, scope, accountIds, pageSize, page)
+    }
     const db = await getMongoDbClientDb()
     const collectionName =
       scope === 'ALERTS'
@@ -455,16 +463,22 @@ export class LatestTeamStatsDashboardMetric {
         : []),
       {
         $project: {
+          _id: false,
           accountId: true,
-          role: true,
-          open: true,
-          inReview: true,
+          open: { $ifNull: ['$open', 0] },
+          inReview: { $ifNull: ['$inReview', 0] },
           inProgress: {
-            $add: ['$reviewInProgress', '$inProgress'],
+            $add: [
+              { $ifNull: ['$reviewInProgress', 0] },
+              { $ifNull: ['$inProgress', 0] },
+            ],
           },
-          escalated: true,
+          escalated: { $ifNull: ['$escalated', 0] },
           onHold: {
-            $add: ['$reviewOnHold', '$onHold'],
+            $add: [
+              { $ifNull: ['$reviewOnHold', 0] },
+              { $ifNull: ['$onHold', 0] },
+            ],
           },
         },
       },
@@ -503,6 +517,70 @@ export class LatestTeamStatsDashboardMetric {
     return {
       items: result?.paginatedData ?? [],
       total: result?.totalCount[0]?.count ?? 0,
+    }
+  }
+
+  public static async getClickhouse(
+    tenantId: string,
+    scope: 'CASES' | 'ALERTS',
+    accountIds?: Array<string>,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardLatestTeamStatsItemResponse> {
+    const client = await getClickhouseClient(tenantId)
+    const assignmentStatuses = this.getStatusAccordingToAssignment(
+      'assignments'
+    ).filter((status) => status !== 'CLOSED')
+    const reviewAssignmentStatuses =
+      this.getStatusAccordingToAssignment('reviewAssignments')
+
+    const viewQuery = getLatestTeamStatsClickhouseQuery(
+      scope,
+      assignmentStatuses,
+      reviewAssignmentStatuses,
+      accountIds
+    )
+    const query = `
+    WITH view as (${viewQuery})
+    SELECT 
+      accountId,
+      open,
+      inReview,
+      (COALESCE(reviewInProgress, 0) + COALESCE(inProgress, 0)) as inProgress,
+      escalated,
+      (COALESCE(reviewOnHold, 0) + COALESCE(onHold, 0)) as onHold,
+      (SELECT count(DISTINCT accountId) FROM view) AS total_count
+    FROM view
+    ORDER BY accountId
+    ${
+      pageSize && page
+        ? `LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}`
+        : ''
+    }
+    `
+
+    const queryResult = await client.query({ query, format: 'JSONEachRow' })
+    const result = await queryResult.json<{
+      accountId: string
+      open: number
+      inReview: number
+      inProgress: number
+      escalated: number
+      onHold: number
+      total_count: number
+    }>()
+
+    const total = Number(result[0]?.total_count ?? 0)
+    return {
+      items: result.map((row) => ({
+        accountId: row.accountId,
+        open: Number(row.open),
+        inReview: Number(row.inReview),
+        inProgress: Number(row.inProgress),
+        escalated: Number(row.escalated),
+        onHold: Number(row.onHold),
+      })),
+      total,
     }
   }
 }
