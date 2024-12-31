@@ -21,6 +21,11 @@ import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
 import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/DashboardTeamStatsItemResponse'
 import { traceable } from '@/core/xray'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { getMaterialisedViewQuery } from '@/utils/clickhouse/materialised-views-queries'
 
 interface TimestampCondition {
   $gte?: number
@@ -890,13 +895,25 @@ export class TeamStatsDashboardMetric {
   public static async get(
     tenantId: string,
     scope: 'CASES' | 'ALERTS',
-    startTimestamp?: number,
-    endTimestamp?: number,
-    status?: (CaseStatus | AlertStatus)[],
-    accountIds?: Array<string>,
-    pageSize?: number,
-    page?: number
+    startTimestamp: number,
+    endTimestamp: number,
+    status: (CaseStatus | AlertStatus)[],
+    accountIds: Array<string>,
+    pageSize: number,
+    page: number
   ): Promise<DashboardTeamStatsItemResponse> {
+    if (isClickhouseEnabled()) {
+      return this.getClickhouse(
+        tenantId,
+        scope,
+        startTimestamp,
+        endTimestamp,
+        status,
+        accountIds,
+        pageSize,
+        page
+      )
+    }
     const db = await getMongoDbClientDb()
     const collectionName =
       scope === 'ALERTS'
@@ -1015,6 +1032,115 @@ export class TeamStatsDashboardMetric {
     return {
       items: data,
       total,
+    }
+  }
+
+  public static async getClickhouse(
+    tenantId: string,
+    scope: 'CASES' | 'ALERTS',
+    startTimestamp: number,
+    endTimestamp: number,
+    status: (CaseStatus | AlertStatus)[],
+    accountIds: Array<string>,
+    pageSize: number,
+    page: number
+  ): Promise<DashboardTeamStatsItemResponse> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const viewQuery =
+      scope === 'CASES'
+        ? getMaterialisedViewQuery('CASES', startTimestamp, endTimestamp)
+        : getMaterialisedViewQuery('ALERTS', startTimestamp, endTimestamp)
+
+    const dateConditions: string[] = []
+    if (startTimestamp) {
+      dateConditions.push(
+        `date >= '${dayjs(startTimestamp).format('YYYY-MM-DD HH:00:00')}'`
+      )
+    }
+    if (endTimestamp) {
+      dateConditions.push(
+        `date <= '${dayjs(endTimestamp).format('YYYY-MM-DD HH:00:00')}'`
+      )
+    }
+
+    const conditions = [
+      ...(status?.length
+        ? [`status IN (${status.map((s) => `'${s}'`).join(',')})`]
+        : []),
+      ...(accountIds?.length
+        ? [`accountId IN (${accountIds.map((id) => `'${id}'`).join(',')})`]
+        : []),
+      ...dateConditions,
+    ]
+
+    const query = `
+    WITH view AS (
+      ${viewQuery}
+    )
+    SELECT
+      accountId,
+      sum(closedBy) as closedBy,
+      sum(assignedTo) as assignedTo,
+      sum(investigationTime) as investigationTime,
+      groupArrayDistinct(caseIds) as caseIds,
+      sum(closedBySystem) as closedBySystem,
+      sum(inProgress) as inProgress,
+      sum(escalatedBy) as escalatedBy
+    FROM view
+      ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
+    GROUP BY accountId
+    ORDER BY accountId
+    LIMIT ${pageSize} OFFSET ${(page - 1) * pageSize}
+  `
+    const countQuery = `
+    WITH view AS (
+      ${viewQuery}
+    )
+    SELECT count(*) as count
+      FROM (
+        SELECT accountId
+        FROM view
+        ${conditions.length ? `WHERE ${conditions.join(' AND ')}` : ''}
+        GROUP BY accountId
+      )`
+
+    const [result, countResult] = await Promise.all([
+      clickhouseClient.query({
+        query,
+        format: 'JSONEachRow',
+      }),
+      clickhouseClient.query({
+        query: countQuery,
+        format: 'JSONEachRow',
+      }),
+    ])
+
+    const [items, count] = await Promise.all([
+      result.json<{
+        accountId: string
+        closedBy: number
+        assignedTo: number
+        investigationTime: string
+        caseIds: string[][]
+        closedBySystem: number
+        inProgress: number
+        escalatedBy: number
+      }>(),
+      countResult.json<{ count: number }>(),
+    ])
+
+    return {
+      items: items.map((item) => ({
+        ...item,
+        closedBy: Number(item.closedBy),
+        assignedTo: Number(item.assignedTo),
+        investigationTime: Number(item.investigationTime),
+        caseIds: [...new Set(item.caseIds?.flat() ?? [])],
+        closedBySystem: Number(item.closedBySystem),
+        inProgress: Number(item.inProgress),
+        escalatedBy: Number(item.escalatedBy),
+      })),
+      total: Number(count[0]?.count ?? 0),
     }
   }
 }

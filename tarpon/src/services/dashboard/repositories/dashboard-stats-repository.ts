@@ -129,12 +129,12 @@ export class DashboardStatsRepository {
     return TeamStatsDashboardMetric.get(
       this.tenantId,
       scope,
-      startTimestamp,
-      endTimestamp,
-      status,
-      accountIds,
-      pageSize,
-      page
+      startTimestamp ?? 0,
+      endTimestamp ?? 0,
+      status ?? [],
+      accountIds ?? [],
+      pageSize ?? 20,
+      page ?? 1
     )
   }
 

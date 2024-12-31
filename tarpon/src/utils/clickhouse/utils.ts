@@ -584,13 +584,16 @@ export const createMaterializedViewQuery = (
 ) => {
   return `
     CREATE MATERIALIZED VIEW IF NOT EXISTS ${view.viewName} TO ${view.table}
-    AS (
+    AS ${
+      view.query ||
+      `(
       SELECT ${view.columns
         ?.filter((col) => !col.includes(' MATERIALIZED '))
         ?.map((col) => col.split(' ')[0])
         ?.join(', ')}
       FROM ${tableName}
-    )
+    )`
+    }
   `
 }
 
@@ -607,8 +610,10 @@ async function createMaterializedViews(
     await client.query({ query: createViewQuery })
     const matQuery = createMaterializedViewQuery(view, table.table)
     await client.query({ query: matQuery })
-
     await addMissingColumns(client, view.table, view.columns)
+    logger.info(
+      `Created materialized view ${view.viewName} for table ${table.table}.`
+    )
   }
 }
 

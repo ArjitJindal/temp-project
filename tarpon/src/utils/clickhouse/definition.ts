@@ -53,6 +53,7 @@ export type MaterializedViewDefinition = Omit<
 > & {
   viewName: string
   columns: string[]
+  query?: string
 }
 
 export type ProjectionsDefinition = {
@@ -151,6 +152,9 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   CASES: {
     tableName: 'cases',
+  },
+  REPORTS: {
+    tableName: 'reports',
   },
   KRS_SCORE: {
     tableName: 'krs_score',
@@ -465,6 +469,18 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     ],
   },
   {
+    table: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
+    idColumn: '_id',
+    timestampColumn: 'createdAt',
+    engine: 'ReplacingMergeTree',
+    primaryKey: '(timestamp, id)',
+    orderBy: '(timestamp, id)',
+    mongoIdColumn: true,
+    materializedColumns: [
+      "status String MATERIALIZED JSONExtractString(data, 'status')",
+    ],
+  },
+  {
     table: CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
     idColumn: 'alertId',
     timestampColumn: 'createdTimestamp',
@@ -512,6 +528,7 @@ export const MONGO_COLLECTION_SUFFIX_MAP_TO_CLICKHOUSE = {
     CLICKHOUSE_DEFINITIONS.ARS_SCORE.tableName,
   [MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS]:
     CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+  [MONGO_TABLE_SUFFIX_MAP.REPORTS]: CLICKHOUSE_DEFINITIONS.REPORTS.tableName,
 }
 
 export const CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO = memoize(() =>
