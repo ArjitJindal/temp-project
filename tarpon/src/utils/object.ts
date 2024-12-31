@@ -82,6 +82,15 @@ export function removeUndefinedFields<T>(obj: T): T {
   }
 }
 
+export function getSortedObject(obj: object) {
+  const keys = Object.keys(obj).sort()
+  const sortedObject = keys.reduce((acc, key) => {
+    acc[key] = obj[key]
+    return acc
+  }, {})
+  return removeUndefinedFields(sortedObject)
+}
+
 export function removeEmptyKeys<T>(obj: T): T {
   if (typeof obj !== 'object' || obj === null) {
     return obj

@@ -1,5 +1,5 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { isNil, omitBy } from 'lodash'
+import { isNil, omit, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -18,7 +18,7 @@ import { traceable } from '@/core/xray'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { ProviderConfig } from '@/services/sanctions'
-import { generateChecksum } from '@/utils/object'
+import { generateChecksum, getSortedObject } from '@/utils/object'
 import { envIs } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
@@ -57,6 +57,7 @@ export class SanctionsSearchRepository {
     searchedBy?: string
     hitContext: SanctionsHitContext | undefined
     providerConfigHash?: string
+    requestHash?: string
   }): Promise<void> {
     const { provider, request, response, createdAt, updatedAt } = props
     const filter: Filter<SanctionsSearchHistory> = { _id: response.searchId }
@@ -74,6 +75,7 @@ export class SanctionsSearchRepository {
         ...(props.providerConfigHash && {
           providerConfigHash: props.providerConfigHash,
         }),
+        ...(props.requestHash && { requestHash: props.requestHash }),
       },
     }
 
@@ -131,25 +133,23 @@ export class SanctionsSearchRepository {
     const { sanctions } = await tenantRepository.getTenantSettings()
     const hasInitialScreeningProfile = !!sanctions?.customInitialSearchProfileId
     const {
-      _id,
       monitoring: _monitoring,
       monitored: _monitored,
       fuzzinessRange,
-      ...params
+      fuzziness,
     } = request
 
-    const paramFilters = Object.entries(params).map(([k, v]) => {
-      if (typeof v === 'object' && Array.isArray(v) && v.length > 0) {
-        return { [`request.${k}`]: { $all: v, $size: v.length } }
-      }
-      return { [`request.${k}`]: v }
-    })
+    const requestHash = generateChecksum(
+      getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+    )
+
     const filters: Filter<SanctionsSearchHistory>[] = [
-      ...paramFilters,
       { 'request.monitoring.enabled': request.monitoring?.enabled },
       ...(!request.monitoring?.enabled
         ? [{ expiresAt: { $exists: true, $gt: Date.now() } }]
         : []),
+      { 'request.fuzziness': fuzziness },
+      { requestHash: requestHash },
     ]
 
     if (fuzzinessRange != null) {

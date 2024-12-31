@@ -1,3 +1,4 @@
+import { omit } from 'lodash'
 import { SanctionsService } from '..'
 import { SanctionsSearchRepository } from '../repositories/sanctions-search-repository'
 import { MOCK_SEARCH_1794517025_DATA } from '@/test-utils/resources/mock-ca-search-response'
@@ -15,6 +16,7 @@ import {
 } from '@/services/sanctions/providers/comply-advantage-provider'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
+import { generateChecksum, getSortedObject } from '@/utils/object'
 
 const mockFetch = mockComplyAdvantageSearch()
 dynamoDbSetupHook()
@@ -83,6 +85,9 @@ describe('Sanctions Service', () => {
         updatedAt: expect.any(Number),
         request,
         response: response,
+        requestHash: generateChecksum(
+          getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+        ),
       })
     })
 

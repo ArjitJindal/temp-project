@@ -1,6 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { BadRequest } from 'http-errors'
-import { isEmpty, round, startCase } from 'lodash'
+import { isEmpty, omit, round, startCase } from 'lodash'
 import dayjs from '@flagright/lib/utils/dayjs'
 import { AlertsRepository } from '../alerts/repository'
 import { SanctionsSearchRepository } from './repositories/sanctions-search-repository'
@@ -56,7 +56,7 @@ import { getDefaultProvider } from '@/services/sanctions/utils'
 import { SanctionsListProvider } from '@/services/sanctions/providers/sanctions-list-provider'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
-import { generateChecksum } from '@/utils/object'
+import { generateChecksum, getSortedObject } from '@/utils/object'
 
 const DEFAULT_FUZZINESS = 0.5
 
@@ -171,6 +171,7 @@ export class SanctionsService {
       updatedAt: Date.now(),
       hitContext: result.hitContext,
       providerConfigHash: result.providerConfigHash,
+      requestHash: result.requestHash,
     })
 
     logger.debug(
@@ -217,14 +218,14 @@ export class SanctionsService {
     let createdAt: number | undefined = undefined
 
     let existedSearch: SanctionsSearchHistory | null = null
-    existedSearch = !hasFeature('PNB')
-      ? await this.sanctionsSearchRepository.getSearchResultByParams(
-          providerName,
-          request,
-          providerOverrides
-        )
-      : null
-
+    existedSearch =
+      providerName === 'comply-advantage'
+        ? await this.sanctionsSearchRepository.getSearchResultByParams(
+            providerName,
+            request,
+            providerOverrides
+          )
+        : null
     let sanctionsSearchResponse: SanctionsProviderResponse
 
     // Only cache results from comply advantage
@@ -232,7 +233,21 @@ export class SanctionsService {
       !existedSearch?.response || providerName !== 'comply-advantage'
     if (shouldSearch) {
       const provider = await this.getProvider(providerName, providerOverrides)
-      sanctionsSearchResponse = await provider.search(request)
+
+      if (providerName !== 'comply-advantage') {
+        let existedSearch: SanctionsSearchHistory | null
+        ;[sanctionsSearchResponse, existedSearch] = await Promise.all([
+          provider.search(request),
+          this.sanctionsSearchRepository.getSearchResultByParams(
+            providerName,
+            request,
+            providerOverrides
+          ),
+        ])
+        searchId = existedSearch?.response?.searchId ?? searchId // As we search anyways when provider is not comply advantage, we can use the searchId from the response to avoid duplicates
+      } else {
+        sanctionsSearchResponse = await provider.search(request)
+      }
       providerSearchId = sanctionsSearchResponse.providerSearchId
     } else {
       createdAt = existedSearch?.createdAt
@@ -261,6 +276,9 @@ export class SanctionsService {
         provider: providerName,
         createdAt: createdAt,
         request,
+        requestHash: generateChecksum(
+          getSortedObject(omit(request, ['fuzzinessRange', 'fuzziness']))
+        ),
         response,
         searchedBy: !context ? getContext()?.user?.id : undefined,
         hitContext: context,
