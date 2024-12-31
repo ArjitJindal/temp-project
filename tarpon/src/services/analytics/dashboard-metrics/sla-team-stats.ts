@@ -15,6 +15,10 @@ import {
 } from '@/utils/mongodb-utils'
 import { DashboardStatsTeamSLAItemResponse } from '@/@types/openapi-internal/all'
 import dayjs from '@/utils/dayjs'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 @traceable
 export class TeamSLAStatsDashboardMetric {
@@ -128,6 +132,9 @@ export class TeamSLAStatsDashboardMetric {
     pageSize?: number,
     page?: number
   ): Promise<DashboardStatsTeamSLAItemResponse> {
+    if (isClickhouseEnabled()) {
+      return await this.getClickhouse(tenantId, timeRange, pageSize, page)
+    }
     const db = await getMongoDbClientDb()
     const collection = db.collection(DASHBOARD_SLA_TEAM_STATS_HOURLY(tenantId))
     const { startTimestamp, endTimestamp } = timeRange || {}
@@ -173,6 +180,7 @@ export class TeamSLAStatsDashboardMetric {
         },
       },
     ]
+
     const totalPipeline = [...basePipeline, { $count: 'total' }]
     const totalResult = await collection
       .aggregate<{ total: number }>(totalPipeline, { allowDiskUse: true })
@@ -207,6 +215,81 @@ export class TeamSLAStatsDashboardMetric {
     return {
       items,
       total,
+    }
+  }
+
+  private static async getClickhouse(
+    tenantId: string,
+    timeRange?: TimeRange,
+    pageSize?: number,
+    page?: number
+  ): Promise<DashboardStatsTeamSLAItemResponse> {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+    const { startTimestamp, endTimestamp } = timeRange || {}
+    const timeRangeCondition: string[] = []
+    if (startTimestamp != null) {
+      timeRangeCondition.push(
+        `alerts.lastStatusChangeTimestamp >= ${startTimestamp}`
+      )
+    }
+    if (endTimestamp != null) {
+      timeRangeCondition.push(
+        `alerts.lastStatusChangeTimestamp <= ${endTimestamp}`
+      )
+    }
+
+    const query = `
+    WITH grouped_data AS (
+      SELECT
+          assignment.assigneeUserId AS account,
+          countIf(sla.policyStatus = 'OK') AS OK,
+          countIf(sla.policyStatus = 'BREACHED') AS BREACHED,
+          countIf(sla.policyStatus = 'WARNING') AS WARNING
+      FROM cases
+      ARRAY JOIN alerts AS alerts
+      ARRAY JOIN alerts.assignments AS assignment
+      ARRAY JOIN alerts.slaPolicyDetails AS sla
+      WHERE (alerts.alertStatus = 'CLOSED') 
+      AND (length(alerts.slaPolicyDetails) > 0) 
+      AND (length(alerts.assignments) > 0)
+      ${
+        timeRangeCondition.length > 0
+          ? `AND (${timeRangeCondition.join(' AND ')})`
+          : ''
+      }
+      GROUP BY account
+    )
+    SELECT 
+    account,
+    OK,
+    BREACHED,
+    WARNING,
+    (SELECT count(*) FROM grouped_data) AS total
+    FROM grouped_data
+    ORDER BY account ASC
+    ${
+      pageSize ? `LIMIT ${pageSize} OFFSET ${((page || 1) - 1) * pageSize}` : ''
+    }
+    `
+    const results = await clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+    const items = await results.json<{
+      account: string
+      OK: number
+      BREACHED: number
+      WARNING: number
+      total: number
+    }>()
+    return {
+      items: items.map((item) => ({
+        accountId: item.account,
+        OK: Number(item.OK),
+        BREACHED: Number(item.BREACHED),
+        WARNING: Number(item.WARNING),
+      })),
+      total: Number(items[0].total),
     }
   }
 }
