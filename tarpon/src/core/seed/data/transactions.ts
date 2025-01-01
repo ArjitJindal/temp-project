@@ -143,6 +143,10 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       )
       .slice(0, numberoShadowRulesHit)
 
+    if (this.transactionIndex >= this.transactionPairs.length) {
+      this.transactionIndex = 0
+    }
+
     const { originUserId, destinationUserId } =
       this.transactionPairs[this.transactionIndex++]
 
