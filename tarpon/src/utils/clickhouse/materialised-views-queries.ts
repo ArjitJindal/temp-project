@@ -29,16 +29,16 @@ export const getInvestigationTimes = (
             SELECT
               caseId,
               caseStatus,
-              statusChanges[idx].timestamp as start_ts,
-              statusChanges[idx + 1].timestamp as end_ts,
-              if(statusChanges[idx].caseStatus = 'ESCALATED_IN_PROGRESS',
+              statusChanges[idx].1 as start_ts,
+              statusChanges[idx + 1].1 as end_ts,
+              if(statusChanges[idx].2 = 'ESCALATED_IN_PROGRESS',
                   reviewAssignments,
                   assignments) as relevant_assignments
             FROM cases
             ARRAY JOIN arrayEnumerate(statusChanges) as idx
             WHERE length(statusChanges) > 1
               AND idx < length(statusChanges)
-              AND statusChanges[idx].caseStatus IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')
+              AND statusChanges[idx].2 IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')
           )
           ARRAY JOIN relevant_assignments AS assignment
           WHERE assignment.assigneeUserId != ''
@@ -70,9 +70,9 @@ export const getInvestigationTimes = (
         SELECT
           alert.alertId as caseId,
           alert.alertStatus as caseStatus,
-          alert.statusChanges[idx].timestamp as start_ts,
-          alert.statusChanges[idx + 1].timestamp as end_ts,
-          if(alert.statusChanges[idx].caseStatus = 'ESCALATED_IN_PROGRESS',
+          alert.statusChanges[idx].1 as start_ts,
+          alert.statusChanges[idx + 1].1 as end_ts,
+          if(alert.statusChanges[idx].2 = 'ESCALATED_IN_PROGRESS',
               alert.reviewAssignments,
               alert.assignments) as relevant_assignments
         FROM cases
@@ -80,7 +80,7 @@ export const getInvestigationTimes = (
         ARRAY JOIN arrayEnumerate(alert.statusChanges) as idx
         WHERE length(alert.statusChanges) > 1
           AND idx < length(alert.statusChanges)
-          AND alert.statusChanges[idx].caseStatus IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')
+          AND alert.statusChanges[idx].2 IN ('OPEN_IN_PROGRESS', 'ESCALATED_IN_PROGRESS')
       )
       ARRAY JOIN relevant_assignments AS assignment
       WHERE assignment.assigneeUserId != ''
