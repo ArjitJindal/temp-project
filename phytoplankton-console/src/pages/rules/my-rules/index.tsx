@@ -280,7 +280,7 @@ const MyRule = (props: { simulationMode?: boolean }) => {
         },
       }),
       helper.simple<'ruleExecutionMode'>({
-        title: 'Execution Mode',
+        title: 'Execution mode',
         key: 'ruleExecutionMode',
         defaultVisibility: true,
         sorting: true,
