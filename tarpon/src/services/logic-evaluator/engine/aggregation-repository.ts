@@ -176,6 +176,11 @@ export class AggregationRepository {
     granularity: LogicAggregationTimeWindowGranularity,
     groupValue?: string
   ): Promise<Array<{ time: string } & AggregationData<T>> | undefined> {
+    if (afterTimestamp === beforeTimestamp) {
+      /*  We early return empty as the timewindow is empty in this case and we will get an error 
+      while trying to fetch from dynamo */
+      return []
+    }
     const queryInput: QueryCommandInput = dynamoDbQueryHelper({
       tableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       sortKey: {
