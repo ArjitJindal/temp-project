@@ -22,6 +22,12 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { traceable } from '@/core/xray'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
+import { getHitsByUserStatsClickhouseQuery } from '@/utils/clickhouse/queries/hits-by-user-stats-clickhouse'
+import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 
 @traceable
 export class HitsByUserStatsDashboardMetric {
@@ -288,6 +294,15 @@ export class HitsByUserStatsDashboardMetric {
     direction?: 'ORIGIN' | 'DESTINATION',
     userType?: 'BUSINESS' | 'CONSUMER'
   ): Promise<DashboardStatsHitsPerUserData[]> {
+    if (isClickhouseEnabled()) {
+      return this.getClickhouse(
+        tenantId,
+        startTimestamp,
+        endTimestamp,
+        direction,
+        userType
+      )
+    }
     const db = await getMongoDbClientDb()
     const collection = db.collection<DashboardStatsTransactionsCountData>(
       DASHBOARD_HITS_BY_USER_STATS_COLLECTION_HOURLY(tenantId)
@@ -372,6 +387,100 @@ export class HitsByUserStatsDashboardMetric {
         rulesHitCount: x.rulesHitCount,
         openAlertsCount: x.openAlertsCount,
         rulesRunCount: x.rulesRunCount,
+      }
+    })
+  }
+
+  private static async getClickhouse(
+    tenantId: string,
+    startTimestamp: number,
+    endTimestamp: number,
+    direction?: 'ORIGIN' | 'DESTINATION',
+    userType?: 'BUSINESS' | 'CONSUMER'
+  ): Promise<DashboardStatsHitsPerUserData[]> {
+    const clickhouse = await getClickhouseClient(tenantId)
+    const directions = direction ? [direction] : ['ORIGIN', 'DESTINATION']
+    const queries = directions.map((dir) => {
+      return getHitsByUserStatsClickhouseQuery(
+        startTimestamp,
+        endTimestamp,
+        dir
+      )
+    })
+    let processedQuery = ''
+    if (queries.length > 1) {
+      processedQuery = `
+        WITH originQuery AS (${queries[0]}), 
+        destinationQuery AS (${queries[1]})
+        select
+            coalesce(NULLIF(a.date, ''), NULLIF(t.date, '')) as date,
+            coalesce(NULLIF(a.userId, ''), NULLIF(t.userId, '')) as userId,
+            coalesce(NULLIF(a.direction, ''), NULLIF(t.direction, '')) as direction,
+            coalesce(NULLIF(a.openAlertsCount, 0), NULLIF(t.openAlertsCount, 0), 0) as openAlertsCount,
+            coalesce(NULLIF(a.rulesHitCount, 0), NULLIF(t.rulesHitCount, 0), 0) as rulesHitCount,
+            coalesce(NULLIF(a.rulesRunCount, 0), NULLIF(t.rulesRunCount, 0), 0) as rulesRunCount
+
+        from originQuery as a
+        full outer join destinationQuery as t
+        on a.date = t.date
+        and a.userId = t.userId
+        and a.direction = t.direction
+      `
+    } else {
+      processedQuery = queries[0]
+    }
+    const finalQuery = `
+      WITH base_data as (${processedQuery}),
+      aggregated_data AS (
+        SELECT 
+          userId,
+          sum(openAlertsCount) as openAlertsCount,
+          sum(rulesRunCount) as rulesRunCount,
+          sum(rulesHitCount) as rulesHitCount
+        FROM base_data
+        ${direction ? `WHERE direction = '${direction}'` : ''}
+        GROUP BY userId
+        HAVING rulesHitCount > 0 AND rulesRunCount > 0
+      ),
+      user_data AS (
+        SELECT 
+          a.*,
+          JSONExtractRaw(u.data) as user,
+          u.type as userType
+        FROM aggregated_data a
+        JOIN ${CLICKHOUSE_DEFINITIONS.USERS.tableName} u ON a.userId = u.id
+        ${userType ? `AND u.type = '${userType}'` : ''}
+      )
+      SELECT 
+        userId,
+        any(user) as user,
+        any(openAlertsCount) as openAlertsCount,
+        any(rulesRunCount) as rulesRunCount,
+        any(rulesHitCount) as rulesHitCount
+      FROM user_data
+      group by userId
+      ORDER BY rulesHitCount DESC
+      LIMIT 10
+    `
+    const result = await clickhouse.query({
+      query: finalQuery,
+      format: 'JSONEachRow',
+    })
+    const items = await result.json<{
+      userId: string
+      user: string
+      openAlertsCount: number
+      rulesRunCount: number
+      rulesHitCount: number
+    }>()
+
+    return items.map((item) => {
+      return {
+        userId: item.userId,
+        user: item.user ? JSON.parse(item.user) : null,
+        rulesHitCount: Number(item.rulesHitCount),
+        openAlertsCount: Number(item.openAlertsCount),
+        rulesRunCount: Number(item.rulesRunCount),
       }
     })
   }
