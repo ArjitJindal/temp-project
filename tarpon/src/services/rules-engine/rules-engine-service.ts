@@ -28,7 +28,6 @@ import { TenantRepository } from '../tenants/repositories/tenant-repository'
 import { sendWebhookTasks, ThinWebhookDeliveryTask } from '../webhook/utils'
 import { RiskScoringService } from '../risk-scoring'
 import { SanctionsService } from '../sanctions'
-import { IBANService } from '../iban'
 import { GeoIPService } from '../geo-ip'
 import {
   LogicEvaluator,
@@ -225,7 +224,6 @@ export class RulesEngineService {
   riskScoringV8Service: RiskScoringV8Service
   ruleLogicEvaluator: LogicEvaluator
   sanctionsService: SanctionsService
-  ibanService: IBANService
   geoIpService: GeoIPService
 
   constructor(
@@ -274,7 +272,6 @@ export class RulesEngineService {
       }
     )
     this.sanctionsService = new SanctionsService(this.tenantId)
-    this.ibanService = new IBANService(this.tenantId)
     this.geoIpService = new GeoIPService(this.tenantId, dynamoDb)
   }
 
@@ -1411,7 +1408,6 @@ export class RulesEngineService {
             { ruleInstance, rule: rule },
             {
               sanctionsService: this.sanctionsService,
-              ibanService: this.ibanService,
               geoIpService: this.geoIpService,
             },
             mode,
@@ -1425,7 +1421,6 @@ export class RulesEngineService {
             { ruleInstance, rule: rule },
             {
               sanctionsService: this.sanctionsService,
-              ibanService: this.ibanService,
             },
             await getMongoDbClient(),
             this.dynamoDb

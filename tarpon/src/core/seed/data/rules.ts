@@ -699,7 +699,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP'],
-        resolveIban: false,
       } as SanctionsBankUserRuleParameters,
       action: 'SUSPEND',
       type: 'USER',
@@ -713,31 +712,26 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
-          resolveIban: false,
         } as SanctionsBankUserRuleParameters,
         HIGH: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
-          resolveIban: false,
         } as SanctionsBankUserRuleParameters,
         MEDIUM: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
-          resolveIban: false,
         } as SanctionsBankUserRuleParameters,
         LOW: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
-          resolveIban: false,
         } as SanctionsBankUserRuleParameters,
         VERY_LOW: {
           fuzziness: 20,
           ongoingScreening: false,
           screeningTypes: ['PEP'],
-          resolveIban: false,
         } as SanctionsBankUserRuleParameters,
       },
       riskLevelActions: {
@@ -1735,7 +1729,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        resolveIban: false,
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [
@@ -1809,7 +1802,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         fuzziness: 20,
         ongoingScreening: false,
         screeningTypes: ['PEP', 'SANCTIONS', 'ADVERSE_MEDIA'],
-        resolveIban: false,
       } as PaymentDetailsScreeningRuleParameters,
       action: 'SUSPEND',
       checksFor: [

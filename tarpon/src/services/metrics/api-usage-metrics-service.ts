@@ -31,7 +31,6 @@ import {
 import { SheetsApiUsageMetricsService } from './sheets-api-usage-metrics-service'
 import { logger } from '@/core/logger'
 import {
-  IBAN_COLLECTION,
   METRICS_COLLECTION,
   SANCTIONS_SEARCHES_COLLECTION,
   TRANSACTIONS_COLLECTION,
@@ -49,7 +48,6 @@ import {
   MetricsData,
   SANCTIONS_SEARCHES_COUNT_METRIC,
   TENANT_SEATS_COUNT_METRIC,
-  IBAN_RESOLUTION_COUNT_METRIC,
   Metric,
   USER_EVENTS_COUNT_METRIC,
 } from '@/core/cloudwatch/metrics'
@@ -114,11 +112,6 @@ export class ApiUsageMetricsService {
       tenantInfo,
       timeRange
     )
-    const ibanResolutinosCounts = await getDailyUsage(
-      IBAN_COLLECTION(tenantInfo.id),
-      'createdAt',
-      timeRange
-    )
     const activeRuleInstanceCounts =
       await this.getDailyActiveRuleInstancesCount(tenantInfo, timeRange)
     const tenantSeatCounts = await this.getDailyNumberOfSeats(
@@ -153,12 +146,6 @@ export class ApiUsageMetricsService {
       mapValues(sanctionsChecksCounts, (v) => [
         {
           metric: SANCTIONS_SEARCHES_COUNT_METRIC,
-          value: v,
-        },
-      ]),
-      mapValues(ibanResolutinosCounts, (v) => [
-        {
-          metric: IBAN_RESOLUTION_COUNT_METRIC,
           value: v,
         },
       ]),

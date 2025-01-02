@@ -54,7 +54,6 @@ export const CUSTOM_API_USAGE_METRIC_NAMES = {
   ACTIVE_RULE_INSTANCES_COUNT_METRIC_NAME: 'ActiveRuleInstancesCount',
   SANCTIONS_SEARCHES_COUNT_METRIC_NAME: 'SanctionsSearchesCount',
   TENANT_SEATS_COUNT_METRIC_NAME: 'TenantSeatsCount',
-  IBAN_RESOLUTION_COUNT_METRIC_NAME: 'IbanResolutionsCount',
 }
 
 export const TRANSACTIONS_COUNT_METRIC: Metric = {
@@ -66,12 +65,6 @@ export const TRANSACTIONS_COUNT_METRIC: Metric = {
 export const SANCTIONS_SEARCHES_COUNT_METRIC: Metric = {
   namespace: 'flagright/ApiUsageMetrics',
   name: CUSTOM_API_USAGE_METRIC_NAMES.SANCTIONS_SEARCHES_COUNT_METRIC_NAME,
-  kind: 'CULMULATIVE',
-}
-
-export const IBAN_RESOLUTION_COUNT_METRIC: Metric = {
-  namespace: 'flagright/ApiUsageMetrics',
-  name: CUSTOM_API_USAGE_METRIC_NAMES.IBAN_RESOLUTION_COUNT_METRIC_NAME,
   kind: 'CULMULATIVE',
 }
 

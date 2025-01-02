@@ -5,14 +5,12 @@ import { uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
   ENABLE_ONGOING_SCREENING_SCHEMA,
-  RESOLVE_IBAN_NUMBER_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
-import { logger } from '@/core/logger'
 import { User } from '@/@types/openapi-public/User'
 
 const caConcurrencyLimit = pLimit(10)
@@ -20,7 +18,6 @@ const caConcurrencyLimit = pLimit(10)
 type BankInfo = { bankName?: string; iban?: string }
 
 export type SanctionsBankUserRuleParameters = {
-  resolveIban?: boolean
   screeningTypes?: SanctionsSearchType[]
   ongoingScreening: boolean
   fuzziness: number
@@ -31,11 +28,6 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
     return {
       type: 'object',
       properties: {
-        resolveIban: RESOLVE_IBAN_NUMBER_SCHEMA({
-          uiSchema: {
-            requiredFeatures: ['IBAN_RESOLUTION'],
-          },
-        }),
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
@@ -49,14 +41,13 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
   }
 
   public async computeRule() {
-    const { fuzziness, resolveIban, screeningTypes, ongoingScreening } =
-      this.parameters
+    const { fuzziness, screeningTypes, ongoingScreening } = this.parameters
 
     if (this.ongoingScreeningMode && !ongoingScreening) {
       return
     }
     const user = this.user as User
-    let bankInfos = (user.savedPaymentDetails || [])
+    const bankInfos = (user.savedPaymentDetails || [])
       ?.map((paymentDetails) => {
         if (paymentDetails.method === 'IBAN') {
           return {
@@ -77,13 +68,6 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
       .filter(Boolean) as BankInfo[]
 
-    if (resolveIban) {
-      try {
-        bankInfos = await this.ibanService.resolveBankNames(bankInfos)
-      } catch (e) {
-        logger.error(e)
-      }
-    }
     const bankInfosToCheck = uniqBy(
       bankInfos.filter((bankInfo) => bankInfo.bankName),
       (bankInfo) => JSON.stringify(bankInfo)

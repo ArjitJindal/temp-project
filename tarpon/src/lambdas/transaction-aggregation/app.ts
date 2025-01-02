@@ -30,7 +30,6 @@ import { Business } from '@/@types/openapi-internal/Business'
 import { logger } from '@/core/logger'
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RulePreAggregationBatchJob } from '@/@types/batch-job'
@@ -322,7 +321,6 @@ export async function handleTransactionAggregationTask(
     { ruleInstance, rule },
     {
       sanctionsService: new SanctionsService(task.tenantId),
-      ibanService: new IBANService(task.tenantId),
       geoIpService: new GeoIPService(task.tenantId, dynamoDb),
     },
     mode,

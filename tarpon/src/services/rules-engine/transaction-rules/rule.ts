@@ -15,7 +15,6 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { traceable } from '@/core/xray'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban'
 import { GeoIPService } from '@/services/geo-ip'
 
 export interface PartyVars {
@@ -61,7 +60,6 @@ export abstract class TransactionRule<
   transactionRepository: RulesEngineTransactionRepositoryInterface
   aggregationRepository?: AggregationRepository
   sanctionsService: SanctionsService
-  ibanService: IBANService
   mode: 'DYNAMODB' | 'MONGODB'
   transactionRiskScore?: number
   geoIpService: GeoIPService
@@ -84,7 +82,6 @@ export abstract class TransactionRule<
     },
     services: {
       sanctionsService: SanctionsService
-      ibanService: IBANService
       geoIpService: GeoIPService
     },
     mode: 'DYNAMODB' | 'MONGODB',
@@ -101,7 +98,6 @@ export abstract class TransactionRule<
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
     this.sanctionsService = services.sanctionsService
-    this.ibanService = services.ibanService
     this.dynamoDb = dynamoDb
     this.mongoDb = mongoDb
     this.mode = mode

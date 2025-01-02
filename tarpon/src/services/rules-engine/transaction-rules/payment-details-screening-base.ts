@@ -2,7 +2,6 @@ import { JSONSchemaType } from 'ajv'
 import { uniqBy } from 'lodash'
 import {
   FUZZINESS_SCHEMA,
-  RESOLVE_IBAN_NUMBER_SCHEMA,
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
@@ -10,7 +9,6 @@ import { RuleHitResult } from '../rule'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
-import { BankInfo } from '@/services/iban'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
 import { formatConsumerName } from '@/utils/helpers'
@@ -26,7 +24,6 @@ export type PaymentDetailsScreeningRuleParameters = {
   }
   screeningTypes?: SanctionsSearchType[]
   fuzziness: number
-  resolveIban?: boolean
 }
 
 @traceable
@@ -39,11 +36,6 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA({}),
         screeningTypes: SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA({}),
         fuzziness: FUZZINESS_SCHEMA,
-        resolveIban: RESOLVE_IBAN_NUMBER_SCHEMA({
-          uiSchema: {
-            requiredFeatures: ['IBAN_RESOLUTION'],
-          },
-        }),
       },
       required: ['fuzziness'],
       additionalProperties: false,
@@ -58,37 +50,8 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
   ): Promise<SanctionsDetails[]> {
     const namesToSearch: Array<{
       name: string
-      iban?: string
       entityType: SanctionsDetailsEntityType
     }> = []
-
-    let bankInfo: BankInfo | undefined = undefined
-
-    if (paymentDetails.method === 'GENERIC_BANK_ACCOUNT') {
-      bankInfo = {
-        bankName: paymentDetails.bankName,
-        iban: paymentDetails.accountNumber,
-      }
-    }
-
-    if (paymentDetails.method === 'IBAN') {
-      bankInfo = {
-        bankName: paymentDetails.bankName,
-        iban: paymentDetails.IBAN,
-      }
-    }
-
-    if (this.parameters.resolveIban && bankInfo) {
-      bankInfo = (await this.ibanService.resolveBankNames([bankInfo]))[0]
-      if (bankInfo?.bankName != null) {
-        namesToSearch.push({
-          name: bankInfo.bankName,
-          iban: bankInfo.iban,
-          entityType: 'BANK_NAME',
-        })
-      }
-    }
-
     switch (paymentDetails.method) {
       case 'CARD':
         {
@@ -138,11 +101,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
 
     const data = await Promise.all(
       namesToSearchFiltered.map(
-        async ({
-          name,
-          iban,
-          entityType,
-        }): Promise<SanctionsDetails | undefined> => {
+        async ({ name, entityType }): Promise<SanctionsDetails | undefined> => {
           const paymentDetailIdentifierField = paymentDetails.method
             ? PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails.method][0]
             : undefined
@@ -173,7 +132,6 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
           if (result.hitsCount > 0) {
             return {
               name,
-              iban,
               searchId: result.searchId,
               entityType,
               hitContext,

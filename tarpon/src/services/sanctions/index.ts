@@ -321,16 +321,6 @@ export class SanctionsService {
         details,
         Date.now()
       )
-      if (context.iban) {
-        await this.sanctionsScreeningDetailsRepository.addSanctionsScreeningDetails(
-          {
-            ...details,
-            name: context.iban,
-            entity: 'IBAN',
-          },
-          Date.now()
-        )
-      }
     }
     return response
   }

@@ -939,17 +939,6 @@ export const ENABLE_ONGOING_SCREENING_SCHEMA = (options?: SchemaOptions) =>
     description: options?.description,
   } as const)
 
-export const RESOLVE_IBAN_NUMBER_SCHEMA = (options?: SchemaOptions) =>
-  ({
-    ...uiSchema(options?.uiSchema),
-    type: 'boolean',
-    title: 'Resolve IBAN number',
-    description:
-      options?.description ||
-      'Enable if you want to identify Bank name using IBAN numbers.',
-    nullable: true,
-  } as const)
-
 export const USER_KYC_STATUS_SCHEMA = (options?: SchemaOptions) =>
   ({
     ...uiSchema(options?.uiSchema, {

@@ -301,10 +301,6 @@ export const SANCTIONS_SCREENING_DETAILS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.SANCTIONS_SCREENING_DETAILS}`
 }
 
-export const IBAN_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-iban`
-}
-
 export const AUDITLOG_COLLECTION = (tenantId: string) => {
   return `${tenantId}-auditlog`
 }
@@ -731,10 +727,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
         ].map((index) => ({
           index,
         })),
-    },
-    [IBAN_COLLECTION(tenantId)]: {
-      getIndexes: () =>
-        [{ 'request.iban': 1, createdAt: 1 }].map((index) => ({ index })),
     },
     [SANCTIONS_WHITELIST_ENTITIES_COLLECTION(tenantId)]: {
       getIndexes: () => [

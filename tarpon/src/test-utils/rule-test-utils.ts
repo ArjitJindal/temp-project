@@ -37,7 +37,6 @@ import { hasFeature, withContext } from '@/core/utils/context'
 import { AlertCreationDirection } from '@/@types/openapi-internal/AlertCreationDirection'
 import { getMigratedV8Config } from '@/services/rules-engine/v8-migrations'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban'
 import { GeoIPService } from '@/services/geo-ip'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 
@@ -590,7 +589,6 @@ export function testAggregationRebuild(
           { ruleInstance, rule },
           {
             sanctionsService: new SanctionsService(tenantId),
-            ibanService: new IBANService(tenantId),
             geoIpService: new GeoIPService(tenantId, dynamoDb),
           },
           'DYNAMODB',

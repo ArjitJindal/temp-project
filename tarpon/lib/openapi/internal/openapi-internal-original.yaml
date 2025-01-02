@@ -10971,7 +10971,6 @@ components:
         - CRM
         - ENTITY_LINKING
         - ADVANCED_WORKFLOWS
-        - IBAN_RESOLUTION
         - SAR
         - QA
         - RULES_ENGINE_V8

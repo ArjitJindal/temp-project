@@ -1,5 +1,4 @@
 import { PaymentDetailsScreeningRuleParameters } from '../payment-details-screening-base'
-import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
 import {
@@ -17,37 +16,12 @@ import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { getTestUser, setUpUsersHooks } from '@/test-utils/user-test-utils'
 import { SanctionsService } from '@/services/sanctions'
 
-process.env.IBAN_API_KEY = 'fake'
-
 dynamoDbSetupHook()
 
-withFeatureHook(['SANCTIONS', 'IBAN_RESOLUTION'])
+withFeatureHook(['SANCTIONS'])
 
 const TEST_SANCTIONS_HITS = ['Vladimir Putin', 'Bank 1', 'Baran Ozkan']
 const TEST_TENANT_ID = getTestTenantId()
-
-const TEST_IBAN_BANK_NAME_MAPPING: { [key: string]: IBANDetails } = {
-  AL35202111090000000001234567: {
-    method: 'IBAN',
-    IBAN: 'AL35202111090000000001234567',
-    bankName: 'Bank 1',
-  },
-  AL35202111090000000001234568: {
-    method: 'IBAN',
-    IBAN: 'AL35202111090000000001234568',
-    bankName: 'Bank 1',
-  },
-  AD1400080001001234567890: {
-    method: 'IBAN',
-    IBAN: 'AD1400080001001234567890',
-    bankName: 'Bank 2',
-  },
-  AD1400080001001234567891: {
-    method: 'IBAN',
-    IBAN: 'AD1400080001001234567891',
-    bankName: 'Bank 3',
-  },
-}
 
 jest.mock('@/services/sanctions', () => {
   type SanctionsServiceInstanceType = InstanceType<typeof SanctionsService>
@@ -76,30 +50,6 @@ jest.mock('@/services/sanctions', () => {
               }
             }
           ),
-      }
-    }),
-  }
-})
-
-jest.mock('@/services/iban', () => {
-  const originalModule =
-    jest.requireActual<typeof import('@/services/iban')>('@/services/iban')
-
-  return {
-    __esModule: true,
-    ...originalModule,
-    IBANService: jest.fn().mockImplementation(() => {
-      return {
-        resolveBankNames: originalModule.IBANService.prototype.resolveBankNames,
-        initialize: originalModule.IBANService.prototype.initialize,
-        initializeInternal:
-          originalModule.IBANService.prototype.initializeInternal,
-        tenantId: TEST_TENANT_ID,
-        queryIban: jest.fn().mockImplementation((iban: string) => {
-          return new Promise((resolve) =>
-            resolve(TEST_IBAN_BANK_NAME_MAPPING[iban])
-          )
-        }),
       }
     }),
   }
@@ -140,7 +90,6 @@ ruleVariantsTest({ aggregation: false }, () => {
         defaultParameters: {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
-          resolveIban: true,
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -196,7 +145,6 @@ ruleVariantsTest({ aggregation: false }, () => {
         defaultParameters: {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
-          resolveIban: false,
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -265,7 +213,6 @@ ruleVariantsTest({ aggregation: false }, () => {
         defaultParameters: {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
-          resolveIban: true,
         } as PaymentDetailsScreeningRuleParameters,
       },
     ])
@@ -330,7 +277,7 @@ ruleVariantsTest({ aggregation: false }, () => {
         defaultParameters: {
           screeningTypes: ['SANCTIONS'],
           fuzziness: 50,
-          resolveIban: true,
+
           transactionAmountThreshold: {
             EUR: 1000,
           },

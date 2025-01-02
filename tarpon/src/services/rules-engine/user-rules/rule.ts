@@ -7,7 +7,6 @@ import { User } from '@/@types/openapi-public/User'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Rule as RuleModel } from '@/@types/openapi-internal/Rule'
 import { SanctionsService } from '@/services/sanctions'
-import { IBANService } from '@/services/iban'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
@@ -124,7 +123,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
   ruleInstance: RuleInstance
   rule: RuleModel
   sanctionsService: SanctionsService
-  ibanService: IBANService
   stage: RuleStage
 
   constructor(
@@ -143,7 +141,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     },
     services: {
       sanctionsService: SanctionsService
-      ibanService: IBANService
     },
     mongoDb: MongoClient,
     dynamoDb: DynamoDBDocumentClient
@@ -158,7 +155,6 @@ export abstract class UserRule<P, T extends object = object> extends Rule {
     this.ruleInstance = context.ruleInstance
     this.rule = context.rule
     this.sanctionsService = services.sanctionsService
-    this.ibanService = services.ibanService
     this.mongoDb = mongoDb
     this.dynamoDb = dynamoDb
   }

@@ -15,11 +15,9 @@ import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getTestTransaction } from '@/test-utils/transaction-test-utils'
 import { SanctionsService } from '@/services/sanctions'
 
-process.env.IBAN_API_KEY = 'fake'
-
 dynamoDbSetupHook()
 
-withFeatureHook(['SANCTIONS', 'IBAN_RESOLUTION'])
+withFeatureHook(['SANCTIONS'])
 
 const TEST_SANCTIONS_HITS = [
   'Vladimir Putin',

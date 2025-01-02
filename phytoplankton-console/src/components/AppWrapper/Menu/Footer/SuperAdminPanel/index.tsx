@@ -66,11 +66,6 @@ const featureDescriptions: Record<Feature, { title: string; description: string 
   },
   ENTITY_LINKING: { title: 'Ontology', description: 'Enables Ontology (entity linking)' },
   ADVANCED_WORKFLOWS: { title: 'Advanced workflows', description: 'Enables case escalations flow' },
-  IBAN_RESOLUTION: {
-    title: 'IBAN resolution',
-    description:
-      'Resolve IBAN numbers from 3rd party website. Used in Certain Screening and Counterparty rules',
-  },
   SAR: { title: 'SAR', description: 'Enables SAR' },
   QA: { title: 'QA', description: 'Enables QA in case management' },
   RULES_ENGINE_V8: {
