@@ -16,7 +16,7 @@ import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
-import { PAYMENT_METHOD_IDENTIFIER_FIELDS } from '@/core/dynamodb/dynamodb-keys'
+import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 
 export type PaymentDetailsScreeningRuleParameters = {
   transactionAmountThreshold?: {
@@ -102,18 +102,12 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     const data = await Promise.all(
       namesToSearchFiltered.map(
         async ({ name, entityType }): Promise<SanctionsDetails | undefined> => {
-          const paymentDetailIdentifierField = paymentDetails.method
-            ? PAYMENT_METHOD_IDENTIFIER_FIELDS[paymentDetails.method][0]
-            : undefined
+          const paymentMethodId = getPaymentMethodId(paymentDetails)
           const hitContext = {
             entity: 'EXTERNAL_USER' as const,
             ruleInstanceId: this.ruleInstance.id ?? '',
             transactionId: this.transaction.transactionId,
-            userId:
-              user?.userId ??
-              (paymentDetailIdentifierField
-                ? paymentDetails[paymentDetailIdentifierField]
-                : undefined),
+            userId: user?.userId ?? paymentMethodId,
             searchTerm: name,
             entityType,
           }
