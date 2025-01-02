@@ -35,7 +35,6 @@ import { IpAddressMultipleUsersRuleParameters } from './ip-address-multiple-user
 import { TooManyUsersForSamePaymentIdentifierParameters } from './too-many-users-for-same-payment-identifier'
 import { TransactionsVolumeRuleParameters } from './transactions-volume'
 import { SenderLocationChangesFrequencyRuleParameters } from './sender-location-changes-frequency'
-import { CardIssuedCountryRuleParameters } from './card-issued-country'
 import { TransactionMatchesPatternRuleParameters } from './transaction-amount-pattern'
 import { PaymentMethodNameRuleParameter } from './payment-method-name-levensthein-distance'
 import { HighTrafficBetweenSamePartiesParameters } from './high-traffic-between-same-parties'
@@ -51,7 +50,6 @@ import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from './total-transa
 import { HighRiskCountryRuleParameters } from './high-risk-countries'
 import { UsingTooManyBanksToMakePaymentsRuleParameters } from './using-too-many-banks-to-make-payments'
 import { HighRiskIpAddressCountriesParameters } from './high-risk-ip-address-countries'
-import { TransactionRiskScoreRuleParameters } from './transaction-risk-score'
 import { SameUserUsingTooManyPaymentIdentifiersParameters } from './same-user-using-too-many-payment-identifiers'
 import { PaymentDetailChangeRuleParameters } from './payment-detail-change-base'
 import { PaymentDetailsScreeningRuleParameters } from './payment-details-screening-base'
@@ -897,34 +895,6 @@ const _RULES_LIBRARY: Array<
   },
   () => {
     return {
-      id: 'R-89',
-      type: 'TRANSACTION',
-      name: 'Transaction risk score exceeds expected limit',
-      description:
-        'For a given user, compares the expected transaction risk score',
-      descriptionTemplate:
-        'Transaction risk score: {{ riskScore }} exceeds the expected limit of {{ parameters.riskScoreThreshold }}',
-      defaultParameters: {
-        riskScoreThreshold: 90,
-      } as TransactionRiskScoreRuleParameters,
-      defaultAction: 'FLAG',
-      ruleImplementationName: 'transaction-risk-score',
-      labels: [],
-      checksFor: [RuleChecksForField.TransactionRiskScore],
-      defaultNature: RuleNature.FRAUD,
-      defaultCasePriority: 'P1',
-      defaultFalsePositiveCheckEnabled: true,
-      requiredFeatures: ['RISK_SCORING', 'RISK_LEVELS'],
-      types: [RuleTypeField.AnomalyDetection],
-      typologies: [
-        RuleTypology.UnusualBehaviour,
-        RuleTypology.HiddenUnusualRelationships,
-      ],
-      sampleUseCases: 'A user with a high risk score initiates a transaction.',
-    }
-  },
-  () => {
-    return {
       id: 'R-99',
       type: 'TRANSACTION',
       name: 'Transaction value exceeds expected limit',
@@ -975,37 +945,6 @@ const _RULES_LIBRARY: Array<
       typologies: [RuleTypology.AccountTakeoverFraud],
       sampleUseCases:
         "Over the course of a week, a user's IP address switches between different countries 10 times, exceeding the set limit for IP address changes and raising concerns about the legitimacy of the user's activities.",
-    }
-  },
-  () => {
-    const defaultParameters: CardIssuedCountryRuleParameters = {
-      allowedCountries: [],
-    }
-    const defaultFilters: TransactionFilters = {
-      originPaymentFilters: {
-        paymentMethods: ['CARD'],
-      },
-    }
-    return {
-      id: 'R-114',
-      type: 'TRANSACTION',
-      name: "Card-issued country isn't in the whitelist",
-      description:
-        "Card is issued in a country that doesn't match the whitelist",
-      descriptionTemplate:
-        "{{ if-sender 'Sender’s' 'Receiver’s' }} card country {{ hitParty.payment.country }} is not whitelisted",
-      defaultParameters,
-      defaultFilters,
-      defaultAction: 'BLOCK',
-      ruleImplementationName: 'card-issued-country',
-      labels: [],
-      checksFor: [RuleChecksForField.TransactionPaymentMethodIssuedCountry],
-      defaultNature: RuleNature.FRAUD,
-      defaultCasePriority: 'P1',
-      types: [RuleTypeField.Blacklist],
-      typologies: [RuleTypology.InternalBlacklists],
-      sampleUseCases:
-        'A card issued in a country that is not on the whitelist is automatically blocked from making transactions.',
     }
   },
   () => {

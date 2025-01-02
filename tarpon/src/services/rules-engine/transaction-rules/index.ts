@@ -1,5 +1,4 @@
 import { RuleHitResult } from '../rule'
-import CardIssuedCountryRule from './card-issued-country'
 import FirstActivityAfterLongTimeRule from './first-activity-after-time-period'
 import FirstPaymentRule from './first-payment'
 import HighRiskCurrencyRule from './high-risk-currency'
@@ -45,7 +44,6 @@ import { TransactionVolumeExceedsTwoPeriodsRule } from './total-transactions-vol
 import HighRiskCountryRule from './high-risk-countries'
 import UsingTooManyBanksToMakePaymentsRule from './using-too-many-banks-to-make-payments'
 import { HighRiskIpAddressCountries } from './high-risk-ip-address-countries'
-import { TransactionRiskScoreRule } from './transaction-risk-score'
 import SameUserUsingTooManyPaymentIdentifiersRule from './same-user-using-too-many-payment-identifiers'
 import { BankAccountHolderNameChangeRule } from './bank-account-holder-name-change'
 import { PaymentDetailsScreeningRule } from './payment-details-screening'
@@ -61,7 +59,6 @@ export class TransactionRuleBase extends TransactionRule<unknown> {
 
 export const _TRANSACTION_RULES = {
   'using-too-many-banks-to-make-payments': UsingTooManyBanksToMakePaymentsRule,
-  'card-issued-country': CardIssuedCountryRule,
   'first-activity-after-time-period': FirstActivityAfterLongTimeRule,
   'first-payment': FirstPaymentRule,
   'high-risk-currency': HighRiskCurrencyRule,
@@ -112,7 +109,6 @@ export const _TRANSACTION_RULES = {
   'high-risk-countries': HighRiskCountryRule,
   'high-risk-ip-address-countries': HighRiskIpAddressCountries,
   'bank-name-change': BankNameChangeRule,
-  'transaction-risk-score': TransactionRiskScoreRule,
   'bank-account-holder-name-change': BankAccountHolderNameChangeRule,
   'payment-details-screening': PaymentDetailsScreeningRule,
 

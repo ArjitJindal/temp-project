@@ -301,6 +301,11 @@ export class RuleRepository {
       TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
       Key: DynamoDbKeys.RULE(ruleId),
     }
-    await this.dynamoDb.send(new DeleteCommand(deleteItemInput))
+    const db = this.mongoDb.db()
+
+    await Promise.all([
+      this.dynamoDb.send(new DeleteCommand(deleteItemInput)),
+      db.collection<Rule>(RULES_COLLECTION).deleteOne({ id: ruleId }),
+    ])
   }
 }
