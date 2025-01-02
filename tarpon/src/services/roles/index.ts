@@ -1,5 +1,4 @@
 import { BadRequest, Conflict } from 'http-errors'
-import { RolesManager } from 'auth0'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -166,22 +165,6 @@ export class RoleService {
     await rolesManager.delete({ id })
   }
 
-  async getRolePermissions(
-    rolesManager: RolesManager,
-    roleId: string
-  ): Promise<Permission[]> {
-    // Haven't implemented any error handling for a bad role ID since this is internal.
-    const auth0Permissions = await auth0AsyncWrapper(() =>
-      rolesManager.getPermissions({
-        id: roleId,
-        per_page: 100, // One day we may have roles with >100 permissions.
-      })
-    )
-    return auth0Permissions
-      .filter((p) => p.permission_name)
-      .map((p) => p.permission_name) as Permission[]
-  }
-
   async getRole(roleId: string): Promise<AccountRole> {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
@@ -189,7 +172,14 @@ export class RoleService {
     const rolesManager = managementClient.roles
     const role = await auth0AsyncWrapper(() => rolesManager.get({ id: roleId }))
 
-    const permissions = await this.getRolePermissions(rolesManager, role.id)
+    // Haven't implemented any error handling for a bad role ID since this is internal.
+    const auth0Permissions = await auth0AsyncWrapper(() =>
+      rolesManager.getPermissions({
+        id: roleId,
+        per_page: 100, // One day we may have roles with >100 permissions.
+      })
+    )
+
     if (!role.id) {
       throw new Error('Role ID cannot be null')
     }
@@ -198,11 +188,13 @@ export class RoleService {
       id: role.id,
       name: getRoleDisplayName(role.name) || 'No name.',
       description: role.description || 'No description.',
-      permissions: permissions,
+      permissions: auth0Permissions
+        .filter((p) => p.permission_name)
+        .map((p) => p.permission_name) as Permission[],
     }
   }
 
-  private async rolesByNamespace(namespace: string): Promise<AccountRole[]> {
+  private async rolesByNamespace(namespace: string) {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
@@ -218,7 +210,7 @@ export class RoleService {
     )
 
     return await Promise.all(
-      validRoles.map(async (role) => {
+      validRoles.map((role) => {
         if (role.name == undefined) {
           throw new Error('Role name cannot be null')
         }
@@ -228,14 +220,7 @@ export class RoleService {
           throw new Error('Role ID cannot be null')
         }
 
-        const permissions = await this.getRolePermissions(rolesManager, role.id)
-
-        return {
-          id: role.id,
-          name: getRoleDisplayName(role.name) || 'No name.',
-          description: role.description || 'No description.',
-          permissions: permissions,
-        }
+        return this.getRole(roleId)
       })
     )
   }
