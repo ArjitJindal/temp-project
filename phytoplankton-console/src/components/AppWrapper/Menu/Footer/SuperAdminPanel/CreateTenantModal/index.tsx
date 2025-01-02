@@ -1,6 +1,7 @@
 import { Fragment, useCallback, useMemo, useState } from 'react';
 import { Typography } from 'antd';
 import { isValidEmail } from '@flagright/lib/utils';
+import { featureDescriptions } from '../../../Footer/SuperAdminPanel/index';
 import Modal from '@/components/library/Modal';
 import { JsonSchemaForm } from '@/components/JsonSchemaForm';
 import { getFixedSchemaJsonForm } from '@/utils/json';
@@ -10,10 +11,8 @@ import { getErrorMessage } from '@/utils/lang';
 import COLORS from '@/components/ui/colors';
 import { Feature } from '@/apis/models/Feature';
 import { useAuth0User } from '@/utils/user-utils';
-import { FEATURES } from '@/apis/models-custom/Feature';
 import { message } from '@/components/library/Message';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
-
 interface Props {
   visible: boolean;
   onClose: () => void;
@@ -53,7 +52,20 @@ switch (currentEnv) {
 
 export const CreateTenantModal = (props: Props) => {
   const { visible, onClose } = props;
-  const UPDATED_FEATURES = useMemo(() => FEATURES.filter((feature) => feature !== 'DEMO_MODE'), []);
+
+  const UPDATED_FEATURES: Record<Feature, { title: string; description: string }> = useMemo(() => {
+    return Object.keys(featureDescriptions)
+      .filter((key) => key !== 'DEMO_MODE')
+      .sort((a, b) => {
+        const valueA = featureDescriptions[a as Feature].title.toLowerCase();
+        const valueB = featureDescriptions[b as Feature].title.toLowerCase();
+        return valueA.localeCompare(valueB);
+      })
+      .reduce((acc, key) => {
+        acc[key as Feature] = featureDescriptions[key as Feature];
+        return acc;
+      }, {} as Record<Feature, { title: string; description: string }>);
+  }, []);
   const [formDetails, setFormDetails] = useState<FormDetails>({
     tenantName: '',
     tenantWebsite: '',
@@ -159,11 +171,11 @@ export const CreateTenantModal = (props: Props) => {
         featureFlags: {
           type: 'array',
           title: 'Feature Flags',
-
           uniqueItems: true,
           items: {
             type: 'string',
-            enum: UPDATED_FEATURES,
+            enum: Object.keys(UPDATED_FEATURES),
+            enumNames: Object.keys(UPDATED_FEATURES).map((key) => featureDescriptions[key].title),
           },
         },
         ...(isSanctionsEnabled && {

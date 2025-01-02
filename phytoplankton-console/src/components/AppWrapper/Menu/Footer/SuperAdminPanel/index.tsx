@@ -37,7 +37,7 @@ import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsS
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 
-const featureDescriptions: Record<Feature, { title: string; description: string }> = {
+export const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   ALERT_DETAILS_PAGE: {
     title: 'Alert details page',
     description: 'Enable showing alert details on a separate page',
