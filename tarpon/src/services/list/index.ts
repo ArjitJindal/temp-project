@@ -25,6 +25,10 @@ import {
   iteratePages,
 } from '@/utils/pagination'
 import { S3Config } from '@/services/aws/s3-service'
+import {
+  ThinWebhookDeliveryTask,
+  sendWebhookTasks,
+} from '@/services/webhook/utils'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { getErrorMessage } from '@/utils/lang'
 import { ListImportResponse } from '@/@types/openapi-internal/ListImportResponse'
@@ -41,6 +45,7 @@ export const METADATA_USER_FULL_NAME = 'userFullName'
 
 @traceable
 export class ListService {
+  tenantId: string
   listRepository: ListRepository
   userRepository: UserRepository
   riskScoringService: RiskScoringV8Service
@@ -53,6 +58,7 @@ export class ListService {
     s3?: S3,
     s3Config?: S3Config
   ) {
+    this.tenantId = tenantId
     this.s3 = s3
     this.s3Config = s3Config
     this.listRepository = new ListRepository(tenantId, connections.dynamoDb)
@@ -115,6 +121,7 @@ export class ListService {
     const data = await this.listRepository.setListItem(listId, item)
     // To rerun risk scores for user
     await this.validateAndHandleReRunTriggers(listId, { items: [item] })
+    await this.sendListUpdatedWebhook(listId, 'SET', [item])
     return data
   }
 
@@ -122,6 +129,7 @@ export class ListService {
     const data = await this.listRepository.setListItems(listId, items)
     // To rerun risk scores for user
     await this.validateAndHandleReRunTriggers(listId, { items })
+    await this.sendListUpdatedWebhook(listId, 'SET', items)
     return data
   }
 
@@ -133,10 +141,12 @@ export class ListService {
     await this.listRepository.deleteListItem(listId, itemId)
     // To re run risk scoring on triggers
     await this.validateAndHandleReRunTriggers(listId, { items: [existingItem] })
+    await this.sendListUpdatedWebhook(listId, 'UNSET', [existingItem])
   }
 
   public async deleteList(listId: string) {
-    return await this.listRepository.deleteList(listId)
+    await this.listRepository.deleteList(listId)
+    await this.sendListUpdatedWebhook(listId, 'CLEAR')
   }
 
   public async clearListItems(listId: string): Promise<void> {
@@ -145,6 +155,7 @@ export class ListService {
     await this.validateAndHandleReRunTriggers(listId, {
       clearedListId: listId,
     })
+    await this.sendListUpdatedWebhook(listId, 'CLEAR')
   }
 
   public async getListHeaders(
@@ -165,7 +176,8 @@ export class ListService {
     listId: string,
     items: ListItem[]
   ): Promise<void> {
-    return await this.listRepository.updateListItems(listId, items)
+    await this.listRepository.updateListItems(listId, items)
+    await this.sendListUpdatedWebhook(listId, 'SET', items)
   }
 
   public async getListItems(
@@ -339,4 +351,27 @@ export class ListService {
       object.Body as NodeJsRuntimeStreamingBlobPayloadOutputTypes
     )
   }
+
+  private async sendListUpdatedWebhook(
+    listId: string,
+    action: 'SET' | 'UNSET' | 'CLEAR',
+    items: ListItem[] = []
+  ) {
+    const webhookTask: ThinWebhookDeliveryTask<ListUpdatedDetails> = {
+      event: 'LIST_UPDATED',
+      triggeredBy: 'SYSTEM',
+      payload: {
+        listId,
+        action,
+        items,
+      },
+    }
+    await sendWebhookTasks<ListUpdatedDetails>(this.tenantId, [webhookTask])
+  }
+}
+
+interface ListUpdatedDetails {
+  listId: string
+  action: 'SET' | 'UNSET' | 'CLEAR'
+  items: ListItem[]
 }
