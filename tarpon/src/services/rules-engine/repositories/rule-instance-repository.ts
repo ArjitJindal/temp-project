@@ -13,6 +13,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { uniq, isEmpty, uniqBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
+import pMap from 'p-map'
 import { isV2RuleInstance } from '../utils'
 import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
@@ -499,8 +500,9 @@ export class RuleInstanceRepository {
       runCountDelta: number
     }
   }) {
-    await Promise.all(
-      Object.keys(updates).map((runRuleInstanceId) => {
+    await pMap(
+      Object.keys(updates),
+      async (runRuleInstanceId) => {
         const updateItemInput: UpdateCommandInput = {
           TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
@@ -513,7 +515,8 @@ export class RuleInstanceRepository {
           ReturnValues: 'UPDATED_NEW',
         }
         return this.dynamoDb.send(new UpdateCommand(updateItemInput))
-      })
+      },
+      { concurrency: 5 }
     )
   }
   public async deleteRuleQueue(ruleQueueId: string) {

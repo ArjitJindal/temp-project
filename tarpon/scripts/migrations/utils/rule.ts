@@ -453,8 +453,10 @@ async function migrateRuleInstancePrivate(
 export const deleteRules = async (ruleIds: string[]) => {
   const dynamoDb = getDynamoDbClient()
   const tenantId = FLAGRIGHT_TENANT_ID
+  const mongoDb = await getMongoDbClient()
   const ruleRepository = new RuleRepository(tenantId, {
     dynamoDb,
+    mongoDb,
   })
 
   await Promise.all(
