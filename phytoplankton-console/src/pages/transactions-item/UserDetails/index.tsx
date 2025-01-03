@@ -2,8 +2,6 @@ import cn from 'clsx';
 import { Tooltip } from 'antd';
 import { QuestionCircleOutlined } from '@ant-design/icons';
 import React from 'react';
-import { isNil } from 'lodash';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import s from './index.module.less';
 import Avatar from './Avatar';
 import OriginIcon from './origin-icon.react.svg';
@@ -23,6 +21,7 @@ import { makeUrl } from '@/utils/routing';
 import Money from '@/components/ui/Money';
 import PaymentDetailsProps from '@/components/ui/PaymentDetailsProps';
 import { PaymentDetails } from '@/utils/api/payment-details';
+import DeviceDataProps from '@/components/ui/DeviceDataProps';
 
 function getUnknownUserTooltipMessage(userId?: string) {
   return userId
@@ -37,10 +36,13 @@ interface Props {
   paymentDetails: PaymentDetails | undefined;
   userId?: string;
   deviceData?: DeviceData;
+  currentRef?: React.RefObject<HTMLDivElement>;
+  otherRef?: React.RefObject<HTMLDivElement>;
 }
 
 export default function UserDetails(props: Props) {
-  const { type, user, userId, amountDetails, paymentDetails, deviceData } = props;
+  const { type, user, userId, amountDetails, paymentDetails, deviceData, currentRef, otherRef } =
+    props;
   const isDestination = type === 'DESTINATION';
   return (
     <Card.Root className={cn(s.root, s[`type-${type}`])}>
@@ -93,23 +95,23 @@ export default function UserDetails(props: Props) {
               </Form.Layout.Label>
             </>
           )}
-          {deviceData && (
-            <>
-              {Object.entries(deviceData)
-                .filter(([_key, value]) => !isNil(value))
-                .map(([key, value]) => (
-                  <Form.Layout.Label title={humanizeAuto(key)} key={key}>
-                    {typeof value === 'boolean' ? (value ? 'Yes' : 'No') : value}
-                  </Form.Layout.Label>
-                ))}
-            </>
-          )}
         </div>
         <Card.Root>
           <Card.Section>
-            <PaymentDetailsProps paymentDetails={paymentDetails} />
+            <PaymentDetailsProps
+              paymentDetails={paymentDetails}
+              currentRef={currentRef}
+              otherRef={otherRef}
+            />
           </Card.Section>
         </Card.Root>
+        {deviceData && (
+          <Card.Root>
+            <Card.Section>
+              <DeviceDataProps deviceData={deviceData} />
+            </Card.Section>
+          </Card.Root>
+        )}
       </Card.Section>
     </Card.Root>
   );

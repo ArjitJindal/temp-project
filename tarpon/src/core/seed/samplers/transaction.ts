@@ -15,6 +15,7 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { paymentAddresses } from '@/core/seed/data/address'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { DeviceData } from '@/@types/openapi-internal/DeviceData'
 
 const TRANSACTION_REFERENCES = [
   'Urgent',
@@ -74,6 +75,12 @@ const TRANSACTION_REFERENCES = [
   'Authorization',
 ]
 
+const OPERATING_SYATEMS = ['iOS', 'Android', 'Windows', 'macOS', 'Linux']
+const DEVICE_MAKERS = ['Apple', 'Samsung', 'Google', 'Microsoft', 'Lenovo']
+const DEVICE_MODELS = ['iPhone', 'Galaxy', 'Pixel', 'Surface', 'ThinkPad']
+const DEVICE_YEARS = ['2020', '2021', '2022', '2023', '2024']
+const APP_VERSIONS = ['1.0', '2.0', '3.0', '4.0', '5.0']
+
 export class TransactionSampler extends BaseSampler<InternalTransaction> {
   protected generateSample({
     originUserId,
@@ -126,16 +133,10 @@ export class TransactionSampler extends BaseSampler<InternalTransaction> {
       },
       timestamp: new Date().getTime(),
       destinationPaymentDetails: destinationPaymentDetails,
-      originDeviceData: {
-        ipAddress: [...new Array(4)]
-          .map((_, i) => this.rng.r(i).randomInt(256))
-          .join('.'),
-      },
-      destinationDeviceData: {
-        ipAddress: [...new Array(4)]
-          .map((_, i) => this.rng.r(i + 4).randomInt(256))
-          .join('.'),
-      },
+      originDeviceData: new DeviceDataSampler(this.rng.randomInt()).getSample(),
+      destinationDeviceData: new DeviceDataSampler(
+        this.rng.randomInt()
+      ).getSample(),
       originPaymentDetails: originPaymentDetails,
       hitRules: [],
       executedRules: [],
@@ -208,6 +209,24 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
         state: this.rng.pickRandom(['NY', 'CA', 'IL', 'ON']),
         postCode: this.rng.randomIntInclusive(10000, 99999).toString(),
       },
+    }
+  }
+}
+
+export class DeviceDataSampler extends BaseSampler<DeviceData> {
+  generateSample(): DeviceData {
+    return {
+      ipAddress: [...new Array(4)].map(() => this.rng.randomInt(256)).join('.'),
+      batteryLevel: Number(this.rng.randomFloat(100).toFixed(1)),
+      deviceLatitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),
+      deviceLongitude: Number((this.rng.randomFloat() * 360 - 180).toFixed(5)),
+      deviceIdentifier: uuid(),
+      vpnUsed: this.rng.pickRandom([true, false]),
+      operatingSystem: this.rng.pickRandom(OPERATING_SYATEMS),
+      deviceMaker: this.rng.pickRandom(DEVICE_MAKERS),
+      deviceModel: this.rng.pickRandom(DEVICE_MODELS),
+      deviceYear: this.rng.pickRandom(DEVICE_YEARS),
+      appVersion: this.rng.pickRandom(APP_VERSIONS),
     }
   }
 }

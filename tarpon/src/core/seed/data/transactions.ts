@@ -287,6 +287,9 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       originPaymentMethodId: getPaymentMethodId(
         transaction?.originPaymentDetails
       ),
+      originDeviceData: transaction?.originDeviceData,
+      destinationDeviceData: transaction?.destinationDeviceData,
+
       transactionState: this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
@@ -339,7 +342,9 @@ export function internalToPublic(
     originPaymentDetails: internal.originPaymentDetails,
     destinationPaymentDetails: internal.destinationPaymentDetails,
     originAmountDetails: internal.originAmountDetails,
+    originDeviceData: internal.originDeviceData,
     destinationAmountDetails: internal.destinationAmountDetails,
+    destinationDeviceData: internal.destinationDeviceData,
     destinationUserId: internal.destinationUserId,
     originUserId: internal.originUserId,
     type: internal.type,

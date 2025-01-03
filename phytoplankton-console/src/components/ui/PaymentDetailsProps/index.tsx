@@ -21,16 +21,27 @@ import { PaymentDetails, PaymentDetailsKey } from '@/utils/api/payment-details';
 
 interface Props {
   paymentDetails: PaymentDetails | undefined;
+  currentRef?: React.RefObject<HTMLDivElement>;
+  otherRef?: React.RefObject<HTMLDivElement>;
 }
 
 export default function PaymentDetailsProps(props: Props) {
-  const { paymentDetails } = props;
+  const { paymentDetails, currentRef, otherRef } = props;
 
   const entries = paymentDetails
     ? (Object.entries(paymentDetails) as [PaymentDetailsKey, unknown][])
     : [];
   return (
-    <div className={s.root}>
+    <div
+      className={s.root}
+      ref={currentRef}
+      style={{
+        height: Math.max(
+          otherRef?.current?.clientHeight ?? 0,
+          currentRef?.current?.clientHeight ?? 0,
+        ),
+      }}
+    >
       {entries.length === 0 && '-'}
       {paymentDetails
         ? entries.map(([key, value]) => (
