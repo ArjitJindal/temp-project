@@ -76,11 +76,15 @@ export interface TransactionsTableParams extends CommonParams {
   destinationMethodFilter?: PaymentMethod;
   originPaymentMethodId?: string;
   destinationPaymentMethodId?: string;
+  'originPayment.paymentMethodId'?: string;
+  'destinationPayment.paymentMethodId'?: string;
   transactionStatusFilter?: RuleAction[];
   ruleInstancesHitFilter?: string[];
   productType?: string[];
   'originAmountDetails.country'?: string[];
   'destinationAmountDetails.country'?: string[];
+  'originPayment.country'?: string[];
+  'destinationPayment.country'?: string[];
   status?: RuleAction & 'all';
   direction?: 'incoming' | 'outgoing' | 'all';
   showDetailedView?: boolean;
@@ -160,12 +164,12 @@ export const transactionParamsToRequest = (
     filterRuleInstancesHit: ruleInstancesHitFilter,
     filterTagKey: tagKey,
     filterTagValue: tagValue,
-    filterOriginPaymentMethodId: params.originPaymentMethodId,
-    filterDestinationPaymentMethodId: params.destinationPaymentMethodId,
+    filterOriginPaymentMethodId: params['originPayment.paymentMethodId'],
+    filterDestinationPaymentMethodId: params['destinationPayment.paymentMethodId'],
     filterTransactionStatus: transactionStatusFilter,
     filterProductType: productType,
-    filterDestinationCountries: params['destinationAmountDetails.country'],
-    filterOriginCountries: params['originAmountDetails.country'],
+    filterDestinationCountries: params['destinationPayment.country'],
+    filterOriginCountries: params['originPayment.country'],
     filterStatus: status && status !== 'all' ? [status] : undefined,
     includePaymentDetails: params.showDetailedView,
   };
