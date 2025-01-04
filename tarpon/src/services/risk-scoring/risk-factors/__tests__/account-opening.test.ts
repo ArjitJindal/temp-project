@@ -1,8 +1,8 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { CONSUMER_TYPE_RISK_FACTOR } from '../customer-type'
 import { PARAMETER_MIGRATION_MAP } from '..'
+import { CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR } from '../account-opening'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -11,26 +11,50 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
-
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 dynamoDbSetupHook()
-describe('Customer Type Risk Factor', () => {
+describe('Reason for Account Opening Risk Factor', () => {
   const tenantId = getTestTenantId()
   test('V8 result should be equivalent to V2 result', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'reasonForAccountOpening' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: 'Investment',
+            },
+          },
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'VERY_HIGH',
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
+      defaultRiskScore: 90,
       logicAggregationVariables: [],
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: 'CONSUMER' }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      reasonForAccountOpening: ['Investment'],
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -63,12 +87,14 @@ describe('Customer Type Risk Factor', () => {
   test('V8 result should handle empty riskLevelAssignmentValues', async () => {
     const riskFactor = {
       ...TEST_CONSUMER_USER_RISK_PARAMETER,
-      riskLevelAssignmentValues: [], // Empty riskLevelAssignmentValues
+      parameter: 'reasonForAccountOpening' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[], // Empty riskLevelAssignmentValues
     }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -78,7 +104,11 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: 'CONSUMER' }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      reasonForAccountOpening: [],
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -89,57 +119,9 @@ describe('Customer Type Risk Factor', () => {
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
       logicEvaluator,
-      {
-        mongoDb,
-        dynamoDb,
-      }
+      { mongoDb, dynamoDb }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
-      DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
-    )
-    const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
-      v8RiskFactor,
-      {
-        user,
-        type: 'USER',
-      }
-    )
-    expect(v2Result.score).toEqual(v8Result.score)
-  })
-  test('V8 result should be able handel empty type', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
 
-    const v8RiskFactor: RiskFactor = {
-      id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
-        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
-        defaultWeight: 0.5,
-      }),
-      defaultRiskScore: 90,
-      logicAggregationVariables: [],
-      logicEntityVariables: [],
-      status: 'ACTIVE',
-    }
-    const user = { ...getTestUser(), type: '' }
-    const mongoDb = await getMongoDbClient()
-    const dynamoDb = getDynamoDbClient()
-    const riskScoringV2Service = new RiskScoringService(tenantId, {
-      mongoDb,
-      dynamoDb,
-    })
-    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
-    const riskScoringV8Service = new RiskScoringV8Service(
-      tenantId,
-      logicEvaluator,
-      {
-        mongoDb,
-        dynamoDb,
-      }
-    )
     const v2Result = await riskScoringV2Service.calculateKrsScore(
       user,
       DEFAULT_CLASSIFICATION_SETTINGS,
@@ -147,19 +129,35 @@ describe('Customer Type Risk Factor', () => {
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
-      {
-        user,
-        type: 'USER',
-      }
+      { user, type: 'USER' }
     )
+
     expect(v2Result.score).toEqual(v8Result.score)
   })
-  test('V8 result should be able handel null', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+  test('V8 result should handle empty string as reason for account opening', async () => {
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'reasonForAccountOpening' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: 'Investment',
+            },
+          },
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'VERY_HIGH',
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -169,7 +167,11 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: null }
+    const user = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      reasonForAccountOpening: [],
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -180,11 +182,9 @@ describe('Customer Type Risk Factor', () => {
     const riskScoringV8Service = new RiskScoringV8Service(
       tenantId,
       logicEvaluator,
-      {
-        mongoDb,
-        dynamoDb,
-      }
+      { mongoDb, dynamoDb }
     )
+
     const v2Result = await riskScoringV2Service.calculateKrsScore(
       user,
       DEFAULT_CLASSIFICATION_SETTINGS,
@@ -192,11 +192,72 @@ describe('Customer Type Risk Factor', () => {
     )
     const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
       v8RiskFactor,
-      {
-        user,
-        type: 'USER',
-      }
+      { user, type: 'USER' }
     )
+
+    expect(v2Result.score).toEqual(v8Result.score)
+  })
+  test('V8 result should handle undefined as reason for account opening', async () => {
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'reasonForAccountOpening' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'LITERAL',
+              content: 'Security',
+            },
+          },
+          riskValue: {
+            type: 'RISK_LEVEL',
+            value: 'VERY_HIGH',
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
+    const v8RiskFactor: RiskFactor = {
+      id: 'TEST_FACTOR',
+      ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
+      defaultRiskScore: 90,
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      status: 'ACTIVE',
+    }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      reasonForAccountOpening: undefined,
+    }
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const riskScoringV2Service = new RiskScoringService(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const riskScoringV8Service = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      { mongoDb, dynamoDb }
+    )
+
+    const v2Result = await riskScoringV2Service.calculateKrsScore(
+      user,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      [riskFactor]
+    )
+    const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
+      v8RiskFactor,
+      { user, type: 'USER' }
+    )
+
     expect(v2Result.score).toEqual(v8Result.score)
   })
 })

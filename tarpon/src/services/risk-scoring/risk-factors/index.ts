@@ -1,22 +1,64 @@
 import { getRiskLevelAndScore } from '../utils'
 import {
+  CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  countryOfNationalityV8Logic,
+} from './country-of-nationality'
+import {
+  CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
+  countryOfResidenceV8Logic,
+} from './country-of-residence'
+import {
+  CONSUMER_CUSTOMER_AGE_RISK_FACTOR,
+  customerAgeV8Logic,
+} from './customer-age'
+import {
   BUSINESS_TYPE_RISK_FACTOR,
   CONSUMER_TYPE_RISK_FACTOR,
   customerTypeV8Logic,
 } from './customer-type'
+import {
+  CONSUMER_USER_OCCUPATION_RISK_FACTOR,
+  userOccupationV8Logic,
+} from './user-occupation'
 import {
   RiskFactorLogicGenerator,
   RiskFactorMigrationEntry,
   V2V8RiskFactor,
   V8MigrationParameters,
 } from './types'
-import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
+import {
+  BUSINESS_USER_SEGMENT_RISK_FACTOR,
+  CONSUMER_USER_SEGMENT_RISK_FACTOR,
+  userSegmentV8Logic,
+} from './user-segment'
+import {
+  CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+  userEmploymentStatusV8Logic,
+} from './user-employment-status'
+import {
+  CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+  reasonForAccountOpeningV8Logic,
+} from './account-opening'
+import {
+  CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
+  sourceOfFundsV8Logic,
+} from './source-of-funds'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 
 //  We will use risk factors from this list to initialise in dynamoDB under the RiskFactors key
 export const RISK_FACTORS: V2V8RiskFactor[] = [
   CONSUMER_TYPE_RISK_FACTOR,
   BUSINESS_TYPE_RISK_FACTOR,
+  CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
+  CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  CONSUMER_CUSTOMER_AGE_RISK_FACTOR,
+  CONSUMER_USER_SEGMENT_RISK_FACTOR,
+  BUSINESS_USER_SEGMENT_RISK_FACTOR,
+  CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+  CONSUMER_USER_OCCUPATION_RISK_FACTOR,
+  CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
+  CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
 ]
 
 function generateV8FactorMigrator(
@@ -47,6 +89,38 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
   {
     key: 'type',
     logicGenerator: customerTypeV8Logic,
+  },
+  {
+    key: 'userDetails.countryOfResidence',
+    logicGenerator: countryOfResidenceV8Logic,
+  },
+  {
+    key: 'userDetails.countryOfNationality',
+    logicGenerator: countryOfNationalityV8Logic,
+  },
+  {
+    key: 'userDetails.dateOfBirth',
+    logicGenerator: customerAgeV8Logic,
+  },
+  {
+    key: 'userSegment',
+    logicGenerator: userSegmentV8Logic,
+  },
+  {
+    key: 'employmentStatus',
+    logicGenerator: userEmploymentStatusV8Logic,
+  },
+  {
+    key: 'occupation',
+    logicGenerator: userOccupationV8Logic,
+  },
+  {
+    key: 'reasonForAccountOpening',
+    logicGenerator: reasonForAccountOpeningV8Logic,
+  },
+  {
+    key: 'sourceOfFunds',
+    logicGenerator: sourceOfFundsV8Logic,
   },
 ]
 

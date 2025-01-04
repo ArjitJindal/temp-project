@@ -1,8 +1,8 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { CONSUMER_TYPE_RISK_FACTOR } from '../customer-type'
 import { PARAMETER_MIGRATION_MAP } from '..'
+import { CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR } from '../user-employment-status'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -11,26 +11,58 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
 import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParameterLevelKeyValue'
+import { EmploymentStatus } from '@/@types/openapi-public/EmploymentStatus'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 
 dynamoDbSetupHook()
-describe('Customer Type Risk Factor', () => {
+describe('User Employment Status Risk Factor', () => {
   const tenantId = getTestTenantId()
   test('V8 result should be equivalent to V2 result', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'employmentStatus' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'Student',
+                },
+              ],
+            },
+          },
+          riskValue: {
+            type: 'RISK_SCORE',
+            value: 50,
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
+
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
+      defaultRiskScore: 90,
       logicAggregationVariables: [],
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: 'CONSUMER' }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      employmentStatus: 'STUDENT',
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -63,12 +95,14 @@ describe('Customer Type Risk Factor', () => {
   test('V8 result should handle empty riskLevelAssignmentValues', async () => {
     const riskFactor = {
       ...TEST_CONSUMER_USER_RISK_PARAMETER,
-      riskLevelAssignmentValues: [], // Empty riskLevelAssignmentValues
+      parameter: 'employmentStatus' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[], // Empty riskLevelAssignmentValues
     }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -78,7 +112,11 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: 'CONSUMER' }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      employmentStatus: 'STUDENT' as EmploymentStatus,
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -108,13 +146,36 @@ describe('Customer Type Risk Factor', () => {
     )
     expect(v2Result.score).toEqual(v8Result.score)
   })
-  test('V8 result should be able handel empty type', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+  test('V8 result should be able to handle null employment status', async () => {
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'employmentStatus' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'Student',
+                },
+              ],
+            },
+          },
+          riskValue: {
+            type: 'RISK_SCORE',
+            value: 50,
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
 
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -124,7 +185,11 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: '' }
+    const user: InternalConsumerUser = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      employmentStatus: undefined,
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -154,12 +219,36 @@ describe('Customer Type Risk Factor', () => {
     )
     expect(v2Result.score).toEqual(v8Result.score)
   })
-  test('V8 result should be able handel null', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+  test('V8 result should be able to handle empty employment status', async () => {
+    const riskFactor = {
+      ...TEST_CONSUMER_USER_RISK_PARAMETER,
+      parameter: 'employmentStatus' as RiskFactorParameter,
+      isDerived: false,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'Student',
+                },
+              ],
+            },
+          },
+          riskValue: {
+            type: 'RISK_SCORE',
+            value: 50,
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
+
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
-      ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -169,7 +258,11 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: null }
+    const user = {
+      ...getTestUser(),
+      type: 'CONSUMER',
+      employmentStatus: '' as EmploymentStatus,
+    }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
