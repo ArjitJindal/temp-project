@@ -7910,9 +7910,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.171.1":
-  version: 2.171.1
-  resolution: "aws-cdk-lib@npm:2.171.1"
+"aws-cdk-lib@npm:~2.172.0":
+  version: 2.172.0
+  resolution: "aws-cdk-lib@npm:2.172.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.208"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.3"
@@ -7931,13 +7931,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: e4ae68b282ae7c9ed6f88f0add23d09a806f6392b233e72e1891b77ce2e7e4886b516064c664c01c89920c4199e11c25372f6ed48f0a4333259ba6d41bfe7697
+  checksum: ea5c388bd3f2d7be11c838f7769368fcf02db37bab1b7fec0a1fdaf55e05f2dc466f005a388dad08b35e3aa99506287373b19bc4fab6a0b9837d1ac804480685
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.171.1":
-  version: 2.171.1
-  resolution: "aws-cdk@npm:2.171.1"
+"aws-cdk@npm:~2.172.0":
+  version: 2.172.0
+  resolution: "aws-cdk@npm:2.172.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -7945,7 +7945,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 78afeec635942fa083baff5f0c12bd2ad4816c698e8abdcc605142107b8330862b22690403989996cd91514b21518de2eaa794b654e0fe04a0ac87b9b0738dd6
+  checksum: 2a11778eab7cec76f45a623065ef0c0af607d3b7ddc3c101cf21aab3d73d7c1e48f811417cb73b813f23929afaa9c4e271a1617904f218e57ddac3332a66bc7a
   languageName: node
   linkType: hard
 
@@ -17157,8 +17157,8 @@ __metadata:
     ahooks: "npm:^2.0.0"
     ajv: "npm:^8.12.0"
     antd: "npm:4.21.4"
-    aws-cdk: "npm:~2.171.1"
-    aws-cdk-lib: "npm:~2.171.1"
+    aws-cdk: "npm:~2.172.0"
+    aws-cdk-lib: "npm:~2.172.0"
     axios: "npm:^0.28.0"
     cheerio: "npm:^1.0.0"
     clsx: "npm:^1.2.1"
