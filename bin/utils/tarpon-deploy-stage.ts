@@ -58,8 +58,8 @@ export const tarponDeployStage = (
             // Don't upload source maps to Lambda
             'rm dist/lambdas/**/*.js.map',
             ...installTerraform,
-            `yarn run synth:${env}`,
-            `yarn run deploy:${env}`,
+            `yarn run synth:${config.stage} --region=${config.region}`,
+            `yarn run deploy:${config.stage} --region=${config.region}`,
             ...(config.region === 'eu-1'
               ? [
                   'yarn add -g nango',
