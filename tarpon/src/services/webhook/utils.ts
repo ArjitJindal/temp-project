@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid'
 import { SendMessageBatchRequestEntry } from '@aws-sdk/client-sqs/dist-types/models/models_0'
+import { uniqBy } from 'lodash'
 import {
   SecretsManagerWebhookSecrets,
   WebhookDeliveryTask,
@@ -134,11 +135,11 @@ async function sendWebhookTasksToWebhooks<T extends object = object>(
 
       return
     }
-
+    const deduplicatedEntries = uniqBy(entries, 'Id')
     await bulkSendMessages(
       sqs,
       process.env.WEBHOOK_DELIVERY_QUEUE_URL as string,
-      entries
+      deduplicatedEntries
     )
 
     if (entries.length > 0) {
