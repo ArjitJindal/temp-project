@@ -271,6 +271,7 @@ export class TeamSLAStatsDashboardMetric {
       pageSize ? `LIMIT ${pageSize} OFFSET ${((page || 1) - 1) * pageSize}` : ''
     }
     `
+
     const results = await clickhouseClient.query({
       query,
       format: 'JSONEachRow',
@@ -289,7 +290,7 @@ export class TeamSLAStatsDashboardMetric {
         BREACHED: Number(item.BREACHED),
         WARNING: Number(item.WARNING),
       })),
-      total: Number(items[0].total),
+      total: Number(items[0]?.total || 0),
     }
   }
 }
