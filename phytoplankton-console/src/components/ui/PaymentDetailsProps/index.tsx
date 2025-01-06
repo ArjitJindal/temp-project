@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { humanizeCamelCase, humanizeConstant } from '@flagright/lib/utils/humanize';
 import Money from '../Money';
 import s from './index.module.less';
@@ -26,7 +26,19 @@ interface Props {
 }
 
 export default function PaymentDetailsProps(props: Props) {
+  const [height, setHeight] = useState<number | null>(null);
   const { paymentDetails, currentRef, otherRef } = props;
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const height = Math.max(
+        otherRef?.current?.clientHeight ?? 0,
+        currentRef?.current?.clientHeight ?? 0,
+      );
+      setHeight(height);
+    }, 100);
+    return () => clearTimeout(timeout);
+  }, [currentRef, otherRef]);
 
   const entries = paymentDetails
     ? (Object.entries(paymentDetails) as [PaymentDetailsKey, unknown][])
@@ -36,10 +48,7 @@ export default function PaymentDetailsProps(props: Props) {
       className={s.root}
       ref={currentRef}
       style={{
-        height: Math.max(
-          otherRef?.current?.clientHeight ?? 0,
-          currentRef?.current?.clientHeight ?? 0,
-        ),
+        height: height ? `${height}px` : `auto`,
       }}
     >
       {entries.length === 0 && '-'}
