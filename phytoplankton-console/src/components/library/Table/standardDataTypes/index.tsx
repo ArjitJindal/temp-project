@@ -425,17 +425,19 @@ export const QA_SAMPLE_ID: ColumnDataType<
   render: (value, { item: entity }) => {
     return (
       <>
-        {entity?.samplingId && (
-          <div className={s.samplingId}>
-            <Id
-              to={addBackUrlToRoute(`/case-management/qa-sampling/${entity.samplingId}`)}
-              testName="sampling-id"
-            >
-              {entity.samplingId}
-            </Id>
-            {entity.samplingType === 'MANUAL' && <Tag color="gold">Manual</Tag>}
-          </div>
-        )}
+        <div className={s.sampleIdColContainer}>
+          {entity?.samplingId && (
+            <div className={s.samplingId}>
+              <Id
+                to={addBackUrlToRoute(`/case-management/qa-sampling/${entity.samplingId}`)}
+                testName="sampling-id"
+              >
+                {entity.samplingId}
+              </Id>
+              {entity.samplingType === 'MANUAL' && <Tag color="gold">Manual</Tag>}
+            </div>
+          )}
+        </div>
       </>
     );
   },
