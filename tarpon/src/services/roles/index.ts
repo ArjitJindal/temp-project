@@ -10,6 +10,8 @@ import { traceable } from '@/core/xray'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { getContext } from '@/core/utils/context'
 import { isFlagrightInternalUser } from '@/@types/jwt'
+import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
 
 @traceable
 export class RoleService {
@@ -263,7 +265,7 @@ export class RoleService {
     }
   }
 
-  async getUsersByRole(id: string) {
+  async getUsersByRole(id: string, tenandId?: string) {
     const managementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
@@ -277,6 +279,18 @@ export class RoleService {
           auth0AsyncWrapper(() => userManager.get({ id: u.user_id as string }))
         )
       )
+      if (tenandId) {
+        const db = await getMongoDbClientDb()
+        const accounts = await db
+          .collection(ACCOUNTS_COLLECTION(tenandId))
+          .find({
+            role: id,
+          })
+          .toArray()
+        return accounts.filter((account) =>
+          users.find((user) => user.user_id === account.id)
+        )
+      }
       return users
     }
     return []

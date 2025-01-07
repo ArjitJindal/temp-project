@@ -1516,7 +1516,12 @@ export class CaseCreationService {
   }
 
   getUsersByRole = memoize(async (assignedRole) =>
-    (await RoleService.getInstance().getUsersByRole(assignedRole))
+    (
+      await RoleService.getInstance().getUsersByRole(
+        assignedRole,
+        this.tenantId
+      )
+    )
       .map((user) => user?.user_id)
       .filter((user) => user !== undefined && user !== '')
   )
