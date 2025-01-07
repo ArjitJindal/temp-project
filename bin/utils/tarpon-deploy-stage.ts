@@ -21,7 +21,8 @@ export const tarponDeployStage = (
 ) => {
   const env = config.stage + (config.region ? `:${config.region}` : '')
   const shouldReleaseSentry = config.stage === 'sandbox'
-
+  const deployCommand = `yarn run deploy:${config.stage} ${config.stage != 'dev' ? `--region=${config.region}` : ''}`
+  const synthCommand = `yarn run synth:${config.stage} ${config.stage != 'dev' ? `--region=${config.region}` : ''}`
   return new codebuild.PipelineProject(scope, `TarponDeploy-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
       version: '0.2',
@@ -58,8 +59,8 @@ export const tarponDeployStage = (
             // Don't upload source maps to Lambda
             'rm dist/lambdas/**/*.js.map',
             ...installTerraform,
-            `yarn run synth:${config.stage} --region=${config.region}`,
-            `yarn run deploy:${config.stage} --region=${config.region}`,
+            synthCommand,
+            deployCommand,
             ...(config.region === 'eu-1'
               ? [
                   'yarn add -g nango',

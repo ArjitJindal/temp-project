@@ -8,7 +8,6 @@ const region = 'eu-central-1'
 
 export const config: Config = {
   stage: 'dev',
-  region: 'eu-1',
   env: { account, region },
   budgets: {
     CLOUDWATCH: 200,
