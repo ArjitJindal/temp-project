@@ -15,7 +15,7 @@ export const getAccounts = () => {
         role: 'ADMIN',
         email: 'system@flagright.com',
         emailVerified: true,
-        name: 'Flagright System',
+        name: FLAGRIGHT_SYSTEM_USER,
         blocked: false,
       },
     ]

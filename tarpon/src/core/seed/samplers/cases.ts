@@ -201,6 +201,7 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
         caseId,
         caseType: 'SYSTEM',
         caseStatus,
+        priority: this.rng.r(3).pickRandom(PRIORITYS),
         createdTimestamp: this.sampleTimestamp(),
         latestTransactionArrivalTimestamp: this.sampleTimestamp(),
         comments: [],

@@ -31,11 +31,9 @@ export async function fetchAndSetAccounts(
 
   const allAccounts =
     tenant != null ? await accountsService.getTenantAccounts(tenant) : []
+
   const accounts = allAccounts.filter(
-    (account) =>
-      account.role !== 'root' &&
-      !account.blocked &&
-      account.name.endsWith('flagright.com')
+    (account) => account.role !== 'root' && !account.blocked
   )
 
   logger.info(`Accounts: ${JSON.stringify(accounts.map((a) => a.email))}`)
