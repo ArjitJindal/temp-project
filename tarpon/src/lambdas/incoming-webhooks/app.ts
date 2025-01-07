@@ -157,18 +157,6 @@ export const webhooksHandler = lambdaApi()(
           continue
         }
 
-        const tenantRepository = new TenantRepository(log.data.tenant_name, {
-          dynamoDb: getDynamoDbClient(),
-        })
-        const tenantSettings = await tenantRepository.getTenantSettings()
-
-        if (!tenantSettings.bruteForceAccountBlockingEnabled) {
-          logger.info(
-            `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
-          )
-          continue
-        }
-
         if (log.data.type !== 'limit_wc') {
           logger.info(`Skipping non-limit_wc webhook event: ${log.data.type}`)
           continue

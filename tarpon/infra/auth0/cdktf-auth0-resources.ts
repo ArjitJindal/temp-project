@@ -10,9 +10,6 @@ import { ClientCreateAddonsSamlp } from 'auth0'
 import { PERMISSIONS } from '@/@types/openapi-internal-custom/Permission'
 import { DEFAULT_ROLES } from '@/core/default-roles'
 import { getAuth0Domain } from '@/utils/auth0-utils'
-import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const SESSION_TIMEOUT_HOURS = 48
 
@@ -47,7 +44,7 @@ function getSecrets<T>(
   return secrets as T
 }
 
-export const createAuth0TenantResources = async (
+export const createAuth0TenantResources = (
   context: Construct,
   config: Config,
   tenantConfig: Auth0TenantConfig
@@ -63,15 +60,6 @@ export const createAuth0TenantResources = async (
     getAuth0Domain(tenantConfig.tenantName, tenantConfig.region),
     ['clientId', 'clientSecret']
   )
-  const mongoDbClient = await getMongoDbClient()
-  const dynamoDbClient = getDynamoDbClient()
-  const tenantRepository = new TenantRepository(tenantName, {
-    dynamoDb: dynamoDbClient,
-    mongoDb: mongoDbClient,
-  })
-  const tenantSettings = await tenantRepository.getTenantSettings([
-    'bruteForceAccountBlockingEnabled',
-  ])
   const provider = new auth0.provider.Auth0Provider(
     context,
     getTenantResourceId(tenantName, 'auth0'),
@@ -169,9 +157,7 @@ export const createAuth0TenantResources = async (
       bruteForceProtection: {
         enabled: true,
         maxAttempts: 3,
-        shields: tenantSettings.bruteForceAccountBlockingEnabled
-          ? ['block'] // brute force blocking
-          : [],
+        shields: ['block'], // Can only unblock from console
         mode: 'count_per_identifier', // If we want to have per ip we need to change this 'count_per_identifier_and_ip' but it will still block the user
       },
       suspiciousIpThrottling: {
