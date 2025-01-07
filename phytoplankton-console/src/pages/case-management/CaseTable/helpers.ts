@@ -24,6 +24,7 @@ export function useTableData(
             reasons: item.lastStatusChange?.reason ?? [],
             otherReason: item.lastStatusChange?.otherReason ?? null,
           },
+          proposedAction: item.lastStatusChange?.caseStatus,
           ...item,
           assignments: statusEscalated(item.caseStatus) ? item.reviewAssignments : item.assignments,
           alertComments: item.alerts?.flatMap((alert) => alert.comments ?? []) ?? [],

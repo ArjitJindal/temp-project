@@ -46,36 +46,36 @@ import { useCaseAlertFilters } from '@/pages/case-management/helpers';
 import {
   ASSIGNMENTS,
   CASE_STATUS,
+  CASE_USER_NAME,
   CASEID,
   DATE,
   NUMBER,
   PRIORITY,
   RISK_LEVEL,
-  CASE_USER_NAME,
   STATUS_CHANGE_PATH,
 } from '@/components/library/Table/standardDataTypes';
 import { RiskLevel } from '@/utils/risk-levels';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import {
+  canMutateEscalatedCases,
   canReviewCases,
+  casesCommentsGenerator,
   findLastStatusForInReview,
+  getAssignmentsToShow,
+  getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
+  isEscalatedCases,
   isInReviewCases,
   isOnHoldOrInProgressOrEscalated,
-  statusInProgressOrOnHold,
   statusEscalated,
-  statusInReview,
-  casesCommentsGenerator,
-  getNextStatusFromInReview,
-  getAssignmentsToShow,
   statusEscalatedL2,
-  canMutateEscalatedCases,
-  isEscalatedCases,
+  statusInProgressOrOnHold,
+  statusInReview,
 } from '@/utils/case-utils';
 import Id from '@/components/ui/Id';
-import { denseArray } from '@/utils/lang';
+import { denseArray, neverReturn } from '@/utils/lang';
 import { USER_STATES } from '@/apis/models-custom/UserState';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
@@ -98,7 +98,11 @@ export default function CaseTable(props: Props) {
   const user = useAuth0User();
   const isRiskLevelsEnabled = useFeatureEnabled('RISK_LEVELS');
   const [selectedCases, setSelectedCases] = useState<string[]>([]);
-  const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
+  const isInReview =
+    params.caseStatus == null ||
+    params.caseStatus.length === 0 ||
+    params.caseStatus.includes('IN_REVIEW') ||
+    false;
   const isMultiLevelEscalationEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
 
   const reloadTable = useCallback(() => {
@@ -246,7 +250,7 @@ export default function CaseTable(props: Props) {
         key: 'user.kycStatusDetails',
         icon: <AccountCircleLineIcon />,
         type: {
-          render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <></>),
+          render: (value) => (value ? <UserKycStatusTag kycStatusDetails={value} /> : <>-</>),
           stringify: (value) => value?.status ?? '',
         },
       }),
@@ -379,38 +383,6 @@ export default function CaseTable(props: Props) {
                 },
               },
             }),
-            helper.simple<'lastStatusChangeReasons'>({
-              title: 'Proposed reason',
-              tooltip: 'Reason proposed for closing the case',
-              key: 'lastStatusChangeReasons',
-              type: {
-                render: (lastStatusChangeReasons) => {
-                  return lastStatusChangeReasons ? (
-                    <>
-                      {lastStatusChangeReasons.reasons.map((closingReason, index) => (
-                        <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
-                      ))}
-                      {lastStatusChangeReasons.otherReason && (
-                        <div>
-                          <span>Other Reasons: </span>
-                          {lastStatusChangeReasons.otherReason}
-                        </div>
-                      )}
-                    </>
-                  ) : (
-                    <>-</>
-                  );
-                },
-                stringify: (lastStatusChangeReasons) => {
-                  return [
-                    ...(lastStatusChangeReasons?.reasons ?? []),
-                    lastStatusChangeReasons?.otherReason,
-                  ]
-                    .filter((x) => !!x)
-                    .join('; ');
-                },
-              },
-            }),
             helper.simple<'lastStatusChange.userId'>({
               title: 'Proposed by',
               key: 'lastStatusChange.userId',
@@ -435,7 +407,7 @@ export default function CaseTable(props: Props) {
         defaultWidth: 210,
         render: (entity) => {
           if (!entity.caseId) {
-            return <></>;
+            return <>-</>;
           }
           const isInReview = isInReviewCases({
             [entity.caseId]: entity,
@@ -508,58 +480,80 @@ export default function CaseTable(props: Props) {
         },
       }),
     ];
-    if (params.caseStatus?.includes('CLOSED')) {
+    if (
+      params.caseStatus == null ||
+      params.caseStatus.length === 0 ||
+      params.caseStatus.some((x) => x !== 'OPEN')
+    ) {
       mergedColumns.push(
-        ...[
-          helper.simple<'lastStatusChangeReasons'>({
-            title: 'Closing reason',
-            tooltip: 'Reason provided for closing a case',
-            key: 'lastStatusChangeReasons',
-            type: {
-              render: (lastStatusChangeReasons) => {
-                return lastStatusChangeReasons ? (
-                  <>
-                    {lastStatusChangeReasons.reasons.map((closingReason, index) => (
-                      <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
-                    ))}
-                    {lastStatusChangeReasons.otherReason && (
-                      <div>
-                        <span>Other Reasons: </span>
-                        {lastStatusChangeReasons.otherReason}
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>-</>
-                );
-              },
-              stringify: (lastStatusChangeReasons) => {
-                return [
-                  ...(lastStatusChangeReasons?.reasons ?? []),
-                  lastStatusChangeReasons?.otherReason,
-                ]
-                  .filter((x) => !!x)
-                  .join('; ');
-              },
+        helper.derived<TableItem['lastStatusChangeReasons']>({
+          title: 'Reason',
+          id: 'readon',
+          value: (value) => {
+            const { lastStatusChangeReasons, caseStatus } = value;
+            if (
+              caseStatus == null ||
+              caseStatus === 'OPEN' ||
+              caseStatus === 'OPEN_IN_PROGRESS' ||
+              caseStatus === 'OPEN_ON_HOLD' ||
+              caseStatus === 'REOPENED'
+            ) {
+              return null;
+            }
+            if (
+              caseStatus === 'CLOSED' ||
+              statusEscalated(caseStatus) ||
+              statusEscalatedL2(caseStatus) ||
+              statusInReview(caseStatus)
+            ) {
+              return lastStatusChangeReasons ?? null;
+            }
+            return neverReturn(caseStatus, lastStatusChangeReasons);
+          },
+          type: {
+            render: (lastStatusChangeReasons): JSX.Element => {
+              return lastStatusChangeReasons ? (
+                <>
+                  {lastStatusChangeReasons.reasons.map((closingReason, index) => (
+                    <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
+                  ))}
+                  {lastStatusChangeReasons.otherReason && (
+                    <div>
+                      <span>Other Reasons: </span>
+                      {lastStatusChangeReasons.otherReason}
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>-</>
+              );
             },
-          }),
-          helper.simple<'lastStatusChange.userId'>({
-            title: 'Closed by',
-            key: 'lastStatusChange.userId',
-            type: {
-              stringify: (value) => {
-                return `${value === undefined ? '' : users[value]?.name ?? value}`;
-              },
-              render: (userId, _) => {
-                return userId ? (
-                  <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
-                ) : (
-                  <>-</>
-                );
-              },
+            stringify: (lastStatusChangeReasons) => {
+              return [
+                ...(lastStatusChangeReasons?.reasons ?? []),
+                lastStatusChangeReasons?.otherReason,
+              ]
+                .filter((x) => !!x)
+                .join('; ');
             },
-          }),
-        ],
+          },
+        }) as TableColumn<TableItem>,
+        helper.simple<'lastStatusChange.userId'>({
+          title: 'Status changed by',
+          key: 'lastStatusChange.userId',
+          type: {
+            stringify: (value) => {
+              return `${value === undefined ? '' : users[value]?.name ?? value}`;
+            },
+            render: (userId, _) => {
+              return userId ? (
+                <ConsoleUserAvatar userId={userId} users={users} loadingUsers={loadingUsers} />
+              ) : (
+                <>-</>
+              );
+            },
+          },
+        }),
       );
     }
 

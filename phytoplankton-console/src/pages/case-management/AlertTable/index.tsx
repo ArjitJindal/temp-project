@@ -86,7 +86,7 @@ import Button from '@/components/library/Button';
 import InvestigativeCoPilotModal from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal';
 import { getOr, map } from '@/utils/asyncResource';
 import RuleQueueTag from '@/components/library/Tag/RuleQueueTag';
-import { denseArray } from '@/utils/lang';
+import { denseArray, neverReturn } from '@/utils/lang';
 import { useRuleQueues } from '@/components/rules/util';
 import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
@@ -95,7 +95,6 @@ import { useMutation } from '@/utils/queries/mutations/hooks';
 import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
-import Tag from '@/components/library/Tag';
 import { useDeepEqualEffect } from '@/utils/hooks';
 import {
   updateSanctionsData,
@@ -298,9 +297,15 @@ export default function AlertTable(props: Props) {
 
   const ruleQueues = useRuleQueues();
 
-  const showClosingReason =
-    params.caseStatus?.includes('CLOSED') || params.alertStatus?.includes('CLOSED') || false;
-  const isInReview = params.caseStatus?.includes('IN_REVIEW') || false;
+  const showReason =
+    params.alertStatus == null ||
+    params.alertStatus.length === 0 ||
+    params.alertStatus.some((x) => {
+      return x !== 'OPEN';
+    });
+
+  const isInReview =
+    params.caseStatus?.includes('IN_REVIEW') || params.alertStatus?.includes('IN_REVIEW') || false;
 
   useDeepEqualEffect(() => {
     reloadTable();
@@ -323,596 +328,566 @@ export default function AlertTable(props: Props) {
       qaEnabled: boolean,
     ): TableColumn<TableAlertItem>[] => {
       const helper = new ColumnHelper<TableAlertItem>();
-      return helper.list([
-        helper.simple<'priority'>({
-          title: '',
-          headerTitle: 'Priority',
-          key: 'priority',
-          type: PRIORITY,
-          disableColumnShuffling: true,
-          defaultWidth: 40,
-          enableResizing: false,
-          sorting: true,
-        }),
-        helper.simple<'alertId'>({
-          title: 'Alert ID',
-          key: 'alertId',
-          icon: <StackLineIcon />,
-          showFilterByDefault: true,
-          filtering: true,
-          type: {
-            render: (alertId, { item: entity }) => {
-              const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
-              if (caseId !== undefined && !alertDetailsPageEnabled) {
-                return <div>{alertId}</div>;
-              }
-              return (
-                <div className={s.alert}>
-                  <Id
-                    to={
-                      entity?.caseId != null && alertId != null
-                        ? addBackUrlToRoute(
-                            getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
-                          )
-                        : '#'
-                    }
-                    testName="alert-id"
-                  >
-                    {alertId}
-                  </Id>
-                  {falsePositiveDetails &&
-                    falsePositiveDetails.isFalsePositive &&
-                    falsePositiveEnabled && (
-                      <FalsePositiveTag
-                        caseIds={[entity.caseId].filter(notEmpty)}
-                        confidence={falsePositiveDetails.confidenceScore}
-                        newCaseStatus={'CLOSED'}
-                        onSaved={reload}
-                        rounded
-                      />
-                    )}
-                </div>
-              );
-            },
-            stringify(value, item) {
-              return item.alertId ?? '';
-            },
-            link: (value, item) => {
-              return item?.caseId && value
-                ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
-                : undefined;
-            },
-          },
-        }),
-        helper.simple<'caseId'>({
-          title: 'Case ID',
-          key: 'caseId',
-          type: CASEID,
-        }),
-        helper.simple<'createdTimestamp'>({
-          title: 'Created at',
-          key: 'createdTimestamp',
-          showFilterByDefault: true,
-          sorting: true,
-          filtering: true,
-          icon: <CalendarLineIcon />,
-          type: DATE,
-        }),
-        helper.simple<'age'>({
-          title: 'Alert age',
-          key: 'age',
-          sorting: true,
-        }),
-        helper.simple<'numberOfTransactionsHit'>({
-          title: '#TX',
-          key: 'numberOfTransactionsHit',
-          sorting: true,
-        }),
-        ...(showUserColumns
-          ? [
-              helper.simple<'caseUserId'>({
-                title: 'User id',
-                key: 'caseUserId',
-                type: ALERT_USER_ID,
-              }),
-
-              helper.simple<'caseUserName'>({
-                title: 'User name',
-                key: 'caseUserName',
-              }),
-            ]
-          : []),
-        helper.simple<'ruleName'>({
-          title: 'Rule name',
-          key: 'ruleName',
-        }),
-        helper.simple<'ruleDescription'>({
-          title: 'Rule description',
-          key: 'ruleDescription',
-        }),
-        helper.simple<'ruleAction'>({
-          title: 'Rule action',
-          key: 'ruleAction',
-          type: RULE_ACTION_STATUS,
-        }),
-        helper.simple<'ruleNature'>({
-          title: 'Rule nature',
-          key: 'ruleNature',
-          type: RULE_NATURE,
-        }),
-        ...(slaEnabled
-          ? [
-              helper.display({
-                title: 'SLA status',
-                render: (entity) => {
-                  return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
-                },
-              }),
-              ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
-            ]
-          : []),
-        helper.simple<'alertStatus'>({
-          title: 'Alert status',
-          key: 'alertStatus',
-          type: CASE_STATUS<TableAlertItem>({
-            statusesToShow: CASE_STATUSS,
-            reload,
+      return helper.list(
+        [
+          helper.simple<'priority'>({
+            title: '',
+            headerTitle: 'Priority',
+            key: 'priority',
+            type: PRIORITY,
+            disableColumnShuffling: true,
+            defaultWidth: 40,
+            enableResizing: false,
+            sorting: true,
           }),
-        }),
-
-        helper.simple<'statusChanges'>({
-          title: 'Status changes',
-          key: 'statusChanges',
-          type: STATUS_CHANGE_PATH('ALERT'),
-          hideInTable: true,
-          exporting: true,
-        }),
-        ...(showClosingReason
-          ? [
-              helper.simple<'lastStatusChangeReasons'>({
-                title: 'Closing reason',
-                tooltip: 'Reason provided for closing an alert',
-                key: 'lastStatusChangeReasons',
-                type: {
-                  render: (lastStatusChangeReasons) => {
-                    return lastStatusChangeReasons ? (
-                      <>
-                        {lastStatusChangeReasons.reasons.map((closingReason, index) => (
-                          <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
-                        ))}
-                        {lastStatusChangeReasons.otherReason && (
-                          <div>
-                            <span>Other Reasons: </span>
-                            {lastStatusChangeReasons.otherReason}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>-</>
-                    );
-                  },
-                  stringify: (lastStatusChangeReasons) => {
-                    return [
-                      ...(lastStatusChangeReasons?.reasons ?? []),
-                      lastStatusChangeReasons?.otherReason,
-                    ]
-                      .filter((x) => !!x)
-                      .join('; ');
-                  },
-                },
-              }),
-            ]
-          : []),
-        ...(qaEnabled
-          ? [
-              helper.simple<'ruleQaStatus'>({
-                title: 'QA status',
-                key: 'ruleQaStatus',
-                type: {
-                  render: (status, { item: alert }) => {
-                    const alertStatus = alert.alertStatus;
-                    if (alertStatus === 'CLOSED') {
-                      if (status === 'PASSED') {
-                        return <>QA pass</>;
+          helper.simple<'alertId'>({
+            title: 'Alert ID',
+            key: 'alertId',
+            icon: <StackLineIcon />,
+            showFilterByDefault: true,
+            filtering: true,
+            type: {
+              render: (alertId, { item: entity }) => {
+                const falsePositiveDetails = entity?.ruleHitMeta?.falsePositiveDetails;
+                if (caseId !== undefined && !alertDetailsPageEnabled) {
+                  return <div>{alertId}</div>;
+                }
+                return (
+                  <div className={s.alert}>
+                    <Id
+                      to={
+                        entity?.caseId != null && alertId != null
+                          ? addBackUrlToRoute(
+                              getAlertUrl(entity.caseId, alertId, alertDetailsPageEnabled),
+                            )
+                          : '#'
                       }
-                      if (status === 'FAILED') {
-                        return <>QA fail</>;
-                      }
-                      return <>Not QA'd</>;
-                    }
-                    return <>-</>;
-                  },
-                },
-              }),
-            ]
-          : []),
-        helper.simple<'caseCreatedTimestamp'>({
-          title: 'Case created at',
-          key: 'caseCreatedTimestamp',
-          type: DATE,
-          sorting: true,
-        }),
-        helper.simple<'updatedAt'>({
-          title: 'Last updated',
-          key: 'updatedAt',
-          type: DATE,
-          filtering: true,
-          sorting: true,
-        }),
-
-        helper.derived({
-          title: 'Assigned to',
-          id: '_assigneeName',
-          sorting: true,
-          defaultWidth: 300,
-          enableResizing: false,
-          value: (item) =>
-            statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
-              ? item.reviewAssignments
-              : item.assignments,
-          type: {
-            ...ASSIGNMENTS,
-            stringify: (value) => {
-              return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
-            },
-            render: (assignments, { item: entity }) => {
-              const otherStatuses = isOnHoldOrInProgressOrEscalated(entity?.alertStatus);
-              return (
-                <AssigneesDropdown
-                  assignments={getAssignmentsToShow(entity) ?? []}
-                  editing={
-                    !(
-                      statusInReview(entity.alertStatus) ||
-                      otherStatuses ||
-                      entity.alertStatus === 'CLOSED' ||
-                      qaMode
-                    )
-                  }
-                  onChange={(assignees) => {
-                    const assignments: Assignment[] = assignees.map((assignee) => ({
-                      assigneeUserId: assignee,
-                      assignedByUserId: userId,
-                      timestamp: Date.now(),
-                    }));
-
-                    const alertId = entity?.alertId;
-
-                    if (alertId == null) {
-                      message.fatal('Alert ID is null');
-                      return;
-                    }
-
-                    if (statusEscalated(entity.alertStatus)) {
-                      handleAlertsReviewAssignments({
-                        alertIds: [alertId],
-                        reviewAssignments: assignments,
-                      });
-                    } else {
-                      handleAlertsAssignments({
-                        alertIds: [alertId],
-                        assignments,
-                      });
-                    }
-                  }}
-                />
-              );
-            },
-          },
-        }),
-        helper.derived({
-          title: 'Assigned to role',
-          id: '_assigneeRole',
-          value: (item) =>
-            statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
-              ? item.reviewAssignments
-              : item.assignments,
-          type: {
-            ...ASSIGNMENTS,
-            stringify: (value) => {
-              return `${value?.map((x) => users[x.assigneeUserId]?.role ?? '').join(',') ?? ''}`;
-            },
-          },
-          hideInTable: true,
-          exporting: true,
-        }),
-        ...(qaMode
-          ? [
-              helper.simple<'assignments'>({
-                title: 'QA assigned to',
-                key: 'assignments',
-                id: '_assignmentName',
-                defaultWidth: 300,
-                enableResizing: false,
-                type: {
-                  ...ASSIGNMENTS,
-                  render: (__, { item: entity }) => {
-                    const assignments = entity.qaAssignment || [];
-                    return (
-                      <AssigneesDropdown
-                        assignments={assignments}
-                        editing={!entity.ruleQaStatus}
-                        onChange={(assignees) => {
-                          if (entity.alertId) {
-                            qaAssigneesUpdateMutation.mutate({
-                              alertId: entity.alertId,
-                              AlertQaAssignmentsUpdateRequest: {
-                                assignments: assignees.map((assigneeUserId) => ({
-                                  assignedByUserId: user.userId,
-                                  assigneeUserId,
-                                  timestamp: Date.now(),
-                                })),
-                              },
-                            });
-                          } else {
-                            message.fatal('Alert ID is missing');
-                            return;
-                          }
-                        }}
-                      />
-                    );
-                  },
-                },
-              }),
-            ]
-          : []),
-
-        helper.simple<'ruleQueueId'>({
-          title: 'Queue',
-          key: 'ruleQueueId',
-          type: {
-            render: (ruleQueueId) => {
-              return <RuleQueueTag queueId={ruleQueueId} />;
-            },
-            stringify: (value) => {
-              return ruleQueues.find((queue) => queue.id === value)?.name ?? 'default';
-            },
-          },
-        }),
-        ...(caseId
-          ? [
-              helper.simple<'creationReason'>({
-                title: 'Creation reason',
-                key: 'creationReason',
-                type: {
-                  render: (value) => {
-                    return <>{value?.reasons.join(', ') ?? '-'}</>;
-                  },
-                },
-                defaultWidth: 200,
-              }),
-            ]
-          : []),
-        ...((isInReview
-          ? [
-              helper.simple<'alertStatus'>({
-                title: 'Proposed action',
-                tooltip: 'Proposed action for the case',
-                key: 'alertStatus',
-                type: {
-                  render: (alertStatus) => {
-                    return alertStatus ? (
-                      <>
-                        {
-                          <CaseStatusTag
-                            caseStatus={getNextStatusFromInReview(alertStatus ?? 'OPEN')}
-                            isProposedAction={true}
-                          />
-                        }
-                      </>
-                    ) : (
-                      <>-</>
-                    );
-                  },
-                },
-              }),
-              helper.simple<'lastStatusChangeReasons'>({
-                title: 'Proposed reason',
-                tooltip: 'Reason proposed for closing the case',
-                key: 'lastStatusChangeReasons',
-                type: {
-                  render: (lastStatusChangeReasons) => {
-                    return lastStatusChangeReasons ? (
-                      <>
-                        {lastStatusChangeReasons.reasons.map((closingReason, index) => (
-                          <ClosingReasonTag key={index}>{closingReason}</ClosingReasonTag>
-                        ))}
-                        {lastStatusChangeReasons.otherReason && (
-                          <div>
-                            <span>Other Reasons: </span>
-                            {lastStatusChangeReasons.otherReason}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <>-</>
-                    );
-                  },
-                  stringify: (lastStatusChangeReasons) => {
-                    return [
-                      ...(lastStatusChangeReasons?.reasons ?? []),
-                      lastStatusChangeReasons?.otherReason,
-                    ]
-                      .filter((x) => !!x)
-                      .join('; ');
-                  },
-                },
-              }),
-              helper.simple<'lastStatusChange.userId'>({
-                title: 'Proposed by',
-                key: 'lastStatusChange.userId',
-                type: {
-                  stringify: (value) => {
-                    return `${value === undefined ? '' : users[value]?.name ?? value}`;
-                  },
-                  render: (userId, _) => {
-                    return userId ? (
-                      <ConsoleUserAvatar
-                        userId={userId}
-                        users={users}
-                        loadingUsers={loadingUsers}
-                      />
-                    ) : (
-                      <>-</>
-                    );
-                  },
-                },
-              }),
-            ]
-          : []) as TableColumn<TableAlertItem>[]),
-        helper.display({
-          title: 'Operations',
-          enableResizing: false,
-          defaultWidth: 330,
-          render: (entity) => {
-            if (!entity.alertId || !entity.caseId) {
-              return <></>;
-            }
-
-            const isInReview = isInReviewCases({ [entity.alertId]: entity }, true);
-
-            const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
-            const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
-            const isEscalated = statusEscalated(entity.alertStatus);
-            const isEscalatedL2 = statusEscalatedL2(entity.alertStatus);
-            const canMutateCases = canMutateEscalatedCases(
-              { [entity.caseId]: entity },
-              userId,
-              isMultiEscalationEnabled,
-            );
-            return (
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {entity?.caseId && !statusInReview(entity.alertStatus) && !isEscalated && (
-                  <AlertsStatusChangeButton
-                    caseId={entity.caseId}
-                    ids={[entity.alertId]}
-                    status={entity.alertStatus}
-                    onSaved={reload}
-                    statusTransitions={{
-                      OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                      OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                    }}
-                    transactionIds={selectedTxns}
-                  />
-                )}
-                {entity?.caseId &&
-                  !statusInReview(entity.alertStatus) &&
-                  isEscalated &&
-                  !isEscalatedL2 &&
-                  canMutateCases && (
-                    <AlertsStatusChangeButton
-                      caseId={entity.caseId}
-                      ids={[entity.alertId]}
-                      status={entity.alertStatus}
-                      onSaved={reload}
-                      statusTransitions={{
-                        ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
-                        ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
-                      }}
-                      transactionIds={selectedTxns}
-                    />
-                  )}
-                {entity?.caseId &&
-                  !statusInReview(entity.alertStatus) &&
-                  isEscalatedL2 &&
-                  canMutateCases &&
-                  userAccount?.escalationLevel === 'L2' && (
-                    <AlertsStatusChangeButton
-                      caseId={entity.caseId}
-                      ids={[entity.alertId]}
-                      status={entity.alertStatus}
-                      onSaved={reload}
-                      statusTransitions={{
-                        ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
-                      }}
-                      transactionIds={selectedTxns}
-                    />
-                  )}
-                {entity?.caseId && isInReview && canReview && entity.alertStatus && (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                    <ApproveSendBackButton
-                      ids={[entity.alertId]}
-                      onReload={reload}
-                      type="ALERT"
-                      previousStatus={previousStatus}
-                      status={entity.alertStatus}
-                      key={entity.alertId}
-                      selectedCaseId={entity.caseId}
-                    />
+                      testName="alert-id"
+                    >
+                      {alertId}
+                    </Id>
+                    {falsePositiveDetails &&
+                      falsePositiveDetails.isFalsePositive &&
+                      falsePositiveEnabled && (
+                        <FalsePositiveTag
+                          caseIds={[entity.caseId].filter(notEmpty)}
+                          confidence={falsePositiveDetails.confidenceScore}
+                          newCaseStatus={'CLOSED'}
+                          onSaved={reload}
+                          rounded
+                        />
+                      )}
                   </div>
-                )}
-                {handleInvestigateAlert && (
-                  <Link
-                    to={makeUrl(
-                      location.pathname,
-                      undefined,
-                      queryAdapter.serializer({
-                        ...params,
-                        forensicsFor: {
-                          alertId: entity.alertId,
-                          caseId: entity.caseId,
-                        },
-                        expandedAlertId: entity.alertId,
-                      }),
+                );
+              },
+              stringify(value, item) {
+                return item.alertId ?? '';
+              },
+              link: (value, item) => {
+                return item?.caseId && value
+                  ? getAlertUrl(item.caseId, value, alertDetailsPageEnabled)
+                  : undefined;
+              },
+            },
+          }),
+          helper.simple<'caseId'>({
+            title: 'Case ID',
+            key: 'caseId',
+            type: CASEID,
+          }),
+          helper.simple<'createdTimestamp'>({
+            title: 'Created at',
+            key: 'createdTimestamp',
+            showFilterByDefault: true,
+            sorting: true,
+            filtering: true,
+            icon: <CalendarLineIcon />,
+            type: DATE,
+          }),
+          helper.simple<'age'>({
+            title: 'Alert age',
+            key: 'age',
+            sorting: true,
+          }),
+          helper.simple<'numberOfTransactionsHit'>({
+            title: '#TX',
+            key: 'numberOfTransactionsHit',
+            sorting: true,
+          }),
+          ...(showUserColumns
+            ? [
+                helper.simple<'caseUserId'>({
+                  title: 'User id',
+                  key: 'caseUserId',
+                  type: ALERT_USER_ID,
+                }),
+
+                helper.simple<'caseUserName'>({
+                  title: 'User name',
+                  key: 'caseUserName',
+                }),
+              ]
+            : []),
+          helper.simple<'ruleName'>({
+            title: 'Rule name',
+            key: 'ruleName',
+          }),
+          helper.simple<'ruleDescription'>({
+            title: 'Rule description',
+            key: 'ruleDescription',
+          }),
+          helper.simple<'ruleAction'>({
+            title: 'Rule action',
+            key: 'ruleAction',
+            type: RULE_ACTION_STATUS,
+          }),
+          helper.simple<'ruleNature'>({
+            title: 'Rule nature',
+            key: 'ruleNature',
+            type: RULE_NATURE,
+          }),
+          ...(slaEnabled
+            ? [
+                helper.display({
+                  title: 'SLA status',
+                  render: (entity) => {
+                    return <SlaStatus slaPolicyDetails={entity.slaPolicyDetails} />;
+                  },
+                }),
+                ...getSlaColumnsForExport(helper, slaPolicies.items ?? []),
+              ]
+            : []),
+          helper.simple<'alertStatus'>({
+            title: 'Alert status',
+            key: 'alertStatus',
+            type: CASE_STATUS<TableAlertItem>({
+              statusesToShow: CASE_STATUSS,
+              reload,
+            }),
+          }),
+          helper.simple<'statusChanges'>({
+            title: 'Status changes',
+            key: 'statusChanges',
+            type: STATUS_CHANGE_PATH('ALERT'),
+            hideInTable: true,
+            exporting: true,
+          }),
+          ...(qaEnabled
+            ? [
+                helper.simple<'ruleQaStatus'>({
+                  title: 'QA status',
+                  key: 'ruleQaStatus',
+                  type: {
+                    render: (status, { item: alert }) => {
+                      const alertStatus = alert.alertStatus;
+                      if (alertStatus === 'CLOSED') {
+                        if (status === 'PASSED') {
+                          return <>QA pass</>;
+                        }
+                        if (status === 'FAILED') {
+                          return <>QA fail</>;
+                        }
+                        return <>Not QA'd</>;
+                      }
+                      return <>-</>;
+                    },
+                  },
+                }),
+              ]
+            : []),
+          helper.simple<'caseCreatedTimestamp'>({
+            title: 'Case created at',
+            key: 'caseCreatedTimestamp',
+            type: DATE,
+            sorting: true,
+          }),
+          helper.simple<'updatedAt'>({
+            title: 'Last updated',
+            key: 'updatedAt',
+            type: DATE,
+            filtering: true,
+            sorting: true,
+          }),
+          helper.derived({
+            title: 'Assigned to',
+            id: '_assigneeName',
+            sorting: true,
+            defaultWidth: 300,
+            enableResizing: false,
+            value: (item) =>
+              statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
+                ? item.reviewAssignments
+                : item.assignments,
+            type: {
+              ...ASSIGNMENTS,
+              stringify: (value) => {
+                return `${value?.map((x) => users[x.assigneeUserId]?.email ?? '').join(',') ?? ''}`;
+              },
+              render: (assignments, { item: entity }) => {
+                const otherStatuses = isOnHoldOrInProgressOrEscalated(entity?.alertStatus);
+                return (
+                  <AssigneesDropdown
+                    assignments={getAssignmentsToShow(entity) ?? []}
+                    editing={
+                      !(
+                        statusInReview(entity.alertStatus) ||
+                        otherStatuses ||
+                        entity.alertStatus === 'CLOSED' ||
+                        qaMode
+                      )
+                    }
+                    onChange={(assignees) => {
+                      const assignments: Assignment[] = assignees.map((assignee) => ({
+                        assigneeUserId: assignee,
+                        assignedByUserId: userId,
+                        timestamp: Date.now(),
+                      }));
+
+                      const alertId = entity?.alertId;
+
+                      if (alertId == null) {
+                        message.fatal('Alert ID is null');
+                        return;
+                      }
+
+                      if (statusEscalated(entity.alertStatus)) {
+                        handleAlertsReviewAssignments({
+                          alertIds: [alertId],
+                          reviewAssignments: assignments,
+                        });
+                      } else {
+                        handleAlertsAssignments({
+                          alertIds: [alertId],
+                          assignments,
+                        });
+                      }
+                    }}
+                  />
+                );
+              },
+            },
+          }),
+          helper.derived({
+            title: 'Assigned to role',
+            id: '_assigneeRole',
+            value: (item) =>
+              statusEscalated(item.alertStatus) || statusInReview(item.alertStatus)
+                ? item.reviewAssignments
+                : item.assignments,
+            type: {
+              ...ASSIGNMENTS,
+              stringify: (value) => {
+                return `${value?.map((x) => users[x.assigneeUserId]?.role ?? '').join(',') ?? ''}`;
+              },
+            },
+            hideInTable: true,
+            exporting: true,
+          }),
+          ...(qaMode
+            ? [
+                helper.simple<'assignments'>({
+                  title: 'QA assigned to',
+                  key: 'assignments',
+                  id: '_assignmentName',
+                  defaultWidth: 300,
+                  enableResizing: false,
+                  type: {
+                    ...ASSIGNMENTS,
+                    render: (__, { item: entity }) => {
+                      const assignments = entity.qaAssignment || [];
+                      return (
+                        <AssigneesDropdown
+                          assignments={assignments}
+                          editing={!entity.ruleQaStatus}
+                          onChange={(assignees) => {
+                            if (entity.alertId) {
+                              qaAssigneesUpdateMutation.mutate({
+                                alertId: entity.alertId,
+                                AlertQaAssignmentsUpdateRequest: {
+                                  assignments: assignees.map((assigneeUserId) => ({
+                                    assignedByUserId: user.userId,
+                                    assigneeUserId,
+                                    timestamp: Date.now(),
+                                  })),
+                                },
+                              });
+                            } else {
+                              message.fatal('Alert ID is missing');
+                              return;
+                            }
+                          }}
+                        />
+                      );
+                    },
+                  },
+                }),
+              ]
+            : []),
+          helper.simple<'ruleQueueId'>({
+            title: 'Queue',
+            key: 'ruleQueueId',
+            type: {
+              render: (ruleQueueId) => {
+                return <RuleQueueTag queueId={ruleQueueId} />;
+              },
+              stringify: (value) => {
+                return ruleQueues.find((queue) => queue.id === value)?.name ?? 'default';
+              },
+            },
+          }),
+          ...(caseId
+            ? [
+                helper.simple<'creationReason'>({
+                  title: 'Creation reason',
+                  key: 'creationReason',
+                  type: {
+                    render: (value) => {
+                      return <>{value?.reasons.join(', ') ?? '-'}</>;
+                    },
+                  },
+                  defaultWidth: 200,
+                }),
+              ]
+            : []),
+          ...((isInReview
+            ? [
+                helper.simple<'alertStatus'>({
+                  title: 'Proposed action',
+                  tooltip: 'Proposed action for the case',
+                  key: 'alertStatus',
+                  type: {
+                    render: (alertStatus) => {
+                      return alertStatus ? (
+                        <>
+                          {
+                            <CaseStatusTag
+                              caseStatus={getNextStatusFromInReview(alertStatus ?? 'OPEN')}
+                              isProposedAction={true}
+                            />
+                          }
+                        </>
+                      ) : (
+                        <>-</>
+                      );
+                    },
+                  },
+                }),
+                helper.simple<'lastStatusChange.userId'>({
+                  title: 'Proposed by',
+                  key: 'lastStatusChange.userId',
+                  type: {
+                    stringify: (value) => {
+                      return `${value === undefined ? '' : users[value]?.name ?? value}`;
+                    },
+                    render: (userId, _) => {
+                      return userId ? (
+                        <ConsoleUserAvatar
+                          userId={userId}
+                          users={users}
+                          loadingUsers={loadingUsers}
+                        />
+                      ) : (
+                        <>-</>
+                      );
+                    },
+                  },
+                }),
+              ]
+            : []) as TableColumn<TableAlertItem>[]),
+          helper.display({
+            title: 'Operations',
+            enableResizing: false,
+            defaultWidth: 330,
+            render: (entity) => {
+              if (!entity.alertId || !entity.caseId) {
+                return <></>;
+              }
+
+              const isInReview = isInReviewCases({ [entity.alertId]: entity }, true);
+
+              const canReview = canReviewCases({ [entity.alertId]: entity }, userId);
+              const previousStatus = findLastStatusForInReview(entity.statusChanges ?? []);
+              const isEscalated = statusEscalated(entity.alertStatus);
+              const isEscalatedL2 = statusEscalatedL2(entity.alertStatus);
+              const canMutateCases = canMutateEscalatedCases(
+                { [entity.caseId]: entity },
+                userId,
+                isMultiEscalationEnabled,
+              );
+              return (
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  {entity?.caseId && !statusInReview(entity.alertStatus) && !isEscalated && (
+                    <AlertsStatusChangeButton
+                      caseId={entity.caseId}
+                      ids={[entity.alertId]}
+                      status={entity.alertStatus}
+                      onSaved={reload}
+                      statusTransitions={{
+                        OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                        OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                      }}
+                      transactionIds={selectedTxns}
+                    />
+                  )}
+                  {entity?.caseId &&
+                    !statusInReview(entity.alertStatus) &&
+                    isEscalated &&
+                    !isEscalatedL2 &&
+                    canMutateCases && (
+                      <AlertsStatusChangeButton
+                        caseId={entity.caseId}
+                        ids={[entity.alertId]}
+                        status={entity.alertStatus}
+                        onSaved={reload}
+                        statusTransitions={{
+                          ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
+                          ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
+                        }}
+                        transactionIds={selectedTxns}
+                      />
                     )}
-                  >
-                    <Button
-                      testName={'investigate-button'}
-                      type="TETRIARY"
-                      onClick={() => {
-                        if (entity.alertId != null && entity.caseId != null) {
-                          handleInvestigateAlert({
+                  {entity?.caseId &&
+                    !statusInReview(entity.alertStatus) &&
+                    isEscalatedL2 &&
+                    canMutateCases &&
+                    userAccount?.escalationLevel === 'L2' && (
+                      <AlertsStatusChangeButton
+                        caseId={entity.caseId}
+                        ids={[entity.alertId]}
+                        status={entity.alertStatus}
+                        onSaved={reload}
+                        statusTransitions={{
+                          ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
+                        }}
+                        transactionIds={selectedTxns}
+                      />
+                    )}
+                  {entity?.caseId && isInReview && canReview && entity.alertStatus && (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <ApproveSendBackButton
+                        ids={[entity.alertId]}
+                        onReload={reload}
+                        type="ALERT"
+                        previousStatus={previousStatus}
+                        status={entity.alertStatus}
+                        key={entity.alertId}
+                        selectedCaseId={entity.caseId}
+                      />
+                    </div>
+                  )}
+                  {handleInvestigateAlert && (
+                    <Link
+                      to={makeUrl(
+                        location.pathname,
+                        undefined,
+                        queryAdapter.serializer({
+                          ...params,
+                          forensicsFor: {
                             alertId: entity.alertId,
                             caseId: entity.caseId,
-                          });
-                        }
-                      }}
+                          },
+                          expandedAlertId: entity.alertId,
+                        }),
+                      )}
                     >
-                      <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            );
-          },
-        }),
-        helper.simple<'comments'>({
-          title: 'Comments',
-          key: 'comments',
-          hideInTable: true,
-          filtering: false,
-          type: {
-            stringify: (value) => commentsToString(value ?? [], users).trim(),
-          },
-        }),
-        helper.simple<'lastStatusChangeReasons'>({
-          title: 'Escalation Reason',
-          key: 'lastStatusChangeReasons',
-          filtering: false,
-          type: {
-            render: (lastStatusChangeReasons) => {
-              if (
-                !lastStatusChangeReasons ||
-                (lastStatusChangeReasons.reasons.length == 0 &&
-                  !lastStatusChangeReasons.otherReason)
-              ) {
-                return <>-</>;
-              }
-              return (
-                <div className={s.escalation}>
-                  <div className={s.tag}>
-                    {lastStatusChangeReasons.reasons.map((reason, index) => {
-                      return <Tag key={index}>{reason}</Tag>;
-                    })}
-                  </div>
-                  {lastStatusChangeReasons.otherReason && (
-                    <p>{lastStatusChangeReasons.otherReason}</p>
+                      <Button
+                        testName={'investigate-button'}
+                        type="TETRIARY"
+                        onClick={() => {
+                          if (entity.alertId != null && entity.caseId != null) {
+                            handleInvestigateAlert({
+                              alertId: entity.alertId,
+                              caseId: entity.caseId,
+                            });
+                          }
+                        }}
+                      >
+                        <BrainIcon style={{ width: '16px', cursor: 'pointer' }} /> Forensics
+                      </Button>
+                    </Link>
                   )}
                 </div>
               );
             },
-          },
-        }),
-      ]);
+          }),
+          helper.simple<'comments'>({
+            title: 'Comments',
+            key: 'comments',
+            hideInTable: true,
+            filtering: false,
+            type: {
+              stringify: (value) => commentsToString(value ?? [], users).trim(),
+            },
+          }),
+          showReason &&
+            helper.derived<TableAlertItem['lastStatusChangeReasons'] | null>({
+              title: 'Reason',
+              id: 'reason',
+              filtering: false,
+              value: (value) => {
+                const { lastStatusChangeReasons, alertStatus } = value;
+                if (
+                  alertStatus == null ||
+                  alertStatus === 'OPEN' ||
+                  alertStatus === 'OPEN_IN_PROGRESS' ||
+                  alertStatus === 'OPEN_ON_HOLD' ||
+                  alertStatus === 'REOPENED'
+                ) {
+                  return null;
+                }
+                if (
+                  alertStatus === 'CLOSED' ||
+                  statusEscalated(alertStatus) ||
+                  statusEscalatedL2(alertStatus) ||
+                  statusInReview(alertStatus)
+                ) {
+                  return lastStatusChangeReasons;
+                }
+                return neverReturn(alertStatus, lastStatusChangeReasons);
+              },
+              type: {
+                render: (lastStatusChangeReasons) => {
+                  if (lastStatusChangeReasons == null) {
+                    return <></>;
+                  }
+                  if (
+                    !lastStatusChangeReasons ||
+                    (lastStatusChangeReasons.reasons.length == 0 &&
+                      !lastStatusChangeReasons.otherReason)
+                  ) {
+                    return <></>;
+                  }
+                  return (
+                    <div className={s.statusChangeReasons}>
+                      <div className={s.tag}>
+                        {lastStatusChangeReasons.reasons.map((reason) => (
+                          <ClosingReasonTag key={reason}>{reason}</ClosingReasonTag>
+                        ))}
+                      </div>
+                      {lastStatusChangeReasons.otherReason && (
+                        <div>
+                          <span>Other Reasons: </span>
+                          {lastStatusChangeReasons.otherReason}
+                        </div>
+                      )}
+                    </div>
+                  );
+                },
+                stringify: (lastStatusChangeReasons) => {
+                  if (lastStatusChangeReasons == null) {
+                    return '';
+                  }
+                  return [
+                    ...(lastStatusChangeReasons?.reasons ?? []),
+                    lastStatusChangeReasons?.otherReason,
+                  ]
+                    .filter(notEmpty)
+                    .join('; ');
+                },
+              },
+            }),
+        ].filter(notEmpty),
+      );
     };
     const col = mergedColumns(
       showUserFilters,
@@ -944,6 +919,7 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
+    showReason,
     alertDetailsPageEnabled,
     showUserFilters,
     handleAlertAssignments,
@@ -955,7 +931,6 @@ export default function AlertTable(props: Props) {
     selectedTxns,
     qaEnabled,
     slaEnabled,
-    showClosingReason,
     qaMode,
     caseId,
     isInReview,
