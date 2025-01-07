@@ -12,9 +12,7 @@
     "deploy:pipeline:actions": "ENV=deploy cdk deploy orca-pipeline --require-approval never",
     "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "aws-login": "npx ts-node ./lib/scripts/aws-login.ts",
-    "synth:pipeline": "cdk synth orca-pipeline",
-    "update-notion-ticket:create": "ts-node scripts/update-notion-ticket.ts create",
-    "update-notion-ticket:merge": "ts-node scripts/update-notion-ticket.ts merge"
+    "synth:pipeline": "cdk synth orca-pipeline"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.441.0",
@@ -43,6 +41,7 @@
   },
   "dependencies": {
     "@flagright/lib": "link:./lib",
+    "@linear/sdk": "^37.0.0",
     "@notionhq/client": "^2.2.14",
     "@slack/web-api": "^7.7.0",
     "@types/lodash": "^4.17.12",

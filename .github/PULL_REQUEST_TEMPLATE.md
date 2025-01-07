@@ -1,7 +1,3 @@
-### Tickets
-
-- Link to Notion ticket
-
 ### Notes
 
 <!-- Describe the changes in a few succinct bullet points -->

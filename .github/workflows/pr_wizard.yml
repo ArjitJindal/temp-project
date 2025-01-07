@@ -28,8 +28,3 @@ jobs:
           cache: "yarn"
           cache-dependency-path: "yarn.lock"
       - run: yarn install --immutable
-      - name: Update Notion ticket
-        run: |
-          BRANCH_NAME=${{ github.event.pull_request.head.ref }} PR_URL=${{ github.event.pull_request.html_url }} npm run update-notion-ticket:create
-        env:
-          NOTION_TOKEN: ${{ secrets.NOTION_TOKEN }}

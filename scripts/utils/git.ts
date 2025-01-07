@@ -51,6 +51,7 @@ export async function getToBeReleasedHeadRefs() {
   )
     .toString()
     .trim()
+
   const prNumbers = execSync(
     `git log --oneline ${lastRelease}..HEAD | grep -oE '\(#[0-9]+\)' | sed 's/[^0-9]*//g'`
   )

@@ -9,4 +9,6 @@ export const STACK_CONSTANTS = {
     'arn:aws:secretsmanager:eu-central-1:073830519512:secret:slackCreds-LrS16B:token',
   GITHUB_TOKEN:
     'arn:aws:secretsmanager:eu-central-1:073830519512:secret:githubCreds-rkDXPR:token',
+  LINEAR_TOKEN:
+    'arn:aws:secretsmanager:eu-central-1:073830519512:secret:linearKey-y9vlvg:apiKey',
 }

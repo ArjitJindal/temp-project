@@ -1,8 +1,8 @@
 import { WebClient } from '@slack/web-api'
 import {
-  getNotionTicketIDByGitRef,
+  getLinearTicketIDByGitRef,
   updateTicketStatusByID,
-} from './utils/notion'
+} from './utils/linear'
 import { getToBeReleasedHeadRefs } from './utils/git'
 
 const slackifyMarkdown = require('slackify-markdown')
@@ -12,13 +12,13 @@ const QA_SLACK_USER_GROUP_ID = 'S074CS7E0EP'
 const READY_TO_TEST_TICKETS_URL =
   'https://www.notion.so/flagright/16d55dfca8e2436c9c7786ab7c62e04e?v=39e46a0c1172475bbb6f763cdd282a0e'
 
-async function updateNotionTickets() {
+async function updateLinearTickets() {
   const headRefs = await getToBeReleasedHeadRefs()
-  const notionTicketIds = headRefs
-    .map(getNotionTicketIDByGitRef)
+  const linearTicketIds = headRefs
+    .map(getLinearTicketIDByGitRef)
     .filter(Boolean) as string[]
 
-  for (const ticketId of notionTicketIds) {
+  for (const ticketId of linearTicketIds) {
     await updateTicketStatusByID(ticketId, 'Ready to Test')
   }
 }
@@ -40,7 +40,7 @@ async function notifySlack() {
 }
 
 async function main() {
-  await updateNotionTickets()
+  await updateLinearTickets()
   await notifySlack()
   console.info('Done')
 }
