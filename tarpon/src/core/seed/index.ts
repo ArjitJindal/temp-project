@@ -22,7 +22,12 @@ export async function seedDemoData(tenantId: string) {
       })
     } catch (error) {
       // error code 60 is returned when the table does not exist
-      if (error instanceof Error && 'code' in error && error.code === 60) {
+      // error code 81 is returned when the database does not exist
+      if (
+        error instanceof Error &&
+        'code' in error &&
+        (error.code == 60 || error.code == 81)
+      ) {
         logger.warn(`Table ${table.table} does not exist`)
       } else {
         logger.warn(`Failed to delete from table ${table.table}: ${error}`)
