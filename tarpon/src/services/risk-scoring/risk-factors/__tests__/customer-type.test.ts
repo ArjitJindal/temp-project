@@ -1,10 +1,16 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { CONSUMER_TYPE_RISK_FACTOR } from '../customer-type'
+import {
+  BUSINESS_TYPE_RISK_FACTOR,
+  CONSUMER_TYPE_RISK_FACTOR,
+} from '../customer-type'
 import { PARAMETER_MIGRATION_MAP } from '..'
-import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
-import { getTestUser } from '@/test-utils/user-test-utils'
+import {
+  TEST_BUSINESS_USER_RISK_PARAMETER,
+  TEST_CONSUMER_USER_RISK_PARAMETER,
+} from '@/test-utils/pulse-test-utils'
+import { getTestBusiness, getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -16,13 +22,13 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 dynamoDbSetupHook()
 describe('Customer Type Risk Factor', () => {
   const tenantId = getTestTenantId()
-  test('V8 result should be equivalent to V2 result', async () => {
-    const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
-    const v8RiskFactor: RiskFactor = {
+  test('V8 result should be equivalent to V2 result for consumer user', async () => {
+    const consumerRiskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
+    const consumerV8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
       riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
-        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskLevelAssignmentValues: consumerRiskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
       }),
@@ -30,7 +36,7 @@ describe('Customer Type Risk Factor', () => {
       logicEntityVariables: [],
       status: 'ACTIVE',
     }
-    const user = { ...getTestUser(), type: 'CONSUMER' }
+    const consumerUser = { ...getTestUser(), type: 'CONSUMER' }
     const mongoDb = await getMongoDbClient()
     const dynamoDb = getDynamoDbClient()
     const riskScoringV2Service = new RiskScoringService(tenantId, {
@@ -46,21 +52,22 @@ describe('Customer Type Risk Factor', () => {
         dynamoDb,
       }
     )
-    const v2Result = await riskScoringV2Service.calculateKrsScore(
-      user,
+    const consumerV2Result = await riskScoringV2Service.calculateKrsScore(
+      consumerUser,
       DEFAULT_CLASSIFICATION_SETTINGS,
-      [riskFactor]
+      [consumerRiskFactor]
     )
-    const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
-      v8RiskFactor,
-      {
-        user,
-        type: 'USER',
-      }
-    )
-    expect(v2Result.score).toEqual(v8Result.score)
+    const consumerV8Result =
+      await riskScoringV8Service.calculateRiskFactorScore(
+        consumerV8RiskFactor,
+        {
+          user: consumerUser,
+          type: 'USER',
+        }
+      )
+    expect(consumerV2Result.score).toEqual(consumerV8Result.score)
   })
-  test('V8 result should handle empty riskLevelAssignmentValues', async () => {
+  test('V8 result should handle empty riskLevelAssignmentValues consumer user', async () => {
     const riskFactor = {
       ...TEST_CONSUMER_USER_RISK_PARAMETER,
       riskLevelAssignmentValues: [], // Empty riskLevelAssignmentValues
@@ -108,7 +115,7 @@ describe('Customer Type Risk Factor', () => {
     )
     expect(v2Result.score).toEqual(v8Result.score)
   })
-  test('V8 result should be able handel empty type', async () => {
+  test('V8 result should be able handel empty type consumer user', async () => {
     const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
 
     const v8RiskFactor: RiskFactor = {
@@ -154,7 +161,7 @@ describe('Customer Type Risk Factor', () => {
     )
     expect(v2Result.score).toEqual(v8Result.score)
   })
-  test('V8 result should be able handel null', async () => {
+  test('V8 result should be able handel null consumer user', async () => {
     const riskFactor = TEST_CONSUMER_USER_RISK_PARAMETER
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
@@ -194,6 +201,164 @@ describe('Customer Type Risk Factor', () => {
       v8RiskFactor,
       {
         user,
+        type: 'USER',
+      }
+    )
+    expect(v2Result.score).toEqual(v8Result.score)
+  })
+  test('V8 result should be equivalent to V2 result for business user', async () => {
+    const businessRiskFactor = {
+      ...TEST_BUSINESS_USER_RISK_PARAMETER,
+      riskLevelAssignmentValues: [
+        {
+          parameterValue: {
+            content: {
+              kind: 'MULTIPLE',
+              values: [
+                {
+                  kind: 'LITERAL',
+                  content: 'REGISTERED',
+                },
+              ],
+            },
+          },
+          riskValue: {
+            type: 'RISK_SCORE',
+            value: 90,
+          },
+        },
+      ] as RiskParameterLevelKeyValue[],
+    }
+    const businessV8RiskFactor: RiskFactor = {
+      id: 'TEST_FACTOR',
+      ...BUSINESS_TYPE_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+        riskLevelAssignmentValues: businessRiskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
+      defaultRiskScore: 90,
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      status: 'ACTIVE',
+    }
+    const businessUser = { ...getTestBusiness(), type: 'BUSINESS' }
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const riskScoringV2Service = new RiskScoringService(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const riskScoringV8Service = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      {
+        mongoDb,
+        dynamoDb,
+      }
+    )
+    const businessV2Result = await riskScoringV2Service.calculateKrsScore(
+      businessUser,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      [businessRiskFactor]
+    )
+    const businessV8Result =
+      await riskScoringV8Service.calculateRiskFactorScore(
+        businessV8RiskFactor,
+        {
+          user: businessUser,
+          type: 'USER',
+        }
+      )
+    expect(businessV2Result.score).toEqual(businessV8Result.score)
+  })
+  test('V8 result should be able handel empty type business user', async () => {
+    const riskFactor = TEST_BUSINESS_USER_RISK_PARAMETER
+
+    const v8RiskFactor: RiskFactor = {
+      id: 'TEST_FACTOR',
+      ...BUSINESS_TYPE_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
+      defaultRiskScore: 90,
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      status: 'ACTIVE',
+    }
+    const businessUser = { ...getTestBusiness(), type: '' }
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const riskScoringV2Service = new RiskScoringService(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const riskScoringV8Service = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      {
+        mongoDb,
+        dynamoDb,
+      }
+    )
+    const v2Result = await riskScoringV2Service.calculateKrsScore(
+      businessUser,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      [riskFactor]
+    )
+    const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
+      v8RiskFactor,
+      {
+        user: businessUser,
+        type: 'USER',
+      }
+    )
+    expect(v2Result.score).toEqual(v8Result.score)
+  })
+  test('V8 result should be able handel null business user', async () => {
+    const riskFactor = TEST_BUSINESS_USER_RISK_PARAMETER
+    const v8RiskFactor: RiskFactor = {
+      id: 'TEST_FACTOR',
+      ...BUSINESS_TYPE_RISK_FACTOR,
+      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
+      defaultRiskScore: 90,
+      logicAggregationVariables: [],
+      logicEntityVariables: [],
+      status: 'ACTIVE',
+    }
+    const businessUser = { ...getTestBusiness(), type: null }
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
+    const riskScoringV2Service = new RiskScoringService(tenantId, {
+      mongoDb,
+      dynamoDb,
+    })
+    const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+    const riskScoringV8Service = new RiskScoringV8Service(
+      tenantId,
+      logicEvaluator,
+      {
+        mongoDb,
+        dynamoDb,
+      }
+    )
+    const v2Result = await riskScoringV2Service.calculateKrsScore(
+      businessUser,
+      DEFAULT_CLASSIFICATION_SETTINGS,
+      [riskFactor]
+    )
+    const v8Result = await riskScoringV8Service.calculateRiskFactorScore(
+      v8RiskFactor,
+      {
+        user: businessUser,
         type: 'USER',
       }
     )

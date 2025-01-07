@@ -17,14 +17,28 @@ const USER_SEGMENT_RISK_FACTOR = (
   type: entityType,
   status: 'INACTIVE',
 })
+const BUSINESSUSER_SEGMENT_RISK_FACTOR = (
+  entityType: RiskEntityType
+): V2V8RiskFactor => ({
+  parameter: 'legalEntity.companyGeneralDetails.userSegment',
+  name: 'User segment',
+  description: 'Risk based on consumer user segment',
+  defaultRiskLevel: 'VERY_HIGH',
+  defaultWeight: 1,
+  logicAggregationVariables: [],
+  logicEntityVariables: [],
+  valueType: 'MULTIPLE',
+  type: entityType,
+  status: 'INACTIVE',
+})
 
 export const CONSUMER_USER_SEGMENT_RISK_FACTOR =
   USER_SEGMENT_RISK_FACTOR('CONSUMER_USER')
 
 export const BUSINESS_USER_SEGMENT_RISK_FACTOR =
-  USER_SEGMENT_RISK_FACTOR('BUSINESS')
+  BUSINESSUSER_SEGMENT_RISK_FACTOR('BUSINESS')
 
-export const userSegmentV8Logic: RiskFactorLogicGenerator = (
+export const consumerUserSegmentV8Logic: RiskFactorLogicGenerator = (
   parameterValue: RiskParameterValue
 ): { logic: any } => {
   return {
@@ -33,6 +47,26 @@ export const userSegmentV8Logic: RiskFactorLogicGenerator = (
         {
           in: [
             { var: 'CONSUMER_USER:userSegment__SENDER' },
+            (parameterValue.content as RiskParameterValueMultiple).values.map(
+              (val) => val.content
+            ),
+          ],
+        },
+      ],
+    },
+  }
+}
+export const businessUserSegmentV8Logic: RiskFactorLogicGenerator = (
+  parameterValue: RiskParameterValue
+): { logic: any } => {
+  return {
+    logic: {
+      and: [
+        {
+          in: [
+            {
+              var: 'BUSINESS_USER:legalEntity-companyGeneralDetails-userSegment__SENDER',
+            },
             (parameterValue.content as RiskParameterValueMultiple).values.map(
               (val) => val.content
             ),

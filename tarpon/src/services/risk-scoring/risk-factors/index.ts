@@ -27,9 +27,34 @@ import {
   V8MigrationParameters,
 } from './types'
 import {
+  BUSINESS_INDUSTRY_RISK_FACTOR,
+  businessIndustryV8Logic,
+} from './business-industry'
+import {
+  BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
+  userRegistrationStatusV8Logic,
+} from './user-registration-status'
+import {
+  BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR,
+  businessRegistrationCountryV8Logic,
+} from './business-registration-country'
+import {
+  BUSINESS_COMPANY_AGE_RISK_FACTOR,
+  companyAgeV8Logic,
+} from './company-age'
+import {
+  BUSINESS_DIRECTORS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  directorsCountryOfNationalityV8Logic,
+} from './directors-country-of-nationality'
+import {
+  BUSINESS_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  shareholdersCountryOfNationalityV8Logic,
+} from './shareholders-country-of-nationality'
+import {
   BUSINESS_USER_SEGMENT_RISK_FACTOR,
+  businessUserSegmentV8Logic,
   CONSUMER_USER_SEGMENT_RISK_FACTOR,
-  userSegmentV8Logic,
+  consumerUserSegmentV8Logic,
 } from './user-segment'
 import {
   CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
@@ -43,6 +68,7 @@ import {
   CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
   sourceOfFundsV8Logic,
 } from './source-of-funds'
+
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 
@@ -50,6 +76,12 @@ import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 export const RISK_FACTORS: V2V8RiskFactor[] = [
   CONSUMER_TYPE_RISK_FACTOR,
   BUSINESS_TYPE_RISK_FACTOR,
+  BUSINESS_INDUSTRY_RISK_FACTOR,
+  BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR,
+  BUSINESS_COMPANY_AGE_RISK_FACTOR,
+  BUSINESS_DIRECTORS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  BUSINESS_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
+  BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
   CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
   CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
   CONSUMER_CUSTOMER_AGE_RISK_FACTOR,
@@ -91,6 +123,30 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
     logicGenerator: customerTypeV8Logic,
   },
   {
+    key: 'legalEntity.companyGeneralDetails.businessIndustry',
+    logicGenerator: businessIndustryV8Logic,
+  },
+  {
+    key: 'legalEntity.companyRegistrationDetails.registrationCountry',
+    logicGenerator: businessRegistrationCountryV8Logic,
+  },
+  {
+    key: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
+    logicGenerator: companyAgeV8Logic,
+  },
+  {
+    key: 'directors',
+    logicGenerator: directorsCountryOfNationalityV8Logic,
+  },
+  {
+    key: 'shareHolders',
+    logicGenerator: shareholdersCountryOfNationalityV8Logic,
+  },
+  {
+    key: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
+    logicGenerator: userRegistrationStatusV8Logic,
+  },
+  {
     key: 'userDetails.countryOfResidence',
     logicGenerator: countryOfResidenceV8Logic,
   },
@@ -104,7 +160,11 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
   },
   {
     key: 'userSegment',
-    logicGenerator: userSegmentV8Logic,
+    logicGenerator: consumerUserSegmentV8Logic,
+  },
+  {
+    key: 'legalEntity.companyGeneralDetails.userSegment',
+    logicGenerator: businessUserSegmentV8Logic,
   },
   {
     key: 'employmentStatus',
