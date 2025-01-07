@@ -159,5 +159,6 @@ export type Config = {
     API_USAGE_GOOGLE_SHEET_ID: string
     POSTHOG_API_KEY?: string
     POSTHOG_HOST?: string
+    FINCEN_SFTP_IP?: string
   }
 }

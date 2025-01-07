@@ -161,6 +161,7 @@ export const jobDecisionHandler = async (
     CASE_SLA_STATUS_REFRESH: 'LAMBDA',
     FIX_RISK_SCORES_FOR_PNB_USERS: 'FARGATE',
     NANGO_DATA_FETCH: 'LAMBDA',
+    FINCEN_REPORT_STATUS_REFRESH: 'LAMBDA',
   }
 
   return {

@@ -104,6 +104,26 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
   }
 }
 
+async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
+  try {
+    await Promise.all(
+      tenantIds.map(async (id) => {
+        await sendBatchJobCommand({
+          type: 'FINCEN_REPORT_STATUS_REFRESH',
+          tenantId: id,
+        })
+      })
+    )
+  } catch (e) {
+    logger.error(
+      `Failed to handle FinCen report status batch job: ${
+        (e as Error)?.message
+      }`,
+      e
+    )
+  }
+}
+
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   // Hack to ensure we query the currency data for viper.
   await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
@@ -112,6 +132,7 @@ export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
   await handleSlaStatusCalculationBatchJob(tenantIds)
   await handleRiskScoringTriggerBatchJob(tenantIds)
   await deleteOldWebhookRetryEvents(tenantIds)
+  await handleFinCenReportStatusBatchJob(tenantIds)
 })
 
 async function deleteOldWebhookRetryEvents(tenantIds: string[]) {

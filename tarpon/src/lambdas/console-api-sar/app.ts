@@ -6,8 +6,7 @@ import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { ReportService } from '@/services/sar/service'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
-import { ask } from '@/utils/openai'
-import { logger } from '@/core/logger'
+import { parseReportXMLResponse } from '@/services/batch-jobs/fincen-report-status-fetch'
 
 export const sarHandler = lambdaApi()(
   async (
@@ -59,22 +58,8 @@ export const sarHandler = lambdaApi()(
     handlers.registerPostReportsReportIdStatus(async (ctx, request) => {
       const status = request.ReportStatusUpdateRequest.status
       let statusInfo = request.ReportStatusUpdateRequest.statusInfo
-      const report = await reportService.getReport(request.reportId)
-      if (
-        report.reportTypeId === 'US-SAR' &&
-        statusInfo.includes('BSAEFilingBatchMessages')
-      ) {
-        try {
-          const result = await ask(
-            `Please transform the following error messages in XML format into a human-readable format. Please only return the transformed output. And the output includes two sections - 1. Batch Status 2. Error Messages.\n---\n${statusInfo}`
-          )
-          statusInfo = result.substring(result.indexOf('Batch Status'))
-        } catch (e) {
-          logger.error(e)
-          statusInfo = `\`\`\`${statusInfo}\`\`\``
-        }
-      }
-
+      const result = await parseReportXMLResponse(statusInfo)
+      statusInfo = result.statusInfo
       await reportService.updateReportStatus(
         request.reportId,
         status,

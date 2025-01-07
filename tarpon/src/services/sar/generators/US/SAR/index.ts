@@ -637,13 +637,48 @@ export class UsSarReportGenerator implements ReportGenerator {
     return [...uniqueIPAddresses]
   }
 
+  public async getAckFileContent(report: Report) {
+    if (this.tenantId.startsWith('flagright')) {
+      const creds = await getSecretByName('fincenCreds')
+      const sftp = new SftpClient()
+      try {
+        await sftp.connect({
+          host: process.env.FINCEN_SFTP_IP,
+          port: 10122,
+          username: creds.username,
+          password: creds.password,
+        })
+        const remoteCwd = await sftp.cwd()
+        logger.info(`Remote dir: ${remoteCwd}`)
+        const remoteFilename = `SARXST.${dayjs(report.createdAt).format(
+          'YYYYMMDDhhmmss'
+        )}.${creds.username}.xml`
+        const localAckFile = `${path.join('/tmp', `${remoteFilename}-ack`)}`
+        logger.info(
+          await sftp.fastGet(
+            path.join(remoteCwd, `Inbox/${remoteFilename}`),
+            localAckFile
+          )
+        )
+        const ackFileContent = fs.readFileSync(localAckFile, 'utf8')
+        logger.info(`Ack file (Inbox/): ${ackFileContent}`)
+        return ackFileContent
+      } catch (e) {
+        logger.warn(e)
+        return ''
+      } finally {
+        await sftp.end()
+      }
+    }
+  }
+
   public async submit(report: Report) {
     if (this.tenantId.startsWith('flagright')) {
       const creds = await getSecretByName('fincenCreds')
       const sftp = new SftpClient()
       try {
         await sftp.connect({
-          host: '166.123.230.128',
+          host: process.env.FINCEN_SFTP_IP,
           port: 10122,
           username: creds.username,
           password: creds.password,

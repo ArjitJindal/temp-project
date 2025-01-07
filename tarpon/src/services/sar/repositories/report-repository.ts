@@ -261,6 +261,26 @@ export class ReportRepository {
       : {}
   }
 
+  public async getReportsByStatus(
+    filterStatus: Array<ReportStatus>,
+    filterJurisdiction?: CountryCode
+  ): Promise<Report[]> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    const filter = this.getConditionsFromParams({
+      filterStatus,
+      filterJurisdiction,
+    })
+    const pipeline: Document[] = [
+      { $match: filter },
+      { $sort: { createdAt: 1 } }, // TODO: only project caseId and status
+    ]
+    const reports = await collection
+      .find<Report>(pipeline, { allowDiskUse: true })
+      .toArray()
+    return reports
+  }
+
   public async getReports(
     params: DefaultApiGetReportsRequest
   ): Promise<{ total: number; items: Report[] }> {
@@ -332,6 +352,33 @@ export class ReportRepository {
     await collection.updateOne(
       { id: reportId },
       { $set: { status, statusInfo } }
+    )
+    await this.addOrUpdateSarItemsInDynamo(reportId, {
+      reportId,
+      status,
+      region: '' as CountryCode, // As the id should be already present so we only update the status so region is not needed
+    })
+  }
+
+  public async updateReportAck(
+    reportId: string,
+    status: ReportStatus,
+    xmlAck: string,
+    parsedAck: string,
+    lastAckFetchTime: number
+  ): Promise<void> {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    await collection.updateOne(
+      { id: reportId },
+      {
+        $set: {
+          status,
+          rawStatusInfo: xmlAck,
+          statusInfo: parsedAck,
+          lastAckFetchTime,
+        },
+      }
     )
     await this.addOrUpdateSarItemsInDynamo(reportId, {
       reportId,

@@ -330,6 +330,11 @@ export type WebhookRetryBatchJob = {
   tenantId: string
 }
 
+export type FinCenReportStatusRefreshBatchJob = {
+  type: 'FINCEN_REPORT_STATUS_REFRESH'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -364,6 +369,7 @@ export type BatchJob =
   | FixRiskScoresForPnbUsers
   | WebhookRetryBatchJob
   | NangoDataFetchBatchJob
+  | FinCenReportStatusRefreshBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

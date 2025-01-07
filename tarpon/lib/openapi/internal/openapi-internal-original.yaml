@@ -14582,6 +14582,19 @@ components:
         - SUBMISSION_ACCEPTED
         - SUBMISSION_REJECTED
         - SUBMISSION_SUCCESSFUL
+    FincenReportStatus:
+      type: string
+      title: FincenReportStatus
+      enum:
+        - RECEIVED
+        - ACCEPTED
+        - TRANSMITTED
+        - ACKNOWLEDGED
+        - ACCEPTED_WITH_WARNINGS
+        - TRANSMITTED_WITH_WARNINGS
+        - REJECTED
+        - ACKNOWLEDGE_FAILED
+        - HOLD
     Report:
       title: Report
       type: object
@@ -14645,6 +14658,10 @@ components:
           oneOf:
             - $ref: '#/components/schemas/InternalConsumerUser'
             - $ref: '#/components/schemas/InternalBusinessUser'
+        rawStatusInfo:
+          type: string
+        lastAckFetchTime:
+          type: number
     ReportParameters:
       type: object
       properties:
