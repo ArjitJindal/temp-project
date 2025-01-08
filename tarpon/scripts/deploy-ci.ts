@@ -74,6 +74,7 @@ const main = async () => {
   }
 
   if (synth) {
+    execSync('yarn openapi:augment', { stdio: 'inherit' })
     execSync(`npx cdk synth --quiet ${config.stackName}`, { stdio: 'inherit' })
   }
 
