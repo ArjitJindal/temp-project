@@ -29,22 +29,4 @@ jobs:
           aws-access-key: ${{ secrets.AWS_PIPELINE_ACCESS_KEY }}
           aws-secret-key: ${{ secrets.AWS_PIPELINE_SECRET_KEY }}
           pipeline-name: "orca-pipeline"
-  notion:
-    if: github.event.pull_request.merged == true
-    strategy:
-      matrix:
-        node-version: [18.x]
-    runs-on: ubuntu-20.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - name: Corepack enable
-        run: corepack enable && yarn set version 4.0.2
-      - name: Use Node.js 18x
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-          cache: "yarn"
-          cache-dependency-path: "yarn.lock"
-      - run: yarn install --immutable
         
