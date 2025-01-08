@@ -276,7 +276,7 @@ export class ReportRepository {
       { $sort: { createdAt: 1 } }, // TODO: only project caseId and status
     ]
     const reports = await collection
-      .find<Report>(pipeline, { allowDiskUse: true })
+      .aggregate<Report>(pipeline, { allowDiskUse: true })
       .toArray()
     return reports
   }
