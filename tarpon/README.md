@@ -130,8 +130,34 @@ cdk bootstrap --profile <profileName>
 
 Then you can deploy to dev like so:
 
+To deploy to dev
+
 ```bash
-npm run deploy:dev
+npm run deploy -- --stage=dev --region=eu-1
+```
+
+To deploy to sandbox asia-1
+
+```bash
+npm run deploy -- --stage=sandbox --region=asia-1
+```
+
+To deploy to sandbox eu-1
+
+```bash
+npm run deploy -- --stage=sandbox --region=eu-1
+```
+
+To deploy to prod eu-1
+
+```bash
+npm run deploy -- --stage=prod --region=eu-1
+```
+
+To deploy clean in any environment
+
+```bash
+npm run deploy -- --stage=dev --region=eu-1 --require-approval=never --clean
 ```
 
 To deploy your PR to a QA environment, add a comment on your PR like:

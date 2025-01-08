@@ -67,10 +67,8 @@ Setup [tarpon](https://github.com/flagright/tarpon) package in you local. Set up
 
 Summary, after Tarpon dependencies are setup (including local DDB instance and MongoDB), in the `tarpon` repo:
 
-1. `npm run start-local-ddb`
-2. `npm run start-local-mongodb`
-3. `npm run synth:local`
-4. `npm run start-local-api`
+1. `npm run dev:api` in `tarpon` repo
+2. `yarn dev` in `phytoplankton-console` repo
 
 ### Deployment
 

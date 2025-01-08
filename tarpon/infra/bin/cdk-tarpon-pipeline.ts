@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import * as cdk from 'aws-cdk-lib'
-import {Stack, Tags} from 'aws-cdk-lib'
+import { Stack, Tags } from 'aws-cdk-lib'
 import { config as devConfig } from '@flagright/lib/config/config-dev'
 import { isQaEnv } from '@flagright/lib/qa'
 import { getTarponConfig } from '@flagright/lib/constants/config'
@@ -26,8 +26,7 @@ if (process.env.ENV === 'dev' && process.env.TYPE === 'canary') {
     `${stage}-tarpon${suffix}`,
     getTarponConfig(stage, region)
   )
-  Tags.of(stack).add('deployment', 'tarpon');
-
+  Tags.of(stack).add('deployment', 'tarpon')
 } else {
   new Stack(app, 'dummy-stack')
 }

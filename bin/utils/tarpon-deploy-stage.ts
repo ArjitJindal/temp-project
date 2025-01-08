@@ -21,7 +21,7 @@ export const tarponDeployStage = (
 ) => {
   const env = config.stage + (config.region ? `:${config.region}` : '')
   const shouldReleaseSentry = config.stage === 'sandbox'
-  const deployCommand = `yarn run deploy:${config.stage} ${config.stage != 'dev' ? `--region=${config.region}` : ''}`
+  const deployCommand = `yarn run deploy -- --require-approval=never --stage=${config.stage} --region=${config.region}`
   const synthCommand = `yarn run synth:${config.stage} ${config.stage != 'dev' ? `--region=${config.region}` : ''}`
   return new codebuild.PipelineProject(scope, `TarponDeploy-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
@@ -67,6 +67,7 @@ export const tarponDeployStage = (
                   'cd ../nango-integrations',
                   'yarn install',
                   'npm run generate',
+                  // Nango deployment
                   `npm run deploy:${config.stage}`,
                 ]
               : []),
