@@ -5336,6 +5336,26 @@ components:
           type: string
         userId:
           type: string
+    ListUpdatedDetails:
+      title: ListUpdatedDetails
+      type: object
+      properties:
+        listId:
+          type: string
+        action:
+          type: string
+          enum:
+            - SET
+            - UNSET
+            - CLEAR
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListItem'
+      required:
+        - listId
+        - action
+        - items
     WebhookEvent:
       title: WebhookEvent
       allOf:

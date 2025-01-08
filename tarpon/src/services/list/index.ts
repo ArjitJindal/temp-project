@@ -40,6 +40,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getUserName } from '@/utils/helpers'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
+import { ListUpdatedDetails } from '@/@types/openapi-public/ListUpdatedDetails'
 
 export const METADATA_USER_FULL_NAME = 'userFullName'
 
@@ -368,10 +369,4 @@ export class ListService {
     }
     await sendWebhookTasks<ListUpdatedDetails>(this.tenantId, [webhookTask])
   }
-}
-
-interface ListUpdatedDetails {
-  listId: string
-  action: 'SET' | 'UNSET' | 'CLEAR'
-  items: ListItem[]
 }
