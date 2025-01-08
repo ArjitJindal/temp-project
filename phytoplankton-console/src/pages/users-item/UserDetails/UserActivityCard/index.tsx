@@ -30,6 +30,10 @@ import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityBy
 import { FormValues } from '@/components/CommentEditor';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  ActivityLogFilterParams,
+  DEFAULT_ACTIVITY_LOG_PARAMS,
+} from '@/pages/case-management-item/CaseDetails';
 
 interface Props {
   user: InternalConsumerUser | InternalBusinessUser;
@@ -115,7 +119,8 @@ export default function UserActivityCard(props: Props) {
   );
 
   return (
-    <ActivityCard
+    <ActivityCard<ActivityLogFilterParams>
+      defaultActivityLogParams={DEFAULT_ACTIVITY_LOG_PARAMS}
       logs={{
         request: async (params) => {
           const { filterCaseStatus, filterAlertStatus, filterActivityBy } = params;

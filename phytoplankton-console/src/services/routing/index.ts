@@ -108,6 +108,12 @@ export function useRoutes(): RouteItem[] {
             permissions: ['case-management:case-details:read'],
           },
           {
+            path: '/case-management/alerts/:id/:tab',
+            component: AlertItemPage,
+            name: 'alert-item',
+            permissions: ['case-management:case-details:read'],
+          },
+          {
             path: '/case-management/case/:id/:tab',
             component: CaseManagementItemPage,
             name: 'item-tab',
@@ -603,7 +609,7 @@ export function useRoutes(): RouteItem[] {
       },
       // Redirect any path starting with /sanctions to /screening
       {
-        path: '/sanctions*',
+        path: '/sanctions/*',
         name: 'sanctions-redirect',
         hideInMenu: true,
         routes: [

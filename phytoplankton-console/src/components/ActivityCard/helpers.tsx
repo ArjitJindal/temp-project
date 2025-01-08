@@ -1,14 +1,16 @@
-import { ReactElement } from 'react';
+import React, { ReactElement } from 'react';
 import { capitalize, has } from 'lodash';
 import { getRiskLevelFromScore } from '@flagright/lib/utils';
 import { firstLetterUpper, humanizeAuto } from '@flagright/lib/utils/humanize';
 import { LogItemData } from './LogCard/LogContainer/LogItem';
 import { Account, AuditLog, Case, CaseStatus, RiskClassificationScore } from '@/apis';
-import { DEFAULT_DATE_FORMAT, dayjs } from '@/utils/dayjs';
+import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import { RISK_LEVEL_LABELS } from '@/utils/risk-levels';
 import { formatDuration, getDuration } from '@/utils/time-utils';
 import { getDisplayedUserInfo } from '@/utils/user-utils';
 import { statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
+import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
+import Avatar from '@/components/library/Avatar';
 
 export const isActionUpdate = (log: AuditLog): boolean => {
   return log.action === 'UPDATE';
@@ -694,4 +696,68 @@ export const checkIfTransactions = (log: AuditLog) => {
 export const getEscalatedTransactions = (log: AuditLog) => {
   const transactions = log.newImage.updatedTransactions;
   return transactions;
+};
+
+export const getLogData = function (
+  logs: AuditLog[],
+  users: { [userId: string]: Account },
+  type: 'USER' | 'CASE',
+  riskClassificationValues: Array<RiskClassificationScore>,
+): LogItemData[] {
+  const logItemData: LogItemData[] = logs
+    .map((log) => {
+      let currentUser: Account | null = null;
+      if (log?.user?.id && users[log?.user?.id]) {
+        currentUser = users[log?.user?.id];
+      }
+      const getIcon = (type: string) => {
+        return type === 'CASE' ? (
+          <CaseIcon width={20} height={20} />
+        ) : (
+          <Avatar size="small" user={currentUser} />
+        );
+      };
+
+      const createStatement = getCreateStatement(log, users, type, riskClassificationValues);
+      if (isActionUpdate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon('USER'),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionCreate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon(type),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionEscalate(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon('CASE'),
+              statement: createStatement,
+            }
+          : null;
+      } else if (isActionDelete(log)) {
+        return createStatement
+          ? {
+              timestamp: log.timestamp,
+              user: log.user,
+              icon: getIcon(type),
+              statement: createStatement,
+            }
+          : null;
+      }
+      return null;
+    })
+    .filter((log) => log !== null) as LogItemData[];
+  return logItemData;
 };

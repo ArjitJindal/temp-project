@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { compact, startCase } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
-import { SanctionsHitsTableParams } from '../ScreeningMatchList/helpers';
 import SearchResultDetailsDrawer from './SearchResultDetailsDrawer';
 import s from './index.module.less';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -38,6 +37,7 @@ import {
 } from '@/utils/asyncResource';
 import UpdatedTag from '@/components/library/Tag/UpdatedTag';
 import { SanctionsHit } from '@/apis';
+import { SanctionsHitsTableParams } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 
 interface Props {
   tableRef?: React.Ref<TableRefType>;

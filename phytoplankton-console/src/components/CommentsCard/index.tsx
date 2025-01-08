@@ -31,7 +31,7 @@ interface Props {
     commentFormValues: CommentEditorFormValues,
     groupId: string,
   ) => Promise<ApiComment>;
-  onCommentAdded: (
+  onCommentAdded?: (
     newComment: ApiComment,
     commentType: CommentType,
     groupId: string,
@@ -104,7 +104,7 @@ export default function CommentsCard(props: Props) {
                             handleAddComment(commentFormValues, group.id)
                           }
                           onCommentAdded={(newComment) =>
-                            onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                            onCommentAdded?.(newComment, CommentType.COMMENT, group.id)
                           }
                           key="comments-component"
                         />
@@ -122,7 +122,7 @@ export default function CommentsCard(props: Props) {
                             handleAddComment(commentFormValues, group.id)
                           }
                           onCommentAdded={(newComment) =>
-                            onCommentAdded(newComment, CommentType.COMMENT, group.id)
+                            onCommentAdded?.(newComment, CommentType.COMMENT, group.id)
                           }
                         />
                       </div>

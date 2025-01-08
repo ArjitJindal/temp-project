@@ -99,7 +99,7 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import {
   updateSanctionsData,
   useChangeSanctionsHitsStatusMutation,
-} from '@/components/ScreeningMatchList/helpers';
+} from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;

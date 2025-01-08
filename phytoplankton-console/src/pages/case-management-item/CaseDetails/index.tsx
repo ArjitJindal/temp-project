@@ -7,17 +7,15 @@ import InsightsCard from './InsightsCard';
 import { UI_SETTINGS } from './ui-settings';
 import style from './index.module.less';
 import { CaseTransactionsCard } from './CaseTransactionsCard';
-import CaseIcon from '@/components/ui/icons/Remix/business/stack-line.react.svg';
 import {
-  Account,
   Alert,
-  AuditLog,
+  AlertStatus,
   Case,
+  CaseStatus,
   Comment as ApiComment,
+  Comment,
   InternalBusinessUser,
   InternalConsumerUser,
-  RiskClassificationScore,
-  Comment,
 } from '@/apis';
 import UserDetails from '@/pages/users-item/UserDetails';
 import { useScrollToFocus } from '@/utils/hooks';
@@ -41,27 +39,36 @@ import CRMMonitoring from '@/pages/users-item/UserDetails/CRMMonitoring';
 import { notEmpty } from '@/utils/array';
 import { isExistedUser } from '@/utils/api/users';
 import PaymentIdentifierDetailsCard from '@/pages/case-management-item/CaseDetails/PaymentIdentifierDetailsCard';
-import ActivityCard from '@/components/ActivityCard';
+import ActivityCard, { getLogData } from '@/components/ActivityCard';
 import { TabItem } from '@/components/library/Tabs';
 import StatusFilterButton from '@/components/ActivityCard/Filters/StatusFilterButton';
 import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearchFIlter';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
-import {
-  getCreateStatement,
-  isActionCreate,
-  isActionDelete,
-  isActionEscalate,
-  isActionUpdate,
-} from '@/components/ActivityCard/helpers';
 import { CommentType, useUsers } from '@/utils/user-utils';
-import Avatar from '@/components/library/Avatar';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
+
+export interface ActivityLogFilterParams {
+  filterActivityBy?: string[];
+  filterCaseStatus?: CaseStatus[];
+  filterAlertStatus?: AlertStatus[];
+  alertId?: string;
+  case?: Case;
+  user?: InternalConsumerUser | InternalBusinessUser;
+}
+
+export const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
+  filterActivityBy: undefined,
+  filterCaseStatus: undefined,
+  filterAlertStatus: undefined,
+  alertId: undefined,
+  case: undefined,
+  user: undefined,
+};
 
 interface Props {
   caseItem: Case;
@@ -335,6 +342,7 @@ function useTabs(
         <AsyncResourceRenderer resource={alertCommentsRes}>
           {(alertCommentsGroups) => (
             <ActivityCard
+              defaultActivityLogParams={DEFAULT_ACTIVITY_LOG_PARAMS}
               logs={{
                 request: async (params) => {
                   const { alertId, filterCaseStatus, filterAlertStatus, filterActivityBy } = params;
@@ -431,69 +439,5 @@ export function getEntityIds(caseItem?: Case): string[] {
   }
   return [...ids].filter(notEmpty);
 }
-
-const getLogData = (
-  logs: AuditLog[],
-  users: { [userId: string]: Account },
-  type: 'USER' | 'CASE',
-  riskClassificationValues: Array<RiskClassificationScore>,
-): LogItemData[] => {
-  const logItemData: LogItemData[] = logs
-    .map((log) => {
-      let currentUser: Account | null = null;
-      if (log?.user?.id && users[log?.user?.id]) {
-        currentUser = users[log?.user?.id];
-      }
-      const getIcon = (type: string) => {
-        return type === 'CASE' ? (
-          <CaseIcon width={20} height={20} />
-        ) : (
-          <Avatar size="small" user={currentUser} />
-        );
-      };
-
-      const createStatement = getCreateStatement(log, users, type, riskClassificationValues);
-      if (isActionUpdate(log)) {
-        return createStatement
-          ? {
-              timestamp: log.timestamp,
-              user: log.user,
-              icon: getIcon('USER'),
-              statement: createStatement,
-            }
-          : null;
-      } else if (isActionCreate(log)) {
-        return createStatement
-          ? {
-              timestamp: log.timestamp,
-              user: log.user,
-              icon: getIcon(type),
-              statement: createStatement,
-            }
-          : null;
-      } else if (isActionEscalate(log)) {
-        return createStatement
-          ? {
-              timestamp: log.timestamp,
-              user: log.user,
-              icon: getIcon('CASE'),
-              statement: createStatement,
-            }
-          : null;
-      } else if (isActionDelete(log)) {
-        return createStatement
-          ? {
-              timestamp: log.timestamp,
-              user: log.user,
-              icon: getIcon(type),
-              statement: createStatement,
-            }
-          : null;
-      }
-      return null;
-    })
-    .filter((log) => log !== null) as LogItemData[];
-  return logItemData;
-};
 
 export default CaseDetails;

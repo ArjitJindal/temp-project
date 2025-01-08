@@ -1,0 +1,375 @@
+import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import HitsTab from './HitsTab';
+import Checklist from './ChecklistTab';
+import TransactionsTab from './TransactionsTab';
+import CommentsTab from './CommentsTab';
+import ActivityTab from './ActivityTab';
+import { TabItem } from '@/components/library/Tabs';
+import { useApi } from '@/api';
+import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
+import {
+  ALERT_ITEM_COMMENTS,
+  SANCTIONS_HITS_ALL,
+  SANCTIONS_HITS_SEARCH,
+} from '@/utils/queries/keys';
+import { AllParams } from '@/components/library/Table/types';
+import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import { getOr, map } from '@/utils/asyncResource';
+import { notEmpty } from '@/utils/array';
+import {
+  Alert,
+  SanctionHitStatusUpdateRequest,
+  SanctionsHit,
+  SanctionsHitListResponse,
+  SanctionsHitStatus,
+} from '@/apis';
+import { Mutation, QueryResult } from '@/utils/queries/types';
+import { useMutation } from '@/utils/queries/mutations/hooks';
+import { message } from '@/components/library/Message';
+import { getErrorMessage } from '@/utils/lang';
+
+export enum AlertTabs {
+  TRANSACTIONS = 'transactions',
+  CHECKLIST = 'checklist',
+  COMMENTS = 'comments',
+  ACTIVITY = 'activity',
+  MATCH_LIST = 'match_list',
+  CLEARED_MATCH_LIST = 'cleared_match_list',
+}
+
+const DEFAULT_TAB_LISTS: AlertTabs[] = [
+  AlertTabs.TRANSACTIONS,
+  AlertTabs.CHECKLIST,
+  AlertTabs.COMMENTS,
+  AlertTabs.ACTIVITY,
+];
+
+const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
+  AlertTabs.MATCH_LIST,
+  AlertTabs.CLEARED_MATCH_LIST,
+  AlertTabs.CHECKLIST,
+  AlertTabs.TRANSACTIONS,
+  AlertTabs.COMMENTS,
+  AlertTabs.ACTIVITY,
+];
+
+export interface SanctionsHitsTableParams {
+  statuses?: SanctionsHitStatus[];
+  searchIds?: string[];
+  searchTerm?: string;
+  fuzziness?: number;
+}
+
+export function useSanctionHitsQuery(
+  params: AllParams<SanctionsHitsTableParams>,
+  alertId?: string,
+  enabled?: boolean,
+): QueryResult<CursorPaginatedData<SanctionsHit>> {
+  const api = useApi();
+  const filters = {
+    alertId: alertId,
+    filterStatus: params.statuses ?? ['OPEN' as const],
+    filterSearchId: params.searchIds,
+  };
+  return useCursorQuery(
+    SANCTIONS_HITS_SEARCH({ ...filters, ...params }),
+    async (paginationParams): Promise<SanctionsHitListResponse> => {
+      if (!filters.alertId) {
+        return {
+          items: [],
+          next: '',
+          prev: '',
+          last: '',
+          hasNext: false,
+          hasPrev: false,
+          count: 0,
+          limit: 100000,
+        };
+      }
+      const request = {
+        ...filters,
+        ...params,
+        ...paginationParams,
+      };
+      return await api.searchSanctionsHits({
+        ...request,
+        start: request.from,
+      });
+    },
+    {
+      enabled: enabled !== false,
+    },
+  );
+}
+
+export function useChangeSanctionsHitsStatusMutation(): {
+  changeHitsStatusMutation: Mutation<
+    unknown,
+    unknown,
+    {
+      toChange: { alertId: string; sanctionHitIds: string[] }[];
+      updates: SanctionHitStatusUpdateRequest;
+    }
+  >;
+} {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  const changeHitsStatusMutation = useMutation<
+    unknown,
+    unknown,
+    {
+      toChange: { alertId: string; sanctionHitIds: string[] }[];
+      updates: SanctionHitStatusUpdateRequest;
+    },
+    unknown
+  >(
+    async (variables: {
+      toChange: { alertId: string; sanctionHitIds: string[] }[];
+      updates: SanctionHitStatusUpdateRequest;
+    }) => {
+      const hideMessage = message.loading(`Saving...`);
+      const { toChange, updates } = variables;
+      try {
+        for (const { alertId, sanctionHitIds } of toChange) {
+          await api.changeSanctionsHitsStatus({
+            SanctionHitsStatusUpdateRequest: {
+              alertId,
+              sanctionHitIds,
+              updates,
+            },
+          });
+        }
+      } finally {
+        hideMessage();
+      }
+    },
+    {
+      onError: (e) => {
+        message.error(`Failed to update hits! ${getErrorMessage(e)}`);
+      },
+      onSuccess: async (_, variables) => {
+        message.success(`Done!`);
+        await queryClient.invalidateQueries(SANCTIONS_HITS_ALL());
+        for (const { alertId } of variables.toChange) {
+          await queryClient.invalidateQueries(ALERT_ITEM_COMMENTS(alertId));
+        }
+      },
+    },
+  );
+
+  return {
+    changeHitsStatusMutation,
+  };
+}
+
+type SelectedSanctionHits = {
+  [alertId: string]: {
+    id: string;
+    status?: SanctionsHitStatus;
+  }[];
+};
+
+export const updateSanctionsData = (
+  formValues: SanctionHitStatusUpdateRequest & { newStatus: SanctionsHitStatus },
+  selectedSanctionHits: SelectedSanctionHits,
+) => {
+  return {
+    toChange: Object.entries(selectedSanctionHits).map(([alertId, sanctionHitIds]) => ({
+      alertId,
+      sanctionHitIds: sanctionHitIds.map(({ id }) => id),
+    })),
+    updates: {
+      comment: formValues.comment,
+      files: formValues.files,
+      reasons: formValues.reasons,
+      whitelistHits: formValues.whitelistHits,
+      removeHitsFromWhitelist: formValues.removeHitsFromWhitelist,
+      status: formValues.newStatus,
+    },
+  };
+};
+
+interface Props {
+  alert?: Alert;
+  caseUserId: string;
+  escalatedTransactionIds?: string[];
+  selectedTransactionIds?: string[];
+  onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
+  selectedSanctionsHitsIds?: string[];
+  sanctionsSearchIdFilter?: string;
+  onSanctionsHitSelect?: (
+    alertId: string,
+    sanctionsHitsIds: string[],
+    statuses: SanctionsHitStatus,
+  ) => void;
+  onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
+}
+
+export function useAlertTabs(props: Props): TabItem[] {
+  const {
+    sanctionsSearchIdFilter,
+    alert,
+    caseUserId,
+    selectedSanctionsHitsIds,
+    onSanctionsHitSelect,
+    escalatedTransactionIds,
+    selectedTransactionIds,
+    onTransactionSelect,
+    onSanctionsHitsChangeStatus,
+  } = props;
+
+  const tabList =
+    alert?.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId
+      ? SCREENING_ALERT_TAB_LISTS
+      : DEFAULT_TAB_LISTS;
+
+  const alertId = alert?.alertId ?? '';
+
+  const [openTableParams, setOpenTableParams] = useState<AllParams<SanctionsHitsTableParams>>({
+    ...DEFAULT_PARAMS_STATE,
+    statuses: ['OPEN'],
+  });
+  const [clearedTableParams, setClearedTableParams] = useState<AllParams<SanctionsHitsTableParams>>(
+    {
+      ...DEFAULT_PARAMS_STATE,
+      statuses: ['CLEARED'],
+    },
+  );
+
+  // Data requests
+  const openHitsQueryResults = useSanctionHitsQuery(
+    {
+      ...openTableParams,
+      searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+    },
+    alertId,
+    tabList.includes(AlertTabs.MATCH_LIST),
+  );
+  const clearedHitsQueryResults = useSanctionHitsQuery(
+    {
+      ...clearedTableParams,
+      searchIds: sanctionsSearchIdFilter ? [sanctionsSearchIdFilter] : undefined,
+    },
+    alertId,
+    tabList.includes(AlertTabs.CLEARED_MATCH_LIST),
+  );
+
+  const openHitsCount = getOr(
+    map(openHitsQueryResults.data, (x) => x.count),
+    null,
+  );
+  const clearedHitsCount = getOr(
+    map(clearedHitsQueryResults.data, (x) => x.count),
+    null,
+  );
+
+  const tabs: TabItem[] = useMemo(() => {
+    return tabList
+      .map((tab) => {
+        if (tab === AlertTabs.TRANSACTIONS) {
+          if (alert != null) {
+            return {
+              title: 'Transactions details',
+              key: tab,
+              children: (
+                <TransactionsTab
+                  alert={alert}
+                  caseUserId={caseUserId}
+                  selectedTransactionIds={selectedTransactionIds}
+                  onTransactionSelect={onTransactionSelect}
+                  escalatedTransactionIds={escalatedTransactionIds}
+                />
+              ),
+            };
+          }
+        }
+        if (tab === AlertTabs.CHECKLIST) {
+          if (alert?.ruleChecklistTemplateId && alert?.alertId) {
+            return {
+              title: 'Checklist',
+              key: tab,
+              children: <Checklist alert={alert} />,
+            };
+          }
+        }
+        if (tab === AlertTabs.COMMENTS) {
+          return {
+            title: 'Comments',
+            key: tab,
+            children: <CommentsTab alert={alert} />,
+          };
+        }
+        if (tab === AlertTabs.ACTIVITY) {
+          return {
+            title: 'Activity',
+            key: tab,
+            children: <ActivityTab alert={alert} />,
+          };
+        }
+        if (tab === AlertTabs.MATCH_LIST) {
+          return {
+            title: 'Human review' + (openHitsCount != null ? ` (${openHitsCount})` : ''),
+            key: tab,
+            children: (
+              <HitsTab
+                alert={alert}
+                params={[openTableParams, setOpenTableParams]}
+                selectedSanctionsHitsIds={selectedSanctionsHitsIds}
+                onSanctionsHitSelect={(sanctionsHitsIds) => {
+                  if (!alert?.alertId) {
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'OPEN');
+                }}
+                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+                queryResult={openHitsQueryResults}
+              />
+            ),
+          };
+        }
+        if (tab === AlertTabs.CLEARED_MATCH_LIST) {
+          return {
+            title: 'Cleared hits' + (clearedHitsCount != null ? ` (${clearedHitsCount})` : ''),
+            key: tab,
+            children: (
+              <HitsTab
+                alert={alert}
+                params={[clearedTableParams, setClearedTableParams]}
+                selectedSanctionsHitsIds={selectedSanctionsHitsIds}
+                onSanctionsHitSelect={(sanctionsHitsIds) => {
+                  if (!alert?.alertId) {
+                    return;
+                  }
+                  onSanctionsHitSelect?.(alert.alertId, sanctionsHitsIds, 'CLEARED');
+                }}
+                onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
+                queryResult={clearedHitsQueryResults}
+              />
+            ),
+          };
+        }
+        return null;
+      })
+      .filter(notEmpty);
+  }, [
+    tabList,
+    caseUserId,
+    openHitsCount,
+    openHitsQueryResults,
+    selectedSanctionsHitsIds,
+    onSanctionsHitSelect,
+    openTableParams,
+    onSanctionsHitsChangeStatus,
+    clearedHitsCount,
+    clearedHitsQueryResults,
+    clearedTableParams,
+    alert,
+    selectedTransactionIds,
+    onTransactionSelect,
+    escalatedTransactionIds,
+  ]);
+
+  return tabs;
+}

@@ -4,29 +4,22 @@ import ScopeSelector, { ScopeSelectorValue } from './ScopeSelector';
 import s from './index.module.less';
 import LogCard from './LogCard';
 import * as Card from '@/components/ui/Card';
-import {
-  AlertStatus,
-  Case,
-  CaseStatus,
-  Comment,
-  InternalBusinessUser,
-  InternalConsumerUser,
-  Permission,
-} from '@/apis';
+import { Comment, Permission } from '@/apis';
 import { Mutation } from '@/utils/queries/types';
 import { StatePair } from '@/utils/state';
 import { LogItemData } from '@/components/ActivityCard/LogCard/LogContainer/LogItem';
-import { map, getOr, AsyncResource } from '@/utils/asyncResource';
+import { AsyncResource, getOr, map } from '@/utils/asyncResource';
 import DownloadFilesButton from '@/components/library/DownloadFilesButton';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
 import { CommentType } from '@/utils/user-utils';
 
 export type Tab = ScopeSelectorValue;
 
-interface Props {
+interface Props<FilterParams> {
+  defaultActivityLogParams: FilterParams;
   logs: {
-    request: (params: ActivityLogFilterParams) => Promise<LogItemData[]>;
-    filters?: (params: StatePair<ActivityLogFilterParams>) => React.ReactNode;
+    request: (params: FilterParams) => Promise<LogItemData[]>;
+    filters?: (params: StatePair<FilterParams>) => React.ReactNode;
   };
   comments: {
     dataRes: AsyncResource<CommentGroup[]>;
@@ -35,33 +28,15 @@ interface Props {
       commentFormValues: CommentEditorFormValues,
       groupId: string,
     ) => Promise<Comment>;
-    onCommentAdded: (newComment: Comment, commentType: CommentType, groupId: string) => void;
+    onCommentAdded?: (newComment: Comment, commentType: CommentType, groupId: string) => void;
     writePermissions: Permission[];
   };
 }
 
-export interface ActivityLogFilterParams {
-  filterActivityBy?: string[];
-  filterCaseStatus?: CaseStatus[];
-  filterAlertStatus?: AlertStatus[];
-  alertId?: string;
-  case?: Case;
-  user?: InternalConsumerUser | InternalBusinessUser;
-}
-
-const DEFAULT_ACTIVITY_LOG_PARAMS: ActivityLogFilterParams = {
-  filterActivityBy: undefined,
-  filterCaseStatus: undefined,
-  filterAlertStatus: undefined,
-  alertId: undefined,
-  case: undefined,
-  user: undefined,
-};
-
-export default function ActivityCard(props: Props) {
-  const { comments, logs } = props;
+export default function ActivityCard<FilterParams>(props: Props<FilterParams>) {
+  const { defaultActivityLogParams, comments, logs } = props;
   const [selectedSection, setSelectedSection] = useState<Tab>('COMMENTS');
-  const [params, setParams] = useState<ActivityLogFilterParams>(DEFAULT_ACTIVITY_LOG_PARAMS);
+  const [params, setParams] = useState<FilterParams>(defaultActivityLogParams);
 
   const totalCommentsLengthRes = map(comments.dataRes, (comments) =>
     comments.reduce((acc, group) => acc + group.comments.length, 0),
@@ -94,7 +69,9 @@ export default function ActivityCard(props: Props) {
             writePermissions={comments.writePermissions}
           />
         )}
-        {selectedSection === 'LOG' && <LogCard logQueryRequest={logs.request} params={params} />}
+        {selectedSection === 'LOG' && (
+          <LogCard<FilterParams> logQueryRequest={logs.request} params={params} />
+        )}
       </Card.Section>
     </Card.Root>
   );
@@ -104,3 +81,5 @@ const getAllAttachments = (commentsGroup: CommentGroup[]) => {
   const allComments = commentsGroup.flatMap((commentGroup) => commentGroup.comments);
   return allComments.filter((comment) => comment.files != null).flatMap((comment) => comment.files);
 };
+
+export { getLogData } from '@/components/ActivityCard/helpers';

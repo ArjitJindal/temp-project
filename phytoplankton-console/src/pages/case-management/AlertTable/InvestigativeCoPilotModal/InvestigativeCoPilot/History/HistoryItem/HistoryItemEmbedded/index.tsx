@@ -10,17 +10,17 @@ import { getOr } from '@/utils/asyncResource';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { ALERT_ITEM } from '@/utils/queries/keys';
-import {
-  SanctionsHitsTableParams,
-  updateSanctionsData,
-  useChangeSanctionsHitsStatusMutation,
-  useSanctionHitsQuery,
-} from '@/components/ScreeningMatchList/helpers';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import SanctionsHitStatusChangeModal from '@/pages/case-management/AlertTable/SanctionsHitStatusChangeModal';
 import Button from '@/components/library/Button';
 import Portal from '@/components/library/Portal';
+import {
+  SanctionsHitsTableParams,
+  updateSanctionsData,
+  useChangeSanctionsHitsStatusMutation,
+  useSanctionHitsQuery,
+} from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 
 interface Props {
   item: QuestionResponseEmbedded;

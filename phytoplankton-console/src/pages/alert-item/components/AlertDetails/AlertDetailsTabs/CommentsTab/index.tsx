@@ -12,8 +12,6 @@ import CommentEditor, {
 } from '@/components/CommentEditor';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
-import { AsyncResource } from '@/utils/asyncResource';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
 import { useMutation } from '@/utils/queries/mutations/hooks';
@@ -21,12 +19,11 @@ import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-ut
 import { getCommentsWithReplies } from '@/components/CommentsCard/utils';
 
 interface Props {
-  alertId: string | null;
-  alertsRes: AsyncResource<Alert>;
+  alert: Alert | undefined;
 }
 
-export default function Comments(props: Props) {
-  const { alertId, alertsRes } = props;
+export default function CommentsTab(props: Props) {
+  const { alert } = props;
   const user = useAuth0User();
   const hasCommentWritePermission = useHasPermissions(['case-management:case-details:write']);
   const api = useApi();
@@ -110,18 +107,18 @@ export default function Comments(props: Props) {
   );
 
   const handleAddCommentReply = async (commentFormValues: CommentEditorFormValues) => {
-    if (alertId == null) {
+    if (alert?.alertId == null) {
       throw new Error(`Alert ID is not defined`);
     }
     return await api.createAlertsCommentReply({
-      alertId,
+      alertId: alert?.alertId,
       commentId: commentFormValues.parentCommentId ?? '',
       CommentRequest: { body: commentFormValues.comment, files: commentFormValues.files },
     });
   };
 
   const handleNewComment = (newComment) => {
-    queryClient.setQueryData<Alert>(ALERT_ITEM(alertId ?? ''), (alert) => {
+    queryClient.setQueryData<Alert>(ALERT_ITEM(alert?.alertId ?? ''), (alert) => {
       if (!alert) {
         return undefined;
       }
@@ -133,60 +130,51 @@ export default function Comments(props: Props) {
   };
 
   return (
-    <AsyncResourceRenderer<Alert> resource={alertsRes}>
-      {(alert) => {
-        const commentsWithReplies = getCommentsWithReplies(alert.comments ?? []);
-        return (
-          <Card.Root>
-            <Card.Section>
-              {alert && alert?.comments?.length ? (
-                <div className={s.list}>
-                  {commentsWithReplies.map((comment) => (
-                    <Comment
-                      key={comment.id}
-                      comment={comment}
-                      currentUserId={currentUserId}
-                      deleteCommentMutation={adaptMutationVariables(
-                        commentDeleteMutation,
-                        (variables: {
-                          commentId: string;
-                        }): { alertId: string; commentId: string } => {
-                          if (alertId == null) {
-                            throw new Error(`Unable to delete comment, alertId is empty`);
-                          }
-                          return { ...variables, alertId };
-                        },
-                      )}
-                      handleAddComment={handleAddCommentReply}
-                      onCommentAdded={handleNewComment}
-                      hasCommentWritePermission={hasCommentWritePermission}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <p>No comments yet. You can add your narrative as a comment below.</p>
-              )}
-            </Card.Section>
-            <Card.Section>
-              <CommentEditor
-                ref={commentEditorRef}
-                values={commentFormValues}
-                submitRes={commentSubmitMutation.dataResource}
-                placeholder={'Add your narrative as a comment here'}
-                onChangeValues={setCommentFormValues}
-                onSubmit={(values) => {
-                  if (alertId != null) {
-                    commentSubmitMutation.mutate({
-                      alertId,
-                      values,
-                    });
-                  }
-                }}
+    <Card.Root>
+      <Card.Section>
+        {alert && alert?.comments?.length ? (
+          <div className={s.list}>
+            {getCommentsWithReplies(alert?.comments ?? []).map((comment) => (
+              <Comment
+                key={comment.id}
+                comment={comment}
+                currentUserId={currentUserId}
+                deleteCommentMutation={adaptMutationVariables(
+                  commentDeleteMutation,
+                  (variables: { commentId: string }): { alertId: string; commentId: string } => {
+                    if (alert?.alertId == null) {
+                      throw new Error(`Unable to delete comment, alertId is empty`);
+                    }
+                    return { ...variables, alertId: alert?.alertId };
+                  },
+                )}
+                handleAddComment={handleAddCommentReply}
+                onCommentAdded={handleNewComment}
+                hasCommentWritePermission={hasCommentWritePermission}
               />
-            </Card.Section>
-          </Card.Root>
-        );
-      }}
-    </AsyncResourceRenderer>
+            ))}
+          </div>
+        ) : (
+          <p>No comments yet. You can add your narrative as a comment below.</p>
+        )}
+      </Card.Section>
+      <Card.Section>
+        <CommentEditor
+          ref={commentEditorRef}
+          values={commentFormValues}
+          submitRes={commentSubmitMutation.dataResource}
+          placeholder={'Add your narrative as a comment here'}
+          onChangeValues={setCommentFormValues}
+          onSubmit={(values) => {
+            if (alert?.alertId != null) {
+              commentSubmitMutation.mutate({
+                alertId: alert?.alertId,
+                values,
+              });
+            }
+          }}
+        />
+      </Card.Section>
+    </Card.Root>
   );
 }

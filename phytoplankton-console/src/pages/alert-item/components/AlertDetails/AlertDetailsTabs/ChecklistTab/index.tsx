@@ -21,7 +21,7 @@ interface Props {
   alert: Alert;
 }
 
-export default function Checklist(props: Props) {
+export default function ChecklistTab(props: Props) {
   const { alert } = props;
   const checklistQueryResult = useAlertChecklist(alert.alertId);
   const [category, setCategory] = useState<string | undefined>();

@@ -27,3 +27,4 @@ services:
       - '9000:9000'
     volumes:
       - ./.local-clickhouse-data:/var/lib/clickhouse-server
+    privileged: true

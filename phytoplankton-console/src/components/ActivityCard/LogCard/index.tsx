@@ -1,6 +1,5 @@
 import React from 'react';
 import { clusteredByDate } from '../helpers';
-import { ActivityLogFilterParams } from '..';
 import LogContainer from './LogContainer';
 import s from './index.module.less';
 import { LogItemData } from './LogContainer/LogItem';
@@ -11,12 +10,12 @@ import { P } from '@/components/ui/Typography';
 import { useUsers } from '@/utils/user-utils';
 import Spinner from '@/components/library/Spinner';
 
-interface Props {
-  logQueryRequest: (params: ActivityLogFilterParams) => Promise<LogItemData[]>;
-  params: ActivityLogFilterParams;
+interface Props<FilterParams> {
+  logQueryRequest: (params: FilterParams) => Promise<LogItemData[]>;
+  params: FilterParams;
 }
 
-const LogCard = (props: Props) => {
+function LogCard<FilterParams>(props: Props<FilterParams>) {
   const { logQueryRequest, params } = props;
   const [_, isLoading] = useUsers();
   const queryResult = useQuery<LogItemData[]>(
@@ -45,6 +44,6 @@ const LogCard = (props: Props) => {
   ) : (
     <Spinner />
   );
-};
+}
 
 export default LogCard;
