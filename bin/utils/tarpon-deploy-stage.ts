@@ -21,8 +21,7 @@ export const tarponDeployStage = (
 ) => {
   const env = config.stage + (config.region ? `:${config.region}` : '')
   const shouldReleaseSentry = config.stage === 'sandbox'
-  const deployCommand = `yarn run deploy -- --require-approval=never --stage=${config.stage} --region=${config.region}`
-  const synthCommand = `yarn run synth:${config.stage} ${config.stage != 'dev' ? `--region=${config.region}` : ''}`
+  const deployCommand = `yarn run deploy -- --require-approval=never --stage=${config.stage} --region=${config.region} --synth`
   return new codebuild.PipelineProject(scope, `TarponDeploy-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
       version: '0.2',

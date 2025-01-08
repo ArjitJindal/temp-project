@@ -6,6 +6,7 @@ const main = async () => {
   const region = args.find((arg) => arg.startsWith('--region='))?.split('=')[1]
   const stage = args.find((arg) => arg.startsWith('--stage='))?.split('=')[1]
   const clean = args.includes('--clean')
+  const synth = args.includes('--synth')
 
   if (!stage) {
     console.error('Stage is required')
@@ -70,6 +71,10 @@ const main = async () => {
     execSync('yarn openapi:augment', { stdio: 'inherit' })
     execSync(`npx cdk synth --quiet ${config.stackName}`, { stdio: 'inherit' })
     execSync('yarn cdktf:init', { stdio: 'inherit' })
+  }
+
+  if (synth) {
+    execSync(`npx cdk synth --quiet ${config.stackName}`, { stdio: 'inherit' })
   }
 
   execSync(`npx cdk deploy ${config.stackName} --require-approval=never`, {
