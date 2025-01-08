@@ -58,7 +58,6 @@ export const tarponDeployStage = (
             // Don't upload source maps to Lambda
             'rm dist/lambdas/**/*.js.map',
             ...installTerraform,
-            synthCommand,
             deployCommand,
             ...(config.region === 'eu-1'
               ? [
