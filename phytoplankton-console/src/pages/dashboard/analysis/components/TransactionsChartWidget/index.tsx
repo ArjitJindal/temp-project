@@ -20,9 +20,9 @@ import Widget from '@/components/library/Widget';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
 import { RuleAction } from '@/apis';
-import { map, isSuccess } from '@/utils/asyncResource';
+import { isSuccess, map } from '@/utils/asyncResource';
+import BarChart, { BarChartData } from '@/components/charts/BarChart';
 
 export default function TransactionsChartWidget(props: WidgetProps) {
   const settings = useSettings();
@@ -51,32 +51,33 @@ export default function TransactionsChartWidget(props: WidgetProps) {
 
   const dataResource = map(
     queryResult.data,
-    ({ data }): ColumnData<string, number, RuleAction> =>
-      data.flatMap((item): ColumnData<string, number, RuleAction> => {
+    ({ data }): BarChartData<string, RuleAction> =>
+      data.flatMap((item): BarChartData<string, RuleAction> => {
         return [
           {
-            xValue: item.time,
-            yValue: item.status_BLOCK ?? 0,
+            category: item.time,
+            value: item.status_BLOCK ?? 0,
             series: 'BLOCK',
           },
           {
-            xValue: item.time,
-            yValue: item.status_SUSPEND ?? 0,
+            category: item.time,
+            value: item.status_SUSPEND ?? 0,
             series: 'SUSPEND',
           },
           {
-            xValue: item.time,
-            yValue: item.status_FLAG ?? 0,
+            category: item.time,
+            value: item.status_FLAG ?? 0,
             series: 'FLAG',
           },
           {
-            xValue: item.time,
-            yValue: item.status_ALLOW ?? 0,
+            category: item.time,
+            value: item.status_ALLOW ?? 0,
             series: 'ALLOW',
           },
         ];
       }),
   );
+
   return (
     <Widget
       extraControls={[
@@ -96,12 +97,14 @@ export default function TransactionsChartWidget(props: WidgetProps) {
         {isSuccess(dataResource) && dataResource.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
-          <Column<RuleAction>
+          <BarChart<string, RuleAction>
+            grouping={'STACKED'}
             data={dataResource}
+            height={400}
             formatSeries={(action) => {
               return getRuleActionLabel(action, settings) ?? action;
             }}
-            formatX={formatDate}
+            formatCategory={formatDate}
             colors={{
               SUSPEND: getRuleActionColorForDashboard('SUSPEND'),
               FLAG: getRuleActionColorForDashboard('FLAG'),

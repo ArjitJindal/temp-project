@@ -21,8 +21,7 @@ import { formatDuration, getDuration } from '@/utils/time-utils';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
-import { map } from '@/utils/asyncResource';
-import { LineChart } from '@/pages/dashboard/analysis/components/charts/Line';
+import { map, success } from '@/utils/asyncResource';
 import WidgetGrid, { WidgetGroupItem } from '@/components/library/WidgetGrid';
 import { UsersTable } from '@/pages/users/users-list/users-table';
 import {
@@ -32,6 +31,7 @@ import {
 } from '@/components/ui/colors';
 import { makeUrl } from '@/utils/routing';
 import { dayjs } from '@/utils/dayjs';
+import LineChart from '@/components/charts/Line';
 
 const HIT_RATE_SERIES = 'Hit rate (%)';
 const FALSE_POSITIVE_RATE_SERIES = 'False positive rate (%)';
@@ -209,60 +209,56 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                 [FALSE_POSITIVE_RATE_SERIES]: COLORS_V2_ANALYTICS_CHARTS_10,
                 ...ruleUpdatedColors,
               };
-              const customContent = (title: string, data) => {
-                return (
-                  <div className={s.tooltip}>
-                    <div className={s.tooltipTitle}>{title}</div>
-                    {data.map(({ data }) => {
-                      const date = title.replace(`${RULE_UPDATED} (`, '').replace(`)`, '');
-                      return (
-                        <div key={data.series} className={s.tooltipRow}>
-                          <div className={s.tooltipLeft}>
-                            <div
-                              className={s.tooltipMarker}
-                              style={{ backgroundColor: colors[data.series] }}
-                            ></div>
-                            <div>{data.series}</div>
-                          </div>
-                          {!data.series.startsWith(RULE_UPDATED) ? (
-                            <div>{data.yValue}%</div>
-                          ) : (
-                            <a
-                              href={makeUrl(
-                                '/auditlog',
-                                {},
-                                {
-                                  filterTypes: 'RULE',
-                                  searchEntityId: ruleInstance.id,
-                                  filterActions: 'UPDATE',
-                                  createdTimestamp: `${dayjs(date)
-                                    .startOf('day')
-                                    .valueOf()},${dayjs(date).endOf('day').valueOf()}`,
-                                },
-                              )}
-                              target="_blank"
-                            >
-                              ➡️
-                            </a>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              };
+              // const customContent = (title: string, data) => {
+              //   return (
+              //     <div className={s.tooltip}>
+              //       <div className={s.tooltipTitle}>{title}</div>
+              //       {data.map(({ data }) => {
+              //         const date = title.replace(`${RULE_UPDATED} (`, '').replace(`)`, '');
+              //         return (
+              //           <div key={data.series} className={s.tooltipRow}>
+              //             <div className={s.tooltipLeft}>
+              //               <div
+              //                 className={s.tooltipMarker}
+              //                 style={{ backgroundColor: colors[data.series] }}
+              //               ></div>
+              //               <div>{data.series}</div>
+              //             </div>
+              //             {!data.series.startsWith(RULE_UPDATED) ? (
+              //               <div>{data.yValue}%</div>
+              //             ) : (
+              //               <a
+              //                 href={makeUrl(
+              //                   '/auditlog',
+              //                   {},
+              //                   {
+              //                     filterTypes: 'RULE',
+              //                     searchEntityId: ruleInstance.id,
+              //                     filterActions: 'UPDATE',
+              //                     createdTimestamp: `${dayjs(date)
+              //                       .startOf('day')
+              //                       .valueOf()},${dayjs(date).endOf('day').valueOf()}`,
+              //                   },
+              //                 )}
+              //                 target="_blank"
+              //               >
+              //                 ➡️
+              //               </a>
+              //             )}
+              //           </div>
+              //         );
+              //       })}
+              //     </div>
+              //   );
+              // };
               return (
                 <LineChart
-                  data={[...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats]}
+                  data={success([...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats])}
                   colors={colors}
                   height={200}
                   hideLegend={true}
-                  dashedLinesSeries={Object.keys(ruleUpdatedColors)}
-                  customTooltip={{
-                    customContent: customContent,
-                    //eslint-disable-next-line
-                    enterable: true,
-                  }}
+                  // dashedLinesSeries={Object.keys(ruleUpdatedColors)}
+                  // customTooltip={customContent}
                 />
               );
             }}

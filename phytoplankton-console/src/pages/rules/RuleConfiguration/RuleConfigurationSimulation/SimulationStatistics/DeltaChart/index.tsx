@@ -1,6 +1,6 @@
-import { Column } from '@ant-design/charts';
 import s from './index.module.less';
-import { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
+import BarChart from '@/components/charts/BarChart';
+import { success } from '@/utils/asyncResource';
 
 type ValueType =
   | 'Before'
@@ -34,39 +34,33 @@ export function DeltaChart(props: Props) {
     afterColor,
     afterFalsePositiveColor,
   } = props;
-  const data = beforeValues
-    .map((v) => ({ label: 'Before', value: v.value, type: v.type }))
-    .concat(afterValues.map((v) => ({ label: 'After', value: v.value, type: v.type })));
   return (
     <div className={s.root}>
-      <Column
-        height={200}
-        width={50}
-        isStack={true}
-        data={data}
-        xField="label"
-        yField="value"
-        seriesField="type"
-        legend={false}
-        maxColumnWidth={40}
-        columnStyle={{
-          radius: [5, 5, 0, 0],
-        }}
-        color={(data) => {
-          const type = data.type as ValueType;
-          switch (type) {
-            case 'Before':
-            case 'True positive (before)':
-              return beforeColor;
-            case 'After':
-            case 'True positive (after)':
-              return afterColor;
-            case 'False positive (before)':
-              return beforeFalsePositiveColor ?? COLORS_V2_GRAY_1;
-            case 'False positive (after)':
-              return afterFalsePositiveColor ?? COLORS_V2_GRAY_1;
+      <BarChart<string, ValueType>
+        grouping={'STACKED'}
+        data={success([
+          ...beforeValues.map((v) => ({ category: 'Before', value: v.value ?? 0, series: v.type })),
+          ...afterValues.map((v) => ({ category: 'After', value: v.value ?? 0, series: v.type })),
+        ])}
+        colors={{}}
+        customBarColors={(_, series: ValueType, defaultColor) => {
+          let result;
+          if (series === 'Before') {
+            result = beforeColor;
+          } else if (series === 'After') {
+            result = afterColor;
+          } else if (series === 'True positive (before)') {
+            result = beforeColor;
+          } else if (series === 'True positive (after)') {
+            result = afterColor;
+          } else if (series === 'False positive (before)') {
+            result = beforeFalsePositiveColor;
+          } else if (series === 'False positive (after)') {
+            result = afterFalsePositiveColor;
           }
+          return result ?? defaultColor;
         }}
+        hideLegend={true}
       />
       <div className={s.title}>{title}</div>
     </div>

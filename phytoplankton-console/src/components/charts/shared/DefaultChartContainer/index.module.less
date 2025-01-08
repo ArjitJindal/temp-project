@@ -1,0 +1,36 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 16px;
+
+  &.orientation-HORIZONTAL {
+    flex-direction: row;
+  }
+
+  &.showSkeleton {
+    pointer-events: none;
+  }
+}
+
+.chartContainer {
+  flex: 1;
+  position: relative;
+}
+
+.chartPosition {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.legendContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

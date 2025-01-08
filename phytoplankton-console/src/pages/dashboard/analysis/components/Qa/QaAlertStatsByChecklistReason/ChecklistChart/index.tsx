@@ -1,8 +1,8 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { MutableRefObject, useEffect, useRef, useState } from 'react';
 import { Alert } from 'antd';
-import Column, { ColumnData } from '../../../charts/Column';
 import s from './styles.module.less';
+import BarChart, { BarChartData } from '@/components/charts/BarChart';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Widget from '@/components/library/Widget';
 import DatePicker from '@/components/ui/DatePicker';
@@ -112,18 +112,18 @@ export const ChecklistChart = (props: ParamsProps) => {
   }, [templateOptions]);
   const pdfRef = useRef() as MutableRefObject<HTMLInputElement>;
   const donutDataRes = isLoading(templateOptionsRes)
-    ? loading<ColumnData<unknown, number, unknown>>()
-    : map(qaAlertStatsByChecklistReason.data, ({ items }) => {
+    ? loading<BarChartData>()
+    : map(qaAlertStatsByChecklistReason.data, ({ items }): BarChartData => {
         return items.flatMap((item) => {
           return [
             {
-              xValue: item.checklistItemReason,
-              yValue: item.totalQaPassedAlerts,
+              category: item.checklistItemReason ?? '',
+              value: item.totalQaPassedAlerts,
               series: 'QA pass',
             },
             {
-              xValue: item.checklistItemReason,
-              yValue: item.totalQaFailedAlerts,
+              category: item.checklistItemReason ?? '',
+              value: item.totalQaFailedAlerts,
               series: 'QA fail',
             },
           ];
@@ -194,20 +194,16 @@ export const ChecklistChart = (props: ParamsProps) => {
         ) : isFailed(donutDataRes) ? (
           <Alert message={donutDataRes.message} type="error" />
         ) : (
-          <Column
-            data={
-              isSuccess(donutDataRes)
-                ? donutDataRes
-                : loading<ColumnData<unknown, number, unknown>>()
-            }
+          <BarChart
+            data={isSuccess(donutDataRes) ? donutDataRes : loading<BarChartData>()}
             colors={{
               'QA pass': COLORS_V2_ANALYTICS_CHARTS_01,
               'QA fail': COLORS_V2_ANALYTICS_CHARTS_15,
             }}
-            rotateLabel={false}
-            elipsisLabel={true}
+            // rotateLabel={false}
+            // elipsisLabel={true}
             height={250}
-            formatX={(val) => {
+            formatCategory={(val) => {
               return `${val}`.replaceAll("'", '`');
             }}
           />

@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
-import Donut, { DonutData } from '../charts/Donut';
+import DonutChart, { DonutData } from '@/components/charts/DonutChart';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -49,12 +49,12 @@ export default function RuleActionSplitCard(props: Props) {
 
     // Converting the frequency map into an array of objects
     const data: DonutData<RuleAction> = Object.entries(frequencyMap).map(([action, value]) => ({
-      series: action as RuleAction,
+      name: action as RuleAction,
       value: value as number,
     }));
 
     data.sort((a, b) => {
-      return RULE_ACTION_ORDER.indexOf(a.series) - RULE_ACTION_ORDER.indexOf(b.series);
+      return RULE_ACTION_ORDER.indexOf(a.name) - RULE_ACTION_ORDER.indexOf(b.name);
     });
     return data;
   });
@@ -82,11 +82,11 @@ export default function RuleActionSplitCard(props: Props) {
         ]}
         {...props}
       >
-        <Donut<RuleAction>
+        <DonutChart<RuleAction>
           data={dataResource}
           colors={COLORS}
-          legendPosition="RIGHT"
-          formatSeries={(action) => getRuleActionLabel(action, settings) ?? action}
+          // legendPosition="RIGHT"
+          formatName={(action) => getRuleActionLabel(action, settings) ?? action}
         />
       </Widget>
     </div>

@@ -1,6 +1,6 @@
 import { RangeValue } from 'rc-picker/es/interface';
 import React, { useState } from 'react';
-import { BarChart } from '../../charts/BarChart';
+import { BarChart } from './BarChart';
 import s from './styles.module.less';
 import { getCsvData } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import Widget from '@/components/library/Widget';

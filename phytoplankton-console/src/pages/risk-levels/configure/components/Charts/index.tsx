@@ -1,107 +1,90 @@
-import { Column } from '@ant-design/charts';
 import React from 'react';
-import s from './styles.module.less';
+import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import BarChart from '@/components/charts/BarChart';
+import { success } from '@/utils/asyncResource';
 import COLORS from '@/components/ui/colors';
-import { formatNumber } from '@/utils/number';
 
 export interface Props {
-  data: Record<string, any>[];
+  data: any[];
   max: number;
 }
 
 const colors = {
-  VERY_LOW: COLORS.limeGreen.base,
-  LOW: COLORS.green.base,
-  MEDIUM: COLORS.lightYellow.base,
-  HIGH: COLORS.lightOrange.base,
-  VERY_HIGH: COLORS.lightRed.base,
+  VERY_LOW: COLORS.limeGreen,
+  LOW: COLORS.green,
+  MEDIUM: COLORS.lightYellow,
+  HIGH: COLORS.lightOrange,
+  VERY_HIGH: COLORS.lightRed,
 };
 
 const GroupedColumn = React.memo((props: Props) => {
   const { data } = props;
   return (
-    <Column
-      isGroup={true}
-      xField="name"
-      yField="value"
-      data={data}
-      dodgePadding={0}
-      seriesField="label"
-      yAxis={{
-        grid: null,
-        minLimit: 0,
-        maxLimit: props.max,
-        label: {
-          formatter: (text) => {
-            return formatNumber(text);
-          },
-        },
-      }}
-      label={{
-        position: 'top',
-        style: {
-          fontStyle: 'bold',
-          fontSize: 12,
-          fill: '#000',
-        },
-        content: (data) => {
-          return formatNumber(data.value);
-        },
-      }}
-      minColumnWidth={32}
-      maxColumnWidth={36}
-      intervalPadding={16}
-      width={250}
-      tooltip={{
-        customContent: (_, items) => {
-          const beforeData = items.find((item) => item.name === 'Before');
-          const afterData = items.find((item) => item.name === 'After');
-
-          return (
-            <div className={s.tooltipRoot}>
-              <div className={s.tooltipParentContainer}>
-                <div className={s.tooltipContainer} style={{ marginBottom: 8 }}>
-                  <div
-                    className={s.tooltipColor}
-                    style={{ backgroundColor: colors[beforeData?.data.name] }}
-                  />
-                  <p>{beforeData?.data.label}</p>
-                  <p>{beforeData?.data.value}</p>
-                </div>
-                <div className={s.tooltipContainer}>
-                  <div
-                    className={s.tooltipColor}
-                    style={{ backgroundColor: colors[afterData?.data.name], opacity: 0.5 }}
-                  />
-                  <p>{afterData?.data.label}</p>
-                  <p>{afterData?.data.value}</p>
-                </div>
-              </div>
-            </div>
-          );
-        },
-      }}
-      height={350}
-      columnStyle={(datum) => {
-        if (datum.label === 'Before') {
-          return {
-            fill: colors[datum.name],
-            fillOpacity: 1,
-          };
+    <BarChart<string, string>
+      colors={{}}
+      data={success(data.map((x) => ({ category: x.name, series: x.label, value: x.value })))}
+      grouping={'GROUPED'}
+      formatCategory={(x) => humanizeConstant(x)}
+      customBarColors={(category, series, defaultColor) => {
+        if (series === 'Before') {
+          return colors[category].base;
         } else {
-          return {
-            fill: colors[datum.name],
-            fillOpacity: 0.5,
-          };
+          return colors[category].alpha ?? defaultColor;
         }
       }}
-      legend={false}
-      interactions={[
-        {
-          type: 'active-region',
-          enable: false,
-        },
-      ]}
+      hideLegend={true}
+      // dodgePadding={0}
+      // seriesField="label"
+      // yAxis={{ grid: null, minLimit: 0, maxLimit: props.max }}
+      // label={{
+      //   position: 'top',
+      //   style: {
+      //     fontStyle: 'bold',
+      //     fontSize: 12,
+      //     fill: '#000',
+      //   },
+      // }}
+      // minColumnWidth={32}
+      // maxColumnWidth={36}
+      // intervalPadding={16}
+      // width={250}
+      // tooltip={{
+      //   customContent: (_, items) => {
+      //     const beforeData = items.find((item) => item.name === 'Before');
+      //     const afterData = items.find((item) => item.name === 'After');
+      //
+      //     return (
+      //       <div className={s.tooltipRoot}>
+      //         <div className={s.tooltipParentContainer}>
+      //           <div className={s.tooltipContainer} style={{ marginBottom: 8 }}>
+      //             <div
+      //               className={s.tooltipColor}
+      //               style={{ backgroundColor: colors[beforeData?.data.name] }}
+      //             />
+      //             <p>{beforeData?.data.label}</p>
+      //             <p>{beforeData?.data.value}</p>
+      //           </div>
+      //           <div className={s.tooltipContainer}>
+      //             <div
+      //               className={s.tooltipColor}
+      //               style={{ backgroundColor: colors[afterData?.data.name], opacity: 0.5 }}
+      //             />
+      //             <p>{afterData?.data.label}</p>
+      //             <p>{afterData?.data.value}</p>
+      //           </div>
+      //         </div>
+      //       </div>
+      //     );
+      //   },
+      // }}
+      // legend={false}
+      // interactions={[
+      //   {
+      //     type: 'active-region',
+      //     enable: false,
+      //   },
+      // ]}
+      height={350}
     />
   );
 });

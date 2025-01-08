@@ -1,0 +1,26 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+@import 'src/components/ui/animation';
+@import 'src/components/charts/shared/highlighting';
+
+.svg {
+  &.disabled {
+    pointer-events: none;
+  }
+}
+
+.arc {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity;
+
+  &.highlighting {
+    opacity: @shaded-opacity;
+
+    &.isHighlighted {
+      opacity: 1;
+      stroke: @highlight-outline-color;
+      stroke-width: @highlight-outline-width;
+    }
+  }
+}

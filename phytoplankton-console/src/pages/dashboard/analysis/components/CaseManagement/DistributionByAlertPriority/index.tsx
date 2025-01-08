@@ -1,6 +1,6 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
-import Donut from '@/pages/dashboard/analysis/components/charts/Donut';
+import DonutChart from '@/components/charts/DonutChart';
 import { DashboardStatsAlertPriorityDistributionStatsAlertPriorityData } from '@/apis';
 import {
   COLORS_V2_PRIMARY_SHADES_BLUE_100,
@@ -44,7 +44,7 @@ const DistributionByAlertPriority = (props: Props) => {
   const dataResource = map(data, ({ alertPriorityData }) => {
     return alertPriorityData.map(
       (item: DashboardStatsAlertPriorityDistributionStatsAlertPriorityData) => {
-        return { series: item.priority ?? 'N/A', value: item.value ?? 0 };
+        return { name: item.priority ?? 'N/A', value: item.value ?? 0 };
       },
     );
   });
@@ -73,12 +73,7 @@ const DistributionByAlertPriority = (props: Props) => {
         ]}
         {...props}
       >
-        <Donut
-          shape="SEMI_CIRCLE"
-          data={dataResource}
-          colors={PRIORITY_COLORS}
-          legendPosition={'BOTTOM'}
-        />
+        <DonutChart data={dataResource} colors={PRIORITY_COLORS} />
       </Widget>
     </div>
   );

@@ -1,0 +1,30 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+@import 'src/components/ui/animation';
+@import 'src/components/charts/shared/highlighting';
+
+.svg {
+  &.showSkeleton {
+    pointer-events: none;
+  }
+}
+
+.block {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity, height, width, x, y;
+
+  &.highlighting {
+    opacity: @shaded-opacity;
+
+    &.isHighlighted {
+      opacity: 1;
+      stroke: @highlight-outline-color;
+      stroke-width: @highlight-outline-width;
+    }
+  }
+}
+
+.text {
+  pointer-events: none;
+}

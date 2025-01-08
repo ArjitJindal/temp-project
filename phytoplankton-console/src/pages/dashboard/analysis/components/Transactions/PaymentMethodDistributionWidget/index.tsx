@@ -18,10 +18,7 @@ import { DASHBOARD_TRANSACTIONS_TOTAL_STATS } from '@/utils/queries/keys';
 import { WidgetProps } from '@/components/library/Widget/types';
 import { getPaymentMethodTitle, PAYMENT_METHODS, PaymentMethod } from '@/utils/payments';
 import { map, getOr } from '@/utils/asyncResource';
-import Treemap, {
-  TreemapData,
-  TreemapItem,
-} from '@/pages/dashboard/analysis/components/charts/Treemap';
+import TreemapChart, { TreemapData, TreemapItem } from '@/components/charts/TreemapChart';
 import { dayjs } from '@/utils/dayjs';
 import Widget from '@/components/library/Widget';
 import WidgetRangePicker, {
@@ -112,10 +109,10 @@ export default function PaymentMethodDistributionWidget(props: Props) {
         resizing="AUTO"
         {...props}
       >
-        <Treemap<PaymentMethod>
+        <TreemapChart<PaymentMethod>
           data={preparedDataRes}
           colors={TREEMAP_COLORS}
-          formatTitle={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
+          formatName={(name) => (name == null ? `Other` : getPaymentMethodTitle(name))}
         />
       </Widget>
     </div>

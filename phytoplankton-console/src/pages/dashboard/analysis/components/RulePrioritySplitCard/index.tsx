@@ -1,5 +1,5 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
-import Donut, { DonutData } from '../charts/Donut';
+import DonutChart, { DonutData } from '@/components/charts/DonutChart';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_24,
@@ -45,14 +45,14 @@ export default function RulePrioritySplitCard(props: Props) {
     // Converting the frequency map into an array of objects
     const priorityData: DonutData<Priority> = Object.entries(priorityFrequency).map(
       ([priority, value]) => ({
-        series: priority as Priority,
+        name: priority as Priority,
         value: value,
       }),
     );
 
     priorityData.sort((a, b) => {
-      const fa = a.series.toLowerCase(),
-        fb = b.series.toLowerCase();
+      const fa = a.name.toLowerCase(),
+        fb = b.name.toLowerCase();
 
       if (fa < fb) {
         return -1;
@@ -89,7 +89,11 @@ export default function RulePrioritySplitCard(props: Props) {
         ]}
         {...props}
       >
-        <Donut<Priority> data={dataResource} colors={gaugeColors} legendPosition="RIGHT" />
+        <DonutChart<Priority>
+          data={dataResource}
+          colors={gaugeColors}
+          // legendPosition="RIGHT"
+        />
       </Widget>
     </div>
   );

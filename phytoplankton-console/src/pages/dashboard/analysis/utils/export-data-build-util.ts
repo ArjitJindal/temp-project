@@ -8,11 +8,11 @@ export interface ExportData {
 
 export const exportDataForDonuts = (
   field: string,
-  data: { series: string; value: number }[],
+  data: { name: string; value: number }[],
 ): string => {
   const parsedData = data.map((dataItem) => {
     return {
-      [field]: dataItem.series,
+      [field]: dataItem.name,
       count: dataItem.value,
     };
   });
@@ -33,7 +33,7 @@ export const exportDataForTreemaps = (
 };
 
 export const exportDataForBarGraphs = (
-  data: { xValue: string | null; yValue: number; series?: string | number | null }[],
+  data: { category: string | null; value: number; series?: string | number | null }[],
   xField: string,
   yField?: string,
   seriesLabel?: string,
@@ -41,13 +41,13 @@ export const exportDataForBarGraphs = (
   const parsedData = orderBy(data, 'value', 'desc').map((dataItem) => {
     return seriesLabel === '' || seriesLabel === null
       ? {
-          [xField]: dataItem.xValue ?? '',
-          [yField ?? 'count']: dataItem.yValue,
+          [xField]: dataItem.category ?? '',
+          [yField ?? 'count']: dataItem.value,
         }
       : {
-          [xField]: dataItem.xValue ?? '',
+          [xField]: dataItem.category ?? '',
           [seriesLabel ?? '']: dataItem.series ?? '',
-          [yField ?? 'count']: dataItem.yValue,
+          [yField ?? 'count']: dataItem.value,
         };
   });
   return getCsvData(parsedData);

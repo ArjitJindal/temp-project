@@ -31,7 +31,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import Widget from '@/components/library/Widget';
 import { CLOSING_REASON_DISTRIBUTION } from '@/utils/queries/keys';
-import Treemap, { TreemapData } from '@/pages/dashboard/analysis/components/charts/Treemap';
+import TreemapChart, { TreemapData } from '@/components/charts/TreemapChart';
 import WidgetRangePicker, {
   Value as WidgetRangePickerValue,
 } from '@/pages/dashboard/analysis/components/widgets/WidgetRangePicker';
@@ -157,7 +157,7 @@ const CaseClosingReasonCard = (props: Props) => {
             selectedSection={selectedSection}
             setSelectedSection={setSelectedSection}
           />
-          <Treemap<ClosingReasons> height={350} data={dataResource} colors={TREEMAP_COLORS} />
+          <TreemapChart<ClosingReasons> height={350} data={dataResource} colors={TREEMAP_COLORS} />
         </div>
       </Widget>
     </div>

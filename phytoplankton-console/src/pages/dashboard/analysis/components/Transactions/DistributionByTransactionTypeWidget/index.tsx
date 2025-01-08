@@ -19,7 +19,7 @@ import {
   COLORS_V2_ANALYTICS_CHARTS_07,
   COLORS_V2_ANALYTICS_CHARTS_10,
 } from '@/components/ui/colors';
-import Donut, { DonutData } from '@/pages/dashboard/analysis/components/charts/Donut';
+import DonutChart, { DonutData } from '@/components/charts/DonutChart';
 import { TransactionType } from '@/apis';
 import DatePicker from '@/components/ui/DatePicker';
 import { TRANSACTION_TYPES } from '@/apis/models-custom/TransactionType';
@@ -50,7 +50,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
     for (const transactionType of TRANSACTION_TYPES) {
       result.push({
         value: value?.data[`transactionType_${transactionType}`] ?? 0,
-        series: transactionType,
+        name: transactionType,
       });
     }
     return result.filter((widgetData) => widgetData.value !== 0);
@@ -88,7 +88,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
         {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
-          <Donut<TransactionType>
+          <DonutChart<TransactionType>
             data={preparedDataRes}
             colors={{
               DEPOSIT: COLORS_V2_ANALYTICS_CHARTS_04,
@@ -98,7 +98,7 @@ export default function DistributionByTransactionTypeWidget(props: WidgetProps) 
               REFUND: COLORS_V2_ANALYTICS_CHARTS_02,
               OTHER: COLORS_V2_ANALYTICS_CHARTS_07,
             }}
-            formatSeries={(series) => {
+            formatName={(series) => {
               return humanizeConstant(series);
             }}
           />

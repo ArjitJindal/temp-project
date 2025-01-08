@@ -1,0 +1,38 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/animation';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  gap: 8px;
+
+  &.skeleton {
+    pointer-events: none;
+  }
+}
+
+.chartContainer {
+  flex: 1;
+  position: relative;
+}
+
+.legendContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.bar {
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+  transition-property: opacity, height, width, x, y;
+
+  &.highlighting {
+    opacity: 0.4;
+
+    &.isHighlighted {
+      opacity: 1;
+    }
+  }
+}

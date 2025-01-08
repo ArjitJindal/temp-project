@@ -40,13 +40,13 @@ const MAIN_PALLETE: MainPallete = {
   purple: { base: '#8b75f2', tint: '#eeebfa', shade: '#986abb' }, // Graphs,Primary
   yellow: { base: '#f5e25a', tint: '#fcf9e3', shade: '#b2a542' }, // Graphs,Primary
   skyBlue: { base: '#78cbeb', tint: '#e6f8ff', shade: '#267999' }, // Graphs,Primary
-  limeGreen: { base: '#bff35a', tint: '#f4fce3', shade: '#86a745' }, // Graphs,Primary
+  limeGreen: { base: '#BFF35A', tint: '#f4fce3', shade: '#86a745', alpha: '#BFF35A80' }, // Graphs,Primary
   lightBlue: { base: '#1890ff', tint: '#e6f7ff', shade: '#096dd9' }, // Graphs,Primary
   lightGreen: { base: '#D1E277', tint: '#F1F6D6', shade: '#000000' }, // Graphs,Primary
-  green: { base: '#AAD246', tint: '#E6F2C8', shade: '#000000' }, // Graphs,Primary
-  lightYellow: { base: '#EED23F', tint: '#FAF2C5', shade: '#000000' }, // Graphs,Primary
-  lightOrange: { base: '#E47E30', tint: '#F7D8C1', shade: '#000000' }, // Graphs,Primary
-  lightRed: { base: '#E93134', tint: '#F8C1C2', shade: '#000000' }, // Graphs,Primary
+  green: { base: '#AAD246', tint: '#E6F2C8', shade: '#000000', alpha: '#AAD24680' }, // Graphs,Primary
+  lightYellow: { base: '#EED23F', tint: '#FAF2C5', shade: '#000000', alpha: '#EED23F80' }, // Graphs,Primary
+  lightOrange: { base: '#E47E30', tint: '#F7D8C1', shade: '#000000', alpha: '#E47E3080' }, // Graphs,Primary
+  lightRed: { base: '#E93134', tint: '#F8C1C2', shade: '#000000', alpha: '#E9313480' }, // Graphs,Primary
 };
 
 const NEW_COLORS = {

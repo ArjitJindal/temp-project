@@ -1,6 +1,5 @@
 import React, { MutableRefObject, useRef, useState } from 'react';
 import { capitalizeWords } from '@flagright/lib/utils/humanize';
-import Donut from '../charts/Donut';
 import { exportDataForDonuts } from '@/pages/dashboard/analysis/utils/export-data-build-util';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
@@ -23,6 +22,7 @@ import { map, getOr } from '@/utils/asyncResource';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import { USERS_STATS } from '@/utils/queries/keys';
+import DonutChart from '@/components/charts/DonutChart';
 
 const COLORS = {
   UNACCEPTABLE: COLORS_V2_ANALYTICS_CHARTS_07,
@@ -68,7 +68,7 @@ export default function UserStatusDistributionCard(props: Props) {
       return acc;
     }, {});
     return Object.entries(statusMap).map(([status, value]) => ({
-      series: status as UserState,
+      name: status as UserState,
       value: value as number,
     }));
   });
@@ -108,11 +108,11 @@ export default function UserStatusDistributionCard(props: Props) {
         ]}
         {...props}
       >
-        <Donut<UserState>
+        <DonutChart<UserState>
           data={dataResource}
           colors={COLORS}
-          legendPosition="RIGHT"
-          formatSeries={(action) => capitalizeWords(action) ?? action}
+          // legendPosition="RIGHT"
+          formatName={(action) => capitalizeWords(action) ?? action}
         />
       </Widget>
     </div>

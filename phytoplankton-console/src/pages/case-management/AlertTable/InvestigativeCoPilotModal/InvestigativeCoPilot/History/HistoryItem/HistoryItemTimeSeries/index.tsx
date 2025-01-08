@@ -1,8 +1,9 @@
 import { QuestionResponseTimeSeries } from '../../../types';
 import { notEmpty } from '@/utils/array';
 import { dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
-import { LineChart, LineData } from '@/pages/dashboard/analysis/components/charts/Line';
 import { ALL_CHART_COLORS } from '@/components/ui/colors';
+import LineChart, { LineData } from '@/components/charts/Line';
+import { success } from '@/utils/asyncResource';
 
 interface Props {
   item: QuestionResponseTimeSeries;
@@ -11,7 +12,7 @@ interface Props {
 export default function HistoryItemTimeSeries(props: Props) {
   const { item } = props;
 
-  const data: LineData<string, number, string> = (item.timeseries ?? []).flatMap((seriesItem) =>
+  const data: LineData<string, string> = (item.timeseries ?? []).flatMap((seriesItem) =>
     (seriesItem.values ?? []).map((valueItem) => ({
       series: seriesItem.label || 'Value',
       yValue: valueItem.value ?? 0,
@@ -25,7 +26,7 @@ export default function HistoryItemTimeSeries(props: Props) {
 
   return (
     <LineChart
-      data={data}
+      data={success(data)}
       colors={seriesLabels.reduce(
         (acc, series, i) => ({ ...acc, [series]: ALL_CHART_COLORS[i % ALL_CHART_COLORS.length] }),
         {},

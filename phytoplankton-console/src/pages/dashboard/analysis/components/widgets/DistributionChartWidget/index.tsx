@@ -5,7 +5,6 @@ import { useLocalStorageState } from 'ahooks';
 import { RangeValue } from 'rc-picker/es/interface';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { exportDataForBarGraphs } from '../../../utils/export-data-build-util';
-import Column, { ColumnData } from '../../charts/Column';
 import GranularDatePicker, {
   GranularityValuesType,
   timeframe,
@@ -20,6 +19,7 @@ import DatePicker from '@/components/ui/DatePicker';
 import ContainerRectMeasure from '@/components/utils/ContainerRectMeasure';
 import { QueryResult } from '@/utils/queries/types';
 import SegmentedControl from '@/components/library/SegmentedControl';
+import BarChart, { BarChartData } from '@/components/charts/BarChart';
 
 interface Props<DataType, ValueType extends string, GroupType extends string> extends WidgetProps {
   groups: Array<{
@@ -63,14 +63,14 @@ export default function DistributionChartWidget<
     groups[0].name,
   );
   const [timeWindowType, setTimeWindowType] = useState<timeframe>('YEAR');
-  const preparedDataRes = map(queryResult.data, (data): ColumnData<string, number, ValueType> => {
+  const preparedDataRes = map(queryResult.data, (data): BarChartData<string, string> => {
     const { attributeDataPrefix } = groups.find((group) => group.name === selectedGroup) ?? {};
     if (groupBy === 'TIME') {
-      return data.flatMap((dataItem): ColumnData<string, number, ValueType> => {
+      return data.flatMap((dataItem): BarChartData => {
         return values.map((value) => {
           return {
-            xValue: dataItem.time ?? '-',
-            yValue: dataItem[`${attributeDataPrefix}_${value}`] ?? 0,
+            category: dataItem.time ?? '-',
+            value: dataItem[`${attributeDataPrefix}_${value}`] ?? 0,
             series: value,
           };
         });
@@ -82,8 +82,8 @@ export default function DistributionChartWidget<
           0,
         );
         return {
-          xValue: attribute,
-          yValue: count,
+          category: attribute,
+          value: count,
           series: attribute,
         };
       });
@@ -173,14 +173,16 @@ export default function DistributionChartWidget<
         <div className={s.chartContainer}>
           <ContainerRectMeasure className={s.chartContainer2}>
             {(size) => (
-              <Column<ValueType, string>
+              <BarChart<string, string>
+                orientation={'VERTICAL'}
+                grouping={'STACKED'}
                 data={preparedDataRes}
                 colors={attributeColors}
                 hideLegend={groupBy === 'VALUE'}
                 height={size.height}
                 rotateLabel={groupBy === 'TIME'}
                 formatSeries={getValueName}
-                formatX={groupBy === 'VALUE' ? getValueName : formatDate}
+                formatCategory={groupBy === 'VALUE' ? getValueName : formatDate}
               />
             )}
           </ContainerRectMeasure>

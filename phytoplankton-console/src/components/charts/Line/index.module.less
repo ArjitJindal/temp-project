@@ -1,0 +1,28 @@
+@import 'src/components/ui/colors';
+@import 'src/components/ui/z-indexes';
+@import 'src/components/ui/animation';
+
+.showSkeleton {
+  pointer-events: none;
+}
+
+.marker {
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: r;
+}
+
+.highlightLine {
+  fill: transparent;
+  transition-timing-function: @default-animation-function;
+  transition-duration: @default-animation-speed;
+  transition-property: fill;
+
+  &.isHighlighted {
+    fill: @fr-colors-brandBlueTint;
+  }
+}
+
+.mouseTargetLine {
+  fill: transparent;
+}

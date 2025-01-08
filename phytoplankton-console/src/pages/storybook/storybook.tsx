@@ -53,7 +53,6 @@ import { Component } from '@/pages/storybook/components';
 import Widget from '@/components/library/Widget/story';
 import WidgetGrid from '@/components/library/WidgetGrid/story';
 import Narrative from '@/components/Narrative/story';
-import Line from '@/pages/dashboard/analysis/components/charts/Line/story';
 import SettingsCard from '@/components/library/SettingsCard/story';
 import Typography from '@/components/ui/Typography/story';
 import Spinner from '@/components/library/Spinner/story';
@@ -65,10 +64,13 @@ import Avatar from '@/components/library/Avatar/story';
 import MarkdownEditor from '@/components/markdown/story';
 import NotificationsDrawerList from '@/components/AppWrapper/Menu/Notifications/NotificationsDrawer/story';
 import InvestigativeCoPilot from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/story';
+import Charts from '@/components/charts/story';
 import Skeleton from '@/components/library/Skeleton/story';
 import DateRangePicker from '@/components/library/DateRangePicker/story';
 import AiAlertSummary from '@/components/AlertDetailsPage/AiAlertSummary/story';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard/story';
+import RiskSimulationChart from '@/pages/risk-levels/configure/components/Charts/story';
+import DeltaChart from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation/SimulationStatistics/DeltaChart/story';
 
 const config: Config = [
   {
@@ -344,8 +346,20 @@ const config: Config = [
     title: 'Miscellaneous',
     components: [
       {
+        key: '@/components/charts',
+        story: Charts,
+      },
+      {
         key: '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot',
         story: InvestigativeCoPilot,
+      },
+      {
+        key: '@/pages/risk-levels/configure/components/Charts',
+        story: RiskSimulationChart,
+      },
+      {
+        key: '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation/SimulationStatistics/DeltaChart',
+        story: DeltaChart,
       },
       {
         key: '@/pages/users-item/UserDetails/EntityPropertiesCard',
@@ -374,10 +388,6 @@ const config: Config = [
       {
         key: '@/components/ui/RiskScoreDisplay',
         story: RiskScoreDisplay,
-      },
-      {
-        key: '@/pages/dashboard/analysis/components/charts/Line',
-        story: Line,
       },
       {
         key: '@/components/ui/LogicBuilder',

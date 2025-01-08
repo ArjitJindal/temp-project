@@ -18,7 +18,7 @@ import { WidgetProps } from '@/components/library/Widget/types';
 import { RISK_LEVELS, RiskLevel } from '@/utils/risk-levels';
 import { useQuery } from '@/utils/queries/hooks';
 import { DASHBOARD_TRANSACTIONS_STATS } from '@/utils/queries/keys';
-import Column, { ColumnData } from '@/pages/dashboard/analysis/components/charts/Column';
+import BarChart, { BarChartData } from '@/components/charts/BarChart';
 import {
   COLORS_V2_ANALYTICS_CHARTS_01,
   COLORS_V2_ANALYTICS_CHARTS_02,
@@ -51,13 +51,13 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
     return await api.getDashboardStatsTransactions(params);
   });
 
-  const preparedDataRes = map(queryResult.data, (value): ColumnData<string, number, RiskLevel> => {
-    const result: ColumnData<string, number, RiskLevel> = [];
+  const preparedDataRes = map(queryResult.data, (value): BarChartData<string, RiskLevel> => {
+    const result: BarChartData<string, RiskLevel> = [];
     for (const datum of value?.data ?? []) {
       for (const riskLevel of RISK_LEVELS) {
         result.push({
-          xValue: datum.time,
-          yValue: datum[`arsRiskLevel_${riskLevel}`] ?? 0,
+          category: datum.time,
+          value: datum[`arsRiskLevel_${riskLevel}`] ?? 0,
           series: riskLevel,
         });
       }
@@ -83,7 +83,7 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
         {isSuccess(preparedDataRes) && preparedDataRes.value.length === 0 ? (
           <Empty description="No data available for selected period" />
         ) : (
-          <Column<RiskLevel>
+          <BarChart<string, RiskLevel>
             data={preparedDataRes}
             colors={{
               VERY_LOW: COLORS_V2_ANALYTICS_CHARTS_01,
@@ -95,7 +95,7 @@ export default function TransactionTRSChartCard(props: WidgetProps) {
             formatSeries={(series) => {
               return getRiskLevelLabel(series, settings);
             }}
-            formatX={formatDate}
+            formatCategory={formatDate}
           />
         )}
       </div>
