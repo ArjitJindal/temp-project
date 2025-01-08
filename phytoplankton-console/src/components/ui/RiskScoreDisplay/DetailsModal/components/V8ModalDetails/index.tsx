@@ -20,6 +20,7 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
   lastItem: ValueItem;
   sortedItems: ValueItem[];
+  isExternalSource?: boolean;
 }
 
 function V8ModalDetails(props: Props) {
@@ -32,6 +33,7 @@ function V8ModalDetails(props: Props) {
     riskScoreAlgo,
     lastItem,
     sortedItems,
+    isExternalSource,
   } = props;
   const api = useApi();
   const queryResult = useQuery(RISK_FACTORS_V8(), async () => {
@@ -50,6 +52,7 @@ function V8ModalDetails(props: Props) {
           lastItem={lastItem}
           riskScoreAlgo={riskScoreAlgo}
           sortedItems={sortedItems}
+          {...(isExternalSource && { isExternalSource: true })}
         />
         {
           <div className={s.formulaWrapper}>

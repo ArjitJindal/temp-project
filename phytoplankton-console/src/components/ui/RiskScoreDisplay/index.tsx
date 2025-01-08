@@ -13,6 +13,7 @@ interface Props {
   showFormulaBackLink?: boolean;
   riskScoreAlgo: (value: ValueItem) => number;
   hideInfo?: boolean;
+  isExternalSource?: boolean;
 }
 
 export function sortByDate<T extends { createdAt: number }>(items: T[]): T[] {
@@ -31,6 +32,7 @@ export default function RiskScoreDisplay(props: Props) {
     showFormulaBackLink,
     riskScoreAlgo,
     hideInfo,
+    isExternalSource,
   } = props;
 
   const [isModalOpen, setModalOpen] = useState(false);
@@ -64,6 +66,7 @@ export default function RiskScoreDisplay(props: Props) {
                 lastItem?.manualRiskLevel ?? '',
               )}.`
         }
+        {...(isExternalSource && { isExternalSource: true })}
       />
       <DetailsModal
         icon={icon}
@@ -79,6 +82,7 @@ export default function RiskScoreDisplay(props: Props) {
         riskScoreAlgo={riskScoreAlgo}
         lastItem={lastItem}
         sortedItems={sortedItems}
+        {...(isExternalSource && { isExternalSource: true })}
       />
     </>
   );

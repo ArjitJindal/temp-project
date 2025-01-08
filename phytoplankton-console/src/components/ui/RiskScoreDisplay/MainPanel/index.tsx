@@ -5,8 +5,10 @@ import s from './index.module.less';
 import InformationLineIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import { RISK_LEVEL_COLORS, RiskLevel, useRiskLevel } from '@/utils/risk-levels';
 import RiskLevelTag from '@/components/library/Tag/RiskLevelTag';
+import ExternalSourceTag from '@/components/library/Tag/ExternalSourceTag';
 import { useId } from '@/utils/hooks';
 import Tooltip from '@/components/library/Tooltip';
+import TagsContainer from '@/components/ui/TagsContainer';
 
 export type MainPanelCustomStyles = Partial<{
   background?: string;
@@ -21,10 +23,20 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
   sortedItems: ValueItem[];
   defaultText?: string;
+  isExternalSource?: boolean;
 }
 
 export default function MainPanel(props: Props) {
-  const { title, lastItem, icon, customStyling, onClickInfo, riskScoreAlgo, sortedItems } = props;
+  const {
+    title,
+    lastItem,
+    icon,
+    customStyling,
+    onClickInfo,
+    riskScoreAlgo,
+    sortedItems,
+    isExternalSource,
+  } = props;
   const sortedScores = useMemo(() => sortedItems.map(({ score }) => score), [sortedItems]);
   const currentScore: number | undefined = lastItem && riskScoreAlgo(lastItem);
   const derivedRiskLevel = useRiskLevel(currentScore);
@@ -56,7 +68,12 @@ export default function MainPanel(props: Props) {
       <div className={s.currentValue}>
         <span>{(currentScore ?? 0.0)?.toFixed(2) ?? 'N/A'}</span>
       </div>
-      <div>{currentRiskLevel && <RiskLevelTag level={currentRiskLevel} />}</div>
+
+      <TagsContainer>
+        {currentRiskLevel && <RiskLevelTag level={currentRiskLevel} />}
+        {isExternalSource && currentRiskLevel && <ExternalSourceTag />}
+      </TagsContainer>
+
       {sortedScores.length > 1 && <Chart riskLevel={currentRiskLevel} values={sortedScores} />}
     </div>
   );

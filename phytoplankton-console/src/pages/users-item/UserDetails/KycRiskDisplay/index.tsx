@@ -28,6 +28,7 @@ export default function KycRiskDisplay({ userId }: Props) {
                       createdAt: result.createdAt,
                       components: result.components,
                       factorScoreDetails: result.factorScoreDetails,
+                      manualRiskLevel: result.manualRiskLevel,
                     },
                   ]
                 : []
@@ -37,6 +38,7 @@ export default function KycRiskDisplay({ userId }: Props) {
             riskScoreName="KRS"
             showFormulaBackLink
             riskScoreAlgo={(values) => values.score}
+            isExternalSource={Boolean(result?.manualRiskLevel)}
           />
         )
       }

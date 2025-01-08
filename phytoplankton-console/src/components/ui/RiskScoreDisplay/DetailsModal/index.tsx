@@ -19,16 +19,23 @@ interface Props {
   riskScoreAlgo: (value: ValueItem) => number;
   lastItem: ValueItem;
   sortedItems: ValueItem[];
+  isExternalSource?: boolean;
 }
 
 export default function DetailsModal(props: Props) {
-  const { title, isOpen, onCancel, components, factorScoreDetails } = props;
+  const { title, isOpen, onCancel, components, factorScoreDetails, lastItem, isExternalSource } =
+    props;
 
   return (
     <Modal title={title} hideFooter={true} isOpen={isOpen} onCancel={onCancel} width="M">
       <div className={cn(s.root)}>
         {factorScoreDetails && factorScoreDetails.length > 0 && (
-          <V8ModalDetails {...props} factorScoreDetails={factorScoreDetails} />
+          <V8ModalDetails
+            {...props}
+            factorScoreDetails={factorScoreDetails}
+            lastItem={lastItem}
+            {...(isExternalSource && { isExternalSource: true })}
+          />
         )}
         {components && components.length > 0 && (
           <V2ModalDetails {...props} components={components} />
