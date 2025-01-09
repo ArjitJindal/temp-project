@@ -68,6 +68,7 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
       ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
       'US'
     )
+    const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
     logger.info('USA Pending report', usaPendingReports)
     const timeNow = Date.now()
     const filteredUsaReports = usaPendingReports.filter(
@@ -77,7 +78,6 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
     logger.info('USA report to fetch', filteredUsaReports.length)
     // 2. fetch result from sftp server
     filteredUsaReports.forEach(async (report) => {
-      const sarGenerator = new UsSarReportGenerator()
       const status = await sarGenerator.getAckFileContent(report)
       if (status && report.id) {
         // 3. parse the xml and check if is different from previous status

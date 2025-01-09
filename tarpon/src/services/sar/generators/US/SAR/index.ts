@@ -102,6 +102,11 @@ function createNarrativeBlocks(narrative: string) {
 
 @traceable
 export class UsSarReportGenerator implements ReportGenerator {
+  public static getInstance(tenantId: string): UsSarReportGenerator {
+    const generator = new UsSarReportGenerator()
+    generator.setTenantId(tenantId)
+    return generator
+  }
   tenantId!: string
   getType(): InternalReportType {
     return {
@@ -110,6 +115,9 @@ export class UsSarReportGenerator implements ReportGenerator {
       directSubmission: true,
       subjectTypes: ['CASE'],
     }
+  }
+  public setTenantId(tenantId: string): void {
+    this.tenantId = tenantId
   }
   public async getUserPopulatedParameters(): Promise<ReportParameters> {
     throw new Error(`User subject is not supported`)
