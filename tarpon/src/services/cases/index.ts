@@ -128,6 +128,7 @@ export class CaseService extends CaseAlertsCommonService {
     this.mongoDb = caseRepository.mongoDb
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
     })
     this.alertsService = new AlertsService(
       alertsRepository,
