@@ -72,7 +72,7 @@ export function removeUndefinedFields<T>(obj: T): T {
     // If the object is a plain object, iterate over its properties
     return transform(obj as object, (result, value, key) => {
       const cleanedValue = removeUndefinedFields(value)
-      if (!isUndefined(cleanedValue)) {
+      if (!isUndefined(cleanedValue) && cleanedValue !== null) {
         result[key] = cleanedValue
       }
     })
