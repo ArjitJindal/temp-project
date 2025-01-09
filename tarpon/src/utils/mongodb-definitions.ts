@@ -333,6 +333,10 @@ export const RULE_QUEUES_COLLECTION = (tenantId: string) => {
   return `${tenantId}-rule-queues`
 }
 
+export const REASONS_COLLECTION = (tenantId: string) => {
+  return `${tenantId}-reasons`
+}
+
 export const MIGRATION_TMP_COLLECTION = 'migration-tmp'
 export const DELTA_SANCTIONS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-delta-sanctions`

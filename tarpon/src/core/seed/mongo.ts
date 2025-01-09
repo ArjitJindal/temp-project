@@ -46,6 +46,7 @@ import {
   SANCTIONS_SCREENING_DETAILS_COLLECTION,
   UNIQUE_TAGS_COLLECTION,
   RULE_QUEUES_COLLECTION,
+  REASONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { getUsers } from '@/core/seed/data/users'
@@ -80,6 +81,7 @@ import {
   createTenantDatabase,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
+import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -110,6 +112,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [ML_MODELS_COLLECTION, () => getMlModels()],
   [UNIQUE_TAGS_COLLECTION, () => allUniqueTags()],
   [RULE_QUEUES_COLLECTION, () => getRandomRuleQueues()],
+  [REASONS_COLLECTION, () => getDefaultReasonsData()],
 ]
 
 export async function seedMongo(client: MongoClient, tenantId: string) {

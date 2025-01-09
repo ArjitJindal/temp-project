@@ -10,7 +10,6 @@ import { MongoDbTransactionRepository } from '@/services/rules-engine/repositori
 import { ReportService } from '@/services/sar/service'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import {
   AttributeGenerator,
   AttributeSet,
@@ -88,7 +87,7 @@ export class RetrievalService {
   async getAttributes(
     entityId: string,
     entityType: NarrativeType,
-    reasons: Array<CaseReasons>
+    reasons: Array<string>
   ) {
     switch (entityType) {
       case 'REPORT':
@@ -109,7 +108,7 @@ export class RetrievalService {
 
   private async getReportAttributes(
     reportId: string,
-    reasons: Array<CaseReasons>
+    reasons: Array<string>
   ): Promise<AttributeSet> {
     const report = await this.reportService.getReport(reportId)
     const caseItem = report.caseId
@@ -135,7 +134,7 @@ export class RetrievalService {
 
   private async getCaseAttributes(
     caseId: string,
-    reasons: Array<CaseReasons>
+    reasons: Array<string>
   ): Promise<AttributeSet> {
     const _case = await this.caseService.getCase(caseId)
 
@@ -165,7 +164,7 @@ export class RetrievalService {
 
   private async getAlertAttributes(
     alertId: string,
-    reasons: Array<CaseReasons>
+    reasons: Array<string>
   ): Promise<AttributeSet> {
     const _case = await this.caseService.getCaseByAlertId(alertId)
 

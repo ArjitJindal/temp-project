@@ -4,15 +4,9 @@ import { UseMutationResult } from '@tanstack/react-query';
 import { statusToOperationName } from './StatusChangeButton';
 import s from './index.module.less';
 import { CaseStatus, FileInfo, KYCStatusDetailsInternal, UserStateDetailsInternal } from '@/apis';
-import { CaseReasons } from '@/apis/models/CaseReasons';
 import Modal from '@/components/library/Modal';
 import Checkbox from '@/components/library/Checkbox';
-import Narrative, {
-  CLOSING_REASONS,
-  COMMON_REASONS,
-  OTHER_REASON,
-  NarrativeRef,
-} from '@/components/Narrative';
+import Narrative, { NarrativeRef } from '@/components/Narrative';
 import { useFinishedSuccessfully } from '@/utils/asyncResource';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import Label from '@/components/library/Label';
@@ -23,15 +17,10 @@ import { notEmpty } from '@/components/library/Form/utils/validation/basicValida
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
 import { useUsers } from '@/utils/user-utils';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
-
-export const ESCALATION_REASONS: CaseReasons[] = [
-  'Fraud',
-  'Anti-money laundering',
-  'Terrorist financing',
-];
+import { useReasons } from '@/utils/reasons';
 
 export interface FormValues {
-  reasons: CaseReasons[];
+  reasons: string[];
   reasonOther: string | undefined;
   comment: string | undefined;
   files: FileInfo[];
@@ -55,7 +44,7 @@ export interface Props {
   oldStatus?: CaseStatus;
   newStatus: CaseStatus;
   newStatusActionLabel?: ActionLabel;
-  defaultReasons?: CaseReasons[];
+  defaultReasons?: string[];
   initialValues?: Partial<FormValues>;
   onClose: () => void;
   updateMutation: UseMutationResult<unknown, unknown, FormValues>;
@@ -122,10 +111,7 @@ export default function StatusChangeModal(props: Props) {
     )}`;
   }, [newStatusActionLabel, newStatus, entityName, entityIds]);
 
-  const possibleReasons: CaseReasons[] = [
-    ...(statusEscalated(newStatus) ? ESCALATION_REASONS : CLOSING_REASONS),
-    ...COMMON_REASONS,
-  ];
+  const possibleReasons = useReasons(statusEscalated(newStatus) ? 'ESCALATION' : 'CLOSURE');
 
   const isQAEnabled = useFeatureEnabled('QA');
   const qaText =
@@ -173,7 +159,7 @@ export default function StatusChangeModal(props: Props) {
           ref={narrativeRef}
           showErrors={showErrors}
           values={formState}
-          otherReason={OTHER_REASON}
+          // otherReason={OTHER_REASON}
           onChange={setFormState}
           alertMessage={alertMessage}
           entityType={entityName}

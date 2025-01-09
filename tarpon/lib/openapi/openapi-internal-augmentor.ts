@@ -34,6 +34,12 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/sla/new-sla-id':
     StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/action-reason':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/action-reason/{reasonId}':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/tenants/settings/bulk-action-reason':
+    StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/delete': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/deletion-data': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
   '/tenants/settings/rule-queues':

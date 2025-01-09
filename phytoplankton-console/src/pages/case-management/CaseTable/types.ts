@@ -1,5 +1,4 @@
 import {
-  CaseReasons,
   Case,
   CaseStatusChange,
   InternalBusinessUser,
@@ -26,7 +25,7 @@ export type TableItem = Omit<Case, 'alerts' | 'caseUsers'> & {
   user: TableUser | null;
   lastStatusChange?: CaseStatusChange;
   lastStatusChangeReasons: {
-    reasons: CaseReasons[];
+    reasons: string[];
     otherReason: string | null;
   } | null;
   alertComments: Comment[];

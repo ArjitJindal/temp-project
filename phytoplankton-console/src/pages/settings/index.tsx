@@ -29,6 +29,7 @@ import { PepStatusConfigSettings } from './components/PepStatusConfigSettings';
 import TagSettings from './components/TagSettings';
 import ReRunTriggerSettings from './components/ReRunTriggerSettings';
 import { WebhookSettings } from './components/WebhookSettings';
+import { ReasonsSettings } from './components/ReasonsSettings';
 import PageWrapper from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -99,6 +100,7 @@ export default function SettingsPage() {
                 <Feature name="NARRATIVE_COPILOT">
                   <NarrativeCopilot />
                 </Feature>
+                <ReasonsSettings />
               </>
             ),
           },

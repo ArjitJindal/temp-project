@@ -2,7 +2,7 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { QueryKey } from '@tanstack/react-query';
 import { compact } from 'lodash';
 import { Dayjs } from '@/utils/dayjs';
-import { ListType } from '@/apis';
+import { ListType, ReasonType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
 
@@ -428,3 +428,5 @@ export const MACHINE_LEARNING_MODELS = (params?: AnyParameters) => [
   'machine-learning-models',
   params,
 ];
+
+export const ACTION_REASONS = (type?: ReasonType) => ['action-reasons', type];

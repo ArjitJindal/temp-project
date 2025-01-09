@@ -43,6 +43,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { CrmService } from '@/services/crm'
 import { NangoService } from '@/services/nango'
+import { ReasonsService } from '@/services/tenants/reasons-service'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -490,6 +491,29 @@ export const tenantsHandler = lambdaApi()(
       await nangoService.deleteCredentials(
         ctx.tenantId,
         request.CRMIntegrationsPatchPayload.integrationsToDelete ?? []
+      )
+    })
+
+    /* Action Reasons */
+
+    handlers.registerGetActionReasons(async (ctx, request) => {
+      const reasonsService = new ReasonsService(tenantId, mongoDb)
+      const type = request.type
+      return await reasonsService.getReasons(type)
+    })
+
+    handlers.registerCreateActionReasons(async (ctx, request) => {
+      const reasonsService = new ReasonsService(tenantId, mongoDb)
+      const reason = request.ConsoleActionReasonCreationRequest
+      return await reasonsService.addReasons(reason)
+    })
+
+    handlers.registerToggleActionReason(async (ctx, request) => {
+      const reasonsService = new ReasonsService(tenantId, mongoDb)
+
+      return await reasonsService.enableOrDisableReason(
+        request.reasonId,
+        request.ConsoleActionReasonPutRequest.isActive
       )
     })
 

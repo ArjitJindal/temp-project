@@ -4941,7 +4941,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/CaseReasons'
+              type: string
           in: query
           name: filterClosingReason
         - schema:
@@ -5216,7 +5216,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/CaseReasons'
+              type: string
           in: query
           name: filterClosingReason
         - schema:
@@ -5537,7 +5537,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/CaseReasons'
+              type: string
           in: query
           name: filterCaseClosureReasons
         - schema:
@@ -6700,6 +6700,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/ReportTypesResponse'
       operationId: get-report-types
+  /tenants/settings/action-reason:
+    get:
+      summary: Get Action reasons
+      operationId: get-action-reasons
+      x-flagright:
+        permissions:
+          - settings:case-management:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsoleActionReason'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/ReasonType'
+          in: query
+          name: type
+  /tenants/settings/bulk-action-reason:
+    post:
+      summary: Create New Action Reasons
+      operationId: create-action-reasons
+      x-flagright:
+        permissions:
+          - settings:case-management:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConsoleActionReason'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsoleBulkActionReasonPostRequest'
+        required: true
+  /tenants/settings/action-reason/{reasonId}:
+    patch:
+      summary: Toggle Action Reason
+      operationId: toggle-action-reason
+      x-flagright:
+        permissions:
+          - settings:case-management:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConsoleActionReason'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConsoleActionReasonPutRequest'
+        required: true
+      parameters:
+        - schema:
+            type: string
+          in: path
+          name: reasonId
+          required: true
   /tenants/settings/sla:
     get:
       summary: Get SLA Policies
@@ -9840,7 +9909,7 @@ components:
         reasons:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         narrative:
           type: string
       required:
@@ -11319,6 +11388,57 @@ components:
         - event
         - eventCreatedAt
         - request
+    ConsoleActionReasonPutRequest:
+      title: ActionReasonPutRequest
+      type: object
+      properties:
+        isActive:
+          type: boolean
+      required:
+        - isActive
+    ConsoleBulkActionReasonPostRequest:
+      title: ConsoleBulkActionReasonPostRequest
+      type: array
+      items:
+        $ref: '#/components/schemas/ConsoleActionReasonCreationRequest'
+    ConsoleActionReasonCreationRequest:
+      title: ConsoleActionReasonCreationRequest
+      type: object
+      properties:
+        reason:
+          type: string
+        reasonType:
+          $ref: '#/components/schemas/ReasonType'
+      required:
+        - reason
+        - reasonType
+    ConsoleActionReason:
+      title: ConsoleActionReason
+      type: object
+      properties:
+        id:
+          type: string
+        reason:
+          type: string
+        reasonType:
+          $ref: '#/components/schemas/ReasonType'
+        isActive:
+          type: boolean
+        isDeleted:
+          type: boolean
+        updatedAt:
+          type: number
+      required:
+        - id
+        - reason
+        - reasonType
+        - isActive
+    ReasonType:
+      title: ReasonType
+      type: string
+      enum:
+        - CLOSURE
+        - ESCALATION
     CaseReasons:
       type: string
       title: CaseReasons
@@ -11950,7 +12070,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         caseStatus:
           $ref: '#/components/schemas/CaseStatus'
         priority:
@@ -12031,7 +12151,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         checklistStatus:
           $ref: '#/components/schemas/ChecklistStatus'
         otherReason:
@@ -12071,7 +12191,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         alertStatus:
           $ref: '#/components/schemas/AlertStatus'
         priority:
@@ -12390,7 +12510,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         timestamp:
           type: number
         caseStatus:
@@ -15436,7 +15556,7 @@ components:
         reason:
           type: array
           items:
-            $ref: '#/components/schemas/CaseReasons'
+            type: string
         reviewAssignments:
           type: array
           items:

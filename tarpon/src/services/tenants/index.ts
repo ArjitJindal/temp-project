@@ -28,6 +28,7 @@ import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
 import { TenantRepository } from './repositories/tenant-repository'
+import { ReasonsService } from './reasons-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
@@ -327,6 +328,9 @@ export class TenantService {
       )
     }
 
+    const reasonsService = new ReasonsService(tenantId, this.mongoDb)
+    // initialising default reasons for new tenant
+    await reasonsService.initialiseDefaultReasons()
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',
       tenantId,

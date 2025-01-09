@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import pluralize from 'pluralize';
 import Button from '@/components/library/Button';
-import { CaseReasons, ChecklistStatus } from '@/apis';
+import { ChecklistStatus } from '@/apis';
 import Modal from '@/components/library/Modal';
 import Narrative, { NarrativeRef, FormValues, OTHER_REASON } from '@/components/Narrative';
 import { message } from '@/components/library/Message';
@@ -23,22 +23,20 @@ export default function QaStatusChangeModal(props: ConfirmModalProps) {
   const [isOpen, setIsOpen] = useState(false);
   const api = useApi();
 
-  const [formState, setFormState] = useState<{ values: FormValues<CaseReasons>; isValid: boolean }>(
-    {
-      values: {
-        reasons: [],
-        comment: '',
-        files: [],
-        reasonOther: '',
-      },
-      isValid: false,
+  const [formState, setFormState] = useState<{ values: FormValues<string>; isValid: boolean }>({
+    values: {
+      reasons: [],
+      comment: '',
+      files: [],
+      reasonOther: '',
     },
-  );
+    isValid: false,
+  });
   const [showError, setShowError] = useState(false);
   const alertsText = pluralize('Alert', alertIds.length);
   const narrativeRef = React.useRef<NarrativeRef>(null);
   const mutation = useMutation(
-    async (values: FormValues<CaseReasons>) => {
+    async (values: FormValues<string>) => {
       await api.alertsQaStatusChange({
         AlertQaStatusUpdateRequest: {
           alertIds,

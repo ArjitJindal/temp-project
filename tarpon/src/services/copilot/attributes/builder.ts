@@ -7,7 +7,6 @@ import { Case } from '@/@types/openapi-internal/Case'
 import { CaseAttributeBuilder } from '@/services/copilot/attributes/case-attribute-builder'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 import { RuleNature } from '@/@types/openapi-public/RuleNature'
 import { NarrativeResponseAttributes } from '@/@types/openapi-internal/NarrativeResponseAttributes'
 
@@ -16,7 +15,7 @@ export type InputData = {
   user: InternalConsumerUser | InternalBusinessUser
   _case?: Case
   ruleInstances?: RuleInstance[]
-  reasons: Array<CaseReasons>
+  reasons: Array<string>
 }
 
 export interface AttributeBuilder {
