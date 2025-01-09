@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR } from '../country-of-nationality'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -50,9 +50,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'userDetails.countryOfNationality'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfNationality',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -109,9 +112,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'userDetails.countryOfNationality'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfNationality',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -187,9 +193,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'userDetails.countryOfNationality'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfNationality',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -266,9 +275,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'userDetails.countryOfNationality'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfNationality',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

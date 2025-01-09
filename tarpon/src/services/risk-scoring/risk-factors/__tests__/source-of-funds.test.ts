@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR } from '../source-of-funds'
 import { TEST_ITERABLE_RISK_ITEM } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -49,7 +49,10 @@ describe('Source of Funds Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['sourceOfFunds']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('sourceOfFunds', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -104,7 +107,10 @@ describe('Source of Funds Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['sourceOfFunds']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('sourceOfFunds', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -177,7 +183,10 @@ describe('Source of Funds Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['sourceOfFunds']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('sourceOfFunds', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -250,7 +259,10 @@ describe('Source of Funds Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['sourceOfFunds']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('sourceOfFunds', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

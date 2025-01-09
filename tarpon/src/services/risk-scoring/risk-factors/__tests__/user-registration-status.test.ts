@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR } from '../user-registration-status'
 import { TEST_BUSINESS_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestBusiness } from '@/test-utils/user-test-utils'
@@ -50,9 +50,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userRegistrationStatus'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userRegistrationStatus',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -131,9 +134,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userRegistrationStatus'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userRegistrationStatus',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -212,9 +218,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userRegistrationStatus'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userRegistrationStatus',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

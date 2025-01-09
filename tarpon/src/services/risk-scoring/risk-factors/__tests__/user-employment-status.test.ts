@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR } from '../user-employment-status'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -48,7 +48,10 @@ describe('User Employment Status Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('employmentStatus', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -102,7 +105,10 @@ describe('User Employment Status Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('employmentStatus', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -175,7 +181,10 @@ describe('User Employment Status Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('employmentStatus', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -248,7 +257,10 @@ describe('User Employment Status Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['employmentStatus']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('employmentStatus', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

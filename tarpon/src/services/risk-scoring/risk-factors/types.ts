@@ -4,6 +4,7 @@ import { RiskParameterLevelKeyValue } from '@/@types/openapi-internal/RiskParame
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 export type V2V8RiskFactor = Omit<RiskFactor, 'id'>
 
@@ -20,4 +21,5 @@ export type RiskFactorLogicGenerator = (parameterValue: RiskParameterValue) => {
 export type RiskFactorMigrationEntry = {
   key: RiskFactorParameter
   logicGenerator: RiskFactorLogicGenerator
+  type: RiskEntityType
 }

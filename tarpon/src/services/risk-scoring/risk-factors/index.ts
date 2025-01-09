@@ -1,3 +1,4 @@
+import { memoize } from 'lodash'
 import { getRiskLevelAndScore } from '../utils'
 import {
   CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
@@ -69,8 +70,8 @@ import {
   sourceOfFundsV8Logic,
 } from './source-of-funds'
 
-import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
+import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
 //  We will use risk factors from this list to initialise in dynamoDB under the RiskFactors key
 export const RISK_FACTORS: V2V8RiskFactor[] = [
@@ -121,74 +122,111 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
   {
     key: 'type',
     logicGenerator: customerTypeV8Logic,
+    type: 'CONSUMER_USER',
+  },
+  {
+    key: 'type',
+    logicGenerator: customerTypeV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'legalEntity.companyGeneralDetails.businessIndustry',
     logicGenerator: businessIndustryV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'legalEntity.companyRegistrationDetails.registrationCountry',
     logicGenerator: businessRegistrationCountryV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'legalEntity.companyRegistrationDetails.dateOfRegistration',
     logicGenerator: companyAgeV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'directors',
     logicGenerator: directorsCountryOfNationalityV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'shareHolders',
     logicGenerator: shareholdersCountryOfNationalityV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'legalEntity.companyGeneralDetails.userRegistrationStatus',
     logicGenerator: userRegistrationStatusV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'userDetails.countryOfResidence',
     logicGenerator: countryOfResidenceV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'userDetails.countryOfNationality',
     logicGenerator: countryOfNationalityV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'userDetails.dateOfBirth',
     logicGenerator: customerAgeV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'userSegment',
     logicGenerator: consumerUserSegmentV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'legalEntity.companyGeneralDetails.userSegment',
     logicGenerator: businessUserSegmentV8Logic,
+    type: 'BUSINESS',
   },
   {
     key: 'employmentStatus',
     logicGenerator: userEmploymentStatusV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'occupation',
     logicGenerator: userOccupationV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'reasonForAccountOpening',
     logicGenerator: reasonForAccountOpeningV8Logic,
+    type: 'CONSUMER_USER',
   },
   {
     key: 'sourceOfFunds',
     logicGenerator: sourceOfFundsV8Logic,
+    type: 'CONSUMER_USER',
   },
 ]
 
-// Map of risk factor parameters to their migration logic
+// Update the map type to use the composite key
 export const PARAMETER_MIGRATION_MAP: Record<
-  Partial<RiskFactorParameter>,
+  string,
   (parameters: V8MigrationParameters) => RiskFactorLogic[]
-> = RISK_FACTOR_MIGRATIONS.reduce((acc, { key, logicGenerator }) => {
-  acc[key] = generateV8FactorMigrator(logicGenerator)
+> = RISK_FACTOR_MIGRATIONS.reduce((acc, { key, logicGenerator, type }) => {
+  // Create composite key as a string for easier lookup
+  const compositeKey = `${type}:${key}`
+  acc[compositeKey] = generateV8FactorMigrator(logicGenerator)
   return acc
-}, {} as Record<Partial<RiskFactorParameter>, (parameters: V8MigrationParameters) => RiskFactorLogic[]>)
+}, {} as Record<string, (parameters: V8MigrationParameters) => RiskFactorLogic[]>)
+
+const getRiskFactorLogicByKeyAndType = memoize(
+  (
+    key: string,
+    type: RiskEntityType
+  ): ((parameters: V8MigrationParameters) => RiskFactorLogic[]) | undefined => {
+    const compositeKey = `${type}:${key}`
+    return PARAMETER_MIGRATION_MAP[compositeKey]
+  },
+  // Memoization resolver - creates unique cache key from arguments
+  (key: string, type: RiskEntityType) => `${type}:${key}`
+)
+
+export { getRiskFactorLogicByKeyAndType }

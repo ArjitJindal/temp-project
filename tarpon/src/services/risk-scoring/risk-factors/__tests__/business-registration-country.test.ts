@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR } from '../business-registration-country'
 import { TEST_BUSINESS_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestBusiness } from '@/test-utils/user-test-utils'
@@ -47,9 +47,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyRegistrationDetails.registrationCountry'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyRegistrationDetails.registrationCountry',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -130,9 +133,12 @@ describe('Country of Nationality Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyRegistrationDetails.registrationCountry'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyRegistrationDetails.registrationCountry',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

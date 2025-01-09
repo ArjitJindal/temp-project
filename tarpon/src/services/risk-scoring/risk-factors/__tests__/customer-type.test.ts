@@ -5,7 +5,7 @@ import {
   BUSINESS_TYPE_RISK_FACTOR,
   CONSUMER_TYPE_RISK_FACTOR,
 } from '../customer-type'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import {
   TEST_BUSINESS_USER_RISK_PARAMETER,
   TEST_CONSUMER_USER_RISK_PARAMETER,
@@ -27,7 +27,9 @@ describe('Customer Type Risk Factor', () => {
     const consumerV8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
+      )({
         riskLevelAssignmentValues: consumerRiskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -75,7 +77,9 @@ describe('Customer Type Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -121,7 +125,9 @@ describe('Customer Type Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -166,7 +172,9 @@ describe('Customer Type Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'CONSUMER_USER') ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -232,7 +240,9 @@ describe('Customer Type Risk Factor', () => {
     const businessV8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'BUSINESS') ?? (() => [])
+      )({
         riskLevelAssignmentValues: businessRiskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -279,7 +289,9 @@ describe('Customer Type Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'BUSINESS') ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -324,7 +336,9 @@ describe('Customer Type Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_TYPE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['type']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('type', 'BUSINESS') ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

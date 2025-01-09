@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR } from '../account-opening'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
@@ -39,8 +39,14 @@ describe('Reason for Account Opening Risk Factor', () => {
     }
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
+
       ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'reasonForAccountOpening',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -94,7 +100,12 @@ describe('Reason for Account Opening Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'reasonForAccountOpening',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -157,7 +168,12 @@ describe('Reason for Account Opening Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'reasonForAccountOpening',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -220,7 +236,12 @@ describe('Reason for Account Opening Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['reasonForAccountOpening']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'reasonForAccountOpening',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -257,7 +278,6 @@ describe('Reason for Account Opening Risk Factor', () => {
       v8RiskFactor,
       { user, type: 'USER' }
     )
-
     expect(v2Result.score).toEqual(v8Result.score)
   })
 })

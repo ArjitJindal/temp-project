@@ -1,7 +1,7 @@
 import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import {
   BUSINESS_USER_SEGMENT_RISK_FACTOR,
   CONSUMER_USER_SEGMENT_RISK_FACTOR,
@@ -25,7 +25,6 @@ import {
   InternalBusinessUser,
   InternalConsumerUser,
 } from '@/@types/openapi-internal/all'
-
 dynamoDbSetupHook()
 describe('User Segment Risk Factor', () => {
   const tenantId = getTestTenantId()
@@ -57,7 +56,10 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userSegment']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('userSegment', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -111,7 +113,10 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userSegment']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('userSegment', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -183,7 +188,10 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userSegment']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('userSegment', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -255,7 +263,10 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userSegment']({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType('userSegment', 'CONSUMER_USER') ??
+        (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -329,9 +340,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userSegment'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userSegment',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -409,9 +423,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userSegment'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userSegment',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,
@@ -489,9 +506,12 @@ describe('User Segment Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...BUSINESS_USER_SEGMENT_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP[
-        'legalEntity.companyGeneralDetails.userSegment'
-      ]({
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'legalEntity.companyGeneralDetails.userSegment',
+          'BUSINESS'
+        ) ?? (() => [])
+      )({
         riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
         riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
         defaultWeight: 0.5,

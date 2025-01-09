@@ -2,7 +2,7 @@ import { RiskScoringService } from '../..'
 import { RiskScoringV8Service } from '../../risk-scoring-v8-service'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '../../repositories/risk-repository'
 import { CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR } from '../country-of-residence'
-import { PARAMETER_MIGRATION_MAP } from '..'
+import { getRiskFactorLogicByKeyAndType } from '..'
 import { TEST_CONSUMER_USER_RISK_PARAMETER } from '@/test-utils/pulse-test-utils'
 import { getTestUser } from '@/test-utils/user-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
@@ -50,13 +50,16 @@ describe('Country of Residence Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userDetails.countryOfResidence'](
-        {
-          riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
-          riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
-          defaultWeight: 0.5,
-        }
-      ),
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfResidence',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
       defaultRiskScore: 90,
       logicAggregationVariables: [],
       logicEntityVariables: [],
@@ -109,13 +112,16 @@ describe('Country of Residence Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userDetails.countryOfResidence'](
-        {
-          riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
-          riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
-          defaultWeight: 0.5,
-        }
-      ),
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfResidence',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
+        riskLevelAssignmentValues: [] as RiskParameterLevelKeyValue[],
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
 
       defaultRiskScore: 90,
       logicAggregationVariables: [],
@@ -192,13 +198,16 @@ describe('Country of Residence Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userDetails.countryOfResidence'](
-        {
-          riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
-          riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
-          defaultWeight: 0.5,
-        }
-      ),
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfResidence',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
       defaultRiskScore: 90,
       logicAggregationVariables: [],
       logicEntityVariables: [],
@@ -274,13 +283,16 @@ describe('Country of Residence Risk Factor', () => {
     const v8RiskFactor: RiskFactor = {
       id: 'TEST_FACTOR',
       ...CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
-      riskLevelLogic: PARAMETER_MIGRATION_MAP['userDetails.countryOfResidence'](
-        {
-          riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
-          riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
-          defaultWeight: 0.5,
-        }
-      ),
+      riskLevelLogic: (
+        getRiskFactorLogicByKeyAndType(
+          'userDetails.countryOfResidence',
+          'CONSUMER_USER'
+        ) ?? (() => [])
+      )({
+        riskLevelAssignmentValues: riskFactor.riskLevelAssignmentValues,
+        riskClassificationValues: DEFAULT_CLASSIFICATION_SETTINGS,
+        defaultWeight: 0.5,
+      }),
       defaultRiskScore: 90,
       logicAggregationVariables: [],
       logicEntityVariables: [],
