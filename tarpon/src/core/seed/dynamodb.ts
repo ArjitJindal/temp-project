@@ -188,7 +188,10 @@ export async function seedDynamo(
   for (const krsScore of getKrsScores()) {
     await riskRepo.createOrUpdateKrsScore(
       krsScore.userId as string,
-      krsScore.krsScore
+      krsScore.krsScore,
+      krsScore.components ?? [],
+      krsScore.factorScoreDetails ?? [],
+      krsScore.isLocked ?? false
     )
   }
 
