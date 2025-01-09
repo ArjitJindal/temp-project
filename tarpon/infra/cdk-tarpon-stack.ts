@@ -241,6 +241,16 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    const batchAsyncRuleQueue = this.createQueue(
+      SQSQueues.BATCH_ASYNC_RULE_QUEUE_NAME.name,
+      {
+        fifo: true,
+        visibilityTimeout: CONSUMER_SQS_VISIBILITY_TIMEOUT,
+        retentionPeriod: Duration.days(7),
+        maxReceiveCount: MAX_SQS_RECEIVE_COUNT,
+      }
+    )
+
     const mongoUpdateConsumerQueue = this.createQueue(
       SQSQueues.MONGO_UPDATE_CONSUMER_QUEUE_NAME.name,
       {
@@ -494,6 +504,7 @@ export class CdkTarponStack extends cdk.Stack {
         BATCH_JOB_QUEUE_URL: batchJobQueue?.queueUrl,
         TARPON_QUEUE_URL: tarponEventQueue.queueUrl,
         ASYNC_RULE_QUEUE_URL: asyncRuleQueue.queueUrl,
+        BATCH_ASYNC_RULE_QUEUE_URL: batchAsyncRuleQueue.queueUrl,
         MONGO_DB_CONSUMER_QUEUE_URL: mongoDbConsumerQueue.queueUrl,
         MONGO_UPDATE_CONSUMER_QUEUE_URL: mongoUpdateConsumerQueue.queueUrl,
       },
@@ -573,6 +584,7 @@ export class CdkTarponStack extends cdk.Stack {
             notificationQueue.queueArn,
             tarponEventQueue.queueArn,
             asyncRuleQueue.queueArn,
+            batchAsyncRuleQueue.queueArn,
             mongoDbConsumerQueue.queueArn,
             mongoUpdateConsumerQueue.queueArn,
           ],
@@ -769,8 +781,17 @@ export class CdkTarponStack extends cdk.Stack {
       }
     )
 
+    // non-batch async rule
     asyncRuleAlias.addEventSource(
       new SqsEventSource(asyncRuleQueue, { maxConcurrency: 100, batchSize: 10 })
+    )
+
+    // batch async rule
+    asyncRuleAlias.addEventSource(
+      new SqsEventSource(batchAsyncRuleQueue, {
+        maxConcurrency: 100,
+        batchSize: 10,
+      })
     )
 
     /* Mongo Update */

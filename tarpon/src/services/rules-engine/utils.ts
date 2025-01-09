@@ -491,59 +491,87 @@ export async function sendAsyncRuleTasks(
   }
 
   const isConcurrentAsyncRulesEnabled = hasFeature('CONCURRENT_ASYNC_RULES')
-  const messages = tasks.map((task) => {
-    let messageDeduplicationId = ''
-    if (task.type === 'TRANSACTION') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `T-${task.transaction.transactionId}`
-      )
-    } else if (task.type === 'TRANSACTION_EVENT') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `TE-${task.transactionEventId}`
-      )
-    } else if (task.type === 'USER') {
-      messageDeduplicationId = sanitizeDeduplicationId(`U-${task.user.userId}`)
-    } else if (task.type === 'USER_EVENT') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `UE-${task.updatedUser.userId}-${task.userEventTimestamp}`
-      )
-    } else if (task.type === 'TRANSACTION_BATCH') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `TB-${task.transaction.transactionId}`
-      )
-    } else if (task.type === 'TRANSACTION_EVENT_BATCH') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `TEB-${task.transactionEvent.transactionId}-${
-          task.transactionEvent.eventId ?? task.transactionEvent.timestamp
-        }`
-      )
-    } else if (task.type === 'USER_BATCH') {
-      messageDeduplicationId = sanitizeDeduplicationId(`UB-${task.user.userId}`)
-    } else if (task.type === 'USER_EVENT_BATCH') {
-      messageDeduplicationId = sanitizeDeduplicationId(
-        `UEB-${task.userEvent.userId}-${
-          task.userEvent.eventId ?? task.userEvent.timestamp
-        }`
-      )
-    }
-    return {
-      MessageBody: JSON.stringify(task),
-      QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
-      MessageGroupId: generateChecksum(
-        isConcurrentAsyncRulesEnabled
-          ? getAsyncRuleMessageGroupId(task)
-          : task.tenantId,
-        10
-      ),
-      MessageDeduplicationId: messageDeduplicationId,
-    }
-  })
 
-  await bulkSendMessages(
-    sqs,
-    process.env.ASYNC_RULE_QUEUE_URL as string,
-    messages
-  )
+  const messages = tasks
+    .filter((task) => !task.type.endsWith('_BATCH'))
+    .map((task) => {
+      let messageDeduplicationId = ''
+      if (task.type === 'TRANSACTION') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `T-${task.transaction.transactionId}`
+        )
+      } else if (task.type === 'TRANSACTION_EVENT') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `TE-${task.transactionEventId}`
+        )
+      } else if (task.type === 'USER') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `U-${task.user.userId}`
+        )
+      } else if (task.type === 'USER_EVENT') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `UE-${task.updatedUser.userId}-${task.userEventTimestamp}`
+        )
+      }
+      return {
+        MessageBody: JSON.stringify(task),
+        QueueUrl: process.env.ASYNC_RULE_QUEUE_URL,
+        MessageGroupId: generateChecksum(
+          isConcurrentAsyncRulesEnabled
+            ? getAsyncRuleMessageGroupId(task)
+            : task.tenantId,
+          10
+        ),
+        MessageDeduplicationId: messageDeduplicationId,
+      }
+    })
+
+  const batchMessages = tasks
+    .filter((task) => task.type.endsWith('_BATCH'))
+    .map((task) => {
+      let messageDeduplicationId = ''
+      if (task.type === 'TRANSACTION_BATCH') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `TB-${task.transaction.transactionId}`
+        )
+      } else if (task.type === 'TRANSACTION_EVENT_BATCH') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `TEB-${task.transactionEvent.transactionId}-${
+            task.transactionEvent.eventId ?? task.transactionEvent.timestamp
+          }`
+        )
+      } else if (task.type === 'USER_BATCH') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `UB-${task.user.userId}`
+        )
+      } else if (task.type === 'USER_EVENT_BATCH') {
+        messageDeduplicationId = sanitizeDeduplicationId(
+          `UEB-${task.userEvent.userId}-${
+            task.userEvent.eventId ?? task.userEvent.timestamp
+          }`
+        )
+      }
+      return {
+        MessageBody: JSON.stringify(task),
+        QueueUrl: process.env.BATCH_ASYNC_RULE_QUEUE_URL,
+        MessageGroupId: generateChecksum(
+          isConcurrentAsyncRulesEnabled
+            ? getAsyncRuleMessageGroupId(task)
+            : task.tenantId,
+          10
+        ),
+        MessageDeduplicationId: messageDeduplicationId,
+      }
+    })
+
+  await Promise.all([
+    bulkSendMessages(sqs, process.env.ASYNC_RULE_QUEUE_URL as string, messages),
+    bulkSendMessages(
+      sqs,
+      process.env.BATCH_ASYNC_RULE_QUEUE_URL as string,
+      batchMessages
+    ),
+  ])
 }
 
 export function mergeUserTags(

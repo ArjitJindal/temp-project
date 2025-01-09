@@ -46,6 +46,7 @@ function getLockKeys(record: AsyncRuleRecord): string[] {
       return [record.userEvent.userId]
   }
 }
+
 export const runAsyncRules = async (record: AsyncRuleRecord) => {
   const { tenantId } = record
   const dynamoDb = getDynamoDbClient()
