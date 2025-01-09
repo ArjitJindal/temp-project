@@ -611,9 +611,6 @@ async function createMaterializedViews(
     const matQuery = createMaterializedViewQuery(view, table.table)
     await client.query({ query: matQuery })
     await addMissingColumns(client, view.table, view.columns)
-    logger.info(
-      `Created materialized view ${view.viewName} for table ${table.table}.`
-    )
   }
 }
 

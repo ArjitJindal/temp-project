@@ -324,7 +324,12 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     materializedViews: [
       {
         viewName: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.viewName,
-        columns: ['id String', 'data String', userNameMaterilizedColumn],
+        columns: [
+          'id String',
+          'data String',
+          userNameMaterilizedColumn,
+          enumFields(USER_TYPES, 'type', 'type'),
+        ],
         table: CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table,
         engine: 'ReplacingMergeTree',
         primaryKey: 'id',

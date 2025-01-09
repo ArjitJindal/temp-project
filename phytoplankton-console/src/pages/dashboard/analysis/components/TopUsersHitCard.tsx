@@ -13,7 +13,7 @@ import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { HITS_PER_USER } from '@/utils/queries/keys';
 import { useApi } from '@/api';
 import { isSuccess } from '@/utils/asyncResource';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users';
 import { getCurrentDomain } from '@/utils/routing';
 
 interface Props extends WidgetProps {
@@ -69,8 +69,11 @@ const TopUsersHitCard = (props: Props) => {
             )}`
           : null;
         return {
-          userId: `${item.userId} (${getCurrentDomain()}${getUserLink(item.user)})`,
-          userName: getUserName(item.user) ?? '',
+          userId: `${item.userId} (${getCurrentDomain()}${getUserLink({
+            userId: item.userId,
+            type: item.userType as 'BUSINESS' | 'CONSUMER',
+          })})`,
+          userName: item.userName ?? '',
           ruleHit: `${item.rulesHitCount} hits`,
           openAlerts: `${item.openAlertsCount} open alerts ${alertLink ? `(${alertLink})` : ''}`,
         };

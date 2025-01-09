@@ -7,7 +7,7 @@ import { TableItem } from './types';
 import { generateAlertsListUrl } from './utils';
 import { Dayjs } from '@/utils/dayjs';
 import UserLink from '@/components/UserLink';
-import { getUserLink, getUserName } from '@/utils/api/users';
+import { getUserLink } from '@/utils/api/users';
 import { TableColumn } from '@/components/library/Table/types';
 import { PaginatedData } from '@/utils/queries/hooks';
 import QueryResultsTable from '@/components/shared/QueryResultsTable';
@@ -33,21 +33,29 @@ export default function HitsPerUserCard(props: Props) {
       title: 'User ID',
       type: {
         render: (userId, { item: entity }) => {
-          const { user } = entity;
-          if (!user) {
+          const { userType } = entity;
+          if (!userType) {
             return <>{userId}</>;
           }
-          return <UserLink user={user}>{userId}</UserLink>;
+          return (
+            <UserLink
+              user={{ userId: entity.userId, type: entity.userType as 'BUSINESS' | 'CONSUMER' }}
+            >
+              {userId}
+            </UserLink>
+          );
         },
         stringify(value) {
           return `${value}`;
         },
-        link: (value, item) => getUserLink(item.user) ?? '',
+        link: (value, item) =>
+          getUserLink({ userId: item.userId, type: item.userType as 'BUSINESS' | 'CONSUMER' }) ??
+          '',
       },
     }),
     helper.derived<string>({
       title: 'Username',
-      value: (entity: TableItem): string => getUserName(entity.user) ?? '',
+      value: (entity: TableItem): string => entity.userName ?? '',
     }),
     helper.simple<'rulesHitCount'>({
       title: 'Rules hit',

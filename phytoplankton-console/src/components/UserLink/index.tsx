@@ -4,7 +4,7 @@ import { getUserLink } from '@/utils/api/users';
 import { TableUser } from '@/pages/case-management/CaseTable/types';
 
 interface Props {
-  user: TableUser;
+  user: Pick<TableUser, 'type' | 'userId'> | null;
   children?: string;
   testName?: string;
 }

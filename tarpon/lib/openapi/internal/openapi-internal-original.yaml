@@ -9782,10 +9782,10 @@ components:
                 type: string
               rulesHitCount:
                 type: number
-              user:
-                oneOf:
-                  - $ref: '#/components/schemas/InternalConsumerUser'
-                  - $ref: '#/components/schemas/InternalBusinessUser'
+              userName:
+                type: string
+              userType:
+                type: string
               openAlertsCount:
                 type: number
               rulesRunCount:

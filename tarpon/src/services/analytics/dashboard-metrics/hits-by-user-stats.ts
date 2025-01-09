@@ -381,9 +381,25 @@ export class HitsByUserStatsDashboardMetric {
       .toArray()
 
     return result.map((x) => {
+      const formatConsumerName = (name: any): string => {
+        const result = [name?.firstName, name?.middleName, name?.lastName]
+          .filter(Boolean)
+          .join(' ')
+        if (result === '') {
+          return '(No name)'
+        }
+        return result
+      }
+
+      const userName =
+        x.user?.type === 'BUSINESS'
+          ? x.user?.legalEntity?.companyGeneralDetails?.legalName ?? '-'
+          : formatConsumerName(x.user?.userDetails?.name) ?? '-'
+
       return {
         userId: x._id,
-        user: x.user ?? undefined,
+        userName,
+        userType: x.user?.type,
         rulesHitCount: x.rulesHitCount,
         openAlertsCount: x.openAlertsCount,
         rulesRunCount: x.rulesRunCount,
@@ -444,20 +460,29 @@ export class HitsByUserStatsDashboardMetric {
       ),
       user_data AS (
         SELECT 
+          id,
+          username as userName,
+          type as userType
+        FROM ${CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table}
+        WHERE id in (SELECT userId FROM aggregated_data)
+        ${userType ? `AND type = '${userType}'` : ''}
+      ),
+      user_joined AS (
+        SELECT 
           a.*,
-          JSONExtractRaw(u.data) as user,
-          u.type as userType
+          u.userName,
+          u.userType
         FROM aggregated_data a
-        JOIN ${CLICKHOUSE_DEFINITIONS.USERS.tableName} u ON a.userId = u.id
-        ${userType ? `AND u.type = '${userType}'` : ''}
+        JOIN user_data u ON a.userId = u.id
       )
       SELECT 
         userId,
-        any(user) as user,
+        any(userName) as userName,
+        any(userType) as userType,
         any(openAlertsCount) as openAlertsCount,
         any(rulesRunCount) as rulesRunCount,
         any(rulesHitCount) as rulesHitCount
-      FROM user_data
+      FROM user_joined
       group by userId
       ORDER BY rulesHitCount DESC
       LIMIT 10
@@ -468,7 +493,8 @@ export class HitsByUserStatsDashboardMetric {
     })
     const items = await result.json<{
       userId: string
-      user: string
+      userName: string
+      userType: string
       openAlertsCount: number
       rulesRunCount: number
       rulesHitCount: number
@@ -477,7 +503,8 @@ export class HitsByUserStatsDashboardMetric {
     return items.map((item) => {
       return {
         userId: item.userId,
-        user: item.user ? JSON.parse(item.user) : null,
+        userName: item.userName,
+        userType: item.userType,
         rulesHitCount: Number(item.rulesHitCount),
         openAlertsCount: Number(item.openAlertsCount),
         rulesRunCount: Number(item.rulesRunCount),
