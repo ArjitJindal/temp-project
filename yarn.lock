@@ -26,13 +26,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/cloud-assembly-schema@npm:^38.0.1":
-  version: 38.0.1
-  resolution: "@aws-cdk/cloud-assembly-schema@npm:38.0.1"
+"@aws-cdk/cloud-assembly-schema@npm:^39.0.1":
+  version: 39.1.42
+  resolution: "@aws-cdk/cloud-assembly-schema@npm:39.1.42"
   dependencies:
-    jsonschema: "npm:^1.4.1"
+    jsonschema: "npm:~1.4.1"
     semver: "npm:^7.6.3"
-  checksum: 5cfc455f586daad26788f739d272c08b9e2291ed50ac48d174769ef95d0c7ef623206480f78be86e36ee2d4939bd57327b1b6c407974eaa417848483430c622d
+  checksum: 94e827349220fab81e70c1a1cd213000272e71e768bbc4e5b7fa2bcba4f10d95fa391f65d4073d4858b5cd0f5b66183e1b9592b794a01a02ef0078c3d19dbc71
   languageName: node
   linkType: hard
 
@@ -631,16 +631,6 @@ __metadata:
     graphql: "npm:^15.4.0"
     isomorphic-unfetch: "npm:^3.1.0"
   checksum: 118c9d587515b7e951408a9eaf6925f3505af47bbd6c431b6f2a8b7a4f16b7fb490a88f4f7ce2be5cf36d18105374b3517700b003458600501fd1025c3687a9a
-  languageName: node
-  linkType: hard
-
-"@notionhq/client@npm:^2.2.14":
-  version: 2.2.15
-  resolution: "@notionhq/client@npm:2.2.15"
-  dependencies:
-    "@types/node-fetch": "npm:^2.5.10"
-    node-fetch: "npm:^2.6.1"
-  checksum: 4153c2e5b47d2ba141d025f2753d0e79ca9b9f25bd8bbdfa9dbf74fe4c2e157ea7964c59387d05163972c4575830bdc48d02db29270e244d81398df0f89fd7dd
   languageName: node
   linkType: hard
 
@@ -1565,16 +1555,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/node-fetch@npm:^2.5.10":
-  version: 2.6.11
-  resolution: "@types/node-fetch@npm:2.6.11"
-  dependencies:
-    "@types/node": "npm:*"
-    form-data: "npm:^4.0.0"
-  checksum: 5283d4e0bcc37a5b6d8e629aee880a4ffcfb33e089f4b903b2981b19c623972d1e64af7c3f9540ab990f0f5c89b9b5dda19c5bcb37a8e177079e93683bfd2f49
-  languageName: node
-  linkType: hard
-
 "@types/node@npm:*, @types/node@npm:>=18.0.0":
   version: 20.12.7
   resolution: "@types/node@npm:20.12.7"
@@ -1703,14 +1683,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.171.1":
-  version: 2.171.1
-  resolution: "aws-cdk-lib@npm:2.171.1"
+"aws-cdk-lib@npm:~2.174.1":
+  version: 2.174.1
+  resolution: "aws-cdk-lib@npm:2.174.1"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.208"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.3"
     "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.1.0"
-    "@aws-cdk/cloud-assembly-schema": "npm:^38.0.1"
+    "@aws-cdk/cloud-assembly-schema": "npm:^39.0.1"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -1724,13 +1704,13 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: e4ae68b282ae7c9ed6f88f0add23d09a806f6392b233e72e1891b77ce2e7e4886b516064c664c01c89920c4199e11c25372f6ed48f0a4333259ba6d41bfe7697
+  checksum: b8201d227a5ce3c66a3779080142ce9ba3dd433e145f37e1387b36a64ad5c59ce9652e16e1b503161ca0511bb18ef70df3e27539c7c5d4941b6d3965cd2bdc21
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.171.1":
-  version: 2.171.1
-  resolution: "aws-cdk@npm:2.171.1"
+"aws-cdk@npm:~2.174.1":
+  version: 2.174.1
+  resolution: "aws-cdk@npm:2.174.1"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -1738,7 +1718,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: 78afeec635942fa083baff5f0c12bd2ad4816c698e8abdcc605142107b8330862b22690403989996cd91514b21518de2eaa794b654e0fe04a0ac87b9b0738dd6
+  checksum: 6bd46c0d34b4f0df6c8bd7a7ba39b4ba612b40c0565682060690e2e447e777869d489e985cd8f3ff50b6dbd7be9aff2d06ef091eee4c133bdbb052a5b8b60411
   languageName: node
   linkType: hard
 
@@ -2416,7 +2396,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"jsonschema@npm:^1.4.1":
+"jsonschema@npm:^1.4.1, jsonschema@npm:~1.4.1":
   version: 1.4.1
   resolution: "jsonschema@npm:1.4.1"
   checksum: c3422d3fc7d33ff7234a806ffa909bb6fb5d1cd664bea229c64a1785dc04cbccd5fc76cf547c6ab6dd7881dbcaf3540a6a9f925a5956c61a9cd3e23a3c1796ef
@@ -3361,12 +3341,11 @@ __metadata:
     "@aws-sdk/client-cloudformation": "npm:^3.441.0"
     "@flagright/lib": "link:./lib"
     "@linear/sdk": "npm:^37.0.0"
-    "@notionhq/client": "npm:^2.2.14"
     "@slack/web-api": "npm:^7.7.0"
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.12"
-    aws-cdk: "npm:~2.171.1"
-    aws-cdk-lib: "npm:~2.171.1"
+    aws-cdk: "npm:~2.174.1"
+    aws-cdk-lib: "npm:~2.174.1"
     constructs: "npm:^10.4.2"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"
