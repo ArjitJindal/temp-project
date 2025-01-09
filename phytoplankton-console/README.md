@@ -63,12 +63,12 @@ Console should be available under https://flagright.local:8001/ (ignore warning 
 
 ## Running It Locally With Tarpon API
 
-Setup [tarpon](https://github.com/flagright/tarpon) package in you local. Set up steps and running tarpon locally in the [Tarpon README] (https://github.com/flagright/tarpon#tarpon).
+Set up the [tarpon](https://github.com/flagright/tarpon) package locally. Setup steps and instructions for running tarpon locally can be found in the [Tarpon README](https://github.com/flagright/tarpon#tarpon).
 
-Summary, after Tarpon dependencies are setup (including local DDB instance and MongoDB), in the `tarpon` repo:
+Summary, after Tarpon dependencies are set up (including local DDB instance and MongoDB), in the `tarpon` directory:
 
-1. `npm run dev:api` in `tarpon` repo
-2. `yarn dev` in `phytoplankton-console` repo
+1. `npm run dev:databases`
+2. `npm run dev:api` (Or use the VSCode launch configuration to run the APIs)
 
 ### Deployment
 

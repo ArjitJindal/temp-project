@@ -8,17 +8,18 @@ Codenamed after the [majestic tarpons](https://youtu.be/wV2CF2WWGFQ).
 
 - src/lambdas - Code for lambda functions.
 - src/services - Code for services which can be used by multiple lambdas.
-- events - Invocation events that you can use to invoke the function.
-- lib/cdk-tarpon-stack.ts - The CDK configuration of the application's AWS resources.
-- lib/cdk-alarms-stack.ts - The CDK configuration of the application's Alarms.
-- lib/cdktf-tarpon-stack.ts - The CDKTF configuration of the application's non-AWS resources.
+- infra/cdk-tarpon-stack.ts - The CDK configuration of the application's AWS resources.
+- infra/cdktf-tarpon-stack.ts - The CDKTF configuration of the application's non-AWS resources.
+- infra/cdk-tarpon-nested-stacks/cdk-tarpon-alarms-stack.ts - The CDK configuration of the application's Alarms.
+- infra/cdk-tarpon-nested-stacks/cdk-tarpon-console-api-stack.ts - The CDK configuration of the application's Console API.
+- infra/cdk-tarpon-nested-stacks/cdk-budgets-stack.ts - The CDK configuration of the application's Budgets.
 
 ## Prerequisites
 
 - AWS CLI - [Install AWS CLI](https://aws.amazon.com/cli/)
 - CDK CLI - [Install the CDK CLI](https://docs.aws.amazon.com/cdk/v2/guide/cli.html)
 - Terraform - [Install the Terraform CLI](https://developer.hashicorp.com/terraform/downloads)
-- Node.js (v14) - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
+- Node.js - [Install Node.js](https://nodejs.org/en/), including the NPM package management tool.
 - Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
 - [yawsso](https://github.com/victorskl/yawsso) - `pip3 install yawsso`
 
@@ -44,9 +45,9 @@ aws_secret_access_key=false
 
 ```
 
-### For first run
+### For the first run
 
-Before initial run to configure databases in your local environment make sure you also had configured your AWS credentials in your machine for your local environment. Add following to your `~/.aws/config`:
+Before the initial run to configure databases in your local environment, make sure you have configured your AWS credentials on your machine for your local environment. Add the following to your `~/.aws/config`:
 
 ```bash
 [default]
@@ -256,12 +257,6 @@ Syncs static data like rules, lists ...etc.
 ENV=dev npm run migration:sync
 ```
 
-### Archived migrations
-
-Migrations are periodically deleted (archived). To find the archived migrations, please check the following PRs:
-
-1. https://github.com/flagright/orca/pull/1469
-
 ## Resources
 
 ### Working with Databases
@@ -301,12 +296,12 @@ Migrations are periodically deleted (archived). To find the archived migrations,
 - Add it to requisite rule list (currently `transaction` or `user` rule types)
 - Merge PR and deploy to all environments (Dev, Sandbox and prod regions)
 
-### Run local rules using production transactions
+### Run local rules using production transactions/users
 
 You can feed your local rules engine with real production transactions by configuring `scripts/debug-rule/config.json` first and run
 
 ```bash
-npm run verify-remote-transactions
+npm run verify-remote-entities
 ```
 
 Note that whenever the script is run. `Tarpon` dynamodb table will be recreated (then every time you run the script, you'll get the same result).

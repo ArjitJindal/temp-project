@@ -28,7 +28,6 @@ export const postSandboxDeployIntegrationsUpdateBuildProject = (
         },
         env: {
           'secrets-manager': {
-            NOTION_TOKEN: STACK_CONSTANTS.NOTION_TOKEN,
             GITHUB_TOKEN: STACK_CONSTANTS.GITHUB_TOKEN,
             SLACK_TOKEN: STACK_CONSTANTS.SLACK_TOKEN,
             LINEAR_TOKEN: STACK_CONSTANTS.LINEAR_TOKEN,
@@ -67,7 +66,6 @@ export const postProdDeployIntegrationsUpdateBuildProject = (
       },
       env: {
         'secrets-manager': {
-          NOTION_TOKEN: STACK_CONSTANTS.NOTION_TOKEN,
           GITHUB_TOKEN: STACK_CONSTANTS.GITHUB_TOKEN,
           SLACK_TOKEN: STACK_CONSTANTS.SLACK_TOKEN,
           LINEAR_TOKEN: STACK_CONSTANTS.LINEAR_TOKEN,

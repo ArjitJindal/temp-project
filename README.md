@@ -2,7 +2,6 @@
 
 - [`phytoplankton-console`](https://github.com/flagright/orca/tree/main/phytoplankton-console) - Frontend code for the console
 - [`tarpon`](https://github.com/flagright/orca/tree/main/tarpon) - Our backend API
-- [`viper`](https://github.com/flagright/orca/tree/main/viper) - Our Data Engineering stack
 - [`raptor`](https://github.com/flagright/orca/tree/main/raptor) - Our ML stack
 - [`lib`](https://github.com/flagright/orca/tree/main/lib) - Shared code
 - [`bin`](https://github.com/flagright/orca/tree/main/bin) - Pipeline code
