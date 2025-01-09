@@ -4,19 +4,18 @@ import {
   updateTicketStatusByID,
 } from './utils/linear'
 import { getToBeReleasedHeadRefs } from './utils/git'
+import { compact } from 'lodash'
 
 const slackifyMarkdown = require('slackify-markdown')
 
 const DEPLOYMENT_SLACK_CHANNEL = 'C03L5KRE2E8'
 const QA_SLACK_USER_GROUP_ID = 'S074CS7E0EP'
 const READY_TO_TEST_TICKETS_URL =
-  'https://www.notion.so/flagright/16d55dfca8e2436c9c7786ab7c62e04e?v=39e46a0c1172475bbb6f763cdd282a0e'
+  'https://linear.app/flagright/team/FDT/view/ready-to-test-dc1f521f4edd'
 
 async function updateLinearTickets() {
   const headRefs = await getToBeReleasedHeadRefs()
-  const linearTicketIds = headRefs
-    .map(getLinearTicketIDByGitRef)
-    .filter(Boolean) as string[]
+  const linearTicketIds = compact(headRefs.map(getLinearTicketIDByGitRef))
 
   for (const ticketId of linearTicketIds) {
     await updateTicketStatusByID(ticketId, 'Ready to Test')

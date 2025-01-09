@@ -1,17 +1,24 @@
 import { Issue, LinearClient } from '@linear/sdk'
 
-const linearClient = new LinearClient({
-  apiKey: process.env.LINEAR_TOKEN,
-})
+const linearClient = new LinearClient({ apiKey: process.env.LINEAR_TOKEN })
 
-const LINEAR_TICKET_ID_REGEX = /FDT-(\d+)/
+const LINEAR_TICKET_ID_REGEX_1 = /FDT-(\d+)/
+const LINEAR_TICKET_ID_REGEX_2 = /fdt-(\d+)/
 
 function getLinearTicketNumber(ticketId: string): number | null {
-  return Number(ticketId.match(LINEAR_TICKET_ID_REGEX)?.[1])
+  return Number(ticketId.match(LINEAR_TICKET_ID_REGEX_1)?.[1])
 }
 
 export function getLinearTicketIDByGitRef(gitRef: string): string | undefined {
-  return gitRef.match(LINEAR_TICKET_ID_REGEX)?.[0]
+  const match1 = gitRef.match(LINEAR_TICKET_ID_REGEX_1)
+  const match2 = gitRef.match(LINEAR_TICKET_ID_REGEX_2)
+  if (match1) {
+    return match1[0].toUpperCase()
+  }
+  if (match2) {
+    return match2[0].toUpperCase()
+  }
+  return undefined
 }
 
 export async function getLinearTicketByID(ticketID: string): Promise<Issue> {
@@ -51,4 +58,18 @@ export async function updateTicketStatusByID(
     stateId: foundStatus.id,
   })
   console.info(`Ticket '${ticketId}' updated to '${status}' status`)
+}
+
+export async function isIssueCustomerFacing(issue: Issue) {
+  const customerNeeds = await linearClient.customerNeeds({
+    filter: {
+      issue: {
+        id: {
+          in: [issue.id],
+        },
+      },
+    },
+  })
+
+  return customerNeeds.nodes.length > 0
 }

@@ -1,14 +1,16 @@
 import { WebClient } from '@slack/web-api'
 import {
-  getNotionPageByTicketID,
-  getNotionTicketIDByGitRef,
+  getLinearTicketByID,
+  getLinearTicketIDByGitRef,
+  isIssueCustomerFacing,
   updateTicketStatusByID,
-} from './utils/notion'
+} from './utils/linear'
 import {
   createGitHubRelease,
   getPullRequest,
   getToBeReleasedHeadRefs,
 } from './utils/git'
+import { compact } from 'lodash'
 
 const slackifyMarkdown = require('slackify-markdown')
 
@@ -22,13 +24,14 @@ const slackClient = new WebClient(process.env.SLACK_TOKEN)
 async function getTicketInfoByPrNumber(prNumber: string) {
   const pr = await getPullRequest(prNumber)
   const headRef = pr.data.head.ref
-  const notionTicketId = getNotionTicketIDByGitRef(headRef)
-  if (!notionTicketId) {
+  const linearTicketId = getLinearTicketIDByGitRef(headRef)
+  if (!linearTicketId) {
     return null
   }
+
   return {
-    ticketId: notionTicketId,
-    url: (await getNotionPageByTicketID(notionTicketId)).url,
+    ticketId: linearTicketId,
+    url: (await getLinearTicketByID(linearTicketId)).url,
   }
 }
 
@@ -84,9 +87,14 @@ async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
       const ticketLink = `[${ticket.ticketId}](${ticket.url})`
       const updatedLine = `${line} (${ticketLink})`
 
-      const page = await getNotionPageByTicketID(ticket.ticketId)
-      const isCustomerFacing =
-        (page.properties['Customer'] as any)?.multi_select.length !== 0
+      const issue = await getLinearTicketByID(ticket.ticketId)
+
+      if (!issue) {
+        return
+      }
+
+      const isCustomerFacing = await isIssueCustomerFacing(issue)
+
       if (isCustomerFacing) {
         customerFacingTickets.push(
           `* :amaze: ${updatedLine.replace(/^\*/, '')}`
@@ -140,19 +148,17 @@ async function notifySlack(releaseUrl: string, rawReleaseNote: string) {
   }
 }
 
-async function updateNotionTickets() {
+async function updateLinearTickets() {
   const headRefs = await getToBeReleasedHeadRefs()
-  const notionTicketIds = headRefs
-    .map(getNotionTicketIDByGitRef)
-    .filter(Boolean) as string[]
+  const linearTicketIds = compact(headRefs.map(getLinearTicketIDByGitRef))
 
-  for (const ticketId of notionTicketIds) {
+  for (const ticketId of linearTicketIds) {
     await updateTicketStatusByID(ticketId, 'Done (Weekly)')
   }
 }
 
 async function main() {
-  await updateNotionTickets()
+  await updateLinearTickets()
   const { releaseUrl, releaseBody } = await createGitHubRelease()
   await notifySlack(releaseUrl, releaseBody)
   console.info(`Release: ${releaseUrl}\n${releaseBody}`)

@@ -12,7 +12,8 @@
     "deploy:pipeline:actions": "ENV=deploy cdk deploy orca-pipeline --require-approval never",
     "deploy:pipeline-test:clean": "export ENV=deploy-test && npm run aws-login deploy && npm run synth:pipeline && npm run deploy:pipeline",
     "aws-login": "npx ts-node ./lib/scripts/aws-login.ts",
-    "synth:pipeline": "cdk synth orca-pipeline"
+    "synth:pipeline": "cdk synth orca-pipeline",
+    "create-release": "ts-node scripts/create-release.ts"
   },
   "devDependencies": {
     "@aws-sdk/client-cloudformation": "^3.441.0",
