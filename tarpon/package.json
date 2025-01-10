@@ -177,7 +177,7 @@
     "@aws-sdk/client-sqs": "^3.687.0",
     "@aws-sdk/client-sts": "^3.687.0",
     "@aws-sdk/lib-dynamodb": "^3.687.0",
-    "@aws-sdk/lib-storage": "3.687.0",
+    "@aws-sdk/lib-storage": "3.716.0",
     "@aws-sdk/s3-presigned-post": "^3.687.0",
     "@aws-sdk/s3-request-presigner": "^3.687.0",
     "@aws-sdk/signature-v4-crt": "^3.687.0",
