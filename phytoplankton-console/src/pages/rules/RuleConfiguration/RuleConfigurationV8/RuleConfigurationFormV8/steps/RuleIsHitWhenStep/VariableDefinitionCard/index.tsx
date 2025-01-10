@@ -9,6 +9,7 @@ import { FormRuleAggregationVariable } from './helpers';
 import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteBinLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import PencilLineIcon from '@/components/ui/icons/Remix/design/pencil-line.react.svg';
+import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
 import * as Card from '@/components/ui/Card';
 import Label from '@/components/library/Label';
 import {
@@ -48,8 +49,6 @@ function augmentAggregationVariables(
             key: `${v.key}${RHS_ONLY_SYMBOL}`,
           },
         ];
-        // Variables with key ending with RHS_ONLY_SYMBOL are hidden from the user and the definition
-        // is the same as the variable with the same key ending with LHS_ONLY_SYMBOL
       } else if (v.key.endsWith(RHS_ONLY_SYMBOL)) {
         const lhsVarKey = v.key.replace(RHS_ONLY_SYMBOL, LHS_ONLY_SYMBOL);
         const syncAggVariable = aggregationVariables.find((v) => v.key === lhsVarKey);
@@ -68,6 +67,173 @@ function augmentAggregationVariables(
     return [v];
   });
 }
+
+interface VariableTagsProps {
+  entityVariables?: LogicEntityVariableInUse[];
+  aggregationVariables?: LogicAggregationVariable[];
+  mlVariables?: RuleMachineLearningVariable[];
+  entityVariableDefinitions: any[];
+  readOnly?: boolean;
+  onEdit?: (key: string, index?: number) => void;
+  onDuplicateEntity?: (key: string, index: number) => void;
+  onDuplicateAgg?: (key: string, index: number) => void;
+  onDelete?: (key: string) => void;
+}
+
+export const VariableTags: React.FC<VariableTagsProps> = ({
+  entityVariables,
+  aggregationVariables,
+  mlVariables,
+  entityVariableDefinitions,
+  readOnly,
+  onEdit,
+  onDuplicateEntity,
+  onDuplicateAgg,
+  onDelete,
+}) => {
+  const hasVariables = Boolean(
+    entityVariables?.length || aggregationVariables?.length || mlVariables?.length,
+  );
+
+  if (!hasVariables) {
+    return null;
+  }
+
+  return (
+    <div className={s.tagsContainer}>
+      {entityVariables?.map((entityVar, index) => {
+        const entityVarDefinition = entityVariableDefinitions.find(
+          (v) => v.key === entityVar.entityKey,
+        );
+
+        const name = entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown';
+
+        return (
+          <Tooltip key={index} title={name}>
+            <div>
+              <Tag
+                key={index}
+                color="action"
+                actions={
+                  readOnly
+                    ? [
+                        {
+                          key: 'view',
+                          icon: <EyeLineIcon className={s.editVariableIcon} />,
+                          action: () => onEdit?.(entityVar.key, index),
+                        },
+                      ]
+                    : [
+                        {
+                          key: 'edit',
+                          icon: <PencilLineIcon className={s.editVariableIcon} />,
+                          action: () => onEdit?.(entityVar.key, index),
+                        },
+                        {
+                          key: 'copy',
+                          icon: <FileCopyLineIcon />,
+                          action: () => onDuplicateEntity?.(entityVar.key, index),
+                        },
+                        {
+                          key: 'delete',
+                          icon: <DeleteBinLineIcon />,
+                          action: () => onDelete?.(entityVar.key),
+                        },
+                      ]
+                }
+              >
+                {name}
+              </Tag>
+            </div>
+          </Tooltip>
+        );
+      })}
+      {aggregationVariables
+        ?.filter((v) => !v.key.endsWith(RHS_ONLY_SYMBOL))
+        .map((aggVar, index) => {
+          const aggVarDefinition = getAggVarDefinition(aggVar, entityVariableDefinitions);
+          const name = aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown';
+
+          return (
+            <Tooltip key={aggVar.key} title={name}>
+              <div className={s.tagsTooltipContainer}>
+                <Tag
+                  key={aggVar.key}
+                  actions={
+                    readOnly
+                      ? [
+                          {
+                            key: 'view',
+                            icon: <EyeLineIcon className={s.editVariableIcon} />,
+                            action: () => onEdit?.(aggVar.key),
+                          },
+                        ]
+                      : [
+                          {
+                            key: 'edit',
+                            icon: <PencilLineIcon className={s.editVariableIcon} />,
+                            action: () => onEdit?.(aggVar.key),
+                          },
+                          {
+                            key: 'copy',
+                            icon: <FileCopyLineIcon />,
+                            action: () => onDuplicateAgg?.(aggVar.key, index),
+                          },
+                          {
+                            key: 'delete',
+                            icon: <DeleteBinLineIcon />,
+                            action: () => onDelete?.(aggVar.key),
+                          },
+                        ]
+                  }
+                >
+                  {name}
+                </Tag>
+              </div>
+            </Tooltip>
+          );
+        })}
+      {mlVariables?.map((mlVar, index) => {
+        const name = mlVar.name || 'Unknown';
+
+        return (
+          <Tooltip key={index} title={name}>
+            <div>
+              <Tag
+                key={index}
+                color="action"
+                actions={
+                  readOnly
+                    ? [
+                        {
+                          key: 'view',
+                          icon: <EyeLineIcon className={s.editVariableIcon} />,
+                          action: () => onEdit?.(mlVar.key, index),
+                        },
+                      ]
+                    : [
+                        {
+                          key: 'edit',
+                          icon: <PencilLineIcon className={s.editVariableIcon} />,
+                          action: () => onEdit?.(mlVar.key, index),
+                        },
+                        {
+                          key: 'delete',
+                          icon: <DeleteBinLineIcon />,
+                          action: () => onDelete?.(mlVar.key),
+                        },
+                      ]
+                }
+              >
+                {name}
+              </Tag>
+            </div>
+          </Tooltip>
+        );
+      })}
+    </div>
+  );
+};
 
 type VariableType = 'entity' | 'aggregation' | 'ml';
 type EditingAggVariable = { type: 'aggregation'; variable: FormRuleAggregationVariable };
@@ -92,7 +258,7 @@ interface RuleAggregationVariablesEditorProps {
   entity?: LogicEntityVariableEntityEnum;
 }
 
-const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
+export const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
   ruleType,
   readOnly,
   entityVariables,
@@ -271,10 +437,8 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
     },
     [aggregationVariables, handleCancelEditVariable, onChange],
   );
-  const hasVariables = Boolean(
-    entityVariables?.length || aggregationVariables?.length || mlVariables?.length,
-  );
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
+
   return (
     <Card.Root>
       <Card.Section>
@@ -302,110 +466,17 @@ const VariableDefinitionCard: React.FC<RuleAggregationVariablesEditorProps> = ({
             </Button>
           </Dropdown>
         </div>
-        {hasVariables && (
-          <div className={s.tagsContainer}>
-            {entityVariables?.map((entityVar, index) => {
-              const entityVarDefinition = entityVariableDefinitions.find(
-                (v) => v.key === entityVar.entityKey,
-              );
-
-              const name = entityVar.name || entityVarDefinition?.uiDefinition.label || 'Unknown';
-
-              return (
-                <Tooltip key={index} title={name}>
-                  <div>
-                    <Tag
-                      key={index}
-                      color="action"
-                      actions={[
-                        {
-                          key: 'edit',
-                          icon: <PencilLineIcon className={s.editVariableIcon} />,
-                          action: () => handleEdit(entityVar.key, index),
-                        },
-                        {
-                          key: 'copy',
-                          icon: <FileCopyLineIcon />,
-                          action: () => handleDuplicateEntityVar(entityVar.key, index),
-                        },
-                        {
-                          key: 'delete',
-                          icon: <DeleteBinLineIcon />,
-                          action: () => handleDelete(entityVar.key),
-                        },
-                      ]}
-                    >
-                      {name}
-                    </Tag>
-                  </div>
-                </Tooltip>
-              );
-            })}
-            {aggregationVariables
-              ?.filter((v) => !v.key.endsWith(RHS_ONLY_SYMBOL))
-              .map((aggVar, index) => {
-                const aggVarDefinition = getAggVarDefinition(aggVar, entityVariableDefinitions);
-                const name = aggVar.name || aggVarDefinition.uiDefinition.label || 'Unknown';
-
-                return (
-                  <Tooltip key={aggVar.key} title={name}>
-                    <div className={s.tagsTooltipContainer}>
-                      <Tag
-                        key={aggVar.key}
-                        actions={[
-                          {
-                            key: 'edit',
-                            icon: <PencilLineIcon className={s.editVariableIcon} />,
-                            action: () => handleEdit(aggVar.key),
-                          },
-                          {
-                            key: 'copy',
-                            icon: <FileCopyLineIcon />,
-                            action: () => handleDuplicateAggVar(aggVar.key, index),
-                          },
-                          {
-                            key: 'delete',
-                            icon: <DeleteBinLineIcon />,
-                            action: () => handleDelete(aggVar.key),
-                          },
-                        ]}
-                      >
-                        {name}
-                      </Tag>
-                    </div>
-                  </Tooltip>
-                );
-              })}
-            {mlVariables?.map((mlVar, index) => {
-              const name = mlVar.name || 'Unknown';
-
-              return (
-                <Tooltip key={index} title={name}>
-                  <div>
-                    <Tag
-                      key={index}
-                      color="action"
-                      actions={[
-                        {
-                          key: 'edit',
-                          icon: <PencilLineIcon className={s.editVariableIcon} />,
-                          action: () => handleEdit(mlVar.key, index),
-                        },
-                        {
-                          key: 'delete',
-                          icon: <DeleteBinLineIcon />,
-                          action: () => handleDelete(mlVar.key),
-                        },
-                      ]}
-                    >
-                      {name}
-                    </Tag>
-                  </div>
-                </Tooltip>
-              );
-            })}
-          </div>
-        )}
+        <VariableTags
+          entityVariables={entityVariables}
+          aggregationVariables={aggregationVariables}
+          mlVariables={mlVariables}
+          entityVariableDefinitions={entityVariableDefinitions}
+          readOnly={readOnly}
+          onEdit={handleEdit}
+          onDuplicateEntity={handleDuplicateEntityVar}
+          onDuplicateAgg={handleDuplicateAggVar}
+          onDelete={handleDelete}
+        />
       </Card.Section>
       {editingVariable?.type === 'entity' && entityVariableDefinitions.length > 0 && (
         <EntityVariableForm

@@ -5,6 +5,7 @@ import { isEqual } from 'lodash';
 import { useLocation, useNavigate } from 'react-router';
 import { HighlightOutlined } from '@ant-design/icons';
 import AuditLogModal from '../AuditLogModal';
+import RuleAuditLogModal from '../RuleAuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
 import { TableItem, TableSearchParams } from './types';
 import { auditLogQueryAdapter, useTableData } from './helpers';
@@ -163,6 +164,9 @@ export default function AuditLogTable() {
         render: (item) => {
           if (!item || isEqual(item.oldImage, item.newImage)) {
             return <Typography.Text type={'secondary'}>-</Typography.Text>;
+          }
+          if (item.type === 'RULE') {
+            return <RuleAuditLogModal data={item} />;
           }
           return <AuditLogModal data={item} />;
         },
