@@ -6706,7 +6706,7 @@ paths:
       operationId: get-action-reasons
       x-flagright:
         permissions:
-          - settings:case-management:read
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -6775,7 +6775,7 @@ paths:
       operationId: get-sla-policies
       x-flagright:
         permissions:
-          - settings:case-management:read
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
@@ -6821,7 +6821,7 @@ paths:
       operationId: get-sla-policy
       x-flagright:
         permissions:
-          - settings:case-management:read
+          - case-management:case-overview:read
       responses:
         '200':
           description: OK
