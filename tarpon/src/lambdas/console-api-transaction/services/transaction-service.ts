@@ -186,6 +186,7 @@ export class TransactionService {
         ruleDescription: rule.ruleDescription,
       })),
       originFundsInfo: transaction.originFundsInfo,
+      alertIds: transaction.alertIds,
     }
   }
 

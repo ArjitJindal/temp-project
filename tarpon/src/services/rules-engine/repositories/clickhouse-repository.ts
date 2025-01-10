@@ -241,6 +241,7 @@ export class ClickhouseTransactionsRepository {
         "length(flatten(arrayMap(y -> y.searchId, arrayMap(x -> x.ruleHitMeta.sanctionsDetails, JSONExtract(data, 'executedRules', 'Array(Tuple(ruleHitMeta Tuple(sanctionsDetails Array(Tuple(searchId String)))))'))))) > 0",
       originFundsInfo:
         "JSONExtract(data, 'originFundsInfo', 'Tuple(sourceOfFunds String, sourceOfWealth String)')",
+      alertIds: "toJSONString(JSONExtract(data, 'alertIds', 'Array(String)'))",
     }
 
     const sortFieldMapper: Record<string, string> = {
@@ -318,6 +319,7 @@ export class ClickhouseTransactionsRepository {
               }[])
             : undefined,
           originFundsInfo: item.originFundsInfo as OriginFundsInfo,
+          alertIds: JSON.parse(item.alertIds as string) as string[],
         }
       }
     )

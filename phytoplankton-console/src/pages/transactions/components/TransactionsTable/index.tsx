@@ -514,6 +514,17 @@ export default function TransactionsTable(props: Props) {
         key: 'reference',
         defaultVisibility: false,
       }),
+      helper.simple<'alertIds'>({
+        title: 'Alert IDs',
+        id: 'alertIds',
+        type: {
+          stringify: (value) => (value ? value.join(', ') : ''),
+        },
+        key: 'alertIds',
+        defaultVisibility: true,
+        hideInTable: true,
+        exporting: true,
+      }),
     ]);
   }, [
     isRiskScoringEnabled,
