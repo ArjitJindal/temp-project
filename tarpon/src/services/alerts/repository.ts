@@ -98,6 +98,8 @@ export class AlertsRepository {
     params: AlertParams,
     options?: { hideTransactionIds?: boolean }
   ): Promise<AlertListResponse> {
+    let result: AlertListResponse
+
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
 
@@ -127,7 +129,7 @@ export class AlertsRepository {
 
       cases.forEach((c) => caseMap.set(c.caseId as string, c))
 
-      return {
+      result = {
         total,
         data: alerts.map((alert) => ({
           alert,
@@ -138,13 +140,12 @@ export class AlertsRepository {
             ?.caseUsers as CaseCaseUsers,
         })),
       }
-    }
-
-    if (!hasFeature('PNB')) {
+    } else if (!hasFeature('PNB')) {
       const pipeline = await this.getAlertsPipeline(params, {
         hideTransactionIds: options?.hideTransactionIds,
         countOnly: false,
       })
+
       const countPipelineResp = await this.getAlertsPipeline(params, {
         hideTransactionIds: options?.hideTransactionIds,
         countOnly: true,
@@ -180,155 +181,175 @@ export class AlertsRepository {
           })
         }
       })
-      return {
+      result = {
         total: await countPromise,
         data: await itemsPromise,
       }
-    }
+    } else {
+      /* Getting count */
+      const alertsCountPipeline = [
+        ...(await this.getAlertsPipeline(params, {
+          hideTransactionIds: options?.hideTransactionIds,
+          countOnly: true,
+          enablePerformanceWorkaround: true,
+        })),
+        {
+          $limit: COUNT_QUERY_LIMIT,
+        },
+        {
+          $count: 'count',
+        },
+      ]
+      const casesCountPipeline = [
+        ...alertsCountPipeline.slice(
+          0,
+          alertsCountPipeline.findIndex((stage) => stage.$unwind)
+        ),
+        {
+          $limit: COUNT_QUERY_LIMIT,
+        },
+        {
+          $count: 'count',
+        },
+      ]
+      // Don't await count here
+      const alertsCountPromise = collection
+        .aggregate<{ count: number }>(alertsCountPipeline)
+        .next()
+        .then((item) => item?.count ?? 0)
+      const casesCountPromise = collection
+        .aggregate<{ count: number }>(casesCountPipeline)
+        .next()
+        .then((item) => item?.count ?? 0)
 
-    /* Getting count */
-    const alertsCountPipeline = [
-      ...(await this.getAlertsPipeline(params, {
-        hideTransactionIds: options?.hideTransactionIds,
-        countOnly: true,
-        enablePerformanceWorkaround: true,
-      })),
-      {
-        $limit: COUNT_QUERY_LIMIT,
-      },
-      {
-        $count: 'count',
-      },
-    ]
-    const casesCountPipeline = [
-      ...alertsCountPipeline.slice(
-        0,
-        alertsCountPipeline.findIndex((stage) => stage.$unwind)
-      ),
-      {
-        $limit: COUNT_QUERY_LIMIT,
-      },
-      {
-        $count: 'count',
-      },
-    ]
-    // Don't await count here
-    const alertsCountPromise = collection
-      .aggregate<{ count: number }>(alertsCountPipeline)
-      .next()
-      .then((item) => item?.count ?? 0)
-    const casesCountPromise = collection
-      .aggregate<{ count: number }>(casesCountPipeline)
-      .next()
-      .then((item) => item?.count ?? 0)
-
-    /* Get paginated alerts */
-    const { skip, limit } = getSkipAndLimit(params)
-    if (
-      !params.sortField &&
-      params.filterAlertStatus &&
-      !params.filterAlertStatus?.includes('CLOSED')
-    ) {
-      params.sortField = 'createdTimestamp'
-    }
-    const pipeline = await this.getAlertsPipeline(params, {
-      hideTransactionIds: options?.hideTransactionIds,
-      countOnly: false,
-      enablePerformanceWorkaround: true,
-    })
-    /**
-     * We're being "creative" here to get around the query performance issue
-     * if sorting is applied, as index cannot be used after $unwind.
-     * Steps:
-     * 1. Sort the cases before unwind
-     * 2. Do skip/limit before unwind (case level)
-     * 3. unwind alerts
-     * 4. Sort the alerts again (alert level)
-     * 5. As the first page alerts could contain the ones we don't want,
-     *    we get the first alert of the next page and use it as the boundary
-     *    to filter out the alerts in the first page that we don't want.
-     *
-     * By using this way, we can still use the index created for `alerts` fields.
-     * The downside is that we could have more than pageSize alerts in the result
-     * (we cannot just cut the extra ones, otherwise the next page could be incorrect)
-     */
-    pipeline.splice(
-      pipeline.findIndex((stage) => stage.$unwind),
-      0,
-      { $skip: skip },
-      { $limit: limit }
-    )
-    const alertsPromise = collection
-      .aggregate<AlertListResponseItem>(pipeline, { allowDiskUse: true })
-      .toArray()
-    let nextPageAlertsPromise: Promise<AlertListResponseItem[]> | undefined
-    if (params.sortField) {
-      const pipeline2 = cloneDeep(pipeline)
-      pipeline2[pipeline2.findIndex((stage) => '$skip' in stage)].$skip += limit
-      pipeline2[pipeline2.findIndex((stage) => '$limit' in stage)].$limit = 1
-      nextPageAlertsPromise = collection
-        .aggregate<AlertListResponseItem>(pipeline2, { allowDiskUse: true })
-        .toArray()
-    }
-    const [alerts, nextPageAlerts] = await Promise.all([
-      alertsPromise,
-      nextPageAlertsPromise,
-    ])
-    let filteredAlerts = alerts
-    if (nextPageAlerts && nextPageAlerts.length > 0 && params.sortField) {
-      const sortField = params.sortField
-      const nextPageSortFieldValue = nextPageAlerts[0].alert[sortField]
-      if (nextPageSortFieldValue) {
-        filteredAlerts = alerts.filter((alert) =>
-          params.sortOrder === 'ascend'
-            ? alert.alert[sortField] <= nextPageSortFieldValue
-            : alert.alert[sortField] >= nextPageSortFieldValue
-        )
+      /* Get paginated alerts */
+      const { skip, limit } = getSkipAndLimit(params)
+      if (
+        !params.sortField &&
+        params.filterAlertStatus &&
+        !params.filterAlertStatus?.includes('CLOSED')
+      ) {
+        params.sortField = 'createdTimestamp'
       }
-    }
-    // As we paginate the cases not alerts, the previous pages could contain the alerts that should be in the current page
-    // Find them and add them to the current page
-    if (params.sortField && skip > 0) {
-      const firstSortFieldValue = filteredAlerts[0]?.alert[params.sortField]
-      const lastSortFieldValue = last(filteredAlerts)?.alert[params.sortField]
-      const gte =
-        params.sortOrder === 'ascend' ? firstSortFieldValue : lastSortFieldValue
-      const lte =
-        params.sortOrder === 'ascend' ? lastSortFieldValue : firstSortFieldValue
-      const pipeline3 = await this.getAlertsPipeline(params, {
+      const pipeline = await this.getAlertsPipeline(params, {
         hideTransactionIds: options?.hideTransactionIds,
         countOnly: false,
-        extraAlertsFilterConditions: [
-          {
-            [`alerts.${params.sortField}`]: {
-              $gte: gte,
-              $lte: lte,
-            },
-          },
-        ],
         enablePerformanceWorkaround: true,
       })
-      const unwindIndex = pipeline3.findIndex((stage) => stage.$unwind)
-      pipeline3.splice(unwindIndex - 1, 0, { $limit: skip })
-      const missedPrevAlerts = await collection
-        .aggregate<AlertListResponseItem>(pipeline3, { allowDiskUse: true })
+      /**
+       * We're being "creative" here to get around the query performance issue
+       * if sorting is applied, as index cannot be used after $unwind.
+       * Steps:
+       * 1. Sort the cases before unwind
+       * 2. Do skip/limit before unwind (case level)
+       * 3. unwind alerts
+       * 4. Sort the alerts again (alert level)
+       * 5. As the first page alerts could contain the ones we don't want,
+       *    we get the first alert of the next page and use it as the boundary
+       *    to filter out the alerts in the first page that we don't want.
+       *
+       * By using this way, we can still use the index created for `alerts` fields.
+       * The downside is that we could have more than pageSize alerts in the result
+       * (we cannot just cut the extra ones, otherwise the next page could be incorrect)
+       */
+      pipeline.splice(
+        pipeline.findIndex((stage) => stage.$unwind),
+        0,
+        { $skip: skip },
+        { $limit: limit }
+      )
+      const alertsPromise = collection
+        .aggregate<AlertListResponseItem>(pipeline, { allowDiskUse: true })
         .toArray()
-      filteredAlerts = filteredAlerts.concat(missedPrevAlerts)
+      let nextPageAlertsPromise: Promise<AlertListResponseItem[]> | undefined
+      if (params.sortField) {
+        const pipeline2 = cloneDeep(pipeline)
+        pipeline2[pipeline2.findIndex((stage) => '$skip' in stage)].$skip +=
+          limit
+        pipeline2[pipeline2.findIndex((stage) => '$limit' in stage)].$limit = 1
+        nextPageAlertsPromise = collection
+          .aggregate<AlertListResponseItem>(pipeline2, { allowDiskUse: true })
+          .toArray()
+      }
+      const [alerts, nextPageAlerts] = await Promise.all([
+        alertsPromise,
+        nextPageAlertsPromise,
+      ])
+
+      let filteredAlerts = alerts
+      if (nextPageAlerts && nextPageAlerts.length > 0 && params.sortField) {
+        const sortField = params.sortField
+        const nextPageSortFieldValue = nextPageAlerts[0].alert[sortField]
+        if (nextPageSortFieldValue) {
+          filteredAlerts = alerts.filter((alert) =>
+            params.sortOrder === 'ascend'
+              ? alert.alert[sortField] <= nextPageSortFieldValue
+              : alert.alert[sortField] >= nextPageSortFieldValue
+          )
+        }
+      }
+      // As we paginate the cases not alerts, the previous pages could contain the alerts that should be in the current page
+      // Find them and add them to the current page
+      if (params.sortField && skip > 0) {
+        const firstSortFieldValue = filteredAlerts[0]?.alert[params.sortField]
+        const lastSortFieldValue = last(filteredAlerts)?.alert[params.sortField]
+        const gte =
+          params.sortOrder === 'ascend'
+            ? firstSortFieldValue
+            : lastSortFieldValue
+        const lte =
+          params.sortOrder === 'ascend'
+            ? lastSortFieldValue
+            : firstSortFieldValue
+        const pipeline3 = await this.getAlertsPipeline(params, {
+          hideTransactionIds: options?.hideTransactionIds,
+          countOnly: false,
+          extraAlertsFilterConditions: [
+            {
+              [`alerts.${params.sortField}`]: {
+                $gte: gte,
+                $lte: lte,
+              },
+            },
+          ],
+          enablePerformanceWorkaround: true,
+        })
+        const unwindIndex = pipeline3.findIndex((stage) => stage.$unwind)
+        pipeline3.splice(unwindIndex - 1, 0, { $limit: skip })
+        const missedPrevAlerts = await collection
+          .aggregate<AlertListResponseItem>(pipeline3, { allowDiskUse: true })
+          .toArray()
+        filteredAlerts = filteredAlerts.concat(missedPrevAlerts)
+      }
+
+      filteredAlerts.forEach((alert) => {
+        if (alert.alert?.slaPolicyDetails) {
+          alert.alert.slaPolicyDetails.sort((a, b) => {
+            const aTime = a?.elapsedTime ?? 0
+            const bTime = b?.elapsedTime ?? 0
+            return bTime - aTime
+          })
+        }
+      })
+
+      result = {
+        total: await alertsCountPromise,
+        totalPages: Math.ceil((await casesCountPromise) / limit),
+        data: uniqBy(filteredAlerts, (v) => v.alert.alertId),
+      }
     }
 
-    filteredAlerts.forEach((alert) => {
-      if (alert.alert?.slaPolicyDetails) {
-        alert.alert.slaPolicyDetails.sort((a, b) => {
-          const aTime = a?.elapsedTime ?? 0
-          const bTime = b?.elapsedTime ?? 0
-          return bTime - aTime
-        })
-      }
-    })
     return {
-      total: await alertsCountPromise,
-      totalPages: Math.ceil((await casesCountPromise) / limit),
-      data: uniqBy(filteredAlerts, (v) => v.alert.alertId),
+      ...result,
+      data: result.data.map((item) => ({
+        ...item,
+        alert: {
+          ...item.alert,
+          comments: item.alert.comments?.filter((comment) => {
+            return !(comment.deletedAt != null)
+          }),
+        },
+      })),
     }
   }
 

@@ -8,6 +8,9 @@ import {
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import Tabs from '@/components/library/Tabs';
 import Select from '@/components/library/Select';
+import { useQuery } from '@/utils/queries/hooks';
+import { ALERT_ITEM } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   alert: TableAlertItem;
@@ -23,7 +26,7 @@ interface Props {
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
 }
 
-export default function ExpandedRowRenderer(props: Props) {
+function ExpandedRowRenderer(props: Props) {
   const {
     alert,
     selectedTransactionIds,
@@ -69,6 +72,20 @@ export default function ExpandedRowRenderer(props: Props) {
         />
       }
     />
+  );
+}
+
+// Wrap alert item into Query to make cache invalidation by alert id works
+export default function (props: Props) {
+  const { alert, ...rest } = props;
+  const alertQueryResult = useQuery(ALERT_ITEM(alert?.alertId ?? ''), () => {
+    return Promise.resolve(alert);
+  });
+
+  return (
+    <AsyncResourceRenderer resource={alertQueryResult.data}>
+      {(alert) => <ExpandedRowRenderer alert={alert} {...rest} />}
+    </AsyncResourceRenderer>
   );
 }
 
