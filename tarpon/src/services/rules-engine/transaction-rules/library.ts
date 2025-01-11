@@ -187,7 +187,6 @@ const _RULES_LIBRARY: Array<
       type: 'TRANSACTION',
       name: 'Transaction amount too high',
       description: `Transaction amount is >= x in ${DEFAULT_CURRENCY_KEYWORD} or equivalent`,
-      engineVersion: 'V8',
       descriptionTemplate:
         'Transaction amount is {{ format-money limit currency }} or more',
       defaultParameters,
@@ -678,7 +677,6 @@ const _RULES_LIBRARY: Array<
     return {
       id: 'R-30',
       type: 'TRANSACTION',
-      engineVersion: 'V8',
       name: 'High velocity user',
       description: 'If a user makes >= x transactions within time t',
       descriptionTemplate:

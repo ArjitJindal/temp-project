@@ -8139,11 +8139,6 @@ components:
           type: string
         description:
           type: string
-        engineVersion:
-          type: string
-          enum:
-            - V2
-            - V8
         types:
           type: array
           items:

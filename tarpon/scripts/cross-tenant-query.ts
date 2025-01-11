@@ -5,10 +5,18 @@
  */
 
 import { exit } from 'process'
+import { execSync } from 'child_process'
 import { program } from 'commander'
 import { render } from 'prettyjson'
 import { Db } from 'mongodb'
-import { isEmpty, mergeWith, sortBy, startCase } from 'lodash'
+import {
+  intersection,
+  isEmpty,
+  memoize,
+  mergeWith,
+  sortBy,
+  startCase,
+} from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import {
   PRODUCTION_REGIONS,
@@ -16,9 +24,14 @@ import {
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
+import {
+  createRuleInstancesLocally,
+  deleteRuleInstancesLocally,
+  verifyTransactionLocally,
+} from './debug-rule/verify-remote-entities'
 import { TenantService } from '@/services/tenants'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getDynamoDbClient, getLocalDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
   RULES_LIBRARY,
@@ -32,6 +45,15 @@ import {
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { initializeTenantContext, withContext } from '@/core/utils/context'
+import { isV2RuleInstance } from '@/services/rules-engine/utils'
+import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
+import dayjs from '@/utils/dayjs'
+import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
+import { V8_MIGRATED_RULES } from '@/services/rules-engine/v8-migrations'
+import { UserRepository } from '@/services/users/repositories/user-repository'
+import { logger } from '@/core/logger'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
+import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
 
 /**
  * Custom query
@@ -52,6 +74,209 @@ async function runReadOnlyQueryForTenant(
    */
 
   return { Hello: 'World' }
+}
+
+// TODO: Remove this once all v2 rules are migrated to v8
+async function validateV2ToV8Rules(
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string,
+  startDate: string,
+  limit: number,
+  targetRuleInstanceIds?: string[]
+): Promise<any> {
+  const BACKGROUND = '\x1b[37;41;1m'
+  const NOCOLOR = '\x1b[0m'
+  console.log(
+    BACKGROUND +
+      `Please set 'localChangeHandlerDisabled=true' in local-dynamodb-change-handler.ts` +
+      NOCOLOR
+  )
+  execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
+  logger.info(`Recreated local tarpon table`)
+  logger.info(`Validating tenant ${tenantId}...`)
+  const localDynamoDb = getLocalDynamoDbClient()
+  const ruleRepository = new RuleRepository(FLAGRIGHT_TENANT_ID, {
+    dynamoDb: localDynamoDb,
+  })
+  for (const rule of RULES_LIBRARY) {
+    await ruleRepository.createOrUpdateRule(rule)
+  }
+  const localRuleInstanceRepository = new RuleInstanceRepository(
+    FLAGRIGHT_TENANT_ID,
+    {
+      dynamoDb: localDynamoDb,
+    }
+  )
+  const ruleInstances = await localRuleInstanceRepository.getAllRuleInstances()
+  if (ruleInstances.length > 0) {
+    await deleteRuleInstancesLocally(ruleInstances.map((r) => r.id as string))
+  }
+
+  const mongoDb = await getMongoDbClient(false)
+  const transactionRepository = new MongoDbTransactionRepository(
+    tenantId,
+    mongoDb
+  )
+  const userRepository = new UserRepository(tenantId, { mongoDb })
+  const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
+    dynamoDb,
+  })
+  const v2RuleInstances = (
+    await ruleInstanceRepository.getActiveRuleInstances()
+  )
+    .filter(
+      (v) =>
+        isV2RuleInstance(v) &&
+        V8_MIGRATED_RULES.includes(v.ruleId as string) &&
+        (targetRuleInstanceIds
+          ? targetRuleInstanceIds.includes(v.id as string)
+          : true)
+    )
+    .map(
+      (v) =>
+        ({
+          ...v,
+          ruleRunMode: 'LIVE',
+          ruleExecutionMode: 'SYNC',
+          ...ruleInstanceRepository.getV8PropsForV2RuleInstance(v),
+        } as RuleInstance)
+    )
+  if (v2RuleInstances.length === 0) {
+    logger.info(`No active V2 rule instances found`)
+    return {}
+  }
+  await createRuleInstancesLocally(v2RuleInstances)
+  const ruleInstanceIds = v2RuleInstances.map((r) => r.id as string)
+
+  const afterTimestamp = dayjs(startDate).valueOf()
+  await updateLocalFeatureFlags(FLAGRIGHT_TENANT_ID, [])
+  logger.info(`Verifying V2 rules...`)
+  const v2HitResults = await verifyTransactions(
+    transactionRepository,
+    userRepository,
+    afterTimestamp,
+    ruleInstanceIds,
+    limit
+  )
+  await updateLocalFeatureFlags(FLAGRIGHT_TENANT_ID, [
+    'RULES_ENGINE_V8',
+    'RULES_ENGINE_V8_FOR_V2_RULES',
+  ])
+  logger.info(`Verifying V8 rules...`)
+  const v8HitResults = await verifyTransactions(
+    transactionRepository,
+    userRepository,
+    afterTimestamp,
+    ruleInstanceIds,
+    limit
+  )
+
+  const result: {
+    [ruleInstanceId: string]: {
+      falseNotHit?: string[]
+      falseHit?: string[]
+      v2HitTransactionsCount: number
+      v8HitTransactionsCount: number
+    }
+  } = {}
+  for (const ruleInstanceId of ruleInstanceIds) {
+    const v2HitTransactionIds = v2HitResults[ruleInstanceId] ?? []
+    const v8HitTransactionIds = v8HitResults[ruleInstanceId] ?? []
+    const hitTransactionIds = intersection(
+      v2HitTransactionIds,
+      v8HitTransactionIds
+    )
+
+    result[ruleInstanceId] = {
+      v2HitTransactionsCount: v2HitTransactionIds.length,
+      v8HitTransactionsCount: v8HitTransactionIds.length,
+    }
+
+    if (
+      hitTransactionIds.length !== v2HitTransactionIds.length ||
+      hitTransactionIds.length !== v8HitTransactionIds.length
+    ) {
+      const v8FalseNotHitTransactionIds = v2HitTransactionIds.filter(
+        (id) => !v8HitTransactionIds.includes(id)
+      )
+      const v8FalseHitTransactionIds = v8HitTransactionIds.filter(
+        (id) => !v2HitTransactionIds.includes(id)
+      )
+      result[ruleInstanceId].falseNotHit = v8FalseNotHitTransactionIds
+      result[ruleInstanceId].falseHit = v8FalseHitTransactionIds
+    }
+  }
+  return result
+}
+
+// TODO: Remove this once all v2 rules are migrated to v8
+async function verifyTransactions(
+  transactionRepository: MongoDbTransactionRepository,
+  userRepository: UserRepository,
+  afterTimestamp: number,
+  ruleInstanceIds: string[],
+  limit: number
+): Promise<{
+  [ruleInstanceId: string]: string[]
+}> {
+  const hitResults: { [ruleInstanceId: string]: string[] } = {}
+  const getRemoteUser = memoize(async (userId: string) => {
+    return await userRepository.getMongoUser(userId)
+  })
+  const txCursor = transactionRepository.getTransactionsCursor({
+    afterTimestamp,
+    sortField: 'timestamp',
+    sortOrder: 'ascend',
+    pageSize: 'DISABLED',
+  })
+  let txCount = 0
+  // Verify using V2 rules
+  for await (const transaction of txCursor) {
+    logger.debug(`Verifying tx ${transaction.transactionId}`)
+    let [originUser, destinationUser] = await Promise.all([
+      transaction.originUserId
+        ? getRemoteUser(transaction.originUserId)
+        : undefined,
+      transaction.destinationUserId
+        ? getRemoteUser(transaction.destinationUserId)
+        : undefined,
+    ])
+    originUser = originUser?.type ? originUser : null
+    destinationUser = destinationUser?.type ? destinationUser : null
+    const result = await verifyTransactionLocally(
+      transaction,
+      originUser,
+      destinationUser
+    )
+    result.hitRules.forEach((r) => {
+      if (ruleInstanceIds.includes(r.ruleInstanceId)) {
+        if (!hitResults[r.ruleInstanceId]) {
+          hitResults[r.ruleInstanceId] = []
+        }
+        hitResults[r.ruleInstanceId].push(transaction.transactionId)
+      }
+    })
+
+    txCount++
+    if (txCount >= limit) {
+      break
+    }
+  }
+  logger.info(`Verified ${txCount} transactions`)
+  return hitResults
+}
+
+async function updateLocalFeatureFlags(
+  tenantId: string,
+  featureFlags: Feature[]
+) {
+  const dynamoDb = getLocalDynamoDbClient()
+  const tenantRepository = new TenantRepository(tenantId, {
+    dynamoDb,
+  })
+  await tenantRepository.createOrUpdateTenantSettings({
+    features: featureFlags,
+  })
 }
 
 /**
@@ -125,10 +350,19 @@ async function tenantFeatures(
 
 program
   .requiredOption('--env <string>', 'dev | sandbox | prod')
-  .option('--query <string>', 'rule-stats | features')
+  .option('--query <string>', 'rule-stats | features | validate-v2-to-v8-rules')
+  // validate-v2-to-v8-rules options
+  .option('--start-date <string>', 'YYYY-MM-DD')
+  .option('--limit <number>', 'Number of transactions to verify')
+  .option('--tenant-ids <string>', 'Comma-separated list of tenant IDs')
+  .option(
+    '--rule-instance-ids <string>',
+    'Comma-separated list of rule instance IDs'
+  )
   .parse()
 
-const { env, query } = program.opts()
+const { env, query, startDate, limit, tenantIds, ruleInstanceIds } =
+  program.opts()
 
 if (!['dev', 'sandbox', 'prod'].includes(env)) {
   console.error(`Allowed --env options: dev, sandbox prod`)
@@ -141,10 +375,16 @@ async function runReadOnlyQueryForEnv(env: Env) {
   const config = getConfig()
   const mongoDb = await getMongoDbClientDb(false)
   const dynamoDb = getDynamoDbClient()
-  const tenantInfos = await TenantService.getAllTenants(
+  let tenantInfos = await TenantService.getAllTenants(
     config.stage,
     config.region
   )
+  if (tenantIds) {
+    const targetTenantIds = tenantIds.split(',')
+    tenantInfos = tenantInfos.filter((t) =>
+      targetTenantIds.includes(t.tenant.id)
+    )
+  }
 
   if (query === 'rule-stats') {
     for (const tenant of tenantInfos) {
@@ -175,6 +415,16 @@ async function runReadOnlyQueryForEnv(env: Env) {
       } else {
         result = await withContext(async () => {
           await initializeTenantContext(tenant.tenant.id)
+
+          if (query === 'validate-v2-to-v8-rules') {
+            return validateV2ToV8Rules(
+              dynamoDb,
+              tenant.tenant.id,
+              startDate,
+              Number(limit),
+              ruleInstanceIds?.split(',')
+            )
+          }
           return runReadOnlyQueryForTenant(mongoDb, dynamoDb, tenant.tenant.id)
         })
       }

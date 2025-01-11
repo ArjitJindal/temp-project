@@ -240,7 +240,17 @@ export class RuleInstanceRepository {
 
     const riskLevelLogic = v2RiskLevelLogic
 
-    return { logic, riskLevelLogic, logicAggregationVariables, baseCurrency }
+    const alertConfig = { ...ruleInstance.alertConfig }
+    if (migratedData?.alertCreationDirection) {
+      alertConfig.alertCreationDirection = migratedData.alertCreationDirection
+    }
+    return {
+      logic,
+      riskLevelLogic,
+      logicAggregationVariables,
+      baseCurrency,
+      alertConfig,
+    }
   }
 
   public async createOrUpdateRuleInstance(

@@ -37,7 +37,6 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { RiskScoringService } from '@/services/risk-scoring'
 import { filterLiveRules, runOnV8Engine } from '@/services/rules-engine/utils'
 import { TransactionEventRepository } from '@/services/rules-engine/repositories/transaction-event-repository'
-import { getRuleByRuleId } from '@/services/rules-engine/transaction-rules/library'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { UserService } from '@/services/users'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -294,11 +293,7 @@ export const transactionHandler = async (
       )
     await Promise.all([
       ...deployingRuleInstances.map(async (ruleInstance) => {
-        const rule = ruleInstance.ruleId
-          ? getRuleByRuleId(ruleInstance.ruleId)
-          : undefined
-
-        if (!runOnV8Engine(ruleInstance, rule)) {
+        if (!runOnV8Engine(ruleInstance)) {
           return
         }
         await logicEvaluator.handleV8Aggregation(

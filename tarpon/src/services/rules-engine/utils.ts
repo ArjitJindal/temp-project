@@ -232,19 +232,13 @@ export function isV2RuleInstance(ruleInstance: RuleInstance): boolean {
   return !!(ruleInstance.ruleId && !ruleInstance.ruleId.startsWith('RC'))
 }
 
-export function runOnV8Engine(
-  ruleInstance: RuleInstance,
-  rule?: Rule
-): boolean {
+export function runOnV8Engine(ruleInstance: RuleInstance): boolean {
   if (hasFeature('RULES_ENGINE_V8')) {
     if (envIs('test')) {
       return true
     }
 
-    if (
-      hasFeature('RULES_ENGINE_V8_FOR_V2_RULES') &&
-      rule?.engineVersion === 'V8'
-    ) {
+    if (hasFeature('RULES_ENGINE_V8_FOR_V2_RULES')) {
       return true
     }
 

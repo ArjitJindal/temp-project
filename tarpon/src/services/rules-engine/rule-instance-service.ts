@@ -23,7 +23,6 @@ import { RuleRepository } from './repositories/rule-repository'
 import { TRANSACTION_RULES } from './transaction-rules'
 import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
-import { getRuleByRuleId } from './transaction-rules/library'
 import { V8_MIGRATED_RULES } from './v8-migrations'
 import { PNB_INTERNAL_RULES } from './pnb-custom-logic'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -258,7 +257,7 @@ export class RuleInstanceService {
         updatedAt
       )
 
-    if (runOnV8Engine(updatedRuleInstance, rule)) {
+    if (runOnV8Engine(updatedRuleInstance)) {
       await ruleInstanceAggregationVariablesRebuild(
         updatedRuleInstance,
         now,
@@ -422,9 +421,7 @@ export class RuleInstanceService {
       dynamoDb,
     })
 
-    const ruleIds = (await ruleRepository.getAllRules())
-      .filter((rule) => rule.engineVersion === 'V8')
-      .map((rule) => rule.id)
+    const ruleIds = (await ruleRepository.getAllRules()).map((rule) => rule.id)
 
     const ruleInstances = await ruleInstanceRepository.getAllRuleInstances()
 
@@ -444,9 +441,9 @@ export class RuleInstanceService {
   }
 
   public async preAggregateV2RuleInstance() {
-    const ruleIds = (await this.ruleRepository.getAllRules())
-      .filter((rule) => rule.engineVersion === 'V8')
-      .map((rule) => rule.id)
+    const ruleIds = (await this.ruleRepository.getAllRules()).map(
+      (rule) => rule.id
+    )
     const ruleInstances =
       await this.ruleInstanceRepository.getAllRuleInstances()
     const ruleInstancesToUpdate = ruleInstances.filter(
@@ -456,8 +453,7 @@ export class RuleInstanceService {
 
     for (const ruleInstance of ruleInstancesToUpdate) {
       if (ruleInstance.ruleId) {
-        const rule = getRuleByRuleId(ruleInstance.ruleId)
-        if (runOnV8Engine(ruleInstance, rule)) {
+        if (runOnV8Engine(ruleInstance)) {
           const originalStatus = ruleInstance.status
           if (originalStatus === 'ACTIVE') {
             await this.createOrUpdateRuleInstance(

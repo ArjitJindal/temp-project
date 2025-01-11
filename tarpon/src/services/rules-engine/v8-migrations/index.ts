@@ -650,41 +650,44 @@ const V8_CONVERSION: Readonly<
       })
     ) as LogicAggregationVariable[]
     const conditions: any[] = []
+    let counterPartyAggVariables: LogicAggregationVariable[] | undefined
     if (
       parameters.transactionsCounterPartiesThreshold
         ?.transactionsCounterPartiesCount
     ) {
       const checkPaymentMethodDetails =
         parameters.transactionsCounterPartiesThreshold.checkPaymentMethodDetails
-      const counterPartyAggVariable: LogicAggregationVariable = {
-        key: 'agg:counterparty',
-        type: checkPaymentMethodDetails
-          ? 'PAYMENT_DETAILS_TRANSACTIONS'
-          : 'USER_TRANSACTIONS',
-        userDirection: 'SENDER_OR_RECEIVER',
-        transactionDirection: 'SENDING_RECEIVING',
-        aggregationFieldKey: checkPaymentMethodDetails
-          ? 'TRANSACTION:destinationPaymentDetailsIdentifier'
-          : 'TRANSACTION:destinationUserId',
-        secondaryAggregationFieldKey: checkPaymentMethodDetails
-          ? 'TRANSACTION:originPaymentDetailsIdentifier'
-          : 'TRANSACTION:originUserId',
-        timeWindow: {
-          start: parameters.timeWindow,
-          end: { units: 0, granularity: 'now' },
-        },
-        aggregationFunc: 'UNIQUE_COUNT',
-        baseCurrency: currency as CurrencyCode,
-        includeCurrentEntity: true,
-      }
-      logicAggregationVariables.push(counterPartyAggVariable)
-      conditions.push({
-        '>=': [
-          { var: counterPartyAggVariable.key },
-          parameters.transactionsCounterPartiesThreshold
-            .transactionsCounterPartiesCount,
-        ],
+      counterPartyAggVariables = amountLogicAggregationVariables.map((v, i) => {
+        let aggregationFieldKey: string | undefined
+        let secondaryAggregationFieldKey: string | undefined
+        if (v.transactionDirection === 'SENDING') {
+          aggregationFieldKey = checkPaymentMethodDetails
+            ? 'TRANSACTION:destinationPaymentDetailsIdentifier'
+            : 'TRANSACTION:destinationUserId'
+        } else if (v.transactionDirection === 'RECEIVING') {
+          aggregationFieldKey = checkPaymentMethodDetails
+            ? 'TRANSACTION:originPaymentDetailsIdentifier'
+            : 'TRANSACTION:originUserId'
+        } else {
+          aggregationFieldKey = checkPaymentMethodDetails
+            ? 'TRANSACTION:destinationPaymentDetailsIdentifier'
+            : 'TRANSACTION:destinationUserId'
+          secondaryAggregationFieldKey = checkPaymentMethodDetails
+            ? 'TRANSACTION:originPaymentDetailsIdentifier'
+            : 'TRANSACTION:originUserId'
+        }
+        return {
+          ...v,
+          key: `agg:counterparty-${i}`,
+          type: checkPaymentMethodDetails
+            ? 'PAYMENT_DETAILS_TRANSACTIONS'
+            : 'USER_TRANSACTIONS',
+          aggregationFieldKey,
+          secondaryAggregationFieldKey,
+          aggregationFunc: 'UNIQUE_COUNT',
+        }
       })
+      logicAggregationVariables.push(...counterPartyAggVariables)
     }
     if (parameters.initialTransactions) {
       const { logicAggregationVariables: countLogicAggregationVariables } =
@@ -701,12 +704,40 @@ const V8_CONVERSION: Readonly<
       conditions.push({
         '>=': [{ var: amountLogicAggregationVariables[0].key }, lowerThreshold],
       })
+      if (counterPartyAggVariables) {
+        conditions.push({
+          '>=': [
+            { var: counterPartyAggVariables?.[0].key },
+            parameters.transactionsCounterPartiesThreshold
+              ?.transactionsCounterPartiesCount,
+          ],
+        })
+      }
     } else if (amountLogicAggregationVariables.length > 1) {
-      conditions.push({
-        or: amountLogicAggregationVariables.map((v) => ({
-          '>=': [{ var: v.key }, lowerThreshold],
-        })),
-      })
+      if (counterPartyAggVariables) {
+        conditions.push({
+          or: amountLogicAggregationVariables.map((v, i) => ({
+            and: [
+              {
+                '>=': [{ var: v.key }, lowerThreshold],
+              },
+              {
+                '>=': [
+                  { var: counterPartyAggVariables?.[i].key },
+                  parameters.transactionsCounterPartiesThreshold
+                    ?.transactionsCounterPartiesCount,
+                ],
+              },
+            ],
+          })),
+        })
+      } else {
+        conditions.push({
+          or: amountLogicAggregationVariables.map((v) => ({
+            '>=': [{ var: v.key }, lowerThreshold],
+          })),
+        })
+      }
     }
     if (parameters.transactionVolumeUpperThreshold) {
       const [_, upperThreshold] = Object.entries(
@@ -729,7 +760,7 @@ const V8_CONVERSION: Readonly<
     }
     return {
       logic: { and: conditions },
-      logicAggregationVariables: logicAggregationVariables,
+      logicAggregationVariables,
       alertCreationDirection,
     }
   },

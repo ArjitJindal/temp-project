@@ -1165,11 +1165,7 @@ export class RulesEngineService {
       // Update aggregation variables in V8 user rules
       Promise.all(
         userRuleInstances.map((ruleInstance) => {
-          const rule = ruleInstance.ruleId
-            ? rulesById[ruleInstance.ruleId]
-            : undefined
-
-          if (!runOnV8Engine(ruleInstance, rule)) {
+          if (!runOnV8Engine(ruleInstance)) {
             return []
           }
 
@@ -1342,7 +1338,7 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedLogicVars[] | undefined
 
-    if (runOnV8Engine(ruleInstance, rule) && logic) {
+    if (runOnV8Engine(ruleInstance) && logic) {
       const data = transactionWithValidUserId
         ? ({
             type: 'TRANSACTION',
@@ -1576,7 +1572,7 @@ export class RulesEngineService {
           logger.debug(`Completed rule`)
 
           let aggregationMessages: FifoSqsMessage[] = []
-          if (runOnV8Engine(ruleInstance, options.rule)) {
+          if (runOnV8Engine(ruleInstance)) {
             await this.ruleLogicEvaluator.handleV8Aggregation(
               'RULES',
               ruleInstance.logicAggregationVariables ?? [],

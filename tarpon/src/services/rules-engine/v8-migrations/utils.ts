@@ -35,6 +35,7 @@ export function migrateCheckDirectionParameters(props: {
   alertCreationDirection: AlertCreationDirection
 } {
   const { type, parameters, aggFunc, baseCurrency } = props
+  const { checkSender = 'all', checkReceiver = 'all' } = parameters
   const aggKeyHash = generateChecksum(props, 5)
   let aggregationFunc: LogicAggregationFunc | undefined = aggFunc
   if (!aggregationFunc) {
@@ -52,7 +53,7 @@ export function migrateCheckDirectionParameters(props: {
   }
 
   const logicAggregationVariables: LogicAggregationVariable[] = []
-  if (parameters.checkSender === 'sending') {
+  if (checkSender === 'sending') {
     if (type === 'AMOUNT') {
       aggregationFieldKey = 'TRANSACTION:originAmountDetails-transactionAmount'
     }
@@ -72,7 +73,7 @@ export function migrateCheckDirectionParameters(props: {
       includeCurrentEntity: true,
     })
   }
-  if (parameters.checkReceiver === 'receiving') {
+  if (checkReceiver === 'receiving') {
     if (type === 'AMOUNT') {
       aggregationFieldKey =
         'TRANSACTION:destinationAmountDetails-transactionAmount'
@@ -93,20 +94,15 @@ export function migrateCheckDirectionParameters(props: {
       includeCurrentEntity: true,
     })
   }
-  if (
-    !parameters.checkSender ||
-    parameters.checkSender === 'all' ||
-    !parameters.checkReceiver ||
-    parameters.checkReceiver === 'all'
-  ) {
+  if (checkSender === 'all' || checkReceiver === 'all') {
     let secondaryAggregationFieldKey = 'TRANSACTION:transactionId'
     if (type === 'AMOUNT') {
-      if (parameters.checkSender) {
+      if (parameters.checkSender === 'all') {
         aggregationFieldKey =
           'TRANSACTION:originAmountDetails-transactionAmount'
         secondaryAggregationFieldKey =
           'TRANSACTION:destinationAmountDetails-transactionAmount'
-      } else {
+      } else if (parameters.checkReceiver === 'all') {
         aggregationFieldKey =
           'TRANSACTION:destinationAmountDetails-transactionAmount'
         secondaryAggregationFieldKey =
@@ -120,7 +116,12 @@ export function migrateCheckDirectionParameters(props: {
         parameters.destinationMatchPaymentMethodDetails
           ? 'PAYMENT_DETAILS_TRANSACTIONS'
           : 'USER_TRANSACTIONS',
-      userDirection: 'SENDER_OR_RECEIVER',
+      userDirection:
+        checkSender === 'all' && checkReceiver === 'all'
+          ? 'SENDER_OR_RECEIVER'
+          : checkSender === 'all'
+          ? 'SENDER'
+          : 'RECEIVER',
       transactionDirection: 'SENDING_RECEIVING',
       aggregationFieldKey,
       secondaryAggregationFieldKey,

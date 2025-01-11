@@ -239,6 +239,20 @@ export function getDynamoDbClient(
   return opts.reduce((client, opt) => opt(client), client)
 }
 
+export function getLocalDynamoDbClient(): DynamoDBDocumentClient {
+  const rawClient = new DynamoDBClient({
+    credentials: {
+      accessKeyId: 'fake',
+      secretAccessKey: 'fake',
+    },
+    region: 'local',
+    endpoint: 'http://localhost:8000',
+  })
+  return DynamoDBDocumentClient.from(rawClient, {
+    marshallOptions: { removeUndefinedValues: true },
+  })
+}
+
 async function getLastEvaluatedKey(
   dynamoDb: DynamoDBDocumentClient,
   query: QueryCommandInput,

@@ -5,10 +5,15 @@ import path from 'path'
 import { execSync } from 'child_process'
 import fs from 'fs-extra'
 import { omit } from 'lodash'
-import { PutCommand, PutCommandInput } from '@aws-sdk/lib-dynamodb'
+import {
+  DeleteCommand,
+  DeleteCommandInput,
+  PutCommand,
+  PutCommandInput,
+} from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getLocalDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { RuleService } from '@/services/rules-engine'
 import { apiFetch } from '@/utils/api-fetch'
@@ -20,8 +25,8 @@ import { TransactionEventWithRulesResult } from '@/@types/openapi-public/Transac
 import dayjs from '@/utils/dayjs'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
-
-process.env.ENV = 'local'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { logger } from '@/core/logger'
 
 const configPath = path.join(__dirname, 'config.json')
 const {
@@ -43,9 +48,6 @@ const {
   'x-fingerprint': string
   resetDb: boolean
 }
-console.info(`Using config from "${configPath}"`)
-console.info(`Will get ${transactionIds.length} transactions from ${api}`)
-console.info(`Will get ${userIds.length} users from ${api}`)
 
 const createdUsers = new Set<string>()
 const jwt = rawJwt.replace(/^Bearer\s+/, '')
@@ -138,59 +140,85 @@ async function getRemoteUser(userId: string) {
   }
 }
 
-async function createRuleInstancesLocally(ruleInstanceIds: string[]) {
-  const ruleInstances = await getRemoteRuleInstances(ruleInstanceIds)
-  const dynamoDb = getDynamoDbClient()
-  for (const ruleInstance of ruleInstances) {
-    if (ruleInstance.type === 'USER') {
-      ruleInstance.userRuleRunCondition = { entityUpdated: true }
-    }
-    const putItemInput: PutCommandInput = {
-      TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
-      Item: {
-        ...DynamoDbKeys.RULE_INSTANCE('flagright', ruleInstance.id),
-        ...ruleInstance,
-        ruleExecutionMode: 'SYNC',
-      },
-    }
-    await dynamoDb.send(new PutCommand(putItemInput))
-  }
-  console.info(`Activated ${ruleInstanceIds.length} rule instances`)
+export async function createRuleInstancesLocally(
+  ruleInstances: RuleInstance[]
+) {
+  const dynamoDb = getLocalDynamoDbClient()
+  await Promise.all(
+    ruleInstances.map(async (ruleInstance) => {
+      if (ruleInstance.type === 'USER') {
+        ruleInstance.userRuleRunCondition = { entityUpdated: true }
+      }
+      const putItemInput: PutCommandInput = {
+        TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+        Item: {
+          ...DynamoDbKeys.RULE_INSTANCE('flagright', ruleInstance.id),
+          ...ruleInstance,
+          ruleExecutionMode: 'SYNC',
+        },
+      }
+      await dynamoDb.send(new PutCommand(putItemInput))
+    })
+  )
+  logger.info(`Activated ${ruleInstances.length} rule instances`)
+}
+export async function deleteRuleInstancesLocally(ruleInstanceIds: string[]) {
+  const dynamoDb = getLocalDynamoDbClient()
+  await Promise.all(
+    ruleInstanceIds.map(async (ruleInstanceId) => {
+      const deleteItemInput: DeleteCommandInput = {
+        TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
+        Key: DynamoDbKeys.RULE_INSTANCE('flagright', ruleInstanceId),
+      }
+      await dynamoDb.send(new DeleteCommand(deleteItemInput))
+    })
+  )
 }
 
-async function createUserLocally(userId: string) {
-  if (createdUsers.has(userId)) {
+async function createUserLocally(user: InternalUser) {
+  if (createdUsers.has(user.userId)) {
     return
   }
-  const user = await getRemoteUser(userId)
-  if (user) {
-    return (
-      await apiFetch<UserWithRulesResult>(
-        `http://localhost:3000/${user.type.toLowerCase()}/users`,
-        {
-          method: 'POST',
-          headers: {
-            'x-api-key': 'fake',
-            'tenant-id': 'flagright',
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(
-            omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
-          ),
-        }
-      )
-    ).result
-  }
-  createdUsers.add(userId)
+  createdUsers.add(user.userId)
+  return (
+    await apiFetch<UserWithRulesResult>(
+      `http://localhost:3000/${user.type.toLowerCase()}/users`,
+      {
+        method: 'POST',
+        headers: {
+          'x-api-key': 'fake',
+          'tenant-id': 'flagright',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(
+          omit(user, '_id', 'PartitionKeyID', 'SortKeyID', 'type')
+        ),
+      }
+    )
+  ).result
 }
 
-async function verifyTransactionLocally(transaction: InternalTransaction) {
+export async function verifyTransactionLocally(
+  transaction: InternalTransaction,
+  originUser?: InternalUser | null,
+  destinationUser?: InternalUser | null
+) {
   const { originUserId, destinationUserId } = transaction
   if (originUserId) {
-    await createUserLocally(originUserId)
+    const user =
+      originUser === undefined ? await getRemoteUser(originUserId) : originUser
+    if (user) {
+      await createUserLocally(user)
+    }
   }
   if (destinationUserId) {
-    await createUserLocally(destinationUserId)
+    const user =
+      destinationUser === undefined
+        ? await getRemoteUser(destinationUserId)
+        : destinationUser
+    if (user) {
+      await createUserLocally(user)
+    }
   }
 
   return (
@@ -252,6 +280,11 @@ async function verifyTransactionEventLocally(
 }
 
 async function main() {
+  process.env.ENV = 'local'
+  console.info(`Using config from "${configPath}"`)
+  console.info(`Will get ${transactionIds.length} transactions from ${api}`)
+  console.info(`Will get ${userIds.length} users from ${api}`)
+
   if (transactionIds.length === 0 && userIds.length === 0) {
     return
   }
@@ -261,7 +294,7 @@ async function main() {
     console.info('Recreated Tarpon DynamoDB table')
 
     const tenantRepo = new TenantRepository('flagright', {
-      dynamoDb: getDynamoDbClient(),
+      dynamoDb: getLocalDynamoDbClient(),
     })
     const settings = await getRemoteSettings()
     await tenantRepo.createOrUpdateTenantSettings(settings)
@@ -270,13 +303,19 @@ async function main() {
     console.info('Recreated TarponRule DynamoDB table')
     await RuleService.syncRulesLibrary()
   }
-  await createRuleInstancesLocally(ruleInstanceIds)
+  const ruleInstances = await getRemoteRuleInstances(ruleInstanceIds)
+  await createRuleInstancesLocally(ruleInstances)
 
   const results: any[] = []
 
   // Users
   for (const userId of userIds) {
-    const result = await createUserLocally(userId)
+    const user = await getRemoteUser(userId)
+    if (!user) {
+      console.error(`User ${userId} not found`)
+      continue
+    }
+    const result = await createUserLocally(user)
     const hit = Boolean(
       result?.hitRules?.length && result?.hitRules?.length > 0
     )
@@ -352,9 +391,11 @@ async function main() {
   console.info(`\nDone. See results: ${outputPath}`)
 }
 
-main()
-  .then(() => process.exit(0))
-  .catch((e) => {
-    console.error(e)
-    process.exit(1)
-  })
+if (require.main === module) {
+  void main()
+    .then(() => process.exit(0))
+    .catch((e) => {
+      console.error(e)
+      process.exit(1)
+    })
+}
