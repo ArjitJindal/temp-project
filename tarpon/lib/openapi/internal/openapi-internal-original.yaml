@@ -6991,6 +6991,10 @@ paths:
               $ref: '#/components/schemas/ReportStatus'
           in: query
           name: filterStatus
+        - schema:
+            type: number
+          in: query
+          name: lastAckFetchTime
     post:
       summary: Create a new report
       operationId: post-reports

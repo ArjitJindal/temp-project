@@ -9,6 +9,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { tenantHasFeature } from '@/core/utils/context'
 import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
+import { ReportRepository } from '@/services/sar/repositories/report-repository'
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -106,12 +107,28 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
 
 async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
   try {
+    const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     await Promise.all(
       tenantIds.map(async (id) => {
-        await sendBatchJobCommand({
-          type: 'FINCEN_REPORT_STATUS_REFRESH',
-          tenantId: id,
-        })
+        const reportRepository = new ReportRepository(
+          // 1. get all sla reports that have submitting and submit accept status
+          id,
+          mongoDb,
+          dynamoDb
+        )
+        const hasUsReports = await reportRepository.hasValidJurisdictionReports(
+          ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
+          'US',
+          Date.now() - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
+        )
+        logger.info('USA report to fetch', hasUsReports)
+        if (hasUsReports) {
+          await sendBatchJobCommand({
+            type: 'FINCEN_REPORT_STATUS_REFRESH',
+            tenantId: id,
+          })
+        }
       })
     )
   } catch (e) {

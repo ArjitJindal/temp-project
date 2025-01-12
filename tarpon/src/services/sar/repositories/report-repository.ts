@@ -254,6 +254,13 @@ export class ReportRepository {
         },
       })
     }
+    if (params.lastAckFetchTime) {
+      conditions.push({
+        lastAckFetchTime: {
+          $gte: params.lastAckFetchTime,
+        },
+      })
+    }
     return conditions.length
       ? {
           $and: conditions,
@@ -263,13 +270,15 @@ export class ReportRepository {
 
   public async getReportsByStatus(
     filterStatus: Array<ReportStatus>,
-    filterJurisdiction?: CountryCode
+    filterJurisdiction?: CountryCode,
+    lastAckFetchTime?: number
   ): Promise<Report[]> {
     const db = this.mongoDb.db()
     const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
     const filter = this.getConditionsFromParams({
       filterStatus,
       filterJurisdiction,
+      lastAckFetchTime,
     })
     const pipeline: Document[] = [
       { $match: filter },
@@ -279,6 +288,26 @@ export class ReportRepository {
       .aggregate<Report>(pipeline, { allowDiskUse: true })
       .toArray()
     return reports
+  }
+
+  public async hasValidJurisdictionReports(
+    filterStatus: Array<ReportStatus>,
+    filterJurisdiction?: CountryCode,
+    lastAckFetchTime?: number
+  ) {
+    const db = this.mongoDb.db()
+    const collection = db.collection<Report>(REPORT_COLLECTION(this.tenantId))
+    const filter = this.getConditionsFromParams({
+      filterStatus,
+      filterJurisdiction,
+      lastAckFetchTime,
+    })
+    const pipeline: Document[] = [{ $match: filter }, { $limit: 1 }]
+    const reports = await collection
+      .aggregate<Report>(pipeline, { allowDiskUse: true })
+      .toArray()
+
+    return reports.length > 0
   }
 
   public async getReports(

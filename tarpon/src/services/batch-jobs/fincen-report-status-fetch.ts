@@ -9,14 +9,6 @@ import { FincenReportStatus } from '@/@types/openapi-internal/FincenReportStatus
 import { ReportStatus } from '@/@types/openapi-internal/ReportStatus'
 import { ask } from '@/utils/openai'
 
-function isMoreThanOneHour(timeNow: number, lastTime?: number) {
-  if (!lastTime) {
-    return true
-  }
-  // TODO: 10 min for testing change it to 1 hour
-  return timeNow - lastTime >= 10 * 60 * 1000 // 1 hour
-}
-
 export function fincenStatusMapper(
   fincenReportStatus: FincenReportStatus
 ): ReportStatus {
@@ -64,18 +56,14 @@ export class FinCenReportStatusFetchBatchJobRunner extends BatchJobRunner {
       mongoDb,
       dynamoDb
     )
-    const usaPendingReports = await reportRepository.getReportsByStatus(
+    const timeNow = Date.now()
+    const filteredUsaReports = await reportRepository.getReportsByStatus(
       ['SUBMITTING', 'SUBMISSION_ACCEPTED'],
-      'US'
+      'US',
+      timeNow - 1000 * 60 * 10 // TODO: need to update this to 60 minutes
     )
     const sarGenerator = UsSarReportGenerator.getInstance(job.tenantId)
-    logger.info('USA Pending report', usaPendingReports)
-    const timeNow = Date.now()
-    const filteredUsaReports = usaPendingReports.filter(
-      (report) =>
-        report.id && isMoreThanOneHour(timeNow, report.lastAckFetchTime)
-    )
-    logger.info('USA report to fetch', filteredUsaReports.length)
+    logger.info('USA Pending report', filteredUsaReports.length)
     // 2. fetch result from sftp server
     filteredUsaReports.forEach(async (report) => {
       const status = await sarGenerator.getAckFileContent(report)
