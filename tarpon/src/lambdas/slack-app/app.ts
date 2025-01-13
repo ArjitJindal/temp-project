@@ -126,26 +126,34 @@ export const slackAlertHandler = lambdaConsumer()(async (event: SQSEvent) => {
         logger.info(
           `Sending case Slack alert: tenant=${tenantId}, caseId=${caseId}`
         )
-        await webhook.send({
-          text: 'New case created',
-          attachments: [
-            {
-              color: '#ffa500', // orange
-              blocks: [
-                {
-                  type: 'section',
-                  text: {
-                    type: 'mrkdwn',
-                    text:
-                      `<${process.env.CONSOLE_URI}/case-management/case/${caseId}|${caseId}>\n` +
-                      '*status:*\n' +
-                      `${caseItem?.caseStatus}`,
+        try {
+          await webhook.send({
+            text: 'New case created',
+            attachments: [
+              {
+                color: '#ffa500', // orange
+                blocks: [
+                  {
+                    type: 'section',
+                    text: {
+                      type: 'mrkdwn',
+                      text:
+                        `<${process.env.CONSOLE_URI}/case-management/case/${caseId}|${caseId}>\n` +
+                        '*status:*\n' +
+                        `${caseItem?.caseStatus}`,
+                    },
                   },
-                },
-              ],
-            },
-          ],
-        })
+                ],
+              },
+            ],
+          })
+        } catch (e) {
+          const status = (e as any).original.status as number
+          if (status && status >= 400 && status < 500) {
+            return
+          }
+          logger.error(e)
+        }
       }
     }
   }
