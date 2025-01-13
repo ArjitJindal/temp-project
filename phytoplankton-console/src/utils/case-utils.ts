@@ -324,3 +324,17 @@ export function getAssignmentsToShow(item: Case | Alert): Assignment[] | undefin
 
   return item.assignments;
 }
+
+export function getEscalationLevel(assignments: Assignment[]): 'L1' | 'L2' | undefined {
+  const levels = new Set(assignments.map((assignment) => assignment.escalationLevel) || []);
+  if (levels.size === 0) {
+    return undefined;
+  }
+  if (levels.has('L2')) {
+    return 'L2';
+  }
+  if (levels.has('L1')) {
+    return 'L1';
+  }
+  return undefined;
+}

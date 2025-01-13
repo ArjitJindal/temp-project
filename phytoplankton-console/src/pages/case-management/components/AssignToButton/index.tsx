@@ -8,14 +8,18 @@ import { useSortedUsers } from '@/utils/user-utils';
 interface Props {
   onSelect: (account: Account) => void;
   isDisabled?: boolean;
+  userFilter?: (account: Account) => boolean;
 }
 
 export default function AssignToButton(props: Props) {
-  const { onSelect } = props;
+  const { onSelect, userFilter } = props;
+
   const [sortedUsers] = useSortedUsers();
+  const filteredUsers = userFilter ? sortedUsers.filter(userFilter) : sortedUsers;
+
   const menu = (
     <AntMenu className={s.assigneeMenu}>
-      {sortedUsers.map((account) => (
+      {filteredUsers.map((account) => (
         <AntMenu.Item
           key={account.id}
           onClick={() => {

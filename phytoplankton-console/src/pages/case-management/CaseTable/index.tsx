@@ -63,6 +63,7 @@ import {
   casesCommentsGenerator,
   findLastStatusForInReview,
   getAssignmentsToShow,
+  getEscalationLevel,
   getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
@@ -667,6 +668,53 @@ export default function CaseTable(props: Props) {
 
           if ([...selectedCaseStatuses].find((status) => statusInProgressOrOnHold(status))) {
             return;
+          }
+
+          // this is for multi-level escalation (PNB)
+          // if any of the selected cases have a different escalation level, then we don't allow the assignment
+          if (isMultiLevelEscalationEnabled) {
+            const someEscalated = [...selectedCaseStatuses].some(
+              (status) => statusEscalated(status) || statusEscalatedL2(status),
+            );
+            // if 'ESCALATED' status is present then we need to make sure it's the only status
+            if (someEscalated && selectedCaseStatuses.size > 1) {
+              return;
+            }
+
+            // if 'ESCALATED' status is present and there's only one case, then
+            // reassignment to another user with the same escalation level is allowed
+            if (someEscalated && selectedCaseStatuses.size === 1) {
+              const selectedEscalationLevels = new Set(
+                Object.values(selectedItems).map((item) =>
+                  getEscalationLevel(item.reviewAssignments ?? []),
+                ),
+              );
+              if (selectedEscalationLevels.size > 1) {
+                return;
+              }
+
+              const escalationLevel = [...selectedEscalationLevels][0];
+
+              return (
+                <AssignToButton
+                  isDisabled={isDisabled}
+                  userFilter={(account) => account?.escalationLevel === escalationLevel}
+                  onSelect={(account) => {
+                    casesReviewAssignmentUpdateMutation.mutate({
+                      caseIds: selectedIds,
+                      reviewAssignments: [
+                        {
+                          assignedByUserId: user.userId,
+                          assigneeUserId: account.id,
+                          timestamp: Date.now(),
+                          escalationLevel: escalationLevel,
+                        },
+                      ],
+                    });
+                  }}
+                />
+              );
+            }
           }
 
           return (

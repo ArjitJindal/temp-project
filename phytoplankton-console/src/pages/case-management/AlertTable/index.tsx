@@ -67,6 +67,7 @@ import {
   commentsToString,
   findLastStatusForInReview,
   getAssignmentsToShow,
+  getEscalationLevel,
   getNextStatusFromInReview,
   getSingleCaseStatusCurrent,
   getSingleCaseStatusPreviousForInReview,
@@ -1142,6 +1143,53 @@ export default function AlertTable(props: Props) {
 
       if ([...selectedAlertStatuses].find((status) => statusInProgressOrOnHold(status))) {
         return;
+      }
+
+      // this is for multi-level escalation (PNB)
+      // if any of the selected alerts have a different escalation level, then we don't allow the assignment
+      if (isMultiEscalationEnabled) {
+        const someEscalated = [...selectedAlertStatuses].some(
+          (status) => statusEscalated(status) || statusEscalatedL2(status),
+        );
+        // if 'ESCALATED' status is present then we need to make sure it's the only status
+        if (someEscalated && selectedAlertStatuses.size > 1) {
+          return;
+        }
+
+        // if 'ESCALATED' status is present and there's only one case, then
+        // reassignment to another user with the same escalation level is allowed
+        if (someEscalated && selectedAlertStatuses.size === 1) {
+          const selectedEscalationLevels = new Set(
+            Object.values(selectedItems).map((item) =>
+              getEscalationLevel(item.reviewAssignments ?? []),
+            ),
+          );
+          if (selectedEscalationLevels.size > 1) {
+            return;
+          }
+
+          const escalationLevel = [...selectedEscalationLevels][0];
+
+          return (
+            <AssignToButton
+              userFilter={(account) => account?.escalationLevel === escalationLevel}
+              onSelect={(account) =>
+                handleAlertsReviewAssignments({
+                  alertIds: selectedIds,
+                  reviewAssignments: [
+                    {
+                      assigneeUserId: account.id,
+                      assignedByUserId: user.userId,
+                      timestamp: Date.now(),
+                      escalationLevel: escalationLevel,
+                    },
+                  ],
+                })
+              }
+              isDisabled={isDisabled}
+            />
+          );
+        }
       }
 
       if (selectedAlertStatuses.has('ESCALATED') && selectedAlertStatuses.size === 1) {
