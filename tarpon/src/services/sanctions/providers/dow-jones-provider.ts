@@ -186,7 +186,7 @@ export const RELATIONSHIP_CODE_TO_NAME = {
 }
 
 // Define the XML parser
-const parser = new XMLParser({
+export const parser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
   isArray: (tagName) => {
@@ -492,6 +492,16 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     await repo.saveAssociations(this.provider(), associations, version)
   }
 
+  private isInactivePEP(date: any) {
+    const currentYear = dayjs().year()
+    return (
+      date['@_DateType'] === 'Inactive as of (PEP)' &&
+      date['@_DateValue'] &&
+      date['@_DateValue']['@_Year'] &&
+      currentYear - dayjs(date['@_DateValue']['@_Year']).year() > 7
+    )
+  }
+
   async fileToEntities(
     repo: SanctionsRepository,
     version: string,
@@ -530,8 +540,8 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           return
         }
         const nameValue = name.NameValue[0]
-        const inactivePEP = person.DateDetails?.Date?.find(
-          (date: any) => date['@_DateType'] === 'Inactive as of (PEP)'
+        const inactivePEP = person.DateDetails?.Date?.find((date: any) =>
+          this.isInactivePEP(date)
         )
         const inactiveRCA = person.DateDetails?.Date?.find(
           (date: any) =>
