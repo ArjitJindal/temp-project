@@ -247,8 +247,8 @@ export const RULE_NATURE: ColumnDataType<RuleNature> = {
   autoFilterDataType: {
     kind: 'select',
     options: RULE_NATURE_OPTIONS,
-    mode: 'SINGLE',
-    displayMode: 'select',
+    mode: 'MULTIPLE',
+    displayMode: 'list',
   },
 };
 

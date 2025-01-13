@@ -28,7 +28,6 @@ import { useAuth0User } from '@/utils/user-utils';
 import { useApi } from '@/api';
 import { DefaultApiPatchAlertsQaAssignmentsRequest } from '@/apis/types/ObjectParamAPI';
 import { AccountsFilter } from '@/components/library/AccountsFilter';
-import { CLOSING_REASONS } from '@/components/Narrative';
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useQaMode } from '@/utils/qa-mode';
 import Button from '@/components/library/Button';
@@ -37,6 +36,7 @@ import Tag from '@/components/library/Tag';
 import { addBackUrlToRoute } from '@/utils/backUrl';
 import Id from '@/components/ui/Id';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import CalendarLineIcon from '@/components/ui/icons/Remix/business/calendar-line.react.svg';
 
 interface Props {
   params: AllParams<TableSearchParams>;
@@ -103,6 +103,15 @@ export default function QaTable(props: Props) {
         },
       },
     }),
+    helper.simple<'createdTimestamp'>({
+      title: 'Created at',
+      key: 'createdTimestamp',
+      type: DATE,
+      sorting: true,
+      filtering: true,
+      showFilterByDefault: true,
+      icon: <CalendarLineIcon />,
+    }),
     helper.simple<'ruleQaStatus'>({
       title: 'QA status',
       key: 'ruleQaStatus',
@@ -130,6 +139,7 @@ export default function QaTable(props: Props) {
       title: 'Rule nature',
       key: 'ruleNature',
       type: RULE_NATURE,
+      filtering: true,
     }),
     helper.simple<'updatedAt'>({
       title: 'Alert closed at',
@@ -152,6 +162,7 @@ export default function QaTable(props: Props) {
         );
       },
     }),
+
     ...(qaMode
       ? [
           helper.derived({
@@ -241,12 +252,6 @@ export default function QaTable(props: Props) {
     'ruleQueueIds',
   ]);
   const extraFilters = useMemo(() => {
-    const closingReasonOptions = [...CLOSING_REASONS, 'Other'].map((reason) => {
-      return {
-        value: reason,
-        label: reason,
-      };
-    });
     return filters.concat([
       {
         key: 'qaAssignment',
@@ -272,10 +277,9 @@ export default function QaTable(props: Props) {
         key: 'filterClosingReason',
         showFilterByDefault: true,
         renderer: {
-          kind: 'select',
-          mode: 'MULTIPLE',
-          displayMode: 'select',
-          options: closingReasonOptions,
+          kind: 'dateTimeRange',
+          allowClear: true,
+          clearNotAllowedReason: 'You must select an interval to view alerts',
         },
       },
     ]);
