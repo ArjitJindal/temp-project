@@ -131,7 +131,7 @@ export default function CommentsTab(props: Props) {
 
   return (
     <Card.Root>
-      <Card.Section>
+      <Card.Section testId={'comments-section'}>
         {alert && alert?.comments?.length ? (
           <div className={s.list}>
             {getCommentsWithReplies(alert?.comments ?? []).map((comment) => (
