@@ -208,7 +208,10 @@ export class SanctionsService {
       }
     }
 
-    request.fuzziness = this.getSanitizedFuzziness(request.fuzziness)
+    request.fuzziness = this.getSanitizedFuzziness(
+      request.fuzziness,
+      providerName
+    )
     request.types = request.types?.length
       ? request.types
       : SANCTIONS_SEARCH_TYPES
@@ -339,14 +342,17 @@ export class SanctionsService {
   }
 
   private getSanitizedFuzziness(
-    fuzziness: number | undefined
+    fuzziness: number | undefined,
+    providerName: SanctionsDataProviderName
   ): number | undefined {
     if (fuzziness == null) {
       return DEFAULT_FUZZINESS
     }
-
-    // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.
-    return round(fuzziness, 1)
+    if (providerName === 'comply-advantage') {
+      // From ComplyAdvantage: Ensure that there are no more than 1 decimal places.
+      return round(fuzziness, 1)
+    }
+    return fuzziness
   }
 
   public async getSearchHistories(
