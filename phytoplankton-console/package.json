@@ -137,7 +137,7 @@
     "@babel/plugin-transform-modules-commonjs": "^7.24.8",
     "@cypress/skip-test": "^2.6.1",
     "@openapitools/openapi-generator-cli": "^2.7.0",
-    "@sentry/cli": "^2.28.6",
+    "@sentry/cli": "^2.40.0",
     "@sentry/esbuild-plugin": "^2.10.2",
     "@svgr/core": "^6.3.1",
     "@testing-library/jest-dom": "^5.16.5",
