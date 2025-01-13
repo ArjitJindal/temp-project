@@ -97,7 +97,7 @@ async function migrateTenant(tenant: Tenant) {
           a &&
           a.transactionIds &&
           targetAlert.transactionIds &&
-          difference(a.transactionIds, targetAlert.transactionIds).length === 0
+          difference(targetAlert.transactionIds, a.transactionIds).length === 0
         ) {
           alertIdsToClose.push(targetAlert.alertId)
         }
