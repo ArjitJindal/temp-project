@@ -9,6 +9,8 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 
+type PrimaryKey = { PartitionKeyID: string; SortKeyID?: string }
+
 @traceable
 export class NangoRepository {
   private readonly tenantId: string
@@ -20,6 +22,8 @@ export class NangoRepository {
   }
 
   public async storeRecord(records: NangoRecord[]) {
+    const keys: PrimaryKey[] = []
+
     try {
       await batchWrite(
         this.dynamoDb,
@@ -30,6 +34,7 @@ export class NangoRepository {
             record.id
           )
 
+          keys.push(primaryKey)
           logger.info('Written record', { primaryKey })
 
           return {
@@ -49,6 +54,12 @@ export class NangoRepository {
     } catch (error) {
       console.error(error)
     }
+
+    if (process.env.NODE_ENV === 'development') {
+      await Promise.all(
+        keys.map((key) => handleLocalChangeCapture(this.tenantId, key))
+      )
+    }
   }
 
   public async storeRecordsClickhouse(
@@ -60,4 +71,15 @@ export class NangoRepository {
       records
     )
   }
+}
+
+const handleLocalChangeCapture = async (
+  tenantId: string,
+  primaryKey: { PartitionKeyID: string; SortKeyID?: string }
+) => {
+  const { localTarponChangeCaptureHandler } = await import(
+    '@/utils/local-dynamodb-change-handler'
+  )
+
+  await localTarponChangeCaptureHandler(tenantId, primaryKey, 'TARPON')
 }
