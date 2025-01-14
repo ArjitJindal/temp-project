@@ -1,18 +1,11 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useMemo } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { useLocalStorageState } from 'ahooks';
 import { queryAdapter } from './helpers/queryAdapter';
 import { UsersTable } from './users-table';
 import { dayjs } from '@/utils/dayjs';
 import { useApi } from '@/api';
-import {
-  AllUsersTableItem,
-  CountryCode,
-  PepRank,
-  RiskLevel,
-  TableListViewEnum,
-  UserRegistrationStatus,
-} from '@/apis';
+import { AllUsersTableItem, CountryCode, PepRank, RiskLevel, UserRegistrationStatus } from '@/apis';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import '../../../components/ui/colors';
 import { useI18n } from '@/locales';
@@ -21,8 +14,9 @@ import { makeUrl, parseQueryString } from '@/utils/routing';
 import { CommonParams } from '@/components/library/Table/types';
 import { USERS } from '@/utils/queries/keys';
 import { useCursorQuery, usePaginatedQuery } from '@/utils/queries/hooks';
-import { useDeepEqualEffect } from '@/utils/hooks';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { NavigationState } from '@/utils/queries/types';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 export interface UserSearchParams extends CommonParams {
   isPepHit?: 'true' | 'false';
@@ -39,37 +33,59 @@ export interface UserSearchParams extends CommonParams {
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
-
   const api = useApi();
   const navigate = useNavigate();
   const location = useLocation();
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
+
+  const parsedParams = useMemo(
+    () => queryAdapter.deserializer(parseQueryString(location.search)),
+    [location.search],
+  );
 
   const [params, setParams] = useState<UserSearchParams>({
     sort: [],
     pageSize: 20,
-    view: 'TABLE' as TableListViewEnum,
   });
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
-  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
+
+  const [isReadyToFetch, setIsReadyToFetch] = useState(false);
+
   const pushParamsToNavigation = useCallback(
     (params: UserSearchParams) => {
+      const state: NavigationState = {
+        isInitialised: true,
+      };
       navigate(makeUrl('/users/list/:list/all', { list: type }, queryAdapter.serializer(params)), {
         replace: true,
+        state: state,
       });
     },
     [navigate, type],
   );
 
-  const handleChangeParams = (newParams: UserSearchParams) => {
-    pushParamsToNavigation(newParams);
-  };
+  const handleChangeParams = useCallback(
+    (newParams: UserSearchParams) => {
+      pushParamsToNavigation(newParams);
+    },
+    [pushParamsToNavigation],
+  );
 
   useDeepEqualEffect(() => {
+    if ((location.state as NavigationState)?.isInitialised !== true) {
+      return;
+    }
     setParams((prevState: UserSearchParams) => ({
       ...prevState,
       ...parsedParams,
     }));
   }, [parsedParams]);
+
+  useEffect(() => {
+    if ((location.state as NavigationState)?.isInitialised !== true) {
+      pushParamsToNavigation(params);
+    }
+    setIsReadyToFetch(true);
+  }, [location.state, parsedParams, pushParamsToNavigation, params]);
 
   const queryResults = useCursorQuery<AllUsersTableItem>(
     USERS(type, { ...params, isClickhouseEnabled }),
@@ -87,43 +103,34 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           limit: 100000,
         };
       }
-      const {
-        view,
-        userId,
-        createdTimestamp,
-        riskLevels,
-        pageSize,
-        tagKey,
-        tagValue,
-        sort,
-        riskLevelLocked,
-        isPepHit,
-        pepCountry,
-        pepRank,
-      } = params;
+
       const queryObj = {
-        view: tableView ?? view,
-        pageSize,
-        afterTimestamp: createdTimestamp ? dayjs(createdTimestamp[0]).valueOf() : 0,
-        beforeTimestamp: createdTimestamp ? dayjs(createdTimestamp[1]).valueOf() : undefined,
-        filterId: userId,
-        filterTagKey: tagKey,
-        filterTagValue: tagValue,
-        filterRiskLevel: riskLevels,
+        view: tableView ?? params.view,
+        pageSize: params.pageSize,
+        afterTimestamp: params.createdTimestamp ? dayjs(params.createdTimestamp[0]).valueOf() : 0,
+        beforeTimestamp: params.createdTimestamp
+          ? dayjs(params.createdTimestamp[1]).valueOf()
+          : undefined,
+        filterId: params.userId,
+        filterTagKey: params.tagKey,
+        filterTagValue: params.tagValue,
+        filterRiskLevel: params.riskLevels,
         ...(type === 'business' && {
           filterUserRegistrationStatus: params.userRegistrationStatus,
         }),
-        sortField: sort[0]?.[0] ?? 'createdTimestamp',
-        sortOrder: sort[0]?.[1] ?? 'ascend',
-        filterIsPepHit: isPepHit,
-        filterPepRank: pepRank,
-        filterRiskLevelLocked: riskLevelLocked,
-        filterPepCountry: pepCountry,
+        sortField: params.sort[0]?.[0] ?? 'createdTimestamp',
+        sortOrder: params.sort[0]?.[1] ?? 'ascend',
+        filterIsPepHit: params.isPepHit,
+        filterPepRank: params.pepRank,
+        filterRiskLevelLocked: params.riskLevelLocked,
+        filterPepCountry: params.pepCountry,
       };
+
       const queryParam = {
         start: from || params.from,
         ...queryObj,
       };
+
       const response =
         type === 'business'
           ? await api.getBusinessUsersList(queryParam)
@@ -137,6 +144,9 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
         items: response.items,
       };
     },
+    {
+      enabled: isReadyToFetch,
+    },
   );
 
   const offsetPaginateQueryResult = usePaginatedQuery<AllUsersTableItem>(
@@ -148,6 +158,7 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           total: 0,
         };
       }
+
       const queryObj = {
         ...paginationParams,
         start: paginationParams.from || params.from,
@@ -178,10 +189,14 @@ const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
           : type === 'consumer'
           ? await api.getConsumerUsersListV2({ ...queryObj, filterIsPepHit: params.isPepHit })
           : await api.getAllUsersListV2({ ...queryObj });
+
       return {
         total: response.count,
         items: response.items,
       };
+    },
+    {
+      enabled: isReadyToFetch,
     },
   );
 

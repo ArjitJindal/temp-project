@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { queryAdapter } from './components/TransactionsTable/helpers/queryAdapter';
 import ProductTypeSearchButton from './components/ProductTypeSearchButton';
@@ -16,14 +16,11 @@ import UserSearchButton from '@/pages/transactions/components/UserSearchButton';
 import TagSearchButton from '@/pages/transactions/components/TagSearchButton';
 import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import { makeUrl, parseQueryString } from '@/utils/routing';
-import { useDeepEqualEffect } from '@/utils/hooks';
-import { TransactionTableItem } from '@/apis';
-import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { NavigationState } from '@/utils/queries/types';
 import { dayjs } from '@/utils/dayjs';
-
-type NavigationState = {
-  isInitialised: boolean;
-} | null;
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { TransactionTableItem } from '@/apis';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 const TableList = () => {
   const api = useApi();
@@ -32,7 +29,11 @@ const TableList = () => {
   const location = useLocation();
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
 
-  const parsedParams = queryAdapter.deserializer(parseQueryString(location.search));
+  const parsedParams = useMemo(
+    () => queryAdapter.deserializer(parseQueryString(location.search)),
+    [location.search],
+  );
+
   const [params, setParams] = useState<TransactionsTableParams>({
     sort: [],
     pageSize: 20,
@@ -41,6 +42,8 @@ const TableList = () => {
       dayjs(defaultTimestamps().beforeTimestamp).format(),
     ],
   });
+
+  const [isReadyToFetch, setIsReadyToFetch] = useState(false);
 
   const pushParamsToNavigation = useCallback(
     (params: TransactionsTableParams) => {
@@ -57,26 +60,35 @@ const TableList = () => {
 
   useEffect(() => {
     if ((location.state as NavigationState)?.isInitialised !== true) {
-      pushParamsToNavigation({
+      // Initial load - set default params
+      const defaultParams = {
         ...params,
         timestamp: [
           dayjs(defaultTimestamps().afterTimestamp).format(),
           dayjs(defaultTimestamps().beforeTimestamp).format(),
         ],
-      });
+      };
+      pushParamsToNavigation(defaultParams);
     }
-  }, [location.state, params, pushParamsToNavigation]);
-
-  const handleChangeParams = (newParams: TransactionsTableParams) => {
-    pushParamsToNavigation(newParams);
-  };
+    setIsReadyToFetch(true);
+  }, [location.state, params, parsedParams, pushParamsToNavigation]);
 
   useDeepEqualEffect(() => {
+    if ((location.state as NavigationState)?.isInitialised !== true) {
+      return;
+    }
     setParams((prevState: TransactionsTableParams) => ({
       ...prevState,
       ...parsedParams,
     }));
   }, [parsedParams]);
+
+  const handleChangeParams = useCallback(
+    (newParams: TransactionsTableParams) => {
+      pushParamsToNavigation(newParams);
+    },
+    [pushParamsToNavigation],
+  );
 
   const queryResult = useCursorQuery<TransactionTableItem>(
     TRANSACTIONS_LIST(parsedParams),
@@ -98,6 +110,7 @@ const TableList = () => {
         ...transactionParamsToRequest({ ...parsedParams, view }, { ignoreDefaultTimestamps: true }),
       });
     },
+    { enabled: isReadyToFetch },
   );
 
   const queryResultOffset = usePaginatedQuery<TransactionTableItem>(
@@ -116,12 +129,12 @@ const TableList = () => {
         ),
         ...paginationParams,
       });
-
       return {
         items: data.items,
         total: data.count,
       };
     },
+    { enabled: isReadyToFetch },
   );
 
   return (

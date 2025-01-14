@@ -41,3 +41,7 @@ export type Mutation<
 > = Pick<UseMutationResult<TData, TError, TVariables, TContext>, 'mutate' | 'mutateAsync'> & {
   dataResource: AsyncResource;
 };
+
+export type NavigationState = {
+  isInitialised: boolean;
+} | null;
