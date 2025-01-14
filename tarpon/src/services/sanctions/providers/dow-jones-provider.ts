@@ -518,6 +518,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
     const jsonObj = parser.parse(xml)
     const people = jsonObj.PFA.Person ?? jsonObj.PFA.Records.Person
+    if (!people) {
+      return
+    }
     const entities = people
       .map((person: any): [Action, SanctionsEntity] | undefined => {
         if (person['@_action'] == 'del') {
