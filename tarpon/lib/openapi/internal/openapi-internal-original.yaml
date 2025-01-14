@@ -6146,7 +6146,7 @@ paths:
         - schema:
             type: array
             items:
-              $ref: '#/components/schemas/SanctionsSearchType'
+              $ref: '#/components/schemas/GenericSanctionsSearchType'
           in: query
           name: types
         - schema:
@@ -11066,6 +11066,7 @@ components:
         - MANUAL_DASHBOARD_REFRESH
         - CONCURRENT_DYNAMODB_CONSUMER
         - ALERTS_DYNAMO_POC
+        - ACURIS
       description: ''
     ManagedRoleName:
       type: string
@@ -12323,6 +12324,7 @@ components:
         - comply-advantage
         - list
         - open-sanctions
+        - acuris
     SanctionHitStatusUpdateRequest:
       title: SanctionHitStatusUpdateRequest
       type: object
@@ -12573,7 +12575,7 @@ components:
         types:
           type: array
           items:
-            $ref: '#/components/schemas/SanctionsSearchType'
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
         monitoring:
           $ref: '#/components/schemas/SanctionsSearchMonitoring'
         apiSearchRequest:
@@ -12599,6 +12601,12 @@ components:
           type: boolean
         listVersion:
           type: number
+        isActivePep:
+          type: boolean
+        isActiveSanctioned:
+          type: boolean
+        entityType:
+          type: string
       required:
         - searchTerm
     PepRank:
@@ -12615,6 +12623,35 @@ components:
         - SANCTIONS
         - PEP
         - ADVERSE_MEDIA
+    GenericSanctionsSearchType:
+      title: GenericSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
+        - PROFILE_OF_INTEREST
+        - REGULATORY_ENFORCEMENT_LIST
+        - GAMBLING_RISK_INTELLIGENCE
+        - CRIME
+    AcurisSanctionsSearchType:
+      title: AcurisSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
+        - PROFILE_OF_INTEREST
+        - REGULATORY_ENFORCEMENT_LIST
+        - GAMBLING_RISK_INTELLIGENCE
+    OpenSanctionsSearchType:
+      title: OpenSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - PROFILE_OF_INTEREST
+        - CRIME
     SanctionsSearchResponse:
       title: SanctionsSearchResponse
       type: object
@@ -13015,6 +13052,12 @@ components:
           type: string
         rank:
           $ref: '#/components/schemas/PepRank'
+        country:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
+        dateFrom:
+          type: string
+        dateTo:
+          type: string
     SanctionsAssociate:
       title: SanctionsAssociate
       type: object
@@ -13026,7 +13069,7 @@ components:
         sanctionsSearchTypes:
           type: array
           items:
-            $ref: '#/components/schemas/SanctionsSearchType'
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
         ranks:
           type: array
           items:
@@ -13078,7 +13121,7 @@ components:
         sanctionSearchTypes:
           type: array
           items:
-            $ref: '#/components/schemas/SanctionsSearchType'
+            $ref: '#/components/schemas/GenericSanctionsSearchType'
         updatedAt:
           type: number
         nameMatched:
@@ -13127,6 +13170,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/SanctionsSource'
+        otherSources:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+              value:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SanctionsSource'
         pepSources:
           type: array
           items:
@@ -13157,6 +13211,20 @@ components:
           type: array
           items:
             $ref: ../public/openapi-public-original.yaml#/components/schemas/PEPStatus
+        isActivePep:
+          type: boolean
+        isActiveSanctioned:
+          type: boolean
+        isDeseased:
+          type: boolean
+        profileImagesUrls:
+          type: array
+          items:
+            type: string
+        dateOfBirths:
+          type: array
+          items:
+            type: string
       required:
         - id
         - name
@@ -13574,7 +13642,10 @@ components:
         - gender
         - PEP_rank
         - associate_PEP_rank
-        - associate_screening_type
+        - associate_screening_type_match
+        - screening_type_match
+        - is_active_pep
+        - is_active_sanctioned
     UsersUniquesField:
       title: UsersUniquesField
       type: string
@@ -15730,6 +15801,17 @@ components:
               type: string
             password:
               type: string
+        providerScreeningTypes:
+          type: array
+          items:
+            type: object
+            properties:
+              provider:
+                $ref: '#/components/schemas/SanctionsDataProviderName'
+              screeningTypes:
+                type: array
+                items:
+                  type: string
     SanctionsSettingsMarketType:
       title: SanctionsSettingsMarketType
       type: string

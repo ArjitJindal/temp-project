@@ -191,7 +191,7 @@ export type ReverifyTransactionsBatchJob = {
 export type SanctionsDataFetchBatchJob = {
   type: 'SANCTIONS_DATA_FETCH'
   tenantId: string
-  provider: SanctionsDataProviderName
+  providers: SanctionsDataProviderName[]
   parameters: {
     from?: string
   }

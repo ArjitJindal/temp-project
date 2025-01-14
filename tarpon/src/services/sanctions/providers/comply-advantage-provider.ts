@@ -1,4 +1,4 @@
-import { groupBy, uniq } from 'lodash'
+import { groupBy, intersection, uniq } from 'lodash'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -273,9 +273,13 @@ export class ComplyAdvantageDataProvider implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
+    const searchTypes = intersection(
+      request.types || [],
+      SANCTIONS_SEARCH_TYPES
+    ) as SanctionsSearchType[]
     const searchProfileId =
       this.complyAdvantageSearchProfileId ||
-      this.pickSearchProfileId(request.types) ||
+      this.pickSearchProfileId(searchTypes) ||
       (process.env.COMPLYADVANTAGE_DEFAULT_SEARCH_PROFILE_ID as string)
 
     const response = await this.complyAdvantageApi.postSearch(searchProfileId, {

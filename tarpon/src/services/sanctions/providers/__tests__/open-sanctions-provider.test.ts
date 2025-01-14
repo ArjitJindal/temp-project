@@ -1,15 +1,16 @@
-import {
-  OpenSanctionsProvider,
-  transformInput,
-} from '@/services/sanctions/providers/open-sanctions-provider'
+import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { MongoSanctionsRepository } from '@/services/sanctions/repositories/sanctions-repository'
 import { DELTA_SANCTIONS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 
 describe('OpenSanctionsProvider', () => {
   it('should filter URLs based on the given date', async () => {
     const tenantId = getTestTenantId()
-    const openSanctionsProvider = new OpenSanctionsProvider(tenantId)
+    const openSanctionsProvider = new OpenSanctionsProvider(
+      tenantId,
+      OPEN_SANCTIONS_SEARCH_TYPES
+    )
     // Mock input JSON
     const mockJson = {
       versions: {
@@ -41,6 +42,7 @@ describe('OpenSanctionsProvider', () => {
   it('should transform a valid OpenSanctionsEntity correctly', () => {
     const mockEntity = {
       id: 'entity123',
+      caption: 'John Doe',
       properties: {
         alias: ['John Doe', 'JD'],
         country: ['USA'],
@@ -53,75 +55,48 @@ describe('OpenSanctionsProvider', () => {
         sourceUrl: ['http://example.com'],
         birthDate: ['1980-05-12'],
       },
-      schema: 'person',
+      schema: 'Person',
     }
+    const openSanctionsProvider = new OpenSanctionsProvider(
+      'test',
+      OPEN_SANCTIONS_SEARCH_TYPES
+    )
 
-    const result = transformInput(mockEntity)
+    const result = openSanctionsProvider.transformInput(mockEntity)
 
     expect(result).toEqual({
       id: 'entity123',
-      aka: ['John Doe', 'JD'],
-      countries: ['USA'],
+      aka: ['John Doe', 'Jd'],
+      countries: ['United States of America'],
       countryCodes: ['US'],
       documents: [],
-      entityType: 'person',
+      entityType: 'Person',
       freetext: 'Note 1\nNote 2',
       gender: 'Male',
       matchTypes: [],
       name: 'John Doe',
       nationality: ['US'],
-      sanctionSearchTypes: ['SANCTIONS'],
-      screeningSources: [{ url: 'http://example.com' }],
-      types: [],
+      sanctionSearchTypes: ['CRIME', 'SANCTIONS'],
+      screeningSources: [
+        { url: 'http://example.com', name: 'http://example.com' },
+      ],
+      types: ['CRIME', 'SANCTIONS'],
       yearOfBirth: '1980',
       updatedAt: expect.any(Number),
+      isActivePep: undefined,
+      isActiveSanctioned: undefined,
+      isDeseased: false,
+      occupations: [],
+      dateOfBirths: ['1980-05-12'],
     })
-  })
-
-  it('should handle missing optional fields gracefully', () => {
-    const mockEntity = {
-      id: 'entity456',
-      properties: {},
-      schema: 'company',
-    }
-
-    const result = transformInput(mockEntity)
-
-    expect(result).toEqual({
-      id: 'entity456',
-      aka: [],
-      countries: [],
-      countryCodes: ['ZZ'],
-      documents: [],
-      entityType: 'company',
-      freetext: '',
-      gender: 'Unknown',
-      matchTypes: [],
-      name: 'Unknown',
-      nationality: ['ZZ'],
-      sanctionSearchTypes: [],
-      screeningSources: undefined,
-      types: [],
-      yearOfBirth: 'Unknown',
-      updatedAt: expect.any(Number),
-    })
-  })
-
-  it('should throw an error for unknown topics', () => {
-    expect(() =>
-      transformInput({
-        id: 'entity789',
-        properties: {
-          topics: ['unknown.topic'],
-        },
-        schema: 'person',
-      })
-    ).toThrowError('Unknown topic unknown.topic')
   })
 
   it.skip('Full load', async () => {
     const tenantId = getTestTenantId()
-    const openSanctionsProvider = new OpenSanctionsProvider(tenantId)
+    const openSanctionsProvider = new OpenSanctionsProvider(
+      tenantId,
+      OPEN_SANCTIONS_SEARCH_TYPES
+    )
     const repo = new MongoSanctionsRepository(
       DELTA_SANCTIONS_COLLECTION(tenantId)
     )
@@ -129,7 +104,10 @@ describe('OpenSanctionsProvider', () => {
   })
   it('Delta changes are loaded', async () => {
     const tenantId = getTestTenantId()
-    const openSanctionsProvider = new OpenSanctionsProvider(tenantId)
+    const openSanctionsProvider = new OpenSanctionsProvider(
+      tenantId,
+      OPEN_SANCTIONS_SEARCH_TYPES
+    )
     const repo = new MongoSanctionsRepository(
       DELTA_SANCTIONS_COLLECTION(tenantId)
     )

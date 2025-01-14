@@ -4,7 +4,7 @@ import {
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
 import createHttpError from 'http-errors'
-import { isEmpty, isEqual } from 'lodash'
+import { compact, isEmpty, isEqual } from 'lodash'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
   JWTAuthorizerResult,
@@ -35,7 +35,6 @@ import { getFullTenantId } from '@/utils/tenant'
 import {
   addSentryExtras,
   getContext,
-  hasFeature,
   tenantSettings,
 } from '@/core/utils/context'
 import { SLAPolicyService } from '@/services/tenants/sla-policy-service'
@@ -43,6 +42,7 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { CrmService } from '@/services/crm'
 import { NangoService } from '@/services/nango'
+import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
@@ -292,7 +292,10 @@ export const tenantsHandler = lambdaApi()(
       const tenantRepository = new TenantRepository(tenantId, {
         dynamoDb: getDynamoDbClientByEvent(event),
       })
-      const settings = await tenantRepository.getTenantSettings(['sanctions'])
+      const settings = await tenantRepository.getTenantSettings([
+        'sanctions',
+        'features',
+      ])
       const batchJobType = request.TenantTriggerBatchJobRequest.jobName
       switch (batchJobType) {
         case 'ONGOING_SCREENING_USER_RULE': {
@@ -333,16 +336,19 @@ export const tenantsHandler = lambdaApi()(
           break
         }
         case 'SANCTIONS_DATA_FETCH': {
-          const provider = hasFeature('DOW_JONES')
-            ? 'dowjones'
-            : 'open-sanctions'
+          const providers = compact(
+            settings.features?.map(
+              (feature) => FEATURE_FLAG_PROVIDER_MAP[feature]
+            )
+          )
+          if (!providers) {
+            throw new createHttpError.BadRequest('No providers found')
+          }
           await sendBatchJobCommand({
             type: 'SANCTIONS_DATA_FETCH',
-            tenantId: settings.sanctions?.dowjonesCreds
-              ? tenantId
-              : 'flagright',
+            tenantId: tenantId,
             parameters: {},
-            provider,
+            providers: providers,
           })
           break
         }

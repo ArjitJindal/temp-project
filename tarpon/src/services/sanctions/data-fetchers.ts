@@ -1,14 +1,31 @@
+import { AcurisProvider } from './providers/acuris-provider'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { OpenSanctionsProvider } from '@/services/sanctions/providers/open-sanctions-provider'
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 
+export const FEATURE_FLAG_PROVIDER_MAP: Record<
+  string,
+  SanctionsDataProviderName
+> = {
+  DOW_JONES: 'dowjones',
+  OPEN_SANCTIONS: 'open-sanctions',
+  ACURIS: 'acuris',
+}
+
 export async function sanctionsDataFetchers(
   tenantId: string,
-  provider: SanctionsDataProviderName
-): Promise<SanctionsDataFetcher> {
-  if (provider === 'dowjones') {
-    return await DowJonesProvider.build(tenantId)
+  providers: SanctionsDataProviderName[]
+): Promise<SanctionsDataFetcher[]> {
+  const fetchers: SanctionsDataFetcher[] = []
+  if (providers.includes('dowjones')) {
+    fetchers.push(await DowJonesProvider.build(tenantId))
   }
-  return await OpenSanctionsProvider.build(tenantId)
+  if (providers.includes('open-sanctions')) {
+    fetchers.push(await OpenSanctionsProvider.build(tenantId))
+  }
+  if (providers.includes('acuris')) {
+    fetchers.push(await AcurisProvider.build(tenantId))
+  }
+  return fetchers
 }

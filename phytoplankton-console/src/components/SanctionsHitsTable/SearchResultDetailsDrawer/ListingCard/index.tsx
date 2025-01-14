@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
+import { compact } from 'lodash';
 import s from './index.module.less';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { Small } from '@/components/ui/Typography';
-import { notEmpty } from '@/utils/array';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import { CountryFlag } from '@/components/ui/CountryDisplay';
@@ -30,7 +30,7 @@ export default function ListingCard(props: Props) {
     pdfMode,
   } = props;
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
-  const nonEmptyTime = listedTime.filter(notEmpty);
+  const nonEmptyTime = compact(listedTime);
   return (
     <div className={s.root}>
       <div className={s.expandIcon}>

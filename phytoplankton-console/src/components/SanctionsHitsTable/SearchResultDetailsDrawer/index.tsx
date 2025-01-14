@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { compact, startCase, uniq, uniqBy } from 'lodash';
-import { humanizeSnakeCase } from '@flagright/lib/utils/humanize';
+import { compact, difference, startCase, uniq, uniqBy } from 'lodash';
+import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
 import DownloadAsPDF from '../../DownloadAsPdf/DownloadAsPDF';
@@ -39,6 +39,9 @@ import SanctionsComparison, {
 import { CountryFlag } from '@/components/ui/CountryDisplay';
 import { dayjs, DEFAULT_DATE_TIME_FORMAT } from '@/utils/dayjs';
 import Tags from '@/pages/users-item/UserDetails/shared/Tags';
+import InformationIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
+import COLORS from '@/components/ui/colors';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
   hitRes: AsyncResource<SanctionsHit | undefined>;
@@ -99,6 +102,11 @@ export default function SearchResultDetailsDrawer(props: Props) {
     <Drawer
       title={
         <div className={s.title}>
+          {hit?.entity?.profileImagesUrls?.length ? (
+            <img height={36} src={hit?.entity?.profileImagesUrls[0]} />
+          ) : (
+            <></>
+          )}
           {pdfName ?? ''}
           {hit?.status === 'OPEN' && <Tag color="purple">Human review</Tag>}
         </div>
@@ -280,13 +288,27 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             {startCase(entity?.entityType)}
           </Form.Layout.Label>
           {entity.aka && entity.aka?.length > 0 && (
-            <Form.Layout.Label title={'Aliases'}>{entity.aka.join(', ')}</Form.Layout.Label>
+            <Form.Layout.Label title={'Aliases'}>
+              <span className={s.tags}>
+                {entity.aka.map((aka) => (
+                  <Tag color="gray" key={aka}>
+                    {aka}
+                  </Tag>
+                ))}
+              </span>
+            </Form.Layout.Label>
           )}
-          {
+          {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
             <Form.Layout.Label key={entity.yearOfBirth} title={'Year of Birth'}>
               {entity.yearOfBirth ?? '-'}
             </Form.Layout.Label>
-          }
+          )}
+          {(entity.dateOfBirths?.length ?? 0) > 0 &&
+            difference(entity.dateOfBirths, [entity.yearOfBirth]).length > 0 && (
+              <Form.Layout.Label title={'Date of birth'}>
+                {entity.dateOfBirths?.join(', ')}
+              </Form.Layout.Label>
+            )}
           {entity.countries && entity.countries.length > 0 && (
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
               <div className={s.countryList}>
@@ -309,7 +331,17 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {occupations && occupations.length > 0 && (
             <Form.Layout.Label key={occupations.join(',')} title={'Occupation'}>
-              {occupations.join(', ')}
+              {entity.occupations
+                ?.filter((occ) => occ.title)
+                .map(
+                  (occ) =>
+                    `${occ.title} ${
+                      occ.dateFrom || occ.dateTo
+                        ? `(${occ.dateFrom || 'Unknown'} - ${occ.dateTo || 'Unknown'})`
+                        : ''
+                    }`,
+                )
+                .join(', ')}
             </Form.Layout.Label>
           )}
           {
@@ -320,56 +352,139 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
-                {entity.associates
-                  .filter(Boolean)
-                  .map(({ association, name, ranks, sanctionsSearchTypes }, i) => (
-                    <React.Fragment key={i}>
-                      {i !== 0 && ', '}
-                      <span>
-                        {name} ({association}
-                        {ranks && ranks.length > 0
-                          ? ` , PEP ranks: ${uniq(ranks)
-                              .map((r) => humanizeSnakeCase(r))
-                              .join(', ')})`
-                          : ''}
-                        {sanctionsSearchTypes?.length
-                          ? `, Screening types: ${sanctionsSearchTypes
-                              .map((type) => humanizeSnakeCase(type))
-                              .join(', ')}`
-                          : ''}
-                        )
-                      </span>
-                    </React.Fragment>
-                  ))}
+                {pdfMode ? (
+                  entity.associates
+                    .filter(Boolean)
+                    .map(({ association, name, ranks, sanctionsSearchTypes }, i) => (
+                      <React.Fragment key={i}>
+                        {i !== 0 && ', '}
+                        <span>
+                          {name} ({association}
+                          {ranks && ranks.length > 0
+                            ? ` , PEP ranks: ${uniq(ranks)
+                                .map((r) => humanizeSnakeCase(r))
+                                .join(', ')})`
+                            : ''}
+                          {sanctionsSearchTypes?.length
+                            ? `, Screening types: ${sanctionsSearchTypes
+                                .map((type) => humanizeSnakeCase(type))
+                                .join(', ')}`
+                            : ''}
+                          )
+                        </span>
+                      </React.Fragment>
+                    ))
+                ) : (
+                  <div className={s.tags}>
+                    {entity.associates.map((assoc, i) => (
+                      <Tag color="gray" key={i}>
+                        <div className={s.associateInfo}>
+                          <span>{assoc.name}</span>
+                          {assoc.association ||
+                          assoc.sanctionsSearchTypes?.length ||
+                          assoc.ranks?.length ? (
+                            <Tooltip
+                              title={
+                                <div className={s.associateInfoTooltip}>
+                                  {assoc.association ? (
+                                    <>
+                                      <span>Association </span> <span>{assoc.association}</span>
+                                    </>
+                                  ) : (
+                                    <></>
+                                  )}
+                                  {assoc.sanctionsSearchTypes?.length ? (
+                                    <>
+                                      <span>Screening types </span>{' '}
+                                      <span>
+                                        {assoc.sanctionsSearchTypes
+                                          .map((type) => humanizeSnakeCase(type))
+                                          .join(', ')}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <></>
+                                  )}
+                                  {assoc.ranks?.length ? (
+                                    <>
+                                      <span>PEP ranks </span>{' '}
+                                      <span>
+                                        {assoc.ranks.map((r) => humanizeSnakeCase(r)).join(', ')}
+                                      </span>
+                                    </>
+                                  ) : (
+                                    <></>
+                                  )}
+                                </div>
+                              }
+                            >
+                              <InformationIcon
+                                height={14}
+                                cursor="pointer"
+                                color={COLORS.brandBlue.base}
+                              />
+                            </Tooltip>
+                          ) : (
+                            <></>
+                          )}
+                        </div>
+                      </Tag>
+                    ))}
+                  </div>
+                )}
               </div>
             </Form.Layout.Label>
           )}
-          {entity.occupations && entity.occupations.length > 0 && (
+          {(entity.occupations?.filter((occ) => occ.rank != null).length ?? 0) > 0 && (
             <Form.Layout.Label title={'PEP Level'}>
               {uniqBy(
-                entity.occupations.filter((occ) => occ.rank != null),
+                entity.occupations?.filter((occ) => occ.rank != null) ?? [],
                 (occ) => occ.rank,
               )
                 .map((occ) => humanizeSnakeCase(occ.rank as string))
                 .join(', ')}
             </Form.Layout.Label>
           )}
-          {entity.occupations && entity.occupations.length > 0 && (
-            <Form.Layout.Label title={'Occupation categories'}>
-              {uniqBy(
-                entity.occupations.filter((occ) => occ.occupationCode != null),
-                (occ) => occ.occupationCode,
-              )
-                .map((occ) => humanizeSnakeCase(occ.occupationCode as string))
-                .join(', ')}
+          {entity.occupations &&
+            entity.occupations.filter((occ) => occ.occupationCode != null).length > 0 && (
+              <Form.Layout.Label title={'Occupation categories'}>
+                {uniqBy(
+                  entity.occupations.filter((occ) => occ.occupationCode != null),
+                  (occ) => occ.occupationCode,
+                )
+                  .map((occ) => humanizeSnakeCase(occ.occupationCode as string))
+                  .join(', ')}
+              </Form.Layout.Label>
+            )}
+          {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep !== null && (
+            <Form.Layout.Label title={'PEP status'}>
+              {entity.isActivePep === true ? 'Active' : 'Inactive'}
+            </Form.Layout.Label>
+          )}
+          {entity.sanctionSearchTypes?.includes('SANCTIONS') &&
+            entity.isActiveSanctioned !== null && (
+              <Form.Layout.Label title={'Sanctioned status'}>
+                {entity.isActiveSanctioned === true ? 'Active' : 'Inactive'}
+              </Form.Layout.Label>
+            )}
+          {entity.isDeseased && (
+            <Form.Layout.Label title={'Deseased'}>
+              {entity.isDeseased ? 'Yes' : 'No'}
             </Form.Layout.Label>
           )}
           {entity.documents && entity.documents.length > 0 && (
             <Form.Layout.Label title={'Documents'}>
-              {entity.documents
-                .filter((doc) => doc.id)
-                .map((doc) => `${doc.name}(${doc.id})`)
-                .join(', ')}
+              {
+                <div className={s.tags}>
+                  {entity.documents
+                    .filter((doc) => doc.id)
+                    .map((doc, i) => (
+                      <Tag color="gray" key={i} wrapText={false}>
+                        {doc.name} : {doc.id}
+                      </Tag>
+                    ))}
+                </div>
+              }
             </Form.Layout.Label>
           )}
         </div>
@@ -454,6 +569,15 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
         hasUpdates: TMP_TABS_HAS_UPDATES,
         sources: entity.mediaSources || [],
       },
+      ...(entity.otherSources?.length
+        ? entity.otherSources
+            .filter((source) => source.value)
+            .map((source) => ({
+              name: humanizeAuto(source.type as string),
+              hasUpdates: TMP_TABS_HAS_UPDATES,
+              sources: source.value as SanctionsSource[],
+            }))
+        : []),
     ];
     return tabs
       .filter((tab) => tab.sources.length > 0)
@@ -497,6 +621,20 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
                             </P>
                           </div>
                         ))}
+                        <div className={s.fieldGrid}>
+                          {source.fields?.map((field) => (
+                            <React.Fragment key={field.name}>
+                              <Form.Layout.Label title={field.name ?? '(Unknown field)'} />
+                              <div>
+                                {field.values?.map((value) => (
+                                  <div key={value}>
+                                    <FieldValue name={field.name || ''} value={value} />
+                                  </div>
+                                ))}
+                              </div>
+                            </React.Fragment>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       <div className={s.fieldGrid}>
@@ -527,5 +665,6 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     entity.pepSources,
     entity.sanctionsSources,
     pdfMode,
+    entity.otherSources,
   ]);
 }

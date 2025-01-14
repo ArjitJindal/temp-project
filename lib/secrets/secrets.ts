@@ -31,11 +31,10 @@ export type Secrets = {
     password: string
     database: string
   }
-  dowjones: {
-    username: string
-    password: string
-  }
   ipGeolocationCreds: { apiKey: string }
+  acuris: {
+    apiKey: string
+  }
 }
 
 export type SecretName = keyof Secrets

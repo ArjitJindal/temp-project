@@ -9,6 +9,7 @@ import {
   WhitelistSubject,
 } from './repositories/sanctions-whitelist-entity-repository'
 import { SanctionsScreeningDetailsRepository } from './repositories/sanctions-screening-details-repository'
+import { AcurisProvider } from './providers/acuris-provider'
 import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearchRequest'
 import { SanctionsHitContext } from '@/@types/openapi-internal/SanctionsHitContext'
 import { SanctionHitStatusUpdateRequest } from '@/@types/openapi-internal/SanctionHitStatusUpdateRequest'
@@ -116,6 +117,8 @@ export class SanctionsService {
         return await DowJonesProvider.build(this.tenantId)
       case 'open-sanctions':
         return OpenSanctionsProvider.build(this.tenantId)
+      case 'acuris':
+        return AcurisProvider.build(this.tenantId)
       case 'list':
         if (!providerConfig?.listId) {
           throw new Error(`No list ID given for list sanctions provider`)

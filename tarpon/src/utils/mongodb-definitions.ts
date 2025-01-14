@@ -54,6 +54,15 @@ export const SANCTIONS_SEARCH_INDEX_DEFINITION: Document = {
       yearOfBirth: {
         type: 'string',
       },
+      entityType: {
+        type: 'string',
+      },
+      isActivePep: {
+        type: 'boolean',
+      },
+      isActiveSanctioned: {
+        type: 'boolean',
+      },
     },
   },
 }

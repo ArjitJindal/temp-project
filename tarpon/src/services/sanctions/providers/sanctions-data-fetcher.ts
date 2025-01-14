@@ -65,18 +65,29 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     return hits.map((hit) => {
       const matchTypes: SanctionsMatchType[] = []
 
+      if (request.types?.some((t) => hit.sanctionSearchTypes?.includes(t))) {
+        matchTypes.push('screening_type_match')
+      }
+
       if (
         hit.associates?.length &&
         hit.associates.some((a) =>
           a.sanctionsSearchTypes?.some((t) => request.types?.includes(t))
         )
       ) {
-        matchTypes.push('associate_screening_type')
+        matchTypes.push('associate_screening_type_match')
       }
 
-      if (request.documentId?.length && hit.documents?.length) {
+      if (
+        request.documentId?.length &&
+        hit.documents?.length &&
+        hit.documents.some(
+          (doc) => doc.id && request.documentId?.includes(doc.id)
+        )
+      ) {
         matchTypes.push('document_id')
       }
+
       if (
         request.nationality?.length &&
         hit.nationality?.length &&
@@ -88,18 +99,35 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         matchTypes.push('nationality')
       }
 
-      if (request.yearOfBirth && hit.yearOfBirth) {
+      if (
+        request.yearOfBirth &&
+        hit.yearOfBirth &&
+        hit.yearOfBirth == String(request.yearOfBirth)
+      ) {
         matchTypes.push('year_of_birth')
       }
+
       if (request.gender && hit.gender && request.gender === hit.gender) {
         matchTypes.push('gender')
       }
-      if (
-        request.fuzzinessRange?.upperBound &&
-        request.fuzzinessRange?.upperBound < 100
-      ) {
-        matchTypes.push('name_fuzzy')
+
+      if (request.searchTerm && hit.name) {
+        if (request.searchTerm.toLowerCase() == hit.name.toLowerCase()) {
+          matchTypes.push('name_exact')
+        } else if (
+          hit.aka?.some(
+            (aka) => request.searchTerm.toLowerCase() == aka.toLowerCase()
+          )
+        ) {
+          matchTypes.push('aka_exact')
+        } else if (
+          request.fuzzinessRange?.upperBound &&
+          request.fuzzinessRange?.upperBound < 100
+        ) {
+          matchTypes.push('name_fuzzy')
+        }
       }
+
       if (request.PEPRank && (hit.occupations || hit.associates)?.length) {
         if (
           hit.occupations
@@ -115,6 +143,20 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         ) {
           matchTypes.push('associate_PEP_rank')
         }
+      }
+      if (
+        request.isActivePep &&
+        (hit.isActivePep === true || hit.isActivePep === null) &&
+        hit.sanctionSearchTypes?.includes('PEP')
+      ) {
+        matchTypes.push('is_active_pep')
+      }
+      if (
+        request.isActiveSanctioned &&
+        (hit.isActiveSanctioned === true || hit.isActiveSanctioned === null) &&
+        hit.sanctionSearchTypes?.includes('SANCTIONS')
+      ) {
+        matchTypes.push('is_active_sanctioned')
       }
       return {
         ...hit,
@@ -206,6 +248,63 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         andConditions.push(matchNationalityCondition)
       }
     }
+
+    if (request.isActivePep) {
+      const isActivePepCondition = {
+        $or: [
+          {
+            isActivePep: {
+              $in: [true, null],
+            },
+          },
+          {
+            sanctionsSearchTypes: {
+              $ne: 'PEP',
+            },
+          },
+        ],
+      }
+      if (request.orFilters?.includes('isActivePep')) {
+        orConditions.push(isActivePepCondition)
+      } else {
+        andConditions.push(isActivePepCondition)
+      }
+    }
+
+    if (request.isActiveSanctioned) {
+      const isActiveSanctionedCondition = {
+        $or: [
+          {
+            isActiveSanctioned: {
+              $in: [true, null],
+            },
+          },
+          {
+            sanctionsSearchTypes: {
+              $ne: 'SANCTIONS',
+            },
+          },
+        ],
+      }
+      if (request.orFilters?.includes('isActiveSanctioned')) {
+        orConditions.push(isActiveSanctionedCondition)
+      } else {
+        andConditions.push(isActiveSanctionedCondition)
+      }
+    }
+
+    if (request.entityType) {
+      if (request.orFilters?.includes('entityType')) {
+        orConditions.push({
+          entityType: request.entityType,
+        })
+      } else {
+        andConditions.push({
+          entityType: request.entityType,
+        })
+      }
+    }
+
     if (request.yearOfBirth) {
       const matchYearOfBirthCondition = {
         yearOfBirth: `${request.yearOfBirth}`,
@@ -409,6 +508,119 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       })
     }
 
+    if (request.isActivePep) {
+      const activeMatch = [
+        {
+          compound: {
+            should: [
+              {
+                compound: {
+                  should: [
+                    {
+                      equals: {
+                        value: true,
+                        path: 'isActivePep',
+                      },
+                    },
+                    {
+                      equals: {
+                        value: null,
+                        path: 'isActivePep',
+                      },
+                    },
+                  ],
+                  minimumShouldMatch: 1,
+                },
+              },
+              {
+                compound: {
+                  mustNot: {
+                    equals: {
+                      value: 'PEP',
+                      path: 'sanctionSearchTypes',
+                    },
+                  },
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
+      if (request.orFilters?.includes('isActivePep')) {
+        orFilters.push(...activeMatch)
+      } else {
+        andFilters.push(...activeMatch)
+      }
+    }
+
+    if (request.isActiveSanctioned) {
+      const activeMatch = [
+        {
+          compound: {
+            should: [
+              {
+                compound: {
+                  should: [
+                    {
+                      equals: {
+                        value: true,
+                        path: 'isActiveSanctioned',
+                      },
+                    },
+                    {
+                      equals: {
+                        value: null,
+                        path: 'isActiveSanctioned',
+                      },
+                    },
+                  ],
+                  minimumShouldMatch: 1,
+                },
+              },
+              {
+                compound: {
+                  mustNot: {
+                    equals: {
+                      value: 'SANCTIONS',
+                      path: 'sanctionSearchTypes',
+                    },
+                  },
+                },
+              },
+            ],
+            minimumShouldMatch: 1,
+          },
+        },
+      ]
+      if (request.orFilters?.includes('isActiveSanctioned')) {
+        orFilters.push(...activeMatch)
+      } else {
+        andFilters.push(...activeMatch)
+      }
+    }
+
+    if (request.entityType) {
+      const matchEntityType = [
+        {
+          text: {
+            query: request.entityType,
+            path: 'entityType',
+          },
+        },
+      ]
+      if (request.orFilters?.includes('entityType')) {
+        orFilters.push(...matchEntityType)
+      } else {
+        andFilters.push({
+          compound: {
+            should: matchEntityType,
+            minimumShouldMatch: 1,
+          },
+        })
+      }
+    }
+
     if (request.nationality && request.nationality.length > 0) {
       const nationalityMatch = [
         ...[...request.nationality, 'XX', 'ZZ'].map((nationality) => ({
@@ -544,7 +756,12 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
         {
           // A minumum searchScore of 3 was encountered by trial and error
           // whilst using atlas search console
-          $match: { ...match, searchScore: { $gt: searchScoreThreshold } },
+          $match: {
+            ...match,
+            searchScore: {
+              $gt: request.isOngoingScreening ? 0.5 : searchScoreThreshold,
+            },
+          },
         },
       ])
       .toArray()

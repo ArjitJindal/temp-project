@@ -23,6 +23,7 @@ import { CheckListCategoryListsInput } from './custom/CheckListCategoryListsInpu
 import { WebhookInput } from './custom/WebhookInput';
 import MarkdownInput from './custom/MarkdownInput';
 import { NumberRangeInput } from './custom/NumberRangeInput';
+import { GenericSanctionScreeningTypes } from './custom/GenericSanctionScreeningTypes';
 import CountryRegion from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/CountryRegion';
 import { InputProps } from '@/components/library/Form';
 import PhoneNumber from '@/components/library/JsonSchemaEditor/Property/PropertyInput/custom/fincen/PhoneNumber';
@@ -109,6 +110,9 @@ export default function PropertyInput(props: Props) {
   }
   if (uiSchema['ui:subtype'] === 'NUMBER_RANGE') {
     return <NumberRangeInput {...props} uiSchema={uiSchema} />;
+  }
+  if (uiSchema['ui:subtype'] === 'GENERIC_SANCTIONS_SCREENING_TYPES') {
+    return <GenericSanctionScreeningTypes {...props} />;
   }
 
   const schemaType = schema.oneOf ? 'object' : schema.type;

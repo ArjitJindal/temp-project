@@ -1,42 +1,64 @@
-import { uniq } from 'lodash'
-import { SanctionsRepository } from '@/services/sanctions/providers/types'
+import { compact, concat, startCase, uniq } from 'lodash'
+import { COUNTRIES } from '@flagright/lib/constants'
+import {
+  Action,
+  SanctionsRepository,
+} from '@/services/sanctions/providers/types'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 import { traceable } from '@/core/xray'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { CountryCode } from '@/@types/openapi-internal/CountryCode'
-
+import { getDynamoDbClient } from '@/utils/dynamodb'
+import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
+import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctionsSearchType'
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
+import dayjs from '@/utils/dayjs'
+import { logger } from '@/core/logger'
 type OpenSanctionsLine = {
   op: string
-  entity: OpenSanctionsEntity
+  entity: OpenSanctionsPersonEntity
 }
 
-type OpenSanctionsEntity = {
+type OpenSanctionsPersonEntity = {
   id: string
   caption?: string
   schema?: string
   properties: {
     name?: string[]
-    addressEntity?: string[]
+    summary?: string[]
+    description?: string[]
+    previousName?: string[]
+    weakAlias?: string[]
+    publisher?: string[]
+    keywords?: string[]
+    title?: string[]
+    firstName?: string[]
     secondName?: string[]
+    middleName?: string[]
+    lastName?: string[]
+    nameSuffix?: string[]
+    birthDate?: string[]
+    birthCountry?: string[]
+    deathDate?: string[]
+    position?: string[]
     topics?: string[]
     gender?: string[]
     createdAt?: string[]
-    lastName?: string[]
-    firstName?: string[]
     country?: string[]
-    birthDate?: string[]
-    middleName?: string[]
     citizenship?: string[]
     alias?: string[]
     birthPlace?: string[]
     sourceUrl?: string[]
-    position?: string[]
     notes?: string[]
     fatherName?: string[]
     address?: string[]
     nationality?: string[]
     modifiedAt?: string[]
-    birthCountry?: string[]
+    passportNumber?: string[]
+    socialSecurityNumber?: string[]
+    political?: string[]
+    idNumber?: string[]
+    innCode?: string[]
   }
   referents?: string[]
   datasets?: string[]
@@ -48,15 +70,39 @@ type OpenSanctionsEntity = {
 
 @traceable
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
+  private types: OpenSanctionsSearchType[]
   static async build(tenantId: string) {
-    return new OpenSanctionsProvider(tenantId)
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    const { sanctions } = await tenantRepository.getTenantSettings([
+      'sanctions',
+    ])
+    let types: OpenSanctionsSearchType[] | undefined
+    if (
+      sanctions?.providerScreeningTypes?.find(
+        (type) => type.provider === 'open-sanctions'
+      )
+    ) {
+      types = sanctions.providerScreeningTypes.find(
+        (type) => type.provider === 'open-sanctions'
+      )?.screeningTypes as OpenSanctionsSearchType[]
+    }
+    return new OpenSanctionsProvider(
+      tenantId,
+      types ?? OPEN_SANCTIONS_SEARCH_TYPES
+    )
   }
 
-  constructor(tenantId: string) {
+  constructor(tenantId: string, types: OpenSanctionsSearchType[]) {
     super('open-sanctions', tenantId)
+    this.types = types
   }
 
   async fullLoad(repo: SanctionsRepository, version: string) {
+    if (!this.types.length) {
+      return
+    }
     return this.processUrl(
       repo,
       version,
@@ -65,17 +111,17 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
   }
 
   async delta(repo: SanctionsRepository, version: string, from: Date) {
+    if (!this.types.length) {
+      return
+    }
     const metadata = await fetch(
-      'https://data.opensanctions.org/datasets/latest/sanctions/index.json'
+      'https://data.opensanctions.org/datasets/latest/default/index.json'
     )
     const json = await metadata.json()
     const deltaUrl = json['delta_url']
-
     const deltaMeta = await fetch(deltaUrl)
     const deltaMetaJson = await deltaMeta.json()
-
     const filteredUrls = this.filterUrls(deltaMetaJson, from)
-
     // TODO remove splice
     await Promise.all(
       filteredUrls.map((url) => this.processDeltaUrl(repo, version, url))
@@ -83,11 +129,10 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
   }
 
   public filterUrls(json: object, from: Date): string[] {
-    const urls: string[] = Object.values(json['versions'])
-
-    return urls.filter((str) => {
-      // Extract the timestamp part (before the '-')
-      const timestampPart = str.split('-')[0].split('/').pop() || ''
+    const versions = Object.keys(json['versions'])
+    const targetUrls: string[] = []
+    versions.forEach((version) => {
+      const timestampPart = version.split('-')[0] || ''
       // Convert the timestamp to a Date object
       const timestampDate = new Date(
         parseInt(timestampPart.slice(0, 4)), // Year
@@ -97,9 +142,12 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         parseInt(timestampPart.slice(10, 12)), // Minutes
         parseInt(timestampPart.slice(12, 14)) // Seconds
       )
-      // Compare the dates
-      return timestampDate >= from
+
+      if (timestampDate >= from) {
+        targetUrls.push(json['versions'][version])
+      }
     })
+    return targetUrls
   }
 
   private async processDeltaUrl(
@@ -107,7 +155,8 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     version: string,
     url: string
   ) {
-    await streamResponseLines(url, async (line) => {
+    let entities: [Action, SanctionsEntity][] = []
+    await this.streamResponseLines(url, async (line) => {
       const parsedLine: OpenSanctionsLine = JSON.parse(line)
 
       // TODO Handle this
@@ -117,168 +166,228 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
 
       const entity = parsedLine.entity
 
-      const sanctionsEntity = transformInput(entity)
+      const sanctionsEntity = this.transformInput(entity)
       switch (parsedLine.op) {
         case 'ADD':
         case 'MOD':
-          await repo.save('open-sanctions', [['add', sanctionsEntity]], version)
+          if (sanctionsEntity) {
+            entities.push(['add', sanctionsEntity])
+          }
           break
         default:
           throw new Error(`Unknown operation ${parsedLine.op}`)
       }
+      if (entities.length > 1000) {
+        await repo.save('open-sanctions', entities, version)
+        logger.info(`Saved ${entities.length} entities`)
+        entities = []
+      }
     })
+    if (entities.length) {
+      await repo.save('open-sanctions', entities, version)
+      logger.info(`Saved ${entities.length} entities`)
+      entities = []
+    }
   }
   private async processUrl(
     repo: SanctionsRepository,
     version: string,
     url: string
   ) {
-    await streamResponseLines(url, async (line) => {
-      const entity: OpenSanctionsEntity | undefined = JSON.parse(line)
-
-      // TODO Handle this
-      if (!entity?.properties?.name) {
+    let entities: [Action, SanctionsEntity][] = []
+    await this.streamResponseLines(url, async (line) => {
+      const entity: OpenSanctionsPersonEntity | undefined = JSON.parse(line)
+      if (!entity) {
         return
       }
-
-      const sanctionsEntity = transformInput(entity)
-      await repo.save('open-sanctions', [['add', sanctionsEntity]], version)
+      const sanctionsEntity = this.transformInput(entity)
+      if (sanctionsEntity) {
+        entities.push(['add', sanctionsEntity])
+      }
+      if (entities.length > 1000) {
+        await repo.save('open-sanctions', entities, version)
+        logger.info(`Saved ${entities.length} entities`)
+        entities = []
+      }
     })
-  }
-}
-
-export function transformInput(entity: OpenSanctionsEntity): SanctionsEntity {
-  const properties = entity.properties
-  return {
-    id: entity.id,
-    aka: properties.alias || [],
-    countries: properties.country || [],
-    countryCodes: (properties.citizenship?.map((c) =>
-      c.toUpperCase()
-    ) as CountryCode[]) || ['ZZ'],
-    documents: [],
-    entityType: entity.schema || '',
-    freetext: properties.notes?.join('\n') || '',
-    gender: properties.gender?.[0] || 'Unknown',
-    matchTypes: [],
-    name: properties.name?.at(0) || 'Unknown',
-    nationality: (properties.nationality?.map((c) =>
-      c.toUpperCase()
-    ) as CountryCode[]) || ['ZZ'],
-    sanctionSearchTypes: uniq(
-      properties.topics?.map((topic) => {
-        switch (topic) {
-          // TODO handle each differently
-          case 'crime':
-          case 'crime.fraud':
-          case 'crime.cyber':
-          case 'crime.fin':
-          case 'crime.env':
-          case 'crime.theft':
-          case 'crime.war':
-          case 'crime.boss':
-          case 'crime.terror':
-          case 'crime.traffick':
-          case 'crime.traffick.drug':
-          case 'crime.traffick.human':
-          case 'wanted':
-          case 'corp.offshore':
-          case 'corp.shell':
-          case 'corp.public':
-          case 'corp.disqual':
-          case 'gov':
-          case 'gov.national':
-          case 'gov.state':
-          case 'gov.muni':
-          case 'gov.soe':
-          case 'gov.igo':
-          case 'gov.head':
-          case 'gov.admin':
-          case 'gov.executive':
-          case 'gov.legislative':
-          case 'gov.judicial':
-          case 'gov.security':
-          case 'gov.financial':
-          case 'fin':
-          case 'fin.bank':
-          case 'fin.fund':
-          case 'fin.adivsor':
-          case 'reg.action':
-          case 'reg.warn':
-          case 'role.pep':
-          case 'role.pol':
-          case 'role.rca':
-          case 'role.judge':
-          case 'role.civil':
-          case 'role.diplo':
-          case 'role.lawyer':
-          case 'role.acct':
-          case 'role.spy':
-          case 'role.oligarch':
-          case 'role.journo':
-          case 'role.act':
-          case 'role.lobby':
-          case 'pol.party':
-          case 'pol.union':
-          case 'rel':
-          case 'mil':
-          case 'asset.frozen':
-          case 'sanction':
-          case 'sanction.linked':
-          case 'sanction.counter':
-          case 'export.control':
-          case 'export.risk':
-          case 'debarment':
-          case 'poi':
-            return 'SANCTIONS'
-          default:
-            throw new Error(`Unknown topic ${topic}`)
-        }
-      })
-    ),
-    screeningSources: properties.sourceUrl?.map((source) => ({ url: source })),
-    types: [],
-    yearOfBirth: properties.birthDate?.[0]?.split('-')[0] || 'Unknown',
-    updatedAt: Date.now(),
-  }
-}
-
-async function streamResponseLines(
-  url: string,
-  processLine: (line: string) => Promise<void>
-): Promise<void> {
-  const response = await fetch(url)
-  if (!response.body) {
-    throw new Error('Stream not supported')
-  }
-
-  const reader = response.body.getReader()
-  const decoder = new TextDecoder()
-  let buffer = ''
-
-  // eslint-disable-next-line no-constant-condition
-  while (true) {
-    const { value, done } = await reader.read()
-    if (done) {
-      break
-    }
-
-    // Decode the chunk and append it to the buffer
-    buffer += decoder.decode(value, { stream: true })
-
-    // Split the buffer by lines
-    const lines = buffer.split('\n')
-    buffer = lines.pop() || '' // Keep the last (incomplete) line in the buffer
-
-    // Process each complete line
-    for (const line of lines) {
-      await processLine(line)
-      // Perform further processing of the line here
+    if (entities.length) {
+      await repo.save('open-sanctions', entities, version)
+      logger.info(`Saved ${entities.length} entities`)
+      entities = []
     }
   }
 
-  // Handle the final line in the buffer, if it exists
-  if (buffer) {
-    await processLine(buffer)
+  transformInput(
+    entity: OpenSanctionsPersonEntity
+  ): SanctionsEntity | undefined {
+    const properties = entity.properties
+    const sanctionSearchTypes = uniq(
+      compact(
+        properties.topics?.map((topic) => {
+          switch (topic) {
+            case 'crime':
+            case 'crime.fraud':
+            case 'crime.cyber':
+            case 'crime.fin':
+            case 'crime.env':
+            case 'crime.theft':
+            case 'crime.war':
+            case 'crime.boss':
+            case 'crime.terror':
+            case 'crime.traffick':
+            case 'crime.traffick.drug':
+            case 'crime.traffick.human':
+              return 'CRIME'
+            case 'role.pep':
+            case 'role.rca':
+              return 'PEP'
+            case 'sanction':
+            case 'sanction.linked':
+            case 'sanction.counter':
+              return 'SANCTIONS'
+            case 'poi':
+              return 'PROFILE_OF_INTEREST'
+          }
+        })
+      ).filter((type) => this.types.includes(type))
+    )
+    if (entity.schema !== 'Person' || sanctionSearchTypes.length === 0) {
+      return undefined
+    }
+    return {
+      id: entity.id,
+      aka: compact(
+        uniq(
+          concat(properties.alias || [], properties.name || []).map((n) =>
+            n.toLowerCase()
+          )
+        ).map((n) => startCase(n))
+      ),
+      countryCodes: (properties.citizenship?.map((c) =>
+        c.toUpperCase()
+      ) as CountryCode[]) || ['ZZ'],
+      types: concat(
+        entity.datasets || [],
+        entity.referents || [],
+        sanctionSearchTypes
+      ),
+      entityType: entity.schema || '',
+      freetext: properties.notes?.join('\n') || '',
+      gender: properties.gender?.[0]
+        ? startCase(properties.gender[0])
+        : 'Unknown',
+      matchTypes: [],
+      name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
+      nationality: (properties.nationality?.map((c) =>
+        c.toUpperCase()
+      ) as CountryCode[]) || ['ZZ'],
+      sanctionSearchTypes,
+      screeningSources: properties.sourceUrl?.map((source) => ({
+        url: source,
+        name: source,
+      })),
+      yearOfBirth: properties.birthDate?.[0]
+        ? dayjs(properties.birthDate[0]).year().toString()
+        : undefined,
+      countries: compact(
+        uniq(
+          concat(
+            properties.country || [],
+            properties.birthCountry || [],
+            properties.nationality || [],
+            properties.citizenship || []
+          )
+        ).map((country) => COUNTRIES[country.toUpperCase() as CountryCode])
+      ),
+      dateOfBirths: properties.birthDate,
+      updatedAt: Date.now(),
+      isDeseased: properties.deathDate?.[0] ? true : false,
+      occupations: compact(
+        concat(
+          properties.political?.map((o) => {
+            return {
+              title: `Political, ${o}`,
+            }
+          }),
+          properties.position?.map((o) => {
+            return {
+              title: o,
+            }
+          })
+        )
+      ),
+      documents: concat(
+        compact(properties.innCode).map((o) => {
+          return {
+            id: o,
+            formattedId: o.replace('-', ''),
+            name: 'Russian company ID',
+          }
+        }),
+        compact(
+          properties.idNumber?.map((o) => {
+            const text =
+              properties.passportNumber?.find(
+                (p) => p.includes(o) && p.includes(',')
+              ) ?? ''
+            const name =
+              text.indexOf(o) !== -1
+                ? text
+                    ?.substring(0, text.indexOf(o) - 2)
+                    ?.split(',')
+                    ?.pop()
+                    ?.trim()
+                : 'Id Number'
+            return {
+              id: o,
+              formattedId: o.replace('-', ''),
+              name: name ?? 'Id Number',
+            }
+          })
+        )
+      ),
+      isActivePep: undefined,
+      isActiveSanctioned: undefined,
+    }
+  }
+
+  private async streamResponseLines(
+    url: string,
+    processLine: (line: string) => Promise<void>
+  ): Promise<void> {
+    const response = await fetch(url)
+    if (!response.body) {
+      throw new Error('Stream not supported')
+    }
+
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      const { value, done } = await reader.read()
+      if (done) {
+        break
+      }
+
+      // Decode the chunk and append it to the buffer
+      buffer += decoder.decode(value, { stream: true })
+
+      // Split the buffer by lines
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || '' // Keep the last (incomplete) line in the buffer
+
+      // Process each complete line
+      for (const line of lines) {
+        await processLine(line)
+        // Perform further processing of the line here
+      }
+    }
+
+    // Handle the final line in the buffer, if it exists
+    if (buffer) {
+      await processLine(buffer)
+    }
   }
 }

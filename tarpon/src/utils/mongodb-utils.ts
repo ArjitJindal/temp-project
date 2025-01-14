@@ -318,6 +318,16 @@ export const createGlobalMongoDBCollections = async (
   await createMongoDBCollectionsInternal(mongoClient, indexDefinitions)
 }
 
+const shouldBuildSearchIndex = (tenantId: string) => {
+  return (
+    envIsNot('test') &&
+    !isDemoTenant(tenantId) &&
+    (hasFeature('DOW_JONES') ||
+      hasFeature('OPEN_SANCTIONS') ||
+      hasFeature('ACURIS'))
+  )
+}
+
 const createMongoDBCollectionsInternal = async (
   mongoClient: MongoClient,
   indexDefinitions: {
@@ -339,11 +349,7 @@ const createMongoDBCollectionsInternal = async (
     const definition = indexDefinitions[collectionName]
     await syncIndexes(collection, definition.getIndexes())
     if (tenantId && definition.getSearchIndex) {
-      if (
-        envIsNot('local', 'test') &&
-        !isDemoTenant(tenantId) &&
-        (hasFeature('DOW_JONES') || hasFeature('OPEN_SANCTIONS'))
-      ) {
+      if (shouldBuildSearchIndex(tenantId)) {
         await createSearchIndex(
           db,
           collectionName,

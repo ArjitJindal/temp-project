@@ -42,7 +42,7 @@ import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rul
 import { RiskLevelRuleParameters } from '@/@types/openapi-internal/RiskLevelRuleParameters'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { mergeObjects } from '@/utils/object'
-import { hasFeatures, tenantSettings } from '@/core/utils/context'
+import { hasFeature, tenantSettings } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { RuleFilters } from '@/@types/openapi-internal/RuleFilters'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -203,15 +203,22 @@ export class RuleService {
     return rule ? this.getTenantSpecificRule(rule) : null
   }
 
+  private hasRequiredFeaturesForRule(rule: Rule): boolean {
+    return (
+      !rule.requiredFeatures ||
+      rule.requiredFeatures.some((feature) => hasFeature(feature))
+    )
+  }
+
   async getAllRules(): Promise<Array<Rule>> {
     let rules = await this.ruleRepository.getAllRules()
     rules = await Promise.all(
       rules.map((rule) => this.getTenantSpecificRule(rule))
     )
+
     return rules.filter(
       (rule) =>
-        isEmpty(rule.requiredFeatures) ||
-        hasFeatures(rule.requiredFeatures || [])
+        isEmpty(rule.requiredFeatures) || this.hasRequiredFeaturesForRule(rule)
     )
   }
 
@@ -315,8 +322,7 @@ export class RuleService {
   private filterRules(rules: Rule[]): Rule[] {
     return rules.filter(
       (rule) =>
-        isEmpty(rule.requiredFeatures) ||
-        hasFeatures(rule.requiredFeatures || [])
+        isEmpty(rule.requiredFeatures) || this.hasRequiredFeaturesForRule(rule)
     )
   }
 

@@ -166,13 +166,17 @@ export default function SettingsPage() {
             ),
           },
           {
+            title: i18n('menu.settings.screening'),
+            key: 'sanctions',
+            children: <SanctionsSettings />,
+          },
+          {
             title: i18n('menu.settings.addons'),
             key: 'addons',
             requiredPermissions: ['settings:add-ons:read'],
             children: (
               <>
                 <FlagrightAISettings />
-                <SanctionsSettings />
                 <FlagrightMLSettings />
               </>
             ),

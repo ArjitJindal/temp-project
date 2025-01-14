@@ -8,5 +8,8 @@ export function getDefaultProvider(): SanctionsDataProviderName {
   if (hasFeature('OPEN_SANCTIONS')) {
     return 'open-sanctions'
   }
+  if (hasFeature('ACURIS')) {
+    return 'acuris'
+  }
   return 'comply-advantage'
 }

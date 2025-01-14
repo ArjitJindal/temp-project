@@ -1,4 +1,4 @@
-import { chunk, groupBy, mapValues } from 'lodash'
+import { chunk, compact, groupBy, mapValues } from 'lodash'
 import { FlagrightRegion, Stage } from '@flagright/lib/constants/deploy'
 import { getTenantInfoFromUsagePlans } from '@flagright/lib/tenants/usage-plans'
 import { cleanUpStaleQaEnvs } from '@lib/qa-cleanup'
@@ -19,6 +19,7 @@ import {
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
+import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 
 export const cronJobDailyHandler = lambdaConsumer()(async () => {
   const tenantInfos = await TenantService.getAllTenants(
@@ -39,17 +40,14 @@ export const cronJobDailyHandler = lambdaConsumer()(async () => {
       const { features } = await tenantRepository.getTenantSettings([
         'features',
       ])
-      if (
-        features?.includes('DOW_JONES') ||
-        features?.includes('OPEN_SANCTIONS')
-      ) {
-        const provider = features?.includes('DOW_JONES')
-          ? 'dowjones'
-          : 'open-sanctions'
+      const providers = compact(
+        features?.map((feature) => FEATURE_FLAG_PROVIDER_MAP[feature])
+      )
+      if (providers.length) {
         return sendBatchJobCommand({
           type: 'SANCTIONS_DATA_FETCH',
           tenantId: tenant.tenant.id,
-          provider,
+          providers: providers,
           parameters: {
             from: dayjs().subtract(1, 'day').toISOString(),
           },

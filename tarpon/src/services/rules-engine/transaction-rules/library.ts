@@ -20,6 +20,7 @@ import { UserAddressChangeRuleParameters } from '../user-rules/user-address-chan
 import { getMigratedV8Config } from '../v8-migrations'
 import { UserOnboardedFromHighRiskCountryRuleParameters } from '../user-rules/user-onboarded-from-high-risk-country'
 import { UserInactivityRuleParameters } from '../user-ongoing-rules/user-inactivity'
+import { GenericSanctionsConsumerUserRuleParameters } from '../user-rules/generic-sanctions-consumer-user'
 import { TransactionAmountRuleParameters } from './transaction-amount'
 import { TransactionNewCountryRuleParameters } from './transaction-new-country'
 import { TransactionNewCurrencyRuleParameters } from './transaction-new-currency'
@@ -1762,6 +1763,40 @@ const _RULES_LIBRARY: Array<
       defaultNature: RuleNature.SCREENING,
       defaultCasePriority: 'P1',
       requiredFeatures: ['SANCTIONS'],
+      types: [RuleTypeField.Screening],
+      typologies: [RuleTypology.ScreeningHits],
+      sampleUseCases:
+        'A consumer user can be checked for sanctions/PEP/AM match.',
+    }
+  },
+  () => {
+    const defaultParameters: GenericSanctionsConsumerUserRuleParameters = {
+      fuzzinessRange: {
+        upperBound: 20,
+        lowerBound: 0,
+      },
+      ongoingScreening: false,
+      screeningValues: [],
+    }
+
+    return {
+      id: 'R-17',
+      name: 'Screening consumer users',
+      type: 'USER',
+      description: 'Screening on consumer users with data providers',
+      descriptionTemplate: 'Screening on consumer users with data providers',
+      defaultParameters,
+      defaultAction: 'SUSPEND',
+      ruleImplementationName: 'generic-sanction-screening-user',
+      labels: [],
+      checksFor: [
+        RuleChecksForField.Username,
+        RuleChecksForField.UserDetails,
+        RuleChecksForField.UsersYearOfBirth,
+      ],
+      defaultNature: RuleNature.SCREENING,
+      defaultCasePriority: 'P1',
+      requiredFeatures: ['ACURIS', 'OPEN_SANCTIONS'],
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:

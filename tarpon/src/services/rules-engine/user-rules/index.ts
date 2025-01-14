@@ -8,10 +8,10 @@ import SanctionsConsumerUserRule from './sanctions-consumer-user'
 import TestAlwaysHitRule from './tests/test-always-hit-rule'
 import UserAddressChange from './user-address-change'
 import UserOnboardedFromHighRiskCountry from './user-onboarded-from-high-risk-country'
+import GenericSanctionsConsumerUserRule from './generic-sanctions-consumer-user'
 import { traceable } from '@/core/xray'
 import DowJonesConsumerUserRule from '@/services/rules-engine/user-rules/dowjones-consumer-user'
 import ListScreeningConsumerUser from '@/services/rules-engine/user-rules/list-screening-consumer-user'
-import OpenSanctionsConsumerUserRule from '@/services/rules-engine/user-rules/open-sanctions-consumer-user'
 
 @traceable
 export class UserRuleBase extends UserRule<unknown> {
@@ -41,9 +41,9 @@ export const _USER_RULES = {
   'user-onboarded-from-high-risk-country': UserOnboardedFromHighRiskCountry,
   'dowjones-consumer-user': DowJonesConsumerUserRule,
   'list-screening-consumer-user': ListScreeningConsumerUser,
-  'open-sanctions-consumer-user': OpenSanctionsConsumerUserRule,
   // TESTING-ONLY RULES
   'tests/test-always-hit-rule': TestAlwaysHitRule,
+  'generic-sanction-screening-user': GenericSanctionsConsumerUserRule,
 } as const
 
 export type UserRuleImplementationName = keyof typeof _USER_RULES

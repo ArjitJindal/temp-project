@@ -1,5 +1,5 @@
 import { MongoClient, Filter, UpdateFilter } from 'mongodb'
-import { isNil, omit, omitBy } from 'lodash'
+import { intersection, isNil, omit, omitBy } from 'lodash'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
   prefixRegexMatchFilter,
@@ -24,6 +24,7 @@ import { logger } from '@/core/logger'
 import { getTriggerSource } from '@/utils/lambda'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/SanctionsSearchType'
 
 const DEFAULT_EXPIRY_TIME = 168 // hours
 
@@ -201,8 +202,12 @@ export class SanctionsSearchRepository {
       ),
     ]
     if (params.types && params.types.length > 0) {
+      const searchTypes = intersection(
+        params.types,
+        SANCTIONS_SEARCH_TYPES
+      ) as SanctionsSearchType[]
       conditions.push({
-        $or: params.types.map((type) => ({
+        $or: searchTypes.map((type) => ({
           'response.data.types': prefixRegexMatchFilter(
             toComplyAdvantageType(type)
           ),

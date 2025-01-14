@@ -102,6 +102,10 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'Open sanctions',
     description: 'Enables using Open sanctions for sanctions',
   },
+  ACURIS: {
+    title: 'Acuris',
+    description: 'Enables using Acuris for sanctions',
+  },
   ASYNC_RULES: {
     title: 'Async rules',
     description: 'Enables async rules',
@@ -171,6 +175,10 @@ export default function SuperAdminPanel() {
   }, [currentCrmSettings]);
 
   const isDowJonesToBeEnabled = features?.includes('DOW_JONES');
+  const hasExternalSanctionsProvider =
+    features?.includes('ACURIS') ||
+    features?.includes('OPEN_SANCTIONS') ||
+    features?.includes('DOW_JONES');
   const isSanctionsToBeEnabled = features?.includes('SANCTIONS');
   const isCrmToBeEnabled = features?.includes('CRM');
   const [sanctionsSettings, setSanctionsSettings] = useState(settings.sanctions);
@@ -282,7 +290,7 @@ export default function SuperAdminPanel() {
   const handleSave = async () => {
     // Sanctions settings validation
     if (isSanctionsToBeEnabled) {
-      if (!isDowJonesToBeEnabled && !sanctionsSettings?.marketType) {
+      if (!hasExternalSanctionsProvider && !sanctionsSettings?.marketType) {
         message.fatal('ComplyAdvantage market type must be set');
         return;
       }
@@ -535,7 +543,7 @@ export default function SuperAdminPanel() {
                 </div>
               </>
             )}
-            {isSanctionsToBeEnabled && !isDowJonesToBeEnabled ? (
+            {isSanctionsToBeEnabled && !hasExternalSanctionsProvider ? (
               <Label label="ComplyAdvantage settings">
                 <Label level={2} label="Market type" required={{ value: true, showHint: true }}>
                   <SelectionGroup

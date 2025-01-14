@@ -1,6 +1,7 @@
 import { lowerCase, startCase } from 'lodash'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { humanizeAuto } from '@flagright/lib/utils/humanize'
+import { GenericScreeningValues } from '../user-rules/generic-sanctions-consumer-user'
 import { TimeWindowFiscalYear, TimeWindowGranularity } from './time-utils'
 import { USER_TYPES } from '@/@types/user/user-type'
 import {
@@ -19,6 +20,7 @@ import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PepRank } from '@/@types/openapi-internal/PepRank'
 import { RULE_STAGES } from '@/@types/openapi-internal-custom/RuleStage'
+import { GENERIC_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/GenericSanctionsSearchType'
 
 type SchemaOptions = {
   title?: string
@@ -896,6 +898,32 @@ export const SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
     ...SANCTIONS_SCREENING_TYPES_SCHEMA(options),
     nullable: true,
   } as const)
+export const GENERIC_SANCTIONS_SCREENING_TYPES_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...uiSchema(options?.uiSchema, {
+      subtype: 'GENERIC_SANCTIONS_SCREENING_TYPES',
+    }),
+    type: 'array',
+    title: options?.title || 'Screening types',
+    description: options?.description,
+    items: {
+      type: 'string',
+      enum: GENERIC_SANCTIONS_SEARCH_TYPES,
+      enumNames: GENERIC_SANCTIONS_SEARCH_TYPES.map((type) =>
+        humanizeAuto(type)
+      ),
+    },
+    uniqueItems: true,
+  } as const)
+export const GENERIC_SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA = (
+  options?: SchemaOptions
+) =>
+  ({
+    ...GENERIC_SANCTIONS_SCREENING_TYPES_SCHEMA(options),
+    nullable: true,
+  } as const)
 
 const SANCTIONS_SCREENING_VALUES = ['NRIC', 'NATIONALITY', 'YOB', 'GENDER']
 const PEP_RANK_VALUES: PepRank[] = ['LEVEL_1', 'LEVEL_2', 'LEVEL_3']
@@ -911,6 +939,25 @@ export const SANCTIONS_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
       type: 'string',
       enum: SANCTIONS_SCREENING_VALUES,
       enumNames: SANCTIONS_SCREENING_VALUES.map((type) => humanizeAuto(type)),
+    },
+    uniqueItems: true,
+    nullable: true,
+  } as const)
+const GENERIC_SCREENING_VALUES: GenericScreeningValues[] = [
+  'NATIONALITY',
+  'YOB',
+  'GENDER',
+]
+export const GENERIC_SCREENING_VALUES_SCHEMA = (options?: SchemaOptions) =>
+  ({
+    ...uiSchema(options?.uiSchema),
+    type: 'array',
+    title: options?.title || 'Screening values',
+    description: options?.description,
+    items: {
+      type: 'string',
+      enum: GENERIC_SCREENING_VALUES,
+      enumNames: GENERIC_SCREENING_VALUES.map((type) => humanizeAuto(type)),
     },
     uniqueItems: true,
     nullable: true,
