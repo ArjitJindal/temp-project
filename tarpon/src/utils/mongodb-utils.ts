@@ -642,6 +642,127 @@ export async function sendMessageToMongoUpdateConsumer<
   await sqs.send(messageCommand)
 }
 
+function replaceNinOperator(expression: any): any {
+  if (typeof expression !== 'object' || expression === null) {
+    return expression
+  }
+
+  if (Array.isArray(expression)) {
+    return expression.map((item) => replaceNinOperator(item))
+  }
+
+  const result = { ...expression }
+
+  for (const [key, value] of Object.entries(result)) {
+    if (key === '$nin') {
+      delete result[key]
+      result['$not'] = { $in: value }
+    } else if (typeof value === 'object') {
+      result[key] = replaceNinOperator(value)
+    }
+  }
+
+  return result
+}
+
+function addLevelRootPath(expression: any, root: string) {
+  if (typeof expression !== 'object' || expression === null) {
+    return expression
+  }
+  if (Array.isArray(expression)) {
+    return expression.map((exp) => addLevelRootPath(exp, root))
+  }
+  const result = { ...expression }
+  for (const [key, value] of Object.entries(expression)) {
+    if (!key.startsWith('$')) {
+      delete result[key]
+      result[`${root}.${key}`] = addLevelRootPath(value, root)
+    } else if (typeof value === 'object') {
+      result[key] = addLevelRootPath(value, root)
+    }
+  }
+  return result
+}
+const QUERY_ONLY_OPERATORS = [
+  '$regex',
+  '$options',
+  '$size',
+  '$exists',
+  '$elemMatch',
+]
+function handleQueryOperatorsWhileConversion(
+  op: string,
+  val: Document,
+  remainingPath: Array<string>,
+  rootField: string,
+  fieldAccessExpression: any
+) {
+  if (op === '$regex') {
+    return {
+      $regexMatch: {
+        input: {
+          $getField: {
+            field: remainingPath.join('.'),
+            input: `$$${rootField}`,
+          },
+        },
+        regex: val,
+      },
+    }
+  }
+  if (op === '$options') {
+    return ''
+  }
+  if (op === '$size') {
+    return {
+      $anyElementTrue: {
+        $map: {
+          input: fieldAccessExpression,
+          as: 'item',
+          in: true,
+        },
+      },
+    }
+  }
+
+  if (op === '$exists') {
+    return {
+      $ne: [
+        {
+          $type: {
+            $getField: {
+              field: remainingPath.join('.'),
+              input: `$$${rootField}`,
+            },
+          },
+        },
+        'missing',
+      ],
+    }
+  }
+  if (op === '$elemMatch') {
+    return {
+      $expr: {
+        $cond: {
+          if: { $isArray: fieldAccessExpression },
+          then: {
+            $anyElementTrue: {
+              $map: {
+                input: fieldAccessExpression,
+                as: 'item',
+                in: convertQueryToAggregationExpression(
+                  addLevelRootPath(val, 'item') as Document
+                ),
+              },
+            },
+          },
+          else: false, // If the field is not an array, $elemMatch should not match
+        },
+      },
+    }
+  }
+}
+
 // Convert query -
 // { $and: [{ field1: { $gte: value, $lte: value } }, { field2: { $lte: value } }] }
 // to aggregation expression -
@@ -677,18 +798,95 @@ export function convertQueryToAggregationExpression(query: Document) {
     const condition = query[field]
 
     if (typeof condition === 'object' && condition !== null) {
-      const expressions = Object.entries(condition).map(([op, val]) => ({
-        [op]: [
-          `$$${field}`,
-          convertQueryToAggregationExpression(val as Document),
-        ],
-      }))
+      const expressions = Object.entries(condition)
+        .map(([op, val]) => {
+          const pathParts = field.split('.')
+          const [rootField, ...remainingPath] = pathParts
+
+          const fieldAccessExpression =
+            remainingPath[0] === '' || !remainingPath[0]
+              ? `$$${rootField}`
+              : {
+                  $getField: {
+                    field: remainingPath[0],
+                    input: `$$${rootField}`,
+                  },
+                }
+
+          const finalFieldAccessor =
+            remainingPath.slice(1).join('.') === '' ||
+            !remainingPath.slice(1).join('.')
+              ? `$$item`
+              : {
+                  $getField: {
+                    field: remainingPath.slice(1).join('.'),
+                    input: '$$item',
+                  },
+                }
+          if (QUERY_ONLY_OPERATORS.includes(op)) {
+            return handleQueryOperatorsWhileConversion(
+              op,
+              val as Document,
+              remainingPath,
+              rootField,
+              fieldAccessExpression
+            )
+          }
+          // Handle both array and non-array cases
+
+          const expression = {
+            $cond: {
+              if: { $isArray: fieldAccessExpression },
+              then: {
+                $anyElementTrue: {
+                  $map: {
+                    input: fieldAccessExpression,
+                    as: 'item',
+                    in: {
+                      [op]: [
+                        finalFieldAccessor,
+                        convertQueryToAggregationExpression(val as Document),
+                      ],
+                    },
+                  },
+                },
+              },
+              else: {
+                [op]: [
+                  {
+                    $getField: {
+                      field: remainingPath.join('.'),
+                      input: `$$${rootField}`,
+                    },
+                  },
+                  convertQueryToAggregationExpression(val as Document),
+                ],
+              },
+            },
+          }
+
+          return {
+            $expr: replaceNinOperator(expression),
+          }
+        })
+        .filter((val) => val !== '')
 
       // Combine multiple conditions into $and
       if (expressions.length > 1) {
         return { $and: expressions }
       }
       return expressions[0] // Single condition
+    }
+    return {
+      $eq: [
+        {
+          $getField: {
+            field: field.split('.').slice(1).join('.'),
+            input: `$$${field.split('.')[0]}`,
+          },
+        },
+        condition,
+      ],
     }
   }
 
