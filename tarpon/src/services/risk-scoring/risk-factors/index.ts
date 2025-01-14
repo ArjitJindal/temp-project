@@ -69,7 +69,99 @@ import {
   CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
   sourceOfFundsV8Logic,
 } from './source-of-funds'
+import {
+  TRANSACTION_ORIGIN_PAYMENT_METHOD_RISK_FACTOR,
+  originPaymentMethodV8Logic,
+} from './transaction/origin-payment-method'
+import {
+  TRANSACTION_DESTINATION_PAYMENT_METHOD_RISK_FACTOR,
+  destinationPaymentMethodV8Logic,
+} from './transaction/destination-payment-method'
+import {
+  originCountryV8Logic,
+  TRANSACTION_ORIGIN_COUNTRY_RISK_FACTOR,
+} from './transaction/origin-country'
+import {
+  destinationCountryV8Logic,
+  TRANSACTION_DESTINATION_COUNTRY_RISK_FACTOR,
+} from './transaction/destination-country'
+import {
+  originCurrencyV8Logic,
+  TRANSACTION_ORIGIN_CURRENCY_RISK_FACTOR,
+} from './transaction/origin-currency'
+import {
+  destinationCurrencyV8Logic,
+  TRANSACTION_DESTINATION_CURRENCY_RISK_FACTOR,
+} from './transaction/destination-currency'
+import {
+  consumerUserAgePlatformV8Logic,
+  TRANSACTION_CONSUMER_USER_AGE_PLATFORM_RISK_FACTOR,
+} from './transaction/consumer-user-age-platform'
+import {
+  businessUserAgePlatformV8Logic,
+  TRANSACTION_BUSINESS_USER_AGE_PLATFORM_RISK_FACTOR,
+} from './transaction/business-user-age-platform'
+import {
+  ipAddressCountryV8Logic,
+  TRANSACTION_IP_ADDRESS_COUNTRY_RISK_FACTOR,
+} from './transaction/ip-address-country'
+import {
+  TRANSACTION_TIME_FOR_RISK_FACTOR,
+  transactionTimeV8Logic,
+} from './transaction/transaction-time'
+import {
+  threeDsDoneV8Logic,
+  TRANSACTION_3DS_DONE_RISK_FACTOR,
+} from './transaction/3ds-done'
+import {
+  cardIssuedCountryV8Logic,
+  TRANSACTION_CARD_ISSUED_COUNTRY_RISK_FACTOR,
+} from './transaction/card-issued-country'
+import {
+  originMccCodeV8Logic,
+  TRANSACTION_ORIGIN_MCC_CODE_RISK_FACTOR,
+} from './transaction/origin-MCC-code'
+import {
+  destinationMccCodeV8Logic,
+  TRANSACTION_DESTINATION_MCC_CODE_RISK_FACTOR,
+} from './transaction/destination-MCC-code'
+import {
+  originBankNameV8Logic,
+  TRANSACTION_ORIGIN_BANK_NAME_RISK_FACTOR,
+} from './transaction/origin-bank-name'
+import {
+  destinationBankNameV8Logic,
+  TRANSACTION_DESTINATION_BANK_NAME_RISK_FACTOR,
+} from './transaction/destination-bank-name'
+import {
+  destinationTransactionAmountV8Logic,
+  TRANSACTION_DESTINATION_TRANSACTION_AMOUNT_RISK_FACTOR,
+} from './transaction/destination-transaction-amount'
+import {
+  originTransactionAmountV8Logic,
+  TRANSACTION_ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR,
+} from './transaction/origin-transaction-amount'
+import {
+  foreignDestinationConsumerCountryV8Logic,
+  TRANSACTION_FOREIGN_DESTINATION_CONSUMER_COUNTRY_RISK_FACTOR,
+} from './transaction/foreign-destination-consumer-country'
+import {
+  foreignOriginConsumerCountryV8Logic,
+  TRANSACTION_FOREIGN_ORIGIN_CONSUMER_COUNTRY_RISK_FACTOR,
+} from './transaction/foreign-origin-consumer-country'
+import {
+  foreignOriginBusinessCountryV8Logic,
+  TRANSACTION_FOREIGN_ORIGIN_BUSINESS_COUNTRY_RISK_FACTOR,
+} from './transaction/foreign-origin-business-country'
+import {
+  foreignDestinationBusinessCountryV8Logic,
+  TRANSACTION_FOREIGN_DESTINATION_BUSINESS_COUNTRY_RISK_FACTOR,
+} from './transaction/foreign-destination-business-country '
 
+import {
+  TRANSACTION_TRANSACTION_TYPE_RISK_FACTOR,
+  transactionTypeV8Logic,
+} from './transaction/transaction-type'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
@@ -92,6 +184,29 @@ export const RISK_FACTORS: V2V8RiskFactor[] = [
   CONSUMER_USER_OCCUPATION_RISK_FACTOR,
   CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
   CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
+  TRANSACTION_3DS_DONE_RISK_FACTOR,
+  TRANSACTION_BUSINESS_USER_AGE_PLATFORM_RISK_FACTOR,
+  TRANSACTION_CARD_ISSUED_COUNTRY_RISK_FACTOR,
+  TRANSACTION_CONSUMER_USER_AGE_PLATFORM_RISK_FACTOR,
+  TRANSACTION_DESTINATION_BANK_NAME_RISK_FACTOR,
+  TRANSACTION_DESTINATION_COUNTRY_RISK_FACTOR,
+  TRANSACTION_DESTINATION_CURRENCY_RISK_FACTOR,
+  TRANSACTION_DESTINATION_MCC_CODE_RISK_FACTOR,
+  TRANSACTION_DESTINATION_PAYMENT_METHOD_RISK_FACTOR,
+  TRANSACTION_DESTINATION_TRANSACTION_AMOUNT_RISK_FACTOR,
+  TRANSACTION_FOREIGN_DESTINATION_BUSINESS_COUNTRY_RISK_FACTOR,
+  TRANSACTION_FOREIGN_DESTINATION_CONSUMER_COUNTRY_RISK_FACTOR,
+  TRANSACTION_FOREIGN_ORIGIN_BUSINESS_COUNTRY_RISK_FACTOR,
+  TRANSACTION_FOREIGN_ORIGIN_CONSUMER_COUNTRY_RISK_FACTOR,
+  TRANSACTION_IP_ADDRESS_COUNTRY_RISK_FACTOR,
+  TRANSACTION_ORIGIN_BANK_NAME_RISK_FACTOR,
+  TRANSACTION_ORIGIN_COUNTRY_RISK_FACTOR,
+  TRANSACTION_ORIGIN_CURRENCY_RISK_FACTOR,
+  TRANSACTION_ORIGIN_MCC_CODE_RISK_FACTOR,
+  TRANSACTION_ORIGIN_PAYMENT_METHOD_RISK_FACTOR,
+  TRANSACTION_ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR,
+  TRANSACTION_TIME_FOR_RISK_FACTOR,
+  TRANSACTION_TRANSACTION_TYPE_RISK_FACTOR,
 ]
 
 function generateV8FactorMigrator(
@@ -203,6 +318,121 @@ const RISK_FACTOR_MIGRATIONS: RiskFactorMigrationEntry[] = [
     key: 'sourceOfFunds',
     logicGenerator: sourceOfFundsV8Logic,
     type: 'CONSUMER_USER',
+  },
+  {
+    key: 'originPaymentDetails.method',
+    logicGenerator: originPaymentMethodV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationPaymentDetails.method',
+    logicGenerator: destinationPaymentMethodV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'originAmountDetails.country',
+    logicGenerator: originCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationAmountDetails.country',
+    logicGenerator: destinationCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'originAmountDetails.transactionCurrency',
+    logicGenerator: originCurrencyV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationAmountDetails.transactionCurrency',
+    logicGenerator: destinationCurrencyV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'type',
+    logicGenerator: transactionTypeV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'consumerCreatedTimestamp',
+    logicGenerator: consumerUserAgePlatformV8Logic,
+    type: 'CONSUMER_USER',
+  },
+  {
+    key: 'businessCreatedTimestamp',
+    logicGenerator: businessUserAgePlatformV8Logic,
+    type: 'BUSINESS',
+  },
+  {
+    key: 'ipAddressCountry',
+    logicGenerator: ipAddressCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'timestamp',
+    logicGenerator: transactionTimeV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: '3dsDone',
+    logicGenerator: threeDsDoneV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'cardIssuedCountry',
+    logicGenerator: cardIssuedCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'originMccCode',
+    logicGenerator: originMccCodeV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationMccCode',
+    logicGenerator: destinationMccCodeV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'originPaymentDetails.bankName',
+    logicGenerator: originBankNameV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationPaymentDetails.bankName',
+    logicGenerator: destinationBankNameV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'originAmountDetails.transactionAmount',
+    logicGenerator: originTransactionAmountV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'destinationAmountDetails.transactionAmount',
+    logicGenerator: destinationTransactionAmountV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'domesticOrForeignOriginCountryConsumer',
+    logicGenerator: foreignOriginConsumerCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'domesticOrForeignOriginCountryBusiness',
+    logicGenerator: foreignOriginBusinessCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'domesticOrForeignDestinationCountryConsumer',
+    logicGenerator: foreignDestinationConsumerCountryV8Logic,
+    type: 'TRANSACTION',
+  },
+  {
+    key: 'domesticOrForeignDestinationCountryBusiness',
+    logicGenerator: foreignDestinationBusinessCountryV8Logic,
+    type: 'TRANSACTION',
   },
 ]
 
