@@ -314,6 +314,7 @@ export class TransactionService {
                   ruleDescription: 1,
                 }
               : [],
+          alertIds: 1,
         },
       })
     return result

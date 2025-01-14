@@ -37,6 +37,7 @@ export function prepareTableData(
       transactionState: item.transactionState,
       originPaymentDetails: item.originPayment?.paymentDetails,
       destinationPaymentDetails: item.destinationPayment?.paymentDetails,
+      alertIds: item.alertIds,
     };
 
     if (item.hitRules?.length === 0) {

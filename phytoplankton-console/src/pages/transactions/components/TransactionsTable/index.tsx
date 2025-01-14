@@ -277,6 +277,16 @@ export default function TransactionsTable(props: Props) {
           exporting: true,
         }),
       ];
+    } else {
+      alertColumns = [
+        helper.derived<string>({
+          title: 'Alert IDs',
+          value: (transaction): string =>
+            transaction.alertIds ? transaction.alertIds.join(', ') : '-',
+          hideInTable: true,
+          exporting: true,
+        }),
+      ];
     }
     return helper.list([
       helper.simple<'transactionId'>({

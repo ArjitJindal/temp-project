@@ -67,6 +67,7 @@ export type DataItem = {
   transactionState?: TransactionState;
   originPaymentDetails?: PaymentDetails;
   destinationPaymentDetails?: PaymentDetails;
+  alertIds?: string[];
 };
 
 type TableParams = TransactionsTableParams;
@@ -168,6 +169,15 @@ export function Content(props: { userId: string }) {
             }),
           ]
         : []),
+      helper.simple<'alertIds'>({
+        title: 'Alert IDs',
+        key: 'alertIds',
+        hideInTable: true,
+        exporting: true,
+        type: {
+          stringify: (value) => value?.join(', ') || '-',
+        },
+      }),
       helper.simple<'ruleName'>({
         title: 'Rules hit',
         key: 'ruleName',
