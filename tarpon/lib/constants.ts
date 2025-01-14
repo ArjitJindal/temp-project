@@ -39,6 +39,12 @@ export function getNameForGlobalResource(name: string, config: Config) {
   }`
 }
 
+export const DEMO_DATA_PREFIX = 'users-attachment-demo'
+
+export function getDemoDataS3Prefix(tenantId: string) {
+  return `${tenantId}/${DEMO_DATA_PREFIX}`
+}
+
 export const DYNAMODB_TABLE_NAMES = {
   TARPON: 'Tarpon',
   TARPON_RULE: 'TarponRule',

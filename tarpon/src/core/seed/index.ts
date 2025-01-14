@@ -2,6 +2,7 @@ import { logger } from '../logger'
 import { seedDynamo } from './dynamodb'
 import { seedMongo } from './mongo'
 import { fetchAndSetAccounts } from './account-setup'
+import { getUsers } from './data/users'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -39,6 +40,9 @@ export async function seedDemoData(tenantId: string) {
 
   await fetchAndSetAccounts(tenantId, mongoDb)
   await createTenantDatabase(tenantId)
+  // necessary to get the users first before seeding the rest
+  logger.info('Creating mock users...')
+  await getUsers(tenantId)
   await seedDynamo(dynamo, tenantId)
   await seedMongo(mongoDb, tenantId)
 }

@@ -4,6 +4,8 @@ import {
   AttributeGenerator,
   DefaultAttributeBuilders,
 } from '@/services/copilot/attributes/builder'
+import { setAccounts } from '@/core/seed/samplers/accounts'
+import { Account } from '@/@types/openapi-internal/Account'
 
 describe('Attribute generator', () => {
   test('Attributes are built correctly', async () => {
@@ -14,7 +16,15 @@ describe('Attribute generator', () => {
     const userSampler = new BusinessUserSampler(0)
     const transactionSamper = new TransactionSampler(0)
 
-    const user = userSampler.getSample(undefined, { country: 'AF' })
+    // first need to populate the accounts with mock data
+    setAccounts([
+      {
+        id: '1',
+        name: 'test',
+        email: 'test@test.com',
+      } as Account,
+    ])
+    const user = await userSampler.getSample(undefined, 'test', false, 'AF')
     const originUserId = user.userId
 
     const attributes = await attributeGenerator.getAttributes({

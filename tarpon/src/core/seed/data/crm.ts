@@ -4,7 +4,7 @@ import {
   Note,
 } from '@mergeapi/merge-sdk-typescript/dist/crm/models'
 import { memoize } from 'lodash'
-import { getUsers } from './users'
+import { users } from './users'
 import {
   CRM_ENGAGEMENTS_SEED,
   CRM_NOTES_SEED,
@@ -86,7 +86,7 @@ const getDomain = (
 export const getEngagements: () => Engagement[] = memoize(() => {
   const rng = new RandomNumberGenerator(CRM_ENGAGEMENTS_SEED)
 
-  return getUsers().flatMap((u) => {
+  return users.flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
@@ -111,7 +111,7 @@ export const getEngagements: () => Engagement[] = memoize(() => {
 export const getNotes: () => Note[] = memoize(() => {
   const rng = new RandomNumberGenerator(CRM_NOTES_SEED)
 
-  return getUsers().flatMap((u) => {
+  return users.flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
@@ -132,7 +132,7 @@ export const getNotes: () => Note[] = memoize(() => {
 export const getTasks: () => Task[] = memoize(() => {
   const rng = new RandomNumberGenerator(CRM_TASKS_SEED)
 
-  return getUsers().flatMap((u) => {
+  return users.flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []
@@ -153,7 +153,7 @@ export const getTasks: () => Task[] = memoize(() => {
 export const getSummaries: () => CrmSummary[] = memoize(() => {
   const rng = new RandomNumberGenerator(CRM_SUMMARY_SEED)
 
-  return getUsers().flatMap((u) => {
+  return users.flatMap((u) => {
     const crmAccountId = getCrmAccountId(u)
     if (!crmAccountId) {
       return []

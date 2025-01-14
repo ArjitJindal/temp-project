@@ -49,7 +49,7 @@ import {
   REASONS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
-import { getUsers } from '@/core/seed/data/users'
+import { users } from '@/core/seed/data/users'
 import { auditlogs } from '@/core/seed/data/auditlogs'
 import {
   getSanctions,
@@ -87,7 +87,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
   [CASES_COLLECTION, () => getCases()],
   [COUNTER_COLLECTION, () => getCounterCollectionData()],
-  [USERS_COLLECTION, () => getUsers()],
+  [USERS_COLLECTION, () => users],
   [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
   [AUDITLOG_COLLECTION, () => auditlogs()],
   [DRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[1]],

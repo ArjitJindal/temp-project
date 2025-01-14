@@ -1,7 +1,9 @@
 import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { cloneDeep, uniq } from 'lodash'
+import { getDemoDataS3Prefix } from '@lib/constants'
 import {
   getSanctions,
   getSanctionsHits,
@@ -50,6 +52,7 @@ import { MARITAL_STATUSS } from '@/@types/openapi-public-custom/MaritalStatus'
 import { GENDERS } from '@/@types/openapi-public-custom/Gender'
 import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentStatus'
 import { PEP_RANKS } from '@/@types/openapi-public-custom/PepRank'
+import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
@@ -147,6 +150,9 @@ const timeIntervals = ['day', 'week', 'month', 'year'] as ManipulateType[]
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 
+const shareHolders: Person[] = []
+const directors: Person[] = []
+
 export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
   protected generateSample(): any {
     return {
@@ -200,6 +206,71 @@ export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
 }
 
 abstract class UserSampler<T> extends BaseSampler<T> {
+  s3Client = new S3Client({
+    region: process.env.AWS_REGION,
+  })
+
+  uploadUserAttachment = async (
+    fileName: string,
+    fileContent: string,
+    tenantId: string
+  ) => {
+    const s3Key = `${getDemoDataS3Prefix(tenantId)}/${fileName}`
+    const command = new PutObjectCommand({
+      Bucket: process.env.DOCUMENT_BUCKET,
+      Key: s3Key,
+      Body: fileContent,
+      ContentType: 'application/pdf',
+    })
+
+    await this.s3Client.send(command)
+    return {
+      s3Key,
+      size: Buffer.from(fileContent).length,
+    }
+  }
+
+  createPdf = (userInfo: {
+    userId: string
+    userName: string
+    attachmentType: string
+  }) => {
+    const fileName = `${userInfo.userId}-${userInfo.attachmentType}.pdf`
+    const pdfHeader = `%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 5 0 R >>\nstream\n`
+
+    const pdfContent = `BT
+/F1 12 Tf
+100 700 Td
+(User Name: ${userInfo.userName}) Tj
+0 -25 Td
+(Attachment Type: ${userInfo.attachmentType}) Tj
+0 -25 Td
+(This is demo document that is uploaded for ${userInfo.userName} for ${userInfo.attachmentType}) Tj
+ET\n`
+
+    const pdfFooter = `endstream\nendobj\n5 0 obj\n20\nendobj\nxref\n0 6\n0000000000 65535 f\n0000000010 00000 n\n0000000075 00000 n\n0000000179 00000 n\n0000000223 00000 n\n0000000261 00000 n\ntrailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n312\n%%EOF`
+    return { fileName, fileContent: pdfHeader + pdfContent + pdfFooter }
+  }
+
+  createAndUploadAttachment = async (
+    userId: string,
+    userName: string,
+    attachmentType: string,
+    tenantId: string
+  ) => {
+    const { fileName, fileContent } = this.createPdf({
+      userId,
+      userName,
+      attachmentType,
+    })
+    const { s3Key, size } = await this.uploadUserAttachment(
+      fileName,
+      fileContent,
+      tenantId
+    )
+    return { s3Key, size }
+  }
+
   protected randomConsumerName(): {
     firstName: string
     middleName: string
@@ -234,21 +305,23 @@ abstract class UserSampler<T> extends BaseSampler<T> {
         this.rng.pickRandom(timeIntervals)
       )
       .valueOf()
+    const documentType = this.rng.pickRandom(DOCUMENT_TYPES)
 
-    return {
-      documentType: this.rng.pickRandom(DOCUMENT_TYPES),
+    const legalDocument: LegalDocument = {
       documentNumber: Array.from(
         { length: Math.max(8, Math.ceil(this.rng.randomInt(10))) },
-        () => letters[Math.ceil(this.rng.randomInt(letters.length))]
+        () => letters[Math.floor(this.rng.randomInt(letters.length))]
       ).join(''),
+      documentType: documentType,
       documentIssuedDate: timestamp,
       documentExpirationDate: expiryDate,
       documentIssuedCountry: 'US',
-      tags: [...Array(Math.ceil(this.rng.randomInt(2)))].map(() =>
+      tags: Array.from({ length: Math.ceil(this.rng.randomInt(2)) }, () =>
         this.sampleDocumentTag()
       ),
       nameOnDocument: name,
     }
+    return legalDocument
   }
 
   protected sampleDocumentTag() {
@@ -395,11 +468,147 @@ abstract class UserSampler<T> extends BaseSampler<T> {
   }
 }
 
-export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
-  protected generateSample(
+export class BusinessUserSampler extends UserSampler<
+  Promise<InternalBusinessUser>
+> {
+  protected getShareHolder = async (
+    timestamp: number,
+    uploadAttachment: boolean = true,
+    domain: string,
+    tenantId: string,
+    company?: CompanySeedData
+  ): Promise<Person> => {
+    const shareHolderId = uuid4()
+    const name: ConsumerName = this.randomConsumerName()
+    const legalDocuments: LegalDocument[] = []
+    const attachments: PersonAttachment[] = []
+
+    if (uploadAttachment) {
+      for (let i = 0; i < Math.ceil(this.rng.randomInt(4)); i++) {
+        const data = this.sampleLegalDocument(name)
+        legalDocuments.push(data)
+        const attachmentName = `${name.firstName}'s ${data.documentType} ${shareHolderId}`
+        const uploadedAttachment = await this.createAndUploadAttachment(
+          shareHolderId,
+          name.firstName,
+          data.documentType,
+          tenantId
+        )
+        const attachment: PersonAttachment = {
+          id: uuid4(),
+          comment: attachmentName,
+          userId: 'auth0|6715dc3e8c86a06594a0375c',
+          createdAt: timestamp,
+          files: [
+            {
+              s3Key: uploadedAttachment.s3Key,
+              filename: attachmentName,
+              size: uploadedAttachment.size,
+            },
+          ],
+        }
+        attachments.push(attachment)
+      }
+    }
+    return {
+      userId: shareHolderId,
+      generalDetails: {
+        name,
+        countryOfResidence: this.rng.pickRandom(COUNTRY_CODES),
+        countryOfNationality: this.rng.pickRandom(COUNTRY_CODES),
+        gender: this.rng.pickRandom(['M', 'F', 'NB']),
+        dateOfBirth: new Date(this.generateRandomTimestamp()).toDateString(),
+      },
+      legalDocuments,
+      contactDetails: {
+        emailIds: [
+          `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}}@${this.rng.pickRandom(
+            emailDomains
+          )}`,
+        ].concat(company?.contactEmails || []),
+        faxNumbers: [this.randomPhoneNumber()],
+        websites: [domain],
+        addresses: [this.rng.pickRandom(usersAddresses())],
+        contactNumbers: [this.randomPhoneNumber()],
+      },
+      tags: [...Array(Math.ceil(this.rng.randomInt(2)))].map(() => {
+        return {
+          key: this.rng.pickRandom(tagKeys),
+          value: uuid4(),
+        }
+      }),
+      attachments,
+    } as Person
+  }
+
+  protected getDirector = async (
+    timestamp: number,
+    domain: string,
+    tenantId: string,
+    uploadAttachment: boolean = true
+  ): Promise<Person> => {
+    const name: ConsumerName = this.randomConsumerName()
+    const directorId = uuid4()
+    const legalDocuments: LegalDocument[] = []
+    const attachments: PersonAttachment[] = []
+
+    if (uploadAttachment) {
+      for (let i = 0; i < Math.ceil(this.rng.randomInt(4)); i++) {
+        const data = this.sampleLegalDocument(name)
+        legalDocuments.push(data)
+        const attachmentName = `${name.firstName}'s ${data.documentType} ${directorId}`
+        const uploadedAttachment = await this.createAndUploadAttachment(
+          directorId,
+          name.firstName,
+          data.documentType,
+          tenantId
+        )
+        const attachment: PersonAttachment = {
+          id: uuid4(),
+          comment: attachmentName,
+          userId: 'auth0|6715dc3e8c86a06594a0375c',
+          createdAt: timestamp,
+          files: [
+            {
+              s3Key: uploadedAttachment.s3Key,
+              filename: attachmentName,
+              size: uploadedAttachment.size,
+            },
+          ],
+        }
+        attachments.push(attachment)
+      }
+    }
+    return {
+      userId: directorId,
+      legalDocuments,
+      contactDetails: {
+        emailIds: [
+          name.firstName.toLowerCase() +
+            '@' +
+            this.rng.pickRandom(emailDomains),
+        ],
+        addresses: [this.rng.pickRandom(usersAddresses())],
+        contactNumbers: [this.randomPhoneNumber()],
+        faxNumbers: [this.randomPhoneNumber()],
+        websites: [domain],
+      },
+      generalDetails: {
+        gender: this.rng.pickRandom(['M', 'F', 'NB']),
+        countryOfResidence: this.rng.pickRandom(COUNTRY_CODES),
+        countryOfNationality: this.rng.pickRandom(COUNTRY_CODES),
+        dateOfBirth: new Date(this.generateRandomTimestamp()).toDateString(),
+        name,
+      },
+      attachments,
+    } as Person
+  }
+  protected async generateSample(
+    tenantId: string,
+    uploadAttachment: boolean = true,
     company?: CompanySeedData,
     country?: CountryCode
-  ): InternalBusinessUser {
+  ): Promise<InternalBusinessUser> {
     const name = company?.name || this.randomName()
     const domain = name.toLowerCase().replace(' ', '').replace('&', '')
     const userId = `U-${this.counter}`
@@ -415,6 +624,35 @@ export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
     for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
       paymentMethod.push(paymentMethodSampler.getSample())
     }
+
+    if (shareHolders.length === 0) {
+      // only poulate once
+      for (let i = 0; i < 100; i++) {
+        shareHolders.push(
+          await this.getShareHolder(
+            timestamp,
+            uploadAttachment,
+            domain,
+            tenantId,
+            company
+          )
+        )
+      }
+    }
+
+    if (directors.length === 0) {
+      for (let i = 0; i < 100; i++) {
+        directors.push(
+          await this.getDirector(timestamp, domain, tenantId, uploadAttachment)
+        )
+      }
+    }
+
+    const userShareHolders: Person[] = this.rng.randomSubsetOfSize(
+      shareHolders,
+      2
+    )
+    const userDirectors: Person[] = this.rng.randomSubsetOfSize(directors, 2)
 
     const user: InternalBusinessUser = {
       type: 'BUSINESS',
@@ -486,75 +724,8 @@ export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
       },
       acquisitionChannel: this.rng.r(5).pickRandom(ACQUISITION_CHANNELS),
       transactionLimits: transactionLimitSampler.getSample(),
-      shareHolders: Array.from({ length: 2 }, () => {
-        const name: ConsumerName = this.randomConsumerName()
-
-        return {
-          userId: uuid4(),
-          generalDetails: {
-            name,
-            countryOfResidence: country ?? this.rng.pickRandom(COUNTRY_CODES),
-            countryOfNationality:
-              country ?? this.rng.r(2).pickRandom(COUNTRY_CODES),
-            gender: this.rng.r(3).pickRandom(['M', 'F', 'NB']),
-            dateOfBirth: new Date(
-              this.generateRandomTimestamp()
-            ).toDateString(),
-          },
-          legalDocuments: Array.from(
-            { length: Math.ceil(this.rng.randomInt(4)) },
-            () => this.sampleLegalDocument(name)
-          ),
-          contactDetails: {
-            emailIds: [
-              `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}}@${this.rng.pickRandom(
-                emailDomains
-              )}`,
-            ].concat(company?.contactEmails || []),
-            faxNumbers: [this.randomPhoneNumber()],
-            websites: [domain],
-            addresses: [this.rng.pickRandom(usersAddresses())],
-            contactNumbers: [this.randomPhoneNumber()],
-          },
-          tags: [...Array(Math.ceil(this.rng.randomInt(2)))].map(() => {
-            return {
-              key: this.rng.pickRandom(tagKeys),
-              value: uuid4(),
-            }
-          }),
-        } as Person
-      }),
-      directors: Array.from({ length: 2 }, () => {
-        const name: ConsumerName = this.randomConsumerName()
-
-        return {
-          userId: uuid4(),
-          legalDocuments: Array.from(
-            { length: Math.ceil(this.rng.randomInt(4)) },
-            () => this.sampleLegalDocument(name)
-          ),
-          contactDetails: {
-            emailIds: [
-              name.firstName.toLowerCase() +
-                '@' +
-                this.rng.pickRandom(emailDomains),
-            ],
-            addresses: [usersAddresses()[500 + this.counter]],
-            contactNumbers: [this.randomPhoneNumber()],
-            faxNumbers: [this.randomPhoneNumber()],
-            websites: [domain],
-          },
-          generalDetails: {
-            gender: this.rng.pickRandom(['M', 'F', 'NB']),
-            countryOfResidence: this.rng.pickRandom(COUNTRY_CODES),
-            countryOfNationality: this.rng.pickRandom(COUNTRY_CODES),
-            dateOfBirth: new Date(
-              this.generateRandomTimestamp()
-            ).toDateString(),
-            name,
-          },
-        } as Person
-      }),
+      shareHolders: userShareHolders,
+      directors: userDirectors,
     }
 
     this.assignKrsAndDrsScores(user) // TOOD: make this into a sampler
@@ -567,8 +738,13 @@ export class BusinessUserSampler extends UserSampler<InternalBusinessUser> {
   }
 }
 
-export class ConsumerUserSampler extends UserSampler<InternalConsumerUser> {
-  protected generateSample(): InternalConsumerUser {
+export class ConsumerUserSampler extends UserSampler<
+  Promise<InternalConsumerUser>
+> {
+  protected async generateSample(
+    tenantId: string,
+    uploadAttachment: boolean = true
+  ): Promise<InternalConsumerUser> {
     const userId = `U-${this.counter}`
     const name = this.randomConsumerName()
     const riskLevel = this.rng.pickRandom(RISK_LEVELS)
@@ -589,6 +765,36 @@ export class ConsumerUserSampler extends UserSampler<InternalConsumerUser> {
       'CONSUMER'
     )
 
+    const legalDocuments: LegalDocument[] = []
+    const attachments: PersonAttachment[] = []
+
+    if (uploadAttachment) {
+      for (let i = 0; i < Math.ceil(this.rng.randomInt(4)); i++) {
+        const data = this.sampleLegalDocument(name)
+        legalDocuments.push(data)
+        const attachmentName = `${name.firstName}'s ${data.documentType} ${userId}`
+        const uploadedAttachment = await this.createAndUploadAttachment(
+          userId,
+          name.firstName,
+          data.documentType,
+          tenantId
+        )
+        const attachment: PersonAttachment = {
+          id: uuid4(),
+          comment: attachmentName,
+          userId: 'auth0|6715dc3e8c86a06594a0375c',
+          createdAt: timestamp,
+          files: [
+            {
+              s3Key: uploadedAttachment.s3Key,
+              filename: attachmentName,
+              size: uploadedAttachment.size,
+            },
+          ],
+        }
+        attachments.push(attachment)
+      }
+    }
     const paymentMethodSampler = new PaymentDetailsSampler()
 
     const paymentMethod: PaymentDetails[] = []
@@ -609,10 +815,8 @@ export class ConsumerUserSampler extends UserSampler<InternalConsumerUser> {
       sourceOfFunds: [this.rng.r(2).pickRandom(SOURCE_OF_FUNDSS)],
       userStateDetails: this.sampleUserStateDetails(),
       kycStatusDetails: this.sampleKycStatusDetails(),
-      legalDocuments: Array.from(
-        { length: Math.ceil(this.rng.randomInt(4)) },
-        () => this.sampleLegalDocument(name)
-      ),
+      legalDocuments,
+      attachments,
       userDetails: {
         dateOfBirth: new Date(this.generateRandomTimestamp(18)).toISOString(),
         countryOfResidence,

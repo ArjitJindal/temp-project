@@ -5,7 +5,7 @@ import {
   ConsumerSanctionsSearchSampler,
 } from '../raw-data/sanctions-search'
 import { BaseSampler } from '../samplers/base'
-import { getUsers, getUserUniqueTags } from './users'
+import { getUserUniqueTags, users } from './users'
 import {
   getSanctions,
   getSanctionsHits,
@@ -78,7 +78,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     this.userTransactionCount = new Map<string, number>()
     this.transactionIndex = 0
 
-    const userIds = getUsers().map((u) => u.userId)
+    const userIds = users.map((u) => u.userId)
 
     // Initialize transaction count for each user
     userIds.forEach((id) => this.userTransactionCount.set(id, 0))
@@ -165,11 +165,11 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       this.userAccountMap.set(destinationUserId, destinationUserPaymentDetails)
     }
 
-    const originUser = getUsers().find((u) => u.userId === originUserId) as
+    const originUser = users.find((u) => u.userId === originUserId) as
       | User
       | Business
 
-    const destinationUser = getUsers().find(
+    const destinationUser = users.find(
       (u) => u.userId === destinationUserId
     ) as User | Business
 

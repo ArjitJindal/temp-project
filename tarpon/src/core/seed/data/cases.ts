@@ -1,6 +1,6 @@
 import { compact, memoize, uniqBy } from 'lodash'
 import { RandomNumberGenerator } from '../samplers/prng'
-import { getUsers } from './users'
+import { users } from './users'
 import { AUDIT_LOGS_STATUS_CHANGE_SEED, CASES_SEED } from './seeds'
 import { getTransactions } from '@/core/seed/data/transactions'
 import {
@@ -22,8 +22,8 @@ export const getCases: () => Case[] = memoize(() => {
   const data: Case[] = []
   const processedUsers = new Set()
 
-  for (let i = 0; i < getUsers().length; i += 1) {
-    const user = getUsers()[i]
+  for (let i = 0; i < users.length; i += 1) {
+    const user = users[i]
     if (processedUsers.has(user.userId)) {
       continue
     }

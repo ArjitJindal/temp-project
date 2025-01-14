@@ -6,7 +6,7 @@ import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
 import { riskFactors } from './data/risk-factors'
 import { getCases } from './data/cases'
 import { UserRepository } from '@/services/users/repositories/user-repository'
-import { getUsers } from '@/core/seed/data/users'
+import { users } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
 import { data as listsData } from '@/core/seed/data/lists'
 import { ListRepository } from '@/services/list/repositories/list-repository'
@@ -71,7 +71,6 @@ export async function seedDynamo(
     dynamoDb,
   })
   logger.info('Creating users...')
-  const users = getUsers()
   for (const user of users) {
     const type = user.type as UserType
     const dynamoUser = pick<UserWithRulesResult | BusinessWithRulesResult>(

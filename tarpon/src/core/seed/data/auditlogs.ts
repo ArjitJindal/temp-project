@@ -1,7 +1,7 @@
 import { v4 as uuid4 } from 'uuid'
 import { memoize } from 'lodash'
 import { generateNarrative } from '../samplers/cases'
-import { getUsers } from './users'
+import { users } from './users'
 import { transactionRules as rules } from './rules'
 import { auditLogForCaseStatusChange } from './cases'
 import { AUDIT_LOG_SEED } from './seeds'
@@ -23,7 +23,7 @@ const generator = function* (): Generator<AuditLog> {
       entityId: uuid4(),
       user: rng.pickRandom(getAccounts()),
     }
-    const allUsers = getUsers()
+    const allUsers = users
 
     // User Viewed
     if (i % 3 === 0) {
