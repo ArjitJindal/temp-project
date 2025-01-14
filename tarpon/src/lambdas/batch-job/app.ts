@@ -22,6 +22,7 @@ import {
 } from '@/core/utils/context'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/services/batch-jobs/batch-job'
 
 function getBatchJobName(job: BatchJobWithId) {
   return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
@@ -118,7 +119,10 @@ export const jobDecisionHandler = async (
   [BATCH_JOB_RUN_TYPE_RESULT_KEY]: BatchRunType
   [BATCH_JOB_PAYLOAD_RESULT_KEY]: any
 }> => {
-  const settings = await tenantSettings(job.tenantId)
+  const settings =
+    job.tenantId === LONG_RUNNING_MIGRATION_TENANT_ID
+      ? {}
+      : await tenantSettings(job.tenantId)
 
   const BATCH_JOB_AND_RUN_TYPE_MAP: {
     [key in BatchJob['type']]: BatchRunType
@@ -162,6 +166,7 @@ export const jobDecisionHandler = async (
     FIX_RISK_SCORES_FOR_PNB_USERS: 'FARGATE',
     NANGO_DATA_FETCH: 'LAMBDA',
     FINCEN_REPORT_STATUS_REFRESH: 'LAMBDA',
+    AGGREGATION_CLEANUP: 'FARGATE',
   }
 
   return {
@@ -179,7 +184,10 @@ export const jobDecisionHandler = async (
 }
 
 export const genericJobRunnerHandler = async (job: BatchJobWithId) => {
-  await initializeTenantContext(job.tenantId)
+  if (job.tenantId !== LONG_RUNNING_MIGRATION_TENANT_ID) {
+    // Skipping as we are creating job per region and context should be handled per tenant
+    await initializeTenantContext(job.tenantId)
+  }
   updateLogMetadata({
     jobId: job.jobId,
     type: job.type,

@@ -335,6 +335,11 @@ export type FinCenReportStatusRefreshBatchJob = {
   tenantId: string
 }
 
+export type AggregationCleanupBatchJob = {
+  type: 'AGGREGATION_CLEANUP'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -370,6 +375,7 @@ export type BatchJob =
   | WebhookRetryBatchJob
   | NangoDataFetchBatchJob
   | FinCenReportStatusRefreshBatchJob
+  | AggregationCleanupBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

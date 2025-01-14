@@ -22,6 +22,7 @@ import { FixRiskScoresForPnbUsersBatchJobRunner } from './fix-risk-scores-for-pn
 import { WebhookRetryBatchJobRunner } from './webhook-retry-batch-job-runner'
 import { NangoDataFetchBatchJobRunner } from './nango-data-fetch'
 import { FinCenReportStatusFetchBatchJobRunner } from './fincen-report-status-fetch'
+import { AggregationCleanupBatchJobRunner } from './aggregation-cleanup-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -94,6 +95,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     NANGO_DATA_FETCH: (jobId) => new NangoDataFetchBatchJobRunner(jobId),
     FINCEN_REPORT_STATUS_REFRESH: (jobId) =>
       new FinCenReportStatusFetchBatchJobRunner(jobId),
+    AGGREGATION_CLEANUP: (jobId) => new AggregationCleanupBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }
