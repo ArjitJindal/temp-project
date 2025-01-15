@@ -195,10 +195,14 @@ export class SLAService {
       'alert',
       alertsCursor,
       async (updatedPolicyDetails, entity) => {
-        await this.alertsRepository.saveAlert(entity.caseId ?? '', {
-          ...entity,
-          slaPolicyDetails: updatedPolicyDetails,
-        })
+        if (!entity.alertId) {
+          return
+        }
+
+        await this.alertsRepository.updateAlertSlaPolicyDetails(
+          [entity.alertId],
+          updatedPolicyDetails
+        )
       }
     )
     logger.debug('SLA Statuses updated for all alerts')
@@ -215,10 +219,14 @@ export class SLAService {
       'case',
       casesCursor,
       async (updatedPolicyDetails, entity) => {
-        await this.caseRepository.updateCase({
-          caseId: entity.caseId,
-          slaPolicyDetails: updatedPolicyDetails,
-        })
+        if (!entity.caseId) {
+          return
+        }
+
+        await this.caseRepository.updateCaseSlaPolicyDetails(
+          entity.caseId,
+          updatedPolicyDetails
+        )
       }
     )
     logger.debug('SLA Statuses updated for all manual cases')

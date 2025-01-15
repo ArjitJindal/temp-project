@@ -48,6 +48,7 @@ import { CounterRepository } from '@/services/counter/repository'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -1482,6 +1483,16 @@ export class CaseRepository {
     )
 
     return updatedCase.value
+  }
+
+  public async updateCaseSlaPolicyDetails(
+    caseId: string,
+    slaPolicyDetails: SLAPolicyDetails[]
+  ): Promise<void> {
+    await this.updateOneCase(
+      { caseId },
+      { $set: { slaPolicyDetails: slaPolicyDetails } }
+    )
   }
 
   public async syncCaseUsers(newUser: InternalUser): Promise<void> {

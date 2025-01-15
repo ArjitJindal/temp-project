@@ -62,6 +62,7 @@ import {
 } from '@/utils/clickhouse/utils'
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 export const API_USER = 'API'
@@ -1056,6 +1057,21 @@ export class AlertsRepository {
           },
         ],
       }
+    )
+  }
+
+  public async updateAlertSlaPolicyDetails(
+    alertIds: string[],
+    slaPolicyDetails: SLAPolicyDetails[]
+  ): Promise<void> {
+    await this.updateManyAlerts(
+      { 'alerts.alertId': { $in: alertIds } },
+      {
+        $set: {
+          'alerts.$[alert].slaPolicyDetails': slaPolicyDetails,
+        },
+      },
+      { arrayFilters: [{ 'alert.alertId': { $in: alertIds } }] }
     )
   }
 
