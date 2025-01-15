@@ -321,12 +321,16 @@ export class DynamoDbTransactionRepository
   }
 
   public async getTransactionById(
-    transactionId: string
+    transactionId: string,
+    attributesToFetch?: Array<keyof AuxiliaryIndexTransaction>
   ): Promise<TransactionWithRulesResult | null> {
     const getItemInput: GetCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       Key: DynamoDbKeys.TRANSACTION(this.tenantId, transactionId),
       ConsistentRead: true,
+      ...(attributesToFetch
+        ? { ProjectionExpression: attributesToFetch.join(', ') }
+        : {}),
     }
     const result = await this.dynamoDb.send(new GetCommand(getItemInput))
 

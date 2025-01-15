@@ -197,6 +197,18 @@ export type SanctionsDataFetchBatchJob = {
   }
 }
 
+export type PnbTransactionEventUpdatesBatchJob = {
+  type: 'PNB_TRANSACTION_EVENT_UPDATES'
+  tenantId: string
+  parameters: {
+    apiKey: string
+    publicApiEndpoint: string
+    concurrency: number
+    type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'OTHERS'
+    s3Key: string
+  }
+}
+
 export type FilesAISummary = {
   type: 'FILES_AI_SUMMARY'
   tenantId: string
@@ -376,6 +388,7 @@ export type BatchJob =
   | NangoDataFetchBatchJob
   | FinCenReportStatusRefreshBatchJob
   | AggregationCleanupBatchJob
+  | PnbTransactionEventUpdatesBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string
