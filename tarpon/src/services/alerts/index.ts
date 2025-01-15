@@ -1188,7 +1188,10 @@ export class AlertsService extends CaseAlertsCommonService {
       return // No changes made to the checklist
     }
     alert.ruleChecklist = updatedChecklist
-    await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
+    await this.alertsRepository.updateAlertChecklistStatus(
+      alertId,
+      updatedChecklist ?? []
+    )
     await this.auditLogService.handleAuditLogForChecklistUpdate(
       alertId,
       originalChecklist,
@@ -1225,7 +1228,10 @@ export class AlertsService extends CaseAlertsCommonService {
     alert.ruleChecklist = updatedChecklist
 
     await Promise.all([
-      this.alertsRepository.saveAlert(alert.caseId ?? '', alert),
+      this.alertsRepository.updateAlertChecklistStatus(
+        alertId,
+        updatedChecklist ?? []
+      ),
       this.auditLogService.handleAuditLogForChecklistUpdate(
         alertId,
         originalChecklist,
@@ -1234,7 +1240,9 @@ export class AlertsService extends CaseAlertsCommonService {
     ])
   }
 
-  private async acceptanceCriteriaPassed(alert: Alert): Promise<boolean> {
+  private async acceptanceCriteriaPassed(
+    alert: Pick<Alert, 'ruleChecklistTemplateId' | 'ruleChecklist'>
+  ): Promise<boolean> {
     const ruleChecklistTemplateId = alert.ruleChecklistTemplateId
 
     if (!ruleChecklistTemplateId) {
@@ -1282,15 +1290,19 @@ export class AlertsService extends CaseAlertsCommonService {
   async updateAlertQaStatus(update: AlertQaStatusUpdateRequest): Promise<void> {
     const alerts = await this.getAlertsByIds(update.alertIds)
     const comment = `Alert QA status set to ${update.checklistStatus} with comment: ${update.comment}`
+
     const promises = alerts.map(async (alert) => {
+      let updatedAssignments: Assignment[] = []
+
       if (update.checklistStatus === 'FAILED') {
         // Find who closed the alert and reassign them
         const originalAssignee = alert.statusChanges
           ?.slice()
           .reverse()
           .find((sc) => sc.caseStatus === 'CLOSED')?.userId
+
         if (originalAssignee) {
-          alert.assignments = [
+          updatedAssignments = [
             {
               assigneeUserId: originalAssignee,
               assignedByUserId: getContext()?.user?.id ?? '',
@@ -1300,25 +1312,23 @@ export class AlertsService extends CaseAlertsCommonService {
         }
       }
 
-      const updatedAlert: Alert = {
-        ...alert,
-        ruleQaStatus: update.checklistStatus,
-        comments: [
-          ...(alert.comments ?? []),
-          {
-            body: comment,
-            createdAt: Date.now(),
-            files: update.files,
-            id: uuid4(),
-            updatedAt: Date.now(),
-            userId: getContext()?.user?.id ?? '',
-          },
-        ],
+      const commentToPush: Comment = {
+        body: comment,
+        createdAt: Date.now(),
+        files: update.files,
+        id: uuid4(),
+        updatedAt: Date.now(),
+        userId: getContext()?.user?.id ?? '',
       }
+
+      const checklistStatus = update.checklistStatus
 
       const acceptanceCriteriaPassed =
         update.checklistStatus === 'PASSED'
-          ? await this.acceptanceCriteriaPassed(updatedAlert)
+          ? await this.acceptanceCriteriaPassed({
+              ruleChecklist: alert.ruleChecklist,
+              ruleChecklistTemplateId: alert.ruleChecklistTemplateId,
+            })
           : true
 
       if (!acceptanceCriteriaPassed) {
@@ -1327,12 +1337,14 @@ export class AlertsService extends CaseAlertsCommonService {
 
       await withTransaction(async () => {
         await Promise.all([
-          this.alertsRepository.saveAlert(
-            updatedAlert.caseId ?? '',
-            updatedAlert
+          this.alertsRepository.updateAlertQaStatus(
+            alert.alertId as string,
+            checklistStatus,
+            commentToPush,
+            updatedAssignments
           ),
           this.auditLogService.handleAuditLogForAlertQaUpdate(
-            updatedAlert.alertId as string,
+            alert.alertId as string,
             update
           ),
           this.alertsRepository.updateAlertQACountInSampling(
@@ -1370,12 +1382,15 @@ export class AlertsService extends CaseAlertsCommonService {
     assignments: Assignment[]
   ): Promise<void> {
     const alert = await this.alertsRepository.getAlertById(alertId)
+
     if (!alert) {
       throw new NotFound('No alert')
     }
 
-    alert.qaAssignment = assignments
-    await this.alertsRepository.saveAlert(alert.caseId ?? '', alert)
+    await this.alertsRepository.updateAlertQaAssignments(
+      alert.alertId as string,
+      assignments
+    )
   }
 
   private getQaSamplingFilters(filters: AlertParams): AlertParams {

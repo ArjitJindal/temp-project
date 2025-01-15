@@ -63,6 +63,7 @@ import {
 import { CaseCaseUsers } from '@/@types/openapi-internal/CaseCaseUsers'
 import { CaseType } from '@/@types/openapi-internal/CaseType'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { ChecklistItemValue } from '@/@types/openapi-internal/ChecklistItemValue'
 
 export const FLAGRIGHT_SYSTEM_USER = 'Flagright System'
 export const API_USER = 'API'
@@ -1075,20 +1076,53 @@ export class AlertsRepository {
     )
   }
 
-  public async saveAlert(caseId: string, alert: Alert): Promise<void> {
-    const db = this.mongoDb.db()
-    const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
-    const now = Date.now()
-    alert.updatedAt = now
+  public async updateAlertChecklistStatus(
+    alertId: string,
+    updatedChecklist: ChecklistItemValue[]
+  ): Promise<void> {
+    await this.updateOneAlert(
+      { 'alerts.alertId': alertId },
+      {
+        $set: {
+          'alerts.$[alert].ruleChecklist': updatedChecklist,
+          'alerts.$[alert].updatedAt': Date.now(),
+        },
+      },
+      { arrayFilters: [{ 'alert.alertId': alertId }] }
+    )
+  }
 
-    if (hasFeature('ALERTS_DYNAMO_POC')) {
-      await this.dynamoAlertRepository.saveAlert(alert)
-    }
+  public async updateAlertQaStatus(
+    alertId: string,
+    qaStatus: ChecklistStatus,
+    comment: Comment,
+    assignments?: Assignment[]
+  ): Promise<void> {
+    await this.updateOneAlert(
+      { 'alerts.alertId': alertId },
+      {
+        $set: {
+          'alerts.$[alert].ruleQaStatus': qaStatus,
+          'alerts.$[alert].assignments': assignments,
+          'alerts.$[alert].updatedAt': Date.now(),
+        },
+        $push: {
+          'alerts.$[alert].comments': comment,
+        },
+      },
+      {
+        arrayFilters: [{ 'alert.alertId': alertId }],
+      }
+    )
+  }
 
-    await collection.findOneAndUpdate(
-      { caseId },
-      { $set: { 'alerts.$[alert]': alert, updatedAt: now } },
-      { arrayFilters: [{ 'alert.alertId': alert.alertId }] }
+  public async updateAlertQaAssignments(
+    alertId: string,
+    assignments: Assignment[]
+  ): Promise<void> {
+    await this.updateOneAlert(
+      { 'alerts.alertId': alertId },
+      { $set: { 'alerts.$[alert].qaAssignment': assignments } }
     )
   }
 
