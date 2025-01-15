@@ -22,8 +22,8 @@ models:
     source: number | null
     subject: string | null
     to_emails: string[] | null
-    created_at: string | null
-    updated_at: string | null
+    created_at: number | null
+    updated_at: number | null
     is_escalated: boolean | null
     cc_emails: string[] | null
     fwd_emails: string[] | null
@@ -35,5 +35,5 @@ models:
     body_text: string | null
     from_email: string | null
     to_email: string | null
-    created_at: string | null
-    updated_at: string | null
+    created_at: number | null
+    updated_at: number | null

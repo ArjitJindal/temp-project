@@ -35,8 +35,8 @@ export interface FreshdeskApiTicket {
   to_emails: string[]
   twitter_id: string
   type: string
-  created_at: string
-  updated_at: string
+  created_at: number
+  updated_at: number
   requester: {
     email: string
   }
@@ -53,8 +53,8 @@ export interface Conversation {
   body_text: string | null
   from_email: string | null
   to_email: string | null
-  created_at: string | null
-  updated_at: string | null
+  created_at: number | null
+  updated_at: number | null
 }
 
 export default async function fetchData(nango: NangoSync): Promise<void> {
@@ -87,8 +87,8 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
         const ticketData = getTicket.data as FreshdeskApiTicket
 
         const ticketSchema: FreshDeskTicket = {
-          created_at: ticket.created_at,
-          updated_at: ticket.updated_at,
+          created_at: new Date(ticket.created_at).valueOf(),
+          updated_at: new Date(ticket.updated_at).valueOf(),
           is_escalated: ticket.is_escalated,
           priority: ticket.priority,
           requester_id: ticket.requester_id,
@@ -109,8 +109,14 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
               body_text: conversation.body_text || null,
               from_email: conversation.from_email || null,
               to_email: conversation.to_email || null,
-              created_at: conversation.created_at || null,
-              updated_at: conversation.updated_at || null,
+              created_at:
+                conversation.created_at !== null
+                  ? new Date(conversation.created_at).valueOf()
+                  : null,
+              updated_at:
+                conversation.updated_at !== null
+                  ? new Date(conversation.updated_at).valueOf()
+                  : null,
             })) || [],
         }
 
