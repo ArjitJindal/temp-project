@@ -94,6 +94,10 @@ function initializeEnvVars() {
   )
   process.env.MONGO_DB_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoDbConsumerQueueName}`
   process.env.MONGO_UPDATE_CONSUMER_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${mongoUpdateConsumerQueueName}`
+  process.env.DOCUMENT_BUCKET = getNameForGlobalResource(
+    StackConstants.S3_DOCUMENT_BUCKET_PREFIX,
+    getConfig()
+  )
 }
 
 async function main() {

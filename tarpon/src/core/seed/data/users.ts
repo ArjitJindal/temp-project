@@ -46,7 +46,7 @@ const consumerUsers: (
   const startCounter = companies.length
   const sampler = new ConsumerUserSampler(undefined, startCounter)
   let uploadAttachments = true
-  if (process.env.DISABLE_UPLOAD_ATTACHMENTS) {
+  if (envIs('local')) {
     uploadAttachments = false
   }
   const userPromises = [...new Array(200)].map(async () => {
