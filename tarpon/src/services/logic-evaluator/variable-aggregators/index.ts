@@ -6,6 +6,7 @@ import { LogicVariableAggregator } from './types'
 import { UNIQUE_VALUES, UNIQUE_COUNT } from './unique'
 import { MIN } from './min'
 import { MAX } from './max'
+import { STDEV } from './stdev'
 import { LogicAggregationFunc } from '@/@types/openapi-internal/LogicAggregationFunc'
 
 export function getLogicVariableAggregator(
@@ -26,6 +27,8 @@ export function getLogicVariableAggregator(
       return MIN
     case 'MAX':
       return MAX
+    case 'STDEV':
+      return STDEV
   }
 }
 

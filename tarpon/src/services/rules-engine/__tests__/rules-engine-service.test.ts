@@ -1672,6 +1672,130 @@ describe('Verify Transaction: V8 engine', () => {
     })
   })
 
+  describe('Simple case - stdev', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        id: 'RC-V8-R-1',
+        defaultLogic: {
+          and: [
+            { '>': [{ var: 'agg:test-stdev' }, 10] },
+            { '<': [{ var: 'agg:test-stdev' }, 20] },
+          ],
+        },
+        defaultLogicAggregationVariables: [
+          {
+            key: 'agg:test-stdev',
+            type: 'PAYMENT_DETAILS_TRANSACTIONS',
+            userDirection: 'SENDER',
+            transactionDirection: 'SENDING',
+            aggregationFieldKey:
+              'TRANSACTION:originAmountDetails-transactionAmount',
+            aggregationFunc: 'STDEV',
+            timeWindow: {
+              start: { units: 1, granularity: 'day' },
+              end: { units: 0, granularity: 'day' },
+            },
+            baseCurrency: 'USD',
+            includeCurrentEntity: true,
+          },
+        ],
+        type: 'TRANSACTION',
+      },
+    ])
+
+    test('Basic test', async () => {
+      const logicEvaluator = new LogicEvaluator(TEST_TENANT_ID, dynamoDb)
+      const rulesEngine = new RulesEngineService(
+        TEST_TENANT_ID,
+        dynamoDb,
+        logicEvaluator
+      )
+      const timestamp = dayjs().valueOf()
+      const result1 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-1',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originUserId: 'U-132',
+          originAmountDetails: {
+            transactionAmount: 20,
+            transactionCurrency: 'USD',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 20,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp,
+        })
+      )
+      expect(result1.executedRules.length).toBe(1)
+      expect(result1.hitRules.length).toBe(0)
+      const result2 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-2',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 55,
+            transactionCurrency: 'USD',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 55,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 1,
+        })
+      )
+      expect(result2.executedRules.length).toBe(1)
+      expect(result2.hitRules.length).toBe(1)
+      const result3 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-3',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 40,
+            transactionCurrency: 'USD',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 40,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 2,
+        })
+      )
+      expect(result3.executedRules.length).toBe(1)
+      expect(result3.hitRules.length).toBe(1)
+      const result4 = await rulesEngine.verifyTransaction(
+        getTestTransaction({
+          transactionId: 'tx-4',
+          originPaymentDetails: {
+            method: 'CARD',
+            cardFingerprint: '123',
+          },
+          originAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          destinationAmountDetails: {
+            transactionAmount: 100,
+            transactionCurrency: 'USD',
+          },
+          timestamp: timestamp + 3,
+        })
+      )
+      expect(result4.executedRules.length).toBe(1)
+      expect(result4.hitRules.length).toBe(0)
+    })
+  })
+
   describe('Simple case - exclude current entity', () => {
     const TEST_TENANT_ID = getTestTenantId()
     setUpRulesHooks(TEST_TENANT_ID, [

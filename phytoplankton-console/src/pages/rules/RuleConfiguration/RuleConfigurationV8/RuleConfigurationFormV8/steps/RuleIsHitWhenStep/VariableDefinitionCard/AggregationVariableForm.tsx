@@ -314,6 +314,10 @@ export const AggregationVariableFormContent: React.FC<
           value: 'MAX',
           label: 'Max',
         },
+        {
+          value: 'STDEV',
+          label: 'Standard deviation',
+        },
       ];
       options.push(...numberValueOptions);
 

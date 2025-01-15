@@ -14,6 +14,7 @@ const AGG_FUNC_TO_TYPE: Record<LogicAggregationFunc, string> = {
   UNIQUE_VALUES: 'multiselect',
   MIN: 'number',
   MAX: 'number',
+  STDEV: 'number',
 };
 
 export function getAggVarDefinition(
