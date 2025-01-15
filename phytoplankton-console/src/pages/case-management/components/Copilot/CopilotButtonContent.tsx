@@ -23,22 +23,34 @@ type CopilotButtonProps = {
   onAskClick: () => void;
   onFormatClick: () => void;
   narrative: string;
+  copilotDisabled: boolean;
+  copilotDisabledReason?: string;
 };
 
 export const CopilotButtons = (props: CopilotButtonProps) => {
   const settings = useSettings();
-  const { narrative, askLoading, formatLoading, attributes, onFormatClick, onAskClick } = props;
+  const {
+    narrative,
+    askLoading,
+    formatLoading,
+    attributes,
+    onFormatClick,
+    onAskClick,
+    copilotDisabled = false,
+    copilotDisabledReason = '',
+  } = props;
   const [showSources, setShowSources] = useState(false);
 
   if (askLoading || formatLoading) {
     return <ProgressBar />;
   }
-
   return (
     <div className={s.buttons}>
       <Tooltip
         title={
-          settings.isAiEnabled
+          copilotDisabled
+            ? copilotDisabledReason
+            : settings.isAiEnabled
             ? `Use AI to generate the narrative template`
             : `Enable AI Features to generate a narrative`
         }
@@ -49,7 +61,7 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
             className={s.copilotAskButton}
             onClick={onAskClick}
             icon={<BrainLineIcon />}
-            isDisabled={!settings?.isAiEnabled || askLoading}
+            isDisabled={!settings?.isAiEnabled || askLoading || copilotDisabled}
             testName="ask-copilot"
             requiredPermissions={['copilot:narrative:write']}
           >
@@ -121,6 +133,8 @@ interface Props {
   setNarrativeValue: (narrative: string) => void;
   entityId: string;
   entityType?: EntityType;
+  copilotDisabled?: boolean;
+  copilotDisabledReason?: string;
 }
 
 export const CopilotButtonContent = ({
@@ -129,6 +143,8 @@ export const CopilotButtonContent = ({
   narrative,
   setNarrativeValue,
   entityType,
+  copilotDisabled,
+  copilotDisabledReason,
 }: Props) => {
   const branding = getBranding();
   const settings = useSettings();
@@ -148,6 +164,8 @@ export const CopilotButtonContent = ({
             entityType={entityType}
             narrative={narrative}
             setNarrativeValue={setNarrativeValue}
+            copilotDisabled={copilotDisabled}
+            copilotDisabledReason={copilotDisabledReason}
           />
         </Tooltip>
       ) : (
@@ -157,6 +175,8 @@ export const CopilotButtonContent = ({
           entityType={entityType}
           narrative={narrative}
           setNarrativeValue={setNarrativeValue}
+          copilotDisabled={copilotDisabled}
+          copilotDisabledReason={copilotDisabledReason}
         />
       )}
     </>
@@ -211,6 +231,8 @@ export const CopilotWrapperContent = ({
   entityId,
   narrative,
   setNarrativeValue,
+  copilotDisabled = false,
+  copilotDisabledReason = '',
 }: Props) => {
   const api = useApi();
   const [askLoading, setAskLoading] = useState(false);
@@ -259,7 +281,6 @@ export const CopilotWrapperContent = ({
       setFormatLoading(false);
     }
   };
-
   return (
     <>
       {reasons.length > 0 && (
@@ -272,6 +293,8 @@ export const CopilotWrapperContent = ({
               onFormatClick={onFormat}
               attributes={attributes}
               narrative={narrative}
+              copilotDisabled={copilotDisabled}
+              copilotDisabledReason={copilotDisabledReason}
             />
           )}
         </div>

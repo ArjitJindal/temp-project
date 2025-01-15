@@ -85,8 +85,20 @@
   }
 }
 
+.bodyDisabled {
+  height: 100%;
+  width: 100%;
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: inherit;
+  background: @fr-colors-gray-3 !important;
+}
+
 // applies gradient border to the button
-.root::before {
+.rootBorder::before {
   content: '';
   position: absolute;
   top: 0;
@@ -102,7 +114,7 @@
   border-radius: 58px;
 }
 
-.root::after {
+.rootBorder::after {
   content: '';
   position: absolute;
   z-index: -1;

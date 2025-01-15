@@ -236,6 +236,14 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
                 entityType={entityType}
+                copilotDisabled={entityIds && entityIds?.length > 1 ? true : false}
+                copilotDisabledReason={
+                  entityType === 'CASE'
+                    ? 'AI copilot cannot be used when closing multiple cases simultaneously.'
+                    : entityType === 'ALERT'
+                    ? 'AI copilot cannot be used when closing multiple alerts simultaneously.'
+                    : ''
+                }
               />
             )}
           </GenericFormField>

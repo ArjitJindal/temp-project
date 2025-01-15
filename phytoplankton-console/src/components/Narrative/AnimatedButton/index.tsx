@@ -57,12 +57,22 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
       <button
         style={style}
         ref={ref}
-        className={cn(
-          s.root,
-          s[`size-${size}`],
-          (children === '' || children == null) && s.iconOnly,
-          className,
-        )}
+        className={
+          !isDisabled
+            ? cn(
+                s.root,
+                s[`size-${size}`],
+                (children === '' || children == null) && s.iconOnly,
+                className,
+                s.rootBorder,
+              )
+            : cn(
+                s.root,
+                s[`size-${size}`],
+                (children === '' || children == null) && s.iconOnly,
+                className,
+              )
+        }
         onClick={handleClick}
         disabled={isDisabled || isLoading}
         type={htmlType}
@@ -71,8 +81,8 @@ const BaseButton = React.forwardRef<HTMLButtonElement, BaseButtonProps>((props, 
         data-sentry-allow={true}
         {...htmlAttrs}
       >
-        <div className={cn(s.body)}>
-          {icon && <GradientIcon icon={icon} />}
+        <div className={isDisabled ? cn(s.bodyDisabled) : cn(s.body)}>
+          {icon && <GradientIcon icon={icon} isDisabled={isDisabled} />}
           <div className={cn(s.text)}>{children}</div>
           {iconRight && <div className={s.icon}>{iconRight}</div>}
         </div>
@@ -98,7 +108,10 @@ const extractPathFromIcon = (icon: React.ReactElement): string => {
   return pathElement?.getAttribute('d') || '';
 };
 
-const GradientIcon: React.FC<{ icon: React.ReactElement }> = ({ icon }) => {
+const GradientIcon: React.FC<{ icon: React.ReactElement; isDisabled: boolean }> = ({
+  icon,
+  isDisabled,
+}) => {
   return (
     <div className={cn(s.icon)}>
       <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
@@ -111,8 +124,16 @@ const GradientIcon: React.FC<{ icon: React.ReactElement }> = ({ icon }) => {
             <stop offset="18.84%" stop-color="#fff" />
             <stop offset="100%" stop-color="#fff" />
           </linearGradient>
+          <linearGradient id="disabledGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="18.84%" stop-color="#000000" />
+            <stop offset="100%" stop-color="#000000" />
+          </linearGradient>
         </defs>
-        <path className={cn(s.path)} fill="url(#gradient)" d={extractPathFromIcon(icon)}></path>
+        <path
+          className={cn(s.path)}
+          fill={isDisabled ? 'url(#disabledGradient)' : 'url(#gradient)'}
+          d={extractPathFromIcon(icon)}
+        ></path>
       </svg>
     </div>
   );
