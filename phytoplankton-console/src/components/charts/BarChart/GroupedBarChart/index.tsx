@@ -9,7 +9,7 @@ import { ColorsMap } from '../types';
 import { BarChartData, Props as BarChartProps } from '../index';
 import { SKELETON_TICK_COMPONENT, useColorScale, usePreparedCustomColoring } from '../helpers';
 import s from './index.module.less';
-import { DEFAULT_PADDINGS, Highlighted, SKELETON_PADDINGS, useDataScales } from './helpers';
+import { Highlighted, SKELETON_PADDINGS, useDataScales } from './helpers';
 import CustomLegendOrdinal from '@/components/charts/shared/CustomLegendOrdinal';
 import Tooltip from '@/components/charts/shared/SeriesTooltip';
 import { makeRandomNumberGenerator } from '@/utils/prng';
@@ -17,7 +17,7 @@ import { getOr, isLoading, map } from '@/utils/asyncResource';
 import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { StatePair } from '@/utils/state';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
-import { Paddings, Rect } from '@/components/charts/shared/helpers';
+import { BAR_CHART_DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
 import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
@@ -101,7 +101,9 @@ export default function GropedColumn<
 
   const colorScale = useColorScale(dataValue, preparedColors);
 
-  const paddings = showSkeleton ? SKELETON_PADDINGS : DEFAULT_PADDINGS;
+  const paddings = showSkeleton
+    ? SKELETON_PADDINGS
+    : BAR_CHART_DEFAULT_PADDINGS(Math.max(...dataValue.map((x) => x.value)));
 
   return (
     <DefaultChartContainer
@@ -198,7 +200,7 @@ function Chart<Category extends StringLike, Series extends StringLike>(
     size,
     formatValue = DEFAULT_FORMATTER,
     showSkeleton = false,
-    paddings = DEFAULT_PADDINGS,
+    paddings = BAR_CHART_DEFAULT_PADDINGS(Math.max(...data.map((x) => x.value))),
     highlightedState,
     customBarColors,
   } = props;

@@ -1,3 +1,5 @@
+import { formatNumber } from '@/utils/number';
+
 export interface Size {
   width: number;
   height: number;
@@ -16,3 +18,13 @@ export interface Paddings {
 }
 
 export const DEFAULT_PADDINGS: Paddings = { top: 16, right: 16, bottom: 64, left: 40 };
+
+export const BAR_CHART_DEFAULT_PADDINGS = (maxY: number): Paddings => {
+  const labelLength = formatNumber(maxY).length;
+  return {
+    top: 16,
+    right: 16,
+    bottom: 64,
+    left: labelLength > 4 ? 32 + labelLength * 4 : 32,
+  };
+};

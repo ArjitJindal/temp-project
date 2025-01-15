@@ -49,8 +49,6 @@ export function useDataScales<Category extends StringLike, Series extends String
   }, [data, width, height]);
 }
 
-export const DEFAULT_PADDINGS: Paddings = { top: 16, right: 16, bottom: 64, left: 32 };
-
 export const SKELETON_PADDINGS: Paddings = { top: 0, right: 0, bottom: 0, left: 0 };
 
 export interface Highlighted {
