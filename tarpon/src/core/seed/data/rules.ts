@@ -755,96 +755,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
   // reseed the rng to get different values for the next rule
   rng.setSeed(TRANSACTION_RULES_SEED + 8)
 
-  const r56RuleInstance: RuleInstance[] = [
-    {
-      id: 'RC-56',
-      type: 'TRANSACTION',
-      ruleId: 'RC-56',
-      ruleNameAlias: 'LOW -> MEDIUM & missing SoF',
-      ruleDescriptionAlias: 'LOW -> MEDIUM & missing SoF',
-      logic: {
-        and: [
-          { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-          { '!': { var: 'entity:9fe10e15' } },
-        ],
-      },
-      riskLevelLogic: {
-        VERY_LOW: {
-          and: [
-            { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-            { '!': { var: 'entity:9fe10e15' } },
-          ],
-        },
-        VERY_HIGH: {
-          and: [
-            { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-            { '!': { var: 'entity:9fe10e15' } },
-          ],
-        },
-        HIGH: {
-          and: [
-            { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-            { '!': { var: 'entity:9fe10e15' } },
-          ],
-        },
-        MEDIUM: {
-          and: [
-            { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-            { '!': { var: 'entity:9fe10e15' } },
-          ],
-        },
-        LOW: {
-          and: [
-            { '==': [{ var: 'entity:34a165bb' }, 'LOW'] },
-            { '!': { var: 'entity:9fe10e15' } },
-          ],
-        },
-      },
-      logicEntityVariables: [
-        {
-          key: 'entity:34a165bb',
-          entityKey: 'CONSUMER_USER:riskLevel__SENDER',
-        },
-        {
-          key: 'entity:9fe10e15',
-          entityKey: 'TRANSACTION:originFundsInfo-sourceOfFunds',
-        },
-      ],
-      logicAggregationVariables: [],
-      action: 'FLAG',
-      riskLevelActions: {
-        VERY_LOW: 'SUSPEND',
-        VERY_HIGH: 'FLAG',
-        HIGH: 'FLAG',
-        MEDIUM: 'FLAG',
-        LOW: 'FLAG',
-      },
-      status: 'INACTIVE',
-      createdAt: 1727965523023,
-      updatedAt: 1728987799955,
-      casePriority: 'P1',
-      falsePositiveCheckEnabled: false,
-      nature: 'AML',
-      labels: [],
-      riskLevelsTriggersOnHit: {
-        VERY_LOW: { usersToCheck: 'ALL' },
-        VERY_HIGH: { usersToCheck: 'ALL' },
-        HIGH: { usersToCheck: 'ALL' },
-        MEDIUM: { usersToCheck: 'ALL' },
-        LOW: { usersToCheck: 'ALL' },
-      },
-      alertConfig: {
-        frozenStatuses: [],
-        alertCreationInterval: { type: 'INSTANTLY' },
-        alertCreatedFor: ['USER'],
-      },
-      checksFor: [],
-      createdBy: rng.pickRandom(getAccounts()).id,
-      ruleExecutionMode: 'SYNC',
-      ruleRunMode: 'LIVE',
-    } as RuleInstance,
-  ]
-
   // reseed the rng to get different values for the next rule
   rng.setSeed(TRANSACTION_RULES_SEED + 9)
 
@@ -854,7 +764,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       type: 'TRANSACTION',
       ruleId: 'R-120',
       ruleNameAlias: 'Average transaction amount exceed past period average',
-      ruleDescriptionAlias: 'Chaning ',
+      ruleDescriptionAlias:
+        'Average transaction amount exceeds historical benchmarks',
       filters: {},
       logic: {
         or: [
@@ -1860,7 +1771,6 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
     ...r16RuleInstance,
     ...r30RuleInstance,
     ...r32RuleInstance,
-    ...r56RuleInstance,
     ...r120RuleInstance,
     ...r121RuleInstance,
     ...r128RuleInstance,
