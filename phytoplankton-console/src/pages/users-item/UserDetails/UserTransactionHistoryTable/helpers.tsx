@@ -32,8 +32,11 @@ export function prepareTableData(
       status: item.status,
       ruleName: null,
       ruleDescription: null,
-      arsRiskLevel: getRiskLevelFromScore(riskClassificationValues, item.ars?.score ?? null),
-      arsScore: item.ars?.score,
+      arsRiskLevel: getRiskLevelFromScore(
+        riskClassificationValues,
+        item.arsScore?.arsScore ?? null,
+      ),
+      arsScore: item.arsScore?.arsScore,
       transactionState: item.transactionState,
       originPaymentDetails: item.originPayment?.paymentDetails,
       destinationPaymentDetails: item.destinationPayment?.paymentDetails,

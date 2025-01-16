@@ -9008,7 +9008,7 @@ components:
       title: TransactionTableItemARS
       type: object
       properties:
-        score:
+        arsScore:
           type: number
         riskLevel:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/RiskLevel
@@ -9141,7 +9141,7 @@ components:
           $ref: '#/components/schemas/TransactionTableItemPayment'
         productType:
           type: string
-        ars:
+        arsScore:
           $ref: '#/components/schemas/TransactionTableItemARS'
         transactionState:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionState

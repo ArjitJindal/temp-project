@@ -185,7 +185,7 @@ export class ClickhouseTransactionsRepository {
   ): Promise<TransactionsResponseOffsetPaginated> {
     const whereClause = await this.getTransactionsWhereConditions(params)
 
-    const sortField = params.sortField ?? 'timestamp'
+    let sortField = params.sortField ?? 'timestamp'
     const sortOrder = params.sortOrder ?? 'ascend'
     const page = params.page ?? 1
     const pageSize = (params.pageSize || DEFAULT_PAGE_SIZE) as number
@@ -247,16 +247,17 @@ export class ClickhouseTransactionsRepository {
     const sortFieldMapper: Record<string, string> = {
       'originPayment.amount': 'originAmountDetails.transactionAmount',
       'destinationPayment.amount': 'destinationAmountDetails.transactionAmount',
-      'ars.score': 'arsScore.arsScore',
     }
 
-    const newSortField = sortFieldMapper[sortField] ?? sortField
+    if (sortField in sortFieldMapper) {
+      sortField = sortFieldMapper[sortField]
+    }
 
     const data = await offsetPaginateClickhouse<TransactionTableItem>(
       this.clickhouseClient,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.materializedViews.BY_ID.table,
       CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName,
-      { page, pageSize, sortField: newSortField, sortOrder },
+      { page, pageSize, sortField, sortOrder },
       whereClause,
       columnsProjection,
       (item) => {
@@ -274,7 +275,7 @@ export class ClickhouseTransactionsRepository {
           transactionId: item.transactionId as string,
           timestamp: item.timestamp as number,
           updatedAt: item.updatedAt as number,
-          ars: { score: item.arsScore as number },
+          arsScore: { arsScore: item.arsScore as number },
           destinationPayment: {
             paymentMethodId: item.destinationPaymentMethodId as string,
             amount: item.destinationAmountDetails_amount as number,

@@ -151,8 +151,8 @@ export class TransactionService {
     return {
       transactionId: transaction.transactionId,
       timestamp: transaction.timestamp,
-      ars: {
-        score: transaction.arsScore?.arsScore,
+      arsScore: {
+        arsScore: transaction.arsScore?.arsScore,
       },
       destinationPayment: {
         amount: transaction.destinationAmountDetails?.transactionAmount,

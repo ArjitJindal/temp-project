@@ -322,9 +322,9 @@ export default function TransactionsTable(props: Props) {
       ...alertColumns,
       ...(isRiskScoringEnabled
         ? [
-            helper.simple<'ars.score'>({
+            helper.simple<'arsScore.arsScore'>({
               title: 'TRS score',
-              key: 'ars.score',
+              key: 'arsScore.arsScore',
               type: FLOAT,
               sorting: true,
               tooltip: 'Transaction Risk Score',
@@ -332,7 +332,7 @@ export default function TransactionsTable(props: Props) {
             }),
             helper.derived({
               title: 'TRS level',
-              value: (entity) => entity.ars?.score,
+              value: (entity) => entity?.arsScore?.arsScore ?? null,
               type: {
                 render: (value) => {
                   if (value == null) {

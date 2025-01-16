@@ -101,7 +101,7 @@ const deleteOldAttachment = async (tenantId: string) => {
       continuationToken = listedObjects.NextContinuationToken
     }
 
-    console.log(`Successfully deleted ${totalDeleted} objects from ${prefix}`)
+    logger.info(`Successfully deleted ${totalDeleted} objects from ${prefix}`)
   } catch (error) {
     logger.error('Error deleting old attachments:', error)
     throw error
