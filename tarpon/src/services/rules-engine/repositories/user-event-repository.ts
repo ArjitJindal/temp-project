@@ -24,6 +24,8 @@ import { BusinessUserMonitoringResult } from '@/@types/openapi-public/BusinessUs
 import { UserRulesResult } from '@/@types/openapi-public/UserRulesResult'
 import { ConsumerUserEventWithRulesResult } from '@/@types/openapi-public/ConsumerUserEventWithRulesResult'
 import { BusinessUserEventWithRulesResult } from '@/@types/openapi-public/BusinessUserEventWithRulesResult'
+import { InternalBusinessUserEvent } from '@/@types/openapi-internal/InternalBusinessUserEvent'
+import { InternalConsumerUserEvent } from '@/@types/openapi-internal/InternalConsumerUserEvent'
 
 @traceable
 export class UserEventRepository {
@@ -44,7 +46,7 @@ export class UserEventRepository {
   }
 
   public async saveUserEvent(
-    userEvent: ConsumerUserEvent | BusinessUserEvent,
+    userEvent: InternalConsumerUserEvent | InternalBusinessUserEvent,
     userType: UserType,
     rulesResult?: ConsumerUserMonitoringResult | BusinessUserMonitoringResult
   ): Promise<string> {

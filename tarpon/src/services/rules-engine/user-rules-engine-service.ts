@@ -102,7 +102,8 @@ export class UserManagementService {
 
   public async verifyUser(
     userPayload: User | Business,
-    type: UserType
+    type: UserType,
+    riskScoreDetails?: UserRiskScoreDetails
   ): Promise<UserWithRulesResult | BusinessWithRulesResult> {
     const isConsumerUser = type === 'CONSUMER'
 
@@ -151,7 +152,10 @@ export class UserManagementService {
             updatedConsumerUserAttributes: userResult,
           },
           'CONSUMER',
-          monitoringResult
+          {
+            ...monitoringResult,
+            riskScoreDetails,
+          }
         ),
         ...asyncRulesPromises,
       ])
@@ -167,7 +171,10 @@ export class UserManagementService {
             updatedBusinessUserAttributes: userResult as Business,
           },
           'BUSINESS',
-          monitoringResult
+          {
+            ...monitoringResult,
+            riskScoreDetails,
+          }
         ),
         ...asyncRulesPromises,
       ])
@@ -356,11 +363,10 @@ export class UserManagementService {
 
     await Promise.all([
       saveUser(updatedUserResult as UserResultType<T>),
-      this.userEventRepository.saveUserEvent(
-        userEvent,
-        userType,
-        monitoringResult
-      ),
+      this.userEventRepository.saveUserEvent(userEvent, userType, {
+        ...monitoringResult,
+        riskScoreDetails,
+      }),
       isAnyAsyncRules &&
         sendAsyncRuleTasks([
           {

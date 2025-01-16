@@ -8899,9 +8899,12 @@ components:
           properties:
             createdAt:
               type: number
+            riskScoreDetails:
+              $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionRiskScoringResult
+              nullable: true
     InternalConsumerUserEvent:
       allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/ConsumerUserEvent
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/ConsumerUserEventWithRulesResult
         - type: object
           additionalProperties: false
           properties:
@@ -8909,7 +8912,7 @@ components:
               type: number
     InternalBusinessUserEvent:
       allOf:
-        - $ref: ../public/openapi-public-original.yaml#/components/schemas/BusinessUserEvent
+        - $ref: ../public/openapi-public-original.yaml#/components/schemas/BusinessUserEventWithRulesResult
         - type: object
           additionalProperties: false
           properties:

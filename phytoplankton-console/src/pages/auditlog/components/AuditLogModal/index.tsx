@@ -3,12 +3,17 @@ import { useState } from 'react';
 import { startCase, toLower } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import COLORS from '@/components/ui/colors';
-import { AuditLog } from '@/apis';
 import TableTemplate, { summariseChanges } from '@/pages/auditlog/components/TableTemplate';
 import Modal from '@/components/library/Modal';
 
 interface Props {
-  data: AuditLog;
+  data: {
+    type: string;
+    oldImage: object;
+    newImage: object;
+    showNotChanged?: boolean;
+    showOldImage?: boolean;
+  };
 }
 
 const AuditLogModal = (props: Props) => {
@@ -39,7 +44,7 @@ const AuditLogModal = (props: Props) => {
               <Typography.Title level={4}>
                 {startCase(toLower(data.type))} details changed
               </Typography.Title>
-              <TableTemplate details={changedDetails} />
+              <TableTemplate details={changedDetails} showOldImage={data.showOldImage} />
             </>
           )}
           <>
@@ -48,7 +53,7 @@ const AuditLogModal = (props: Props) => {
                 <Typography.Title level={4}>
                   {startCase(toLower(data.type))} details not changed
                 </Typography.Title>
-                <TableTemplate details={notChangedDetails} />
+                <TableTemplate details={notChangedDetails} showOldImage={data.showOldImage} />
               </div>
             )}
           </>

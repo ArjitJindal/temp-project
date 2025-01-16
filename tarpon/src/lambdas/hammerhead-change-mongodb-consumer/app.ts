@@ -63,7 +63,6 @@ export async function drsScoreEventHandler(
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
-
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
 
   if (newDrsScore.triggeredBy !== 'PUBLIC_API' && newDrsScore.userId) {
@@ -146,7 +145,6 @@ export async function krsScoreEventHandler(
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
   const userRepository = new UserRepository(tenantId, { mongoDb })
-
   krsScore = omit(krsScore, DYNAMO_KEYS) as KrsScore
 
   await Promise.all([

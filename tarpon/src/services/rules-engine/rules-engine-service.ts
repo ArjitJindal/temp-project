@@ -1991,6 +1991,7 @@ export class RulesEngineService {
               transactionId: transaction.transactionId,
               eventDescription: `Transaction status was manually changed to ${action} by ${userId}`,
               reason: reason.join(', '),
+              riskScoreDetails: transaction.riskScoreDetails,
             },
             rulesResult: {
               status: action,

@@ -4,9 +4,9 @@ import { RangeValue } from 'rc-picker/es/interface';
 import { isEqual } from 'lodash';
 import { useLocation, useNavigate } from 'react-router';
 import { HighlightOutlined } from '@ant-design/icons';
-import AuditLogModal from '../AuditLogModal';
 import RuleAuditLogModal from '../RuleAuditLogModal';
 import ActionsFilterButton from '../ActionsFilterButton';
+import AuditLogModal from '../AuditLogModal';
 import { TableItem, TableSearchParams } from './types';
 import { auditLogQueryAdapter, useTableData } from './helpers';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
@@ -168,7 +168,17 @@ export default function AuditLogTable() {
           if (item.type === 'RULE') {
             return <RuleAuditLogModal data={item} />;
           }
-          return <AuditLogModal data={item} />;
+          return (
+            <AuditLogModal
+              data={{
+                type: item.type,
+                oldImage: item.oldImage,
+                newImage: item.newImage,
+                showNotChanged: true,
+                showOldImage: true,
+              }}
+            />
+          );
         },
       },
     }),

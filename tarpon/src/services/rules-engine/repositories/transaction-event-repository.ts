@@ -46,7 +46,7 @@ export class TransactionEventRepository {
   }
 
   public async saveTransactionEvent(
-    transactionEvent: TransactionEvent,
+    transactionEvent: InternalTransactionEvent,
     rulesResult: Undefined<TransactionMonitoringResult> = {}
   ): Promise<string> {
     const eventIds = await this.saveTransactionEvents([
@@ -57,7 +57,7 @@ export class TransactionEventRepository {
 
   public async saveTransactionEvents(
     transactionEvents: Array<{
-      transactionEvent: TransactionEvent
+      transactionEvent: InternalTransactionEvent
       rulesResult?: Undefined<TransactionMonitoringResult>
     }>
   ): Promise<string[]> {

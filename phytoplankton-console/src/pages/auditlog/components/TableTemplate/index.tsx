@@ -4,7 +4,6 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AccountTag from '@/components/AccountTag';
-import { AuditLog } from '@/apis';
 
 type TableItem = {
   key: string;
@@ -15,9 +14,12 @@ interface TableTemplateProp {
   details: TableItem[];
 }
 
-export const summariseChanges = (
-  data: AuditLog,
-): {
+export const summariseChanges = (data: {
+  type: string;
+  oldImage: object;
+  newImage: object;
+  showNotChanged?: boolean;
+}): {
   changedDetails: TableItem[];
   notChangedDetails: TableItem[];
 } => {
@@ -41,7 +43,10 @@ export const summariseChanges = (
       changedDetails.push(obj);
     }
   });
-  return { changedDetails, notChangedDetails };
+
+  return data.showNotChanged
+    ? { changedDetails, notChangedDetails }
+    : { changedDetails, notChangedDetails: [] };
 };
 
 const UNIX_TIMESTAMP_MS_REGEX = /^\d{13}$/;
@@ -68,7 +73,7 @@ const RenderModalData = (value: any | undefined) => {
   }
 };
 
-const TableTemplate = (props: TableTemplateProp) => {
+const TableTemplate = (props: TableTemplateProp & { showOldImage?: boolean }) => {
   const helper = new ColumnHelper<TableItem>();
   return (
     <Table<TableItem>
@@ -80,23 +85,27 @@ const TableTemplate = (props: TableTemplateProp) => {
         helper.simple<'key'>({
           title: 'Parameter name',
           key: 'key',
-          defaultWidth: 250,
+          defaultWidth: props.showOldImage ? 250 : 350,
           type: {
             render: (text) => (
               <>{text ? <b>{getFlattenedObjectHumanReadableKey(text)}</b> : 'N/A'}</>
             ),
           },
         }),
-        helper.simple<'oldImage'>({
-          title: 'Old value',
-          key: 'oldImage',
-          defaultWidth: 350,
-          type: {
-            render: (data) => {
-              return RenderModalData(data);
-            },
-          },
-        }),
+        ...(props.showOldImage
+          ? [
+              helper.simple<'oldImage'>({
+                title: 'Old value',
+                key: 'oldImage',
+                defaultWidth: 350,
+                type: {
+                  render: (data) => {
+                    return RenderModalData(data);
+                  },
+                },
+              }),
+            ]
+          : []),
         helper.simple<'newImage'>({
           title: 'New value',
           key: 'newImage',
