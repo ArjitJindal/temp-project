@@ -266,7 +266,7 @@ export class SanctionsScreeningDetailsRepository {
     }
 
     if (params.filterName) {
-      where.push(`name LIKE '%${params.filterName}%'`)
+      where.push(`positionCaseInsensitive(name, '${params.filterName}')`)
     }
 
     if (params.filterIsHit != null) {
@@ -292,7 +292,6 @@ export class SanctionsScreeningDetailsRepository {
         where.push('isNew != 1')
       }
     }
-
     return where.join(' AND ')
   }
 
