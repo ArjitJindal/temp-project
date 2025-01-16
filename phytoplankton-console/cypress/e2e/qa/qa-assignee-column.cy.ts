@@ -20,7 +20,9 @@ describe('QA Assignee Column', () => {
   });
 
   it('should be present when QA feature flag is turned on', () => {
-    cy.visit('/case-management/cases');
+    cy.visit(
+      '/case-management/cases?page=1&pageSize=20&showCases=QA_UNCHECKED_ALERTS&alertStatus=CLOSED&qaAssignment=auth0%7C66f2d9df0b24d36a04cc31a2&filterQaStatus=NOT_QA%27d',
+    );
     cy.get('[data-cy="qa-toggle"]').click();
     cy.contains('QA assignee').should('exist');
 
