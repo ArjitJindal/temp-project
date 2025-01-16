@@ -43,7 +43,7 @@ export const config: Config = {
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
     LAMBDA_DEFAULT: {
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     INCOMING_WEBHOOK_LAMBDA: {
       MEMORY_SIZE: 1024,
