@@ -2,7 +2,6 @@ import { GetObjectCommand } from '@aws-sdk/client-s3'
 import csvtojson from 'csvtojson'
 import { FlagrightClient } from 'flagright'
 import { chunk } from 'lodash'
-import { CountryCode } from 'flagright/api'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getS3Client } from '@/utils/s3'
@@ -89,8 +88,6 @@ export class PnbTransactionEventUpdatesBatchJobRunner extends BatchJobRunner {
                           transactionData.originAmountDetails
                             ?.transactionCurrency ?? 'MYR',
                         transactionAmount: transaction.amount,
-                        country: transactionData.originAmountDetails
-                          ?.country as CountryCode,
                       },
                     }
                   : {}),
@@ -103,8 +100,6 @@ export class PnbTransactionEventUpdatesBatchJobRunner extends BatchJobRunner {
                         transactionCurrency:
                           transactionData.destinationAmountDetails
                             ?.transactionCurrency ?? 'MYR',
-                        country: transactionData.destinationAmountDetails
-                          ?.country as CountryCode,
                       },
                     }
                   : {}),
