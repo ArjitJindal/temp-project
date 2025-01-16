@@ -61,7 +61,7 @@ export const tarponDeployStage = (
             deployCommand,
             ...(config.stage === 'dev'
               ? [
-                  'yarn add -g nango',
+                  'npm install -g nango',
                   'cd ../nango-integrations',
                   'yarn install',
                   'npm run generate',
