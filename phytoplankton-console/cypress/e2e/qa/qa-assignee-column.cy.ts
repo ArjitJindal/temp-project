@@ -9,7 +9,10 @@ describe('QA Assignee Column', () => {
       ...PERMISSIONS.CASE_DETAILS,
       ...PERMISSIONS.TRANSACTION_OVERVIEW,
     ];
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS, features: { QA: qaFlag } });
+    cy.loginWithPermissions({
+      permissions: REQUIRED_PERMISSIONS,
+      features: { QA: qaFlag, ALERT_DETAILS_PAGE: false },
+    });
   });
 
   it('should not be present when QA feature flag is turned off', () => {

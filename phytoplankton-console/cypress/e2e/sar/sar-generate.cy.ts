@@ -12,7 +12,7 @@ describe('SAR Generate', () => {
   });
   it('should open SAR report form', () => {
     cy.visit(
-      '/case-management/cases?page=1&pageSize=100&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
+      '/case-management/cases?page=1&pageSize=100&sort=-createdTimestamp&showCases=ALL_ALERTS&alertStatus=OPEN&ruleNature=AML',
     );
 
     cy.intercept('GET', '**/report-types').as('sarCountries');
