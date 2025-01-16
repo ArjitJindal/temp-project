@@ -30,8 +30,8 @@ export class SanctionsDataFetchBatchJobRunner extends BatchJobRunner {
     const sanctionsCollectionName = SANCTIONS_COLLECTION(tenantId)
     const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
     const client = await getMongoDbClient()
-    await client.db().dropCollection(deltaSanctionsCollectionName)
     await createMongoDBCollections(client, tenantId)
+    await client.db().collection(deltaSanctionsCollectionName).deleteMany({})
     for (const fetcher of fetchers) {
       logger.info(`Running ${fetcher.constructor.name}`)
       if (runFullLoad) {
