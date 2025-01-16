@@ -195,6 +195,7 @@ export class BatchImportService {
   ): Promise<{
     response: BatchResponse
     validatedTransactionEvents: TransactionEvent[]
+    validatedTransactions: Transaction[]
   }> {
     const relatedTransactionIds = compact(
       transactionEvents.flatMap(
@@ -245,6 +246,7 @@ export class BatchImportService {
         ),
       },
       validatedTransactionEvents,
+      validatedTransactions: existingTransactions,
     }
   }
   private validateTransactionEvent(

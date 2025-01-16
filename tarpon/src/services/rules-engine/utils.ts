@@ -400,6 +400,8 @@ type AsyncRuleRecordTransactionEvent = {
 type AsyncRuleRecordTransactionEventBatch = {
   type: 'TRANSACTION_EVENT_BATCH'
   transactionEvent: TransactionEvent
+  originUserId?: string
+  destinationUserId?: string
 }
 
 type AsyncRuleRecordUser = {
@@ -457,8 +459,11 @@ function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
         record.tenantId,
       ])[0]
     case 'TRANSACTION_EVENT_BATCH':
-      // TODO: To improve this
-      return record.tenantId
+      return compact([
+        record.originUserId,
+        record.destinationUserId,
+        record.tenantId,
+      ])[0]
     case 'USER':
       return record.user.userId
     case 'USER_EVENT':
@@ -469,6 +474,7 @@ function getAsyncRuleMessageGroupId(record: AsyncRuleRecord): string {
       return record.userEvent.userId
   }
 }
+
 export async function sendAsyncRuleTasks(
   tasks: AsyncRuleRecord[]
 ): Promise<void> {

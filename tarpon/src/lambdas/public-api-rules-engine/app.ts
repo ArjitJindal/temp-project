@@ -218,6 +218,11 @@ export const transactionHandler = lambdaApi()(
   }
 )
 
+type TransactionUserMap = Record<
+  string,
+  { originUserId?: string; destinationUserId?: string }
+>
+
 export const transactionEventHandler = lambdaApi()(
   async (
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -272,16 +277,29 @@ export const transactionEventHandler = lambdaApi()(
       const batchImportService = new BatchImportService(ctx.tenantId, {
         dynamoDb,
       })
-      const { response, validatedTransactionEvents } =
+      const { response, validatedTransactionEvents, validatedTransactions } =
         await batchImportService.importTransactionEvents(
           batchId,
           request.TransactionEventBatchRequest.data
         )
+
+      const transactionUserIdMap: TransactionUserMap =
+        validatedTransactions.reduce((acc, v) => {
+          acc[v.transactionId] = {
+            originUserId: v.originUserId,
+            destinationUserId: v.destinationUserId,
+          }
+          return acc
+        }, {} as TransactionUserMap)
+
       await sendAsyncRuleTasks(
         validatedTransactionEvents.map((v) => ({
           type: 'TRANSACTION_EVENT_BATCH',
           transactionEvent: v,
           tenantId,
+          originUserId: transactionUserIdMap[v.transactionId]?.originUserId,
+          destinationUserId:
+            transactionUserIdMap[v.transactionId]?.destinationUserId,
         }))
       )
       return response
