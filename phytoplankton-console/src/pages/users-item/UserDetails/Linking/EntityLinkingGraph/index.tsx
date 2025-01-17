@@ -13,13 +13,17 @@ import cn from 'clsx';
 import parentS from '../index.module.less';
 import { UserPanel } from '../UserPanel';
 import { AttributePanel } from '../AttributePanel';
+import { GraphFilters } from '../UserGraph';
+import { ScopeSelectorValue } from '../entity_linking';
 import s from './index.module.less';
 import CommandKeyIcon from './command-key-icon.react.svg';
 import fontUrl from './arialuni.ttf';
+import { EntityFilterButton } from './EntityFilter';
+import { LinkCountFilterButton } from './LinkCountFilter';
 import { GraphEdges, GraphNodes } from '@/apis';
 import Alert from '@/components/library/Alert';
-
 type EntityLinkingProps = {
+  scope: ScopeSelectorValue;
   userId: string;
   extraHints: string[];
   onFollow: (userId: string) => void;
@@ -29,11 +33,14 @@ type EntityLinkingProps = {
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
   isFollowEnabled: (id: string) => boolean;
+  filters: GraphFilters;
+  setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
 };
 export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   const graphRef = useRef<GraphCanvasRef | null>(null);
 
   const {
+    scope,
     nodes,
     edges,
     userId,
@@ -43,6 +50,8 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     edgeInterpolation = 'linear',
     isFollowEnabled,
     extraHints,
+    filters,
+    setFilters,
   } = props;
 
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
@@ -90,6 +99,12 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
           />{' '}
           key and scroll to zoom
         </Alert>
+        {scope === 'TXN' && (
+          <div className={s.filters}>
+            <EntityFilterButton filters={filters} setFilters={setFilters} />
+            <LinkCountFilterButton filters={filters} setFilters={setFilters} />
+          </div>
+        )}
       </div>
       {selectedNode && (
         <>

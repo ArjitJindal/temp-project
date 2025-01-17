@@ -174,7 +174,9 @@ export const allUsersViewHandler = lambdaApi()(
       return linkerService.transactions(
         request.userId,
         request?.afterTimestamp,
-        request?.beforeTimestamp
+        request?.beforeTimestamp,
+        request?.entities,
+        request?.linksCount
       )
     })
 

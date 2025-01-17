@@ -1,9 +1,10 @@
 import React, { useState, useCallback } from 'react';
 import s from './index.module.less';
-import UserGraph from './UserGraph';
+import UserGraph, { GraphParams } from './UserGraph';
 import * as Card from '@/components/ui/Card';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 import { useApi } from '@/api';
+import { EntitiesEnum } from '@/apis';
 
 export type ScopeSelectorValue = 'ENTITY' | 'TXN';
 
@@ -17,22 +18,32 @@ const Linking = (props: Props) => {
   const api = useApi();
 
   const getUser = useCallback(
-    (userId: string, afterTimestamp?: number, beforeTimestamp?: number) => {
+    (userId: string, filters: { afterTimestamp?: number; beforeTimestamp?: number }) => {
       return api.getUserEntity({
         userId,
-        afterTimestamp,
-        beforeTimestamp,
+        afterTimestamp: filters.afterTimestamp,
+        beforeTimestamp: filters.beforeTimestamp,
       });
     },
     [api],
   );
 
-  const getTxn = useCallback(
-    (userId: string, afterTimestamp?: number, beforeTimestamp?: number) => {
+  const getTxn = useCallback<GraphParams>(
+    (
+      userId: string,
+      filters: {
+        afterTimestamp?: number;
+        beforeTimestamp?: number;
+        entities?: EntitiesEnum;
+        linksCount?: number;
+      },
+    ) => {
       return api.getTxnLinking({
         userId,
-        afterTimestamp,
-        beforeTimestamp,
+        afterTimestamp: filters.afterTimestamp,
+        beforeTimestamp: filters.beforeTimestamp,
+        entities: filters.entities,
+        linksCount: filters.linksCount,
       });
     },
     [api],
@@ -50,6 +61,7 @@ const Linking = (props: Props) => {
       </div>
       {scope === 'ENTITY' && (
         <UserGraph
+          scope={scope}
           userId={props.userId}
           getGraph={getUser}
           edgeInterpolation={'linear'}
@@ -59,6 +71,7 @@ const Linking = (props: Props) => {
       )}
       {scope === 'TXN' && (
         <UserGraph
+          scope={scope}
           userId={props.userId}
           getGraph={getTxn}
           edgeInterpolation={'curved'}

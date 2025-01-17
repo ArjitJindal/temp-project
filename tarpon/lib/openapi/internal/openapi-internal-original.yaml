@@ -1994,6 +1994,15 @@ paths:
             type: number
           in: query
           name: beforeTimestamp
+        - schema:
+            $ref: '#/components/schemas/EntitiesEnum'
+          in: query
+          name: entities
+        - schema:
+            type: number
+            default: 0
+          in: query
+          name: linksCount
   /users/{userId}/screening-status:
     get:
       summary: Screening Status
@@ -16043,6 +16052,14 @@ components:
               - operator
       required:
         - statuses
+    EntitiesEnum:
+      title: EntitiesEnum
+      type: string
+      description: Enum Entities
+      enum:
+        - all
+        - user
+        - payment-identifiers
     SLATimeWindow:
       title: SLATimeWindow
       type: object

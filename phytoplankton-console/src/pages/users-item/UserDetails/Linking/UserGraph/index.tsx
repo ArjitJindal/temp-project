@@ -3,14 +3,26 @@ import { uniqBy } from 'lodash';
 import { EdgeArrowPosition, EdgeInterpolation } from 'reagraph';
 import s from '../index.module.less';
 import { EntityLinkingGraph } from '../EntityLinkingGraph';
+import { ScopeSelectorValue } from '../entity_linking';
 import * as Card from '@/components/ui/Card';
-import { Graph, GraphEdges, GraphNodes } from '@/apis';
+import { EntitiesEnum, Graph, GraphEdges, GraphNodes } from '@/apis';
 import Spinner from '@/components/library/Spinner';
 import { dayjs } from '@/utils/dayjs';
 
+export type GraphParams = (
+  user: string,
+  filters: {
+    afterTimestamp?: number;
+    beforeTimestamp?: number;
+    entities?: EntitiesEnum;
+    linksCount?: number;
+  },
+) => Promise<Graph>;
+
 interface Props {
+  scope: ScopeSelectorValue;
   userId: string;
-  getGraph: (user: string, afterTimestamp?: number, beforeTimestamp?: number) => Promise<Graph>;
+  getGraph: GraphParams;
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
   isFollowEnabled: (id: string) => boolean;
@@ -18,21 +30,36 @@ interface Props {
 
 const DEFAULT_PAST_DAYS = 30;
 
+// entities
+export interface GraphFilters {
+  entities: EntitiesEnum[];
+  linkCount: number[];
+}
 export default function UserGraph(props: Props) {
   const [userId, setUserId] = useState(props.userId);
   const [entity, setEntity] = useState<Graph>();
   const [followed, setFollowed] = useState([props.userId]);
-  const { getGraph, isFollowEnabled } = props;
+  const { getGraph } = props;
 
   const [nodes, setNodes] = useState<GraphNodes[]>([]);
   const [edges, setEdges] = useState<GraphEdges[]>([]);
 
+  // filters
+  const [filters, setFilters] = useState<GraphFilters>({
+    entities: ['all'],
+    linkCount: [0],
+  });
   useEffect(() => {
     const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
-    getGraph(userId, DEFAULT_AFTER_TIMESTAMP, undefined)
+    getGraph(userId, {
+      afterTimestamp: DEFAULT_AFTER_TIMESTAMP,
+      beforeTimestamp: undefined,
+      entities: filters.entities[0],
+      linksCount: filters.linkCount[0],
+    })
       .then(setEntity)
       .then(() => setFollowed((followed) => [userId, ...followed]));
-  }, [getGraph, userId]);
+  }, [getGraph, userId, filters]);
 
   useEffect(() => {
     if (entity) {
@@ -53,11 +80,12 @@ export default function UserGraph(props: Props) {
               onFollow={(userId) => {
                 setUserId(userId);
               }}
-              userId={props.userId}
               extraHints={[`Ontology displays data for the last ${DEFAULT_PAST_DAYS} days only`]}
               edgeInterpolation={props.edgeInterpolation}
               edgeArrowPosition={props.edgeArrowPosition}
-              isFollowEnabled={isFollowEnabled}
+              filters={filters}
+              setFilters={setFilters}
+              {...props}
             />
           </div>
         </Card.Section>
