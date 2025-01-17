@@ -5,9 +5,30 @@ import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
 import { ReasonType } from '@/@types/openapi-internal/ReasonType'
 import { ConsoleActionReasonCreationRequest } from '@/@types/openapi-internal/ConsoleActionReasonCreationRequest'
-import { CASE_REASONSS } from '@/@types/openapi-internal-custom/CaseReasons'
+import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 
-export const DEFAULT_CLOSURE_REASONS = CASE_REASONSS.reverse()
+export const DEFAULT_CLOSURE_REASONS: CaseReasons[] = [
+  'False positive',
+  'Investigation completed',
+  'Documents collected',
+  'Suspicious activity reported (SAR)',
+  'Documents not collected',
+  'Transaction Refunded',
+  'Transaction Rejected',
+  'User Blacklisted',
+  'User Terminated',
+  'Escalated',
+  'Confirmed fraud',
+  'Confirmed genuine',
+  'Suspected fraud',
+  'True positive',
+  'Fraud',
+  'Anti-money laundering',
+  'Terrorist financing',
+  'Internal referral',
+  'External referral',
+  'Other',
+]
 
 export const DEFAULT_ESCALATION_REASONS = [
   'Fraud',
@@ -19,19 +40,19 @@ export const DEFAULT_ESCALATION_REASONS = [
 export const getDefaultReasonsData = () => {
   const date = Date.now()
   const defaultClosureReasons: ConsoleActionReason[] =
-    DEFAULT_CLOSURE_REASONS.map((reason) => ({
+    DEFAULT_CLOSURE_REASONS.map((reason, index) => ({
       id: uuidv4(),
       reason: reason,
       reasonType: 'CLOSURE',
-      updatedAt: date,
+      updatedAt: date + index,
       isActive: true,
     }))
   const defaultEscalationReasons: ConsoleActionReason[] =
-    DEFAULT_ESCALATION_REASONS.map((reason) => ({
+    DEFAULT_ESCALATION_REASONS.map((reason, index) => ({
       id: uuidv4(),
       reason: reason,
       reasonType: 'ESCALATION',
-      updatedAt: date,
+      updatedAt: date + index,
       isActive: true,
     }))
   return defaultClosureReasons.concat(defaultEscalationReasons)
@@ -57,11 +78,11 @@ export class ReasonsService {
   public async addReasons(request: ConsoleActionReasonCreationRequest[]) {
     const updatedAt = Date.now()
     const reasons = request.map(
-      (data): ConsoleActionReason => ({
+      (data, index): ConsoleActionReason => ({
         ...data,
         id: uuidv4(),
         isActive: true,
-        updatedAt,
+        updatedAt: updatedAt + index,
       })
     )
     await this.reasonsRepository.bulkAddReasons(reasons)
