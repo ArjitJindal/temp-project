@@ -142,10 +142,7 @@ export class UserClickhouseRepository {
       }
     }
     if (isPulseEnabled) {
-      result.items = await insertRiskScores(
-        result.items,
-        riskClassificationValues
-      )
+      result.items = insertRiskScores(result.items, riskClassificationValues)
     }
 
     return {

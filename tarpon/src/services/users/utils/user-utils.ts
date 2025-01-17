@@ -11,8 +11,6 @@ import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
-import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
-import { hasFeature } from '@/core/utils/context'
 import { AllUsersTableItem } from '@/@types/openapi-internal/AllUsersTableItem'
 const internalUserAttributes = InternalUser.getAttributeTypeMap().map(
   (v) => v.name
@@ -57,30 +55,16 @@ export const getUsersFilterByRiskLevel = (
   }
 }
 
-export async function insertRiskScores(
+export function insertRiskScores(
   items:
     | WithId<InternalBusinessUser | InternalConsumerUser>[]
     | (InternalBusinessUser | InternalConsumerUser)[]
     | AllUsersTableItem[],
-  riskClassificationValues: RiskClassificationScore[],
-  riskRepository?: RiskRepository
+  riskClassificationValues: RiskClassificationScore[]
 ) {
-  const hasFeaturePNB = hasFeature('PNB')
-  let drsScores: DrsScore[] = []
-  let krsScores: KrsScore[] = []
-  if (hasFeaturePNB && riskRepository) {
-    ;[drsScores, krsScores] = await Promise.all([
-      riskRepository.getDrsScores(items.map((user) => user.userId)),
-      riskRepository.getKrsScores(items.map((user) => user.userId)),
-    ])
-  }
   const updatedItems = items.map((user) => {
-    const drsScore = hasFeaturePNB
-      ? drsScores.find((score) => score.userId === user.userId)
-      : user?.drsScore
-    const krsScore = hasFeaturePNB
-      ? krsScores.find((score) => score.userId === user.userId)
-      : user?.krsScore
+    const drsScore = user?.drsScore
+    const krsScore = user?.krsScore
     let newUser = user
     if (drsScore != null) {
       const derivedRiskLevel = drsScore?.manualRiskLevel

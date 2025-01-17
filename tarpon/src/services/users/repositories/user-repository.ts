@@ -710,7 +710,7 @@ export class UserRepository {
       ])
       .toArray()
     if (isPulseEnabled) {
-      users = await insertRiskScores(users, riskClassificationValues)
+      users = insertRiskScores(users, riskClassificationValues)
     }
 
     const total = await collection.countDocuments(query, {
