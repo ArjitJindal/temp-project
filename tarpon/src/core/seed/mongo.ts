@@ -81,7 +81,11 @@ import {
   createTenantDatabase,
   isClickhouseEnabledInRegion,
 } from '@/utils/clickhouse/utils'
-import { getDefaultReasonsData } from '@/services/tenants/reasons-service'
+import {
+  DEFAULT_CLOSURE_REASONS,
+  DEFAULT_ESCALATION_REASONS,
+  getDefaultReasonsData,
+} from '@/services/tenants/reasons-service'
 
 const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [TRANSACTIONS_COLLECTION, () => getTransactions()],
@@ -148,6 +152,8 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],
     ['SLAPolicy', getSLAPolicies().length],
+    ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
+    ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
   ]
 
   for (const counter of counters) {

@@ -28,7 +28,7 @@ export class ReasonsRepository {
         reasonType: type ? type : { $exists: true },
         isDeleted: { $ne: true },
       })
-      .sort({ updatedAt: 1 })
+      .sort({ id: 1 })
       .toArray()
     return reasons
   }

@@ -1,5 +1,5 @@
 import { MongoClient } from 'mongodb'
-import { v4 as uuidv4 } from 'uuid'
+import { CounterRepository } from '../counter/repository'
 import { ReasonsRepository } from './repositories/reasons-repository'
 import { traceable } from '@/core/xray'
 import { ConsoleActionReason } from '@/@types/openapi-internal/ConsoleActionReason'
@@ -41,7 +41,7 @@ export const getDefaultReasonsData = () => {
   const date = Date.now()
   const defaultClosureReasons: ConsoleActionReason[] =
     DEFAULT_CLOSURE_REASONS.map((reason, index) => ({
-      id: uuidv4(),
+      id: 'AR' + (index + 1).toString().padStart(3, '0'),
       reason: reason,
       reasonType: 'CLOSURE',
       updatedAt: date + index,
@@ -49,7 +49,7 @@ export const getDefaultReasonsData = () => {
     }))
   const defaultEscalationReasons: ConsoleActionReason[] =
     DEFAULT_ESCALATION_REASONS.map((reason, index) => ({
-      id: uuidv4(),
+      id: 'AR' + (index + 1).toString().padStart(3, '0'),
       reason: reason,
       reasonType: 'ESCALATION',
       updatedAt: date + index,
@@ -61,8 +61,17 @@ export const getDefaultReasonsData = () => {
 @traceable
 export class ReasonsService {
   private reasonsRepository: ReasonsRepository
+  private counterRepository: CounterRepository
   constructor(tenantId: string, mongoDb: MongoClient) {
     this.reasonsRepository = new ReasonsRepository(tenantId, mongoDb)
+    this.counterRepository = new CounterRepository(tenantId, mongoDb)
+  }
+
+  private async getNewReasonId(type: ReasonType) {
+    const count = await this.counterRepository.getNextCounterAndUpdate(
+      type === 'CLOSURE' ? 'ClosureReason' : 'EscalationReason'
+    )
+    return 'AR' + count.toString().padStart(3, '0')
   }
 
   public async getReasons(type?: ReasonType) {
@@ -77,14 +86,16 @@ export class ReasonsService {
 
   public async addReasons(request: ConsoleActionReasonCreationRequest[]) {
     const updatedAt = Date.now()
-    const reasons = request.map(
-      (data, index): ConsoleActionReason => ({
+    const reasons: ConsoleActionReason[] = []
+    for (const data of request) {
+      const id = await this.getNewReasonId(data.reasonType)
+      reasons.push({
         ...data,
-        id: uuidv4(),
+        id,
         isActive: true,
-        updatedAt: updatedAt + index,
+        updatedAt: updatedAt,
       })
-    )
+    }
     await this.reasonsRepository.bulkAddReasons(reasons)
     return reasons
   }
