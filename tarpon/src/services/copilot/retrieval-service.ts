@@ -4,6 +4,7 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { BadRequest, NotFound } from 'http-errors'
+import { CurrencyService } from '../currency'
 import { CaseService } from '@/services/cases'
 import { UserService } from '@/services/users'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -124,11 +125,14 @@ export class RetrievalService {
         []
     )
 
+    const exchangeRates = await new CurrencyService().getExchangeData()
+
     return await this.attributeBuilder.getAttributes({
       transactions,
       user,
       reasons,
       _case: caseItem,
+      exchangeRates: exchangeRates.rates,
     })
   }
 
@@ -153,12 +157,16 @@ export class RetrievalService {
         ruleInstanceIds.filter((id) => id)
       ),
     ])
+
+    const exchangeRates = await new CurrencyService().getExchangeData()
+
     return await this.attributeBuilder.getAttributes({
       transactions,
       user,
       _case,
       ruleInstances,
       reasons,
+      exchangeRates: exchangeRates.rates,
     })
   }
 
@@ -172,10 +180,7 @@ export class RetrievalService {
       throw new BadRequest(`No alert for ${alertId}`)
     }
 
-    const ruleInstanceIds = [
-      _case?.alerts?.find((a) => a.alertId === alertId)
-        ?.ruleInstanceId as string,
-    ]
+    const alert = _case?.alerts?.find((a) => a.alertId === alertId)
 
     const user = await this.userService.getUser(
       _case?.caseUsers?.origin?.userId ||
@@ -184,18 +189,21 @@ export class RetrievalService {
     )
 
     const [transactions, ruleInstances] = await Promise.all([
-      this.txnRepository.getTransactionsByIds(_case.caseTransactionsIds || []),
+      this.txnRepository.getTransactionsByIds(alert?.transactionIds || []),
       this.ruleInstanceRepository.getRuleInstancesByIds(
-        ruleInstanceIds.filter((id) => id)
+        alert?.ruleInstanceId ? [alert.ruleInstanceId] : []
       ),
     ])
+
+    const exchangeRates = await new CurrencyService().getExchangeRates()
 
     return await this.attributeBuilder.getAttributes({
       transactions,
       user,
-      _case,
       ruleInstances,
       reasons,
+      _alert: alert,
+      exchangeRates,
     })
   }
 }

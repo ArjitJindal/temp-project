@@ -12,7 +12,7 @@ import { maxLength, notEmpty } from '@/components/library/Form/utils/validation/
 import { and } from '@/components/library/Form/utils/validation/combinators';
 import { MAX_COMMENT_LENGTH } from '@/components/CommentEditor';
 import InputField from '@/components/library/Form/InputField';
-import { CaseReasons, FileInfo, NarrativeType } from '@/apis';
+import { AdditionalCopilotInfo, CaseReasons, FileInfo, NarrativeType } from '@/apis';
 import Select from '@/components/library/Select';
 import TextInput from '@/components/library/TextInput';
 import NarrativesSelectStatusChange from '@/pages/case-management/components/NarrativesSelectStatusChange';
@@ -73,6 +73,7 @@ type NarrativeProps<R> = {
   advancedOptionsValidators?: ObjectFieldValidator<any>;
   isCopilotEnabled?: boolean;
   infoText?: string;
+  additionalCopilotInfo?: AdditionalCopilotInfo;
 };
 
 export interface NarrativeRef {
@@ -97,6 +98,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
     isCopilotEnabled = true,
     infoText,
     advancedOptionsValidators,
+    additionalCopilotInfo,
   } = props;
 
   const editorRef = useRef<MarkdownEditor>(null);
@@ -227,6 +229,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
             {(props) => (
               <CopilotButtonContent
                 reasons={values.values.reasons ?? []}
+                otherReason={values.values.reasonOther}
                 narrative={props.value || ''}
                 setNarrativeValue={(value) => {
                   props.onChange?.(value);
@@ -236,6 +239,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
                 }}
                 entityId={entityIds && entityIds?.length > 0 ? entityIds[0] : ''}
                 entityType={entityType}
+                additionalCopilotInfo={additionalCopilotInfo}
                 copilotDisabled={entityIds && entityIds?.length > 1 ? true : false}
                 copilotDisabledReason={
                   entityType === 'CASE'

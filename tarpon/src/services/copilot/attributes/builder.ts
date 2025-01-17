@@ -1,3 +1,5 @@
+import { CurrencyExchangeUSDType } from '../../currency'
+import { AlertAttributeBuilder } from './alert-attribute-builder'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -9,6 +11,7 @@ import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleNature } from '@/@types/openapi-public/RuleNature'
 import { NarrativeResponseAttributes } from '@/@types/openapi-internal/NarrativeResponseAttributes'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 export type InputData = {
   transactions: InternalTransaction[]
@@ -16,6 +19,8 @@ export type InputData = {
   _case?: Case
   ruleInstances?: RuleInstance[]
   reasons: Array<string>
+  _alert?: Alert
+  exchangeRates: CurrencyExchangeUSDType['rates']
 }
 
 export interface AttributeBuilder {
@@ -64,6 +69,7 @@ interface AttributeTypes extends Record<AIAttribute, any> {
   productsSold: string[]
   transactionIds: string[]
   ruleHitNames: string[]
+  alertGenerationDate: string
 }
 type AttributeValue<T extends AIAttribute> = T extends keyof AttributeTypes
   ? AttributeTypes[T]
@@ -205,12 +211,14 @@ type AttributeBuilders = {
   transaction: AttributeBuilder
   user: AttributeBuilder
   _case: AttributeBuilder
+  _alert: AttributeBuilder
 }
 
 export const DefaultAttributeBuilders: AttributeBuilders = {
   transaction: new TransactionsBuilder(),
   user: new UserAttributeBuilder(),
   _case: new CaseAttributeBuilder(),
+  _alert: new AlertAttributeBuilder(),
 }
 
 export type BuilderKey = keyof AttributeBuilders
@@ -232,6 +240,8 @@ export class AttributeGenerator {
     this.builders.user.build(attributes, inputData)
     this.builders._case.build(attributes, inputData)
     this.builders.transaction.build(attributes, inputData)
+    this.builders._alert.build(attributes, inputData)
+
     return attributes
   }
 }

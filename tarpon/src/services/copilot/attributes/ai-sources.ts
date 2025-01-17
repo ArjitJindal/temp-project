@@ -6,7 +6,7 @@ interface AIAttributeData {
   isPii: boolean
   category: AIAttributeCategory
 }
-const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
+const AI_SOURCES_MAP: Record<AIAttribute, AIAttributeData> = {
   userType: {
     isPii: false,
     category: 'USER',
@@ -25,7 +25,7 @@ const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
   },
   alertComments: {
     isPii: false,
-    category: 'CASE',
+    category: 'ALERT',
   },
   userComments: {
     isPii: false,
@@ -35,6 +35,10 @@ const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
     isPii: false,
     category: 'CASE',
   },
+  alertGenerationDate: {
+    isPii: false,
+    category: 'ALERT',
+  },
   firstPaymentAmount: {
     isPii: false,
     category: 'TRANSACTION',
@@ -43,19 +47,35 @@ const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
     isPii: false,
     category: 'TRANSACTION',
   },
-  minAmount: {
+  minOriginAmount: {
     isPii: false,
     category: 'TRANSACTION',
   },
-  maxAmount: {
+  minDestinationAmount: {
     isPii: false,
     category: 'TRANSACTION',
   },
-  totalTransactionAmount: {
+  maxOriginAmount: {
     isPii: false,
     category: 'TRANSACTION',
   },
-  averageTransactionAmount: {
+  maxDestinationAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  totalOriginAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  totalDestinationAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  averageOriginAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  averageDestinationAmount: {
     isPii: false,
     category: 'TRANSACTION',
   },
@@ -67,9 +87,13 @@ const AI_SOURCES_MAP: { [key in AIAttribute]: AIAttributeData } = {
     isPii: false,
     category: 'USER',
   },
-  closureDate: {
+  caseActionDate: {
     isPii: false,
     category: 'CASE',
+  },
+  alertActionDate: {
+    isPii: false,
+    category: 'ALERT',
   },
   industry: {
     isPii: false,

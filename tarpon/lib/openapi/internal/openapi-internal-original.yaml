@@ -9928,11 +9928,23 @@ components:
             type: string
         narrative:
           type: string
+        additionalCopilotInfo:
+          $ref: '#/components/schemas/AdditionalCopilotInfo'
+        otherReason:
+          type: string
       required:
         - reasons
         - entityId
         - entityType
         - narrative
+    AdditionalCopilotInfo:
+      title: AdditionalCopilotInfo
+      type: object
+      properties:
+        newCaseStatus:
+          $ref: '#/components/schemas/CaseStatus'
+        newAlertStatus:
+          $ref: '#/components/schemas/AlertStatus'
     NarrativeResponse:
       title: NarrativeResponse
       type: object
@@ -10264,15 +10276,21 @@ components:
         - alertComments
         - userComments
         - caseGenerationDate
+        - alertGenerationDate
         - firstPaymentAmount
         - transactionsCount
-        - minAmount
-        - maxAmount
-        - totalTransactionAmount
-        - averageTransactionAmount
+        - minOriginAmount
+        - maxOriginAmount
+        - minDestinationAmount
+        - maxDestinationAmount
+        - totalOriginAmount
+        - totalDestinationAmount
+        - averageOriginAmount
+        - averageDestinationAmount
         - name
         - websites
-        - closureDate
+        - caseActionDate
+        - alertActionDate
         - industry
         - productsSold
         - transactionIds
@@ -10285,6 +10303,7 @@ components:
         - CASE
         - USER
         - TRANSACTION
+        - ALERT
     TenantSettings:
       title: TenantSettings
       type: object

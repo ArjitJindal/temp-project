@@ -6,7 +6,7 @@ import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import MagicLineIcon from '@/components/ui/icons/Remix/design/magic-line.react.svg';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
-import { CaseReasons, NarrativeResponseAttributes } from '@/apis';
+import { AdditionalCopilotInfo, CaseReasons, NarrativeResponseAttributes } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -23,7 +23,7 @@ type CopilotButtonProps = {
   onAskClick: () => void;
   onFormatClick: () => void;
   narrative: string;
-  copilotDisabled: boolean;
+  copilotDisabled?: boolean;
   copilotDisabledReason?: string;
 };
 
@@ -127,25 +127,30 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
   );
 };
 
-interface Props {
+type CopilotButtonContentProps = {
   reasons: string[];
-  narrative: string;
-  setNarrativeValue: (narrative: string) => void;
   entityId: string;
   entityType?: EntityType;
+  narrative: string;
+  setNarrativeValue: (narrative: string) => void;
+  additionalCopilotInfo?: AdditionalCopilotInfo;
+  otherReason?: string;
   copilotDisabled?: boolean;
   copilotDisabledReason?: string;
-}
+};
 
-export const CopilotButtonContent = ({
-  reasons,
-  entityId,
-  narrative,
-  setNarrativeValue,
-  entityType,
-  copilotDisabled,
-  copilotDisabledReason,
-}: Props) => {
+export const CopilotButtonContent = (props: CopilotButtonContentProps) => {
+  const {
+    reasons,
+    entityId,
+    entityType,
+    narrative,
+    setNarrativeValue,
+    additionalCopilotInfo,
+    otherReason,
+    copilotDisabled,
+    copilotDisabledReason,
+  } = props;
   const branding = getBranding();
   const settings = useSettings();
 
@@ -164,6 +169,8 @@ export const CopilotButtonContent = ({
             entityType={entityType}
             narrative={narrative}
             setNarrativeValue={setNarrativeValue}
+            additionalCopilotInfo={additionalCopilotInfo}
+            otherReason={otherReason}
             copilotDisabled={copilotDisabled}
             copilotDisabledReason={copilotDisabledReason}
           />
@@ -175,6 +182,8 @@ export const CopilotButtonContent = ({
           entityType={entityType}
           narrative={narrative}
           setNarrativeValue={setNarrativeValue}
+          additionalCopilotInfo={additionalCopilotInfo}
+          otherReason={otherReason}
           copilotDisabled={copilotDisabled}
           copilotDisabledReason={copilotDisabledReason}
         />
@@ -225,16 +234,33 @@ function ProgressBar() {
     </div>
   );
 }
-export const CopilotWrapperContent = ({
-  reasons,
-  entityType,
-  entityId,
-  narrative,
-  setNarrativeValue,
-  copilotDisabled = false,
-  copilotDisabledReason = '',
-}: Props) => {
+
+type CopilotWrapperContentProps = {
+  reasons: string[];
+  entityId: string;
+  entityType: EntityType;
+  narrative: string;
+  setNarrativeValue: (narrative: string) => void;
+  additionalCopilotInfo?: AdditionalCopilotInfo;
+  otherReason?: string;
+  copilotDisabled?: boolean;
+  copilotDisabledReason?: string;
+};
+
+export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
   const api = useApi();
+  const {
+    reasons,
+    entityId,
+    entityType,
+    narrative,
+    setNarrativeValue,
+    additionalCopilotInfo,
+    otherReason,
+    copilotDisabled,
+    copilotDisabledReason,
+  } = props;
+
   const [askLoading, setAskLoading] = useState(false);
   const [formatLoading, setFormatLoading] = useState(false);
   const [attributes, setAttributes] = useState<NarrativeResponseAttributes[]>([]);
@@ -248,9 +274,10 @@ export const CopilotWrapperContent = ({
         NarrativeRequest: {
           entityId,
           entityType: entityType || 'CASE',
-          // TODO make this generic
           reasons: reasons as CaseReasons[],
+          otherReason,
           narrative: '',
+          additionalCopilotInfo,
         },
       });
       const processedNarrative = boldPlaceholders(response.narrative);
@@ -262,6 +289,7 @@ export const CopilotWrapperContent = ({
       setAskLoading(false);
     }
   };
+
   const onFormat = async () => {
     try {
       setFormatLoading(true);

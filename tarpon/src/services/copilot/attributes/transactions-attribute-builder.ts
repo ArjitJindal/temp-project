@@ -6,6 +6,7 @@ import {
   InputData,
 } from '@/services/copilot/attributes/builder'
 import { traceable } from '@/core/xray'
+import { CurrencyService } from '@/services/currency'
 
 @traceable
 export class TransactionsBuilder implements AttributeBuilder {
@@ -17,34 +18,12 @@ export class TransactionsBuilder implements AttributeBuilder {
     if (inputData.transactions.length === 0) {
       return
     }
-    const thresholds: { [key: number]: number } = {
-      1: 0,
-      10: 0,
-      100: 0,
-      1_000: 0,
-      10_000: 0,
-      100_000: 0,
-      1_000_000: 0,
-    }
-    let transactionsCount = 0
-    const ipAddressSet = new Set()
-    const originPaymentMethods = new Set()
-    const destinationPaymentMethods = new Set()
-    const originUsers = new Set()
-    const destinationUsers = new Set()
-    const originCurrencies = new Set()
-    const destinationCurrencies = new Set()
-
-    let minTime = 0
-    let maxTime = 0
-
-    let minOriginAmount = 0
-    let maxOriginAmount = 0
-    let minDestinationAmount = 0
-    let maxDestinationAmount = 0
-
-    let totalDestinationAmount = 0
-    let totalOriginAmount = 0
+    let minOriginAmountInUSD: number | null = null
+    let maxOriginAmountInUSD: number | null = null
+    let minDestinationAmountInUSD: number | null = null
+    let maxDestinationAmountInUSD: number | null = null
+    let totalDestinationAmountInUSD = 0
+    let totalOriginAmountInUSD = 0
 
     const transactions = inputData.transactions.sort((a, b) => {
       if (a.createdAt && b.createdAt) {
@@ -55,119 +34,122 @@ export class TransactionsBuilder implements AttributeBuilder {
 
     const mainCurrency =
       transactions.at(0)?.originAmountDetails?.transactionCurrency
+
     const currencySymbol = getSymbolFromCurrency(mainCurrency || '')
 
-    const firstPaymentAmount =
-      transactions.at(0)?.originAmountDetails?.transactionAmount
+    const firstPaymentAmountInUsd = mainCurrency
+      ? CurrencyService.getExchangeRate(
+          mainCurrency,
+          'USD',
+          inputData.exchangeRates
+        )
+      : undefined
+
     transactions.forEach((t) => {
-      // Count transactions into incremental thresholds
-      const amount = t.destinationAmountDetails?.transactionAmount
-      if (amount) {
-        Object.keys(thresholds).forEach((threshold) => {
-          const thresholdI = parseInt(threshold)
-          if (amount >= thresholdI) {
-            thresholds[thresholdI]++
-          }
-        })
+      const originAmountInUSD = t.originAmountDetails
+        ? CurrencyService.getTargetCurrencyAmount(
+            t.originAmountDetails,
+            'USD',
+            inputData.exchangeRates
+          ).transactionAmount
+        : undefined
+
+      const destinationAmountInUSD = t.destinationAmountDetails
+        ? CurrencyService.getTargetCurrencyAmount(
+            t.destinationAmountDetails,
+            'USD',
+            inputData.exchangeRates
+          ).transactionAmount
+        : undefined
+
+      if (originAmountInUSD) {
+        minOriginAmountInUSD = minOriginAmountInUSD
+          ? Math.min(minOriginAmountInUSD, originAmountInUSD)
+          : originAmountInUSD
+        maxOriginAmountInUSD = maxOriginAmountInUSD
+          ? Math.max(maxOriginAmountInUSD, originAmountInUSD)
+          : originAmountInUSD
+        totalOriginAmountInUSD += originAmountInUSD
       }
 
-      transactionsCount++
-
-      // Distinct counts
-      ipAddressSet.add(t.originDeviceData?.ipAddress)
-      ipAddressSet.add(t.destinationDeviceData?.ipAddress)
-      originPaymentMethods.add(JSON.stringify(t.originPaymentDetails?.method))
-      destinationPaymentMethods.add(
-        JSON.stringify(t.destinationPaymentDetails?.method)
-      )
-      originUsers.add(t.originUserId)
-      destinationUsers.add(t.destinationUserId)
-      originCurrencies.add(t.originAmountDetails?.transactionCurrency)
-      destinationCurrencies.add(t.destinationAmountDetails?.transactionCurrency)
-
-      // For basic velocity
-      if (!minTime) {
-        minTime = t.timestamp
+      if (destinationAmountInUSD) {
+        minDestinationAmountInUSD = minDestinationAmountInUSD
+          ? Math.min(minDestinationAmountInUSD, destinationAmountInUSD)
+          : destinationAmountInUSD
+        maxDestinationAmountInUSD = maxDestinationAmountInUSD
+          ? Math.max(maxDestinationAmountInUSD, destinationAmountInUSD)
+          : destinationAmountInUSD
+        totalDestinationAmountInUSD += destinationAmountInUSD
       }
-      if (!maxTime) {
-        maxTime = t.timestamp
-      }
-      if (t.timestamp < minTime) {
-        minTime = t.timestamp
-      }
-      if (t.timestamp > maxTime) {
-        maxTime = t.timestamp
-      }
-
-      // Min/Max Payment amounts
-      if (!minDestinationAmount) {
-        minDestinationAmount =
-          t.destinationAmountDetails?.transactionAmount || 0
-      }
-      if (!minOriginAmount) {
-        minOriginAmount = t.originAmountDetails?.transactionAmount || 0
-      }
-      if (!maxDestinationAmount) {
-        maxDestinationAmount =
-          t.destinationAmountDetails?.transactionAmount || 0
-      }
-      if (!maxOriginAmount) {
-        maxOriginAmount = t.originAmountDetails?.transactionAmount || 0
-      }
-
-      if (
-        t.destinationAmountDetails?.transactionAmount &&
-        t.destinationAmountDetails?.transactionAmount < minDestinationAmount
-      ) {
-        minDestinationAmount = t.destinationAmountDetails?.transactionAmount
-      }
-      if (
-        t.destinationAmountDetails?.transactionAmount &&
-        t.destinationAmountDetails?.transactionAmount > maxDestinationAmount
-      ) {
-        maxDestinationAmount = t.destinationAmountDetails?.transactionAmount
-      }
-      if (
-        t.originAmountDetails?.transactionAmount &&
-        t.originAmountDetails?.transactionAmount < minOriginAmount
-      ) {
-        minOriginAmount = t.originAmountDetails?.transactionAmount
-      }
-      if (
-        t.originAmountDetails?.transactionAmount &&
-        t.originAmountDetails?.transactionAmount > maxOriginAmount
-      ) {
-        maxOriginAmount = t.originAmountDetails?.transactionAmount
-      }
-      if (t.timestamp > maxTime) {
-        maxTime = t.timestamp
-      }
-
-      // Totals
-      totalDestinationAmount +=
-        t.destinationAmountDetails?.transactionAmount || 0
-      totalOriginAmount += t.originAmountDetails?.transactionAmount || 0
     })
 
-    attributes.setAttribute('transactionsCount', transactionsCount)
-    attributes.setAttribute('minAmount', `${currencySymbol}${minOriginAmount}`)
-    attributes.setAttribute('maxAmount', `${currencySymbol}${maxOriginAmount}`)
+    const convertToMainCurrency = (amountInUSD: number | null) => {
+      return amountInUSD
+        ? CurrencyService.getTargetCurrencyAmount(
+            {
+              transactionAmount: amountInUSD,
+              transactionCurrency: 'USD',
+            },
+            mainCurrency || 'USD',
+            inputData.exchangeRates
+          ).transactionAmount
+        : undefined
+    }
+
+    const minOriginAmount = convertToMainCurrency(minOriginAmountInUSD)
+    const minDestinationAmount = convertToMainCurrency(
+      minDestinationAmountInUSD
+    )
+    const maxOriginAmount = convertToMainCurrency(maxOriginAmountInUSD)
+    const maxDestinationAmount = convertToMainCurrency(
+      maxDestinationAmountInUSD
+    )
+    const totalOriginAmount = convertToMainCurrency(totalOriginAmountInUSD) ?? 0
+    const totalDestinationAmount =
+      convertToMainCurrency(totalDestinationAmountInUSD) ?? 0
+
+    const averageOriginAmount = totalOriginAmount / transactions.length
+    const averageDestinationAmount =
+      totalDestinationAmount / transactions.length
+
+    attributes.setAttribute('transactionsCount', transactions.length)
     attributes.setAttribute(
-      'totalTransactionAmount',
+      'minOriginAmount',
+      `${currencySymbol}${minOriginAmount}`
+    )
+    attributes.setAttribute(
+      'maxOriginAmount',
+      `${currencySymbol}${maxOriginAmount}`
+    )
+    attributes.setAttribute(
+      'totalOriginAmount',
       `${currencySymbol}${totalOriginAmount}`
     )
     attributes.setAttribute(
-      'averageTransactionAmount',
-      `${currencySymbol}${Math.floor(
-        totalDestinationAmount / transactionsCount
-      )}`
+      'averageOriginAmount',
+      `${currencySymbol}${averageOriginAmount}`
+    )
+    attributes.setAttribute(
+      'minDestinationAmount',
+      `${currencySymbol}${minDestinationAmount}`
+    )
+    attributes.setAttribute(
+      'maxDestinationAmount',
+      `${currencySymbol}${maxDestinationAmount}`
+    )
+    attributes.setAttribute(
+      'totalDestinationAmount',
+      `${currencySymbol}${totalDestinationAmount}`
+    )
+    attributes.setAttribute(
+      'averageDestinationAmount',
+      `${currencySymbol}${averageDestinationAmount}`
     )
     attributes.setAttribute(
       'firstPaymentAmount',
-      `${currencySymbol}${firstPaymentAmount}`
+      `${currencySymbol}${firstPaymentAmountInUsd}`
     )
 
-    // If too many transactions, then we will hit token limit for GPT
     if (transactions.length < 20) {
       attributes.setAttribute(
         'transactionIds',

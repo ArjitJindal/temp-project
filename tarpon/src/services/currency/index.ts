@@ -86,21 +86,8 @@ export class CurrencyService {
       date: dayjs().format('YYYY-MM-DD'),
     }
   }
-  public async getExchangeData(): Promise<CurrencyExchangeUSDType> {
-    if (envIs('local')) {
-      return CurrencyService.parseCoinbaseResponse(mockedCurrencyExchangeRates)
-    }
-    const response = await apiFetch<CoinbaseResponse>(
-      `https://api.coinbase.com/v2/exchange-rates?currency=USD`
-    )
 
-    return CurrencyService.parseCoinbaseResponse(response.result)
-  }
-
-  public async getCurrencyExchangeRate(
-    sourceCurrency: Currency,
-    targetCurrency: Currency
-  ): Promise<number> {
+  public async getExchangeRates(): Promise<CurrencyExchangeUSDType['rates']> {
     let exchangeData = await this.getCache()
 
     if (isEmpty(exchangeData) || this.isCacheExpired(exchangeData)) {
@@ -126,7 +113,32 @@ export class CurrencyService {
       throw new Error(`Failed to fetch currency exchange data from CDN`)
     }
 
-    return this.getExchangeRate(sourceCurrency, targetCurrency, exchangeData)
+    return exchangeData.rates
+  }
+
+  public async getExchangeData(): Promise<CurrencyExchangeUSDType> {
+    if (envIs('local')) {
+      return CurrencyService.parseCoinbaseResponse(mockedCurrencyExchangeRates)
+    }
+
+    const response = await apiFetch<CoinbaseResponse>(
+      `https://api.coinbase.com/v2/exchange-rates?currency=USD`
+    )
+
+    return CurrencyService.parseCoinbaseResponse(response.result)
+  }
+
+  public async getCurrencyExchangeRate(
+    sourceCurrency: Currency,
+    targetCurrency: Currency
+  ): Promise<number> {
+    const exchangeData = await this.getExchangeRates()
+
+    return CurrencyService.getExchangeRate(
+      sourceCurrency,
+      targetCurrency,
+      exchangeData
+    )
   }
 
   public async clearCache(): Promise<void> {
@@ -140,13 +152,13 @@ export class CurrencyService {
     )
   }
 
-  private getExchangeRate(
+  public static getExchangeRate(
     sourceCurrency: Currency,
     targetCurrency: Currency,
-    exchangeData: CurrencyExchangeUSDType
+    exchangeData: CurrencyExchangeUSDType['rates']
   ): number {
-    const sourceCurrencyExchangeRateInUSD = exchangeData.rates[sourceCurrency]
-    const targetCurrencyExchangeRateInUSD = exchangeData.rates[targetCurrency]
+    const sourceCurrencyExchangeRateInUSD = exchangeData[sourceCurrency]
+    const targetCurrencyExchangeRateInUSD = exchangeData[targetCurrency]
 
     const exchangeRate =
       targetCurrencyExchangeRateInUSD / sourceCurrencyExchangeRateInUSD
@@ -154,24 +166,39 @@ export class CurrencyService {
     return exchangeRate
   }
 
-  public async getTargetCurrencyAmount(
+  public static getTargetCurrencyAmount(
     transactionAmountDetails: TransactionAmountDetails,
-    targetCurrency: CurrencyCode
-  ): Promise<TransactionAmountDetails> {
+    targetCurrency: CurrencyCode,
+    exchangeRates: CurrencyExchangeUSDType['rates']
+  ): TransactionAmountDetails {
     const sourceCurrency = transactionAmountDetails.transactionCurrency
     if (sourceCurrency === targetCurrency) {
       return transactionAmountDetails
     }
 
-    const rate = await this.getCurrencyExchangeRate(
+    const rate = CurrencyService.getExchangeRate(
       sourceCurrency,
-      targetCurrency
+      targetCurrency,
+      exchangeRates
     )
 
     return {
       transactionAmount: transactionAmountDetails.transactionAmount * rate,
       transactionCurrency: targetCurrency,
     }
+  }
+
+  public async getTargetCurrencyAmount(
+    transactionAmountDetails: TransactionAmountDetails,
+    targetCurrency: CurrencyCode
+  ): Promise<TransactionAmountDetails> {
+    const exchangeData = await this.getExchangeRates()
+
+    return CurrencyService.getTargetCurrencyAmount(
+      transactionAmountDetails,
+      targetCurrency,
+      exchangeData
+    )
   }
 
   private async getCache(): Promise<CurrencyExchangeUSDType | undefined> {

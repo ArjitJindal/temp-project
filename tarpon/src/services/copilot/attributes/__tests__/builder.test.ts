@@ -4,6 +4,7 @@ import {
   AttributeGenerator,
   DefaultAttributeBuilders,
 } from '@/services/copilot/attributes/builder'
+import { CurrencyService } from '@/services/currency'
 import { setAccounts } from '@/core/seed/samplers/accounts'
 import { Account } from '@/@types/openapi-internal/Account'
 
@@ -52,6 +53,7 @@ describe('Attribute generator', () => {
       ],
       user,
       reasons: [],
+      exchangeRates: (await new CurrencyService().getExchangeData()).rates,
     })
     expect(attributes.getAttribute('transactionsCount')).toEqual(5)
   })

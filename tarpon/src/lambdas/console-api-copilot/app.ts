@@ -29,8 +29,16 @@ export const copilotHandler = lambdaApi({})(
 
     const copilotService = new AutoNarrativeService()
     const retrievalService = await RetrievalService.new(event)
+
     handlers.registerGenerateNarrative(async (ctx, request) => {
-      const { entityId, entityType, reasons } = request.NarrativeRequest
+      const {
+        entityId,
+        entityType,
+        reasons,
+        otherReason,
+        additionalCopilotInfo,
+      } = request.NarrativeRequest
+
       const attributes = await retrievalService.getAttributes(
         entityId,
         entityType,
@@ -39,9 +47,16 @@ export const copilotHandler = lambdaApi({})(
       if (entityType === 'REPORT') {
         return copilotService.getSarNarrative(attributes)
       }
+
       if (entityType === 'CASE' || entityType === 'ALERT') {
-        return copilotService.getNarrative(attributes)
+        return copilotService.getNarrative(
+          attributes,
+          entityType === 'CASE' ? 'CASE' : 'ALERT',
+          additionalCopilotInfo,
+          otherReason
+        )
       }
+
       throw new NotFound(`Entity type not supported: ${entityType}`)
     })
 

@@ -17,6 +17,7 @@ import { useApi } from '@/api';
 import { COPILOT_AI_RESOURCES } from '@/utils/queries/keys';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import SettingsCard from '@/components/library/SettingsCard';
+import { isValidAIAttribute } from '@/apis/models-custom/AIAttribute';
 
 export const AISources = () => {
   const settings = useSettings();
@@ -96,7 +97,7 @@ export const AISources = () => {
                 <Button
                   onClick={() => {
                     updateSettings.mutate({
-                      aiSourcesDisabled: aiSourcesDisabled,
+                      aiSourcesDisabled: aiSourcesDisabled.filter(isValidAIAttribute),
                     });
                   }}
                   requiredPermissions={['settings:case-management:write']}

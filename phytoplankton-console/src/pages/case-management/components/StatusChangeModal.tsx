@@ -76,6 +76,7 @@ export default function StatusChangeModal(props: Props) {
     skipReasonsModal = false,
     advancedOptions,
   } = props;
+
   const initialValues: FormValues = useDeepEqualMemo(
     () => ({
       ...DEFAULT_INITIAL_VALUES,
@@ -189,6 +190,10 @@ export default function StatusChangeModal(props: Props) {
           advancedOptionsValidators={{
             userStateDetails: userStateDetailsValidator,
             kycStatusDetails: kycStatusDetailsValidator,
+          }}
+          additionalCopilotInfo={{
+            ...(entityName === 'CASE' && { newCaseStatus: newStatus }),
+            ...(entityName === 'ALERT' && { newAlertStatus: newStatus }),
           }}
         />
       </Modal>
