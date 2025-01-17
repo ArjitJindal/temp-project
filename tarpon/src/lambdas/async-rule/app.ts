@@ -1,5 +1,5 @@
 import { SQSEvent } from 'aws-lambda'
-import { groupBy } from 'lodash'
+import { compact, groupBy } from 'lodash'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
 import {
   hasFeature,
@@ -34,8 +34,7 @@ function getLockKeys(record: AsyncRuleRecord): string[] {
         record.transaction.destinationUserId,
       ].filter((id): id is string => !!id)
     case 'TRANSACTION_EVENT_BATCH':
-      // TODO: To improve this
-      return [record.tenantId]
+      return compact([record.originUserId, record.destinationUserId])
     case 'USER':
       return [record.user.userId]
     case 'USER_EVENT':
