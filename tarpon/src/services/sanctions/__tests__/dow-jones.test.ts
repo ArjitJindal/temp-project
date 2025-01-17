@@ -130,7 +130,7 @@ Jubilant Pharmova Ltd.`,
             name: 'Ange-Félix Patassé',
             entityType: 'Person',
             nationality: ['CF'],
-            sanctionSearchTypes: ['PEP', 'ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
+            sanctionSearchTypes: ['ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
             gender: 'Male',
             occupations: [
               {
@@ -233,7 +233,7 @@ Patasse passed away on April 5, 2011.`,
             ],
             yearOfBirth: '1937',
             dateMatched: true,
-            matchTypes: ['PEP', 'Corruption'],
+            matchTypes: ['Corruption'],
             screeningSources: [
               {
                 createdAt: 1026518400000,

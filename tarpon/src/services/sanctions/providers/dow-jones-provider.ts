@@ -496,9 +496,9 @@ export class DowJonesProvider extends SanctionsDataFetcher {
     const currentYear = dayjs().year()
     return (
       date['@_DateType'] === 'Inactive as of (PEP)' &&
-      date['@_DateValue'] &&
-      date['@_DateValue']['@_Year'] &&
-      currentYear - dayjs(date['@_DateValue']['@_Year']).year() > 7
+      date['DateValue'] &&
+      date['DateValue']['@_Year'] &&
+      currentYear - dayjs(date['DateValue']['@_Year']).year() > 7
     )
   }
 
@@ -543,8 +543,10 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           return
         }
         const nameValue = name.NameValue[0]
-        const inactivePEP = person.DateDetails?.Date?.find((date: any) =>
-          this.isInactivePEP(date)
+        const inactivePEP = Boolean(
+          person.DateDetails?.Date?.find((date: any) =>
+            this.isInactivePEP(date)
+          )
         )
         const inactiveRCA = person.DateDetails?.Date?.find(
           (date: any) =>
