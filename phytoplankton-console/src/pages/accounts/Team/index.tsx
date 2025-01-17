@@ -189,24 +189,20 @@ export default function Team() {
         },
       },
     }),
-    columnHelper.simple<'lastLogin'>({
-      key: 'lastLogin',
-      title: 'Last login',
-      type: {
-        stringify: (lastLogin) => {
-          if (!lastLogin) {
-            return 'N/A';
-          }
-          return new Date(lastLogin).toLocaleString();
-        },
-      },
-      hideInTable: true,
-      exporting: true,
-    }),
     columnHelper.simple<'createdAt'>({
       key: 'createdAt',
       title: 'Created at',
+      defaultWidth: 300,
       type: {
+        render(createdAt, _context) {
+          return (
+            <div className={s.createdAt}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {createdAt ? new Date(createdAt).toLocaleString() : 'N/A'}
+              </P>
+            </div>
+          );
+        },
         stringify: (createdAt) => {
           if (!createdAt) {
             return 'N/A';
@@ -214,7 +210,29 @@ export default function Team() {
           return new Date(createdAt).toLocaleString();
         },
       },
-      hideInTable: true,
+      exporting: true,
+    }),
+    columnHelper.simple<'lastLogin'>({
+      key: 'lastLogin',
+      title: 'Last login',
+      defaultWidth: 300,
+      type: {
+        render(lastLogin, _context) {
+          return (
+            <div className={s.lastLogin}>
+              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
+                {lastLogin ? new Date(lastLogin).toLocaleString() : 'N/A'}
+              </P>
+            </div>
+          );
+        },
+        stringify: (lastLogin) => {
+          if (!lastLogin) {
+            return 'N/A';
+          }
+          return new Date(lastLogin).toLocaleString();
+        },
+      },
       exporting: true,
     }),
     columnHelper.simple<'lastPasswordReset'>({
@@ -235,7 +253,7 @@ export default function Team() {
       key: 'emailVerified',
       title: 'Email verification',
       sorting: true,
-      defaultWidth: 250,
+      defaultWidth: 220,
       type: {
         render: (emailVerified, context) => {
           return (
