@@ -1,13 +1,124 @@
 @import 'src/components/ui/colors';
 @import 'src/components/ui/animation';
+@import 'src/components/library/helpers';
 
-.label {
-  display: flex;
-  justify-content: center;
-  align-items: center;
+.root {
+  --toggle-padding: 2px;
+
+  &.size-M {
+    --toggle-height: @figma-vars--tokens-sizeIconIconsizeM;
+    --toggle-width: 46px;
+    --toggle-icon-size: @figma-vars--tokens-sizeIconIconsizeXs;
+  }
+
+  &.size-S {
+    --toggle-height: @figma-vars--tokens-sizeIconIconsizeS;
+    --toggle-width: 34px;
+    --toggle-icon-size: @figma-vars--tokens-sizeIconIconsizeXs;
+  }
+
+  --toggle-box-width: calc(var(--toggle-width) + var(--toggle-padding) * 2);
+  --toggle-box-height: calc(var(--toggle-height) + var(--toggle-padding) * 2);
+
+  height: var(--toggle-box-height);
+  width: var(--toggle-box-width);
+  position: relative;
+}
+
+.content {
+  position: relative;
+  height: var(--toggle-box-height);
+  width: var(--toggle-box-width);
+  border-radius: calc(var(--toggle-box-height) / 2);
+  transition-property: background, box-shadow;
+  transition-duration: @default-animation-speed;
+  transition-timing-function: @default-animation-function;
+
+  .circle {
+    height: var(--toggle-height);
+    width: var(--toggle-height);
+    position: absolute;
+    top: var(--toggle-padding);
+    left: var(--toggle-padding);
+    border-radius: 50%;
+    background: @figma-vars--tokens-colorButtonFillSecondaryDefault;
+    transition-property: transform;
+    transition-duration: @default-animation-speed;
+    transition-timing-function: @default-animation-function;
+
+    .icon {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: var(--toggle-icon-size);
+      height: var(--toggle-icon-size);
+      transform: translateX(-50%) translateY(-50%);
+      transition-property: opacity;
+      transition-duration: @default-animation-speed;
+      transition-timing-function: @default-animation-function;
+    }
+  }
+}
+
+.icon.on {
+  color: @figma-vars--tokens-colorIconAction;
+}
+
+.icon.off {
+  color: @figma-vars--tokens-colorStrokeSecondary;
+}
+
+.input {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
-  font-size: 16px;
-  font-weight: 600;
-  color: #fff;
-  padding-right: 2px;
+  width: 100%;
+  opacity: 0;
+  z-index: 1;
+  cursor: pointer;
+
+  &:checked + .content {
+    background: @figma-vars--tokens-colorButtonFillPrimaryDefault;
+
+    .circle {
+      transform: translateX(var(--toggle-width)) translateX(calc(var(--toggle-height) * -1));
+    }
+
+    .icon.on {
+      opacity: 1;
+    }
+
+    .icon.off {
+      opacity: 0;
+    }
+  }
+
+  &:not(:checked) + .content {
+    background: @figma-vars--tokens-colorBackgroundSecondary;
+
+    .icon.on {
+      opacity: 0;
+    }
+
+    .icon.off {
+      opacity: 1;
+    }
+  }
+
+  &:disabled {
+    &,
+    & + .content {
+      pointer-events: none;
+      background: @figma-vars--tokens-colorBackgroundDisabled;
+
+      .icon {
+        color: @figma-vars--tokens-colorStrokeDisabled;
+      }
+    }
+  }
+
+  &:focus + .content {
+    .default-focused-shadow();
+  }
 }

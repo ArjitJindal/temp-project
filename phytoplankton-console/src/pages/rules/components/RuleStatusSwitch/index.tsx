@@ -1,11 +1,9 @@
-import { Switch } from 'antd';
-import cn from 'clsx';
 import React from 'react';
-import s from './style.module.less';
 import { useHasPermissions } from '@/utils/user-utils';
 import { RiskFactor, RuleInstance } from '@/apis';
 import Tooltip from '@/components/library/Tooltip';
 import { dayjs } from '@/utils/dayjs';
+import Toggle from '@/components/library/Toggle';
 
 interface RuleStatusSwitchProps {
   entity: RuleInstance | RiskFactor;
@@ -27,11 +25,13 @@ export const RuleStatusSwitch: React.FC<RuleStatusSwitchProps> = (props: RuleSta
   const justDeploying = isDeploying && dayjs().diff(entity.updatedAt, 'minute') < 15;
   return (
     <Tooltip title={tooltipText} placement="top">
-      <Switch
-        className={cn(isDeploying && s.deploying)}
-        disabled={!canWriteRules || justDeploying || isDisabled}
-        checked={entity.status !== 'INACTIVE'}
-        onChange={onToggle}
+      <Toggle
+        isLoading={isDeploying}
+        isDisabled={!canWriteRules || justDeploying || isDisabled}
+        value={entity.status !== 'INACTIVE'}
+        onChange={(newValue) => {
+          onToggle?.(newValue ?? false);
+        }}
       />
     </Tooltip>
   );

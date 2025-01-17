@@ -29,8 +29,8 @@ export const PepStatusConfigSettings = () => {
         <Toggle
           value={settings.pepStatusLock}
           onChange={settings.pepStatusLock ? handleDisable : handleEnable}
-          loading={mutateTenantSettings.isLoading}
-          disabled={!permissions}
+          isLoading={mutateTenantSettings.isLoading}
+          isDisabled={!permissions}
         />
       </Tooltip>
     </SettingsCard>

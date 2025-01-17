@@ -1,11 +1,40 @@
 @import 'src/components/ui/colors';
 @import 'src/components/ui/animation';
+@import 'src/components/library/helpers';
 
 .root {
-  width: 20px;
-  height: 20px;
   position: relative;
   flex-shrink: 0;
+
+  &.size-S {
+    width: @figma-vars--tokens-sizeIconIconsizeXs;
+    height: @figma-vars--tokens-sizeIconIconsizeXs;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsize4xs;
+      height: @figma-vars--tokens-sizeIconIconsize4xs;
+    }
+  }
+
+  &.size-M {
+    width: @figma-vars--tokens-sizeIconIconsizeS;
+    height: @figma-vars--tokens-sizeIconIconsizeS;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsize3xs;
+      height: @figma-vars--tokens-sizeIconIconsize3xs;
+    }
+  }
+
+  &.size-L {
+    width: @figma-vars--tokens-sizeIconIconsizeM;
+    height: @figma-vars--tokens-sizeIconIconsizeM;
+
+    .content::before {
+      width: @figma-vars--tokens-sizeIconIconsizeXs;
+      height: @figma-vars--tokens-sizeIconIconsizeXs;
+    }
+  }
 }
 
 .input {
@@ -20,9 +49,9 @@
 
   &:checked {
     + .content {
-      border-color: @fr-colors-v2-primary-flagrightBlue;
+      border-color: @figma-vars--tokens-colorStrokeAction;
       &::before {
-        background: @fr-colors-v2-primary-flagrightBlue;
+        background: @figma-vars--tokens-colorButtonFillPrimaryDefault;
         opacity: 1;
       }
     }
@@ -31,12 +60,17 @@
   &:disabled {
     + .content {
       pointer-events: none;
-      border-color: @fr-colors-v2-state-disabled;
-      background: @fr-colors-v2-gray-1;
+      border-color: @figma-vars--tokens-colorStrokeDisabled;
 
       &::before {
-        background: @fr-colors-v2-state-disabled;
+        background: @figma-vars--tokens-colorBackgroundDisabled;
       }
+    }
+  }
+
+  &:focus {
+    + .content {
+      .default-focused-shadow();
     }
   }
 }
@@ -48,18 +82,18 @@
   top: 0;
   left: 0;
   border-radius: 50%;
-  border: 1px solid @fr-colors-v2-gray-6;
+  border: 1px solid @figma-vars--tokens-colorStrokePrimary;
+  background: @figma-vars--tokens-colorButtonFillSecondaryDefault;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: box-shadow @default-animation-speed @default-animation-function;
 
   &::before {
     content: ' ';
     display: block;
     position: absolute;
-    width: 12px;
-    height: 12px;
     border-radius: 50%;
     top: 50%;
     left: 50%;

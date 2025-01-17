@@ -1,5 +1,4 @@
 import React, { useImperativeHandle, useState } from 'react';
-import { Switch } from 'antd';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ListHeader, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
@@ -18,6 +17,7 @@ import { useHasPermissions } from '@/utils/user-utils';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { DATE } from '@/components/library/Table/standardDataTypes';
 import { message } from '@/components/library/Message';
+import Toggle from '@/components/library/Toggle';
 
 export type ListTableRef = React.Ref<{
   reload: () => void;
@@ -136,9 +136,9 @@ function ListTable(props: Props, ref: ListTableRef) {
       defaultWidth: 80,
       type: {
         render: (status, { item: entity }) => (
-          <Switch
-            checked={status ?? false}
-            disabled={!hasListWritePermissions}
+          <Toggle
+            value={status}
+            isDisabled={!hasListWritePermissions}
             onChange={(value) => {
               changeListMutation.mutate({
                 listId: entity.listId,

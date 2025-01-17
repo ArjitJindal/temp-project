@@ -72,7 +72,7 @@ export default function (): JSX.Element {
           <>
             <Label label={'View mode'} position={'RIGHT'}>
               <Toggle
-                size={'SMALL'}
+                size={'S'}
                 value={state.isOn ?? true}
                 onChange={(value) => {
                   setState((state) => ({

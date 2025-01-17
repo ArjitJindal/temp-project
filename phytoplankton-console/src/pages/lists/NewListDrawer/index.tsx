@@ -170,7 +170,7 @@ export default function NewListDrawer(props: Props) {
                       label={'Status'}
                       labelProps={{ position: 'RIGHT' }}
                     >
-                      {(inputProps) => <Toggle size="SMALL" {...inputProps} />}
+                      {(inputProps) => <Toggle size="S" {...inputProps} />}
                     </InputField>
                   </>
                 )}

@@ -42,7 +42,7 @@ export const FlagrightAISettings = () => {
               <Toggle
                 value={settings.isAiEnabled}
                 onChange={!settings.isAiEnabled ? onClick : handleDisable}
-                loading={mutateTenantSettings.isLoading}
+                isLoading={mutateTenantSettings.isLoading}
                 isDisabled={!permissions}
               />
             )}
@@ -50,7 +50,7 @@ export const FlagrightAISettings = () => {
         ) : (
           <Tooltip title={`Contact us to purchase AI features.`} placement="topLeft">
             <div>
-              <Toggle value={false} disabled={true} isDisabled={!permissions} />
+              <Toggle value={false} isDisabled={true} />
             </div>
           </Tooltip>
         )}

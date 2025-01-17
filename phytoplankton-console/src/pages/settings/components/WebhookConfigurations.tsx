@@ -1,4 +1,4 @@
-import { Space, Switch } from 'antd';
+import { Space } from 'antd';
 import { useCallback, useRef, useState } from 'react';
 import { JSONSchemaType } from 'ajv';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
@@ -14,6 +14,7 @@ import { DefaultApiGetWebhooksRequest } from '@/apis/types/ObjectParamAPI';
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { getBranding } from '@/utils/branding';
 import Tag from '@/components/library/Tag';
+import Toggle from '@/components/library/Toggle';
 
 export const WebhookConfigurations: React.FC = () => {
   const api = useApi();
@@ -92,12 +93,12 @@ export const WebhookConfigurations: React.FC = () => {
         render: (webhook) => {
           return (
             <Space style={{ alignItems: 'baseline' }}>
-              <Switch
-                disabled={!isDevelopersWriteEnabled}
-                checked={webhook?.enabled ?? false}
+              <Toggle
+                isDisabled={!isDevelopersWriteEnabled}
+                value={webhook?.enabled ?? false}
                 onChange={(checked) => {
                   if (webhook) {
-                    handleSaveWebhook({ ...webhook, enabled: checked });
+                    handleSaveWebhook({ ...webhook, enabled: checked ?? false });
                   }
                 }}
               />

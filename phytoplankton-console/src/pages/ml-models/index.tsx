@@ -1,6 +1,5 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import { Switch } from 'antd';
 import s from './style.module.less';
 import { useI18n } from '@/locales';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
@@ -17,6 +16,7 @@ import Tooltip from '@/components/library/Tooltip';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { MACHINE_LEARNING_MODELS } from '@/utils/queries/keys';
 import { message } from '@/components/library/Message';
+import Toggle from '@/components/library/Toggle';
 
 interface TableSearchParams extends CommonParams {
   modelId?: string;
@@ -131,8 +131,8 @@ export const MlModelsPage = () => {
         type: {
           render: (enabled, { item }) => {
             return (
-              <Switch
-                checked={enabled}
+              <Toggle
+                value={enabled}
                 onChange={(checked) => {
                   updateModelMutation.mutate({
                     ...item,

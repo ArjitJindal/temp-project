@@ -25,7 +25,7 @@ export default function (): JSX.Element {
         </Button>
         <Label label={'Skeleton mode'} position={'RIGHT'}>
           <Toggle
-            size={'XS'}
+            size={'S'}
             value={skeletonMode}
             onChange={(newValue) => setSkeletonMode(newValue ?? false)}
           />

@@ -36,8 +36,8 @@ export const ProductionAccessControl = () => {
       <Toggle
         onChange={!settings.isProductionAccessEnabled ? handleToggleOn : handleToggleOff}
         value={settings.isProductionAccessEnabled}
-        loading={mutateTenantSettings.isLoading}
-        disabled={!hasSystemConfigWrite}
+        isLoading={mutateTenantSettings.isLoading}
+        isDisabled={!hasSystemConfigWrite}
       />
     </SettingsCard>
   );

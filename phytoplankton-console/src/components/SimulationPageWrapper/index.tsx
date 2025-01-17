@@ -82,13 +82,13 @@ export const SimulationPageWrapper = forwardRef<
               <div>
                 <Tooltip title={SIMULATOR_DISABLED_TOOLTIP_MESSAGE} placement="bottomLeft">
                   <span>
-                    <Toggle size="SMALL" disabled={true} />
+                    <Toggle size="S" isDisabled={true} />
                   </span>
                 </Tooltip>
               </div>
             ) : (
               <Toggle
-                size="SMALL"
+                size="S"
                 value={props.isSimulationModeEnabled}
                 onChange={props.onSimulationModeChange}
                 testId="simulation-toggle"

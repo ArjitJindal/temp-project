@@ -1,5 +1,4 @@
 import React, { useMemo } from 'react';
-import { Switch } from 'antd';
 import { capitalize, uniqBy } from 'lodash';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { COUNTRIES, CURRENCIES_SELECT_OPTIONS } from '@flagright/lib/constants';
@@ -73,6 +72,7 @@ import Tag from '@/components/library/Tag';
 import { statusToOperationName } from '@/pages/case-management/components/StatusChangeButton';
 import { PEP_RANKS } from '@/apis/models-custom/PepRank';
 import { FeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import Toggle from '@/components/library/Toggle';
 
 export const UNKNOWN: Required<FullColumnDataType<unknown>> = {
   render: (value) => {
@@ -216,8 +216,8 @@ export const BOOLEAN: ColumnDataType<boolean> = {
   renderEdit: (context) => {
     const [state] = context.edit.state;
     return (
-      <Switch
-        checked={state}
+      <Toggle
+        value={state}
         onChange={(checked) => {
           context.edit.onConfirm(checked);
         }}

@@ -15464,7 +15464,6 @@ __metadata:
     react-resizable: "npm:^3.0.4"
     react-router: "npm:^6.3.0"
     react-router-dom: "npm:^6.3.0"
-    react-switch: "npm:^7.0.0"
     react-test-renderer: "npm:^17.0.0"
     reagraph: "npm:^4.11.1"
     stylelint: "npm:^13.0.0"
@@ -16967,18 +16966,6 @@ __metadata:
     react: ^16.3.0 || ^17.0.0
     react-dom: ^16.3.0 || ^17.0.0
   checksum: 084c80d984d2b69886580c9de800b5e2f21edbe9244a7b9bf7d0cae24d568296b76e3e2a95c9f46bd2ecd686a61341f4a68bbe0e2b6eb22c1a32981d3609808a
-  languageName: node
-  linkType: hard
-
-"react-switch@npm:^7.0.0":
-  version: 7.0.0
-  resolution: "react-switch@npm:7.0.0"
-  dependencies:
-    prop-types: "npm:^15.7.2"
-  peerDependencies:
-    react: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-    react-dom: ^15.3.0 || ^16.0.0 || ^17.0.0 || ^18.0.0
-  checksum: fe5d2fc7c25998de5ff8c0f5a0013d43bb5dc89564d97b03f9e0202761a00127e477d4d670e8cc2885cfcacbc98e87c0c3555a1398d0db1403db45598d0dc753
   languageName: node
   linkType: hard
 

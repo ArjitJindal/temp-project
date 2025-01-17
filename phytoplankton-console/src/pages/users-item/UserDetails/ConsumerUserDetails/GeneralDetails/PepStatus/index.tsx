@@ -167,7 +167,7 @@ export const PepStatusForm = (props: FormProps) => {
       <Label label="Is PEP" required>
         <Toggle
           value={isPepHit}
-          size="SMALL"
+          size={'S'}
           onChange={(checked) => {
             onChange({
               ...values,

@@ -31,7 +31,7 @@ export const FlagrightMLSettings = () => {
             <Toggle
               value={settings.isMlEnabled}
               onChange={handleToggle}
-              loading={mutateTenantSettings.isLoading}
+              isLoading={mutateTenantSettings.isLoading}
               isDisabled={!permissions}
             />
           ) : (
@@ -40,7 +40,7 @@ export const FlagrightMLSettings = () => {
               placement="topLeft"
             >
               <div>
-                <Toggle value={false} disabled={true} isDisabled={!permissions} />
+                <Toggle value={false} isDisabled={true} />
               </div>
             </Tooltip>
           )}

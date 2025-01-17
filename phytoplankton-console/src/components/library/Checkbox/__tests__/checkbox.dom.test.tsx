@@ -25,10 +25,9 @@ describe('Checkbox Component', () => {
     expect(checkbox).toBeDisabled();
   });
 
-  test('has indeterminate and isVisible classes when value is undefined', () => {
+  test('has indeterminate classes when value is undefined', () => {
     const { container } = render(<Checkbox value={undefined} testName="testCheckbox" />);
-    const indeterminateDiv = container.querySelector(`.${s.indeterminate}`);
+    const indeterminateDiv = container.querySelector(`.${s.isIndeterminate}`);
     expect(indeterminateDiv).toBeInTheDocument();
-    expect(indeterminateDiv).toHaveClass(s.isVisible);
   });
 });

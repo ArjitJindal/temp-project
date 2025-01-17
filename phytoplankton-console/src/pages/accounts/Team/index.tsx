@@ -326,7 +326,7 @@ export default function Team() {
                   deactivate: !checked,
                 });
               }}
-              disabled={item.id === user.userId}
+              isDisabled={item.id === user.userId}
             />
           );
         },

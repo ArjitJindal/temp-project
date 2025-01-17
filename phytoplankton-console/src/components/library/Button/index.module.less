@@ -1,9 +1,10 @@
 @import 'src/components/ui/colors.less';
 @import 'src/components/ui/animation.less';
+@import 'src/components/library/helpers.less';
 
 .outline(@color) {
   &:focus {
-    box-shadow: 0 0 0 3px fade(@color, 30%);
+    .default-focused-shadow(@color);
   }
 }
 

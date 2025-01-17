@@ -32,7 +32,7 @@ export const CASES_ITEM_TRANSACTIONS = (caseId: string, searchParams: AnyParamet
   'list',
   searchParams,
 ];
-export const LISTS_OF_TYPE = (type: ListType): QueryKey => ['lists', { type }, 'list'];
+export const LISTS_OF_TYPE = (type: ListType | undefined): QueryKey => ['lists', { type }, 'list'];
 export const LISTS_ITEM = (id?: string, type?: ListType): QueryKey => ['lists', 'item', id, type];
 export const LISTS_ITEM_TYPE = (id: string, type: ListType, params?: AnyParameters): QueryKey => [
   'lists',

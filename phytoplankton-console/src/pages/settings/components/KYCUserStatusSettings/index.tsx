@@ -29,8 +29,8 @@ export const KYCUserStatusSettings = () => {
         <Toggle
           value={settings.kycUserStatusLock}
           onChange={settings.kycUserStatusLock ? handleDisable : handleEnable}
-          loading={mutateTenantSettings.isLoading}
-          disabled={!permissions}
+          isLoading={mutateTenantSettings.isLoading}
+          isDisabled={!permissions}
         />
       </Tooltip>
     </SettingsCard>

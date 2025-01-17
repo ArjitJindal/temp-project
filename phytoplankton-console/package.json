@@ -124,7 +124,6 @@
     "react-resizable": "^3.0.4",
     "react-router": "^6.3.0",
     "react-router-dom": "^6.3.0",
-    "react-switch": "^7.0.0",
     "reagraph": "^4.11.1",
     "umi-request": "^1.4.0",
     "url-parse": "^1.5.10",

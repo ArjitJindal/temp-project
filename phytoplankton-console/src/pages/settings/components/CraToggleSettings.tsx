@@ -25,7 +25,7 @@ export default function CraToggleSettings() {
           <Toggle
             onChange={settings.riskScoringCraEnabled === false ? handleEnable : handleDisable}
             value={settings.riskScoringCraEnabled ?? true}
-            loading={mutateTenantSettings.isLoading}
+            isLoading={mutateTenantSettings.isLoading}
             isDisabled={!permissions}
           />
         </div>

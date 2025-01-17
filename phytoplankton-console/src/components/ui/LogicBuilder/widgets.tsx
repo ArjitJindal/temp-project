@@ -258,7 +258,7 @@ const customBooleanWidget: BooleanWidget<QueryBuilderConfig> = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <Toggle size="SMALL" value={props.value ?? false} onChange={props.setValue} />
+        <Toggle size="S" value={props.value ?? false} onChange={props.setValue} />
       </WidgetWrapper>
     );
   },

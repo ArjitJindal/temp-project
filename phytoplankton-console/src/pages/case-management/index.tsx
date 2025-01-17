@@ -27,6 +27,7 @@ import { useQaMode } from '@/utils/qa-mode';
 import Tooltip from '@/components/library/Tooltip';
 import { getBranding } from '@/utils/branding';
 import { DerivedStatus } from '@/apis';
+import Label from '@/components/library/Label';
 
 export default function CaseManagementPage() {
   const i18n = useI18n();
@@ -131,21 +132,18 @@ export default function CaseManagementPage() {
       actionButton={
         <div className={s.qaSwitch}>
           {hasQaEnabled ? (
-            <Toggle
-              value={qaMode}
-              onChange={(value) => setQaMode(!!value)}
-              disabled={false}
-              showLabel
-              label={'QA'}
-              testId="qa-toggle"
-            />
+            <Label label={'QA'} position={'RIGHT'}>
+              <Toggle value={qaMode} onChange={(value) => setQaMode(!!value)} testId="qa-toggle" />
+            </Label>
           ) : (
             <Tooltip
               title={`This is an advanced feature. Contact support at ${branding.supportEmail} to access it.`}
               placement="topLeft"
             >
               <div>
-                <Toggle value={qaMode} disabled={true} showLabel label={'QA'} />
+                <Label label={'QA'} position={'RIGHT'}>
+                  <Toggle value={qaMode} isDisabled={true} />
+                </Label>
               </div>
             </Tooltip>
           )}

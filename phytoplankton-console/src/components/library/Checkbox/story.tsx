@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Component from './index';
 import { UseCase } from '@/pages/storybook/components';
+import PropertyMatrix from '@/pages/storybook/components/PropertyMatrix';
 
 export default function (): JSX.Element {
   const [value, setValue] = useState<undefined | boolean>(false);
@@ -14,17 +15,25 @@ export default function (): JSX.Element {
           }}
         />
       </UseCase>
+      <UseCase title={'Sizes and states'}>
+        <PropertyMatrix
+          yLabel={'value'}
+          y={[true, undefined, false] as const}
+          xLabel={'Sizes'}
+          x={['S', 'M', 'L'] as const}
+        >
+          {(size, value) => <Component value={value} size={size} />}
+        </PropertyMatrix>
+      </UseCase>
       <UseCase title={'Disabled'}>
-        <Component value={value} onChange={setValue} isDisabled={true} />
-      </UseCase>
-      <UseCase
-        title={'Undetermined'}
-        description="Checkbox is in indeterminate state when receives undefined"
-      >
-        <Component value={undefined} onChange={() => {}} />
-      </UseCase>
-      <UseCase title={'With label'}>
-        <Component value={value} onChange={setValue} />
+        <PropertyMatrix
+          yLabel={'value'}
+          y={[true, undefined, false] as const}
+          xLabel={'Sizes'}
+          x={['S', 'M', 'L'] as const}
+        >
+          {(size, value) => <Component isDisabled={true} value={value} size={size} />}
+        </PropertyMatrix>
       </UseCase>
     </>
   );

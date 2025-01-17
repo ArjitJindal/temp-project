@@ -82,7 +82,7 @@ export default function (): JSX.Element {
           <>
             <Label label={'Show'} position={'LEFT'}>
               <Toggle
-                size={'SMALL'}
+                size={'S'}
                 value={state.show || false}
                 onChange={(newValue) => {
                   setState((state) => ({ ...state, show: newValue }));

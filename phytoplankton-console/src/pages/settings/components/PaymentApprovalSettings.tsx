@@ -30,8 +30,8 @@ export const PaymentApprovalSettings = () => {
           <Toggle
             onChange={!settings.isPaymentApprovalEnabled ? handleEnable : handleDisable}
             value={settings.isPaymentApprovalEnabled}
-            loading={mutateTenantSettings.isLoading}
-            disabled={!permissions}
+            isLoading={mutateTenantSettings.isLoading}
+            isDisabled={!permissions}
           />
         </div>
       </SettingsCard>
