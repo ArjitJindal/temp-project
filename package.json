@@ -43,7 +43,7 @@
   "dependencies": {
     "@flagright/lib": "link:./lib",
     "@linear/sdk": "^37.0.0",
-    "@slack/web-api": "^7.7.0",
+    "@slack/web-api": "^7.8.0",
     "@types/lodash": "^4.17.12",
     "aws-cdk": "~2.174.1",
     "aws-cdk-lib": "~2.174.1",
