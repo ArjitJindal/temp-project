@@ -20,6 +20,7 @@ import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 import { tenantSettings } from '@/core/utils/context'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
+import { Alert } from '@/@types/openapi-internal/Alert'
 
 export class RetrievalService {
   private readonly caseService: CaseService
@@ -167,6 +168,7 @@ export class RetrievalService {
       ruleInstances,
       reasons,
       exchangeRates: exchangeRates.rates,
+      _alerts: _case.alerts || [],
     })
   }
 
@@ -202,7 +204,7 @@ export class RetrievalService {
       user,
       ruleInstances,
       reasons,
-      _alert: alert,
+      _alerts: [alert as Alert],
       exchangeRates,
     })
   }

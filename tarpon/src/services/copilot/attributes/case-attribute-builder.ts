@@ -1,4 +1,3 @@
-import { mapRuleAttributes } from './utils/ruleAttributeMapper'
 import {
   AttributeBuilder,
   AttributeSet,
@@ -18,16 +17,6 @@ export class CaseAttributeBuilder implements AttributeBuilder {
       return
     }
 
-    attributes.setAttribute(
-      'rules',
-      mapRuleAttributes(inputData.ruleInstances || [])
-    )
-
-    attributes.setAttribute(
-      'ruleHitNames',
-      inputData.ruleInstances?.map((ri) => ri.ruleNameAlias || '') || []
-    )
-
     attributes.setAttribute('reasons', inputData.reasons)
 
     attributes.setAttribute(
@@ -41,11 +30,6 @@ export class CaseAttributeBuilder implements AttributeBuilder {
         undefined
     )
 
-    attributes.setAttribute(
-      'alertComments',
-      inputData._alert?.comments?.map((c) => c.body) || []
-    )
-
-    attributes.setAttribute('alertActionDate', new Date().toLocaleDateString())
+    attributes.setAttribute('caseActionDate', new Date().toLocaleDateString())
   }
 }

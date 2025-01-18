@@ -19,7 +19,7 @@ export type InputData = {
   _case?: Case
   ruleInstances?: RuleInstance[]
   reasons: Array<string>
-  _alert?: Alert
+  _alerts?: Alert[]
   exchangeRates: CurrencyExchangeUSDType['rates']
 }
 
@@ -211,14 +211,14 @@ type AttributeBuilders = {
   transaction: AttributeBuilder
   user: AttributeBuilder
   _case: AttributeBuilder
-  _alert: AttributeBuilder
+  _alerts: AttributeBuilder
 }
 
 export const DefaultAttributeBuilders: AttributeBuilders = {
   transaction: new TransactionsBuilder(),
   user: new UserAttributeBuilder(),
   _case: new CaseAttributeBuilder(),
-  _alert: new AlertAttributeBuilder(),
+  _alerts: new AlertAttributeBuilder(),
 }
 
 export type BuilderKey = keyof AttributeBuilders
@@ -240,7 +240,7 @@ export class AttributeGenerator {
     this.builders.user.build(attributes, inputData)
     this.builders._case.build(attributes, inputData)
     this.builders.transaction.build(attributes, inputData)
-    this.builders._alert.build(attributes, inputData)
+    this.builders._alerts.build(attributes, inputData)
 
     return attributes
   }
