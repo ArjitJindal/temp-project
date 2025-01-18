@@ -17,7 +17,9 @@ export class CaseAttributeBuilder implements AttributeBuilder {
       return
     }
 
-    attributes.setAttribute('reasons', inputData.reasons)
+    if (!attributes.getAttribute('reasons')) {
+      attributes.setAttribute('reasons', inputData.reasons)
+    }
 
     attributes.setAttribute(
       'caseComments',

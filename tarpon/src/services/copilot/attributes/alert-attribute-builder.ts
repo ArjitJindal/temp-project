@@ -14,6 +14,10 @@ export class AlertAttributeBuilder implements AttributeBuilder {
   }
 
   build(attributes: AttributeSet, inputData: InputData) {
+    if (!inputData._alerts?.length) {
+      return
+    }
+
     attributes.setAttribute(
       'alertComments',
       compact(
@@ -23,7 +27,9 @@ export class AlertAttributeBuilder implements AttributeBuilder {
       ) || []
     )
 
-    attributes.setAttribute('reasons', inputData.reasons)
+    if (!attributes.getAttribute('reasons')) {
+      attributes.setAttribute('reasons', inputData.reasons)
+    }
 
     if (inputData._alerts?.[0]) {
       attributes.setAttribute(
