@@ -159,6 +159,14 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
+          stageName: 'Approve_E2E',
+          actions: [
+            new codepipline_actions.ManualApprovalAction({
+              actionName: 'Approve_E2E',
+            }),
+          ],
+        },
+        {
           stageName: 'E2E_Test_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({

@@ -43,6 +43,11 @@ async function getCypressCreds() {
 }
 
 (async () => {
+  if (process.env.ENV === 'dev') {
+    const seedDemoData = `TENANT=cypress-tenant npm run dev:databases:init`;
+    execSync('cd ../tarpon && ' + seedDemoData, { stdio: 'inherit' });
+    execSync('cd ../phytoplankton-console', { stdio: 'inherit' });
+  }
   const cypressCreds = process.env.CYPRESS_CREDS ?? {};
   console.info('🔑 Cypress creds in env', cypressCreds);
   let { super_admin, custom_role, admin } =
