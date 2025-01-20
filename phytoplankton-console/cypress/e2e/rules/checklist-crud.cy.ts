@@ -46,7 +46,7 @@ describe('Checklkist Crud', () => {
     //check if checklist template is showing when still in draft
     cy.visit('/rules/rules-library');
     cy.get('button[data-cy="configure-rule-button"]').first().click();
-    cy.contains('Checklist details').click();
+    cy.contains('Investigation checklist').click();
     cy.get('.ant-select-selector').click();
     cy.get('.ant-select-selector').each(($el) => {
       const text = $el.text().trim();
@@ -74,7 +74,7 @@ describe('Checklkist Crud', () => {
     //making sure that checklist template shows in the rules configuration
     cy.visit('/rules/rules-library');
     cy.get('button[data-cy="configure-rule-button"]').first().click();
-    cy.contains('Checklist details').click();
+    cy.contains('Investigation checklist').click();
     cy.get('.ant-select-selector').click();
     cy.contains(checklistText);
 
@@ -93,7 +93,7 @@ describe('Checklkist Crud', () => {
     //check if checklist template is not shown after it is deleted
     cy.visit('/rules/rules-library');
     cy.get('button[data-cy="configure-rule-button"]').first().click();
-    cy.contains('Checklist details').click();
+    cy.contains('Investigation checklist').click();
     cy.get('.ant-select-selector').click();
     cy.get('.ant-select-selector').each(($el) => {
       const text = $el.text().trim();

@@ -97,7 +97,7 @@ export default function BasicDetailsStep(props: Props) {
       return <RuleDetails {...props} />;
     } else if (activeTab === 'simulation_details') {
       return <SimulationIterationDetails />;
-    } else if (activeTab === 'checklist_details') {
+    } else if (activeTab === 'investigation_checklist') {
       return <ChecklistDetails />;
     } else if (activeTab === 'alert_creation_details') {
       return <AlertCreationDetails />;
@@ -342,7 +342,7 @@ function ChecklistDetails() {
   return (
     <>
       <StepHeader
-        title={'Checklist details'}
+        title={'Investigation checklist'}
         description={
           'Set the checklist for analysts to follow during the investigation when this rule is hit.'
         }
