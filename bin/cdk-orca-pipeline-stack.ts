@@ -174,6 +174,7 @@ export class CdkOrcaPipelineStack extends Stack {
               project: getE2ETestProject(this, 'dev', role),
               input: SOURCE_ARTIFACT,
               outputs: [E2E_ARTIFACT],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
             }),
           ],
         },
