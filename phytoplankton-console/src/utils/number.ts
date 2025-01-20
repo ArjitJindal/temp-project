@@ -57,3 +57,11 @@ export function formatNumber(
     return '-';
   }
 }
+
+export function isValidNumber(value: number | string | undefined): boolean {
+  if (value == null) {
+    return false;
+  }
+  const num = typeof value === 'string' ? Number(value) : value;
+  return typeof num === 'number' && isFinite(num);
+}

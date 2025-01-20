@@ -6,7 +6,7 @@ import { AsyncResource, hasValue } from '@/utils/asyncResource';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
 import Warning from '@/components/ui/icons/Remix/system/error-warning-line.react.svg';
 import Tooltip from '@/components/library/Tooltip';
-import { formatNumber } from '@/utils/number';
+import { formatNumber, isValidNumber } from '@/utils/number';
 
 export interface SectionProps {
   title: string;
@@ -31,7 +31,9 @@ export const OverviewCardSection = (props: SectionProps) => {
       <div className={s.body}>
         <div className={s.value}>
           <Skeleton res={value} length={5}>
-            {(v) => (typeof v === 'string' ? v : formatNumber(v))}
+            {(v) =>
+              typeof v === 'string' ? (isValidNumber(v) ? formatNumber(v) : v) : formatNumber(v)
+            }
           </Skeleton>
         </div>
         {description && <div className={s.description}>{description}</div>}
