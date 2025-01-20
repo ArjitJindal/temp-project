@@ -1,6 +1,6 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { FindCursor, MongoClient } from 'mongodb'
-import { get, mean, memoize } from 'lodash'
+import { get, mean, memoize, pick } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
@@ -46,6 +46,7 @@ import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetai
 import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLevel'
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -558,7 +559,7 @@ export class RiskScoringService {
       }
 
       await caseRepository.updateDynamicRiskScores(
-        transactionId,
+        pick(transaction, ['transactionId', 'hitRules']),
         transaction.originUserId === userId ? score : undefined,
         transaction.destinationUserId === userId ? score : undefined
       )
@@ -999,7 +1000,7 @@ export class RiskScoringService {
       this.tenantId,
       this.mongoDb
     )
-    const transactions: FindCursor<Transaction> =
+    const transactions: FindCursor<TransactionWithRulesResult> =
       await transactionsRepo.getTransactionsWithoutArsScoreCursor({
         afterCreatedAt,
         beforeCreatedAt,
@@ -1025,7 +1026,7 @@ export class RiskScoringService {
         await this.updateDynamicRiskScores(transaction)
 
       await caseRepo.updateDynamicRiskScores(
-        transaction.transactionId,
+        pick(transaction, ['transactionId', 'hitRules']),
         originDrsScore,
         destinationDrsScore
       )

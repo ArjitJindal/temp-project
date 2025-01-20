@@ -49,6 +49,7 @@ import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { AccountsService } from '@/services/accounts'
 import { TableListViewEnum } from '@/@types/openapi-internal/TableListViewEnum'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 
 export type CaseWithoutCaseTransactions = Omit<Case, 'caseTransactions'>
 
@@ -281,6 +282,7 @@ export class CaseRepository {
     options?: {
       arrayFilters?: Document[]
       returnFullDocument?: boolean
+      upsert?: boolean
     }
   ): Promise<ModifyResult<Case>> {
     return internalMongoUpdateOne(
@@ -1427,34 +1429,34 @@ export class CaseRepository {
   }
 
   public async updateDynamicRiskScores(
-    transactionId: string,
+    transaction: Pick<TransactionWithRulesResult, 'transactionId' | 'hitRules'>,
     originDrsScore: number | undefined | null,
     destinationDrsScore: number | undefined | null
   ) {
+    if (!transaction.hitRules?.length) {
+      return
+    }
+
     await Promise.all([
       originDrsScore != null &&
         this.updateOneCase(
           {
-            caseTransactionsIds: transactionId,
+            caseTransactionsIds: transaction.transactionId,
             'caseUsers.origin': { $ne: null },
           },
-          {
-            $set: {
-              'caseUsers.originUserDrsScore': originDrsScore,
-            },
-          }
+          { $set: { 'caseUsers.originUserDrsScore': originDrsScore } },
+          { upsert: false }
         ),
       destinationDrsScore != null &&
         this.updateOneCase(
           {
-            caseTransactionsIds: transactionId,
+            caseTransactionsIds: transaction.transactionId,
             'caseUsers.destination': { $ne: null },
           },
           {
-            $set: {
-              'caseUsers.destinationUserDrsScore': destinationDrsScore,
-            },
-          }
+            $set: { 'caseUsers.destinationUserDrsScore': destinationDrsScore },
+          },
+          { upsert: false }
         ),
     ])
   }

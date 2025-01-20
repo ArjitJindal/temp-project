@@ -562,13 +562,14 @@ export async function internalMongoUpdateOne<T extends Document>(
     arrayFilters?: Document[]
     returnFullDocument?: boolean
     session?: ClientSession
+    upsert?: boolean
   }
 ): Promise<ModifyResult<T>> {
   const db = mongoClient.db()
   const collection = db.collection<T>(collectionName)
   const data = await collection.findOneAndUpdate(filter, update, {
     returnDocument: 'after',
-    upsert: true,
+    upsert: options?.upsert ?? true,
     ...(options?.arrayFilters ? { arrayFilters: options.arrayFilters } : {}),
     ...(options?.returnFullDocument ? {} : { projection: { _id: 1 } }),
     ...(options?.session ? { session: options.session } : {}),

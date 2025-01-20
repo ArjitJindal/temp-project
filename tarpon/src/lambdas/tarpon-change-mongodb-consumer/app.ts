@@ -372,7 +372,7 @@ export const transactionHandler = async (
           : Promise.resolve(undefined),
       ])
       await casesRepo.updateDynamicRiskScores(
-        transaction.transactionId,
+        pick(transaction, ['transactionId', 'hitRules']),
         originDrsScore?.drsScore,
         destinationDrsScore?.drsScore
       )
@@ -386,7 +386,7 @@ export const transactionHandler = async (
       logger.info(`Calculation of ARS & DRS Completed`)
 
       await casesRepo.updateDynamicRiskScores(
-        transaction.transactionId,
+        pick(transaction, ['transactionId', 'hitRules']),
         originDrsScore,
         destinationDrsScore
       )
