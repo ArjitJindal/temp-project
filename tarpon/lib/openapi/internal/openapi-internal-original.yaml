@@ -7506,6 +7506,47 @@ paths:
       responses:
         '200':
           description: OK
+  /crm-records:
+    get:
+      summary: Get crm tickets for a defined model and email
+      operationId: get-crm-tickets
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CrmGetResponse'
+      parameters:
+        - schema:
+            $ref: '#/components/schemas/CrmModelType'
+          in: query
+          name: model
+          required: true
+        - schema:
+            type: string
+          in: query
+          name: email
+          required: true
+        - schema:
+            type: integer
+          in: query
+          name: page
+        - schema:
+            type: integer
+          in: query
+          name: pageSize
+        - schema:
+            type: string
+            enum:
+              - ascend
+              - descend
+          in: query
+          name: sortOrder
+        - schema:
+            type: string
+          in: query
+          name: sortField
 components:
   schemas:
     QuestionAutocompleteResponse:
@@ -16154,6 +16195,114 @@ components:
         - totalRows
         - successRows
         - failedRows
+    CrmModelType:
+      title: CrmModelType
+      description: Define all different crm model types here
+      type: string
+      enum:
+        - FreshDeskTicket
+    CrmGetResponse:
+      title: CrmRecords
+      type: object
+      properties:
+        items:
+          $ref: '#/components/schemas/CRMRecords'
+        count:
+          type: integer
+    CRMRecords:
+      title: CRMRecords
+      type: array
+      items:
+        $ref: '#/components/schemas/CRMRecord'
+    CRMRecord:
+      title: CRMRecord
+      type: object
+      oneOf:
+        - $ref: '#/components/schemas/FreshdeskTicket'
+    FreshdeskTicket:
+      title: FreshdeskTicket
+      description: Data field in the Crm ticket object
+      type: object
+      additionalProperties: {}
+      properties:
+        model:
+          $ref: '#/components/schemas/CrmModelType'
+        subject:
+          type: string
+        fwd_emails:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: integer
+          nullable: true
+        timestamp:
+          type: integer
+          format: int64
+        reply_cc_emails:
+          type: array
+          items:
+            type: string
+        priority:
+          type: number
+        source:
+          type: number
+        is_escalated:
+          type: boolean
+        email:
+          type: string
+        updated_at:
+          type: integer
+          nullable: true
+        PartitionKeyId:
+          type: string
+        conversations:
+          type: array
+          items:
+            $ref: '#/components/schemas/FreshdeskTicketConversation'
+        description_text:
+          type: string
+        responder_id:
+          type: integer
+          format: int64
+        requester_id:
+          type: integer
+          format: int64
+        id:
+          type: string
+        cc_emails:
+          type: array
+          items:
+            type: string
+        SortKeyId:
+          type: string
+        to_emails:
+          type: array
+          items:
+            type: string
+          nullable: true
+        type:
+          type: string
+          nullable: true
+      required:
+        - id
+        - model
+    FreshdeskTicketConversation:
+      title: CrmTicketConversation
+      type: object
+      properties:
+        created_at:
+          type: integer
+          nullable: true
+        to_email:
+          type: string
+        from_email:
+          type: string
+        updated_at:
+          type: string
+          nullable: true
+        body_text:
+          type: string
   securitySchemes:
     Authorization:
       type: http

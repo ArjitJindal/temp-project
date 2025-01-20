@@ -3,12 +3,13 @@ import { memoize } from 'lodash'
 import { Nango } from '@nangohq/node'
 import axios from 'axios'
 import { CrmRepository } from '../crm/repository'
-import { NangoRepository } from './repository'
+import { NangoRepository, CrmRecordParams } from './repository'
 import { getSecret } from '@/utils/secrets-manager'
 import { NangoWebhookEvent } from '@/@types/openapi-internal/NangoWebhookEvent'
 import { NangoModels, NangoRecord } from '@/@types/nango'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
+import { CrmGetResponse } from '@/@types/openapi-internal/CrmGetResponse'
 
 type NangoModelData = {
   idKey: string
@@ -174,5 +175,14 @@ export class NangoService {
     }
 
     await crmRepository.storeIntegrations(integrations)
+  }
+
+  public async getCrmNangoRecords(
+    tenantId: string,
+    crmRecordParams: CrmRecordParams
+  ): Promise<CrmGetResponse> {
+    const repository = new NangoRepository(tenantId, this.dynamoDb)
+
+    return repository.getCrmRecords(crmRecordParams)
   }
 }

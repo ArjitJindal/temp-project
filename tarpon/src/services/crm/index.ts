@@ -1,5 +1,6 @@
 import { Engagement, Note, Task } from '@mergeapi/merge-sdk-typescript/dist/crm'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { ClickHouseClient } from '@clickhouse/client'
 import { v4 as uuidv4 } from 'uuid'
 import { NangoService } from '../nango'
 import { CrmRepository } from './repository'
@@ -22,10 +23,16 @@ import { CRMIntegrations } from '@/@types/openapi-internal/CRMIntegrations'
 export class CrmService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
+  clickHouseClient: ClickHouseClient
 
-  constructor(tenantId: string, dynamoDb?: DynamoDBDocumentClient) {
+  constructor(
+    tenantId: string,
+    dynamoDb?: DynamoDBDocumentClient,
+    clickHouseClient?: ClickHouseClient
+  ) {
     this.tenantId = tenantId
     this.dynamoDb = dynamoDb as DynamoDBDocumentClient
+    this.clickHouseClient = clickHouseClient as ClickHouseClient
   }
 
   public async getAccount(id: string): Promise<CrmAccountResponse | null> {

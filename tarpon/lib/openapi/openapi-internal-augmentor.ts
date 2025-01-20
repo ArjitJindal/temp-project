@@ -291,6 +291,7 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
   '/notifications/{notificationId}/read':
     StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
+  '/crm-records': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

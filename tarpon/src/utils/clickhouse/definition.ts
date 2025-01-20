@@ -510,6 +510,7 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
     orderBy: '(model, id)',
     materializedColumns: [
       "model String MATERIALIZED JSON_VALUE(data, '$.model')",
+      "email String MATERIALIZED JSON_VALUE(data, '$.email')",
     ],
   },
 ] as const

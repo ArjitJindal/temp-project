@@ -44,6 +44,7 @@ import { CrmService } from '@/services/crm'
 import { NangoService } from '@/services/nango'
 import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 import { ReasonsService } from '@/services/tenants/reasons-service'
+import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -489,6 +490,24 @@ export const tenantsHandler = lambdaApi()(
         getDynamoDbClientByEvent(event)
       )
       return await crmService.getIntegrations()
+    })
+
+    handlers.registerGetCrmTickets(async (ctx, request) => {
+      const nangoService = new NangoService(getDynamoDbClientByEvent(event))
+
+      const crmRecordParams = {
+        model: request.model ?? '',
+        email: request.email ?? '',
+        page: request.page ?? 1,
+        pageSize: request.pageSize ?? DEFAULT_PAGE_SIZE,
+        sortField: request.sortField ?? '',
+        sortOrder: request.sortOrder || 'ascend',
+      }
+
+      return await nangoService.getCrmNangoRecords(
+        ctx.tenantId,
+        crmRecordParams
+      )
     })
 
     handlers.registerPatchTenantsCrmIntegrations(async (ctx, request) => {
