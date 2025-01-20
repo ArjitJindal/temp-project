@@ -8,8 +8,20 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { tenantHasFeature } from '@/core/utils/context'
-import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 import { ReportRepository } from '@/services/sar/repositories/report-repository'
+import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
+import {
+  getTimeFromRegion,
+  JobRunConfig,
+  shouldRun,
+} from '@/utils/sla-scheduler'
+
+const batchJobScheduler5Hours10Minutes: JobRunConfig = {
+  windowStart: 18,
+  windowEnd: 9,
+  runIntervalInHours: 5,
+  checkCallInterval: 10,
+} // runs job at interval of 5 hours, check for running condition every 10 minutes
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -76,6 +88,7 @@ async function handleRiskScoringTriggerBatchJob(tenantIds: string[]) {
 async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
   const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
+
   try {
     await Promise.all(
       tenantIds.map(async (id) => {
@@ -142,14 +155,24 @@ async function handleFinCenReportStatusBatchJob(tenantIds: string[]) {
 }
 
 export const cronJobTenMinuteHandler = lambdaConsumer()(async () => {
-  // Hack to ensure we query the currency data for viper.
-  await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
-  const tenantIds = await TenantService.getAllTenantIds()
-  await handleDashboardRefreshBatchJob(tenantIds)
-  await handleSlaStatusCalculationBatchJob(tenantIds)
-  await handleRiskScoringTriggerBatchJob(tenantIds)
-  await deleteOldWebhookRetryEvents(tenantIds)
-  await handleFinCenReportStatusBatchJob(tenantIds)
+  try {
+    const now = getTimeFromRegion()
+    // Hack to ensure we query the currency data for viper.
+    await new CurrencyService().getCurrencyExchangeRate('USD', 'EUR')
+    const tenantIds = await TenantService.getAllTenantIds()
+    await handleDashboardRefreshBatchJob(tenantIds)
+
+    if (shouldRun(batchJobScheduler5Hours10Minutes, now)) {
+      await handleSlaStatusCalculationBatchJob(tenantIds)
+    }
+
+    await handleRiskScoringTriggerBatchJob(tenantIds)
+    await deleteOldWebhookRetryEvents(tenantIds)
+    await handleFinCenReportStatusBatchJob(tenantIds)
+  } catch (error) {
+    logger.error('Error in 10 minute cron job handler', error)
+    throw error
+  }
 })
 
 async function deleteOldWebhookRetryEvents(tenantIds: string[]) {
