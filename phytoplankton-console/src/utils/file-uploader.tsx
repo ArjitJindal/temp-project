@@ -1,4 +1,3 @@
-import axios from 'axios';
 import mime from 'mime';
 import { ObjectDefaultApi as FlagrightApi } from '@/apis/types/ObjectParamAPI';
 
@@ -10,12 +9,24 @@ export async function uploadFile(api: FlagrightApi, file: File): Promise<{ s3Key
   const { presignedUrl, s3Key } = await api.postGetPresignedUrl({ filename, fileSize });
 
   // 2. Upload file to S3 directly
-  await axios.put(presignedUrl, file, {
-    headers: {
-      'Content-Type': mime.getType(filename) ?? false,
-      'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
-      'X-Content-Type-Options': 'nosniff',
-    },
+  const headers: Record<string, string> = {
+    'Content-Type': mime.getType(filename) ?? '',
+    'Content-Disposition': `attachment; filename="${encodeURIComponent(filename)}"`,
+    'X-Content-Type-Options': 'nosniff',
+  };
+  const response = await fetch(presignedUrl, {
+    method: 'PUT',
+    headers: headers,
+    body: file,
   });
+  if (!response.ok) {
+    console.error({
+      status: response.status,
+      statusText: response.statusText,
+      body: await response.text(),
+    });
+    throw new Error(`Unable to upload file`);
+  }
+
   return { s3Key };
 }
