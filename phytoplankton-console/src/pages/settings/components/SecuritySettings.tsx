@@ -178,8 +178,8 @@ export const SecuritySettings = () => {
               : handleBruteForceAccountBlockingDisable
           }
           value={settings.bruteForceAccountBlockingEnabled}
-          loading={mutateTenantSettings.isLoading || isLoading('bruteForceAccountBlocking')}
-          disabled={!permissions}
+          isLoading={mutateTenantSettings.isLoading || isLoading('bruteForceAccountBlocking')}
+          isDisabled={!permissions}
         />
       </SettingsCard>
     </Fragment>
