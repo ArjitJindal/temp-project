@@ -39,9 +39,22 @@ import dayjs from '@/utils/dayjs'
 import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 
-const DEFAULT_RISK_LEVEL = 'HIGH'
-const DEFAULT_RISK_SCORE = 75
+const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
+
+function getDefaultRiskValue(
+  riskClassificationValues: Array<RiskClassificationScore>
+): number {
+  let riskScore = 75 // Make this configurable
+
+  riskClassificationValues.map((value) => {
+    if (value.riskLevel === DEFAULT_RISK_LEVEL) {
+      riskScore = mean([value.upperBoundRiskScore, value.lowerBoundRiskScore])
+    }
+  })
+
+  return riskScore
+}
 
 @traceable
 export class RiskScoringV8Service {
@@ -51,6 +64,7 @@ export class RiskScoringV8Service {
   private tenantId: string
   private mongoDb: MongoClient | undefined
   private batchJobRepository?: BatchJobRepository
+  private riskClassificationValues?: RiskClassificationScore[]
   constructor(
     tenantId: string,
     logicEvaluator: LogicEvaluator,
@@ -75,13 +89,22 @@ export class RiskScoringV8Service {
     return this.mongoDb
   }
 
+  private async getRiskClassificationValues() {
+    if (!this.riskClassificationValues) {
+      this.riskClassificationValues =
+        await this.riskRepository.getRiskClassificationValues()
+    }
+    return this.riskClassificationValues
+  }
+
   public async calculateRiskFactorScore(
     factor: RiskFactor,
     riskData: LogicData
   ): Promise<RiskFactorScoreDetails> {
     let result: RiskFactorScoreDetails | undefined
+    // Match risk logic in descending order of risk level.
     const logicDetailsArray = (factor.riskLevelLogic ?? []).sort(
-      (a, b) => a.riskScore - b.riskScore
+      (a, b) => b.riskScore - a.riskScore
     )
     for (const logicDetails of logicDetailsArray) {
       const logic = logicDetails.logic
@@ -118,12 +141,15 @@ export class RiskScoringV8Service {
         riskData.transactionEvents
       )
     }
+    const riskClassificationValues = await this.getRiskClassificationValues()
     return (
       result ?? {
         riskFactorId: factor.id,
         vars: [],
         riskLevel: factor.defaultRiskLevel ?? DEFAULT_RISK_LEVEL,
-        score: factor.defaultRiskScore ?? DEFAULT_RISK_SCORE,
+        score:
+          factor.defaultRiskScore ??
+          getDefaultRiskValue(riskClassificationValues),
         hit: false,
         weight: factor.defaultWeight ?? 0,
       }
@@ -141,11 +167,13 @@ export class RiskScoringV8Service {
         this.calculateRiskFactorScore(factor, riskData)
       )
     )
+
+    const riskClassificationScore = await this.getRiskClassificationValues()
     if (!result || result.length === 0) {
       return {
         riskFactorsResult: {
           scoreDetails: [],
-          score: DEFAULT_RISK_SCORE,
+          score: getDefaultRiskValue(riskClassificationScore),
         },
       }
     }
@@ -265,12 +293,14 @@ export class RiskScoringV8Service {
         riskClassificationValues,
         arsScore.score
       ),
-      originUserCraRiskScore: originDrsScore ?? DEFAULT_RISK_SCORE,
+      originUserCraRiskScore:
+        originDrsScore ?? getDefaultRiskValue(riskClassificationValues),
       originUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
         originDrsScore
       ),
-      destinationUserCraRiskScore: destinationDrsScore ?? DEFAULT_RISK_SCORE,
+      destinationUserCraRiskScore:
+        destinationDrsScore ?? getDefaultRiskValue(riskClassificationValues),
       destinationUserCraRiskLevel: this.getRiskLevelOrDefault(
         riskClassificationValues,
         destinationDrsScore
@@ -477,7 +507,9 @@ export class RiskScoringV8Service {
     )
     if (isLocked && lockKrs !== false) {
       return {
-        score: existingKrs?.krsScore ?? DEFAULT_RISK_SCORE,
+        score:
+          existingKrs?.krsScore ??
+          getDefaultRiskValue(riskClassificationValues),
         scoreDetails: existingKrs?.factorScoreDetails ?? [],
       }
     }
@@ -592,10 +624,11 @@ export class RiskScoringV8Service {
         riskClassificationValues,
         kycRiskScore
       ),
-      craRiskScore: craRiskScore ?? DEFAULT_RISK_SCORE,
+      craRiskScore:
+        craRiskScore ?? getDefaultRiskValue(riskClassificationValues),
       craRiskLevel: getRiskLevelFromScore(
         riskClassificationValues,
-        craRiskScore ?? DEFAULT_RISK_SCORE
+        craRiskScore ?? getDefaultRiskValue(riskClassificationValues)
       ),
     }
   }

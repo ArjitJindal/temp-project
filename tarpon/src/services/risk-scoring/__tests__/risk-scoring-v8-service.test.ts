@@ -295,10 +295,10 @@ describe('V8 Risk scoring ', () => {
           userTest
         )
         /* As the destination user has transaction count == 2 and the origin user has transaction count == 1 
-        but as the priority of lower risk is higher so we hit MEDIUM logic condition not the VERY_HIGH */
+        but as the priority of lower risk is lower so we hit VERY_HIGH logic condition not the MEDIUM */
         expect(result2).toEqual({
-          trsScore: 50,
-          trsRiskLevel: 'MEDIUM',
+          trsScore: 100,
+          trsRiskLevel: 'VERY_HIGH',
         })
       })
       test('Ars score with aggregation variable defaulting to high as no userId (high)', async () => {

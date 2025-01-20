@@ -3,24 +3,24 @@ import { getRiskLevelAndScore } from '../utils'
 import {
   CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
   countryOfNationalityV8Logic,
-} from './country-of-nationality'
+} from './user/country-of-nationality'
 import {
   CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR,
   countryOfResidenceV8Logic,
-} from './country-of-residence'
+} from './user/country-of-residence'
 import {
   CONSUMER_CUSTOMER_AGE_RISK_FACTOR,
   customerAgeV8Logic,
-} from './customer-age'
+} from './user/customer-age'
 import {
   BUSINESS_TYPE_RISK_FACTOR,
   CONSUMER_TYPE_RISK_FACTOR,
   customerTypeV8Logic,
-} from './customer-type'
+} from './user/customer-type'
 import {
   CONSUMER_USER_OCCUPATION_RISK_FACTOR,
   userOccupationV8Logic,
-} from './user-occupation'
+} from './user/user-occupation'
 import {
   RiskFactorLogicGenerator,
   RiskFactorMigrationEntry,
@@ -30,45 +30,45 @@ import {
 import {
   BUSINESS_INDUSTRY_RISK_FACTOR,
   businessIndustryV8Logic,
-} from './business-industry'
+} from './user/business-industry'
 import {
   BUSINESS_USER_REGISTRATION_STATUS_RISK_FACTOR,
   userRegistrationStatusV8Logic,
-} from './user-registration-status'
+} from './user/user-registration-status'
 import {
   BUSINESS_REGISTRATION_COUNTRY_RISK_FACTOR,
   businessRegistrationCountryV8Logic,
-} from './business-registration-country'
+} from './user/business-registration-country'
 import {
   BUSINESS_COMPANY_AGE_RISK_FACTOR,
   companyAgeV8Logic,
-} from './company-age'
+} from './user/company-age'
 import {
   BUSINESS_DIRECTORS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
   directorsCountryOfNationalityV8Logic,
-} from './directors-country-of-nationality'
+} from './user/directors-country-of-nationality'
 import {
   BUSINESS_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
   shareholdersCountryOfNationalityV8Logic,
-} from './shareholders-country-of-nationality'
+} from './user/shareholders-country-of-nationality'
 import {
   BUSINESS_USER_SEGMENT_RISK_FACTOR,
   businessUserSegmentV8Logic,
   CONSUMER_USER_SEGMENT_RISK_FACTOR,
   consumerUserSegmentV8Logic,
-} from './user-segment'
+} from './user/user-segment'
 import {
   CONSUMER_USER_EMPLOYMENT_STATUS_RISK_FACTOR,
   userEmploymentStatusV8Logic,
-} from './user-employment-status'
+} from './user/user-employment-status'
 import {
   CONSUMER_USER_REASON_FOR_ACCOUNT_OPENING_RISK_FACTOR,
   reasonForAccountOpeningV8Logic,
-} from './account-opening'
+} from './user/account-opening'
 import {
   CONSUMER_USER_SOURCE_OF_FUNDS_RISK_FACTOR,
   sourceOfFundsV8Logic,
-} from './source-of-funds'
+} from './user/source-of-funds'
 import {
   TRANSACTION_ORIGIN_PAYMENT_METHOD_RISK_FACTOR,
   originPaymentMethodV8Logic,

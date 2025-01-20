@@ -22,7 +22,7 @@ import {
 } from 'lodash'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
-import { LOGIC_FUNCTIONS } from '../functions'
+import { INTERNAL_LOGIC_FUNCTIONS, LOGIC_FUNCTIONS } from '../functions'
 import {
   getLogicVariableByKey,
   getTransactionLogicEntityVariables,
@@ -134,9 +134,9 @@ const TRANSACTION_EVENT_ENTITY_VARIABLE_TYPE: LogicEntityVariableEntityEnum =
 export const getJsonLogicEngine = memoizeOne(
   (context?: { tenantId: string; dynamoDb: DynamoDBDocumentClient }) => {
     const jsonLogicEngine = new AsyncLogicEngine()
-    LOGIC_FUNCTIONS.filter((v) => v.run).forEach((v) =>
-      jsonLogicEngine.addMethod(v.key, v.run)
-    )
+    LOGIC_FUNCTIONS.concat(INTERNAL_LOGIC_FUNCTIONS)
+      .filter((v) => v.run)
+      .forEach((v) => jsonLogicEngine.addMethod(v.key, v.run))
     CUSTOM_INTERNAL_OPERATORS.concat(LOGIC_OPERATORS).forEach((v) =>
       jsonLogicEngine.addMethod(
         v.key,

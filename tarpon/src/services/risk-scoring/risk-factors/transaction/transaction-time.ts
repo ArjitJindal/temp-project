@@ -1,7 +1,7 @@
 import { RiskFactorLogicGenerator, V2V8RiskFactor } from '../types'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
-import { RiskParameterValueDayRange } from '@/@types/openapi-internal/all'
+import { RiskParameterValueTimeRange } from '@/@types/openapi-internal/all'
 
 const TRANSACTION_TIME_RISK_FACTOR = (
   entityType: RiskEntityType
@@ -24,15 +24,31 @@ export const TRANSACTION_TIME_FOR_RISK_FACTOR =
 export const transactionTimeV8Logic: RiskFactorLogicGenerator = (
   parameterValue: RiskParameterValue
 ): { logic: any } => {
-  const range = parameterValue.content as RiskParameterValueDayRange
+  const range = parameterValue.content as RiskParameterValueTimeRange
   return {
     logic: {
       and: [
         {
           'op:between_time': [
-            { var: 'TRANSACTION:time' },
-            range.start,
-            range.end,
+            {
+              local_time_in_hour: [
+                { var: 'TRANSACTION:timestamp' },
+                range.timezone,
+              ],
+            },
+            range.startHour,
+            range.endHour,
+          ],
+        },
+        {
+          '!=': [
+            {
+              local_time_in_hour: [
+                { var: 'TRANSACTION:timestamp' },
+                range.timezone,
+              ],
+            },
+            range.endHour,
           ],
         },
       ],

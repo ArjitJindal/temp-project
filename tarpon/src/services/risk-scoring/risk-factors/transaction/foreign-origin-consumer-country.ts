@@ -28,9 +28,15 @@ export const foreignOriginConsumerCountryV8Logic: RiskFactorLogicGenerator = (
   const parameterValueContent = (
     parameterValue.content as RiskParameterValueMultiple
   ).values[0].content
-  return {
+  const migratedLogic = {
     logic: {
       and: [
+        {
+          '==': [{ var: 'USER:type__SENDER' }, 'CONSUMER'],
+        },
+        {
+          '!=': [{ var: 'TRANSACTION:originUserId' }, null],
+        },
         {
           [parameterValueContent === 'DOMESTIC' ? '==' : '!=']: [
             { var: 'TRANSACTION:originAmountDetails-country' },
@@ -40,4 +46,22 @@ export const foreignOriginConsumerCountryV8Logic: RiskFactorLogicGenerator = (
       ],
     },
   }
+  if (parameterValueContent === 'DOMESTIC') {
+    migratedLogic.logic.and.push(
+      ...[
+        {
+          '!=': [{ var: 'TRANSACTION:originAmountDetails-country' }, null],
+        },
+        {
+          '!=': [
+            {
+              var: 'CONSUMER_USER:userDetails-countryOfResidence__SENDER',
+            },
+            null,
+          ],
+        },
+      ]
+    )
+  }
+  return migratedLogic
 }

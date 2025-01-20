@@ -29,7 +29,7 @@ export const originCountryV8Logic: RiskFactorLogicGenerator = (
       and: [
         {
           in: [
-            { var: 'TRANSACTION:originIpCountry' },
+            { var: 'TRANSACTION:originAmountDetails-country' },
             (parameterValue.content as RiskParameterValueMultiple).values.map(
               (val) => val.content
             ),

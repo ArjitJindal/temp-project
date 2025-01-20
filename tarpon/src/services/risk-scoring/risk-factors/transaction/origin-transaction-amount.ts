@@ -1,7 +1,7 @@
 import { RiskFactorLogicGenerator, V2V8RiskFactor } from '../types'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
-import { RiskParameterValueDayRange } from '@/@types/openapi-internal/all'
+import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/all'
 
 const ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR = (
   entityType: RiskEntityType
@@ -24,13 +24,19 @@ export const TRANSACTION_ORIGIN_TRANSACTION_AMOUNT_RISK_FACTOR =
 export const originTransactionAmountV8Logic: RiskFactorLogicGenerator = (
   parameterValue: RiskParameterValue
 ): { logic: any } => {
-  const range = parameterValue.content as RiskParameterValueDayRange
+  const range = parameterValue.content as RiskParameterValueAmountRange
   return {
     logic: {
       and: [
         {
           '<=': [
             range.start,
+            { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
+            range.end,
+          ],
+        },
+        {
+          '!=': [
             { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
             range.end,
           ],

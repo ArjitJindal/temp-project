@@ -29,9 +29,15 @@ export const foreignDestinationBusinessCountryV8Logic: RiskFactorLogicGenerator 
     const parameterValueContent = (
       parameterValue.content as RiskParameterValueMultiple
     ).values[0].content
-    return {
+    const migratedLogic = {
       logic: {
         and: [
+          {
+            '==': [{ var: 'USER:type__RECEIVER' }, 'BUSINESS'],
+          },
+          {
+            '!=': [{ var: 'TRANSACTION:destinationUserId' }, null],
+          },
           {
             [parameterValueContent === 'DOMESTIC' ? '==' : '!=']: [
               { var: 'TRANSACTION:destinationAmountDetails-country' },
@@ -43,4 +49,25 @@ export const foreignDestinationBusinessCountryV8Logic: RiskFactorLogicGenerator 
         ],
       },
     }
+    if (parameterValueContent === 'DOMESTIC') {
+      migratedLogic.logic.and.push(
+        ...[
+          {
+            '!=': [
+              { var: 'TRANSACTION:destinationAmountDetails-country' },
+              null,
+            ],
+          },
+          {
+            '!=': [
+              {
+                var: 'BUSINESS_USER:legalEntity-companyRegistrationDetails-registrationCountry__RECEIVER',
+              },
+              null,
+            ],
+          },
+        ]
+      )
+    }
+    return migratedLogic
   }

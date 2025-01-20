@@ -10,6 +10,7 @@ import { program } from 'commander'
 import { render } from 'prettyjson'
 import { Db } from 'mongodb'
 import {
+  chunk,
   intersection,
   isEmpty,
   memoize,
@@ -23,6 +24,12 @@ import {
   Env,
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+  shortId,
+} from '@flagright/lib/utils'
+import { StackConstants } from '@lib/constants'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 import {
   createRuleInstancesLocally,
@@ -31,7 +38,11 @@ import {
 } from './debug-rule/verify-remote-entities'
 import { TenantService } from '@/services/tenants'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { getDynamoDbClient, getLocalDynamoDbClient } from '@/utils/dynamodb'
+import {
+  dangerouslyDeletePartition,
+  getDynamoDbClient,
+  getLocalDynamoDbClient,
+} from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import {
   RULES_LIBRARY,
@@ -44,7 +55,11 @@ import {
 } from '@/services/rules-engine/filters'
 import { Feature } from '@/@types/openapi-internal/Feature'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
-import { initializeTenantContext, withContext } from '@/core/utils/context'
+import {
+  initializeTenantContext,
+  updateTenantFeatures,
+  withContext,
+} from '@/core/utils/context'
 import { isV2RuleInstance } from '@/services/rules-engine/utils'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import dayjs from '@/utils/dayjs'
@@ -54,7 +69,30 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
-
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { getRiskFactorLogicByKeyAndType } from '@/services/risk-scoring/risk-factors'
+import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { getVariableKeysFromLogic } from '@/services/logic-evaluator/engine/utils'
+import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { RiskService } from '@/services/risk'
+import {
+  TRANSACTIONS_COLLECTION,
+  USERS_COLLECTION,
+} from '@/utils/mongodb-definitions'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
+import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { RiskScoringV8Service } from '@/services/risk-scoring/risk-scoring-v8-service'
+import { Business } from '@/@types/openapi-internal/Business'
+import { User } from '@/@types/openapi-public/User'
+import { Transaction } from '@/@types/openapi-public/Transaction'
+import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDetails'
+import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
+import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
+import { RiskScoringService } from '@/services/risk-scoring'
+import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/RiskParameterValueAmountRange'
 /**
  * Custom query
  */
@@ -74,6 +112,233 @@ async function runReadOnlyQueryForTenant(
    */
 
   return { Hello: 'World' }
+}
+type ReportItem = {
+  entityId: string
+  type: string
+  v2Score?: number
+  v8Score?: number
+}
+async function getV8RiskScoreReport<
+  T extends InternalTransaction | InternalUser
+>(
+  entities: T[],
+  type: 'USER' | 'TRANSACTION',
+  dynamoDb: DynamoDBDocumentClient,
+  tenantId: string
+) {
+  const report: ReportItem[] = []
+  const entityChunks = chunk(entities, 10)
+  const logicEvaluator = new LogicEvaluator(tenantId, dynamoDb)
+  const riskScoringV8Service = new RiskScoringV8Service(
+    tenantId,
+    logicEvaluator,
+    { dynamoDb }
+  )
+  const riskScoringService = new RiskScoringService(tenantId, { dynamoDb })
+  for (const chunk of entityChunks) {
+    const riskData = await Promise.all(
+      chunk.map(async (entity): Promise<ReportItem> => {
+        const riskScoreDetails =
+          type === 'USER'
+            ? await riskScoringV8Service.handleUserUpdate({
+                user: entity as User | Business,
+              })
+            : await riskScoringV8Service.handleTransaction(
+                entity as Transaction,
+                []
+              )
+        const v2Score =
+          type == 'USER'
+            ? (
+                await riskScoringService.runRiskScoresForUser(
+                  entity as User | Business
+                )
+              ).kycRiskScore
+            : (
+                await riskScoringService.calculateArsScore(
+                  entity as Transaction
+                )
+              ).score
+        return {
+          v2Score: v2Score,
+          v8Score:
+            type === 'USER'
+              ? (riskScoreDetails as UserRiskScoreDetails).kycRiskScore
+              : (riskScoreDetails as TransactionRiskScoringResult).trsScore,
+          type,
+          entityId:
+            type === 'USER'
+              ? (entity as InternalUser).userId
+              : (entity as InternalTransaction).transactionId,
+        }
+      })
+    )
+    report.push(...riskData)
+  }
+  return report
+}
+
+function getResultFromRiskReport(report: ReportItem[]) {
+  return report.reduce<{
+    correctRiskScores: number
+    incorrectRiskScores: number
+    incorrectEntities: string[]
+  }>(
+    (acc, val) => {
+      if (Math.trunc(val.v2Score ?? 0) === Math.trunc(val.v8Score ?? 0)) {
+        acc.correctRiskScores += 1
+      } else {
+        acc.incorrectRiskScores += 1
+        acc.incorrectEntities.push(val.entityId)
+      }
+      return acc
+    },
+    { correctRiskScores: 0, incorrectRiskScores: 0, incorrectEntities: [] }
+  )
+}
+
+function createV8FactorFromV2(
+  value: ParameterAttributeRiskValues,
+  riskClassificationValues: RiskClassificationScore[]
+) {
+  const logicMigrator = getRiskFactorLogicByKeyAndType(
+    value.parameter,
+    value.riskEntityType
+  )
+  const logic = logicMigrator
+    ? logicMigrator({
+        riskLevelAssignmentValues: value.riskLevelAssignmentValues,
+        riskClassificationValues: riskClassificationValues,
+        defaultWeight: value.weight,
+      })
+    : []
+  const { entityVariableKeys } = getVariableKeysFromLogic(logic[0])
+  const v8Factor: RiskFactorsPostRequest = {
+    riskLevelLogic: logic,
+    defaultWeight: value.weight,
+    name: value.parameter,
+    description: `${value.parameter} testing`,
+    type: value.riskEntityType,
+    riskLevelAssignmentValues: value.riskLevelAssignmentValues,
+    logicEntityVariables: entityVariableKeys.map(
+      (entityVarKey): LogicEntityVariableInUse => ({
+        entityKey: entityVarKey,
+        key: `entity:${shortId()}`,
+      })
+    ),
+    logicAggregationVariables: [],
+    defaultRiskLevel:
+      value.defaultValue.type === 'RISK_LEVEL'
+        ? value.defaultValue.value
+        : getRiskLevelFromScore(
+            riskClassificationValues,
+            value.defaultValue.value
+          ),
+    defaultRiskScore:
+      value.defaultValue.type === 'RISK_SCORE'
+        ? value.defaultValue.value
+        : getRiskScoreFromLevel(
+            riskClassificationValues,
+            value.defaultValue.value
+          ),
+    status: value.isActive ? 'ACTIVE' : 'INACTIVE',
+    baseCurrency:
+      (
+        value.riskLevelAssignmentValues?.[0]?.parameterValue
+          ?.content as RiskParameterValueAmountRange
+      )?.currency ?? 'USD',
+  }
+  return v8Factor
+}
+
+async function validateV2ToV8RiskFactors(
+  dynamoDb: DynamoDBDocumentClient,
+  mongoDb: Db,
+  tenantId: string,
+  limit: number
+) {
+  const BACKGROUND = '\x1b[37;41;1m'
+  const NOCOLOR = '\x1b[0m'
+  console.log(
+    BACKGROUND +
+      `Please set 'localChangeHandlerDisabled=true' in local-dynamodb-change-handler.ts` +
+      NOCOLOR
+  )
+  if (['pnb', 'pnb-stress'].includes(tenantId)) {
+    return
+  }
+  execSync('npm run recreate-local-ddb --table=Tarpon >/dev/null 2>&1')
+  execSync('npm run recreate-local-ddb --table=Hammerhead >/dev/null 2>&1')
+  logger.info(`Recreated local tarpon table`)
+  logger.info(`Validating tenant ${tenantId}...`)
+  const localDynamoDb = getLocalDynamoDbClient()
+  const localRiskRepository = new RiskRepository(tenantId, {
+    dynamoDb: localDynamoDb,
+  })
+  const riskService = new RiskService(tenantId, { dynamoDb })
+  // get tenant v2 risk factors
+  const v2RiskParameters = await riskService.getAllRiskParameters()
+
+  // save v2 factors locally
+
+  for (const riskParameter of v2RiskParameters) {
+    await localRiskRepository.createOrUpdateParameterRiskItem(riskParameter)
+  }
+
+  const riskClassificationValues =
+    await riskService.getRiskClassificationValues()
+  // migrated v8 risk factors
+  const v8RiskFactors = v2RiskParameters?.map((value) =>
+    createV8FactorFromV2(value, riskClassificationValues)
+  )
+  // Delete all existing risk factors
+  await dangerouslyDeletePartition(
+    localDynamoDb,
+    tenantId,
+    DynamoDbKeys.RISK_FACTOR(tenantId).PartitionKeyID,
+    StackConstants.HAMMERHEAD_DYNAMODB_TABLE_NAME(tenantId)
+  )
+  const featuresRequired: Feature[] = ['RISK_SCORING_V8', 'RISK_SCORING']
+  await updateLocalFeatureFlags(tenantId, featuresRequired)
+  updateTenantFeatures(featuresRequired)
+  // Create V8 risk factors locally
+
+  let count = 0
+  for (const v8Factor of v8RiskFactors) {
+    await localRiskRepository.createOrUpdateRiskFactor({
+      id: `${count}`,
+      ...v8Factor,
+    })
+    count++
+  }
+
+  const users = await mongoDb
+    .collection<InternalUser>(USERS_COLLECTION(tenantId))
+    .aggregate<InternalUser>([{ $sample: { size: limit } }])
+    .toArray()
+
+  const transactions = await mongoDb
+    .collection<InternalTransaction>(TRANSACTIONS_COLLECTION(tenantId))
+    .aggregate<InternalTransaction>([{ $sample: { size: limit } }])
+    .toArray()
+
+  const userReport = await getV8RiskScoreReport<InternalUser>(
+    users,
+    'USER',
+    localDynamoDb,
+    tenantId
+  )
+  const transactionsReport = await getV8RiskScoreReport<InternalTransaction>(
+    transactions,
+    'TRANSACTION',
+    localDynamoDb,
+    tenantId
+  )
+
+  const transactionResult = getResultFromRiskReport(transactionsReport)
+  const userResult = getResultFromRiskReport(userReport)
+  return { userResult, transactionResult }
 }
 
 // TODO: Remove this once all v2 rules are migrated to v8
@@ -350,10 +615,13 @@ async function tenantFeatures(
 
 program
   .requiredOption('--env <string>', 'dev | sandbox | prod')
-  .option('--query <string>', 'rule-stats | features | validate-v2-to-v8-rules')
+  .option(
+    '--query <string>',
+    'rule-stats | features | validate-v2-to-v8-rules | validate-v2-to-v8-risk-factors'
+  )
   // validate-v2-to-v8-rules options
   .option('--start-date <string>', 'YYYY-MM-DD')
-  .option('--limit <number>', 'Number of transactions to verify')
+  .option('--limit <number>', 'Number of entities to verify')
   .option('--tenant-ids <string>', 'Comma-separated list of tenant IDs')
   .option(
     '--rule-instance-ids <string>',
@@ -423,6 +691,14 @@ async function runReadOnlyQueryForEnv(env: Env) {
               startDate,
               Number(limit),
               ruleInstanceIds?.split(',')
+            )
+          }
+          if (query === 'validate-v2-to-v8-risk-factors') {
+            return validateV2ToV8RiskFactors(
+              dynamoDb,
+              mongoDb,
+              tenant.tenant.id,
+              Number(limit)
             )
           }
           return runReadOnlyQueryForTenant(mongoDb, dynamoDb, tenant.tenant.id)

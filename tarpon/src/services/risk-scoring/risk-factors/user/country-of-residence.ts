@@ -3,25 +3,25 @@ import { RiskParameterValueMultiple } from '@/@types/openapi-internal/RiskParame
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 
-const DESTINATION_COUNTRY_RISK_FACTOR = (
+const COUNTRY_OF_RESIDENCE_RISK_FACTOR = (
   entityType: RiskEntityType
 ): V2V8RiskFactor => ({
-  parameter: 'destinationAmountDetails.country',
-  name: 'Destination country',
-  description: 'Risk based on transaction destination country',
+  parameter: 'userDetails.countryOfResidence',
+  name: 'Country of Residence',
+  description: 'Risk based on customer residence country',
   defaultRiskLevel: 'VERY_HIGH',
   defaultWeight: 1,
   logicAggregationVariables: [],
   logicEntityVariables: [],
-  status: 'INACTIVE',
   valueType: 'MULTIPLE',
   type: entityType,
+  status: 'INACTIVE',
 })
 
-export const TRANSACTION_DESTINATION_COUNTRY_RISK_FACTOR =
-  DESTINATION_COUNTRY_RISK_FACTOR('TRANSACTION')
+export const CONSUMER_COUNTRY_OF_RESIDENCE_RISK_FACTOR =
+  COUNTRY_OF_RESIDENCE_RISK_FACTOR('CONSUMER_USER')
 
-export const destinationCountryV8Logic: RiskFactorLogicGenerator = (
+export const countryOfResidenceV8Logic: RiskFactorLogicGenerator = (
   parameterValue: RiskParameterValue
 ): { logic: any } => {
   return {
@@ -29,7 +29,7 @@ export const destinationCountryV8Logic: RiskFactorLogicGenerator = (
       and: [
         {
           in: [
-            { var: 'TRANSACTION:destinationAmountDetails-country' },
+            { var: 'CONSUMER_USER:userDetails-countryOfResidence__SENDER' },
             (parameterValue.content as RiskParameterValueMultiple).values.map(
               (val) => val.content
             ),
