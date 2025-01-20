@@ -157,7 +157,6 @@ export const createAuth0TenantResources = (
       bruteForceProtection: {
         enabled: true,
         maxAttempts: 3,
-        shields: ['block'], // Can only unblock from console
         mode: 'count_per_identifier', // If we want to have per ip we need to change this 'count_per_identifier_and_ip' but it will still block the user
       },
       suspiciousIpThrottling: {

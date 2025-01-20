@@ -17,12 +17,20 @@ export const SecuritySettings = () => {
   const settings = useSettings();
   const permissions = useHasPermissions(['settings:security:write']);
   const mutateTenantSettings = useUpdateTenantSettings();
-  const handleDisable = () => {
+  const handleMfaDisable = () => {
     mutateTenantSettings.mutate({ mfaEnabled: false });
   };
 
-  const handleEnable = () => {
+  const handleMfaEnable = () => {
     mutateTenantSettings.mutate({ mfaEnabled: true });
+  };
+
+  const handleBruteForceAccountBlockingEnable = () => {
+    mutateTenantSettings.mutate({ bruteForceAccountBlockingEnabled: true });
+  };
+
+  const handleBruteForceAccountBlockingDisable = () => {
+    mutateTenantSettings.mutate({ bruteForceAccountBlockingEnabled: false });
   };
 
   const maxActiveSessionsOptions: SelectOption[] = [
@@ -89,7 +97,7 @@ export const SecuritySettings = () => {
         description="When enabled, users will be required to use Multi-Factor Authentication to access the platform using any Authenticator app."
       >
         <Toggle
-          onChange={!settings.mfaEnabled ? handleEnable : handleDisable}
+          onChange={!settings.mfaEnabled ? handleMfaEnable : handleMfaDisable}
           value={settings.mfaEnabled}
           isLoading={mutateTenantSettings.isLoading || isLoading('mfaEnabled')}
           isDisabled={!permissions}
@@ -157,6 +165,21 @@ export const SecuritySettings = () => {
           allowClear={false}
           style={{ width: '40%' }}
           isDisabled={!permissions || isLoading('maxActiveSessions')}
+        />
+      </SettingsCard>
+      <SettingsCard
+        title="Brute force account blocking"
+        description="When enabled, the account will be blocked after a certain number of failed login attempts."
+      >
+        <Toggle
+          onChange={
+            !settings.bruteForceAccountBlockingEnabled
+              ? handleBruteForceAccountBlockingEnable
+              : handleBruteForceAccountBlockingDisable
+          }
+          value={settings.bruteForceAccountBlockingEnabled}
+          loading={mutateTenantSettings.isLoading || isLoading('bruteForceAccountBlocking')}
+          disabled={!permissions}
         />
       </SettingsCard>
     </Fragment>

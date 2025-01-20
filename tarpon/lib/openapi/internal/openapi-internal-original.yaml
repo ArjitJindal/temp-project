@@ -10401,6 +10401,8 @@ components:
           type: boolean
         mfaEnabled:
           type: boolean
+        bruteForceAccountBlockingEnabled:
+          type: boolean
         passwordResetDays:
           type: number
         accountDormancyAllowedDays:
