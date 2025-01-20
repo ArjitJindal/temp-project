@@ -17,7 +17,10 @@ export class ApiException<T> extends Error {
     let message: string = `Unknown error happened while communicating to our servers ("${httpMessage}")`;
     if (code === 404) {
       message = `Requested resource not found`;
-    } else if (code >= 400 && code < 500) {
+    } else {
+      if (code >= 500) {
+        message = `Something has gone wrong, sorry!`;
+      }
       try {
         if (typeof body === 'string') {
           const json = JSON.parse(body);
@@ -26,8 +29,6 @@ export class ApiException<T> extends Error {
           }
         }
       } catch (e) {}
-    } else if (code > 500) {
-      message = `Something has gone wrong, sorry!`;
     }
     super(message);
   }

@@ -14,6 +14,9 @@ export function getErrorMessage(e: unknown) {
   if (typeof e === 'string' && e !== '') {
     return e;
   }
+  if (e instanceof TypeError && e.message === 'Failed to fetch') {
+    return 'Unable to connect to our servers. Please ensure you are connected to the internet and have any ad-blockers disabled.';
+  }
   if (typeof e === 'object' && e != null && 'message' in e) {
     return (e as any).message ?? 'Unknown error';
   }
