@@ -1,12 +1,18 @@
 import { uniq } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { SanctionsComparisonTableItem, SanctionsComparisonTableItemMatch } from './types';
-import { ComplyAdvantageNameMatched, SanctionsHitContext, SanctionsMatchTypeDetails } from '@/apis';
+import {
+  ComplyAdvantageNameMatched,
+  SanctionsEntity,
+  SanctionsHitContext,
+  SanctionsMatchTypeDetails,
+} from '@/apis';
 import { notEmpty } from '@/utils/array';
 
 export function getComparisonItems(
   matchTypeDetails: SanctionsMatchTypeDetails[],
   ctx: SanctionsHitContext,
+  sanctionsEntity?: SanctionsEntity,
 ): SanctionsComparisonTableItem[] {
   // Make a single item for every match in every caMatchTypesDetails
   const plainItems = (matchTypeDetails ?? []).flatMap((details): SanctionsComparisonTableItem[] => {
@@ -30,8 +36,8 @@ export function getComparisonItems(
       },
       secondaryMatches.length > 0 && {
         title: 'Date of birth',
-        screeningValue: secondaryMatches.map(({ query_term }) => query_term).join(', '),
-        kycValue: yearOfBirth,
+        screeningValue: sanctionsEntity?.yearOfBirth ?? '',
+        kycValue: yearOfBirth ?? secondaryMatches.map(({ query_term }) => query_term).join(', '),
         match: reduceMatched(secondaryMatches),
         sources: sources ?? [],
       },

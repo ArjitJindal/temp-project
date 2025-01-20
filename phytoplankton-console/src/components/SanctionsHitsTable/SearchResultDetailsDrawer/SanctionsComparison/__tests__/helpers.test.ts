@@ -102,7 +102,7 @@ describe('getComparisonItems', () => {
       },
       {
         title: 'Date of birth',
-        screeningValue: '01-01-1990',
+        screeningValue: '',
         kycValue: 1990,
         match: 'NO_HIT',
         sources: ['source1'],
@@ -148,7 +148,7 @@ describe('getComparisonItems', () => {
       },
       {
         title: 'Date of birth',
-        screeningValue: '02-02-1985',
+        screeningValue: '',
         kycValue: 1985,
         match: 'NO_HIT',
         sources: ['source1', 'source2'],
