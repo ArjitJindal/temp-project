@@ -9,6 +9,7 @@ const CUSTOMER_SHAREHOLDERS_COUNTRY_OF_NATIONALITY_RISK_FACTOR = (
   parameter: 'shareHolders',
   name: 'Shareholders country of nationality',
   description: 'Risk value based on shareholder country of the nationality',
+  targetIterableParameter: 'generalDetails.countryOfNationality',
   defaultRiskLevel: 'VERY_HIGH',
   defaultWeight: 1,
   logicAggregationVariables: [],

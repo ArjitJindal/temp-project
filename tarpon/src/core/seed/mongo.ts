@@ -10,6 +10,7 @@ import { getSLAPolicies } from './data/sla'
 import { getMlModels } from './data/ml-models'
 import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
+import { riskFactors } from './data/risk-factors'
 import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
   ClickHouseTables,
@@ -152,6 +153,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
     ['Case', getCases().length],
     ['Alert', getCases().flatMap((c) => c.alerts).length],
     ['SLAPolicy', getSLAPolicies().length],
+    ['RiskFactor', riskFactors().length],
     ['ClosureReason', DEFAULT_CLOSURE_REASONS.length],
     ['EscalationReason', DEFAULT_ESCALATION_REASONS.length],
   ]

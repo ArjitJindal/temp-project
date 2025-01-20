@@ -8,6 +8,10 @@ import {
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { CounterRepository } from '../counter/repository'
+import {
+  createV8FactorFromV2,
+  generateV2FactorId,
+} from '../risk-scoring/risk-factors'
 import { PulseAuditLogService } from './pulse-audit-log'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
@@ -113,6 +117,21 @@ export class RiskService {
       await this.riskRepository.createOrUpdateParameterRiskItem(
         parameterAttributeRiskValues
       )
+    const riskClassificationScore =
+      await this.riskRepository.getRiskClassificationValues()
+
+    const v8Factor = createV8FactorFromV2(
+      parameterAttributeRiskValues,
+      riskClassificationScore
+    )
+    // Update the v8 risk factor to keep the logic in sync
+    await this.createOrUpdateRiskFactor(
+      v8Factor,
+      generateV2FactorId(
+        parameterAttributeRiskValues.parameter,
+        parameterAttributeRiskValues.riskEntityType
+      )
+    )
     await this.auditLogService.handleParameterRiskItemUpdate(
       oldParameterRiskItemValue,
       newParameterRiskItemValue
@@ -187,8 +206,15 @@ export class RiskService {
     return await this.riskRepository.getAverageArsScore(userId)
   }
 
-  async getAllRiskFactors(entityType?: RiskEntityType) {
-    return this.riskRepository.getAllRiskFactors(entityType)
+  async getAllRiskFactors(
+    entityType?: RiskEntityType,
+    includeMigratedV2Factors = false
+  ) {
+    const data = await this.riskRepository.getAllRiskFactors(entityType)
+    if (includeMigratedV2Factors) {
+      return data
+    }
+    return data.filter((riskFactor) => riskFactor.id.startsWith('RF'))
   }
 
   async bulkCreateandReplaceRiskFactors(riskFactors: RiskFactorsPostRequest[]) {

@@ -6,7 +6,7 @@ import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 
-export type V2V8RiskFactor = Omit<RiskFactor, 'id'>
+export type V2V8RiskFactor = Omit<RiskFactor, 'id'> & { parameter: string }
 
 export type V8MigrationParameters = {
   riskLevelAssignmentValues: RiskParameterLevelKeyValue[]

@@ -215,9 +215,19 @@ export async function handleV8PreAggregationTask(
       )
     }
 
-    await jobRepository.updateJob(task.jobId, {
+    const newJob = (await jobRepository.updateJob(task.jobId, {
       $inc: { 'metadata.completeTasksCount': 1 },
-    })
+    })) as RulePreAggregationBatchJob
+    if (
+      newJob.metadata &&
+      newJob.metadata.completeTasksCount >= newJob.metadata.tasksCount &&
+      riskFactor?.status === 'DEPLOYING'
+    ) {
+      logger.info(
+        `Pre-aggregation complete (job: ${task.jobId}). Switching rule instance ${riskFactor.id} to ACTIVE.`
+      )
+      await riskRepository.updateRiskFactorStatus(riskFactor.id, 'ACTIVE')
+    }
   } else if (!task.entity) {
     await ruleEvaluator.rebuildAggregationVariable(
       task.aggregationVariable,

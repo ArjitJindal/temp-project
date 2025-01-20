@@ -129,9 +129,10 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'Multi Level Escalation',
     description: 'Enables multi level escalation',
   },
-  SALES_RISK_SCORING: {
-    title: 'Sales risk scoring',
-    description: 'Enables access to both views of risk configuration.',
+  RISK_SCORING_V8_FOR_V2: {
+    title: 'Risk Scoring V8 for V2',
+    description:
+      'Enables both V2 and V8 engines together (requires: Risk scoring & Risk scoring V8)',
   },
   STRICT_FILE_SECURITY: {
     title: 'Strict file security',

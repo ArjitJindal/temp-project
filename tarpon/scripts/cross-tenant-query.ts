@@ -24,11 +24,6 @@ import {
   Env,
   SANDBOX_REGIONS,
 } from '@flagright/lib/constants/deploy'
-import {
-  getRiskLevelFromScore,
-  getRiskScoreFromLevel,
-  shortId,
-} from '@flagright/lib/utils'
 import { StackConstants } from '@lib/constants'
 import { getConfig, loadConfigEnv } from './migrations/utils/config'
 import {
@@ -69,12 +64,11 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { logger } from '@/core/logger'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { RuleRepository } from '@/services/rules-engine/repositories/rule-repository'
-import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
-import { getRiskFactorLogicByKeyAndType } from '@/services/risk-scoring/risk-factors'
-import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
-import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
-import { getVariableKeysFromLogic } from '@/services/logic-evaluator/engine/utils'
-import { LogicEntityVariableInUse } from '@/@types/openapi-internal/LogicEntityVariableInUse'
+import {
+  createV8FactorFromV2,
+  generateV2FactorId,
+  RISK_FACTORS,
+} from '@/services/risk-scoring/risk-factors'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RiskService } from '@/services/risk'
 import {
@@ -92,7 +86,7 @@ import { UserRiskScoreDetails } from '@/@types/openapi-internal/UserRiskScoreDet
 import { TransactionRiskScoringResult } from '@/@types/openapi-public/TransactionRiskScoringResult'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskScoringService } from '@/services/risk-scoring'
-import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/RiskParameterValueAmountRange'
+import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 /**
  * Custom query
  */
@@ -198,60 +192,6 @@ function getResultFromRiskReport(report: ReportItem[]) {
   )
 }
 
-function createV8FactorFromV2(
-  value: ParameterAttributeRiskValues,
-  riskClassificationValues: RiskClassificationScore[]
-) {
-  const logicMigrator = getRiskFactorLogicByKeyAndType(
-    value.parameter,
-    value.riskEntityType
-  )
-  const logic = logicMigrator
-    ? logicMigrator({
-        riskLevelAssignmentValues: value.riskLevelAssignmentValues,
-        riskClassificationValues: riskClassificationValues,
-        defaultWeight: value.weight,
-      })
-    : []
-  const { entityVariableKeys } = getVariableKeysFromLogic(logic[0])
-  const v8Factor: RiskFactorsPostRequest = {
-    riskLevelLogic: logic,
-    defaultWeight: value.weight,
-    name: value.parameter,
-    description: `${value.parameter} testing`,
-    type: value.riskEntityType,
-    riskLevelAssignmentValues: value.riskLevelAssignmentValues,
-    logicEntityVariables: entityVariableKeys.map(
-      (entityVarKey): LogicEntityVariableInUse => ({
-        entityKey: entityVarKey,
-        key: `entity:${shortId()}`,
-      })
-    ),
-    logicAggregationVariables: [],
-    defaultRiskLevel:
-      value.defaultValue.type === 'RISK_LEVEL'
-        ? value.defaultValue.value
-        : getRiskLevelFromScore(
-            riskClassificationValues,
-            value.defaultValue.value
-          ),
-    defaultRiskScore:
-      value.defaultValue.type === 'RISK_SCORE'
-        ? value.defaultValue.value
-        : getRiskScoreFromLevel(
-            riskClassificationValues,
-            value.defaultValue.value
-          ),
-    status: value.isActive ? 'ACTIVE' : 'INACTIVE',
-    baseCurrency:
-      (
-        value.riskLevelAssignmentValues?.[0]?.parameterValue
-          ?.content as RiskParameterValueAmountRange
-      )?.currency ?? 'USD',
-  }
-  return v8Factor
-}
-
 async function validateV2ToV8RiskFactors(
   dynamoDb: DynamoDBDocumentClient,
   mongoDb: Db,
@@ -289,9 +229,15 @@ async function validateV2ToV8RiskFactors(
   const riskClassificationValues =
     await riskService.getRiskClassificationValues()
   // migrated v8 risk factors
-  const v8RiskFactors = v2RiskParameters?.map((value) =>
-    createV8FactorFromV2(value, riskClassificationValues)
-  )
+  const v8RiskFactors =
+    v2RiskParameters?.map((value) => ({
+      id: generateV2FactorId(value.parameter, value.riskEntityType),
+      ...RISK_FACTORS.find(
+        (val) =>
+          value.parameter === val.parameter && value.riskEntityType === val.type
+      ),
+      ...createV8FactorFromV2(value, riskClassificationValues),
+    })) ?? []
   // Delete all existing risk factors
   await dangerouslyDeletePartition(
     localDynamoDb,
@@ -304,13 +250,8 @@ async function validateV2ToV8RiskFactors(
   updateTenantFeatures(featuresRequired)
   // Create V8 risk factors locally
 
-  let count = 0
   for (const v8Factor of v8RiskFactors) {
-    await localRiskRepository.createOrUpdateRiskFactor({
-      id: `${count}`,
-      ...v8Factor,
-    })
-    count++
+    await localRiskRepository.createOrUpdateRiskFactor(v8Factor as RiskFactor)
   }
 
   const users = await mongoDb

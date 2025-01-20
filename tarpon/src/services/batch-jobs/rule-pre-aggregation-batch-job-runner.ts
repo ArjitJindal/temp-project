@@ -74,7 +74,10 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
     const ruleInstanceRepository = new RuleInstanceRepository(job.tenantId, {
       dynamoDb,
     })
-
+    const riskRepository = new RiskRepository(job.tenantId, {
+      dynamoDb,
+      mongoDb: await getMongoDbClient(),
+    })
     if (entity?.type === 'RULE') {
       const { ruleInstanceId } = entity
       const ruleInstance = await ruleInstanceRepository.getRuleInstanceById(
@@ -96,11 +99,6 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         return
       }
     } else if (entity?.type === 'RISK_FACTOR') {
-      const riskRepository = new RiskRepository(job.tenantId, {
-        dynamoDb,
-        mongoDb: await getMongoDbClient(),
-      })
-
       const { riskFactorId } = entity
 
       const riskFactor = await riskRepository.getRiskFactor(riskFactorId)
@@ -182,6 +180,12 @@ export class RulePreAggregationBatchJobRunner extends BatchJobRunner {
         entity.ruleInstanceId,
         'ACTIVE'
       )
+    }
+    if (this.setDeduplicationIds.size === 0 && entity?.type === 'RISK_FACTOR') {
+      logger.info(
+        `No tasks to pre-aggregate. Switching rule instance ${entity.riskFactorId} to ACTIVE.`
+      )
+      await riskRepository.updateRiskFactorStatus(entity.riskFactorId, 'ACTIVE')
     }
   }
 

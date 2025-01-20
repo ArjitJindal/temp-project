@@ -8,7 +8,11 @@ const CUSTOMER_TYPE_RISK_FACTOR = (
 ): V2V8RiskFactor => ({
   parameter: 'type',
   name: 'Customer type',
-  description: 'Risk value for consumer (individuals) users',
+  description: `Risk value for ${
+    entityType === 'CONSUMER_USER'
+      ? 'consumer (individuals)'
+      : 'businesses (merchants/legal entities)'
+  } users`,
   defaultRiskLevel: 'VERY_HIGH',
   defaultWeight: 1,
   logicAggregationVariables: [],

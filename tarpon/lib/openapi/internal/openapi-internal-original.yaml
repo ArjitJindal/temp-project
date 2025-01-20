@@ -10858,6 +10858,10 @@ components:
             $ref: '#/components/schemas/RiskParameterLevelKeyValue'
         parameter:
           $ref: '#/components/schemas/RiskFactorParameter'
+        targetIterableParameter:
+          type: string
+          enum:
+            - generalDetails.countryOfNationality
         valueType:
           type: string
           enum:
@@ -11094,7 +11098,7 @@ components:
         - CONCURRENT_ASYNC_RULES
         - PNB
         - MULTI_LEVEL_ESCALATION
-        - SALES_RISK_SCORING
+        - RISK_SCORING_V8_FOR_V2
         - STRICT_FILE_SECURITY
         - MANUAL_PRE_AGGREGATION
         - MANUAL_DASHBOARD_REFRESH

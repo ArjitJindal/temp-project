@@ -9,6 +9,7 @@ const CUSTOMER_DIRECTORS_COUNTRY_OF_NATIONALITY_RISK_FACTOR = (
   parameter: 'directors',
   name: 'Directors country of nationality',
   description: 'Risk value based on director country of the nationality',
+  targetIterableParameter: 'generalDetails.countryOfNationality',
   defaultRiskLevel: 'VERY_HIGH',
   defaultWeight: 1,
   logicAggregationVariables: [],

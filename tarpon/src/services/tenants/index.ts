@@ -27,6 +27,8 @@ import { stageAndRegion } from '@flagright/lib/utils'
 import { siloDataTenants } from '@flagright/lib/constants'
 import { createNewApiKeyForTenant } from '../api-key'
 import { RuleInstanceService } from '../rules-engine/rule-instance-service'
+import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
+import { generateV2FactorId, RISK_FACTORS } from '../risk-scoring/risk-factors'
 import { TenantRepository } from './repositories/tenant-repository'
 import { ReasonsService } from './reasons-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
@@ -331,6 +333,21 @@ export class TenantService {
     const reasonsService = new ReasonsService(tenantId, this.mongoDb)
     // initialising default reasons for new tenant
     await reasonsService.initialiseDefaultReasons()
+
+    const riskRepository = new RiskRepository(tenantId, {
+      dynamoDb: this.dynamoDb,
+      mongoDb: this.mongoDb,
+    })
+    // initalising v2 risk factors in v8 for new tenant
+    await Promise.all(
+      RISK_FACTORS.map(async (riskFactor) => {
+        await riskRepository.createOrUpdateRiskFactor({
+          id: generateV2FactorId(riskFactor.parameter, riskFactor.type),
+          ...riskFactor,
+        })
+      })
+    )
+
     await sendBatchJobCommand({
       type: 'SYNC_DATABASES',
       tenantId,

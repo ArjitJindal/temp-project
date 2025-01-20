@@ -51,7 +51,7 @@ export function useRoutes(): RouteItem[] {
   const isAuditLogEnabled = useFeatureEnabled('AUDIT_LOGS');
   const isSarEnabled = useFeatureEnabled('SAR');
   const hasMachineLearningFeature = useFeatureEnabled('MACHINE_LEARNING');
-  const isSalesRiskScoringEnabled = useFeatureEnabled('SALES_RISK_SCORING');
+  const isRiskScoringV8EnabledForV2 = useFeatureEnabled('RISK_SCORING_V8_FOR_V2');
   const [lastActiveTab] = useLocalStorageState('user-active-tab', 'consumer');
   const [lastActiveRuleTab] = useLocalStorageState('rule-active-tab', 'rules-library');
   const [lastActiveList] = useLocalStorageState('user-active-list', 'whitelist');
@@ -302,7 +302,7 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      isSalesRiskScoringEnabled && {
+      isRiskScoringV8EnabledForV2 && {
         path: '/risk-levels',
         icon: 'risk-scoring',
         name: 'risk-levels',
@@ -428,7 +428,7 @@ export function useRoutes(): RouteItem[] {
           },
         ],
       },
-      !isSalesRiskScoringEnabled &&
+      !isRiskScoringV8EnabledForV2 &&
         (isRiskScoringEnabled || isRiskScoringV8Enabled) && {
           path: '/risk-levels',
           icon: 'risk-scoring',
@@ -754,7 +754,7 @@ export function useRoutes(): RouteItem[] {
     permissions,
     hasMachineLearningFeature,
     isRiskScoringV8Enabled,
-    isSalesRiskScoringEnabled,
+    isRiskScoringV8EnabledForV2,
   ]);
 }
 

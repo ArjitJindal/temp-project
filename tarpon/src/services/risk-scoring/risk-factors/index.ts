@@ -1,4 +1,8 @@
 import { memoize } from 'lodash'
+import {
+  getRiskLevelFromScore,
+  getRiskScoreFromLevel,
+} from '@flagright/lib/utils'
 import { getRiskLevelAndScore } from '../utils'
 import {
   CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
@@ -164,6 +168,12 @@ import {
 } from './transaction/transaction-type'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
+import { ParameterAttributeRiskValues } from '@/@types/openapi-internal/ParameterAttributeRiskValues'
+import { CurrencyCode } from '@/@types/openapi-public/CurrencyCode'
+import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/RiskParameterValueAmountRange'
+import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
+import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
+import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 
 //  We will use risk factors from this list to initialise in dynamoDB under the RiskFactors key
 export const RISK_FACTORS: V2V8RiskFactor[] = [
@@ -460,3 +470,71 @@ const getRiskFactorLogicByKeyAndType = memoize(
 )
 
 export { getRiskFactorLogicByKeyAndType }
+
+export function generateV2FactorId(
+  parameter: string,
+  entityType: RiskEntityType
+): string {
+  return `${entityType}:${parameter}`
+}
+
+export function createV8FactorFromV2(
+  v2Factor: ParameterAttributeRiskValues,
+  riskClassification: RiskClassificationScore[]
+): Partial<RiskFactorsPostRequest> {
+  const riskLevelLogic = createRiskLevelLogic(v2Factor, riskClassification)
+
+  return {
+    riskLevelLogic,
+    defaultWeight: v2Factor.weight,
+    type: v2Factor.riskEntityType,
+    riskLevelAssignmentValues: v2Factor.riskLevelAssignmentValues,
+    ...createDefaultRiskValues(v2Factor, riskClassification),
+    status: (v2Factor.isActive ? 'ACTIVE' : 'INACTIVE') as RuleInstanceStatus,
+    baseCurrency: extractBaseCurrency(v2Factor),
+  }
+}
+
+export function createRiskLevelLogic(
+  v2Factor: ParameterAttributeRiskValues,
+  riskClassification: RiskClassificationScore[]
+) {
+  const logicMigrator = getRiskFactorLogicByKeyAndType(
+    v2Factor.parameter,
+    v2Factor.riskEntityType
+  )
+
+  return logicMigrator
+    ? logicMigrator({
+        riskLevelAssignmentValues: v2Factor.riskLevelAssignmentValues,
+        riskClassificationValues: riskClassification,
+        defaultWeight: v2Factor.weight,
+      })
+    : []
+}
+
+export function createDefaultRiskValues(
+  v2Factor: ParameterAttributeRiskValues,
+  riskClassification: RiskClassificationScore[]
+) {
+  const { type, value } = v2Factor.defaultValue
+  return {
+    defaultRiskLevel:
+      type === 'RISK_LEVEL'
+        ? value
+        : getRiskLevelFromScore(riskClassification, value),
+    defaultRiskScore:
+      type === 'RISK_SCORE'
+        ? value
+        : getRiskScoreFromLevel(riskClassification, value),
+  }
+}
+
+export function extractBaseCurrency(
+  v2Factor: ParameterAttributeRiskValues
+): CurrencyCode {
+  const firstAssignment = v2Factor.riskLevelAssignmentValues?.[0]
+  const parameterContent = firstAssignment?.parameterValue
+    ?.content as RiskParameterValueAmountRange
+  return parameterContent?.currency ?? 'USD'
+}
