@@ -20,6 +20,7 @@ import {
   Feature,
   SanctionsSettingsMarketType,
   Tenant,
+  TenantData,
   TenantSettings,
 } from '@/apis';
 import { clearAuth0LocalStorage, useAccountRole, useAuth0User } from '@/utils/user-utils';
@@ -36,6 +37,8 @@ import Tag from '@/components/library/Tag';
 import { SANCTIONS_SETTINGS_MARKET_TYPES } from '@/apis/models-custom/SanctionsSettingsMarketType';
 import SelectionGroup from '@/components/library/SelectionGroup';
 import { getOr, isSuccess } from '@/utils/asyncResource';
+import ExpandContainer from '@/components/utils/ExpandContainer';
+import ExpandIcon from '@/components/library/ExpandIcon';
 
 export const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   ALERT_DETAILS_PAGE: {
@@ -167,6 +170,15 @@ export default function SuperAdminPanel() {
   const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
   const [tenantIdToDelete, setTenantIdToDelete] = useState<string | undefined>(undefined);
   const [instantDelete, setInstantDelete] = useState<boolean>(false);
+  const [containerCollapssed, setContainerCollapssed] = useState<{
+    deletionContainer: boolean;
+    markedForDeletionContainer: boolean;
+    failedToDeleteContainer: boolean;
+  }>({
+    deletionContainer: true,
+    markedForDeletionContainer: true,
+    failedToDeleteContainer: true,
+  });
 
   useEffect(() => {
     if (currentCrmSettings) {
@@ -242,6 +254,11 @@ export default function SuperAdminPanel() {
     [tenants, user.allowedRegions],
   );
 
+  const handleContainerCollapse = (
+    container: 'deletionContainer' | 'markedForDeletionContainer' | 'failedToDeleteContainer',
+  ) => {
+    setContainerCollapssed((prev) => ({ ...prev, [container]: !prev[container] }));
+  };
   const handleChangeTenant = async (newTenantId: string) => {
     if (user.tenantId === newTenantId) {
       return;
@@ -319,7 +336,6 @@ export default function SuperAdminPanel() {
 
   let batchJobMessage;
   const role = useAccountRole();
-
   return (
     <>
       <Button size="SMALL" onClick={showModal} testName="superadmin-panel-button">
@@ -359,43 +375,32 @@ export default function SuperAdminPanel() {
             </Button>
 
             {tenantsDeletedRecently?.length ? (
-              <Label
-                label={`Tenants recently deleted in last 30 days (${tenantsDeletedRecently.length})`}
-              >
-                <Space direction={'horizontal'} wrap={true}>
-                  {tenantsDeletedRecently.map((tenant, index) => (
-                    <Tag color={'success'} key={index}>
-                      {tenant.tenantName} ({tenant.tenantId})
-                    </Tag>
-                  ))}
-                </Space>
-              </Label>
+              <ListTenants
+                tenants={tenantsDeletedRecently}
+                label="Tenants recently deleted in last 30 days"
+                containerCollapsed={containerCollapssed.deletionContainer}
+                onClick={() => handleContainerCollapse('deletionContainer')}
+              />
             ) : (
               <></>
             )}
             {tenantsMarkedForDelete?.length ? (
-              <Label label={`Tenants marked for delete (${tenantsMarkedForDelete.length})`}>
-                <Space direction={'horizontal'} wrap={true}>
-                  {tenantsMarkedForDelete.map((tenant, index) => (
-                    <Tag color={'warning'} key={index}>
-                      {tenant.tenantName} ({tenant.tenantId})
-                    </Tag>
-                  ))}
-                </Space>
-              </Label>
+              <ListTenants
+                tenants={tenantsMarkedForDelete}
+                label="Tenants marked for delete"
+                containerCollapsed={containerCollapssed.markedForDeletionContainer}
+                onClick={() => handleContainerCollapse('markedForDeletionContainer')}
+              />
             ) : (
               <></>
             )}
             {tenantsFailedToDelete?.length ? (
-              <Label label={`Tenants failed to delete (${tenantsFailedToDelete.length})`}>
-                <Space direction={'horizontal'} wrap={true}>
-                  {tenantsFailedToDelete.map((tenant, index) => (
-                    <Tag color={'error'} key={index}>
-                      {tenant.tenantName} ({tenant.tenantId})
-                    </Tag>
-                  ))}
-                </Space>
-              </Label>
+              <ListTenants
+                tenants={tenantsFailedToDelete}
+                label="Tenants failed to delete "
+                containerCollapsed={containerCollapssed.failedToDeleteContainer}
+                onClick={() => handleContainerCollapse('failedToDeleteContainer')}
+              />
             ) : (
               <></>
             )}
@@ -787,3 +792,39 @@ export default function SuperAdminPanel() {
     </>
   );
 }
+
+const ListTenants = ({
+  tenants,
+  label,
+  containerCollapsed,
+  onClick,
+}: {
+  tenants: TenantData[];
+  label: string;
+  containerCollapsed: boolean;
+  onClick: () => void;
+}) => {
+  return (
+    <Label
+      label={`${label} (${tenants.length})`}
+      iconRight={
+        <ExpandIcon
+          isExpanded={!containerCollapsed}
+          color="BLACK"
+          onClick={onClick}
+          cursor="pointer"
+        />
+      }
+    >
+      <ExpandContainer isCollapsed={containerCollapsed}>
+        <Space direction={'horizontal'} wrap={true}>
+          {tenants.map((tenant, index) => (
+            <Tag color={'warning'} key={index}>
+              {tenant.tenantName ? tenant.tenantName : tenant.tenantId} ({tenant.tenantId})
+            </Tag>
+          ))}
+        </Space>
+      </ExpandContainer>
+    </Label>
+  );
+};

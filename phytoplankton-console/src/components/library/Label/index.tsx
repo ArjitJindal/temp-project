@@ -12,6 +12,7 @@ export interface Props extends InputProps<string> {
   children?: React.ReactNode;
   position?: 'TOP' | 'RIGHT' | 'LEFT';
   level?: 1 | 2 | 3 | 4;
+  iconRight?: React.ReactNode;
   description?: string;
   element?: 'label' | 'div';
   required?:
@@ -37,12 +38,21 @@ export default function Label(props: Props) {
       showHint: false,
     },
     testId,
+    iconRight,
   } = props;
   const isRequired = (typeof required === 'boolean' ? required : required?.value) === true;
   const showHint = (typeof required === 'boolean' ? required : required?.showHint) === true;
+
   const labelEl = (
     <div className={cn(s.label, s[`level-${level}`])}>
-      {label}
+      {iconRight ? (
+        <div className={s.labelText}>
+          <span>{label}</span>
+          <span className={s.iconRight}>{iconRight}</span>
+        </div>
+      ) : (
+        label
+      )}
       {hint && (
         <Tooltip title={hint} placement="top">
           <InformationLineIcon className={s.icon} />

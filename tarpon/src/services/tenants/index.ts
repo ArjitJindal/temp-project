@@ -796,18 +796,27 @@ export class TenantService {
     } = await tenantRepository.getTenantsDeletionData()
     const tenants = await this.getAllTenants(auth0Domain)
     return {
-      tenantsDeletedRecently: tenantIdsDeletedRecently.map((tenantId) => ({
-        tenantId,
-        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
-      })),
-      tenantsFailedToDelete: tenantIdsFailedToDelete.map((tenantId) => ({
-        tenantId,
-        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
-      })),
-      tenantsMarkedForDelete: tenantIdsMarkedForDelete.map((tenantId) => ({
-        tenantId,
-        tenantName: tenants.find((tenant) => tenant.id === tenantId)?.id,
-      })),
+      tenantsDeletedRecently: tenantIdsDeletedRecently.map((tenantId) => {
+        const tenant = tenants.find((tenant) => tenant.id === tenantId)
+        return {
+          tenantId,
+          tenantName: tenant?.name ?? tenantId,
+        }
+      }),
+      tenantsFailedToDelete: tenantIdsFailedToDelete.map((tenantId) => {
+        const tenant = tenants.find((tenant) => tenant.id === tenantId)
+        return {
+          tenantId,
+          tenantName: tenant?.name ?? tenantId,
+        }
+      }),
+      tenantsMarkedForDelete: tenantIdsMarkedForDelete.map((tenantId) => {
+        const tenant = tenants.find((tenant) => tenant.id === tenantId)
+        return {
+          tenantId,
+          tenantName: tenant?.name ?? tenantId,
+        }
+      }),
     }
   }
 }

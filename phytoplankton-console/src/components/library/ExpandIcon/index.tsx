@@ -8,10 +8,18 @@ interface Props {
   size?: 'SMALL' | 'BIG';
   isInvalid?: boolean;
   onClick?: () => void;
+  cursor?: 'pointer' | 'default';
 }
 
 export default function ExpandIcon(props: Props) {
-  const { isExpanded, color = 'BLUE', size = 'SMALL', onClick, isInvalid = false } = props;
+  const {
+    isExpanded,
+    color = 'BLUE',
+    size = 'SMALL',
+    onClick,
+    isInvalid = false,
+    cursor = 'default',
+  } = props;
 
   return (
     <button
@@ -26,7 +34,7 @@ export default function ExpandIcon(props: Props) {
       data-cy="expand-icon"
       type="button"
     >
-      <ArrowRightSLine />
+      <ArrowRightSLine cursor={cursor} />
     </button>
   );
 }
