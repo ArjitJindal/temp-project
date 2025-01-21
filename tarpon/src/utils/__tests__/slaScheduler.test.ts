@@ -1,5 +1,6 @@
 import { JobRunConfig, shouldRun } from '../sla-scheduler'
 import dayjs from '@/utils/dayjs'
+
 describe('HourBatchJobScheduler', () => {
   describe('Normal window (same day)', () => {
     // Window: 9AM to 5PM, every 3 hours, check every 5 minutes

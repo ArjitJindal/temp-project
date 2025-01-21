@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from '@/utils/dayjs'
 
-export function getTimeFromRegion(): Dayjs {
-  const region = process.env.AWS_REGION || 'eu-west-2'
+export function getTimeFromRegion(region?: string): Dayjs {
+  region = region || process.env.AWS_REGION || 'eu-west-2'
   const regionTimezones: Record<string, string> = {
     // North America
     'us-east-1': 'America/New_York', // N. Virginia
@@ -17,7 +17,7 @@ export function getTimeFromRegion(): Dayjs {
     'eu-west-1': 'Europe/Dublin', // Ireland
     'eu-west-2': 'Europe/London', // London
     'eu-west-3': 'Europe/Paris', // Paris
-    'eu-central-1': 'Europe/Frankfurt', // Frankfurt
+    'eu-central-1': 'Europe/Berlin', // Frankfurt
     'eu-south-1': 'Europe/Rome', // Milan
     'eu-north-1': 'Europe/Stockholm', // Stockholm
 
@@ -26,7 +26,7 @@ export function getTimeFromRegion(): Dayjs {
     'ap-south-1': 'Asia/Kolkata', // Mumbai
     'ap-northeast-1': 'Asia/Tokyo', // Tokyo
     'ap-northeast-2': 'Asia/Seoul', // Seoul
-    'ap-northeast-3': 'Asia/Osaka', // Osaka
+    'ap-northeast-3': 'Asia/Tokyo', // Osaka (using Tokyo as Osaka isn't available)
     'ap-southeast-1': 'Asia/Singapore', // Singapore
     'ap-southeast-2': 'Australia/Sydney', // Sydney
 
