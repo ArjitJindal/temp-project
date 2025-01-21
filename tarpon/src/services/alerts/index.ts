@@ -857,15 +857,17 @@ export class AlertsService extends CaseAlertsCommonService {
     )
     await sendMessageToMongoUpdateConsumer({
       filter: {
-        alertId: alert.alertId,
+        'alerts.alertId': alert.alertId,
       },
       operationType: 'updateOne',
       updateMessage: {
-        $set: { slaPolicyDetails },
+        $set: {
+          'alerts.$[alert].slaPolicyDetails': slaPolicyDetails,
+        },
       },
       sendToClickhouse: true,
       collectionName: CASES_COLLECTION(this.tenantId),
-      arrayFilters: [{ 'alerts.alertId': alert.alertId }],
+      arrayFilters: [{ 'alert.alertId': alert.alertId }],
     })
   }
 
