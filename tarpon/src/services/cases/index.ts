@@ -800,8 +800,8 @@ export class CaseService extends CaseAlertsCommonService {
   ): Promise<Case> {
     const caseEntity = await this.caseRepository.getCaseById(caseId)
 
-    if (options?.logAuditLogView) {
-      await this.auditLogService.handleViewCase(caseId)
+    if (options?.logAuditLogView && caseEntity) {
+      await this.auditLogService.handleViewCase(caseEntity)
     }
 
     const case_ =

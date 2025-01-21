@@ -397,10 +397,11 @@ export class CasesAlertsReportAuditLogService {
     })
   }
 
-  public async handleViewCase(caseId: string) {
+  public async handleViewCase(caseData: Case) {
     await this.createAuditLog({
       logAction: 'VIEW',
-      caseId,
+      caseId: caseData.caseId ?? '',
+      caseDetails: caseData,
     })
   }
 
