@@ -271,7 +271,7 @@ export class SLAService {
         },
       ])
       .toArray()
-    const numberOfJobs = Math.ceil(targetAlertsCount[0].count / 50_000)
+    const numberOfJobs = Math.ceil((targetAlertsCount[0]?.count ?? 0) / 50_000)
     const froms = (
       await Promise.all(
         range(numberOfJobs).map(async (i): Promise<string | null> => {
