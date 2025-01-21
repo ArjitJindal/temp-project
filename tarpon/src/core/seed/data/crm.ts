@@ -63,11 +63,11 @@ const getUserName = (
   user: InternalBusinessUser | InternalConsumerUser
 ): string | undefined => {
   if (user.type === 'CONSUMER') {
-    const { lastName, firstName, middleName } = user.userDetails?.name ?? {
-      lastName: '',
-      firstName: '',
-      middleName: '',
-    }
+    const {
+      lastName = '',
+      firstName = '',
+      middleName = '',
+    } = user.userDetails?.name ?? {}
     return `${lastName} ${firstName}${middleName ? ` ${middleName}` : ''}`
   }
   return user.legalEntity.companyGeneralDetails.legalName

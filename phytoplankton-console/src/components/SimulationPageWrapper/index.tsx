@@ -1,7 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useMemo } from 'react';
-import AsyncResourceRenderer from '../utils/AsyncResourceRenderer';
-import { useFeatureEnabled, useSettings } from '../AppWrapper/Providers/SettingsProvider';
-import { P } from '../ui/Typography';
+import { useFeatureEnabled } from '../AppWrapper/Providers/SettingsProvider';
 import PageWrapper, { PageWrapperProps } from '../PageWrapper';
 import { Authorized } from '../utils/Authorized';
 import s from './styles.module.less';
@@ -12,7 +10,6 @@ import { getBranding } from '@/utils/branding';
 import { SIMULATION_COUNT } from '@/utils/queries/keys';
 import Tooltip from '@/components/library/Tooltip';
 import Label from '@/components/library/Label';
-import { AsyncResource, map } from '@/utils/asyncResource';
 
 export type SimulationPageWrapperRef = {
   refetchSimulationCount: () => void;
@@ -22,28 +19,6 @@ export type SimulationPageWrapperProps = PageWrapperProps & {
   header?: (actionButtons: React.ReactNode) => JSX.Element;
   isSimulationModeEnabled: boolean;
   onSimulationModeChange: (value: boolean | undefined) => void;
-};
-
-const SimulationUsageCard = (props: { usageCount: AsyncResource<number> }) => {
-  const settings = useSettings();
-  const branding = getBranding();
-
-  return (
-    <div className={s.card}>
-      <P bold variant="m" className={s.title}>
-        <AsyncResourceRenderer renderLoading={() => `Loading...`} resource={props.usageCount}>
-          {(usageCount) => {
-            const simulations = settings?.limits?.simulations;
-            const remainingSimulations = !simulations ? 0 : Math.max(simulations - usageCount, 0);
-            return `${remainingSimulations} simulations left`;
-          }}
-        </AsyncResourceRenderer>
-      </P>
-      <a className={s.buyMore} href={`mailto:${branding.supportEmail}`} target="_blank">
-        Buy more
-      </a>
-    </div>
-  );
 };
 
 export const SimulationPageWrapper = forwardRef<
@@ -72,11 +47,6 @@ export const SimulationPageWrapper = forwardRef<
     <div className={s.simulationRoot}>
       <Authorized required={['simulator:simulations:read']}>
         <div className={s.right}>
-          {isSimulationFeatureEnabled && props.isSimulationModeEnabled && (
-            <SimulationUsageCard
-              usageCount={map(simulationCountResults.data, (x) => x.runJobsCount)}
-            />
-          )}
           <Label label="Simulator" position="RIGHT">
             {!isSimulationFeatureEnabled ? (
               <div>
