@@ -380,6 +380,7 @@ export class UserService {
   private getUserCommonColumns(): Record<string, string> {
     return {
       userId: 'id',
+      userName: 'username',
       createdTimestamp: "JSONExtractFloat(data, 'createdTimestamp')",
       type: "JSONExtractString(data, 'type')",
       updatedAt: "JSONExtractFloat(data, 'updatedAt')",
@@ -1089,7 +1090,7 @@ export class UserService {
     ): AllUsersTableItem => {
       return {
         userId: data.userId as string,
-        name: data.name as string,
+        name: data.userName as string,
         type: data.type as UserType,
         kycStatus: data.kycStatus as KYCStatus,
         userState: data.userState as UserState,
