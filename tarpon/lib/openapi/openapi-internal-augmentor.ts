@@ -292,6 +292,8 @@ export const ConsoleApiPathToLambda: any = {
   '/notifications/{notificationId}/read':
     StackConstants.CONSOLE_API_NOTIFICATIONS_FUNCTION_NAME,
   '/crm-records': StackConstants.CONSOLE_API_TENANT_FUNCTION_NAME,
+  '/webhooks/internal-proxy':
+    StackConstants.CONSOLE_API_INCOMING_WEBHOOKS_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(
@@ -305,6 +307,7 @@ const openapi = getAugmentedOpenapi(
       '/webhooks/complyadvantage',
       '/webhooks/auth0',
       '/webhooks/nango',
+      '/webhooks/internal-proxy',
     ],
     allowedOrigins: getAllowedOrigins(),
   }

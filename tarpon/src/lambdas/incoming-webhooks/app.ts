@@ -1,8 +1,12 @@
+import { createHmac } from 'crypto'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { Forbidden } from 'http-errors'
+import { stageAndRegion } from '@flagright/lib/utils'
+import { FlagrightRegion } from '@flagright/lib/constants/deploy'
+import axios from 'axios'
 import { NangoService } from '../../services/nango'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -16,8 +20,8 @@ import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { updateLogMetadata } from '@/core/utils/context'
 import { AccountsService } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { envIs } from '@/utils/env'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
+import { InternalProxyWebhookData } from '@/@types/openapi-internal/InternalProxyWebhookData'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -30,6 +34,9 @@ const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.79.153.96',
   '52.63.190.126',
 ]
+
+const INTERNAL_PROXY_WEBHOOK_SECRET = '2e01012c-ee69-4848-8c12-020bfd1e57bc'
+const INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER = 'X-Internal-Proxy-Signature'
 
 export const webhooksHandler = lambdaApi()(
   async (
@@ -198,10 +205,6 @@ export const webhooksHandler = lambdaApi()(
     })
 
     handlers.registerPostWebhookNango(async (ctx, request) => {
-      if (!envIs('dev')) {
-        return
-      }
-
       const dynamoDb = getDynamoDbClientByEvent(event)
 
       logger.info(`Received Nango webhook event: ${JSON.stringify(request)}`)
@@ -212,18 +215,110 @@ export const webhooksHandler = lambdaApi()(
         request.NangoWebhookEvent
       )
 
-      await sendBatchJobCommand({
-        tenantId,
-        type: 'NANGO_DATA_FETCH',
-        parameters: {
+      const [_, currentRegion] = stageAndRegion()
+
+      // if current region is not the same as the region of the webhook, we need to send a proxy webhook
+      if (currentRegion !== region) {
+        await sendInternalProxyWebhook(region as FlagrightRegion, {
+          tenantId,
+          type: 'NANGO_DATA_FETCH',
           webhookData: request.NangoWebhookEvent,
-          region,
-        },
-      })
+          region: region as FlagrightRegion,
+        })
+      } else {
+        await sendBatchJobCommand({
+          tenantId,
+          type: 'NANGO_DATA_FETCH',
+          parameters: {
+            webhookData: request.NangoWebhookEvent,
+            region,
+          },
+        })
+      }
 
       return
+    })
+
+    handlers.registerPostWebhookInternalProxy(async (ctx, request) => {
+      const { destinationRegion } = request.InternalProxyWebhookEvent
+      const type = request.InternalProxyWebhookEvent.data.type
+
+      const signature = event.headers[INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]
+
+      if (!signature) {
+        throw new Forbidden('Missing signature')
+      }
+
+      const isValid = await verifyInternalProxyWebhook(
+        signature,
+        request.InternalProxyWebhookEvent.data
+      )
+
+      if (!isValid) {
+        throw new Forbidden(
+          `Invalid signature for internal proxy webhook: ${signature}`
+        )
+      }
+
+      switch (type) {
+        case 'NANGO_DATA_FETCH': {
+          await sendBatchJobCommand({
+            tenantId: request.InternalProxyWebhookEvent.data.tenantId,
+            type: 'NANGO_DATA_FETCH',
+            parameters: {
+              webhookData: request.InternalProxyWebhookEvent.data.webhookData,
+              region: destinationRegion,
+            },
+          })
+          break
+        }
+      }
     })
 
     return await handlers.handle(event)
   }
 )
+
+async function sendInternalProxyWebhook(
+  destinationRegion: FlagrightRegion,
+  payload: InternalProxyWebhookData
+) {
+  const [currentStage] = stageAndRegion()
+
+  let url: string | undefined
+
+  if (currentStage === 'dev') {
+    url = `https://api.flagright.dev/console/webhooks/internal-proxy`
+  } else if (currentStage === 'sandbox') {
+    if (destinationRegion === 'eu-1') {
+      url = `https://sandbox.api.flagright.com/console/webhooks/internal-proxy`
+    } else {
+      url = `https://sandbox-asia-1.api.flagright.com/console/webhooks/internal-proxy`
+    }
+  } else if (currentStage === 'prod') {
+    url = `https://${destinationRegion}.api.flagright.com/console/webhooks/internal-proxy`
+  }
+
+  if (!url) {
+    throw new Error('Invalid region for internal proxy webhook')
+  }
+
+  const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
+    .update(JSON.stringify(payload))
+    .digest('hex')
+
+  await axios.post(url, payload, {
+    headers: { [INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]: signature },
+  })
+}
+
+async function verifyInternalProxyWebhook(
+  receivedSignature: string,
+  payload: InternalProxyWebhookData
+) {
+  const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
+    .update(JSON.stringify(payload))
+    .digest('hex')
+
+  return receivedSignature === signature
+}

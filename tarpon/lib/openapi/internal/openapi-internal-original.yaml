@@ -6434,6 +6434,20 @@ paths:
       responses:
         '200':
           description: OK
+  /webhooks/internal-proxy:
+    post:
+      summary: Receive webhook events from internal proxy
+      tags: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InternalProxyWebhookEvent'
+        required: true
+      operationId: post-webhook-internal-proxy
+      responses:
+        '200':
+          description: OK
   /simulation:
     post:
       summary: Create new simulation task
@@ -13566,6 +13580,53 @@ components:
           type: string
         modifiedAfter:
           type: string
+    FlagrightRegion:
+      type: string
+      enum:
+        - eu-1
+        - us-1
+        - eu-2
+        - asia-1
+        - asia-2
+        - asia-3
+        - au-1
+        - me-1
+    InternalProxyWebhookEvent:
+      title: InternalProxyWebhookEvent
+      type: object
+      properties:
+        sourceRegion:
+          $ref: '#/components/schemas/FlagrightRegion'
+        destinationRegion:
+          $ref: '#/components/schemas/FlagrightRegion'
+        data:
+          $ref: '#/components/schemas/InternalProxyWebhookData'
+      required:
+        - tenantId
+        - sourceRegion
+        - destinationRegion
+        - data
+    InternalProxyWebhookData:
+      oneOf:
+        - $ref: '#/components/schemas/NangoBatchJobTrigger'
+    NangoBatchJobTrigger:
+      type: object
+      properties:
+        tenantId:
+          type: string
+        type:
+          type: string
+          enum:
+            - NANGO_DATA_FETCH
+        webhookData:
+          $ref: '#/components/schemas/NangoWebhookEvent'
+        region:
+          $ref: '#/components/schemas/FlagrightRegion'
+      required:
+        - tenantId
+        - type
+        - webhookData
+        - region
     Auth0Log:
       title: Auth0Log
       type: object
