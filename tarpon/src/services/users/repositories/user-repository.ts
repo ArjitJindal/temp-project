@@ -21,7 +21,16 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { get, isEmpty, keyBy, mapValues, mergeWith, set, uniq } from 'lodash'
+import {
+  get,
+  isEmpty,
+  keyBy,
+  mapValues,
+  mergeWith,
+  omit,
+  set,
+  uniq,
+} from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import {
   getUsersFilterByRiskLevel,
@@ -1085,12 +1094,14 @@ export class UserRepository {
       executedRules: filterOutInternalRules(user.executedRules ?? []),
     }
 
+    const updateWithoutId = omit(userToSave, ['_id'])
+
     await Promise.all([
       internalMongoUpdateOne(
         this.mongoDb,
         USERS_COLLECTION(this.tenantId),
         { userId: user.userId },
-        { $set: userToSave },
+        { $set: updateWithoutId },
         { session: options?.session }
       ),
       this.updateUniqueTags(userToSave?.tags),
