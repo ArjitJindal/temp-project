@@ -111,7 +111,7 @@ export const config: Config = {
       '01c3b373-c01a-48b2-96f7-3fcf17dd0c91',
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
-      'https://uptime.betterstack.com/api/v1/aws-cloudwatch/webhook/fkY3F4w8uhZrwypLxNPmTeg4',
+      'https://uptime.betterstack.com/api/v1/aws-cloudwatch/webhook/qtsBwPwv38x338drf31XGMd6',
     CONSOLE_URI: 'https://console.flagright.com',
     SLACK_CLIENT_ID: '2800969986821.3767916979623',
     SLACK_CLIENT_SECRET: 'c4263c5996fb4b219f4cf79e7bc05b1a',
