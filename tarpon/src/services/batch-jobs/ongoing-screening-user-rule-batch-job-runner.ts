@@ -7,6 +7,7 @@ import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
 import { ListRepository } from '../list/repositories/list-repository'
+import { mergeRules } from '../rules-engine/utils/rule-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { OngoingScreeningUserRuleBatchJob } from '@/@types/batch-job'
@@ -250,6 +251,7 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
               rules,
               'ONGOING'
             )
+
             result?.executedRules
               ?.filter(
                 (executedRule) =>
@@ -269,6 +271,15 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
                 }
               })
             if (result?.hitRules && result.hitRules.length > 0) {
+              const mergedExecutedRules = mergeRules(
+                user.executedRules ?? [],
+                result?.executedRules ?? []
+              )
+              const mergedHitRules = mergeRules(
+                user.hitRules ?? [],
+                result?.hitRules ?? []
+              )
+
               await Promise.all([
                 this.createCase(
                   user,
@@ -284,6 +295,11 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
                   ),
                   user,
                   null
+                ),
+                this.userService?.userRepository?.updateUserWithExecutedRules(
+                  user.userId,
+                  mergedExecutedRules,
+                  mergedHitRules
                 ),
               ])
             }
