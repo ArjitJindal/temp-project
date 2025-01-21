@@ -159,14 +159,6 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
-          stageName: 'Approve_E2E',
-          actions: [
-            new codepipline_actions.ManualApprovalAction({
-              actionName: 'Approve_E2E',
-            }),
-          ],
-        },
-        {
           stageName: 'E2E_Test_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({
@@ -174,7 +166,6 @@ export class CdkOrcaPipelineStack extends Stack {
               project: getE2ETestProject(this, 'dev', role),
               input: SOURCE_ARTIFACT,
               outputs: [E2E_ARTIFACT],
-              extraInputs: [TARPON_BUILD_ARTIFACT],
             }),
           ],
         },

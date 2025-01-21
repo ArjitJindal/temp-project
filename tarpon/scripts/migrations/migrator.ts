@@ -18,6 +18,8 @@ import { syncClickhouseTables } from './always-run/sync-clickhouse'
 import { envIs } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RuleService } from '@/services/rules-engine'
+import { seedDemoData } from '@/core/seed'
+import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { hasFeature } from '@/core/utils/context'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
@@ -152,6 +154,30 @@ async function main() {
   const success = await umzug.runAsCLI()
   if (!success) {
     exit(1)
+  }
+
+  if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
+    // Seed cypress tenant on dev
+    if (envIs('dev')) {
+      await seedDemoData('cypress-tenant')
+      await cleanUpCypressTestAuth0Users()
+    }
+  }
+}
+
+async function cleanUpCypressTestAuth0Users() {
+  const managementClient = await getAuth0ManagementClient(
+    'dev-flagright.eu.auth0.com'
+  )
+  const userManager = managementClient.users
+  const users = await userManager.getAll({
+    q: 'email:test-cypress*',
+  })
+  for (const user of users.data) {
+    if (user.email.startsWith('test-cypress')) {
+      await userManager.delete({ id: user.user_id })
+      console.info(`Deleted user: ${user.email}`)
+    }
   }
 }
 
