@@ -29,6 +29,7 @@ import { CounterRepository } from '../counter/repository'
 import { AlertsService } from '../alerts'
 import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
+import { SLAService } from '../sla/sla-service'
 import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import {
@@ -303,7 +304,11 @@ export class CaseCreationService {
       ).items
     }
 
-    const case_ = await this.addOrUpdateCase({
+    const auth0Domain =
+      getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+    const slaService = new SLAService(this.tenantId, this.mongoDb, auth0Domain)
+    const now = Date.now()
+    let case_: Case = {
       caseType: 'MANUAL',
       caseStatus: 'OPEN',
       caseUsers: {
@@ -317,8 +322,8 @@ export class CaseCreationService {
       caseTransactionsCount: transactions.length,
       createdBy: manualCaseData.userId,
       priority: priority ?? 'P1',
-      updatedAt: Date.now(),
-      createdTimestamp: Date.now(),
+      updatedAt: now,
+      createdTimestamp: now,
       caseTransactionsIds: transactions.map((t) => t.transactionId),
       statusChanges: [statusChange],
       lastStatusChange: statusChange,
@@ -331,14 +336,36 @@ export class CaseCreationService {
         ),
         tags: compact(uniqObjects(transactions.flatMap((t) => t.tags ?? []))),
       },
-      slaPolicyDetails:
-        slaPolicies.length > 0
-          ? slaPolicies.map((slaPolicy) => ({
-              slaPolicyId: slaPolicy.id,
-            }))
-          : undefined,
-    })
+    }
 
+    const slaPolicyDetails =
+      slaPolicies.length > 0
+        ? await Promise.all(
+            slaPolicies.map(async (policy): Promise<SLAPolicyDetails> => {
+              const slaDetail =
+                await slaService.calculateSLAStatusForEntity<Case>(
+                  case_,
+                  policy.id,
+                  'case'
+                )
+              return {
+                slaPolicyId: policy.id,
+                updatedAt: now,
+                ...(slaDetail?.elapsedTime
+                  ? {
+                      policyStatus: slaDetail?.policyStatus,
+                      elapsedTime: slaDetail?.elapsedTime,
+                    }
+                  : {}),
+              }
+            })
+          )
+        : undefined
+    case_ = {
+      ...case_,
+      slaPolicyDetails,
+    }
+    await this.addOrUpdateCase(case_)
     if (!case_.caseId) {
       throw Error('Cannot find CaseId')
     }
@@ -612,7 +639,15 @@ export class CaseCreationService {
           hitRule.ruleHitMeta != null
             ? await this.addOrUpdateSanctionsHits(hitRule.ruleHitMeta, false)
             : undefined
-        return {
+
+        const auth0Domain =
+          getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
+        const slaService = new SLAService(
+          this.tenantId,
+          this.mongoDb,
+          auth0Domain
+        )
+        const newAlert = {
           _id: alertCount,
           alertId: `A-${alertCount}`,
           createdTimestamp: availableAfterTimestamp ?? createdTimestamp,
@@ -652,11 +687,30 @@ export class CaseCreationService {
               ) ?? []
           ),
           assignments: assignee ? [assignee] : [],
-          slaPolicyDetails: ruleInstanceMatch?.alertConfig?.slaPolicies?.map(
-            (id): SLAPolicyDetails => ({
+        }
+        const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
+          ruleInstanceMatch?.alertConfig?.slaPolicies?.map(async (id) => {
+            const slaDetail =
+              await slaService.calculateSLAStatusForEntity<Alert>(
+                newAlert,
+                id,
+                'alert'
+              )
+            return {
               slaPolicyId: id,
-            })
-          ),
+              updatedAt: now,
+              ...(slaDetail?.elapsedTime
+                ? {
+                    elapsedTime: slaDetail?.elapsedTime,
+                    policyStatus: slaDetail?.policyStatus,
+                  }
+                : {}),
+            }
+          }) || []
+        )
+        return {
+          ...newAlert,
+          slaPolicyDetails,
         }
       })
     )

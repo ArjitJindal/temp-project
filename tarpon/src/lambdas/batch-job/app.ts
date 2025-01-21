@@ -1,8 +1,6 @@
 import { SQSEvent } from 'aws-lambda'
 import {
   ExecutionAlreadyExists,
-  ListExecutionsCommand,
-  ListExecutionsCommandInput,
   SFNClient,
   StartExecutionCommand,
 } from '@aws-sdk/client-sfn'
@@ -22,36 +20,11 @@ import {
 } from '@/core/utils/context'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
+import { SLAService } from '@/services/sla/sla-service'
 import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/services/batch-jobs/batch-job'
 
 function getBatchJobName(job: BatchJobWithId) {
   return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
-}
-
-async function getRunningJobs(
-  stateMachineArn: string | undefined,
-  jobName: string,
-  sfnClient: SFNClient
-): Promise<boolean> {
-  try {
-    const params: ListExecutionsCommandInput = {
-      stateMachineArn,
-      statusFilter: 'RUNNING',
-    }
-
-    const command = new ListExecutionsCommand(params)
-    const response = await sfnClient.send(command)
-
-    // Filter the jobs by name
-    const runningJobs = response?.executions?.filter(
-      (execution) => execution && execution.name?.includes(jobName)
-    )
-
-    return (runningJobs?.length ?? 0) > 0
-  } catch (error) {
-    logger.error('Error fetching running jobs:', error)
-    throw error
-  }
 }
 
 export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
@@ -64,36 +37,16 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
   for (const record of event.Records) {
     const job = JSON.parse(record.body) as BatchJobWithId
     const jobName = getBatchJobName(job)
-    const jobRepository = new BatchJobRepository(
-      job.tenantId,
-      await getMongoDbClient()
-    )
+    const mongoDb = await getMongoDbClient()
+    const jobRepository = new BatchJobRepository(job.tenantId, mongoDb)
     const existingJob = await jobRepository.getJobById(job.jobId)
     if (!existingJob) {
       await jobRepository.insertJob(job)
     }
-    let areSLAJobsRunning: boolean | undefined
 
-    // TODO: Remove this once we have a proper way to handle this in FR-5951
-    if (
-      job.tenantId?.startsWith('pnb') &&
-      job.type === 'ALERT_SLA_STATUS_REFRESH'
-    ) {
-      areSLAJobsRunning =
-        areSLAJobsRunning ??
-        (await getRunningJobs(
-          process.env.BATCH_JOB_STATE_MACHINE_ARN,
-          `${job.tenantId}-ALERT_SLA_STATUS_REFRESH`, // Adding it to make SLA jobs idempotent, as the payload is same for all the jobs
-          sfnClient
-        ))
-
-      if (areSLAJobsRunning) {
-        logger.info(`Job ${jobName} is already running`, {
-          jobName,
-          batchJobPayload: job,
-        })
-        return
-      }
+    if (job.type === 'ALERT_SLA_STATUS_REFRESH') {
+      const slaService = new SLAService(job.tenantId, mongoDb, '')
+      await slaService.handleSendingSlaRefreshJobs()
     }
 
     try {
@@ -154,10 +107,7 @@ export const jobDecisionHandler = async (
     RULE_PRE_AGGREGATION: 'FARGATE',
     MANUAL_RULE_PRE_AGGREGATION: 'FARGATE',
     FILES_AI_SUMMARY: 'LAMBDA',
-    // TODO: Remove this once we have a proper way to handle this in FR-5951
-    ALERT_SLA_STATUS_REFRESH: settings.features?.includes('PNB')
-      ? 'FARGATE'
-      : 'LAMBDA',
+    ALERT_SLA_STATUS_REFRESH: 'LAMBDA',
     REVERIFY_TRANSACTIONS: 'FARGATE',
     SANCTIONS_DATA_FETCH: 'FARGATE',
     BACKFILL_AVERAGE_TRS: 'LAMBDA',

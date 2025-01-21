@@ -11,7 +11,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 @traceable
 export class AlertSLAStatusRefreshBatchJobRunner extends BatchJobRunner {
   protected async run(job: AlertSLAStatusRefreshBatchJob): Promise<void> {
-    const { tenantId } = job
+    const { tenantId, from, to } = job
     const mongoDb = await getMongoDbClient()
     const context = getContext()
     const slaStatusCalculationService = new SLAService(
@@ -19,7 +19,10 @@ export class AlertSLAStatusRefreshBatchJobRunner extends BatchJobRunner {
       mongoDb,
       context?.auth0Domain as string
     )
-    await slaStatusCalculationService.calculateAndUpdateSLAStatusesForAlerts()
+    await slaStatusCalculationService.calculateAndUpdateSLAStatusesForAlerts(
+      from,
+      to
+    )
   }
 }
 

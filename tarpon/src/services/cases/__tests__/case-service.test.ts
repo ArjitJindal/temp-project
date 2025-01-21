@@ -1358,7 +1358,16 @@ describe('Case Service - Post Api Tests', () => {
       caseId: 'C-1-6',
       createdTimestamp: Date.now(),
       caseStatus: 'OPEN',
-      alerts: [TEST_ALERT_1, TEST_ALERT_3],
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertId: 'A-1.1',
+        },
+        {
+          ...TEST_ALERT_3,
+          alertId: 'A-3.1',
+        },
+      ],
       assignments: undefined,
       reviewAssignments: undefined,
       caseType: 'SYSTEM',
@@ -1379,7 +1388,7 @@ describe('Case Service - Post Api Tests', () => {
       caseStatus: 'CLOSED',
       alerts: [
         {
-          alertId: 'A-1',
+          alertId: 'A-1.1',
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
@@ -1400,7 +1409,7 @@ describe('Case Service - Post Api Tests', () => {
           ],
         },
         {
-          alertId: 'A-3',
+          alertId: 'A-3.1',
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
@@ -1461,7 +1470,7 @@ describe('Case Service - Post Api Tests', () => {
       caseStatus: 'REOPENED',
       alerts: [
         {
-          alertId: 'A-1',
+          alertId: 'A-1.1',
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
@@ -1482,7 +1491,7 @@ describe('Case Service - Post Api Tests', () => {
           ],
         },
         {
-          alertId: 'A-3',
+          alertId: 'A-3.1',
           alertStatus: 'CLOSED',
           caseId: 'C-1-6',
           lastStatusChange: {
@@ -2131,7 +2140,16 @@ describe('Test Review Approvals Send Back Flow', () => {
     await caseService.caseRepository.addCaseMongo({
       caseId,
       caseStatus: 'OPEN',
-      alerts: [TEST_ALERT_1, TEST_ALERT_2],
+      alerts: [
+        {
+          ...TEST_ALERT_1,
+          alertId: 'A-1.1',
+        },
+        {
+          ...TEST_ALERT_2,
+          alertId: 'A-2.1',
+        },
+      ],
       caseType: 'SYSTEM',
       caseAggregates: DEFAULT_CASE_AGGREGATES,
     })
@@ -2169,7 +2187,7 @@ describe('Test Review Approvals Send Back Flow', () => {
       caseStatus: 'OPEN',
       alerts: [
         {
-          alertId: 'A-1',
+          alertId: 'A-1.1',
           alertStatus: 'OPEN',
           reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],
           lastStatusChange: {
@@ -2194,7 +2212,7 @@ describe('Test Review Approvals Send Back Flow', () => {
             },
           ],
         },
-        { alertId: 'A-2', alertStatus: 'CLOSED' },
+        { alertId: 'A-2.1', alertStatus: 'CLOSED' },
       ],
       assignments: [{ assigneeUserId: 'ACCOUNT-3' }],
       reviewAssignments: [{ assigneeUserId: 'ACCOUNT-1' }],

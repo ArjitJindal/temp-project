@@ -21,7 +21,10 @@ export const mongoUpdateConsumerHandler = lambdaConsumer()(
         const data = await collection.updateOne(
           event.filter,
           event.updateMessage,
-          { upsert: event.upsert || false }
+          {
+            upsert: event.upsert || false,
+            ...(event.arrayFilters ? { arrayFilters: event.arrayFilters } : {}),
+          }
         )
 
         if (event.sendToClickhouse) {

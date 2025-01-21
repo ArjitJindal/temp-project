@@ -133,6 +133,8 @@ export type ManualRulePreAggregationBatchJob = {
 export type AlertSLAStatusRefreshBatchJob = {
   type: 'ALERT_SLA_STATUS_REFRESH'
   tenantId: string
+  from?: string
+  to?: string
 }
 /* Case SLA Status Calculation */
 export type CaseSLAStatusRefreshBatchJob = {

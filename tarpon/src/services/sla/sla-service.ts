@@ -1,11 +1,12 @@
 import { AggregationCursor, MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { omit } from 'lodash'
+import { omit, range } from 'lodash'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { Account, AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
 import { AlertsRepository } from '../alerts/repository'
 import { CaseRepository } from '../cases/repository'
+import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import {
   getElapsedTime,
   getSLAStatusFromElapsedTime,
@@ -22,6 +23,7 @@ import { hasFeature } from '@/core/utils/context'
 import { processCursorInBatch } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 
 const CONCURRENCY = 50
 const BATCH_SIZE = 10000
@@ -32,7 +34,11 @@ export class SLAService {
   private slaPolicyService: SLAPolicyService
   private accountsService: AccountsService
   private caseRepository: CaseRepository
+  private mongoDb: MongoClient
+  private tenantId: string
   constructor(tenantId: string, mongoDb: MongoClient, auth0Domain: string) {
+    this.mongoDb = mongoDb
+    this.tenantId = tenantId
     this.alertsRepository = new AlertsRepository(tenantId, { mongoDb })
     this.slaPolicyService = new SLAPolicyService(tenantId, mongoDb)
     this.accountsService = new AccountsService({ auth0Domain }, { mongoDb })
@@ -184,12 +190,15 @@ export class SLAService {
     )
   }
 
-  public async calculateAndUpdateSLAStatusesForAlerts() {
+  public async calculateAndUpdateSLAStatusesForAlerts(
+    from?: string,
+    to?: string
+  ) {
     if (!hasFeature('ALERT_SLA')) {
       return
     }
     const alertsCursor = this.alertsRepository
-      .getNonClosedAlertsCursor()
+      .getNonClosedAlertsCursor(from, to)
       .addCursorFlag('noCursorTimeout', true) // As for some tenants the alerts count could be in the millions, we need to make sure the cursor does not timeout
     await this.calculateAndUpdateSLAStatusesForEntity<Alert>(
       'alert',
@@ -234,5 +243,79 @@ export class SLAService {
 
   private async getSLAPolicy(slaPolicyId: string) {
     return await this.slaPolicyService.getSLAPolicyById(slaPolicyId)
+  }
+
+  public async handleSendingSlaRefreshJobs() {
+    const casesCollection = this.mongoDb
+      .db()
+      .collection(CASES_COLLECTION(this.tenantId))
+    const matchFilter = {
+      $match: {
+        'alerts.alertStatus': {
+          $ne: 'CLOSED',
+        },
+      },
+    }
+    const targetAlertsCount = await casesCollection
+      .aggregate([
+        matchFilter,
+        {
+          $unwind: '$alerts',
+        },
+        matchFilter,
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+          },
+        },
+      ])
+      .toArray()
+    const numberOfJobs = Math.ceil(targetAlertsCount[0].count / 50_000)
+    const froms = (
+      await Promise.all(
+        range(numberOfJobs).map(async (i): Promise<string | null> => {
+          const entity = (
+            await casesCollection
+              .aggregate([
+                matchFilter,
+                {
+                  $unwind: '$alerts',
+                },
+                matchFilter,
+                {
+                  $sort: {
+                    'alerts.alertId': 1,
+                  },
+                },
+                {
+                  $skip: i * 50_000,
+                },
+                {
+                  $limit: 1,
+                },
+              ])
+              .toArray()
+          )[0]
+
+          if (entity) {
+            return entity.id
+          }
+          return null
+        })
+      )
+    ).filter((p): p is string => Boolean(p))
+    for (let i = 0; i < froms.length; i++) {
+      const from = froms[i]
+      const to = froms[i + 1] || undefined // Use `null` as `to` for the last batch
+
+      logger.info(`Sending batch job #${i}`)
+      await sendBatchJobCommand({
+        type: 'ALERT_SLA_STATUS_REFRESH',
+        tenantId: this.tenantId,
+        from,
+        to,
+      })
+    }
   }
 }

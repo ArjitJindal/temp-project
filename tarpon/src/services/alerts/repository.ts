@@ -892,15 +892,36 @@ export class AlertsRepository {
     return result.alerts?.find((alert) => alert.alertId === alertId) ?? null
   }
 
-  public getNonClosedAlertsCursor(): AggregationCursor<Alert> {
+  public getNonClosedAlertsCursor(
+    from?: string,
+    to?: string
+  ): AggregationCursor<Alert> {
     const db = this.mongoDb.db()
     const collection = db.collection<Case>(CASES_COLLECTION(this.tenantId))
+    const matchFilter =
+      from || to
+        ? {
+            'alerts.alertId': {
+              ...(from
+                ? {
+                    $gte: from,
+                  }
+                : {}),
+              ...(to
+                ? {
+                    $lt: to,
+                  }
+                : {}),
+            },
+          }
+        : {}
     const pipeline = [
       {
         $match: {
           alerts: {
             $elemMatch: { alertStatus: { $ne: 'CLOSED' } },
           },
+          ...matchFilter,
         },
       },
       {
@@ -921,6 +942,7 @@ export class AlertsRepository {
                 $ne: 'CLOSED',
               },
             },
+            ...(isEmpty(matchFilter) ? [] : [matchFilter]),
           ],
         },
       },

@@ -22,6 +22,8 @@ import { Upload } from '@aws-sdk/lib-storage'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { getPaymentMethodId } from '../../core/dynamodb/dynamodb-keys'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { SLAService } from '../sla/sla-service'
+import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { DefaultApiGetCaseListRequest } from '@/@types/openapi-internal/RequestParameters'
@@ -41,7 +43,11 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { CaseClosedDetails } from '@/@types/openapi-public/CaseClosedDetails'
 import { CaseAlertsCommonService } from '@/services/case-alerts-common'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
+import {
+  getMongoDbClient,
+  sendMessageToMongoUpdateConsumer,
+  withTransaction,
+} from '@/utils/mongodb-utils'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { CaseEscalationsUpdateRequest } from '@/@types/openapi-internal/CaseEscalationsUpdateRequest'
@@ -78,7 +84,10 @@ import { S3Config } from '@/services/aws/s3-service'
 import { createReport } from '@/services/cases/utils/report'
 import * as XlsxGenerator from '@/services/cases/utils/xlsx-generator'
 import { LinkerService } from '@/services/linker'
+import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { TransactionAction } from '@/@types/openapi-internal/TransactionAction'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 
 @traceable
 export class CaseService extends CaseAlertsCommonService {
@@ -91,6 +100,9 @@ export class CaseService extends CaseAlertsCommonService {
   auditLogService: CasesAlertsReportAuditLogService
   tenantId: string
   mongoDb: MongoClient
+  hasFeatureSla: boolean
+  slaPolicyService: SLAPolicyService
+  auth0Domain: string
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -160,6 +172,9 @@ export class CaseService extends CaseAlertsCommonService {
       this.mongoDb
     )
     this.linkerService = new LinkerService(this.tenantId)
+    this.hasFeatureSla = hasFeature('ALERT_SLA') && hasFeature('PNB')
+    this.slaPolicyService = new SLAPolicyService(this.tenantId, this.mongoDb)
+    this.auth0Domain = getContext()?.auth0Domain ?? ''
   }
 
   private getUpdateManualCaseComment(
@@ -570,6 +585,14 @@ export class CaseService extends CaseAlertsCommonService {
     const currentStatus = cases[0].caseStatus
 
     const commentBody = this.getCaseCommentBody(updates, currentStatus)
+    let slaPolicies: SLAPolicy[] = []
+    if (this.hasFeatureSla) {
+      slaPolicies = (
+        await this.slaPolicyService.getSLAPolicies({
+          type: 'MANUAL_CASE',
+        })
+      ).items
+    }
 
     await withTransaction(async () => {
       await Promise.all([
@@ -624,6 +647,20 @@ export class CaseService extends CaseAlertsCommonService {
         hasFeature('QA') &&
         updates.caseStatus === 'CLOSED'
           ? [this.caseRepository.markAllChecklistItemsAsDone(caseIds)]
+          : []),
+        ...(this.hasFeatureSla
+          ? cases.map(async (c) =>
+              this.updateManualCaseWithSlaDetails(
+                {
+                  ...c,
+                  caseStatus: updates.caseStatus,
+                  lastStatusChange: statusChange,
+                  statusChanges: [...(c.statusChanges ?? []), statusChange],
+                },
+                Date.now(),
+                slaPolicies
+              )
+            )
           : []),
       ])
 
@@ -1062,6 +1099,52 @@ export class CaseService extends CaseAlertsCommonService {
     }
   }
 
+  private async updateManualCaseWithSlaDetails(
+    c: Case,
+    timestamp: number,
+    slaPolicies: SLAPolicy[]
+  ) {
+    if (c.caseType != 'MANUAL') {
+      return
+    }
+    const slaPolicyIds = slaPolicies.map((slaPolicy) => slaPolicy.id)
+    const slaService = new SLAService(
+      this.tenantId,
+      this.mongoDb,
+      this.auth0Domain
+    )
+    const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
+      slaPolicyIds.map(async (id) => {
+        const slaDetail = await slaService.calculateSLAStatusForEntity<Case>(
+          c,
+          id,
+          'case'
+        )
+        return {
+          slaPolicyId: id,
+          updatedAt: timestamp,
+          ...(slaDetail?.elapsedTime
+            ? {
+                elapsedTime: slaDetail?.elapsedTime,
+                policyStatus: slaDetail?.policyStatus,
+              }
+            : {}),
+        }
+      }) || []
+    )
+    await sendMessageToMongoUpdateConsumer({
+      filter: {
+        caseId: c.caseId,
+      },
+      operationType: 'updateOne',
+      updateMessage: {
+        $set: { slaPolicyDetails },
+      },
+      sendToClickhouse: true,
+      collectionName: CASES_COLLECTION(this.tenantId),
+    })
+  }
+
   public async updateAssignments(
     caseIds: string[],
     assignments: Assignment[]
@@ -1071,6 +1154,15 @@ export class CaseService extends CaseAlertsCommonService {
     assignments.forEach((assignment) => {
       assignment.timestamp = timestamp
     })
+
+    let slaPolicies: SLAPolicy[] = []
+    if (this.hasFeatureSla) {
+      slaPolicies = (
+        await this.slaPolicyService.getSLAPolicies({
+          type: 'MANUAL_CASE',
+        })
+      ).items
+    }
 
     const oldCases = await this.caseRepository.getCasesByIds(caseIds)
     const oldCasesIds = oldCases.map((c) => c.caseId)
@@ -1095,6 +1187,18 @@ export class CaseService extends CaseAlertsCommonService {
           { assignments }
         )
       }),
+      ...(this.hasFeatureSla
+        ? oldCases.map(async (c) =>
+            this.updateManualCaseWithSlaDetails(
+              {
+                ...c,
+                assignments,
+              },
+              timestamp,
+              slaPolicies
+            )
+          )
+        : []),
     ])
   }
 
@@ -1110,6 +1214,15 @@ export class CaseService extends CaseAlertsCommonService {
       assignment.timestamp = timestamp
     })
 
+    let slaPolicies: SLAPolicy[] = []
+    if (this.hasFeatureSla) {
+      slaPolicies = (
+        await this.slaPolicyService.getSLAPolicies({
+          type: 'MANUAL_CASE',
+        })
+      ).items
+    }
+
     await Promise.all([
       this.caseRepository.updateReviewAssignmentsOfCases(
         caseIds,
@@ -1123,6 +1236,18 @@ export class CaseService extends CaseAlertsCommonService {
           { reviewAssignments }
         )
       }),
+      ...(this.hasFeatureSla
+        ? oldCases.map(async (c) =>
+            this.updateManualCaseWithSlaDetails(
+              {
+                ...c,
+                reviewAssignments,
+              },
+              timestamp,
+              slaPolicies
+            )
+          )
+        : []),
     ])
   }
 }

@@ -28,6 +28,8 @@ import { ChecklistTemplatesService } from '../tenants/checklist-template-service
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
+import { SLAService } from '../sla/sla-service'
+import { RuleInstanceRepository } from '../rules-engine/repositories/rule-instance-repository'
 import {
   API_USER,
   AlertParams,
@@ -55,7 +57,11 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AccountsService } from '@/services/accounts'
 import { isAlertAvailable } from '@/services/cases/utils'
 import { CasesAlertsReportAuditLogService } from '@/services/cases/case-alerts-report-audit-log-service'
-import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
+import {
+  getMongoDbClient,
+  sendMessageToMongoUpdateConsumer,
+  withTransaction,
+} from '@/utils/mongodb-utils'
 import { CaseStatusUpdate } from '@/@types/openapi-internal/CaseStatusUpdate'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -80,6 +86,8 @@ import { CommentRequest } from '@/@types/openapi-internal/CommentRequest'
 import { AlertOpenedDetails } from '@/@types/openapi-public/AlertOpenedDetails'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { S3Config } from '@/services/aws/s3-service'
+import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
+import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 
 @traceable
 export class AlertsService extends CaseAlertsCommonService {
@@ -89,6 +97,9 @@ export class AlertsService extends CaseAlertsCommonService {
   mongoDb: MongoClient
   dynamoDb: DynamoDBDocumentClient
   caseRepository: CaseRepository
+  ruleInstanceRepository: RuleInstanceRepository
+  hasFeatureSla: boolean
+  auth0Domain: string
 
   public static async fromEvent(
     event: APIGatewayProxyWithLambdaAuthorizerEvent<
@@ -129,6 +140,12 @@ export class AlertsService extends CaseAlertsCommonService {
     this.caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
     })
+
+    this.ruleInstanceRepository = new RuleInstanceRepository(this.tenantId, {
+      dynamoDb: this.dynamoDb,
+    })
+    this.hasFeatureSla = hasFeature('ALERT_SLA')
+    this.auth0Domain = getContext()?.auth0Domain ?? ''
   }
 
   public async getAlerts(
@@ -794,7 +811,62 @@ export class AlertsService extends CaseAlertsCommonService {
           { assignments }
         )
       }),
+      ...(this.hasFeatureSla
+        ? existingAlerts.map((alert) => {
+            return this.updateAlertWithSlaDetails(
+              {
+                ...alert,
+                assignments: assignments,
+                updatedAt: timestamp,
+              },
+              timestamp
+            )
+          })
+        : []),
     ])
+  }
+
+  private async updateAlertWithSlaDetails(alert: Alert, timestamp: number) {
+    const ruleInstance = await this.ruleInstanceRepository.getRuleInstanceById(
+      alert.ruleInstanceId
+    )
+    const slaPolicyIds = ruleInstance?.alertConfig?.slaPolicies ?? []
+    const slaService = new SLAService(
+      this.tenantId,
+      this.mongoDb,
+      this.auth0Domain
+    )
+    const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
+      slaPolicyIds.map(async (id) => {
+        const slaDetail = await slaService.calculateSLAStatusForEntity<Alert>(
+          alert,
+          id,
+          'alert'
+        )
+        return {
+          ...(slaDetail?.elapsedTime
+            ? {
+                elapsedTime: slaDetail?.elapsedTime,
+                policyStatus: slaDetail?.policyStatus,
+              }
+            : {}),
+          slaPolicyId: id,
+          updatedAt: timestamp,
+        }
+      }) || []
+    )
+    await sendMessageToMongoUpdateConsumer({
+      filter: {
+        alertId: alert.alertId,
+      },
+      operationType: 'updateOne',
+      updateMessage: {
+        $set: { slaPolicyDetails },
+      },
+      sendToClickhouse: true,
+      collectionName: CASES_COLLECTION(this.tenantId),
+      arrayFilters: [{ 'alerts.alertId': alert.alertId }],
+    })
   }
 
   public async updateReviewAssignments(
@@ -822,6 +894,18 @@ export class AlertsService extends CaseAlertsCommonService {
           { reviewAssignments }
         )
       }),
+      ...(this.hasFeatureSla
+        ? existingAlerts.map((alert) => {
+            return this.updateAlertWithSlaDetails(
+              {
+                ...alert,
+                reviewAssignments: reviewAssignments,
+                updatedAt: timestamp,
+              },
+              timestamp
+            )
+          })
+        : []),
     ])
   }
 
@@ -1011,7 +1095,12 @@ export class AlertsService extends CaseAlertsCommonService {
 
     await withTransaction(async () => {
       const [response] = await Promise.all([
-        this.alertsRepository.updateStatus(alertIds, caseIds, statusChange),
+        this.alertsRepository.updateStatus(
+          alertIds,
+          caseIds,
+          statusChange,
+          undefined
+        ),
         this.saveComments(alertIds, caseIds, {
           userId: statusChange.userId,
           body: commentBody,
@@ -1055,6 +1144,20 @@ export class AlertsService extends CaseAlertsCommonService {
         updateChecklistStatus &&
         hasFeature('QA')
           ? [this.alertsRepository.markAllChecklistItemsAsDone(alertIds)]
+          : []),
+        ...(this.hasFeatureSla
+          ? alerts.map((alert) => {
+              return this.updateAlertWithSlaDetails(
+                {
+                  ...alert,
+                  alertStatus: statusChange.caseStatus,
+                  lastStatusChange: statusChange,
+                  statusChanges: [...(alert.statusChanges ?? []), statusChange],
+                  updatedAt: Date.now(),
+                },
+                Date.now()
+              )
+            })
           : []),
       ])
 

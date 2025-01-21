@@ -632,6 +632,7 @@ export interface MongoUpdateMessage<T extends Document = Document> {
   sendToClickhouse: boolean
   collectionName: string
   upsert?: boolean
+  arrayFilters?: Document[]
 }
 
 export async function sendMessageToMongoUpdateConsumer<
