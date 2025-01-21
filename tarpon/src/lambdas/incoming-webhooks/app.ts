@@ -157,7 +157,26 @@ export const webhooksHandler = lambdaApi()(
           continue
         }
 
-        const tenantRepository = new TenantRepository(log.data.tenant_name, {
+        const accountsService = new AccountsService(
+          { auth0Domain: `${log.data.tenant_name}.eu.auth0.com` },
+          { mongoDb }
+        )
+
+        const account = await accountsService.getAccountByEmail(
+          log.data.user_name
+        )
+
+        logger.info(`Account: ${account}`, { account })
+        if (!account) {
+          logger.warn(
+            `Received unhandled Auth0 webhook event for unknown account: ${log.data.user_name}`
+          )
+          continue
+        }
+
+        const tenant = await accountsService.getAccountTenant(account.id)
+
+        const tenantRepository = new TenantRepository(tenant.id, {
           dynamoDb: getDynamoDbClient(),
         })
         const tenantSettings = await tenantRepository.getTenantSettings()
@@ -171,21 +190,6 @@ export const webhooksHandler = lambdaApi()(
 
         if (log.data.type !== 'limit_wc') {
           logger.info(`Skipping non-limit_wc webhook event: ${log.data.type}`)
-          continue
-        }
-
-        const accountsService = new AccountsService(
-          { auth0Domain: `${log.data.tenant_name}.eu.auth0.com` },
-          { mongoDb }
-        )
-        const account = await accountsService.getAccountByEmail(
-          log.data.user_name
-        )
-        logger.info(`Account: ${account}`, { account })
-        if (!account) {
-          logger.warn(
-            `Received unhandled Auth0 webhook event for unknown account: ${log.data.user_name}`
-          )
           continue
         }
 
