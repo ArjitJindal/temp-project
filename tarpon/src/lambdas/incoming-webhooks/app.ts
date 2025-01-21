@@ -192,6 +192,8 @@ export const webhooksHandler = lambdaApi()(
           logger.info(
             `Skipping webhook event for tenant ${log.data.tenant_name} because brute force account blocking is disabled`
           )
+          // Brute force account blocking acutally disables you from IP so we need to unblock it
+          await accountsService.unblockBruteForceAccount(account)
           continue
         }
 

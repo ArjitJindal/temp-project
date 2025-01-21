@@ -1157,13 +1157,18 @@ export class AccountsService {
     return users.map(AccountsService.userToAccount)[0] ?? null
   }
 
+  async unblockBruteForceAccount(account: Account) {
+    const managementClient = await getAuth0ManagementClient(
+      this.config.auth0Domain
+    )
+    const usersBlocksManager = managementClient.userBlocks
+    await usersBlocksManager.delete({ id: account.id })
+  }
+
   async blockAccountBruteForce(account: Account) {
     // DONT'T DO ANY MONGO UPDATES HERE.
     // THIS IS CALLED FROM AN AUTH0 WEBHOOK, AND WE ONLY TRIGGER IT FROM EU-1
     // SINCE ALL LOGINS ARE IN EU-1
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
     const accountId = account.id
 
     if (account.blocked) {
@@ -1172,7 +1177,6 @@ export class AccountsService {
       )
     }
 
-    const userBlocksManager = managementClient.userBlocks
     await Promise.all([
       ...(!account.blocked
         ? [
@@ -1182,7 +1186,7 @@ export class AccountsService {
             }),
           ]
         : []),
-      userBlocksManager.delete({ id: accountId }),
+      this.unblockBruteForceAccount(account),
     ])
   }
 }
