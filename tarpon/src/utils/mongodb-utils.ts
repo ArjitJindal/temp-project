@@ -575,7 +575,12 @@ export async function internalMongoUpdateOne<T extends Document>(
     ...(options?.session ? { session: options.session } : {}),
   })
 
-  const result = data.value as { _id: ObjectId }
+  const result = data.value
+
+  // Assuming that update didn't changed anything, we can return the original data
+  if (!result?._id) {
+    return data
+  }
 
   await sendMessageToMongoConsumer({
     collectionName,
