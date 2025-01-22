@@ -235,7 +235,7 @@ export default function ChecklistTab(props: Props) {
           <Card.Section>
             <SegmentedControl
               size="LARGE"
-              active={category ?? checklistRes[0].name}
+              active={category ?? checklistRes[0]?.name}
               onChange={(category) => {
                 setCategory(category);
               }}

@@ -21,24 +21,26 @@ export const useAlertChecklist = (alertId: string | undefined): QueryResult<Hydr
       checklistTemplateId: ruleInstance.checklistTemplateId,
     });
 
-    return template?.categories?.map((category): ChecklistCategory => {
-      return {
-        name: category.name,
-        items: category.checklistItems.map((cli): ChecklistItem => {
-          const item = alert.ruleChecklist?.find((item) => item.checklistItemId === cli.id);
-          if (!item) {
-            throw new Error('Bad checklist item');
-          }
-          return {
-            id: cli.id,
-            name: cli.name,
-            level: cli.level,
-            qaStatus: item.status,
-            done: item.done ?? 'NOT_STARTED',
-          };
-        }),
-      };
-    });
+    return (
+      template?.categories?.map((category): ChecklistCategory => {
+        return {
+          name: category.name,
+          items: category.checklistItems.map((cli): ChecklistItem => {
+            const item = alert.ruleChecklist?.find((item) => item.checklistItemId === cli.id);
+            if (!item) {
+              throw new Error('Bad checklist item');
+            }
+            return {
+              id: cli.id,
+              name: cli.name,
+              level: cli.level,
+              qaStatus: item.status,
+              done: item.done ?? 'NOT_STARTED',
+            };
+          }),
+        };
+      }) ?? []
+    );
   });
 };
 
