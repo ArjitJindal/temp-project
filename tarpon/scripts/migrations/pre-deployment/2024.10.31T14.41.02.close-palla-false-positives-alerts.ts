@@ -7,9 +7,11 @@ import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { AlertsRepository } from '@/services/alerts/repository'
 import { AlertsService } from '@/services/alerts'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const tenantId = tenant.id
+  const dynamoDb = getDynamoDbClient()
   if (tenantId !== 'e5eb4e1664') {
     // Palla tenant id
     return
@@ -90,6 +92,7 @@ async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
   const alertsRepository = new AlertsRepository(tenantId, {
     mongoDb: mongoDb,
+    dynamoDb: dynamoDb,
   })
   const s3 = getS3Client()
   const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig

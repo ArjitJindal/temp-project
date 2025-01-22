@@ -36,10 +36,13 @@ export class SLAService {
   private caseRepository: CaseRepository
   private mongoDb: MongoClient
   private tenantId: string
+
   constructor(tenantId: string, mongoDb: MongoClient, auth0Domain: string) {
     this.mongoDb = mongoDb
     this.tenantId = tenantId
-    this.alertsRepository = new AlertsRepository(tenantId, { mongoDb })
+    this.alertsRepository = new AlertsRepository(tenantId, {
+      mongoDb,
+    })
     this.slaPolicyService = new SLAPolicyService(tenantId, mongoDb)
     this.accountsService = new AccountsService({ auth0Domain }, { mongoDb })
     this.caseRepository = new CaseRepository(tenantId, { mongoDb })

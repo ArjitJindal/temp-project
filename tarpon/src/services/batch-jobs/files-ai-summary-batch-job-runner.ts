@@ -20,6 +20,7 @@ import { ask, ModelVersion } from '@/utils/openai'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const AI_EXTENSIONS = ['pdf'] as const
 
@@ -70,11 +71,15 @@ export class FilesAiSummaryBatchJobRunner extends BatchJobRunner {
     type: FilesAISummary['parameters']['type']
   ): Promise<CaseRepository | AlertsRepository | UserRepository> {
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
 
     if (type === 'CASE') {
       return new CaseRepository(tenantId, { mongoDb })
     } else if (type === 'ALERT') {
-      return new AlertsRepository(tenantId, { mongoDb })
+      return new AlertsRepository(tenantId, {
+        mongoDb,
+        dynamoDb,
+      })
     } else if (type === 'USER') {
       return new UserRepository(tenantId, { mongoDb })
     }

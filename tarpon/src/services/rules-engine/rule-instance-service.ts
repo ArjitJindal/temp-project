@@ -80,6 +80,7 @@ export class RuleInstanceService {
     })
     this.alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
     })
     this.dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
       mongoDb: this.mongoDb,

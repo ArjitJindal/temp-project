@@ -13,12 +13,14 @@ import { getS3Client } from '@/utils/s3'
 import { CaseConfig } from '@/lambdas/console-api-case/app'
 import { AlertsRepository } from '@/services/alerts/repository'
 import { AlertsService } from '@/services/alerts'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   if (tenant.id !== 'pnb' || envIsNot('prod')) {
     return
   }
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const db = mongoDb.db()
   const transactionsCollection = db.collection<InternalTransaction>(
     TRANSACTIONS_COLLECTION(tenant.id)
@@ -107,6 +109,7 @@ async function migrateTenant(tenant: Tenant) {
 
   const alertsRepository = new AlertsRepository(tenant.id, {
     mongoDb: mongoDb,
+    dynamoDb: dynamoDb,
   })
   const s3 = getS3Client()
   const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig

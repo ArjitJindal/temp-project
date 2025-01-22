@@ -107,13 +107,12 @@ export class RuleInstanceRepository {
   dynamoDb: DynamoDBDocumentClient
   tenantId: string
   aggregationRepository: AggregationRepository
+
   constructor(
     tenantId: string,
-    connections: {
-      dynamoDb?: DynamoDBDocumentClient
-    }
+    connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
-    this.dynamoDb = connections.dynamoDb as DynamoDBDocumentClient
+    this.dynamoDb = connections.dynamoDb
     this.tenantId = tenantId
     this.aggregationRepository = new AggregationRepository(
       tenantId,

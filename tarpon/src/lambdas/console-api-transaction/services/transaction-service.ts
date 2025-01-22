@@ -200,6 +200,7 @@ export class TransactionService {
     if (params.alertId != null) {
       const alertRepository = new AlertsRepository(this.tenantId, {
         mongoDb: this.mongoDb,
+        dynamoDb: this.dynamoDb,
       })
 
       const alert = await alertRepository.getAlertById(params.alertId)

@@ -7,6 +7,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { CaseRepository } from '@/services/cases/repository'
 import { CaseAggregates } from '@/@types/openapi-internal/CaseAggregates'
 import { withFeatureHook } from '@/test-utils/feature-test-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 withFeatureHook(['ALERT_SLA', 'PNB'])
 
@@ -444,7 +445,10 @@ describe('test sla service', () => {
         ],
       })
       await service.calculateAndUpdateSLAStatusesForAlerts()
-      const alertsRepository = new AlertsRepository(tenantId, { mongoDb })
+      const alertsRepository = new AlertsRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       const alert1 = await alertsRepository.getAlertById('testAlert1')
       const alert2 = await alertsRepository.getAlertById('testAlert2')
       const alert3 = await alertsRepository.getAlertById('testAlert3')

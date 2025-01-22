@@ -154,9 +154,11 @@ async function getCaseService(tenantId: string) {
 
 async function getAlertsService(tenantId: string) {
   const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const s3 = getS3ClientByEvent(null as any)
   const alertsRepository = new AlertsRepository(tenantId, {
     mongoDb,
+    dynamoDb,
   })
 
   const alertsService = new AlertsService(alertsRepository, s3, {

@@ -1301,6 +1301,7 @@ export class CaseCreationService {
   private async sendAlertOpenedWebhook(alerts: Alert[], cases: Case[]) {
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
     })
     const s3 = getS3Client()
     const { DOCUMENT_BUCKET, TMP_BUCKET } = process.env as CaseConfig

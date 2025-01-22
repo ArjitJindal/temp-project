@@ -139,6 +139,7 @@ export class AlertsService extends CaseAlertsCommonService {
 
     this.caseRepository = new CaseRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.dynamoDb,
     })
 
     this.ruleInstanceRepository = new RuleInstanceRepository(this.tenantId, {

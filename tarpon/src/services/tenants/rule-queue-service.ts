@@ -69,6 +69,7 @@ export class RuleQueuesService {
     }
     const alertsRepository = new AlertsRepository(this.tenantId, {
       mongoDb: this.mongoDb,
+      dynamoDb: this.ruleInstanceRepository.dynamoDb,
     })
 
     await this.ruleInstanceRepository.deleteRuleQueue(queueId)
