@@ -167,7 +167,7 @@ export default function SuperAdminPanel() {
   const currentCrmSettings = getOr(crmIntegrations.data, {});
   const [crmSettings, setCrmSettings] = useState<CRMIntegrations | undefined>(currentCrmSettings);
   const initialFeatures = useFeatures();
-  const [features, setFeatures] = useState<Feature[] | undefined>(settings.features);
+  const [features, setFeatures] = useState<Feature[] | undefined>(settings.features?.sort());
   const [limits, setLimits] = useState<TenantSettings['limits']>(settings.limits || {});
   const [tenantIdToDelete, setTenantIdToDelete] = useState<string | undefined>(undefined);
   const [instantDelete, setInstantDelete] = useState<boolean>(false);
@@ -413,13 +413,15 @@ export default function SuperAdminPanel() {
             >
               <Select<Feature>
                 mode="MULTIPLE"
-                options={Object.keys(featureDescriptions).map((featureKey) => {
-                  return {
-                    label: featureDescriptions[featureKey].title,
-                    value: featureKey as Feature,
-                    title: featureDescriptions[featureKey].description,
-                  };
-                })}
+                options={Object.keys(featureDescriptions)
+                  .sort()
+                  .map((featureKey) => {
+                    return {
+                      label: featureDescriptions[featureKey].title,
+                      value: featureKey as Feature,
+                      title: featureDescriptions[featureKey].description,
+                    };
+                  })}
                 onChange={(v) => setFeatures(v ?? [])}
                 allowClear
                 isDisabled={!initialFeatures}
