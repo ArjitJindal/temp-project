@@ -54,7 +54,6 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     description: 'Enables AI copilot feature in case management',
   },
   AI_FORENSICS: { title: 'AI forensics', description: 'Enables AI forensics' },
-  GOOGLE_SSO: { title: "Google SSO (Don't Use)", description: 'Enable google log in' },
   SANCTIONS: { title: 'Screening', description: 'Enables screening' },
   FALSE_POSITIVE_CHECK: {
     title: 'False positive check',

@@ -11148,7 +11148,6 @@ components:
         - SLACK_ALERTS
         - NARRATIVE_COPILOT
         - AI_FORENSICS
-        - GOOGLE_SSO
         - SANCTIONS
         - FALSE_POSITIVE_CHECK
         - DEMO_MODE
