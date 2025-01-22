@@ -27,7 +27,7 @@ import {
   getSearchIndexName,
 } from './mongodb-definitions'
 import { sendMessageToMongoConsumer } from './clickhouse/utils'
-import { envIsNot } from './env'
+import { envIs, envIsNot } from './env'
 import { isDemoTenant } from './tenant'
 import { getSQSClient } from './sns-sqs-client'
 import { generateChecksum } from './object'
@@ -42,6 +42,7 @@ import {
 import { logger } from '@/core/logger'
 import { CounterRepository } from '@/services/counter/repository'
 import { hasFeature } from '@/core/utils/context'
+import { executeMongoUpdate } from '@/lambdas/mongo-update-consumer/app'
 
 const getMongoDbClientInternal = memoize(async (useCache = true) => {
   if (process.env.NODE_ENV === 'test') {
@@ -643,6 +644,11 @@ export interface MongoUpdateMessage<T extends Document = Document> {
 export async function sendMessageToMongoUpdateConsumer<
   T extends Document = Document
 >(message: MongoUpdateMessage<T>) {
+  if (envIs('local') || envIs('test')) {
+    await executeMongoUpdate([message as MongoUpdateMessage<Document>])
+    return
+  }
+
   const sqs = getSQSClient()
 
   const messageCommand = new SendMessageCommand({

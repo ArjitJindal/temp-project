@@ -11,35 +11,39 @@ export const mongoUpdateConsumerHandler = lambdaConsumer()(
       JSON.parse(record.body)
     ) as MongoUpdateMessage[]
 
-    const mongoClient = await getMongoDbClient()
-    const db = mongoClient.db()
-
-    await pMap(
-      events,
-      async (event) => {
-        const collection = db.collection<Document>(event.collectionName)
-        const data = await collection.updateOne(
-          event.filter,
-          event.updateMessage,
-          {
-            upsert: event.upsert || false,
-            ...(event.arrayFilters ? { arrayFilters: event.arrayFilters } : {}),
-          }
-        )
-
-        if (event.sendToClickhouse) {
-          await sendMessageToMongoConsumer({
-            clusterTime: Date.now(),
-            collectionName: event.collectionName,
-            documentKey: {
-              type: 'id',
-              value: String(data.upsertedId),
-            },
-            operationType: 'update',
-          })
-        }
-      },
-      { concurrency: 10 }
-    )
+    await executeMongoUpdate(events)
   }
 )
+
+export const executeMongoUpdate = async (events: MongoUpdateMessage[]) => {
+  const mongoClient = await getMongoDbClient()
+  const db = mongoClient.db()
+
+  await pMap(
+    events,
+    async (event) => {
+      const collection = db.collection<Document>(event.collectionName)
+      const data = await collection.updateOne(
+        event.filter,
+        event.updateMessage,
+        {
+          upsert: event.upsert || false,
+          ...(event.arrayFilters ? { arrayFilters: event.arrayFilters } : {}),
+        }
+      )
+
+      if (event.sendToClickhouse) {
+        await sendMessageToMongoConsumer({
+          clusterTime: Date.now(),
+          collectionName: event.collectionName,
+          documentKey: {
+            type: 'id',
+            value: String(data.upsertedId),
+          },
+          operationType: 'update',
+        })
+      }
+    },
+    { concurrency: 10 }
+  )
+}
