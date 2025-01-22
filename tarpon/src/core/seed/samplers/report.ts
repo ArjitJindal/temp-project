@@ -304,7 +304,7 @@ export function SampleFincenReport(
               OrganizationTypeID: '5',
             },
           ],
-          FlagrightAlternatePartyName: {
+          AlternateName: {
             RawPartyFullName: 'Baran Ozkan',
           },
           FlagrightPartyIdentificationTin: {

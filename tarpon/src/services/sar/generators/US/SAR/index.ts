@@ -402,7 +402,7 @@ export class UsSarReportGenerator implements ReportGenerator {
         ...reportParams.report.filingInstitution.PartyName,
         PartyNameTypeCode: 'L',
       },
-      reportParams.report.filingInstitution.FlagrightAlternatePartyName,
+      reportParams.report.filingInstitution.AlternateName,
     ].filter(Boolean)
     // Augment PartyIdentificationTypeCode
     reportParams.report.filingInstitution.PartyIdentification = [
@@ -420,7 +420,7 @@ export class UsSarReportGenerator implements ReportGenerator {
     ].filter(Boolean)
     reportParams.report.filingInstitution = omit(
       reportParams.report.filingInstitution,
-      'FlagrightAlternatePartyName',
+      'AlternateName',
       'FlagrightPartyIdentificationTin',
       'FlagrightPartyIdentificationFilingInstitutionIdentification',
       'FlagrightPartyIdentificationInternalControl'
@@ -452,7 +452,7 @@ export class UsSarReportGenerator implements ReportGenerator {
             financialInstitution.PartyName),
           PartyNameTypeCode: 'L',
         },
-        ...(financialInstitution.FlagrightAlternatePartyName ?? []),
+        ...(financialInstitution.AlternateName ?? []),
       ]
       // Augment PartyIdentificationTypeCode
       financialInstitution.PartyIdentification = [
@@ -467,7 +467,7 @@ export class UsSarReportGenerator implements ReportGenerator {
       ].filter(Boolean)
       return omit(
         financialInstitution,
-        'FlagrightAlternatePartyName',
+        'AlternateName',
         'FlagrightPartyIdentificationTin',
         'FlagrightPartyIdentificationFinancialInstitutionIdentification',
         'FlagrightPartyIdentificationInternalControl'
@@ -488,9 +488,9 @@ export class UsSarReportGenerator implements ReportGenerator {
               PartyNameTypeCode: 'L',
             }
           : undefined,
-        ...(subject.FlagrightAlternatePartyName ?? []),
+        ...(subject.AlternateName ?? []),
       ].filter(Boolean)
-      return omit(subject, 'FlagrightAlternatePartyName')
+      return omit(subject, 'AlternateName')
     })
 
     const parties = [

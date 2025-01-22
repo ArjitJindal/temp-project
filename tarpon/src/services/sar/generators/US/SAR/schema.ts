@@ -341,7 +341,7 @@ export const FilingInstitution = {
         ['RawPartyFullName'],
         ['RawPartyFullName']
       ),
-      FlagrightAlternatePartyName,
+      AlternateName: FlagrightAlternatePartyName,
       Address: arraySchema(
         pickAddressFields(
           [
@@ -484,7 +484,7 @@ export const FinancialInstitution = {
         ['EntityLastNameUnknownIndicator', 'RawPartyFullName'],
         []
       ),
-      FlagrightAlternatePartyName: arraySchema(FlagrightAlternatePartyName),
+      AlternateName: arraySchema(FlagrightAlternatePartyName),
       Address: arraySchema(
         pickAddressFields(
           [
@@ -659,7 +659,7 @@ export const Subject = {
         ],
         []
       ),
-      FlagrightAlternatePartyName: arraySchema(FlagrightAlternatePartyName),
+      AlternateName: arraySchema(FlagrightAlternatePartyName),
       Address: arraySchema(
         pickAddressFields(
           [
