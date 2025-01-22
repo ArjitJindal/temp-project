@@ -111,12 +111,20 @@ export const allUsersViewHandler = lambdaApi()(
     const linkerService = new LinkerService(tenantId)
     const handlers = new Handlers()
 
-    handlers.registerGetAllUsersList(
-      async (ctx, request) => await userService.getUsers(request)
-    )
+    handlers.registerGetAllUsersList(async (ctx, request) => {
+      console.log('GetAllUsersListV1')
+      console.log('request', request)
+      const users = await userService.getUsers(request)
+      console.log('users', users)
+      return users
+    })
 
     handlers.registerGetAllUsersListV2(async (ctx, request) => {
-      return await userService.getUsersV2(request)
+      console.log('GetAllUsersListV2')
+      console.log('request', request)
+      const users = await userService.getClickhouseUsers(request)
+      console.log('users', users)
+      return users
     })
 
     handlers.registerGetUsersItem(

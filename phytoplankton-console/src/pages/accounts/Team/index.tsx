@@ -37,6 +37,7 @@ import { PaginatedData } from '@/utils/queries/hooks';
 import Toggle from '@/components/library/Toggle';
 import { ACCOUNT_LIST } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import TimestampDisplay from '@/components/ui/TimestampDisplay';
 
 export default function Team() {
   const actionRef = useRef<TableRefType>(null);
@@ -197,9 +198,7 @@ export default function Team() {
         render(createdAt, _context) {
           return (
             <div className={s.createdAt}>
-              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                {createdAt ? new Date(createdAt).toLocaleString() : 'N/A'}
-              </P>
+              {createdAt ? <TimestampDisplay timestamp={createdAt} /> : 'N/A'}
             </div>
           );
         },
@@ -220,9 +219,7 @@ export default function Team() {
         render(lastLogin, _context) {
           return (
             <div className={s.lastLogin}>
-              <P variant="m" fontWeight="normal" style={{ marginBottom: 0 }}>
-                {lastLogin ? new Date(lastLogin).toLocaleString() : 'N/A'}
-              </P>
+              {lastLogin ? <TimestampDisplay timestamp={lastLogin} /> : 'N/A'}
             </div>
           );
         },
