@@ -647,7 +647,6 @@ paths:
               examples:
                 example-1:
                   value:
-                    eventType: CREATED
                     transactionId: 443dea26147a406b957d9ee3a1247b11
                     transactionState: SUCCESSFUL
                     timestamp: 1641654664000
