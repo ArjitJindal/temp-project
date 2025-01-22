@@ -16,7 +16,7 @@ import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/cas
 import { UserStatusTriggersAdvancedOptionsForm } from '@/components/UserStatusTriggersAdvancedOptionsForm';
 import { ALERT_CHECKLIST, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 
-interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
+export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   onSaved: () => void;
 }
 

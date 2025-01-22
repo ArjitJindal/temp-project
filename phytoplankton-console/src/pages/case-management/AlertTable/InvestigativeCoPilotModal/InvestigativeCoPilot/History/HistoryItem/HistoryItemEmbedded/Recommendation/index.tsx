@@ -48,6 +48,7 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
                   ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                 }}
+                haveModal={true}
               />
             ) : (
               <ApproveSendBackButton
@@ -77,6 +78,7 @@ export const Recommendation = ({ alertId }: { alertId: string }) => {
                   ESCALATED_IN_PROGRESS: { status: 'OPEN', actionLabel: 'Send back' },
                   ESCALATED_ON_HOLD: { status: 'OPEN', actionLabel: 'Send back' },
                 }}
+                haveModal={true}
               />
             )}
             {alert.caseId && (

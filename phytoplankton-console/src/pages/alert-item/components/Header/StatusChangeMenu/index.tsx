@@ -125,6 +125,7 @@ const useOptions = (props: Props) => {
                   OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
                 }}
+                haveModal={true}
                 className={s.statusButton}
               />
             ),
@@ -159,6 +160,7 @@ const useOptions = (props: Props) => {
                     actionLabel: 'Send back',
                   },
                 }}
+                haveModal={true}
                 className={s.statusButton}
               />
             ),
@@ -178,6 +180,7 @@ const useOptions = (props: Props) => {
                         ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
                       }}
                       className={s.statusButton}
+                      haveModal={true}
                     />
                   ),
                 },
@@ -200,6 +203,7 @@ const useOptions = (props: Props) => {
                   ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
                 }}
                 className={s.statusButton}
+                haveModal={true}
               />
             ),
           },
@@ -217,6 +221,7 @@ const useOptions = (props: Props) => {
                 statusTransitions={APPROVE_STATUS_TRANSITIONS}
                 skipReasonsModal
                 className={s.statusButton}
+                haveModal={true}
               />
             ),
           },
@@ -234,6 +239,7 @@ const useOptions = (props: Props) => {
                 statusTransitions={DECLINE_STATUS_TRANSITIONS}
                 skipReasonsModal
                 className={s.statusButton}
+                haveModal={true}
               />
             ),
           },

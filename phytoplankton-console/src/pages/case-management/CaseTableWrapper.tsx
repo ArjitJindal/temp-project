@@ -1,22 +1,40 @@
 import { TableSearchParams } from './types';
 import CaseTable from './CaseTable';
+import TableModalProvider, { ModalHandlers } from './components/TableModalProvider';
+import CasesStatusChangeModal, {
+  Props as CasesStatusChangeModalProps,
+} from './components/CasesStatusChangeButton/CasesStatusChangeModal';
+import AlertsStatusChangeModal, {
+  Props as AlertsStatusChangeModalProps,
+} from './components/AlertsStatusChangeButton/AlertsStatusChangeModal';
 import { dayjs } from '@/utils/dayjs';
 import { Case } from '@/apis';
 import { useApi } from '@/api';
-import { usePaginatedQuery } from '@/utils/queries/hooks';
+import { PaginatedData, usePaginatedQuery } from '@/utils/queries/hooks';
 import { AllParams } from '@/components/library/Table/types';
 import { CASES_LIST } from '@/utils/queries/keys';
 import { useRuleOptions } from '@/utils/rules';
 import { useAuth0User } from '@/utils/user-utils';
 import { getStatuses } from '@/utils/case-utils';
+import { QueryResult } from '@/utils/queries/types';
+
+interface CaseTableChildrenProps extends ModalHandlers<CasesStatusChangeModalProps> {
+  params: AllParams<TableSearchParams>;
+  queryResult: QueryResult<PaginatedData<Case>>;
+  onChangeParams: (newState: AllParams<TableSearchParams>) => void;
+  rules: { value: string; label: string }[];
+  showAssignedToFilter: boolean;
+}
 
 export default function CaseTableWrapper(props: {
   params: TableSearchParams;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
 }) {
   const { params, onChangeParams } = props;
+
   const api = useApi();
   const auth0user = useAuth0User();
+
   const queryResults = usePaginatedQuery<Case>(CASES_LIST(params), async (paginationParams) => {
     const {
       sort,
@@ -100,12 +118,36 @@ export default function CaseTableWrapper(props: {
   const ruleOptions = useRuleOptions();
 
   return (
-    <CaseTable
-      params={params}
-      onChangeParams={onChangeParams}
-      queryResult={queryResults}
-      rules={ruleOptions}
-      showAssignedToFilter={params.showCases === 'MY' ? false : true}
-    />
+    <TableModalProvider<CasesStatusChangeModalProps, CaseTableChildrenProps>
+      ModalComponent={CasesStatusChangeModal}
+      childrenProps={{
+        params,
+        queryResult: queryResults,
+        onChangeParams,
+        rules: ruleOptions,
+        showAssignedToFilter: params.showCases === 'MY' ? false : true,
+      }}
+    >
+      {(firstProviderChildrenProps) => (
+        <TableModalProvider<AlertsStatusChangeModalProps, CaseTableChildrenProps>
+          ModalComponent={AlertsStatusChangeModal}
+          childrenProps={firstProviderChildrenProps}
+        >
+          {(secondProviderChildrenProps) => (
+            <CaseTable<CasesStatusChangeModalProps, AlertsStatusChangeModalProps>
+              params={secondProviderChildrenProps.params}
+              onChangeParams={secondProviderChildrenProps.onChangeParams}
+              queryResult={secondProviderChildrenProps.queryResult}
+              rules={secondProviderChildrenProps.rules}
+              showAssignedToFilter={secondProviderChildrenProps.showAssignedToFilter}
+              updateFirstModalState={firstProviderChildrenProps.updateModalState}
+              setFirstModalVisibility={firstProviderChildrenProps.handleModalEvent}
+              updateSecondModalState={secondProviderChildrenProps.updateModalState}
+              setSecondModalVisibility={secondProviderChildrenProps.handleModalEvent}
+            />
+          )}
+        </TableModalProvider>
+      )}
+    </TableModalProvider>
   );
 }

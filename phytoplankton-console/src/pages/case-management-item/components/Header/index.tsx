@@ -128,7 +128,7 @@ const StatusChangeButton: React.FC<StatusChangeButtonProps> = ({
     isEscalatedL2,
   );
 
-  return config ? <CasesStatusChangeButton {...config} /> : null;
+  return config ? <CasesStatusChangeButton {...config} haveModal={true} /> : null;
 };
 
 export default function Header(props: Props) {

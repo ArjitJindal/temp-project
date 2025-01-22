@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import * as Card from '@/components/ui/Card';
 import { Case } from '@/apis';
-import AlertTable, { AlertTableParams } from '@/pages/case-management/AlertTable';
+import { AlertTableParams } from '@/pages/case-management/AlertTable';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
+import AlertTableWrapper from '@/pages/case-management/AlertTable/AlertTableWrappper';
 
 interface Props {
   caseItem: Case;
@@ -24,7 +25,7 @@ export default function AlertsCard(props: Props) {
   return (
     <Card.Root>
       <Card.Section>
-        <AlertTable
+        <AlertTableWrapper
           expandedAlertId={expandedAlertId}
           caseId={caseId}
           params={params}

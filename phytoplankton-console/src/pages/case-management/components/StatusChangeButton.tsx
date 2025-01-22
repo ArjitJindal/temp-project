@@ -55,41 +55,42 @@ export interface FormValues {
   files: FileInfo[];
 }
 
+interface Props {
+  ids: string[];
+  status?: CaseStatus | AlertStatus;
+  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
+  isDisabled?: boolean;
+  className?: string;
+  haveModal?: boolean;
+}
 interface ChildrenProps {
   isVisible: boolean;
   setVisible: (newVisible: boolean) => void;
   newStatus: CaseStatus | AlertStatus;
 }
 
-interface Props {
-  ids: string[];
-  status?: CaseStatus | AlertStatus;
-  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
-  statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
-  children: (childrenProps: ChildrenProps) => React.ReactNode;
-  isDisabled?: boolean;
-  className?: string;
+interface StatusChangeButtonWithoutModalProps extends Props {
+  haveModal: false;
+  updateModalState: (newState: CaseStatus) => void;
+  setModalVisibility: (newVisible: boolean) => void;
 }
 
-export default function StatusChangeButton(props: Props) {
-  const {
-    ids,
-    status,
-    buttonProps = {},
-    children,
-    statusTransitions,
-    isDisabled = false,
-    className,
-  } = props;
-  const [isModalVisible, setModalVisible] = useState(false);
+interface StatusChangeButtonWithModalProps extends Props {
+  haveModal: true;
+  children: (childrenProps: ChildrenProps) => React.ReactNode;
+}
+
+export function StatusChangeButton(
+  props: StatusChangeButtonWithModalProps | StatusChangeButtonWithoutModalProps,
+) {
+  const { status, statusTransitions, haveModal } = props;
 
   const overridenStatus = status ? statusTransitions?.[status] : null;
-
   const newStatus = useMemo(
     () => overridenStatus?.status ?? getNextStatus(status),
     [overridenStatus, status],
   );
-
   const requiredPermissions: Permission[] = useMemo(() => {
     return compact([
       'case-management:case-overview:write',
@@ -99,12 +100,103 @@ export default function StatusChangeButton(props: Props) {
 
   return (
     <>
+      {haveModal ? (
+        <ModalWrapper
+          newStatus={newStatus}
+          buttonProps={props as StatusChangeButtonWithModalProps}
+          requiredPermissions={requiredPermissions}
+          overridenStatus={overridenStatus}
+        >
+          {props.children}
+        </ModalWrapper>
+      ) : (
+        <ModalButton
+          {...props}
+          newStatus={newStatus}
+          requiredPermissions={requiredPermissions}
+          overridenStatus={overridenStatus}
+        />
+      )}
+    </>
+  );
+}
+
+const ModalWrapper = ({
+  newStatus,
+  buttonProps,
+  requiredPermissions,
+  overridenStatus,
+  children,
+}: {
+  newStatus: CaseStatus;
+  requiredPermissions: Permission[];
+  overridenStatus:
+    | {
+        status: CaseStatus;
+        actionLabel: ActionLabel;
+      }
+    | null
+    | undefined;
+  buttonProps: StatusChangeButtonWithModalProps;
+  children: (childrenProps: ChildrenProps) => React.ReactNode;
+}) => {
+  const [isModalVisible, setModalVisible] = useState(false);
+  const handleModalState = (visible: boolean) => {
+    setModalVisible(visible);
+  };
+
+  return (
+    <>
+      {buttonProps.ids.length > 0 && (
+        <ModalButton
+          {...buttonProps}
+          haveModal={false}
+          updateModalState={(_: CaseStatus) => {}}
+          setModalVisibility={handleModalState}
+          requiredPermissions={requiredPermissions}
+          overridenStatus={overridenStatus}
+          newStatus={newStatus}
+        />
+      )}
+      {children({ isVisible: isModalVisible, setVisible: setModalVisible, newStatus })}
+    </>
+  );
+};
+
+const ModalButton = (
+  props: StatusChangeButtonWithoutModalProps & {
+    newStatus: CaseStatus;
+    requiredPermissions: Permission[];
+    overridenStatus:
+      | {
+          status: CaseStatus;
+          actionLabel: ActionLabel;
+        }
+      | null
+      | undefined;
+  },
+) => {
+  const {
+    ids,
+    buttonProps = {},
+    isDisabled = false,
+    className,
+    updateModalState,
+    setModalVisibility,
+    newStatus,
+    requiredPermissions,
+    overridenStatus,
+  } = props;
+
+  return (
+    <>
       {ids.length > 0 && (
         <Button
           type="TETRIARY"
           analyticsName={`update-status-${newStatus}`}
           onClick={() => {
-            setModalVisible(true);
+            updateModalState(newStatus);
+            setModalVisibility(true);
           }}
           isDisabled={isDisabled ? isDisabled : !ids.length}
           size={buttonProps.size}
@@ -116,7 +208,6 @@ export default function StatusChangeButton(props: Props) {
           {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>
       )}
-      {children({ isVisible: isModalVisible, setVisible: setModalVisible, newStatus })}
     </>
   );
-}
+};

@@ -132,7 +132,7 @@ const isAllAlertsOfStatus = (
   return Object.values(selectedItems).every((item) => item.alertStatus === status);
 };
 
-interface Props {
+interface Props<ModalProps> {
   params: AlertTableParams;
   onChangeParams?: (newState: AlertTableParams) => void;
   isEmbedded?: boolean;
@@ -142,9 +142,11 @@ interface Props {
   expandTransactions?: boolean;
   showAssignedToFilter?: boolean;
   expandedAlertId?: string;
+  updateModalState: (newState: ModalProps) => void;
+  setModalVisibility: (visibility: boolean) => void;
 }
 
-export default function AlertTable(props: Props) {
+export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const {
     caseId,
     params: externalParams,
@@ -154,6 +156,8 @@ export default function AlertTable(props: Props) {
     expandTransactions = true,
     showAssignedToFilter,
     expandedAlertId,
+    updateModalState,
+    setModalVisibility,
   } = props;
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
@@ -728,6 +732,11 @@ export default function AlertTable(props: Props) {
                         OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                       }}
                       transactionIds={selectedTxns}
+                      updateModalState={(modalState) => {
+                        updateModalState(modalState as ModalProps);
+                      }}
+                      setModalVisibility={setModalVisibility}
+                      haveModal={false}
                     />
                   )}
                   {entity?.caseId &&
@@ -745,6 +754,11 @@ export default function AlertTable(props: Props) {
                           ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                         }}
                         transactionIds={selectedTxns}
+                        updateModalState={(modalState) => {
+                          updateModalState(modalState as ModalProps);
+                        }}
+                        setModalVisibility={setModalVisibility}
+                        haveModal={false}
                       />
                     )}
                   {entity?.caseId &&
@@ -761,6 +775,11 @@ export default function AlertTable(props: Props) {
                           ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
                         }}
                         transactionIds={selectedTxns}
+                        updateModalState={(modalState) => {
+                          updateModalState(modalState as ModalProps);
+                        }}
+                        setModalVisibility={setModalVisibility}
+                        haveModal={false}
                       />
                     )}
                   {entity?.caseId && isInReview && canReview && entity.alertStatus && (
@@ -920,8 +939,6 @@ export default function AlertTable(props: Props) {
     );
     return col;
   }, [
-    showReason,
-    alertDetailsPageEnabled,
     showUserFilters,
     handleAlertAssignments,
     handleAlertsReviewAssignments,
@@ -932,20 +949,24 @@ export default function AlertTable(props: Props) {
     selectedTxns,
     qaEnabled,
     slaEnabled,
+    slaPolicies.items,
     qaMode,
     caseId,
     isInReview,
+    showReason,
+    alertDetailsPageEnabled,
     users,
     qaAssigneesUpdateMutation,
     ruleQueues,
     loadingUsers,
+    isMultiEscalationEnabled,
+    updateModalState,
+    setModalVisibility,
+    userAccount?.escalationLevel,
     location.pathname,
     params,
     navigate,
     expandedAlertId,
-    slaPolicies,
-    isMultiEscalationEnabled,
-    userAccount?.escalationLevel,
   ]);
   const [isAutoExpand, setIsAutoExpand] = useState(false);
   useEffect(() => {
@@ -1279,6 +1300,11 @@ export default function AlertTable(props: Props) {
             OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
           }}
           isDisabled={isDisabled}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       );
     },
@@ -1318,6 +1344,11 @@ export default function AlertTable(props: Props) {
             ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
           }}
           isDisabled={isDisabled}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       );
     },
@@ -1358,6 +1389,11 @@ export default function AlertTable(props: Props) {
           statusTransitions={{
             ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
           }}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       );
     },
@@ -1404,6 +1440,11 @@ export default function AlertTable(props: Props) {
           caseId={caseId}
           isDisabled={isDisabled}
           statusTransitions={statusTransitions}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       );
     },
@@ -1461,6 +1502,11 @@ export default function AlertTable(props: Props) {
             OPEN_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
             OPEN_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
           }}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       ) : null;
     },
@@ -1500,6 +1546,11 @@ export default function AlertTable(props: Props) {
             ESCALATED_IN_PROGRESS: { status: 'CLOSED', actionLabel: 'Close' },
             ESCALATED_ON_HOLD: { status: 'CLOSED', actionLabel: 'Close' },
           }}
+          updateModalState={(modalState) => {
+            updateModalState(modalState as ModalProps);
+          }}
+          setModalVisibility={setModalVisibility}
+          haveModal={false}
         />
       ) : null;
     },

@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router';
 import CaseTableWrapper from './CaseTableWrapper';
-import AlertTable from './AlertTable';
 import s from './index.module.less';
 import { QAButton } from './QA/Dropdown';
+import AlertTableWrapper from './AlertTable/AlertTableWrappper';
 import { Authorized } from '@/components/utils/Authorized';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import { useI18n } from '@/locales';
@@ -181,7 +181,7 @@ function getTable(
     case 'MY_ALERTS':
       return (
         <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
-          <AlertTable
+          <AlertTableWrapper
             escalatedTransactionIds={[]}
             params={params}
             onChangeParams={handleChangeParams}
@@ -193,7 +193,7 @@ function getTable(
     case 'ALL_ALERTS':
       return (
         <Authorized required={['case-management:case-overview:read']} showForbiddenPage>
-          <AlertTable
+          <AlertTableWrapper
             escalatedTransactionIds={[]}
             params={params}
             onChangeParams={handleChangeParams}

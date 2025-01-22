@@ -15,7 +15,7 @@ import { ALERT_CHECKLIST, ALERT_ITEM, CASES_ITEM } from '@/utils/queries/keys';
 import { OTHER_REASON } from '@/components/Narrative';
 import { getAssigneeName, statusEscalated, statusEscalatedL2 } from '@/utils/case-utils';
 
-interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
+export interface Props extends Omit<StatusChangeModalProps, 'entityName' | 'updateMutation'> {
   caseId?: string;
   transactionIds?: { [alertId: string]: string[] };
   onSaved: () => void;

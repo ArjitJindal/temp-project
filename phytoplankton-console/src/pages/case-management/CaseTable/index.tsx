@@ -83,16 +83,31 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { getOr } from '@/utils/asyncResource';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 
-interface Props {
+interface Props<FirstModalProps, SecondModalProps> {
   params: AllParams<TableSearchParams>;
   queryResult: QueryResult<PaginatedData<Case>>;
   onChangeParams: (newState: AllParams<TableSearchParams>) => void;
   rules: { value: string; label: string }[];
   showAssignedToFilter?: boolean;
+  updateFirstModalState: (newState: FirstModalProps) => void;
+  setFirstModalVisibility: (visibility: boolean) => void;
+  updateSecondModalState: (newState: SecondModalProps) => void;
+  setSecondModalVisibility: (visibility: boolean) => void;
 }
 
-export default function CaseTable(props: Props) {
-  const { queryResult, params, onChangeParams, showAssignedToFilter } = props;
+export default function CaseTable<FirstModalProps, SecondModalProps>(
+  props: Props<FirstModalProps, SecondModalProps>,
+) {
+  const {
+    queryResult,
+    params,
+    onChangeParams,
+    showAssignedToFilter,
+    updateFirstModalState,
+    setFirstModalVisibility,
+    updateSecondModalState,
+    setSecondModalVisibility,
+  } = props;
 
   const tableQueryResult = useTableData(queryResult);
   const tableRef = useRef<TableRefType>(null);
@@ -433,6 +448,11 @@ export default function CaseTable(props: Props) {
                     OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                     OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                   }}
+                  updateModalState={(modalState) => {
+                    updateFirstModalState(modalState as FirstModalProps);
+                  }}
+                  setModalVisibility={setFirstModalVisibility}
+                  haveModal={false}
                 />
               )}
               {entity?.caseId &&
@@ -448,6 +468,11 @@ export default function CaseTable(props: Props) {
                       ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                       ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                     }}
+                    updateModalState={(modalState) => {
+                      updateFirstModalState(modalState as FirstModalProps);
+                    }}
+                    setModalVisibility={setFirstModalVisibility}
+                    haveModal={false}
                   />
                 )}
               {entity?.caseId &&
@@ -462,6 +487,11 @@ export default function CaseTable(props: Props) {
                     statusTransitions={{
                       ESCALATED_L2: { actionLabel: 'Close', status: 'CLOSED' },
                     }}
+                    updateModalState={(modalState) => {
+                      updateFirstModalState(modalState as FirstModalProps);
+                    }}
+                    setModalVisibility={setFirstModalVisibility}
+                    haveModal={false}
                   />
                 )}
               {entity?.caseId && isInReview && canReview && entity.caseStatus && (
@@ -593,18 +623,20 @@ export default function CaseTable(props: Props) {
 
     return mergedColumns;
   }, [
-    user.userId,
-    params.caseStatus,
-    reloadTable,
-    users,
-    loadingUsers,
     isRiskLevelsEnabled,
-    caseAssignmentUpdateMutation,
-    caseReviewAssignmentUpdateMutation,
-    isInReview,
+    reloadTable,
     slaEnabled,
     slaPolicies.items,
+    isInReview,
+    params.caseStatus,
+    users,
+    user.userId,
+    caseReviewAssignmentUpdateMutation,
+    caseAssignmentUpdateMutation,
+    loadingUsers,
     isMultiLevelEscalationEnabled,
+    updateFirstModalState,
+    setFirstModalVisibility,
     userAccount?.escalationLevel,
   ]);
 
@@ -635,7 +667,7 @@ export default function CaseTable(props: Props) {
       renderExpanded={(record) => (
         <>
           {record.caseId && (
-            <AlertTable
+            <AlertTable<SecondModalProps>
               isEmbedded={true}
               params={{
                 ...DEFAULT_PARAMS_STATE,
@@ -644,6 +676,8 @@ export default function CaseTable(props: Props) {
               }}
               escalatedTransactionIds={record.caseHierarchyDetails?.childTransactionIds || []}
               expandTransactions={false}
+              updateModalState={updateSecondModalState}
+              setModalVisibility={setSecondModalVisibility}
             />
           )}
         </>
@@ -768,6 +802,11 @@ export default function CaseTable(props: Props) {
                   OPEN_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   OPEN_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                 }}
+                updateModalState={(modalState) => {
+                  updateFirstModalState(modalState as FirstModalProps);
+                }}
+                setModalVisibility={setFirstModalVisibility}
+                haveModal={false}
               />
             )
           );
@@ -798,6 +837,11 @@ export default function CaseTable(props: Props) {
                   ESCALATED_IN_PROGRESS: { actionLabel: 'Close', status: 'CLOSED' },
                   ESCALATED_ON_HOLD: { actionLabel: 'Close', status: 'CLOSED' },
                 }}
+                updateModalState={(modalState) => {
+                  updateFirstModalState(modalState as FirstModalProps);
+                }}
+                setModalVisibility={setFirstModalVisibility}
+                haveModal={false}
               />
             )
           );
@@ -867,6 +911,11 @@ export default function CaseTable(props: Props) {
                 ESCALATED_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
                 ESCALATED_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
               }}
+              updateModalState={(modalState) => {
+                updateFirstModalState(modalState as FirstModalProps);
+              }}
+              setModalVisibility={setFirstModalVisibility}
+              haveModal={false}
             />
           );
         },
@@ -901,6 +950,11 @@ export default function CaseTable(props: Props) {
                   ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
                   ESCALATED_L2_ON_HOLD: { status: 'ESCALATED_L2', actionLabel: 'Send back' },
                 }}
+                updateModalState={(modalState) => {
+                  updateFirstModalState(modalState as FirstModalProps);
+                }}
+                setModalVisibility={setFirstModalVisibility}
+                haveModal={false}
               />
             )
           );
@@ -938,6 +992,11 @@ export default function CaseTable(props: Props) {
                   OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
                 }}
+                updateModalState={(modalState) => {
+                  updateFirstModalState(modalState as FirstModalProps);
+                }}
+                setModalVisibility={setFirstModalVisibility}
+                haveModal={false}
               />
             )
           );
@@ -985,6 +1044,11 @@ export default function CaseTable(props: Props) {
                     actionLabel: 'Send back',
                   },
                 }}
+                updateModalState={(modalState) => {
+                  updateFirstModalState(modalState as FirstModalProps);
+                }}
+                setModalVisibility={setFirstModalVisibility}
+                haveModal={false}
               />
             )
           );

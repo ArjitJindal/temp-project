@@ -47,6 +47,7 @@ export const ApproveSendBackButton = (props: Props) => {
               caseStatus={props.status}
               statusTransitions={APPROVE_STATUS_TRANSITIONS}
               skipReasonsModal
+              haveModal={true}
             />
           )}
           {!props.isDeclineHidden && (
@@ -57,6 +58,7 @@ export const ApproveSendBackButton = (props: Props) => {
               caseStatus={props.previousStatus}
               statusTransitions={DECLINE_STATUS_TRANSITIONS}
               skipReasonsModal
+              haveModal={true}
             />
           )}
         </>
@@ -72,6 +74,7 @@ export const ApproveSendBackButton = (props: Props) => {
               statusTransitions={APPROVE_STATUS_TRANSITIONS}
               skipReasonsModal
               caseId={props.selectedCaseId}
+              haveModal={true}
             />
           )}
           {!props.isDeclineHidden && (
@@ -84,6 +87,7 @@ export const ApproveSendBackButton = (props: Props) => {
               statusTransitions={DECLINE_STATUS_TRANSITIONS}
               skipReasonsModal
               caseId={props.selectedCaseId}
+              haveModal={true}
             />
           )}
         </>
