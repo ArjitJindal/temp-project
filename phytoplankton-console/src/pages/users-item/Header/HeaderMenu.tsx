@@ -162,9 +162,7 @@ export const HeaderMenu = (props: Props) => {
   return (
     <div>
       <Dropdown options={options} optionClassName={s.option}>
-        <Button type="TETRIARY" testName="status-options-button" className={s.button}>
-          <MoreOutlined />
-        </Button>
+        <Button type="TETRIARY" testName="status-options-button" icon={<MoreOutlined />} />
       </Dropdown>
     </div>
   );

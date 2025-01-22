@@ -39,11 +39,9 @@ const StatusChangeMenu = (props: Props) => {
         <Button
           type="TETRIARY"
           testName="status-options-button"
-          className={s.button}
           isDisabled={isDisabled}
-        >
-          <MoreOutlined />
-        </Button>
+          icon={<MoreOutlined />}
+        />
       </Dropdown>
     </div>
   );

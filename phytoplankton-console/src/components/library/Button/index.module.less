@@ -22,6 +22,8 @@
   transition-timing-function: @default-animation-function;
   transition-property: box-shadow, border-color, background, color;
   outline: none;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
 
   .outline(@figma-vars--primitives-colorBrand500);
 
@@ -167,4 +169,6 @@
 
 .icon {
   display: flex;
+  justify-content: center;
+  align-items: center;
 }
