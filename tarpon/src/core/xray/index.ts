@@ -1,3 +1,4 @@
+import process from 'process'
 import { Subsegment } from 'aws-xray-sdk-core'
 import { logger } from '@/core/logger'
 import { envIsNot } from '@/utils/env'
@@ -57,7 +58,17 @@ export function traceable(target: any) {
           target.segmentInProgress = true
           const serviceName = target?.name || 'unknown'
           const segment = await addNewSubsegment(serviceName, key)
+          const convertToMB = (value: number) =>
+            `${Math.round((value / 1024 / 1024) * 100) / 100} MB`
           try {
+            const used = process.memoryUsage()
+            const data = {
+              rss: convertToMB(used.rss),
+              heapTotal: convertToMB(used.heapTotal),
+              heapUsed: convertToMB(used.heapUsed),
+              external: convertToMB(used.external),
+            }
+            segment?.addMetadata('memory_usage', data)
             return await originalMethod.apply(this, args)
           } catch (err: any) {
             segment?.addError(err)
