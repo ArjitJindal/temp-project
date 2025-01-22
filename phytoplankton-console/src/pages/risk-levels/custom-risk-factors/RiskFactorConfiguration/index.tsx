@@ -14,10 +14,14 @@ import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import { RiskClassificationScore, RiskFactor, RiskFactorsPostRequest } from '@/apis';
 import { makeUrl } from '@/utils/routing';
+import { useApi } from '@/api';
+import { useQuery } from '@/utils/queries/hooks';
+import { NEW_RISK_FACTOR_ID } from '@/utils/queries/keys';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   riskItemType: 'consumer' | 'business' | 'transaction';
-  mode: 'CREATE' | 'EDIT' | 'READ';
+  mode: 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE';
   id?: string;
   riskItem?: RiskFactor;
   onSubmit: (values: RiskFactorConfigurationFormValues, riskItem?: RiskFactor) => void;
@@ -42,7 +46,7 @@ export const RiskFactorConfiguration = (props: Props) => {
   const [activeStepKey, setActiveStepKey] = useState(STEPS[0]);
   const activeStepIndex = STEPS.findIndex((key) => key === activeStepKey);
   const formRef = useRef<FormRef<any>>(null);
-  const isMutable = useMemo(() => ['CREATE', 'EDIT'].includes(mode), [mode]);
+  const isMutable = useMemo(() => ['CREATE', 'EDIT', 'DUPLICATE'].includes(mode), [mode]);
   const formInitialValues = riskItem ? deserializeRiskItem(riskItem) : undefined;
   const navigateToRiskFactors = () => {
     dataKey
@@ -54,23 +58,32 @@ export const RiskFactorConfiguration = (props: Props) => {
         )
       : navigate(makeUrl(`/risk-levels/custom-risk-factors/:type`, { type: riskItemType }));
   };
-
+  const api = useApi();
+  const queryResult = useQuery<string | undefined>(NEW_RISK_FACTOR_ID(id), async () => {
+    const newRiskId = await api.getNewRiskFactorId({ riskId: id });
+    return newRiskId.riskFactorId;
+  });
   return (
     <>
-      <RiskFactorConfigurationForm
-        ref={formRef}
-        activeStepKey={activeStepKey}
-        readonly={!canWriteRiskFactors || mode === 'READ'}
-        onActiveStepChange={setActiveStepKey}
-        onSubmit={(formValues) => {
-          onSubmit(formValues, riskItem);
-        }}
-        id={id}
-        type={riskItemType}
-        formInitialValues={formInitialValues}
-      />
+      <AsyncResourceRenderer resource={queryResult.data}>
+        {(riskFactorId) => (
+          <RiskFactorConfigurationForm
+            ref={formRef}
+            activeStepKey={activeStepKey}
+            readonly={!canWriteRiskFactors || mode === 'READ'}
+            onActiveStepChange={setActiveStepKey}
+            onSubmit={(formValues) => {
+              onSubmit(formValues, riskItem);
+            }}
+            id={id}
+            type={riskItemType}
+            formInitialValues={formInitialValues}
+            newRiskId={mode === 'EDIT' || mode === 'READ' ? id : riskFactorId}
+          />
+        )}
+      </AsyncResourceRenderer>
       <div className={s.footerButtons}>
-        {(!canWriteRiskFactors || mode === 'EDIT') && (
+        {(!canWriteRiskFactors || mode === 'EDIT' || mode === 'DUPLICATE') && (
           <Button type="TETRIARY" onClick={navigateToRiskFactors}>
             Cancel
           </Button>
@@ -88,7 +101,7 @@ export const RiskFactorConfiguration = (props: Props) => {
             Previous
           </Button>
         )}
-        {(mode === 'EDIT' || activeStepIndex !== STEPS.length - 1) && (
+        {(mode === 'EDIT' || mode === 'DUPLICATE' || activeStepIndex !== STEPS.length - 1) && (
           <Button
             type="SECONDARY"
             onClick={() => {
@@ -122,7 +135,7 @@ export const RiskFactorConfiguration = (props: Props) => {
             </Button>
           </>
         )}
-        {canWriteRiskFactors && mode === 'EDIT' && (
+        {canWriteRiskFactors && (mode === 'EDIT' || mode === 'DUPLICATE') && (
           <Button
             htmlType="submit"
             isLoading={isLoadingUpdation}
@@ -193,6 +206,7 @@ export function serializeRiskItem(
   riskFactorFormValues: RiskFactorConfigurationFormValues,
   type: 'consumer' | 'business' | 'transaction',
   riskClassificationValues: RiskClassificationScore[],
+  riskFactorId?: string,
 ): RiskFactorsPostRequest {
   return {
     name: riskFactorFormValues.basicDetailsStep.name ?? '',
@@ -213,5 +227,6 @@ export function serializeRiskItem(
       riskFactorFormValues.riskFactorConfigurationStep.aggregationVariables ?? [],
     logicEntityVariables: riskFactorFormValues.riskFactorConfigurationStep.entityVariables ?? [],
     type: type === 'consumer' ? 'CONSUMER_USER' : type === 'business' ? 'BUSINESS' : 'TRANSACTION',
+    riskFactorId,
   };
 }

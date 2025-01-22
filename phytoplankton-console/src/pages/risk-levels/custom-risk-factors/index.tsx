@@ -1,9 +1,10 @@
 import { useNavigate, useParams } from 'react-router';
-import { useEffect, useRef, useState } from 'react';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { EditOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { SimulationHistory } from '../RiskFactorsSimulation/SimulationHistoryPage/SimulationHistory';
 import { RiskFactorsSimulation } from '../RiskFactorsSimulation';
+import ActionMenu from '../custom-risk-factors/components/ActionMenu';
 import s from './style.module.less';
 import { Feature } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
@@ -20,7 +21,6 @@ import { TableColumn, TableRefType } from '@/components/library/Table/types';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import { map } from '@/utils/queries/types';
 import { BOOLEAN, DATE_TIME, STRING } from '@/components/library/Table/standardDataTypes';
-import Confirm from '@/components/utils/Confirm';
 import { useHasPermissions } from '@/utils/user-utils';
 import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
@@ -76,7 +76,7 @@ export default function () {
 interface Props {
   type: string;
 }
-type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
+export type ScopeSelectorValue = 'consumer' | 'business' | 'transaction';
 export const CustomRiskFactors = (props: Props) => {
   const { type } = props;
   const api = useApi();
@@ -99,6 +99,7 @@ export const CustomRiskFactors = (props: Props) => {
   );
   const [updatedRiskFactor, setUpdatedRiskFactor] = useState<{ [key: string]: RiskFactor }>({});
   const canWriteRiskFactors = useHasPermissions(['risk-scoring:risk-factors:write']);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   useEffect(() => {
     if (type !== 'simulation' && type !== 'simulation-history') {
@@ -107,6 +108,19 @@ export const CustomRiskFactors = (props: Props) => {
       });
     }
   }, [selectedSection, navigate, type]);
+
+  const onDuplicate = useCallback(
+    (entity: RiskFactor, selectedSection: ScopeSelectorValue) => {
+      navigate(
+        makeUrl(`/risk-levels/custom-risk-factors/:type/:id/duplicate`, {
+          type: selectedSection,
+          id: entity.id,
+        }),
+        { replace: true },
+      );
+    },
+    [navigate],
+  );
 
   const queryClient = useQueryClient();
   const handleActivationChangeMutation = useMutation<
@@ -143,9 +157,11 @@ export const CustomRiskFactors = (props: Props) => {
       onSuccess: async () => {
         await queryClient.invalidateQueries(RISK_FACTORS_V8(type));
         message.success(`Risk factor deleted`);
+        setDeleting(false);
       },
       onError: async (err) => {
         message.fatal(`Unable to delete the risk factor - Some parameters are missing`, err);
+        setDeleting(false);
       },
     },
   );
@@ -242,30 +258,19 @@ export const CustomRiskFactors = (props: Props) => {
             >
               Edit
             </Button>
-            <Confirm
-              title={`Are you sure you want to delete this ${entity.id} ${entity.name} risk factor?`}
-              text="Please confirm that you want to delete this risk factor. This action cannot be undone."
-              onConfirm={() => {
-                if (canWriteRiskFactors && entity.id) {
-                  deleteRiskFactorMutation.mutate(entity.id);
+            <ActionMenu
+              onDuplicate={() => onDuplicate(entity, selectedSection)}
+              entity={entity}
+              canWriteRiskFactors={canWriteRiskFactors}
+              res={getMutationAsyncResource(deleteRiskFactorMutation)}
+              selectedSection={selectedSection}
+              deleting={deleting}
+              onDelete={(id) => {
+                if (canWriteRiskFactors && id) {
+                  deleteRiskFactorMutation.mutate(id);
                 }
               }}
-              res={getMutationAsyncResource(deleteRiskFactorMutation)}
-            >
-              {({ onClick }) => (
-                <Button
-                  onClick={onClick}
-                  icon={<DeleteOutlined />}
-                  size="SMALL"
-                  type="TETRIARY"
-                  isDisabled={!canWriteRiskFactors}
-                  isLoading={deleteRiskFactorMutation.isLoading}
-                  testName="risk-factor-delete-button"
-                >
-                  Delete
-                </Button>
-              )}
-            </Confirm>
+            />
           </div>
         );
       },

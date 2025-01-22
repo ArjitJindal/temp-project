@@ -7,7 +7,6 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
-import { CounterRepository } from '../counter/repository'
 import {
   createV8FactorFromV2,
   generateV2FactorId,
@@ -253,20 +252,16 @@ export class RiskService {
     if (!this.mongoDb) {
       throw new Error('MongoDB connection not available')
     }
-
-    const currentId = riskFactorId
     let currentRiskFactor: RiskFactor | null = null
-
-    if (riskFactorId) {
-      currentRiskFactor = await this.riskRepository.getRiskFactor(riskFactorId)
+    const id =
+      riskFactorId || riskFactor.riskFactorId
+        ? riskFactorId && !riskFactor.riskFactorId
+          ? riskFactorId
+          : await this.getNewRiskFactorId(riskFactor.riskFactorId, true)
+        : await this.getNewRiskFactorId(undefined, true)
+    if (!riskFactor.riskFactorId && riskFactorId) {
+      currentRiskFactor = await this.riskRepository.getRiskFactor(id)
     }
-
-    const counterRepository = new CounterRepository(this.tenantId, this.mongoDb)
-    const id: string =
-      currentId ??
-      `RF-${(await counterRepository.getNextCounterAndUpdate('RiskFactor'))
-        .toString()
-        .padStart(3, '0')}`
 
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
@@ -305,7 +300,9 @@ export class RiskService {
     this.riskRepository.getAllRiskFactors.cache.clear?.()
     return data
   }
-
+  async getNewRiskFactorId(riskFactorId?: string, update = false) {
+    return await this.riskRepository.getNewRiskFactorId(riskFactorId, update)
+  }
   async getRiskFactor(riskFactorId: string): Promise<RiskFactor | null> {
     const data = await this.riskRepository.getRiskFactor(riskFactorId)
 

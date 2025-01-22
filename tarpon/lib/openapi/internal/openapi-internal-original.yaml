@@ -4362,6 +4362,25 @@ paths:
           description: Not enough privileges
       parameters: []
       description: ''
+  /risk-factors/new-risk-factor-id:
+    parameters: []
+    get:
+      summary: Get a new unique risk ID
+      operationId: get-new-risk-factor-id
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NewRiskFactorIdResponse'
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: riskId
+          description: Risk ID
+      description: Get a new risk ID
   /risk-factors/{riskFactorId}:
     parameters:
       - schema:
@@ -10877,6 +10896,8 @@ components:
       title: RiskFactorsUpdateRequest
       type: object
       properties:
+        riskFactorId:
+          type: string
         status:
           $ref: '#/components/schemas/RuleInstanceStatus'
         logicAggregationVariables:
@@ -11161,6 +11182,13 @@ components:
         - ALERTS_DYNAMO_POC
         - ACURIS
       description: ''
+    NewRiskFactorIdResponse:
+      title: NewRiskFactorIdResponse
+      type: object
+      properties:
+        riskFactorId:
+          type: string
+          nullable: false
     ManagedRoleName:
       type: string
       title: ManagedRoleName

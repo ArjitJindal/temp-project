@@ -16,9 +16,14 @@ export interface BasicDetailsFormValues {
   description: string;
   defaultRiskValue: RiskLevel | number;
   defaultWeight: number;
+  riskFactorId?: string;
 }
 
-export const BasicDetailsStep = () => {
+interface Props {
+  newRiskId?: string;
+}
+export const BasicDetailsStep = (props: Props) => {
+  const { newRiskId } = props;
   const riskClassificationQuery = useRiskClassificationScores();
   const riskClassificationValues = getOr(riskClassificationQuery, []);
   return (
@@ -26,6 +31,13 @@ export const BasicDetailsStep = () => {
       <Card.Root>
         <Card.Section>
           <PropertyListLayout>
+            <InputField<BasicDetailsFormValues, 'riskFactorId'>
+              name={'riskFactorId'}
+              label={'Risk Factor ID'}
+              labelProps={{ required: true }}
+            >
+              {(inputProps) => <TextInput {...inputProps} value={newRiskId} isDisabled />}
+            </InputField>
             <InputField<BasicDetailsFormValues, 'name'>
               name={'name'}
               label={'Risk factor name'}

@@ -26,6 +26,7 @@ interface RiskFactorConfigurationFormProps {
   onSubmit: (formValues: RiskFactorConfigurationFormValues) => void;
   id?: string;
   formInitialValues?: RiskFactorConfigurationFormValues;
+  newRiskId?: string;
 }
 
 export interface RiskFactorConfigurationFormValues {
@@ -50,6 +51,7 @@ function RiskFactorConfigurationForm(
     onActiveStepChange,
     onSubmit,
     formInitialValues,
+    newRiskId,
   } = props;
   const [alwaysShowErrors, setAlwaysShowErrors] = useState(false);
   const INITIAL_VALUES = useMemo(() => {
@@ -152,7 +154,12 @@ function RiskFactorConfigurationForm(
           <div className={cn(s.stepperContent)}>
             <div className={cn(readonly ? s.readOnlyFormContent : '')}>
               <NestedForm<RiskFactorConfigurationFormValues> name={activeStepKey}>
-                <StepSubform activeStepKey={activeStepKey} readOnly={readonly} type={type} />
+                <StepSubform
+                  activeStepKey={activeStepKey}
+                  readOnly={readonly}
+                  type={type}
+                  newRiskId={newRiskId}
+                />
               </NestedForm>
             </div>
           </div>
@@ -168,8 +175,9 @@ function StepSubform(props: {
   activeStepKey: string;
   readOnly: boolean;
   type: 'consumer' | 'business' | 'transaction';
+  newRiskId?: string;
 }) {
-  const { activeStepKey, readOnly, type } = props;
+  const { activeStepKey, readOnly, type, newRiskId } = props;
   const ruleType = type === 'transaction' ? 'TRANSACTION' : 'USER';
   const entity =
     type === 'transaction'
@@ -179,7 +187,7 @@ function StepSubform(props: {
       : 'BUSINESS_USER';
 
   if (activeStepKey === BASIC_DETAILS_STEP) {
-    return <BasicDetailsStep />;
+    return <BasicDetailsStep newRiskId={newRiskId} />;
   }
   if (activeStepKey === RISK_FACTOR_CONFIGURATION_STEP) {
     return <RiskFactorConfigurationStep readOnly={readOnly} ruleType={ruleType} entity={entity} />;

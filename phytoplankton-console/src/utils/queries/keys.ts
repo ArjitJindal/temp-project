@@ -402,6 +402,8 @@ export const NOTIFICATIONS = (notificationStatus?: 'ALL' | 'UNREAD'): QueryKey =
 
 export const NEW_RULE_ID = (ruleId?: string): QueryKey => ['new-rule-id', ruleId];
 
+export const NEW_RISK_FACTOR_ID = (riskId?: string): QueryKey => ['new-risk-factor-id', riskId];
+
 export const SIMULATION_RISK_FACTOR = (jobId: string): QueryKey => [
   'risk-factor',
   'simulation',

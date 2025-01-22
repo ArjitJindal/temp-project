@@ -54,7 +54,7 @@ import { AggregationRepository } from '@/services/logic-evaluator/engine/aggrega
 import { RiskFactorScoreDetails } from '@/@types/openapi-internal/RiskFactorScoreDetails'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
 import { getLogicAggVarsWithUpdatedVersion } from '@/utils/risk-rule-shared'
-import { internalMongoReplace } from '@/utils/mongodb-utils'
+import { getMongoDbClient, internalMongoReplace } from '@/utils/mongodb-utils'
 import { sendMessageToMongoConsumer } from '@/utils/clickhouse/utils'
 import { getTriggerSource } from '@/utils/lambda'
 import {
@@ -64,6 +64,7 @@ import {
 import { TrsScoresResponse } from '@/@types/openapi-internal/TrsScoresResponse'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { handleSmallNumber } from '@/utils/helpers'
+import { CounterRepository } from '@/services/counter/repository'
 
 const riskClassificationValuesCache = createNonConsoleApiInMemoryCache<
   RiskClassificationScore[]
@@ -1020,6 +1021,27 @@ export class RiskRepository {
       delete item['SortKeyID']
       return item
     })
+  }
+
+  public async getNewRiskFactorId(
+    riskFactorId?: string,
+    update = false
+  ): Promise<string> {
+    const mongoDb = await getMongoDbClient()
+    const counterRepository = new CounterRepository(this.tenantId, mongoDb)
+
+    if (riskFactorId) {
+      const id = riskFactorId.split('.')[0]
+      const nextCount = await counterRepository[
+        update ? 'getNextCounterAndUpdate' : 'getNextCounter'
+      ](id as any)
+      return `${id}.${nextCount}`
+    } else {
+      const count = await counterRepository[
+        update ? 'getNextCounterAndUpdate' : 'getNextCounter'
+      ]('RiskFactor' as any)
+      return `RF-${count.toString().padStart(3, '0')}`
+    }
   }
 }
 

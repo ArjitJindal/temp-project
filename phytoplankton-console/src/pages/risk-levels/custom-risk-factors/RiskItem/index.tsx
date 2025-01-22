@@ -67,9 +67,9 @@ export default function () {
           id && {
             title: id,
           },
-          (mode === 'read' || mode === 'edit') &&
+          (mode === 'read' || mode === 'edit' || mode === 'duplicate') &&
             id && {
-              title: mode === 'read' ? 'View' : 'Edit',
+              title: mode === 'read' ? 'View' : mode === 'edit' ? 'Edit' : 'duplicate',
               to: isSimulationMode
                 ? makeUrl(`/risk-levels/custom-risk-factors/simulation-mode/:key/:type/:id/:mode`, {
                     key,
@@ -267,6 +267,7 @@ function RiskItemForm(props: RiskItemFormProps) {
           riskFactorFormValues,
           type,
           riskClassificationValues,
+          id,
         ),
       });
     },
@@ -286,7 +287,7 @@ function RiskItemForm(props: RiskItemFormProps) {
       updateRiskFactorMutation.mutate({
         variables: { riskFactorFormValues: formValues, riskItem },
       });
-    } else if (mode === 'create') {
+    } else if (mode === 'create' || mode === 'duplicate') {
       createRiskFactorMutation.mutate(formValues);
     }
   };
@@ -297,7 +298,7 @@ function RiskItemForm(props: RiskItemFormProps) {
           <RiskFactorConfiguration
             riskItemType={type}
             onSubmit={handleSubmit}
-            mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ'}
+            mode={mode.toUpperCase() as 'CREATE' | 'EDIT' | 'READ' | 'DUPLICATE'}
             id={id}
             riskItem={data || undefined}
             isLoadingUpdation={updateRiskFactorMutation?.isLoading}

@@ -97,7 +97,8 @@ export const parameterRiskAssignmentHandler = lambdaApi({
 
     handlers.registerPostCreateRiskFactor(async (ctx, request) => {
       return await riskService.createOrUpdateRiskFactor(
-        request.RiskFactorsPostRequest
+        request.RiskFactorsPostRequest,
+        request.RiskFactorsPostRequest.riskFactorId
       )
     })
 
@@ -106,6 +107,12 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         request.RiskFactorsUpdateRequest,
         request.riskFactorId
       )
+    })
+
+    handlers.registerGetNewRiskFactorId(async (ctx, request) => {
+      return {
+        riskFactorId: await riskService.getNewRiskFactorId(request.riskId),
+      }
     })
 
     handlers.registerPostBulkRiskFactors(async (ctx, request) => {
