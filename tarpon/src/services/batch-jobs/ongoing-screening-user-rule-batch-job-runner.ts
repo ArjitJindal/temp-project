@@ -252,25 +252,27 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
               'ONGOING'
             )
 
-            result?.executedRules
-              ?.filter(
-                (executedRule) =>
-                  ruleInstances.find(
-                    (ruleInstance) =>
-                      ruleInstance.id === executedRule.ruleInstanceId
-                  )?.userRuleRunCondition?.schedule
-              )
-              .forEach((executedRule) => {
-                updates[executedRule.ruleInstanceId] = {
-                  hitCountDelta:
-                    (updates[executedRule.ruleInstanceId]?.hitCountDelta ?? 0) +
-                    (executedRule.ruleHit ? 1 : 0),
-                  runCountDelta:
-                    (updates[executedRule.ruleInstanceId]?.runCountDelta ?? 0) +
-                    1,
-                }
-              })
-            if (result?.hitRules && result.hitRules.length > 0) {
+            // We only update when there are no hit rules else we will update the user in consumer
+            if (!result?.hitRules?.length) {
+              result?.executedRules
+                ?.filter(
+                  (executedRule) =>
+                    ruleInstances.find(
+                      (ruleInstance) =>
+                        ruleInstance.id === executedRule.ruleInstanceId
+                    )?.userRuleRunCondition?.schedule
+                )
+                .forEach((executedRule) => {
+                  updates[executedRule.ruleInstanceId] = {
+                    hitCountDelta:
+                      (updates[executedRule.ruleInstanceId]?.hitCountDelta ??
+                        0) + (executedRule.ruleHit ? 1 : 0),
+                    runCountDelta:
+                      (updates[executedRule.ruleInstanceId]?.runCountDelta ??
+                        0) + 1,
+                  }
+                })
+            } else {
               const mergedExecutedRules = mergeRules(
                 user.executedRules ?? [],
                 result?.executedRules ?? []
