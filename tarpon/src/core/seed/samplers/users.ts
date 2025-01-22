@@ -28,7 +28,10 @@ import { CountryCode } from '@/@types/openapi-internal/CountryCode'
 import { BUSINESS_USER_SEGMENTS } from '@/@types/openapi-internal-custom/BusinessUserSegment'
 import { PAYMENT_METHODS } from '@/@types/openapi-internal-custom/PaymentMethod'
 import { PaymentDetailsSampler } from '@/core/seed/samplers/transaction'
-import { usersAddresses, phoneNumber } from '@/core/seed/samplers/address'
+import {
+  phoneNumber,
+  AddressWithUsageSampler,
+} from '@/core/seed/samplers/address'
 import { userRules } from '@/core/seed/data/rules'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
@@ -56,15 +59,6 @@ import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
-
-const emailRNG = new RandomNumberGenerator(42.1)
-
-const emailSet = [...Array(100)].map(
-  () =>
-    `${emailRNG.pickRandom(names).toLowerCase()}@${emailRNG.pickRandom(
-      emailDomains
-    )}`
-)
 
 const tagKeys = [
   'internalConsumerId',
@@ -152,6 +146,7 @@ const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 
 const shareHolders: Person[] = []
 const directors: Person[] = []
+const addressSampler = new AddressWithUsageSampler()
 
 export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
   protected generateSample(): any {
@@ -209,6 +204,17 @@ abstract class UserSampler<T> extends BaseSampler<T> {
   s3Client = new S3Client({
     region: process.env.AWS_REGION,
   })
+
+  getEmail(seed: number, name: ConsumerName) {
+    if (seed % 7 === 0) {
+      return `${name.firstName.toLowerCase()}${name?.middleName?.toLowerCase()}${name?.lastName?.toLowerCase()}@${this.rng.pickRandom(
+        emailDomains
+      )}`
+    }
+    return `${name.firstName.toLowerCase()}${name?.lastName?.toLowerCase()}@${this.rng.pickRandom(
+      emailDomains
+    )}`
+  }
 
   uploadUserAttachment = async (
     fileName: string,
@@ -337,10 +343,6 @@ ET\n`
       pepCountry: this.rng.pickRandom(COUNTRY_CODES),
       pepRank: this.rng.pickRandom(PEP_RANKS),
     }
-  }
-
-  protected randomEmail() {
-    return this.rng.pickRandom(emailSet)
   }
 
   protected randomPhoneNumber() {
@@ -521,14 +523,12 @@ export class BusinessUserSampler extends UserSampler<
       },
       legalDocuments,
       contactDetails: {
-        emailIds: [
-          `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}}@${this.rng.pickRandom(
-            emailDomains
-          )}`,
-        ].concat(company?.contactEmails || []),
+        emailIds: [this.getEmail(this.rng.randomInt(1000), name)].concat(
+          company?.contactEmails || []
+        ),
         faxNumbers: [this.randomPhoneNumber()],
         websites: [domain],
-        addresses: [this.rng.pickRandom(usersAddresses())],
+        addresses: addressSampler.getAddress(),
         contactNumbers: [this.randomPhoneNumber()],
       },
       tags: [...Array(Math.ceil(this.rng.randomInt(2)))].map(() => {
@@ -583,12 +583,8 @@ export class BusinessUserSampler extends UserSampler<
       userId: directorId,
       legalDocuments,
       contactDetails: {
-        emailIds: [
-          name.firstName.toLowerCase() +
-            '@' +
-            this.rng.pickRandom(emailDomains),
-        ],
-        addresses: [this.rng.pickRandom(usersAddresses())],
+        emailIds: [this.getEmail(this.rng.randomInt(1000), name)],
+        addresses: addressSampler.getAddress(),
         contactNumbers: [this.randomPhoneNumber()],
         faxNumbers: [this.randomPhoneNumber()],
         websites: [domain],
@@ -675,9 +671,13 @@ export class BusinessUserSampler extends UserSampler<
       savedPaymentDetails: paymentMethod,
       legalEntity: {
         contactDetails: {
-          emailIds: company?.contactEmails || [this.randomEmail()],
+          emailIds: company?.contactEmails || [
+            this.getEmail(this.rng.randomInt(1000), {
+              firstName: name,
+            }),
+          ],
           websites: company?.website ? [company.website] : [],
-          addresses: [usersAddresses()[this.counter]],
+          addresses: addressSampler.getAddress(1),
         },
         companyFinancialDetails: {
           expectedTransactionAmountPerMonth: {
@@ -827,14 +827,10 @@ export class ConsumerUserSampler extends UserSampler<
         userCategory: this.rng.pickRandom(userCategory),
       },
       contactDetails: {
-        emailIds: [
-          `${name.firstName.toLowerCase()}.${name.middleName?.toLowerCase()}@${this.rng.pickRandom(
-            emailDomains
-          )}`,
-        ],
+        emailIds: [this.getEmail(this.rng.randomInt(1000), name)],
         faxNumbers: [this.randomPhoneNumber()],
         websites: [domain],
-        addresses: [usersAddresses()[this.counter]], // TODO: use address sampler / replace this
+        addresses: addressSampler.getAddress(1),
         contactNumbers: [this.randomPhoneNumber()],
       },
       occupation: this.rng.r(1).pickRandom(occupation),

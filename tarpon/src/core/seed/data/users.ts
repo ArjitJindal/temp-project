@@ -23,21 +23,22 @@ const businessUsers: (
   tenantId: string
 ) => Promise<InternalBusinessUser[]> = async (tenantId: string) => {
   const sampler = new BusinessUserSampler()
-  const userPromises = companies.map(async (c) => {
+  const businessUser: InternalBusinessUser[] = []
+  for (let i = 0; i < companies.length; i++) {
     let uploadAttachments = true
     if (envIs('local')) {
       uploadAttachments = false
     }
-    const user = await sampler.getSample(
-      undefined,
-      tenantId,
-      uploadAttachments,
-      c
+    businessUser.push(
+      await sampler.getSample(
+        undefined,
+        tenantId,
+        uploadAttachments,
+        companies[i]
+      )
     )
-    return user
-  })
-
-  return Promise.all(userPromises)
+  }
+  return businessUser
 }
 
 const consumerUsers: (
@@ -49,12 +50,14 @@ const consumerUsers: (
   if (envIs('local')) {
     uploadAttachments = false
   }
-  const userPromises = [...new Array(200)].map(async () => {
-    const user = await sampler.getSample(undefined, tenantId, uploadAttachments)
-    return user
-  })
+  const consumerUser: InternalConsumerUser[] = []
+  for (let i = 0; i < 200; i++) {
+    consumerUser.push(
+      await sampler.getSample(undefined, tenantId, uploadAttachments)
+    )
+  }
 
-  return Promise.all(userPromises)
+  return consumerUser
 }
 
 const deleteOldAttachment = async (tenantId: string) => {

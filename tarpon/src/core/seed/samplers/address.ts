@@ -43,10 +43,20 @@ export class AddressSampler extends BaseSampler<Address> {
 
 export class AddressWithUsageSampler extends AddressSampler {
   addressUsage: Map<string, number>
+  addresses: Address[] = []
+  maxAddresses = 1000
+  currentAddressIndex = 0
 
-  constructor(seed: number, counter?: number) {
+  constructor(
+    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    counter?: number
+  ) {
     super(seed, counter)
     this.addressUsage = new Map<string, number>()
+    for (let i = 0; i < this.maxAddresses; i++) {
+      const address = super.generateSample()
+      this.addresses.push(address)
+    }
   }
 
   generateSample(): Address {
@@ -56,6 +66,7 @@ export class AddressWithUsageSampler extends AddressSampler {
       const usage = this.addressUsage.get(address.addressLines[0]) ?? 0
       if (usage < 3) {
         this.addressUsage.set(address.addressLines[0], usage + 1)
+        this.addresses.push(address)
         return address
       }
       // shuffle the seed to avoid infinite loop
@@ -66,11 +77,19 @@ export class AddressWithUsageSampler extends AddressSampler {
       'Could not find an address with usage count <= 3 after 10 retries'
     )
   }
-}
 
-export const usersAddresses: () => Address[] = memoize(() => {
-  const sampler = new AddressWithUsageSampler(201)
-  return [...Array(1000)].map(() => {
-    return sampler.getSample()
-  })
-})
+  getAddress(randomNumber: number = this.rng.randomInt(10000)): Address[] {
+    let addressCount =
+      randomNumber % 7 === 0 ? 3 : randomNumber % 5 === 0 ? 2 : 1
+    const addresses: Address[] = []
+    while (addressCount--) {
+      const address = this.addresses[this.currentAddressIndex]
+      addresses.push(address)
+      this.currentAddressIndex++
+      if (this.currentAddressIndex >= this.maxAddresses) {
+        this.currentAddressIndex = 0
+      }
+    }
+    return addresses
+  }
+}
