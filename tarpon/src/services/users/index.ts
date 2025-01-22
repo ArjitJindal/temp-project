@@ -1418,6 +1418,10 @@ export class UserService {
         userId: user.userId,
         reason: updateRequest.userStateDetails?.reason ?? 'User update',
         updatedConsumerUserAttributes: updateRequest,
+        riskScoreDetails: {
+          kycRiskScore: (updatedUser as InternalUser).krsScore?.krsScore,
+          craRiskScore: (updatedUser as InternalUser).drsScore?.drsScore,
+        },
       },
       isBusiness ? 'BUSINESS' : 'CONSUMER'
     )

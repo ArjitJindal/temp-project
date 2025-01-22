@@ -13,6 +13,7 @@ interface Props {
     newImage: object;
     showNotChanged?: boolean;
     showOldImage?: boolean;
+    metaData?: object;
   };
 }
 
@@ -20,7 +21,12 @@ const AuditLogModal = (props: Props) => {
   const { data } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const { changedDetails, notChangedDetails } = summariseChanges(data);
-
+  const { changedDetails: metaDataDetails } = summariseChanges({
+    type: 'Meta Data',
+    oldImage: {},
+    newImage: data.metaData ?? {},
+    showNotChanged: false,
+  });
   return (
     <>
       <Typography.Text
@@ -54,6 +60,20 @@ const AuditLogModal = (props: Props) => {
                   {startCase(toLower(data.type))} details not changed
                 </Typography.Title>
                 <TableTemplate details={notChangedDetails} showOldImage={data.showOldImage} />
+              </div>
+            )}
+          </>
+          <>
+            {data.metaData && (
+              <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
+                <Typography.Title level={4}>
+                  {startCase(toLower(data.type))} event meta data
+                </Typography.Title>
+                <TableTemplate
+                  details={metaDataDetails}
+                  showOldImage={data.showOldImage}
+                  isMetaData={true}
+                />
               </div>
             )}
           </>

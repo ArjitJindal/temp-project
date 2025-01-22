@@ -73,7 +73,9 @@ const RenderModalData = (value: any | undefined) => {
   }
 };
 
-const TableTemplate = (props: TableTemplateProp & { showOldImage?: boolean }) => {
+const TableTemplate = (
+  props: TableTemplateProp & { showOldImage?: boolean; isMetaData?: boolean },
+) => {
   const helper = new ColumnHelper<TableItem>();
   return (
     <Table<TableItem>
@@ -107,7 +109,7 @@ const TableTemplate = (props: TableTemplateProp & { showOldImage?: boolean }) =>
             ]
           : []),
         helper.simple<'newImage'>({
-          title: 'New value',
+          title: props.isMetaData ? 'Value' : 'New value',
           key: 'newImage',
           defaultWidth: 350,
           type: {

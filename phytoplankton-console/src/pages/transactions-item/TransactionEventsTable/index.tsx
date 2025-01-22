@@ -63,7 +63,7 @@ export default function TransactionEventsTable(props: Props) {
         type: TRANSACTION_STATE,
       }),
       helper.simple({
-        title: 'Event Time',
+        title: 'Event time',
         key: 'timestamp',
         type: DATE_TIME,
       }),
@@ -109,6 +109,7 @@ export default function TransactionEventsTable(props: Props) {
                   newImage: item.updatedTransactionAttributes,
                   showNotChanged: false,
                   showOldImage: false,
+                  metaData: item.metaData,
                 }}
               />
             );
