@@ -26,6 +26,7 @@ import { SanctionsSearchRequest } from '@/@types/openapi-internal/SanctionsSearc
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
 import { traceable } from '@/core/xray'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
 function getSearchTypesKey(
   types: SanctionsSearchType[] = SANCTIONS_SEARCH_TYPES
@@ -140,7 +141,7 @@ export function complyAdvantageDocToEntity(
     matchTypes: hit.match_types,
     sanctionSearchTypes,
     aka: doc.aka?.map((aka) => aka.name).filter(Boolean) as string[],
-    entityType: doc.entity_type as string,
+    entityType: doc.entity_type as SanctionsEntityType,
     updatedAt: doc.last_updated_utc
       ? new Date(doc.last_updated_utc).getTime()
       : undefined,

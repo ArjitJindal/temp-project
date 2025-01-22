@@ -8,6 +8,7 @@ import {
 } from '../utils/rule-parameter-schemas'
 import { isBusinessUser } from '../utils/user-rule-utils'
 import { RuleHitResult } from '../rule'
+import { getEntityTypeForSearch } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { formatConsumerName } from '@/utils/helpers'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -15,6 +16,7 @@ import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsD
 import { Business } from '@/@types/openapi-public/Business'
 import dayjs from '@/utils/dayjs'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 const BUSINESS_USER_ENTITY_TYPES: Array<{
   value: SanctionsDetailsEntityType
@@ -94,6 +96,7 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
         dateOfBirth: person.generalDetails?.dateOfBirth,
       })) ?? []),
     ].filter((entity) => entity.name)
+    const provider = getDefaultProvider()
 
     const hitResult: RuleHitResult = []
     const sanctionsDetails = (
@@ -118,6 +121,10 @@ export default class SanctionsBusinessUserRule extends UserRule<SanctionsBusines
               types: screeningTypes,
               fuzziness: fuzziness / 100,
               monitoring: { enabled: ongoingScreening },
+              ...getEntityTypeForSearch(
+                provider,
+                entity.entityType === 'LEGAL_NAME' ? 'BUSINESS' : 'PERSON'
+              ),
             },
             hitContext
           )

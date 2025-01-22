@@ -12726,7 +12726,7 @@ components:
         isActiveSanctioned:
           type: boolean
         entityType:
-          type: string
+          $ref: '#/components/schemas/SanctionsEntityType'
       required:
         - searchTerm
     PepRank:
@@ -13229,7 +13229,7 @@ components:
         name:
           type: string
         entityType:
-          type: string
+          $ref: '#/components/schemas/SanctionsEntityType'
         matchTypes:
           type: array
           items:
@@ -13813,6 +13813,13 @@ components:
         - screening_type_match
         - is_active_pep
         - is_active_sanctioned
+    SanctionsEntityType:
+      title: SanctionsEntityType
+      type: string
+      enum:
+        - PERSON
+        - BUSINESS
+        - BANK
     UsersUniquesField:
       title: UsersUniquesField
       type: string
@@ -16007,6 +16014,10 @@ components:
               provider:
                 $ref: '#/components/schemas/SanctionsDataProviderName'
               screeningTypes:
+                type: array
+                items:
+                  type: string
+              entityTypes:
                 type: array
                 items:
                   type: string

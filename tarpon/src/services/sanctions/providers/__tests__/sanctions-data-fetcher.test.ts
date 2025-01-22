@@ -36,7 +36,7 @@ class TestSanctionsDataFetcher extends SanctionsDataFetcher {
       data: [
         {
           id: '4',
-          entityType: 'person',
+          entityType: 'PERSON',
           name: 'John Doe',
           countryCodes: ['US'],
           yearOfBirth: '1980',
@@ -68,14 +68,14 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     await sanctionsCollection.insertMany([
       {
         id: '1',
-        entityType: 'person',
+        entityType: 'PERSON',
         name: 'John Doe',
         countryCodes: ['US'],
         yearOfBirth: '1980',
       },
       {
         id: '1',
-        entityType: 'person',
+        entityType: 'PERSON',
         name: 'Jane Smith',
         countryCodes: ['GB'],
         yearOfBirth: '1985',
@@ -94,7 +94,7 @@ describe('SanctionsDataFetcher Integration Tests', () => {
     await searchCollection.insertOne({
       providerSearchId,
       hitsCount: 1,
-      data: [{ id: '30', entityType: 'person', name: 'Jane Smith' }],
+      data: [{ id: '30', entityType: 'PERSON', name: 'Jane Smith' }],
       createdAt: new Date().getTime(),
       monitor: false,
     })

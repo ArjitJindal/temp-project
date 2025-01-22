@@ -50,7 +50,7 @@ describe('DowJonesProvider', () => {
             id: '11756174',
             name: 'Priyavrat Bhartia',
             sanctionSearchTypes: [], // RCAs are not sanctions
-            entityType: 'Person',
+            entityType: 'PERSON',
             gender: 'Male',
             aka: [],
             countries: ['India'],
@@ -128,7 +128,7 @@ Jubilant Pharmova Ltd.`,
           {
             id: '10183',
             name: 'Ange-Félix Patassé',
-            entityType: 'Person',
+            entityType: 'PERSON',
             nationality: ['CF'],
             sanctionSearchTypes: ['ADVERSE_MEDIA'], // only sanctions list mapped person in sanction
             gender: 'Male',
@@ -334,7 +334,7 @@ Patasse passed away on April 5, 2011.`,
           {
             id: '10184',
             name: 'Martin Ziguélé',
-            entityType: 'Person',
+            entityType: 'PERSON',
             gender: 'Male',
             documents: [],
             nationality: ['CF'],
@@ -586,7 +586,7 @@ const HIT_WITH_NO_AKA: SanctionsEntity = {
   updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
   types: ['adverse-media'],
   name: 'Vladimir Putiin',
-  entityType: 'person',
+  entityType: 'PERSON',
   yearOfBirth: '1952',
   sanctionsSources: [
     {
@@ -602,7 +602,7 @@ const HIT_WITH_DUPLICATED_AKA: SanctionsEntity = {
   types: ['adverse-media'],
   name: 'Vladimir Putiin',
   aka: ['Vladimir Vladimirovich Putiin'],
-  entityType: 'person',
+  entityType: 'PERSON',
   yearOfBirth: '1952',
   sanctionsSources: [
     {
@@ -617,7 +617,7 @@ const HIT_WITH_AKA: SanctionsEntity = {
   updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
   types: ['adverse-media'],
   name: 'Vladimir Putiin',
-  entityType: 'person',
+  entityType: 'PERSON',
   aka: ['Vova Pupa'],
   yearOfBirth: '1952',
   sanctionsSources: [

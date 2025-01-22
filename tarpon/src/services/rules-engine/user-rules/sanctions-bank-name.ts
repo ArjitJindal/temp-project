@@ -8,10 +8,12 @@ import {
   SANCTIONS_SCREENING_TYPES_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
+import { getEntityTypeForSearch } from '../utils/rule-utils'
 import { UserRule } from './rule'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 import { User } from '@/@types/openapi-public/User'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 const caConcurrencyLimit = pLimit(10)
 
@@ -68,6 +70,8 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
       })
       .filter(Boolean) as BankInfo[]
 
+    const provider = getDefaultProvider()
+
     const bankInfosToCheck = uniqBy(
       bankInfos.filter((bankInfo) => bankInfo.bankName),
       (bankInfo) => JSON.stringify(bankInfo)
@@ -96,6 +100,7 @@ export default class SanctionsBankUserRule extends UserRule<SanctionsBankUserRul
                 types: screeningTypes,
                 fuzziness: fuzziness / 100,
                 monitoring: { enabled: ongoingScreening },
+                ...getEntityTypeForSearch(provider, 'BANK'),
               },
               hitContext
             )

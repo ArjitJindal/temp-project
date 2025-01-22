@@ -6,6 +6,7 @@ import {
   TRANSACTION_AMOUNT_THRESHOLDS_OPTIONAL_SCHEMA,
 } from '../utils/rule-parameter-schemas'
 import { RuleHitResult } from '../rule'
+import { getEntityTypeForSearch } from '../utils/rule-utils'
 import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
@@ -17,6 +18,7 @@ import { notNullish } from '@/utils/array'
 import { User } from '@/@types/openapi-public/User'
 import { Business } from '@/@types/openapi-public/Business'
 import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
+import { getDefaultProvider } from '@/services/sanctions/utils'
 
 export type PaymentDetailsScreeningRuleParameters = {
   transactionAmountThreshold?: {
@@ -52,6 +54,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
       name: string
       entityType: SanctionsDetailsEntityType
     }> = []
+    const provider = getDefaultProvider()
     switch (paymentDetails.method) {
       case 'CARD':
         {
@@ -119,6 +122,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
               monitoring: {
                 enabled: false,
               },
+              ...getEntityTypeForSearch(provider, 'PERSON'),
             },
             hitContext
           )

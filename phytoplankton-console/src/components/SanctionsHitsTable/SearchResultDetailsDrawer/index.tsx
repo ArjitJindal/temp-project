@@ -299,13 +299,18 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
-            <Form.Layout.Label key={entity.yearOfBirth} title={'Year of Birth'}>
+            <Form.Layout.Label
+              key={entity.yearOfBirth}
+              title={entity.entityType === 'PERSON' ? 'Year of Birth' : 'Year of Incorporation'}
+            >
               {entity.yearOfBirth ?? '-'}
             </Form.Layout.Label>
           )}
           {(entity.dateOfBirths?.length ?? 0) > 0 &&
             difference(entity.dateOfBirths, [entity.yearOfBirth]).length > 0 && (
-              <Form.Layout.Label title={'Date of birth'}>
+              <Form.Layout.Label
+                title={entity.entityType === 'PERSON' ? 'Date of birth' : 'Date of incorporation'}
+              >
                 {entity.dateOfBirths?.join(', ')}
               </Form.Layout.Label>
             )}
@@ -323,7 +328,10 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {entity.nationality && entity.nationality.length > 0 && (
-            <Form.Layout.Label key={entity.nationality?.join(',')} title={'Nationality'}>
+            <Form.Layout.Label
+              key={entity.nationality?.join(',')}
+              title={entity.entityType === 'PERSON' ? 'Nationality' : 'Country of incorporation'}
+            >
               {compact(entity.nationality)
                 ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
                 .join(', ')}
@@ -473,7 +481,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {entity.documents && entity.documents.length > 0 && (
-            <Form.Layout.Label title={'Documents'}>
+            <Form.Layout.Label title={entity.entityType === 'PERSON' ? 'Documents' : 'Identifiers'}>
               {
                 <div className={s.tags}>
                   {entity.documents
@@ -541,11 +549,12 @@ function makeStubAiText(hit: SanctionsHit): string {
     ].includes(x),
   );
   const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
-  if (hasNameMatches && hasDateMatches) {
+  const shouldShowDateMatch = hasDateMatches || hit.entity.entityType === 'PERSON';
+  if (hasNameMatches && shouldShowDateMatch) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {
     return 'Name matches and hit requires human review';
-  } else if (hasDateMatches) {
+  } else if (shouldShowDateMatch) {
     return 'Date of birth match and hit requires human review';
   }
   return 'Hit requires human review';

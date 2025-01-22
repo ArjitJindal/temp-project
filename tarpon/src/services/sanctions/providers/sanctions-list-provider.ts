@@ -102,7 +102,7 @@ export class SanctionsListProvider implements SanctionsDataProvider {
     })
     const filteredResults = matchingItems.map((i): SanctionsEntity => {
       return {
-        entityType: 'Person',
+        entityType: 'PERSON',
         id: i.key,
         name: i.key,
       }

@@ -1,3 +1,4 @@
+import { getNameMatches, getSecondaryMatches } from './utils'
 import {
   SanctionsDataProvider,
   SanctionsProviderResponse,
@@ -16,6 +17,7 @@ import { SanctionsProviderSearchRepository } from '@/services/sanctions/reposito
 import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
 import { SanctionsMatchType } from '@/@types/openapi-internal/SanctionsMatchType'
 import { traceable } from '@/core/xray'
+import { SanctionsMatchTypeDetails } from '@/@types/openapi-internal/SanctionsMatchTypeDetails'
 
 @traceable
 export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
@@ -812,14 +814,27 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   async search(
     request: SanctionsSearchRequest
   ): Promise<SanctionsProviderResponse> {
+    let result: SanctionsProviderResponse
     if (
       !request.manualSearch &&
       (request.fuzzinessRange?.upperBound === 100 ||
         (request.fuzziness ?? 0) * 100 === 100)
     ) {
-      return this.searchWithoutMatchingNames(request)
+      result = await this.searchWithoutMatchingNames(request)
+    } else {
+      result = await this.searchWithMatchingNames(request)
     }
-    return this.searchWithMatchingNames(request)
+    return {
+      ...result,
+      data: result.data?.map(
+        (entity: SanctionsEntity): SanctionsEntity => ({
+          ...entity,
+          matchTypeDetails: [
+            SanctionsDataFetcher.deriveMatchingDetails(request, entity),
+          ],
+        })
+      ),
+    }
   }
 
   provider(): SanctionsDataProviderName {
@@ -841,5 +856,24 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     monitor: boolean
   ): Promise<void> {
     await this.searchRepository.setMonitoring(providerSearchId, monitor)
+  }
+
+  public static deriveMatchingDetails(
+    searchRequest: SanctionsSearchRequest,
+    entity: SanctionsEntity
+  ): SanctionsMatchTypeDetails {
+    // Calculate name matches
+    const nameMatches = getNameMatches(entity, searchRequest)
+
+    // Calculate year matches
+    const secondaryMatches = getSecondaryMatches(entity, searchRequest)
+
+    return {
+      amlTypes: [],
+      matchingName: entity.name,
+      nameMatches: nameMatches,
+      secondaryMatches: secondaryMatches,
+      sources: [],
+    }
   }
 }

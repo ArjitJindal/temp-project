@@ -129,7 +129,7 @@ export default class GenericSanctionsConsumerUserRule extends UserRule<GenericSa
             }
           : {}),
         orFilters: ['yearOfBirth', 'gender', 'nationality'],
-        entityType: 'Person',
+        entityType: 'PERSON',
         isActivePep: Boolean(
           screeningTypes?.includes('PEP') && this.parameters.isActive
         ),

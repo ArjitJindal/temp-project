@@ -3,6 +3,8 @@ import { mergeRulesForPNB } from '../pnb-custom-logic'
 import { Tag } from '@/@types/openapi-public/Tag'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
 import { hasFeature } from '@/core/utils/context'
+import { SanctionsDataProviderName } from '@/@types/openapi-internal/SanctionsDataProviderName'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 
 export const tagsRuleFilter = (
   incomingTags: Tag[] | UserTag[] | undefined,
@@ -42,4 +44,16 @@ export function mergeRules<T extends { ruleInstanceId: string }>(
     (newRulesResults ?? []).concat(existingRulesResult ?? []),
     (r) => r.ruleInstanceId
   )
+}
+
+export function getEntityTypeForSearch(
+  provider: SanctionsDataProviderName,
+  entity: SanctionsEntityType
+) {
+  if (provider === 'comply-advantage') {
+    return {}
+  }
+  return {
+    entityType: entity,
+  }
 }

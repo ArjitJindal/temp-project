@@ -1,5 +1,6 @@
 import { compact, concat, startCase, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
+import { shouldLoadScreeningData } from './utils'
 import {
   Action,
   SanctionsRepository,
@@ -14,15 +15,26 @@ import { OpenSanctionsSearchType } from '@/@types/openapi-internal/OpenSanctions
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/OpenSanctionsSearchType'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 type OpenSanctionsLine = {
   op: string
   entity: OpenSanctionsPersonEntity
 }
 
-type OpenSanctionsPersonEntity = {
+interface OpenSanctionsEntity {
   id: string
   caption?: string
   schema?: string
+  referents?: string[]
+  datasets?: string[]
+  first_seen?: string
+  last_seen?: string
+  last_change?: string
+  target?: boolean
+}
+
+type OpenSanctionsPersonEntity = OpenSanctionsEntity & {
   properties: {
     name?: string[]
     summary?: string[]
@@ -60,17 +72,62 @@ type OpenSanctionsPersonEntity = {
     idNumber?: string[]
     innCode?: string[]
   }
-  referents?: string[]
-  datasets?: string[]
-  first_seen?: string
-  last_seen?: string
-  last_change?: string
-  target?: boolean
+}
+
+type OpenSanctionsOrgProperties = {
+  name?: string[]
+  summary?: string[]
+  description?: string[]
+  country?: string[]
+  alias?: string[]
+  previousName?: string[]
+  weakAlias?: string[]
+  sourceUrl?: string[]
+  publisher?: string[]
+  keywords?: string[]
+  title?: string[]
+  topics?: string[]
+  notes?: string[]
+  createdAt?: string[]
+  modifiedAt?: string[]
+  email?: string[]
+  phone?: string[]
+  legalForm?: string[]
+  incorporationDate?: string[]
+  status?: string[]
+  sector?: string[]
+  classification?: string[]
+  swiftBic?: string[]
+  registrationNumber?: string[]
+  idNumber?: string[]
+  innCode?: string[]
+  vatCode?: string[]
+  jurisdiction?: string[]
+  mainCountry?: string[]
+  icijId?: string[]
+  okpoCode?: string[]
+  ogrnCode?: string[]
+  leiCode?: string[]
+  dunsCode?: string[]
+  uniqueEntityId?: string[]
+  npiCode?: string[]
+  cageCode?: string[]
+  permId?: string[]
+  imoNumber?: string[]
+  giiNumber?: string[]
+  kppCode?: string[]
+  bikCode?: string[]
+  ricCode?: string[]
+}
+
+type OpenSanctionsOrganizationEntity = OpenSanctionsEntity & {
+  properties: OpenSanctionsOrgProperties
 }
 
 @traceable
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
+  private entityTypes: SanctionsEntityType[]
   static async build(tenantId: string) {
     const tenantRepository = new TenantRepository(tenantId, {
       dynamoDb: getDynamoDbClient(),
@@ -79,28 +136,33 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
       'sanctions',
     ])
     let types: OpenSanctionsSearchType[] | undefined
-    if (
-      sanctions?.providerScreeningTypes?.find(
-        (type) => type.provider === 'open-sanctions'
-      )
-    ) {
-      types = sanctions.providerScreeningTypes.find(
-        (type) => type.provider === 'open-sanctions'
-      )?.screeningTypes as OpenSanctionsSearchType[]
+    let entityTypes: SanctionsEntityType[] | undefined
+    const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
+      (type) => type.provider === 'open-sanctions'
+    )
+    if (openSanctionSettings) {
+      types = openSanctionSettings.screeningTypes as OpenSanctionsSearchType[]
+      entityTypes = openSanctionSettings.entityTypes as SanctionsEntityType[]
     }
     return new OpenSanctionsProvider(
       tenantId,
-      types ?? OPEN_SANCTIONS_SEARCH_TYPES
+      types ?? OPEN_SANCTIONS_SEARCH_TYPES,
+      entityTypes ?? SANCTIONS_ENTITY_TYPES
     )
   }
 
-  constructor(tenantId: string, types: OpenSanctionsSearchType[]) {
+  constructor(
+    tenantId: string,
+    types: OpenSanctionsSearchType[],
+    entityTypes: SanctionsEntityType[]
+  ) {
     super('open-sanctions', tenantId)
     this.types = types
+    this.entityTypes = entityTypes
   }
 
   async fullLoad(repo: SanctionsRepository, version: string) {
-    if (!this.types.length) {
+    if (!shouldLoadScreeningData(this.types, this.entityTypes)) {
       return
     }
     return this.processUrl(
@@ -111,7 +173,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
   }
 
   async delta(repo: SanctionsRepository, version: string, from: Date) {
-    if (!this.types.length) {
+    if (!shouldLoadScreeningData(this.types, this.entityTypes)) {
       return
     }
     const metadata = await fetch(
@@ -217,41 +279,12 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     }
   }
 
-  transformInput(
-    entity: OpenSanctionsPersonEntity
+  private transformPersonEntity(
+    entity: OpenSanctionsPersonEntity,
+    sanctionSearchTypes: OpenSanctionsSearchType[]
   ): SanctionsEntity | undefined {
     const properties = entity.properties
-    const sanctionSearchTypes = uniq(
-      compact(
-        properties.topics?.map((topic) => {
-          switch (topic) {
-            case 'crime':
-            case 'crime.fraud':
-            case 'crime.cyber':
-            case 'crime.fin':
-            case 'crime.env':
-            case 'crime.theft':
-            case 'crime.war':
-            case 'crime.boss':
-            case 'crime.terror':
-            case 'crime.traffick':
-            case 'crime.traffick.drug':
-            case 'crime.traffick.human':
-              return 'CRIME'
-            case 'role.pep':
-            case 'role.rca':
-              return 'PEP'
-            case 'sanction':
-            case 'sanction.linked':
-            case 'sanction.counter':
-              return 'SANCTIONS'
-            case 'poi':
-              return 'PROFILE_OF_INTEREST'
-          }
-        })
-      ).filter((type) => this.types.includes(type))
-    )
-    if (entity.schema !== 'Person' || sanctionSearchTypes.length === 0) {
+    if (!this.entityTypes.includes('PERSON')) {
       return undefined
     }
     return {
@@ -271,7 +304,7 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         entity.referents || [],
         sanctionSearchTypes
       ),
-      entityType: entity.schema || '',
+      entityType: 'PERSON',
       freetext: properties.notes?.join('\n') || '',
       gender: properties.gender?.[0]
         ? startCase(properties.gender[0])
@@ -351,6 +384,133 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     }
   }
 
+  private transformOrganizationEntity(
+    entity: OpenSanctionsOrganizationEntity,
+    sanctionSearchTypes: OpenSanctionsSearchType[]
+  ): SanctionsEntity | undefined {
+    const properties = entity.properties
+    const schema =
+      entity.properties?.topics?.find((topic) => topic === 'fin.bank') ||
+      entity.properties.swiftBic?.length
+        ? 'BANK'
+        : 'BUSINESS'
+    if (!this.entityTypes.includes(schema)) {
+      return undefined
+    }
+    return {
+      id: entity.id,
+      name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
+      entityType: schema,
+      aka: compact(
+        uniq(
+          concat(properties.alias || [], properties.name || []).map((n) =>
+            n.toLowerCase()
+          )
+        ).map((n) => startCase(n))
+      ),
+      sanctionSearchTypes,
+      types: concat(
+        entity.datasets || [],
+        entity.referents || [],
+        sanctionSearchTypes
+      ),
+      freetext: properties.notes?.join('\n') || '',
+      sanctionsSources: properties.sourceUrl?.map((source) => ({
+        url: source,
+        name: source,
+      })),
+      yearOfBirth: properties.incorporationDate?.[0]
+        ? dayjs(properties.incorporationDate[0]).year().toString()
+        : undefined,
+      dateOfBirths: properties.incorporationDate,
+      documents: [
+        ...this.getDocuments(properties.swiftBic, 'SWIFT BIC'),
+        ...this.getDocuments(
+          properties.registrationNumber,
+          'Registration Number'
+        ),
+        ...this.getDocuments(properties.okpoCode, 'OKPO Code'),
+        ...this.getDocuments(properties.cageCode, 'CAGE Code'),
+        ...this.getDocuments(properties.permId, 'Perm ID'),
+        ...this.getDocuments(properties.imoNumber, 'IMO Number'),
+        ...this.getDocuments(properties.giiNumber, 'GII Number'),
+        ...this.getDocuments(properties.kppCode, 'KPP Code'),
+        ...this.getDocuments(properties.bikCode, 'BIC Code'),
+        ...this.getDocuments(properties.ricCode, 'RIC Code'),
+        ...this.getDocuments(properties.uniqueEntityId, 'Unique Entity ID'),
+        ...this.getDocuments(properties.npiCode, 'NPI Code'),
+        ...this.getDocuments(properties.vatCode, 'VAT Code'),
+        ...this.getDocuments(properties.icijId, 'ICIJ ID'),
+        ...this.getDocuments(properties.ogrnCode, 'OGRN Code'),
+        ...this.getDocuments(properties.okpoCode, 'OKPO Code'),
+        ...this.getDocuments(properties.innCode, 'INN Code'),
+        ...this.getDocuments(properties.idNumber, 'ID Number'),
+      ],
+      countries: compact(
+        uniq(
+          concat(
+            properties.country || [],
+            properties.mainCountry || [],
+            properties.jurisdiction || []
+          )
+        ).map((country) => COUNTRIES[country.toUpperCase() as CountryCode])
+      ),
+      nationality: (properties.mainCountry ?? ['ZZ']) as CountryCode[],
+    }
+  }
+
+  transformInput(
+    entity: OpenSanctionsPersonEntity
+  ): SanctionsEntity | undefined {
+    const properties = entity.properties
+    const sanctionSearchTypes = uniq(
+      compact(
+        properties.topics?.map((topic) => {
+          switch (topic) {
+            case 'crime':
+            case 'crime.fraud':
+            case 'crime.cyber':
+            case 'crime.fin':
+            case 'crime.env':
+            case 'crime.theft':
+            case 'crime.war':
+            case 'crime.boss':
+            case 'crime.terror':
+            case 'crime.traffick':
+            case 'crime.traffick.drug':
+            case 'crime.traffick.human':
+              return 'CRIME'
+            case 'role.pep':
+            case 'role.rca':
+              return 'PEP'
+            case 'sanction':
+            case 'sanction.linked':
+            case 'sanction.counter':
+              return 'SANCTIONS'
+            case 'poi':
+              return 'PROFILE_OF_INTEREST'
+          }
+        })
+      ).filter((type) => this.types.includes(type))
+    )
+    if (sanctionSearchTypes.length === 0) {
+      return undefined
+    }
+    if (entity.schema === 'Person') {
+      return this.transformPersonEntity(entity, sanctionSearchTypes)
+    } else if (
+      entity.schema === 'Organization' ||
+      entity.schema === 'Company' ||
+      entity.schema === 'LegalEntity'
+    ) {
+      return this.transformOrganizationEntity(
+        entity as OpenSanctionsOrganizationEntity,
+        sanctionSearchTypes
+      )
+    }
+    return undefined
+  }
+
   private async streamResponseLines(
     url: string,
     processLine: (line: string) => Promise<void>
@@ -389,5 +549,14 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     if (buffer) {
       await processLine(buffer)
     }
+  }
+  private getDocuments(ids: string[] | undefined, name: string) {
+    return compact(ids).map((o) => {
+      return {
+        id: o,
+        formattedId: o.replace('-', ''),
+        name: name,
+      }
+    })
   }
 }

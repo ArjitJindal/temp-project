@@ -188,11 +188,6 @@ export const sanctionsSearchHit = (
 ): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
   const rng = new RandomNumberGenerator(seed)
 
-  const entityType =
-    entity === 'USER' || entity === 'EXTERNAL_USER'
-      ? 'individual'
-      : 'organisation'
-
   const id = uuid4()
   const selectedCountryCodes = rng.randomSubsetOfSize(
     COUNTRY_CODES,
@@ -244,7 +239,7 @@ export const sanctionsSearchHit = (
   const sanctionsEntity: SanctionsEntity = {
     id: rng.r(7).randomNumber().toString(36).substring(2, 8).toUpperCase(),
     name,
-    entityType,
+    entityType: 'PERSON',
     matchTypes,
     sanctionsSources,
     mediaSources,
@@ -286,7 +281,7 @@ export const sanctionsSearchHit = (
         pepSources.length > 0 && 'pep',
       ]),
       name,
-      entityType,
+      entityType: 'PERSON',
       matchTypes,
       sanctionsSources,
       mediaSources,

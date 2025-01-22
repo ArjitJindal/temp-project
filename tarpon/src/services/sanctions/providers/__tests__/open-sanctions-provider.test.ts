@@ -9,7 +9,8 @@ describe('OpenSanctionsProvider', () => {
     const tenantId = getTestTenantId()
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
-      OPEN_SANCTIONS_SEARCH_TYPES
+      OPEN_SANCTIONS_SEARCH_TYPES,
+      ['PERSON']
     )
     // Mock input JSON
     const mockJson = {
@@ -59,7 +60,8 @@ describe('OpenSanctionsProvider', () => {
     }
     const openSanctionsProvider = new OpenSanctionsProvider(
       'test',
-      OPEN_SANCTIONS_SEARCH_TYPES
+      OPEN_SANCTIONS_SEARCH_TYPES,
+      ['PERSON']
     )
 
     const result = openSanctionsProvider.transformInput(mockEntity)
@@ -70,7 +72,7 @@ describe('OpenSanctionsProvider', () => {
       countries: ['United States of America'],
       countryCodes: ['US'],
       documents: [],
-      entityType: 'Person',
+      entityType: 'PERSON',
       freetext: 'Note 1\nNote 2',
       gender: 'Male',
       matchTypes: [],
@@ -95,7 +97,8 @@ describe('OpenSanctionsProvider', () => {
     const tenantId = getTestTenantId()
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
-      OPEN_SANCTIONS_SEARCH_TYPES
+      OPEN_SANCTIONS_SEARCH_TYPES,
+      ['PERSON']
     )
     const repo = new MongoSanctionsRepository(
       DELTA_SANCTIONS_COLLECTION(tenantId)
@@ -106,7 +109,8 @@ describe('OpenSanctionsProvider', () => {
     const tenantId = getTestTenantId()
     const openSanctionsProvider = new OpenSanctionsProvider(
       tenantId,
-      OPEN_SANCTIONS_SEARCH_TYPES
+      OPEN_SANCTIONS_SEARCH_TYPES,
+      ['PERSON']
     )
     const repo = new MongoSanctionsRepository(
       DELTA_SANCTIONS_COLLECTION(tenantId)

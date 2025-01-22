@@ -2,6 +2,7 @@ import { Readable } from 'stream'
 import { createInterface } from 'readline'
 import { capitalize, compact, concat, intersection } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
+import { shouldLoadScreeningData } from './utils'
 import {
   Action,
   SanctionsRepository,
@@ -18,6 +19,8 @@ import { AcurisSanctionsSearchType } from '@/@types/openapi-internal/AcurisSanct
 import { getSecretByName } from '@/utils/secrets-manager'
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/AcurisSanctionsSearchType'
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
+import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
+import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 
 const EXTERNAL_TO_INTERNAL_TYPES: Record<string, AcurisSanctionsSearchType> = {
   'PEP-CURRENT': 'PEP',
@@ -251,6 +254,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
   private apiKey: string
   private uri: string = 'https://api.acuris.com/compliance-datafeed'
   private screeningTypes: AcurisSanctionsSearchType[]
+  private entityTypes: SanctionsEntityType[]
   static async build(tenantId: string) {
     const tenantRepository = new TenantRepository(tenantId, {
       dynamoDb: getDynamoDbClient(),
@@ -259,14 +263,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
       'sanctions',
     ])
     let types: AcurisSanctionsSearchType[] | undefined
-    if (
-      sanctions?.providerScreeningTypes?.find(
-        (type) => type.provider === 'acuris'
-      )
-    ) {
-      types = sanctions.providerScreeningTypes.find(
-        (type) => type.provider === 'acuris'
-      )?.screeningTypes as AcurisSanctionsSearchType[]
+    let entityTypes: SanctionsEntityType[] | undefined
+    const acurisSettings = sanctions?.providerScreeningTypes?.find(
+      (type) => type.provider === 'acuris'
+    )
+    if (acurisSettings) {
+      types = acurisSettings?.screeningTypes as AcurisSanctionsSearchType[]
+      entityTypes = acurisSettings?.entityTypes as SanctionsEntityType[]
     }
     const apiKey = (await getSecretByName('acuris'))?.apiKey
     if (!apiKey) {
@@ -275,28 +278,28 @@ export class AcurisProvider extends SanctionsDataFetcher {
     return new AcurisProvider(
       tenantId,
       apiKey,
-      types ?? ACURIS_SANCTIONS_SEARCH_TYPES
+      types ?? ACURIS_SANCTIONS_SEARCH_TYPES,
+      entityTypes ?? SANCTIONS_ENTITY_TYPES
     )
   }
 
   constructor(
     tenantId: string,
     apiKey: string,
-    screeningTypes: AcurisSanctionsSearchType[]
+    screeningTypes: AcurisSanctionsSearchType[],
+    entityTypes: SanctionsEntityType[]
   ) {
     super('acuris', tenantId)
     this.apiKey = apiKey
     this.screeningTypes = screeningTypes
+    this.entityTypes = entityTypes
   }
 
   async fullLoad(repo: SanctionsRepository, version: string) {
-    if (this.screeningTypes.length === 0) {
+    if (!shouldLoadScreeningData(this.screeningTypes, this.entityTypes)) {
       return
     }
-    const types = [
-      'individuals',
-      // , 'businesses' // TODO: Add back in when we have requirement of business data
-    ]
+    const types = this.getEntityTypesToLoad()
     for (const type of types) {
       const response = await fetch(`${this.uri}/${type}/full-extract`, {
         headers: {
@@ -326,12 +329,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
       for await (const line of rl) {
         const entity = JSON.parse(line)
         if (type === 'individuals') {
-          const e = this.processIndividualEntity(entity, 'Person')
+          const e = this.processIndividualEntity(entity, 'PERSON')
           if (e) {
             entities.push([entity.isDeleted ? 'del' : 'add', e])
           }
         } else if (type === 'businesses') {
-          const e = this.processBusinessEntity(entity, 'Business')
+          const e = this.processBusinessEntity(entity, 'BUSINESS')
           if (e) {
             entities.push([entity.isDeleted ? 'del' : 'add', e])
           }
@@ -349,14 +352,18 @@ export class AcurisProvider extends SanctionsDataFetcher {
     }
   }
 
+  private getEntityTypesToLoad() {
+    return [
+      ...(this.entityTypes.includes('PERSON') ? ['individuals'] : []),
+      ...(this.entityTypes.includes('BUSINESS') ? ['businesses'] : []),
+    ]
+  }
+
   async delta(repo: SanctionsRepository, version: string, from: Date) {
-    if (this.screeningTypes.length === 0) {
+    if (!shouldLoadScreeningData(this.screeningTypes, this.entityTypes)) {
       return
     }
-    const types = [
-      'individuals',
-      // 'businesses' // TODO: Add back in when we have requirement of business data
-    ]
+    const types = this.getEntityTypesToLoad()
     for (const type of types) {
       const response = await fetch(
         `${this.uri}/${type}/delta?timestamp=${from.getTime()}`,
@@ -371,12 +378,12 @@ export class AcurisProvider extends SanctionsDataFetcher {
       let entities: [Action, SanctionsEntity][] = []
       for (const entity of data.profiles) {
         if (type === 'individuals') {
-          const e = this.processIndividualEntity(entity, 'Person')
+          const e = this.processIndividualEntity(entity, 'PERSON')
           if (e) {
             entities.push([entity.isDeleted ? 'del' : 'add', e])
           }
         } else if (type === 'businesses') {
-          const e = this.processBusinessEntity(entity, 'Business')
+          const e = this.processBusinessEntity(entity, 'BUSINESS')
           if (e) {
             entities.push([entity.isDeleted ? 'del' : 'add', e])
           }
@@ -393,14 +400,28 @@ export class AcurisProvider extends SanctionsDataFetcher {
     }
   }
 
+  private getOccupations(occupations: PepEntry[], pepTier: string) {
+    return occupations?.map((entry) => ({
+      title: entry.position,
+      rank: PEP_TIERS[pepTier],
+      country: entry.countryIsoCode as CountryCode,
+      dateFrom: entry.dateFromIso,
+      dateTo: entry.dateToIso,
+    }))
+  }
+
+  private hasScreeningType(type: AcurisSanctionsSearchType) {
+    return this.screeningTypes.includes(type)
+  }
+
   private processIndividualEntity(
     entity: AcurisIndividualEntity,
-    entityType: string
+    entityType: SanctionsEntityType
   ): SanctionsEntity | undefined {
     const pepTier = entity.pepEntries.pepTier
     const sanctionSearchTypes = entity.datasets
       .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-      .filter((type) => this.screeningTypes.includes(type))
+      .filter((type) => this.hasScreeningType(type))
     if (!intersection(sanctionSearchTypes, this.screeningTypes).length) {
       return
     }
@@ -412,7 +433,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       types: concat(
         entity.datasets
           .filter((dataset) =>
-            this.screeningTypes.includes(EXTERNAL_TO_INTERNAL_TYPES[dataset])
+            this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
           )
           .map((dataset) => ACURIS_TYPES[dataset]),
         sanctionSearchTypes
@@ -427,33 +448,21 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       nationality: entity.nationalitiesIsoCodes as CountryCode[],
       occupations: [
-        ...(entity?.pepEntries?.current?.map((entry) => ({
-          title: entry.position,
-          rank: PEP_TIERS[pepTier],
-          country: entry.countryIsoCode as CountryCode,
-          dateFrom: entry.dateFromIso,
-          dateTo: entry.dateToIso,
-        })) ?? []),
-        ...(entity?.pepEntries?.former?.map((entry) => ({
-          title: entry.position,
-          rank: PEP_TIERS[pepTier],
-          country: entry.countryIsoCode as CountryCode,
-          dateFrom: entry.dateFromIso,
-          dateTo: entry.dateToIso,
-        })) ?? []),
+        ...this.getOccupations(entity.pepEntries.current ?? [], pepTier),
+        ...this.getOccupations(entity.pepEntries.former ?? [], pepTier),
       ],
       yearOfBirth: entity.datesOfBirthIso?.length
         ? String(entity.datesOfBirthIso.map((date) => dayjs(date).year())[0])
         : undefined,
       dateOfBirths: entity.datesOfBirthIso,
       isDeseased: entity.isDeseased,
-      isActiveSanctioned: this.screeningTypes.includes('SANCTIONS')
+      isActiveSanctioned: this.hasScreeningType('SANCTIONS')
         ? Boolean(entity.sanEntries.current.length)
         : undefined,
-      isActivePep: this.screeningTypes.includes('PEP')
+      isActivePep: this.hasScreeningType('PEP')
         ? Boolean(entity.pepEntries.current.length)
         : undefined,
-      sanctionsSources: this.screeningTypes.includes('SANCTIONS')
+      sanctionsSources: this.hasScreeningType('SANCTIONS')
         ? entity.evidences
             .filter(
               ({ evidenceId }) =>
@@ -465,7 +474,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             )
             .map((evidence) => this.getOtherSources(evidence))
         : [],
-      pepSources: this.screeningTypes.includes('PEP')
+      pepSources: this.hasScreeningType('PEP')
         ? entity.evidences
             .filter(
               ({ evidenceId }) =>
@@ -480,9 +489,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
         association: link.relationship,
         sanctionsSearchTypes: link.datasets
           .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-          .filter((type) => this.screeningTypes.includes(type)),
+          .filter((type) => this.hasScreeningType(type)),
       })),
-      mediaSources: this.screeningTypes.includes('ADVERSE_MEDIA')
+      mediaSources: this.hasScreeningType('ADVERSE_MEDIA')
         ? entity.evidences
             .filter(({ evidenceId }) =>
               entity.rreEntries.some((rreEntry) =>
@@ -495,7 +504,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
         : [],
       rawResponse: entity,
       otherSources: [
-        ...(this.screeningTypes.includes('PROFILE_OF_INTEREST')
+        ...(this.hasScreeningType('PROFILE_OF_INTEREST')
           ? [
               {
                 type: 'PROFILE_OF_INTEREST',
@@ -509,7 +518,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
               },
             ]
           : []),
-        ...(this.screeningTypes.includes('REGULATORY_ENFORCEMENT_LIST')
+        ...(this.hasScreeningType('REGULATORY_ENFORCEMENT_LIST')
           ? [
               {
                 type: 'REGULATORY_ENFORCEMENT_LIST',
@@ -525,7 +534,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
               },
             ]
           : []),
-        ...(this.screeningTypes.includes('GAMBLING_RISK_INTELLIGENCE')
+        ...(this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
           ? [
               {
                 type: 'GAMBLING_RISK_INTELLIGENCE',
@@ -551,11 +560,11 @@ export class AcurisProvider extends SanctionsDataFetcher {
   }
   private processBusinessEntity(
     entity: AcurisBusinessEntity,
-    entityType: string
+    entityType: SanctionsEntityType
   ): SanctionsEntity | undefined {
     const sanctionSearchTypes = entity.datasets
       .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-      .filter((type) => this.screeningTypes.includes(type))
+      .filter((type) => this.hasScreeningType(type))
     if (!intersection(sanctionSearchTypes, this.screeningTypes).length) {
       return
     }
@@ -566,13 +575,13 @@ export class AcurisProvider extends SanctionsDataFetcher {
       types: concat(
         entity.datasets
           .filter((dataset) =>
-            this.screeningTypes.includes(EXTERNAL_TO_INTERNAL_TYPES[dataset])
+            this.hasScreeningType(EXTERNAL_TO_INTERNAL_TYPES[dataset])
           )
           .map((dataset) => ACURIS_TYPES[dataset]),
         sanctionSearchTypes
       ),
       sanctionSearchTypes,
-      sanctionsSources: this.screeningTypes.includes('SANCTIONS')
+      sanctionsSources: this.hasScreeningType('SANCTIONS')
         ? entity.evidences
             .filter(({ evidenceId }) =>
               entity.sanEntries.current.some((sanEntry) =>
@@ -588,9 +597,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
         association: link.relationship,
         sanctionsSearchTypes: link.datasets
           .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
-          .filter((type) => this.screeningTypes.includes(type)),
+          .filter((type) => this.hasScreeningType(type)),
       })),
-      mediaSources: this.screeningTypes.includes('ADVERSE_MEDIA')
+      mediaSources: this.hasScreeningType('ADVERSE_MEDIA')
         ? entity.evidences
             .filter(({ evidenceId }) =>
               entity.rreEntries.some((rreEntry) =>
@@ -602,7 +611,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             .map((evidence) => this.getMedia(evidence))
         : [],
       otherSources: [
-        ...(this.screeningTypes.includes('PROFILE_OF_INTEREST')
+        ...(this.hasScreeningType('PROFILE_OF_INTEREST')
           ? [
               {
                 type: 'PROFILE_OF_INTEREST',
@@ -616,7 +625,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
               },
             ]
           : []),
-        ...(this.screeningTypes.includes('REGULATORY_ENFORCEMENT_LIST')
+        ...(this.hasScreeningType('REGULATORY_ENFORCEMENT_LIST')
           ? [
               {
                 type: 'REGULATORY_ENFORCEMENT_LIST',
@@ -632,7 +641,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
               },
             ]
           : []),
-        ...(this.screeningTypes.includes('GAMBLING_RISK_INTELLIGENCE')
+        ...(this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
           ? [
               {
                 type: 'GAMBLING_RISK_INTELLIGENCE',
@@ -641,8 +650,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
                     ({ evidenceId }) =>
                       entity.griEntries.some(
                         (griEntry) => griEntry.evidenceId === evidenceId
-                      ) &&
-                      sanctionSearchTypes.includes('GAMBLING_RISK_INTELLIGENCE')
+                      ) && this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
                   )
                   .map((evidence) => this.getOtherSources(evidence)),
               },

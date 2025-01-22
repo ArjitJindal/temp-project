@@ -1,4 +1,5 @@
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
+import { useState } from 'react';
 import s from './styles.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
@@ -12,9 +13,12 @@ import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
 import { useHasPermissions } from '@/utils/user-utils';
-import SelectionGroup from '@/components/library/SelectionGroup';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
+import Select from '@/components/library/Select';
+import Label from '@/components/ui/Form/Layout/Label';
+import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
+import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
 
 export const SanctionsSettings = () => {
   const permissions = useHasPermissions(['settings:add-ons:read']);
@@ -32,34 +36,39 @@ export const SanctionsSettings = () => {
   const settings = useSettings();
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
-  const handleAcurisTypesChange = (values: string[] | undefined) => {
-    updateTenantSettingsMutation.mutate({
-      sanctions: {
-        ...settings.sanctions,
-        providerScreeningTypes: [
-          ...(settings.sanctions?.providerScreeningTypes?.filter(
-            (type) => type.provider !== 'acuris',
-          ) || []),
-          {
-            provider: 'acuris',
-            screeningTypes: values,
-          },
-        ],
-      },
-    });
+  const getSettings = (
+    provider: 'acuris' | 'open-sanctions',
+    defaultScreeningTypes,
+    defaultEntityTypes,
+  ) => {
+    return {
+      provider,
+      screeningTypes:
+        settings.sanctions?.providerScreeningTypes?.find((type) => type.provider === provider)
+          ?.screeningTypes || defaultScreeningTypes,
+      entityTypes:
+        settings.sanctions?.providerScreeningTypes?.find((type) => type.provider === provider)
+          ?.entityTypes || defaultEntityTypes,
+    };
   };
-  const handleOpenSanctionsTypesChange = (values: string[] | undefined) => {
+  const [acurisScreeningTypes, setAcurisScreeningTypes] =
+    useState<SanctionsSettingsProviderScreeningTypes>(
+      getSettings('acuris', ACURIS_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
+    );
+  const [openSanctionsScreeningTypes, setOpenSanctionsScreeningTypes] =
+    useState<SanctionsSettingsProviderScreeningTypes>(
+      getSettings('open-sanctions', OPEN_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
+    );
+
+  const handleTypesChange = (value: SanctionsSettingsProviderScreeningTypes) => {
     updateTenantSettingsMutation.mutate({
       sanctions: {
         ...settings.sanctions,
         providerScreeningTypes: [
           ...(settings.sanctions?.providerScreeningTypes?.filter(
-            (type) => type.provider !== 'open-sanctions',
+            (type) => type.provider !== value.provider,
           ) || []),
-          {
-            provider: 'open-sanctions',
-            screeningTypes: values,
-          },
+          value,
         ],
       },
     });
@@ -67,46 +76,97 @@ export const SanctionsSettings = () => {
   return (
     <>
       {hasFeatureAcuris && isSanctionsEnabled ? (
-        <SettingsCard
-          title="Screening types for Acuris"
-          description="Select screening types for Acuris."
-        >
-          <SelectionGroup
-            mode="MULTIPLE"
-            options={ACURIS_SANCTIONS_SEARCH_TYPES.map((type) => ({
-              label: humanizeAuto(type),
-              value: type,
-            }))}
-            isDisabled={updateTenantSettingsMutation.isLoading}
-            onChange={handleAcurisTypesChange}
-            value={
-              settings.sanctions?.providerScreeningTypes?.find((type) => type.provider === 'acuris')
-                ?.screeningTypes || ACURIS_SANCTIONS_SEARCH_TYPES
-            }
-          />
+        <SettingsCard title="Acuris settings">
+          <div className={s.sanctionsSettingsRoot}>
+            <Label title="Screening types for Acuris" color="dark">
+              <Select
+                mode="MULTIPLE"
+                options={ACURIS_SANCTIONS_SEARCH_TYPES.map((type) => ({
+                  label: humanizeAuto(type),
+                  value: type,
+                }))}
+                onChange={(values) =>
+                  setAcurisScreeningTypes({
+                    ...acurisScreeningTypes,
+                    screeningTypes: values ?? [],
+                  })
+                }
+                value={acurisScreeningTypes.screeningTypes}
+              />
+            </Label>
+            <Label title="Required entities data" color="dark">
+              <Select
+                mode="MULTIPLE"
+                options={SANCTIONS_ENTITY_TYPES.map((type) => ({
+                  label: humanizeAuto(type),
+                  value: type,
+                }))}
+                onChange={(values) =>
+                  setAcurisScreeningTypes({
+                    ...acurisScreeningTypes,
+                    entityTypes: values ?? [],
+                  })
+                }
+                value={acurisScreeningTypes.entityTypes}
+              />
+            </Label>
+            <Button
+              type="PRIMARY"
+              onClick={() => handleTypesChange(acurisScreeningTypes)}
+              className={s.sanctionsSettingsButton}
+              isDisabled={updateTenantSettingsMutation.isLoading}
+            >
+              Save
+            </Button>
+          </div>
         </SettingsCard>
       ) : (
         <></>
       )}
       {hasFeatureOpenSanctions && isSanctionsEnabled ? (
-        <SettingsCard
-          title="Screening types for Open Sanctions"
-          description="Select screening types for Open Sanctions."
-        >
-          <SelectionGroup
-            mode="MULTIPLE"
-            options={OPEN_SANCTIONS_SEARCH_TYPES.map((type) => ({
-              label: humanizeAuto(type),
-              value: type,
-            }))}
-            onChange={handleOpenSanctionsTypesChange}
-            isDisabled={updateTenantSettingsMutation.isLoading}
-            value={
-              settings.sanctions?.providerScreeningTypes?.find(
-                (type) => type.provider === 'open-sanctions',
-              )?.screeningTypes || OPEN_SANCTIONS_SEARCH_TYPES
-            }
-          />
+        <SettingsCard title="Open Sanctions settings">
+          <div className={s.sanctionsSettingsRoot}>
+            <Label title="Screening types for Open Sanctions" color="dark">
+              <Select
+                mode="MULTIPLE"
+                options={OPEN_SANCTIONS_SEARCH_TYPES.map((type) => ({
+                  label: humanizeAuto(type),
+                  value: type,
+                }))}
+                onChange={(values) =>
+                  setOpenSanctionsScreeningTypes({
+                    ...openSanctionsScreeningTypes,
+                    screeningTypes: values ?? [],
+                  })
+                }
+                value={openSanctionsScreeningTypes.screeningTypes}
+              />
+            </Label>
+            <Label title="Required entities data" color="dark">
+              <Select
+                mode="MULTIPLE"
+                options={SANCTIONS_ENTITY_TYPES.map((type) => ({
+                  label: humanizeAuto(type),
+                  value: type,
+                }))}
+                onChange={(values) =>
+                  setOpenSanctionsScreeningTypes({
+                    ...openSanctionsScreeningTypes,
+                    entityTypes: values ?? [],
+                  })
+                }
+                value={openSanctionsScreeningTypes.entityTypes}
+              />
+            </Label>
+            <Button
+              type="PRIMARY"
+              onClick={() => handleTypesChange(openSanctionsScreeningTypes)}
+              className={s.sanctionsSettingsButton}
+              isDisabled={updateTenantSettingsMutation.isLoading}
+            >
+              Save
+            </Button>
+          </div>
         </SettingsCard>
       ) : (
         <></>

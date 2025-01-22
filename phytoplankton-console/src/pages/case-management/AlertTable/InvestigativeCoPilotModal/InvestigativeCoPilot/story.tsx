@@ -59,7 +59,7 @@ export default function (): JSX.Element {
           updatedAt: 1726500154888,
           types: ['sanction', 'adverse-media', 'pep'],
           name: 'GreenSolutions#500',
-          entityType: 'organisation',
+          entityType: 'BUSINESS',
           sanctionsSources: [
             {
               countryCodes: ['RU'],

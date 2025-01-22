@@ -425,7 +425,7 @@ const SAMPLE_HIT_1: SanctionsEntity = {
   updatedAt: new Date('2024-06-20T10:09:30Z').getTime(),
   types: ['adverse-media'],
   name: 'Vladimir Putiin',
-  entityType: 'person',
+  entityType: 'PERSON',
   aka: ['Vladimir Putin'],
   sanctionsSources: [
     {
@@ -440,7 +440,7 @@ const SAMPLE_HIT_2: SanctionsEntity = {
   updatedAt: new Date('2024-06-21T10:09:30Z').getTime(),
   types: ['adverse-media'],
   name: 'Genadiy Zuganov',
-  entityType: 'person',
+  entityType: 'PERSON',
   aka: ['Genadiy Zuganov'],
   sanctionsSources: [
     {
