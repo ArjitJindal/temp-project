@@ -14872,6 +14872,7 @@ components:
         - countryCode
         - country
         - directSubmission
+        - reportStatuses
       properties:
         id:
           type: string
@@ -14889,6 +14890,14 @@ components:
           $ref: ../public/openapi-public-original.yaml#/components/schemas/CountryCode
         directSubmission:
           type: boolean
+        reportStatuses:
+          oneOf:
+            - type: array
+              items:
+                $ref: '#/components/schemas/FincenReportValidStatus'
+            - type: array
+              items:
+                $ref: '#/components/schemas/NonFincenReportValidStatus'
     ReportSubjectType:
       title: ReportSubjectType
       type: string
@@ -14906,19 +14915,41 @@ components:
           type: string
         createdAt:
           type: number
-    ReportStatus:
+    NonFincenReportValidStatus:
       type: string
-      title: ReportStatus
+      title: NonFincenReportValidStatus
+      description:
+        report status for those jurisdiction that don't support fincen
+        report submission
       enum:
         - COMPLETE
+        - DRAFT
+    FincenReportValidStatus:
+      type: string
+      title: FincenReportValidStatus
+      description:
+        report status for those jurisdiction that support fincen report
+        submission
+      enum:
         - DRAFT
         - SUBMITTING
         - SUBMISSION_ACCEPTED
         - SUBMISSION_REJECTED
         - SUBMISSION_SUCCESSFUL
+    ReportStatus:
+      type: string
+      title: ReportStatus
+      enum:
+        - DRAFT
+        - SUBMITTING
+        - SUBMISSION_ACCEPTED
+        - SUBMISSION_REJECTED
+        - SUBMISSION_SUCCESSFUL
+        - COMPLETE
     FincenReportStatus:
       type: string
       title: FincenReportStatus
+      description: status returned from fincen sftp server
       enum:
         - RECEIVED
         - ACCEPTED

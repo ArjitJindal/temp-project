@@ -3,12 +3,11 @@ import { useState } from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useQueryClient } from '@tanstack/react-query';
 import ReportStatusTag from './ReportStatusTag';
-import { REPORT_STATUSS } from '@/apis/models-custom/ReportStatus';
 import MarkdownEditor from '@/components/markdown/MarkdownEditor';
 import MarkdownViewer from '@/components/markdown/MarkdownViewer';
 import Select from '@/components/library/Select';
 import Modal from '@/components/library/Modal';
-import { Report, ReportStatus } from '@/apis';
+import { FincenReportValidStatus, NonFincenReportValidStatus, Report, ReportStatus } from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { REPORTS_LIST } from '@/utils/queries/keys';
@@ -16,8 +15,12 @@ import { useHasPermissions } from '@/utils/user-utils';
 
 type StatusUpdate = { status: ReportStatus; statusInfo: string };
 
-export default function ReportStatusChangeModal(props: { report?: Report; onClose: () => void }) {
-  const { report, onClose } = props;
+export default function ReportStatusChangeModal(props: {
+  report?: Report;
+  onClose: () => void;
+  reportStatuses: FincenReportValidStatus[] | NonFincenReportValidStatus[];
+}) {
+  const { report, onClose, reportStatuses } = props;
   const [statusInfoEditing, setStatusInfoEditing] = useState<boolean>(false);
   const [statusUpdate, setStatusUpdate] = useState<StatusUpdate | null>(null);
   const api = useApi();
@@ -77,7 +80,7 @@ export default function ReportStatusChangeModal(props: { report?: Report; onClos
             mode="SINGLE"
             style={{ width: 200 }}
             value={statusUpdate?.status}
-            options={REPORT_STATUSS.map((v) => ({ label: humanizeConstant(v), value: v }))}
+            options={reportStatuses.map((v) => ({ label: humanizeConstant(v), value: v }))}
             onChange={(v) => {
               if (v != null) {
                 setStatusUpdate(

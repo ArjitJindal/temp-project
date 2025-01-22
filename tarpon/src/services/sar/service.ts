@@ -37,6 +37,8 @@ import { getS3ClientByEvent } from '@/utils/s3'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUserName } from '@/utils/helpers'
+import { FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/FincenReportValidStatus'
+import { NON_FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/NonFincenReportValidStatus'
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)
@@ -122,9 +124,11 @@ export class ReportService {
         id,
         implemented: true,
         type: type.type,
+        reportStatuses: type.directSubmission
+          ? FINCEN_REPORT_VALID_STATUSS
+          : NON_FINCEN_REPORT_VALID_STATUSS,
       })
     }
-
     // For demos, append some generators we want to implement.
     return types.concat(
       UNIMPLEMENTED_GENERATORS.map(
@@ -135,6 +139,7 @@ export class ReportService {
           id: `${countryCode}-${type}`,
           implemented: false,
           type,
+          reportStatuses: NON_FINCEN_REPORT_VALID_STATUSS,
         })
       )
     )
@@ -196,7 +201,7 @@ export class ReportService {
       createdAt: now,
       updatedAt: now,
       createdById: account.id,
-      status: 'DRAFT',
+      status: 'DRAFT' as ReportStatus,
       parameters: {
         ...populatedParameters,
         report: prefillReport,
@@ -280,7 +285,7 @@ export class ReportService {
       createdAt: now,
       updatedAt: now,
       createdById: account.id,
-      status: 'DRAFT',
+      status: 'DRAFT' as ReportStatus,
       parameters: {
         ...populatedParameters,
         report: prefillReport,
@@ -337,7 +342,7 @@ export class ReportService {
     report.parameters =
       generator?.getAugmentedReportParams(report) ?? report.parameters
     report.id = report.id ?? (await this.reportRepository.getId())
-    report.status = 'COMPLETE'
+    report.status = 'COMPLETE' as ReportStatus
     const generationResult = await generator.generate(report.parameters, report)
     const now = Date.now()
     if (generationResult?.type === 'STRING') {
@@ -375,7 +380,7 @@ export class ReportService {
 
     if (directSubmission && generator.submit) {
       logger.info('Submitting report')
-      report.status = 'SUBMITTING'
+      report.status = 'SUBMITTING' as ReportStatus
       report.statusInfo = await generator.submit(report)
       logger.info('Submitted report')
     }
@@ -403,7 +408,7 @@ export class ReportService {
   }
 
   async draftReport(report: Report): Promise<Report> {
-    report.status = 'DRAFT'
+    report.status = 'DRAFT' as ReportStatus
     report.updatedAt = Date.now()
     report.parameters =
       this.getReportGenerator(report.reportTypeId)?.getAugmentedReportParams(

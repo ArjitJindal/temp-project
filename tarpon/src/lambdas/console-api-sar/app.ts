@@ -17,10 +17,13 @@ export const sarHandler = lambdaApi()(
     const reportService = await ReportService.fromEvent(event)
     const handlers = new Handlers()
 
-    handlers.registerGetReportTypes(async () => ({
-      data: reportService.getTypes(),
-      total: reportService.getTypes().length,
-    }))
+    handlers.registerGetReportTypes(async () => {
+      const types = reportService.getTypes()
+      return {
+        data: types,
+        total: types.length,
+      }
+    })
 
     handlers.registerGetReportsDraft(async (ctx, request) => {
       if (request.caseId != null && request.userId != null) {

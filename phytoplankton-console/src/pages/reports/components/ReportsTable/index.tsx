@@ -344,6 +344,11 @@ export default function ReportsTable() {
       />
       <ReportStatusChangeModal
         report={displayStatusInfoReport}
+        reportStatuses={
+          reportTypes.data.find(
+            (type) => type.countryCode === displayStatusInfoReport?.reportTypeId.split('-')[0],
+          )?.reportStatuses ?? []
+        }
         onClose={() => setDisplayStatusInfoReport(undefined)}
       />
     </>

@@ -194,6 +194,7 @@ export function SampleFincenReport(
   caseId: string,
   caseUserId: string,
   status: ReportStatus,
+  jurisdiction: string = 'US',
   parentReportId?: string,
   childIds?: string[]
 ): Report & { _id: string } {
@@ -208,7 +209,7 @@ export function SampleFincenReport(
     caseId: caseId,
     caseUserId: caseUserId,
     schema: new UsSarReportGenerator().getSchema(),
-    reportTypeId: 'US-SAR',
+    reportTypeId: `${jurisdiction}-SAR`,
     createdAt: 1691431739370,
     updatedAt: 1691431739370,
     createdById: rng.pickRandom(accounts).id,
