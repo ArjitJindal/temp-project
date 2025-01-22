@@ -11,6 +11,7 @@ import { getMlModels } from './data/ml-models'
 import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
 import { riskFactors } from './data/risk-factors'
+import { getUserEvents } from './data/user_events'
 import {
   CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
   ClickHouseTables,
@@ -48,6 +49,7 @@ import {
   UNIQUE_TAGS_COLLECTION,
   RULE_QUEUES_COLLECTION,
   REASONS_COLLECTION,
+  USER_EVENTS_COLLECTION,
 } from '@/utils/mongodb-definitions'
 import { allUniqueTags, getTransactions } from '@/core/seed/data/transactions'
 import { users } from '@/core/seed/data/users'
@@ -93,6 +95,7 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [CASES_COLLECTION, () => getCases()],
   [COUNTER_COLLECTION, () => getCounterCollectionData()],
   [USERS_COLLECTION, () => users],
+  [USER_EVENTS_COLLECTION, () => getUserEvents()],
   [KRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[0]],
   [AUDITLOG_COLLECTION, () => auditlogs()],
   [DRS_SCORES_COLLECTION, () => krsAndDrsScoreData()[1]],

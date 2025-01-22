@@ -608,7 +608,10 @@ export class BusinessUserSampler extends UserSampler<
     const name = company?.name || this.randomName()
     const domain = name.toLowerCase().replace(' ', '').replace('&', '')
     const userId = `U-${this.counter}`
-    const timestamp = this.sampleTimestamp(3600 * 365 * 24 * 1000)
+    const timestamp = this.rng.randomTimestamp(
+      3600 * 24 * 365 * 1000,
+      dayjs().subtract(30, 'day').toDate()
+    )
 
     const tagSampler = new TagSampler()
     const transactionLimitSampler = new ExpectedTransactionLimitSampler()
@@ -663,7 +666,7 @@ export class BusinessUserSampler extends UserSampler<
       userStateDetails: this.sampleUserStateDetails(),
       executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
       hitRules: hitRules,
-      updatedAt: timestamp,
+      updatedAt: timestamp + 60 * 60 * 24 * 1000,
       comments: [],
       kycStatusDetails: this.sampleKycStatusDetails(),
       createdTimestamp: timestamp,
@@ -753,7 +756,10 @@ export class ConsumerUserSampler extends UserSampler<
     const riskLevel = this.rng.pickRandom(RISK_LEVELS)
     const countryOfResidence = this.rng.pickRandom(COUNTRY_CODES)
     const countryOfNationality = this.rng.r(1).pickRandom(COUNTRY_CODES)
-    const timestamp = this.sampleTimestamp(3600 * 24 * 365 * 1000)
+    const timestamp = this.rng.randomTimestamp(
+      3600 * 24 * 365 * 1000,
+      dayjs().subtract(30, 'day').toDate()
+    )
     const domain = name.firstName
       .toLowerCase()
       .replace(' ', '')
@@ -809,12 +815,12 @@ export class ConsumerUserSampler extends UserSampler<
     const user: InternalConsumerUser = {
       type: 'CONSUMER' as const,
       userId,
-      riskLevel,
       acquisitionChannel: this.rng.pickRandom(ACQUISITION_CHANNELS),
       userSegment: this.rng.pickRandom(CONSUMER_USER_SEGMENTS),
       reasonForAccountOpening: [
         this.rng.r(1).pickRandom(['Investment', 'Saving', 'Business', 'Other']),
       ],
+      riskLevel,
       sourceOfFunds: [this.rng.r(2).pickRandom(SOURCE_OF_FUNDSS)],
       userStateDetails: this.sampleUserStateDetails(),
       kycStatusDetails: this.sampleKycStatusDetails(),
@@ -843,14 +849,13 @@ export class ConsumerUserSampler extends UserSampler<
         employerName: this.rng.r(4).pickRandom(employerName),
         businessIndustry: [this.rng.r(5).pickRandom(businessIndustry)],
       },
+      executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
+      hitRules: hitRules,
+      transactionLimits: transactionLimitSampler.getSample(),
+      savedPaymentDetails: paymentMethod,
       pepStatus: Array.from({ length: Math.ceil(this.rng.randomInt(3)) }).map(
         () => this.randomPepStatus()
       ),
-      executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
-      hitRules: hitRules,
-      createdTimestamp: timestamp,
-      updatedAt: timestamp,
-      createdAt: timestamp,
       tags: [
         {
           key: 'crmAccountId',
@@ -858,8 +863,9 @@ export class ConsumerUserSampler extends UserSampler<
         },
         tagSampler.getSample(),
       ],
-      transactionLimits: transactionLimitSampler.getSample(),
-      savedPaymentDetails: paymentMethod,
+      updatedAt: timestamp + 60 * 60 * 24 * 1000,
+      createdTimestamp: timestamp,
+      createdAt: timestamp,
     }
 
     this.assignKrsAndDrsScores(user)

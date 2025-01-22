@@ -103,7 +103,7 @@ export const UserEvents = (props: Props) => {
       exporting: false,
       type: {
         render: (item) => {
-          if (!item?.updatedConsumerUserAttributes) {
+          if (!item?.updatedConsumerUserAttributes && !item?.updatedBusinessUserAttributes) {
             return <Typography.Text type={'secondary'}>View Changes</Typography.Text>;
           }
           return (
@@ -111,7 +111,9 @@ export const UserEvents = (props: Props) => {
               data={{
                 type: 'User',
                 oldImage: {},
-                newImage: item.updatedConsumerUserAttributes,
+                newImage: item.updatedConsumerUserAttributes
+                  ? item.updatedConsumerUserAttributes
+                  : item.updatedBusinessUserAttributes ?? {},
                 showNotChanged: false,
                 showOldImage: false,
               }}
