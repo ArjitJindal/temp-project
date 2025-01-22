@@ -1,6 +1,7 @@
 import { last, uniq, uniqBy } from 'lodash'
 import { v4 as uuid4 } from 'uuid'
 import { compile } from 'handlebars'
+import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
 import { BaseSampler } from './base'
@@ -32,6 +33,7 @@ import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { getSLAStatusFromElapsedTime } from '@/services/sla/sla-utils'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
 
 let counter = 1
 let alertCounter = 1
@@ -119,7 +121,6 @@ export const mapAccountToAssignment = (account: Account): Assignment[] => {
 export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
   private statusChangeSampler: StatusChangeSampler
   private alertSampler: AlertSampler
-
   constructor(seed: number, counter?: number) {
     super(seed, counter)
     const childSamplerSeed = this.rng.randomInt()
@@ -197,6 +198,14 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
       }
 
       const caseId = `C-${counter++}`
+      const originUserRiskLevel = getRiskLevelFromScore(
+        DEFAULT_CLASSIFICATION_SETTINGS,
+        origin?.drsScore?.drsScore ?? origin?.krsScore?.krsScore ?? 75
+      )
+      const destinationUserRiskLevel = getRiskLevelFromScore(
+        DEFAULT_CLASSIFICATION_SETTINGS,
+        destination?.drsScore?.drsScore ?? destination?.krsScore?.krsScore ?? 75
+      )
       return {
         caseId,
         caseType: 'SYSTEM',
@@ -234,10 +243,12 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
           destination,
           originUserRiskLevel:
             origin?.drsScore?.manualRiskLevel ??
-            origin?.drsScore?.derivedRiskLevel,
+            origin?.drsScore?.derivedRiskLevel ??
+            originUserRiskLevel,
           destinationUserRiskLevel:
             destination?.drsScore?.manualRiskLevel ??
-            destination?.drsScore?.derivedRiskLevel,
+            destination?.drsScore?.derivedRiskLevel ??
+            destinationUserRiskLevel,
           originUserDrsScore: origin?.drsScore?.drsScore,
           destinationUserDrsScore: destination?.drsScore?.drsScore,
         },
