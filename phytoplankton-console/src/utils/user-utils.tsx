@@ -29,6 +29,8 @@ export const FLAGRIGHT_SYSTEM_USER = 'Flagright System';
 
 export const API_USER = 'API';
 
+export const MAX_LOGIN_ATTEMPTS_BEFORE_BLOCKING = 3;
+
 export interface FlagrightAuth0User {
   name: string | null;
   picture: string | null;

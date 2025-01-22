@@ -5,7 +5,7 @@ import {
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
 import Toggle from '@/components/library/Toggle';
-import { useHasPermissions } from '@/utils/user-utils';
+import { MAX_LOGIN_ATTEMPTS_BEFORE_BLOCKING, useHasPermissions } from '@/utils/user-utils';
 import Select from '@/components/library/Select';
 
 type SelectOption = {
@@ -169,7 +169,7 @@ export const SecuritySettings = () => {
       </SettingsCard>
       <SettingsCard
         title="Brute force account blocking"
-        description="When enabled, the account will be blocked after a certain number of failed login attempts."
+        description={`When enabled, the account will be blocked after ${MAX_LOGIN_ATTEMPTS_BEFORE_BLOCKING} failed login attempts.`}
       >
         <Toggle
           onChange={
