@@ -726,6 +726,9 @@ export class BusinessUserSampler extends UserSampler<
       transactionLimits: transactionLimitSampler.getSample(),
       shareHolders: userShareHolders,
       directors: userDirectors,
+      linkedEntities: {
+        parentUserId: `U-${this.rng.randomInt(200)}`,
+      },
     }
 
     this.assignKrsAndDrsScores(user) // TOOD: make this into a sampler
