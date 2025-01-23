@@ -1,9 +1,14 @@
-import { memoize } from 'lodash'
+import { get, memoize } from 'lodash'
 import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
 import { getRiskLevelAndScore } from '../utils'
+import {
+  DERIVED_PARAM_LIST,
+  getTransactionDerivedRiskFactorHandler,
+  getUserDerivedRiskFactorHandler,
+} from '../derived-risk-factors'
 import {
   CONSUMER_COUNTRY_OF_NATIONALITY_RISK_FACTOR,
   countryOfNationalityV8Logic,
@@ -174,6 +179,9 @@ import { RiskParameterValueAmountRange } from '@/@types/openapi-internal/RiskPar
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
 import { RuleInstanceStatus } from '@/@types/openapi-internal/RuleInstanceStatus'
+import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { LogicData } from '@/services/logic-evaluator/engine'
+import { logger } from '@/core/logger'
 
 //  We will use risk factors from this list to initialise in dynamoDB under the RiskFactors key
 export const RISK_FACTORS: V2V8RiskFactor[] = [
@@ -528,6 +536,46 @@ export function createDefaultRiskValues(
         ? value
         : getRiskScoreFromLevel(riskClassification, value),
   }
+}
+
+export async function extractParamValues(
+  param: RiskFactorParameter,
+  riskData: LogicData,
+  type: RiskEntityType
+) {
+  logger.debug(DERIVED_PARAM_LIST(type === 'TRANSACTION' ? type : 'USER'))
+  if (
+    !DERIVED_PARAM_LIST(type === 'TRANSACTION' ? type : 'USER').includes(param)
+  ) {
+    return get(
+      riskData.type === 'TRANSACTION' ? riskData.transaction : riskData.user,
+      param
+    )
+  }
+  if (riskData.type === 'TRANSACTION') {
+    const handler = getTransactionDerivedRiskFactorHandler(type, param)
+    if (!handler) {
+      logger.error(`No handler found for risk factor ${param}`)
+      return undefined
+    }
+    // Todo: Improve this to handle IP address country for both directions.
+    return (
+      await handler(
+        riskData.transaction,
+        {
+          originUser: riskData.senderUser ?? null,
+          destinationUser: riskData.receiverUser ?? null,
+        },
+        param
+      )
+    )?.[0]
+  }
+  const handler = getUserDerivedRiskFactorHandler(type, param)
+  if (!handler) {
+    logger.error(`No handler found for risk factor ${param}`)
+    return undefined
+  }
+  return (await handler(riskData.user, param))?.[0]
 }
 
 export function extractBaseCurrency(

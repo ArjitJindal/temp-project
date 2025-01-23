@@ -313,6 +313,7 @@ export class TenantService {
           maxRetryHours: envIs('prod') ? 96 : 24,
           maxRetryReachedAction: envIs('prod') ? 'IGNORE' : 'DISABLE_WEBHOOK',
         },
+        riskScoringAlgorithm: { type: 'FORMULA_SIMPLE_AVG' },
         auth0Domain: tenantData.auth0Domain,
         ...(tenantData.sanctionsMarketType && {
           sanctions: tenantData.sanctionsMarketType

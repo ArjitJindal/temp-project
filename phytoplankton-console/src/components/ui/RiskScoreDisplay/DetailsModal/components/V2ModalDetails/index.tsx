@@ -69,26 +69,37 @@ function V2ModalDetails(props: Props) {
           </div>
         }
       </div>
-      <div className={s.table}>
-        <Table<TableRow>
-          rowKey={'parameter'}
-          sizingMode="FULL_WIDTH"
-          pagination={false}
-          toolsOptions={false}
-          data={{
-            total: components.length,
-            items: components.map((component) => ({
-              entityType: component.entityType,
-              parameter: component.parameter as ParameterName,
-              value: component.value,
-              riskScore: component.score,
-              weight: component.weight,
-              riskLevel: component.riskLevel,
-            })),
-          }}
-          columns={columns}
-        />
-      </div>
+      <V2RiskBreakDownTable components={components} />
+    </div>
+  );
+}
+
+export interface V2RiskBreakDownTableProps {
+  components: Array<RiskScoreComponent>;
+}
+
+export function V2RiskBreakDownTable(props: V2RiskBreakDownTableProps) {
+  const { components } = props;
+  return (
+    <div className={s.table}>
+      <Table<TableRow>
+        rowKey={'parameter'}
+        sizingMode="FULL_WIDTH"
+        pagination={false}
+        toolsOptions={false}
+        data={{
+          total: components.length,
+          items: components.map((component) => ({
+            entityType: component.entityType,
+            parameter: component.parameter as ParameterName,
+            value: component.value,
+            riskScore: component.score,
+            weight: component.weight,
+            riskLevel: component.riskLevel,
+          })),
+        }}
+        columns={columns}
+      />
     </div>
   );
 }

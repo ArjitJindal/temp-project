@@ -736,8 +736,7 @@ export class RiskScoringService {
           derivedValues = await handler(
             entity as Transaction,
             await this.getUsersFromTransaction(entity as Transaction),
-            parameterAttributeDetails.parameter,
-            this.tenantId
+            parameterAttributeDetails.parameter
           )
         }
         matchedRiskLevels = await Promise.all(

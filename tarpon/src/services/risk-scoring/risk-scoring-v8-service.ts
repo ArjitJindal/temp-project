@@ -14,6 +14,7 @@ import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongo
 import { BatchJobRepository } from '../batch-jobs/repositories/batch-job-repository'
 import { UserRepository } from '../users/repositories/user-repository'
 import { RiskRepository } from './repositories/risk-repository'
+import { extractParamValues } from './risk-factors'
 import { traceable } from '@/core/xray'
 import { Transaction } from '@/@types/openapi-public/Transaction'
 import { User } from '@/@types/openapi-public/User'
@@ -38,6 +39,7 @@ import { ReRunTrigger } from '@/@types/openapi-internal/ReRunTrigger'
 import dayjs from '@/utils/dayjs'
 import { BatchJobInDb, RiskScoringTriggersBatchJob } from '@/@types/batch-job'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
+import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
 
 const DEFAULT_RISK_LEVEL = 'VERY_HIGH'
 const CONCURRENCY = 100
@@ -158,21 +160,22 @@ export class RiskScoringV8Service {
 
   public async calculateRiskFactorsScore(
     riskData: LogicData,
-    riskFactor: RiskFactor[]
+    riskFactors: RiskFactor[]
   ): Promise<{
     riskFactorsResult: RiskFactorsResult
   }> {
     const result = await Promise.all(
-      riskFactor.map((factor) =>
+      riskFactors.map((factor) =>
         this.calculateRiskFactorScore(factor, riskData)
       )
     )
 
     const riskClassificationScore = await this.getRiskClassificationValues()
-    if (!result || result.length === 0) {
+    if (result.length === 0) {
       return {
         riskFactorsResult: {
           scoreDetails: [],
+          components: [],
           score: getDefaultRiskValue(riskClassificationScore),
         },
       }
@@ -194,11 +197,57 @@ export class RiskScoringV8Service {
       )
     }
     const score = this.calculateWeightedSumScore(result)
+    const { v2ScoreComponents, v8FactorScoreDetails } =
+      await this.augmentFactorScoreDetails(result, riskData, riskFactors)
     return {
       riskFactorsResult: {
-        scoreDetails: result,
+        scoreDetails: v8FactorScoreDetails,
+        components: v2ScoreComponents,
         score: score,
       },
+    }
+  }
+
+  private async augmentFactorScoreDetails(
+    factorScoreDetails: RiskFactorScoreDetails[],
+    riskData: LogicData,
+    riskFactors: RiskFactor[]
+  ) {
+    const v2FactorScoreDetails = factorScoreDetails.filter(
+      (val) => !val.riskFactorId.startsWith('RF')
+    )
+    const v2ScoreComponents = await Promise.all(
+      v2FactorScoreDetails.map(async (val) => {
+        return await this.convertToComponent(val, riskData, riskFactors)
+      })
+    )
+    // Saving V2 in both factorScoreDetails and components
+    return { v8FactorScoreDetails: factorScoreDetails, v2ScoreComponents }
+  }
+
+  private async convertToComponent(
+    factorScoreDetail: RiskFactorScoreDetails,
+    riskData: LogicData,
+    riskFactors: RiskFactor[]
+  ): Promise<RiskScoreComponent> {
+    const riskFactor = riskFactors.find(
+      (val) => val.id === factorScoreDetail.riskFactorId
+    )
+    if (!riskFactor || !riskFactor.parameter) {
+      throw new Error('V2 Risk factor not found for V8')
+    }
+    const value = await extractParamValues(
+      riskFactor.parameter,
+      riskData,
+      riskFactor.type
+    )
+    return {
+      entityType: riskFactor.type,
+      parameter: riskFactor.parameter,
+      riskLevel: factorScoreDetail.riskLevel,
+      score: factorScoreDetail.score,
+      value: value,
+      weight: factorScoreDetail.weight,
     }
   }
 
@@ -331,7 +380,7 @@ export class RiskScoringV8Service {
     if (oldDrsScore?.isUpdatable === false) {
       return oldDrsScore.drsScore
     }
-    const { riskScoringAlgorithm = { type: 'FORMULA_SIMPLE_AVG' } } =
+    const { riskScoringAlgorithm = { type: 'FORMULA_LEGACY_MOVING_AVG' } } =
       await this.getTenantSettings() // Default to simple average if no algorithm is set
     const krsScore = await this.getKrsScoreValue(userId)
     const newDrsScore = this.calculateNewDrsScore({
@@ -392,13 +441,14 @@ export class RiskScoringV8Service {
     drsScore: number,
     transactionId: string,
     factorScoreDetails?: RiskFactorScoreDetails[],
+    components?: RiskScoreComponent[],
     isUpdatable?: boolean
   ) {
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
       drsScore,
       transactionId,
-      [],
+      components ?? [],
       isUpdatable ?? true,
       factorScoreDetails
     )
@@ -436,7 +486,7 @@ export class RiskScoringV8Service {
       arsScore.score,
       originUserId,
       destinationUserId,
-      [],
+      arsScore.components,
       arsScore.scoreDetails
     )
   }
@@ -511,6 +561,7 @@ export class RiskScoringV8Service {
           existingKrs?.krsScore ??
           getDefaultRiskValue(riskClassificationValues),
         scoreDetails: existingKrs?.factorScoreDetails ?? [],
+        components: existingKrs?.components ?? [],
       }
     }
 
@@ -526,13 +577,14 @@ export class RiskScoringV8Service {
           manualKrsRiskLevel
         ),
         scoreDetails: [],
+        components: [],
       }
     }
     const newKrsScore = await this.calculateKrsScore(user, riskFactors)
     await this.riskRepository.createOrUpdateKrsScore(
       user.userId,
       newKrsScore.score,
-      [],
+      newKrsScore.components,
       newKrsScore.scoreDetails,
       lockKrs
     )
@@ -573,6 +625,7 @@ export class RiskScoringV8Service {
           newKrsScore.score,
           'FIRST_DRS',
           newKrsScore.scoreDetails,
+          newKrsScore.components,
           isDrsUpdatable
         )
       } else {
@@ -580,6 +633,7 @@ export class RiskScoringV8Service {
           userId,
           newKrsScore.score,
           newKrsScore.scoreDetails,
+          newKrsScore.components,
           isDrsUpdatable
         )
       }
@@ -637,6 +691,7 @@ export class RiskScoringV8Service {
     userId: string,
     krsScore: number,
     factorScoreDetails?: RiskFactorScoreDetails[],
+    components?: RiskScoreComponent[],
     isUpdatable?: boolean
   ) {
     const oldDrsScore = await this.getDrsScore(userId)
@@ -644,7 +699,7 @@ export class RiskScoringV8Service {
       return oldDrsScore.drsScore
     }
     const avgArsScore = await this.riskRepository.getAverageArsScore(userId)
-    const { riskScoringAlgorithm = { type: 'FORMULA_SIMPLE_AVG' } } =
+    const { riskScoringAlgorithm = { type: 'FORMULA_LEGACY_MOVING_AVG' } } =
       await this.getTenantSettings() // Default to simple average if no algorithm is set
     const newDrsScore = this.calculateNewDrsScore({
       algorithm: riskScoringAlgorithm,
@@ -659,6 +714,7 @@ export class RiskScoringV8Service {
       newDrsScore,
       'USER_UPDATE',
       factorScoreDetails,
+      components,
       isUpdatable
     )
     return newDrsScore

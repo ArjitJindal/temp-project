@@ -33,13 +33,14 @@ export default function DetailsModal(props: Props) {
           <V8ModalDetails
             {...props}
             factorScoreDetails={factorScoreDetails}
+            components={components}
             lastItem={lastItem}
             {...(isExternalSource && { isExternalSource: true })}
           />
         )}
-        {components && components.length > 0 && (
-          <V2ModalDetails {...props} components={components} />
-        )}
+        {(!factorScoreDetails || !(factorScoreDetails.length > 0)) &&
+          components &&
+          components.length > 0 && <V2ModalDetails {...props} components={components} />}
       </div>
     </Modal>
   );

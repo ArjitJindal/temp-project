@@ -4330,6 +4330,11 @@ paths:
           in: query
           name: entityType
           description: Entity type you want to filter on
+        - schema:
+            type: boolean
+          in: query
+          name: includeV2
+          description: Include V2 risk factors
       responses:
         '200':
           description: OK
@@ -11061,11 +11066,16 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/RiskFactorScoreDetails'
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/RiskScoreComponent'
         score:
           type: number
       required:
         - scoreDetails
         - score
+        - components
     ParameterAttributeRiskValues:
       title: ParameterAttributeRiskValues
       type: object

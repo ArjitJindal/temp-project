@@ -1,4 +1,4 @@
-import { keyBy } from 'lodash'
+import { keyBy, memoize } from 'lodash'
 import {
   ARS_USER_AGE_RISK_HANDLERS,
   KRS_USER_AGE_RISK_HANDLERS,
@@ -43,8 +43,7 @@ export type TransactionRiskFactorValueHandler<T> = {
       originUser: Business | User | null
       destinationUser: Business | User | null
     },
-    parameter: RiskFactorParameter,
-    tenantId: string
+    parameter: RiskFactorParameter
   ) => Promise<Array<T | undefined>>
 }
 
@@ -85,6 +84,12 @@ export function getUserDerivedRiskFactorHandler(
     USER_RISK_FACTOR_HANDLERS_MAP[getRiskFactorKey(entityType, parameter)]
   return handler ? handler.handler : undefined
 }
+
+export const DERIVED_PARAM_LIST = memoize((type: 'USER' | 'TRANSACTION') => {
+  return type === 'TRANSACTION'
+    ? TRANSACTION_RISK_FACTOR_HANDLERS.map((val) => val.parameter)
+    : USER_RISK_FACTOR_HANDLERS.map((val) => val.parameter)
+})
 
 export function getTransactionDerivedRiskFactorHandler(
   entityType: RiskEntityType,

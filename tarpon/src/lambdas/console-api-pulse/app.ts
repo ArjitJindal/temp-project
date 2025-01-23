@@ -84,7 +84,8 @@ export const parameterRiskAssignmentHandler = lambdaApi({
     })
 
     handlers.registerGetAllRiskFactors(async (_ctx, request) => {
-      return await riskService.getAllRiskFactors(request.entityType)
+      const includeV2 = request.includeV2
+      return await riskService.getAllRiskFactors(request.entityType, includeV2)
     })
 
     handlers.registerGetRiskFactor(async (ctx, request) => {
