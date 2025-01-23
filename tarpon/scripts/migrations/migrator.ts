@@ -26,7 +26,7 @@ import { PNB_INTERNAL_RULES } from '@/services/rules-engine/pnb-custom-logic'
 import { isDemoTenant } from '@/utils/tenant'
 
 const MIGRATION_TEMPLATE = `import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 
 async function migrateTenant(tenant: Tenant) {}
 

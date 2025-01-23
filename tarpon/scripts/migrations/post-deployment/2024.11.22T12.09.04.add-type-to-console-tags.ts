@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { logger } from '@/core/logger'
 import { ConsoleTagTypeEnum } from '@/@types/openapi-internal/ConsoleTag'

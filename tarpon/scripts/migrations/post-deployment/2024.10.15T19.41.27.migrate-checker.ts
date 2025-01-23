@@ -1,9 +1,9 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { AccountsService, Tenant } from '@/services/accounts'
+import { AccountsService } from '@/services/accounts'
 import { AppMetadata } from '@/utils/auth0-utils'
 import { tenantHasFeature } from '@/core/utils/context'
-
+import { Tenant } from '@/services/accounts/repository'
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   if (!(await tenantHasFeature(tenant.id, 'ADVANCED_WORKFLOWS'))) {
     return

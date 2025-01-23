@@ -1,7 +1,7 @@
 import { omit } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClientDb, processCursorInBatch } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 import { generateChecksum, getSortedObject } from '@/utils/object'
 

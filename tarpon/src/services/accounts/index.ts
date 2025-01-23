@@ -12,14 +12,19 @@ import { memoize } from 'lodash'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
+import { Auth0TenantMetadata, InternalUserCreate, Tenant } from './repository'
 import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import {
   AppMetadata,
   auth0AsyncWrapper,
+  CONNECTION_NAME,
+  generateRandomPassword,
   getAuth0AuthenticationClient,
   getAuth0ManagementClient,
+  organizationToTenant,
+  userToAccount,
 } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
@@ -36,36 +41,13 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs, envIsNot } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
-import dayjs from '@/utils/dayjs'
-
-// todo: move to config?
-const CONNECTION_NAME = 'Username-Password-Authentication'
 
 export type Account = ApiAccount
-
-export type Tenant = {
-  id: string
-  name: string
-  orgId: string
-  apiAudience: string
-  region: string
-  isProductionAccessDisabled: boolean
-}
 
 export type TenantBasic = {
   id: string
   name: string
   auth0Domain?: string
-}
-
-type Auth0TenantMetadata = {
-  tenantId: string
-  consoleApiUrl: string
-  apiAudience: string
-  auth0Domain: string
-  region: FlagrightRegion
-  isProductionAccessDisabled: string
-  tenantCreatedAt: string
 }
 
 @traceable
@@ -115,24 +97,6 @@ export class AccountsService {
     return accounts.filter((account) => !account.blocked)
   }
 
-  private static organizationToTenant(
-    organization: GetOrganizations200ResponseOneOfInner
-  ): Tenant {
-    const tenantId = organization.metadata.tenantId
-    if (tenantId == null) {
-      throw new Conflict('Invalid organization metadata, tenantId expected')
-    }
-    return {
-      id: tenantId,
-      name: organization.display_name || tenantId,
-      orgId: organization.id,
-      apiAudience: organization.metadata?.apiAudience,
-      region: organization.metadata?.region,
-      isProductionAccessDisabled:
-        organization.metadata?.isProductionAccessDisabled === 'true',
-    }
-  }
-
   public async updateAuth0TenantMetadata(
     tenantId: string,
     updatedMetadata: Partial<Auth0TenantMetadata>
@@ -157,49 +121,6 @@ export class AccountsService {
       { metadata: { ...organization.metadata, ...updatedMetadata } }
     )
   }
-  private static userToAccount(user: GetUsers200ResponseOneOfInner): Account {
-    const {
-      app_metadata,
-      user_id,
-      email,
-      last_login,
-      created_at,
-      last_password_reset,
-    } = user
-    if (user_id == null) {
-      throw new Conflict('User id can not be null')
-    }
-    if (email == null) {
-      throw new Conflict('User email can not be null')
-    }
-    const role: string = app_metadata ? app_metadata.role : 'user'
-
-    return {
-      id: user_id,
-      role: role,
-      email: email,
-      emailVerified: user.email_verified ?? false,
-      name: user.name ?? '',
-      picture: user.picture,
-      blocked: user.blocked ?? false,
-      reviewerId: app_metadata?.reviewerId,
-      ...(app_metadata?.blockedReason && {
-        blockedReason: app_metadata.blockedReason,
-      }),
-      lastLogin: dayjs(last_login as string).valueOf(),
-      createdAt: dayjs(created_at as string).valueOf(),
-      lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
-      escalationLevel: app_metadata?.escalationLevel,
-      escalationReviewerId: app_metadata?.escalationReviewerId,
-      isReviewer: app_metadata?.isReviewer,
-    }
-  }
-
-  private generateRandomPassword() {
-    const randomString = 'TheBestProduct'
-
-    return `P-${randomString}@${Date.now()}`
-  }
 
   async resetPassword(accountId: string) {
     const managementClient = await getAuth0ManagementClient(
@@ -214,7 +135,7 @@ export class AccountsService {
 
     await managementClient.users.update(
       { id: accountId },
-      { password: this.generateRandomPassword() }
+      { password: generateRandomPassword() }
     )
 
     await this.sendPasswordResetEmail(user.email)
@@ -238,7 +159,7 @@ export class AccountsService {
       throw new Conflict('User suppose to be a member of tenant organization')
     }
 
-    return AccountsService.organizationToTenant(organization)
+    return organizationToTenant(organization)
   }
 
   public async accountsChangeTenantHandler(
@@ -301,15 +222,7 @@ export class AccountsService {
 
   async createAccountInOrganization(
     tenant: Tenant,
-    params: {
-      email: string
-      role: string
-      isReviewer?: boolean
-      isReviewRequired?: boolean
-      reviewerId?: string
-      escalationLevel?: string
-      escalationReviewerId?: string
-    }
+    params: InternalUserCreate
   ): Promise<Account> {
     let user: GetUsers200ResponseOneOfInner | null = null
     let account: Account | null = null
@@ -351,7 +264,7 @@ export class AccountsService {
             connection: CONNECTION_NAME,
             email: params.email,
             // NOTE: We need at least one upper case character
-            password: this.generateRandomPassword(),
+            password: generateRandomPassword(),
             app_metadata: {
               role: params.role,
               isReviewer: params.isReviewer,
@@ -372,7 +285,7 @@ export class AccountsService {
           params.role
         )
       }
-      account = AccountsService.userToAccount(user)
+      account = userToAccount(user)
       await organizationManager.addMembers(
         { id: tenant.orgId },
         { members: [account.id] }
@@ -497,7 +410,7 @@ export class AccountsService {
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     const rawAccounts = await this.getTenantAccountsRaw(tenant)
-    return rawAccounts.map(AccountsService.userToAccount)
+    return rawAccounts.map(userToAccount)
   }
 
   async getAccount(id: string): Promise<Account | null> {
@@ -512,7 +425,7 @@ export class AccountsService {
       const userManager = managementClient.users
       try {
         const user = await auth0AsyncWrapper(() => userManager.get({ id }))
-        return AccountsService.userToAccount(user)
+        return userToAccount(user)
       } catch (e) {
         logger.warn(`Error getting account ${id}`, { error: e })
         return null
@@ -526,7 +439,7 @@ export class AccountsService {
     const userManager = managementClient.users
     const q = `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`
     const users = await auth0AsyncWrapper(() => userManager.getAll({ q }))
-    return users.map(AccountsService.userToAccount)
+    return users.map(userToAccount)
   }
 
   async getTenants(auth0Domain?: string): Promise<Tenant[]> {
@@ -554,7 +467,7 @@ export class AccountsService {
       morePagesAvailable = pagedOrganizations.total > organizations.length
     }
 
-    const tenants = organizations.map(AccountsService.organizationToTenant)
+    const tenants = organizations.map(organizationToTenant)
 
     if (envIsNot('prod') || !user?.allowedRegions) {
       return tenants
@@ -798,7 +711,7 @@ export class AccountsService {
     )
 
     await this.updateAuth0UserInMongo(tenant.id, accountId, patch)
-    return AccountsService.userToAccount(patchedUser)
+    return userToAccount(patchedUser)
   }
 
   async getUserSettings(accountId: string): Promise<AccountSettings> {
@@ -942,41 +855,20 @@ export class AccountsService {
     emails: string[],
     role: string
   ): Promise<void> {
-    const tenantId = organization.metadata?.tenantId
+    const tenantId = organization.metadata?.tenantId as string
 
     if (tenantId == null) {
       throw new BadRequest('Unable to find tenant id in organization metadata')
     }
 
+    const tenant = organizationToTenant(organization)
+
     for await (const email of emails) {
-      await this.createAccountInOrganization(
-        {
-          id: tenantId as unknown as string,
-          name: organization.name,
-          orgId: organization.id,
-          apiAudience: organization.metadata?.apiAudience,
-          region: organization.metadata?.region,
-          isProductionAccessDisabled:
-            organization.metadata?.isProductionAccessDisabled === 'true',
-        },
-        { email, role }
-      )
+      await this.createAccountInOrganization(tenant, { email, role })
     }
 
-    const allAccounts = await this.getTenantAccounts({
-      id: tenantId as unknown as string,
-      name: organization.name,
-      orgId: organization.id,
-      apiAudience: organization.metadata?.apiAudience as unknown as string,
-      region: organization.metadata?.region as unknown as string,
-      isProductionAccessDisabled:
-        organization.metadata?.isProductionAccessDisabled === 'true',
-    })
-
-    await this.insertAuth0UserToMongo(
-      tenantId as unknown as string,
-      allAccounts
-    )
+    const allAccounts = await this.getTenantAccounts(tenant)
+    await this.insertAuth0UserToMongo(tenantId, allAccounts)
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {
@@ -1034,7 +926,7 @@ export class AccountsService {
       })
     )
 
-    return users.map(AccountsService.userToAccount)[0] ?? null
+    return users.map(userToAccount)[0] ?? null
   }
 
   async unblockBruteForceAccount(account: Account) {

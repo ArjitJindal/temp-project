@@ -1,7 +1,7 @@
 import { isEmpty } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { RiskScoringService } from '@/services/risk-scoring/risk-scoring-service'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'

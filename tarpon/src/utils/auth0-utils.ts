@@ -1,7 +1,17 @@
-import { AuthenticationClient, ManagementClient } from 'auth0'
-import { memoize } from 'lodash'
+import {
+  AuthenticationClient,
+  GetOrganizations200ResponseOneOfInner,
+  GetUsers200ResponseOneOfInner,
+  ManagementClient,
+  PostOrganizationsRequest,
+} from 'auth0'
+import { Conflict } from 'http-errors'
+import { memoize, uniq } from 'lodash'
 import { getSecret } from './secrets-manager'
+import dayjs from './dayjs'
 import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'
+import { Tenant } from '@/services/accounts/repository'
+import { Account } from '@/services/accounts'
 
 export type Auth0ManagementAPICreds = {
   clientId: string
@@ -73,4 +83,91 @@ export async function auth0AsyncWrapper<T>(
 ): Promise<T> {
   const result = await asyncFunction()
   return result.data
+}
+
+export const generateRandomPassword = () => {
+  const randomString = 'TheBestProduct'
+  const date = `${Date.now()}`
+  const uniqDate = uniq(date).join('')
+  const password = `P-${randomString}@${uniqDate}`
+  return password
+}
+
+export const CONNECTION_NAME = 'Username-Password-Authentication'
+
+export const organizationToTenant = (
+  organization: GetOrganizations200ResponseOneOfInner
+): Tenant => {
+  const tenantId = organization.metadata.tenantId
+  if (tenantId == null) {
+    throw new Conflict('Invalid organization metadata, tenantId expected')
+  }
+  return {
+    id: tenantId,
+    name: organization.display_name || tenantId,
+    orgId: organization.id,
+    apiAudience: organization.metadata?.apiAudience,
+    region: organization.metadata?.region,
+    isProductionAccessDisabled:
+      organization.metadata?.isProductionAccessDisabled === 'true',
+    tenantCreatedAt: organization.metadata?.tenantCreatedAt,
+    consoleApiUrl: organization.metadata?.consoleApiUrl,
+    auth0Domain: organization.metadata?.auth0Domain,
+  }
+}
+
+export const tenantToOrganization = (
+  tenant: Tenant
+): PostOrganizationsRequest => {
+  return {
+    name: tenant.name,
+    metadata: {
+      tenantId: tenant.id,
+      consoleApiUrl: tenant.consoleApiUrl,
+      apiAudience: tenant.apiAudience,
+      auth0Domain: tenant.auth0Domain,
+      region: tenant.region,
+      isProductionAccessDisabled: tenant.isProductionAccessDisabled,
+      tenantCreatedAt: tenant.tenantCreatedAt,
+    },
+  }
+}
+
+export function userToAccount(user: GetUsers200ResponseOneOfInner): Account {
+  const {
+    app_metadata,
+    user_id,
+    email,
+    last_login,
+    created_at,
+    last_password_reset,
+  } = user
+
+  if (user_id == null) {
+    throw new Conflict('User id can not be null')
+  }
+  if (email == null) {
+    throw new Conflict('User email can not be null')
+  }
+  const role: string = app_metadata ? app_metadata.role : 'user'
+
+  return {
+    id: user_id,
+    role: role,
+    email: email,
+    emailVerified: user.email_verified ?? false,
+    name: user.name ?? '',
+    picture: user.picture,
+    blocked: user.blocked ?? false,
+    reviewerId: app_metadata?.reviewerId,
+    ...(app_metadata?.blockedReason && {
+      blockedReason: app_metadata.blockedReason,
+    }),
+    lastLogin: dayjs(last_login as string).valueOf(),
+    createdAt: dayjs(created_at as string).valueOf(),
+    lastPasswordReset: dayjs(last_password_reset as string).valueOf(),
+    escalationLevel: app_metadata?.escalationLevel,
+    escalationReviewerId: app_metadata?.escalationReviewerId,
+    isReviewer: app_metadata?.isReviewer,
+  }
 }

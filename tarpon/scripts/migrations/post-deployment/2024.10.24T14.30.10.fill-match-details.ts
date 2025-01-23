@@ -1,6 +1,6 @@
 import { Filter } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { SanctionsHit } from '@/@types/openapi-internal/SanctionsHit'
 import { SanctionsSearchHistory } from '@/@types/openapi-internal/SanctionsSearchHistory'
 import {
@@ -90,6 +90,9 @@ if (require.main === module) {
     apiAudience: 'apiAudience',
     region: 'region',
     isProductionAccessDisabled: true,
+    tenantCreatedAt: new Date().toISOString(),
+    consoleApiUrl: 'https://console.flagright.com',
+    auth0Domain: 'flagright.auth0.com',
   }).then(
     () => {
       console.log('Done')

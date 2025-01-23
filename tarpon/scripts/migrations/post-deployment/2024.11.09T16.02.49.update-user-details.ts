@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 
 async function migrateTenant(tenant: Tenant) {

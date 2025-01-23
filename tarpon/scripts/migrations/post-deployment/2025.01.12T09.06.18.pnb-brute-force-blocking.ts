@@ -2,7 +2,7 @@ import { StackConstants } from '@lib/constants'
 import { UpdateCommand, UpdateCommandInput } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 async function migrateTenant(tenant: Tenant) {

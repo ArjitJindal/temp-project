@@ -2,13 +2,14 @@ import { min } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant, TenantBasic } from '@/services/accounts'
+import { TenantBasic } from '@/services/accounts'
 import { ApiUsageMetricsService } from '@/services/metrics/api-usage-metrics-service'
 import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { isDemoTenant } from '@/utils/tenant'
 import { SheetsApiUsageMetricsService } from '@/services/metrics/sheets-api-usage-metrics-service'
 import { DailyMetricStats, MonthlyMetricStats } from '@/services/metrics/utils'
+import { Tenant } from '@/services/accounts/repository'
 
 type TimeRange = { startTimestamp: number; endTimestamp: number }
 

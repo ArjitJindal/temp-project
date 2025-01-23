@@ -4,7 +4,7 @@ import {
   CLICKHOUSE_DEFINITIONS,
   ClickHouseTables,
 } from '@/utils/clickhouse/definition'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { isClickhouseEnabledInRegion } from '@/utils/clickhouse/utils'
 async function migrateTenant(tenant: Tenant) {

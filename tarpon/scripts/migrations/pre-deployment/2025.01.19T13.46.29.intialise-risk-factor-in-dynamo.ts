@@ -4,7 +4,7 @@ import {
   generateV2FactorId,
   RISK_FACTORS,
 } from '@/services/risk-scoring/risk-factors'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'

@@ -34,7 +34,7 @@ import { ReasonsService } from './reasons-service'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { TenantCreationResponse } from '@/@types/openapi-internal/TenantCreationResponse'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
-import { AccountsService, Tenant } from '@/services/accounts'
+import { AccountsService } from '@/services/accounts'
 import { checkMultipleEmails } from '@/utils/helpers'
 import { getAuth0Domain, isWhitelabelAuth0Domain } from '@/utils/auth0-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -58,6 +58,7 @@ import { FormulaSimpleAvg } from '@/@types/openapi-internal/FormulaSimpleAvg'
 import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyMovingAvg'
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
+import { Tenant } from '@/services/accounts/repository'
 
 export type TenantInfo = {
   tenant: Tenant

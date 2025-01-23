@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { envIsNot } from '@/utils/env'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getClickhouseClient } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 

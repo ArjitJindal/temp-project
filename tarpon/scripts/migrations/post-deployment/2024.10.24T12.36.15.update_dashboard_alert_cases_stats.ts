@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import {
   DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY,
   DASHBOARD_LATEST_TEAM_CASES_STATS_HOURLY,

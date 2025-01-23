@@ -1,7 +1,7 @@
 import { Auth0DevTenantConfig } from '@lib/configs/auth0/tenant-config-dev'
 import { cloneDeep } from 'lodash'
 import { getConfig } from './config'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { TenantInfo, TenantService } from '@/services/tenants'
@@ -32,9 +32,12 @@ export async function migrateAllTenants(
             apiAudience: '',
             region: 'local',
             isProductionAccessDisabled: false,
+            tenantCreatedAt: new Date().toISOString(),
+            consoleApiUrl: 'https://console.flagright.com',
+            auth0Domain: 'dev-flagright.eu.auth0.com',
           },
-          auth0Domain: 'dev-flagright.eu.auth0.com',
           auth0TenantConfig: Auth0DevTenantConfig,
+          auth0Domain: 'dev-flagright.eu.auth0.com',
         },
       ]
     } else {

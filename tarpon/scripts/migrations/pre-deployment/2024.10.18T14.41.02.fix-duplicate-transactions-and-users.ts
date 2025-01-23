@@ -1,7 +1,7 @@
 import { omit, pick } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient, withTransaction } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import {
   TRANSACTIONS_COLLECTION,
   USERS_COLLECTION,

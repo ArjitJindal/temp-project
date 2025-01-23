@@ -5,7 +5,7 @@ import {
   getClickhouseClient,
   getClickhouseDbName,
 } from '@/utils/clickhouse/utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { envIsNot } from '@/utils/env'
 
 async function migrateTenant(tenant: Tenant) {

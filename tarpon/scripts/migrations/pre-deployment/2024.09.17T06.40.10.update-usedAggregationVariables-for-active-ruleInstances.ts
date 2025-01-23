@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { AggregationRepository } from '@/services/logic-evaluator/engine/aggregation-repository'
 import { logger } from '@/core/logger'

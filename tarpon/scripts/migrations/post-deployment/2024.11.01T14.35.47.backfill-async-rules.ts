@@ -1,7 +1,7 @@
 import { memoize, omit } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'
 import dayjs from '@/utils/dayjs'

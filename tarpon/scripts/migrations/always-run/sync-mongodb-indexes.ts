@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { logger } from '@/core/logger'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import {
   createMongoDBCollections,
   getMongoDbClient,

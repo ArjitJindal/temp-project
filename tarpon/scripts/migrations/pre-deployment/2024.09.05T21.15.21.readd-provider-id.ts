@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SANCTIONS_SEARCHES_COLLECTION } from '@/utils/mongodb-definitions'
 

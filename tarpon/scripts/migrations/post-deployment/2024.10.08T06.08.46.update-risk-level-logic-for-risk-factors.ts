@@ -1,7 +1,7 @@
 import { isObject } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskFactorLogic } from '@/@types/openapi-internal/RiskFactorLogic'

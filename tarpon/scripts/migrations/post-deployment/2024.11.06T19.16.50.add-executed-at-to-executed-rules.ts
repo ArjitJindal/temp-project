@@ -1,7 +1,7 @@
 import { chunk } from 'lodash'
 import { WithId } from 'mongodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   TRANSACTIONS_COLLECTION,

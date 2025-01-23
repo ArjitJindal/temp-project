@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { getDynamoDbClient } from '@/utils/dynamodb'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 import { RuleExecutionMode } from '@/@types/openapi-internal/RuleExecutionMode'

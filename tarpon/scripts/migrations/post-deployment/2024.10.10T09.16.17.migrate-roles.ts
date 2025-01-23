@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { RoleService } from '@/services/roles'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   // if tenant as settings:organization:write, then we need to add new roles

@@ -1,6 +1,6 @@
 import { migrateAllTenants } from '../utils/tenant'
 import { WebhookSettings } from '@/@types/openapi-internal/WebhookSettings'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { envIs } from '@/utils/env'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'

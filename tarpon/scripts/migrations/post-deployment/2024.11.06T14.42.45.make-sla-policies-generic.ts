@@ -1,5 +1,5 @@
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { SLA_POLICIES_COLLECTION } from '@/utils/mongodb-definitions'

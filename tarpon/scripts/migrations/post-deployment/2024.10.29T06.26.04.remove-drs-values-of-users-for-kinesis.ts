@@ -1,7 +1,7 @@
 import { StackConstants } from '@lib/constants'
 import { DeleteCommand, DeleteCommandInput } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 

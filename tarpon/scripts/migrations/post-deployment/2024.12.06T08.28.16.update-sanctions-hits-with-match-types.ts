@@ -5,7 +5,7 @@ import {
   CASES_COLLECTION,
   SANCTIONS_HITS_COLLECTION,
 } from '@/utils/mongodb-definitions'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 

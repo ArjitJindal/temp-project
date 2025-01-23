@@ -1,7 +1,7 @@
 import { chunk, difference } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
 import { envIsNot } from '@/utils/env'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import {

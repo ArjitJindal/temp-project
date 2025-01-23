@@ -6,7 +6,7 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { migrateAllTenants } from '../utils/tenant'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { USERS_COLLECTION } from '@/utils/mongodb-definitions'
 import { getMongoDbClientDb } from '@/utils/mongodb-utils'

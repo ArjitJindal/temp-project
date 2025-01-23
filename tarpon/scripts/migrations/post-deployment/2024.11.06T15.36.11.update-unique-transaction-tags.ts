@@ -1,6 +1,6 @@
 import { compact } from 'lodash'
 import { migrateAllTenants } from '../utils/tenant'
-import { Tenant } from '@/services/accounts'
+import { Tenant } from '@/services/accounts/repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
   UNIQUE_TAGS_COLLECTION,
