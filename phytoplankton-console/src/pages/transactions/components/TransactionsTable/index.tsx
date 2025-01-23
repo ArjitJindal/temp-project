@@ -8,6 +8,7 @@ import { isTransactionHasDetails } from './ExpandedRowRenderer/helpers';
 import GavelIcon from '@/components/ui/icons/Remix/design/focus-2-line.react.svg';
 import {
   Alert,
+  Amount,
   ExecutedRulesResult,
   PaymentMethod,
   RuleAction,
@@ -16,6 +17,7 @@ import {
   TransactionTableItem,
   TransactionTableItemUser,
   UserType,
+  TransactionTableItemPayment,
 } from '@/apis';
 import {
   AllParams,
@@ -37,9 +39,8 @@ import {
   COUNTRY,
   DATE,
   FLOAT,
-  MONEY_AMOUNT,
+  MONEY,
   MONEY_CURRENCIES,
-  MONEY_CURRENCY,
   PAYMENT_METHOD,
   RULE_ACTION_STATUS,
   STRING,
@@ -220,6 +221,18 @@ export const getStatus = (
     return status ?? (executedRule?.ruleHit ? executedRule?.ruleAction : 'ALLOW');
   }
   return undefined;
+};
+
+const getAmountFromPayment = (
+  payment: TransactionTableItemPayment | null | undefined,
+): Amount | undefined => {
+  if (payment == null) {
+    return undefined;
+  }
+  return {
+    amountValue: payment.amount ?? 0,
+    amountCurrency: payment.currency ?? 'USD',
+  };
 };
 
 export default function TransactionsTable(props: Props) {
@@ -430,16 +443,11 @@ export default function TransactionsTable(props: Props) {
         type: STRING,
         filtering: true,
       }),
-      helper.simple<'originPayment.amount'>({
+      helper.derived({
+        id: 'originAmount',
         title: 'Origin amount',
-        type: MONEY_AMOUNT,
-        key: 'originPayment.amount',
-        sorting: true,
-      }),
-      helper.simple<'originPayment.currency'>({
-        title: 'Origin currency',
-        key: 'originPayment.currency',
-        type: MONEY_CURRENCY,
+        value: (entity) => getAmountFromPayment(entity.originPayment),
+        type: MONEY,
       }),
       helper.simple<'originPayment.country'>({
         title: 'Origin country',
@@ -491,16 +499,11 @@ export default function TransactionsTable(props: Props) {
         type: STRING,
         filtering: true,
       }),
-      helper.simple<'destinationPayment.amount'>({
+      helper.derived({
+        id: 'destinationAmount',
         title: 'Destination amount',
-        type: MONEY_AMOUNT,
-        key: 'destinationPayment.amount',
-        sorting: true,
-      }),
-      helper.simple<'destinationPayment.currency'>({
-        title: 'Destination currency',
-        type: MONEY_CURRENCY,
-        key: 'destinationPayment.currency',
+        value: (entity) => getAmountFromPayment(entity.destinationPayment),
+        type: MONEY,
       }),
       helper.simple<'destinationPayment.country'>({
         title: 'Destination country',
