@@ -5438,6 +5438,8 @@ components:
           type: string
         metadata:
           $ref: '#/components/schemas/ListKeyMetadata'
+        ttl:
+          type: number
       required:
         - key
     ListMetadata:
@@ -5454,6 +5456,19 @@ components:
           type: boolean
         checksum:
           type: string
+        ttl:
+          type: object
+          properties:
+            unit:
+              type: string
+              enum:
+                - HOUR
+                - DAY
+            value:
+              type: number
+          required:
+            - unit
+            - value
       additionalProperties: {}
     ListExisted:
       type: object

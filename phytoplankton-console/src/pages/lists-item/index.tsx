@@ -2,6 +2,7 @@ import { useLocation, useParams } from 'react-router';
 import { UnorderedListOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import React, { useState } from 'react';
+import pluralize from 'pluralize';
 import s from './index.module.less';
 import ItemsTable from './ItemsTable';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs } from '@/utils/dayjs';
@@ -95,6 +96,15 @@ export default function ListsItemPage() {
                   <Form.Layout.Label icon={<TimeLineIcon />} title="Created at">
                     {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
                   </Form.Layout.Label>
+                  {listHeader?.metadata?.ttl && (
+                    <Form.Layout.Label icon={<TimeLineIcon />} title="Expiration time per item">
+                      {pluralize(
+                        listHeader.metadata.ttl.unit.toLocaleLowerCase(),
+                        listHeader.metadata.ttl.value,
+                        true,
+                      )}
+                    </Form.Layout.Label>
+                  )}
                 </Card.Section>
                 <Card.Section>
                   <ItemsTable

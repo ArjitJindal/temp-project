@@ -1,5 +1,6 @@
 import React, { useImperativeHandle, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import pluralize from 'pluralize';
 import { ListHeader, ListMetadata, ListType } from '@/apis';
 import { useApi } from '@/api';
 import Button from '@/components/library/Button';
@@ -147,6 +148,19 @@ function ListTable(props: Props, ref: ListTableRef) {
             }}
           />
         ),
+      },
+    }),
+    helper.simple<'metadata.ttl'>({
+      key: 'metadata.ttl',
+      title: 'Expiration time per item',
+      defaultWidth: 80,
+      type: {
+        render: (value) => {
+          if (value?.value == null) {
+            return <>-</>;
+          }
+          return <div>{pluralize(value.unit.toLocaleLowerCase(), value.value, true)}</div>;
+        },
       },
     }),
     ...(hasListWritePermissions

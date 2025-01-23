@@ -28,6 +28,7 @@ import {
   CursorPaginationResponse,
   DEFAULT_PAGE_SIZE,
 } from '@/utils/pagination'
+import { ListMetadataTtl } from '@/@types/openapi-public/ListMetadataTtl'
 
 @traceable
 export class ListRepository {
@@ -167,12 +168,38 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
-    const { Item } = await this.dynamoDb.send(
-      new GetCommand({
+
+    const currentTimestamp = Math.floor(Date.now() / 1000)
+
+    const { Items = [] } = await this.dynamoDb.send(
+      new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        Key: DynamoDbKeys.LIST_ITEM(this.tenantId, listId, header.version, key),
+        KeyConditionExpression: 'PartitionKeyID = :pk AND SortKeyID = :sk',
+        FilterExpression:
+          'attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp',
+        ExpressionAttributeNames: {
+          '#ttl': 'ttl',
+        },
+        ExpressionAttributeValues: {
+          ':pk': DynamoDbKeys.LIST_ITEM(
+            this.tenantId,
+            listId,
+            header.version,
+            key
+          ).PartitionKeyID,
+          ':sk': DynamoDbKeys.LIST_ITEM(
+            this.tenantId,
+            listId,
+            header.version,
+            key
+          ).SortKeyID,
+          ':currentTimestamp': currentTimestamp,
+          ':null': null,
+        },
       })
     )
+
+    const Item = Items.length === 1 ? Items[0] : null
     if (Item == null) {
       return null
     }
@@ -188,6 +215,16 @@ export class ListRepository {
     if (header == null) {
       throw new Error(`List doesn't exist`)
     }
+
+    // if list has a default TTL we need to set the ttl field in every item
+    const listTTL: ListMetadataTtl | undefined = header.metadata?.ttl
+    if (listTTL) {
+      const itemsExpireAt = computeItemExpireAt(listTTL)
+      listItems.forEach((item) => {
+        item.ttl = itemsExpireAt
+      })
+    }
+
     const requests: BatchWriteRequestInternal[] = listItems.map((listItem) => ({
       PutRequest: {
         Item: {
@@ -230,6 +267,15 @@ export class ListRepository {
     }
     const map: { [key: string]: BatchWriteRequestInternal } = {}
 
+    // if list has a default TTL we need to set the ttl field in every item
+    const listTTL: ListMetadataTtl | undefined = header.metadata?.ttl
+    if (listTTL) {
+      const itemsExpireAt = computeItemExpireAt(listTTL)
+      listItems.forEach((item) => {
+        item.ttl = itemsExpireAt
+      })
+    }
+
     for (const item of listItems) {
       map[item.key] = {
         PutRequest: {
@@ -267,13 +313,22 @@ export class ListRepository {
       }
       requestedVersion = header.version
     }
+    const currentTimestamp = Math.floor(Date.now() / 1000)
     const pageSize = params?.pageSize ?? DEFAULT_PAGE_SIZE
+
     const queryCommandInput = {
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression:
+        'attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp',
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
+      },
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, requestedVersion)
           .PartitionKeyID,
+        ':currentTimestamp': currentTimestamp,
+        ':null': null,
       },
       ExclusiveStartKey: params?.fromCursorKey
         ? DynamoDbKeys.LIST_ITEM(
@@ -372,4 +427,21 @@ export class ListRepository {
     )
     return Items.length > 0
   }
+}
+
+const computeItemExpireAt = (ttl: ListMetadataTtl) => {
+  // compute the expiration of the items in seconds
+  let secondsTTL: number
+  switch (ttl.unit) {
+    case 'HOUR':
+      secondsTTL = ttl.value * 3600
+      break
+    case 'DAY':
+      secondsTTL = ttl.value * 86400
+      break
+    default:
+      throw new Error(`Unsupported TTL unit: ${ttl.unit}`)
+  }
+  const itemsExpireAt = Math.floor(Date.now() / 1000 + secondsTTL)
+  return itemsExpireAt
 }

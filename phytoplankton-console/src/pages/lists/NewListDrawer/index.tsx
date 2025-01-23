@@ -19,6 +19,8 @@ import Toggle from '@/components/library/Toggle';
 import { UseFormState } from '@/components/library/Form/utils';
 import { notEmpty } from '@/components/library/Form/utils/validation/basicValidators';
 import { DefaultApiPostWhiteListRequest } from '@/apis/types/ObjectParamAPI';
+import NumberInput from '@/components/library/NumberInput';
+import Alert from '@/components/library/Alert';
 
 interface FormValues {
   subtype: ListSubtype | null;
@@ -26,6 +28,10 @@ interface FormValues {
   description: string;
   status: boolean;
   values: string[];
+  ttl: {
+    value?: number;
+    unit: 'HOUR' | 'DAY';
+  };
 }
 
 interface Props {
@@ -41,6 +47,9 @@ const INITIAL_FORM_STATE: FormValues = {
   name: '',
   description: '',
   status: false,
+  ttl: {
+    unit: 'HOUR',
+  },
 };
 
 export default function NewListDrawer(props: Props) {
@@ -70,13 +79,23 @@ export default function NewListDrawer(props: Props) {
                 name: values.name,
                 description: values.description,
                 status: values.status,
+                ttl: values.ttl.value
+                  ? {
+                      value: values.ttl.value,
+                      unit: values.ttl.unit,
+                    }
+                  : undefined,
               },
               items: values.values?.map((key) => ({ key })) ?? [],
             },
           },
         };
 
-        listType === 'WHITELIST' ? api.postWhiteList(payload) : api.postBlacklist(payload);
+        if (listType === 'WHITELIST') {
+          await api.postWhiteList(payload);
+        } else {
+          await api.postBlacklist(payload);
+        }
       }
     },
     {
@@ -172,6 +191,51 @@ export default function NewListDrawer(props: Props) {
                     >
                       {(inputProps) => <Toggle size="S" {...inputProps} />}
                     </InputField>
+                    <InputField<FormValues, 'ttl'> name="ttl" label={'Expiration time per item'}>
+                      {(inputProps) => (
+                        <div className={s.ttl}>
+                          <NumberInput
+                            {...inputProps}
+                            value={inputProps.value?.value}
+                            onChange={(newValue) => {
+                              inputProps.onChange?.({
+                                unit: inputProps.value?.unit ?? 'HOUR',
+                                value: newValue,
+                              });
+                            }}
+                            placeholder={'Enter the number'}
+                          />
+                          <Select<FormValues['ttl']['unit']>
+                            {...inputProps}
+                            value={inputProps.value?.unit}
+                            onChange={(unit) => {
+                              inputProps.onChange?.({
+                                value: inputProps.value?.value,
+                                unit,
+                              });
+                            }}
+                            options={[
+                              { value: 'HOUR', label: 'Hours' },
+                              { value: 'DAY', label: 'Days' },
+                            ]}
+                          />
+                        </div>
+                      )}
+                    </InputField>
+                    <Alert type={'info'}>
+                      <div>
+                        1. Time to live applies to each item independently and is calculated from
+                        the duration an item is added.
+                      </div>
+                      <div>
+                        2. Time to live applies only to list items. Items are removed as per above
+                        configuration, but the list remains.
+                      </div>
+                      <div>
+                        3. Time to live settings can't change once set. Create a new list for a new
+                        configuration.
+                      </div>
+                    </Alert>
                   </>
                 )}
               </>
