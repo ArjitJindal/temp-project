@@ -154,6 +154,10 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'Alerts Dynamo POC (Experimental)',
     description: 'Enables alerts Dynamo POC (Experimental)',
   },
+  LOCKS_FOR_AGGREGATION_UPDATE: {
+    title: 'Acquire locks for aggregation',
+    description: 'Acquire locks while updating aggregation',
+  },
 };
 
 const isEnvLocal = process.env.ENV_NAME === 'local';

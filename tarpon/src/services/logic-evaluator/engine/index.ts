@@ -1162,12 +1162,15 @@ export class LogicEvaluator {
     const { transaction } = data
     // Acquire lock before updating the aggregation data to avoid double-counting issue
     // when multiple events are processed at the same time.
-    const lockKey = generateChecksum(`agg:${transaction.transactionId}`)
-    await acquireLock(this.dynamoDb, lockKey, {
-      startingDelay: 500,
-      maxDelay: 500,
-      ttlSeconds: 15,
-    })
+    const hasLockFeature = hasFeature('LOCKS_FOR_AGGREGATION_UPDATE')
+    if (hasLockFeature) {
+      const lockKey = generateChecksum(`agg:${transaction.transactionId}`)
+      await acquireLock(this.dynamoDb, lockKey, {
+        startingDelay: 500,
+        maxDelay: 500,
+        ttlSeconds: 15,
+      })
+    }
     await this.updateAggregationVariableInternal(
       aggregationVariable,
       data,
@@ -1178,7 +1181,10 @@ export class LogicEvaluator {
         newDataValue,
       }
     )
-    await releaseLock(this.dynamoDb, lockKey)
+    if (hasLockFeature) {
+      const lockKey = generateChecksum(`agg:${transaction.transactionId}`)
+      await releaseLock(this.dynamoDb, lockKey)
+    }
   }
   private async updateAggregationVariableInternal(
     aggregationVariable: LogicAggregationVariable,

@@ -11190,6 +11190,7 @@ components:
         - CONCURRENT_DYNAMODB_CONSUMER
         - ALERTS_DYNAMO_POC
         - ACURIS
+        - LOCKS_FOR_AGGREGATION_UPDATE
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse
