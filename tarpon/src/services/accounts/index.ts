@@ -1,10 +1,4 @@
-import {
-  BadRequest,
-  Conflict,
-  Forbidden,
-  NotFound,
-  Unauthorized,
-} from 'http-errors'
+import { BadRequest, Conflict, Forbidden, NotFound } from 'http-errors'
 import {
   GetOrganizations200ResponseOneOfInner,
   GetUsers200ResponseOneOfInner,
@@ -13,15 +7,8 @@ import {
 } from 'auth0'
 import { MongoClient } from 'mongodb'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
-import {
-  DeleteCommand,
-  DynamoDBDocumentClient,
-  GetCommand,
-  PutCommand,
-  QueryCommand,
-} from '@aws-sdk/lib-dynamodb'
-import { StackConstants } from '@lib/constants'
-import { memoize, sortBy } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { memoize } from 'lodash'
 import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
@@ -50,7 +37,6 @@ import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePay
 import { envIs, envIsNot } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import dayjs from '@/utils/dayjs'
-import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 
 // todo: move to config?
 const CONNECTION_NAME = 'Username-Password-Authentication'
@@ -82,20 +68,10 @@ type Auth0TenantMetadata = {
   tenantCreatedAt: string
 }
 
-type ActiveSession = {
-  PartitionKeyID: string
-  SortKeyID: string
-  userId: string
-  userAgent: string
-  deviceFingerprint: string
-  createdAt: number
-}
-
 @traceable
 export class AccountsService {
   private config: { auth0Domain: string }
   private mongoDb: MongoClient
-  private dynamoDb: DynamoDBDocumentClient | undefined
   private roleService: RoleService
 
   constructor(
@@ -104,7 +80,6 @@ export class AccountsService {
   ) {
     this.config = config
     this.mongoDb = connections.mongoDb
-    this.dynamoDb = connections.dynamoDb
     this.roleService = new RoleService({
       auth0Domain: this.config.auth0Domain,
     })
@@ -523,100 +498,6 @@ export class AccountsService {
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     const rawAccounts = await this.getTenantAccountsRaw(tenant)
     return rawAccounts.map(AccountsService.userToAccount)
-  }
-
-  async refreshActiveSessions(
-    tenantId: string,
-    userId: string,
-    deviceInfo: { userAgent: string; deviceFingerprint: string }
-  ): Promise<void> {
-    if (!this.dynamoDb) {
-      throw new Error('DynamoDB client is not initialized')
-    }
-    const dynamoDb = this.dynamoDb
-    const maxActiveSessions = getContext()?.settings?.maxActiveSessions
-    if (!maxActiveSessions) {
-      return
-    }
-    const activeSessions = await this.getActiveSessions(tenantId, userId)
-    if (activeSessions.length >= maxActiveSessions) {
-      const sortedActiveSessions = sortBy(activeSessions, 'createdAt')
-      const sessionsToDelete = sortedActiveSessions.slice(
-        0,
-        activeSessions.length - maxActiveSessions + 1
-      )
-      await Promise.all(
-        sessionsToDelete.map((sessionToDelete) =>
-          dynamoDb.send(
-            new DeleteCommand({
-              TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-              Key: {
-                PartitionKeyID: sessionToDelete.PartitionKeyID,
-                SortKeyID: sessionToDelete.SortKeyID,
-              },
-            })
-          )
-        )
-      )
-    }
-    const keys = DynamoDbKeys.ACTIVE_SESSIONS(tenantId, userId, deviceInfo)
-    await this.dynamoDb.send(
-      new PutCommand({
-        TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-        Item: {
-          ...keys,
-          userId,
-          ...deviceInfo,
-          createdAt: Date.now(),
-        },
-      })
-    )
-  }
-
-  async validateActiveSession(
-    tenantId: string,
-    userId: string,
-    deviceInfo: { userAgent: string; deviceFingerprint: string }
-  ): Promise<void> {
-    if (!this.dynamoDb) {
-      throw new Error('DynamoDB client is not initialized')
-    }
-    const maxActiveSessions = getContext()?.settings?.maxActiveSessions
-    if (!maxActiveSessions) {
-      return
-    }
-    const result = await this.dynamoDb.send(
-      new GetCommand({
-        TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-        Key: DynamoDbKeys.ACTIVE_SESSIONS(tenantId, userId, deviceInfo),
-      })
-    )
-    if (!result.Item) {
-      // Getting active sessions is needed when an admin user updates the max active sessions config
-      const activeSessions = await this.getActiveSessions(tenantId, userId)
-      if (activeSessions.length + 1 > maxActiveSessions) {
-        throw new Unauthorized('Invalid session')
-      }
-    }
-  }
-
-  public async getActiveSessions(
-    tenantId: string,
-    userId: string
-  ): Promise<ActiveSession[]> {
-    if (!this.dynamoDb) {
-      throw new Error('DynamoDB client is not initialized')
-    }
-    const result = await this.dynamoDb.send(
-      new QueryCommand({
-        TableName: StackConstants.TRANSIENT_DYNAMODB_TABLE_NAME,
-        KeyConditionExpression: 'PartitionKeyID = :pk',
-        ExpressionAttributeValues: {
-          ':pk': DynamoDbKeys.ACTIVE_SESSIONS(tenantId, userId).PartitionKeyID,
-        },
-      })
-    )
-    return (result.Items ?? []) as ActiveSession[]
   }
 
   async getAccount(id: string): Promise<Account | null> {

@@ -15,9 +15,8 @@ import {
   getApiRequiredPermissions as getInternalApiRequiredPermissions,
 } from '@/@types/openapi-internal-custom/DefaultApi'
 import { determineApi } from '@/core/utils/api'
-import { getDynamoDbClient } from '@/utils/dynamodb'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { AccountsService } from '@/services/accounts'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { SessionsService } from '@/services/sessions'
 
 type Handler = APIGatewayProxyWithLambdaAuthorizerHandler<
   APIGatewayEventLambdaAuthorizerContext<Credentials & JWTAuthorizerResult>
@@ -31,6 +30,7 @@ export const rbacMiddleware =
     if (api !== 'CONSOLE' && ctx?.functionName !== 'Testing-API') {
       return await handler(event, ctx)
     }
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     const apiPath: string = event.resource
     const httpMethod: string = event.httpMethod
@@ -46,26 +46,19 @@ export const rbacMiddleware =
       assertProductionAccess()
     }
 
+    const tenantId = event.requestContext.authorizer.tenantId
+
+    const sessionsService = new SessionsService(tenantId, dynamoDb)
     const maxActiveSessions = getContext()?.settings?.maxActiveSessions
-    if (
-      maxActiveSessions &&
-      maxActiveSessions > 0 &&
-      !event.path.includes('/post-login')
-    ) {
-      const accountsService = new AccountsService(
-        { auth0Domain: event.requestContext.authorizer.auth0Domain },
-        { mongoDb: await getMongoDbClient(), dynamoDb: getDynamoDbClient() }
-      )
-      await accountsService.validateActiveSession(
-        event.requestContext.authorizer.tenantId,
+
+    if (maxActiveSessions && !event.path.includes('/post-login')) {
+      const userAgent =
+        event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
+      const deviceFingerprint = event.headers['x-fingerprint'] || 'unknown'
+
+      await sessionsService.validateActiveSession(
         event.requestContext.authorizer.userId,
-        {
-          userAgent:
-            event.headers['User-Agent'] ||
-            event.headers['user-agent'] ||
-            'unknown',
-          deviceFingerprint: event.headers['x-fingerprint'] || 'unknown',
-        }
+        { userAgent, deviceFingerprint }
       )
     }
 

@@ -14,7 +14,8 @@ import {
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getSecretByName } from '@/utils/secrets-manager'
-import { getDynamoDbClient } from '@/utils/dynamodb'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
+import { SessionsService } from '@/services/sessions'
 
 export const accountsHandler = lambdaApi()(
   async (
@@ -23,10 +24,12 @@ export const accountsHandler = lambdaApi()(
     >
   ) => {
     const { userId, auth0Domain, tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClientByEvent(event)
     const mongoDb = await getMongoDbClient()
+    const sessionsService = new SessionsService(tenantId, dynamoDb)
     const accountsService = new AccountsService(
       { auth0Domain },
-      { mongoDb, dynamoDb: getDynamoDbClient() }
+      { mongoDb, dynamoDb }
     )
     const organization = await accountsService.getAccountTenant(userId)
     const handlers = new Handlers()
@@ -35,7 +38,7 @@ export const accountsHandler = lambdaApi()(
       const userAgent =
         event.headers['User-Agent'] || event.headers['user-agent'] || 'unknown'
       const deviceFingerprint = event.headers['x-fingerprint'] || 'unknown'
-      await accountsService.refreshActiveSessions(tenantId, userId, {
+      await sessionsService.refreshActiveSessions(userId, {
         userAgent,
         deviceFingerprint,
       })
