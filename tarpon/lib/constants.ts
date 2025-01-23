@@ -277,6 +277,7 @@ export const StackConstants = {
     'AsyncRuleRunnerFunction'
   ),
   CRON_JOB_DAILY: getResourceNameForTarpon('CronJobDailyFunction'),
+  CRON_JOB_HOURLY: getResourceNameForTarpon('CronJobHourlyFunction'),
   CRON_JOB_TEN_MINUTE: getResourceNameForTarpon('CronJobTenMinuteFunction'),
   REQUEST_LOGGER_FUNCTION_NAME: getResourceNameForTarpon(
     'RequestLoggerFunction'
