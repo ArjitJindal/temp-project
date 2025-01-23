@@ -4,6 +4,7 @@ import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { cloneDeep, uniq } from 'lodash'
 import { getDemoDataS3Prefix } from '@lib/constants'
+import { ONLY_COUNTRIES } from '@flagright/lib/constants/countries'
 import {
   getSanctions,
   getSanctionsHits,
@@ -20,7 +21,6 @@ import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import { CompanySeedData, names } from '@/core/seed/samplers/dictionary'
-import { COUNTRY_CODES } from '@/@types/openapi-internal-custom/CountryCode'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -340,7 +340,9 @@ ET\n`
   protected randomPepStatus(): PEPStatus {
     return {
       isPepHit: Math.random() < 0.5, // TODO: should use the internal PRNG?
-      pepCountry: this.rng.pickRandom(COUNTRY_CODES),
+      pepCountry: this.rng.pickRandom(
+        Object.keys(ONLY_COUNTRIES)
+      ) as CountryCode,
       pepRank: this.rng.pickRandom(PEP_RANKS),
     }
   }
@@ -516,8 +518,12 @@ export class BusinessUserSampler extends UserSampler<
       userId: shareHolderId,
       generalDetails: {
         name,
-        countryOfResidence: this.rng.pickRandom(COUNTRY_CODES),
-        countryOfNationality: this.rng.pickRandom(COUNTRY_CODES),
+        countryOfResidence: this.rng.pickRandom(
+          Object.keys(ONLY_COUNTRIES)
+        ) as CountryCode,
+        countryOfNationality: this.rng.pickRandom(
+          Object.keys(ONLY_COUNTRIES)
+        ) as CountryCode,
         gender: this.rng.pickRandom(['M', 'F', 'NB']),
         dateOfBirth: new Date(this.generateRandomTimestamp()).toDateString(),
       },
@@ -591,8 +597,12 @@ export class BusinessUserSampler extends UserSampler<
       },
       generalDetails: {
         gender: this.rng.pickRandom(['M', 'F', 'NB']),
-        countryOfResidence: this.rng.pickRandom(COUNTRY_CODES),
-        countryOfNationality: this.rng.pickRandom(COUNTRY_CODES),
+        countryOfResidence: this.rng.pickRandom(
+          Object.keys(ONLY_COUNTRIES)
+        ) as CountryCode,
+        countryOfNationality: this.rng.pickRandom(
+          Object.keys(ONLY_COUNTRIES)
+        ) as CountryCode,
         dateOfBirth: new Date(this.generateRandomTimestamp()).toDateString(),
         name,
       },
@@ -721,7 +731,9 @@ export class BusinessUserSampler extends UserSampler<
             .r(3)
             .pickRandom(['LLC', 'Sole Proprietorship', 'Other', 'Corporation']),
           registrationIdentifier: this.rng.r(4).randomString(),
-          registrationCountry: country ?? this.rng.pickRandom(COUNTRY_CODES),
+          registrationCountry:
+            country ??
+            (this.rng.pickRandom(Object.keys(ONLY_COUNTRIES)) as CountryCode),
           tags: [{ key: 'Unit', value: 'S1300' }],
         },
       },
@@ -754,8 +766,12 @@ export class ConsumerUserSampler extends UserSampler<
     const userId = `U-${this.counter}`
     const name = this.randomConsumerName()
     const riskLevel = this.rng.pickRandom(RISK_LEVELS)
-    const countryOfResidence = this.rng.pickRandom(COUNTRY_CODES)
-    const countryOfNationality = this.rng.r(1).pickRandom(COUNTRY_CODES)
+    const countryOfResidence = this.rng.pickRandom(
+      Object.keys(ONLY_COUNTRIES)
+    ) as CountryCode
+    const countryOfNationality = this.rng.pickRandom(
+      Object.keys(ONLY_COUNTRIES)
+    ) as CountryCode
     const timestamp = this.rng.randomTimestamp(
       3600 * 24 * 365 * 1000,
       dayjs().subtract(30, 'day').toDate()
@@ -828,8 +844,8 @@ export class ConsumerUserSampler extends UserSampler<
       attachments,
       userDetails: {
         dateOfBirth: new Date(this.generateRandomTimestamp(18)).toISOString(),
-        countryOfResidence,
-        countryOfNationality,
+        countryOfResidence: countryOfResidence as CountryCode,
+        countryOfNationality: countryOfNationality as CountryCode,
         name,
         gender: this.rng.pickRandom(GENDERS),
         maritalStatus: this.rng.r(6).pickRandom(MARITAL_STATUSS),

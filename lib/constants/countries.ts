@@ -275,6 +275,38 @@ export const COUNTRIES = {
   XY: 'Western Europe',
 }
 
+export const REGIONS = [
+  'XA',
+  'XB',
+  'XC',
+  'XD',
+  'XE',
+  'XF',
+  'XG',
+  'XH',
+  'XI',
+  'XJ',
+  'XL',
+  'XM',
+  'XN',
+  'XO',
+  'XP',
+  'XQ',
+  'XR',
+  'XS',
+  'XT',
+  'XU',
+  'XV',
+  'XW',
+  'XY',
+]
+
+export const ONLY_COUNTRIES = { ...COUNTRIES }
+REGIONS.forEach((region) => {
+  if (ONLY_COUNTRIES[region]) {
+    delete ONLY_COUNTRIES[region]
+  }
+})
 export type CountryCode = keyof typeof COUNTRIES
 
 export function isCountryCode(val: unknown): val is CountryCode {
