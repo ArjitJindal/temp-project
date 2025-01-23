@@ -2,7 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { isEmpty, isEqual, pick, uniq } from 'lodash'
 import { StackConstants } from '@lib/constants'
 import { logger } from '../logger'
-import { DynamoDbKeys } from '../dynamodb/dynamodb-keys'
+import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { riskFactors } from './data/risk-factors'
 import { getCases } from './data/cases'
 import { UserRepository } from '@/services/users/repositories/user-repository'
@@ -27,6 +27,7 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { isDemoTenant } from '@/utils/tenant'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
 import {
   getArsScores,
   getDrsScores,
@@ -229,8 +230,15 @@ export async function seedDynamo(
       ...(demoSettings.features ?? []),
       ...(nonDemoSettings.features ?? []),
     ])
+    const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
+      const keys = TenantSettings.attributeTypeMap
+        .map((key) => key.name)
+        .filter((key) => key !== 'features')
+      return keys as TenantSettingName[]
+    }
     if (!isEmpty(nonDemoSettings) && !isEqual(demoSettings, nonDemoSettings)) {
       logger.info('Setting tenant settings...')
+      await tenantRepo.deleteTenantSettings(getTenantSettingsKeysToDelete())
       await tenantRepo.createOrUpdateTenantSettings({
         ...nonDemoSettings,
         features: mergedFeatureFlags,
