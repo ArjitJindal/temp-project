@@ -43,6 +43,7 @@ export const PublicManagementApiPathToLambda: any = {
     StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
   '/users/search': StackConstants.PUBLIC_MANAGEMENT_API_USER_FUNCTION_NAME,
   '/lists': StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME,
+  '/lists/{listId}': StackConstants.PUBLIC_MANAGEMENT_API_LISTS_FUNCTION_NAME,
 }
 
 const openapi = getAugmentedOpenapi(

@@ -1131,6 +1131,19 @@ paths:
 
         `GET /users/search` endpoint retrieves a list of users matching the specified search criteria.
   /lists:
+    get:
+      security:
+        - x-api-key: []
+      summary: Get all lists
+      description: Get all lists
+      operationId: get-lists
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListsResponse'
     post:
       security:
         - x-api-key: []
@@ -1182,6 +1195,42 @@ paths:
                 $ref: '#/components/schemas/ErrorMessage'
         '500':
           description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorMessage'
+  /lists/{listId}:
+    get:
+      security:
+        - x-api-key: []
+      summary: Get a list by id
+      description: Get a list by id
+      operationId: get-list-by-id
+      parameters:
+        - name: listId
+          in: path
+          description: List ID
+          required: true
+          style: simple
+          schema:
+            type: string
+        - schema:
+            type: string
+          name: start
+          in: query
+        - schema:
+            type: number
+          name: pageSize
+          in: query
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ListItemsResponse'
+        '404':
+          description: List not found
           content:
             application/json:
               schema:
@@ -1290,6 +1339,61 @@ components:
         - status
         - message
         - listId
+    ListHeader:
+      title: ListHeader
+      type: object
+      properties:
+        listId:
+          type: string
+        metadata:
+          type: object
+          properties:
+            name:
+              type: string
+            ttl:
+              type: number
+              description: Time to live in seconds
+              nullable: true
+              default: null
+        size:
+          type: number
+        listType:
+          type: string
+          enum:
+            - WHITELIST
+            - BLACKLIST
+        subtype:
+          type: string
+        createdTimestamp:
+          type: number
+      required:
+        - listId
+        - listType
+        - subtype
+        - createdTimestamp
+    ListsResponse:
+      title: ListsResponse
+      type: object
+      properties:
+        lists:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListHeader'
+      required:
+        - lists
+    ListItemsResponse:
+      title: ListItemsResponse
+      type: object
+      properties:
+        listId:
+          type: string
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/ListDataItems'
+      required:
+        - listId
+        - items
     UsersSearchResponse:
       title: UsersSearchResponse
       type: object
