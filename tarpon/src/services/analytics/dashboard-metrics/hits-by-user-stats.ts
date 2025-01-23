@@ -465,7 +465,6 @@ export class HitsByUserStatsDashboardMetric {
           type as userType
         FROM ${CLICKHOUSE_DEFINITIONS.USERS.materializedViews.BY_ID.table}
         WHERE id in (SELECT userId FROM aggregated_data)
-        ${userType ? `AND type = '${userType}'` : ''}
       ),
       user_joined AS (
         SELECT 
@@ -474,6 +473,7 @@ export class HitsByUserStatsDashboardMetric {
           u.userType
         FROM aggregated_data a
         JOIN user_data u ON a.userId = u.id
+        ${userType ? `HAVING u.userType = '${userType}'` : ''}
       )
       SELECT 
         userId,
