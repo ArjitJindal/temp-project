@@ -36,8 +36,10 @@ export abstract class BaseSampler<T> {
     return Date.now() - Math.round(this.rng.randomNumber() * backTo)
   }
 
-  protected generateRandomTimestamp(yearDifference: number = 0): number {
-    const minDate = '1947-01-01'
+  protected generateRandomTimestamp(
+    yearDifference: number = 0,
+    minDate: string = '1947-01-01'
+  ): number {
     const maxDate = dayjs()
       .subtract(yearDifference, 'year')
       .format('YYYY-MM-DD')

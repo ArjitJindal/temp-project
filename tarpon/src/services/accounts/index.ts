@@ -638,13 +638,12 @@ export class AccountsService {
       }
     }
   )
-
   async getAccounts(ids: string[]): Promise<Account[]> {
     const managementClient: ManagementClient = await getAuth0ManagementClient(
       this.config.auth0Domain
     )
     const userManager = managementClient.users
-    const q = `user_id: "${ids.join('" OR "')}"`
+    const q = `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`
     const users = await auth0AsyncWrapper(() => userManager.getAll({ q }))
     return users.map(AccountsService.userToAccount)
   }

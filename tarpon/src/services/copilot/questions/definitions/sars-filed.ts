@@ -55,12 +55,11 @@ export const SarsFiled: TableQuestion<Period> = {
     const accounts = await accountService.getAccounts(
       result.map((r) => r.createdById)
     )
-
     const items = result.map((r, i) => {
       return [
         r.id,
         r.description,
-        (accounts && accounts.at(i)?.name) ?? '-',
+        (accounts && accounts.at(i)?.name) ?? r.createdById,
         r.caseId,
         r.createdAt,
       ]

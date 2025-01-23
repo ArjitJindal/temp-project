@@ -16,7 +16,7 @@ import { InvestigationContext, Question, Variables } from './types'
 import { QuestionResponse } from '@/@types/openapi-internal/QuestionResponse'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
-import { getContext } from '@/core/utils/context'
+import { getContext, tenantSettings } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { QuestionVariable } from '@/@types/openapi-internal/QuestionVariable'
@@ -200,6 +200,8 @@ export class QuestionService {
     ) {
       throw new Error('Could not get context for question')
     }
+    const userCurrency =
+      (await tenantSettings(tenantId))?.defaultValues?.currency ?? 'USD'
 
     // Preloading currency data so we don't have to make all the questions async.
     const cs = new CurrencyService()
@@ -224,7 +226,11 @@ export class QuestionService {
     }
 
     if (question.skipCache) {
-      const response = await this.getQuestionResponse(ctx, varObject, question)
+      const response = await this.getQuestionResponse(
+        ctx,
+        { ...varObject, currency: userCurrency },
+        question
+      )
       return response
     }
 
@@ -241,10 +247,26 @@ export class QuestionService {
     }
     const result = await this.dynamoClient.send(new GetCommand(getItemInput))
     if (result.Item) {
-      return result.Item.response as QuestionResponse
+      // checking if the current user currency is the same as the currency in the cache
+      const questionResponse = result.Item.response as QuestionResponse
+      let hasCurrency = false,
+        cacheCurrency = 'USD'
+      questionResponse.variables?.forEach((variable) => {
+        if (variable.name === 'currency') {
+          hasCurrency = true
+          cacheCurrency = variable.value as string
+        }
+      })
+      if (hasCurrency && cacheCurrency === userCurrency) {
+        return questionResponse
+      }
     }
 
-    const response = await this.getQuestionResponse(ctx, varObject, question)
+    const response = await this.getQuestionResponse(
+      ctx,
+      { ...varObject, currency: userCurrency },
+      question
+    )
     void this.dynamoClient.send(
       new PutCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
@@ -270,7 +292,10 @@ export class QuestionService {
       throw new Error()
     }
 
-    varObject = { ...question.defaults(ctx), ...varObject }
+    varObject = {
+      ...question.defaults(ctx),
+      ...varObject,
+    }
 
     const common = {
       questionId: question.questionId,
