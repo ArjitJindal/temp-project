@@ -167,6 +167,12 @@ export const CLICKHOUSE_DEFINITIONS = {
   },
   SANCTIONS_SCREENING_DETAILS: {
     tableName: 'sanctions_screening_details',
+    materializedViews: {
+      BY_ID: {
+        viewName: 'sanctions_screening_details_by_id_mv',
+        table: 'sanctions_screening_details_by_id',
+      },
+    },
   },
   ALERTS: {
     tableName: 'alerts',
@@ -471,6 +477,20 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "transactionIds Array(String) MATERIALIZED JSONExtract(data, 'transactionIds', 'Array(String)')",
       "isOngoingScreening Bool MATERIALIZED JSONExtractBool(data, 'isOngoingScreening')",
       "isHit Bool MATERIALIZED JSONExtractBool(data, 'isHit')",
+    ],
+    materializedViews: [
+      {
+        viewName:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.materializedViews
+            .BY_ID.viewName,
+        columns: ['id String', 'data String'],
+        table:
+          CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.materializedViews
+            .BY_ID.table,
+        engine: 'ReplacingMergeTree',
+        primaryKey: 'id',
+        orderBy: 'id',
+      },
     ],
   },
   {

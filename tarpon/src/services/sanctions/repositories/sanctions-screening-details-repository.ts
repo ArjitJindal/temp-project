@@ -133,7 +133,7 @@ export class SanctionsScreeningDetailsRepository {
     FROM
       sanctions_screening_details FINAL
     WHERE
-      timestamp >= ${timestampRange?.from ?? 0} AND timestamp <= ${
+      timestamp BETWEEN ${timestampRange?.from ?? 0} AND ${
       timestampRange?.to ?? Number.MAX_SAFE_INTEGER
     }
     GROUP BY
@@ -251,12 +251,18 @@ export class SanctionsScreeningDetailsRepository {
   ): string {
     const where: string[] = []
 
-    if (params.afterTimestamp) {
-      where.push(`timestamp >= ${params.afterTimestamp}`)
-    }
+    if (params.afterTimestamp && params.beforeTimestamp) {
+      where.push(
+        `timestamp BETWEEN ${params.afterTimestamp} AND ${params.beforeTimestamp}`
+      )
+    } else {
+      if (params.afterTimestamp) {
+        where.push(`timestamp >= ${params.afterTimestamp}`)
+      }
 
-    if (params.beforeTimestamp) {
-      where.push(`timestamp <= ${params.beforeTimestamp}`)
+      if (params.beforeTimestamp) {
+        where.push(`timestamp <= ${params.beforeTimestamp}`)
+      }
     }
 
     if (params.filterEntities) {
@@ -384,7 +390,8 @@ export class SanctionsScreeningDetailsRepository {
 
     const data = await offsetPaginateClickhouse<SanctionsScreeningDetails>(
       clickhouseClient,
-      CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
+      CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.materializedViews.BY_ID
+        .viewName,
       CLICKHOUSE_DEFINITIONS.SANCTIONS_SCREENING_DETAILS.tableName,
       {
         page: params.page,

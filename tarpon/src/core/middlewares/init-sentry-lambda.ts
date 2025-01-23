@@ -41,7 +41,6 @@ export const initSentryLambda =
             email: verifiedEmail ?? undefined,
           })
         }
-
         Sentry.setTags(getContext()?.logMetadata || {})
         Sentry.setContext(
           'query',
