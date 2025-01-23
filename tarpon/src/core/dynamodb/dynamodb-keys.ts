@@ -451,6 +451,22 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#activesessions#${userId}`,
     SortKeyID: generateChecksum(deviceInfo, 5),
   }),
+  ACCOUNTS: (accountId?: string) => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#accounts-id`,
+    SortKeyID: accountId,
+  }),
+  ACCOUNTS_BY_EMAIL: (email: string) => ({
+    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#accounts-email`,
+    SortKeyID: email,
+  }),
+  ORGANIZATION: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#organization-data`,
+    SortKeyID: 'organization',
+  }),
+  ORGANIZATION_ACCOUNTS: (tenantId: string) => ({
+    PartitionKeyID: `${tenantId}#organization-accounts`,
+    SortKeyID: 'accounts',
+  }),
 }
 
 export type DynamoDbKeyEnum = keyof typeof DynamoDbKeys

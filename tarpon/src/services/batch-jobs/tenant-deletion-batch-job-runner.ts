@@ -102,6 +102,11 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ACTIVE_SESSIONS'
   | 'ALERT_COMMENT'
   | 'ALERT_COMMENT_FILE'
+  // TODO to implement
+  | 'ORGANIZATION'
+  | 'ORGANIZATION_ACCOUNTS'
+  | 'ACCOUNTS'
+  | 'ACCOUNTS_BY_EMAIL'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
