@@ -464,13 +464,13 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                   .join(', ')}
               </Form.Layout.Label>
             )}
-          {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep !== null && (
+          {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
             <Form.Layout.Label title={'PEP status'}>
               {entity.isActivePep === true ? 'Active' : 'Inactive'}
             </Form.Layout.Label>
           )}
           {entity.sanctionSearchTypes?.includes('SANCTIONS') &&
-            entity.isActiveSanctioned !== null && (
+            entity.isActiveSanctioned != null && (
               <Form.Layout.Label title={'Sanctioned status'}>
                 {entity.isActiveSanctioned === true ? 'Active' : 'Inactive'}
               </Form.Layout.Label>
