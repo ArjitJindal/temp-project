@@ -26,38 +26,59 @@ export default function LinkedEntities(props: Props) {
 
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
-      {(graph) => (
-        <EntityPropertiesCard
-          title={'Linked entities'}
-          items={[
-            {
-              label: 'Parent user ID’s',
-              value: user.linkedEntities?.parentUserId,
-            },
-            {
-              label: 'Child user ID’s',
-              value: (
-                <div>
-                  {graph.nodes
-                    ?.filter(({ id }) => id.startsWith('children:'))
-                    .flatMap(({ id }) => id.substring('children:'.length).split(/,\s/))
-                    .map((childId, i) => (
-                      <>
-                        {i !== 0 && ', '}
-                        <Link
-                          key={childId}
-                          to={makeUrl(`/users/list/all/:userId`, { userId: childId })}
-                        >
-                          {childId}
-                        </Link>
-                      </>
-                    ))}
-                </div>
-              ),
-            },
-          ]}
-        />
-      )}
+      {(graph) => {
+        const childIds = graph.nodes
+          ?.filter(({ id }) => id.startsWith('children:'))
+          .flatMap(({ id }) => id.substring('children:'.length).split(/,\s/));
+
+        const parentUserId = user.linkedEntities?.parentUserId;
+        return (
+          <EntityPropertiesCard
+            title={'Linked entities'}
+            items={[
+              {
+                label: 'Parent user ID’s',
+                value: parentUserId ? (
+                  <div>
+                    <Link
+                      key={'parentUserId'}
+                      to={makeUrl(`/users/list/all/:userId`, {
+                        userId: parentUserId,
+                      })}
+                    >
+                      {parentUserId}
+                    </Link>
+                  </div>
+                ) : (
+                  ''
+                ),
+              },
+              ...(childIds && childIds.length > 0
+                ? [
+                    {
+                      label: 'Child user ID’s',
+                      value: (
+                        <div>
+                          {childIds.map((childId, i) => (
+                            <>
+                              {!i && ', '}
+                              <Link
+                                key={childId}
+                                to={makeUrl(`/users/list/all/:userId`, { userId: childId })}
+                              >
+                                {childId}
+                              </Link>
+                            </>
+                          ))}
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
+            ]}
+          />
+        );
+      }}
     </AsyncResourceRenderer>
   );
 }
