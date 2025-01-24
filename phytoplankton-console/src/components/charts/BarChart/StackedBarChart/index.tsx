@@ -22,6 +22,7 @@ import { BAR_CHART_DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/
 import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
+import { formatNumber } from '@/utils/number';
 
 const random = makeRandomNumberGenerator(999999);
 const SKELETON_DATA: BarChartData<string, string> = [...new Array(10)].flatMap((_, category) =>
@@ -253,21 +254,21 @@ function Chart<Category extends StringLike, Series extends StringLike>(
   return (
     <TooltipWrapper
       tooltipState={state}
-      tooltipComponent={({ tooltipData }) =>
-        tooltipData.type === 'ITEM' ? (
+      tooltipComponent={({ tooltipData }) => {
+        return tooltipData.type === 'ITEM' ? (
           <SeriesTooltip
-            items={[
-              {
-                color: colorScale(tooltipData.key as unknown as Series),
-                label: tooltipData.key,
-                value: formatValue(getSeriesValue(tooltipData.datum, tooltipData.key)),
-              },
-            ]}
+            items={series
+              .filter((seriesKey) => tooltipData.datum[seriesKey] !== undefined)
+              .map((seriesKey) => ({
+                color: colorScale(seriesKey as unknown as Series),
+                label: seriesKey,
+                value: formatNumber(formatValue(getSeriesValue(tooltipData.datum, seriesKey))),
+              }))}
           />
         ) : (
           <DefaultChartTooltip>{tooltipData.category}</DefaultChartTooltip>
-        )
-      }
+        );
+      }}
     >
       {({ containerRef }) => {
         return (

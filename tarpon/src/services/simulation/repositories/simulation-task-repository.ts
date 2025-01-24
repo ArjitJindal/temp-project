@@ -227,16 +227,16 @@ export class SimulationTaskRepository {
               },
               statistics: {
                 current: {
-                  falsePositivesCases: random(20, 40),
-                  totalCases: random(250, 300),
-                  transactionsHit: random(2500, 3000),
-                  usersHit: random(250, 300),
+                  falsePositivesCases: random(1, 10),
+                  totalCases: 11,
+                  transactionsHit: 100,
+                  usersHit: 11,
                 },
                 simulated: {
-                  falsePositivesCases: random(20, 40),
-                  totalCases: random(250, 300),
-                  transactionsHit: random(2500, 3000),
-                  usersHit: random(250, 300),
+                  falsePositivesCases: random(1, 10),
+                  totalCases: 22,
+                  transactionsHit: 200,
+                  usersHit: 22,
                 },
               },
             } as SimulationBeaconIteration
