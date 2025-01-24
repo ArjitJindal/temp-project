@@ -61,7 +61,7 @@ export default function LinkedEntities(props: Props) {
                         <div>
                           {childIds.map((childId, i) => (
                             <>
-                              {!i && ', '}
+                              {i !== 0 && ', '}
                               <Link
                                 key={childId}
                                 to={makeUrl(`/users/list/all/:userId`, { userId: childId })}
