@@ -246,11 +246,15 @@ export class UserClickhouseRepository {
 
     // Filter conditions (can be OR-ed or AND-ed)
     if (params.filterId) {
-      filterConditions.push(`ilike(id, '${params.filterId}%')`)
+      filterConditions.push(
+        `ilike(id, '${params.filterId.replace(/'/g, "''")}%')`
+      )
     }
 
     if (params.filterName) {
-      filterConditions.push(`ilike(username, '%${params.filterName}%')`)
+      filterConditions.push(
+        `ilike(username, '%${params.filterName.replace(/'/g, "''")}%')`
+      )
     }
 
     if ((options?.isPulseEnabled ?? true) && params.filterRiskLevel) {
