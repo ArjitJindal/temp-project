@@ -12,6 +12,7 @@ import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import {
   CountryCode,
   SanctionsEntity,
+  SanctionsEntityType,
   SanctionsHit,
   SanctionsHitStatus,
   SanctionsSource,
@@ -301,7 +302,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
             <Form.Layout.Label
               key={entity.yearOfBirth}
-              title={entity.entityType === 'PERSON' ? 'Year of Birth' : 'Year of Incorporation'}
+              title={
+                isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
+              }
             >
               {entity.yearOfBirth ?? '-'}
             </Form.Layout.Label>
@@ -309,7 +312,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {(entity.dateOfBirths?.length ?? 0) > 0 &&
             difference(entity.dateOfBirths, [entity.yearOfBirth]).length > 0 && (
               <Form.Layout.Label
-                title={entity.entityType === 'PERSON' ? 'Date of birth' : 'Date of incorporation'}
+                title={
+                  isHitEntityPerson(entity.entityType) ? 'Date of birth' : 'Date of incorporation'
+                }
               >
                 {entity.dateOfBirths?.join(', ')}
               </Form.Layout.Label>
@@ -330,7 +335,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           {entity.nationality && entity.nationality.length > 0 && (
             <Form.Layout.Label
               key={entity.nationality?.join(',')}
-              title={entity.entityType === 'PERSON' ? 'Nationality' : 'Country of incorporation'}
+              title={
+                isHitEntityPerson(entity.entityType) ? 'Nationality' : 'Country of incorporation'
+              }
             >
               {compact(entity.nationality)
                 ?.map((code) => (['ZZ', 'XX'].includes(code) ? 'Not known' : COUNTRIES[code]))
@@ -481,7 +488,9 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {entity.documents && entity.documents.length > 0 && (
-            <Form.Layout.Label title={entity.entityType === 'PERSON' ? 'Documents' : 'Identifiers'}>
+            <Form.Layout.Label
+              title={isHitEntityPerson(entity.entityType) ? 'Documents' : 'Identifiers'}
+            >
               {
                 <div className={s.tags}>
                   {entity.documents
@@ -549,7 +558,7 @@ function makeStubAiText(hit: SanctionsHit): string {
     ].includes(x),
   );
   const hasDateMatches = hit.entity.matchTypes?.some((x) => ['year_of_birth'].includes(x));
-  const shouldShowDateMatch = hasDateMatches || hit.entity.entityType === 'PERSON';
+  const shouldShowDateMatch = hasDateMatches || isHitEntityPerson(hit.entity.entityType);
   if (hasNameMatches && shouldShowDateMatch) {
     return 'Date of birth and name match and hit requires human review';
   } else if (hasNameMatches) {
@@ -676,4 +685,8 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     pdfMode,
     entity.otherSources,
   ]);
+}
+
+function isHitEntityPerson(entityType: SanctionsEntityType): boolean {
+  return entityType.toUpperCase() === 'PERSON';
 }
