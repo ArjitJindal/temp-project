@@ -1998,11 +1998,6 @@ paths:
             $ref: '#/components/schemas/EntitiesEnum'
           in: query
           name: entities
-        - schema:
-            type: number
-            default: 0
-          in: query
-          name: linksCount
   /users/{userId}/screening-status:
     get:
       summary: Screening Status

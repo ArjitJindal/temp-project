@@ -27,7 +27,7 @@ export default function PopupContent(props: Props) {
             }}
           >
             <div className={s.itemTitle}>
-              {`>`}
+              {`> `}
               {item}
             </div>
             {value.includes(parseInt(item)) && <CheckLineIcon className={s.itemIcon} />}

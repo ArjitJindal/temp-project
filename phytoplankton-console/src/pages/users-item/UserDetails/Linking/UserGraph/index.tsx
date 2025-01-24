@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { uniqBy } from 'lodash';
 import { EdgeArrowPosition, EdgeInterpolation } from 'reagraph';
 import s from '../index.module.less';
@@ -15,7 +15,6 @@ export type GraphParams = (
     afterTimestamp?: number;
     beforeTimestamp?: number;
     entities?: EntitiesEnum;
-    linksCount?: number;
   },
 ) => Promise<Graph>;
 
@@ -33,12 +32,13 @@ const DEFAULT_PAST_DAYS = 30;
 // entities
 export interface GraphFilters {
   entities: EntitiesEnum[];
-  linkCount: number[];
 }
+
 export default function UserGraph(props: Props) {
   const [userId, setUserId] = useState(props.userId);
   const [entity, setEntity] = useState<Graph>();
   const [followed, setFollowed] = useState([props.userId]);
+  const [linkCount, setLinkCount] = useState<number>(0);
   const { getGraph } = props;
 
   const [nodes, setNodes] = useState<GraphNodes[]>([]);
@@ -47,7 +47,6 @@ export default function UserGraph(props: Props) {
   // filters
   const [filters, setFilters] = useState<GraphFilters>({
     entities: ['all'],
-    linkCount: [0],
   });
   useEffect(() => {
     const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
@@ -55,7 +54,6 @@ export default function UserGraph(props: Props) {
       afterTimestamp: DEFAULT_AFTER_TIMESTAMP,
       beforeTimestamp: undefined,
       entities: filters.entities[0],
-      linksCount: filters.linkCount[0],
     })
       .then(setEntity)
       .then(() => setFollowed((followed) => [userId, ...followed]));
@@ -68,14 +66,46 @@ export default function UserGraph(props: Props) {
     }
   }, [entity]);
 
+  const filteredEdges = useMemo(() => {
+    return edges.filter((edge) => {
+      const label = edge.label;
+      if (!label) {
+        return true;
+      }
+
+      try {
+        const numberedLabel = Number(label);
+        if (numberedLabel > linkCount) {
+          return true;
+        }
+      } catch {
+        return true;
+      }
+
+      return false;
+    });
+  }, [edges, linkCount]);
+
+  const filteredNodes = useMemo(() => {
+    return nodes.filter((node) => {
+      if (node.id === `user:${props.userId}`) {
+        return true;
+      }
+
+      return filteredEdges.some((edge) => edge.source === node.id || edge.target === node.id);
+    });
+  }, [nodes, filteredEdges, props.userId]);
+
   return (
     <>
       {entity && (
         <Card.Section>
           <div className={s.graphContainer}>
             <EntityLinkingGraph
-              nodes={nodes}
-              edges={edges}
+              linkCount={linkCount}
+              setLinkCount={setLinkCount}
+              nodes={filteredNodes}
+              edges={filteredEdges}
               followed={followed}
               onFollow={(userId) => {
                 setUserId(userId);

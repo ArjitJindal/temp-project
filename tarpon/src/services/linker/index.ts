@@ -145,8 +145,7 @@ export class LinkerService {
     userId: string,
     afterTimestamp?: number,
     beforeTimestamp?: number,
-    entity: EntitiesEnum = 'all',
-    linksCount: number = 0
+    entity: EntitiesEnum = 'all'
   ): Promise<EntityGraph> {
     const mongoClient = await getMongoDbClient()
     const db = mongoClient.db()
@@ -269,10 +268,6 @@ export class LinkerService {
       max([maxBy(credit, 'count')?.count, maxBy(debit, 'count')?.count]) || 10
 
     credit.forEach((userTxns) => {
-      if (userTxns.count >= linksCount) {
-        return
-      }
-
       const userSourceId = `${
         allUserIds.includes(userTxns._id) ? 'user' : 'payment'
       }:${userTxns._id}`
@@ -296,10 +291,6 @@ export class LinkerService {
     })
 
     debit.forEach((userTxns) => {
-      if (userTxns.count >= linksCount) {
-        return
-      }
-
       const userTargetId = `${
         allUserIds.includes(userTxns._id) ? 'user' : 'payment'
       }:${userTxns._id}`

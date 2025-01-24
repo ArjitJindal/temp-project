@@ -31,19 +31,13 @@ const Linking = (props: Props) => {
   const getTxn = useCallback<GraphParams>(
     (
       userId: string,
-      filters: {
-        afterTimestamp?: number;
-        beforeTimestamp?: number;
-        entities?: EntitiesEnum;
-        linksCount?: number;
-      },
+      filters: { afterTimestamp?: number; beforeTimestamp?: number; entities?: EntitiesEnum },
     ) => {
       return api.getTxnLinking({
         userId,
         afterTimestamp: filters.afterTimestamp,
         beforeTimestamp: filters.beforeTimestamp,
         entities: filters.entities,
-        linksCount: filters.linksCount,
       });
     },
     [api],

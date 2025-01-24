@@ -177,8 +177,7 @@ export const allUsersViewHandler = lambdaApi()(
         request.userId,
         request?.afterTimestamp,
         request?.beforeTimestamp,
-        request?.entities,
-        request?.linksCount
+        request?.entities
       )
     })
 

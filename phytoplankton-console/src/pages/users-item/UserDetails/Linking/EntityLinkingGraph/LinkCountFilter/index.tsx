@@ -1,33 +1,22 @@
-import { GraphFilters } from '../../UserGraph';
 import PopupContent from './PopupContent';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 
 interface Props {
-  filters: GraphFilters;
-  setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
+  linkCount: number;
+  setLinkCount: (value: number) => void;
 }
 
 export function LinkCountFilterButton(props: Props) {
-  const { filters, setFilters } = props;
+  const { linkCount, setLinkCount } = props;
 
-  const isEntitiesEmpty = filters.linkCount.length === 0;
   return (
     <QuickFilterBase
       analyticsName="filters-link-count"
       title="Link count"
-      buttonText={isEntitiesEmpty ? undefined : '>' + filters.linkCount.join(', ')}
-      onClear={
-        isEntitiesEmpty
-          ? undefined
-          : () => {
-              setFilters({ ...filters, linkCount: [] });
-            }
-      }
+      buttonText={'> ' + linkCount}
+      allowClear={false}
     >
-      <PopupContent
-        value={filters.linkCount}
-        onConfirm={(value) => setFilters({ ...filters, linkCount: value })}
-      />
+      <PopupContent value={[linkCount]} onConfirm={(value) => setLinkCount(value?.[0])} />
     </QuickFilterBase>
   );
 }

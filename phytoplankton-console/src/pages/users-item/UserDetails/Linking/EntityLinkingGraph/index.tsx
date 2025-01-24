@@ -35,6 +35,8 @@ type EntityLinkingProps = {
   isFollowEnabled: (id: string) => boolean;
   filters: GraphFilters;
   setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
+  linkCount: number;
+  setLinkCount: (value: number) => void;
 };
 export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   const graphRef = useRef<GraphCanvasRef | null>(null);
@@ -52,6 +54,8 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     extraHints,
     filters,
     setFilters,
+    linkCount,
+    setLinkCount,
   } = props;
 
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
@@ -102,7 +106,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         {scope === 'TXN' && (
           <div className={s.filters}>
             <EntityFilterButton filters={filters} setFilters={setFilters} />
-            <LinkCountFilterButton filters={filters} setFilters={setFilters} />
+            <LinkCountFilterButton linkCount={linkCount} setLinkCount={setLinkCount} />
           </div>
         )}
       </div>
