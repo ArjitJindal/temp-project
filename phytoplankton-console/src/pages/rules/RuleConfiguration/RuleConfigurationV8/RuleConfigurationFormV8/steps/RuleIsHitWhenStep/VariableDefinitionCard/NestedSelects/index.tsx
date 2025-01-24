@@ -84,6 +84,7 @@ function NestedSelects(props: Props, ref?: React.Ref<RefType>) {
               : selectedOption.label
           }
           options={selectedOption.children ?? []}
+          isDisabled={isDisabled}
         />
       )}
     </>

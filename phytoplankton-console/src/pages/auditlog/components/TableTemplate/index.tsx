@@ -4,6 +4,7 @@ import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';
 import TimestampDisplay from '@/components/ui/TimestampDisplay';
 import AccountTag from '@/components/AccountTag';
+import { AuditLog } from '@/apis/models/AuditLog';
 
 type TableItem = {
   key: string;
@@ -47,6 +48,17 @@ export const summariseChanges = (data: {
   return data.showNotChanged
     ? { changedDetails, notChangedDetails }
     : { changedDetails, notChangedDetails: [] };
+};
+
+export const summarizeAdvancedOptions = (data: AuditLog) => {
+  const flattenedOld = flattenObject(data?.oldImage || {});
+  const flattenedNew = flattenObject(data?.newImage || {});
+  const allKeys = uniq([...Object.keys(flattenedOld), ...Object.keys(flattenedNew)]);
+  return allKeys.map((key) => ({
+    key,
+    oldImage: flattenedOld[key] || 'N/A',
+    newImage: flattenedNew[key] || 'N/A',
+  }));
 };
 
 const UNIX_TIMESTAMP_MS_REGEX = /^\d{13}$/;
