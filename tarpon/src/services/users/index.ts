@@ -1113,7 +1113,12 @@ export class UserService {
         callback
       )
 
-    return result
+    // count field is returned as string - converting it to number to match the expected response
+    // TODO: see if we can fix this in the clickhouse repository for all queries
+    return {
+      ...result,
+      count: Number(result.count),
+    }
   }
 
   public async getRuleInstancesTransactionUsersHit(

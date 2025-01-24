@@ -57,7 +57,13 @@ export default function PopupContent(props: Props) {
           onChange={(e) => setSearch(e.currentTarget.value)}
           onKeyDown={(e) => {
             if (e.key === 'Enter') {
-              onEnterInput(search);
+              if (isSuccess(usersRes.data)) {
+                const uniqueMatch = usersRes.data.value.total === 1;
+                if (uniqueMatch) {
+                  const foundUserId = usersRes.data.value.users[0].userId;
+                  onEnterInput(foundUserId);
+                }
+              }
             }
           }}
           allowClear

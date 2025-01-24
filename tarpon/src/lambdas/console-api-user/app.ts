@@ -112,13 +112,11 @@ export const allUsersViewHandler = lambdaApi()(
     const handlers = new Handlers()
 
     handlers.registerGetAllUsersList(async (ctx, request) => {
-      const users = await userService.getUsers(request)
-      return users
+      return await userService.getUsers(request)
     })
 
     handlers.registerGetAllUsersListV2(async (ctx, request) => {
-      const users = await userService.getClickhouseUsers(request)
-      return users
+      return await userService.getClickhouseUsers(request)
     })
 
     handlers.registerGetUsersItem(
