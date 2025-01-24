@@ -71,6 +71,7 @@ export class GeoIPService {
     if (this.providers.length === 0) {
       throw new Error('No IP location providers enabled')
     }
+    let errorCount = 0
     for (const provider of this.providers) {
       try {
         const response = await provider.resolveIp(ipAddress, resolutionType)
@@ -81,9 +82,15 @@ export class GeoIPService {
           return response
         }
       } catch (e) {
-        logger.error(
+        errorCount++
+        logger.warn(
           `Failed to resolve IP address ${ipAddress} with ${provider.source} - ${e}`
         )
+        if (errorCount === this.providers.length) {
+          throw new Error(
+            `Failed to resolve IP address ${ipAddress} with all providers`
+          )
+        }
       }
     }
     return null
