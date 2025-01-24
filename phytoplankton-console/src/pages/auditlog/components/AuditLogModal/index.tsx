@@ -45,7 +45,7 @@ const AuditLogModal = (props: Props) => {
         title={`Changes for ${humanizeAuto(data.type)}`}
       >
         <div style={{ padding: '1rem', width: '100%' }}>
-          {changedDetails.length && (
+          {changedDetails.length > 0 && (
             <>
               <Typography.Title level={4}>
                 {startCase(toLower(data.type))} details changed
@@ -64,7 +64,7 @@ const AuditLogModal = (props: Props) => {
             )}
           </>
           <>
-            {data.metaData && (
+            {metaDataDetails.length > 0 && (
               <div style={{ marginTop: changedDetails.length ? '2rem' : 'auto' }}>
                 <Typography.Title level={4}>
                   {startCase(toLower(data.type))} event meta data

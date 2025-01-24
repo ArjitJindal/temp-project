@@ -15,6 +15,7 @@ import * as Card from '@/components/ui/Card';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
+import Tooltip from '@/components/library/Tooltip';
 
 type Props = {
   userId: string;
@@ -104,7 +105,11 @@ export const UserEvents = (props: Props) => {
       type: {
         render: (item) => {
           if (!item?.updatedConsumerUserAttributes && !item?.updatedBusinessUserAttributes) {
-            return <Typography.Text type={'secondary'}>View Changes</Typography.Text>;
+            return (
+              <Tooltip title="No changes were made to the user details.">
+                <Typography.Text type={'secondary'}>View Changes</Typography.Text>
+              </Tooltip>
+            );
           }
           return (
             <AuditLogModal

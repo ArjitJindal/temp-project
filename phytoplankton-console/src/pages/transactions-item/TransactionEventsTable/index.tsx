@@ -19,6 +19,7 @@ import { CommonParams, TableColumn } from '@/components/library/Table/types';
 import { useRiskClassificationScores } from '@/utils/risk-levels';
 import { getOr } from '@/utils/asyncResource';
 import AuditLogModal from '@/pages/auditlog/components/AuditLogModal';
+import Tooltip from '@/components/library/Tooltip';
 
 interface Props {
   transactionId: string;
@@ -98,15 +99,19 @@ export default function TransactionEventsTable(props: Props) {
         exporting: false,
         type: {
           render: (item) => {
-            if (!item?.updatedTransactionAttributes) {
-              return <Typography.Text type={'secondary'}>View Changes</Typography.Text>;
+            if (!(item?.updatedTransactionAttributes || item?.metaData)) {
+              return (
+                <Tooltip title="No changes were made to the transaction details.">
+                  <Typography.Text type={'secondary'}>View Changes</Typography.Text>
+                </Tooltip>
+              );
             }
             return (
               <AuditLogModal
                 data={{
                   type: 'Transaction',
                   oldImage: {},
-                  newImage: item.updatedTransactionAttributes,
+                  newImage: item.updatedTransactionAttributes || {},
                   showNotChanged: false,
                   showOldImage: false,
                   metaData: item.metaData,
