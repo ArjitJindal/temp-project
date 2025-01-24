@@ -48,6 +48,12 @@ const LAMBDA_LAYER_ARN_BY_REGION: Record<FlagrightRegion, string> = {
 // IMPORTANT: We should use the returned `alias` for granting further roles.
 // We should only use the returned `func` to do the things that alias cannot do
 // (e.g add environment variables)
+
+const autoScalingLambdaNames = [
+  StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME,
+  StackConstants.PUBLIC_API_TRANSACTION_EVENT_FUNCTION_NAME,
+]
+
 export function createFunction(
   context: Construct & { config: Config } & {
     functionProps: Partial<FunctionProps>
@@ -137,7 +143,7 @@ export function createFunction(
     provisionedConcurrentExecutions: provisionedConcurrency,
   }
   // Check for autoscaling lambda - currrently only transaction lambda
-  if (name === StackConstants.PUBLIC_API_TRANSACTION_FUNCTION_NAME) {
+  if (autoScalingLambdaNames.includes(name)) {
     lambdaOptions = {
       aliasName: StackConstants.LAMBDA_LATEST_ALIAS_NAME,
       version: func.currentVersion,
