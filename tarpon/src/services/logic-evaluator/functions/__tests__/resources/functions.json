@@ -1,4 +1,6 @@
 [
+  "number_of_items",
+  "number_of_objects",
   "truncate_decimal",
   "string_to_number",
   "number_to_string",

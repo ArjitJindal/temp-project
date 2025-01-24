@@ -342,7 +342,7 @@ const customMultiselectWidget: MultiSelectWidget<QueryBuilderConfig> = {
   type: `select`,
   factory: (props) => {
     const listValues = getSelectOptions(props);
-    const isCountryField = props.field.includes('country');
+    const isCountryField = props.field?.includes('country');
 
     const options =
       listValues.map((x) => {
