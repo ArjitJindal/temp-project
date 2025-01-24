@@ -322,7 +322,6 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     tenantId: string,
     accounts: Account[]
   ): Promise<void> {
-    console.log('accounts', accounts)
     await batchWrite(
       this.dynamoClient,
       accounts.map((account) => ({

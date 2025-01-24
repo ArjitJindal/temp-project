@@ -57,7 +57,9 @@ export const getCases: () => Case[] = memoize(() => {
   }
 
   const uniqueCases = uniqBy(data, 'caseId')
-  const uniqueData = uniqBy(uniqueCases, 'caseUsers.origin.userId')
+  const uniqueData = uniqBy(uniqueCases, (c) => {
+    return c.caseUsers?.origin?.userId || c.caseUsers?.destination?.userId
+  })
   return uniqueData
 })
 

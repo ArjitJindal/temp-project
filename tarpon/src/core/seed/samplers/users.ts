@@ -144,7 +144,6 @@ const timeIntervals = ['day', 'week', 'month', 'year'] as ManipulateType[]
 
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 
-const shareHolders: Person[] = []
 const directors: Person[] = []
 const addressSampler = new AddressWithUsageSampler()
 
@@ -629,6 +628,8 @@ export class BusinessUserSampler extends UserSampler<
 
     const hitRules = this.sampleUserRules(userId, name, 'BUSINESS')
     const paymentMethod: PaymentDetails[] = []
+
+    const shareHolders: Person[] = []
 
     for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
       paymentMethod.push(paymentMethodSampler.getSample())

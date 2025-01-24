@@ -91,7 +91,6 @@ export function mockComplyAdvantageSearch(hit = true) {
             },
           }
         }
-        // console.log('url', url.pathname)
         throw new Error(`Not implemented`)
       }
       throw new Error(

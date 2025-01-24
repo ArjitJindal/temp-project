@@ -1,6 +1,5 @@
 import { omit } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
-import { logger } from '@/core/logger'
 import { DbClients } from '@/core/dynamodb/dynamodb-stream-consumer-builder'
 import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
@@ -27,12 +26,8 @@ export async function arsScoreEventHandler(
   if (!arsScore || isDemoTenant(tenantId) || !transactionId) {
     return
   }
-  logger.info(`Processing ARS Score`)
   const { mongoDb } = dbClients
-
-  const riskRepository = new RiskRepository(tenantId, {
-    mongoDb,
-  })
+  const riskRepository = new RiskRepository(tenantId, { mongoDb })
 
   const transactionRepository = new MongoDbTransactionRepository(
     tenantId,
@@ -45,8 +40,6 @@ export async function arsScoreEventHandler(
     riskRepository.addArsValueToMongo(arsScore),
     transactionRepository.updateArsScore(transactionId, arsScore), // If transaction id does not exist, it will not result in an error
   ])
-
-  logger.info(`ARS Score Processed`)
 }
 
 export async function drsScoreEventHandler(
@@ -59,10 +52,8 @@ export async function drsScoreEventHandler(
     return
   }
 
-  const { mongoDb, dynamoDb } = dbClients
-
-  const riskRepository = new RiskRepository(tenantId, { mongoDb, dynamoDb })
-  const userRepository = new UserRepository(tenantId, { mongoDb, dynamoDb })
+  const riskRepository = new RiskRepository(tenantId, dbClients)
+  const userRepository = new UserRepository(tenantId, dbClients)
   newDrsScore = omit(newDrsScore, DYNAMO_KEYS) as DrsScore
 
   if (newDrsScore.triggeredBy !== 'PUBLIC_API' && newDrsScore.userId) {
@@ -128,8 +119,6 @@ export async function drsScoreEventHandler(
       ? userRepository.updateDrsScoreOfUser(newDrsScore.userId, newDrsScore)
       : undefined,
   ])
-
-  logger.info(`DRS Score Processed`)
 }
 
 export async function krsScoreEventHandler(
@@ -140,7 +129,6 @@ export async function krsScoreEventHandler(
   if (!krsScore || isDemoTenant(tenantId)) {
     return
   }
-  logger.info(`Processing KRS Score`)
   const { mongoDb } = dbClients
 
   const riskRepository = new RiskRepository(tenantId, { mongoDb })
@@ -153,8 +141,6 @@ export async function krsScoreEventHandler(
       ? userRepository.updateKrsScoreOfUserMongo(krsScore.userId, krsScore)
       : undefined,
   ])
-
-  logger.info(`KRS Score Processed`)
 }
 
 export async function avgArsScoreEventHandler(
@@ -165,7 +151,6 @@ export async function avgArsScoreEventHandler(
   if (!newAvgArs) {
     return
   }
-  logger.info(`Processing AVG ARS Score`)
   const { mongoDb } = dbClients
 
   const userRepository = new UserRepository(tenantId, { mongoDb })
@@ -176,5 +161,4 @@ export async function avgArsScoreEventHandler(
     newAvgArs.userId,
     omit(newAvgArs)
   )
-  logger.info(`AVG ARS Score Processed`)
 }

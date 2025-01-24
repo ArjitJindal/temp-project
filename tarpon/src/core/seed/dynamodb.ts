@@ -104,7 +104,6 @@ export async function seedDynamo(
     } else {
       userAvgArsScore = arsScoreSummation / transactionCount
     }
-    logger.info(`Updating average ARS score for user ${user.userId}`)
     await riskRepo.updateOrCreateAverageArsScore(user.userId, {
       userId: user.userId,
       value: userAvgArsScore,
@@ -167,7 +166,6 @@ export async function seedDynamo(
     })
   }
 
-  logger.info('Clear risk factors')
   await dangerouslyDeletePartition(
     dynamoDb,
     tenantId,
@@ -206,7 +204,6 @@ export async function seedDynamo(
     )
   }
 
-  console.log('Creating alerts...')
   const dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
 
   for (const caseItem of getCases()) {

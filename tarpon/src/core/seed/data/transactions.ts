@@ -39,7 +39,7 @@ import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
   : envIs('local')
-  ? 200
+  ? 500
   : 50
 
 const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
