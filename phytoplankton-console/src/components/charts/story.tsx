@@ -25,7 +25,7 @@ export default function (): JSX.Element {
       ['2024/05/05', '2024/05/06', '2024/05/07', '2024/05/08', '2024/05/09'].map((category) => ({
         series,
         category: category,
-        value: prnd() * 100,
+        value: prnd() * 100000,
       })),
   );
 
@@ -52,58 +52,24 @@ export default function (): JSX.Element {
   const LINE_DATA = [...LINE_DATA_1, ...LINE_DATA_2];
   LINE_DATA.sort((x, y) => x.xValue.toString().localeCompare(y.xValue.toString()));
 
-  const TREEMAP_DATA: TreemapData<string> = [
-    {
-      name: 'value 1',
-      value: 5 * prnd(),
-    },
-    {
-      name: 'value 2',
-      value: 200 * prnd(),
-    },
-    {
-      name: 'value 3',
-      value: 100 * prnd(),
-    },
-    {
-      name: 'value 4',
-      value: 400 * prnd(),
-    },
-    {
-      name: 'value 5',
-      value: 500 * prnd(),
-    },
-  ];
+  const TREEMAP_DATA: TreemapData<string> = [...new Array(3 + Math.round(prnd() * 30))].map(
+    (_, i) => ({
+      name: `value ${i + 1}`,
+      value: 5 * (i + 1) * prnd(),
+    }),
+  );
 
-  const DONUT_DATA: DonutData<string> = [
-    {
-      name: 'value 1',
-      value: 20 * prnd(),
-    },
-    {
-      name: 'value 2',
-      value: 200 * prnd(),
-    },
-    {
-      name: 'value 3',
-      value: 100 * prnd(),
-    },
-    {
-      name: 'value 4',
-      value: 400 * prnd(),
-    },
-    {
-      name: 'value 5',
-      value: 500 * prnd(),
-    },
-  ];
+  const DONUT_DATA: DonutData<string> = [...new Array(3 + Math.round(prnd() * 30))].map((_, i) => ({
+    name: `value ${i + 1}`,
+    value: 5 * (i + 1) * prnd(),
+  }));
 
   return (
     <>
       <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-start' }}>
         <Button
           onClick={() => {
-            setSeed(Math.random());
+            setSeed(Number.MAX_SAFE_INTEGER * Math.random());
           }}
         >
           New data

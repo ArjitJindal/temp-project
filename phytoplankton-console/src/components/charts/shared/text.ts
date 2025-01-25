@@ -22,7 +22,7 @@ export const DEFAULT_AXIS_FONT_STYLE: FontStyle = {
 
 let ctx: CanvasRenderingContext2D | null = null;
 
-const measureTextSize = memoize(
+export const measureTextSize = memoize(
   (text: string, fontStyle: FontStyle) => {
     if (ctx == null) {
       const canvas = document.createElement('canvas');

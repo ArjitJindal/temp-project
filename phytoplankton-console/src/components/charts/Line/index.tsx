@@ -9,7 +9,7 @@ import cn from 'clsx';
 import { LineData } from './types';
 import s from './index.module.less';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
-import { TooltipData, useColorScale, useDataScales } from '@/components/charts/Line/helpers';
+import { TooltipData, useColorScale, useScales } from '@/components/charts/Line/helpers';
 
 import { DEFAULT_PADDINGS, Paddings } from '@/components/charts/shared/helpers';
 import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
@@ -98,9 +98,10 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
   showSkeleton?: boolean;
   formatY: (value: number) => string;
 }) {
-  const { data, size, colors, paddings = DEFAULT_PADDINGS, showSkeleton = false, formatY } = props;
+  const { data, size, colors, showSkeleton = false, formatY } = props;
   const colorScale = useColorScale(data, colors);
-  const { xScale, yScale } = useDataScales<X, Series>(data, size, paddings);
+  const { scales, paddings } = useScales<X, Series>(data, size, DEFAULT_PADDINGS);
+  const { xScale, yScale } = scales;
   const lines = groupBy(data, ({ series }) => series?.toString() ?? '');
   const innerHeight = size.height - paddings.bottom - paddings.top;
 

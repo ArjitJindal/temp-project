@@ -18,7 +18,7 @@ import { getOr, isLoading, map } from '@/utils/asyncResource';
 import { COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { StatePair } from '@/utils/state';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
-import { BAR_CHART_DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
+import { DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
 import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
@@ -103,10 +103,6 @@ export default function StackedBarChart<
 
   const colorScale = useColorScale(dataValue, preparedColors);
 
-  const paddings = showSkeleton
-    ? SKELETON_PADDINGS
-    : BAR_CHART_DEFAULT_PADDINGS(Math.max(...dataValue.map((x) => x.value)));
-
   return (
     <DefaultChartContainer
       height={height}
@@ -128,7 +124,6 @@ export default function StackedBarChart<
               : preparedColors
           }
           formatValue={formatValue}
-          paddings={paddings}
           highlightedState={[highlighted, setHighlighted]}
           customBarColors={preparedCustomBarColors}
         />
@@ -200,13 +195,15 @@ function Chart<Category extends StringLike, Series extends StringLike>(
     colors,
     formatValue = DEFAULT_FORMATTER,
     showSkeleton = false,
-    paddings = BAR_CHART_DEFAULT_PADDINGS(Math.max(...data.map((x) => x.value))),
     highlightedState,
     customBarColors,
   } = props;
 
+  const initialPaddings = showSkeleton ? SKELETON_PADDINGS : DEFAULT_PADDINGS;
+
   const colorScale = useColorScale(data, colors);
-  const derivedScales = useScales(data, size, paddings);
+
+  const { scales: derivedScales, paddings } = useScales(data, size, initialPaddings);
 
   const [highlighted, setHighlighted] = highlightedState;
   const { xScale, yScale } = derivedScales;

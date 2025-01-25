@@ -9,7 +9,7 @@ import { ColorsMap } from '../types';
 import { BarChartData, Props as BarChartProps } from '../index';
 import { SKELETON_TICK_COMPONENT, useColorScale, usePreparedCustomColoring } from '../helpers';
 import s from './index.module.less';
-import { Highlighted, SKELETON_PADDINGS, useDataScales } from './helpers';
+import { Highlighted, SKELETON_PADDINGS, useScales } from './helpers';
 import CustomLegendOrdinal from '@/components/charts/shared/CustomLegendOrdinal';
 import Tooltip from '@/components/charts/shared/SeriesTooltip';
 import { makeRandomNumberGenerator } from '@/utils/prng';
@@ -17,7 +17,7 @@ import { getOr, isLoading, map } from '@/utils/asyncResource';
 import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { StatePair } from '@/utils/state';
 import DefaultChartContainer from '@/components/charts/shared/DefaultChartContainer';
-import { BAR_CHART_DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
+import { DEFAULT_PADDINGS, Paddings, Rect } from '@/components/charts/shared/helpers';
 import { DEFAULT_FORMATTER } from '@/components/charts/shared/formatting';
 import { TooltipWrapper, useTooltipState } from '@/components/charts/shared/TooltipWrapper';
 import DefaultChartTooltip from '@/components/charts/shared/DefaultChartTooltip';
@@ -101,10 +101,6 @@ export default function GropedColumn<
 
   const colorScale = useColorScale(dataValue, preparedColors);
 
-  const paddings = showSkeleton
-    ? SKELETON_PADDINGS
-    : BAR_CHART_DEFAULT_PADDINGS(Math.max(...dataValue.map((x) => x.value)));
-
   return (
     <DefaultChartContainer
       height={height}
@@ -127,7 +123,6 @@ export default function GropedColumn<
           }
           formatValue={formatValue}
           showSkeleton={showSkeleton}
-          paddings={paddings}
           highlightedState={[highlighted, setHighlighted]}
           customBarColors={preparedCustomBarColors}
         />
@@ -200,13 +195,16 @@ function Chart<Category extends StringLike, Series extends StringLike>(
     size,
     formatValue = DEFAULT_FORMATTER,
     showSkeleton = false,
-    paddings = BAR_CHART_DEFAULT_PADDINGS(Math.max(...data.map((x) => x.value))),
     highlightedState,
     customBarColors,
   } = props;
+
+  const initialPaddings = showSkeleton ? SKELETON_PADDINGS : DEFAULT_PADDINGS;
+
   const [highlighted, setHighlighted] = highlightedState;
 
-  const { x0Scale, x1Scale, yScale } = useDataScales(data, size, paddings);
+  const { scales, paddings } = useScales(data, size, initialPaddings);
+  const { x0Scale, x1Scale, yScale } = scales;
   const colorScale = useColorScale(data, colors);
 
   const preparedData: PreparedDataItem[] = useMemo(() => {

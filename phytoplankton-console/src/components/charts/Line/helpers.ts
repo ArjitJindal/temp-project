@@ -5,8 +5,10 @@ import { uniq } from 'lodash';
 import { LineData } from './types';
 import { ColorsMap } from '@/components/charts/BarChart';
 
-import { Paddings } from '@/components/charts/shared/helpers';
+import { adjustScalesAndPaddings, Paddings } from '@/components/charts/shared/helpers';
 import { ALL_CHART_COLORS } from '@/components/ui/colors';
+import { useDeepEqualMemo } from '@/utils/hooks';
+import { DerivedScales } from '@/components/charts/BarChart/StackedBarChart/helpers';
 
 export type DataScales<X extends StringLike> = {
   xScale: ScaleBand<X>;
@@ -37,36 +39,49 @@ export function useColorScale<X extends StringLike, Series extends StringLike>(
   }, [data, colors]);
 }
 
-export function useDataScales<X extends StringLike, Series extends StringLike>(
+export function calcScales<X extends StringLike, Series extends StringLike>(
   data: LineData<X, Series>,
   size: { width: number; height: number } | null,
   paddings: Paddings,
 ): DataScales<X> {
-  return useMemo(() => {
-    const { width: fullWidth, height: fullHeight } = size ?? { width: 0, height: 0 };
+  const { width: fullWidth, height: fullHeight } = size ?? { width: 0, height: 0 };
 
-    const width = fullWidth - paddings.left - paddings.right;
-    const height = fullHeight - paddings.top - paddings.bottom;
+  const width = fullWidth - paddings.left - paddings.right;
+  const height = fullHeight - paddings.top - paddings.bottom;
 
-    const xMax = width;
-    const yMax = height;
+  const xMax = width;
+  const yMax = height;
 
-    const xScale = scaleBand<X>({
-      domain: data.map((item) => item.xValue),
-      padding: 0.2,
-      range: [0, xMax],
-      round: true,
+  const xScale = scaleBand<X>({
+    domain: data.map((item) => item.xValue),
+    padding: 0.2,
+    range: [0, xMax],
+    round: true,
+  });
+
+  const yScale = scaleLinear<number>({
+    domain: [
+      Math.min(0, ...data.map((item) => item.yValue)),
+      Math.max(1, ...data.map((item) => item.yValue)),
+    ],
+    range: [yMax, 0],
+    nice: true,
+  });
+
+  return { xScale, yScale };
+}
+
+export function useScales<X extends StringLike, Series extends StringLike>(
+  data: LineData<X, Series>,
+  size: { width: number; height: number } | null,
+  initialPaddings: Paddings,
+): {
+  scales: DerivedScales<X>;
+  paddings: Paddings;
+} {
+  return useDeepEqualMemo(() => {
+    return adjustScalesAndPaddings<X, DerivedScales<X>>(initialPaddings, (paddings) => {
+      return calcScales<X, Series>(data, size, paddings);
     });
-
-    const yScale = scaleLinear<number>({
-      domain: [
-        Math.min(0, ...data.map((item) => item.yValue)),
-        Math.max(1, ...data.map((item) => item.yValue)),
-      ],
-      range: [yMax, 0],
-      nice: true,
-    });
-
-    return { xScale, yScale };
-  }, [data, size, paddings]);
+  }, [data, size, initialPaddings]);
 }

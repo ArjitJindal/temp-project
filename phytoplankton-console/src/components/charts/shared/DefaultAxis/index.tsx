@@ -9,6 +9,8 @@ import s from './index.module.less';
 import { DEFAULT_AXIS_FONT_STYLE } from '@/components/charts/shared/text';
 import { COLORS_V2_GRAY_6, COLORS_V2_SKELETON_COLOR } from '@/components/ui/colors';
 import { SKELETON_TICK_COMPONENT } from '@/components/charts/BarChart/helpers';
+import { DEFAULT_X_AXIS_LABEL_ANGLE } from '@/components/charts/shared/helpers';
+import { DEFAULT_NUMBER_FORMATTER } from '@/components/charts/shared/formatting';
 
 type Props<Scale extends AxisScale> = SharedAxisProps<Scale> & {
   showSkeleton?: boolean;
@@ -39,7 +41,7 @@ export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) 
           fontWeight: DEFAULT_AXIS_FONT_STYLE.fontWeight,
           fontFamily: DEFAULT_AXIS_FONT_STYLE.fontFamily,
           textAnchor: 'end',
-          angle: -45,
+          angle: 180 * (DEFAULT_X_AXIS_LABEL_ANGLE / Math.PI),
           fill: axisColor,
           ...tickLabelPropsResult,
           className: cn(s.tick, tickLabelPropsResult.className),
@@ -57,6 +59,7 @@ export function DefaultAxisLeft<Scale extends AxisScale>(props: Props<Scale>) {
       stroke={axisColor}
       tickStroke={axisColor}
       tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : undefined}
+      tickFormat={DEFAULT_NUMBER_FORMATTER}
       {...rest}
       tickLabelProps={(...args) => {
         const tickLabelPropsResult = tickLabelProps ? tickLabelProps(...args) : {};
