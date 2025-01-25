@@ -11,7 +11,6 @@ import {
   assertCurrentUserRoleAboveAdmin,
   JWTAuthorizerResult,
 } from '@/@types/jwt'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
@@ -25,12 +24,8 @@ export const accountsHandler = lambdaApi()(
   ) => {
     const { userId, auth0Domain, tenantId } = event.requestContext.authorizer
     const dynamoDb = getDynamoDbClientByEvent(event)
-    const mongoDb = await getMongoDbClient()
     const sessionsService = new SessionsService(tenantId, dynamoDb)
-    const accountsService = new AccountsService(
-      { auth0Domain },
-      { mongoDb, dynamoDb }
-    )
+    const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
     const organization = await accountsService.getAccountTenant(userId)
     const handlers = new Handlers()
 
@@ -103,6 +98,7 @@ export const accountsHandler = lambdaApi()(
     handlers.registerAccountChangeSettings(
       async (ctx, request) =>
         await accountsService.patchUserSettings(
+          ctx.tenantId,
           request.accountId,
           request.AccountSettings
         )

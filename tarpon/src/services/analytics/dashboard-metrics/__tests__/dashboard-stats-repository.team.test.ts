@@ -13,6 +13,7 @@ import { FLAGRIGHT_SYSTEM_USER } from '@/services/alerts/repository'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
 import { withFeaturesToggled } from '@/test-utils/feature-test-utils'
 import { hasFeature } from '@/core/utils/context'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 dynamoDbSetupHook()
 
@@ -29,7 +30,7 @@ withFeaturesToggled(['CLICKHOUSE_ENABLED'], ['RISK_SCORING'], async () => {
       const TENANT_ID = getTestTenantId()
       const statsRepository = await getStatsRepo(TENANT_ID)
 
-      await statsRepository.refreshTeamStats()
+      await statsRepository.refreshTeamStats(getDynamoDbClient())
       const { items, total } = await statsRepository.getTeamStatistics('CASES')
       expect(items).toEqual([])
       expect(total).toBe(0)
@@ -44,7 +45,7 @@ withFeaturesToggled(['CLICKHOUSE_ENABLED'], ['RISK_SCORING'], async () => {
       const TENANT_ID = getTestTenantId()
       const statsRepository = await getStatsRepo(TENANT_ID)
 
-      await statsRepository.refreshTeamStats()
+      await statsRepository.refreshTeamStats(getDynamoDbClient())
       const stats = await statsRepository.getTeamStatistics('CASES')
       expect(stats).toEqual([])
     })
@@ -1538,7 +1539,7 @@ async function expectCaseStats(
     pageSize?: number
   }
 ) {
-  await repo.refreshTeamStats()
+  await repo.refreshTeamStats(getDynamoDbClient())
   const stats = await repo.getTeamStatistics(
     'CASES',
     filters?.startTimestamp,
@@ -1575,7 +1576,7 @@ async function expectAlertStats(
     pageSize?: number
   }
 ) {
-  await repo.refreshTeamStats()
+  await repo.refreshTeamStats(getDynamoDbClient())
   const stats = await repo.getTeamStatistics(
     'ALERTS',
     dateFilter?.startTimestamp,

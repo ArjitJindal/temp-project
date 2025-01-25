@@ -1,11 +1,5 @@
-import { BadRequest, Conflict, Forbidden, NotFound } from 'http-errors'
-import {
-  GetOrganizations200ResponseOneOfInner,
-  GetUsers200ResponseOneOfInner,
-  ManagementClient,
-  UserUpdate,
-} from 'auth0'
-import { MongoClient } from 'mongodb'
+import { BadRequest, Forbidden, NotFound } from 'http-errors'
+import { GetOrganizations200ResponseOneOfInner, ManagementClient } from 'auth0'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { memoize } from 'lodash'
@@ -13,17 +7,20 @@ import { CaseRepository } from '../cases/repository'
 import { AlertsRepository } from '../alerts/repository'
 import { SLAPolicyRepository } from '../tenants/repositories/sla-policy-repository'
 import { Auth0TenantMetadata, InternalUserCreate, Tenant } from './repository'
-import { Account as ApiAccount } from '@/@types/openapi-internal/Account'
+import { DynamoAccountsRepository } from './repository/dynamo'
+import { Auth0AccountsRepository } from './repository/auth0'
+import {
+  Account,
+  Account as ApiAccount,
+} from '@/@types/openapi-internal/Account'
 import { logger } from '@/core/logger'
 import { AccountSettings } from '@/@types/openapi-internal/AccountSettings'
 import {
-  AppMetadata,
   auth0AsyncWrapper,
   CONNECTION_NAME,
   generateRandomPassword,
   getAuth0AuthenticationClient,
   getAuth0ManagementClient,
-  organizationToTenant,
   userToAccount,
 } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
@@ -31,7 +28,6 @@ import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPaylo
 import { RoleService } from '@/services/roles'
 import { getContext, hasFeature, tenantSettings } from '@/core/utils/context'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
 import { isFlagrightInternalUser, isRoleAboveAdmin } from '@/@types/jwt'
 import {
   DefaultApiAccountsChangeTenantRequest,
@@ -39,10 +35,8 @@ import {
 } from '@/@types/openapi-internal/RequestParameters'
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
-import { envIs, envIsNot } from '@/utils/env'
+import { envIs } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
-
-export type Account = ApiAccount
 
 export type TenantBasic = {
   id: string
@@ -53,47 +47,43 @@ export type TenantBasic = {
 @traceable
 export class AccountsService {
   private config: { auth0Domain: string }
-  private mongoDb: MongoClient
   private roleService: RoleService
+  private dynamoDb: DynamoDBDocumentClient
 
   constructor(
     config: { auth0Domain: string },
-    connections: { mongoDb: MongoClient; dynamoDb?: DynamoDBDocumentClient }
+    connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
     this.config = config
-    this.mongoDb = connections.mongoDb
     this.roleService = new RoleService({
       auth0Domain: this.config.auth0Domain,
     })
+    this.dynamoDb = connections.dynamoDb
   }
 
-  public static async getInstance() {
-    return new AccountsService(
-      {
-        auth0Domain:
-          (getContext()?.auth0Domain as string) ??
-          (process.env.AUTH0_DOMAIN as string), // to get auth0 credentials for dashboard widget in demo mode.
-      },
-      { mongoDb: await getMongoDbClient() }
-    )
+  public cache() {
+    return new DynamoAccountsRepository(this.config.auth0Domain, this.dynamoDb)
   }
 
-  public async getAllAccountsMongo(tenantId: string): Promise<Account[]> {
-    const db = this.mongoDb.db()
+  public auth0() {
+    return new Auth0AccountsRepository(this.config.auth0Domain)
+  }
 
-    const accounts = await db
-      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
-      .find()
-      .toArray()
+  public static getInstance(dynamoDb: DynamoDBDocumentClient) {
+    const auth0Domain = (getContext()?.auth0Domain ??
+      process.env.AUTH0_DOMAIN) as string // to get auth0 credentials for dashboard widget in demo mode.
+    return new AccountsService({ auth0Domain }, { dynamoDb })
+  }
 
+  public async getAllAccountsCache(tenantId: string): Promise<Account[]> {
+    const accounts = await this.cache().getTenantAccounts({ id: tenantId })
     return accounts
   }
 
   public async getAllActiveAccounts(): Promise<Account[]> {
     const userId = (getContext()?.user as Account).id
-
-    const tenant = await this.getAccountTenant(userId)
-    const accounts = await this.getTenantAccounts(tenant)
+    const tenant = await this.auth0().getAccountTenant(userId)
+    const accounts = await this.auth0().getTenantAccounts(tenant)
     return accounts.filter((account) => !account.blocked)
   }
 
@@ -101,25 +91,7 @@ export class AccountsService {
     tenantId: string,
     updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
-    const tenant = await this.getTenantById(tenantId)
-    if (tenant == null) {
-      logger.error(`Unable to find tenant by id: ${tenantId}`)
-      return
-    }
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const organizationManager = managementClient.organizations
-    const organization = await auth0AsyncWrapper(() =>
-      organizationManager.get({
-        id: tenant.orgId,
-      })
-    )
-
-    await organizationManager.update(
-      { id: tenant.orgId },
-      { metadata: { ...organization.metadata, ...updatedMetadata } }
-    )
+    await this.auth0().patchOrganization(tenantId, updatedMetadata)
   }
 
   async resetPassword(accountId: string) {
@@ -142,24 +114,7 @@ export class AccountsService {
   }
 
   async getAccountTenant(userId: string): Promise<Tenant> {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-
-    const usersManagement = managementClient.users
-    const organizations: GetOrganizations200ResponseOneOfInner[] =
-      await auth0AsyncWrapper(() =>
-        usersManagement.getUserOrganizations({ id: userId })
-      )
-    if (organizations.length > 1) {
-      throw new Conflict('User can be a member of only one tenant')
-    }
-    const [organization] = organizations
-    if (organization == null) {
-      throw new Conflict('User suppose to be a member of tenant organization')
-    }
-
-    return organizationToTenant(organization)
+    return this.auth0().getAccountTenant(userId)
   }
 
   public async accountsChangeTenantHandler(
@@ -181,19 +136,13 @@ export class AccountsService {
     organization: Tenant,
     values: AccountInvitePayload
   ): Promise<ApiAccount> {
-    const {
-      role,
-      email,
-      reviewerId,
-      escalationLevel,
-      isReviewer,
-      escalationReviewerId,
-    } = values
+    const { role = 'analyst' } = values
     const inviteRole = role ?? 'analyst'
     if (inviteRole === 'root') {
       throw new Forbidden(`It's not possible to create a root user`)
     }
     const allAccounts: Account[] = await this.getTenantAccounts(organization)
+
     const existingAccount = allAccounts.filter(
       (account) => !isRoleAboveAdmin(account.role) && account.blocked === false
     )
@@ -208,100 +157,56 @@ export class AccountsService {
       )
     }
 
-    const user = await this.createAccountInOrganization(organization, {
-      email,
-      role: inviteRole,
-      reviewerId,
-      escalationLevel,
-      isReviewer,
-      escalationReviewerId,
-    })
-
-    return user
+    return this.createAccount(organization, { ...values, role })
   }
 
-  async createAccountInOrganization(
+  async createAccount(
     tenant: Tenant,
     params: InternalUserCreate
   ): Promise<Account> {
-    let user: GetUsers200ResponseOneOfInner | null = null
     let account: Account | null = null
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const organizationManager = managementClient.organizations
     try {
-      const existingUser = await auth0AsyncWrapper(() =>
-        userManager.getAll({
-          q: `email:"${params.email}"`,
-          per_page: 1,
-          fields: 'user_id,blocked',
-        })
-      )
+      const existingUser = await this.auth0().getAccountByEmail(params.email)
 
-      if (existingUser.length > 0) {
+      if (existingUser) {
         /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
-        if (existingUser[0].blocked) {
-          user = await auth0AsyncWrapper(() =>
-            userManager.update(
-              { id: existingUser[0].user_id as string },
-              { blocked: false, app_metadata: { blockedReason: null } }
-            )
+        if (existingUser.blocked) {
+          account = await this.auth0().patchAccount(
+            tenant.id,
+            existingUser.id,
+            { blocked: false, blockedReason: null }
           )
-
           await this.roleService.setRole(
             tenant.id,
-            user.user_id as string,
+            existingUser.id,
             params.role
           )
         } else {
           throw new BadRequest('The user already exists.')
         }
       } else {
-        user = await auth0AsyncWrapper(() =>
-          userManager.create({
-            connection: CONNECTION_NAME,
-            email: params.email,
-            // NOTE: We need at least one upper case character
-            password: generateRandomPassword(),
-            app_metadata: {
-              role: params.role,
-              isReviewer: params.isReviewer,
-              isReviewRequired: params.isReviewRequired,
-              reviewerId: params.reviewerId,
-              escalationLevel: params.escalationLevel,
-              escalationReviewerId: params.escalationReviewerId,
-            } as AppMetadata,
-            verify_email: false,
-          })
-        )
-        logger.info('Created user', {
-          email: params.email,
+        account = await this.auth0().createAccount(tenant.id, {
+          type: 'AUTH0',
+          params,
         })
-        await this.roleService.setRole(
-          tenant.id,
-          user.user_id as string,
-          params.role
-        )
+        logger.info('Created user', { email: params.email })
+        await this.roleService.setRole(tenant.id, account.id, params.role)
       }
-      account = userToAccount(user)
-      await organizationManager.addMembers(
-        { id: tenant.orgId },
-        { members: [account.id] }
-      )
+      await this.auth0().addAccountToOrganization(tenant, account)
       logger.info(`Added user to orginization ${tenant.orgId}`, {
         email: params.email,
         account: account.id,
       })
       await this.sendPasswordResetEmail(params.email)
-      await this.insertAuth0UserToMongo(tenant.id, [account])
+      await this.cache().createAccount(tenant.id, {
+        type: 'DATABASE',
+        params: account,
+      })
+      await this.cache().addAccountToOrganization(tenant, account)
     } catch (e) {
-      if (user) {
-        await userManager.delete({ id: user.user_id as string })
-        logger.info('Deleted user', {
-          email: params.email,
-        })
+      if (account) {
+        await this.auth0().deleteAccount(account)
+        logger.info('Deleted user', { email: params.email })
       }
       throw e
     }
@@ -331,86 +236,40 @@ export class AccountsService {
       connection: CONNECTION_NAME,
       email,
     })
-    logger.info(`Sent password reset email`, {
-      email,
-    })
+    logger.info(`Sent password reset email`, { email })
   }
 
-  public async insertAuth0UserToMongo(tenantId: string, users: Account[]) {
-    const db = this.mongoDb.db()
-    await Promise.all(
-      users.map((user) =>
-        db
-          .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
-          .updateOne({ id: user.id }, { $set: user }, { upsert: true })
-      )
-    )
+  public async addUserCache(tenantId: string, users: Account[]) {
+    await this.cache().putMultipleAccounts(tenantId, users)
   }
 
-  private async deleteAuth0UserFromMongo(tenantId: string, userId: string) {
-    const db = this.mongoDb.db()
-    await db
-      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
-      .deleteOne({ id: userId })
+  private async deleteUserCache(tenantId: string, userId: string) {
+    const account = await this.getAccount(userId)
+    if (!account) {
+      return
+    }
+    await this.cache().deleteAccount(account)
   }
 
-  private async updateAuth0UserInMongo(
+  private async updateUserCache(
     tenantId: string,
     userId: string,
     data: Partial<Account>
   ) {
-    const db = this.mongoDb.db()
-    await db
-      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
-      .updateOne({ id: userId }, { $set: data })
-  }
+    const account = await this.getAccount(userId)
 
-  async getTenantAccountsRaw(
-    tenant: Tenant
-  ): Promise<GetUsers200ResponseOneOfInner[]> {
-    const accounts: GetUsers200ResponseOneOfInner[] = []
-    let totalCount = 0
-    let page = 0
-
-    const managementClient: ManagementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-
-    const organizationManager = managementClient.organizations
-    const userManager = managementClient.users
-
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      const result = await auth0AsyncWrapper(() =>
-        organizationManager.getMembers({
-          id: tenant.orgId,
-          include_totals: true,
-          per_page: 50,
-          page,
-        })
-      )
-      const ids = result.members.map((x) => x.user_id)
-      if (ids.length == 0) {
-        break
-      }
-      const users = await auth0AsyncWrapper(() =>
-        userManager.getAll({
-          q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
-        })
-      )
-      accounts.push(...users)
-      totalCount += result.members.length
-      if (totalCount >= result.total) {
-        break
-      }
-      page += 1
+    if (!account) {
+      return
     }
-    return accounts
+
+    await this.cache().createAccount(tenantId, {
+      type: 'DATABASE',
+      params: { ...account, ...data },
+    })
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
-    const rawAccounts = await this.getTenantAccountsRaw(tenant)
-    return rawAccounts.map(userToAccount)
+    return this.auth0().getTenantAccounts(tenant)
   }
 
   async getAccount(id: string): Promise<Account | null> {
@@ -419,61 +278,16 @@ export class AccountsService {
 
   private getAccountInternal = memoize(
     async (id: string): Promise<Account | null> => {
-      const managementClient: ManagementClient = await getAuth0ManagementClient(
-        this.config.auth0Domain
-      )
-      const userManager = managementClient.users
-      try {
-        const user = await auth0AsyncWrapper(() => userManager.get({ id }))
-        return userToAccount(user)
-      } catch (e) {
-        logger.warn(`Error getting account ${id}`, { error: e })
-        return null
-      }
+      return this.auth0().getAccount(id)
     }
   )
+
   async getAccounts(ids: string[]): Promise<Account[]> {
-    const managementClient: ManagementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const q = `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`
-    const users = await auth0AsyncWrapper(() => userManager.getAll({ q }))
-    return users.map(userToAccount)
+    return this.auth0().getAccountByIds(ids)
   }
 
   async getTenants(auth0Domain?: string): Promise<Tenant[]> {
-    const managementClient = await getAuth0ManagementClient(
-      auth0Domain ?? this.config.auth0Domain
-    )
-    const user = getContext()?.user
-    const organizationManager = managementClient.organizations
-    let pageNumber = 0
-    const limitPerPage = 100
-    let organizations: GetOrganizations200ResponseOneOfInner[] = []
-    let morePagesAvailable = true
-
-    while (morePagesAvailable) {
-      const pagedOrganizations = await auth0AsyncWrapper(() =>
-        organizationManager.getAll({
-          per_page: limitPerPage,
-          page: pageNumber,
-          include_totals: true,
-        })
-      )
-
-      organizations = [...organizations, ...pagedOrganizations.organizations]
-      pageNumber++
-      morePagesAvailable = pagedOrganizations.total > organizations.length
-    }
-
-    const tenants = organizations.map(organizationToTenant)
-
-    if (envIsNot('prod') || !user?.allowedRegions) {
-      return tenants
-    }
-
-    return tenants
+    return this.auth0().getTenants(auth0Domain)
   }
 
   async changeUserTenant(
@@ -490,47 +304,31 @@ export class AccountsService {
     if (oldTenant.name === newTenant.name) {
       return
     }
-
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const organizationManager = managementClient.organizations
     // Need to do this call to make sure operations are executed in exact order.
     // Without it if you try to remove and add member from the same organization,
     // it will be removed but will not be added
     const user = await this.getAccount(userId)
-
-    await organizationManager.addMembers(
-      { id: newTenant.orgId },
-      { members: [userId] }
-    )
-
+    if (!user) {
+      throw new BadRequest(`Unable to find user by id: ${userId}`)
+    }
+    await this.auth0().addAccountToOrganization(newTenant, user)
     try {
-      await organizationManager.deleteMembers(
-        { id: oldTenant.orgId },
-        { members: [userId] }
-      )
+      await this.auth0().deleteAccountFromOrganization(oldTenant, user)
     } catch (e) {
       // If the user was not deleted from the old tenant, we need to remove it from the new tenant
-      await organizationManager.deleteMembers(
-        { id: newTenant.orgId },
-        { members: [userId] }
-      )
+      await this.auth0().deleteAccountFromOrganization(newTenant, user)
       throw e
     }
-    await this.deleteAuth0UserFromMongo(oldTenant.id, userId)
+    await this.deleteUserCache(oldTenant.id, userId)
 
     if (user) {
-      await this.insertAuth0UserToMongo(newTenant.id, [user])
+      await this.addUserCache(newTenant.id, [user])
     }
   }
 
   async deleteUser(tenant: Tenant, idToDelete: string, reassignedTo: string) {
+    const mongodb = await getMongoDbClient()
     const userTenant = await this.getAccountTenant(idToDelete)
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
 
     if (userTenant == null || userTenant.id !== tenant.id) {
       throw new BadRequest(
@@ -548,21 +346,17 @@ export class AccountsService {
 
       promises.push(
         ...usersWithReviewer.map((user) =>
-          userManager.update(
-            { id: user.id },
-            { app_metadata: { reviewerId: reassignedTo } }
-          )
+          this.auth0().patchAccount(tenant.id, user.id, {
+            app_metadata: { reviewerId: reassignedTo },
+          })
         )
       )
     }
 
-    const caseRepository = new CaseRepository(tenant.id, {
-      mongoDb: this.mongoDb,
-    })
-    const alertRepository = new AlertsRepository(tenant.id, {
-      mongoDb: this.mongoDb,
-    })
-    const slaPolicyRepository = new SLAPolicyRepository(tenant.id, this.mongoDb)
+    const connections = { mongoDb: mongodb, dynamoDb: this.dynamoDb }
+    const caseRepository = new CaseRepository(tenant.id, connections)
+    const alertRepository = new AlertsRepository(tenant.id, connections)
+    const slaPolicyRepository = new SLAPolicyRepository(tenant.id, mongodb)
 
     promises.push(
       ...[
@@ -576,12 +370,15 @@ export class AccountsService {
     await Promise.all(promises)
   }
 
-  public async updateAuth0User(accountId: string, data: UserUpdate) {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    await userManager.update({ id: accountId }, data)
+  public async updateBlockedReason(
+    tenantId: string,
+    accountId: string,
+    blockedReason: Account['blockedReason'] | null
+  ) {
+    await this.auth0().patchAccount(tenantId, accountId, {
+      blockedReason,
+      blocked: true,
+    })
   }
 
   public async blockAccount(
@@ -605,11 +402,8 @@ export class AccountsService {
     const userRoles = await userManager.getRoles({ id: accountId })
 
     await Promise.all([
-      this.updateAuth0User(accountId, {
-        blocked: true,
-        app_metadata: { blockedReason },
-      }),
-      this.updateAuth0UserInMongo(tenantId, accountId, {
+      this.updateBlockedReason(tenantId, accountId, blockedReason),
+      this.updateUserCache(tenantId, accountId, {
         blocked: true,
         blockedReason,
       }),
@@ -627,19 +421,14 @@ export class AccountsService {
     accountId: string,
     deactivateReason: Account['blockedReason']
   ) {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-
-    const userManager = managementClient.users
     await Promise.all([
-      this.updateAuth0UserInMongo(tenant.id, accountId, {
+      this.updateUserCache(tenant.id, accountId, {
         blocked: true,
       }),
-      userManager.update(
-        { id: accountId },
-        { app_metadata: { blockedReason: deactivateReason }, blocked: true }
-      ),
+      this.auth0().patchAccount(tenant.id, accountId, {
+        blockedReason: deactivateReason,
+        blocked: true,
+      }),
     ])
   }
 
@@ -674,56 +463,23 @@ export class AccountsService {
     accountId: string,
     patch: AccountPatchPayload
   ): Promise<Account> {
-    const userTenant = await this.getAccountTenant(accountId)
-    const managementClient: ManagementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-
-    if (userTenant == null || userTenant.id !== tenant.id) {
-      throw new BadRequest(
-        `Unable to find user "${accountId}" in the tenant |${tenant.id}|`
-      )
-    }
-
     if (patch.role) {
       await this.roleService.setRole(tenant.id, accountId, patch.role)
     }
-    const user = await auth0AsyncWrapper(() =>
-      userManager.get({
-        id: accountId,
-      })
-    )
-
-    const patchedUser = await auth0AsyncWrapper(() =>
-      userManager.update(
-        { id: accountId },
-        {
-          app_metadata: {
-            ...user.app_metadata,
-            reviewerId: patch.reviewerId ?? null,
-            escalationReviewerId: patch.escalationReviewerId ?? null,
-            escalationLevel: patch.escalationLevel ?? null,
-            isReviewer: patch.isReviewer ?? null,
-          },
-        }
-      )
-    )
-
-    await this.updateAuth0UserInMongo(tenant.id, accountId, patch)
-    return userToAccount(patchedUser)
+    const patchedUser = await this.auth0().patchAccount(tenant.id, accountId, {
+      app_metadata: patch,
+    })
+    await this.updateUserCache(tenant.id, accountId, patch)
+    return patchedUser
   }
 
   async getUserSettings(accountId: string): Promise<AccountSettings> {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const user = await auth0AsyncWrapper(() =>
-      userManager.get({ id: accountId })
-    )
+    const account = await this.getAccount(accountId)
+    if (!account) {
+      throw new BadRequest(`Unable to find user by id: ${accountId}`)
+    }
     return {
-      demoMode: user.user_metadata?.['demoMode'] === true,
+      demoMode: account?.demoMode === true,
     }
   }
 
@@ -731,29 +487,17 @@ export class AccountsService {
    * @deprecated The role service setRole method should be used instead.
    */
   async patchUserSettings(
+    tenantId: string,
     accountId: string,
     patch: Partial<AccountSettings>
   ): Promise<AccountSettings> {
-    if (!accountId) {
-      throw new BadRequest(`accountId is not provided`)
-    }
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const user = await auth0AsyncWrapper(() =>
-      userManager.get({
-        id: accountId,
-      })
-    )
+    await this.auth0().patchAccount(tenantId, accountId, {
+      user_metadata: patch,
+    })
 
-    const updatedUser = await auth0AsyncWrapper(() =>
-      userManager.update(
-        { id: accountId },
-        { user_metadata: { ...user.user_metadata, ...patch } }
-      )
-    )
-    return updatedUser.user_metadata ?? {}
+    return {
+      demoMode: patch.demoMode ?? false,
+    }
   }
 
   async deactivateUser(
@@ -762,11 +506,12 @@ export class AccountsService {
     deactivate: boolean
   ): Promise<Account | null> {
     await Promise.all([
-      this.updateAuth0User(accountId, {
-        blocked: deactivate,
-        app_metadata: { blockedReason: deactivate ? 'DEACTIVATED' : null },
-      }),
-      this.updateAuth0UserInMongo(tenantId, accountId, {
+      this.updateBlockedReason(
+        tenantId,
+        accountId,
+        deactivate ? 'DEACTIVATED' : null
+      ),
+      this.updateUserCache(tenantId, accountId, {
         blocked: deactivate,
         blockedReason: deactivate ? 'DEACTIVATED' : undefined,
       }),
@@ -780,12 +525,7 @@ export class AccountsService {
   async createAuth0Organization(
     tenantData: TenantCreationRequest,
     tenantId: string
-  ): Promise<GetOrganizations200ResponseOneOfInner> {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const organizationManager = managementClient.organizations
-
+  ): Promise<Tenant> {
     let consoleApiUrl = ''
     if (envIs('prod')) {
       consoleApiUrl = `https://${process.env.REGION}.api.flagright.com/console`
@@ -806,23 +546,24 @@ export class AccountsService {
       apiAudience: process.env.AUTH0_AUDIENCE as unknown as string,
       auth0Domain: tenantData.auth0Domain,
       region: process.env.REGION as FlagrightRegion,
-      isProductionAccessDisabled: 'false',
+      isProductionAccessDisabled: false,
       tenantCreatedAt: Date.now().toString(),
     }
-    const organization = await auth0AsyncWrapper(() =>
-      organizationManager.create({
+
+    const organization = await this.auth0().createOrganization(tenantId, {
+      type: 'AUTH0',
+      params: {
         name: tenantData.tenantName.toLowerCase(),
         display_name: tenantData?.auth0DisplayName?.replace(
           /[^a-zA-Z0-9]/g,
           '_'
         ),
-        metadata,
-      })
-    )
-
-    if (organization.id == null) {
-      throw new Error('Unable to create organization')
-    }
+        metadata: {
+          ...metadata,
+          isProductionAccessDisabled: 'false',
+        },
+      },
+    })
 
     return organization
   }
@@ -851,24 +592,22 @@ export class AccountsService {
   }
 
   async createAccountInOrganizationMultiple(
-    organization: GetOrganizations200ResponseOneOfInner,
+    tenant: Tenant,
     emails: string[],
     role: string
   ): Promise<void> {
-    const tenantId = organization.metadata?.tenantId as string
+    const tenantId = tenant.id
 
     if (tenantId == null) {
       throw new BadRequest('Unable to find tenant id in organization metadata')
     }
 
-    const tenant = organizationToTenant(organization)
-
     for await (const email of emails) {
-      await this.createAccountInOrganization(tenant, { email, role })
+      await this.createAccount(tenant, { email, role })
     }
 
     const allAccounts = await this.getTenantAccounts(tenant)
-    await this.insertAuth0UserToMongo(tenantId, allAccounts)
+    await this.addUserCache(tenantId, allAccounts)
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {
@@ -903,15 +642,10 @@ export class AccountsService {
     tenantId: string,
     roles: string[]
   ): Promise<string[]> {
-    const db = this.mongoDb.db()
-
-    const accounts = await db
-      .collection<Account>(ACCOUNTS_COLLECTION(tenantId))
-      .find({ role: { $in: roles } })
-      .project({ id: 1, _id: 0 })
-      .toArray()
-
-    return accounts.map((account) => account.id)
+    const accounts = await this.cache().getTenantAccounts({ id: tenantId })
+    return accounts
+      .filter((account) => roles.includes(account.role))
+      .map((account) => account.id)
   }
 
   async getAccountByEmail(email: string): Promise<Account | null> {
@@ -937,7 +671,7 @@ export class AccountsService {
     await usersBlocksManager.delete({ id: account.id })
   }
 
-  async blockAccountBruteForce(account: Account) {
+  async blockAccountBruteForce(tenantId: string, account: Account) {
     // DONT'T DO ANY MONGO UPDATES HERE.
     // THIS IS CALLED FROM AN AUTH0 WEBHOOK, AND WE ONLY TRIGGER IT FROM EU-1
     // SINCE ALL LOGINS ARE IN EU-1
@@ -951,12 +685,7 @@ export class AccountsService {
 
     await Promise.all([
       ...(!account.blocked
-        ? [
-            this.updateAuth0User(accountId, {
-              blocked: true,
-              app_metadata: { blockedReason: 'BRUTE_FORCE' },
-            }),
-          ]
+        ? [this.updateBlockedReason(tenantId, accountId, 'BRUTE_FORCE')]
         : []),
       this.unblockBruteForceAccount(account),
     ])

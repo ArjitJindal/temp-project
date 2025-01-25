@@ -59,6 +59,7 @@ import { FormulaLegacyMovingAvg } from '@/@types/openapi-internal/FormulaLegacyM
 import { FormulaCustom } from '@/@types/openapi-internal/FormulaCustom'
 import { logger } from '@/core/logger'
 import { Tenant } from '@/services/accounts/repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export type TenantInfo = {
   tenant: Tenant
@@ -179,8 +180,8 @@ export class TenantService {
   ): Promise<TenantInfo[]> => {
     const stageOrDefault = stage ?? (process.env.ENV?.split(':')[0] as Stage)
     const regionOrDefault = region ?? (process.env.REGION as FlagrightRegion)
+    const dynamoDb = getDynamoDbClient()
     const tenantInfos: Array<TenantInfo> = []
-    const mongoDb = await getMongoDbClient()
     const auth0TenantConfigs = getAuth0TenantConfigs(
       stageOrDefault,
       regionOrDefault
@@ -190,7 +191,7 @@ export class TenantService {
         auth0TenantConfig.tenantName,
         auth0TenantConfig.region
       )
-      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+      const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
       tenantInfos.push(
         ...(await accountsService.getTenants()).map((tenant) => ({
           tenant,
@@ -238,7 +239,7 @@ export class TenantService {
 
     const accountsService = new AccountsService(
       { auth0Domain: tenantData.auth0Domain },
-      { mongoDb: this.mongoDb }
+      { dynamoDb: this.dynamoDb }
     )
 
     const existingOrganization = await accountsService.getOrganization(
@@ -668,7 +669,7 @@ export class TenantService {
         )
       }
 
-      const accountsService = await AccountsService.getInstance()
+      const accountsService = AccountsService.getInstance(this.dynamoDb)
 
       if (!isEmpty(updateData)) {
         await accountsService.updateAuth0TenantMetadata(
@@ -725,7 +726,7 @@ export class TenantService {
       )
     }
 
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = await accountsService.getTenantById(tenantIdToDelete)
 
     if (
@@ -763,10 +764,7 @@ export class TenantService {
 
   public async getAllTenants(auth0Domain: string) {
     let tenants: Tenant[] = []
-    const accountsService = new AccountsService(
-      { auth0Domain },
-      { mongoDb: this.mongoDb }
-    )
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
     if (isWhitelabelAuth0Domain(auth0Domain)) {
       tenants = await accountsService.getTenants()
     } else {

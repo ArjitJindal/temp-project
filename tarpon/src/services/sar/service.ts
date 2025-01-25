@@ -8,7 +8,6 @@ import { BadRequest, NotFound } from 'http-errors'
 import { S3 } from '@aws-sdk/client-s3'
 import { Upload } from '@aws-sdk/lib-storage'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
-import { Account } from '../accounts'
 import { CaseRepository } from '../cases/repository'
 import { MongoDbTransactionRepository } from '../rules-engine/repositories/mongodb-transaction-repository'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
@@ -39,6 +38,7 @@ import { UserRepository } from '@/services/users/repositories/user-repository'
 import { getUserName } from '@/utils/helpers'
 import { FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/FincenReportValidStatus'
 import { NON_FINCEN_REPORT_VALID_STATUSS } from '@/@types/openapi-internal-custom/NonFincenReportValidStatus'
+import { Account } from '@/@types/openapi-internal/Account'
 
 function withSchema(report: Report): Report {
   const generator = REPORT_GENERATORS.get(report.reportTypeId)

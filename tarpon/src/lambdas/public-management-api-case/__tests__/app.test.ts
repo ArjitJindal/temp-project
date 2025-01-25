@@ -8,8 +8,13 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { CaseCreationRequest } from '@/@types/openapi-public-management/CaseCreationRequest'
 import { CaseUpdateable } from '@/@types/openapi-public-management/CaseUpdateable'
+import { AccountsService } from '@/services/accounts'
 
 dynamoDbSetupHook()
+
+jest
+  .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
+  .mockResolvedValue([])
 
 describe('Test Create Case', () => {
   const tenantId = getTestTenantId()

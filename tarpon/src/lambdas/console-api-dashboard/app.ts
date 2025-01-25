@@ -12,6 +12,7 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { DashboardStatsTransactionsCountItem } from '@/@types/openapi-internal/DashboardStatsTransactionsCountItem'
 import dayjs from '@/utils/dayjs'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 let localRefreshedAll = false
 
@@ -51,9 +52,11 @@ export const dashboardStatsHandler = lambdaApi()(
     const handlers = new Handlers()
     const mongoDb = await getMongoDbClient()
     const tenantId = event.requestContext.authorizer.principalId
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
       mongoDb,
+      dynamoDb,
     })
 
     handlers.registerGetDashboardStatsTransactions(async (ctx, request) => {
@@ -160,7 +163,8 @@ export const dashboardStatsHandler = lambdaApi()(
         page,
       } = request
       const { userId } = ctx
-      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+      const dynamoDb = getDynamoDbClientByEvent(event)
+      const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
@@ -184,7 +188,7 @@ export const dashboardStatsHandler = lambdaApi()(
     handlers.registerGetDashboardStatsOverview(async (ctx) => {
       const accountsService = new AccountsService(
         { auth0Domain: event.requestContext.authorizer.auth0Domain },
-        { mongoDb }
+        { dynamoDb: getDynamoDbClientByEvent(event) }
       )
       const organization = await accountsService.getAccountTenant(ctx.userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
@@ -195,7 +199,9 @@ export const dashboardStatsHandler = lambdaApi()(
         .map((account) => account.id)
 
       if (shouldRefreshAll(event)) {
-        await dashboardStatsRepository.refreshTeamStats()
+        await dashboardStatsRepository.refreshTeamStats(
+          getDynamoDbClientByEvent(event)
+        )
       }
       return await dashboardStatsRepository.getOverviewStatistics(accountIds)
     })
@@ -243,7 +249,10 @@ export const dashboardStatsHandler = lambdaApi()(
       const { auth0Domain } = event.requestContext.authorizer
       const { scope, pageSize, page } = request
       const { userId } = ctx
-      const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+      const accountsService = new AccountsService(
+        { auth0Domain },
+        { dynamoDb: getDynamoDbClientByEvent(event) }
+      )
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization

@@ -306,7 +306,10 @@ export class CaseCreationService {
 
     const auth0Domain =
       getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-    const slaService = new SLAService(this.tenantId, this.mongoDb, auth0Domain)
+    const slaService = new SLAService(this.tenantId, auth0Domain, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
     const now = Date.now()
     let case_: Case = {
       caseType: 'MANUAL',
@@ -642,11 +645,10 @@ export class CaseCreationService {
 
         const auth0Domain =
           getContext()?.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-        const slaService = new SLAService(
-          this.tenantId,
-          this.mongoDb,
-          auth0Domain
-        )
+        const slaService = new SLAService(this.tenantId, auth0Domain, {
+          mongoDb: this.mongoDb,
+          dynamoDb: this.caseRepository.dynamoDb,
+        })
         const newAlert = {
           _id: alertCount,
           alertId: `A-${alertCount}`,

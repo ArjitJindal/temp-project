@@ -4,7 +4,6 @@ import { MongoClient } from 'mongodb'
 import createHttpError from 'http-errors'
 import { AccountsService } from '../accounts'
 import { FLAGRIGHT_SYSTEM_USER } from '../alerts/repository'
-import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import {
@@ -21,28 +20,21 @@ import { STATUSS } from '@/@types/openapi-public-management-custom/Status'
 @traceable
 export class CasesAlertsTransformer {
   public tenantId: string
-  public mongoDb: MongoClient
   public dynamoDb: DynamoDBDocumentClient
   private accountService: AccountsService
-  private auth0Domain: string
 
   constructor(
     tenantId: string,
     connections: { mongoDb: MongoClient; dynamoDb: DynamoDBDocumentClient }
   ) {
     this.tenantId = tenantId
-    this.mongoDb = connections.mongoDb
     this.dynamoDb = connections.dynamoDb
-    this.auth0Domain = getContext()?.auth0Domain as string
-    this.accountService = new AccountsService(
-      { auth0Domain: this.auth0Domain },
-      { mongoDb: this.mongoDb }
-    )
+    this.accountService = AccountsService.getInstance(this.dynamoDb)
   }
 
-  public getAllAccountsMongo = memoize(
+  public getAllAccounts = memoize(
     async (tenantId: string) => {
-      const accounts = await this.accountService.getAllAccountsMongo(tenantId)
+      const accounts = await this.accountService.getAllAccountsCache(tenantId)
       return {
         mapByEmail: keyBy(accounts, 'email'),
         list: accounts,
@@ -56,7 +48,7 @@ export class CasesAlertsTransformer {
     status: CaseStatus,
     entity: Pick<CaseInternal, 'assignments' | 'reviewAssignments'>
   ): Promise<Assignment[]> {
-    const accounts = await this.getAllAccountsMongo(this.tenantId)
+    const accounts = await this.getAllAccounts(this.tenantId)
 
     const accountsMap = accounts.mapById
 
@@ -82,7 +74,7 @@ export class CasesAlertsTransformer {
   public async transformAssignmentsToInternal(
     assignments: Assignment[]
   ): Promise<CaseInternal['assignments']> {
-    const accounts = await this.getAllAccountsMongo(this.tenantId)
+    const accounts = await this.getAllAccounts(this.tenantId)
 
     const accountsMap = accounts.mapByEmail
 

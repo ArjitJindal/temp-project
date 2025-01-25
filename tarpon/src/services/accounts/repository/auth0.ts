@@ -18,6 +18,8 @@ import {
   userToAccount,
 } from '@/utils/auth0-utils'
 import { Account } from '@/@types/openapi-internal/Account'
+import { getContext } from '@/core/utils/context'
+import { envIsNot } from '@/utils/env'
 
 export class Auth0AccountsRepository extends BaseAccountsRepository {
   private readonly auth0Domain: string
@@ -163,7 +165,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           app_metadata: {
             ...user.app_metadata,
             ...patchData.app_metadata,
-            ...(patchData.blockedReason && {
+            // Specific Undefined Check Don't Change
+            ...(patchData.blockedReason !== undefined && {
               blockedReason: patchData.blockedReason,
             }),
           },
@@ -176,7 +179,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     return userToAccount(patchedUser.data)
   }
 
-  async getTenantAccounts(tenant?: Tenant): Promise<Account[]> {
+  async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     if (!tenant) {
       throw new Error('Tenant is required to fetch accounts from Auth0')
     }
@@ -258,7 +261,19 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     const organizationManager = managementClient.organizations
 
     const organization = await auth0AsyncWrapper(() =>
-      organizationManager.update({ id: tenantId }, { metadata: patch })
+      organizationManager.update(
+        { id: tenantId },
+        {
+          metadata: {
+            ...patch,
+            ...(patch.isProductionAccessDisabled != null && {
+              isProductionAccessDisabled: patch.isProductionAccessDisabled
+                ? 'true'
+                : 'false',
+            }),
+          },
+        }
+      )
     )
 
     return organizationToTenant(organization.data)
@@ -292,5 +307,39 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users
     await userManager.delete({ id: account.id })
+  }
+
+  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
+    const managementClient = await getAuth0ManagementClient(
+      auth0Domain ?? this.auth0Domain
+    )
+    const user = getContext()?.user
+    const organizationManager = managementClient.organizations
+    let pageNumber = 0
+    const limitPerPage = 100
+    let organizations: GetOrganizations200ResponseOneOfInner[] = []
+    let morePagesAvailable = true
+
+    while (morePagesAvailable) {
+      const pagedOrganizations = await auth0AsyncWrapper(() =>
+        organizationManager.getAll({
+          per_page: limitPerPage,
+          page: pageNumber,
+          include_totals: true,
+        })
+      )
+
+      organizations = [...organizations, ...pagedOrganizations.organizations]
+      pageNumber++
+      morePagesAvailable = pagedOrganizations.total > organizations.length
+    }
+
+    const tenants = organizations.map(organizationToTenant)
+
+    if (envIsNot('prod') || !user?.allowedRegions) {
+      return tenants
+    }
+
+    return tenants
   }
 }

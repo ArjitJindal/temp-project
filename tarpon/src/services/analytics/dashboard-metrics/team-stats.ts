@@ -1,3 +1,4 @@
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { getAffectedInterval } from '../../dashboard/utils'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { cleanUpStaleData, updateRoles, withUpdatedAt } from './utils'
@@ -5,6 +6,7 @@ import dayjs from '@/utils/dayjs'
 import {
   HOUR_DATE_FORMAT,
   HOUR_DATE_FORMAT_JS,
+  getMongoDbClient,
   getMongoDbClientDb,
   paginatePipeline,
 } from '@/utils/mongodb-utils'
@@ -34,7 +36,11 @@ interface TimestampCondition {
 
 @traceable
 export class TeamStatsDashboardMetric {
-  public static async refresh(tenantId, timeRange?: TimeRange): Promise<void> {
+  public static async refresh(
+    tenantId: string,
+    dynamoDb: DynamoDBClient,
+    timeRange?: TimeRange
+  ): Promise<void> {
     const db = await getMongoDbClientDb()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const alertAggregationCollection =
@@ -888,8 +894,13 @@ export class TeamStatsDashboardMetric {
       ),
     ])
 
-    await updateRoles(db, alertAggregationCollection)
-    await updateRoles(db, caseAggregationCollection)
+    const connections = {
+      mongoDb: await getMongoDbClient(),
+      dynamoDb,
+    }
+
+    await updateRoles(alertAggregationCollection, connections)
+    await updateRoles(caseAggregationCollection, connections)
   }
 
   public static async get(

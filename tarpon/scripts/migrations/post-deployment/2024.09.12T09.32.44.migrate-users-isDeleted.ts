@@ -1,13 +1,13 @@
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AccountsService } from '@/services/accounts'
 import { TenantService } from '@/services/tenants'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const up = async () => {
-  const mongoDb = await getMongoDbClient()
+  const dynamoDb = getDynamoDbClient()
   const tenants = await TenantService.getAllTenants()
 
   for (const { auth0Domain, tenant } of tenants) {
-    const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+    const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
     const allAccounts = await accountsService.getTenantAccounts(tenant)
     await Promise.all(
       allAccounts.map(async (a) => {

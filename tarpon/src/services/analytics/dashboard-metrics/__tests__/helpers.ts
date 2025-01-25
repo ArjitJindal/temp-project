@@ -48,7 +48,7 @@ export async function getCaseRepo(tenantId: string) {
 }
 export async function getAlertRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
-  const dynamoDb = await getDynamoDbClient()
+  const dynamoDb = getDynamoDbClient()
   return new AlertsRepository(tenantId, {
     mongoDb,
     dynamoDb,
@@ -59,6 +59,7 @@ export async function getStatsRepo(tenantId: string) {
   const mongoDb = await getMongoDbClient()
   return new DashboardStatsRepository(tenantId, {
     mongoDb,
+    dynamoDb: getDynamoDbClient(),
   })
 }
 

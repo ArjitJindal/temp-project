@@ -27,6 +27,14 @@ jest.mock('../../accounts', () => {
   }
 })
 
+const getSlaService = async (tenantId: string) => {
+  const mongoDb = await getMongoDbClient()
+  return new SLAService(tenantId, 'test', {
+    mongoDb,
+    dynamoDb: getDynamoDbClient(),
+  })
+}
+
 describe('test sla service', () => {
   const tenantId = getTestTenantId()
   describe('test calculateSLAStatusForEntity', () => {
@@ -36,8 +44,7 @@ describe('test sla service', () => {
       })
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -61,8 +68,7 @@ describe('test sla service', () => {
         })
       })
       test('should return the Warning status and time for open alert with 10 day SLA', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -87,7 +93,10 @@ describe('test sla service', () => {
       })
       test('should return the Breached and time for open alert with 10 day SLA', async () => {
         const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = new SLAService(tenantId, 'test', {
+          mongoDb,
+          dynamoDb: getDynamoDbClient(),
+        })
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -138,8 +147,7 @@ describe('test sla service', () => {
       })
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status with second open status time skipped', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -185,8 +193,7 @@ describe('test sla service', () => {
         })
       })
       test('should return the Breached status with second open status time skipped', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -239,8 +246,7 @@ describe('test sla service', () => {
       TEST_POLICY.policyConfiguration.accountRoles = undefined
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 10 day SLA', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -282,8 +288,7 @@ describe('test sla service', () => {
       })
       setUpSLAHooks(tenantId, [TEST_POLICY])
       test('should return the Ok status and time for open alert with 2 day SLA only counting monday and wednesday', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf() // Thursday
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -307,8 +312,7 @@ describe('test sla service', () => {
         })
       })
       test('should return the Breached status and time for open alert with 2 day SLA only counting monday and wednesday', async () => {
-        const mongoDb = await getMongoDbClient()
-        const service = new SLAService(tenantId, mongoDb, 'test')
+        const service = await getSlaService(tenantId)
         const timestamp = new Date('2021-01-01T00:00:00Z').valueOf() // Thursday
         const alert: Alert = getTestAlert({
           createdTimestamp: timestamp,
@@ -358,7 +362,7 @@ describe('test sla service', () => {
     test('should calculate SLA policy status for non closed alerts', async () => {
       const mongoDb = await getMongoDbClient()
       const caseRepository = new CaseRepository(tenantId, { mongoDb })
-      const service = new SLAService(tenantId, mongoDb, 'test')
+      const service = await getSlaService(tenantId)
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       /* Creating alerts in two cases to verify the SLA status calculation */
       await caseRepository.addCaseMongo({
@@ -504,8 +508,7 @@ describe('test sla service', () => {
     })
     setUpSLAHooks(tenantId, [TEST_POLICY])
     test('should calculate SLA policy status for escalated alerts', async () => {
-      const mongoDb = await getMongoDbClient()
-      const service = new SLAService(tenantId, mongoDb, 'test')
+      const service = await getSlaService(tenantId)
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       const alert: Alert = getTestAlert({
         createdTimestamp: timestamp,
@@ -552,7 +555,7 @@ describe('test sla service', () => {
     test('should calculate SLA policy status for non closed manual cases', async () => {
       const mongoDb = await getMongoDbClient()
       const caseRepository = new CaseRepository(tenantId, { mongoDb })
-      const service = new SLAService(tenantId, mongoDb, 'test')
+      const service = await getSlaService(tenantId)
       const timestamp = new Date('2021-01-01T00:00:00Z').valueOf()
       await caseRepository.addCaseMongo({
         caseId: 'testCase1',

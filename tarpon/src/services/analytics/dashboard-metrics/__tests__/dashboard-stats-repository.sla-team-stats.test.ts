@@ -9,6 +9,7 @@ import {
   withFeaturesToggled,
 } from '@/test-utils/feature-test-utils'
 import { isClickhouseEnabled } from '@/utils/clickhouse/utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 const TEST_ACCOUNT_ID_1 = 'TEST_ACCOUNT_ID_1'
 const TEST_ACCOUNT_ID_2 = 'TEST_ACCOUNT_ID_2'
@@ -41,7 +42,7 @@ withFeaturesToggled([], ['CLICKHOUSE_ENABLED'], () => {
     }
     const TENANT_ID = getTestTenantId()
     const statsRepository = await getStatsRepo(TENANT_ID)
-    await statsRepository.refreshTeamStats()
+    await statsRepository.refreshTeamStats(getDynamoDbClient())
     const { items, total } = await statsRepository.getSLATeamStatistics()
     expect(items).toEqual([])
     expect(total).toBe(0)

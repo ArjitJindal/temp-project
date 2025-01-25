@@ -1,7 +1,8 @@
 import { MongoClient } from 'mongodb'
 import { compact, memoize } from 'lodash'
 import { v4 as uuid } from 'uuid'
-import { Account, AccountsService } from '../accounts'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
+import { AccountsService } from '../accounts'
 import { RoleService } from '../roles'
 import { NotificationsChannels } from './notifications-channels'
 import { ConsoleNotifications } from './console-notifications'
@@ -32,19 +33,25 @@ import {
   NotificationRawPayload,
   PartialNotification,
 } from '@/@types/notifications'
+import { Account } from '@/@types/openapi-internal/Account'
 
 @traceable
 export class NotificationsService {
   tenantId: string
   mongoDb: MongoClient
+  dynamoDb: DynamoDBClient
 
-  constructor(tenantId: string, connections: { mongoDb: MongoClient }) {
+  constructor(
+    tenantId: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
     this.tenantId = tenantId
     this.mongoDb = connections.mongoDb
+    this.dynamoDb = connections.dynamoDb
   }
 
   private allUsers = memoize(async () => {
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
     const tenant = await accountsService.getTenantById(this.tenantId)
     if (!tenant) {
       throw new Error(`Tenant not found: ${this.tenantId}`)

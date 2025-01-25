@@ -11,6 +11,7 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { AccountsService } from '@/services/accounts'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { DEFAULT_CASE_AGGREGATES } from '@/utils/case'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 jest.mock('@/services/accounts')
 
 export async function testQuestion<V extends Variables, D>(
@@ -45,7 +46,7 @@ export async function testQuestion<V extends Variables, D>(
     userId: 'U-1',
   }
 
-  const accountService = new AccountsService({ auth0Domain: '' }, { mongoDb })
+  const accountService = AccountsService.getInstance(getDynamoDbClient())
   const ctx: InvestigationContext = {
     tenantId,
     caseId: 'C-1',

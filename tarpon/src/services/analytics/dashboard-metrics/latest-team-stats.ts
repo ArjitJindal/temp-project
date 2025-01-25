@@ -1,6 +1,7 @@
 import { difference } from 'lodash'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { updateRoles, withUpdatedAt } from './utils'
-import { getMongoDbClientDb } from '@/utils/mongodb-utils'
+import { getMongoDbClient, getMongoDbClientDb } from '@/utils/mongodb-utils'
 import {
   CASES_COLLECTION,
   DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY,
@@ -32,8 +33,12 @@ export class LatestTeamStatsDashboardMetric {
       ? reviewAssignmentsStatus
       : assignmentsStatus
   }
-  public static async refresh(tenantId: string): Promise<void> {
-    const db = await getMongoDbClientDb()
+  public static async refresh(
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient
+  ): Promise<void> {
+    const mongoDb = await getMongoDbClient()
+    const db = mongoDb.db()
     const casesCollection = db.collection<Case>(CASES_COLLECTION(tenantId))
     const alertAggregationCollection =
       DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY(tenantId)
@@ -428,9 +433,9 @@ export class LatestTeamStatsDashboardMetric {
           .next()
       }
     }
-
-    await updateRoles(db, alertAggregationCollection)
-    await updateRoles(db, caseAggregationCollection)
+    const connections = { mongoDb, dynamoDb }
+    await updateRoles(alertAggregationCollection, connections)
+    await updateRoles(caseAggregationCollection, connections)
   }
 
   public static async get(

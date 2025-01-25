@@ -354,6 +354,12 @@ export type AggregationCleanupBatchJob = {
   tenantId: string
 }
 
+export type SyncAuth0DataBatchJob = {
+  type: 'SYNC_AUTH0_DATA'
+  tenantId: string
+  parameters: { type: 'ALL' } | { type: 'TENANT_IDS'; tenantIds: string[] }
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -391,6 +397,7 @@ export type BatchJob =
   | FinCenReportStatusRefreshBatchJob
   | AggregationCleanupBatchJob
   | PnbTransactionEventUpdatesBatchJob
+  | SyncAuth0DataBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

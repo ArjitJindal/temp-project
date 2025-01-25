@@ -340,9 +340,8 @@ export class ApiUsageMetricsService {
     if (!tenantInfo.auth0Domain) {
       return {}
     }
-    const accountsService = new AccountsService(
-      { auth0Domain: tenantInfo.auth0Domain },
-      { mongoDb: this.connections.mongoDb }
+    const accountsService = AccountsService.getInstance(
+      this.connections.dynamoDb
     )
     const tenant = await accountsService.getTenantById(tenantInfo.id)
     if (!tenant) {

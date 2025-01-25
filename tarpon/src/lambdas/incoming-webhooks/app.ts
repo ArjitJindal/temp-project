@@ -19,7 +19,6 @@ import { TenantRepository } from '@/services/tenants/repositories/tenant-reposit
 import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { updateLogMetadata } from '@/core/utils/context'
 import { AccountsService } from '@/services/accounts'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 import { InternalProxyWebhookData } from '@/@types/openapi-internal/InternalProxyWebhookData'
 
@@ -151,8 +150,6 @@ export const webhooksHandler = lambdaApi()(
         )
       }
 
-      const mongoDb = await getMongoDbClient()
-
       for (const log of webhookEvent.logs) {
         logger.info(`Received Auth0 webhook event: ${JSON.stringify(log)}`, {
           log,
@@ -166,7 +163,7 @@ export const webhooksHandler = lambdaApi()(
 
         const accountsService = new AccountsService(
           { auth0Domain: `${log.data.tenant_name}.eu.auth0.com` },
-          { mongoDb }
+          { dynamoDb: getDynamoDbClientByEvent(event) }
         )
 
         const account = await accountsService.getAccountByEmail(
@@ -202,7 +199,7 @@ export const webhooksHandler = lambdaApi()(
           continue
         }
 
-        await accountsService.blockAccountBruteForce(account)
+        await accountsService.blockAccountBruteForce(tenant.id, account)
       }
     })
 

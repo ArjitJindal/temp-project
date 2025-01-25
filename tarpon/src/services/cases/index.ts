@@ -152,9 +152,8 @@ export class CaseService extends CaseAlertsCommonService {
       mongoDb: this.mongoDb,
       dynamoDb: this.caseRepository.dynamoDb,
     })
-    this.accountsService = new AccountsService(
-      { auth0Domain: getContext()?.auth0Domain as string },
-      { mongoDb: this.mongoDb }
+    this.accountsService = AccountsService.getInstance(
+      this.caseRepository.dynamoDb
     )
     this.userService = new UserService(
       this.tenantId,
@@ -545,7 +544,9 @@ export class CaseService extends CaseAlertsCommonService {
     }
 
     const context = getContext()
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = AccountsService.getInstance(
+      this.caseRepository.dynamoDb
+    )
     const userId = externalRequest ? API_USER : (context?.user as Account)?.id
     const accountUser =
       externalRequest || !userId
@@ -1004,7 +1005,9 @@ export class CaseService extends CaseAlertsCommonService {
     caseId: string,
     caseUpdateRequest: CaseEscalationsUpdateRequest
   ): Promise<{ assigneeIds: string[] }> {
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = AccountsService.getInstance(
+      this.caseRepository.dynamoDb
+    )
     const accounts = await accountsService.getAllActiveAccounts()
 
     const case_ = await this.getCase(caseId)
@@ -1108,11 +1111,10 @@ export class CaseService extends CaseAlertsCommonService {
       return
     }
     const slaPolicyIds = slaPolicies.map((slaPolicy) => slaPolicy.id)
-    const slaService = new SLAService(
-      this.tenantId,
-      this.mongoDb,
-      this.auth0Domain
-    )
+    const slaService = new SLAService(this.tenantId, this.auth0Domain, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.caseRepository.dynamoDb,
+    })
     const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
       slaPolicyIds.map(async (id) => {
         const slaDetail = await slaService.calculateSLAStatusForEntity<Case>(

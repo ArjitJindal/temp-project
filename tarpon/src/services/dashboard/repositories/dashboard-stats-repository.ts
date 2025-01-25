@@ -1,4 +1,6 @@
 import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { TransactionStatsDashboardMetric } from '../../analytics/dashboard-metrics/transaction-stats'
 import { HitsByUserStatsDashboardMetric } from '../../analytics/dashboard-metrics/hits-by-user-stats'
 import { RuleHitsStatsDashboardMetric } from '../../analytics/dashboard-metrics/rule-stats'
@@ -36,15 +38,18 @@ import { DashboardTeamStatsItemResponse } from '@/@types/openapi-internal/Dashbo
 @traceable
 export class DashboardStatsRepository {
   mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
   tenantId: string
 
   constructor(
     tenantId: string,
     connections: {
+      dynamoDb: DynamoDBDocumentClient
       mongoDb: MongoClient
     }
   ) {
     this.mongoDb = connections.mongoDb as MongoClient
+    this.dynamoDb = connections.dynamoDb
     this.tenantId = tenantId
   }
 
@@ -53,7 +58,7 @@ export class DashboardStatsRepository {
       this.refreshTransactionStats(timeRange),
       this.refreshAlertsStats(timeRange),
       this.refreshUserStats(timeRange),
-      this.refreshTeamStats(timeRange),
+      this.refreshTeamStats(this.dynamoDb, timeRange),
       this.refreshQaStats(timeRange),
       this.refreshLatestTeamStats(),
       this.refreshSLATeamStats(timeRange),
@@ -217,15 +222,19 @@ export class DashboardStatsRepository {
     await UserStats.refresh(this.tenantId, userCreatedTimestampTimeRange)
   }
 
-  public async refreshTeamStats(caseUpdatedAtTimeRange?: TimeRange) {
+  public async refreshTeamStats(
+    dynamoDb: DynamoDBClient,
+    caseUpdatedAtTimeRange?: TimeRange
+  ) {
     await TeamStatsDashboardMetric.refresh(
       this.tenantId,
+      dynamoDb,
       caseUpdatedAtTimeRange
     )
   }
 
   public async refreshLatestTeamStats() {
-    await LatestTeamStatsDashboardMetric.refresh(this.tenantId)
+    await LatestTeamStatsDashboardMetric.refresh(this.tenantId, this.dynamoDb)
   }
 
   public async refreshQaStats(alertUpdatedAtTimeRange?: TimeRange) {

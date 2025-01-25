@@ -6,6 +6,7 @@ import {
 } from '@/@types/batch-job'
 import { getContext } from '@/core/utils/context'
 import { traceable } from '@/core/xray'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 
 @traceable
@@ -16,8 +17,8 @@ export class AlertSLAStatusRefreshBatchJobRunner extends BatchJobRunner {
     const context = getContext()
     const slaStatusCalculationService = new SLAService(
       tenantId,
-      mongoDb,
-      context?.auth0Domain as string
+      context?.auth0Domain as string,
+      { mongoDb, dynamoDb: getDynamoDbClient() }
     )
     await slaStatusCalculationService.calculateAndUpdateSLAStatusesForAlerts(
       from,
@@ -34,8 +35,8 @@ export class CaseSLAStatusRefreshBatchJobRunner extends BatchJobRunner {
     const context = getContext()
     const slaStatusCalculationService = new SLAService(
       tenantId,
-      mongoDb,
-      context?.auth0Domain as string
+      context?.auth0Domain as string,
+      { mongoDb, dynamoDb: getDynamoDbClient() }
     )
     await slaStatusCalculationService.calculateAndUpdateSLAStatusesForCases()
   }

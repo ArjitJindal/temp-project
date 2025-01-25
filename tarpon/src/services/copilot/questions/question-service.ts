@@ -44,11 +44,12 @@ export class QuestionService {
   ) {
     const mongoClient = await getMongoDbClient()
     const { principalId: tenantId } = event.requestContext.authorizer
+    const dynamoDb = getDynamoDbClientByEvent(event)
 
     return new QuestionService(
       new InvestigationRepository(mongoClient, tenantId),
-      await AccountsService.getInstance(),
-      getDynamoDbClientByEvent(event)
+      AccountsService.getInstance(dynamoDb),
+      dynamoDb
     )
   }
 

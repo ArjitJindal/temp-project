@@ -1,6 +1,11 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { DYNAMODB_TABLE_NAMES, StackConstants } from '@lib/constants'
-import { DeleteCommand, GetCommand, PutCommand } from '@aws-sdk/lib-dynamodb'
+import {
+  DeleteCommand,
+  GetCommand,
+  PutCommand,
+  QueryCommand,
+} from '@aws-sdk/lib-dynamodb'
 import { NotFound } from 'http-errors'
 import { uniq } from 'lodash'
 import {
@@ -21,9 +26,11 @@ type CacheAccount = Account & { tenantId: string }
 
 export class DynamoAccountsRepository extends BaseAccountsRepository {
   private readonly dynamoClient: DynamoDBClient
+  private readonly auth0Domain: string
 
-  constructor(dynamoClient: DynamoDBClient) {
+  constructor(auth0Domain: string, dynamoClient: DynamoDBClient) {
     super()
+    this.auth0Domain = auth0Domain
     this.dynamoClient = dynamoClient
   }
 
@@ -44,7 +51,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     return getNonDemoTenantId(tenantId)
   }
 
-  private async getOrganizationAccountIds(tenantId: string): Promise<string[]> {
+  public async getOrganizationAccountIds(tenantId: string): Promise<string[]> {
     const organizationAccountsKey = DynamoDbKeys.ORGANIZATION_ACCOUNTS(
       this.getNonDemoTenantId(tenantId)
     )
@@ -60,7 +67,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     return organizationAccounts.Item?.accounts ?? []
   }
 
-  async getTenantAccounts(tenant: Tenant): Promise<CacheAccount[]> {
+  async getTenantAccounts(tenant: Pick<Tenant, 'id'>): Promise<CacheAccount[]> {
     const accountIds = await this.getOrganizationAccountIds(tenant.id)
 
     return await batchGet<CacheAccount>(
@@ -161,6 +168,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
 
     const updatedAccount: Account = {
       ...account,
+      ...(patchData.role && { role: patchData.role }),
       ...patchData.app_metadata,
       ...patchData.user_metadata,
       ...(patchData.blocked != null && { blocked: patchData.blocked }),
@@ -221,9 +229,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     const updatedTenant: Tenant = {
       ...tenant,
       ...patch,
-      isProductionAccessDisabled:
-        patch.isProductionAccessDisabled === 'true' ??
-        tenant.isProductionAccessDisabled, // TODO: fix this
+      isProductionAccessDisabled: patch.isProductionAccessDisabled ?? false,
     }
     await this.createOrganization(this.getNonDemoTenantId(tenantId), {
       type: 'DATABASE',
@@ -353,6 +359,23 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     await this.addAccountsToOrganization(
       { id: this.getNonDemoTenantId(tenantId) },
       accounts.map((account) => account.id)
+    )
+  }
+
+  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
+    const query = new QueryCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+      KeyConditionExpression: ':pk = :pk',
+      ExpressionAttributeValues: {
+        ':pk': DynamoDbKeys.ORGANIZATION(FLAGRIGHT_TENANT_ID),
+      },
+    })
+
+    const result = await this.dynamoClient.send(query)
+    const updatedAuth0Domain = auth0Domain ?? this.auth0Domain
+
+    return ((result.Items ?? []) as Tenant[]).filter(
+      (item) => item.auth0Domain === updatedAuth0Domain
     )
   }
 }

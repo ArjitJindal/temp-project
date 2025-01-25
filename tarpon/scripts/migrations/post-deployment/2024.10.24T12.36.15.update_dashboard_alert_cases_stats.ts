@@ -8,6 +8,7 @@ import {
   DASHBOARD_TEAM_CASES_STATS_HOURLY,
 } from '@/utils/mongodb-definitions'
 import { DashboardStatsRepository } from '@/services/dashboard/repositories/dashboard-stats-repository'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
@@ -24,6 +25,7 @@ async function migrateTenant(tenant: Tenant) {
   const teamAlertsCollection = db.collection(
     DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenant.id)
   )
+  const dynamoDb = getDynamoDbClient()
 
   await Promise.all([
     latestCasesCollection.deleteMany({}),
@@ -34,8 +36,9 @@ async function migrateTenant(tenant: Tenant) {
 
   const dashboardStatsRepository = new DashboardStatsRepository(tenant.id, {
     mongoDb,
+    dynamoDb,
   })
-  await dashboardStatsRepository.refreshTeamStats()
+  await dashboardStatsRepository.refreshTeamStats(dynamoDb)
   await dashboardStatsRepository.refreshLatestTeamStats()
 }
 

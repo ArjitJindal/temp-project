@@ -185,7 +185,10 @@ describe('Dashboard refresh runner', () => {
     })
 
     expect(refreshTeamStatsMock).toBeCalledTimes(1)
-    expect(refreshTeamStatsMock).toBeCalledWith(checkTimeRange)
+    expect(refreshTeamStatsMock).toBeCalledWith(
+      expect.any(Object),
+      checkTimeRange
+    )
 
     expect(refreshUserStatsMock).toBeCalledTimes(1)
   })

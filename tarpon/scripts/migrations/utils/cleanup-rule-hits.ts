@@ -61,6 +61,7 @@ async function cleanupRuleHitsInternal(values: Props) {
   })
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb,
+    dynamoDb,
   })
   const migrationLastCompletedTimestamp = migrationKey
     ? await getMigrationLastCompletedTimestamp(migrationKey)

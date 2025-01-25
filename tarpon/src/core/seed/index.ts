@@ -38,11 +38,11 @@ export async function seedDemoData(tenantId: string) {
   })
   await Promise.all(promises)
 
-  await fetchAndSetAccounts(tenantId, mongoDb)
+  await fetchAndSetAccounts(tenantId, dynamo)
   await createTenantDatabase(tenantId)
   // necessary to get the users first before seeding the rest
   logger.info('Creating mock users...')
   await getUsers(tenantId)
   await seedDynamo(dynamo, tenantId)
-  await seedMongo(mongoDb, tenantId)
+  await seedMongo(tenantId, mongoDb, dynamo)
 }

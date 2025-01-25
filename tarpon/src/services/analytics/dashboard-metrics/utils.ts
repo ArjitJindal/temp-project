@@ -1,4 +1,5 @@
-import { Db, Document, Filter } from 'mongodb'
+import { Document, Filter, MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { TimeRange } from '../../dashboard/repositories/types'
 import { getAffectedInterval } from '../../dashboard/utils'
 import {
@@ -266,9 +267,12 @@ export function getAttributeSumStatsDerivedPipeline(
   ]
 }
 
-export const updateRoles = async (db: Db, collectionName: string) => {
-  const accountsService = await AccountsService.getInstance()
-  const collection = db.collection(collectionName)
+export const updateRoles = async (
+  collectionName: string,
+  connections: { dynamoDb: DynamoDBDocumentClient; mongoDb: MongoClient }
+) => {
+  const accountsService = AccountsService.getInstance(connections.dynamoDb)
+  const collection = connections.mongoDb.db().collection(collectionName)
   const accounts = await collection.distinct('accountId')
 
   for (const accountId of accounts) {

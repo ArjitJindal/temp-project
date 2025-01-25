@@ -6,7 +6,6 @@ import { getRuleInstance, transactionRules, userRules } from '../data/rules'
 import { getSLAPolicyById } from '../data/sla'
 import { BaseSampler } from './base'
 import { Case } from '@/@types/openapi-internal/Case'
-import { Account } from '@/services/accounts'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
@@ -34,6 +33,7 @@ import { getSLAStatusFromElapsedTime } from '@/services/sla/sla-utils'
 import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
+import { Account } from '@/@types/openapi-internal/Account'
 
 let counter = 1
 let alertCounter = 1

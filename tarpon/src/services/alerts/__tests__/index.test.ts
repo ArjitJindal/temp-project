@@ -14,9 +14,10 @@ import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { getS3ClientByEvent } from '@/utils/s3'
-import { Account, AccountsService } from '@/services/accounts'
+import { AccountsService } from '@/services/accounts'
 import { RulesEngineService } from '@/services/rules-engine'
 import { LogicEvaluator } from '@/services/logic-evaluator/engine'
+import { Account } from '@/@types/openapi-internal/Account'
 
 dynamoDbSetupHook()
 withLocalChangeHandler()

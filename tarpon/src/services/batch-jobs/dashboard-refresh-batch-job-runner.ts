@@ -16,6 +16,7 @@ import { traceable } from '@/core/xray'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { getAffectedInterval } from '@/services/dashboard/utils'
 import { TimeRange } from '@/services/dashboard/repositories/types'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
   if (timestamps.length === 0) {
@@ -50,12 +51,11 @@ function getTargetTimeRanges(timestamps: number[]): TimeRange[] {
 export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
   protected async run(job: DashboardRefreshBatchJob): Promise<void> {
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
     const db = mongoDb.db()
     const dashboardStatsRepository = new DashboardStatsRepository(
       job.tenantId,
-      {
-        mongoDb,
-      }
+      { mongoDb, dynamoDb }
     )
     const { checkTimeRange } = job.parameters
     const refreshJobs = [
@@ -109,7 +109,10 @@ export class DashboardRefreshBatchJobRunner extends BatchJobRunner {
 
       // Team stats
       (async () => {
-        await dashboardStatsRepository.refreshTeamStats(checkTimeRange)
+        await dashboardStatsRepository.refreshTeamStats(
+          dynamoDb,
+          checkTimeRange
+        )
         logger.info(`Refreshed team stats - ${JSON.stringify(checkTimeRange)}`)
         await dashboardStatsRepository.refreshLatestTeamStats()
         logger.info(`Refreshed latest team stats`)

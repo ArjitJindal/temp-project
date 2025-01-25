@@ -15,7 +15,6 @@ import {
   GetUsagePlanKeysCommand,
   UpdateApiKeyCommand,
 } from '@aws-sdk/client-api-gateway'
-import { MongoClient } from 'mongodb'
 import { AccountsService } from '../accounts'
 import {
   getNonUserReceiverKeys,
@@ -116,8 +115,8 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private deletedUserAggregationUserIds = new Set<string>()
   private auth0Domain: string
   private accountsService = memoize(
-    (auth0Domain: string, mongoDb: MongoClient) =>
-      new AccountsService({ auth0Domain }, { mongoDb })
+    (auth0Domain: string) =>
+      new AccountsService({ auth0Domain }, { dynamoDb: this.dynamoDb() })
   )
   private managementClient = memoize((auth0Domain: string) =>
     getAuth0ManagementClient(auth0Domain)
@@ -275,8 +274,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deactivateAuth0Users(tenantId: string) {
-    const mongoDb = await getMongoDbClient()
-    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const accountsService = this.accountsService(this.auth0Domain)
     logger.info('Deactivating all users from Auth0')
     const tenant = await accountsService.getTenantById(tenantId)
     if (!tenant) {
@@ -292,8 +290,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
   private async deleteDynamoDbData(tenantId: string) {
     const changeDate = dayjs('2024-01-30')
-    const mongoDb = await this.mongoDb()
-    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const accountsService = this.accountsService(this.auth0Domain)
 
     try {
       const tenant = await this.getTenantByTenantId(tenantId, accountsService)
@@ -855,9 +852,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteAuth0Users(tenantId: string) {
-    const mongoDb = await this.mongoDb()
-
-    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const accountsService = this.accountsService(this.auth0Domain)
     logger.info('Deleting all users from Auth0')
     const tenant = await this.getTenantByTenantId(tenantId, accountsService)
     if (!tenant) {
@@ -948,8 +943,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   }
 
   private async deleteAuth0Organization(tenantId: string) {
-    const mongoDb = await this.mongoDb()
-    const accountsService = this.accountsService(this.auth0Domain, mongoDb)
+    const accountsService = this.accountsService(this.auth0Domain)
     const tenant = await this.getTenantByTenantId(tenantId, accountsService)
     if (tenant == null) {
       logger.warn(`Tenant ${tenantId} not found`)

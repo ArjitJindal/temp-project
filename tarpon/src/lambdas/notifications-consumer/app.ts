@@ -9,10 +9,12 @@ import {
 import { NotificationsService } from '@/services/notifications'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { AuditLog } from '@/@types/openapi-internal/AuditLog'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const notificationsConsumerHandler = lambdaConsumer()(
   async (event: SQSEvent) => {
     const mongoDb = await getMongoDbClient()
+    const dynamoDb = getDynamoDbClient()
 
     const events = event.Records.map((record) =>
       JSON.parse(JSON.parse(record.body).Message as string)
@@ -29,6 +31,7 @@ export const notificationsConsumerHandler = lambdaConsumer()(
 
         const notificationsService = new NotificationsService(tenantId, {
           mongoDb,
+          dynamoDb,
         })
         for (const event of tenantEvents) {
           await notificationsService.handleNotification(

@@ -8,10 +8,10 @@ import {
   DASHBOARD_TEAM_CASES_STATS_HOURLY,
 } from '@/utils/mongodb-definitions'
 import { updateRoles } from '@/services/analytics/dashboard-metrics/utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 async function migrateTenant(tenant: Tenant) {
   const mongoDb = await getMongoDbClient()
-  const db = mongoDb.db()
 
   const latestAlertsCollectionName = DASHBOARD_LATEST_TEAM_ALERTS_STATS_HOURLY(
     tenant.id
@@ -22,13 +22,17 @@ async function migrateTenant(tenant: Tenant) {
   const alertsCollectionName = DASHBOARD_TEAM_ALERTS_STATS_HOURLY(tenant.id)
   const casesCollectionName = DASHBOARD_TEAM_CASES_STATS_HOURLY(tenant.id)
 
+  const connections = {
+    mongoDb,
+    dynamoDb: getDynamoDbClient(),
+  }
   // Update roles for alerts collection
-  await updateRoles(db, latestAlertsCollectionName)
-  await updateRoles(db, alertsCollectionName)
+  await updateRoles(latestAlertsCollectionName, connections)
+  await updateRoles(alertsCollectionName, connections)
 
   // Update roles for cases collection
-  await updateRoles(db, latestCasesCollectionName)
-  await updateRoles(db, casesCollectionName)
+  await updateRoles(latestCasesCollectionName, connections)
+  await updateRoles(casesCollectionName, connections)
 }
 
 export const up = async () => {

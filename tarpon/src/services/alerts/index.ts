@@ -240,7 +240,7 @@ export class AlertsService extends CaseAlertsCommonService {
       this.tenantId,
       this.mongoDb
     )
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
     const accounts = await accountsService.getAllActiveAccounts()
     const currentUserId = getContext()?.user?.id
     const currentUserAccount = accounts.find((a) => a.id === currentUserId)
@@ -832,11 +832,10 @@ export class AlertsService extends CaseAlertsCommonService {
       alert.ruleInstanceId
     )
     const slaPolicyIds = ruleInstance?.alertConfig?.slaPolicies ?? []
-    const slaService = new SLAService(
-      this.tenantId,
-      this.mongoDb,
-      this.auth0Domain
-    )
+    const slaService = new SLAService(this.tenantId, this.auth0Domain, {
+      mongoDb: this.mongoDb,
+      dynamoDb: this.alertsRepository.dynamoDb,
+    })
     const slaPolicyDetails: SLAPolicyDetails[] = await Promise.all(
       slaPolicyIds.map(async (id) => {
         const slaDetail = await slaService.calculateSLAStatusForEntity<Alert>(
@@ -1026,7 +1025,7 @@ export class AlertsService extends CaseAlertsCommonService {
       },
     }
 
-    const accountsService = await AccountsService.getInstance()
+    const accountsService = await AccountsService.getInstance(this.dynamoDb)
     let userAccount: Account | undefined = undefined
     if (!externalRequest && userId) {
       userAccount =

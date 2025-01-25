@@ -22,6 +22,7 @@ import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { SLAService } from '@/services/sla/sla-service'
 import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/services/batch-jobs/batch-job'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 function getBatchJobName(job: BatchJobWithId) {
   return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
@@ -45,7 +46,10 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     }
 
     if (job.type === 'ALERT_SLA_STATUS_REFRESH') {
-      const slaService = new SLAService(job.tenantId, mongoDb, '')
+      const slaService = new SLAService(job.tenantId, '', {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await slaService.handleSendingSlaRefreshJobs()
     }
 
@@ -118,6 +122,7 @@ export const jobDecisionHandler = async (
     NANGO_DATA_FETCH: 'LAMBDA',
     FINCEN_REPORT_STATUS_REFRESH: 'LAMBDA',
     AGGREGATION_CLEANUP: 'FARGATE',
+    SYNC_AUTH0_DATA: 'LAMBDA',
   }
 
   return {

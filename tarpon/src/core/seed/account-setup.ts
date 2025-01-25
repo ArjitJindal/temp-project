@@ -1,24 +1,22 @@
-import { MongoClient } from 'mongodb'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { setAccounts } from './samplers/accounts'
 import { AccountsService } from '@/services/accounts'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { logger } from '@/core/logger'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export async function fetchAndSetAccounts(
   tenantId: string,
-  mongoDb: MongoClient
+  dynamoDb: DynamoDBDocumentClient
 ): Promise<void> {
   const originalTenantId = getNonDemoTenantId(tenantId)
   const tenantRepository = new TenantRepository(originalTenantId, {
-    mongoDb,
-    dynamoDb: getDynamoDbClient(),
+    dynamoDb,
   })
   const settings = await tenantRepository.getTenantSettings(['auth0Domain'])
   const auth0Domain =
     settings.auth0Domain || (process.env.AUTH0_DOMAIN as string)
-  const accountsService = new AccountsService({ auth0Domain }, { mongoDb })
+  const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
 
   logger.info(`TenantId: ${tenantId}`)
 

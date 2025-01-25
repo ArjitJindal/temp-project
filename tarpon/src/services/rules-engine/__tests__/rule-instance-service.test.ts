@@ -157,7 +157,10 @@ describe('RuleInstanceService', () => {
 
     it('transaction rule stats', async () => {
       const mongoDb = await getMongoDbClient()
-      const dashboardRepo = new DashboardStatsRepository(tenantId, { mongoDb })
+      const dashboardRepo = new DashboardStatsRepository(tenantId, {
+        mongoDb,
+        dynamoDb: getDynamoDbClient(),
+      })
       await dashboardRepo.refreshTransactionStats()
 
       const result = await ruleInstanceService.getRuleInstanceStats(

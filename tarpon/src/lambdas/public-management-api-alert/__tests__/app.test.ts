@@ -17,6 +17,11 @@ import {
   setUpTransactionsHooks,
 } from '@/test-utils/transaction-test-utils'
 import { withLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { AccountsService } from '@/services/accounts'
+
+jest
+  .spyOn(AccountsService.prototype, 'getAllActiveAccounts')
+  .mockResolvedValue([])
 
 dynamoDbSetupHook()
 withLocalChangeHandler()
@@ -68,10 +73,7 @@ describe('Test Create Alert', () => {
       caseId: 'CA-1',
       entityDetails: {
         type: 'PAYMENT',
-        paymentDetails: {
-          method: 'WALLET',
-          walletType: 'PAYTM',
-        },
+        paymentDetails: { method: 'WALLET', walletType: 'PAYTM' },
       },
       priority: 'P1',
       createdTimestamp: Date.now(),
@@ -109,10 +111,7 @@ describe('Test Create Alert', () => {
       caseId: 'CA-1',
       createdTimestamp: Date.now(),
       priority: 'P1',
-      entityDetails: {
-        type: 'TRANSACTION',
-        transactionIds: [],
-      },
+      entityDetails: { type: 'TRANSACTION', transactionIds: [] },
       ruleDetails: {
         action: 'ALLOW',
         description: 'Allow all transactions',
@@ -149,10 +148,7 @@ describe('Test Create Alert', () => {
       alertStatus: 'OPEN',
       caseId: 'CA-1',
       createdTimestamp: alertRequest.createdTimestamp,
-      entityDetails: {
-        type: 'TRANSACTION',
-        transactionIds: ['T-1', 'T-2'],
-      },
+      entityDetails: { type: 'TRANSACTION', transactionIds: ['T-1', 'T-2'] },
       priority: 'P1',
       ruleDetails: {
         action: 'ALLOW',
@@ -185,10 +181,7 @@ describe('Test Create Alert', () => {
       alertStatus: 'OPEN',
       caseId: 'CA-1',
       createdTimestamp: expect.any(Number),
-      entityDetails: {
-        type: 'TRANSACTION',
-        transactionIds: ['T-1', 'T-2'],
-      },
+      entityDetails: { type: 'TRANSACTION', transactionIds: ['T-1', 'T-2'] },
       priority: 'P2',
       ruleDetails: {
         action: 'ALLOW',
@@ -235,10 +228,7 @@ describe('Test Create Alert', () => {
       alertStatus: 'OPEN',
       caseId: 'CA-1',
       createdTimestamp: expect.any(Number),
-      entityDetails: {
-        type: 'TRANSACTION',
-        transactionIds: ['T-1', 'T-2'],
-      },
+      entityDetails: { type: 'TRANSACTION', transactionIds: ['T-1', 'T-2'] },
       priority: 'P2',
       ruleDetails: {
         action: 'ALLOW',
@@ -287,12 +277,8 @@ describe('Test Create Alert', () => {
       getApiGatewayPostEvent(
         tenantId,
         '/alerts/{alertId}/comments',
-        {
-          body: 'This is a comment',
-        },
-        {
-          pathParameters: { alertId: 'AL-1' },
-        }
+        { body: 'This is a comment' },
+        { pathParameters: { alertId: 'AL-1' } }
       ),
 
       null as any,

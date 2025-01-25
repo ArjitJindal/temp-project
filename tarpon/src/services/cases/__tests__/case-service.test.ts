@@ -8,7 +8,7 @@ import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
 import { CaseRepository } from '@/services/cases/repository'
 import { getTestTenantId } from '@/test-utils/tenant-test-utils'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { Account, AccountsService } from '@/services/accounts'
+import { AccountsService } from '@/services/accounts'
 import { Priority } from '@/@types/openapi-internal/Priority'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Case } from '@/@types/openapi-internal/Case'
@@ -31,6 +31,7 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { UserService } from '@/services/users'
 import { enableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
+import { Account } from '@/@types/openapi-internal/Account'
 
 const TEST_ACCOUNT_1: Account = {
   id: 'ACCOUNT-1',

@@ -10268,6 +10268,8 @@ components:
             - DEACTIVATED
         isReviewer:
           type: boolean
+        demoMode:
+          type: boolean
       required:
         - id
         - role

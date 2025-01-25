@@ -11,8 +11,7 @@ import { getSecret } from './secrets-manager'
 import dayjs from './dayjs'
 import { EscalationLevel } from '@/@types/openapi-internal/EscalationLevel'
 import { Tenant } from '@/services/accounts/repository'
-import { Account } from '@/services/accounts'
-
+import { Account } from '@/@types/openapi-internal/Account'
 export type Auth0ManagementAPICreds = {
   clientId: string
   clientSecret: string
@@ -127,7 +126,9 @@ export const tenantToOrganization = (
       apiAudience: tenant.apiAudience,
       auth0Domain: tenant.auth0Domain,
       region: tenant.region,
-      isProductionAccessDisabled: tenant.isProductionAccessDisabled,
+      isProductionAccessDisabled: tenant.isProductionAccessDisabled
+        ? 'true'
+        : 'false',
       tenantCreatedAt: tenant.tenantCreatedAt,
     },
   }
@@ -169,5 +170,6 @@ export function userToAccount(user: GetUsers200ResponseOneOfInner): Account {
     escalationLevel: app_metadata?.escalationLevel,
     escalationReviewerId: app_metadata?.escalationReviewerId,
     isReviewer: app_metadata?.isReviewer,
+    demoMode: user.user_metadata?.demoMode ?? false,
   }
 }

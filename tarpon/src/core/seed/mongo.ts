@@ -1,5 +1,6 @@
 import { Document, MongoClient, MongoError, WithId } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { logger } from '../logger'
 import { data as krsAndDrsScoreData } from './data/risk-scores'
 import { getCases } from './data/cases'
@@ -123,7 +124,11 @@ const collections: [(tenantId: string) => string, () => unknown[]][] = [
   [REASONS_COLLECTION, () => getDefaultReasonsData()],
 ]
 
-export async function seedMongo(client: MongoClient, tenantId: string) {
+export async function seedMongo(
+  tenantId: string,
+  client: MongoClient,
+  dynamoDb: DynamoDBClient
+) {
   logger.info('Seeding MongoDB...')
   const db = client.db()
   const originalTenantId = getNonDemoTenantId(tenantId)
@@ -258,6 +263,7 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
   logger.info('Refreshing dashboard stats...')
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,
+    dynamoDb,
   })
 
   await dashboardStatsRepository.refreshAllStats()
@@ -265,7 +271,10 @@ export async function seedMongo(client: MongoClient, tenantId: string) {
 
   logger.info('Updating alerts SLA statuses')
 
-  const alertsSLAService = new SLAService(tenantId, client, auth0Domain)
+  const alertsSLAService = new SLAService(tenantId, auth0Domain, {
+    mongoDb: client,
+    dynamoDb,
+  })
 
   await alertsSLAService.calculateAndUpdateSLAStatusesForAlerts()
 

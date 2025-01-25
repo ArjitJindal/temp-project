@@ -1,8 +1,9 @@
 import { AggregationCursor, MongoClient } from 'mongodb'
 import pMap from 'p-map'
 import { omit, range } from 'lodash'
+import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
-import { Account, AccountsService } from '../accounts'
+import { AccountsService } from '../accounts'
 import { getDerivedStatus } from '../cases/utils'
 import { AlertsRepository } from '../alerts/repository'
 import { CaseRepository } from '../cases/repository'
@@ -24,6 +25,7 @@ import { processCursorInBatch } from '@/utils/mongodb-utils'
 import { Case } from '@/@types/openapi-internal/Case'
 import { SLAPolicyDetails } from '@/@types/openapi-internal/SLAPolicyDetails'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
+import { Account } from '@/@types/openapi-internal/Account'
 
 const CONCURRENCY = 50
 const BATCH_SIZE = 10000
@@ -37,15 +39,19 @@ export class SLAService {
   private mongoDb: MongoClient
   private tenantId: string
 
-  constructor(tenantId: string, mongoDb: MongoClient, auth0Domain: string) {
-    this.mongoDb = mongoDb
+  constructor(
+    tenantId: string,
+    auth0Domain: string,
+    connections: { mongoDb: MongoClient; dynamoDb: DynamoDBClient }
+  ) {
+    this.mongoDb = connections.mongoDb
     this.tenantId = tenantId
     this.alertsRepository = new AlertsRepository(tenantId, {
-      mongoDb,
+      mongoDb: this.mongoDb,
     })
-    this.slaPolicyService = new SLAPolicyService(tenantId, mongoDb)
-    this.accountsService = new AccountsService({ auth0Domain }, { mongoDb })
-    this.caseRepository = new CaseRepository(tenantId, { mongoDb })
+    this.slaPolicyService = new SLAPolicyService(tenantId, connections.mongoDb)
+    this.accountsService = new AccountsService({ auth0Domain }, connections)
+    this.caseRepository = new CaseRepository(tenantId, connections)
   }
 
   private async getAccounts(userIds: string[]): Promise<Account[]> {

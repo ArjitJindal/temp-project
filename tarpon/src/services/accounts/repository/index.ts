@@ -39,7 +39,7 @@ export type Auth0TenantMetadata = {
   apiAudience: string
   auth0Domain: string
   region: FlagrightRegion
-  isProductionAccessDisabled: string
+  isProductionAccessDisabled: boolean
   tenantCreatedAt: string
 }
 
@@ -52,7 +52,8 @@ export type PatchAccountData = {
   blocked?: boolean
   app_metadata?: Omit<AccountPatchPayload, 'demoMode'>
   user_metadata?: { demoMode?: boolean }
-  blockedReason?: Account['blockedReason']
+  blockedReason?: Account['blockedReason'] | null
+  role?: string
 }
 
 export abstract class BaseAccountsRepository {
@@ -73,7 +74,7 @@ export abstract class BaseAccountsRepository {
     createParams: InternalAccountCreate
   ): Promise<Account>
   abstract unblockAccount(tenantId: string, accountId: string): Promise<Account>
-  abstract getTenantAccounts(tenant?: Tenant): Promise<Account[]>
+  abstract getTenantAccounts(tenant: Tenant): Promise<Account[]>
   abstract getAccountByIds(accountIds: string[]): Promise<Account[]>
   abstract createOrganization(
     tenantId: string,
@@ -92,4 +93,5 @@ export abstract class BaseAccountsRepository {
     account: Account
   ): Promise<void>
   abstract deleteAccount(account: Account): Promise<void>
+  abstract getTenants(auth0Domain?: string): Promise<Tenant[]>
 }

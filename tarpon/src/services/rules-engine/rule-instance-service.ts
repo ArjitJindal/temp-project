@@ -82,9 +82,10 @@ export class RuleInstanceService {
       mongoDb: this.mongoDb,
       dynamoDb: this.dynamoDb,
     })
-    this.dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
-      mongoDb: this.mongoDb,
-    })
+    this.dashboardStatsRepository = new DashboardStatsRepository(
+      this.tenantId,
+      { mongoDb: this.mongoDb, dynamoDb: this.dynamoDb }
+    )
   }
 
   public async getRuleInstanceById(ruleInstanceId: string) {

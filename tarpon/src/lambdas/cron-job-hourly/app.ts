@@ -1,7 +1,15 @@
-import { logger } from '@/core/logger'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { lambdaConsumer } from '@/core/middlewares/lambda-consumer-middlewares'
+import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
 
 export const cronJobHourlyHandler = lambdaConsumer()(async () => {
-  // TODO: Will be used for hourly cron job
-  logger.info('Running hourly cron job')
+  await syncAccountAndOrganizations()
 })
+
+async function syncAccountAndOrganizations() {
+  await sendBatchJobCommand({
+    type: 'SYNC_AUTH0_DATA',
+    tenantId: FLAGRIGHT_TENANT_ID,
+    parameters: { type: 'ALL' },
+  })
+}

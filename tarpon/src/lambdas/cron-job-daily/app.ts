@@ -10,7 +10,6 @@ import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { envIs } from '@/utils/env'
 import { AccountsService } from '@/services/accounts'
-import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { tenantHasFeature } from '@/core/utils/context'
@@ -155,16 +154,14 @@ async function createApiUsageJobs(tenantInfos: TenantInfo[]) {
 }
 
 async function checkDormantUsers(tenantInfos: TenantInfo[]) {
-  const mongoDb = await getMongoDbClient()
   const dynamoDb = getDynamoDbClient()
   for await (const tenant of tenantInfos) {
     const accountsService = new AccountsService(
       { auth0Domain: tenant.auth0Domain },
-      { mongoDb }
+      { dynamoDb }
     )
     const tenantSettings = await new TenantRepository(tenant.tenant.id, {
       dynamoDb,
-      mongoDb,
     }).getTenantSettings()
 
     const accounts = (
