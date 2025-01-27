@@ -28,7 +28,10 @@ export interface SanctionsRepository {
 
 export interface SanctionsDataProvider {
   provider(): SanctionsDataProviderName
-  search(request: SanctionsSearchRequest): Promise<SanctionsProviderResponse>
+  search(
+    request: SanctionsSearchRequest,
+    isMigration?: boolean
+  ): Promise<SanctionsProviderResponse>
 
   getSearch(providerSearchId: string): Promise<SanctionsProviderResponse>
 

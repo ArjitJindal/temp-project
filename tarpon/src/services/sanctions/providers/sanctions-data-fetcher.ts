@@ -368,7 +368,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async searchWithMatchingNames(
-    request: SanctionsSearchRequest
+    request: SanctionsSearchRequest,
+    limit: number = 100
   ): Promise<SanctionsProviderResponse> {
     const client = await getMongoDbClient()
     const match = {}
@@ -751,7 +752,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
           },
         },
         {
-          $limit: 100,
+          $limit: limit,
         },
         {
           $addFields: {
@@ -815,7 +816,8 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
   }
 
   async search(
-    request: SanctionsSearchRequest
+    request: SanctionsSearchRequest,
+    isMigration?: boolean // TODO: remove this once after migration is done
   ): Promise<SanctionsProviderResponse> {
     let result: SanctionsProviderResponse
     if (
@@ -825,7 +827,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     ) {
       result = await this.searchWithoutMatchingNames(request)
     } else {
-      result = await this.searchWithMatchingNames(request)
+      result = await this.searchWithMatchingNames(
+        request,
+        isMigration ? 500 : 100
+      )
     }
     return {
       ...result,

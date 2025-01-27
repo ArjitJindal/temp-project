@@ -9,6 +9,7 @@ import { TaskStatusChange } from '../openapi-internal/TaskStatusChange'
 import { InternalTransaction } from '../openapi-internal/InternalTransaction'
 import { SanctionsDataProviderName } from '../openapi-internal/SanctionsDataProviderName'
 import { NangoWebhookEvent } from '../openapi-internal/NangoWebhookEvent'
+import { SanctionsSettingsProviderScreeningTypes } from '../openapi-internal/SanctionsSettingsProviderScreeningTypes'
 import { AggregatorName } from '@/services/rules-engine/aggregator'
 import { TenantBasic } from '@/services/accounts'
 import { TimeRange } from '@/services/dashboard/repositories/types'
@@ -194,6 +195,7 @@ export type SanctionsDataFetchBatchJob = {
   type: 'SANCTIONS_DATA_FETCH'
   tenantId: string
   providers: SanctionsDataProviderName[]
+  settings?: SanctionsSettingsProviderScreeningTypes[]
   parameters: {
     from?: string
   }
@@ -354,6 +356,15 @@ export type AggregationCleanupBatchJob = {
   tenantId: string
 }
 
+export type InHouseScreeningMigrationBatchJob = {
+  type: 'IN_HOUSE_SCREENING_MIGRATION'
+  tenantId: string
+  parameters: {
+    providers: SanctionsDataProviderName[]
+    settings: SanctionsSettingsProviderScreeningTypes[]
+  }
+}
+
 export type SyncAuth0DataBatchJob = {
   type: 'SYNC_AUTH0_DATA'
   tenantId: string
@@ -397,6 +408,7 @@ export type BatchJob =
   | FinCenReportStatusRefreshBatchJob
   | AggregationCleanupBatchJob
   | PnbTransactionEventUpdatesBatchJob
+  | InHouseScreeningMigrationBatchJob
   | SyncAuth0DataBatchJob
 
 export type BatchJobWithId = BatchJob & {

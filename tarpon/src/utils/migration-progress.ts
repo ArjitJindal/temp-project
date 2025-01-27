@@ -24,3 +24,25 @@ export async function updateMigrationLastCompletedTimestamp(
     { upsert: true }
   )
 }
+
+export async function getMigrationLastCompletedId(migrationKey: string) {
+  const mongoDb = (await getMongoDbClient()).db()
+  const migrationProgress = await mongoDb
+    .collection(MIGRATION_TMP_COLLECTION)
+    .findOne({ _id: migrationKey as any })
+  return migrationProgress?.lastCompletedId
+}
+
+export async function updateMigrationLastCompletedId(
+  migrationKey: string,
+  lastCompletedId: string
+) {
+  const mongoDb = (await getMongoDbClient()).db()
+  await mongoDb
+    .collection(MIGRATION_TMP_COLLECTION)
+    .updateOne(
+      { _id: migrationKey as any },
+      { $set: { lastCompletedId } },
+      { upsert: true }
+    )
+}

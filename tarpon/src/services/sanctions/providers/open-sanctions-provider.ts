@@ -17,6 +17,7 @@ import dayjs from '@/utils/dayjs'
 import { logger } from '@/core/logger'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
+import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 type OpenSanctionsLine = {
   op: string
   entity: OpenSanctionsPersonEntity
@@ -128,21 +129,29 @@ type OpenSanctionsOrganizationEntity = OpenSanctionsEntity & {
 export class OpenSanctionsProvider extends SanctionsDataFetcher {
   private types: OpenSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
-  static async build(tenantId: string) {
-    const tenantRepository = new TenantRepository(tenantId, {
-      dynamoDb: getDynamoDbClient(),
-    })
-    const { sanctions } = await tenantRepository.getTenantSettings([
-      'sanctions',
-    ])
+  static async build(
+    tenantId: string,
+    settings?: SanctionsSettingsProviderScreeningTypes
+  ) {
     let types: OpenSanctionsSearchType[] | undefined
     let entityTypes: SanctionsEntityType[] | undefined
-    const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
-      (type) => type.provider === 'open-sanctions'
-    )
-    if (openSanctionSettings) {
-      types = openSanctionSettings.screeningTypes as OpenSanctionsSearchType[]
-      entityTypes = openSanctionSettings.entityTypes as SanctionsEntityType[]
+    if (settings) {
+      types = settings.screeningTypes as OpenSanctionsSearchType[]
+      entityTypes = settings.entityTypes as SanctionsEntityType[]
+    } else {
+      const tenantRepository = new TenantRepository(tenantId, {
+        dynamoDb: getDynamoDbClient(),
+      })
+      const { sanctions } = await tenantRepository.getTenantSettings([
+        'sanctions',
+      ])
+      const openSanctionSettings = sanctions?.providerScreeningTypes?.find(
+        (type) => type.provider === 'open-sanctions'
+      )
+      if (openSanctionSettings) {
+        types = openSanctionSettings.screeningTypes as OpenSanctionsSearchType[]
+        entityTypes = openSanctionSettings.entityTypes as SanctionsEntityType[]
+      }
     }
     return new OpenSanctionsProvider(
       tenantId,
@@ -397,6 +406,13 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     if (!this.entityTypes.includes(schema)) {
       return undefined
     }
+    const countryOfIncorporation = uniq(
+      concat(
+        properties.country || [],
+        properties.mainCountry || [],
+        properties.jurisdiction || []
+      )
+    ).map((country) => country.toUpperCase() as CountryCode)
     return {
       id: entity.id,
       name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
@@ -447,15 +463,13 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         ...this.getDocuments(properties.idNumber, 'ID Number'),
       ],
       countries: compact(
-        uniq(
-          concat(
-            properties.country || [],
-            properties.mainCountry || [],
-            properties.jurisdiction || []
-          )
-        ).map((country) => COUNTRIES[country.toUpperCase() as CountryCode])
+        countryOfIncorporation.map(
+          (country) => COUNTRIES[country as CountryCode]
+        )
       ),
-      nationality: (properties.mainCountry ?? ['ZZ']) as CountryCode[],
+      nationality: (countryOfIncorporation.length
+        ? countryOfIncorporation
+        : ['ZZ']) as CountryCode[],
     }
   }
 

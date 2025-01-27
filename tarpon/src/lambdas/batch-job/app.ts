@@ -113,6 +113,7 @@ export const jobDecisionHandler = async (
     FINCEN_REPORT_STATUS_REFRESH: 'LAMBDA',
     AGGREGATION_CLEANUP: 'FARGATE',
     SYNC_AUTH0_DATA: 'LAMBDA',
+    IN_HOUSE_SCREENING_MIGRATION: 'FARGATE',
   }
 
   return {

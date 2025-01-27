@@ -1,5 +1,6 @@
 import { Filter, MongoClient, ReplaceOneModel } from 'mongodb'
 import { isNil, omitBy } from 'lodash'
+import { getDefaultProvider } from '../utils'
 import { withTransaction } from '@/utils/mongodb-utils'
 import { SANCTIONS_WHITELIST_ENTITIES_COLLECTION } from '@/utils/mongodb-definitions'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
@@ -114,6 +115,7 @@ export class SanctionsWhitelistEntityRepository {
     subject: WhitelistSubject,
     limit = Number.MAX_SAFE_INTEGER
   ): Promise<SanctionsWhitelistEntity[]> {
+    const provider = getDefaultProvider()
     const db = this.mongoDb.db()
     const collection = db.collection<SanctionsWhitelistEntity>(
       SANCTIONS_WHITELIST_ENTITIES_COLLECTION(this.tenantId)
@@ -126,6 +128,9 @@ export class SanctionsWhitelistEntityRepository {
           { 'sanctionsEntity.id': { $in: requestEntityIds } },
           { 'caEntity.id': { $in: requestEntityIds } },
         ],
+      },
+      {
+        provider: provider,
       },
       ...SUBJECT_FIELDS.map((key) => ({
         $or: [{ [key]: subject[key] }, { [key]: { $eq: null } }],

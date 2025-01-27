@@ -21,6 +21,7 @@ import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/
 import { SanctionsSource } from '@/@types/openapi-internal/SanctionsSource'
 import { SanctionsEntityType } from '@/@types/openapi-internal/SanctionsEntityType'
 import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
+import { SanctionsSettingsProviderScreeningTypes } from '@/@types/openapi-internal/SanctionsSettingsProviderScreeningTypes'
 
 const EXTERNAL_TO_INTERNAL_TYPES: Record<string, AcurisSanctionsSearchType> = {
   'PEP-CURRENT': 'PEP',
@@ -253,21 +254,29 @@ export class AcurisProvider extends SanctionsDataFetcher {
   private uri: string = 'https://api.acuris.com/compliance-datafeed'
   private screeningTypes: AcurisSanctionsSearchType[]
   private entityTypes: SanctionsEntityType[]
-  static async build(tenantId: string) {
-    const tenantRepository = new TenantRepository(tenantId, {
-      dynamoDb: getDynamoDbClient(),
-    })
-    const { sanctions } = await tenantRepository.getTenantSettings([
-      'sanctions',
-    ])
+  static async build(
+    tenantId: string,
+    settings?: SanctionsSettingsProviderScreeningTypes
+  ) {
     let types: AcurisSanctionsSearchType[] | undefined
     let entityTypes: SanctionsEntityType[] | undefined
-    const acurisSettings = sanctions?.providerScreeningTypes?.find(
-      (type) => type.provider === 'acuris'
-    )
-    if (acurisSettings) {
-      types = acurisSettings?.screeningTypes as AcurisSanctionsSearchType[]
-      entityTypes = acurisSettings?.entityTypes as SanctionsEntityType[]
+    if (settings) {
+      types = settings.screeningTypes as AcurisSanctionsSearchType[]
+      entityTypes = settings.entityTypes as SanctionsEntityType[]
+    } else {
+      const tenantRepository = new TenantRepository(tenantId, {
+        dynamoDb: getDynamoDbClient(),
+      })
+      const { sanctions } = await tenantRepository.getTenantSettings([
+        'sanctions',
+      ])
+      const acurisSettings = sanctions?.providerScreeningTypes?.find(
+        (type) => type.provider === 'acuris'
+      )
+      if (acurisSettings) {
+        types = acurisSettings?.screeningTypes as AcurisSanctionsSearchType[]
+        entityTypes = acurisSettings?.entityTypes as SanctionsEntityType[]
+      }
     }
     const apiKey = (await getSecretByName('acuris'))?.apiKey
     if (!apiKey) {

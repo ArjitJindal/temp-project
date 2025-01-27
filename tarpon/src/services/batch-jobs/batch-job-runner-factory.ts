@@ -24,6 +24,7 @@ import { NangoDataFetchBatchJobRunner } from './nango-data-fetch'
 import { FinCenReportStatusFetchBatchJobRunner } from './fincen-report-status-fetch'
 import { AggregationCleanupBatchJobRunner } from './aggregation-cleanup-batch-job-runner'
 import { PnbTransactionEventUpdatesBatchJobRunner } from './pnb-transaction-event-updates'
+import { InHouseScreeningMigrationBatchJobRunner } from './in-house-screening-migration-batch-job-runner'
 import { SyncAuth0DataRunner } from './sync-auth0-data'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
@@ -100,6 +101,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     FINCEN_REPORT_STATUS_REFRESH: (jobId) =>
       new FinCenReportStatusFetchBatchJobRunner(jobId),
     AGGREGATION_CLEANUP: (jobId) => new AggregationCleanupBatchJobRunner(jobId),
+    IN_HOUSE_SCREENING_MIGRATION: (jobId) =>
+      new InHouseScreeningMigrationBatchJobRunner(jobId),
     SYNC_AUTH0_DATA: (jobId) => new SyncAuth0DataRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
