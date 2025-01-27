@@ -12760,7 +12760,6 @@ components:
         - ADVERSE_MEDIA
         - PROFILE_OF_INTEREST
         - REGULATORY_ENFORCEMENT_LIST
-        - GAMBLING_RISK_INTELLIGENCE
         - CRIME
     AcurisSanctionsSearchType:
       title: AcurisSanctionsSearchType
@@ -12771,7 +12770,6 @@ components:
         - ADVERSE_MEDIA
         - PROFILE_OF_INTEREST
         - REGULATORY_ENFORCEMENT_LIST
-        - GAMBLING_RISK_INTELLIGENCE
     OpenSanctionsSearchType:
       title: OpenSanctionsSearchType
       type: string

@@ -376,9 +376,6 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     const andFilters: any[] = []
     const orFilters: any[] = []
 
-    if (request.countryCodes) {
-      match['countryCodes'] = { $in: request.countryCodes }
-    }
     if (request.yearOfBirth) {
       const yearOfBirthMatch = [
         {
@@ -432,7 +429,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (request.allowDocumentMatches && request.documentId) {
+    if (
+      (request.allowDocumentMatches || request.manualSearch) &&
+      request.documentId
+    ) {
       const documentIdMatch =
         request.documentId.length > 0
           ? request.documentId.flatMap((docId) => [
@@ -489,7 +489,10 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       }
     }
 
-    if (!request.allowDocumentMatches && request.documentId?.length) {
+    if (
+      !(request.allowDocumentMatches || request.manualSearch) &&
+      request.documentId?.length
+    ) {
       andFilters.push({
         compound: {
           mustNot: request.documentId.flatMap((docId) => [

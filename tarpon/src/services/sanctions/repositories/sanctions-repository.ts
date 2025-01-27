@@ -33,11 +33,11 @@ export class MongoSanctionsRepository implements SanctionsRepository {
               filter: { id: entity.id, provider },
               update: {
                 $setOnInsert: {
-                  ...entity,
-                  provider,
                   createdAt: Date.now(),
                 },
                 $set: {
+                  ...entity,
+                  provider,
                   version,
                 },
               },

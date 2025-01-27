@@ -286,7 +286,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             <Form.Layout.Label title={'Full name'}>{entity?.name}</Form.Layout.Label>
           )}
           <Form.Layout.Label title={'Entity type'}>
-            {startCase(entity?.entityType)}
+            {startCase(entity?.entityType?.toLowerCase())}
           </Form.Layout.Label>
           {entity.aka && entity.aka?.length > 0 && (
             <Form.Layout.Label title={'Aliases'}>

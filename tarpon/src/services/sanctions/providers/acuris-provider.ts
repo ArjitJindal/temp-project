@@ -33,7 +33,6 @@ const EXTERNAL_TO_INTERNAL_TYPES: Record<string, AcurisSanctionsSearchType> = {
   RRE: 'ADVERSE_MEDIA',
   POI: 'PROFILE_OF_INTEREST',
   REL: 'REGULATORY_ENFORCEMENT_LIST',
-  GRI: 'GAMBLING_RISK_INTELLIGENCE',
 }
 
 const ACURIS_TYPES = {
@@ -45,7 +44,6 @@ const ACURIS_TYPES = {
   RRE: 'Reputational Risk Exposure',
   POI: 'Profile Of Interest',
   REL: 'Regulatory Enforcement List',
-  GRI: 'Gambling Risk Intelligence',
 }
 
 const PEP_TIERS = {
@@ -440,7 +438,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       sanctionSearchTypes,
       gender: entity.gender,
-      aka: entity.aliases.map((alias) => this.getEntityName(alias, 'Person')),
+      aka: entity.aliases.map((alias) => this.getEntityName(alias, entityType)),
       countries: compact(
         entity.nationalitiesIsoCodes.map(
           (code) => COUNTRIES[code as CountryCode]
@@ -485,7 +483,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             .map((evidence) => this.getOtherSources(evidence))
         : [],
       associates: entity.individualLinks.map((link) => ({
-        name: this.getEntityName(link, 'Person'),
+        name: this.getEntityName(link, entityType),
         association: link.relationship,
         sanctionsSearchTypes: link.datasets
           .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
@@ -528,20 +526,6 @@ export class AcurisProvider extends SanctionsDataFetcher {
                       relEntry.events.some((event) =>
                         event.evidenceIds.includes(evidenceId)
                       )
-                    )
-                  )
-                  .map((evidence) => this.getOtherSources(evidence)),
-              },
-            ]
-          : []),
-        ...(this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
-          ? [
-              {
-                type: 'GAMBLING_RISK_INTELLIGENCE',
-                value: entity.evidences
-                  .filter(({ evidenceId }) =>
-                    entity.griEntries.some(
-                      (griEntry) => griEntry.evidenceId === evidenceId
                     )
                   )
                   .map((evidence) => this.getOtherSources(evidence)),
@@ -593,7 +577,7 @@ export class AcurisProvider extends SanctionsDataFetcher {
             .map((evidence) => this.getOtherSources(evidence))
         : [],
       associates: entity.businessLinks.map((link) => ({
-        name: this.getEntityName(link, 'Business'),
+        name: this.getEntityName(link, entityType),
         association: link.relationship,
         sanctionsSearchTypes: link.datasets
           .map((dataset) => EXTERNAL_TO_INTERNAL_TYPES[dataset])
@@ -641,21 +625,6 @@ export class AcurisProvider extends SanctionsDataFetcher {
               },
             ]
           : []),
-        ...(this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
-          ? [
-              {
-                type: 'GAMBLING_RISK_INTELLIGENCE',
-                value: entity.evidences
-                  .filter(
-                    ({ evidenceId }) =>
-                      entity.griEntries.some(
-                        (griEntry) => griEntry.evidenceId === evidenceId
-                      ) && this.hasScreeningType('GAMBLING_RISK_INTELLIGENCE')
-                  )
-                  .map((evidence) => this.getOtherSources(evidence)),
-              },
-            ]
-          : []),
       ].filter((e) => e.value.length),
       rawResponse: entity,
       profileImagesUrls: entity.profileImages,
@@ -675,15 +644,15 @@ export class AcurisProvider extends SanctionsDataFetcher {
       middleName?: string
       lastName?: string
     }
-  >(entity: T, entityType: string): string {
-    if (entityType === 'Person') {
+  >(entity: T, entityType: SanctionsEntityType): string {
+    if (entityType === 'PERSON') {
       return compact([
         entity.firstName,
         entity.middleName,
         entity.lastName,
       ]).join(' ')
     }
-    if (entityType === 'Business') {
+    if (entityType === 'BUSINESS') {
       return entity.name ?? ''
     }
     return ''
