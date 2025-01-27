@@ -95,6 +95,16 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
             actions: ['sts:AssumeRole'],
             resources: [jwtAuthorizerBaseRole.roleArn],
           }),
+          // dynamodb:GetItem and DynamoDB:PutItem and DeleteItem
+          new PolicyStatement({
+            effect: Effect.ALLOW,
+            actions: [
+              'dynamodb:GetItem',
+              'dynamodb:PutItem',
+              'dynamodb:DeleteItem',
+            ],
+            resources: ['*'],
+          }),
         ],
       })
     )

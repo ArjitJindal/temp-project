@@ -79,31 +79,6 @@ export class UserAuditLogService {
     await publishAuditLog(this.tenantId, auditLog)
   }
 
-  public async handleAuditLogForDeleteComment(
-    userId: string,
-    comment: Comment
-  ): Promise<void> {
-    const mongoDb = await getMongoDbClient()
-    const userRepository = new UserRepository(this.tenantId, {
-      mongoDb: mongoDb,
-      dynamoDb: getDynamoDbClient(),
-    })
-    const user = await userRepository.getUserById(userId)
-    const auditLog: AuditLog = {
-      type: 'USER',
-      subtype: 'COMMENT',
-      action: 'DELETE',
-      timestamp: Date.now(),
-      oldImage: comment,
-      newImage: {},
-      entityId: userId,
-      logMetadata: {
-        userType: user?.type,
-      },
-    }
-    await publishAuditLog(this.tenantId, auditLog)
-  }
-
   private async createAuditLog(userId: string, logAction: AuditLogActionEnum) {
     const auditLog: AuditLog = {
       type: 'USER',

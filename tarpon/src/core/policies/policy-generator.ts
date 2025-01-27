@@ -59,6 +59,19 @@ export default class PolicyBuilder {
         },
       },
     })
+    this.statements.push({
+      Effect: 'Allow',
+      Action: ['dynamodb:*'],
+      Resource: ['*'],
+      Condition: {
+        'ForAllValues:StringLike': {
+          'dynamodb:LeadingKeys': [
+            `${FLAGRIGHT_TENANT_ID}#accounts-id`,
+            `${FLAGRIGHT_TENANT_ID}#accounts-email`,
+          ],
+        },
+      },
+    })
     return this
   }
 

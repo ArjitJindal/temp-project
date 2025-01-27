@@ -102,6 +102,7 @@ import { BusinessUserTableItem } from '@/@types/openapi-internal/BusinessUserTab
 import { Amount } from '@/@types/openapi-public/Amount'
 import { UserRegistrationStatus } from '@/@types/openapi-internal/UserRegistrationStatus'
 import { ConsumerName } from '@/@types/openapi-public/ConsumerName'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
 
 const KYC_STATUS_DETAILS_PRIORITY: Record<KYCStatus, number> = {
   MANUAL_REVIEW: 0,
@@ -1867,7 +1868,11 @@ export class UserService {
     }
   }
 
-  public async deleteUserComment(userId: string, commentId: string) {
+  @auditLog('USER', 'COMMENT', 'DELETE')
+  public async deleteUserComment(
+    userId: string,
+    commentId: string
+  ): Promise<AuditLogReturnData<void, Comment>> {
     const user = await this.getUser(userId)
 
     if (!user) {
@@ -1897,7 +1902,11 @@ export class UserService {
 
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
-        return
+        return {
+          oldImage: user.comments?.find((c) => c.id === commentId),
+          result: undefined,
+          entityId: userId,
+        }
       }
     }
     let shareHolderId: string | undefined = undefined
@@ -1928,7 +1937,11 @@ export class UserService {
 
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
-        return
+        return {
+          oldImage: user.comments?.find((c) => c.id === commentId),
+          result: undefined,
+          entityId: userId,
+        }
       }
     }
     let directorId: string | undefined = undefined
@@ -1959,7 +1972,11 @@ export class UserService {
 
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
-        return
+        return {
+          oldImage: user.comments?.find((c) => c.id === commentId),
+          result: undefined,
+          entityId: userId,
+        }
       }
     }
 
@@ -1982,18 +1999,19 @@ export class UserService {
       commentId
     )
 
-    let deleteAuditLogPromise: Promise<void> = Promise.resolve()
-    if (comment) {
-      deleteAuditLogPromise =
-        this.userAuditLogService.handleAuditLogForDeleteComment(userId, comment)
-    }
+    const deleteAuditLogPromise: Promise<void> = Promise.resolve()
 
     await Promise.all([
       deleteObjectsPromise,
       deleteCommentPromise,
       deleteAuditLogPromise,
     ])
-    return
+
+    return {
+      oldImage: user.comments?.find((c) => c.id === commentId),
+      result: undefined,
+      entityId: userId,
+    }
   }
 
   public async searchUsers(

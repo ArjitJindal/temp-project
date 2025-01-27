@@ -139,8 +139,14 @@ export const allUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerDeleteUsersUserIdCommentsCommentId(
-      async (ctx, request) =>
-        await userService.deleteUserComment(request.userId, request.commentId)
+      async (ctx, request) => {
+        const response = await userService.deleteUserComment(
+          request.userId,
+          request.commentId
+        )
+
+        return response.result
+      }
     )
 
     handlers.registerGetEventsList(

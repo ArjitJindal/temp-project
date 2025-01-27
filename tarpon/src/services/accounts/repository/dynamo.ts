@@ -169,8 +169,10 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     const updatedAccount: Account = {
       ...account,
       ...(patchData.role && { role: patchData.role }),
-      ...patchData.app_metadata,
-      ...patchData.user_metadata,
+      ...(patchData.app_metadata && { app_metadata: patchData.app_metadata }),
+      ...(patchData.user_metadata && {
+        user_metadata: patchData.user_metadata,
+      }),
       ...(patchData.blocked != null && { blocked: patchData.blocked }),
       ...(patchData.blockedReason && {
         blockedReason: patchData.blockedReason,

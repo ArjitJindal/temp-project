@@ -164,13 +164,20 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
         {
           app_metadata: {
             ...user.app_metadata,
-            ...patchData.app_metadata,
+            ...(patchData.app_metadata && {
+              app_metadata: patchData.app_metadata,
+            }),
             // Specific Undefined Check Don't Change
             ...(patchData.blockedReason !== undefined && {
               blockedReason: patchData.blockedReason,
             }),
           },
-          user_metadata: { ...user.user_metadata, ...patchData.user_metadata },
+          user_metadata: {
+            ...user.user_metadata,
+            ...(patchData?.user_metadata && {
+              user_metadata: patchData.user_metadata,
+            }),
+          },
           blocked: patchData.blocked,
         }
       )
