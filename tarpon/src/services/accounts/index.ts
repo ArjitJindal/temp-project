@@ -287,7 +287,7 @@ export class AccountsService {
   }
 
   async getTenants(auth0Domain?: string): Promise<Tenant[]> {
-    return this.auth0().getTenants(auth0Domain)
+    return this.auth0().getTenants(auth0Domain ?? this.config.auth0Domain)
   }
 
   async changeUserTenant(

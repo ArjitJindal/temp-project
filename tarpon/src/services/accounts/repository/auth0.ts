@@ -182,8 +182,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
         }
       )
     )
-
-    return userToAccount(patchedUser.data)
+    return userToAccount(patchedUser)
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
@@ -317,9 +316,8 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   }
 
   async getTenants(auth0Domain?: string): Promise<Tenant[]> {
-    const managementClient = await getAuth0ManagementClient(
-      auth0Domain ?? this.auth0Domain
-    )
+    const domain = auth0Domain ?? this.auth0Domain
+    const managementClient = await getAuth0ManagementClient(domain)
     const user = getContext()?.user
     const organizationManager = managementClient.organizations
     let pageNumber = 0

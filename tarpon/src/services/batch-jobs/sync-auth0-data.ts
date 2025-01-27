@@ -14,26 +14,26 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
       const tenants = await TenantService.getAllTenants()
 
       for (const tenant of tenants) {
-        await this.syncTenant(tenant.tenant)
+        await this.syncTenant(tenant.tenant, tenant.auth0Domain)
       }
     } else if (job.parameters.type === 'TENANT_IDS') {
       const tenantIds = job.parameters.tenantIds
-      const accountsService = await AccountsService.getInstance(
+      const accountsService = AccountsService.getInstance(
         this.dynamoDb as DynamoDBClient
       )
 
       for (const tenantId of tenantIds) {
         const tenant = await accountsService.getTenantById(tenantId)
         if (tenant) {
-          await this.syncTenant(tenant)
+          await this.syncTenant(tenant, tenant.auth0Domain)
         }
       }
     }
   }
 
-  private async syncTenant(tenant: Tenant) {
+  private async syncTenant(tenant: Tenant, auth0Domain?: string) {
     const accountService = new AccountsService(
-      { auth0Domain: tenant.auth0Domain },
+      { auth0Domain: auth0Domain ?? tenant.auth0Domain },
       { dynamoDb: this.dynamoDb as DynamoDBClient }
     )
 
