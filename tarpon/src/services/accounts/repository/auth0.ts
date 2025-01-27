@@ -174,9 +174,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
           },
           user_metadata: {
             ...user.user_metadata,
-            ...(patchData?.user_metadata && {
-              user_metadata: patchData.user_metadata,
-            }),
+            ...patchData.user_metadata,
           },
           blocked: patchData.blocked,
         }
