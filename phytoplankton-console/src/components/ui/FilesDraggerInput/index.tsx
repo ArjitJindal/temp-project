@@ -1,6 +1,7 @@
 import { Upload } from 'antd';
 import cn from 'clsx';
 import { useEffect, useState } from 'react';
+import mime from 'mime';
 import s from './index.module.less';
 import { InputProps } from '@/components/library/Form';
 import { FileInfo } from '@/apis';
@@ -19,6 +20,7 @@ interface Props extends InputProps<FileInfo[]> {
   listType?: 'comment' | 'attachment';
   setUploading?: (uploading: boolean) => void;
   required?: boolean;
+  accept?: string[]; // file mime types to accept, e.g. ["image/jpeg", "image/png", "application/pdf"]
 }
 
 export default function FilesDraggerInput(props: Props) {
@@ -31,6 +33,7 @@ export default function FilesDraggerInput(props: Props) {
     listType = 'comment',
     required = false,
     setUploading,
+    accept,
   } = props;
   const [uploadingCount, setUploadingCount] = useState(0);
   const api = useApi();
@@ -51,18 +54,27 @@ export default function FilesDraggerInput(props: Props) {
     }
   }, [onChange, prevState, state]);
 
+  const acceptedTypes = accept?.map((mimetype) => '.' + mime.getExtension(mimetype));
+
   return (
     <div className={s.root}>
       <Upload.Dragger
         disabled={uploadingCount > 0}
         multiple={!singleFile}
         showUploadList={false}
+        accept={acceptedTypes?.join(',')}
         customRequest={async ({ file: f, onError, onSuccess }) => {
           setUploadingCount((count) => count + 1);
           setUploading?.(true);
           const file = f as File;
           const hideMessage = message.loading('Uploading...');
           try {
+            if (accept) {
+              if (!file.type || !accept.includes(file.type)) {
+                throw new Error(`File type not allowed. Accepted types: ${accept.join(', ')}`);
+              }
+            }
+
             if (listType === 'attachment') {
               const allowedTypes = [
                 'image/jpeg',
@@ -75,6 +87,7 @@ export default function FilesDraggerInput(props: Props) {
                 throw new Error('Unsupported file type');
               }
             }
+
             const { s3Key } = await uploadFile(api, file);
             if (onSuccess) {
               onSuccess(s3Key);

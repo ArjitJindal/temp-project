@@ -101,6 +101,7 @@ export default function ImportCsvModal(props: Props) {
             setErrors(undefined);
           }}
           singleFile={true}
+          accept={['text/csv']}
         />
         <P grey={true} variant={'s'}>
           Provided CSV file should not contain header. Each row should contain at least one value
