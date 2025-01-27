@@ -42,6 +42,7 @@ export default class PolicyBuilder {
           'dynamodb:LeadingKeys': [
             `${this.tenantId}*`,
             `${SHARED_PARTITION_KEY_PREFIX}*`,
+            `${SHARED_AUTH0_PARTITION_KEY_PREFIX}*`,
           ],
         },
       },
@@ -59,16 +60,6 @@ export default class PolicyBuilder {
       Condition: {
         'ForAllValues:StringLike': {
           'dynamodb:LeadingKeys': [`${FLAGRIGHT_TENANT_ID}*`],
-        },
-      },
-    })
-    this.statements.push({
-      Effect: 'Allow',
-      Action: ['dynamodb:*'],
-      Resource: [`arn:aws:dynamodb:*:*:table/*`],
-      Condition: {
-        'ForAllValues:StringLike': {
-          'dynamodb:LeadingKeys': [`${SHARED_AUTH0_PARTITION_KEY_PREFIX}*`],
         },
       },
     })
