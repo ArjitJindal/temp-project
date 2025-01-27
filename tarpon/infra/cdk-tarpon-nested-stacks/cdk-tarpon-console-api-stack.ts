@@ -9,6 +9,7 @@ import {
   IRole,
   ManagedPolicy,
   Policy,
+  PolicyDocument,
   PolicyStatement,
   Role,
 } from 'aws-cdk-lib/aws-iam'
@@ -85,6 +86,23 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
       managedPolicies: [
         ManagedPolicy.fromAwsManagedPolicyName('PowerUserAccess'),
       ],
+      inlinePolicies: {
+        JwtAuthorizerPolicy: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              effect: Effect.ALLOW,
+              actions: [
+                'dynamodb:GetItem',
+                'dynamodb:PutItem',
+                'dynamodb:DeleteItem',
+                'dynamodb:BatchGetItem',
+                'dynamodb:BatchWriteItem',
+              ],
+              resources: ['*'],
+            }),
+          ],
+        }),
+      },
     })
     jwtAuthorizerAlias.role?.attachInlinePolicy(
       new Policy(this, getResourceNameForTarpon('JwtAuthorizerPolicy'), {
@@ -94,16 +112,6 @@ export class CdkTarponConsoleLambdaStack extends cdk.NestedStack {
             effect: Effect.ALLOW,
             actions: ['sts:AssumeRole'],
             resources: [jwtAuthorizerBaseRole.roleArn],
-          }),
-          // dynamodb:GetItem and DynamoDB:PutItem and DeleteItem
-          new PolicyStatement({
-            effect: Effect.ALLOW,
-            actions: [
-              'dynamodb:GetItem',
-              'dynamodb:PutItem',
-              'dynamodb:DeleteItem',
-            ],
-            resources: ['*'],
           }),
         ],
       })

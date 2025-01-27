@@ -87,7 +87,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       )
     )
 
-    return userToAccount(user.data)
+    return userToAccount(user)
   }
 
   async getAccountTenant(userId: string): Promise<Tenant> {
@@ -143,7 +143,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       })
     )
 
-    return userToAccount(user.data)
+    return userToAccount(user)
   }
 
   async patchAccount(
@@ -254,7 +254,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       organizationManager.create(params)
     )
 
-    return organizationToTenant(organization.data)
+    return organizationToTenant(organization)
   }
 
   async patchOrganization(
@@ -280,7 +280,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       )
     )
 
-    return organizationToTenant(organization.data)
+    return organizationToTenant(organization)
   }
 
   async addAccountToOrganization(

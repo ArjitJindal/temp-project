@@ -1,7 +1,10 @@
 import { PolicyDocument, Statement } from 'aws-lambda'
 import { StackConstants } from '@lib/constants'
 import { FLAGRIGHT_TENANT_ID } from '../constants'
-import { SHARED_PARTITION_KEY_PREFIX } from '../dynamodb/dynamodb-keys'
+import {
+  SHARED_AUTH0_PARTITION_KEY_PREFIX,
+  SHARED_PARTITION_KEY_PREFIX,
+} from '../dynamodb/dynamodb-keys'
 
 export default class PolicyBuilder {
   tenantId: string
@@ -62,16 +65,14 @@ export default class PolicyBuilder {
     this.statements.push({
       Effect: 'Allow',
       Action: ['dynamodb:*'],
-      Resource: ['*'],
+      Resource: [`arn:aws:dynamodb:*:*:table/*`],
       Condition: {
         'ForAllValues:StringLike': {
-          'dynamodb:LeadingKeys': [
-            `${FLAGRIGHT_TENANT_ID}#accounts-id`,
-            `${FLAGRIGHT_TENANT_ID}#accounts-email`,
-          ],
+          'dynamodb:LeadingKeys': [`${SHARED_AUTH0_PARTITION_KEY_PREFIX}*`],
         },
       },
     })
+
     return this
   }
 

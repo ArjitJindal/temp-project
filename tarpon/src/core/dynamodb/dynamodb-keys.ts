@@ -46,6 +46,7 @@ export const AVG_ARS_KEY_IDENTIFIER = '#avg-ars-value'
 export const DRS_KEY_IDENTIFIER = '#drs-value'
 export const RULE_INSTANCE_IDENTIFIER = 'rule-instance#'
 export const SHARED_PARTITION_KEY_PREFIX = 'shared'
+export const SHARED_AUTH0_PARTITION_KEY_PREFIX = 'shared-auth0'
 export const ALERT_KEY_IDENTIFIER = '#alert-data'
 export const ALERT_COMMENT_KEY_IDENTIFIER = '#alert-comment'
 export const ALERT_FILE_ID_IDENTIFIER = '#alert-file'
@@ -452,16 +453,16 @@ export const DynamoDbKeys = {
     SortKeyID: generateChecksum(deviceInfo, 5),
   }),
   ACCOUNTS: (accountId?: string) => ({
-    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#accounts-id`,
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-id`,
     SortKeyID: accountId,
   }),
   ACCOUNTS_BY_EMAIL: (email: string) => ({
-    PartitionKeyID: `${FLAGRIGHT_TENANT_ID}#accounts-email`,
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-email`,
     SortKeyID: email,
   }),
   ORGANIZATION: (tenantId: string) => ({
-    PartitionKeyID: `${tenantId}#organization-data`,
-    SortKeyID: 'organization',
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-data`,
+    SortKeyID: tenantId,
   }),
   ORGANIZATION_ACCOUNTS: (tenantId: string) => ({
     PartitionKeyID: `${tenantId}#organization-accounts`,
