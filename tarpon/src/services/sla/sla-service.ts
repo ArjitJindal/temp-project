@@ -1,6 +1,6 @@
 import { AggregationCursor, MongoClient } from 'mongodb'
 import pMap from 'p-map'
-import { omit, range } from 'lodash'
+import { compact, omit, range } from 'lodash'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { AccountsService } from '../accounts'
@@ -281,7 +281,7 @@ export class SLAService {
       ])
       .toArray()
     const numberOfJobs = Math.ceil((targetAlertsCount[0]?.count ?? 0) / 50_000)
-    const froms = (
+    const froms = compact(
       await Promise.all(
         range(numberOfJobs).map(async (i): Promise<string | null> => {
           const entity = (
@@ -308,12 +308,12 @@ export class SLAService {
           )[0]
 
           if (entity) {
-            return entity.id
+            return entity.alerts.alertId
           }
           return null
         })
       )
-    ).filter((p): p is string => Boolean(p))
+    )
     for (let i = 0; i < froms.length; i++) {
       const from = froms[i]
       const to = froms[i + 1] || undefined // Use `null` as `to` for the last batch

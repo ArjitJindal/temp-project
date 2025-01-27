@@ -15,13 +15,15 @@ import {
   JobRunConfig,
   shouldRun,
 } from '@/utils/sla-scheduler'
+import { SLAService } from '@/services/sla/sla-service'
 
 const batchJobScheduler5Hours10Minutes: JobRunConfig = {
   windowStart: 18,
   windowEnd: 9,
   runIntervalInHours: 5,
   checkCallInterval: 10,
-} // runs job at interval of 5 hours, check for running condition every 10 minutes
+  shouldRunWhenOutsideWindow: true,
+} // runs job at interval of 5 hours, check for running condition every 10 minutes. If the time is outside the run window it runs with different frequency
 
 async function handleDashboardRefreshBatchJob(tenantIds: string[]) {
   try {
@@ -95,10 +97,11 @@ async function handleSlaStatusCalculationBatchJob(tenantIds: string[]) {
         const tenantService = new TenantService(id, { mongoDb, dynamoDb })
         const features = (await tenantService.getTenantSettings()).features
         if (features?.includes('ALERT_SLA')) {
-          await sendBatchJobCommand({
-            type: 'ALERT_SLA_STATUS_REFRESH',
-            tenantId: id,
+          const slaService = new SLAService(id, '', {
+            mongoDb,
+            dynamoDb,
           })
+          await slaService.handleSendingSlaRefreshJobs()
         }
         if (features?.includes('PNB')) {
           await sendBatchJobCommand({

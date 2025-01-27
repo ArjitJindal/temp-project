@@ -47,6 +47,7 @@ export interface JobRunConfig {
   windowEnd: number
   runIntervalInHours: number
   checkCallInterval: number
+  shouldRunWhenOutsideWindow: boolean
 }
 
 const HOURS_IN_DAY = 24
@@ -84,7 +85,7 @@ export const shouldRun = (config: JobRunConfig, now: Dayjs): boolean => {
   const minute = now.minute()
 
   if (!isWithinWindow(config, hour)) {
-    return false
+    return config.shouldRunWhenOutsideWindow
   }
 
   if (isRunIntervalMultiple(config, hour) && isRunMinute(config, minute)) {

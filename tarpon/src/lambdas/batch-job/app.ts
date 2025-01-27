@@ -20,9 +20,7 @@ import {
 } from '@/core/utils/context'
 import { BatchJobRepository } from '@/services/batch-jobs/repositories/batch-job-repository'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
-import { SLAService } from '@/services/sla/sla-service'
 import { LONG_RUNNING_MIGRATION_TENANT_ID } from '@/services/batch-jobs/batch-job'
-import { getDynamoDbClient } from '@/utils/dynamodb'
 
 function getBatchJobName(job: BatchJobWithId) {
   return `${job.tenantId}-${job.type}-${job.jobId}`.slice(0, 80)
@@ -43,14 +41,6 @@ export const jobTriggerHandler = lambdaConsumer()(async (event: SQSEvent) => {
     const existingJob = await jobRepository.getJobById(job.jobId)
     if (!existingJob) {
       await jobRepository.insertJob(job)
-    }
-
-    if (job.type === 'ALERT_SLA_STATUS_REFRESH') {
-      const slaService = new SLAService(job.tenantId, '', {
-        mongoDb,
-        dynamoDb: getDynamoDbClient(),
-      })
-      await slaService.handleSendingSlaRefreshJobs()
     }
 
     try {

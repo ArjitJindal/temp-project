@@ -9,6 +9,7 @@ describe('HourBatchJobScheduler', () => {
       windowEnd: 17,
       runIntervalInHours: 3,
       checkCallInterval: 5,
+      shouldRunWhenOutsideWindow: false,
     }
 
     test.each([
@@ -34,6 +35,7 @@ describe('HourBatchJobScheduler', () => {
       windowEnd: 5,
       runIntervalInHours: 2,
       checkCallInterval: 10,
+      shouldRunWhenOutsideWindow: false,
     }
 
     test.each([
@@ -63,6 +65,7 @@ describe('HourBatchJobScheduler', () => {
           windowEnd: 17,
           runIntervalInHours: 2,
           checkCallInterval: 61,
+          shouldRunWhenOutsideWindow: false,
         }
         shouldRun(config, dayjs('2024-03-20 09:00'))
       }).toThrow('Calling of the fucntion should be less than a hour')
@@ -74,6 +77,7 @@ describe('HourBatchJobScheduler', () => {
         windowEnd: 17,
         runIntervalInHours: 2,
         checkCallInterval: 15,
+        shouldRunWhenOutsideWindow: false,
       }
 
       // Test various times within and outside the 15-minute window
@@ -89,6 +93,7 @@ describe('HourBatchJobScheduler', () => {
         windowEnd: 9,
         runIntervalInHours: 2,
         checkCallInterval: 5,
+        shouldRunWhenOutsideWindow: false,
       }
       expect(shouldRun(config, dayjs('2024-03-20 09:03'))).toBe(false)
     })
@@ -101,6 +106,7 @@ describe('HourBatchJobScheduler', () => {
       windowEnd: 11,
       runIntervalInHours: 4,
       checkCallInterval: 10,
+      shouldRunWhenOutsideWindow: false,
     }
 
     test.each([
@@ -130,6 +136,7 @@ describe('HourBatchJobScheduler', () => {
       windowEnd: 18,
       runIntervalInHours: 1,
       checkCallInterval: 3,
+      shouldRunWhenOutsideWindow: false,
     }
 
     test.each([
