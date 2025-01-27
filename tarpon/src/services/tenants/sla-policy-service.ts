@@ -1,4 +1,5 @@
 import { MongoClient } from 'mongodb'
+import { SLAAuditLogService } from '../sla/sla-audit-log-service'
 import { SLAPolicyRepository } from './repositories/sla-policy-repository'
 import { traceable } from '@/core/xray'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
@@ -9,8 +10,10 @@ import { SLAPolicyIdResponse } from '@/@types/openapi-internal/SLAPolicyIdRespon
 @traceable
 export class SLAPolicyService {
   private slaPolicyRepository: SLAPolicyRepository
+  private slaAuditLogService: SLAAuditLogService
   constructor(tenantId: string, mongoClient: MongoClient) {
     this.slaPolicyRepository = new SLAPolicyRepository(tenantId, mongoClient)
+    this.slaAuditLogService = new SLAAuditLogService(tenantId)
   }
   public async getSLAPolicies(
     params: DefaultApiGetSlaPoliciesRequest
@@ -23,18 +26,37 @@ export class SLAPolicyService {
   }
   public async createSLAPolicy(policy: SLAPolicy): Promise<SLAPolicy> {
     const id = await this.slaPolicyRepository.getNewId(true)
-    return await this.slaPolicyRepository.createSLAPolicy({
+    const newPolicy = {
       ...policy,
       id: id,
       createdAt: Date.now(),
       updatedAt: Date.now(),
-    })
+    }
+    const savedPolicy = await this.slaPolicyRepository.createSLAPolicy(
+      newPolicy
+    )
+    await this.slaAuditLogService.handleAuditLogForSLAPolicyChange(
+      id,
+      undefined,
+      savedPolicy
+    )
+    return savedPolicy
   }
   public async updateSLAPolicy(policy: SLAPolicy): Promise<SLAPolicy> {
-    return await this.slaPolicyRepository.updateSLAPolicy({
+    const oldPolicy = await this.getSLAPolicyById(policy.id)
+    const updatedPolicy = {
       ...policy,
       updatedAt: Date.now(),
-    })
+    }
+    const savedPolicy = await this.slaPolicyRepository.updateSLAPolicy(
+      updatedPolicy
+    )
+    await this.slaAuditLogService.handleAuditLogForSLAPolicyChange(
+      policy.id,
+      oldPolicy,
+      savedPolicy
+    )
+    return savedPolicy
   }
   public async reassignSLAPolicies(
     assignmentId: string,

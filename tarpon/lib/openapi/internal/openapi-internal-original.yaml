@@ -13905,6 +13905,7 @@ components:
         - WEBHOOK
         - API-KEY
         - SAR
+        - SLA
     AuditLogActionEnum:
       title: AuditLogActionEnum
       type: string
@@ -13963,6 +13964,8 @@ components:
             - API_UPDATE
             - API_CREATION
             - TAGS_UPDATE
+            - SLA_POLICY_UPDATE
+            - SLA_STATUS_UPDATE
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

@@ -14,6 +14,7 @@ import {
   matchPolicyRoleConditions,
   matchPolicyStatusConditions,
 } from './sla-utils'
+import { SLAAuditLogService } from './sla-audit-log-service'
 import { traceable } from '@/core/xray'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { logger } from '@/core/logger'
@@ -38,6 +39,7 @@ export class SLAService {
   private caseRepository: CaseRepository
   private mongoDb: MongoClient
   private tenantId: string
+  private slaAuditLogService: SLAAuditLogService
 
   constructor(
     tenantId: string,
@@ -52,6 +54,7 @@ export class SLAService {
     this.slaPolicyService = new SLAPolicyService(tenantId, connections.mongoDb)
     this.accountsService = new AccountsService({ auth0Domain }, connections)
     this.caseRepository = new CaseRepository(tenantId, connections)
+    this.slaAuditLogService = new SLAAuditLogService(tenantId)
   }
 
   private async getAccounts(userIds: string[]): Promise<Account[]> {
@@ -135,15 +138,43 @@ export class SLAService {
         )
       }
     })
-    return elapsedTime > 0
-      ? {
-          elapsedTime: elapsedTime,
-          policyStatus: getSLAStatusFromElapsedTime(
-            elapsedTime,
-            slaPolicy.policyConfiguration
-          ),
-        }
-      : undefined
+    if (elapsedTime <= 0) {
+      return undefined
+    }
+
+    const newStatus = getSLAStatusFromElapsedTime(
+      elapsedTime,
+      slaPolicy.policyConfiguration
+    )
+
+    const existingStatus = entity.slaPolicyDetails?.find(
+      (detail) => detail.slaPolicyId === slaPolicyId
+    )?.policyStatus
+
+    let entityId: string | undefined
+    if (type === 'alert') {
+      entityId = (entity as Alert).alertId
+    } else {
+      entityId = (entity as Case).caseId
+    }
+    if (!entityId) {
+      return undefined
+    }
+
+    if (existingStatus !== newStatus) {
+      await this.slaAuditLogService.handleAuditLogForSLAStatusChange(
+        entityId,
+        existingStatus,
+        newStatus,
+        slaPolicyId,
+        elapsedTime
+      )
+    }
+
+    return {
+      elapsedTime: elapsedTime,
+      policyStatus: newStatus,
+    }
   }
 
   public async calculateAndUpdateSLAStatusesForEntity<T extends Alert | Case>(
