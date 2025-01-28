@@ -750,6 +750,7 @@ export class TenantService {
 
     await tenantRepository.createPendingRecordForTenantDeletion({
       tenantId: tenantIdToDelete,
+      tenantName: tenant?.name ?? tenantIdToDelete,
       triggeredByEmail: getContext()?.user?.email ?? '',
       triggeredById: getContext()?.user?.id ?? '',
       notRecoverable: notRecoverable ?? false,
@@ -802,7 +803,7 @@ export class TenantService {
     return tenantSettings.riskScoringAlgorithm
   }
 
-  public async getTenantsDeletionData(auth0Domain: string) {
+  public async getTenantsDeletionData() {
     const tenantRepository = new TenantRepository('', {
       mongoDb: this.mongoDb,
     })
@@ -811,29 +812,11 @@ export class TenantService {
       tenantIdsFailedToDelete,
       tenantIdsMarkedForDelete,
     } = await tenantRepository.getTenantsDeletionData()
-    const tenants = await this.getAllTenants(auth0Domain)
+
     return {
-      tenantsDeletedRecently: tenantIdsDeletedRecently.map((tenantId) => {
-        const tenant = tenants.find((tenant) => tenant.id === tenantId)
-        return {
-          tenantId,
-          tenantName: tenant?.name ?? tenantId,
-        }
-      }),
-      tenantsFailedToDelete: tenantIdsFailedToDelete.map((tenantId) => {
-        const tenant = tenants.find((tenant) => tenant.id === tenantId)
-        return {
-          tenantId,
-          tenantName: tenant?.name ?? tenantId,
-        }
-      }),
-      tenantsMarkedForDelete: tenantIdsMarkedForDelete.map((tenantId) => {
-        const tenant = tenants.find((tenant) => tenant.id === tenantId)
-        return {
-          tenantId,
-          tenantName: tenant?.name ?? tenantId,
-        }
-      }),
+      tenantsFailedToDelete: tenantIdsFailedToDelete,
+      tenantsDeletedRecently: tenantIdsDeletedRecently,
+      tenantsMarkedForDelete: tenantIdsMarkedForDelete,
     }
   }
 }

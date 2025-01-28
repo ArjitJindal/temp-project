@@ -436,7 +436,7 @@ export const tenantsHandler = lambdaApi()(
         mongoDb,
         dynamoDb: getDynamoDbClientByEvent(event),
       })
-      return await tenantService.getTenantsDeletionData(auth0Domain)
+      return await tenantService.getTenantsDeletionData()
     })
     /* SLA Policies */
     handlers.registerGetSlaPolicies(async (ctx, request) => {

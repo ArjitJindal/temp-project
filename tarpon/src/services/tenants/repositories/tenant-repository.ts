@@ -103,6 +103,7 @@ export class TenantRepository {
 
   public async createPendingRecordForTenantDeletion(data: {
     tenantId: string
+    tenantName: string
     triggeredByEmail: string
     triggeredById: string
     notRecoverable: boolean
@@ -127,6 +128,7 @@ export class TenantRepository {
       triggeredByEmail: data.triggeredByEmail,
       triggeredById: data.triggeredById,
       tenantId: data.tenantId,
+      tenantName: data.tenantName,
       notRecoverable: data.notRecoverable ? true : false,
     })
   }
@@ -208,15 +210,18 @@ export class TenantRepository {
         .toArray(),
     ])
     return {
-      tenantIdsFailedToDelete: tenantsFailedToDelete.map(
-        (tenant) => tenant.tenantId
-      ),
-      tenantIdsMarkedForDelete: tenantsMarkedForDelete.map(
-        (tenant) => tenant.tenantId
-      ),
-      tenantIdsDeletedRecently: tenantsDeletedRecently.map(
-        (tenant) => tenant.tenantId
-      ),
+      tenantIdsFailedToDelete: tenantsFailedToDelete.map((tenant) => ({
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
+      })),
+      tenantIdsMarkedForDelete: tenantsMarkedForDelete.map((tenant) => ({
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
+      })),
+      tenantIdsDeletedRecently: tenantsDeletedRecently.map((tenant) => ({
+        tenantId: tenant.tenantId,
+        tenantName: tenant.tenantName,
+      })),
     }
   }
 }

@@ -13901,6 +13901,8 @@ components:
     DeleteTenant:
       type: object
       properties:
+        tenantName:
+          type: string
         tenantId:
           type: string
         notRecoverable:
