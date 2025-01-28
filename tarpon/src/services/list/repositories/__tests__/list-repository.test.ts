@@ -424,6 +424,26 @@ describe('Verify list repository', () => {
         expect(r.hasPrev).toEqual(true)
         expect(r.count).toEqual(ITEMS_COUNT)
       })
+
+      test('Fetch all items', async () => {
+        const { listId } = await listRepo.createList(
+          LIST_TYPE,
+          'USER_ID',
+          newList
+        )
+
+        let listCursor = await listRepo.getListItems(listId, { pageSize: 10 })
+        const allItems: ListItem[] = []
+        allItems.push(...listCursor.items)
+        while (listCursor.hasNext) {
+          listCursor = await listRepo.getListItems(listId, {
+            fromCursorKey: listCursor.next,
+            pageSize: 10,
+          })
+          allItems.push(...listCursor.items)
+        }
+        expect(allItems.length).toEqual(ITEMS_COUNT)
+      })
     })
   })
 

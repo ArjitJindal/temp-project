@@ -340,7 +340,7 @@ export class ListRepository {
         : undefined,
       Limit: pageSize + 1,
     }
-    const { Items = [], LastEvaluatedKey } = await this.dynamoDb.send(
+    const { Items = [] } = await this.dynamoDb.send(
       new QueryCommand(queryCommandInput)
     )
     let prev = ''
@@ -367,7 +367,7 @@ export class ListRepository {
     const count = await this.countListValues(listId, requestedVersion)
     return {
       next:
-        hasNextPage && LastEvaluatedKey != null && items.length > 0
+        hasNextPage && items.length === pageSize
           ? items[items.length - 1].key
           : '',
       prev: prev,
