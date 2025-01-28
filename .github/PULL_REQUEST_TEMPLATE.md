@@ -8,7 +8,10 @@ This change was deployed:
 - [ ] Locally
 - [ ] QA
 
-<!-- Now describe how the review can test these changes -->
+
+### Instructions for QA
+
+<!-- Give very specific and granular steps for QA to test these changes. Provide examples and include the exact URL, user, and any other details that are relevant. -->
 
 ### Screenshots
 
