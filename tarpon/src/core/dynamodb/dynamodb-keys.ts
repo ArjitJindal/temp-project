@@ -465,8 +465,8 @@ export const DynamoDbKeys = {
     SortKeyID: tenantId,
   }),
   ORGANIZATION_ACCOUNTS: (tenantId: string) => ({
-    PartitionKeyID: `${tenantId}#organization-accounts`,
-    SortKeyID: 'accounts',
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-accounts`,
+    SortKeyID: tenantId,
   }),
 }
 
