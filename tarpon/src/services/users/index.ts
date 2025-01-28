@@ -1417,6 +1417,10 @@ export class UserService {
       await this.userRepository.saveConsumerUser(userToUpdate as User)
     }
 
+    // Handle risk scoring update
+    const userUpdatedRiskScore =
+      await this.riskScoringV8Service.handleUserUpdate({ user: updatedUser })
+
     // Save user event
     await this.userEventRepository.saveUserEvent(
       {
@@ -1425,15 +1429,12 @@ export class UserService {
         reason: updateRequest.userStateDetails?.reason ?? 'User update',
         updatedConsumerUserAttributes: updateRequest,
         riskScoreDetails: {
-          kycRiskScore: (updatedUser as InternalUser).krsScore?.krsScore,
-          craRiskScore: (updatedUser as InternalUser).drsScore?.drsScore,
+          kycRiskScore: userUpdatedRiskScore.kycRiskScore,
+          craRiskScore: userUpdatedRiskScore.craRiskScore,
         },
       },
       isBusiness ? 'BUSINESS' : 'CONSUMER'
     )
-
-    // Handle risk scoring update
-    await this.riskScoringV8Service.handleUserUpdate({ user: updatedUser })
 
     // Handle post-update actions
     const [_, comment] = await Promise.all([
