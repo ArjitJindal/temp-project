@@ -20,7 +20,11 @@ import { BaseSampler } from './base'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
-import { CompanySeedData, names } from '@/core/seed/samplers/dictionary'
+import {
+  companies,
+  CompanySeedData,
+  names,
+} from '@/core/seed/samplers/dictionary'
 import { CurrencyCode } from '@/@types/openapi-internal/CurrencyCode'
 import { LegalDocument } from '@/@types/openapi-internal/LegalDocument'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -32,7 +36,12 @@ import {
   phoneNumber,
   AddressWithUsageSampler,
 } from '@/core/seed/samplers/address'
-import { userRules } from '@/core/seed/data/rules'
+import {
+  businessRules,
+  consumerRules,
+  RuleSampler,
+  userRules,
+} from '@/core/seed/data/rules'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
@@ -474,6 +483,18 @@ ET\n`
 export class BusinessUserSampler extends UserSampler<
   Promise<InternalBusinessUser>
 > {
+  private ruleSampler: RuleSampler
+  constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
+    super(seed)
+    this.ruleSampler = new RuleSampler(
+      undefined,
+      businessRules,
+      [2, 3],
+      companies.length,
+      false
+    )
+  }
+
   protected getShareHolder = async (
     timestamp: number,
     uploadAttachment: boolean = true,
@@ -545,7 +566,6 @@ export class BusinessUserSampler extends UserSampler<
       attachments,
     } as Person
   }
-
   protected getDirector = async (
     timestamp: number,
     domain: string,
@@ -626,7 +646,11 @@ export class BusinessUserSampler extends UserSampler<
     const transactionLimitSampler = new ExpectedTransactionLimitSampler()
     const paymentMethodSampler = new PaymentDetailsSampler()
 
-    const hitRules = this.sampleUserRules(userId, name, 'BUSINESS')
+    const hitRules = this.ruleSampler.getSample(undefined, this.counter - 1)
+    const executedRules = businessRules.map((r) => ({
+      ...r,
+      ruleHit: hitRules.some((h) => h.ruleInstanceId === r.ruleInstanceId),
+    }))
     const paymentMethod: PaymentDetails[] = []
 
     const shareHolders: Person[] = []
@@ -675,7 +699,7 @@ export class BusinessUserSampler extends UserSampler<
         tagSampler.getSample(),
       ],
       userStateDetails: this.sampleUserStateDetails(),
-      executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
+      executedRules: executedRules,
       hitRules: hitRules,
       updatedAt: timestamp + 60 * 60 * 24 * 1000,
       comments: [],
@@ -760,6 +784,20 @@ export class BusinessUserSampler extends UserSampler<
 export class ConsumerUserSampler extends UserSampler<
   Promise<InternalConsumerUser>
 > {
+  private ruleSampler: RuleSampler
+  constructor(
+    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    counter: number
+  ) {
+    super(seed, counter)
+    this.ruleSampler = new RuleSampler(
+      undefined,
+      consumerRules,
+      [2, 3],
+      200,
+      false
+    )
+  }
   protected async generateSample(
     tenantId: string,
     uploadAttachment: boolean = true
@@ -785,11 +823,14 @@ export class ConsumerUserSampler extends UserSampler<
     const tagSampler = new TagSampler() // TODO: find a better seed
     const transactionLimitSampler = new ExpectedTransactionLimitSampler()
 
-    const hitRules = this.sampleUserRules(
-      userId,
-      `${name.firstName} ${name.middleName} ${name.lastName}`,
-      'CONSUMER'
+    const hitRules = this.ruleSampler.getSample(
+      undefined,
+      this.counter - companies.length - 1
     )
+    const executedRules = consumerRules.map((r) => ({
+      ...r,
+      ruleHit: hitRules.some((h) => h.ruleInstanceId === r.ruleInstanceId),
+    }))
 
     const legalDocuments: LegalDocument[] = []
     const attachments: PersonAttachment[] = []
@@ -866,7 +907,7 @@ export class ConsumerUserSampler extends UserSampler<
         employerName: this.rng.r(4).pickRandom(employerName),
         businessIndustry: [this.rng.r(5).pickRandom(businessIndustry)],
       },
-      executedRules: userRules(hitRules.map((r) => r.ruleInstanceId)),
+      executedRules: executedRules,
       hitRules: hitRules,
       transactionLimits: transactionLimitSampler.getSample(),
       savedPaymentDetails: paymentMethod,

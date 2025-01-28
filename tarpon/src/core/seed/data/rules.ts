@@ -358,7 +358,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       action: 'FLAG',
       type: 'TRANSACTION',
       ruleNameAlias:
-        'Too many transactions under reporting limit sent by a user.',
+        'Too many transactions under reporting limit sent by a user (shadow)',
       ruleDescriptionAlias:
         '>= ‘x’ number of consecutive low value outgoing transactions just below a threshold amount ‘y’ to a user. Often seen in structured money laundering attempts.',
       filters: {
@@ -615,7 +615,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       } as TransactionsVelocityRuleParameters,
       action: 'FLAG',
       type: 'TRANSACTION',
-      ruleNameAlias: 'High velocity user',
+      ruleNameAlias: 'High velocity user (shadow)',
       ruleDescriptionAlias: 'High velocity user',
       alertConfig: {
         slaPolicies: [rng.r(1).pickRandom(getSLAPolicies()).id],
@@ -1255,7 +1255,8 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
       ruleId: 'R-121',
       ruleNameAlias:
         'Average transactions number exceed past period average number',
-      ruleDescriptionAlias: 'Testing',
+      ruleDescriptionAlias:
+        'Average transactions number exceed past period average number',
       filters: {},
       logic: {
         or: [
@@ -1720,7 +1721,7 @@ export const ruleInstances: () => RuleInstance[] = memoize(() => {
         RuleChecksForField.CounterpartyBankName,
       ],
       type: 'TRANSACTION',
-      ruleNameAlias: 'Tx’s counterparty screening',
+      ruleNameAlias: 'Tx’s counterparty screening (shadow)',
       ruleDescriptionAlias:
         'Screening transaction’s counterparty for Sanctions/PEP/Adverse media',
       filters: {},
@@ -1852,3 +1853,100 @@ export const userRules: (hitRuleIds?: string[]) => ExecutedRulesResult[] =
         }
       })
   })
+const businessUserInstanceId = ['pLRu4m', 'FlWDkd']
+const consumerUserInstanceId = ['pLRu4m', 'hODvd2']
+export const businessRules: ExecutedRulesResult[] = userRules().filter((rule) =>
+  businessUserInstanceId.some((id) => id == rule.ruleInstanceId)
+)
+
+export const consumerRules: ExecutedRulesResult[] = userRules().filter((rule) =>
+  consumerUserInstanceId.some((id) => id == rule.ruleInstanceId)
+)
+
+export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
+  entityRuleHitMap: Map<number, string[]>
+  entityIds: number[]
+  ruleToAssignWeight: ExecutedRulesResult[]
+  constructor(
+    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    ruleToAssignWeight: ExecutedRulesResult[],
+    ruleHits: number[],
+    entityCount: number,
+    shouldHaveZeroHit: boolean = false
+  ) {
+    super(seed)
+
+    this.ruleToAssignWeight = ruleToAssignWeight
+    const totalWeight = ruleHits.reduce((sum, hits) => sum + 1 / hits, 0)
+    const ruleHitsPercentage = [
+      shouldHaveZeroHit ? 0 : 1 / ruleToAssignWeight.length,
+      ...ruleHits.map((hit) => totalWeight / hit),
+    ]
+    ruleHits = [0, ...ruleHits]
+    const ruleHitMap = new Map<string, number>()
+
+    ruleToAssignWeight.forEach((rule) => {
+      ruleHitMap.set(rule.ruleInstanceId ?? '', 3)
+    })
+
+    const groups = this.divideIntoPercentage(
+      ruleToAssignWeight.map((rule) => rule.ruleInstanceId ?? ''),
+      ruleHitsPercentage
+    )
+
+    groups.forEach((ele, i) => {
+      ele.forEach((id) => {
+        ruleHitMap.set(id, ruleHits[shouldHaveZeroHit ? i : i + 1])
+      })
+    })
+
+    this.entityRuleHitMap = new Map()
+    this.entityIds = [...Array(entityCount)].map((_, i) => i)
+    ruleHitMap.forEach((value, key) => {
+      if (value !== 0) {
+        const entityToPick =
+          (value * entityCount) / 100 +
+          this.rng.randomIntInclusive(0, 0.02 * entityCount)
+        const pickedEntity = this.rng.randomSubsetOfSize(
+          this.entityIds,
+          entityToPick
+        )
+        pickedEntity.forEach((id) => {
+          if (this.entityRuleHitMap.has(id)) {
+            this.entityRuleHitMap.get(id)?.push(key)
+          } else {
+            this.entityRuleHitMap.set(id, [key])
+          }
+        })
+      }
+    })
+  }
+
+  private divideIntoPercentage = <T>(
+    ids: T[],
+    weightToDivide: number[]
+  ): T[][] => {
+    const unusedIds = new Set(ids)
+    const rng = new RandomNumberGenerator()
+    const dividedGroups: T[][] = []
+
+    weightToDivide.forEach((weight) => {
+      const totalElements = ids.length * weight
+      const pickedElement = rng.randomSubsetOfSize(
+        Array.from(unusedIds),
+        totalElements
+      )
+      dividedGroups.push(pickedElement)
+      pickedElement.forEach((id) => unusedIds.delete(id))
+    })
+
+    return dividedGroups
+  }
+
+  generateSample(entityId: number): ExecutedRulesResult[] {
+    const ruleHitIds = this.entityRuleHitMap.get(entityId) ?? []
+    return this.ruleToAssignWeight.filter((rule) =>
+      ruleHitIds.includes(rule.ruleInstanceId ?? '')
+    )
+  }
+}

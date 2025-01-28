@@ -45,7 +45,7 @@ const consumerUsers: (
   tenantId: string
 ) => Promise<InternalConsumerUser[]> = async (tenantId: string) => {
   const startCounter = companies.length
-  const sampler = new ConsumerUserSampler(undefined, startCounter)
+  const sampler = new ConsumerUserSampler(undefined, startCounter + 1)
   let uploadAttachments = true
   if (envIs('local')) {
     uploadAttachments = false

@@ -1,4 +1,4 @@
-import { compact, random, memoize, uniq, cloneDeep, shuffle } from 'lodash'
+import { compact, random, memoize, uniq, shuffle } from 'lodash'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
 import {
   BusinessSanctionsSearchSampler,
@@ -26,7 +26,7 @@ import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
-import { transactionRules } from '@/core/seed/data/rules'
+import { RuleSampler, transactionRules } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
@@ -50,7 +50,6 @@ interface TransactionPair {
 }
 
 export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
-  private userTransactionMap: Map<string, string[]>
   private userAccountMap: Map<
     string,
     {
@@ -63,11 +62,18 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
   private transactionPairs: TransactionPair[]
   private userTransactionCount: Map<string, number>
   private transactionIndex: number
+  private ruleSampler: RuleSampler
 
   constructor(seed: number) {
     super(seed)
 
-    this.userTransactionMap = new Map<string, string[]>()
+    this.ruleSampler = new RuleSampler(
+      undefined,
+      transactionRules(),
+      [2, 5, 10, 13],
+      TXN_COUNT,
+      true
+    )
     this.userAccountMap = new Map<
       string,
       {
@@ -124,17 +130,14 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     this.transactionRiskScoreSampler = new TransactionRiskScoreSampler()
   }
 
-  protected generateSample(): InternalTransaction {
+  protected generateSample(transactionIdForRule: number): InternalTransaction {
     const type = this.rng.pickRandom(TRANSACTION_TYPES)
 
     // Hack in some suspended transactions for payment approvals
-    const hitRules: ExecutedRulesResult[] =
-      this.rng.r(1).randomFloat() < 0.3
-        ? cloneDeep(this.rng.randomSubset(transactionRules()))
-        : this.rng.r(2).randomNumber() < 0.9 &&
-          this.rng.r(2).randomNumber() > 0.8
-        ? transactionRules().filter((r) => r.ruleAction === 'SUSPEND')
-        : []
+    const hitRules: ExecutedRulesResult[] = this.ruleSampler.getSample(
+      undefined,
+      transactionIdForRule
+    )
 
     const numberoShadowRulesHit = (this.counter % 3) + 1
     const shadowRulesHit = hitRules
@@ -289,7 +292,6 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       ),
       originDeviceData: transaction?.originDeviceData,
       destinationDeviceData: transaction?.destinationDeviceData,
-
       transactionState: this.rng.pickRandom(TRANSACTION_STATES),
       arsScore: {
         transactionId,
@@ -353,7 +355,9 @@ export function internalToPublic(
 
 export const getTransactions: () => InternalTransaction[] = memoize(() => {
   const fullTransactionSampler = new FullTransactionSampler(TRANSACTIONS_SEED)
-  return [...Array(TXN_COUNT)].map(() => fullTransactionSampler.getSample())
+  return [...Array(TXN_COUNT)].map((_, index) => {
+    return fullTransactionSampler.getSample(undefined, index)
+  })
 })
 
 export const getTransactionUniqueTags = memoize(() => {
