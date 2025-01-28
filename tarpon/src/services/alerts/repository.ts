@@ -1144,7 +1144,8 @@ export class AlertsRepository {
   ): Promise<void> {
     await this.updateOneAlert(
       { 'alerts.alertId': alertId },
-      { $set: { 'alerts.$[alert].qaAssignment': assignments } }
+      { $set: { 'alerts.$[alert].qaAssignment': assignments } },
+      { arrayFilters: [{ 'alert.alertId': alertId }] }
     )
   }
 
