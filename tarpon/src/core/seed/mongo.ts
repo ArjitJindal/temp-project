@@ -1,4 +1,4 @@
-import { Document, MongoClient, MongoError, WithId } from 'mongodb'
+import { MongoClient, MongoError } from 'mongodb'
 import { chunk, cloneDeep } from 'lodash'
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { logger } from '../logger'
@@ -13,10 +13,6 @@ import { getCounterCollectionData } from './data/counter'
 import { getRandomRuleQueues } from './data/rule-queue'
 import { riskFactors } from './data/risk-factors'
 import { getUserEvents } from './data/user_events'
-import {
-  CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO,
-  ClickHouseTables,
-} from '@/utils/clickhouse/definition'
 import {
   allCollections,
   createGlobalMongoDBCollections,
@@ -79,12 +75,6 @@ import { Alert } from '@/@types/openapi-internal/Alert'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { SLAService } from '@/services/sla/sla-service'
-import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
-import {
-  batchInsertToClickhouse,
-  createTenantDatabase,
-  isClickhouseEnabledInRegion,
-} from '@/utils/clickhouse/utils'
 import {
   DEFAULT_CLOSURE_REASONS,
   DEFAULT_ESCALATION_REASONS,
@@ -222,44 +212,6 @@ export async function seedMongo(
     }
   }
 
-  if (isClickhouseEnabledInRegion()) {
-    const mongoConsumerService = new MongoDbConsumer(client)
-    await createTenantDatabase(tenantId)
-    await Promise.all(
-      ClickHouseTables.map(async (table) => {
-        const clickhouseTable = table.table
-        // clear everything clickhouse table
-        const mongoTable = CLICKHOUSE_TABLE_SUFFIX_MAP_TO_MONGO()[table.table]
-        const mongoCollectionName = `${tenantId}-${mongoTable}`
-        const data = db.collection(mongoCollectionName).find().batchSize(100)
-        let dataArray: WithId<Document>[] = []
-        for await (const dataChunk of data) {
-          dataArray.push(dataChunk)
-          if (dataArray.length === 100) {
-            const updatedData = await mongoConsumerService.updateInsertMessages(
-              mongoTable,
-              dataArray
-            )
-
-            await batchInsertToClickhouse(
-              tenantId,
-              clickhouseTable,
-              updatedData
-            )
-            dataArray = []
-          }
-        }
-        if (dataArray.length > 0) {
-          const updatedData = await mongoConsumerService.updateInsertMessages(
-            mongoTable,
-            dataArray
-          )
-
-          await batchInsertToClickhouse(tenantId, clickhouseTable, updatedData)
-        }
-      })
-    )
-  }
   logger.info('Refreshing dashboard stats...')
   const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
     mongoDb: client,

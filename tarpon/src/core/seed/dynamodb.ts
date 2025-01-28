@@ -17,10 +17,7 @@ import {
 import { DynamoDbTransactionRepository } from '@/services/rules-engine/repositories/dynamodb-transaction-repository'
 import { RuleInstanceRepository } from '@/services/rules-engine/repositories/rule-instance-repository'
 import { ruleInstances } from '@/core/seed/data/rules'
-import {
-  disableLocalChangeHandler,
-  enableLocalChangeHandler,
-} from '@/utils/local-dynamodb-change-handler'
+import { disableLocalChangeHandler } from '@/utils/local-dynamodb-change-handler'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
 import { DYNAMO_ONLY_USER_ATTRIBUTES } from '@/services/users/utils/user-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
@@ -207,9 +204,7 @@ export async function seedDynamo(
   const dynamoAlertRepository = new DynamoAlertRepository(tenantId, dynamoDb)
 
   for (const caseItem of getCases()) {
-    enableLocalChangeHandler()
     await dynamoAlertRepository.saveAlerts(caseItem.alerts ?? [])
-    disableLocalChangeHandler()
   }
 
   logger.info('Create risk factors')

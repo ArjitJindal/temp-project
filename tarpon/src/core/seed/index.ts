@@ -3,6 +3,7 @@ import { seedDynamo } from './dynamodb'
 import { seedMongo } from './mongo'
 import { fetchAndSetAccounts } from './account-setup'
 import { getUsers } from './data/users'
+import { seedClickhouse } from './clickhouse'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import {
@@ -45,4 +46,5 @@ export async function seedDemoData(tenantId: string) {
   await getUsers(tenantId)
   await seedDynamo(dynamo, tenantId)
   await seedMongo(tenantId, mongoDb, dynamo)
+  await seedClickhouse(tenantId)
 }

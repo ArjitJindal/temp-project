@@ -180,7 +180,7 @@ export const CLICKHOUSE_DEFINITIONS = {
   NANGO_RECORDS: {
     tableName: 'nango_records',
   },
-}
+} as const
 
 export const ClickHouseTables: ClickhouseTableDefinition[] = [
   {

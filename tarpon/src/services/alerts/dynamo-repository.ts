@@ -140,6 +140,14 @@ export class DynamoAlertRepository {
       })),
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId)
     )
+
+    await Promise.all(
+      alerts.map((alert) =>
+        this.localChangeHandler(
+          DynamoDbKeys.ALERT(this.tenantId, alert.alertId as string)
+        )
+      )
+    )
   }
 
   public async saveAlert(alert: Alert): Promise<void> {
