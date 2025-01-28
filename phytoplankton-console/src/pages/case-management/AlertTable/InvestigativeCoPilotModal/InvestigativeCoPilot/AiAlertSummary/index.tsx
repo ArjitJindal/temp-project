@@ -16,7 +16,7 @@ interface Props {
   onReload: () => void;
 }
 
-export const AiAlertSummary = (props: Props) => {
+export default function AiAlertSummary(props: Props) {
   const { summary, onReload, alertId } = props;
 
   const api = useApi();
@@ -58,4 +58,4 @@ export const AiAlertSummary = (props: Props) => {
       <div className={s.summary}>{summary}</div>
     </div>
   );
-};
+}

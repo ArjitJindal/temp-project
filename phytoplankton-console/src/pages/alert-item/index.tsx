@@ -16,16 +16,10 @@ import { useUpdateAlertQueryData } from '@/utils/api/alerts';
 
 function AlertItemPage() {
   const { id: alertId } = useParams<'id'>() as { id: string };
-  // const location = useLocation();
-  // const searchParams = new URLSearchParams(location.search);
-  // const expandedAlertId = searchParams.get('expandedAlertId');
+
   const api = useApi();
   const queryClient = useQueryClient();
-  // useCloseSidebarByDefault();
-  //
-  // const updateCaseQueryData = useUpdateCaseQueryData();
-  // const updateAlertQueryData = useUpdateAlertQueryData();
-  // const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
+
   const alertQueryResults = useQuery(
     ALERT_ITEM(alertId),
     (): Promise<Alert> => api.getAlert({ alertId }),

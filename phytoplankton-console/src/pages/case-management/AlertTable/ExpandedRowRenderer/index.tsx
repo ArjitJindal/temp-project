@@ -56,7 +56,9 @@ function ExpandedRowRenderer(props: Props) {
 
   return (
     <Tabs
-      items={tabItems.filter(({ key }) => key !== AlertTabs.ACTIVITY)}
+      items={tabItems.filter(
+        ({ key }) => key !== AlertTabs.ACTIVITY && key !== AlertTabs.AI_FORENSICS,
+      )}
       type="line"
       defaultActiveKey={AlertTabs.TRANSACTIONS}
       tabBarExtraContent={

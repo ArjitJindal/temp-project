@@ -17,7 +17,6 @@ export default function (): JSX.Element {
       variableOptions: [],
       createdById: 'test-user-id',
       createdAt: new Date().getDate(),
-      ruleType: 'TRANSACTION',
       hitRulesDetails: {
         ruleId: 'RC-102',
         ruleInstanceId: 'h4b18fnrh3',
@@ -26,6 +25,7 @@ export default function (): JSX.Element {
           'Unique transaction’s origin email id’s of a specific payment method and transaction state in the last 30 days',
         ruleAction: 'SUSPEND',
       },
+      ruleType: 'TRANSACTION',
       ruleLogic: fixture.logic,
       ruleSummary:
         'This rule checks for mentioned user’s transactions origin Email ID in the last 10 days with transaction time stamp recorded at 2024-04-01, 19:48:33 and used payment method is card or transaction state is blocked. ',

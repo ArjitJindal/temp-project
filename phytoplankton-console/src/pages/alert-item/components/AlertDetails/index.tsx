@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import AlertDetailsTabs from './AlertDetailsTabs';
 import { Alert, Case } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
@@ -24,6 +24,8 @@ function AlertDetails(props: Props) {
     return api.getCase({ caseId });
   });
 
+  const [selectedTransactions, setSelectedTransactions] = useState<string[]>([]);
+
   return (
     <AsyncResourceRenderer resource={caseQueryResults.data}>
       {(caseItem) => (
@@ -33,6 +35,11 @@ function AlertDetails(props: Props) {
           caseUserId={
             caseItem.caseUsers?.origin?.userId ?? caseItem.caseUsers?.destination?.userId ?? ''
           }
+          selectedTransactionIds={selectedTransactions}
+          onTransactionSelect={(_alertId, transactionIds) => {
+            setSelectedTransactions(transactionIds);
+          }}
+          escalatedTransactionIds={caseItem.caseHierarchyDetails?.childTransactionIds ?? []}
         />
       )}
     </AsyncResourceRenderer>

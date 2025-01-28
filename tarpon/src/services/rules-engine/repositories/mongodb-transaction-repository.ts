@@ -1103,7 +1103,7 @@ export class MongoDbTransactionRepository
     return result
   }
 
-  private async getAmount(
+  public async getAmount(
     transaction: InternalTransaction,
     referenceCurrency: Currency
   ): Promise<number> {

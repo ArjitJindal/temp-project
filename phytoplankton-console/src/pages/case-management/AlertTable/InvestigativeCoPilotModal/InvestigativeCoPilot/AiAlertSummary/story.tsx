@@ -1,4 +1,4 @@
-import { AiAlertSummary } from '.';
+import AiAlertSummary from './index';
 import { UseCase } from '@/pages/storybook/components';
 
 export default function (): JSX.Element {

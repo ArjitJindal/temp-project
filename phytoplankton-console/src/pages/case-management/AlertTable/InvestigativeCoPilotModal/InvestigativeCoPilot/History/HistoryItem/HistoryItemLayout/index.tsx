@@ -10,22 +10,25 @@ interface Props {
   tools?: React.ReactNode;
   children: React.ReactNode;
   count?: number;
+  hideTitle?: boolean;
 }
 
 function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement | null>) {
-  const { dataKey, title, tools, isLoading, isUnread, children, count } = props;
+  const { dataKey, title, tools, isLoading, isUnread, children, count, hideTitle = false } = props;
   return (
     <div
       data-key={dataKey}
       className={cn(s.root, isLoading && s.isLoading, isUnread && s.isUnread)}
       ref={ref}
     >
-      <div className={s.header}>
-        <div className={s.title}>
-          {title} {count != null ? `(${count})` : ''}
+      {!hideTitle && (
+        <div className={s.header}>
+          <div className={s.title}>
+            {title} {count != null ? `(${count})` : ''}
+          </div>
+          {tools && <div className={s.tools}>{tools}</div>}
         </div>
-        {tools && <div className={s.tools}>{tools}</div>}
-      </div>
+      )}
       {children}
     </div>
   );

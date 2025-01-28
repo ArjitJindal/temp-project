@@ -67,7 +67,7 @@ import InvestigativeCoPilot from '@/pages/case-management/AlertTable/Investigati
 import Charts from '@/components/charts/story';
 import Skeleton from '@/components/library/Skeleton/story';
 import DateRangePicker from '@/components/library/DateRangePicker/story';
-import AiAlertSummary from '@/components/AlertDetailsPage/AiAlertSummary/story';
+import AiAlertSummary from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/AiAlertSummary/story';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard/story';
 import RiskSimulationChart from '@/pages/risk-levels/configure/components/Charts/story';
 import DeltaChart from '@/pages/rules/RuleConfiguration/RuleConfigurationSimulation/SimulationStatistics/DeltaChart/story';
@@ -370,7 +370,7 @@ const config: Config = [
         story: NotificationsDrawerList,
       },
       {
-        key: '@/components/AlertDetailsPage/AiAlertSummary',
+        key: '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/AiAlertSummary/story',
         story: AiAlertSummary,
       },
       {

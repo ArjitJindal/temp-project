@@ -4,6 +4,14 @@ import { useCallback } from 'react';
 import { ALERT_ITEM, ALERT_ITEM_COMMENTS } from '../queries/keys';
 import { Alert } from '@/apis';
 
+export function isScreeningAlert(alert: Alert | undefined): boolean {
+  return (
+    alert?.ruleNature === 'SCREENING' &&
+    alert.ruleHitMeta?.sanctionsDetails != null &&
+    alert.alertId != null
+  );
+}
+
 export const useUpdateAlertQueryData = () => {
   const queryClient = useQueryClient();
   return useCallback(

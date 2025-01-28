@@ -14,6 +14,7 @@ import COLORS, {
   COLORS_V2_RISK_LEVEL_BASE_HIGH,
 } from '@/components/ui/colors';
 import { useApi } from '@/api';
+import { isLoading } from '@/utils/asyncResource';
 
 export const RULE_ACTION_VALUES: RuleAction[] = ['ALLOW', 'FLAG', 'BLOCK', 'SUSPEND'];
 
@@ -85,7 +86,11 @@ interface UseRuleOptionsParams {
   onlyWithAlerts?: boolean;
 }
 
-export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } {
+export function useRules(): {
+  rules: RulesMap;
+  ruleInstances: RuleInstanceMap;
+  isLoading: boolean;
+} {
   const api = useApi();
   const rulesResults = useQuery(RULES(), (): Promise<Rule[]> => api.getRules({}));
   const ruleInstanceResults = useQuery(
@@ -107,7 +112,11 @@ export function useRules(): { rules: RulesMap; ruleInstances: RuleInstanceMap } 
     }
   }, [ruleInstanceResults.data]);
 
-  return { rules: rulesMap, ruleInstances: ruleInstancesMap };
+  return {
+    rules: rulesMap,
+    ruleInstances: ruleInstancesMap,
+    isLoading: isLoading(ruleInstanceResults.data) || isLoading(rulesResults.data),
+  };
 }
 
 export function useRuleOptions({ onlyWithAlerts = false }: UseRuleOptionsParams = {}) {

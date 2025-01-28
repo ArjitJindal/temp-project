@@ -13,15 +13,9 @@ export const formatData = (item: Partial<QuestionResponse>): string => {
   switch (item.questionType) {
     case 'RULE_HIT': {
       result.push([csvValue('hitRulesDetails'), csvValue(item.hitRulesDetails)]);
-      result.push([csvValue('ruleType'), csvValue(item.ruleType)]);
       result.push([csvValue('ruleLogic'), csvValue(item.ruleLogic)]);
       result.push([csvValue('ruleSummary'), csvValue(item.ruleSummary)]);
-      result.push([
-        csvValue('logicAggregationVariables'),
-        csvValue(item.logicAggregationVariables),
-      ]);
-      result.push([csvValue('logicEntityVariables'), csvValue(item.logicEntityVariables)]);
-      result.push([csvValue('logicMlVariables'), csvValue(item.logicMlVariables)]);
+      result.push([csvValue('ruleType'), csvValue(item.ruleType)]);
       result.push([
         csvValue('logicAggregationVariables'),
         csvValue(item.logicAggregationVariables),

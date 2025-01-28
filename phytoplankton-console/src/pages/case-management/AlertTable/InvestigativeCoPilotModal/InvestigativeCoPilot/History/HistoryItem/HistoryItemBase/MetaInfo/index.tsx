@@ -12,10 +12,14 @@ export default function MetaInfo(props: Props) {
   const { item } = props;
   return (
     <div className={s.root}>
-      <Item label={'Searched by'}>
-        <AccountTag accountId={item.createdById} />
-      </Item>
-      <Item label={'Searched on'}>{dayjs(item.createdAt).format(DEFAULT_DATE_TIME_FORMAT)}</Item>
+      {item.createdById != null && (
+        <Item label={'Searched by'}>
+          <AccountTag accountId={item.createdById} />
+        </Item>
+      )}
+      {item.createdAt != null && (
+        <Item label={'Searched on'}>{dayjs(item.createdAt).format(DEFAULT_DATE_TIME_FORMAT)}</Item>
+      )}
     </div>
   );
 }

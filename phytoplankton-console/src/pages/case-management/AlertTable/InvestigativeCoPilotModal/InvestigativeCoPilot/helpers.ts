@@ -91,5 +91,8 @@ export function itemId(item: QuestionResponse | QuestionResponseSkeleton): strin
   if (item.questionType === 'SKELETON') {
     return item.requestId;
   }
-  return item?.createdAt?.toString();
+  if (item?.createdAt != null) {
+    return item?.createdAt?.toString();
+  }
+  return item.questionId;
 }

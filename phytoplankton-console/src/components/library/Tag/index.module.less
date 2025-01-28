@@ -4,6 +4,12 @@
   display: inline-flex;
   font-weight: normal;
   font-style: normal;
+
+  &.trimText {
+    .text {
+      max-width: 200px;
+    }
+  }
 }
 
 .body {
@@ -130,7 +136,6 @@
   line-height: 16px;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px;
 }
 
 .wrapText {

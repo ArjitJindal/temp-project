@@ -9,15 +9,9 @@ import {
 
 export type QuestionResponseBase = Pick<
   Api.QuestionResponse,
-  | 'questionId'
-  | 'variableOptions'
-  | 'title'
-  | 'createdById'
-  | 'createdAt'
-  | 'variables'
-  | 'summary'
-  | 'explained'
->;
+  'questionId' | 'variableOptions' | 'title' | 'variables' | 'summary' | 'explained'
+> &
+  Partial<Pick<Api.QuestionResponse, 'createdAt' | 'createdById'>>;
 
 export interface QuestionResponseTable extends QuestionResponseBase, Api.Table {
   questionType: 'TABLE';
@@ -42,9 +36,9 @@ export interface QuestionResponseEmbedded extends QuestionResponseBase {
 export interface QuestionResponseRuleHit extends QuestionResponseBase {
   questionType: 'RULE_HIT';
   hitRulesDetails: HitRulesDetails;
-  ruleType: RuleType;
   ruleLogic?: any;
   ruleSummary?: string;
+  ruleType?: RuleType;
   logicAggregationVariables?: LogicAggregationVariable[];
   logicEntityVariables?: LogicEntityVariableInUse[];
   logicMlVariables?: RuleMachineLearningVariable[];
@@ -63,7 +57,7 @@ export interface QuestionResponseScreeningComparison
 export type QuestionResponseSkeleton = {
   questionType: 'SKELETON';
   requestId: string;
-  requestString: string;
+  requestString?: string;
   error?: string;
 };
 

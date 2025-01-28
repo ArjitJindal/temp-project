@@ -11,6 +11,11 @@ import PageTabs from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
 import { makeUrl } from '@/utils/routing';
 import { useElementSize } from '@/utils/browser';
+import { isScreeningAlert } from '@/utils/api/alerts';
+import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
+import { statusEscalated, statusInReview } from '@/utils/case-utils';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { notEmpty } from '@/utils/array';
 
 interface Props {
   headerStickyElRef: HTMLDivElement | null;
@@ -51,17 +56,66 @@ export default function AlertDetailsTabs(props: Props) {
   const [sanctionsDetailsId, setSanctionsDetailsId] = useState<string | undefined>(
     sanctionDetails[0]?.searchId,
   );
+  const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
+
+  const isCaseHavingEscalated = statusEscalated(alert.alertStatus);
+  const isReviewAlerts = statusInReview(alert.alertStatus);
+
+  const transactionSelectionActions = [
+    !(isCaseHavingEscalated || isReviewAlerts) &&
+      (({ selectedIds, isDisabled }) => {
+        const alertId = alert.alertId;
+        if (alertId == null) {
+          return;
+        }
+        const caseId = alert.caseId;
+        if (
+          !escalationEnabled ||
+          !caseId ||
+          !alert.alertStatus ||
+          isReviewAlerts ||
+          isCaseHavingEscalated
+        ) {
+          return;
+        }
+        return (
+          <AlertsStatusChangeButton
+            ids={[alertId]}
+            transactionIds={{
+              [alertId]: selectedIds,
+            }}
+            onSaved={() => {
+              navigate(makeUrl('/case-management/case/:id', { id: caseId }), { replace: true });
+            }}
+            status={alert.alertStatus}
+            caseId={caseId}
+            statusTransitions={{
+              OPEN: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              REOPENED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              CLOSED: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
+              OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
+            }}
+            isDisabled={isDisabled}
+            haveModal={true}
+          />
+        );
+      }),
+  ].filter(notEmpty);
+
+  const isTransactionSelectionEnabled = transactionSelectionActions.length > 0;
 
   const tabItems = useAlertTabs({
     alert: alert,
     caseUserId: caseUserId,
     selectedTransactionIds: selectedTransactionIds,
-    onTransactionSelect: onTransactionSelect,
+    onTransactionSelect: isTransactionSelectionEnabled ? onTransactionSelect : undefined,
     escalatedTransactionIds: escalatedTransactionIds,
     selectedSanctionsHitsIds: selectedSanctionsHitsIds,
     sanctionsSearchIdFilter: sanctionsDetailsId,
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
+    transactionSelectionActions: transactionSelectionActions,
   });
 
   return (
@@ -78,18 +132,19 @@ export default function AlertDetailsTabs(props: Props) {
           { replace: true },
         );
       }}
-      // defaultActiveKey={AlertTabs.TRANSACTIONS}
       tabBarExtraContent={
-        <Select
-          value={sanctionsDetailsId}
-          isDisabled={sanctionDetails.length < 2}
-          options={sanctionDetails.map((detailsItem) => ({
-            label: getOptionName(detailsItem),
-            value: detailsItem.searchId,
-          }))}
-          onChange={setSanctionsDetailsId}
-          allowClear={false}
-        />
+        isScreeningAlert(alert) && (
+          <Select
+            value={sanctionsDetailsId}
+            isDisabled={sanctionDetails.length < 2}
+            options={sanctionDetails.map((detailsItem) => ({
+              label: getOptionName(detailsItem),
+              value: detailsItem.searchId,
+            }))}
+            onChange={setSanctionsDetailsId}
+            allowClear={false}
+          />
+        )
       }
     />
   );

@@ -1,25 +1,25 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import HistoryItemRuleHit from 'src/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemRuleHit';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
+import HistoryItemRuleHit from './HistoryItemRuleHit';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
 import HistoryItemTimeSeries from './HistoryItemTimeSeries';
 import HistoryItemBase from './HistoryItemBase';
-import { VariablesValues } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBase/Variables';
+import { VariablesValues } from './HistoryItemBase/Variables';
+import HistoryItemBarchart from './HistoryItemBarchart';
+import HistoryItemProperties from './HistoryItemProperties';
+import HistoryItemEmbedded from './HistoryItemEmbedded';
+import HistoryItemScreeningComparison from './HistoryItemScreeningComparison';
 import { getErrorMessage, neverReturn } from '@/utils/lang';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 import { isLoading } from '@/utils/asyncResource';
-import HistoryItemBarchart from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemBarchart';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
-import HistoryItemProperties from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemProperties';
-import HistoryItemEmbedded from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemEmbedded';
 import { CommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
-import HistoryItemScreeningComparison from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemScreeningComparison';
 
 interface Props {
   isUnread: boolean;

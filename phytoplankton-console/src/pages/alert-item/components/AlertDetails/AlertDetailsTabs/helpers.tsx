@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
+import AiForensicsTab from 'src/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
 import TransactionsTab from './TransactionsTab';
@@ -13,7 +14,7 @@ import {
   SANCTIONS_HITS_ALL,
   SANCTIONS_HITS_SEARCH,
 } from '@/utils/queries/keys';
-import { AllParams } from '@/components/library/Table/types';
+import { AllParams, SelectionAction } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { getOr, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
@@ -23,13 +24,17 @@ import {
   SanctionsHit,
   SanctionsHitListResponse,
   SanctionsHitStatus,
+  TransactionTableItem,
 } from '@/apis';
 import { Mutation, QueryResult } from '@/utils/queries/types';
 import { useMutation } from '@/utils/queries/mutations/hooks';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
+import { isScreeningAlert } from '@/utils/api/alerts';
+import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
 
 export enum AlertTabs {
+  AI_FORENSICS = 'ai-forensics',
   TRANSACTIONS = 'transactions',
   CHECKLIST = 'checklist',
   COMMENTS = 'comments',
@@ -39,6 +44,7 @@ export enum AlertTabs {
 }
 
 const DEFAULT_TAB_LISTS: AlertTabs[] = [
+  AlertTabs.AI_FORENSICS,
   AlertTabs.TRANSACTIONS,
   AlertTabs.CHECKLIST,
   AlertTabs.COMMENTS,
@@ -46,6 +52,7 @@ const DEFAULT_TAB_LISTS: AlertTabs[] = [
 ];
 
 const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
+  AlertTabs.AI_FORENSICS,
   AlertTabs.MATCH_LIST,
   AlertTabs.CLEARED_MATCH_LIST,
   AlertTabs.CHECKLIST,
@@ -192,7 +199,7 @@ export const updateSanctionsData = (
 };
 
 interface Props {
-  alert?: Alert;
+  alert: Alert;
   caseUserId: string;
   escalatedTransactionIds?: string[];
   selectedTransactionIds?: string[];
@@ -205,6 +212,7 @@ interface Props {
     statuses: SanctionsHitStatus,
   ) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
+  transactionSelectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
 }
 
 export function useAlertTabs(props: Props): TabItem[] {
@@ -218,12 +226,10 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectedTransactionIds,
     onTransactionSelect,
     onSanctionsHitsChangeStatus,
+    transactionSelectionActions,
   } = props;
 
-  const tabList =
-    alert?.ruleNature === 'SCREENING' && alert.ruleHitMeta?.sanctionsDetails && alert.alertId
-      ? SCREENING_ALERT_TAB_LISTS
-      : DEFAULT_TAB_LISTS;
+  const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
 
   const alertId = alert?.alertId ?? '';
 
@@ -268,25 +274,31 @@ export function useAlertTabs(props: Props): TabItem[] {
   const tabs: TabItem[] = useMemo(() => {
     return tabList
       .map((tab) => {
+        if (tab === AlertTabs.AI_FORENSICS) {
+          return {
+            title: 'AI Forensics',
+            key: tab,
+            children: <AiForensicsTab alert={alert} caseUserId={caseUserId} />,
+          };
+        }
         if (tab === AlertTabs.TRANSACTIONS) {
-          if (alert != null) {
-            return {
-              title: 'Transactions details',
-              key: tab,
-              children: (
-                <TransactionsTab
-                  alert={alert}
-                  caseUserId={caseUserId}
-                  selectedTransactionIds={selectedTransactionIds}
-                  onTransactionSelect={onTransactionSelect}
-                  escalatedTransactionIds={escalatedTransactionIds}
-                />
-              ),
-            };
-          }
+          return {
+            title: 'Transactions details',
+            key: tab,
+            children: (
+              <TransactionsTab
+                alert={alert}
+                caseUserId={caseUserId}
+                selectedTransactionIds={selectedTransactionIds}
+                onTransactionSelect={onTransactionSelect}
+                escalatedTransactionIds={escalatedTransactionIds}
+                selectionActions={transactionSelectionActions}
+              />
+            ),
+          };
         }
         if (tab === AlertTabs.CHECKLIST) {
-          if (alert?.ruleChecklistTemplateId && alert?.alertId) {
+          if (alert.ruleChecklistTemplateId && alert.alertId) {
             return {
               title: 'Checklist',
               key: tab,
@@ -354,6 +366,7 @@ export function useAlertTabs(props: Props): TabItem[] {
       })
       .filter(notEmpty);
   }, [
+    transactionSelectionActions,
     tabList,
     caseUserId,
     openHitsCount,

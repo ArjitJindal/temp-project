@@ -1,59 +1,38 @@
-import React, { useEffect, useRef, useState, useCallback, useLayoutEffect, useMemo } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
-import pluralize from 'pluralize';
 import cn from 'clsx';
 import { nanoid } from 'nanoid';
-import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import RequestForm, { FormValues } from './RequestForm';
 import History from './History';
 import { parseQuestionResponse, QuestionResponse, QuestionResponseSkeleton } from './types';
 import s from './index.module.less';
 import ScrollButton from './ScrollButton';
 import { calcIsScrollVisible, calcScrollPosition, itemId } from './helpers';
-import dayjs, { TIME_FORMAT_WITHOUT_SECONDS } from '@/utils/dayjs';
 import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
-import { ALERT_ITEM, COPILOT_ALERT_QUESTIONS, CASES_ITEM } from '@/utils/queries/keys';
-import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
-import * as Form from '@/components/ui/Form';
-import { isSuccess, map, useFinishedSuccessfully, all } from '@/utils/asyncResource';
-import TimestampDisplay from '@/components/ui/TimestampDisplay';
-import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
-import Id from '@/components/ui/Id';
-import { addBackUrlToRoute } from '@/utils/backUrl';
-import { makeUrl } from '@/utils/routing';
+import { COPILOT_ALERT_QUESTIONS } from '@/utils/queries/keys';
+import { isLoading, isSuccess, map, useFinishedSuccessfully } from '@/utils/asyncResource';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { Case } from '@/apis';
-import { TableUser } from '@/pages/case-management/CaseTable/types';
-import { getUserName } from '@/utils/api/users';
-import UserLink from '@/components/UserLink';
-import { useElementSize, scrollTo } from '@/utils/browser';
+import { scrollTo, useElementSize } from '@/utils/browser';
 import { useIsChanged } from '@/utils/hooks';
 import { calcVisibleElements } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/helpers';
 import { notEmpty } from '@/utils/array';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 
 interface Props {
   alertId: string;
-  caseId: string;
+  preloadedHistory?: (QuestionResponse | QuestionResponseSkeleton)[];
 }
 
 export default function InvestigativeCoPilot(props: Props) {
-  const { alertId, caseId } = props;
+  const { alertId, preloadedHistory } = props;
   const api = useApi();
   const [history, setHistory] = useState<(QuestionResponse | QuestionResponseSkeleton)[]>([]);
 
   const [rootRef, setRootRef] = useState<HTMLDivElement | null>(null);
   const historyRef = useRef<HTMLDivElement>(null);
-
-  const caseQueryResults = useQuery(
-    CASES_ITEM(caseId),
-    (): Promise<Case> =>
-      api.getCase({
-        caseId,
-      }),
-  );
 
   const historyQuery = useQuery(COPILOT_ALERT_QUESTIONS(alertId), async () => {
     return await api.getQuestions({
@@ -191,12 +170,6 @@ export default function InvestigativeCoPilot(props: Props) {
     },
   );
 
-  const alertQueryResult = useQuery(ALERT_ITEM(alertId), async () =>
-    api.getAlert({
-      alertId,
-    }),
-  );
-
   const unreadResponses = history.length - skeletonsCount - seenIds.length;
 
   useEffect(() => {
@@ -212,109 +185,64 @@ export default function InvestigativeCoPilot(props: Props) {
     }
   }, [rootRef, isScrollEventDisabled, handleRefresh]);
 
+  const allItems = useMemo(() => {
+    return preloadedHistory ? [...preloadedHistory, ...history] : history;
+  }, [preloadedHistory, history]);
+
+  const allSeenIds = useMemo(() => {
+    return preloadedHistory ? [...preloadedHistory.map((x) => itemId(x)), ...seenIds] : seenIds;
+  }, [preloadedHistory, seenIds]);
+
+  const isHistoryLoading = isLoading(historyRes);
   return (
-    <AsyncResourceRenderer resource={historyRes}>
-      {() => (
-        <div className={s.root} ref={setRootRef}>
-          <AsyncResourceRenderer resource={all([caseQueryResults.data, alertQueryResult.data])}>
-            {([caseItem, alert]) => {
-              const caseUsers = caseItem.caseUsers ?? {};
-
-              const user = caseUsers?.origin?.userId
-                ? caseUsers?.origin
-                : caseUsers?.destination?.userId
-                ? caseUsers?.destination
-                : undefined;
-
-              const caseUserName = getUserName(user as TableUser | undefined);
-              const caseUserId = caseUsers?.origin?.userId ?? caseUsers?.destination?.userId ?? '';
-              const paymentDetails =
-                caseItem.paymentDetails?.origin ?? caseItem.paymentDetails?.destination;
-
-              return (
-                <div className={s.alertInfo}>
-                  {user && 'type' in user && (
-                    <>
-                      <Form.Layout.Label title={'User'}>{caseUserName}</Form.Layout.Label>
-                      <Form.Layout.Label title={'User ID'}>
-                        <UserLink user={user}>{caseUserId}</UserLink>
-                      </Form.Layout.Label>
-                    </>
-                  )}
-                  {paymentDetails && (
-                    <>
-                      <Form.Layout.Label title={'Payment method'}>
-                        {humanizeAuto(paymentDetails.method)}
-                      </Form.Layout.Label>
-                      <Form.Layout.Label title={'Payment method ID'}>
-                        {caseItem.paymentMethodId ?? '-'}
-                      </Form.Layout.Label>
-                    </>
-                  )}
-                  <Form.Layout.Label title={'Alert ID'}>
-                    <Id
-                      to={addBackUrlToRoute(
-                        makeUrl(`/case-management/case/:caseId/:tab`, {
-                          caseId: alert.caseId,
-                          tab: 'alerts',
-                        }),
-                      )}
-                      testName="alert-id"
-                    >
-                      {alertId}
-                    </Id>
-                  </Form.Layout.Label>
-                  <Form.Layout.Label title={'Case ID'}>
-                    <Id
-                      to={addBackUrlToRoute(
-                        makeUrl(`/case-management/case/:caseId`, {
-                          caseId: alert.caseId,
-                        }),
-                      )}
-                      testName="case-id"
-                    >
-                      {alert.caseId}
-                    </Id>
-                  </Form.Layout.Label>
-                  <Form.Layout.Label title={'Created at'}>
-                    <TimestampDisplay
-                      timestamp={alert.createdTimestamp}
-                      timeFormat={TIME_FORMAT_WITHOUT_SECONDS}
-                    />
-                  </Form.Layout.Label>
-                  <Form.Layout.Label title={'Priority'}>{alert.priority}</Form.Layout.Label>
-                  <Form.Layout.Label title={'Alert age'}>
-                    {pluralize(
-                      'day',
-                      Math.floor(dayjs.duration(Date.now() - alert.createdTimestamp).asDays()),
-                      true,
-                    )}
-                  </Form.Layout.Label>
-                  <Form.Layout.Label title={'TX#'}>
-                    {alert.numberOfTransactionsHit}
-                  </Form.Layout.Label>
-                  <Form.Layout.Label title={'Alert status'}>
-                    {alert.alertStatus ? <CaseStatusTag caseStatus={alert.alertStatus} /> : 'N/A'}
-                  </Form.Layout.Label>
-                </div>
-              );
-            }}
-          </AsyncResourceRenderer>
-          <div className={s.history} ref={historyRef}>
-            <History alertId={alertId} items={history} seenItems={seenIds} setSizes={setSizes} />
-          </div>
-          <div className={s.form}>
-            <div className={cn(s.scrollToBottom, !isScrollVisible && s.isHidden)}>
-              <ScrollButton
-                isBottom={isBottom}
-                onScroll={handleScrollTo}
-                unreadResponses={unreadResponses}
-              />
-            </div>
-            <RequestForm mutation={postQuestionMutation} history={history} alertId={alertId} />
-          </div>
+    <div className={s.root} ref={setRootRef}>
+      <div className={s.history} ref={historyRef}>
+        {/*<AiAlertSummary alertId={alertId} summary={'derasd'} onReload={() => {}} />*/}
+        <AsyncResourceRenderer
+          resource={historyRes}
+          renderLoading={() => (
+            <History
+              alertId={alertId}
+              items={[
+                {
+                  questionType: 'SKELETON',
+                  requestId: 'loading_1',
+                },
+                {
+                  questionType: 'SKELETON',
+                  requestId: 'loading_2',
+                },
+              ]}
+              seenItems={allSeenIds}
+              setSizes={setSizes}
+            />
+          )}
+        >
+          {() => (
+            <History
+              alertId={alertId}
+              items={allItems}
+              seenItems={allSeenIds}
+              setSizes={setSizes}
+            />
+          )}
+        </AsyncResourceRenderer>
+      </div>
+      <div className={s.form}>
+        <div className={cn(s.scrollToBottom, (!isScrollVisible || isHistoryLoading) && s.isHidden)}>
+          <ScrollButton
+            isBottom={isBottom}
+            onScroll={handleScrollTo}
+            unreadResponses={unreadResponses}
+          />
         </div>
-      )}
-    </AsyncResourceRenderer>
+        <RequestForm
+          mutation={postQuestionMutation}
+          history={history}
+          alertId={alertId}
+          isLoading={isLoading(historyRes)}
+        />
+      </div>
+    </div>
   );
 }

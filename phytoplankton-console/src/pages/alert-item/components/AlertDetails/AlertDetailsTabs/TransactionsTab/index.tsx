@@ -11,7 +11,8 @@ import { FIXED_API_PARAMS } from '@/pages/case-management-item/CaseDetails/Insig
 import { dayjs } from '@/utils/dayjs';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { useApi } from '@/api';
-import { Alert, CurrencyCode, TransactionType } from '@/apis';
+import { Alert, CurrencyCode, TransactionTableItem, TransactionType } from '@/apis';
+import { SelectionAction } from '@/components/library/Table/types';
 
 interface Props {
   alert: Alert;
@@ -19,6 +20,7 @@ interface Props {
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
+  selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
 }
 
 export default function TransactionsTab(props: Props) {
@@ -28,6 +30,7 @@ export default function TransactionsTab(props: Props) {
     escalatedTransactionIds,
     onTransactionSelect,
     selectedTransactionIds,
+    selectionActions,
   } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
@@ -81,13 +84,26 @@ export default function TransactionsTab(props: Props) {
       <TransactionsTable
         escalatedTransactions={escalatedTransactionIds}
         selectedIds={selectedTransactionIds}
-        onSelect={(transactionIds) => {
-          if (!alert.alertId) {
-            // message.fatal('Unable to select transactions, alert id is empty');
-            return;
-          }
-          onTransactionSelect && onTransactionSelect(alert.alertId, transactionIds);
-        }}
+        selectionInfo={
+          selectionActions?.length
+            ? {
+                entityCount: selectedTransactionIds?.length ?? 0,
+                entityName: 'transaction',
+              }
+            : undefined
+        }
+        selectionActions={selectionActions}
+        onSelect={
+          onTransactionSelect
+            ? (transactionIds) => {
+                if (!alert.alertId) {
+                  // message.fatal('Unable to select transactions, alert id is empty');
+                  return;
+                }
+                onTransactionSelect?.(alert.alertId, transactionIds);
+              }
+            : undefined
+        }
         queryResult={transactionsResponse}
         params={params}
         onChangeParams={setParams}

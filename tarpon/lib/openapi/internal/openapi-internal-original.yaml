@@ -1771,6 +1771,7 @@ paths:
             type: string
           in: query
           name: referenceCurrency
+          required: true
   /transactions/stats/by-time:
     get:
       summary: Transaction - Stats
@@ -4729,6 +4730,34 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/TransactionsResponse'
+  /alerts/{alertId}/transactions/stats:
+    parameters:
+      - schema:
+          $ref: '#/components/schemas/TableListViewEnum'
+        in: query
+        name: view
+      - schema:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+        in: query
+        name: referenceCurrency
+      - schema:
+          type: string
+        name: alertId
+        in: path
+        required: true
+    get:
+      summary: Alerts - Item - Transaction Stats
+      operationId: get-alert-transaction-stats
+      x-flagright:
+        permissions:
+          - transactions:overview:read
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AlertTransactionsStats'
   /alerts:
     get:
       summary: Alerts - List
@@ -16442,6 +16471,26 @@ components:
           nullable: true
         body_text:
           type: string
+    AlertTransactionsStats:
+      type: object
+      properties:
+        totalTransactionsAmount:
+          $ref: '#/components/schemas/MoneyAmount'
+        numberOfUsersTransactedWith:
+          type: number
+      required:
+        - totalTransactionsAmount
+        - numberOfUsersTransactedWith
+    MoneyAmount:
+      type: object
+      properties:
+        amount:
+          type: number
+        currency:
+          $ref: ../public/openapi-public-original.yaml#/components/schemas/CurrencyCode
+      required:
+        - amount
+        - currency
   securitySchemes:
     Authorization:
       type: http

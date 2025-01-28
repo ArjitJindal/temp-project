@@ -17,6 +17,7 @@ interface Props {
   mutation: UseMutationResult<unknown, unknown, FormValues[]>;
   history: (QuestionResponse | QuestionResponseSkeleton)[];
   alertId: string;
+  isLoading: boolean;
 }
 
 export default function RequestForm(props: Props) {
@@ -24,19 +25,8 @@ export default function RequestForm(props: Props) {
 
   const mutationRes = getMutationAsyncResource(mutation);
   return (
-    <div className={cn(s.root, isLoading(mutationRes) && s.isLoading)}>
+    <div className={cn(s.root, props.isLoading && isLoading(mutationRes) && s.isLoading)}>
       <AiForensicsSearchBar searchMutation={mutation} alertId={alertId} history={history} />
     </div>
   );
-}
-
-export function randomSubset<T>(variants: T[], limit: number): T[] {
-  const shuffled = [...variants];
-
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  return shuffled.slice(0, limit);
 }

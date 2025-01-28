@@ -1,6 +1,8 @@
 import React from 'react';
 import InvestigativeCoPilot from './InvestigativeCoPilot';
+import s from './index.module.less';
 import Modal from '@/components/library/Modal';
+import InvestigativeCoPilotAlertInfo from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/InvestigativeCoPilotAlertInfo';
 
 interface Props {
   alertId: string | undefined;
@@ -20,9 +22,16 @@ export default function InvestigativeCoPilotModal(props: Props) {
       width="XL"
       height="FULL"
     >
-      {alertId && caseId && (
-        <InvestigativeCoPilot key={alertId} alertId={alertId} caseId={caseId} />
-      )}
+      <div className={s.root}>
+        {alertId && caseId && (
+          <>
+            <InvestigativeCoPilotAlertInfo alertId={alertId} caseId={caseId} />
+            <div className={s.copilotContainer}>
+              <InvestigativeCoPilot key={alertId} alertId={alertId} />
+            </div>
+          </>
+        )}
+      </div>
     </Modal>
   );
 }

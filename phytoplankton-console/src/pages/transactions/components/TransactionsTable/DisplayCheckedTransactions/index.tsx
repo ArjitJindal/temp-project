@@ -2,19 +2,16 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import UserSearchButton from '../../UserSearchButton';
 import s from './styles.module.less';
-import { useApi } from '@/api';
 import { Alert } from '@/apis';
 import Modal from '@/components/library/Modal';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import TransactionsTable, {
-  transactionParamsToRequest,
   TransactionsTableParams,
 } from '@/pages/transactions/components/TransactionsTable';
-import { useCursorQuery } from '@/utils/queries/hooks';
-import { TRANSACTIONS_LIST } from '@/utils/queries/keys';
 import InformationIcon from '@/components/ui/icons/Remix/system/information-line.react.svg';
 import COLORS from '@/components/ui/colors';
 import { RULE_ACTIONS } from '@/apis/models-custom/RuleAction';
+import { useCheckedTransactionsQuery } from '@/pages/transactions/components/TransactionsTable/DisplayCheckedTransactions/helpers';
 
 type Props = {
   alert: Alert;
@@ -32,27 +29,9 @@ const DisplayCheckedTransactions = (props: Props) => {
   const ruleActionOptions = RULE_ACTIONS.map((action) => {
     return { value: action, label: action };
   });
-  const api = useApi();
 
-  const queryResult = useCursorQuery(
-    TRANSACTIONS_LIST({ ...params, caseUserId }),
-    async ({ from, view }) => {
-      const hitDirections = props.alert.ruleHitMeta?.hitDirections;
-      return await api.getTransactionsList({
-        ...transactionParamsToRequest({ ...params, view }),
-        start: from || params.from,
-        ...(hitDirections?.length === 1
-          ? {
-              filterDestinationUserId: hitDirections?.includes('DESTINATION')
-                ? caseUserId
-                : undefined,
-              filterOriginUserId: hitDirections?.includes('ORIGIN') ? caseUserId : undefined,
-            }
-          : { filterUserId: caseUserId }),
-        filterRuleInstancesExecuted: [alert.ruleInstanceId],
-      });
-    },
-  );
+  const queryResult = useCheckedTransactionsQuery(alert, caseUserId, params);
+
   const count = useMemo(() => {
     const [count, limit] =
       queryResult.data?.kind === 'SUCCESS'

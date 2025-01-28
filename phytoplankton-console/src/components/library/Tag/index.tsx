@@ -37,6 +37,7 @@ interface Props {
   actions?: TagAction[];
   onClick?: () => void;
   wrapText?: boolean;
+  trimText?: boolean;
 }
 
 export default function Tag(props: Props) {
@@ -49,10 +50,11 @@ export default function Tag(props: Props) {
     maxWidth,
     actions = [],
     wrapText = true,
+    trimText = true,
   } = props;
 
   return (
-    <div className={cn(s.root)}>
+    <div className={cn(s.root, trimText && trimText && s.trimText)}>
       <div
         className={cn(s.body, s[`color-${color}`], onClick != null && s.isClickable, className)}
         onClick={onClick}

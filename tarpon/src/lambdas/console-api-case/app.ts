@@ -3,12 +3,14 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound, BadRequest, Forbidden } from 'http-errors'
+import { uniq } from 'lodash'
 import { CaseService } from '../../services/cases'
 import { TransactionService } from '../console-api-transaction/services/transaction-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
 import { Case } from '@/@types/openapi-internal/Case'
+import { AlertTransactionsStats } from '@/@types/openapi-internal/AlertTransactionsStats'
 import { hasFeature } from '@/core/utils/context'
 import { AlertsService } from '@/services/alerts'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
@@ -201,6 +203,42 @@ export const casesHandler = lambdaApi()(
         { includeUsers: true }
       )
     })
+
+    handlers.registerGetAlertTransactionStats(
+      async (ctx, request): Promise<AlertTransactionsStats> => {
+        const transactionService = await TransactionService.fromEvent(event)
+
+        const alert = await alertsService.getAlert(request.alertId)
+
+        const transactionCursor = transactionService.getTransactionCursor({
+          filterIdList: alert.transactionIds ?? [],
+        })
+
+        const referenceCurrency = request.referenceCurrency ?? 'USD'
+
+        const userIds: string[] = []
+        let totalTransactionsAmount = 0
+        for await (const transaction of transactionCursor) {
+          const amount =
+            await transactionService.transactionRepository.getAmount(
+              transaction,
+              referenceCurrency
+            )
+          totalTransactionsAmount += amount
+          if (transaction.destinationUserId) {
+            userIds.push(transaction.destinationUserId)
+          }
+        }
+
+        return {
+          totalTransactionsAmount: {
+            amount: totalTransactionsAmount,
+            currency: referenceCurrency,
+          },
+          numberOfUsersTransactedWith: uniq(userIds).length,
+        }
+      }
+    )
 
     /** Escalation */
     handlers.registerPostCasesCaseIdEscalate(async (ctx, request) => {

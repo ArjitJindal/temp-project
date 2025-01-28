@@ -82,6 +82,9 @@ export default function AlertsStatusChangeModal(props: Props) {
         }
       }
       await queryClient.invalidateQueries({ queryKey: CASES_ITEM(props.caseId as string) });
+      for (const alertId of props.entityIds) {
+        await queryClient.invalidateQueries({ queryKey: ALERT_ITEM(alertId) });
+      }
     },
     [props.caseId, props.entityIds, props.transactionIds, api, currentUser, queryClient, users],
   );

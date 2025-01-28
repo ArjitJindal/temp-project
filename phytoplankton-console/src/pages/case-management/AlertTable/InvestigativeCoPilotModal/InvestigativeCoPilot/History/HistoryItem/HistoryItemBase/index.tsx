@@ -34,6 +34,7 @@ function HistoryItemBase(props: Props, ref?: React.ForwardedRef<HTMLDivElement |
 
   return (
     <HistoryItemLayout
+      hideTitle={item.questionType === 'RULE_HIT'}
       title={title}
       tools={
         <>

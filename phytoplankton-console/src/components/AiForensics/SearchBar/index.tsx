@@ -16,8 +16,10 @@ import ShineIcon from '@/components/ui/icons/shining-stars.react.svg';
 import { useQuery } from '@/utils/queries/hooks';
 import { useApi } from '@/api';
 import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
-import { QuestionResponse } from '@/apis';
-import { QuestionResponseSkeleton } from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
+import {
+  QuestionResponse,
+  QuestionResponseSkeleton,
+} from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/types';
 import { ALERT_ITEM, COPILOT_SUGGESTIONS } from '@/utils/queries/keys';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 

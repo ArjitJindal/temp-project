@@ -235,6 +235,8 @@ export const SIMULATION_JOBS = (params?: AnyParameters): QueryKey =>
   ['simulation', params].filter(Boolean);
 export const ALERT_ITEM_TRANSACTION_LIST = (alertId: string, params?: AnyParameters): QueryKey =>
   ['alerts', 'item', alertId, 'transactions', 'list', params].filter(Boolean);
+export const ALERT_ITEM_TRANSACTION_STATS = (alertId: string): QueryKey =>
+  ['alerts', 'item', alertId, 'transactions', 'stats'].filter(Boolean);
 export const QA_SAMPLE_IDS = () => ['qa-samples', 'ids'];
 export const SANCTIONS_SEARCH_LIST = (searchIds: string[]): QueryKey => [
   'sanctions',
