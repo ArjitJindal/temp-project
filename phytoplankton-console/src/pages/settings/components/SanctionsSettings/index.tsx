@@ -12,7 +12,7 @@ import ComplyAdvantageLogo from '@/branding/Comply-Advantage-logo.svg';
 import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
-import { useHasPermissions } from '@/utils/user-utils';
+import { isSuperAdmin, useAuth0User, useHasPermissions } from '@/utils/user-utils';
 import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import Select from '@/components/library/Select';
@@ -22,6 +22,8 @@ import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType
 
 export const SanctionsSettings = () => {
   const permissions = useHasPermissions(['settings:add-ons:read']);
+  const user = useAuth0User();
+  const superAdmin = isSuperAdmin(user);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const branding = getBranding();
 
@@ -85,6 +87,7 @@ export const SanctionsSettings = () => {
                   label: humanizeAuto(type),
                   value: type,
                 }))}
+                isDisabled={!superAdmin}
                 onChange={(values) =>
                   setAcurisScreeningTypes({
                     ...acurisScreeningTypes,
@@ -101,6 +104,7 @@ export const SanctionsSettings = () => {
                   label: humanizeAuto(type),
                   value: type,
                 }))}
+                isDisabled={!superAdmin}
                 onChange={(values) =>
                   setAcurisScreeningTypes({
                     ...acurisScreeningTypes,
@@ -114,7 +118,7 @@ export const SanctionsSettings = () => {
               type="PRIMARY"
               onClick={() => handleTypesChange(acurisScreeningTypes)}
               className={s.sanctionsSettingsButton}
-              isDisabled={updateTenantSettingsMutation.isLoading}
+              isDisabled={updateTenantSettingsMutation.isLoading || !superAdmin}
             >
               Save
             </Button>
@@ -133,6 +137,7 @@ export const SanctionsSettings = () => {
                   label: humanizeAuto(type),
                   value: type,
                 }))}
+                isDisabled={!superAdmin}
                 onChange={(values) =>
                   setOpenSanctionsScreeningTypes({
                     ...openSanctionsScreeningTypes,
@@ -149,6 +154,7 @@ export const SanctionsSettings = () => {
                   label: humanizeAuto(type),
                   value: type,
                 }))}
+                isDisabled={!superAdmin}
                 onChange={(values) =>
                   setOpenSanctionsScreeningTypes({
                     ...openSanctionsScreeningTypes,
@@ -162,7 +168,7 @@ export const SanctionsSettings = () => {
               type="PRIMARY"
               onClick={() => handleTypesChange(openSanctionsScreeningTypes)}
               className={s.sanctionsSettingsButton}
-              isDisabled={updateTenantSettingsMutation.isLoading}
+              isDisabled={updateTenantSettingsMutation.isLoading || !superAdmin}
             >
               Save
             </Button>
