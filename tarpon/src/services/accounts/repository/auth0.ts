@@ -20,6 +20,7 @@ import {
 import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
+import { logger } from '@/core/logger'
 
 export class Auth0AccountsRepository extends BaseAccountsRepository {
   private readonly auth0Domain: string
@@ -35,11 +36,17 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     await organizationManager.delete({ id: tenant.orgId })
   }
 
-  async getAccount(accountId: string): Promise<Account> {
+  async getAccount(accountId: string): Promise<Account | null> {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users
-    const user = await userManager.get({ id: accountId })
-    return userToAccount(user.data)
+    try {
+      const user = await userManager.get({ id: accountId })
+      return userToAccount(user.data)
+    } catch (error) {
+      // Gracefully handle user not found - Kavish
+      logger.warn(`Error fetching account ${accountId} from Auth0: ${error}`)
+      return null
+    }
   }
 
   async getAccountByEmail(email: string): Promise<Account | null> {

@@ -34,7 +34,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     this.dynamoClient = dynamoClient
   }
 
-  async getAccount(accountId: string): Promise<CacheAccount> {
+  async getAccount(accountId: string): Promise<CacheAccount | null> {
     const key = DynamoDbKeys.ACCOUNTS(this.auth0Domain, accountId)
     const data = await this.dynamoClient.send(
       new GetCommand({
@@ -120,7 +120,10 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
 
   async getAccountTenant(accountId: string): Promise<Tenant | null> {
     const account = await this.getAccount(accountId)
-    return this.getOrganization(this.getNonDemoTenantId(account?.tenantId))
+    if (!account) {
+      return null
+    }
+    return this.getOrganization(this.getNonDemoTenantId(account.tenantId))
   }
 
   async getOrganization(tenantId: string): Promise<Tenant | null> {
@@ -196,7 +199,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async unblockAccount(tenantId: string, accountId: string): Promise<Account> {
-    const account = await this.getAccount(accountId)
+    const account = (await this.getAccount(accountId)) as Account
     account.blocked = false
     await this.createAccount(tenantId, { type: 'DATABASE', params: account })
     return account
@@ -208,7 +211,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     patchData: PatchAccountData
   ): Promise<Account> {
     const nonDemoTenantId = this.getNonDemoTenantId(tenantId)
-    const account = await this.getAccount(accountId)
+    const account = (await this.getAccount(accountId)) as Account
 
     const updatedAccount: Account = {
       ...account,

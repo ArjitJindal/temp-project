@@ -325,10 +325,13 @@ export class AccountsService {
 
       if (!account) {
         const data = await this.auth0().getAccount(id)
-        await this.cache().createAccount(id, {
-          type: 'DATABASE',
-          params: data,
-        })
+        if (data) {
+          await this.cache().createAccount(id, {
+            type: 'DATABASE',
+            params: data,
+          })
+        }
+
         return data
       }
 
