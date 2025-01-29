@@ -11,7 +11,6 @@ import {
   getWebhookSecrets,
 } from '../../services/webhook/utils'
 import { WebhookDeliveryRepository } from '../../services/webhook/repositories/webhook-delivery-repository'
-import { WebhookAuditLogService } from './services/webhook-audit-log-service'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -42,23 +41,18 @@ export const webhookConfigurationHandler = lambdaApi()(
 
     handlers.registerPostWebhooks(async (ctx, request) => {
       const webhook = request.WebhookConfiguration
-      const newWebhook = await webhookRepository.saveWebhook(webhook)
+      const newWebhookData = await webhookRepository.saveWebhook(webhook)
+      const newWebhook = newWebhookData.result
       const secret = uuidv4()
 
       if (!envIs('local')) {
         await createWebhookSecret(tenantId, newWebhook._id as string, secret)
       }
 
-      const response = {
+      return {
         ...newWebhook,
         secret,
       }
-
-      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
-      await webhookAuditLogService.handleAuditLogForWebhookCreated(
-        newWebhook._id as string
-      )
-      return response
     })
 
     handlers.registerPostWebhooksWebhookid(async (ctx, request) => {
@@ -68,31 +62,25 @@ export const webhookConfigurationHandler = lambdaApi()(
       if (existingWebhook == null) {
         throw new NotFound(`webhook ${webhookId} is not found`)
       }
-      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
-      await webhookAuditLogService.handleAuditLogForWebhookUpdated(
-        webhookId,
-        existingWebhook,
-        {
-          ...existingWebhook,
-          webhookUrl: updatedWebhook.webhookUrl ?? existingWebhook.webhookUrl,
-          events: updatedWebhook.events ?? existingWebhook.events,
-          enabled: updatedWebhook.enabled ?? existingWebhook.enabled,
-        }
-      )
-      return await webhookRepository.saveWebhook({
+
+      const newWebhookData = await webhookRepository.saveWebhook({
         ...existingWebhook,
         webhookUrl: updatedWebhook.webhookUrl ?? existingWebhook.webhookUrl,
         events: updatedWebhook.events ?? existingWebhook.events,
         enabled: updatedWebhook.enabled ?? existingWebhook.enabled,
       })
+
+      return newWebhookData.result
     })
 
     handlers.registerDeleteWebhooksWebhookId(async (ctx, request) => {
       const webhookId = request.webhookId
-      await webhookRepository.deleteWebhook(webhookId)
+      const webhook = await webhookRepository.getWebhook(webhookId)
+      if (webhook == null) {
+        throw new NotFound(`webhook ${webhookId} is not found`)
+      }
+      await webhookRepository.deleteWebhook(webhook)
       await deleteWebhookSecrets(tenantId, webhookId)
-      const webhookAuditLogService = new WebhookAuditLogService(tenantId)
-      await webhookAuditLogService.handleAuditLogForWebhookDeleted(webhookId)
       return
     })
 

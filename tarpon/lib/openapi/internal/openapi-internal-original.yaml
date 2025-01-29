@@ -13997,6 +13997,7 @@ components:
             - TAGS_UPDATE
             - SLA_POLICY_UPDATE
             - SLA_STATUS_UPDATE
+            - WEBHOOK
         action:
           $ref: '#/components/schemas/AuditLogActionEnum'
         timestamp:

@@ -152,7 +152,7 @@ export async function deliverWebhookEvent(
         ) {
           await Promise.all([
             webhookRepository.disableWebhook(
-              webhook._id as string,
+              webhook,
               `Automatically deactivated at ${dayjs().format()} by the system as it has reached the maximum retry limit (${hoursForRetry} hours)`
             ),
             webhookRetryRepository.deleteWebhookRetryEvent(
