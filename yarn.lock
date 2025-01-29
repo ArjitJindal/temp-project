@@ -1539,10 +1539,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/lodash@npm:^4.17.12":
-  version: 4.17.13
-  resolution: "@types/lodash@npm:4.17.13"
-  checksum: c3d0b7efe7933ac0369b99f2f7bff9240d960680fdb74b41ed4bd1b3ca60cca1e31fe4046d9abbde778f941a41bc2a75eb629abf8659fa6c27b66efbbb0802a9
+"@types/lodash@npm:^4.17.14":
+  version: 4.17.15
+  resolution: "@types/lodash@npm:4.17.15"
+  checksum: 2eb2dc6d231f5fb4603d176c08c8d7af688f574d09af47466a179cd7812d9f64144ba74bb32ca014570ffdc544eedc51b7a5657212bad083b6eecbd72223f9bb
   languageName: node
   linkType: hard
 
@@ -3343,7 +3343,7 @@ __metadata:
     "@linear/sdk": "npm:^37.0.0"
     "@slack/web-api": "npm:^7.8.0"
     "@tsconfig/node18": "npm:^18.2.1"
-    "@types/lodash": "npm:^4.17.12"
+    "@types/lodash": "npm:^4.17.14"
     aws-cdk: "npm:~2.174.1"
     aws-cdk-lib: "npm:~2.174.1"
     constructs: "npm:^10.4.2"
