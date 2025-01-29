@@ -452,20 +452,20 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}#activesessions#${userId}`,
     SortKeyID: generateChecksum(deviceInfo, 5),
   }),
-  ACCOUNTS: (accountId?: string) => ({
-    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-id`,
+  ACCOUNTS: (auth0Domain: string, accountId: string) => ({
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-id#${auth0Domain}`,
     SortKeyID: accountId,
   }),
-  ACCOUNTS_BY_EMAIL: (email: string) => ({
-    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-email`,
+  ACCOUNTS_BY_EMAIL: (auth0Domain: string, email: string) => ({
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#accounts-email#${auth0Domain}`,
     SortKeyID: email,
   }),
-  ORGANIZATION: (tenantId: string) => ({
-    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-data`,
+  ORGANIZATION: (auth0Domain: string, tenantId: string) => ({
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-data#${auth0Domain}`,
     SortKeyID: tenantId,
   }),
-  ORGANIZATION_ACCOUNTS: (tenantId: string) => ({
-    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-accounts`,
+  ORGANIZATION_ACCOUNTS: (auth0Domain: string, tenantId: string) => ({
+    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#organization-accounts#${auth0Domain}`,
     SortKeyID: tenantId,
   }),
 }

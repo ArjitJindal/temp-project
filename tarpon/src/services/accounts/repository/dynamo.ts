@@ -35,7 +35,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async getAccount(accountId: string): Promise<CacheAccount> {
-    const key = DynamoDbKeys.ACCOUNTS(accountId)
+    const key = DynamoDbKeys.ACCOUNTS(this.auth0Domain, accountId)
     const data = await this.dynamoClient.send(
       new GetCommand({
         TableName:
@@ -43,6 +43,9 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         Key: key,
       })
     )
+
+    delete data.Item?.PartitionKeyID
+    delete data.Item?.SortKeyID
 
     return data.Item as CacheAccount
   }
@@ -53,6 +56,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
 
   public async getOrganizationAccountIds(tenantId: string): Promise<string[]> {
     const organizationAccountsKey = DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+      this.auth0Domain,
       this.getNonDemoTenantId(tenantId)
     )
     const organizationAccounts = await this.dynamoClient.send(
@@ -64,23 +68,33 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       })
     )
 
-    return organizationAccounts.Item?.accounts ?? []
+    return (organizationAccounts.Item?.accounts ?? []).map((account) => {
+      delete (account as any).PartitionKeyID
+      delete (account as any).SortKeyID
+      return account
+    })
   }
 
   async getTenantAccounts(tenant: Pick<Tenant, 'id'>): Promise<CacheAccount[]> {
     const accountIds = await this.getOrganizationAccountIds(tenant.id)
 
-    return await batchGet<CacheAccount>(
+    const data = await batchGet<CacheAccount>(
       this.dynamoClient,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(
         this.getNonDemoTenantId(tenant.id)
       ),
-      accountIds.map((id) => DynamoDbKeys.ACCOUNTS(id))
+      accountIds.map((id) => DynamoDbKeys.ACCOUNTS(this.auth0Domain, id))
     )
+
+    return data.map((account) => {
+      delete (account as any).PartitionKeyID
+      delete (account as any).SortKeyID
+      return account
+    })
   }
 
   async getAccountByEmail(email: string): Promise<CacheAccount | null> {
-    const key = DynamoDbKeys.ACCOUNTS_BY_EMAIL(email)
+    const key = DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, email)
     const data = await this.dynamoClient.send(
       new GetCommand({
         TableName:
@@ -88,6 +102,9 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         Key: key,
       })
     )
+
+    delete data.Item?.PartitionKeyID
+    delete data.Item?.SortKeyID
 
     return data.Item as CacheAccount
   }
@@ -98,7 +115,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async getOrganization(tenantId: string): Promise<Tenant | null> {
-    const key = DynamoDbKeys.ORGANIZATION(tenantId)
+    const key = DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenantId)
     const data = await this.dynamoClient.send(
       new GetCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(
@@ -107,6 +124,9 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         Key: key,
       })
     )
+
+    delete data.Item?.PartitionKeyID
+    delete data.Item?.SortKeyID
 
     return data.Item as Tenant
   }
@@ -130,7 +150,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
             StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
           Item: {
             ...account,
-            ...DynamoDbKeys.ACCOUNTS(account.id),
+            ...DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
             tenantId: nonDemoTenantId,
           },
         })
@@ -140,7 +160,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           TableName: DYNAMODB_TABLE_NAMES.TARPON,
           Item: {
             ...account,
-            ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(account.email),
+            ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
             tenantId: nonDemoTenantId,
           },
         })
@@ -190,10 +210,14 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     const accounts = await batchGet<Account>(
       this.dynamoClient,
       StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-      accountIds.map((id) => DynamoDbKeys.ACCOUNTS(id))
+      accountIds.map((id) => DynamoDbKeys.ACCOUNTS(this.auth0Domain, id))
     )
 
-    return accounts
+    return accounts.map((account) => {
+      delete (account as any).PartitionKeyID
+      delete (account as any).SortKeyID
+      return account
+    })
   }
 
   async createOrganization(
@@ -212,7 +236,10 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...params,
-          ...DynamoDbKeys.ORGANIZATION(this.getNonDemoTenantId(tenantId)),
+          ...DynamoDbKeys.ORGANIZATION(
+            this.auth0Domain,
+            this.getNonDemoTenantId(tenantId)
+          ),
         },
       })
     )
@@ -237,6 +264,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       type: 'DATABASE',
       params: updatedTenant,
     })
+
     return updatedTenant
   }
 
@@ -255,6 +283,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+            this.auth0Domain,
             this.getNonDemoTenantId(tenant.id)
           ),
           accounts: allAccounts,
@@ -278,6 +307,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+            this.auth0Domain,
             this.getNonDemoTenantId(tenant.id)
           ),
           accounts: allAccounts,
@@ -300,6 +330,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+            this.auth0Domain,
             this.getNonDemoTenantId(tenant.id)
           ),
           accounts: allAccounts,
@@ -313,14 +344,14 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       this.dynamoClient.send(
         new DeleteCommand({
           TableName: DYNAMODB_TABLE_NAMES.TARPON,
-          Key: DynamoDbKeys.ACCOUNTS_BY_EMAIL(account.email),
+          Key: DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
         })
       ),
       this.dynamoClient.send(
         new DeleteCommand({
           TableName:
             StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-          Key: DynamoDbKeys.ACCOUNTS(account.id),
+          Key: DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
         })
       ),
     ])
@@ -336,7 +367,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         PutRequest: {
           Item: {
             ...account,
-            ...DynamoDbKeys.ACCOUNTS(account.id),
+            ...DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
             tenantId: this.getNonDemoTenantId(tenantId),
           },
         },
@@ -350,7 +381,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         PutRequest: {
           Item: {
             ...account,
-            ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(account.email),
+            ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
             tenantId: this.getNonDemoTenantId(tenantId),
           },
         },
@@ -365,16 +396,19 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async getTenants(auth0Domain?: string): Promise<Tenant[]> {
+    const updatedAuth0Domain = auth0Domain ?? this.auth0Domain
     const query = new QueryCommand({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
       KeyConditionExpression: ':pk = :pk',
       ExpressionAttributeValues: {
-        ':pk': DynamoDbKeys.ORGANIZATION(FLAGRIGHT_TENANT_ID),
+        ':pk': DynamoDbKeys.ORGANIZATION(
+          updatedAuth0Domain,
+          FLAGRIGHT_TENANT_ID
+        ),
       },
     })
 
     const result = await this.dynamoClient.send(query)
-    const updatedAuth0Domain = auth0Domain ?? this.auth0Domain
 
     return ((result.Items ?? []) as Tenant[]).filter(
       (item) => item.auth0Domain === updatedAuth0Domain
