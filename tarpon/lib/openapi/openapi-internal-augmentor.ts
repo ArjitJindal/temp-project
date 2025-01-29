@@ -197,6 +197,8 @@ export const ConsoleApiPathToLambda: any = {
     StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/webhooks/{webhookId}/deliveries':
     StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
+  '/webhook-deliveries/{deliveryTaskId}/resend':
+    StackConstants.CONSOLE_API_WEBHOOK_CONFIGURATION_FUNCTION_NAME,
   '/pulse/risk-classification':
     StackConstants.CONSOLE_API_RISK_CLASSIFICATION_FUNCTION_NAME,
   '/risk-factors':

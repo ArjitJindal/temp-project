@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
+import { message } from 'antd';
+import { useMutation } from '@tanstack/react-query';
 import { WebhookDeliveryAttempt, WebhookEventType } from '@/apis';
 import { useApi } from '@/api';
 import Colors, { COLORS_V2_GRAY_1 } from '@/components/ui/colors';
@@ -16,6 +18,8 @@ import Label from '@/components/library/Label';
 import { DEFAULT_PAGE_SIZE, DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { WEBHOOK_EVENT_TYPES } from '@/apis/models-custom/WebhookEventType';
 import { dayjs } from '@/utils/dayjs';
+import Button from '@/components/library/Button';
+import { CloseMessage } from '@/components/library/Message';
 
 interface Props {
   webhookId: string;
@@ -30,12 +34,55 @@ interface Params extends CommonParams {
 
 export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => {
   const api = useApi();
+  const [selectedWebhookDelivery, setSelectedWebhookDelivery] = useState<WebhookDeliveryAttempt>();
+
+  let hide: CloseMessage | undefined;
+
+  const resendMutation = useMutation<
+    { success: boolean; error?: string },
+    unknown,
+    { deliveryTaskId: string }
+  >(
+    async (payload) => {
+      const response = await api.postWebhookEventResend(payload);
+      return {
+        success: response.success ?? false,
+        error: response?.error,
+      };
+    },
+    {
+      onSuccess: (response) => {
+        if (response.success) {
+          message.success('Webhook called successfully');
+        } else {
+          message.error('Failed to call webhook: ' + response.error);
+        }
+        hide?.();
+      },
+      onError: (_e) => {
+        message.error('Failed to call webhook');
+        hide?.();
+      },
+      onMutate: () => {
+        hide = message.loading('Sending webhook...');
+      },
+    },
+  );
+
+  const handleReplayWebhook = useCallback(
+    (event: WebhookDeliveryAttempt) => {
+      if (!event.deliveryTaskId) {
+        return;
+      }
+      resendMutation.mutate({ deliveryTaskId: event.deliveryTaskId });
+    },
+    [resendMutation],
+  );
 
   const [params, setParams] = useState<Params>({
     ...DEFAULT_PARAMS_STATE,
   });
 
-  const [selectedWebhookDelivery, setSelectedWebhookDelivery] = useState<WebhookDeliveryAttempt>();
   const webhookResults = usePaginatedQuery(
     WEBHOOKS(webhookId, params),
     async (paginationParams) => {
@@ -137,6 +184,25 @@ export const WebhookDeliveryAttemptsTable: React.FC<Props> = ({ webhookId }) => 
       title: 'Delivered At',
       type: DATE_TIME,
       filtering: true,
+    }),
+    helper.simple<'deliveryTaskId'>({
+      key: 'deliveryTaskId',
+      title: 'Actions',
+      type: {
+        render: (deliveryTaskId, { item: entity }) => (
+          <Button
+            type="PRIMARY"
+            size="SMALL"
+            onClick={() => handleReplayWebhook(entity)}
+            isLoading={
+              resendMutation.isLoading &&
+              resendMutation.variables?.deliveryTaskId === deliveryTaskId
+            }
+          >
+            Send again
+          </Button>
+        ),
+      },
     }),
   ]);
 

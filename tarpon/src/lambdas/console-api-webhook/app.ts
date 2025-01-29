@@ -5,6 +5,7 @@ import {
 import { v4 as uuidv4 } from 'uuid'
 import { NotFound } from 'http-errors'
 import { WebhookRepository } from '../../services/webhook/repositories/webhook-repository'
+import { simpleSendWebhookRequest } from '../webhook-deliverer/app'
 import {
   createWebhookSecret,
   deleteWebhookSecrets,
@@ -17,6 +18,7 @@ import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { WebhookSecrets } from '@/@types/openapi-internal/WebhookSecrets'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
 import { envIs } from '@/utils/env'
+import { WebhookDeliveryTask } from '@/@types/webhook'
 
 export const webhookConfigurationHandler = lambdaApi()(
   async (
@@ -113,6 +115,70 @@ export const webhookConfigurationHandler = lambdaApi()(
       return {
         items,
         total,
+      }
+    })
+
+    handlers.registerPostWebhookEventResend(async (ctx, request) => {
+      const webhookDeliveryTaskId = request.deliveryTaskId
+      // fetch the webhook delivery attempt from the database
+      const webhookLatestDeliveryAttempt =
+        await webhookDeliveryRepository.getLatestWebhookDeliveryAttempt(
+          webhookDeliveryTaskId
+        )
+      if (!webhookLatestDeliveryAttempt) {
+        throw new NotFound(
+          `Webhook delivery attempt ${webhookDeliveryTaskId} not found`
+        )
+      }
+
+      const requestBody = JSON.parse(
+        webhookLatestDeliveryAttempt.request.body || '{}'
+      ) as {
+        createdTimestamp: number
+        data: any
+        triggeredBy: 'MANUAL' | 'SYSTEM'
+      }
+
+      const webhookDeliveryTask: WebhookDeliveryTask = {
+        _id: webhookDeliveryTaskId,
+        webhookId: webhookLatestDeliveryAttempt.webhookId,
+        tenantId: tenantId,
+        event: webhookLatestDeliveryAttempt.event,
+        createdAt: requestBody.createdTimestamp,
+        payload: requestBody.data,
+        triggeredBy: requestBody.triggeredBy,
+      }
+
+      // replay the webhook event
+      try {
+        const response = await simpleSendWebhookRequest(webhookDeliveryTask)
+
+        if (!response) {
+          return {
+            success: false,
+            error: 'Webhook server did not respond',
+          }
+        }
+
+        if (
+          response?.status &&
+          response?.status >= 300 &&
+          response?.status < 600
+        ) {
+          return {
+            success: false,
+            error: 'Webhook server returned status ' + response?.status,
+          }
+        }
+
+        return {
+          success: true,
+        }
+      } catch (error) {
+        return {
+          success: false,
+          error: 'Failed to replay webhook event',
+        }
       }
     })
 

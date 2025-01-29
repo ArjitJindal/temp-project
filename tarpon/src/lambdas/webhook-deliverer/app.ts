@@ -26,11 +26,101 @@ import { getDynamoDbClient } from '@/utils/dynamodb'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { WebhookRetryRepository } from '@/services/webhook/repositories/webhook-retry-repository'
 import { WebhookRetryOnlyFor } from '@/@types/openapi-internal/WebhookRetryOnlyFor'
+import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import {
+  getNotExpiredSecrets,
+  getWebhookSecrets,
+} from '@/services/webhook/utils'
 
 export class ClientServerError extends Error {}
 
 // For non-production env, we only retry up to 1 day
 const MAX_RETRY_HOURS = envIs('prod') ? 4 * 24 : 24
+
+async function buildWebhookRequest(
+  tenantSettings: TenantSettings,
+  secrets: string[],
+  webhookDeliveryTask: WebhookDeliveryTask
+) {
+  const postPayload: WebhookEvent = {
+    id: webhookDeliveryTask._id,
+    type: webhookDeliveryTask.event,
+    data: webhookDeliveryTask.payload,
+    createdTimestamp: webhookDeliveryTask.createdAt,
+    triggeredBy: webhookDeliveryTask.triggeredBy,
+  }
+
+  const hmacs = secrets.map((secret) => createHmac('sha256', secret))
+  const postPayloadString = JSON.stringify(postPayload)
+  const hmacSignatures = hmacs
+    .map((hmac) => {
+      hmac.update(postPayloadString)
+      return hmac.digest('hex')
+    })
+    .join(',')
+
+  const header = isWhitelabeledTenantFromSettings(tenantSettings)
+    ? 'x-webhook-signature'
+    : 'x-flagright-signature'
+
+  const fetchOptions = {
+    method: 'POST',
+    headers: {
+      [header]: hmacSignatures,
+      'content-type': 'application/json',
+    },
+    body: postPayloadString,
+  }
+
+  return fetchOptions
+}
+
+export async function simpleSendWebhookRequest(
+  webhookDeliveryTask: WebhookDeliveryTask
+): Promise<Response | undefined> {
+  const dynamoDb = getDynamoDbClient()
+  const mongoDb = await getMongoDbClient()
+
+  const tenantRepository = new TenantRepository(webhookDeliveryTask.tenantId, {
+    dynamoDb,
+  })
+  const webhookRepository = new WebhookRepository(
+    webhookDeliveryTask.tenantId,
+    mongoDb
+  )
+
+  const webhook = await webhookRepository.getWebhook(
+    webhookDeliveryTask.webhookId
+  )
+  if (!webhook) {
+    throw new Error('Webhook not found')
+  }
+
+  const secretKeys = await getWebhookSecrets(
+    webhookDeliveryTask.tenantId,
+    webhookDeliveryTask.webhookId
+  )
+  const settings = await tenantRepository.getTenantSettings([
+    'webhookSettings',
+    'auth0Domain',
+    'features',
+  ])
+
+  const requestTimeoutSec = process.env.WEBHOOK_REQUEST_TIMEOUT_SEC
+    ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
+    : 10
+
+  const fetchOptions = {
+    ...(await buildWebhookRequest(
+      settings,
+      getNotExpiredSecrets(secretKeys),
+      webhookDeliveryTask
+    )),
+    signal: timeoutSignal(requestTimeoutSec * 1000),
+  }
+
+  return await abortableFetch(fetch).fetch(webhook.webhookUrl, fetchOptions)
+}
 
 export async function deliverWebhookEvent(
   webhook: WebhookConfiguration,
@@ -56,27 +146,6 @@ export async function deliverWebhookEvent(
     mongoDb
   )
 
-  const postPayload: WebhookEvent = {
-    id: webhookDeliveryTask._id,
-    type: webhookDeliveryTask.event,
-    data: webhookDeliveryTask.payload,
-    createdTimestamp: webhookDeliveryTask.createdAt,
-    triggeredBy: webhookDeliveryTask.triggeredBy,
-  }
-
-  const hmacs = secrets.map((secret) => createHmac('sha256', secret))
-  const postPayloadString = JSON.stringify(postPayload)
-  const hmacSignatures = hmacs
-    .map((hmac) => {
-      hmac.update(postPayloadString)
-      return hmac.digest('hex')
-    })
-    .join(',')
-
-  const requestTimeoutSec = process.env.WEBHOOK_REQUEST_TIMEOUT_SEC
-    ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
-    : 10
-
   const settings = await tenantRepository.getTenantSettings([
     'webhookSettings',
     'auth0Domain',
@@ -84,19 +153,15 @@ export async function deliverWebhookEvent(
   ])
   const webhookSettings = settings.webhookSettings
 
-  const header = isWhitelabeledTenantFromSettings(settings)
-    ? 'x-webhook-signature'
-    : 'x-flagright-signature'
+  const requestTimeoutSec = process.env.WEBHOOK_REQUEST_TIMEOUT_SEC
+    ? Number(process.env.WEBHOOK_REQUEST_TIMEOUT_SEC)
+    : 10
 
   const fetchOptions = {
-    method: 'POST',
-    headers: {
-      [header]: hmacSignatures,
-      'content-type': 'application/json',
-    },
-    body: postPayloadString,
+    ...(await buildWebhookRequest(settings, secrets, webhookDeliveryTask)),
     signal: timeoutSignal(requestTimeoutSec * 1000),
   }
+
   const requestStartedAt = Date.now()
   let response: Response | undefined = undefined
   try {

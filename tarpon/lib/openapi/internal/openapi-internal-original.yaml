@@ -4598,6 +4598,33 @@ paths:
             type: string
           in: query
           name: filterEventType
+  /webhook-deliveries/{deliveryTaskId}/resend:
+    parameters:
+      - schema:
+          type: string
+        name: deliveryTaskId
+        in: path
+        required: true
+    post:
+      summary: Resend a webhook event
+      operationId: post-webhook-event-resend
+      x-flagright:
+        permissions:
+          - settings:developers:write
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+        '404':
+          description: Webhook delivery attempt not found
   /transactions/action:
     post:
       summary: Apply an action on transactions
