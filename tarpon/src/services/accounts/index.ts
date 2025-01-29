@@ -21,7 +21,6 @@ import {
   generateRandomPassword,
   getAuth0AuthenticationClient,
   getAuth0ManagementClient,
-  userToAccount,
 } from '@/utils/auth0-utils'
 import { TenantCreationRequest } from '@/@types/openapi-internal/TenantCreationRequest'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
@@ -37,6 +36,7 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
 
 export type TenantBasic = {
   id: string
@@ -69,6 +69,15 @@ export class AccountsService {
     return new Auth0AccountsRepository(this.config.auth0Domain)
   }
 
+  public async deleteOrganization(tenant: Tenant) {
+    await this.auth0().deleteOrganization(tenant)
+    await this.cache().deleteOrganization(tenant)
+  }
+
+  private shouldUseCache() {
+    return getContext()?.user?.role === 'root'
+  }
+
   public static getInstance(dynamoDb: DynamoDBDocumentClient) {
     const auth0Domain = (getContext()?.auth0Domain ??
       process.env.AUTH0_DOMAIN) as string // to get auth0 credentials for dashboard widget in demo mode.
@@ -82,8 +91,8 @@ export class AccountsService {
 
   public async getAllActiveAccounts(): Promise<Account[]> {
     const userId = (getContext()?.user as Account).id
-    const tenant = await this.auth0().getAccountTenant(userId)
-    const accounts = await this.auth0().getTenantAccounts(tenant)
+    const tenant = await this.getAccountTenant(userId)
+    const accounts = await this.getTenantAccounts(tenant)
     return accounts.filter((account) => !account.blocked)
   }
 
@@ -114,7 +123,26 @@ export class AccountsService {
   }
 
   async getAccountTenant(userId: string): Promise<Tenant> {
-    return this.auth0().getAccountTenant(userId)
+    if (!this.shouldUseCache()) {
+      return this.auth0().getAccountTenant(userId)
+    }
+
+    const tenant = await this.cache().getAccountTenant(userId)
+
+    if (!tenant) {
+      const data = await this.auth0().getAccountTenant(userId)
+
+      if (data) {
+        await this.cache().createOrganization(userId, {
+          type: 'DATABASE',
+          params: data,
+        })
+      }
+
+      return data
+    }
+
+    return tenant
   }
 
   public async accountsChangeTenantHandler(
@@ -269,7 +297,18 @@ export class AccountsService {
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
-    return this.auth0().getTenantAccounts(tenant)
+    if (!this.shouldUseCache()) {
+      return this.auth0().getTenantAccounts(tenant)
+    }
+
+    const accounts = await this.cache().getTenantAccounts(tenant)
+
+    if (!accounts.length) {
+      const data = await this.auth0().getTenantAccounts(tenant)
+      await this.cache().putMultipleAccounts(tenant.id, data)
+      return data
+    }
+    return accounts
   }
 
   async getAccount(id: string): Promise<Account | null> {
@@ -278,16 +317,57 @@ export class AccountsService {
 
   private getAccountInternal = memoize(
     async (id: string): Promise<Account | null> => {
-      return this.auth0().getAccount(id)
+      if (!this.shouldUseCache()) {
+        return this.auth0().getAccount(id)
+      }
+
+      const account = await this.cache().getAccount(id)
+
+      if (!account) {
+        const data = await this.auth0().getAccount(id)
+        await this.cache().createAccount(id, {
+          type: 'DATABASE',
+          params: data,
+        })
+        return data
+      }
+
+      return account
     }
   )
 
-  async getAccounts(ids: string[]): Promise<Account[]> {
-    return this.auth0().getAccountByIds(ids)
+  async getAccounts(tenantId: string, ids: string[]): Promise<Account[]> {
+    if (!this.shouldUseCache()) {
+      return this.auth0().getAccountByIds(ids)
+    }
+
+    const accounts = await this.cache().getAccountByIds(ids)
+
+    if (accounts.length !== ids.length) {
+      const data = await this.auth0().getAccountByIds(ids)
+      await this.cache().putMultipleAccounts(tenantId, data)
+
+      return data
+    }
+    return accounts
   }
 
-  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
-    return this.auth0().getTenants(auth0Domain ?? this.config.auth0Domain)
+  async getTenants(
+    auth0Domain?: string,
+    useCache: boolean = false
+  ): Promise<Tenant[]> {
+    const domain = auth0Domain ?? this.config.auth0Domain
+    if (!this.shouldUseCache() || !useCache) {
+      return this.auth0().getTenants(domain)
+    }
+
+    const tenants = await this.cache().getTenants(domain)
+    if (!tenants.length) {
+      const data = await this.auth0().getTenants(domain)
+      await this.cache().putMultipleTenants(data)
+      return data
+    }
+    return tenants
   }
 
   async changeUserTenant(
@@ -311,12 +391,12 @@ export class AccountsService {
     if (!user) {
       throw new BadRequest(`Unable to find user by id: ${userId}`)
     }
-    await this.auth0().addAccountToOrganization(newTenant, user)
+    await this.addAccountToOrganization(newTenant, user)
     try {
-      await this.auth0().deleteAccountFromOrganization(oldTenant, user)
+      await this.deleteAccountFromOrganization(oldTenant, user)
     } catch (e) {
       // If the user was not deleted from the old tenant, we need to remove it from the new tenant
-      await this.auth0().deleteAccountFromOrganization(newTenant, user)
+      await this.deleteAccountFromOrganization(newTenant, user)
       throw e
     }
     await this.deleteUserCache(oldTenant.id, userId)
@@ -324,6 +404,16 @@ export class AccountsService {
     if (user) {
       await this.addUserCache(newTenant.id, [user])
     }
+  }
+
+  async addAccountToOrganization(tenant: Tenant, account: Account) {
+    await this.auth0().addAccountToOrganization(tenant, account)
+    await this.cache().addAccountToOrganization(tenant, account)
+  }
+
+  async deleteAccountFromOrganization(tenant: Tenant, account: Account) {
+    await this.auth0().deleteAccountFromOrganization(tenant, account)
+    await this.cache().deleteAccountFromOrganization(tenant, account)
   }
 
   async deleteUser(tenant: Tenant, idToDelete: string, reassignedTo: string) {
@@ -375,10 +465,9 @@ export class AccountsService {
     accountId: string,
     blockedReason: Account['blockedReason'] | null
   ) {
-    await this.auth0().patchAccount(tenantId, accountId, {
-      blockedReason,
-      blocked: true,
-    })
+    const data = { blocked: true, blockedReason }
+    await this.auth0().patchAccount(tenantId, accountId, data)
+    await this.cache().patchAccount(tenantId, accountId, data)
   }
 
   public async blockAccount(
@@ -403,10 +492,6 @@ export class AccountsService {
 
     await Promise.all([
       this.updateBlockedReason(tenantId, accountId, blockedReason),
-      this.updateUserCache(tenantId, accountId, {
-        blocked: true,
-        blockedReason,
-      }),
       userRoles.data.length &&
         !skipRemovingRoles &&
         userManager.deleteRoles(
@@ -416,28 +501,9 @@ export class AccountsService {
     ])
   }
 
-  public async deactivateAccount(
-    tenant: Tenant,
-    accountId: string,
-    deactivateReason: Account['blockedReason']
-  ) {
-    await Promise.all([
-      this.updateUserCache(tenant.id, accountId, {
-        blocked: true,
-      }),
-      this.auth0().patchAccount(tenant.id, accountId, {
-        blockedReason: deactivateReason,
-        blocked: true,
-      }),
-    ])
-  }
-
-  async deleteAuth0User(userId: string) {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    await userManager.delete({ id: userId })
+  async deleteAuth0User(user: Account) {
+    await this.auth0().deleteAccount(user)
+    await this.cache().deleteAccount(user)
   }
 
   async patchUserHandler(
@@ -575,11 +641,10 @@ export class AccountsService {
       this.config.auth0Domain
     )
     const organizationManager = managementClient.organizations
+
     try {
       const organization = await auth0AsyncWrapper(() =>
-        organizationManager.getByName({
-          name: tenantName.toLowerCase(),
-        })
+        organizationManager.getByName({ name: tenantName.toLowerCase() })
       )
 
       return organization
@@ -596,18 +661,12 @@ export class AccountsService {
     emails: string[],
     role: string
   ): Promise<void> {
-    const tenantId = tenant.id
-
-    if (tenantId == null) {
-      throw new BadRequest('Unable to find tenant id in organization metadata')
-    }
-
     for await (const email of emails) {
       await this.createAccount(tenant, { email, role })
     }
 
     const allAccounts = await this.getTenantAccounts(tenant)
-    await this.addUserCache(tenantId, allAccounts)
+    await this.addUserCache(tenant.id, allAccounts)
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {
@@ -649,18 +708,23 @@ export class AccountsService {
   }
 
   async getAccountByEmail(email: string): Promise<Account | null> {
-    const managementClient = await getAuth0ManagementClient(
-      this.config.auth0Domain
-    )
-    const userManager = managementClient.users
-    const users = await auth0AsyncWrapper(() =>
-      userManager.getAll({
-        q: `email:(${email})`,
-        per_page: 1,
-      })
-    )
+    if (!this.shouldUseCache()) {
+      return this.auth0().getAccountByEmail(email)
+    }
 
-    return users.map(userToAccount)[0] ?? null
+    const account = await this.cache().getAccountByEmail(email)
+
+    if (!account) {
+      const data = await this.auth0().getAccountByEmail(email)
+
+      if (data) {
+        await this.cache().createAccountByEmail(email, data)
+      }
+
+      return data
+    }
+
+    return account
   }
 
   async unblockBruteForceAccount(account: Account) {
@@ -671,7 +735,7 @@ export class AccountsService {
     await usersBlocksManager.delete({ id: account.id })
   }
 
-  async blockAccountBruteForce(tenantId: string, account: Account) {
+  async blockAccountBruteForce(tenant: Tenant, account: Account) {
     // DONT'T DO ANY MONGO UPDATES HERE.
     // THIS IS CALLED FROM AN AUTH0 WEBHOOK, AND WE ONLY TRIGGER IT FROM EU-1
     // SINCE ALL LOGINS ARE IN EU-1
@@ -685,9 +749,12 @@ export class AccountsService {
 
     await Promise.all([
       ...(!account.blocked
-        ? [this.updateBlockedReason(tenantId, accountId, 'BRUTE_FORCE')]
+        ? [this.updateBlockedReason(tenant.id, account.id, 'BRUTE_FORCE')]
         : []),
       this.unblockBruteForceAccount(account),
+      sendInternalProxyWebhook(tenant.region as FlagrightRegion, {
+        type: 'ACCOUNTS_REFRESH',
+      }),
     ])
   }
 }

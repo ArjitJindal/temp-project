@@ -29,6 +29,12 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     this.auth0Domain = auth0Domain
   }
 
+  async deleteOrganization(tenant: Tenant): Promise<void> {
+    const managementClient = await getAuth0ManagementClient(this.auth0Domain)
+    const organizationManager = managementClient.organizations
+    await organizationManager.delete({ id: tenant.orgId })
+  }
+
   async getAccount(accountId: string): Promise<Account> {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const userManager = managementClient.users

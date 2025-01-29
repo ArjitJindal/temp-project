@@ -1,4 +1,3 @@
-import { createHmac } from 'crypto'
 import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
@@ -6,7 +5,6 @@ import {
 import { Forbidden } from 'http-errors'
 import { stageAndRegion } from '@flagright/lib/utils'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
-import axios from 'axios'
 import { NangoService } from '../../services/nango'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
@@ -20,7 +18,11 @@ import { getDynamoDbClient, getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { updateLogMetadata } from '@/core/utils/context'
 import { AccountsService } from '@/services/accounts'
 import { sendBatchJobCommand } from '@/services/batch-jobs/batch-job'
-import { InternalProxyWebhookData } from '@/@types/openapi-internal/InternalProxyWebhookData'
+import {
+  sendInternalProxyWebhook,
+  verifyInternalProxyWebhook,
+} from '@/utils/internal-proxy'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.76.153.128',
@@ -33,9 +35,6 @@ const COMPLYADVANTAGE_PRODUCTION_IPS = [
   '54.79.153.96',
   '52.63.190.126',
 ]
-
-const INTERNAL_PROXY_WEBHOOK_SECRET = '2e01012c-ee69-4848-8c12-020bfd1e57bc'
-const INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER = 'X-Internal-Proxy-Signature'
 
 export const webhooksHandler = lambdaApi()(
   async (
@@ -199,7 +198,7 @@ export const webhooksHandler = lambdaApi()(
           continue
         }
 
-        await accountsService.blockAccountBruteForce(tenant.id, account)
+        await accountsService.blockAccountBruteForce(tenant, account)
       }
     })
 
@@ -241,22 +240,12 @@ export const webhooksHandler = lambdaApi()(
     handlers.registerPostWebhookInternalProxy(async (ctx, request) => {
       const { destinationRegion } = request.InternalProxyWebhookEvent
       const type = request.InternalProxyWebhookEvent.data.type
-
-      const signature = event.headers[INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]
-
-      if (!signature) {
-        throw new Forbidden('Missing signature')
-      }
-
-      const isValid = await verifyInternalProxyWebhook(
-        signature,
+      const isValid = verifyInternalProxyWebhook(
+        event.headers,
         request.InternalProxyWebhookEvent.data
       )
-
       if (!isValid) {
-        throw new Forbidden(
-          `Invalid signature for internal proxy webhook: ${signature}`
-        )
+        throw new Forbidden(`Invalid signature for internal proxy webhook`)
       }
 
       switch (type) {
@@ -271,53 +260,20 @@ export const webhooksHandler = lambdaApi()(
           })
           break
         }
+
+        case 'ACCOUNTS_REFRESH': {
+          await sendBatchJobCommand({
+            tenantId: FLAGRIGHT_TENANT_ID,
+            type: 'SYNC_AUTH0_DATA',
+            parameters: {
+              type: 'ALL',
+            },
+          })
+          break
+        }
       }
     })
 
     return await handlers.handle(event)
   }
 )
-
-async function sendInternalProxyWebhook(
-  destinationRegion: FlagrightRegion,
-  payload: InternalProxyWebhookData
-) {
-  const [currentStage] = stageAndRegion()
-
-  let url: string | undefined
-
-  if (currentStage === 'dev') {
-    url = `https://api.flagright.dev/console/webhooks/internal-proxy`
-  } else if (currentStage === 'sandbox') {
-    if (destinationRegion === 'eu-1') {
-      url = `https://sandbox.api.flagright.com/console/webhooks/internal-proxy`
-    } else {
-      url = `https://sandbox-asia-1.api.flagright.com/console/webhooks/internal-proxy`
-    }
-  } else if (currentStage === 'prod') {
-    url = `https://${destinationRegion}.api.flagright.com/console/webhooks/internal-proxy`
-  }
-
-  if (!url) {
-    throw new Error('Invalid region for internal proxy webhook')
-  }
-
-  const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
-    .update(JSON.stringify(payload))
-    .digest('hex')
-
-  await axios.post(url, payload, {
-    headers: { [INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]: signature },
-  })
-}
-
-async function verifyInternalProxyWebhook(
-  receivedSignature: string,
-  payload: InternalProxyWebhookData
-) {
-  const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
-    .update(JSON.stringify(payload))
-    .digest('hex')
-
-  return receivedSignature === signature
-}

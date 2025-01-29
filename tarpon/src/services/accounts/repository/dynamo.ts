@@ -50,6 +50,15 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     return data.Item as CacheAccount
   }
 
+  async deleteOrganization(tenant: Tenant): Promise<void> {
+    await this.dynamoClient.send(
+      new DeleteCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenant.id),
+        Key: DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenant.id),
+      })
+    )
+  }
+
   private getNonDemoTenantId(tenantId: string): string {
     return getNonDemoTenantId(tenantId)
   }
@@ -161,7 +170,6 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           Item: {
             ...account,
             ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
-            tenantId: nonDemoTenantId,
           },
         })
       ),
@@ -169,6 +177,22 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     ])
 
     return { ...account, tenantId }
+  }
+
+  async createAccountByEmail(
+    email: string,
+    account: Account
+  ): Promise<Account> {
+    await this.dynamoClient.send(
+      new PutCommand({
+        TableName: DYNAMODB_TABLE_NAMES.TARPON,
+        Item: {
+          ...account,
+          ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, email),
+        },
+      })
+    )
+    return account
   }
 
   async unblockAccount(tenantId: string, accountId: string): Promise<Account> {
@@ -412,6 +436,21 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
 
     return ((result.Items ?? []) as Tenant[]).filter(
       (item) => item.auth0Domain === updatedAuth0Domain
+    )
+  }
+
+  async putMultipleTenants(tenants: Tenant[]): Promise<void> {
+    await batchWrite(
+      this.dynamoClient,
+      tenants.map((tenant) => ({
+        PutRequest: {
+          Item: {
+            ...tenant,
+            ...DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenant.id),
+          },
+        },
+      })),
+      StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID)
     )
   }
 }

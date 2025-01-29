@@ -53,6 +53,7 @@ export const SarsFiled: TableQuestion<Period> = {
       .toArray()
 
     const accounts = await accountService.getAccounts(
+      tenantId,
       result.map((r) => r.createdById)
     )
     const items = result.map((r, i) => {

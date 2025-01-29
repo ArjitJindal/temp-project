@@ -64,6 +64,7 @@ export abstract class BaseAccountsRepository {
     tenantId: string,
     userId?: string
   ): Promise<Tenant | null>
+  abstract deleteOrganization(tenant: Tenant): Promise<void>
   abstract patchAccount(
     tenantId: string,
     accountId: string,

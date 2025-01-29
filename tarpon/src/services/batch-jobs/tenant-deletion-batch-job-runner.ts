@@ -45,7 +45,6 @@ import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResu
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { ListHeader } from '@/@types/openapi-internal/ListHeader'
 import { traceable } from '@/core/xray'
-import { getAuth0ManagementClient } from '@/utils/auth0-utils'
 import { getContext } from '@/core/utils/context'
 import {
   TENANT_DELETION_COLLECTION,
@@ -117,9 +116,6 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
   private accountsService = memoize(
     (auth0Domain: string) =>
       new AccountsService({ auth0Domain }, { dynamoDb: this.dynamoDb() })
-  )
-  private managementClient = memoize((auth0Domain: string) =>
-    getAuth0ManagementClient(auth0Domain)
   )
   constructor(jobId: string) {
     super(jobId)
@@ -294,13 +290,10 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
 
     try {
       const tenant = await this.getTenantByTenantId(tenantId, accountsService)
-      const account = await accountsService.getOrganization(
-        tenant?.name as string
-      )
       /** If the tenant is created after https://github.com/flagright/orca/pull/3077#event-11574061803  */
       if (
-        account?.metadata?.tenantCreatedAt &&
-        dayjs(parseInt(account?.metadata?.tenantCreatedAt)).isAfter(changeDate)
+        tenant?.tenantCreatedAt &&
+        dayjs(parseInt(tenant.tenantCreatedAt)).isAfter(changeDate)
       ) {
         await this.deleteDynamoDbDataUsingMongo(tenantId)
         return
@@ -862,7 +855,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
     const users = await accountsService.getTenantAccounts(tenant)
     for (const user of users) {
       logger.info(`Deleting auth0 user ${user.id}`)
-      await accountsService.deleteAuth0User(user.id)
+      await accountsService.deleteAuth0User(user)
     }
   }
 
@@ -949,8 +942,7 @@ export class TenantDeletionBatchJobRunner extends BatchJobRunner {
       logger.warn(`Tenant ${tenantId} not found`)
       return
     }
-    const managementClient = await this.managementClient(this.auth0Domain)
-    await managementClient.organizations.delete({ id: tenant.orgId })
+    await accountsService.deleteOrganization(tenant)
   }
 
   private async deleteDynamoDbDataUsingMongo(tenantId: string) {

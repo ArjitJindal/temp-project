@@ -13662,15 +13662,14 @@ components:
         destinationRegion:
           $ref: '#/components/schemas/FlagrightRegion'
         data:
-          $ref: '#/components/schemas/InternalProxyWebhookData'
+          oneOf:
+            - $ref: '#/components/schemas/NangoBatchJobTrigger'
+            - $ref: '#/components/schemas/AccountsRefreshBatchJobTrigger'
       required:
         - tenantId
         - sourceRegion
         - destinationRegion
         - data
-    InternalProxyWebhookData:
-      oneOf:
-        - $ref: '#/components/schemas/NangoBatchJobTrigger'
     NangoBatchJobTrigger:
       type: object
       properties:
@@ -13689,6 +13688,15 @@ components:
         - type
         - webhookData
         - region
+    AccountsRefreshBatchJobTrigger:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - ACCOUNTS_REFRESH
+      required:
+        - type
     Auth0Log:
       title: Auth0Log
       type: object

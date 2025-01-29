@@ -325,6 +325,7 @@ export class CaseService extends CaseAlertsCommonService {
     // Generate report
     const { subjectType = 'USER' } = caseItem
     const report = await createReport(
+      this.tenantId,
       caseItem,
       {
         afterTimestamp: params.afterTimestamp,

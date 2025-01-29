@@ -50,6 +50,7 @@ interface ReportParams {
 }
 
 export async function createReport(
+  tenantId: string,
   caseItem: Case,
   params: ReportParams,
   accountsService: AccountsService,
@@ -71,7 +72,7 @@ export async function createReport(
     addAlertDetails && exportAlertDetails(caseItem),
     addOntology &&
       (await exportOntology(caseItem, afterTimestamp, linkerService)),
-    addActivity && (await exportActivity(caseItem, accountsService)),
+    addActivity && (await exportActivity(tenantId, caseItem, accountsService)),
     addTransactions &&
       (await exportTransactions(caseItem, transactionsRepository)),
   ].filter(notEmpty)
@@ -466,6 +467,7 @@ async function exportTransactions(
 }
 
 async function exportActivity(
+  tenantId: string,
   caseItem: Case,
   accountsService: AccountsService
 ): Promise<Sheet> {
@@ -475,7 +477,7 @@ async function exportActivity(
       alert.comments?.map(({ userId }) => userId)
     ),
   ].filter(notEmpty)
-  const accounts = await accountsService.getAccounts(allAccountIds)
+  const accounts = await accountsService.getAccounts(tenantId, allAccountIds)
   const exportComment = (comment) => {
     const account = accounts.find((x) => x.id === comment.userId)
     // todo: add files links?

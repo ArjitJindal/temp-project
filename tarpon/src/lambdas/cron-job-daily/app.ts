@@ -177,8 +177,8 @@ async function checkDormantUsers(tenantInfos: TenantInfo[]) {
         const currentDate = dayjs().format('YYYY-MM-DD')
         const diff = dayjs(currentDate).diff(lastLoginDate, 'day')
         if (diff > accountDormancyAllowedDays) {
-          await accountsService.deactivateAccount(
-            tenant.tenant,
+          await accountsService.blockAccount(
+            tenant.tenant.id,
             account.id,
             'DORMANT'
           )
