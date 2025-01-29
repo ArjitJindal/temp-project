@@ -1880,7 +1880,7 @@ export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
     const totalWeight = ruleHits.reduce((sum, hits) => sum + 1 / hits, 0)
     const ruleHitsPercentage = [
       shouldHaveZeroHit ? 0 : 1 / ruleToAssignWeight.length,
-      ...ruleHits.map((hit) => totalWeight / hit),
+      ...ruleHits.map((hit) => 1 / (hit * totalWeight)),
     ]
     ruleHits = [0, ...ruleHits]
     const ruleHitMap = new Map<string, number>()
