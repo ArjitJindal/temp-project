@@ -119,6 +119,7 @@ import { TransactionEventWithRulesResult } from '@/@types/openapi-public/Transac
 import { RuleMode } from '@/@types/openapi-internal/RuleMode'
 import { UserRiskScoreDetails } from '@/@types/openapi-public/UserRiskScoreDetails'
 import { RuleStage } from '@/@types/openapi-internal/RuleStage'
+import { AccountsService } from '@/services/accounts'
 
 const ruleAscendingComparator = (
   rule1: HitRulesDetails,
@@ -225,7 +226,7 @@ export class RulesEngineService {
   ruleLogicEvaluator: LogicEvaluator
   sanctionsService: SanctionsService
   geoIpService: GeoIPService
-
+  accountsService: AccountsService
   constructor(
     tenantId: string,
     dynamoDb: DynamoDBDocumentClient,
@@ -246,6 +247,12 @@ export class RulesEngineService {
     this.ruleRepository = new RuleRepository(tenantId, {
       dynamoDb,
     })
+    this.accountsService = new AccountsService(
+      {
+        auth0Domain: getContext()?.auth0Domain ?? '',
+      },
+      { dynamoDb }
+    )
     this.ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb,
     })
@@ -1962,6 +1969,8 @@ export class RulesEngineService {
       transactionIds
     )
 
+    const account = await this.accountsService.getAccount(userId)
+
     if (txns.length === 0) {
       throw new Error('No transactions')
     }
@@ -1989,7 +1998,9 @@ export class RulesEngineService {
                 transaction.transactionState as TransactionState,
               timestamp: Date.now(),
               transactionId: transaction.transactionId,
-              eventDescription: `Transaction status was manually changed to ${action} by ${userId}`,
+              eventDescription: `Transaction status was manually changed to ${action} by ${
+                account?.name ?? userId
+              }`,
               reason: reason.join(', '),
               riskScoreDetails: transaction.riskScoreDetails,
             },

@@ -41,6 +41,8 @@ import {
   setUpRiskFactorsHook,
 } from '@/test-utils/pulse-test-utils'
 import { TenantService } from '@/services/tenants'
+import { AccountsService } from '@/services/accounts'
+import { Account } from '@/@types/openapi-internal/Account'
 
 const RULE_INSTANCE_ID_MATCHER = expect.stringMatching(/^[A-Z0-9.-]+$/)
 
@@ -48,6 +50,24 @@ const dynamoDb = getDynamoDbClient()
 
 dynamoDbSetupHook()
 withLocalChangeHandler()
+
+const TEST_ACCOUNT_1: Account = {
+  id: 'ACCOUNT-1',
+  role: 'admin',
+  email: 'a@email.com',
+  emailVerified: true,
+  name: 'ACCOUNT-1',
+  blocked: false,
+  escalationLevel: 'L1',
+  escalationReviewerId: 'ACCOUNT-4',
+}
+
+jest
+  .spyOn(AccountsService.prototype, 'getAccount')
+  .mockImplementation(async () => {
+    return TEST_ACCOUNT_1
+  })
+
 describe('Verify Transaction', () => {
   const TEST_TENANT_ID = getTestTenantId()
   test('Verify Transaction: returns empty executed rules if no rules are configured', async () => {
