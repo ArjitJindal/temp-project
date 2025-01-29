@@ -30,7 +30,7 @@ export const config: Config = {
       MEMORY_LIMIT: 4096,
     },
     CLOUD_WATCH: {
-      logRetention: RetentionDays.TWO_WEEKS,
+      logRetention: RetentionDays.ONE_WEEK,
     },
     DYNAMODB: {
       BILLING_MODE: BillingMode.PAY_PER_REQUEST,
