@@ -2000,13 +2000,7 @@ export class UserService {
       commentId
     )
 
-    const deleteAuditLogPromise: Promise<void> = Promise.resolve()
-
-    await Promise.all([
-      deleteObjectsPromise,
-      deleteCommentPromise,
-      deleteAuditLogPromise,
-    ])
+    await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
     return {
       oldImage: user.comments?.find((c) => c.id === commentId),

@@ -30,12 +30,12 @@ export const riskClassificationHandler = lambdaApi({
       async () => await riskService.getRiskClassificationValues()
     )
 
-    handlers.registerPostPulseRiskClassification(
-      async (ctx, request) =>
-        await riskService.createOrUpdateRiskClassificationConfig(
-          request.RiskClassificationScore
-        )
-    )
+    handlers.registerPostPulseRiskClassification(async (ctx, request) => {
+      const response = await riskService.createOrUpdateRiskClassificationConfig(
+        request.RiskClassificationScore
+      )
+      return response.result
+    })
 
     return await handlers.handle(event)
   }
@@ -63,18 +63,18 @@ export const parameterRiskAssignmentHandler = lambdaApi({
         )
     )
 
-    handlers.registerPostPulseRiskParameter(
-      async (ctx, request) =>
-        await riskService.createOrUpdateRiskParameter(
-          request.PostPulseRiskParameters.parameterAttributeRiskValues
-        )
-    )
+    handlers.registerPostPulseRiskParameter(async (ctx, request) => {
+      const response = await riskService.createOrUpdateRiskParameter(
+        request.PostPulseRiskParameters.parameterAttributeRiskValues
+      )
+      return response.result
+    })
 
     handlers.registerPostPulseRiskParameters(async (ctx, request) => {
       await Promise.all(
         request.PostPulseRiskParametersBulk.parameterAttributeRiskValues.map(
-          (riskParameter) =>
-            riskService.createOrUpdateRiskParameter(riskParameter)
+          async (riskParameter) =>
+            await riskService.createOrUpdateRiskParameter(riskParameter)
         )
       )
     })
@@ -149,14 +149,14 @@ export const manualRiskAssignmentHandler = lambdaApi({
         await riskService.getRiskAssignment(request.userId)
     )
 
-    handlers.registerPulseManualRiskAssignment(
-      async (ctx, request) =>
-        await riskService.createOrUpdateRiskAssignment(
-          request.userId,
-          request.ManualRiskAssignmentPayload.riskLevel,
-          request.ManualRiskAssignmentPayload.isUpdatable
-        )
-    )
+    handlers.registerPulseManualRiskAssignment(async (ctx, request) => {
+      const response = await riskService.createOrUpdateRiskAssignment(
+        request.userId,
+        request.ManualRiskAssignmentPayload.riskLevel,
+        request.ManualRiskAssignmentPayload.isUpdatable
+      )
+      return response.result
+    })
 
     return await handlers.handle(event)
   }

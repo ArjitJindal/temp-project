@@ -32,7 +32,6 @@ import dayjs, { convertToDays } from '@/utils/dayjs'
 import { RiskParameterValue } from '@/@types/openapi-internal/RiskParameterValue'
 import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { Transaction } from '@/@types/openapi-public/Transaction'
-import { PulseAuditLogService } from '@/services/risk/pulse-audit-log'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
 import { RiskEntityType } from '@/@types/openapi-internal/RiskEntityType'
 import { RiskScoreComponent } from '@/@types/openapi-internal/RiskScoreComponent'
@@ -47,6 +46,8 @@ import { RiskScoreValueLevel } from '@/@types/openapi-internal/RiskScoreValueLev
 import { RiskScoreValueScore } from '@/@types/openapi-internal/RiskScoreValueScore'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 
 function getDefaultRiskValue(
   riskClassificationValues: Array<RiskClassificationScore>
@@ -61,6 +62,12 @@ function getDefaultRiskValue(
 
   return riskScore
 }
+
+type RiskScoreAuditLogReturnData = AuditLogReturnData<
+  number | undefined | null,
+  DrsScore,
+  DrsScore
+>
 
 async function matchParameterValue(
   valueToMatch: unknown,
@@ -678,7 +685,10 @@ export class RiskScoringService {
         : null,
     ])
 
-    return { originDrsScore, destinationDrsScore }
+    return {
+      originDrsScore: originDrsScore?.result,
+      destinationDrsScore: destinationDrsScore?.result,
+    }
   }
 
   public async getRiskFactorScores(
@@ -820,24 +830,33 @@ export class RiskScoringService {
     return drsScore.drsScore
   }
 
+  @auditLog('RISK_SCORING', 'DRS_RISK_LEVEL', 'UPDATE')
   private async calculateAndUpdateDRS(
     userId: string,
     arsScore: number,
     transactionId: string,
     components: RiskScoreComponent[]
-  ): Promise<number | null | undefined> {
+  ): Promise<RiskScoreAuditLogReturnData> {
     const krsScore = (await this.riskRepository.getKrsScore(userId))?.krsScore
     if (krsScore == null) {
-      return null
+      return {
+        publishAuditLog: () => false,
+        result: null,
+        entityId: userId,
+      }
     }
 
     const drsObject = await this.riskRepository.getDrsScore(userId)
     const currentDrsValue = drsObject?.drsScore ?? krsScore
 
     if (!drsObject?.isUpdatable) {
-      return drsObject?.drsScore
+      return {
+        publishAuditLog: () => false,
+        result: drsObject?.drsScore,
+        entityId: userId,
+      }
     }
-    const auditLogService = new PulseAuditLogService(this.tenantId)
+
     const drsScore = this.calculateDrsScore(currentDrsValue, arsScore)
     await this.riskRepository.createOrUpdateDrsScore(
       userId,
@@ -846,9 +865,20 @@ export class RiskScoringService {
       components
     )
     const newDrsObject = await this.riskRepository.getDrsScore(userId)
-    await auditLogService.handleDrsUpdate(drsObject, newDrsObject, 'AUTOMATIC')
 
-    return newDrsObject?.drsScore
+    const logMetadata = {
+      userId: newDrsObject?.userId,
+      type: 'AUTOMATIC',
+      transactionId: newDrsObject?.transactionId,
+      createdAt: newDrsObject?.createdAt,
+    }
+    return {
+      oldImage: drsObject ?? undefined,
+      newImage: newDrsObject ?? undefined,
+      result: newDrsObject?.drsScore,
+      entityId: userId,
+      logMetadata,
+    }
   }
 
   public async calculateAndUpdateKRSAndDRS(

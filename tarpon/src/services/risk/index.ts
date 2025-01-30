@@ -7,11 +7,11 @@ import {
   getRiskLevelFromScore,
   getRiskScoreFromLevel,
 } from '@flagright/lib/utils'
+import { humanizeAuto } from '@flagright/lib/utils/humanize'
 import {
   createV8FactorFromV2,
   generateV2FactorId,
 } from '../risk-scoring/risk-factors'
-import { PulseAuditLogService } from './pulse-audit-log'
 import { riskFactorAggregationVariablesRebuild } from './utils'
 import { RiskRepository } from '@/services/risk-scoring/repositories/risk-repository'
 import { RiskClassificationScore } from '@/@types/openapi-internal/RiskClassificationScore'
@@ -23,6 +23,8 @@ import { RiskFactor } from '@/@types/openapi-internal/RiskFactor'
 import { RiskFactorsUpdateRequest } from '@/@types/openapi-internal/RiskFactorsUpdateRequest'
 import { RiskFactorsPostRequest } from '@/@types/openapi-internal/RiskFactorsPostRequest'
 import { RiskFactorParameter } from '@/@types/openapi-internal/RiskFactorParameter'
+import { auditLog, AuditLogReturnData } from '@/utils/audit-log'
+import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 
 const validateClassificationRequest = (
   classificationValues: Array<RiskClassificationScore>
@@ -39,12 +41,29 @@ const validateClassificationRequest = (
   }
 }
 
+type ParameterRiskItemAuditLogReturnData = AuditLogReturnData<
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValues,
+  ParameterAttributeRiskValues
+>
+
+type RiskClassificationAuditLogReturnData = AuditLogReturnData<
+  RiskClassificationScore[],
+  RiskClassificationScore[],
+  RiskClassificationScore[]
+>
+
+type DrsRiskItemAuditLogReturnData = AuditLogReturnData<
+  DrsScore,
+  DrsScore,
+  DrsScore
+>
+
 @traceable
 export class RiskService {
   tenantId: string
   dynamoDb: DynamoDBDocumentClient
   riskRepository: RiskRepository
-  auditLogService: PulseAuditLogService
   mongoDb?: MongoClient
 
   constructor(
@@ -57,7 +76,6 @@ export class RiskService {
       dynamoDb: this.dynamoDb,
       mongoDb: connections.mongoDb,
     })
-    this.auditLogService = new PulseAuditLogService(tenantId)
     this.mongoDb = connections.mongoDb
   }
 
@@ -65,9 +83,10 @@ export class RiskService {
     return await this.riskRepository.getRiskClassificationValues()
   }
 
+  @auditLog('RISK_SCORING', 'RISK_CLASSIFICATION', 'UPDATE')
   async createOrUpdateRiskClassificationConfig(
     riskClassificationScore: RiskClassificationScore[]
-  ) {
+  ): Promise<RiskClassificationAuditLogReturnData> {
     validateClassificationRequest(riskClassificationScore)
     const oldClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
@@ -78,11 +97,12 @@ export class RiskService {
     const newClassificationValues = result.classificationValues
     const oldClassificationValuesAsRiskClassificationScore =
       oldClassificationValues
-    await this.auditLogService.handleAuditLogForRiskClassificationsUpdated(
-      oldClassificationValuesAsRiskClassificationScore,
-      newClassificationValues
-    )
-    return newClassificationValues
+    return {
+      oldImage: oldClassificationValuesAsRiskClassificationScore,
+      newImage: newClassificationValues,
+      result: newClassificationValues,
+      entityId: 'RISK_CLASSIFICATION_VALUES',
+    }
   }
 
   async getRiskParameter(
@@ -104,9 +124,10 @@ export class RiskService {
     return (await this.riskRepository.getParameterRiskItems()) ?? []
   }
 
+  @auditLog('RISK_SCORING', 'PARAMETER_RISK_ITEM', 'UPDATE')
   async createOrUpdateRiskParameter(
     parameterAttributeRiskValues: ParameterAttributeRiskValues
-  ) {
+  ): Promise<ParameterRiskItemAuditLogReturnData> {
     const oldParameterRiskItemValue =
       await this.riskRepository.getParameterRiskItem(
         parameterAttributeRiskValues.parameter,
@@ -131,22 +152,35 @@ export class RiskService {
         parameterAttributeRiskValues.riskEntityType
       )
     )
-    await this.auditLogService.handleParameterRiskItemUpdate(
-      oldParameterRiskItemValue,
-      newParameterRiskItemValue
-    )
-    return newParameterRiskItemValue
+    return {
+      oldImage: oldParameterRiskItemValue ?? undefined,
+      newImage: newParameterRiskItemValue,
+      result: newParameterRiskItemValue,
+      actionTypeOverride: oldParameterRiskItemValue ? 'UPDATE' : 'CREATE',
+      logMetadata: {
+        parameter: newParameterRiskItemValue.parameter,
+        riskEntityType: newParameterRiskItemValue.riskEntityType,
+        targetIterableParameter:
+          newParameterRiskItemValue.targetIterableParameter,
+      },
+      entityId: [
+        humanizeAuto('RISK_FACTOR'),
+        humanizeAuto(parameterAttributeRiskValues.riskEntityType),
+        parameterAttributeRiskValues.parameter,
+      ].join(' - '),
+    }
   }
 
   async getRiskAssignment(userId: string) {
     return this.riskRepository.getDRSRiskItem(userId)
   }
 
+  @auditLog('RISK_SCORING', 'DRS_RISK_LEVEL', 'UPDATE')
   async createOrUpdateRiskAssignment(
     userId: string,
     riskLevel: RiskLevel | undefined,
     isUpdatable?: boolean
-  ) {
+  ): Promise<DrsRiskItemAuditLogReturnData> {
     if (!riskLevel) {
       throw new BadRequest('Invalid request - please provide riskLevel')
     }
@@ -158,12 +192,19 @@ export class RiskService {
         riskLevel,
         isUpdatable
       )
-    await this.auditLogService.handleDrsUpdate(
-      oldDrsRiskItem,
-      newDrsRiskItem,
-      'MANUAL'
-    )
-    return newDrsRiskItem
+    const logMetadata = {
+      userId: newDrsRiskItem?.userId,
+      type: 'MANUAL',
+      transactionId: newDrsRiskItem?.transactionId,
+      createdAt: newDrsRiskItem?.createdAt,
+    }
+    return {
+      oldImage: oldDrsRiskItem ?? undefined,
+      newImage: newDrsRiskItem,
+      result: newDrsRiskItem,
+      entityId: userId,
+      logMetadata,
+    }
   }
 
   async getDrsValueFromMongo(userId: string) {

@@ -16,6 +16,8 @@ export type AuditLogReturnData<
   newImage?: N
   result: R
   entityId: string
+  publishAuditLog?: () => boolean
+  actionTypeOverride?: AuditLogActionEnum
   logMetadata?: object
 }
 
@@ -40,19 +42,19 @@ export function auditLog<
         // Call the original async method and await the result
         const result = await originalMethod.apply(this, args)
 
-        const auditLog: AuditLog = {
-          type,
-          subtype,
-          action,
-          timestamp: Date.now(),
-          oldImage: result.oldImage,
-          newImage: result.newImage,
-          entityId: result.entityId,
-          logMetadata: result.logMetadata,
+        if (!result.publishAuditLog || result.publishAuditLog()) {
+          const auditLog: AuditLog = {
+            type,
+            subtype,
+            action: result.actionTypeOverride ?? action,
+            timestamp: Date.now(),
+            oldImage: result.oldImage,
+            newImage: result.newImage,
+            entityId: result.entityId,
+            logMetadata: result.logMetadata,
+          }
+          await publishAuditLog(getContext()?.tenantId as string, auditLog)
         }
-
-        await publishAuditLog(getContext()?.tenantId as string, auditLog)
-
         // Return the result (the original return value)
         return result
       }
