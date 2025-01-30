@@ -75,7 +75,7 @@ export class AccountsService {
   }
 
   private shouldUseCache() {
-    return getContext()?.user?.role === 'root'
+    return getContext()?.user?.role !== 'root'
   }
 
   public static getInstance(dynamoDb: DynamoDBDocumentClient) {
