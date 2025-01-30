@@ -466,9 +466,10 @@ export class AccountsService {
   public async updateBlockedReason(
     tenantId: string,
     accountId: string,
+    blocked: boolean,
     blockedReason: Account['blockedReason'] | null
   ) {
-    const data = { blocked: true, blockedReason }
+    const data = { blocked, blockedReason }
     await this.auth0().patchAccount(tenantId, accountId, data)
     await this.cache().patchAccount(tenantId, accountId, data)
   }
@@ -494,7 +495,7 @@ export class AccountsService {
     const userRoles = await userManager.getRoles({ id: accountId })
 
     await Promise.all([
-      this.updateBlockedReason(tenantId, accountId, blockedReason),
+      this.updateBlockedReason(tenantId, accountId, true, blockedReason),
       userRoles.data.length &&
         !skipRemovingRoles &&
         userManager.deleteRoles(
@@ -578,6 +579,7 @@ export class AccountsService {
       this.updateBlockedReason(
         tenantId,
         accountId,
+        deactivate,
         deactivate ? 'DEACTIVATED' : null
       ),
       this.updateUserCache(tenantId, accountId, {
@@ -752,7 +754,7 @@ export class AccountsService {
 
     await Promise.all([
       ...(!account.blocked
-        ? [this.updateBlockedReason(tenant.id, account.id, 'BRUTE_FORCE')]
+        ? [this.updateBlockedReason(tenant.id, account.id, true, 'BRUTE_FORCE')]
         : []),
       this.unblockBruteForceAccount(account),
       sendInternalProxyWebhook(tenant.region as FlagrightRegion, {
