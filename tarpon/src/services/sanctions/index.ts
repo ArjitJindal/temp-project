@@ -511,7 +511,6 @@ export class SanctionsService {
         params.filterHitIds = alert.ruleHitMeta?.sanctionsDetails?.flatMap(
           ({ sanctionHitIds }) => sanctionHitIds ?? []
         )
-        params.filterSearchId = undefined
       }
     }
 
