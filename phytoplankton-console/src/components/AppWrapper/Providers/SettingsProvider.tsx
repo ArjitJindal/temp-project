@@ -118,6 +118,15 @@ export function useFeatureEnabled(feature: FeatureName): boolean {
   return features.includes(feature) || false;
 }
 
+export function useHasNoSanctionsProviders(): boolean {
+  const features = useFeatures();
+  return (
+    !features.includes('ACURIS') &&
+    !features.includes('OPEN_SANCTIONS') &&
+    !features.includes('DOW_JONES')
+  );
+}
+
 export function useFeaturesEnabled(features: FeatureName[]): boolean {
   const enabledFeatures = useFeatures();
   return features.every((feature) => enabledFeatures.includes(feature));
@@ -165,6 +174,7 @@ export function useRuleActionLabel(ruleAction: RuleAction | undefined): string |
   const settings = useSettings();
   return getRuleActionLabel(ruleAction, settings);
 }
+
 export function getRiskLevelLabel(riskLevel: RiskLevel, settings: TenantSettings): string {
   const alias = settings.riskLevelAlias?.find((item) => item.level === riskLevel)?.alias;
   return alias || humanizeConstant(riskLevel);

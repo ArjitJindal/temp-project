@@ -4,6 +4,7 @@ import s from './styles.module.less';
 import SettingsCard from '@/components/library/SettingsCard';
 import {
   useFeatureEnabled,
+  useHasNoSanctionsProviders,
   useSettings,
   useUpdateTenantSettings,
 } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -26,6 +27,7 @@ export const SanctionsSettings = () => {
   const superAdmin = isSuperAdmin(user);
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const branding = getBranding();
+  const hasNoSanctionsProviders = useHasNoSanctionsProviders();
 
   const handleDownload = () => {
     message.success('Screening list download started');
@@ -185,7 +187,7 @@ export const SanctionsSettings = () => {
         }
         description={isSanctionsEnabled ? '' : 'Screen individuals and entities in a single API.'}
       >
-        {isSanctionsEnabled && !hasFeatureAcuris ? (
+        {isSanctionsEnabled && hasNoSanctionsProviders ? (
           <>
             <div className={s.sanctionsModal}>
               <div className={s.sanctionsLayout}>
