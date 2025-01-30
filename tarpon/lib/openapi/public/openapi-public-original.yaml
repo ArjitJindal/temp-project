@@ -5521,7 +5521,6 @@ components:
         - listId
         - listType
         - subtype
-        - size
         - createdTimestamp
     PaymentMethod:
       type: string

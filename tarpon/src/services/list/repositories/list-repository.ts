@@ -54,7 +54,7 @@ export class ListRepository {
       listType,
       subtype,
       createdTimestamp: Date.now(),
-      size: items.length,
+      size: metadata?.ttl ? undefined : items.length,
     }
     await this.updateListHeader(header)
     await this.updateListItems(listId, items)
@@ -119,7 +119,19 @@ export class ListRepository {
             },
     }
     const { Items = [] } = await paginateQuery(this.dynamoDb, query)
-    return Items.map(({ header }) => header)
+
+    const headers = await Promise.all(
+      Items.map(async ({ header }) => {
+        if (header.metadata?.ttl) {
+          header.size = await this.countListValues(
+            header.listId,
+            header.version
+          )
+        }
+        return header
+      })
+    )
+    return headers
   }
 
   public async getListHeader(listId: string): Promise<ListHeader | null> {
@@ -138,6 +150,12 @@ export class ListRepository {
       return null
     }
     const { header } = Item
+
+    // If TTL is configured, compute size on the fly
+    if (header.metadata?.ttl) {
+      header.size = await this.countListValues(header.listId, header.version)
+    }
+
     return header
   }
 
@@ -154,6 +172,9 @@ export class ListRepository {
   }
 
   private async refreshListHeader(listHeader: ListHeader): Promise<void> {
+    if (listHeader.metadata?.ttl) {
+      return
+    }
     await this.updateListHeader({
       ...listHeader,
       size: await this.countListValues(listHeader.listId, listHeader.version),
@@ -385,13 +406,21 @@ export class ListRepository {
     listId: string,
     version?: number
   ): Promise<number> {
+    const currentTimestamp = Math.floor(Date.now() / 1000)
     const { Count } = await paginateQuery(this.dynamoDb, {
       Select: 'COUNT',
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
       KeyConditionExpression: 'PartitionKeyID = :pk',
+      FilterExpression:
+        'attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp',
+      ExpressionAttributeNames: {
+        '#ttl': 'ttl',
+      },
       ExpressionAttributeValues: {
         ':pk': DynamoDbKeys.LIST_ITEM(this.tenantId, listId, version)
           .PartitionKeyID,
+        ':currentTimestamp': currentTimestamp,
+        ':null': null,
       },
     })
     return Count ?? 0
@@ -404,7 +433,7 @@ export class ListRepository {
   ): Promise<boolean> {
     const { listId, version } = listHeader
     const key = DynamoDbKeys.LIST_ITEM(this.tenantId, listId, version, value)
-
+    const currentTimestamp = Math.floor(Date.now() / 1000)
     let KeyConditionExpression: string
     if (method === 'EXACT') {
       KeyConditionExpression = 'PartitionKeyID = :pk AND SortKeyID = :sk'
@@ -418,9 +447,16 @@ export class ListRepository {
       new QueryCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         KeyConditionExpression,
+        FilterExpression:
+          'attribute_not_exists(#ttl) OR #ttl = :null OR #ttl >= :currentTimestamp',
+        ExpressionAttributeNames: {
+          '#ttl': 'ttl',
+        },
         ExpressionAttributeValues: {
           ':pk': key.PartitionKeyID,
           ':sk': key.SortKeyID,
+          ':currentTimestamp': currentTimestamp,
+          ':null': null,
         },
         Limit: 1,
       })

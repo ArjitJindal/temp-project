@@ -97,7 +97,7 @@ export default function ListsItemPage() {
                     {dayjs(listHeader.createdTimestamp).format(DATE_TIME_FORMAT_WITHOUT_SECONDS)}
                   </Form.Layout.Label>
                   {listHeader?.metadata?.ttl && (
-                    <Form.Layout.Label icon={<TimeLineIcon />} title="Expiration time per item">
+                    <Form.Layout.Label icon={<TimeLineIcon />} title="Item expiration time">
                       {pluralize(
                         listHeader.metadata.ttl.unit.toLocaleLowerCase(),
                         listHeader.metadata.ttl.value,

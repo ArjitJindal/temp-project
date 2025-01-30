@@ -191,7 +191,7 @@ export default function NewListDrawer(props: Props) {
                     >
                       {(inputProps) => <Toggle size="S" {...inputProps} />}
                     </InputField>
-                    <InputField<FormValues, 'ttl'> name="ttl" label={'Expiration time per item'}>
+                    <InputField<FormValues, 'ttl'> name="ttl" label={'Item expiration time'}>
                       {(inputProps) => (
                         <div className={s.ttl}>
                           <NumberInput
@@ -224,16 +224,16 @@ export default function NewListDrawer(props: Props) {
                     </InputField>
                     <Alert type={'info'}>
                       <div>
-                        1. Time to live applies to each item independently and is calculated from
-                        the duration an item is added.
+                        1. Expiration time applies to each item independently and is calculated from
+                        the time an item is added.
                       </div>
                       <div>
-                        2. Time to live applies only to list items. Items are removed as per above
-                        configuration, but the list remains.
+                        2. Expiration time applies only to list items. Items are removed as per
+                        above configuration, but the list remains.
                       </div>
                       <div>
-                        3. Time to live settings can't change once set. Create a new list for a new
-                        configuration.
+                        3. Expiration time settings can't change once set. Create a new list for a
+                        new configuration.
                       </div>
                     </Alert>
                   </>

@@ -152,8 +152,8 @@ function ListTable(props: Props, ref: ListTableRef) {
     }),
     helper.simple<'metadata.ttl'>({
       key: 'metadata.ttl',
-      title: 'Expiration time per item',
-      defaultWidth: 80,
+      title: 'Item expiration time',
+      defaultWidth: 180,
       type: {
         render: (value) => {
           if (value?.value == null) {
