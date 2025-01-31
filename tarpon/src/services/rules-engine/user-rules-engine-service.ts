@@ -129,19 +129,6 @@ export class UserManagementService {
       ...monitoringResult,
     }
 
-    const asyncRulesPromises = isAnyAsyncRules
-      ? [
-          sendAsyncRuleTasks([
-            {
-              type: 'USER',
-              user: userPayload,
-              tenantId: this.tenantId,
-              userType: type,
-            },
-          ]),
-        ]
-      : []
-
     if (isConsumerUser) {
       await Promise.all([
         this.userRepository.saveConsumerUser(userResult),
@@ -157,7 +144,6 @@ export class UserManagementService {
             riskScoreDetails,
           }
         ),
-        ...asyncRulesPromises,
       ])
     } else {
       await Promise.all([
@@ -176,7 +162,17 @@ export class UserManagementService {
             riskScoreDetails,
           }
         ),
-        ...asyncRulesPromises,
+      ])
+    }
+    // Send async rules tasks after user is saved successfully
+    if (isAnyAsyncRules) {
+      await sendAsyncRuleTasks([
+        {
+          type: 'USER',
+          user: userPayload,
+          tenantId: this.tenantId,
+          userType: type,
+        },
       ])
     }
     await this.listService.syncListsMetadata({
