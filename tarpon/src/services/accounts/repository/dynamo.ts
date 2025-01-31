@@ -291,6 +291,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
+          ...account,
           ...DynamoDbKeys.ORGANIZATION_ACCOUNTS(
             this.auth0Domain,
             this.getNonDemoTenantId(tenant.id),
