@@ -4454,6 +4454,9 @@ components:
           description: Additional information that can be added via tags
           items:
             $ref: '#/components/schemas/Tag'
+        transitNumber:
+          type: string
+          description: Transit number of the bank account
       required:
         - method
     UPIDetails:
