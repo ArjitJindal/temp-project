@@ -1,5 +1,6 @@
 import { Dispatch } from 'react';
-import { Updater } from '@/utils/state';
+import { StatePair, Updater } from '@/utils/state';
+import { FieldMeta } from '@/components/library/Form/context';
 
 export interface FormState<FormValues> {
   values: FormValues;
@@ -9,6 +10,7 @@ export interface FormState<FormValues> {
 }
 
 export interface InputProps<Value> {
+  name?: string;
   isError?: boolean;
   isLoading?: boolean;
   isDisabled?: boolean;
@@ -19,3 +21,11 @@ export interface InputProps<Value> {
   onBlur?: () => void;
   allowClear?: boolean;
 }
+
+export type InternalFieldsMeta = { [key: string]: FieldMeta };
+
+export type InternalFormState<FormValues> = {
+  formValues: StatePair<FormValues>;
+  isFormValid: StatePair<boolean>;
+  fieldMeta: StatePair<InternalFieldsMeta>;
+};

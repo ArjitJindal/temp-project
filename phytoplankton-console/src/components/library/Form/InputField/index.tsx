@@ -39,6 +39,7 @@ export default function InputField<FormValues, Key extends keyof FormValues = ke
         ) : (
           <Label label={label} description={description} {...labelProps}>
             {children({
+              name: String(name),
               value,
               onChange,
               isError: showError,

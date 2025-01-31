@@ -5,7 +5,7 @@ import { InputProps } from '@/components/library/Form';
 
 type Sizes = 'S' | 'M' | 'L';
 
-interface Props extends InputProps<boolean> {
+export interface Props extends InputProps<boolean> {
   size?: Sizes;
   testName?: string;
 }

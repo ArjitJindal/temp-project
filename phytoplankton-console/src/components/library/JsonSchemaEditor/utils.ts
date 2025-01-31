@@ -13,6 +13,7 @@ import {
   $IS_OPTIONAL,
   $SELF_VALIDATION,
   FieldValidator,
+  ObjectFieldValidator,
   Validator,
 } from '@/components/library/Form/utils/validation/types';
 import {
@@ -78,7 +79,7 @@ export function findRequiredProperty(propertyItems: PropertyItems, name: string)
 export function makeValidators<T>(
   props: PropertyItems,
   rootSchema?: ExtendedSchema,
-): FieldValidator<T> {
+): ObjectFieldValidator<T> {
   return props.reduce((acc, prop): FieldValidator<T> => {
     let propValidators;
     const schema = dereferenceType(prop.schema, rootSchema);
