@@ -1,3 +1,5 @@
+import { TARPON_BUILD_ARTIFACT } from './artifcats'
+
 const GENERATED_DIRS = [
   'dist',
   'node_modules',
@@ -10,4 +12,10 @@ const GENERATED_DIRS = [
   '.gen',
 ]
 
-export { GENERATED_DIRS }
+const commandMoveGeneratedDirs = () =>
+  GENERATED_DIRS.map(
+    (dir) =>
+      `mv "$CODEBUILD_SRC_DIR_${TARPON_BUILD_ARTIFACT.artifactName}"/${dir} ${dir}`
+  )
+
+export { GENERATED_DIRS, commandMoveGeneratedDirs }

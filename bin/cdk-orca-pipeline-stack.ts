@@ -159,16 +159,27 @@ export class CdkOrcaPipelineStack extends Stack {
           ],
         },
         {
+          stageName: 'Start_E2E_Test',
+          actions: [
+            new codepipline_actions.ManualApprovalAction({
+              actionName: 'Start_E2E_Test',
+              externalEntityLink: `https://${phytoDevConfig.SITE_DOMAIN}`,
+            }),
+          ],
+        },
+        {
           stageName: 'E2E_Test_Dev',
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'E2E_Test_Dev',
-              project: getE2ETestProject(this, 'dev', role),
+              project: getE2ETestProject(this, 'dev', role, devConfig),
               input: SOURCE_ARTIFACT,
               outputs: [E2E_ARTIFACT],
+              extraInputs: [TARPON_BUILD_ARTIFACT],
             }),
           ],
         },
+
         {
           stageName: 'Approve_Sandbox',
           actions: [

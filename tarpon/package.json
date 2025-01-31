@@ -54,6 +54,7 @@
     "dev:api:console": "API=CONSOLE yarn start-local-api",
     "dev": "ENV=local yarn parallel dev:databases dev:api",
     "_migrator": "ts-node --transpileOnly scripts/migrations/migrator.ts",
+    "migration:seed:demo-data": "MIGRATION_TYPE=POST_DEPLOYMENT ENV=local yarn _migrator seed-demo-data",
     "migration:pre:create": "MIGRATION_TYPE=PRE_DEPLOYMENT ENV=local yarn _migrator create --name $npm_config_name.ts --allow-extension .ts",
     "migration:pre:up": "MIGRATION_TYPE=PRE_DEPLOYMENT yarn _migrator up",
     "migration:pre:down": "MIGRATION_TYPE=PRE_DEPLOYMENT yarn _migrator down",

@@ -77,6 +77,12 @@ async function main() {
   initializeEnvVars()
   const isMigrationFileCreation = process.argv.includes('create')
 
+  if (process.argv.includes('seed-demo-data')) {
+    await seedDemoData('cypress-tenant')
+    await cleanUpCypressTestAuth0Users()
+    return
+  }
+
   if (process.argv.includes('sync')) {
     await syncData()
     return
@@ -126,14 +132,6 @@ async function main() {
   const success = await umzug.runAsCLI()
   if (!success) {
     exit(1)
-  }
-
-  if (!isMigrationFileCreation && migrationType === 'POST_DEPLOYMENT') {
-    // Seed cypress tenant on dev
-    if (envIs('dev')) {
-      await seedDemoData('cypress-tenant')
-      await cleanUpCypressTestAuth0Users()
-    }
   }
 }
 

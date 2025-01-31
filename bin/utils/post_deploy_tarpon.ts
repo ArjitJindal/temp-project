@@ -6,8 +6,7 @@ import {
 } from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import { getAssumeRoleCommands } from './assume-role-commands'
-import { GENERATED_DIRS } from '../constants/generatedDirs'
-import { TARPON_BUILD_ARTIFACT } from '../constants/artifcats'
+import { commandMoveGeneratedDirs } from '../constants/generatedDirs'
 import { ComputeType } from 'aws-cdk-lib/aws-codebuild'
 import { IVpc } from 'aws-cdk-lib/aws-ec2'
 
@@ -42,10 +41,7 @@ export const postDeploymentCodeBuildProject = (
         build: {
           commands: [
             'cd tarpon',
-            ...GENERATED_DIRS.map(
-              (dir) =>
-                `mv "$CODEBUILD_SRC_DIR_${TARPON_BUILD_ARTIFACT.artifactName}"/${dir} ${dir}`
-            ),
+            ...commandMoveGeneratedDirs(),
             `npm run migration:post:up`,
             'cd ..',
           ],
