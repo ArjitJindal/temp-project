@@ -42,7 +42,14 @@ export function DeltaChart(props: Props) {
           ...beforeValues.map((v) => ({ category: 'Before', value: v.value ?? 0, series: v.type })),
           ...afterValues.map((v) => ({ category: 'After', value: v.value ?? 0, series: v.type })),
         ])}
-        colors={{}}
+        colors={{
+          Before: beforeColor,
+          After: afterColor,
+          'True positive (before)': beforeColor,
+          'True positive (after)': afterColor,
+          'False positive (before)': beforeFalsePositiveColor,
+          'False positive (after)': afterFalsePositiveColor,
+        }}
         customBarColors={(_, series: ValueType, defaultColor) => {
           let result;
           if (series === 'Before') {
