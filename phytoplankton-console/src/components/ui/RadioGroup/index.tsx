@@ -30,6 +30,7 @@ export default function RadioGroup<T extends Comparable>(props: Props<T>) {
                   onChange?.(restOption.value);
                 }
               }}
+              testName={`${label.toLowerCase()}`}
             />
           </Label>
         </div>

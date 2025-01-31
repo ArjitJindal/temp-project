@@ -20,10 +20,10 @@ describe('Accounts - CRUD Test', () => {
     cy.contains('Invite').click();
     cy.intercept('POST', '**/accounts**').as('accounts');
     cy.get('input[data-cy="accounts-email"]').type(randomEmail);
-    cy.get('.ant-select-selector').click();
+    cy.get('.ant-select-selector').first().click();
     cy.get('.ant-select-item-option-content').contains('Developer').click();
-    cy.get('button[data-cy="accounts-invite"]').click();
-    cy.closeDrawerWithConfirmation();
+    cy.get('input[data-cy="checker"]').click();
+    cy.get('button[data-cy="modal-ok"]').click();
     cy.wait(`@accounts`, { timeout: 30000 })
       .its('response.statusCode')
       .should('be.oneOf', [200, 304]);
@@ -34,9 +34,8 @@ describe('Accounts - CRUD Test', () => {
 
     cy.get('.ant-select-selector').click();
     cy.get('.ant-select-item-option-content').contains('Analyst').click();
-    cy.get('button[data-cy="accounts-invite"]').click();
+    cy.get('button[data-cy="modal-ok"]').click();
     cy.intercept('GET', '**/accounts**').as('update');
-    cy.closeDrawerWithConfirmation();
     cy.wait(`@update`, { timeout: 30000 })
       .its('response.statusCode')
       .should('be.oneOf', [200, 304]);
@@ -48,7 +47,9 @@ describe('Accounts - CRUD Test', () => {
       .find('button[data-cy="accounts-delete-button"]')
       .click();
 
-    cy.get('.ant-select-selection-search-input').click().type('cypress+admin@flagright.com{enter}');
+    cy.get('div[data-cy="delete-user-reassign-to"]')
+      .click()
+      .type('cypress+admin@flagright.com{enter}');
     cy.get('button[data-cy="delete-account"]').click();
     cy.wait(`@delete`, { timeout: 30000 })
       .its('response.statusCode')

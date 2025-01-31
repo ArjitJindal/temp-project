@@ -158,6 +158,7 @@ export function DeleteUser(props: DeleteUserProps) {
             mode="SINGLE"
             onChange={(value) => setReassignTo(value ?? null)}
             value={reassignTo}
+            testId="delete-user-reassign-to"
           />
           <Button
             testName="delete-account"
