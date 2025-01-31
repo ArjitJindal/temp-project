@@ -13337,7 +13337,9 @@ components:
           items:
             $ref: '#/components/schemas/SanctionsOccupation'
         yearOfBirth:
-          type: string
+          type: array
+          items:
+            type: string
         freetext:
           type: string
         screeningSources:

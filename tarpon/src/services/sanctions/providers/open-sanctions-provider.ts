@@ -328,9 +328,9 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         url: source,
         name: source,
       })),
-      yearOfBirth: properties.birthDate?.[0]
-        ? dayjs(properties.birthDate[0]).year().toString()
-        : undefined,
+      yearOfBirth: properties.birthDate?.map((date) =>
+        dayjs(date).format('YYYY')
+      ),
       countries: compact(
         uniq(
           concat(
@@ -435,9 +435,9 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
         url: source,
         name: source,
       })),
-      yearOfBirth: properties.incorporationDate?.[0]
-        ? dayjs(properties.incorporationDate[0]).year().toString()
-        : undefined,
+      yearOfBirth: properties.incorporationDate?.map((date) =>
+        dayjs(date).format('YYYY')
+      ),
       dateOfBirths: properties.incorporationDate,
       documents: [
         ...this.getDocuments(properties.swiftBic, 'SWIFT BIC'),

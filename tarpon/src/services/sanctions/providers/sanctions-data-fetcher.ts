@@ -104,7 +104,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
       if (
         request.yearOfBirth &&
         hit.yearOfBirth &&
-        hit.yearOfBirth == String(request.yearOfBirth)
+        hit.yearOfBirth.includes(request.yearOfBirth.toString())
       ) {
         matchTypes.push('year_of_birth')
       }

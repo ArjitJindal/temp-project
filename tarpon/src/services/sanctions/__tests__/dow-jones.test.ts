@@ -89,8 +89,9 @@ Ssbpb Investment Holding Private Limited
 Digicontent Ltd
 Jubilant Ingrevia Ltd.
 Jubilant Pharmova Ltd.`,
-            yearOfBirth: '1976',
+            yearOfBirth: ['1976'],
             types: ['Relative or Close Associate (RCA)'],
+            dateOfBirths: ['1976-10-04'],
           },
         ],
       ],
@@ -231,7 +232,8 @@ Patasse passed away on April 5, 2011.`,
                 formattedId: 'Central African Republic',
               },
             ],
-            yearOfBirth: '1937',
+            yearOfBirth: ['1937'],
+            dateOfBirths: ['1937-01-25'],
             dateMatched: true,
             matchTypes: ['Corruption'],
             screeningSources: [
@@ -357,8 +359,9 @@ Patasse passed away on April 5, 2011.`,
             aka: ['Martin Zinguélé', 'Martin Ziguele', 'Martin Zinguele'],
             countries: ['Central African Republic'],
             countryCodes: ['CF'],
-            yearOfBirth: '1957',
+            yearOfBirth: ['1957'],
             types: ['Politically Exposed Person (PEP)'],
+            dateOfBirths: ['1957-02-12'],
           },
         ],
       ],
@@ -587,7 +590,7 @@ const HIT_WITH_NO_AKA: SanctionsEntity = {
   types: ['adverse-media'],
   name: 'Vladimir Putiin',
   entityType: 'PERSON',
-  yearOfBirth: '1952',
+  yearOfBirth: ['1952'],
   sanctionsSources: [
     {
       name: 'company AM',
@@ -603,7 +606,7 @@ const HIT_WITH_DUPLICATED_AKA: SanctionsEntity = {
   name: 'Vladimir Putiin',
   aka: ['Vladimir Vladimirovich Putiin'],
   entityType: 'PERSON',
-  yearOfBirth: '1952',
+  yearOfBirth: ['1952'],
   sanctionsSources: [
     {
       name: 'company AM',
@@ -619,7 +622,7 @@ const HIT_WITH_AKA: SanctionsEntity = {
   name: 'Vladimir Putiin',
   entityType: 'PERSON',
   aka: ['Vova Pupa'],
-  yearOfBirth: '1952',
+  yearOfBirth: ['1952'],
   sanctionsSources: [
     {
       name: 'company AM',

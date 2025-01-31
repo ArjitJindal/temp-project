@@ -50,3 +50,45 @@ export const WEEKDAY_NUMBERS = {
 export function getDefaultTimezone(): Timezone {
   return 'Etc/UTC'
 }
+
+export function convertDateFormat(
+  year: string,
+  month: string,
+  date: string
+): string {
+  if (!year) {
+    return ''
+  }
+
+  const monthMap: Record<string, string> = {
+    Jan: '01',
+    Feb: '02',
+    Mar: '03',
+    Apr: '04',
+    May: '05',
+    Jun: '06',
+    Jul: '07',
+    Aug: '08',
+    Sep: '09',
+    Oct: '10',
+    Nov: '11',
+    Dec: '12',
+  }
+
+  const numericMonth = month ? monthMap[month] || month : ''
+
+  const { format, d } =
+    !numericMonth && !date
+      ? { format: 'YYYY', d: `${year}` }
+      : numericMonth && !date
+      ? { format: 'YYYY-MM', d: `${year}-${numericMonth}` }
+      : date
+      ? { format: 'YYYY-MM-DD', d: `${year}-${numericMonth}-${date}` }
+      : { format: '', d: '' }
+
+  if (!format || !d) {
+    return ''
+  }
+
+  return d
+}

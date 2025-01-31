@@ -246,6 +246,7 @@ interface AcurisBusinessEntity extends AcurisEntity {
     alias: string
     type: string
   }[]
+  datesOfBirthIso: string[]
 }
 
 @traceable
@@ -458,9 +459,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
         ...this.getOccupations(entity.pepEntries.current ?? [], pepTier),
         ...this.getOccupations(entity.pepEntries.former ?? [], pepTier),
       ],
-      yearOfBirth: entity.datesOfBirthIso?.length
-        ? String(entity.datesOfBirthIso.map((date) => dayjs(date).year())[0])
-        : undefined,
+      yearOfBirth: entity.datesOfBirthIso?.map((date) =>
+        dayjs(date).format('YYYY')
+      ),
       dateOfBirths: entity.datesOfBirthIso,
       isDeseased: entity.isDeseased,
       isActiveSanctioned: this.hasScreeningType('SANCTIONS')
@@ -643,6 +644,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
         id: identifier.value,
         formattedId: identifier.value?.split(' ')[0]?.replace('-', ''),
       })),
+      yearOfBirth: entity.datesOfBirthIso?.map((date) =>
+        dayjs(date).format('YYYY')
+      ),
     }
   }
 

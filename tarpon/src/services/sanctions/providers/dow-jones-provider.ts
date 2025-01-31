@@ -6,7 +6,7 @@ import { pipeline } from 'stream'
 import axios from 'axios'
 import { XMLParser } from 'fast-xml-parser'
 import unzipper from 'unzipper'
-import { replace, uniq, uniqBy } from 'lodash'
+import { replace, uniq, uniqBy, compact } from 'lodash'
 import { decode } from 'html-entities'
 import { COUNTRIES } from '@flagright/lib/constants'
 import {
@@ -15,7 +15,7 @@ import {
   SanctionsRepository,
 } from '@/services/sanctions/providers/types'
 import { logger } from '@/core/logger'
-import dayjs from '@/utils/dayjs'
+import dayjs, { convertDateFormat } from '@/utils/dayjs'
 import { SanctionsDataFetcher } from '@/services/sanctions/providers/sanctions-data-fetcher'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
 import { removeUndefinedFields } from '@/utils/object'
@@ -745,9 +745,38 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           countries: countries.map((c) => COUNTRIES[c]),
           nationality,
           countryCodes: countries.map((c) => c as CountryCode),
-          yearOfBirth: person.DateDetails?.Date?.find(
-            (date: any) => date['@_DateType'] === 'Date of Birth'
-          )?.DateValue['@_Year'] as string,
+          yearOfBirth: compact(
+            person.DateDetails?.Date?.flatMap((d) =>
+              d['@_DateType'] === 'Date of Birth'
+                ? Array.isArray(d.DateValue)
+                  ? d.DateValue.map((v) => v['@_Year'])
+                  : d.DateValue?.['@_Year'] ?? ''
+                : []
+            )
+          ) as string[],
+          dateOfBirths: compact(
+            person.DateDetails?.Date?.flatMap((d) =>
+              d['@_DateType'] === 'Date of Birth'
+                ? Array.isArray(d.DateValue)
+                  ? d.DateValue.map((v) => {
+                      const {
+                        '@_Day': day = '',
+                        '@_Month': month = '',
+                        '@_Year': year = '',
+                      } = v
+                      return convertDateFormat(year, month, day)
+                    })
+                  : (() => {
+                      const {
+                        '@_Day': day = '',
+                        '@_Month': month = '',
+                        '@_Year': year = '',
+                      } = d.DateValue || {}
+                      return convertDateFormat(year, month, day)
+                    })()
+                : []
+            )
+          ) as string[],
         }
 
         return [

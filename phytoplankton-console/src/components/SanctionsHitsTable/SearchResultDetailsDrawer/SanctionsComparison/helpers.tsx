@@ -36,7 +36,7 @@ export function getComparisonItems(
       },
       secondaryMatches.length > 0 && {
         title: 'Date of birth',
-        screeningValue: sanctionsEntity?.yearOfBirth ?? '',
+        screeningValue: sanctionsEntity?.yearOfBirth ? sanctionsEntity.yearOfBirth.join(', ') : '',
         kycValue: yearOfBirth ?? secondaryMatches.map(({ query_term }) => query_term).join(', '),
         match: reduceMatched(secondaryMatches),
         sources: sources ?? [],

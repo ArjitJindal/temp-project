@@ -145,7 +145,7 @@ export function complyAdvantageDocToEntity(
     updatedAt: doc.last_updated_utc
       ? new Date(doc.last_updated_utc).getTime()
       : undefined,
-    yearOfBirth: fieldData['Year of Birth']?.values[0]?.value as string,
+    yearOfBirth: fieldData['Year of Birth']?.values.map((value) => value.value),
     gender: fieldData['Gender']?.values[0]?.value as string,
     matchTypeDetails:
       hit.match_types_details?.map(

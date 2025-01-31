@@ -39,7 +39,7 @@ class TestSanctionsDataFetcher extends SanctionsDataFetcher {
           entityType: 'PERSON',
           name: 'John Doe',
           countryCodes: ['US'],
-          yearOfBirth: '1980',
+          yearOfBirth: ['1980'],
         },
       ],
       createdAt: new Date().getTime(),
@@ -71,14 +71,14 @@ describe('SanctionsDataFetcher Integration Tests', () => {
         entityType: 'PERSON',
         name: 'John Doe',
         countryCodes: ['US'],
-        yearOfBirth: '1980',
+        yearOfBirth: ['1980'],
       },
       {
         id: '1',
         entityType: 'PERSON',
         name: 'Jane Smith',
         countryCodes: ['GB'],
-        yearOfBirth: '1985',
+        yearOfBirth: ['1985'],
       },
     ])
   })

@@ -83,7 +83,7 @@ describe('OpenSanctionsProvider', () => {
         { url: 'http://example.com', name: 'http://example.com' },
       ],
       types: ['CRIME', 'SANCTIONS'],
-      yearOfBirth: '1980',
+      yearOfBirth: ['1980'],
       updatedAt: expect.any(Number),
       isActivePep: undefined,
       isActiveSanctioned: undefined,

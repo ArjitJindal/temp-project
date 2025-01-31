@@ -162,7 +162,7 @@ describe('complyAdvantageDocToEntity', () => {
       aka: ['Alias1'],
       entityType: 'PERSON',
       updatedAt: new Date('2023-09-01T00:00:00Z').getTime(),
-      yearOfBirth: '1980',
+      yearOfBirth: ['1980'],
       gender: 'Male',
       matchTypeDetails: [
         {

@@ -301,16 +301,17 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           )}
           {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
             <Form.Layout.Label
-              key={entity.yearOfBirth}
+              key={entity.yearOfBirth[0]}
               title={
                 isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
               }
             >
-              {entity.yearOfBirth ?? '-'}
+              {entity.yearOfBirth.join(', ') ?? '-'}
             </Form.Layout.Label>
           )}
           {(entity.dateOfBirths?.length ?? 0) > 0 &&
-            difference(entity.dateOfBirths, [entity.yearOfBirth]).length > 0 && (
+            entity.yearOfBirth &&
+            difference(entity.dateOfBirths, entity.yearOfBirth).length > 0 && (
               <Form.Layout.Label
                 title={
                   isHitEntityPerson(entity.entityType) ? 'Date of birth' : 'Date of incorporation'

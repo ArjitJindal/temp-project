@@ -68,6 +68,17 @@ export class SanctionsHitsRepository {
       ...params,
       sortField: params.sortField || 'sanctionsHitId',
     })
+    results.items = results.items.map((item) => ({
+      ...item,
+      entity: {
+        ...item.entity,
+        yearOfBirth: Array.isArray(item.entity.yearOfBirth)
+          ? item.entity.yearOfBirth
+          : item.entity.yearOfBirth
+          ? [item.entity.yearOfBirth]
+          : [],
+      },
+    }))
     return {
       ...results,
       items: results.items,

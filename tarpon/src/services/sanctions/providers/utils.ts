@@ -101,7 +101,7 @@ export function getSecondaryMatches(
   searchRequest: SanctionsSearchRequest
 ) {
   const yearOfBirth =
-    (entity.yearOfBirth != null && parseInt(entity.yearOfBirth)) || undefined
+    entity.yearOfBirth?.length && parseInt(entity.yearOfBirth[0])
   if (searchRequest.yearOfBirth != null) {
     let matchTypes: SanctionsNameMatchedMatchTypesEnum[] = []
     if (yearOfBirth != null) {

@@ -289,7 +289,7 @@ export const sanctionsSearchHit = (
       countries: compact(selectedCountries),
       gender: rng.r(10).pickRandom(['male', 'female']),
       countryCodes: selectedCountryCodes,
-      yearOfBirth: rng.r(11).randomIntInclusive(1900, 2024).toString(),
+      yearOfBirth: [rng.r(11).randomIntInclusive(1900, 2024).toString()],
       nationality: rng
         .r(12)
         .randomSubsetOfSize(
