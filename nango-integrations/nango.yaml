@@ -31,9 +31,17 @@ models:
     tags: string[] | null
     description_text: string | null
     conversations: Conversation[] | null
+    attachments: Attachments[] | null
   Conversation:
     body_text: string | null
     from_email: string | null
     to_email: string | null
     created_at: number | null
     updated_at: number | null
+  Attachments:
+    content_type: string
+    size: number
+    updated_at: string
+    name: string
+    id: number
+    attachment_url: string
