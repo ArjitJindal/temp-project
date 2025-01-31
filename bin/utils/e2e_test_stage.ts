@@ -1,4 +1,8 @@
-import { aws_codebuild as codebuild, aws_iam as iam } from 'aws-cdk-lib'
+import {
+  aws_codebuild as codebuild,
+  aws_iam as iam,
+  aws_ec2 as ec2,
+} from 'aws-cdk-lib'
 import { Construct } from 'constructs'
 import { STACK_CONSTANTS } from '../constants/stack-constants'
 import { commandMoveGeneratedDirs } from '../constants/generatedDirs'
@@ -9,7 +13,8 @@ export const getE2ETestProject = (
   scope: Construct,
   env: 'dev',
   codeDeployRole: iam.IRole,
-  config: Config
+  config: Config,
+  vpc: ec2.IVpc
 ) => {
   return new codebuild.PipelineProject(scope, `PhytoplanktonE2eTest-${env}`, {
     buildSpec: codebuild.BuildSpec.fromObject({
@@ -34,6 +39,7 @@ export const getE2ETestProject = (
             'yarn --frozen-lockfile',
             `export AWS_REGION=${config.env.region}`,
             `export AWS_ACCOUNT=${config.env.account}`,
+            `export ENV=${config.stage}`,
             ...getAssumeRoleCommands(config),
             `cd ..`,
           ],
@@ -41,8 +47,8 @@ export const getE2ETestProject = (
         build: {
           commands: [
             'cd tarpon',
-            'npm run migration:seed:demo-data',
             ...commandMoveGeneratedDirs(),
+            'npm run migration:seed:demo-data',
             'cd ..',
             'cd phytoplankton-console',
             'ENV=dev CI=true npm run cypress:run',
@@ -73,5 +79,6 @@ export const getE2ETestProject = (
       computeType: codebuild.ComputeType.MEDIUM,
     },
     role: codeDeployRole,
+    vpc,
   })
 }

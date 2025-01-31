@@ -172,7 +172,7 @@ export class CdkOrcaPipelineStack extends Stack {
           actions: [
             new codepipline_actions.CodeBuildAction({
               actionName: 'E2E_Test_Dev',
-              project: getE2ETestProject(this, 'dev', role, devConfig),
+              project: getE2ETestProject(this, 'dev', role, devConfig, vpc),
               input: SOURCE_ARTIFACT,
               outputs: [E2E_ARTIFACT],
               extraInputs: [TARPON_BUILD_ARTIFACT],
