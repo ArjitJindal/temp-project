@@ -19,6 +19,7 @@ import {
 } from '@/apis';
 import * as Form from '@/components/ui/Form';
 import LinkIcon from '@/components/ui/icons/Remix/system/external-link-line.react.svg';
+import { Popover } from '@/components/ui/Popover';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
 import ArrowRightSLineIcon from '@/components/ui/icons/Remix/system/arrow-right-s-line.react.svg';
 import ArrowLeftSLineIcon from '@/components/ui/icons/Remix/system/arrow-left-s-line.react.svg';
@@ -288,17 +289,6 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType?.toLowerCase())}
           </Form.Layout.Label>
-          {entity.aka && entity.aka?.length > 0 && (
-            <Form.Layout.Label title={'Aliases'}>
-              <span className={s.tags}>
-                {entity.aka.map((aka) => (
-                  <Tag color="gray" key={aka}>
-                    {aka}
-                  </Tag>
-                ))}
-              </span>
-            </Form.Layout.Label>
-          )}
           {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
             <Form.Layout.Label
               key={entity.yearOfBirth[0]}
@@ -365,6 +355,21 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               {entity.gender ?? '-'}
             </Form.Layout.Label>
           }
+          {entity.aka && entity.aka?.length > 0 && (
+            <Form.Layout.Label title={'Aliases'}>
+              <div className={s.aliases}>
+                {entity.aka.map((aka, i) => (
+                  <Popover
+                    key={i}
+                    content={aka}
+                    trigger="hover"
+                    children={<Tag color="gray">{aka}</Tag>}
+                    wrapText={true}
+                  />
+                ))}
+              </div>
+            </Form.Layout.Label>
+          )}
           {entity.associates && entity.associates?.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
