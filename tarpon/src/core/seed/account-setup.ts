@@ -1,4 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { compact } from 'lodash'
 import { setAccounts } from './samplers/accounts'
 import { AccountsService } from '@/services/accounts'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
@@ -30,7 +31,7 @@ export async function fetchAndSetAccounts(
   const allAccounts =
     tenant != null ? await accountsService.getTenantAccounts(tenant) : []
 
-  const accounts = allAccounts.filter(
+  const accounts = compact(allAccounts).filter(
     (account) => account.role !== 'root' && !account.blocked
   )
 

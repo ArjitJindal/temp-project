@@ -1,6 +1,7 @@
 #!/usr/bin/env ts-node
 import { execSync } from 'child_process'
 import axios from 'axios'
+import { initializeEnvVars } from './migrations/utils/config'
 import { RuleService } from '@/services/rules-engine'
 import { seedDemoData } from '@/core/seed'
 
@@ -8,6 +9,7 @@ process.env.ENV = process.env.ENV || 'local'
 const TENANT = process.env.TENANT || 'flagright'
 
 async function main() {
+  initializeEnvVars()
   console.info('Creating Clickhouse tables...')
   // Create Clickhouse database
   await axios.post(
