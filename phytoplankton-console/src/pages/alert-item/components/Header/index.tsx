@@ -13,6 +13,9 @@ import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { notEmpty } from '@/utils/array';
 import PriorityTag from '@/components/library/PriorityTag';
 import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsStatusChangeButton';
+import { SarButton } from '@/components/Sar';
+import CreateCaseConfirmModal from '@/pages/case-management/AlertTable/CreateCaseConfirmModal';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
 interface Props {
   isLoading: boolean;
@@ -33,6 +36,7 @@ export default function Header(props: Props) {
   });
   const api = useApi();
   const client = useQueryClient();
+  const actions = useActions(alertItem, caseId);
   return (
     <EntityHeader
       stickyElRef={headerStickyElRef}
@@ -90,8 +94,45 @@ export default function Header(props: Props) {
           }}
           haveModal={true}
         />,
+        ...actions,
       ]}
       subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItem={alertItem} />}
     />
   );
+}
+
+function useActions(alertItem: Alert, caseId: string | undefined): React.ReactNode[] {
+  const isSarEnabled = useFeatureEnabled('SAR');
+  const client = useQueryClient();
+
+  const result: React.ReactNode[] = [];
+  const alertId = alertItem.alertId;
+
+  if (alertId == null) {
+    return result;
+  }
+
+  // SAR report button
+  {
+    if (isSarEnabled && caseId != null) {
+      result.push(<SarButton caseId={caseId} alertIds={[alertId]} />);
+    }
+  }
+
+  // Create new case modal
+  {
+    if (caseId) {
+      result.push(
+        <CreateCaseConfirmModal
+          selectedEntities={[alertId]}
+          caseId={caseId}
+          onResetSelection={() => {
+            client.invalidateQueries(ALERT_ITEM(alertItem.alertId ?? ''));
+          }}
+        />,
+      );
+    }
+  }
+
+  return result;
 }

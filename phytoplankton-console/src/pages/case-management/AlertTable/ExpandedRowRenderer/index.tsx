@@ -4,6 +4,7 @@ import { TableAlertItem } from '@/pages/case-management/AlertTable/types';
 import { SanctionsDetails, SanctionsHitStatus } from '@/apis';
 import {
   AlertTabs,
+  TABS_TO_HIDE_IN_TABLE,
   useAlertTabs,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import Tabs from '@/components/library/Tabs';
@@ -56,9 +57,7 @@ function ExpandedRowRenderer(props: Props) {
 
   return (
     <Tabs
-      items={tabItems.filter(
-        ({ key }) => key !== AlertTabs.ACTIVITY && key !== AlertTabs.AI_FORENSICS,
-      )}
+      items={tabItems.filter(({ key }) => !TABS_TO_HIDE_IN_TABLE.some((x) => x === key))}
       type="line"
       defaultActiveKey={AlertTabs.TRANSACTIONS}
       tabBarExtraContent={

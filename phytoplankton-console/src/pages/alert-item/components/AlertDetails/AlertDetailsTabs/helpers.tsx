@@ -8,18 +8,22 @@ import CommentsTab from './CommentsTab';
 import ActivityTab from './ActivityTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
-import { CursorPaginatedData, useCursorQuery } from '@/utils/queries/hooks';
+import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';
 import {
   ALERT_ITEM_COMMENTS,
+  CASES_ITEM,
   SANCTIONS_HITS_ALL,
   SANCTIONS_HITS_SEARCH,
+  USERS_ITEM,
 } from '@/utils/queries/keys';
 import { AllParams, SelectionAction } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
-import { getOr, map } from '@/utils/asyncResource';
+import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
 import {
   Alert,
+  InternalBusinessUser,
+  InternalConsumerUser,
   SanctionHitStatusUpdateRequest,
   SanctionsHit,
   SanctionsHitListResponse,
@@ -32,6 +36,13 @@ import { message } from '@/components/library/Message';
 import { getErrorMessage } from '@/utils/lang';
 import { isScreeningAlert } from '@/utils/api/alerts';
 import { TransactionsTableParams } from '@/pages/transactions/components/TransactionsTable';
+import UserDetails from '@/pages/users-item/UserDetails';
+import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import Linking from '@/pages/users-item/UserDetails/Linking';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
+import * as Card from '@/components/ui/Card';
+import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -39,8 +50,12 @@ export enum AlertTabs {
   CHECKLIST = 'checklist',
   COMMENTS = 'comments',
   ACTIVITY = 'activity',
-  MATCH_LIST = 'match_list',
-  CLEARED_MATCH_LIST = 'cleared_match_list',
+  MATCH_LIST = 'match-list',
+  CLEARED_MATCH_LIST = 'cleared-match-list',
+  USER_DETAILS = 'user-details',
+  ONTOLOGY = 'ontology',
+  TRANSACTION_INSIGHTS = 'transaction-insights',
+  EXPECTED_TRANSACTION_LIMITS = 'expected-transaction-limits',
 }
 
 const DEFAULT_TAB_LISTS: AlertTabs[] = [
@@ -48,6 +63,10 @@ const DEFAULT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.TRANSACTIONS,
   AlertTabs.CHECKLIST,
   AlertTabs.COMMENTS,
+  AlertTabs.USER_DETAILS,
+  AlertTabs.ONTOLOGY,
+  AlertTabs.TRANSACTION_INSIGHTS,
+  AlertTabs.EXPECTED_TRANSACTION_LIMITS,
   AlertTabs.ACTIVITY,
 ];
 
@@ -58,7 +77,19 @@ const SCREENING_ALERT_TAB_LISTS: AlertTabs[] = [
   AlertTabs.CHECKLIST,
   AlertTabs.TRANSACTIONS,
   AlertTabs.COMMENTS,
+  AlertTabs.USER_DETAILS,
+  AlertTabs.ONTOLOGY,
+  AlertTabs.TRANSACTION_INSIGHTS,
+  AlertTabs.EXPECTED_TRANSACTION_LIMITS,
+];
+
+export const TABS_TO_HIDE_IN_TABLE: AlertTabs[] = [
+  AlertTabs.AI_FORENSICS,
   AlertTabs.ACTIVITY,
+  AlertTabs.USER_DETAILS,
+  AlertTabs.ONTOLOGY,
+  AlertTabs.TRANSACTION_INSIGHTS,
+  AlertTabs.EXPECTED_TRANSACTION_LIMITS,
 ];
 
 export interface SanctionsHitsTableParams {
@@ -271,9 +302,28 @@ export function useAlertTabs(props: Props): TabItem[] {
     null,
   );
 
+  const api = useApi();
+  const caseQueryResult = useQuery(CASES_ITEM(alert.caseId ?? ''), () => {
+    if (alert.caseId == null) {
+      throw new Error(`Alert doesn't have case assigned`);
+    }
+    return api.getCase({ caseId: alert.caseId });
+  });
+  const userQueryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
+    USERS_ITEM(caseUserId),
+    () => {
+      if (caseUserId == null) {
+        throw new Error(`Id is not defined`);
+      }
+      return api.getUsersItem({ userId: caseUserId });
+    },
+  );
+
+  const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
+
   const tabs: TabItem[] = useMemo(() => {
     return tabList
-      .map((tab) => {
+      .map((tab): TabItem | null => {
         if (tab === AlertTabs.AI_FORENSICS) {
           return {
             title: 'AI Forensics',
@@ -362,6 +412,64 @@ export function useAlertTabs(props: Props): TabItem[] {
             ),
           };
         }
+        if (tab === AlertTabs.USER_DETAILS) {
+          return {
+            title: 'User details',
+            key: tab,
+            children: (
+              <AsyncResourceRenderer resource={userQueryResult.data}>
+                {(user) => <UserDetails user={user} />}
+              </AsyncResourceRenderer>
+            ),
+          };
+        }
+        if (tab === AlertTabs.ONTOLOGY) {
+          if (!isEntityLinkingEnabled) {
+            return null;
+          }
+          if (!isSuccess(caseQueryResult.data) || !isSuccess(userQueryResult.data)) {
+            return null;
+          }
+          const caseItem = caseQueryResult.data.value;
+          const { subjectType = 'USER' } = caseItem;
+          const isUserSubject = subjectType === 'USER';
+
+          if (!isUserSubject) {
+            return null;
+          }
+
+          return {
+            title: 'Ontology',
+            key: tab,
+            children: <Linking userId={caseUserId} />,
+            captureEvents: true,
+          };
+        }
+        if (tab === AlertTabs.TRANSACTION_INSIGHTS) {
+          return {
+            title: 'Transaction insights',
+            key: tab,
+            children: <InsightsCard userId={caseUserId} />,
+            captureEvents: true,
+          };
+        }
+        if (tab === AlertTabs.EXPECTED_TRANSACTION_LIMITS) {
+          return {
+            title: 'Expected transaction limits',
+            key: tab,
+            children: (
+              <AsyncResourceRenderer resource={userQueryResult.data}>
+                {(user) => (
+                  <Card.Root>
+                    <ExpectedTransactionLimits user={user} />
+                  </Card.Root>
+                )}
+              </AsyncResourceRenderer>
+            ),
+            isClosable: false,
+            isDisabled: false,
+          };
+        }
         return null;
       })
       .filter(notEmpty);
@@ -382,6 +490,9 @@ export function useAlertTabs(props: Props): TabItem[] {
     selectedTransactionIds,
     onTransactionSelect,
     escalatedTransactionIds,
+    caseQueryResult.data,
+    userQueryResult.data,
+    isEntityLinkingEnabled,
   ]);
 
   return tabs;

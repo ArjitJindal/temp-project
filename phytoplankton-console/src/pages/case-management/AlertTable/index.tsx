@@ -93,7 +93,6 @@ import { notEmpty } from '@/utils/array';
 import { adaptMutationVariables } from '@/utils/queries/mutations/helpers';
 import { SLA_POLICY_LIST } from '@/utils/queries/keys';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import ClosingReasonTag from '@/components/library/Tag/ClosingReasonTag';
 import { useQuery } from '@/utils/queries/hooks';
 import CaseStatusTag from '@/components/library/Tag/CaseStatusTag';
 import { useDeepEqualEffect } from '@/utils/hooks';
@@ -101,6 +100,7 @@ import {
   updateSanctionsData,
   useChangeSanctionsHitsStatusMutation,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
+import StatusChangeReasonsDisplay from '@/components/ui/StatusChangeReasonsDisplay';
 
 export type AlertTableParams = AllParams<TableSearchParams> & {
   filterQaStatus?: Array<ChecklistStatus | "NOT_QA'd" | undefined>;
@@ -878,19 +878,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                     return <></>;
                   }
                   return (
-                    <div className={s.statusChangeReasons}>
-                      <div className={s.tag}>
-                        {lastStatusChangeReasons.reasons.map((reason) => (
-                          <ClosingReasonTag key={reason}>{reason}</ClosingReasonTag>
-                        ))}
-                      </div>
-                      {lastStatusChangeReasons.otherReason && (
-                        <div>
-                          <span>Other Reasons: </span>
-                          {lastStatusChangeReasons.otherReason}
-                        </div>
-                      )}
-                    </div>
+                    <StatusChangeReasonsDisplay
+                      reasons={lastStatusChangeReasons.reasons}
+                      otherReason={lastStatusChangeReasons.otherReason}
+                    />
                   );
                 },
                 stringify: (lastStatusChangeReasons) => {
