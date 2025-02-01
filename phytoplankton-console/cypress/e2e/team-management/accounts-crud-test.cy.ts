@@ -47,9 +47,7 @@ describe('Accounts - CRUD Test', () => {
       .find('button[data-cy="accounts-delete-button"]')
       .click();
 
-    cy.get('div[data-cy="delete-user-reassign-to"]')
-      .click()
-      .type('cypress+admin@flagright.com{enter}');
+    cy.get('div[data-cy="delete-user-reassign-to"]').type('cypress+admin@flagright.com{enter}');
     cy.get('button[data-cy="delete-account"]').click();
     cy.wait(`@delete`, { timeout: 30000 })
       .its('response.statusCode')
