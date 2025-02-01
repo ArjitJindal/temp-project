@@ -150,12 +150,8 @@ const DOCUMENT_TYPES = [
 ]
 
 const timeIntervals = ['day', 'week', 'month', 'year'] as ManipulateType[]
-
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
-
-const directors: Person[] = []
 const addressSampler = new AddressWithUsageSampler()
-
 export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
   protected generateSample(): any {
     return {
@@ -480,19 +476,14 @@ ET\n`
   }
 }
 
-export class BusinessUserSampler extends UserSampler<
-  Promise<InternalBusinessUser>
-> {
-  private ruleSampler: RuleSampler
-  constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
+class ShareHolderSampler extends UserSampler<Promise<Person[]>> {
+  companies: CompanySeedData[] = []
+  constructor(
+    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
+    companies: CompanySeedData[]
+  ) {
     super(seed)
-    this.ruleSampler = new RuleSampler(
-      undefined,
-      businessRules,
-      [2, 3],
-      companies.length,
-      false
-    )
+    this.companies = companies
   }
 
   protected getShareHolder = async (
@@ -566,6 +557,43 @@ export class BusinessUserSampler extends UserSampler<
       attachments,
     } as Person
   }
+
+  protected async generateSample(
+    timestamp: number,
+    uploadAttachment: boolean = true,
+    domain: string,
+    tenantId: string,
+    company: CompanySeedData
+  ) {
+    const numberOfShareHolder = this.rng.randomIntInclusive(1, 2)
+    const shareHolders = [
+      await this.getShareHolder(
+        timestamp,
+        uploadAttachment,
+        domain,
+        tenantId,
+        company
+      ),
+    ]
+    while (shareHolders.length < numberOfShareHolder) {
+      let c: CompanySeedData | null = null
+      while (!c || c == company) {
+        c = this.rng.pickRandom(companies)
+      }
+      shareHolders.push(
+        await this.getShareHolder(
+          timestamp,
+          uploadAttachment,
+          domain,
+          tenantId,
+          company
+        )
+      )
+    }
+    return shareHolders
+  }
+}
+class DirectorSampler extends UserSampler<Promise<Person[]>> {
   protected getDirector = async (
     timestamp: number,
     domain: string,
@@ -629,9 +657,41 @@ export class BusinessUserSampler extends UserSampler<
     } as Person
   }
   protected async generateSample(
+    timestamp: number,
+    domain: string,
+    tenantId: string,
+    uploadAttachment: boolean = true
+  ) {
+    const numberOfDirectors = this.rng.randomIntInclusive(1, 2)
+    const directors: Person[] = []
+    while (directors.length < numberOfDirectors) {
+      directors.push(
+        await this.getDirector(timestamp, domain, tenantId, uploadAttachment)
+      )
+    }
+    return directors
+  }
+}
+
+export class BusinessUserSampler extends UserSampler<
+  Promise<InternalBusinessUser>
+> {
+  private ruleSampler: RuleSampler
+  constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
+    super(seed)
+    this.ruleSampler = new RuleSampler(
+      undefined,
+      businessRules,
+      [2, 3],
+      companies.length,
+      false
+    )
+  }
+
+  protected async generateSample(
     tenantId: string,
     uploadAttachment: boolean = true,
-    company?: CompanySeedData,
+    company: CompanySeedData,
     country?: CountryCode
   ): Promise<InternalBusinessUser> {
     const name = company?.name || this.randomName()
@@ -653,40 +713,28 @@ export class BusinessUserSampler extends UserSampler<
     }))
     const paymentMethod: PaymentDetails[] = []
 
-    const shareHolders: Person[] = []
-
     for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
       paymentMethod.push(paymentMethodSampler.getSample())
     }
 
-    if (shareHolders.length === 0) {
-      // only poulate once
-      for (let i = 0; i < 100; i++) {
-        shareHolders.push(
-          await this.getShareHolder(
-            timestamp,
-            uploadAttachment,
-            domain,
-            tenantId,
-            company
-          )
-        )
-      }
-    }
+    const shareHolderSampler = new ShareHolderSampler(undefined, companies)
+    const directorSampler = new DirectorSampler()
 
-    if (directors.length === 0) {
-      for (let i = 0; i < 100; i++) {
-        directors.push(
-          await this.getDirector(timestamp, domain, tenantId, uploadAttachment)
-        )
-      }
-    }
-
-    const userShareHolders: Person[] = this.rng.randomSubsetOfSize(
-      shareHolders,
-      2
+    const userShareHolders: Person[] = await shareHolderSampler.getSample(
+      undefined,
+      timestamp,
+      uploadAttachment,
+      domain,
+      tenantId,
+      company
     )
-    const userDirectors: Person[] = this.rng.randomSubsetOfSize(directors, 2)
+    const userDirectors: Person[] = await directorSampler.getSample(
+      undefined,
+      timestamp,
+      domain,
+      tenantId,
+      uploadAttachment
+    )
 
     const user: InternalBusinessUser = {
       type: 'BUSINESS',

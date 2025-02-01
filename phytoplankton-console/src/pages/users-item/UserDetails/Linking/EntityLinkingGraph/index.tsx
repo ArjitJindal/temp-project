@@ -158,14 +158,16 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         onCanvasClick={() => {
           setSelectedNode(undefined);
         }}
-        renderNode={({ node, ...rest }) => (
-          <SphereWithIcon
-            {...rest}
-            color={getNodeColor(userId, node.id)}
-            node={node}
-            image={getIcon(node.id)}
-          />
-        )}
+        renderNode={({ node, ...rest }) => {
+          return (
+            <SphereWithIcon
+              {...rest}
+              color={getNodeColor(userId, node.id)}
+              node={node}
+              image={getIcon(node.id)}
+            />
+          );
+        }}
         nodes={nodes}
         edges={edges}
       />
