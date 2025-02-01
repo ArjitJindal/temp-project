@@ -41,6 +41,7 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     const accounts = await auth0.getTenantAccounts(tenant)
     const cache = accountService.cache()
 
+    await cache.deleteAllOrganizationAccounts(tenant.id)
     await cache.putMultipleAccounts(tenant.id, accounts)
     await cache.createOrganization(tenant.id, {
       type: 'DATABASE',

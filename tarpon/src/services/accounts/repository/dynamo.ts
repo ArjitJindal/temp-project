@@ -320,6 +320,12 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   }
 
   async deleteAccount(account: Account): Promise<void> {
+    const accountToDelete = await this.getAccount(account.id)
+
+    if (!accountToDelete) {
+      throw new NotFound('Account not found')
+    }
+
     await Promise.all([
       this.dynamoClient.send(
         new DeleteCommand({
@@ -334,7 +340,39 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           Key: DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
         })
       ),
+      this.dynamoClient.send(
+        new DeleteCommand({
+          TableName: DYNAMODB_TABLE_NAMES.TARPON,
+          Key: DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+            this.auth0Domain,
+            this.getNonDemoTenantId(accountToDelete.tenantId),
+            accountToDelete.id
+          ),
+        })
+      ),
     ])
+  }
+
+  async deleteAllOrganizationAccounts(tenantId: string): Promise<void> {
+    const key = DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+      this.auth0Domain,
+      this.getNonDemoTenantId(tenantId)
+    )
+
+    const accounts = await this.dynamoClient.send(
+      new QueryCommand({
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
+        KeyConditionExpression: 'PartitionKeyID = :pk',
+        ExpressionAttributeValues: {
+          ':pk': key.PartitionKeyID,
+        },
+      })
+    )
+
+    for (const account of accounts.Items ?? []) {
+      await this.deleteAccount(account as Account)
+    }
   }
 
   async putMultipleAccounts(

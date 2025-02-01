@@ -444,10 +444,7 @@ export const DynamoDbKeys = {
   ACTIVE_SESSIONS: (
     tenantId: string,
     userId: string,
-    deviceInfo?: {
-      userAgent: string
-      deviceFingerprint: string
-    }
+    deviceInfo?: { userAgent: string; deviceFingerprint: string }
   ) => ({
     PartitionKeyID: `${tenantId}#activesessions#${userId}`,
     SortKeyID: generateChecksum(deviceInfo, 5),
