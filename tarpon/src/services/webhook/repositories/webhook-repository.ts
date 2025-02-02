@@ -1,5 +1,6 @@
 import { MongoClient } from 'mongodb'
 import { v4 as uuidv4 } from 'uuid'
+import { captureMessage } from '@sentry/node'
 import { WEBHOOK_COLLECTION } from '@/utils/mongodb-definitions'
 import { WebhookEventType } from '@/@types/openapi-public/WebhookEventType'
 import { WebhookConfiguration } from '@/@types/openapi-internal/WebhookConfiguration'
@@ -91,6 +92,10 @@ export class WebhookRepository {
       { _id: webhook._id },
       { $set: { enabled: false, autoDisableMessage: message } }
     )
+
+    captureMessage(`Webhook ${webhook._id} disabled by ${message}`, {
+      level: 'info',
+    })
 
     return {
       newImage: result?.value as WebhookConfiguration,

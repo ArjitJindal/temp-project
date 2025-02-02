@@ -204,7 +204,7 @@ export async function deliverWebhookEvent(
       const hoursForRetry = webhookSettings?.maxRetryHours ?? MAX_RETRY_HOURS
 
       if (retryHours >= hoursForRetry) {
-        logger.error(
+        logger.warn(
           `Failed to deliver event ${webhookDeliveryTask.event} to ${webhook.webhookUrl} after ${hoursForRetry} hours. Will not retry`
         )
 
@@ -226,7 +226,7 @@ export async function deliverWebhookEvent(
           ])
         }
 
-        logger.error(
+        logger.warn(
           `Failed to deliver event ${webhookDeliveryTask.event} to ${
             webhook.webhookUrl
           } after ${hoursForRetry} hours. Will not retry action: ${humanizeConstant(
