@@ -47,6 +47,7 @@ export const getE2ETestProject = (
         build: {
           commands: [
             'cd tarpon',
+            'export SEED_TRANSACTIONS_COUNT=1000',
             ...commandMoveGeneratedDirs(),
             'npm run migration:seed:demo-data',
             'cd ..',

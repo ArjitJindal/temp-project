@@ -32,6 +32,7 @@ describe('Accounts - CRUD Test', () => {
 
     cy.contains('td', randomEmail).parent().find('button[data-cy="accounts-edit-button"]').click();
 
+    cy.wait(1000); // eslint-disable-line cypress/no-unnecessary-waiting
     cy.get('.ant-select-selector').click();
     cy.get('.ant-select-item-option-content').contains('Analyst').click();
     cy.get('button[data-cy="modal-ok"]').click();
@@ -40,6 +41,8 @@ describe('Accounts - CRUD Test', () => {
       .its('response.statusCode')
       .should('be.oneOf', [200, 304]);
 
+    // Lets wait for the account to be updated and things to refresh
+    cy.wait(2000); // eslint-disable-line cypress/no-unnecessary-waiting
     //Delete the added account
     cy.intercept('GET', '**/accounts**').as('delete');
     cy.contains('td', randomEmail)
