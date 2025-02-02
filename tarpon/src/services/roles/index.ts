@@ -1,4 +1,7 @@
 import { BadRequest, Conflict } from 'http-errors'
+import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
+import { DynamoRolesRepository } from './repository/dynamo'
+import { Auth0RolesRepository } from './repository/auth0'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -16,13 +19,34 @@ import { ACCOUNTS_COLLECTION } from '@/utils/mongodb-definitions'
 @traceable
 export class RoleService {
   private config: { auth0Domain: string }
+  private dynamoDb: DynamoDBDocumentClient
 
-  constructor(config: { auth0Domain: string }) {
+  constructor(
+    config: { auth0Domain: string },
+    connections: { dynamoDb: DynamoDBDocumentClient }
+  ) {
     this.config = config
+    this.dynamoDb = connections.dynamoDb
   }
 
-  public static getInstance() {
-    return new RoleService({ auth0Domain: getContext()?.auth0Domain as string })
+  public static getInstance(
+    dynamoDb: DynamoDBDocumentClient,
+    auth0Domain?: string
+  ) {
+    const derivedAuth0Domain =
+      auth0Domain ??
+      getContext()?.auth0Domain ??
+      (process.env.AUTH0_DOMAIN as string)
+
+    return new RoleService({ auth0Domain: derivedAuth0Domain }, { dynamoDb })
+  }
+
+  public cache() {
+    return new DynamoRolesRepository(this.config.auth0Domain, this.dynamoDb)
+  }
+
+  public auth0() {
+    return new Auth0RolesRepository(this.config.auth0Domain)
   }
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {

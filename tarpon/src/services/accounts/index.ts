@@ -55,10 +55,8 @@ export class AccountsService {
     connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
     this.config = config
-    this.roleService = new RoleService({
-      auth0Domain: this.config.auth0Domain,
-    })
     this.dynamoDb = connections.dynamoDb
+    this.roleService = new RoleService(config, connections)
   }
 
   public cache() {

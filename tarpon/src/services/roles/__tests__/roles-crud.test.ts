@@ -12,6 +12,7 @@ import {
   auth0AsyncWrapper,
   getAuth0ManagementClient,
 } from '@/utils/auth0-utils'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 jest.mock('@/utils/auth0-utils')
 const mockedGetAuth0ManagementClient =
   getAuth0ManagementClient as unknown as jest.Mock
@@ -25,7 +26,6 @@ const API_RESPONSE = {
 }
 
 const TEST_TENANT_ID = 'test-tenant-id'
-const TEST_DOMAIN = 'test-domain'
 
 let TEST_ROLES: { id?: string; name?: string; description?: string }[] = [
   {
@@ -126,7 +126,7 @@ describe('Test Custom Roles Deletion and Updation', () => {
     })
   })
   test('Test Custom Role creation,updation and deletion', async () => {
-    const roleService = new RoleService({ auth0Domain: TEST_DOMAIN })
+    const roleService = RoleService.getInstance(getDynamoDbClient())
     const createdRole = await roleService.createRole(TEST_TENANT_ID, {
       name: 'test-name',
       description: 'test-description',

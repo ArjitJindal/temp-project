@@ -59,12 +59,14 @@ export class NotificationsService {
     return accountsService.getTenantAccounts(tenant)
   })
 
+  private rolesService = memoize(() => RoleService.getInstance(this.dynamoDb))
+
   private allRoles = memoize(
-    async () => await RoleService.getInstance().getTenantRoles(this.tenantId)
+    async () => await this.rolesService().getTenantRoles(this.tenantId)
   )
 
   private roleById = memoize(
-    async (roleId: string) => await RoleService.getInstance().getRole(roleId),
+    async (roleId: string) => await this.rolesService().getRole(roleId),
     (roleId) => roleId
   )
 

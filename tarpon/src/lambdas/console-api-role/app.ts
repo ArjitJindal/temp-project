@@ -6,6 +6,7 @@ import { RoleService } from '@/services/roles'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { Handlers } from '@/@types/openapi-internal-custom/DefaultApi'
+import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 
 export const rolesHandler = lambdaApi()(
   async (
@@ -14,7 +15,10 @@ export const rolesHandler = lambdaApi()(
     >
   ) => {
     const { auth0Domain } = event.requestContext.authorizer
-    const rolesService = new RoleService({ auth0Domain })
+    const rolesService = RoleService.getInstance(
+      getDynamoDbClientByEvent(event),
+      auth0Domain
+    )
     const { tenantId } = event.requestContext.authorizer
 
     const handlers = new Handlers()
