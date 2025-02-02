@@ -105,6 +105,9 @@ type ExcludedDynamoDbKey = Exclude<
   | 'ORGANIZATION_ACCOUNTS'
   | 'ACCOUNTS'
   | 'ACCOUNTS_BY_EMAIL'
+  | 'ROLES'
+  | 'ROLES_BY_NAME'
+  | 'ROLES_BY_NAMESPACE'
 > // If new Dynamo Key is added then it will be type checked so that it must have a way to delete if created
 
 @traceable
