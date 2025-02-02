@@ -47,6 +47,10 @@ Sentry.init({
       return event;
     }
 
+    if (hint?.originalException.message.includes('ResizeObserver loop limit exceeded')) {
+      return null;
+    }
+
     const error = hint?.originalException as HttpError | Error;
     if (error && 'code' in error && error.code && error.code >= 400 && error.code < 500) {
       return null;
