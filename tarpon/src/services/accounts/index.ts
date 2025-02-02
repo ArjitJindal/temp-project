@@ -267,18 +267,6 @@ export class AccountsService {
     logger.info(`Sent password reset email`, { email })
   }
 
-  public async addUserCache(tenantId: string, users: Account[]) {
-    await this.cache().putMultipleAccounts(tenantId, users)
-  }
-
-  private async deleteUserCache(tenantId: string, userId: string) {
-    const account = await this.getAccount(userId)
-    if (!account) {
-      return
-    }
-    await this.cache().deleteAccount(account)
-  }
-
   private async updateUserCache(
     tenantId: string,
     userId: string,
@@ -379,14 +367,17 @@ export class AccountsService {
     userId: string
   ) {
     const idToChange = accountId
-    const oldTenant = await this.getAccountTenant(idToChange)
-    const newTenant = await this.getTenantById(newTenantId)
+    const [oldTenant, newTenant] = await Promise.all([
+      this.getAccountTenant(idToChange),
+      this.getTenantById(newTenantId),
+    ])
     if (newTenant == null) {
       throw new BadRequest(`Unable to find tenant by id: ${newTenantId}`)
     }
     if (oldTenant.name === newTenant.name) {
       return
     }
+
     // Need to do this call to make sure operations are executed in exact order.
     // Without it if you try to remove and add member from the same organization,
     // it will be removed but will not be added
@@ -402,10 +393,10 @@ export class AccountsService {
       await this.deleteAccountFromOrganization(newTenant, user)
       throw e
     }
-    await this.deleteUserCache(oldTenant.id, userId)
-
-    if (user) {
-      await this.addUserCache(newTenant.id, [user])
+    if (oldTenant.region !== newTenant.region) {
+      await sendInternalProxyWebhook(newTenant.region as FlagrightRegion, {
+        type: 'ACCOUNTS_REFRESH',
+      })
     }
   }
 
@@ -669,9 +660,6 @@ export class AccountsService {
     for await (const email of emails) {
       await this.createAccount(tenant, { email, role })
     }
-
-    const allAccounts = await this.getTenantAccounts(tenant)
-    await this.addUserCache(tenant.id, allAccounts)
   }
 
   async checkAuth0UserExistsMultiple(emails: string[]): Promise<boolean> {

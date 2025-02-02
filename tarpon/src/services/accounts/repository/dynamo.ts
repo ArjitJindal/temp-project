@@ -24,6 +24,7 @@ import {
 } from '@/utils/dynamodb'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { getContext } from '@/core/utils/context'
 
 type CacheAccount = Account & { tenantId: string }
 
@@ -139,7 +140,6 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     }
 
     const nonDemoTenantId = this.getNonDemoTenantId(tenantId)
-
     const account = createParams.params
 
     await Promise.all([
@@ -321,10 +321,7 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
 
   async deleteAccount(account: Account): Promise<void> {
     const accountToDelete = await this.getAccount(account.id)
-
-    if (!accountToDelete) {
-      throw new NotFound('Account not found')
-    }
+    const tenantId = accountToDelete?.tenantId ?? getContext()?.tenantId
 
     await Promise.all([
       this.dynamoClient.send(
@@ -340,16 +337,20 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
           Key: DynamoDbKeys.ACCOUNTS(this.auth0Domain, account.id),
         })
       ),
-      this.dynamoClient.send(
-        new DeleteCommand({
-          TableName: DYNAMODB_TABLE_NAMES.TARPON,
-          Key: DynamoDbKeys.ORGANIZATION_ACCOUNTS(
-            this.auth0Domain,
-            this.getNonDemoTenantId(accountToDelete.tenantId),
-            accountToDelete.id
-          ),
-        })
-      ),
+      ...(tenantId
+        ? [
+            this.dynamoClient.send(
+              new DeleteCommand({
+                TableName: DYNAMODB_TABLE_NAMES.TARPON,
+                Key: DynamoDbKeys.ORGANIZATION_ACCOUNTS(
+                  this.auth0Domain,
+                  this.getNonDemoTenantId(tenantId),
+                  account.id
+                ),
+              })
+            ),
+          ]
+        : []),
     ])
   }
 
