@@ -13696,7 +13696,6 @@ components:
             - $ref: '#/components/schemas/NangoBatchJobTrigger'
             - $ref: '#/components/schemas/AccountsRefreshBatchJobTrigger'
       required:
-        - tenantId
         - sourceRegion
         - destinationRegion
         - data
