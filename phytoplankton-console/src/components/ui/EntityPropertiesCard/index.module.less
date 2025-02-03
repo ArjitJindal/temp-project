@@ -13,6 +13,7 @@
   background: #f8f9fa;
   position: sticky;
   top: 0;
+  left: 0;
   padding: 12px 12px 0 12px;
 }
 
@@ -24,12 +25,16 @@
 
 .items {
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: auto minmax(auto, min-content);
   gap: 12px 40px;
   padding: 0 12px 12px 12px;
 }
 
 .itemLabel {
   color: @fr-colors-v2-gray-6;
-  white-space: nowrap;
+  max-width: 250px;
+}
+
+.itemValue {
+  word-break: break-all;
 }

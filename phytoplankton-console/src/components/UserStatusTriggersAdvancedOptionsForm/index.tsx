@@ -23,7 +23,7 @@ import {
   RuleType,
 } from '@/apis';
 import InputField from '@/components/library/Form/InputField';
-import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/GeneralDetails/PepStatus';
+import { PEP_RANK_OPTIONS } from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
 
 type UserStatusTriggersAdvancedOptionsFormProps = {
   type: 'CASE' | 'RULE';

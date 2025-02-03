@@ -14,7 +14,7 @@ export default function FinancialDetails(props: Props) {
   const financialDetails = user.legalEntity.companyFinancialDetails;
   return (
     <EntityPropertiesCard
-      title={'Financial details'}
+      title={'Company financial details'}
       items={[
         {
           label: 'Expected total transaction volume per month',

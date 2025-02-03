@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
-import { PepStatusLabel, PepStatusValue } from './PepStatus';
-import { InternalConsumerUser, PEPStatus } from '@/apis';
+import { InternalConsumerUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
 import CountryDisplay from '@/components/ui/CountryDisplay';
 import TagList from '@/components/library/Tag/TagList';
 import Tag from '@/components/library/Tag';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
+
 interface Props {
   user: InternalConsumerUser;
   columns?: number;
@@ -21,7 +21,6 @@ const GENDER_MAP = {
 
 export default function GeneralDetails(props: Props) {
   const { user, columns = 1 } = props;
-  const [pepStatus, setPepStatus] = useState<PEPStatus[]>(user.pepStatus ?? []);
   return (
     <EntityPropertiesCard
       title={'General details'}
@@ -110,16 +109,6 @@ export default function GeneralDetails(props: Props) {
         {
           label: 'Alias',
           value: user.userDetails?.alias,
-        },
-        {
-          label: (
-            <PepStatusLabel
-              userId={user.userId}
-              pepStatus={user.pepStatus ?? []}
-              updatePepStatus={setPepStatus}
-            />
-          ),
-          value: <PepStatusValue pepStatus={pepStatus} />,
         },
       ]}
     />

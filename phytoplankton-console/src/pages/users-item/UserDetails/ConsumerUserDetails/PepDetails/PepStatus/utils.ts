@@ -1,6 +1,6 @@
 import { compact, first, flatMap, groupBy, map } from 'lodash';
 import { COUNTRIES } from '@flagright/lib/constants';
-import { FormValues } from '.';
+import { FormValues } from './index';
 import { PEPStatus, PepRank } from '@/apis';
 import { message } from '@/components/library/Message';
 
