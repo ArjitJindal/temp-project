@@ -30,6 +30,7 @@ import { AlertsService } from '../alerts'
 import { S3Config } from '../aws/s3-service'
 import { SLAPolicyService } from '../tenants/sla-policy-service'
 import { SLAService } from '../sla/sla-service'
+import { AccountsService } from '../accounts'
 import { CasesAlertsReportAuditLogService } from './case-alerts-report-audit-log-service'
 import { CaseService } from '.'
 import {
@@ -1572,15 +1573,18 @@ export class CaseCreationService {
     return result
   }
 
-  getUsersByRole = memoize(async (assignedRole) =>
-    (
-      await RoleService.getInstance(
-        this.caseRepository.dynamoDb
-      ).getUsersByRole(assignedRole, this.tenantId)
+  public getUsersByRole = memoize(async (assignedRole: string) => {
+    const rolesService = RoleService.getInstance(this.caseRepository.dynamoDb)
+    const accountsService = AccountsService.getInstance(
+      this.caseRepository.dynamoDb
     )
-      .map((user) => user?.user_id)
-      .filter((user) => user !== undefined && user !== '')
-  )
+    const tenant = await accountsService.getTenantById(this.tenantId)
+    if (!tenant) {
+      return []
+    }
+    const data = await rolesService.getUsersByRole(assignedRole, tenant)
+    return data.map((user) => user.id)
+  })
 
   private getFrozenStatusFilter(
     alert: Alert,

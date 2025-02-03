@@ -2,6 +2,7 @@ import { PostOrganizationsRequest } from 'auth0'
 import { FlagrightRegion } from '@flagright/lib/constants/deploy'
 import { Account } from '@/@types/openapi-internal/Account'
 import { AccountPatchPayload } from '@/@types/openapi-internal/AccountPatchPayload'
+import { traceable } from '@/core/xray'
 
 export type Tenant = {
   id: string
@@ -56,6 +57,7 @@ export type PatchAccountData = {
   role?: string
 }
 
+@traceable
 export abstract class BaseAccountsRepository {
   abstract getAccount(accountId: string): Promise<Account | null>
   abstract getAccountByEmail(email: string): Promise<Account | null>
@@ -95,4 +97,5 @@ export abstract class BaseAccountsRepository {
   ): Promise<void>
   abstract deleteAccount(account: Account): Promise<void>
   abstract getTenants(auth0Domain?: string): Promise<Tenant[]>
+  abstract getTenantById(tenantId: string): Promise<Tenant | null>
 }

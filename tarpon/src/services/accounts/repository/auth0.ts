@@ -21,7 +21,9 @@ import { Account } from '@/@types/openapi-internal/Account'
 import { getContext } from '@/core/utils/context'
 import { envIsNot } from '@/utils/env'
 import { logger } from '@/core/logger'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class Auth0AccountsRepository extends BaseAccountsRepository {
   private readonly auth0Domain: string
 
@@ -357,5 +359,10 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     }
 
     return tenants
+  }
+
+  async getTenantById(tenantId: string): Promise<Tenant | null> {
+    const tenants = await this.getTenants()
+    return tenants.find((tenant) => tenant.id === tenantId) ?? null
   }
 }

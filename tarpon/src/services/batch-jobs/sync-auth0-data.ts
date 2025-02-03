@@ -9,7 +9,9 @@ import { SyncAuth0DataBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { Tenant } from '@/services/accounts/repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { traceable } from '@/core/xray'
 
+@traceable
 export class SyncAuth0DataRunner extends BatchJobRunner {
   private dynamoDb?: DynamoDBClient
   protected async run(job: SyncAuth0DataBatchJob) {
@@ -43,9 +45,9 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
       { dynamoDb: this.dynamoDb as DynamoDBClient }
     )
 
-    const auth0 = accountService.auth0()
+    const auth0 = accountService.auth0
     const accounts = await auth0.getTenantAccounts(tenant)
-    const cache = accountService.cache()
+    const cache = accountService.cache
 
     await cache.deleteAllOrganizationAccounts(tenant.id)
     await cache.putMultipleAccounts(tenant.id, accounts)
@@ -60,8 +62,8 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
       this.dynamoDb as DynamoDBClient,
       auth0Domain ?? tenant.auth0Domain
     )
-    const auth0 = rolesService.auth0()
-    const cache = rolesService.cache()
+    const auth0 = rolesService.auth0
+    const cache = rolesService.cache
 
     const roles = await auth0.rolesByNamespace(getNonDemoTenantId(tenant.id))
 

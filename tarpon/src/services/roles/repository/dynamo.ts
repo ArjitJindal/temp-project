@@ -14,7 +14,12 @@ import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getNonDemoTenantId } from '@/utils/tenant'
+import { traceable } from '@/core/xray'
+import { Tenant } from '@/services/accounts/repository'
+import { DynamoAccountsRepository } from '@/services/accounts/repository/dynamo'
+import { Account } from '@/@types/openapi-internal/Account'
 
+@traceable
 export class DynamoRolesRepository extends BaseRolesRepository {
   private dynamoClient: DynamoDBDocumentClient
   private auth0Domain: string
@@ -176,5 +181,19 @@ export class DynamoRolesRepository extends BaseRolesRepository {
         ),
       })
     )
+  }
+
+  public async getUsersByRole(id: string, tenant: Tenant): Promise<Account[]> {
+    const accountsService = new DynamoAccountsRepository(
+      this.auth0Domain,
+      this.dynamoClient
+    )
+    const accounts = await accountsService.getTenantAccounts(tenant)
+    const role = await this.getRole(id)
+    if (!role) {
+      throw new Error('Role not found')
+    }
+    const roleName = getRoleDisplayName(role.name)
+    return accounts.filter((account) => account.role === roleName)
   }
 }

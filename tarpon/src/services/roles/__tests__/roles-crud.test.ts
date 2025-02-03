@@ -8,16 +8,31 @@ import {
 } from 'auth0'
 import { remove } from 'lodash'
 import { RoleService } from '..'
+import { Auth0RolesRepository } from '../repository/auth0'
 import {
   auth0AsyncWrapper,
   getAuth0ManagementClient,
 } from '@/utils/auth0-utils'
 import { getDynamoDbClient } from '@/utils/dynamodb'
+import { dynamoDbSetupHook } from '@/test-utils/dynamodb-test-utils'
+import { Tenant } from '@/services/accounts/repository'
+import { AccountsService } from '@/services/accounts'
 jest.mock('@/utils/auth0-utils')
 const mockedGetAuth0ManagementClient =
   getAuth0ManagementClient as unknown as jest.Mock
 
+dynamoDbSetupHook()
+
 const mockedAuth0AsyncWrapper = auth0AsyncWrapper as unknown as jest.Mock
+
+jest.spyOn(AccountsService.prototype, 'getTenantById').mockResolvedValue({
+  id: 'test-tenant-id',
+  name: 'test-tenant-name',
+} as Tenant)
+
+jest
+  .spyOn(Auth0RolesRepository.prototype, 'getUsersByRole')
+  .mockResolvedValue([])
 
 const API_RESPONSE = {
   status: 200,

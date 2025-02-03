@@ -35,7 +35,6 @@ import {
 import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
-import { getNonDemoTenantId } from '@/utils/tenant'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
 
 export type TenantBasic = {
@@ -49,6 +48,8 @@ export class AccountsService {
   private config: { auth0Domain: string }
   private roleService: RoleService
   private dynamoDb: DynamoDBDocumentClient
+  public cache: DynamoAccountsRepository
+  public auth0: Auth0AccountsRepository
 
   constructor(
     config: { auth0Domain: string },
@@ -57,19 +58,16 @@ export class AccountsService {
     this.config = config
     this.dynamoDb = connections.dynamoDb
     this.roleService = new RoleService(config, connections)
-  }
-
-  public cache() {
-    return new DynamoAccountsRepository(this.config.auth0Domain, this.dynamoDb)
-  }
-
-  public auth0() {
-    return new Auth0AccountsRepository(this.config.auth0Domain)
+    this.cache = new DynamoAccountsRepository(
+      this.config.auth0Domain,
+      this.dynamoDb
+    )
+    this.auth0 = new Auth0AccountsRepository(this.config.auth0Domain)
   }
 
   public async deleteOrganization(tenant: Tenant) {
-    await this.auth0().deleteOrganization(tenant)
-    await this.cache().deleteOrganization(tenant)
+    await this.auth0.deleteOrganization(tenant)
+    await this.cache.deleteOrganization(tenant)
   }
 
   private shouldUseCache() {
@@ -83,7 +81,7 @@ export class AccountsService {
   }
 
   public async getAllAccountsCache(tenantId: string): Promise<Account[]> {
-    const accounts = await this.cache().getTenantAccounts({ id: tenantId })
+    const accounts = await this.cache.getTenantAccounts({ id: tenantId })
     return accounts
   }
 
@@ -98,7 +96,7 @@ export class AccountsService {
     tenantId: string,
     updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
-    await this.auth0().patchOrganization(tenantId, updatedMetadata)
+    await this.auth0.patchOrganization(tenantId, updatedMetadata)
   }
 
   async resetPassword(accountId: string) {
@@ -122,16 +120,16 @@ export class AccountsService {
 
   async getAccountTenant(userId: string): Promise<Tenant> {
     if (!this.shouldUseCache()) {
-      return this.auth0().getAccountTenant(userId)
+      return this.auth0.getAccountTenant(userId)
     }
 
-    const tenant = await this.cache().getAccountTenant(userId)
+    const tenant = await this.cache.getAccountTenant(userId)
 
     if (!tenant) {
-      const data = await this.auth0().getAccountTenant(userId)
+      const data = await this.auth0.getAccountTenant(userId)
 
       if (data) {
-        await this.cache().createOrganization(userId, {
+        await this.cache.createOrganization(userId, {
           type: 'DATABASE',
           params: data,
         })
@@ -153,9 +151,22 @@ export class AccountsService {
   }
 
   async getTenantById(rawTenantId: string): Promise<Tenant | null> {
-    const tenantId = getNonDemoTenantId(rawTenantId)
-    const allTenants = await this.getTenants()
-    return allTenants.find((tenant) => tenant.id === tenantId) ?? null
+    if (!this.shouldUseCache()) {
+      return this.auth0.getTenantById(rawTenantId)
+    }
+
+    const tenant = await this.cache.getTenantById(rawTenantId)
+    if (!tenant) {
+      const data = await this.auth0.getTenantById(rawTenantId)
+      if (data) {
+        await this.cache.createOrganization(rawTenantId, {
+          type: 'DATABASE',
+          params: data,
+        })
+      }
+    }
+
+    return tenant
   }
 
   public async inviteAccount(
@@ -192,16 +203,15 @@ export class AccountsService {
   ): Promise<Account> {
     let account: Account | null = null
     try {
-      const existingUser = await this.auth0().getAccountByEmail(params.email)
+      const existingUser = await this.auth0.getAccountByEmail(params.email)
 
       if (existingUser) {
         /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
         if (existingUser.blocked) {
-          account = await this.auth0().patchAccount(
-            tenant.id,
-            existingUser.id,
-            { blocked: false, blockedReason: null }
-          )
+          account = await this.auth0.patchAccount(tenant.id, existingUser.id, {
+            blocked: false,
+            blockedReason: null,
+          })
           await this.roleService.setRole(
             tenant.id,
             existingUser.id,
@@ -211,27 +221,27 @@ export class AccountsService {
           throw new BadRequest('The user already exists.')
         }
       } else {
-        account = await this.auth0().createAccount(tenant.id, {
+        account = await this.auth0.createAccount(tenant.id, {
           type: 'AUTH0',
           params,
         })
         logger.info('Created user', { email: params.email })
         await this.roleService.setRole(tenant.id, account.id, params.role)
       }
-      await this.auth0().addAccountToOrganization(tenant, account)
+      await this.auth0.addAccountToOrganization(tenant, account)
       logger.info(`Added user to orginization ${tenant.orgId}`, {
         email: params.email,
         account: account.id,
       })
       await this.sendPasswordResetEmail(params.email)
-      await this.cache().createAccount(tenant.id, {
+      await this.cache.createAccount(tenant.id, {
         type: 'DATABASE',
         params: account,
       })
-      await this.cache().addAccountToOrganization(tenant, account)
+      await this.cache.addAccountToOrganization(tenant, account)
     } catch (e) {
       if (account) {
-        await this.auth0().deleteAccount(account)
+        await this.auth0.deleteAccount(account)
         logger.info('Deleted user', { email: params.email })
       }
       throw e
@@ -276,7 +286,7 @@ export class AccountsService {
       return
     }
 
-    await this.cache().createAccount(tenantId, {
+    await this.cache.createAccount(tenantId, {
       type: 'DATABASE',
       params: { ...account, ...data },
     })
@@ -284,14 +294,14 @@ export class AccountsService {
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
     if (!this.shouldUseCache()) {
-      return this.auth0().getTenantAccounts(tenant)
+      return this.auth0.getTenantAccounts(tenant)
     }
 
-    const accounts = await this.cache().getTenantAccounts(tenant)
+    const accounts = await this.cache.getTenantAccounts(tenant)
 
     if (!accounts.length) {
-      const data = await this.auth0().getTenantAccounts(tenant)
-      await this.cache().putMultipleAccounts(tenant.id, data)
+      const data = await this.auth0.getTenantAccounts(tenant)
+      await this.cache.putMultipleAccounts(tenant.id, data)
       return data
     }
     return accounts
@@ -304,15 +314,15 @@ export class AccountsService {
   private getAccountInternal = memoize(
     async (id: string): Promise<Account | null> => {
       if (!this.shouldUseCache()) {
-        return this.auth0().getAccount(id)
+        return this.auth0.getAccount(id)
       }
 
-      const account = await this.cache().getAccount(id)
+      const account = await this.cache.getAccount(id)
 
       if (!account) {
-        const data = await this.auth0().getAccount(id)
+        const data = await this.auth0.getAccount(id)
         if (data) {
-          await this.cache().createAccount(id, {
+          await this.cache.createAccount(id, {
             type: 'DATABASE',
             params: data,
           })
@@ -327,14 +337,14 @@ export class AccountsService {
 
   async getAccounts(tenantId: string, ids: string[]): Promise<Account[]> {
     if (!this.shouldUseCache()) {
-      return this.auth0().getAccountByIds(ids)
+      return this.auth0.getAccountByIds(ids)
     }
 
-    const accounts = await this.cache().getAccountByIds(ids)
+    const accounts = await this.cache.getAccountByIds(ids)
 
     if (accounts.length !== ids.length) {
-      const data = await this.auth0().getAccountByIds(ids)
-      await this.cache().putMultipleAccounts(tenantId, data)
+      const data = await this.auth0.getAccountByIds(ids)
+      await this.cache.putMultipleAccounts(tenantId, data)
 
       return data
     }
@@ -347,13 +357,13 @@ export class AccountsService {
   ): Promise<Tenant[]> {
     const domain = auth0Domain ?? this.config.auth0Domain
     if (!this.shouldUseCache() || !useCache) {
-      return this.auth0().getTenants(domain)
+      return this.auth0.getTenants(domain)
     }
 
-    const tenants = await this.cache().getTenants(domain)
+    const tenants = await this.cache.getTenants(domain)
     if (!tenants.length) {
-      const data = await this.auth0().getTenants(domain)
-      await this.cache().putMultipleTenants(data)
+      const data = await this.auth0.getTenants(domain)
+      await this.cache.putMultipleTenants(data)
       return data
     }
     return tenants
@@ -401,13 +411,13 @@ export class AccountsService {
   }
 
   async addAccountToOrganization(tenant: Tenant, account: Account) {
-    await this.auth0().addAccountToOrganization(tenant, account)
-    await this.cache().addAccountToOrganization(tenant, account)
+    await this.auth0.addAccountToOrganization(tenant, account)
+    await this.cache.addAccountToOrganization(tenant, account)
   }
 
   async deleteAccountFromOrganization(tenant: Tenant, account: Account) {
-    await this.auth0().deleteAccountFromOrganization(tenant, account)
-    await this.cache().deleteAccountFromOrganization(tenant, account)
+    await this.auth0.deleteAccountFromOrganization(tenant, account)
+    await this.cache.deleteAccountFromOrganization(tenant, account)
   }
 
   async deleteUser(tenant: Tenant, idToDelete: string, reassignedTo: string) {
@@ -430,7 +440,7 @@ export class AccountsService {
 
       promises.push(
         ...usersWithReviewer.map((user) =>
-          this.auth0().patchAccount(tenant.id, user.id, {
+          this.auth0.patchAccount(tenant.id, user.id, {
             app_metadata: { reviewerId: reassignedTo },
           })
         )
@@ -461,8 +471,8 @@ export class AccountsService {
     blockedReason: Account['blockedReason'] | null
   ) {
     const data = { blocked, blockedReason }
-    await this.auth0().patchAccount(tenantId, accountId, data)
-    await this.cache().patchAccount(tenantId, accountId, data)
+    await this.auth0.patchAccount(tenantId, accountId, data)
+    await this.cache.patchAccount(tenantId, accountId, data)
   }
 
   public async blockAccount(
@@ -497,8 +507,8 @@ export class AccountsService {
   }
 
   async deleteAuth0User(user: Account) {
-    await this.auth0().deleteAccount(user)
-    await this.cache().deleteAccount(user)
+    await this.auth0.deleteAccount(user)
+    await this.cache.deleteAccount(user)
   }
 
   async patchUserHandler(
@@ -527,7 +537,7 @@ export class AccountsService {
     if (patch.role) {
       await this.roleService.setRole(tenant.id, accountId, patch.role)
     }
-    const patchedUser = await this.auth0().patchAccount(tenant.id, accountId, {
+    const patchedUser = await this.auth0.patchAccount(tenant.id, accountId, {
       app_metadata: patch,
     })
     await this.updateUserCache(tenant.id, accountId, patch)
@@ -552,7 +562,7 @@ export class AccountsService {
     accountId: string,
     patch: Partial<AccountSettings>
   ): Promise<AccountSettings> {
-    await this.auth0().patchAccount(tenantId, accountId, {
+    await this.auth0.patchAccount(tenantId, accountId, {
       user_metadata: patch,
     })
 
@@ -612,7 +622,7 @@ export class AccountsService {
       tenantCreatedAt: Date.now().toString(),
     }
 
-    const organization = await this.auth0().createOrganization(tenantId, {
+    const organization = await this.auth0.createOrganization(tenantId, {
       type: 'AUTH0',
       params: {
         name: tenantData.tenantName.toLowerCase(),
@@ -694,7 +704,7 @@ export class AccountsService {
     tenantId: string,
     roles: string[]
   ): Promise<string[]> {
-    const accounts = await this.cache().getTenantAccounts({ id: tenantId })
+    const accounts = await this.cache.getTenantAccounts({ id: tenantId })
     return accounts
       .filter((account) => roles.includes(account.role))
       .map((account) => account.id)
@@ -702,16 +712,16 @@ export class AccountsService {
 
   async getAccountByEmail(email: string): Promise<Account | null> {
     if (!this.shouldUseCache()) {
-      return this.auth0().getAccountByEmail(email)
+      return this.auth0.getAccountByEmail(email)
     }
 
-    const account = await this.cache().getAccountByEmail(email)
+    const account = await this.cache.getAccountByEmail(email)
 
     if (!account) {
-      const data = await this.auth0().getAccountByEmail(email)
+      const data = await this.auth0.getAccountByEmail(email)
 
       if (data) {
-        await this.cache().createAccountByEmail(email, data)
+        await this.cache.createAccountByEmail(email, data)
       }
 
       return data

@@ -1,8 +1,11 @@
 import { isFlagrightInternalUser } from '@/@types/jwt'
+import { Account } from '@/@types/openapi-internal/Account'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { CreateAccountRole } from '@/@types/openapi-internal/CreateAccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import { getContext } from '@/core/utils/context'
+import { traceable } from '@/core/xray'
+import { Tenant } from '@/services/accounts/repository'
 
 export type CreateRoleInternal =
   | { type: 'DATABASE'; params: AccountRole }
@@ -10,6 +13,7 @@ export type CreateRoleInternal =
 
 export const DEFAULT_NAMESPACE = 'default'
 
+@traceable
 export abstract class BaseRolesRepository {
   abstract getTenantRoles(tenantId: string): Promise<AccountRole[]>
   abstract createRole(
@@ -27,7 +31,7 @@ export abstract class BaseRolesRepository {
     roleId: string,
     permissions: Permission[]
   ): Promise<void>
-
+  abstract getUsersByRole(id: string, tenant: Tenant): Promise<Account[]>
   protected shouldFetchRootRole(): boolean {
     return !!isFlagrightInternalUser() && getContext()?.user?.role === 'root'
   }

@@ -139,10 +139,6 @@ export const USERS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.USERS}`
 }
 
-export const ACCOUNTS_COLLECTION = (tenantId: string) => {
-  return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.ACCOUNTS}`
-}
-
 export const TRANSACTION_EVENTS_COLLECTION = (tenantId: string) => {
   return `${tenantId}-${MONGO_TABLE_SUFFIX_MAP.TRANSACTION_EVENTS}`
 }
@@ -682,10 +678,6 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
     [SIMULATION_RESULT_COLLECTION(tenantId)]: {
       getIndexes: () => [{ taskId: 1 }].map((index) => ({ index })),
     },
-    [ACCOUNTS_COLLECTION(tenantId)]: {
-      getIndexes: () => [{ index: { id: 1 }, unique: true }],
-    },
-
     [KRS_SCORES_COLLECTION(tenantId)]: {
       getIndexes: () => [{ userId: 1 }].map((index) => ({ index })),
     },

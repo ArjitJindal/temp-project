@@ -25,9 +25,11 @@ import {
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { getContext } from '@/core/utils/context'
+import { traceable } from '@/core/xray'
 
 type CacheAccount = Account & { tenantId: string }
 
+@traceable
 export class DynamoAccountsRepository extends BaseAccountsRepository {
   private readonly dynamoClient: DynamoDBClient
   private readonly auth0Domain: string
@@ -88,6 +90,21 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       delete (item as any).SortKeyID
       return item
     }) ?? []) as CacheAccount[]
+  }
+
+  async getTenantById(tenantId: string): Promise<Tenant | null> {
+    const key = DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenantId)
+    const data = await this.dynamoClient.send(
+      new GetCommand({
+        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        Key: key,
+      })
+    )
+
+    delete data.Item?.PartitionKeyID
+    delete data.Item?.SortKeyID
+
+    return data.Item as Tenant
   }
 
   async getAccountByEmail(email: string): Promise<CacheAccount | null> {
@@ -372,7 +389,9 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     )
 
     for (const account of accounts.Items ?? []) {
-      await this.deleteAccount(account as Account)
+      if (account.id) {
+        await this.deleteAccount(account as Account)
+      }
     }
   }
 

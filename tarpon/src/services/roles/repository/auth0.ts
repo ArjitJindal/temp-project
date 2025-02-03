@@ -1,6 +1,10 @@
 import { BadRequest } from 'http-errors'
 import { compact } from 'lodash'
-import { getNamespacedRoleName, transformRole } from '../utils'
+import {
+  getNamespacedRoleName,
+  getRoleDisplayName,
+  transformRole,
+} from '../utils'
 import { BaseRolesRepository, CreateRoleInternal, DEFAULT_NAMESPACE } from '.'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import {
@@ -9,7 +13,11 @@ import {
 } from '@/utils/auth0-utils'
 import { isValidManagedRoleName } from '@/@types/openapi-internal-custom/ManagedRoleName'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { traceable } from '@/core/xray'
+import { Auth0AccountsRepository } from '@/services/accounts/repository/auth0'
+import { Tenant } from '@/services/accounts/repository'
 
+@traceable
 export class Auth0RolesRepository extends BaseRolesRepository {
   private auth0Domain: string
 
@@ -203,5 +211,16 @@ export class Auth0RolesRepository extends BaseRolesRepository {
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const rolesManager = managementClient.roles
     await rolesManager.delete({ id })
+  }
+
+  public async getUsersByRole(id: string, tenant: Tenant) {
+    const accountsService = new Auth0AccountsRepository(this.auth0Domain)
+    const accounts = await accountsService.getTenantAccounts(tenant)
+    const role = await this.getRole(id)
+    if (!role) {
+      throw new Error('Role not found')
+    }
+    const roleName = getRoleDisplayName(role.name)
+    return accounts.filter((account) => account.role === roleName)
   }
 }
