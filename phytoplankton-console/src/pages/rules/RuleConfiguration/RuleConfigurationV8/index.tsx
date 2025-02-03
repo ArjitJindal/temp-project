@@ -23,6 +23,7 @@ import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { NEW_RULE_ID } from '@/utils/queries/keys';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 
 export type Mode = 'EDIT' | 'CREATE' | 'DUPLICATE' | 'READ';
 
@@ -205,11 +206,13 @@ export default function RuleConfigurationV8(props: Props) {
             )}
           </div>
           <RuleModeModal
+            submitRes={getMutationAsyncResource(
+              type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation,
+            )}
             ruleId={rule?.id ?? ruleInstance?.ruleId ?? ruleInstanceId ?? ''}
             isOpen={isRuleModeModalOpen}
             onOk={() => {
               formRef?.current?.submit();
-              setIsRuleModeModalOpen(false);
             }}
             onCancel={() => setIsRuleModeModalOpen(false)}
             ruleMode={ruleMode}

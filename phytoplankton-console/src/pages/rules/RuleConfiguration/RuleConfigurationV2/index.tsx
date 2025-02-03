@@ -20,6 +20,7 @@ import { Rule, RuleInstance, RuleRunMode } from '@/apis';
 import StepButtons from '@/components/library/StepButtons';
 import { FormRef } from '@/components/library/Form';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
+import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
 
 export interface Props {
   rule?: Rule | null;
@@ -207,11 +208,13 @@ export default function RuleConfigurationV2(props: Props) {
           )}
         </div>
         <RuleModeModal
+          submitRes={getMutationAsyncResource(
+            type === 'EDIT' ? updateRuleInstanceMutation : createRuleInstanceMutation,
+          )}
           isOpen={isRuleModeModalOpen}
           ruleId={rule?.id || ''}
           onOk={() => {
             formRef?.current?.submit();
-            setIsRuleModeModalOpen(false);
           }}
           ruleMode={ruleMode}
           onChangeRuleMode={setRuleMode}

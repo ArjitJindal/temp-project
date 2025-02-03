@@ -1,7 +1,9 @@
+import { useEffect } from 'react';
 import s from './styles.module.less';
 import { RuleRunMode } from '@/apis';
 import Modal from '@/components/library/Modal';
 import SelectionGroup, { Option } from '@/components/library/SelectionGroup';
+import { AsyncResource, isLoading, useFinishedSuccessfully } from '@/utils/asyncResource';
 
 const RULE_MODE_OPTIONS: Option<RuleRunMode>[] = [
   {
@@ -19,6 +21,7 @@ const RULE_MODE_OPTIONS: Option<RuleRunMode>[] = [
 ];
 
 type Props = {
+  submitRes: AsyncResource;
   isOpen: boolean;
   onCancel: () => void;
   ruleId: string;
@@ -28,7 +31,13 @@ type Props = {
 };
 
 export const RuleModeModal = (props: Props) => {
-  const { isOpen, ruleMode, onChangeRuleMode, ruleId, onOk, onCancel } = props;
+  const { submitRes, isOpen, ruleMode, onChangeRuleMode, ruleId, onOk, onCancel } = props;
+  const finishedSuccessfully = useFinishedSuccessfully(submitRes);
+  useEffect(() => {
+    if (finishedSuccessfully) {
+      onCancel();
+    }
+  }, [finishedSuccessfully, onCancel]);
   return (
     <Modal
       isOpen={isOpen}
@@ -36,6 +45,9 @@ export const RuleModeModal = (props: Props) => {
       title={`Configure rule ${ruleId}`}
       onOk={onOk}
       okText="Confirm"
+      okProps={{
+        isLoading: isLoading(submitRes),
+      }}
     >
       <div className={s.modalDescription}>
         <SelectionGroup<RuleRunMode>
