@@ -392,9 +392,11 @@ export class AccountsService {
       throw e
     }
     if (oldTenant.region !== newTenant.region) {
-      await sendInternalProxyWebhook(newTenant.region as FlagrightRegion, {
-        type: 'ACCOUNTS_REFRESH',
-      })
+      await sendInternalProxyWebhook(
+        newTenant.region as FlagrightRegion,
+        { type: 'ACCOUNTS_REFRESH' },
+        false
+      )
     }
   }
 

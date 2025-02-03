@@ -242,7 +242,7 @@ export const webhooksHandler = lambdaApi()(
       const type = request.InternalProxyWebhookEvent.data.type
       const isValid = verifyInternalProxyWebhook(
         event.headers,
-        request.InternalProxyWebhookEvent.data
+        request.InternalProxyWebhookEvent
       )
       if (!isValid) {
         throw new Forbidden(`Invalid signature for internal proxy webhook`)

@@ -1,9 +1,10 @@
 import { createHmac } from 'crypto'
 import { stageAndRegion } from '@flagright/lib/utils'
-import axios from 'axios'
+import axios, { AxiosError } from 'axios'
 import { APIGatewayProxyEventHeaders } from 'aws-lambda'
 import { FlagrightRegion } from '@/@types/openapi-internal/FlagrightRegion'
 import { InternalProxyWebhookEvent } from '@/@types/openapi-internal/InternalProxyWebhookEvent'
+import { logger } from '@/core/logger'
 
 const INTERNAL_PROXY_WEBHOOK_SECRET = '2e01012c-ee69-4848-8c12-020bfd1e57bc'
 const INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER = 'X-Internal-Proxy-Signature'
@@ -12,7 +13,8 @@ export type InternalProxyWebhookData = InternalProxyWebhookEvent['data']
 
 export async function sendInternalProxyWebhook(
   destinationRegion: FlagrightRegion,
-  payload: InternalProxyWebhookData
+  payload: InternalProxyWebhookData,
+  throwError: boolean = true
 ) {
   const [currentStage] = stageAndRegion()
 
@@ -34,18 +36,39 @@ export async function sendInternalProxyWebhook(
     throw new Error('Invalid region for internal proxy webhook')
   }
 
+  const payloadToSend: InternalProxyWebhookEvent = {
+    data: payload,
+    destinationRegion,
+    sourceRegion: stageAndRegion()[1] as FlagrightRegion,
+  }
+
   const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
-    .update(JSON.stringify(payload))
+    .update(JSON.stringify(payloadToSend))
     .digest('hex')
 
-  await axios.post(url, payload, {
-    headers: { [INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]: signature },
-  })
+  try {
+    await axios.post(url, payloadToSend, {
+      headers: { [INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]: signature },
+    })
+  } catch (e) {
+    const error = e as AxiosError
+    if (!throwError) {
+      logger.error('Failed to send internal proxy webhook', {
+        message: error.message,
+        status: error.response?.status,
+        errorMessage: error.response?.data,
+        url,
+        payload: payloadToSend,
+      })
+    } else {
+      throw e
+    }
+  }
 }
 
 export function verifyInternalProxyWebhook(
   headers: APIGatewayProxyEventHeaders,
-  payload: InternalProxyWebhookData
+  payload: InternalProxyWebhookEvent
 ) {
   const signature = headers[INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER]
   if (!signature) {
