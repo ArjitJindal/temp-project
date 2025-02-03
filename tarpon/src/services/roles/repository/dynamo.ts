@@ -7,7 +7,11 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { memoize } from 'lodash'
-import { getNamespace, getRoleDisplayName } from '../utils'
+import {
+  getNamespace,
+  getNamespacedRoleName,
+  getRoleDisplayName,
+} from '../utils'
 import { BaseRolesRepository, CreateRoleInternal, DEFAULT_NAMESPACE } from '.'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
@@ -92,7 +96,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Role not found')
     }
 
-    await this.createRole(role.name, {
+    await this.createRole(getNamespace(role.name), {
       params: { ...role, permissions },
       type: 'DATABASE',
     })
@@ -109,10 +113,13 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Role not found')
     }
 
-    await this.deleteRole(id)
     await this.createRole(tenantId, {
       type: 'DATABASE',
-      params: { ...role, ...data },
+      params: {
+        ...role,
+        ...data,
+        name: getNamespacedRoleName(tenantId, data.name || ''),
+      },
     })
   }
 
@@ -131,10 +138,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     allRoles.push(...updatedDefaultRoles)
     allRoles.push(...roles)
 
-    return allRoles.map((r) => ({
-      ...r,
-      name: getRoleDisplayName(r.name) || 'No name',
-    }))
+    return allRoles
   }
 
   private async getRolesByNamespace(namespace: string): Promise<AccountRole[]> {

@@ -1,9 +1,6 @@
-import {
-  GetOrganizationMemberRoles200ResponseOneOfInner,
-  Permission,
-} from 'auth0'
+import { GetOrganizationMemberRoles200ResponseOneOfInner } from 'auth0'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
-import { Permission as InternalPermission } from '@/@types/openapi-internal/Permission'
+import { Permission } from '@/@types/openapi-internal/Permission'
 
 export function getNamespacedRoleName(namespace: string, roleName: string) {
   return `${namespace}:${roleName}`
@@ -35,8 +32,6 @@ export function transformRole(
     id: auth0Role.id,
     name: getRoleDisplayName(auth0Role.name) || 'No name',
     description: auth0Role.description,
-    permissions: permissions.map(
-      (p) => p.permission_name
-    ) as InternalPermission[],
+    permissions,
   }
 }

@@ -21,17 +21,18 @@ describe('Audit log filter - entity type', () => {
       cy.get('[data-cy="auditlog-entity-confirm"]').click();
       cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
 
-      cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
-      cy.get('[data-cy="auditlog-entity-reset"]').click();
-
-      cy.get('[data-cy="rules-filter"]:contains("Entity ID")').first().click();
       cy.get('[data-cy="auditlog-secondary"]')
         .first()
         .invoke('text')
-        .then((text2) => {
+        .then((entityId) => {
+          cy.get('[data-cy="rules-filter"]:contains("Entity")').first().click();
+          cy.get('[data-cy="auditlog-entity-reset"]').click();
+
+          cy.get('[data-cy="rules-filter"]:contains("Entity ID")').first().click();
+
           cy.get(
             '.ant-popover-content:contains("Entity ID") .ant-popover-inner-content input',
-          ).type(text2);
+          ).type(entityId);
 
           cy.get('[data-cy="auditlog-primary"]').contains('CASE').should('exist');
         });

@@ -43,7 +43,10 @@ export class Auth0RolesRepository extends BaseRolesRepository {
       throw new Error('Role ID cannot be null')
     }
 
-    return transformRole(role, auth0Permissions)
+    return transformRole(
+      role,
+      auth0Permissions.map((p) => p.permission_name) as Permission[]
+    )
   }
 
   async createRole(
@@ -85,7 +88,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
       throw new Error('Role ID cannot be null')
     }
 
-    return { ...inputRole, id: role.id }
+    return { ...inputRole, id: role.id, name: role.name }
   }
 
   async getTenantRoles(tenantId: string): Promise<AccountRole[]> {

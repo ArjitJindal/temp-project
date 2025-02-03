@@ -6,7 +6,7 @@ import { Tenant } from '../accounts/repository'
 import { sendBatchJobCommand } from '../batch-jobs/batch-job'
 import { Auth0RolesRepository } from './repository/auth0'
 import { DynamoRolesRepository } from './repository/dynamo'
-import { isInNamespace } from './utils'
+import { isInNamespace, transformRole } from './utils'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
 import {
@@ -66,7 +66,7 @@ export class RoleService {
 
       return roles
     }
-    return roles
+    return roles.map((r) => transformRole(r, r.permissions))
   }
 
   async createRole(
@@ -81,7 +81,7 @@ export class RoleService {
       type: 'DATABASE',
       params: data,
     })
-    return data
+    return transformRole(data, data.permissions)
   }
 
   async updateRole(
@@ -155,7 +155,7 @@ export class RoleService {
       })
       return role
     }
-    return cachedRole
+    return transformRole(cachedRole, cachedRole.permissions)
   }
 
   async setRole(
