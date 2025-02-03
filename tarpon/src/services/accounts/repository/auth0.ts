@@ -227,7 +227,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       }
       const users = await auth0AsyncWrapper(() =>
         userManager.getAll({
-          q: `user_id:(${ids.map((id) => `"${id}"`).join(' OR ')})`,
+          q: `user_id: "${ids.join('" OR "')}"`,
         })
       )
       accounts.push(...users.map(userToAccount))
@@ -246,7 +246,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
 
     const users = await auth0AsyncWrapper(() =>
       userManager.getAll({
-        q: `user_id:(${accountIds.map((id) => `"${id}"`).join(' OR ')})`,
+        q: `user_id: "${accountIds.join('" OR "')}"`,
       })
     )
     return users.map(userToAccount)
