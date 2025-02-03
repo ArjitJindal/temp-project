@@ -1,18 +1,28 @@
 @import 'src/components/ui/colors.less';
 @import 'src/components/ui/animation.less';
 
+:global {
+  .ant-message {
+    .ant-message-notice {
+      padding: 0;
+    }
+  }
+}
+
 .root {
   :global {
-    .ant-message-custom-content {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-    }
-
     .ant-message-notice-content {
       min-height: 56px;
       padding: 16px 18px;
       border-radius: 4px;
+      box-shadow: none;
+      background: transparent;
+    }
+
+    .ant-message-custom-content {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
     }
 
     .ant-message-warning {
@@ -30,47 +40,119 @@
   }
 }
 
-.icon {
-  width: 24px;
-  flex-shrink: 0;
-
-  &.info {
-    color: @fr-colors-infoColor;
-  }
-
-  &.success {
-    color: @fr-colors-v2-alert-success;
-  }
-
-  &.error {
-    color: @fr-colors-v2-alert-critical;
-  }
-}
-
 .message {
   display: flex;
   align-items: flex-start;
-  font-weight: 600;
-  gap: 8px;
+  gap: 4px;
   max-width: 600px;
   min-width: 200px;
   justify-content: space-between;
+  background: white;
+  padding: @figma-vars--tokens-spacingSpacingXs;
+  box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 6px 16px 0 rgba(0, 0, 0, 0.08),
+    0 9px 28px 8px rgba(0, 0, 0, 0.05);
+  border-radius: @figma-vars--tokens-spacingSpacing3xs;
+  position: relative;
+
+  &::before {
+    display: block;
+    content: ' ';
+    position: absolute;
+    left: 0;
+    height: 100%;
+    background: gray;
+    top: 0;
+    width: 3px;
+    border-top-left-radius: @figma-vars--tokens-spacingSpacing3xs;
+    border-bottom-left-radius: @figma-vars--tokens-spacingSpacing3xs;
+  }
+
+  &.type-SUCCESS {
+    &::before {
+      background: @figma-vars--tokens-colorIconSuccess;
+    }
+    .icon {
+      color: @figma-vars--tokens-colorIconSuccess;
+    }
+  }
+
+  &.type-INFO {
+    &::before {
+      background: @figma-vars--tokens-colorIconAction;
+    }
+    .icon {
+      color: @figma-vars--tokens-colorIconAction;
+    }
+  }
+
+  &.type-ERROR {
+    &::before {
+      background: @figma-vars--tokens-colorIconError;
+    }
+    .icon {
+      color: @figma-vars--tokens-colorIconError;
+    }
+  }
+
+  &.type-WARNING {
+    &::before {
+      background: @figma-vars--tokens-colorIconWarning;
+    }
+    .icon {
+      color: @figma-vars--tokens-colorIconWarning;
+    }
+  }
+
+  &.type-LOADING {
+    &::before {
+      background: transparent;
+    }
+    .icon {
+      display: none;
+    }
+  }
+}
+
+.iconWrapper {
+  display: flex;
+  align-items: center;
+  height: @figma-vars--primitives-typographyFontLineHeightM;
+}
+
+.icon {
+  width: @figma-vars--tokens-sizeIconIconsizeS;
+  flex-shrink: 0;
 }
 
 .messageText {
-  min-height: 24px;
-  line-height: 24px;
   text-align: left;
+  flex: 1;
+}
+
+.messageTitle {
+  font-weight: 600;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
+}
+
+.messageLink {
+  margin-left: 16px;
+}
+
+.messageBody {
+  font-weight: 400;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
 }
 
 .closeIcon {
   display: flex;
   align-items: center;
-  height: 24px;
+  height: @figma-vars--primitives-typographyFontLineHeightM;
   cursor: pointer;
   flex-shrink: 0;
 
   > svg {
-    height: 14px;
+    height: @figma-vars--tokens-sizeIconIconsizeS;
   }
 }

@@ -109,7 +109,7 @@ export default function ImportCsvModal(props: Props) {
           with specified key already exist in the list, it will be overwritten.
         </P>
         {errors?.map((error) => (
-          <Alert type={'error'} key={error.lineNumber}>
+          <Alert type={'ERROR'} key={error.lineNumber}>
             Line {error.lineNumber}: {error.reason}
           </Alert>
         ))}

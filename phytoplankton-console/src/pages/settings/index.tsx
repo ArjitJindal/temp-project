@@ -189,9 +189,7 @@ export default function SettingsPage() {
               <>
                 {isDemoMode && (
                   <div style={{ marginBottom: '8px' }}>
-                    <Alert type={'warning'} size="m">
-                      Please disable demo mode before testing the API.
-                    </Alert>
+                    <Alert type={'WARNING'}>Please disable demo mode before testing the API.</Alert>
                   </div>
                 )}
                 <ApiKeysSettings />

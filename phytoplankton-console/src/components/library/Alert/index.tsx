@@ -6,28 +6,29 @@ import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.s
 import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
 
+export type AlertType = 'ERROR' | 'WARNING' | 'INFO' | 'SUCCESS';
+
 interface Props {
-  type: 'error' | 'warning' | 'info' | 'success';
-  size?: 's' | 'm' | 'l';
+  type: AlertType;
   children: React.ReactNode;
 }
 
 export default function Alert(props: Props) {
-  const { type, children, size } = props;
+  const { type, children } = props;
   return (
     <div
-      className={cn(s.root, s[`type-${type}`], s[`size-${size ?? 's'}`])}
+      className={cn(s.root, s[`type-${type}`])}
       data-cy={`alert-${type}`}
-      data-sentry-allow={type === 'error'}
+      data-sentry-allow={type === 'ERROR'}
     >
       <div className={s.body}>
         <div className={s.iconContainer}>
-          {type === 'error' && <AlertFillIcon className={s.icon} data-cy={`icon-${type}`} />}
-          {type === 'warning' && (
+          {type === 'ERROR' && <AlertFillIcon className={s.icon} data-cy={`icon-${type}`} />}
+          {type === 'WARNING' && (
             <ExclamationCircleIcon className={s.icon} data-cy={`icon-${type}`} />
           )}
-          {type === 'info' && <InformationFillIcon className={s.icon} data-cy={`icon-${type}`} />}
-          {type === 'success' && (
+          {type === 'INFO' && <InformationFillIcon className={s.icon} data-cy={`icon-${type}`} />}
+          {type === 'SUCCESS' && (
             <CheckboxCircleFillIcon className={s.icon} data-cy={`icon-${type}`} />
           )}
         </div>

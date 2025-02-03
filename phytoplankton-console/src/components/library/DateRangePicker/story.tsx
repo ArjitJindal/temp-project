@@ -12,7 +12,7 @@ export default function (): JSX.Element {
       <UseCase title="Basic case">
         {([state, setState]) => (
           <>
-            <Alert type={'info'}>
+            <Alert type={'INFO'}>
               State: {state.value?.map((x) => x?.format() ?? 'null').join(' - ') ?? 'null'}
             </Alert>
             <DateRangePicker
@@ -32,7 +32,7 @@ export default function (): JSX.Element {
       >
         {([state, setState]) => (
           <>
-            <Alert type={'info'}>
+            <Alert type={'INFO'}>
               State: {state.value?.map((x) => x?.format() ?? 'null').join(' - ') ?? 'null'}
             </Alert>
             <DateRangePicker
@@ -47,7 +47,7 @@ export default function (): JSX.Element {
       <UseCase title="Do not allow clear">
         {([state, setState]) => (
           <>
-            <Alert type={'info'}>
+            <Alert type={'INFO'}>
               State: {state.value?.map((x) => x?.format() ?? 'null').join(' - ') ?? 'null'}
             </Alert>
             <DateRangePicker
@@ -63,7 +63,7 @@ export default function (): JSX.Element {
       <UseCase title="Do not allow clear, with tooltip">
         {([state, setState]) => (
           <>
-            <Alert type={'info'}>
+            <Alert type={'INFO'}>
               State: {state.value?.map((x) => x?.format() ?? 'null').join(' - ') ?? 'null'}
             </Alert>
             <DateRangePicker
@@ -89,7 +89,7 @@ export default function (): JSX.Element {
                 }}
               />
             </Label>
-            <Alert type={'info'}>
+            <Alert type={'INFO'}>
               State: {state.value?.map((x) => x?.format() ?? 'null').join(' - ') ?? 'null'}
             </Alert>
             {state.show && (

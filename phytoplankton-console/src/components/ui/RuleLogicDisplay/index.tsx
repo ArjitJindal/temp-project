@@ -47,7 +47,7 @@ export default function RuleLogicDisplay(props: Props) {
       {(logicBuildConfig: QueryBuilderConfig) => {
         const [propsTree, errors] = QbUtils._loadFromJsonLogic(ruleLogic, logicBuildConfig);
         if (errors.length > 0) {
-          return <Alert type={'error'}>Unable to display rule logic. {errors.join('; ')}</Alert>;
+          return <Alert type={'ERROR'}>Unable to display rule logic. {errors.join('; ')}</Alert>;
         }
         const checkedPropsTree = propsTree
           ? QbUtils.checkTree(propsTree, logicBuildConfig)

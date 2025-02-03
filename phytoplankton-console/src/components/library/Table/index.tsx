@@ -363,7 +363,7 @@ function Table<Item extends object, Params extends object = CommonParams>(
                 {isFailed(dataRes) ? (
                   <tr>
                     <td colSpan={table.getAllFlatColumns().length} className={s.error}>
-                      <Alert type="error">{dataRes.message}</Alert>
+                      <Alert type="ERROR">{dataRes.message}</Alert>
                     </td>
                   </tr>
                 ) : (

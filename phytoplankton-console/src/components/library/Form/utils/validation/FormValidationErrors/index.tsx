@@ -11,7 +11,7 @@ export default function FormValidationErrors<FormValues>(_props: Props): JSX.Ele
   return (
     <div className={s.root}>
       {validationErrors.map((error, i) => (
-        <Alert type={'error'} key={i}>
+        <Alert type={'ERROR'} key={i}>
           {error}
         </Alert>
       ))}

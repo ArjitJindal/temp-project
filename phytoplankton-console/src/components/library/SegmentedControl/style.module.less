@@ -5,28 +5,30 @@
   display: flex;
   background: @fr-colors-v2-gray-1;
   padding: 2px;
-  border-radius: 2px;
+  border-radius: @figma-vars--primitives-borderRadiusXs;
   width: fit-content;
 
   &.size-SMALL {
     > .item {
-      padding: 0 12px;
+      padding: @figma-vars--primitives-spacing4xs @figma-vars--primitives-spacingXs;
     }
   }
+
   &.size-MEDIUM {
     > .item {
-      padding: 4px 12px;
+      padding: @figma-vars--primitives-spacing3xs @figma-vars--primitives-spacingXs;
     }
   }
+
   &.size-LARGE {
     > .item {
-      padding: 8px 12px;
+      padding: @figma-vars--primitives-spacing2xs @figma-vars--primitives-spacingXs;
     }
   }
 }
 
 .item {
-  color: @fr-colors-v2-gray-10;
+  color: @figma-vars--tokens-colorTextPrimary;
   cursor: pointer;
   border-radius: 2px;
   border: none;
@@ -34,20 +36,26 @@
   display: flex;
   gap: 4px;
   align-items: center;
-  font-size: 14px;
-  line-height: 24px;
+  font-family: @figma-vars--primitives-typographyFontFamilyBody;
+  font-weight: 400;
+  font-size: @figma-vars--primitives-typographyFontSizeM;
+  line-height: @figma-vars--primitives-typographyFontLineHeightM;
   transition-property: background, color, box-shadow, font-weight;
   transition-timing-function: @default-animation-function;
   transition-duration: @default-animation-speed;
 
   &:disabled {
     pointer-events: none;
-    color: @fr-colors-v2-state-disabled;
+    color: @figma-vars--tokens-colorTextDisabled;
+  }
+
+  &:hover {
+    color: @figma-vars--tokens-colorTextSecondary;
   }
 
   &:not(:disabled).isActive {
     background: white;
-    color: @fr-colors-v2-primary-flagrightBlue;
+    color: @figma-vars--tokens-colorTextAction;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   }

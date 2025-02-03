@@ -45,7 +45,7 @@ export default function ApplyRiskLevels(props: Props) {
         />
       </Label>
       {isAnyLevelChanged && (
-        <Alert type={'warning'}>
+        <Alert type={'WARNING'}>
           You have selected an already configured risk level. Clicking on ‘Apply’ will override the
           older configuration
         </Alert>

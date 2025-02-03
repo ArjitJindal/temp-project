@@ -82,7 +82,7 @@ export default function ActionReasonModal(props: Props) {
             ))}
           </div>
         )}
-        <Alert type="info">
+        <Alert type="INFO">
           Note that any updates will only apply to new, not closed and re-opened cases and alerts.
         </Alert>
       </div>

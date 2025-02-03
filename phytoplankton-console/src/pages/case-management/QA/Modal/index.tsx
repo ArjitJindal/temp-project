@@ -156,7 +156,7 @@ const QASlider = (props: QAModalProps & { formState: { values: QAFormValues } })
           );
         }}
       </InputField>
-      <Alert type="info">
+      <Alert type="INFO">
         {type === 'CREATE'
           ? 'Note that any filters applied to the Not QA’d alerts will be considered during the creation of a sample. '
           : 'Note that you can only increase the number of alerts in the sample. '}

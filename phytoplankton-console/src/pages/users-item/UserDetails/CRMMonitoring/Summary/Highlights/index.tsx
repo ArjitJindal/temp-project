@@ -11,9 +11,9 @@ const Highlights = (props: Props) => {
   return (
     <div className={s.highlights}>
       <h3>Highlights</h3>
-      {summary.bad && <Alert type={'warning'}>{summary.bad}</Alert>}
-      {summary.good && <Alert type={'success'}>{summary.good}</Alert>}
-      {summary.neutral && <Alert type={'info'}>{summary.neutral}</Alert>}
+      {summary.bad && <Alert type={'WARNING'}>{summary.bad}</Alert>}
+      {summary.good && <Alert type={'SUCCESS'}>{summary.good}</Alert>}
+      {summary.neutral && <Alert type={'INFO'}>{summary.neutral}</Alert>}
     </div>
   );
 };

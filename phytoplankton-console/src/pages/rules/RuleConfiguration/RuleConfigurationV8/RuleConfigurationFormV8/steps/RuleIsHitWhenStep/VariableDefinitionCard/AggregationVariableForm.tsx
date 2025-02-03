@@ -736,7 +736,7 @@ export const AggregationVariableFormContent: React.FC<
           </Label>
         )}
       </PropertyColumns>
-      {timeWindowValidationError && <Alert type="error">{timeWindowValidationError}</Alert>}
+      {timeWindowValidationError && <Alert type="ERROR">{timeWindowValidationError}</Alert>}
       {!hideFilters && (
         <div>
           {!formValues.filtersLogic && !showFilters && !readOnly ? (
@@ -765,7 +765,7 @@ export const AggregationVariableFormContent: React.FC<
         </div>
       )}
       {!hideSummary && (
-        <Alert type="info" size="m">
+        <Alert type="INFO">
           Variable summary
           <br />
           <AggregationVariableSummary

@@ -486,7 +486,7 @@ export default function AccountForm(props: Props) {
               <AsyncResourceRenderer resource={isInviteDisabled} renderLoading={() => <></>}>
                 {(value) =>
                   value && (
-                    <Alert type={'warning'}>
+                    <Alert type={'WARNING'}>
                       You have reached maximum no. of Seats ({maxSeats}). Please contact support at{' '}
                       <a href={`mailto:${branding.supportEmail}`}>{branding.supportEmail}</a> if you
                       want additional seats

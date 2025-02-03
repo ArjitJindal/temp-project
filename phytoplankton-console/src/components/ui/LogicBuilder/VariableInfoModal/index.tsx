@@ -125,7 +125,7 @@ function EntityVariableInfo(props: {
   return (
     <>
       <Label label="Summary">
-        <Alert type="info" size="m">
+        <Alert type="INFO">
           {label != null ? (
             <>
               {'This variable uses value of '}
@@ -137,7 +137,7 @@ function EntityVariableInfo(props: {
         </Alert>
       </Label>
       <Label label="Filters">
-        <Alert type="info">
+        <Alert type="INFO">
           The system will search from the latest to the earliest{' '}
           {formValues.type?.toLowerCase() ?? 'unknown'} event to find the first match based on your
           filters
@@ -162,7 +162,7 @@ function AggregationVariableInfo(props: {
   return (
     <>
       <Label label="Variable summary">
-        <Alert type="info" size="m">
+        <Alert type="INFO">
           <AggregationVariableSummary
             ruleType={ruleType}
             variableFormValues={variable}

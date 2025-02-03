@@ -87,11 +87,11 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     <div className={cn(s.root, isScrollEnabled && s.isScrollEnabled)}>
       <div className={s.hint}>
         {extraHints.map((hint, index) => (
-          <Alert key={index} type={'info'}>
+          <Alert key={index} type={'INFO'}>
             {hint}
           </Alert>
         ))}
-        <Alert type={'info'}>
+        <Alert type={'INFO'}>
           Hold Ctrl or{' '}
           <CommandKeyIcon
             style={{

@@ -165,7 +165,7 @@ export const ApiKeysSettings = () => {
 
               return timesLeft === 1 ? (
                 <Alert
-                  type="error"
+                  type="ERROR"
                   key={index}
                 >{`You can view API key ${timesLeft} more time`}</Alert>
               ) : null;

@@ -107,7 +107,7 @@ const config: Config = [
         key: 'Message',
         story: Message,
         designLink:
-          'https://www.figma.com/file/8pFXj0S40ULQbCSmhMJEJ4/Design-system?type=design&node-id=214%3A8710&mode=dev',
+          'https://www.figma.com/design/8f2OFrSxBjNuo4dtV0twxb/Aegis-Design-System?node-id=168-2816',
       },
       {
         key: 'Vertical menu',
@@ -450,7 +450,7 @@ function ComponentPage(props: { category: Category }) {
   const component = category.components.find((x) => x.key === params.component);
   if (component == null) {
     return (
-      <AlertComponent type="error">
+      <AlertComponent type="ERROR">
         {`Component not found: ${params.component ?? '(empty)'}`}
       </AlertComponent>
     );
@@ -474,7 +474,7 @@ function CategoryPage() {
   const category = config.find((x) => x.key === params.category);
   if (category == null) {
     return (
-      <AlertComponent type="error">
+      <AlertComponent type="ERROR">
         {`Category not found: ${params.category ?? '(empty)'}`}
       </AlertComponent>
     );

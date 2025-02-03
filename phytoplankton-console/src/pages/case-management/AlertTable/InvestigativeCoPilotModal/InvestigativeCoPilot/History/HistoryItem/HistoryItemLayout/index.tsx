@@ -24,7 +24,7 @@ function HistoryItemLayout(props: Props, ref?: React.ForwardedRef<HTMLDivElement
       {!hideTitle && (
         <div className={s.header}>
           <div className={s.title}>
-            {title} {count != null ? `(${count})` : ''}
+            {title} {count != null ? `(${count}!)` : ''}
           </div>
           {tools && <div className={s.tools}>{tools}</div>}
         </div>

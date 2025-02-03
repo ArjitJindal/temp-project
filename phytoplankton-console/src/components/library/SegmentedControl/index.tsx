@@ -7,7 +7,7 @@ import { Comparable, compare, key } from '@/utils/comparable';
 
 export interface Item<Value> {
   value: Value;
-  label: string;
+  label?: string;
   isDisabled?: boolean;
   icon?: React.ReactNode;
 }
@@ -36,7 +36,7 @@ export default function SegmentedControl<Value extends Comparable = string>(prop
           data-cy={`segmented-control-${kebabCase(item.value?.toString())}`}
         >
           {item.icon && <div className={s.itemIcon}>{item.icon}</div>}
-          <SameWidthDiv>{item.label}</SameWidthDiv>
+          {item.label && <SameWidthDiv>{item.label}</SameWidthDiv>}
         </button>
       ))}
     </div>

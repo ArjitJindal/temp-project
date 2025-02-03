@@ -221,7 +221,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         </InputField>
         {infoText && (
           <div className={s.infoDiv}>
-            <Alert type="info">{infoText}</Alert>
+            <Alert type="INFO">{infoText}</Alert>
           </div>
         )}
         {showCopilot && (
@@ -284,7 +284,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         />
       </Label>
       {extraFields}
-      {alertMessage && <Alert type="info">{alertMessage}</Alert>}
+      {alertMessage && <Alert type="INFO">{alertMessage}</Alert>}
     </Form>
   );
 }

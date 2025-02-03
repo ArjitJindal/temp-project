@@ -338,13 +338,13 @@ export default function DownloadButton<T extends object, Params extends object>(
               </Form.Layout.Label>
             )}
             {pagesMode === 'ALL' && (
-              <Alert type="info">
+              <Alert type="INFO">
                 This option downloads up to 100,000 rows. Browser capacity may also impact the
                 download.
               </Alert>
             )}
             {pagesMode === 'UP_TO_10000' && (
-              <Alert type="error">
+              <Alert type="ERROR">
                 Download failed for all pages due to browser capacity. Please try downloading for up
                 to 10,000 rows.
               </Alert>

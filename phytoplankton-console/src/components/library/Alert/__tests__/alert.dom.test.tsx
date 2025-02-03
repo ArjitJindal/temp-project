@@ -1,23 +1,22 @@
-import { test, describe, expect } from '@jest/globals';
+import { describe, expect, test } from '@jest/globals';
 import { render, screen } from 'testing-library-wrapper';
-import Alert from '..';
-import COLORS, {
-  COLORS_V2_ALERT_ERROR,
-  COLORS_V2_ALERT_WARNING,
-  COLORS_V2_PRIMARY_TINTS_BLUE_900,
-} from '@/components/ui/colors';
+import Alert, { AlertType } from '..';
+import {
+  FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_SUCCESS,
+  FIGMA_VARS_TOKENS_COLOR_STROKE_WARNING,
+} from '@/components/ui/figma-vars';
 
-type AlertType = 'error' | 'warning' | 'info' | 'success';
-
-const ALERT_TYPES: AlertType[] = ['error', 'warning', 'info', 'success'];
+const ALERT_TYPES: AlertType[] = ['ERROR', 'WARNING', 'INFO', 'SUCCESS'];
 
 const ALERT_BORDER_COLORS: {
   [key in AlertType]: string;
 } = {
-  error: COLORS_V2_ALERT_ERROR,
-  warning: COLORS_V2_ALERT_WARNING,
-  info: COLORS_V2_PRIMARY_TINTS_BLUE_900,
-  success: COLORS.leafGreen.base,
+  ERROR: FIGMA_VARS_TOKENS_COLOR_STROKE_ERROR,
+  WARNING: FIGMA_VARS_TOKENS_COLOR_STROKE_WARNING,
+  INFO: FIGMA_VARS_TOKENS_COLOR_STROKE_ACTION,
+  SUCCESS: FIGMA_VARS_TOKENS_COLOR_STROKE_SUCCESS,
 };
 
 describe('Alert Component', () => {
@@ -44,7 +43,7 @@ describe('Alert Component', () => {
 
   test('displays children content', () => {
     const message = 'This is an alert message';
-    render(<Alert type="error">{message}</Alert>);
+    render(<Alert type="ERROR">{message}</Alert>);
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 });

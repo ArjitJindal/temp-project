@@ -1,42 +1,56 @@
 import React from 'react';
 import { message as AntMessage } from 'antd';
 import cn from 'clsx';
-import { NoticeType } from 'antd/lib/message';
 import * as Sentry from '@sentry/react';
 import s from './index.module.less';
 import InformationFillIcon from '@/components/ui/icons/Remix/system/information-fill.react.svg';
 import CheckboxCircleFillIcon from '@/components/ui/icons/Remix/system/checkbox-circle-fill.react.svg';
-import CloseCircleFillIcon from '@/components/ui/icons/Remix/system/close-circle-fill.react.svg';
+import ErrorWarningFillIcon from '@/components/ui/icons/Remix/system/error-warning-fill.react.svg';
 import CloseFillIcon from '@/components/ui/icons/Remix/system/close-fill.react.svg';
+import AlertFillIcon from '@/components/ui/icons/Remix/system/alert-fill.react.svg';
+import Link from '@/components/ui/Link';
 
 const errorsCaptured: string[] = [];
 
 export type CloseMessage = () => void;
 
-type ShowMessageOptions = {
+type ShowNotificationOptions = {
   duration?: number;
+  details?: string;
   onClose?: () => void;
+  link?: string;
+  linkTitle?: string;
 };
 
-export type ShowMessage = (message: React.ReactNode, options?: ShowMessageOptions) => CloseMessage;
-export type ShowMessageWithOptionalError = (
+export type ShowNotification = (
   message: React.ReactNode,
-  error?: any | unknown,
-  options?: ShowMessageOptions,
+  options?: ShowNotificationOptions,
 ) => CloseMessage;
 
-export const info: ShowMessage = (message: React.ReactNode, options?: ShowMessageOptions) => {
+export type ShowNotificationWithOptionalError = (
+  message: React.ReactNode,
+  error?: any | unknown,
+  options?: ShowNotificationOptions,
+) => CloseMessage;
+
+export const info: ShowNotification = (
+  message: React.ReactNode,
+  options?: ShowNotificationOptions,
+) => {
   return open(message, 'INFO', options);
 };
 
-export const success: ShowMessage = (message: React.ReactNode, options?: ShowMessageOptions) => {
+export const success: ShowNotification = (
+  message: React.ReactNode,
+  options?: ShowNotificationOptions,
+) => {
   return open(message, 'SUCCESS', options);
 };
 
-export const fatal: ShowMessageWithOptionalError = (
+export const fatal: ShowNotificationWithOptionalError = (
   message: React.ReactNode,
   error: any | unknown,
-  options?: ShowMessageOptions,
+  options?: Omit<ShowNotificationOptions, 'duration'>,
 ) => {
   if (!errorsCaptured.includes(message?.toString() || '') && process.env.ENV_NAME !== 'local') {
     errorsCaptured.push(message?.toString() || ''); // prevent duplicate errors
@@ -44,19 +58,40 @@ export const fatal: ShowMessageWithOptionalError = (
       Sentry.captureException(error);
     }
   }
-  return open(message, 'ERROR', options);
+  return open(message, 'ERROR', {
+    ...options,
+    duration: 0,
+  });
 };
 
-export const error: ShowMessage = (message: React.ReactNode, options?: ShowMessageOptions) => {
-  return open(message, 'ERROR', options);
+export const error: ShowNotification = (
+  message: React.ReactNode,
+  options?: Omit<ShowNotificationOptions, 'duration'>,
+) => {
+  return open(message, 'ERROR', {
+    ...options,
+    duration: 0,
+  });
 };
 
-export const loading: ShowMessage = (message: React.ReactNode) => {
-  return open(message, 'LOADING');
+export const loading: ShowNotification = (
+  message: React.ReactNode,
+  options?: Omit<ShowNotificationOptions, 'duration'>,
+) => {
+  return open(message, 'LOADING', {
+    ...options,
+    duration: 0,
+  });
 };
 
-export const warn: ShowMessage = (message: React.ReactNode, options?: ShowMessageOptions) => {
-  return open(message, 'WARNING', options);
+export const warn: ShowNotification = (
+  message: React.ReactNode,
+  options?: Omit<ShowNotificationOptions, 'duration'>,
+) => {
+  return open(message, 'WARNING', {
+    ...options,
+    duration: 0,
+  });
 };
 
 export const message = {
@@ -71,52 +106,72 @@ export const message = {
 /*
   Helper functions
  */
-
 function open(
-  message: React.ReactNode,
+  title: React.ReactNode,
   type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING',
-  options?: ShowMessageOptions,
+  options?: ShowNotificationOptions,
 ): CloseMessage {
-  let icon: React.ReactNode | undefined;
-  let antType: NoticeType | undefined = undefined;
-  let isClosable = true;
-  if (type === 'INFO') {
-    icon = <InformationFillIcon className={cn(s.icon, s.info)} />;
-  } else if (type === 'SUCCESS') {
-    icon = <CheckboxCircleFillIcon className={cn(s.icon, s.success)} />;
-  } else if (type === 'ERROR') {
-    icon = <CloseCircleFillIcon className={cn(s.icon, s.error)} />;
-  } else if (type === 'LOADING') {
-    antType = 'loading';
-    isClosable = false;
-  } else {
-    antType = 'warning';
-  }
   const close = AntMessage.open({
-    icon: icon,
-    type: antType,
     content: (
-      <div className={s.message} data-sentry-allow={type === 'ERROR'}>
-        <div className={s.messageText} data-cy="ant-message-popup">
-          {message}
-        </div>
-        {isClosable && (
-          <div
-            className={s.closeIcon}
-            onClick={() => {
-              if (options?.onClose) {
-                options.onClose();
-              }
-              close();
-            }}
-          >
-            <CloseFillIcon />
-          </div>
-        )}
-      </div>
+      <MessageBody
+        type={type}
+        title={title}
+        onClose={() => {
+          options?.onClose?.();
+          close();
+        }}
+      >
+        {options?.details}
+      </MessageBody>
     ),
-    duration: isClosable ? options?.duration ?? 5 : 0,
+    duration: options?.duration ?? 5,
     className: s.root,
   });
   return close;
+}
+
+export function MessageBody(props: {
+  type: 'INFO' | 'SUCCESS' | 'ERROR' | 'LOADING' | 'WARNING';
+  title: React.ReactNode;
+  link?: string;
+  linkTitle?: string;
+  children?: React.ReactNode;
+  onClose?: () => void;
+}) {
+  const { type, title, children, link, linkTitle, onClose } = props;
+  let icon: React.ReactNode | undefined = undefined;
+  let isClosable = true;
+  if (type === 'INFO') {
+    icon = <InformationFillIcon className={cn(s.icon)} />;
+  } else if (type === 'SUCCESS') {
+    icon = <CheckboxCircleFillIcon className={cn(s.icon)} />;
+  } else if (type === 'ERROR') {
+    icon = <AlertFillIcon className={cn(s.icon)} />;
+  } else if (type === 'WARNING') {
+    icon = <ErrorWarningFillIcon className={cn(s.icon)} />;
+  } else if (type === 'LOADING') {
+    isClosable = false;
+  }
+
+  return (
+    <div className={cn(s.message, s[`type-${type}`])} data-sentry-allow={type === 'ERROR'}>
+      <div className={s.iconWrapper}>{icon}</div>
+      <div className={s.messageText} data-cy="ant-message-popup">
+        <div className={s.messageTitle}>
+          {title}
+          {link && (
+            <Link className={s.messageLink} to={link}>
+              {linkTitle ?? 'Link'}
+            </Link>
+          )}
+        </div>
+        <div className={s.messageBody}>{children}</div>
+      </div>
+      {isClosable && (
+        <div className={s.closeIcon} onClick={onClose}>
+          <CloseFillIcon />
+        </div>
+      )}
+    </div>
+  );
 }

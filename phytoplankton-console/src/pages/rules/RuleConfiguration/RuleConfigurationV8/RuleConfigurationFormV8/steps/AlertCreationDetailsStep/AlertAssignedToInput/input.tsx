@@ -66,7 +66,7 @@ export function AlertAssignedToInput() {
               />
             )}
           </InputField>
-          <Alert type="info">
+          <Alert type="INFO">
             Please note if one or more accounts are selected, the alert will be automatically
             assigned and distributed equally.
           </Alert>
@@ -91,7 +91,7 @@ export function AlertAssignedToInput() {
               />
             )}
           </InputField>
-          <Alert type="info">
+          <Alert type="INFO">
             Please note that the alert is automatically assigned and equally distributed among the
             accounts within the role.
           </Alert>

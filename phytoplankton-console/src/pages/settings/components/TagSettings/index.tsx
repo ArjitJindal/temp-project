@@ -211,7 +211,7 @@ function TagSettings() {
         externalState={externalState}
       ></Table>
       {isMaxTags && (
-        <Alert type="error">
+        <Alert type="ERROR">
           A new key cannot be added as the limit of 10 tags has already been reached
         </Alert>
       )}

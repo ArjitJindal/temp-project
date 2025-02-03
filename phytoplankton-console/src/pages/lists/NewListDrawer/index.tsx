@@ -222,7 +222,7 @@ export default function NewListDrawer(props: Props) {
                         </div>
                       )}
                     </InputField>
-                    <Alert type={'info'}>
+                    <Alert type={'INFO'}>
                       <div>
                         1. Expiration time applies to each item independently and is calculated from
                         the time an item is added.

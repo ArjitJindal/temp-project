@@ -228,7 +228,7 @@ export default function DefineLogicCard(props: Props) {
             }
           />
           {showErrors && isError(validationError) && (
-            <Alert type={'error'}>{validationError}</Alert>
+            <Alert type={'ERROR'}>{validationError}</Alert>
           )}
         </Card.Section>
       )}

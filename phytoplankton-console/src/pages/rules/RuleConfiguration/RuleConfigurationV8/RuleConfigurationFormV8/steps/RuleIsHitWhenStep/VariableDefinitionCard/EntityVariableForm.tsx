@@ -460,7 +460,7 @@ export const EntityVariableForm: React.FC<EntityVariableFormProps> = ({
                 </Link>
               ) : (
                 <Label label="Filters">
-                  <Alert type="info">
+                  <Alert type="INFO">
                     The system will search from the latest to the earliest{' '}
                     {formValues.type.toLowerCase()} event to find the first match based on your
                     filters

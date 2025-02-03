@@ -445,15 +445,15 @@ export default function ValuesTable(props: Props) {
         </div>
         <div className={style.alertBox}>
           {newValueInfoMessage != null && newValueValidationMessage == null && (
-            <Alert children={newValueInfoMessage} type="info" />
+            <Alert children={newValueInfoMessage} type="INFO" />
           )}
           {newValueValidationMessage != null && (
-            <Alert children={newValueValidationMessage} type="error" />
+            <Alert children={newValueValidationMessage} type="ERROR" />
           )}
         </div>
       </div>
       <Alert
-        type="info"
+        type="INFO"
         children="Please note the risk level will automatically convert to risk score. You can also manually update the risk score and it will be considered in risk algorithm calculation."
       />
       <div className={style.footer}>

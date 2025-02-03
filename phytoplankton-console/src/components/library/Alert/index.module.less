@@ -2,73 +2,57 @@
 
 .root {
   border: 1px solid transparent;
-  padding: 8px 12px;
+  padding: @figma-vars--tokens-spacingSpacingXs;
   display: flex;
-  gap: 8px;
+  gap: @figma-vars--tokens-spacingSpacing3xs;
   align-items: center;
-  border-radius: 2px;
+  border-radius: @figma-vars--primitives-borderRadiusS;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
 
-  &.size-s {
-    font-size: 12px;
-
-    .iconContainer {
-      padding-top: 1px;
-    }
-  }
-  &.size-m {
-    font-size: 14px;
-
-    .iconContainer {
-      padding-top: 2px;
-    }
-  }
-  &.size-l {
-    font-size: 16px;
-
-    .iconContainer {
-      padding-top: 2px;
-    }
-  }
-
-  &.type-error {
-    border-color: @fr-colors-red-tmp-1;
-    background-color: fade(@fr-colors-red-tmp-1, 4%);
+  &.type-ERROR {
+    border-color: @figma-vars--tokens-colorStrokeError;
+    background-color: @figma-vars--tokens-colorBackgroundErrorHue;
 
     .icon {
-      color: @fr-colors-red-tmp-1;
+      color: @figma-vars--tokens-colorStrokeError;
     }
   }
 
-  &.type-warning {
-    border-color: @fr-colors-v2-alert-warning;
-    background-color: fade(@fr-colors-v2-alert-warning, 10%);
+  &.type-WARNING {
+    border-color: @figma-vars--tokens-colorStrokeWarning;
+    background-color: @figma-vars--tokens-colorBackgroundWarning;
 
     .icon {
-      color: @fr-colors-v2-alert-warning;
+      color: @figma-vars--tokens-colorStrokeWarning;
     }
   }
 
-  &.type-info {
-    border-color: @fr-colors-v2-primary-flagrightBlue;
-    background-color: fade(@fr-colors-v2-primary-flagrightBlue, 10%);
+  &.type-INFO {
+    border-color: @figma-vars--tokens-colorStrokeAction;
+    background-color: @figma-vars--tokens-colorBackgroundInformationHue;
 
     .icon {
-      color: @fr-colors-v2-primary-flagrightBlue;
+      color: @figma-vars--tokens-colorStrokeAction;
     }
   }
 
-  &.type-success {
-    border-color: @fr-colors-leafGreen;
-    background-color: fade(@fr-colors-leafGreen, 10%);
+  &.type-SUCCESS {
+    border-color: @figma-vars--tokens-colorStrokeSuccess;
+    background-color: @figma-vars--tokens-colorBackgroundSuccessHue;
 
     .icon {
-      color: @fr-colors-leafGreen;
+      color: @figma-vars--tokens-colorStrokeSuccess;
     }
   }
 }
 
 .icon {
-  width: 16px;
+  width: @figma-vars--tokens-spacingSpacingL;
+}
+
+.iconContainer {
+  padding-top: 1px;
+  height: @figma-vars--primitives-typographyFontLineHeightS;
 }
 
 .body {
@@ -77,6 +61,8 @@
   gap: 8px;
 }
 
-.iconContainer {
-  height: 16px;
+.text {
+  font-family: @figma-vars--primitives-typographyFontFamilyBody;
+  font-size: @figma-vars--primitives-typographyFontSizeS;
+  line-height: @figma-vars--primitives-typographyFontLineHeightS;
 }

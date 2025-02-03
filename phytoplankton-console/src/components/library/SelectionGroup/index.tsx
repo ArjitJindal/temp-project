@@ -43,7 +43,7 @@ export default function SelectionGroup<
   const { mode, options, testName, optionFixedWidth, isDisabled } = props;
   const isSingle = props.mode === 'SINGLE';
   const values: SelectionGroupValueType[] = isSingle
-    ? props.value
+    ? props.value != null
       ? [props.value]
       : []
     : props.value ?? [];
@@ -51,7 +51,9 @@ export default function SelectionGroup<
   return (
     <div className={cn(s.root, mode === 'MULTIPLE' ? s.modeMultiple : s.modeSingle)}>
       {options.map((option, index) => {
-        const isActive = values.includes(option.value);
+        const isActive = values.some(
+          (value) => JSON.stringify(option.value) === JSON.stringify(value),
+        );
         return (
           <Tooltip title={option.tooltip} key={index}>
             <label
@@ -67,9 +69,9 @@ export default function SelectionGroup<
                 {isSingle ? (
                   <Radio
                     isDisabled={isDisabled || option.isDisabled}
-                    value={JSON.stringify(option.value) === JSON.stringify(props.value)}
+                    value={isActive}
                     onChange={(newValue) => {
-                      if (isSingle && newValue) {
+                      if (isSingle && newValue != null) {
                         props.onChange?.(option.value);
                       }
                     }}
