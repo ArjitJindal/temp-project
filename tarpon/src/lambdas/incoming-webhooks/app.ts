@@ -42,7 +42,7 @@ export const webhooksHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { sourceIp } = event.requestContext.identity
+    const { sourceIp } = event?.requestContext?.identity || {}
 
     const handlers = new Handlers()
 

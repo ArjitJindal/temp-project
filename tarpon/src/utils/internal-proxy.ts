@@ -7,7 +7,7 @@ import { InternalProxyWebhookEvent } from '@/@types/openapi-internal/InternalPro
 import { logger } from '@/core/logger'
 
 const INTERNAL_PROXY_WEBHOOK_SECRET = '2e01012c-ee69-4848-8c12-020bfd1e57bc'
-const INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER = 'X-Internal-Proxy-Signature'
+const INTERNAL_PROXY_WEBHOOK_SIGNATURE_HEADER = 'x-internal-proxy-signature'
 
 export type InternalProxyWebhookData = InternalProxyWebhookEvent['data']
 
@@ -20,7 +20,9 @@ export async function sendInternalProxyWebhook(
 
   let url: string | undefined
 
-  if (currentStage === 'dev') {
+  if (currentStage === 'local') {
+    url = `http://localhost:3002/webhooks/internal-proxy`
+  } else if (currentStage === 'dev') {
     url = `https://api.flagright.dev/console/webhooks/internal-proxy`
   } else if (currentStage === 'sandbox') {
     if (destinationRegion === 'eu-1') {
@@ -37,13 +39,14 @@ export async function sendInternalProxyWebhook(
   }
 
   const payloadToSend: InternalProxyWebhookEvent = {
+    createdTimestamp: Date.now(),
     data: payload,
     destinationRegion,
     sourceRegion: stageAndRegion()[1] as FlagrightRegion,
   }
 
   const signature = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
-    .update(JSON.stringify(payloadToSend))
+    .update(signatureKey(payloadToSend))
     .digest('hex')
 
   try {
@@ -66,6 +69,15 @@ export async function sendInternalProxyWebhook(
   }
 }
 
+const signatureKey = (payload: InternalProxyWebhookEvent) => {
+  return [
+    payload.sourceRegion,
+    payload.destinationRegion,
+    payload.data.type,
+    payload.createdTimestamp,
+  ].join('|')
+}
+
 export function verifyInternalProxyWebhook(
   headers: APIGatewayProxyEventHeaders,
   payload: InternalProxyWebhookEvent
@@ -76,7 +88,7 @@ export function verifyInternalProxyWebhook(
   }
 
   const hmac = createHmac('sha256', INTERNAL_PROXY_WEBHOOK_SECRET)
-  hmac.update(JSON.stringify(payload))
+  hmac.update(signatureKey(payload))
   const computedSignature = hmac.digest('hex')
   return computedSignature === signature
 }

@@ -13695,10 +13695,13 @@ components:
           oneOf:
             - $ref: '#/components/schemas/NangoBatchJobTrigger'
             - $ref: '#/components/schemas/AccountsRefreshBatchJobTrigger'
+        createdTimestamp:
+          type: number
       required:
         - sourceRegion
         - destinationRegion
         - data
+        - createdTimestamp
     NangoBatchJobTrigger:
       type: object
       properties:
