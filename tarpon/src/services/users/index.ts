@@ -1137,7 +1137,7 @@ export class UserService {
   }
 
   public async updateMointoringStatus(userId: string, isEnabled: boolean) {
-    const user = await this.getUser(userId)
+    const user = await this.getUser(userId, false)
 
     if (!isBusinessUser(user as Business | User)) {
       throw new createError.BadRequest(
@@ -1250,11 +1250,18 @@ export class UserService {
     }
   }
 
-  public async getUser(userId: string): Promise<InternalUser> {
+  public async getUser(
+    userId: string,
+    getAttachments: boolean = true
+  ): Promise<InternalUser> {
     const user = await this.userRepository.getUserById(userId)
 
     if (!user) {
       throw new createError.NotFound(`User ${userId} not found`)
+    }
+
+    if (!getAttachments) {
+      return user
     }
 
     const comments: Comment[] =

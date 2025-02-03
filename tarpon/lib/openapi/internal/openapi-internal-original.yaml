@@ -6048,7 +6048,7 @@ paths:
         in: path
         required: true
     get:
-      summary: Create a Case Comment
+      summary: Get a Case
       operationId: get-case
       x-flagright:
         permissions:

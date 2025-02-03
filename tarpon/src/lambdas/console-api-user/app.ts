@@ -51,7 +51,7 @@ export const businessUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerPostBusinessUsersUserId(async (ctx, request) => {
-      const user = await userService.getUser(request.userId)
+      const user = await userService.getUser(request.userId, false)
       return await userService.updateUser(user, request.UserUpdateRequest)
     })
 
@@ -92,7 +92,7 @@ export const consumerUsersViewHandler = lambdaApi()(
     })
 
     handlers.registerPostConsumerUsersUserId(async (ctx, request) => {
-      const user = await userService.getUser(request.userId)
+      const user = await userService.getUser(request.userId, false)
       return await userService.updateUser(user, request.UserUpdateRequest)
     })
 
@@ -157,7 +157,7 @@ export const allUsersViewHandler = lambdaApi()(
       if (!hasFeature('CRM')) {
         throw new Forbidden('CRM feature not enabled')
       }
-      const user = await userService.getUser(request.userId)
+      const user = await userService.getUser(request.userId, false)
       const crmAccountId = user.tags?.find(
         (t) => t.key === 'crmAccountId'
       )?.value

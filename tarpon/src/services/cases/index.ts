@@ -983,7 +983,7 @@ export class CaseService extends CaseAlertsCommonService {
         ...caseEntity,
         caseUsers: {
           ...caseEntity.caseUsers,
-          origin: await this.userService.getUser(userId),
+          origin: await this.userService.getUser(userId, false),
         },
       }
     }
@@ -994,7 +994,7 @@ export class CaseService extends CaseAlertsCommonService {
         ...caseEntity,
         caseUsers: {
           ...caseEntity.caseUsers,
-          destination: await this.userService.getUser(userId),
+          destination: await this.userService.getUser(userId, false),
         },
       }
     }

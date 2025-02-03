@@ -117,7 +117,7 @@ export class RetrievalService {
       ? await this.caseService.getCase(report.caseId)
       : undefined
 
-    const user = await this.userService.getUser(report.caseUserId)
+    const user = await this.userService.getUser(report.caseUserId, false)
 
     // Hydrate case transactions
     const transactions = await this.txnRepository.getTransactionsByIds(
