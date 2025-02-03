@@ -85,27 +85,16 @@ export function transformJsonLogic(
     )
   )
   const hasAllOperator = getAllValuesByKey('all', rawJsonLogic)
+  const updatedLogic = cloneDeep(rawJsonLogic)
   if (!hasDirectionLessEntityVariables && !hasAllOperator) {
     return rawJsonLogic
   }
-  const updatedLogic = cloneDeep(rawJsonLogic)
-  traverse(rawJsonLogic, (key, value, path) => {
-    if (key === 'all') {
-      // Retrieve the original "all" block
-      const originalAll = get(rawJsonLogic, path)
-      if (Array.isArray(originalAll) && originalAll.length > 0) {
-        // Build the "and" block
-        const hasItemsCheck = {
-          'op:hasItems': [originalAll[0], true],
-        }
-        const wrappedLogic = {
-          and: [hasItemsCheck, { all: originalAll }],
-        }
-        const parentPath = path.slice(0, -1) // Remove the last part of the path to get the parent
-        set(updatedLogic, parentPath, wrappedLogic)
+  if (hasDirectionLessEntityVariables) {
+    traverse(rawJsonLogic, (key, value, path) => {
+      if (key !== 'var') {
+        return
       }
-    }
-    if (key === 'var' && hasDirectionLessEntityVariables) {
+
       const isDirectionLessVar = isDirectionLessVariable(
         entityVariables.find((e) => e.key === value)?.entityKey ?? value
       )
@@ -164,17 +153,40 @@ export function transformJsonLogic(
           )
         )
       }
-    }
-  })
+    })
+  }
+  /* Have to iterate again as in a single iteration updation at same level does not work correctly
+  with directionless variables inside an 'all' block.
+  */
+  const allUpdatedLogic = cloneDeep(updatedLogic)
+  if (hasAllOperator) {
+    traverse(updatedLogic, (key, _value, path) => {
+      if (key === 'all') {
+        // Retrieve the original "all" block
+        const originalAll = get(updatedLogic, path)
+        if (Array.isArray(originalAll) && originalAll.length > 0) {
+          // Build the "and" block
+          const hasItemsCheck = {
+            'op:hasItems': [originalAll[0], true],
+          }
+          const wrappedLogic = {
+            and: [hasItemsCheck, { all: originalAll }],
+          }
+          const parentPath = path.slice(0, -1) // Remove the last part of the path to get the parent
+          set(allUpdatedLogic, parentPath, wrappedLogic)
+        }
+      }
+    })
+  }
   const { entityVariableKeys: newEntityVariableKeys } =
-    getVariableKeysFromLogic(updatedLogic)
+    getVariableKeysFromLogic(allUpdatedLogic)
   const stillHasDirectionLessEntityVariables = newEntityVariableKeys.some(
     isDirectionLessVariable
   )
   // NOTE: Transform one more time if both LHS and RHS are direction-less variables
   return stillHasDirectionLessEntityVariables
-    ? transformJsonLogic(updatedLogic, entityVariables)
-    : updatedLogic
+    ? transformJsonLogic(allUpdatedLogic, entityVariables)
+    : allUpdatedLogic
 }
 
 // transform the raw var data to be the format that will be persisted

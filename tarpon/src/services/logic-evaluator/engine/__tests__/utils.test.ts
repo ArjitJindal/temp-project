@@ -411,6 +411,85 @@ describe('Transform json logic with direction-less entity variables', () => {
       ],
     })
   })
+  test('direction less variables inside all block', () => {
+    const updatedJsonLogic = transformJsonLogic({
+      and: [
+        {
+          all: [
+            { var: 'BUSINESS_USER:directors__BOTH' },
+            {
+              in: [
+                { var: 'generalDetails.countryOfNationality' },
+                ['US', 'NZ'],
+              ],
+            },
+          ],
+        },
+      ],
+    })
+    expect(updatedJsonLogic).toEqual({
+      and: [
+        {
+          or: [
+            {
+              and: [
+                {
+                  'op:hasItems': [
+                    {
+                      var: 'BUSINESS_USER:directors__SENDER',
+                    },
+                    true,
+                  ],
+                },
+                {
+                  all: [
+                    {
+                      var: 'BUSINESS_USER:directors__SENDER',
+                    },
+                    {
+                      in: [
+                        {
+                          var: 'generalDetails.countryOfNationality',
+                        },
+                        ['US', 'NZ'],
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            {
+              and: [
+                {
+                  'op:hasItems': [
+                    {
+                      var: 'BUSINESS_USER:directors__RECEIVER',
+                    },
+                    true,
+                  ],
+                },
+                {
+                  all: [
+                    {
+                      var: 'BUSINESS_USER:directors__RECEIVER',
+                    },
+                    {
+                      in: [
+                        {
+                          var: 'generalDetails.countryOfNationality',
+                        },
+                        ['US', 'NZ'],
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    })
+  })
 })
 
 describe('Transform var data', () => {
@@ -542,6 +621,47 @@ describe('Transform var data', () => {
     expect(vars).toEqual({
       v1: 'k1',
       root: { 'a.b.c': [1, 3], 'a.b.d': [2, 4], e: ['a', '10'] },
+    })
+  })
+  test('complex logic with no key access for nested fields', () => {
+    const vars = transformJsonLogicVars(
+      {
+        and: [
+          {
+            and: [
+              {
+                'op:hasItems': [
+                  {
+                    var: 'a',
+                  },
+                  true,
+                ],
+              },
+              {
+                all: [
+                  {
+                    var: 'a',
+                  },
+                  {
+                    in: [
+                      {
+                        var: 'b',
+                      },
+                      ['US', 'NZ'],
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        a: [{ b: 'US' }, { b: 'IN' }],
+      }
+    )
+    expect(vars).toEqual({
+      a: { b: ['US', 'IN'] },
     })
   })
 })
