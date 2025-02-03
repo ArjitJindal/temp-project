@@ -11,6 +11,11 @@ describe('count_of_array_of_items', () => {
     const result = await NUMBER_OF_ITEMS.run(x)
     expect(result).toEqual(0)
   })
+  it('should return 0 for null array for items', async () => {
+    const x = [null]
+    const result = await NUMBER_OF_ITEMS.run(x)
+    expect(result).toEqual(0)
+  })
 })
 describe('count_of_array_of_objects', () => {
   it('should return the length of the array of objects', async () => {

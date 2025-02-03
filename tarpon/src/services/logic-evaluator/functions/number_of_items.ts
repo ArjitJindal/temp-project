@@ -1,7 +1,7 @@
 import { LogicFunction } from './types'
 
 const arraylen = (inputArray: any) => {
-  if (!Array.isArray(inputArray)) {
+  if (!Array.isArray(inputArray) || !Array.isArray(inputArray[0])) {
     return 0
   }
   return inputArray[0].length
