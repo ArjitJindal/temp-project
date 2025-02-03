@@ -473,10 +473,6 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#roles#${auth0Domain}`,
     SortKeyID: roleId,
   }),
-  ROLES_BY_NAME: (auth0Domain: string, roleName: string) => ({
-    PartitionKeyID: `${SHARED_AUTH0_PARTITION_KEY_PREFIX}#roles-by-name#${auth0Domain}`,
-    SortKeyID: roleName,
-  }),
   ROLES_BY_NAMESPACE: (
     auth0Domain: string,
     namespace: string,

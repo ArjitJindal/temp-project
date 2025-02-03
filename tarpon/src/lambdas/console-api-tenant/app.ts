@@ -45,6 +45,7 @@ import { NangoService } from '@/services/nango'
 import { FEATURE_FLAG_PROVIDER_MAP } from '@/services/sanctions/data-fetchers'
 import { ReasonsService } from '@/services/tenants/reasons-service'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
+import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
 
 const ROOT_ONLY_SETTINGS: Array<keyof TenantSettings> = [
   'features',
@@ -353,6 +354,17 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'SYNC_AUTH0_DATA': {
+          await sendBatchJobCommand({
+            type: 'SYNC_AUTH0_DATA',
+            tenantId: FLAGRIGHT_TENANT_ID,
+            parameters: {
+              type: 'ALL',
+            },
+          })
+          break
+        }
+
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
         }

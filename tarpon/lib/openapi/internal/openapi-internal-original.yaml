@@ -9485,6 +9485,7 @@ components:
         - DEMO_MODE_DATA_LOAD
         - TEST_FARGATE
         - SANCTIONS_DATA_FETCH
+        - SYNC_AUTH0_DATA
     DashboardStatsTransactionsCount:
       type: object
       title: DashboardStatsTransactionsCount

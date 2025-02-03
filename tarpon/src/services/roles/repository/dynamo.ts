@@ -7,16 +7,13 @@ import {
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
 import { memoize } from 'lodash'
-import { getRoleDisplayName } from '../utils'
+import { getNamespace, getRoleDisplayName } from '../utils'
 import { BaseRolesRepository, CreateRoleInternal, DEFAULT_NAMESPACE } from '.'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { FLAGRIGHT_TENANT_ID } from '@/core/constants'
-import {
-  auth0AsyncWrapper,
-  getAuth0ManagementClient,
-} from '@/utils/auth0-utils'
 import { AccountRole } from '@/@types/openapi-internal/AccountRole'
 import { Permission } from '@/@types/openapi-internal/Permission'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 export class DynamoRolesRepository extends BaseRolesRepository {
   private dynamoClient: DynamoDBDocumentClient
@@ -26,6 +23,10 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     super()
     this.dynamoClient = dynamoClient
     this.auth0Domain = auth0Domain
+  }
+
+  private getTenantId(tenantId: string) {
+    return getNonDemoTenantId(tenantId)
   }
 
   async createRole(namespace: string, data: CreateRoleInternal) {
@@ -53,7 +54,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
         Item: {
           ...DynamoDbKeys.ROLES_BY_NAMESPACE(
             this.auth0Domain,
-            namespace,
+            this.getTenantId(namespace),
             role.id
           ),
           ...role,
@@ -61,34 +62,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       })
     )
 
-    await this.dynamoClient.send(
-      new PutCommand({
-        TableName:
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Item: {
-          ...DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, role.name),
-          ...role,
-        },
-      })
-    )
-
     return role
-  }
-
-  public async getRolesByName(name: string): Promise<AccountRole | null> {
-    const managementClient = await getAuth0ManagementClient(this.auth0Domain)
-    const rolesManager = managementClient.roles
-    const roles = await auth0AsyncWrapper(() =>
-      rolesManager.getAll({ name_filter: name })
-    )
-
-    const role = roles[0]
-
-    if (!role) {
-      return null
-    }
-
-    return this.getRole(role.id as string)
   }
 
   public getRole = memoize(async (id: string): Promise<AccountRole | null> => {
@@ -164,8 +138,10 @@ export class DynamoRolesRepository extends BaseRolesRepository {
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         ExpressionAttributeValues: {
-          ':pk': DynamoDbKeys.ROLES_BY_NAMESPACE(this.auth0Domain, namespace)
-            .PartitionKeyID,
+          ':pk': DynamoDbKeys.ROLES_BY_NAMESPACE(
+            this.auth0Domain,
+            this.getTenantId(namespace)
+          ).PartitionKeyID,
         },
         KeyConditionExpression: 'PartitionKeyID = :pk',
       })
@@ -193,15 +169,11 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       new DeleteCommand({
         TableName:
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Key: DynamoDbKeys.ROLES_BY_NAMESPACE(this.auth0Domain, role.name, id),
-      })
-    )
-
-    await this.dynamoClient.send(
-      new DeleteCommand({
-        TableName:
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        Key: DynamoDbKeys.ROLES_BY_NAME(this.auth0Domain, id),
+        Key: DynamoDbKeys.ROLES_BY_NAMESPACE(
+          this.auth0Domain,
+          this.getTenantId(getNamespace(role.name)),
+          id
+        ),
       })
     )
   }
