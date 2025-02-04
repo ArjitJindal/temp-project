@@ -41,7 +41,7 @@ export const config: Config = {
     PUBLIC_API_GATEWAY: {},
     CONSOLE_API_GATEWAY: {},
     LAMBDA_DEFAULT: {
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     API_KEY_AUTHORIZER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
@@ -52,7 +52,7 @@ export const config: Config = {
     TRANSACTION_LAMBDA: {
       MAX_PROVISIONED_CONCURRENCY: 1,
       MIN_PROVISIONED_CONCURRENCY: 0,
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     TARPON_CHANGE_CAPTURE_LAMBDA: {
       MEMORY_SIZE: 1024,
@@ -61,7 +61,7 @@ export const config: Config = {
     TRANSACTION_AGGREGATION_MAX_CONCURRENCY: 2,
     USER_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     TRANSACTIONS_VIEW_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
@@ -78,7 +78,7 @@ export const config: Config = {
     },
     CASE_LAMBDA: {
       PROVISIONED_CONCURRENCY: 0,
-      MEMORY_SIZE: 512,
+      MEMORY_SIZE: 1024,
     },
     BATCH_JOB_LAMBDA: {
       MEMORY_SIZE: 1024,
