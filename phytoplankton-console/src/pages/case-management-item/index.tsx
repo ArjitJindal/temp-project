@@ -16,6 +16,7 @@ import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { isSuccess, isLoading } from '@/utils/asyncResource';
+import { useUpdateCaseQueryData } from '@/utils/api/cases';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -29,6 +30,7 @@ function CaseManagementItemPage() {
   useCloseSidebarByDefault();
 
   const updateAlertQueryData = useUpdateAlertQueryData();
+  const updateCaseQueryData = useUpdateCaseQueryData();
   const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
   const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
 
@@ -52,8 +54,19 @@ function CaseManagementItemPage() {
       );
 
       updateAlertCommentsQueryData(alertId, (comments) => [...(comments ?? []), newComment]);
+
       return;
     }
+
+    updateCaseQueryData(caseId, (caseItem) =>
+      caseItem == null
+        ? caseItem
+        : {
+            ...caseItem,
+            comments: [...(caseItem?.comments ?? []), newComment],
+            updatedAt: Date.now(),
+          },
+    );
   };
 
   const handleAddCommentReply = async (commentFormValues: FormValues, groupId: string) => {
