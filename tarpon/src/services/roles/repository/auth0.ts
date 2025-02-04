@@ -106,8 +106,6 @@ export class Auth0RolesRepository extends BaseRolesRepository {
       roles.push(compact([rootRole, whitelabelRootRole]))
     }
 
-    console.log('roles', JSON.stringify(roles, null, 2))
-
     return roles.flat()
   }
 
