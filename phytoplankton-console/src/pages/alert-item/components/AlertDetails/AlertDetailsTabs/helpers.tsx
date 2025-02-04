@@ -14,7 +14,6 @@ import {
   CASES_ITEM,
   SANCTIONS_HITS_ALL,
   SANCTIONS_HITS_SEARCH,
-  USERS_ITEM,
 } from '@/utils/queries/keys';
 import { AllParams, SelectionAction } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
@@ -22,8 +21,6 @@ import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
 import {
   Alert,
-  InternalBusinessUser,
-  InternalConsumerUser,
   SanctionHitStatusUpdateRequest,
   SanctionsHit,
   SanctionsHitListResponse,
@@ -43,6 +40,7 @@ import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsPro
 import InsightsCard from '@/pages/case-management-item/CaseDetails/InsightsCard';
 import * as Card from '@/components/ui/Card';
 import ExpectedTransactionLimits from '@/pages/users-item/UserDetails/shared/TransactionLimits';
+import { useConsoleUser } from '@/pages/users-item/UserDetails/utils';
 
 export enum AlertTabs {
   AI_FORENSICS = 'ai-forensics',
@@ -309,15 +307,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     }
     return api.getCase({ caseId: alert.caseId });
   });
-  const userQueryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(
-    USERS_ITEM(caseUserId),
-    () => {
-      if (caseUserId == null) {
-        throw new Error(`Id is not defined`);
-      }
-      return api.getUsersItem({ userId: caseUserId });
-    },
-  );
+  const userQueryResult = useConsoleUser(caseUserId);
 
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
@@ -416,11 +406,7 @@ export function useAlertTabs(props: Props): TabItem[] {
           return {
             title: 'User details',
             key: tab,
-            children: (
-              <AsyncResourceRenderer resource={userQueryResult.data}>
-                {(user) => <UserDetails user={user} />}
-              </AsyncResourceRenderer>
-            ),
+            children: <UserDetails userId={caseUserId} />,
           };
         }
         if (tab === AlertTabs.ONTOLOGY) {

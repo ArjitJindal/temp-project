@@ -45,7 +45,7 @@ import StatusFilterButton from '@/components/ActivityCard/Filters/StatusFilterBu
 import AlertIdSearchFilter from '@/components/ActivityCard/Filters/AlertIdSearchFIlter';
 import ActivityByFilterButton from '@/components/ActivityCard/Filters/ActivityByFilterButton';
 import { useMutation } from '@/utils/queries/mutations/hooks';
-import { CommentType, useUsers } from '@/utils/user-utils';
+import { useUsers } from '@/utils/user-utils';
 import { CommentGroup } from '@/components/CommentsCard';
 import { message } from '@/components/library/Message';
 import { FormValues as CommentEditorFormValues } from '@/components/CommentEditor';
@@ -82,12 +82,7 @@ interface CommentsHandlers {
     commentFormValues: CommentEditorFormValues,
     groupId: string,
   ) => Promise<ApiComment>;
-  onCommentAdded: (
-    newComment: Comment,
-    commentType: CommentType,
-    groupId: string,
-    personId?: string,
-  ) => void;
+  onCommentAdded: (newComment: Comment, groupId: string) => void;
 }
 
 function CaseDetails(props: Props) {
@@ -257,7 +252,7 @@ function useTabs(
     isUserSubject && {
       title: 'User details',
       key: 'user-details',
-      children: <UserDetails user={user} />,
+      children: <UserDetails userId={user?.userId} />,
       isClosable: false,
       isDisabled: false,
     },
@@ -406,18 +401,18 @@ function useTabs(
               comments={{
                 writePermissions: ['case-management:case-details:write'],
                 handleAddComment: comments.handleAddComment,
-                onCommentAdded: comments.onCommentAdded,
+                onCommentAdded: (newComment, _, groupId) => {
+                  return comments.onCommentAdded(newComment, groupId);
+                },
                 deleteCommentMutation: deleteCommentMutation,
-                dataRes: success(
-                  [
-                    ...alertCommentsGroups,
-                    {
-                      title: 'Case comments',
-                      id: caseItem.caseId ?? '-',
-                      comments: caseItem.comments ?? [],
-                    },
-                  ] ?? [],
-                ),
+                dataRes: success([
+                  ...alertCommentsGroups,
+                  {
+                    title: 'Case comments',
+                    id: caseItem.caseId ?? '-',
+                    comments: caseItem.comments ?? [],
+                  },
+                ]),
               }}
             />
           )}

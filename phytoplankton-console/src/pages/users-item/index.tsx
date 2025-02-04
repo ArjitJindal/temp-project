@@ -8,6 +8,7 @@ import s from './index.module.less';
 import CRMMonitoring from './UserDetails/CRMMonitoring';
 import Linking from './UserDetails/Linking';
 import { UserEvents } from './UserDetails/UserEvents';
+import { useConsoleUser } from './UserDetails/utils';
 import PageWrapper, { PAGE_WRAPPER_PADDING } from '@/components/PageWrapper';
 import { makeUrl } from '@/utils/routing';
 import {
@@ -20,7 +21,6 @@ import {
 import { useApi } from '@/api';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import * as Card from '@/components/ui/Card';
-import { useQuery } from '@/utils/queries/hooks';
 import { USERS_ITEM } from '@/utils/queries/keys';
 import PageTabs, { TABS_LINE_HEIGHT } from '@/components/ui/PageTabs';
 import { keepBackUrl } from '@/utils/backUrl';
@@ -43,13 +43,6 @@ export default function UserItem() {
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
   const isCrmEnabled = useFeatureEnabled('CRM');
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
-
-  const queryResult = useQuery<InternalConsumerUser | InternalBusinessUser>(USERS_ITEM(id), () => {
-    if (id == null) {
-      throw new Error(`Id is not defined`);
-    }
-    return api.getUsersItem({ userId: id });
-  });
 
   const handleNewTags = (tags: UserTag[]) => {
     queryClient.setQueryData<InternalConsumerUser | InternalBusinessUser>(
@@ -150,6 +143,8 @@ export default function UserItem() {
   const rect = useElementSize(headerStickyElRef);
   const entityHeaderHeight = rect?.height ?? 0;
 
+  const queryResult = useConsoleUser(id);
+
   return (
     <AsyncResourceRenderer resource={queryResult.data}>
       {(user) => (
@@ -184,7 +179,7 @@ export default function UserItem() {
               {
                 title: 'User details',
                 key: 'user-details',
-                children: <UserDetails user={user} onNewComment={handleNewComment} />,
+                children: <UserDetails userId={user.userId} onNewComment={handleNewComment} />,
                 isClosable: false,
                 isDisabled: false,
               },

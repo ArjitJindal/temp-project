@@ -3,13 +3,7 @@ import { useLocation, useParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import Header from './components/Header';
 import { Authorized } from '@/components/utils/Authorized';
-import {
-  Case,
-  Comment,
-  InternalBusinessUser,
-  InternalConsumerUser,
-  PersonAttachment,
-} from '@/apis';
+import { Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import PageWrapper from '@/components/PageWrapper';
 import * as Card from '@/components/ui/Card';
@@ -18,12 +12,10 @@ import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import { ALERT_LIST, CASES_ITEM, CASE_AUDIT_LOGS_LIST } from '@/utils/queries/keys';
 import CaseDetails from '@/pages/case-management-item/CaseDetails';
 import { useCloseSidebarByDefault } from '@/components/AppWrapper/Providers/SidebarProvider';
-import { useUpdateCaseQueryData } from '@/utils/api/cases';
 import { FormValues } from '@/components/CommentEditor';
 import { useUpdateAlertItemCommentsData, useUpdateAlertQueryData } from '@/utils/api/alerts';
 import { ALERT_GROUP_PREFIX } from '@/utils/case-utils';
 import { isSuccess, isLoading } from '@/utils/asyncResource';
-import { CommentType } from '@/utils/user-utils';
 
 const CASE_REFETCH_INTERVAL_SECONDS = 60;
 
@@ -36,7 +28,6 @@ function CaseManagementItemPage() {
   const queryClient = useQueryClient();
   useCloseSidebarByDefault();
 
-  const updateCaseQueryData = useUpdateCaseQueryData();
   const updateAlertQueryData = useUpdateAlertQueryData();
   const updateAlertCommentsQueryData = useUpdateAlertItemCommentsData();
   const queryResults = useQuery(CASES_ITEM(caseId), (): Promise<Case> => api.getCase({ caseId }));
@@ -48,126 +39,20 @@ function CaseManagementItemPage() {
     { refetchIntervalSeconds: CASE_REFETCH_INTERVAL_SECONDS },
   );
 
-  const handleCommentAdded = async (
-    newComment: Comment,
-    commentType: CommentType,
-    groupId: string,
-    personId?: string,
-  ): Promise<void> => {
+  const handleCommentAdded = async (newComment: Comment, groupId: string): Promise<void> => {
     await queryClient.invalidateQueries(CASE_AUDIT_LOGS_LIST(caseId, {}));
 
     if (groupId.startsWith(ALERT_GROUP_PREFIX)) {
       const alertId = groupId.replace(ALERT_GROUP_PREFIX, '');
 
-      updateAlertQueryData(alertId, (alertItem) => {
-        if (alertItem == null) {
-          return alertItem;
-        }
-        return {
-          ...alertItem,
-          comments: [...(alertItem?.comments ?? []), newComment],
-        };
-      });
+      updateAlertQueryData(alertId, (alertItem) =>
+        alertItem
+          ? { ...alertItem, comments: [...(alertItem.comments ?? []), newComment] }
+          : alertItem,
+      );
 
-      updateAlertCommentsQueryData(alertId, (comments) => {
-        if (comments == null) {
-          return [newComment];
-        }
-        return [...comments, newComment];
-      });
-
+      updateAlertCommentsQueryData(alertId, (comments) => [...(comments ?? []), newComment]);
       return;
-    }
-
-    if (commentType === CommentType.COMMENT) {
-      updateCaseQueryData(caseId, (caseItem) => {
-        if (caseItem == null) {
-          return caseItem;
-        }
-        return {
-          ...caseItem,
-          comments: [...(caseItem?.comments ?? []), newComment],
-          updatedAt: Date.now(),
-        };
-      });
-    }
-
-    if (commentType === CommentType.USER) {
-      updateCaseQueryData(caseId, (caseItem) => {
-        if (caseItem == null) {
-          return caseItem;
-        }
-        if (
-          caseItem.caseUsers?.origin instanceof InternalBusinessUser ||
-          caseItem.caseUsers?.origin instanceof InternalConsumerUser
-        ) {
-          return {
-            ...caseItem,
-            caseUsers: {
-              ...caseItem.caseUsers,
-              origin: {
-                ...caseItem.caseUsers.origin,
-                attachments: [...(caseItem.caseUsers.origin.attachments ?? []), newComment],
-              },
-            },
-          };
-        }
-        if (
-          caseItem.caseUsers?.destination instanceof InternalBusinessUser ||
-          caseItem.caseUsers?.destination instanceof InternalConsumerUser
-        ) {
-          return {
-            ...caseItem,
-            caseUsers: {
-              ...caseItem.caseUsers,
-              destination: {
-                ...caseItem.caseUsers.destination,
-                attachments: [...(caseItem.caseUsers.destination.attachments ?? []), newComment],
-              },
-            },
-          };
-        }
-      });
-    }
-
-    if (commentType === CommentType.SHAREHOLDERDIRECTOR && personId) {
-      updateCaseQueryData(caseId, (caseItem) => {
-        if (caseItem == null) {
-          return caseItem;
-        }
-        if (caseItem.caseUsers?.origin instanceof InternalBusinessUser) {
-          return {
-            ...caseItem,
-            caseUsers: {
-              ...caseItem.caseUsers,
-              origin: {
-                ...caseItem.caseUsers.origin,
-                shareHolders: caseItem.caseUsers.origin.shareHolders?.map((shareHolder) => {
-                  if (shareHolder.userId === personId) {
-                    return shareHolder;
-                  }
-                  return {
-                    ...shareHolder,
-                    attachments: [
-                      ...(shareHolder.attachments ?? []),
-                      newComment as PersonAttachment,
-                    ],
-                  };
-                }),
-                directors: caseItem.caseUsers.origin.directors?.map((director) => {
-                  if (director.userId === personId) {
-                    return director;
-                  }
-                  return {
-                    ...director,
-                    attachments: [...(director.attachments ?? []), newComment as PersonAttachment],
-                  };
-                }),
-              },
-            },
-          };
-        }
-      });
     }
   };
 

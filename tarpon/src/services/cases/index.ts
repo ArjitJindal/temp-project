@@ -977,28 +977,6 @@ export class CaseService extends CaseAlertsCommonService {
       }))
     )
 
-    if (caseEntity.caseUsers?.origin?.userId) {
-      const userId = caseEntity.caseUsers?.origin?.userId
-      caseEntity = {
-        ...caseEntity,
-        caseUsers: {
-          ...caseEntity.caseUsers,
-          origin: await this.userService.getUser(userId, false),
-        },
-      }
-    }
-
-    if (caseEntity.caseUsers?.destination?.userId) {
-      const userId = caseEntity.caseUsers?.destination?.userId
-      caseEntity = {
-        ...caseEntity,
-        caseUsers: {
-          ...caseEntity.caseUsers,
-          destination: await this.userService.getUser(userId, false),
-        },
-      }
-    }
-
     return { ...caseEntity, comments: commentsWithUrl, alerts }
   }
 
