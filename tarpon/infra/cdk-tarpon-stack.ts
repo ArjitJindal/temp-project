@@ -1158,22 +1158,43 @@ export class CdkTarponStack extends cdk.Stack {
       )
 
       // Cron job hourly
-      const { func: cronJobHourlyHandler } = createFunction(
-        this,
-        lambdaExecutionRole,
-        {
-          name: StackConstants.CRON_JOB_HOURLY,
-        }
-      )
 
-      const hourlyRule = new Rule(
-        this,
-        getResourceNameForTarpon('HourlyRule'),
-        {
-          schedule: Schedule.cron({ minute: '0' }),
+      if (!isQaEnv()) {
+        const { func: cronJobHourlyHandler } = createFunction(
+          this,
+          lambdaExecutionRole,
+          { name: StackConstants.CRON_JOB_HOURLY }
+        )
+
+        let minute = '0'
+
+        if (envIs('prod') && config.region) {
+          const triggerTime: Record<FlagrightRegion, string> = {
+            'eu-1': '0',
+            'eu-2': '5',
+            'asia-2': '10',
+            'au-1': '15',
+            'us-1': '20',
+            'me-1': '25',
+            'asia-1': '30',
+            'asia-3': '35',
+          }
+
+          minute = triggerTime[config.region]
+        } else if (envIs('sandbox')) {
+          minute = '45'
+        } else if (envIs('dev')) {
+          minute = '50'
         }
-      )
-      hourlyRule.addTarget(new LambdaFunctionTarget(cronJobHourlyHandler))
+
+        // Run cron job every hour on a particular minute
+        const hourlyRule = new Rule(
+          this,
+          getResourceNameForTarpon('HourlyRule'),
+          { schedule: Schedule.cron({ minute }) }
+        )
+        hourlyRule.addTarget(new LambdaFunctionTarget(cronJobHourlyHandler))
+      }
     }
 
     /* Tarpon Kinesis Change capture consumer */
