@@ -373,7 +373,7 @@ export class DynamoAlertRepository {
 
   private async localChangeHandler(primaryKey: {
     PartitionKeyID: string
-    SortKeyID: string
+    SortKeyID?: string
   }) {
     if (runLocalChangeHandler()) {
       const { localTarponChangeCaptureHandler } = await import(
