@@ -1,5 +1,5 @@
 import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
-import { DYNAMODB_TABLE_NAMES, StackConstants } from '@lib/constants'
+import { StackConstants } from '@lib/constants'
 import {
   DeleteCommand,
   GetCommand,
@@ -59,7 +59,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   async deleteOrganization(tenant: Tenant): Promise<void> {
     await this.dynamoClient.send(
       new DeleteCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenant.id),
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenant.id),
       })
     )
@@ -96,7 +97,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     const key = DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenantId)
     const data = await this.dynamoClient.send(
       new GetCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: key,
       })
     )
@@ -135,9 +137,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     const key = DynamoDbKeys.ORGANIZATION(this.auth0Domain, tenantId)
     const data = await this.dynamoClient.send(
       new GetCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(
-          this.getNonDemoTenantId(tenantId)
-        ),
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: key,
       })
     )
@@ -173,7 +174,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
       ),
       this.dynamoClient.send(
         new PutCommand({
-          TableName: DYNAMODB_TABLE_NAMES.TARPON,
+          TableName:
+            StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
           Item: {
             ...account,
             ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
@@ -192,7 +194,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
   ): Promise<Account> {
     await this.dynamoClient.send(
       new PutCommand({
-        TableName: DYNAMODB_TABLE_NAMES.TARPON,
+        TableName:
+          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Item: {
           ...account,
           ...DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, email),
@@ -343,7 +346,8 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     await Promise.all([
       this.dynamoClient.send(
         new DeleteCommand({
-          TableName: DYNAMODB_TABLE_NAMES.TARPON,
+          TableName:
+            StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
           Key: DynamoDbKeys.ACCOUNTS_BY_EMAIL(this.auth0Domain, account.email),
         })
       ),
@@ -358,7 +362,10 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
         ? [
             this.dynamoClient.send(
               new DeleteCommand({
-                TableName: DYNAMODB_TABLE_NAMES.TARPON,
+                TableName:
+                  StackConstants.TARPON_DYNAMODB_TABLE_NAME(
+                    FLAGRIGHT_TENANT_ID
+                  ),
                 Key: DynamoDbKeys.ORGANIZATION_ACCOUNTS(
                   this.auth0Domain,
                   this.getNonDemoTenantId(tenantId),
