@@ -44,7 +44,7 @@ type FormValues = Pick<Account, 'email' | 'role'> & {
 const defaultState: FormValues = {
   role: 'admin',
   email: '',
-  reviewPermissions: 'MAKER',
+  reviewPermissions: undefined,
   checker: {
     type: 'ACCOUNT',
   },
@@ -338,7 +338,6 @@ export default function AccountForm(props: Props) {
           role: notEmpty,
           ...(isAdvancedWorkflowsEnabled
             ? {
-                reviewPermissions: notEmpty,
                 ...(values?.reviewPermissions === 'MAKER'
                   ? {
                       checker: {
@@ -392,8 +391,10 @@ export default function AccountForm(props: Props) {
                 >
                   {(inputProps) => (
                     <div className={s.permissionsGroup}>
-                      <RadioGroup
-                        options={(['MAKER', 'CHECKER', 'ESCALATION_L1', 'ESCALATION_L2'] as const)
+                      <RadioGroup<ReviewPermission | undefined>
+                        options={(
+                          [undefined, 'MAKER', 'CHECKER', 'ESCALATION_L1', 'ESCALATION_L2'] as const
+                        )
                           .filter((x) => {
                             if (x === 'ESCALATION_L2') {
                               return isMultiEscalationsEnabled;
@@ -402,7 +403,9 @@ export default function AccountForm(props: Props) {
                           })
                           .map((x) => {
                             let label: string;
-                            if (x === 'ESCALATION_L1') {
+                            if (x == null) {
+                              label = 'None';
+                            } else if (x === 'ESCALATION_L1') {
                               label = isMultiEscalationsEnabled
                                 ? 'Escalation L1'
                                 : 'Escalation reviewer';
