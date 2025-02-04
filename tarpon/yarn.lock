@@ -9514,7 +9514,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"axios@npm:^1.7.8":
+"axios@npm:^1.7.9":
   version: 1.7.9
   resolution: "axios@npm:1.7.9"
   dependencies:
@@ -19054,7 +19054,7 @@ __metadata:
     aws-sdk-client-mock-jest: "npm:^2.0.1"
     aws-xray-sdk: "npm:^3.5.0"
     aws-xray-sdk-core: "npm:^3.3.8"
-    axios: "npm:^1.7.8"
+    axios: "npm:^1.7.9"
     base-x: "npm:^3.0.9"
     body-parser: "npm:^1.20.0"
     builtin-modules: "npm:^3.3.0"

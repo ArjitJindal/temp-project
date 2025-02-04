@@ -29,7 +29,7 @@ jobs:
     runs-on: large
     services:
       clickhouse-server:
-        image: clickhouse/clickhouse-server:latest
+        image: clickhouse/clickhouse-server:25.1.2
         ports:
           - '8123:8123'
           - '9000:9000'
