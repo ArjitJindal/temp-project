@@ -38,6 +38,7 @@ models:
     to_email: string | null
     created_at: number | null
     updated_at: number | null
+    cc_emails: string[] | null
   Attachments:
     content_type: string
     size: number

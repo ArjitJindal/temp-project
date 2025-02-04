@@ -55,6 +55,7 @@ export interface Conversation {
   to_email: string | null
   created_at: number | null
   updated_at: number | null
+  cc_emails: string[] | null
 }
 
 export interface Attachments {
@@ -118,6 +119,7 @@ export default async function fetchData(nango: NangoSync): Promise<void> {
               body_text: conversation.body_text || null,
               from_email: conversation.from_email || null,
               to_email: conversation.to_email || null,
+              cc_emails: conversation.cc_emails || null,
               created_at:
                 conversation.created_at !== null
                   ? new Date(conversation.created_at).valueOf()
