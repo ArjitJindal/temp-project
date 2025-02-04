@@ -206,6 +206,34 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
         DEFAULT_CLASSIFICATION_SETTINGS,
         destination?.drsScore?.drsScore ?? destination?.krsScore?.krsScore ?? 75
       )
+
+      const alerts: Alert[] = ruleHits
+        .filter((rh) => rh.nature === nature)
+        .map((ruleHit) => {
+          const ruleInstance = getRuleInstance(ruleHit.ruleInstanceId)
+
+          if (ruleInstance.ruleRunMode === 'SHADOW') {
+            return null
+          }
+
+          const alertTransactions =
+            ruleInstance.type === 'USER'
+              ? []
+              : caseTransactions.filter(
+                  (t) =>
+                    !!t.hitRules.find(
+                      (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
+                    )
+                )
+
+          return this.alertSampler.getSample(undefined, {
+            caseId,
+            ruleHit,
+            transactions: alertTransactions,
+          })
+        })
+        .filter((alert): alert is Alert => alert !== null)
+
       return {
         caseId,
         caseType: 'SYSTEM',
@@ -271,27 +299,7 @@ export class TransactionUserCasesSampler extends BaseSampler<Case[]> {
         },
 
         caseTransactionsIds: caseTransactions.map((t) => t.transactionId),
-        alerts: ruleHits
-          .filter((rh) => rh.nature === nature)
-          .map((ruleHit) => {
-            const ruleInstance = getRuleInstance(ruleHit.ruleInstanceId)
-
-            const alertTransactions =
-              ruleInstance.type === 'USER'
-                ? []
-                : caseTransactions.filter(
-                    (t) =>
-                      !!t.hitRules.find(
-                        (hr) => hr.ruleInstanceId === ruleHit.ruleInstanceId
-                      )
-                  )
-
-            return this.alertSampler.getSample(undefined, {
-              caseId,
-              ruleHit,
-              transactions: alertTransactions,
-            })
-          }),
+        alerts: alerts,
       }
     }).filter((c) => c.alerts && c.alerts.length)
   }
