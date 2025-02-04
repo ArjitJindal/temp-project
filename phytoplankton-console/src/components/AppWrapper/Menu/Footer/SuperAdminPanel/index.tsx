@@ -1,5 +1,5 @@
 import { Divider, Input, Space } from 'antd';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { validate } from 'uuid';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import NumberInput from '../../../../library/NumberInput';
@@ -39,6 +39,7 @@ import SelectionGroup from '@/components/library/SelectionGroup';
 import { getOr, isSuccess } from '@/utils/asyncResource';
 import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
+import { useDeepEqualEffect } from '@/utils/hooks';
 
 export const featureDescriptions: Record<Feature, { title: string; description: string }> = {
   ALERT_DETAILS_PAGE: {
@@ -167,7 +168,7 @@ export default function SuperAdminPanel() {
   const [showCreateTenantModal, setShowCreateTenantModal] = useState(false);
   const settings = useSettings();
   const crmIntegrations = useQuery(['crmIntegrations'], () => api.getTenantsCrmIntegrations());
-  const currentCrmSettings = getOr(crmIntegrations.data, {});
+  const currentCrmSettings = getOr(crmIntegrations.data, undefined);
   const [crmSettings, setCrmSettings] = useState<CRMIntegrations | undefined>(currentCrmSettings);
   const initialFeatures = useFeatures();
   const [features, setFeatures] = useState<Feature[] | undefined>(settings.features?.sort());
@@ -184,7 +185,7 @@ export default function SuperAdminPanel() {
     failedToDeleteContainer: true,
   });
 
-  useEffect(() => {
+  useDeepEqualEffect(() => {
     if (currentCrmSettings) {
       setCrmSettings(currentCrmSettings);
     }
