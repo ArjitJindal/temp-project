@@ -97,6 +97,7 @@ export class AccountsService {
     updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
     await this.auth0.patchOrganization(tenantId, updatedMetadata)
+    await this.cache.patchOrganization(tenantId, updatedMetadata)
   }
 
   async resetPassword(accountId: string) {

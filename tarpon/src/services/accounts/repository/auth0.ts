@@ -276,12 +276,19 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     tenantId: string,
     patch: Partial<Auth0TenantMetadata>
   ): Promise<Tenant> {
+    const tenant = await this.getTenantById(tenantId)
+
+    if (!tenant) {
+      throw new createHttpError.NotFound(
+        `Organization not found with for tenant ${tenantId}`
+      )
+    }
     const managementClient = await getAuth0ManagementClient(this.auth0Domain)
     const organizationManager = managementClient.organizations
 
     const organization = await auth0AsyncWrapper(() =>
       organizationManager.update(
-        { id: tenantId },
+        { id: tenant?.orgId },
         {
           metadata: {
             ...patch,
