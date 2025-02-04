@@ -8528,6 +8528,8 @@ components:
           type: number
         hitCount:
           type: number
+        ruleRunTime:
+          type: number
         falsePositiveCheckEnabled:
           type: boolean
         checklistTemplateId:

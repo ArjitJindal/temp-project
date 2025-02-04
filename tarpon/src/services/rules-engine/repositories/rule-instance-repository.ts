@@ -509,17 +509,19 @@ export class RuleInstanceRepository {
       runCountDelta: number
     }
   }) {
+    const now = Date.now()
     await pMap(
       Object.keys(updates),
       async (runRuleInstanceId) => {
         const updateItemInput: UpdateCommandInput = {
           TableName: StackConstants.TARPON_RULE_DYNAMODB_TABLE_NAME,
           Key: DynamoDbKeys.RULE_INSTANCE(this.tenantId, runRuleInstanceId),
-          UpdateExpression: `SET runCount = if_not_exists(runCount, :zero) + :runCountInc, hitCount = if_not_exists(hitCount, :zero) + :hitCountInc`,
+          UpdateExpression: `SET runCount = if_not_exists(runCount, :zero) + :runCountInc, hitCount = if_not_exists(hitCount, :zero) + :hitCountInc, ruleRunTime = :now`,
           ExpressionAttributeValues: {
             ':runCountInc': updates[runRuleInstanceId].runCountDelta,
             ':hitCountInc': updates[runRuleInstanceId].hitCountDelta,
             ':zero': 0,
+            ':now': now,
           },
           ReturnValues: 'UPDATED_NEW',
         }
