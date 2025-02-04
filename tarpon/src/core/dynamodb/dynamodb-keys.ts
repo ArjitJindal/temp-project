@@ -77,7 +77,7 @@ export const DynamoDbKeys = {
     PartitionKeyID: `${tenantId}${NANGO_RECORD_KEY_IDENTIFIER}${NANGO_RECORD_MODEL_KEY_IDENTIFIER}:${modelName}`,
     SortKeyID: id,
   }),
-  ALERT_COMMENT: (tenantId: string, alertId: string, commentId: string) => ({
+  ALERT_COMMENT: (tenantId: string, alertId: string, commentId?: string) => ({
     PartitionKeyID: `${tenantId}#${ALERT_ID_PREFIX}${alertId}${ALERT_COMMENT_KEY_IDENTIFIER}`,
     SortKeyID: commentId,
   }),

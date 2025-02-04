@@ -1018,6 +1018,9 @@ export class AlertsRepository {
       updatedAt: now,
     }
 
+    if (hasFeature('ALERTS_DYNAMO_POC')) {
+      await this.dynamoAlertRepository.saveComment(alertId, commentToSave)
+    }
     await collection.findOneAndUpdate(
       {
         caseId,

@@ -51,7 +51,7 @@ const consumerUsers: (
     uploadAttachments = false
   }
   const consumerUser: InternalConsumerUser[] = []
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 500; i++) {
     consumerUser.push(
       await sampler.getSample(undefined, tenantId, uploadAttachments)
     )

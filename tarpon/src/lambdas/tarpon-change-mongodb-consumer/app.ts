@@ -2,6 +2,7 @@ import path from 'path'
 import { KinesisStreamEvent, SQSEvent } from 'aws-lambda'
 import { difference, isEmpty, isEqual, omit, pick } from 'lodash'
 import { StackConstants } from '@lib/constants'
+import { GetCommand, QueryCommand } from '@aws-sdk/lib-dynamodb'
 import {
   arsScoreEventHandler,
   avgArsScoreEventHandler,
@@ -60,6 +61,8 @@ import { insertToClickhouse } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
 import { NangoRecord } from '@/@types/nango'
+import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
+import { getDynamoDbClient } from '@/utils/dynamodb'
 
 export const INTERNAL_ONLY_USER_ATTRIBUTES = difference(
   InternalUser.getAttributeTypeMap().map((v) => v.name),
@@ -429,29 +432,14 @@ async function userEventHandler(
   )
 }
 
-async function alertHandler(
-  tenantId: string,
-  alert: Alert | undefined,
-  dbClients: DbClients
-) {
+async function alertHandler(tenantId: string, alert: Alert | undefined) {
   if (!alert || !alert.alertId) {
     return
   }
-
-  const caseRepository = new CaseRepository(tenantId, {
-    mongoDb: dbClients.mongoDb,
-    dynamoDb: dbClients.dynamoDb,
-  })
-
-  const case_ = await caseRepository.getCaseById(alert.caseId as string)
-
-  if (!case_) {
-    return
-  }
-
+  alert.updatedAt = Date.now()
   await insertToClickhouse<AlertClickhouse>(
     CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
-    { ...alert, caseStatus: case_.caseStatus },
+    alert,
     tenantId
   )
 }
@@ -464,8 +452,40 @@ async function alertCommentHandler(
   if (!alertComment || !alertComment.id) {
     return
   }
+  console.log('Alert Comment Handler', alertComment)
+  // Get the updated alert from DynamoDB
+  const dynamoDb = getDynamoDbClient()
+  const key = DynamoDbKeys.ALERT(tenantId, alertId)
 
-  // TODO: Implement if required
+  const { Item: alert } = await dynamoDb.send(
+    new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      Key: key,
+    })
+  )
+
+  if (!alert) {
+    return
+  }
+
+  const commentsResponse = await dynamoDb.send(
+    new QueryCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+      KeyConditionExpression: 'PartitionKeyID = :pkid',
+      ExpressionAttributeValues: {
+        ':pkid': DynamoDbKeys.ALERT_COMMENT(tenantId, alertId).PartitionKeyID,
+      },
+    })
+  )
+  console.log('Comments Response', commentsResponse)
+  const alertWithComments = alert as Alert & { comments: Comment[] }
+  alertWithComments.comments = (commentsResponse.Items as Comment[]) || []
+
+  // await insertToClickhouse<AlertClickhouse>(
+  //   CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+  //   alertWithComments,
+  //   tenantId
+  // )
 }
 
 async function alertFileHandler(
@@ -478,7 +498,28 @@ async function alertFileHandler(
     return
   }
 
-  // TODO: Implement if required
+  // const dynamoDb = getDynamoDbClient()
+  // const key = DynamoDbKeys.ALERT_COMMENT_FILE(
+  //   tenantId,
+  //   alertId,
+  //   commentId,
+  //   alertFile.s3Key
+  // )
+
+  // await dynamoDb.send(
+  //   new PutCommand({
+  //     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+  //     Item: {
+  //       ...key,
+  //       fileName: alertFile.fileName,
+  //       fileSize: alertFile.fileSize,
+  //       mimeType: alertFile.mimeType,
+  //       s3Key: alertFile.s3Key,
+  //       uploadedAt: alertFile.uploadedAt || Date.now(),
+  //       uploadedBy: alertFile.uploadedBy,
+  //     },
+  //   })
+  // )
 }
 
 async function nangoRecordHandler(
@@ -591,8 +632,8 @@ const tarponBuilder = new StreamConsumerBuilder(
   .setAvgArsScoreEventHandler((tenantId, oldAvgArs, newAvgArs, dbClients) =>
     avgArsScoreEventHandler(tenantId, newAvgArs, dbClients)
   )
-  .setAlertHandler((tenantId, oldAlert, newAlert, dbClients) =>
-    alertHandler(tenantId, newAlert, dbClients)
+  .setAlertHandler((tenantId, oldAlert, newAlert) =>
+    alertHandler(tenantId, newAlert)
   )
   .setAlertCommentHandler((tenantId, alertId, oldComment, newComment) =>
     alertCommentHandler(tenantId, alertId, newComment)

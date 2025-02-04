@@ -3,7 +3,6 @@ import {
   DeleteCommand,
   GetCommand,
   PutCommand,
-  QueryCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
@@ -101,20 +100,18 @@ export class DynamoAlertRepository {
     fileS3Key: string,
     summary: string
   ): Promise<void> {
-    const key = DynamoDbKeys.ALERT_COMMENT_FILE(
-      this.tenantId,
-      alertId,
-      commentId,
-      fileS3Key
-    )
+    const key = DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
 
     await this.dynamoDb.send(
       new UpdateCommand({
         TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
         Key: key,
-        UpdateExpression: 'set aiSummary = :summary',
+        UpdateExpression:
+          'set updatedAt = :updatedAt, files.$[file].aiSummary = :summary',
         ExpressionAttributeValues: {
           ':summary': summary,
+          ':updatedAt': Date.now(),
+          ':file': fileS3Key,
         },
       })
     )
@@ -182,40 +179,16 @@ export class DynamoAlertRepository {
       })
     )
 
-    const queryCommandResult = await this.dynamoDb.send(
-      new QueryCommand({
-        TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-        KeyConditionExpression: 'PartitionKeyID = :pk',
-        ExpressionAttributeValues: {
-          ':pk': DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
-            .PartitionKeyID,
-        },
-      })
-    )
-
-    if (!queryCommandResult?.Items?.length) {
-      return
-    }
-
-    await Promise.all(
-      queryCommandResult?.Items?.map(async (item) => {
-        const key = DynamoDbKeys.ALERT_COMMENT_FILE(
-          this.tenantId,
-          item.alertId,
-          item.commentId,
-          item.s3Key
-        )
-
-        await this.dynamoDb.send(
-          new DeleteCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-          })
-        )
-
-        await this.localChangeHandler(key)
-      })
-    )
+    // const queryCommandResult = await this.dynamoDb.send(
+    //   new QueryCommand({
+    //     TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+    //     KeyConditionExpression: 'PartitionKeyID = :pk',
+    //     ExpressionAttributeValues: {
+    //       ':pk': DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId, commentId)
+    //         .PartitionKeyID,
+    //     },
+    //   })
+    // )
   }
 
   public async updateStatus(
@@ -258,15 +231,27 @@ export class DynamoAlertRepository {
     )
   }
   public async getAlert(alertId: string): Promise<Alert | undefined> {
-    const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-    const command = new GetCommand({
+    const alertKey = DynamoDbKeys.ALERT(this.tenantId, alertId)
+    const alertCommentKey = DynamoDbKeys.ALERT_COMMENT(this.tenantId, alertId)
+    const getAlertCommand = new GetCommand({
       TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-      Key: key,
+      Key: alertKey,
     })
+    const getAlertCommentCommand = new GetCommand({
+      TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
+      Key: alertCommentKey,
+    })
+    const commandResultAlert = await this.dynamoDb.send(getAlertCommand)
+    const commandResultAlertComment = await this.dynamoDb.send(
+      getAlertCommentCommand
+    )
 
-    const commandResult = await this.dynamoDb.send(command)
+    const alert = {
+      ...commandResultAlert.Item,
+      comments: commandResultAlertComment.Item,
+    } as Alert | undefined
 
-    return commandResult.Item as Alert | undefined
+    return alert
   }
 
   public async updateAssignments(

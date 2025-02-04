@@ -30,17 +30,12 @@ import { RuleSampler, transactionRules } from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
-import { envIs } from '@/utils/env'
 import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
 import { User } from '@/@types/openapi-internal/User'
 import { Business } from '@/@types/openapi-internal/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
 
-export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
-  ? Number(process.env.SEED_TRANSACTIONS_COUNT)
-  : envIs('local')
-  ? 500
-  : 50
+export const TXN_COUNT = 5000
 
 const ZERO_HIT_RATE_RULE_IDS = ['Es4Zmo', 'CK4Nh2']
 
