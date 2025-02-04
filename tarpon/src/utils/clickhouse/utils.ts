@@ -207,8 +207,8 @@ const clickhouseInsert = async (
   try {
     await backOff(insert, {
       numOfAttempts: 3,
-      maxDelay: 10000,
-      startingDelay: 1000,
+      maxDelay: 120000, // We can have max delay of 2 minutes
+      startingDelay: 30000, // We can have starting delay of 30 seconds
       jitter: 'full',
     })
   } catch (e) {

@@ -142,7 +142,7 @@ export class CdktfTarponStack extends TerraformStack {
           'password'
         ),
         idleScaling: true,
-        idleTimeoutMinutes: 10,
+        idleTimeoutMinutes: 30,
         ...(config.stage !== 'dev' && {
           minTotalMemoryGb: config.clickhouse.minTotalMemoryGb || 24,
           maxTotalMemoryGb: config.clickhouse.maxTotalMemoryGb || 24,
