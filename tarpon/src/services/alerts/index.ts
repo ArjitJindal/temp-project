@@ -240,7 +240,7 @@ export class AlertsService extends CaseAlertsCommonService {
       this.tenantId,
       this.mongoDb
     )
-    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const accountsService = AccountsService.getInstance(this.dynamoDb, true)
     const accounts = await accountsService.getAllActiveAccounts()
     const currentUserId = getContext()?.user?.id
     const currentUserAccount = accounts.find((a) => a.id === currentUserId)

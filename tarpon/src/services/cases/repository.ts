@@ -350,7 +350,7 @@ export class CaseRepository {
     if (params.filterAssignmentsRoles?.length) {
       // Since the number of accounts is typically a small number, we can fetch relevant accounts and filter cases by
       // making use of the `params.filterAssignmentsIds` field.
-      const accountsService = AccountsService.getInstance(this.dynamoDb)
+      const accountsService = AccountsService.getInstance(this.dynamoDb, true)
       const accountIdsWithRole = await accountsService.getAccountIdsForRoles(
         this.tenantId,
         params.filterAssignmentsRoles

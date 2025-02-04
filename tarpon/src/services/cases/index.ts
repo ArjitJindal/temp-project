@@ -153,7 +153,8 @@ export class CaseService extends CaseAlertsCommonService {
       dynamoDb: this.caseRepository.dynamoDb,
     })
     this.accountsService = AccountsService.getInstance(
-      this.caseRepository.dynamoDb
+      this.caseRepository.dynamoDb,
+      true
     )
     this.userService = new UserService(
       this.tenantId,

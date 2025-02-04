@@ -50,9 +50,10 @@ export class AccountsService {
   private dynamoDb: DynamoDBDocumentClient
   public cache: DynamoAccountsRepository
   public auth0: Auth0AccountsRepository
+  public alwaysUseCache: boolean = false
 
   constructor(
-    config: { auth0Domain: string },
+    config: { auth0Domain: string; alwaysUseCache?: boolean },
     connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
     this.config = config
@@ -63,6 +64,7 @@ export class AccountsService {
       this.dynamoDb
     )
     this.auth0 = new Auth0AccountsRepository(this.config.auth0Domain)
+    this.alwaysUseCache = config.alwaysUseCache ?? false
   }
 
   public async deleteOrganization(tenant: Tenant) {
@@ -71,13 +73,20 @@ export class AccountsService {
   }
 
   private shouldUseCache() {
+    if (this.alwaysUseCache) {
+      return true
+    }
+
     return getContext()?.user?.role !== 'root'
   }
 
-  public static getInstance(dynamoDb: DynamoDBDocumentClient) {
+  public static getInstance(
+    dynamoDb: DynamoDBDocumentClient,
+    alwaysUseCache: boolean = false
+  ) {
     const auth0Domain = (getContext()?.auth0Domain ??
       process.env.AUTH0_DOMAIN) as string // to get auth0 credentials for dashboard widget in demo mode.
-    return new AccountsService({ auth0Domain }, { dynamoDb })
+    return new AccountsService({ auth0Domain, alwaysUseCache }, { dynamoDb })
   }
 
   public async getAllAccountsCache(tenantId: string): Promise<Account[]> {
@@ -97,7 +106,6 @@ export class AccountsService {
     updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
     await this.auth0.patchOrganization(tenantId, updatedMetadata)
-    await this.cache.patchOrganization(tenantId, updatedMetadata)
   }
 
   async resetPassword(accountId: string) {
@@ -157,7 +165,7 @@ export class AccountsService {
     }
 
     const tenant = await this.cache.getTenantById(rawTenantId)
-    if (!tenant) {
+    if (!tenant?.id) {
       const data = await this.auth0.getTenantById(rawTenantId)
       if (data) {
         await this.cache.createOrganization(rawTenantId, {
@@ -165,6 +173,7 @@ export class AccountsService {
           params: data,
         })
       }
+      return data
     }
 
     return tenant

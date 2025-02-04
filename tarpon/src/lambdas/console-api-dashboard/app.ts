@@ -52,6 +52,7 @@ export const dashboardStatsHandler = lambdaApi()(
     const handlers = new Handlers()
     const mongoDb = await getMongoDbClient()
     const tenantId = event.requestContext.authorizer.principalId
+    const auth0Domain = event.requestContext.authorizer.auth0Domain
     const dynamoDb = getDynamoDbClientByEvent(event)
 
     const dashboardStatsRepository = new DashboardStatsRepository(tenantId, {
@@ -153,7 +154,6 @@ export const dashboardStatsHandler = lambdaApi()(
     })
 
     handlers.registerGetDashboardTeamStats(async (ctx, request) => {
-      const { auth0Domain } = event.requestContext.authorizer
       const {
         scope,
         startTimestamp,
@@ -164,7 +164,10 @@ export const dashboardStatsHandler = lambdaApi()(
       } = request
       const { userId } = ctx
       const dynamoDb = getDynamoDbClientByEvent(event)
-      const accountsService = new AccountsService({ auth0Domain }, { dynamoDb })
+      const accountsService = new AccountsService(
+        { auth0Domain, alwaysUseCache: true },
+        { dynamoDb }
+      )
       const organization = await accountsService.getAccountTenant(userId)
       const accounts: Account[] = await accountsService.getTenantAccounts(
         organization
@@ -187,7 +190,7 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsOverview(async (ctx) => {
       const accountsService = new AccountsService(
-        { auth0Domain: event.requestContext.authorizer.auth0Domain },
+        { auth0Domain, alwaysUseCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
       const organization = await accountsService.getAccountTenant(ctx.userId)
@@ -246,11 +249,10 @@ export const dashboardStatsHandler = lambdaApi()(
     )
 
     handlers.registerGetDashboardLatestTeamStats(async (ctx, request) => {
-      const { auth0Domain } = event.requestContext.authorizer
       const { scope, pageSize, page } = request
       const { userId } = ctx
       const accountsService = new AccountsService(
-        { auth0Domain },
+        { auth0Domain, alwaysUseCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
       const organization = await accountsService.getAccountTenant(userId)
