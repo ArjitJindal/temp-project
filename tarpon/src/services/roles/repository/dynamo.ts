@@ -93,7 +93,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(roleId)
 
     if (!role) {
-      throw new Error('Role not found')
+      throw new Error('Role not found with id: ' + roleId)
     }
 
     await this.createRole(getNamespace(role.name), {
@@ -110,7 +110,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(id)
 
     if (!role) {
-      throw new Error('Role not found')
+      throw new Error('Role not found with id: ' + id)
     }
 
     await this.createRole(tenantId, {
@@ -163,7 +163,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const role = await this.getRole(id)
 
     if (!role) {
-      throw new Error('Role not found')
+      throw new Error('Role not found with id: ' + id)
     }
 
     await this.dynamoClient.send(
@@ -195,7 +195,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     const accounts = await accountsService.getTenantAccounts(tenant)
     const role = await this.getRole(id)
     if (!role) {
-      throw new Error('Role not found')
+      return []
     }
     const roleName = getRoleDisplayName(role.name)
     return accounts.filter((account) => account.role === roleName)

@@ -221,7 +221,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
     const accounts = await accountsService.getTenantAccounts(tenant)
     const role = await this.getRole(id)
     if (!role) {
-      throw new Error('Role not found')
+      return []
     }
     const roleName = getRoleDisplayName(role.name)
     return accounts.filter((account) => account.role === roleName)
