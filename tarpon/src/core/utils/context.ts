@@ -123,6 +123,9 @@ export async function getInitialContext(
         region: process.env.AWS_REGION,
         requestId: lambdaContext?.awsRequestId,
         traceId: trace.sampled === '1' ? trace.root : undefined,
+        userId,
+        verifiedEmail,
+        role,
       },
       metrics: {},
       metricDimensions: {

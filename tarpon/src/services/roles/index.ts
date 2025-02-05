@@ -187,12 +187,9 @@ export class RoleService {
       { roles: [role.id as string] }
     )
 
-    // Set app metadata
-    const user = await auth0AsyncWrapper(() => userManager.get({ id: userId }))
-    await userManager.update(
-      { id: userId },
-      { app_metadata: { ...user.app_metadata, role: roleName } }
-    )
+    const accountsService = AccountsService.getInstance(this.dynamoDb)
+    const tenant = await accountsService.getAccountTenant(userId)
+    await accountsService.patchUser(tenant, userId, { role: roleName })
   }
 
   public getUsersByRole = memoize(async (id: string, tenant: Tenant) => {

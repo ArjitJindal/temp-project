@@ -1182,7 +1182,11 @@ export class CdkTarponStack extends cdk.Stack {
 
           minute = triggerTime[config.region]
         } else if (envIs('sandbox')) {
-          minute = '45'
+          if (config.region === 'eu-1') {
+            minute = '40'
+          } else {
+            minute = '45'
+          }
         } else if (envIs('dev')) {
           minute = '50'
         }

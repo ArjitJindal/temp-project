@@ -83,6 +83,9 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       })
     )
 
+    delete role.Item?.PartitionKeyID
+    delete role.Item?.SortKeyID
+
     return role.Item as AccountRole
   })
 
@@ -113,32 +116,36 @@ export class DynamoRolesRepository extends BaseRolesRepository {
       throw new Error('Role not found with id: ' + id)
     }
 
+    const roleName = getNamespacedRoleName(tenantId, data.name || role.name)
+
     await this.createRole(tenantId, {
       type: 'DATABASE',
       params: {
         ...role,
         ...data,
-        name: getNamespacedRoleName(tenantId, data.name || ''),
+        name: getNamespacedRoleName(tenantId, data.name || roleName),
       },
     })
   }
 
-  async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
+  async getTenantRoles(
+    tenantId: string,
+    fetchAllRoles: boolean = false
+  ): Promise<AccountRole[]> {
     const allRoles: AccountRole[] = []
     const defaultRoles = await this.getRolesByNamespace(DEFAULT_NAMESPACE)
     const roles = await this.getRolesByNamespace(tenantId)
-    let updatedDefaultRoles = defaultRoles
 
-    if (!this.shouldFetchRootRole()) {
-      updatedDefaultRoles = defaultRoles.filter(
-        (r) => r.name !== 'root' && r.name !== 'whitelabel-root'
-      )
-    }
-
-    allRoles.push(...updatedDefaultRoles)
+    allRoles.push(...defaultRoles)
     allRoles.push(...roles)
 
-    return allRoles
+    if (fetchAllRoles || this.shouldFetchRootRole()) {
+      return allRoles
+    }
+
+    return allRoles.filter(
+      (r) => r.name !== 'root' && r.name !== 'whitelabel-root'
+    )
   }
 
   private async getRolesByNamespace(namespace: string): Promise<AccountRole[]> {

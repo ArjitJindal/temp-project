@@ -41,9 +41,13 @@ export const accountsHandler = lambdaApi()(
 
     handlers.registerMe(async () => await accountsService.getAccount(userId))
 
-    handlers.registerGetAccounts(
-      async () => await accountsService.getTenantAccounts(organization)
-    )
+    handlers.registerGetAccounts(async () => {
+      const accountsService = new AccountsService(
+        { auth0Domain, alwaysUseCache: true },
+        { dynamoDb }
+      )
+      return await accountsService.getTenantAccounts(organization)
+    })
 
     handlers.registerAccountsInvite(async (ctx, request) => {
       return await accountsService.inviteAccount(

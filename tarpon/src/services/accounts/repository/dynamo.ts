@@ -378,30 +378,6 @@ export class DynamoAccountsRepository extends BaseAccountsRepository {
     ])
   }
 
-  async deleteAllOrganizationAccounts(tenantId: string): Promise<void> {
-    const key = DynamoDbKeys.ORGANIZATION_ACCOUNTS(
-      this.auth0Domain,
-      this.getNonDemoTenantId(tenantId)
-    )
-
-    const accounts = await this.dynamoClient.send(
-      new QueryCommand({
-        TableName:
-          StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
-        KeyConditionExpression: 'PartitionKeyID = :pk',
-        ExpressionAttributeValues: {
-          ':pk': key.PartitionKeyID,
-        },
-      })
-    )
-
-    for (const account of accounts.Items ?? []) {
-      if (account.id) {
-        await this.deleteAccount(account as Account)
-      }
-    }
-  }
-
   async putMultipleAccounts(
     tenantId: string,
     accounts: Account[]

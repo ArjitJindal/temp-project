@@ -2,8 +2,6 @@ import { DynamoDBClient } from '@aws-sdk/client-dynamodb'
 import { AccountsService } from '../accounts'
 import { TenantService } from '../tenants'
 import { RoleService } from '../roles'
-import { getNamespacedRoleName } from '../roles/utils'
-import { DEFAULT_NAMESPACE } from '../roles/repository'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { SyncAuth0DataBatchJob } from '@/@types/batch-job'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -39,18 +37,27 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     }
   }
 
-  private async syncTenantAccounts(tenant: Tenant, auth0Domain?: string) {
+  private async syncTenantAccounts(tenant: Tenant, auth0Domain: string) {
     const accountService = new AccountsService(
       { auth0Domain: auth0Domain ?? tenant.auth0Domain },
       { dynamoDb: this.dynamoDb as DynamoDBClient }
     )
 
     const auth0 = accountService.auth0
-    const accounts = await auth0.getTenantAccounts(tenant)
     const cache = accountService.cache
+    const auth0Accounts = await auth0.getTenantAccounts(tenant)
+    const currentCacheAccounts = await cache.getTenantAccounts(tenant)
 
-    await cache.deleteAllOrganizationAccounts(tenant.id)
-    await cache.putMultipleAccounts(tenant.id, accounts)
+    // find accounts which are in currentCacheAccounts but not in auth0Accounts
+    const accountsToDelete = currentCacheAccounts.filter(
+      (account) => !auth0Accounts.some((a) => a.id === account.id)
+    )
+
+    for (const account of accountsToDelete) {
+      await cache.deleteAccountFromOrganization({ id: tenant.id }, account)
+    }
+
+    await cache.putMultipleAccounts(tenant.id, auth0Accounts)
     await cache.createOrganization(tenant.id, {
       type: 'DATABASE',
       params: tenant,
@@ -65,45 +72,29 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     const auth0 = rolesService.auth0
     const cache = rolesService.cache
 
-    const roles = await auth0.rolesByNamespace(getNonDemoTenantId(tenant.id))
+    const auth0Roles = await auth0.getTenantRoles(
+      getNonDemoTenantId(tenant.id),
+      true
+    )
+    const cacheRoles = await cache.getTenantRoles(
+      getNonDemoTenantId(tenant.id),
+      true
+    )
 
-    for (const role of roles) {
+    // Roles in cache but not in auth0
+    const rolesToDelete = cacheRoles.filter(
+      (role) => !auth0Roles.some((r) => r.id === role.id)
+    )
+
+    for (const role of rolesToDelete) {
+      await cache.deleteRole(role.id)
+    }
+
+    for (const role of auth0Roles) {
       await cache.createRole(tenant.id, {
         type: 'DATABASE',
-        params: {
-          ...role,
-          name: getNamespacedRoleName(tenant.id, role.name),
-        },
+        params: role,
       })
     }
-
-    const defaultRoles = await auth0.rolesByNamespace(DEFAULT_NAMESPACE)
-    for (const role of defaultRoles) {
-      await cache.createRole(DEFAULT_NAMESPACE, {
-        type: 'DATABASE',
-        params: {
-          ...role,
-          name: getNamespacedRoleName('default', role.name),
-        },
-      })
-    }
-
-    const rootRole = await auth0.getRolesByName('root')
-    await cache.createRole(DEFAULT_NAMESPACE, {
-      type: 'DATABASE',
-      params: {
-        ...rootRole,
-        name: 'root',
-      },
-    })
-
-    const whitelabelRootRole = await auth0.getRolesByName('whitelabel-root')
-    await cache.createRole(DEFAULT_NAMESPACE, {
-      type: 'DATABASE',
-      params: {
-        ...whitelabelRootRole,
-        name: 'whitelabel-root',
-      },
-    })
   }
 }
