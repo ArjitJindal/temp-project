@@ -7,7 +7,7 @@ import { Address } from '@/@types/openapi-public/Address'
 export const phoneNumber: () => string[] = memoize(() => {
   const rng = new RandomNumberGenerator(42)
 
-  return [...Array(1000)].map(() =>
+  return [...Array(500)].map(() =>
     (Math.floor(rng.randomInt(1000000000)) + 1000000000).toString()
   )
 })
@@ -44,7 +44,7 @@ export class AddressSampler extends BaseSampler<Address> {
 export class AddressWithUsageSampler extends AddressSampler {
   addressUsage: Map<string, number>
   addresses: Address[] = []
-  maxAddresses = 1000
+  maxAddresses = 500
   currentAddressIndex = 0
 
   constructor(

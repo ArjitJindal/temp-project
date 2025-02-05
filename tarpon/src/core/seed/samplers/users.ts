@@ -152,6 +152,10 @@ const DOCUMENT_TYPES = [
 const timeIntervals = ['day', 'week', 'month', 'year'] as ManipulateType[]
 const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890'
 const addressSampler = new AddressWithUsageSampler()
+
+const comapnyEmails: string[] = companies
+  .map((company) => company.contactEmails)
+  .flat()
 export class ExpectedTransactionLimitSampler extends BaseSampler<any> {
   protected generateSample(): any {
     return {
@@ -942,7 +946,13 @@ export class ConsumerUserSampler extends UserSampler<
         userCategory: this.rng.pickRandom(userCategory),
       },
       contactDetails: {
-        emailIds: [this.getEmail(this.rng.randomInt(1000), name)],
+        emailIds: [
+          this.getEmail(this.rng.randomInt(1000), name),
+          ...this.rng.randomSubsetOfSize(
+            comapnyEmails,
+            this.rng.randomIntInclusive(0, 2)
+          ),
+        ],
         faxNumbers: [this.randomPhoneNumber()],
         websites: [domain],
         addresses: addressSampler.getAddress(1),
