@@ -742,6 +742,7 @@ export class CaseRepository {
               state: 1,
             },
             kycStatusDetails: 1,
+            legalEntity: 1,
           },
           destination: {
             userId: 1,
@@ -753,6 +754,7 @@ export class CaseRepository {
               state: 1,
             },
             kycStatusDetails: 1,
+            legalEntity: 1,
           },
           originUserDrsScore: 1,
           destinationUserDrsScore: 1,

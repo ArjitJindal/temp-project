@@ -1058,6 +1058,7 @@ export class UserService {
           userDetails: {
             name: 1,
           },
+          legalEntity: 1,
           userStateDetails: {
             state: 1,
           },
