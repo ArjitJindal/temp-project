@@ -133,11 +133,11 @@ export function useFeaturesEnabled(features: FeatureName[]): boolean {
 }
 
 export function Feature(props: {
-  name: FeatureName;
+  name: FeatureName | FeatureName[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const isEnabled = useFeatureEnabled(props.name);
+  const isEnabled = useFeaturesEnabled(Array.isArray(props.name) ? props.name : [props.name]);
   return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
 }
 

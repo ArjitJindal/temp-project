@@ -40,7 +40,7 @@ export default function SubHeader(props: Props) {
           <UserStateEditor onNewComment={onNewComment} title={'User status'} user={user} />
         </div>
       </div>
-      <Feature name="RISK_SCORING">
+      <Feature name={['RISK_SCORING', 'RISK_LEVELS']} fallback={''}>
         <div className={s.risks}>
           <KycRiskDisplay userId={user.userId} />
           <UserTrsRiskDisplay userId={user.userId} />
