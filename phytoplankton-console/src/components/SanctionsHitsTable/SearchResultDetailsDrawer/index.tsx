@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { compact, difference, startCase, uniq, uniqBy } from 'lodash';
+import { compact, difference, groupBy, startCase, uniq, uniqBy } from 'lodash';
 import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
@@ -278,7 +278,6 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
     }
     return acc;
   }, {});
-
   return (
     <>
       <Section title={'Key information'}>
@@ -296,7 +295,7 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                 isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
               }
             >
-              {entity.yearOfBirth.join(', ') ?? '-'}
+              {entity.yearOfBirth.length > 0 ? entity.yearOfBirth.join(', ') : '-'}
             </Form.Layout.Label>
           )}
           {(entity.dateOfBirths?.length ?? 0) > 0 &&
@@ -494,20 +493,20 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
             </Form.Layout.Label>
           )}
           {entity.documents && entity.documents.length > 0 && (
-            <Form.Layout.Label
-              title={isHitEntityPerson(entity.entityType) ? 'Documents' : 'Identifiers'}
-            >
-              {
-                <div className={s.tags}>
-                  {entity.documents
-                    .filter((doc) => doc.id)
-                    .map((doc, i) => (
-                      <Tag color="gray" key={i} wrapText={false}>
-                        {doc.name} : {doc.id}
-                      </Tag>
-                    ))}
-                </div>
-              }
+            <Form.Layout.Label title={'Documents'}>
+              <div className={s.documents}>
+                {Object.entries(
+                  groupBy(
+                    entity.documents.filter((doc) => doc.id),
+                    'name',
+                  ),
+                ).map(([name, docs], i) => (
+                  <div key={i}>
+                    <span>{`${name}: `}</span>
+                    <span>{docs.map((doc) => doc.id).join(', ')}</span>
+                  </div>
+                ))}
+              </div>
             </Form.Layout.Label>
           )}
         </div>
