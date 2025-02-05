@@ -428,7 +428,7 @@ export default function AccountForm(props: Props) {
                   <SecondPersonFields<FormValues, 'checker'>
                     name={'checker'}
                     typeLabel={'Checker type'}
-                    assignmentsLabel={'Select one or more ‘Checker’ account(s)'}
+                    assignmentsLabel={'Select a Checker account'}
                     assignmentsPlaceholder={`Select a 'Checker'`}
                     assignmentsCustomFilter={(account) => {
                       return account.isReviewer ?? false;
@@ -446,7 +446,7 @@ export default function AccountForm(props: Props) {
                     assignmentsCustomFilter={(account) => {
                       return account.escalationLevel === 'L2';
                     }}
-                    assignmentsLabel={'Select one or more ‘Escalation L2’ account(s)'}
+                    assignmentsLabel={'Select an Escalation L2 account'}
                     assignmentsPlaceholder={'Select a escalation L2 reviewer'}
                     roleLabel={'Select ‘Escalation L2’ role'}
                     rolePlaceholder={'Select ‘Escalation L2’ role'}
