@@ -188,8 +188,15 @@ export class RoleService {
     )
 
     const accountsService = AccountsService.getInstance(this.dynamoDb)
-    const tenant = await accountsService.getAccountTenant(userId)
-    await accountsService.patchUser(tenant, userId, { role: roleName })
+    const patchedUser = await accountsService.auth0.patchAccount(
+      tenantId,
+      userId,
+      { role: roleName, app_metadata: { role: roleName } }
+    )
+    await accountsService.cache.patchAccount(tenantId, userId, {
+      ...patchedUser,
+      role: roleName,
+    })
   }
 
   public getUsersByRole = memoize(async (id: string, tenant: Tenant) => {

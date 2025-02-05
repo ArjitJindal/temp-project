@@ -549,6 +549,7 @@ export class AccountsService {
     }
     const patchedUser = await this.auth0.patchAccount(tenant.id, accountId, {
       app_metadata: patch,
+      role: patch.role,
     })
     await this.updateUserCache(tenant.id, accountId, patch)
     return patchedUser
