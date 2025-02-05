@@ -18,7 +18,7 @@ export default function StatusChangeReasonsDisplay(props: Props) {
   }, [reasons, otherReason]);
   return (
     <div className={s.root}>
-      {((reasonsToShow.length === 0 && otherReason == null) || otherReason !== '') && '-'}
+      {reasonsToShow.length === 0 && (otherReason == null || otherReason === '') && '-'}
       {reasonsToShow && reasonsToShow.length > 0 && (
         <TagList>
           {reasonsToShow?.map((reason) => (
