@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { compact, difference, groupBy, startCase, uniq, uniqBy } from 'lodash';
+import { compact, difference, groupBy, startCase, uniq } from 'lodash';
 import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
@@ -257,10 +257,13 @@ export function AISummarySection(props: { score: number; comment: string }) {
 export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: boolean }) {
   const { entity, pdfMode = false } = props;
   const tabItems = useTabs(entity, pdfMode);
-  const occupations = entity.occupations
-    ? entity.occupations.map((occ) => occ.title).filter(Boolean)
-    : [];
-
+  const occupations = entity?.occupations ?? [];
+  const occupationTitles = compact(occupations?.map((occ) => occ.title));
+  const occupationCodes = uniq(
+    compact(occupations?.map((o) => (o.occupationCode ? humanizeAuto(o.occupationCode) : null))),
+  );
+  const pepRanks = uniq(compact(occupations?.map((o) => (o.rank ? humanizeAuto(o.rank) : null))));
+  const associations = entity.associates?.filter((a) => a.name);
   const countryCodesMap = compact(entity.countries)?.reduce((acc, countryName) => {
     const country = COUNTRIES[countryName as CountryCode];
     let code = country
@@ -334,10 +337,10 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                 .join(', ')}
             </Form.Layout.Label>
           )}
-          {occupations && occupations.length > 0 && (
-            <Form.Layout.Label key={occupations.join(',')} title={'Occupation'}>
-              {entity.occupations
-                ?.filter((occ) => occ.title)
+          {occupationTitles.length > 0 && (
+            <Form.Layout.Label key={occupationTitles.join(',')} title={'Occupation'}>
+              {occupations
+                .filter((o) => o.title)
                 .map(
                   (occ) =>
                     `${occ.title} ${
@@ -369,34 +372,32 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               </div>
             </Form.Layout.Label>
           )}
-          {entity.associates && entity.associates?.length > 0 && (
+          {associations && associations.length > 0 && (
             <Form.Layout.Label title={'Other associates'}>
               <div>
                 {pdfMode ? (
-                  entity.associates
-                    .filter(Boolean)
-                    .map(({ association, name, ranks, sanctionsSearchTypes }, i) => (
-                      <React.Fragment key={i}>
-                        {i !== 0 && ', '}
-                        <span>
-                          {name} ({association}
-                          {ranks && ranks.length > 0
-                            ? ` , PEP ranks: ${uniq(ranks)
-                                .map((r) => humanizeSnakeCase(r))
-                                .join(', ')})`
-                            : ''}
-                          {sanctionsSearchTypes?.length
-                            ? `, Screening types: ${sanctionsSearchTypes
-                                .map((type) => humanizeSnakeCase(type))
-                                .join(', ')}`
-                            : ''}
-                          )
-                        </span>
-                      </React.Fragment>
-                    ))
+                  associations.map(({ association, name, ranks, sanctionsSearchTypes }, i) => (
+                    <React.Fragment key={i}>
+                      {i !== 0 && ', '}
+                      <span>
+                        {name} ({association}
+                        {ranks && ranks.length > 0
+                          ? ` , PEP ranks: ${uniq(ranks)
+                              .map((r) => humanizeSnakeCase(r))
+                              .join(', ')})`
+                          : ''}
+                        {sanctionsSearchTypes?.length
+                          ? `, Screening types: ${sanctionsSearchTypes
+                              .map((type) => humanizeSnakeCase(type))
+                              .join(', ')}`
+                          : ''}
+                        )
+                      </span>
+                    </React.Fragment>
+                  ))
                 ) : (
                   <div className={s.tags}>
-                    {entity.associates.map((assoc, i) => (
+                    {associations.map((assoc, i) => (
                       <Tag color="gray" key={i}>
                         <div className={s.associateInfo}>
                           <span>{assoc.name}</span>
@@ -406,34 +407,16 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
                             <Tooltip
                               title={
                                 <div className={s.associateInfoTooltip}>
-                                  {assoc.association ? (
-                                    <>
-                                      <span>Association </span> <span>{assoc.association}</span>
-                                    </>
-                                  ) : (
-                                    <></>
+                                  {getAssociationRow('Association', assoc.association)}
+                                  {getAssociationRow(
+                                    'Screening types',
+                                    assoc.sanctionsSearchTypes
+                                      ?.map((type) => humanizeSnakeCase(type))
+                                      .join(', '),
                                   )}
-                                  {assoc.sanctionsSearchTypes?.length ? (
-                                    <>
-                                      <span>Screening types </span>{' '}
-                                      <span>
-                                        {assoc.sanctionsSearchTypes
-                                          .map((type) => humanizeSnakeCase(type))
-                                          .join(', ')}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <></>
-                                  )}
-                                  {assoc.ranks?.length ? (
-                                    <>
-                                      <span>PEP ranks </span>{' '}
-                                      <span>
-                                        {assoc.ranks.map((r) => humanizeSnakeCase(r)).join(', ')}
-                                      </span>
-                                    </>
-                                  ) : (
-                                    <></>
+                                  {getAssociationRow(
+                                    'PEP rank',
+                                    assoc.ranks?.map((r) => humanizeSnakeCase(r)).join(', '),
                                   )}
                                 </div>
                               }
@@ -455,27 +438,14 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
               </div>
             </Form.Layout.Label>
           )}
-          {(entity.occupations?.filter((occ) => occ.rank != null).length ?? 0) > 0 && (
-            <Form.Layout.Label title={'PEP Level'}>
-              {uniqBy(
-                entity.occupations?.filter((occ) => occ.rank != null) ?? [],
-                (occ) => occ.rank,
-              )
-                .map((occ) => humanizeSnakeCase(occ.rank as string))
-                .join(', ')}
+          {pepRanks.length > 0 && (
+            <Form.Layout.Label title={'PEP Level'}>{pepRanks.join(', ')}</Form.Layout.Label>
+          )}
+          {occupationCodes.length > 0 && (
+            <Form.Layout.Label title={'Occupation categories'}>
+              {occupationCodes.join(', ')}
             </Form.Layout.Label>
           )}
-          {entity.occupations &&
-            entity.occupations.filter((occ) => occ.occupationCode != null).length > 0 && (
-              <Form.Layout.Label title={'Occupation categories'}>
-                {uniqBy(
-                  entity.occupations.filter((occ) => occ.occupationCode != null),
-                  (occ) => occ.occupationCode,
-                )
-                  .map((occ) => humanizeSnakeCase(occ.occupationCode as string))
-                  .join(', ')}
-              </Form.Layout.Label>
-            )}
           {entity.sanctionSearchTypes?.includes('PEP') && entity.isActivePep != null && (
             <Form.Layout.Label title={'PEP status'}>
               {entity.isActivePep === true ? 'Active' : 'Inactive'}
@@ -694,4 +664,15 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
 
 function isHitEntityPerson(entityType: SanctionsEntityType): boolean {
   return entityType.toUpperCase() === 'PERSON';
+}
+
+function getAssociationRow(title: string, info?: string): ReactNode {
+  if (!info) {
+    return <></>;
+  }
+  return (
+    <>
+      <span>{title} </span> <span>{info}</span>
+    </>
+  );
 }
