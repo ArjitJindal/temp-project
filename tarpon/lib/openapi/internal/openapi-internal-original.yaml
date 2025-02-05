@@ -9042,7 +9042,6 @@ components:
               type: number
             riskScoreDetails:
               $ref: ../public/openapi-public-original.yaml#/components/schemas/TransactionRiskScoringResult
-              nullable: true
     InternalConsumerUserEvent:
       allOf:
         - $ref: ../public/openapi-public-original.yaml#/components/schemas/ConsumerUserEventWithRulesResult
