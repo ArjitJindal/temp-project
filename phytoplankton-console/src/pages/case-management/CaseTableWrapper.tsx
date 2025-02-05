@@ -32,7 +32,7 @@ export default function CaseTableWrapper(props: {
 }) {
   const { params, onChangeParams } = props;
 
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const auth0user = useAuth0User();
 
   const queryResults = usePaginatedQuery<Case>(CASES_LIST(params), async (paginationParams) => {

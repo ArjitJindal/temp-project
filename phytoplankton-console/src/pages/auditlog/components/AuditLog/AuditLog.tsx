@@ -31,7 +31,7 @@ import { useDeepEqualEffect } from '@/utils/hooks';
 import TagList from '@/components/library/Tag/TagList';
 
 export default function AuditLogTable() {
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const location = useLocation();
   const parsedParams = useMemo(
     () => auditLogQueryAdapter.deserializer(parseQueryString(location.search)),

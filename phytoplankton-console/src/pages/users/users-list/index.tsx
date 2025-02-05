@@ -33,7 +33,7 @@ export interface UserSearchParams extends CommonParams {
 
 const UsersTab = (props: { type: 'business' | 'consumer' | 'all' }) => {
   const type = props.type;
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const navigate = useNavigate();
   const location = useLocation();
   const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');

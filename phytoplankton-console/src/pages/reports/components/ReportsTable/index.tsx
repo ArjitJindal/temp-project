@@ -57,7 +57,7 @@ export default function ReportsTable() {
   );
 
   const [users, loadingUsers] = useUsers({ includeBlockedUsers: true });
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const [params, setParams] = useState<TableParams>(DEFAULT_PARAMS_STATE);
 
   const pushParamsToNavigation = useCallback(

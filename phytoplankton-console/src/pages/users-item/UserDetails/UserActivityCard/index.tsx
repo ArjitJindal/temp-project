@@ -49,7 +49,7 @@ interface AliasMapping {
 
 export default function UserActivityCard(props: Props) {
   const { user, comments } = props;
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const [users, _] = useUsers();
   const queryClient = useQueryClient();
   const riskClassificationQuery = useRiskClassificationScores();

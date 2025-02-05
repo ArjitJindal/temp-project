@@ -21,7 +21,7 @@ export default function PaymentApprovalsTable(props: Props) {
     ...DEFAULT_PARAMS_STATE,
     sort: [['timestamp', 'descend']],
   });
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const queryClient = useQueryClient();
   const queryKey = TRANSACTIONS_LIST({ ...params, filterStatus });

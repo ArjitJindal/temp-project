@@ -133,7 +133,7 @@ function CaseDetails(props: Props) {
 }
 
 function useAlertsComments(alertIds: string[]): AsyncResource<CommentGroup[]> {
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
 
   const results = useQueries<ApiComment[]>({
     queries: alertIds.map((alertId) => ({

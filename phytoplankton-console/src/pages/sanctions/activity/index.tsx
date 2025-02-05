@@ -55,7 +55,7 @@ function getEntityName(entity: SanctionsScreeningEntity) {
 }
 
 export const SanctionsScreeningActivity = () => {
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const [params, setParams] = useState<TableSearchParams>({
     ...DEFAULT_PARAMS_STATE,
     ...DEFAULT_DATE_RANGE_PARAMS,

@@ -30,7 +30,7 @@ interface Props {
 
 export default function ActivityTab(props: Props) {
   const { alert } = props;
-  const api = useApi();
+  const api = useApi({ debounce: 500 });
   const commentEditorRef = useRef<CommentEditorRef>(null);
 
   const queryClient = useQueryClient();
