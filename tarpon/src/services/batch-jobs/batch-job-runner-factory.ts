@@ -23,7 +23,7 @@ import { WebhookRetryBatchJobRunner } from './webhook-retry-batch-job-runner'
 import { NangoDataFetchBatchJobRunner } from './nango-data-fetch'
 import { FinCenReportStatusFetchBatchJobRunner } from './fincen-report-status-fetch'
 import { AggregationCleanupBatchJobRunner } from './aggregation-cleanup-batch-job-runner'
-import { PnbTransactionEventUpdatesBatchJobRunner } from './pnb-transaction-event-updates'
+import { PnbTransactionUpdatesBatchJobRunner } from './pnb-transaction-updates'
 import { InHouseScreeningMigrationBatchJobRunner } from './in-house-screening-migration-batch-job-runner'
 import { SyncAuth0DataRunner } from './sync-auth0-data'
 import { BatchJobType } from '@/@types/batch-job'
@@ -73,8 +73,8 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     SANCTIONS_DATA_FETCH: (jobId) =>
       new SanctionsDataFetchBatchJobRunner(jobId),
     BACKFILL_AVERAGE_TRS: (jobId) => new BackfillAvgTrsRunner(jobId),
-    PNB_TRANSACTION_EVENT_UPDATES: (jobId) =>
-      new PnbTransactionEventUpdatesBatchJobRunner(jobId),
+    PNB_TRANSACTION_UPDATES: (jobId) =>
+      new PnbTransactionUpdatesBatchJobRunner(jobId),
     RISK_SCORING_RECALCULATION: (jobId) =>
       new RiskScoringRecalculationBatchJobRunner(jobId),
     SIMULATION_RISK_FACTORS_V8: (jobId) =>

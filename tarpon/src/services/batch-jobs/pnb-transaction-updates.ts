@@ -1,6 +1,6 @@
 import { GetObjectCommand } from '@aws-sdk/client-s3'
 import csvtojson from 'csvtojson'
-import { FlagrightClient } from 'flagright'
+import { Flagright, FlagrightClient } from 'flagright'
 import { chunk } from 'lodash'
 import { DynamoDbTransactionRepository } from '../rules-engine/repositories/dynamodb-transaction-repository'
 import { BatchJobRunner } from './batch-job-runner-base'
@@ -8,8 +8,10 @@ import { getS3Client } from '@/utils/s3'
 import { getDynamoDbClient } from '@/utils/dynamodb'
 import { PnbTransactionEventUpdatesBatchJob } from '@/@types/batch-job'
 import { logger } from '@/core/logger'
+import { pickKnownEntityFields } from '@/utils/object'
+import { Transaction } from '@/@types/openapi-public/Transaction'
 
-export class PnbTransactionEventUpdatesBatchJobRunner extends BatchJobRunner {
+export class PnbTransactionUpdatesBatchJobRunner extends BatchJobRunner {
   async run(job: PnbTransactionEventUpdatesBatchJob) {
     const dynamoDb = getDynamoDbClient()
     const transactionRepository = new DynamoDbTransactionRepository(
@@ -55,13 +57,7 @@ export class PnbTransactionEventUpdatesBatchJobRunner extends BatchJobRunner {
         chunk.map(async (transaction) => {
           const transactionData =
             await transactionRepository.getTransactionById(
-              transaction.transactionId,
-              [
-                'transactionState',
-                'originAmountDetails',
-                'transactionId',
-                'destinationAmountDetails',
-              ]
+              transaction.transactionId
             )
 
           if (!transactionData) {
@@ -74,35 +70,16 @@ export class PnbTransactionEventUpdatesBatchJobRunner extends BatchJobRunner {
           }
 
           try {
-            await flagrightClient.transactionEvents.create({
-              transactionId: transaction.transactionId,
-              timestamp: Date.now(),
-              transactionState: transactionData.transactionState ?? 'CREATED',
-              updatedTransactionAttributes: {
-                ...(job.parameters.type === 'DEPOSIT' ||
-                job.parameters.type === 'OTHERS' ||
-                job.parameters.type === 'TRANSFER'
-                  ? {
-                      originAmountDetails: {
-                        transactionCurrency:
-                          transactionData.originAmountDetails
-                            ?.transactionCurrency ?? 'MYR',
-                        transactionAmount: transaction.amount,
-                      },
-                    }
-                  : {}),
-                ...(job.parameters.type === 'WITHDRAWAL' ||
-                job.parameters.type === 'OTHERS' ||
-                job.parameters.type === 'TRANSFER'
-                  ? {
-                      destinationAmountDetails: {
-                        transactionAmount: transaction.amount,
-                        transactionCurrency:
-                          transactionData.destinationAmountDetails
-                            ?.transactionCurrency ?? 'MYR',
-                      },
-                    }
-                  : {}),
+            const pickTransaction = pickKnownEntityFields(
+              transactionData,
+              Transaction
+            ) as Flagright.Transaction
+            await flagrightClient.transactions.verify({
+              validateTransactionId: 'false',
+              body: {
+                ...pickTransaction,
+                originUserId: pickTransaction.destinationUserId,
+                destinationUserId: '',
               },
             })
 

@@ -202,13 +202,12 @@ export type SanctionsDataFetchBatchJob = {
 }
 
 export type PnbTransactionEventUpdatesBatchJob = {
-  type: 'PNB_TRANSACTION_EVENT_UPDATES'
+  type: 'PNB_TRANSACTION_UPDATES'
   tenantId: string
   parameters: {
     apiKey: string
     publicApiEndpoint: string
     concurrency: number
-    type: 'DEPOSIT' | 'WITHDRAWAL' | 'TRANSFER' | 'OTHERS'
     s3Key: string
   }
 }
