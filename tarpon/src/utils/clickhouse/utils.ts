@@ -7,7 +7,7 @@ import {
 } from '@clickhouse/client'
 import { NodeClickHouseClientConfigOptions } from '@clickhouse/client/dist/config'
 import { chain, get, maxBy } from 'lodash'
-import { backOff } from 'exponential-backoff'
+import { backOff, BackoffOptions } from 'exponential-backoff'
 import { SendMessageCommand, SQS } from '@aws-sdk/client-sqs'
 import { getTarponConfig } from '@flagright/lib/constants/config'
 import { stageAndRegion } from '@flagright/lib/utils/env'
@@ -194,7 +194,14 @@ const clickhouseInsert = async (
     async_insert: envIs('test', 'local') ? 0 : 1,
   }
 
-  const insert = async () => {
+  const options: BackoffOptions = {
+    numOfAttempts: 10,
+    maxDelay: 240000,
+    startingDelay: 10000,
+    timeMultiple: 2,
+  }
+
+  await backOff(async () => {
     await client.insert({
       table,
       values,
@@ -202,19 +209,7 @@ const clickhouseInsert = async (
       format: 'JSON',
       clickhouse_settings: CLICKHOUSE_SETTINGS,
     })
-  }
-
-  try {
-    await backOff(insert, {
-      numOfAttempts: 3,
-      maxDelay: 120000, // We can have max delay of 2 minutes
-      startingDelay: 30000, // We can have starting delay of 30 seconds
-      jitter: 'full',
-    })
-  } catch (e) {
-    logger.error(`Error inserting into clickhouse: ${(e as Error)?.message}`)
-    throw e
-  }
+  }, options)
 }
 
 const testCache = new Set()
