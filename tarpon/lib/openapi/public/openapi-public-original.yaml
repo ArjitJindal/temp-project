@@ -6473,6 +6473,7 @@ components:
         - PAYMENT_NAME
         - PAYMENT_BENEFICIARY_NAME
         - BANK_NAME
+        - BANK_ACCOUNT_HOLDER_NAME
     UserEntityLink:
       title: UserEntityLink
       type: object

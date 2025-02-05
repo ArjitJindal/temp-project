@@ -3,6 +3,8 @@ import axios from 'axios'
 import { DowJonesProvider } from '@/services/sanctions/providers/dow-jones-provider'
 import { SanctionsRepository } from '@/services/sanctions/providers/types'
 import { SanctionsEntity } from '@/@types/openapi-internal/SanctionsEntity'
+import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/@types/openapi-internal-custom/DowJonesSanctionsSearchType'
+import { SANCTIONS_ENTITY_TYPES } from '@/@types/openapi-internal-custom/SanctionsEntityType'
 
 jest.mock('axios')
 jest.mock('unzipper')
@@ -13,7 +15,13 @@ describe('DowJonesProvider', () => {
   let repo: SanctionsRepository
 
   beforeEach(async () => {
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider(
+      'testuser',
+      'testpass',
+      'test',
+      DOW_JONES_SANCTIONS_SEARCH_TYPES,
+      SANCTIONS_ENTITY_TYPES
+    )
     repo = {
       save: jest.fn(),
       saveAssociations: jest.fn(),
@@ -40,7 +48,13 @@ describe('DowJonesProvider', () => {
   it('should process single file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_single')
     await fetcher.processSingleFile(repo, '2024-02', filePath)
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider(
+      'testuser',
+      'testpass',
+      'test',
+      DOW_JONES_SANCTIONS_SEARCH_TYPES,
+      ['PERSON']
+    )
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [
@@ -49,13 +63,13 @@ describe('DowJonesProvider', () => {
           {
             id: '11756174',
             name: 'Priyavrat Bhartia',
-            sanctionSearchTypes: [], // RCAs are not sanctions
+            sanctionSearchTypes: ['ADVERSE_MEDIA'], // RCAs are not sanctions
             entityType: 'PERSON',
             gender: 'Male',
             aka: [],
             countries: ['India'],
             countryCodes: ['IN'],
-            matchTypes: [],
+            matchTypes: ['Organised Crime'],
             dateMatched: true,
             nationality: ['IN'],
             documents: [
@@ -89,8 +103,8 @@ Ssbpb Investment Holding Private Limited
 Digicontent Ltd
 Jubilant Ingrevia Ltd.
 Jubilant Pharmova Ltd.`,
+            types: ['Special Interest Person (SIP) - Organised Crime'],
             yearOfBirth: ['1976'],
-            types: ['Relative or Close Associate (RCA)'],
             dateOfBirths: ['1976-10-04'],
           },
         ],
@@ -120,7 +134,13 @@ Jubilant Pharmova Ltd.`,
   it('should process split file archive', async () => {
     const filePath = path.resolve(__dirname, 'data/dowjones_splits')
     await fetcher.processSplitArchive(repo, '2024-02', filePath)
-    fetcher = new DowJonesProvider('testuser', 'testpass', 'test')
+    fetcher = new DowJonesProvider(
+      'testuser',
+      'testpass',
+      'test',
+      DOW_JONES_SANCTIONS_SEARCH_TYPES,
+      SANCTIONS_ENTITY_TYPES
+    )
     expect(repo.save).toHaveBeenCalledWith(
       'dowjones',
       [
@@ -144,11 +164,7 @@ Jubilant Pharmova Ltd.`,
               'Politically Exposed Person (PEP)',
               'Special Interest Person (SIP) - Corruption',
             ],
-            aka: [
-              'Ange Félix Patassé',
-              'Ange Felix Patasse',
-              'Ange-Felix Patasse',
-            ],
+            aka: ['Ange Felix Patasse', 'Ange-Felix Patasse'],
             freetext: `PROFILE CREATED: 28-Aug-2006
 UPDATE ADDED: 05-Sep-2006
 UPDATE ADDED: 07-Jun-2022
@@ -356,7 +372,7 @@ Patasse passed away on April 5, 2011.`,
             dateMatched: true,
             matchTypes: ['PEP'],
             sanctionSearchTypes: ['PEP'],
-            aka: ['Martin Zinguélé', 'Martin Ziguele', 'Martin Zinguele'],
+            aka: ['Martin Zinguele', 'Martin Ziguele'],
             countries: ['Central African Republic'],
             countryCodes: ['CF'],
             yearOfBirth: ['1957'],

@@ -63,19 +63,10 @@ export class MongoSanctionsRepository implements SanctionsRepository {
           }
         case 'del':
           return {
-            updateOne: {
+            deleteOne: {
               filter: {
                 id: entity.id,
                 provider,
-                version,
-                deletedAt: { $exists: false },
-              },
-              update: {
-                $set: {
-                  ...entity,
-                  version,
-                  deletedAt: Date.now(),
-                },
               },
             },
           }

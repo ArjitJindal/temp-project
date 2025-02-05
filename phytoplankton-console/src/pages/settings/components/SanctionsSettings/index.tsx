@@ -14,12 +14,14 @@ import { message } from '@/components/library/Message';
 import { getBranding } from '@/utils/branding';
 import { downloadLink } from '@/utils/download-link';
 import { isSuperAdmin, useAuth0User, useHasPermissions } from '@/utils/user-utils';
-import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
-import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
 import Select from '@/components/library/Select';
 import Label from '@/components/ui/Form/Layout/Label';
 import { SanctionsSettingsProviderScreeningTypes } from '@/apis/models/SanctionsSettingsProviderScreeningTypes';
+import { ACURIS_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/AcurisSanctionsSearchType';
 import { SANCTIONS_ENTITY_TYPES } from '@/apis/models-custom/SanctionsEntityType';
+import { OPEN_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/OpenSanctionsSearchType';
+import { SanctionsDataProviderName } from '@/apis';
+import { DOW_JONES_SANCTIONS_SEARCH_TYPES } from '@/apis/models-custom/DowJonesSanctionsSearchType';
 
 export const SanctionsSettings = () => {
   const permissions = useHasPermissions(['settings:add-ons:read']);
@@ -40,8 +42,9 @@ export const SanctionsSettings = () => {
   const settings = useSettings();
   const hasFeatureAcuris = useFeatureEnabled('ACURIS');
   const hasFeatureOpenSanctions = useFeatureEnabled('OPEN_SANCTIONS');
+  const hasFeatureDowJones = useFeatureEnabled('DOW_JONES');
   const getSettings = (
-    provider: 'acuris' | 'open-sanctions',
+    provider: SanctionsDataProviderName,
     defaultScreeningTypes,
     defaultEntityTypes,
   ) => {
@@ -63,7 +66,10 @@ export const SanctionsSettings = () => {
     useState<SanctionsSettingsProviderScreeningTypes>(
       getSettings('open-sanctions', OPEN_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
     );
-
+  const [dowJonesScreeningTypes, setDowJonesScreeningTypes] =
+    useState<SanctionsSettingsProviderScreeningTypes>(
+      getSettings('dowjones', DOW_JONES_SANCTIONS_SEARCH_TYPES, SANCTIONS_ENTITY_TYPES),
+    );
   const handleTypesChange = (value: SanctionsSettingsProviderScreeningTypes) => {
     updateTenantSettingsMutation.mutate({
       sanctions: {
@@ -79,106 +85,41 @@ export const SanctionsSettings = () => {
   };
   return (
     <>
-      {hasFeatureAcuris && isSanctionsEnabled ? (
-        <SettingsCard title="Acuris settings">
-          <div className={s.sanctionsSettingsRoot}>
-            <Label title="Screening types for Acuris" color="dark">
-              <Select
-                mode="MULTIPLE"
-                options={ACURIS_SANCTIONS_SEARCH_TYPES.map((type) => ({
-                  label: humanizeAuto(type),
-                  value: type,
-                }))}
-                isDisabled={!superAdmin}
-                onChange={(values) =>
-                  setAcurisScreeningTypes({
-                    ...acurisScreeningTypes,
-                    screeningTypes: values ?? [],
-                  })
-                }
-                value={acurisScreeningTypes.screeningTypes}
-              />
-            </Label>
-            <Label title="Required entities data" color="dark">
-              <Select
-                mode="MULTIPLE"
-                options={SANCTIONS_ENTITY_TYPES.map((type) => ({
-                  label: humanizeAuto(type),
-                  value: type,
-                }))}
-                isDisabled={!superAdmin}
-                onChange={(values) =>
-                  setAcurisScreeningTypes({
-                    ...acurisScreeningTypes,
-                    entityTypes: values ?? [],
-                  })
-                }
-                value={acurisScreeningTypes.entityTypes}
-              />
-            </Label>
-            <Button
-              type="PRIMARY"
-              onClick={() => handleTypesChange(acurisScreeningTypes)}
-              className={s.sanctionsSettingsButton}
-              isDisabled={updateTenantSettingsMutation.isLoading || !superAdmin}
-            >
-              Save
-            </Button>
-          </div>
-        </SettingsCard>
-      ) : (
-        <></>
-      )}
-      {hasFeatureOpenSanctions && isSanctionsEnabled ? (
-        <SettingsCard title="Open Sanctions settings">
-          <div className={s.sanctionsSettingsRoot}>
-            <Label title="Screening types for Open Sanctions" color="dark">
-              <Select
-                mode="MULTIPLE"
-                options={OPEN_SANCTIONS_SEARCH_TYPES.map((type) => ({
-                  label: humanizeAuto(type),
-                  value: type,
-                }))}
-                isDisabled={!superAdmin}
-                onChange={(values) =>
-                  setOpenSanctionsScreeningTypes({
-                    ...openSanctionsScreeningTypes,
-                    screeningTypes: values ?? [],
-                  })
-                }
-                value={openSanctionsScreeningTypes.screeningTypes}
-              />
-            </Label>
-            <Label title="Required entities data" color="dark">
-              <Select
-                mode="MULTIPLE"
-                options={SANCTIONS_ENTITY_TYPES.map((type) => ({
-                  label: humanizeAuto(type),
-                  value: type,
-                }))}
-                isDisabled={!superAdmin}
-                onChange={(values) =>
-                  setOpenSanctionsScreeningTypes({
-                    ...openSanctionsScreeningTypes,
-                    entityTypes: values ?? [],
-                  })
-                }
-                value={openSanctionsScreeningTypes.entityTypes}
-              />
-            </Label>
-            <Button
-              type="PRIMARY"
-              onClick={() => handleTypesChange(openSanctionsScreeningTypes)}
-              className={s.sanctionsSettingsButton}
-              isDisabled={updateTenantSettingsMutation.isLoading || !superAdmin}
-            >
-              Save
-            </Button>
-          </div>
-        </SettingsCard>
-      ) : (
-        <></>
-      )}
+      <SanctionsProviderSettings
+        title="Acuris"
+        hasFeature={hasFeatureAcuris}
+        screeningTypes={acurisScreeningTypes}
+        searchTypes={ACURIS_SANCTIONS_SEARCH_TYPES}
+        onScreeningTypesChange={setAcurisScreeningTypes}
+        isLoading={updateTenantSettingsMutation.isLoading}
+        isSuperAdmin={superAdmin}
+        onSave={handleTypesChange}
+        isSanctionsEnabled={isSanctionsEnabled}
+      />
+
+      <SanctionsProviderSettings
+        title="Open Sanctions"
+        hasFeature={hasFeatureOpenSanctions}
+        screeningTypes={openSanctionsScreeningTypes}
+        searchTypes={OPEN_SANCTIONS_SEARCH_TYPES}
+        onScreeningTypesChange={setOpenSanctionsScreeningTypes}
+        isLoading={updateTenantSettingsMutation.isLoading}
+        isSuperAdmin={superAdmin}
+        onSave={handleTypesChange}
+        isSanctionsEnabled={isSanctionsEnabled}
+      />
+
+      <SanctionsProviderSettings
+        title="Dow Jones"
+        hasFeature={hasFeatureDowJones}
+        screeningTypes={dowJonesScreeningTypes}
+        searchTypes={DOW_JONES_SANCTIONS_SEARCH_TYPES}
+        onScreeningTypesChange={setDowJonesScreeningTypes}
+        isLoading={updateTenantSettingsMutation.isLoading}
+        isSuperAdmin={superAdmin}
+        onSave={handleTypesChange}
+        isSanctionsEnabled={isSanctionsEnabled}
+      />
       <SettingsCard
         title={
           isSanctionsEnabled
@@ -224,5 +165,72 @@ export const SanctionsSettings = () => {
         )}
       </SettingsCard>
     </>
+  );
+};
+
+const SanctionsProviderSettings = ({
+  title,
+  hasFeature,
+  screeningTypes,
+  searchTypes,
+  onScreeningTypesChange,
+  isLoading,
+  isSuperAdmin,
+  onSave,
+  isSanctionsEnabled,
+}) => {
+  if (!hasFeature || !isSanctionsEnabled) {
+    return null;
+  }
+
+  return (
+    <SettingsCard title={`${title} settings`}>
+      <div className={s.sanctionsSettingsRoot}>
+        <Label title={`Screening types for ${title}`} color="dark">
+          <Select
+            mode="MULTIPLE"
+            options={searchTypes.map((type) => ({
+              label: humanizeAuto(type),
+              value: type,
+            }))}
+            isDisabled={!isSuperAdmin}
+            onChange={(values) =>
+              onScreeningTypesChange({
+                screeningTypes: values ?? [],
+                entityTypes: screeningTypes.entityTypes,
+                provider: screeningTypes.provider,
+              })
+            }
+            value={screeningTypes.screeningTypes}
+          />
+        </Label>
+        <Label title="Required entities data" color="dark">
+          <Select
+            mode="MULTIPLE"
+            options={SANCTIONS_ENTITY_TYPES.map((type) => ({
+              label: humanizeAuto(type),
+              value: type,
+            }))}
+            isDisabled={!isSuperAdmin}
+            onChange={(values) =>
+              onScreeningTypesChange({
+                screeningTypes: screeningTypes.screeningTypes,
+                entityTypes: values ?? [],
+                provider: screeningTypes.provider,
+              })
+            }
+            value={screeningTypes.entityTypes}
+          />
+        </Label>
+        <Button
+          type="PRIMARY"
+          onClick={() => onSave(screeningTypes)}
+          className={s.sanctionsSettingsButton}
+          isDisabled={isLoading || !isSuperAdmin}
+        >
+          Save
+        </Button>
+      </div>
+    </SettingsCard>
   );
 };

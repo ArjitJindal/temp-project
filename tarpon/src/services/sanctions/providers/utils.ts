@@ -125,3 +125,32 @@ export function getSecondaryMatches(
   }
   return []
 }
+
+function normalize(str: string): string {
+  return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+export function getUniqueStrings(arr: string[]): string[] {
+  const collator = new Intl.Collator(undefined, { sensitivity: 'base' })
+  const uniqueMap: Map<string, string> = new Map()
+  for (const str of arr) {
+    const normalized = normalize(str)
+    let foundKey: string | null = null
+    for (const key of uniqueMap.keys()) {
+      if (collator.compare(key, normalized) === 0) {
+        foundKey = key
+        break
+      }
+    }
+    if (foundKey) {
+      const value = uniqueMap.get(foundKey)
+      if (value && normalize(value) !== value) {
+        uniqueMap.set(foundKey, str)
+      }
+    } else {
+      uniqueMap.set(normalized, str)
+    }
+  }
+
+  return Array.from(uniqueMap.values())
+}

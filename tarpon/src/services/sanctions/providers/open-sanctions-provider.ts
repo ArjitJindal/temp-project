@@ -1,6 +1,6 @@
 import { compact, concat, startCase, uniq } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
-import { shouldLoadScreeningData } from './utils'
+import { getUniqueStrings, shouldLoadScreeningData } from './utils'
 import {
   Action,
   SanctionsRepository,
@@ -298,8 +298,8 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
     }
     return {
       id: entity.id,
-      aka: compact(
-        uniq(
+      aka: getUniqueStrings(
+        compact(
           concat(properties.alias || [], properties.name || []).map((n) =>
             n.toLowerCase()
           )
@@ -417,8 +417,8 @@ export class OpenSanctionsProvider extends SanctionsDataFetcher {
       id: entity.id,
       name: startCase(entity.caption?.toLowerCase() ?? 'Unknown'),
       entityType: schema,
-      aka: compact(
-        uniq(
+      aka: getUniqueStrings(
+        compact(
           concat(properties.alias || [], properties.name || []).map((n) =>
             n.toLowerCase()
           )

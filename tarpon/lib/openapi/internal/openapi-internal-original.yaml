@@ -12828,6 +12828,13 @@ components:
         - ADVERSE_MEDIA
         - PROFILE_OF_INTEREST
         - REGULATORY_ENFORCEMENT_LIST
+    DowJonesSanctionsSearchType:
+      title: DowJonesSanctionsSearchType
+      type: string
+      enum:
+        - SANCTIONS
+        - PEP
+        - ADVERSE_MEDIA
     OpenSanctionsSearchType:
       title: OpenSanctionsSearchType
       type: string

@@ -2,7 +2,7 @@ import { Readable } from 'stream'
 import { createInterface } from 'readline'
 import { capitalize, compact, concat, intersection } from 'lodash'
 import { COUNTRIES } from '@flagright/lib/constants'
-import { shouldLoadScreeningData } from './utils'
+import { getUniqueStrings, shouldLoadScreeningData } from './utils'
 import {
   Action,
   SanctionsRepository,
@@ -448,7 +448,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
       ),
       sanctionSearchTypes,
       gender: entity.gender,
-      aka: entity.aliases.map((alias) => this.getEntityName(alias, entityType)),
+      aka: getUniqueStrings(
+        entity.aliases.map((alias) => this.getEntityName(alias, entityType))
+      ),
       countries: compact(
         entity.nationalitiesIsoCodes.map(
           (code) => COUNTRIES[code as CountryCode]
@@ -566,6 +568,9 @@ export class AcurisProvider extends SanctionsDataFetcher {
       id: entity.qrCode,
       name: this.getEntityName(entity, entityType),
       entityType: entityType,
+      aka: getUniqueStrings(
+        compact(entity.aliases.map((alias) => alias.alias))
+      ),
       types: concat(
         entity.datasets
           .filter((dataset) =>
