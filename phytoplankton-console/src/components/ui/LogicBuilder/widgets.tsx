@@ -147,7 +147,9 @@ const customNumberWidget: NumberWidget<QueryBuilderConfig> = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
+        <div className={s.numberInputWrapper}>
+          <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
+        </div>
       </WidgetWrapper>
     );
   },
@@ -325,7 +327,7 @@ const customSelectWidget: SelectWidget<QueryBuilderConfig> = {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
-          autoTrim={true}
+          // autoTrim={true}
           dropdownMatchWidth={false}
           portaled={true}
           allowClear={true}
