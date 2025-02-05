@@ -128,10 +128,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     })
   }
 
-  async getTenantRoles(
-    tenantId: string,
-    fetchAllRoles: boolean = false
-  ): Promise<AccountRole[]> {
+  async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
     const allRoles: AccountRole[] = []
     const defaultRoles = await this.getRolesByNamespace(DEFAULT_NAMESPACE)
     const roles = await this.getRolesByNamespace(tenantId)
@@ -139,13 +136,11 @@ export class DynamoRolesRepository extends BaseRolesRepository {
     allRoles.push(...defaultRoles)
     allRoles.push(...roles)
 
-    if (fetchAllRoles || this.shouldFetchRootRole()) {
+    if (this.shouldFetchRootRole()) {
       return allRoles
     }
 
-    return allRoles.filter(
-      (r) => r.name !== 'root' && r.name !== 'whitelabel-root'
-    )
+    return allRoles
   }
 
   private async getRolesByNamespace(namespace: string): Promise<AccountRole[]> {
@@ -169,10 +164,6 @@ export class DynamoRolesRepository extends BaseRolesRepository {
   public async deleteRole(id: string) {
     const role = await this.getRole(id)
 
-    if (!role) {
-      throw new Error('Role not found with id: ' + id)
-    }
-
     await this.dynamoClient.send(
       new DeleteCommand({
         TableName:
@@ -187,7 +178,7 @@ export class DynamoRolesRepository extends BaseRolesRepository {
           StackConstants.TARPON_DYNAMODB_TABLE_NAME(FLAGRIGHT_TENANT_ID),
         Key: DynamoDbKeys.ROLES_BY_NAMESPACE(
           this.auth0Domain,
-          this.getTenantId(getNamespace(role.name)),
+          this.getTenantId(getNamespace(role?.name || '')),
           id
         ),
       })

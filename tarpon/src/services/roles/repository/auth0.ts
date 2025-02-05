@@ -91,10 +91,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
     return { ...inputRole, id: role.id, name: role.name }
   }
 
-  async getTenantRoles(
-    tenantId: string,
-    fetchAllRoles: boolean = false
-  ): Promise<AccountRole[]> {
+  async getTenantRoles(tenantId: string): Promise<AccountRole[]> {
     const promises: Promise<AccountRole[]>[] = [
       this.rolesByNamespace(DEFAULT_NAMESPACE),
       this.rolesByNamespace(tenantId),
@@ -102,7 +99,7 @@ export class Auth0RolesRepository extends BaseRolesRepository {
 
     const roles = await Promise.all(promises)
 
-    if (fetchAllRoles || this.shouldFetchRootRole()) {
+    if (this.shouldFetchRootRole()) {
       const rootRole = await this.getRolesByName('root')
       const whitelabelRootRole = await this.getRolesByName('whitelabel-root')
 

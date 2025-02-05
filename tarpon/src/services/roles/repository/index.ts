@@ -15,10 +15,7 @@ export const DEFAULT_NAMESPACE = 'default'
 
 @traceable
 export abstract class BaseRolesRepository {
-  abstract getTenantRoles(
-    tenantId: string,
-    fetchAllRoles: boolean
-  ): Promise<AccountRole[]>
+  abstract getTenantRoles(tenantId: string): Promise<AccountRole[]>
   abstract createRole(
     tenantId: string,
     inputRole: CreateRoleInternal
