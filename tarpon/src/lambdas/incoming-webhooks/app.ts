@@ -42,7 +42,7 @@ export const webhooksHandler = lambdaApi()(
       APIGatewayEventLambdaAuthorizerContext<JWTAuthorizerResult>
     >
   ) => {
-    const { sourceIp } = event?.requestContext?.identity || {}
+    const { sourceIp } = event.requestContext.identity
 
     const handlers = new Handlers()
 
@@ -205,7 +205,21 @@ export const webhooksHandler = lambdaApi()(
       }
     })
 
+    const NANGO_WEBHOOK_IPS = [
+      '100.20.92.101',
+      '44.225.181.72',
+      '44.227.217.144',
+    ]
+
     handlers.registerPostWebhookNango(async (ctx, request) => {
+      const isIpAllowed = NANGO_WEBHOOK_IPS.includes(sourceIp)
+
+      if (!isIpAllowed) {
+        throw new Forbidden(
+          `IP ${sourceIp} is not authorized to make this request for Nango webhook`
+        )
+      }
+
       const dynamoDb = getDynamoDbClientByEvent(event)
 
       logger.info(`Received Nango webhook event: ${JSON.stringify(request)}`)
