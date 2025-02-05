@@ -1,5 +1,5 @@
-import { scaleBand, scaleLinear, scaleOrdinal, StringLike } from '@visx/scale';
-import { ScaleBand, ScaleLinear, ScaleOrdinal } from 'd3-scale';
+import { scaleLinear, scaleOrdinal, StringLike, scalePoint } from '@visx/scale';
+import { ScaleLinear, ScaleOrdinal, ScalePoint } from 'd3-scale';
 import { useMemo } from 'react';
 import { uniq } from 'lodash';
 import { LineData } from './types';
@@ -8,10 +8,9 @@ import { ColorsMap } from '@/components/charts/BarChart';
 import { adjustScalesAndPaddings, Paddings } from '@/components/charts/shared/helpers';
 import { ALL_CHART_COLORS } from '@/components/ui/colors';
 import { useDeepEqualMemo } from '@/utils/hooks';
-import { DerivedScales } from '@/components/charts/BarChart/StackedBarChart/helpers';
 
 export type DataScales<X extends StringLike> = {
-  xScale: ScaleBand<X>;
+  xScale: ScalePoint<X>;
   yScale: ScaleLinear<number, number>;
 };
 
@@ -52,7 +51,7 @@ export function calcScales<X extends StringLike, Series extends StringLike>(
   const xMax = width;
   const yMax = height;
 
-  const xScale = scaleBand<X>({
+  const xScale = scalePoint<X>({
     domain: data.map((item) => item.xValue),
     padding: 0.2,
     range: [0, xMax],
@@ -76,11 +75,11 @@ export function useScales<X extends StringLike, Series extends StringLike>(
   size: { width: number; height: number } | null,
   initialPaddings: Paddings,
 ): {
-  scales: DerivedScales<X>;
+  scales: DataScales<X>;
   paddings: Paddings;
 } {
   return useDeepEqualMemo(() => {
-    return adjustScalesAndPaddings<X, DerivedScales<X>>(initialPaddings, (paddings) => {
+    return adjustScalesAndPaddings<X, DataScales<X>>(initialPaddings, (paddings) => {
       return calcScales<X, Series>(data, size, paddings);
     });
   }, [data, size, initialPaddings]);

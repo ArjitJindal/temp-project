@@ -119,6 +119,34 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
           .filter((xValue) => xValue.toString() === tooltipData.xValue.toString())
       : [];
 
+  const findNearestXValue = (mouseX: number) => {
+    const xPositions = data.map((item) => xScale(item.xValue));
+    const mousePosition = mouseX - paddings.left;
+
+    let nearestIndex = 0;
+    const firstPosition = xPositions[0];
+    if (!firstPosition) {
+      return data[0].xValue;
+    }
+
+    let minDistance = Math.abs(firstPosition - mousePosition);
+
+    for (let i = 1; i < xPositions.length; i++) {
+      const position = xPositions[i];
+      if (!position) {
+        continue;
+      }
+
+      const distance = Math.abs(position - mousePosition);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearestIndex = i;
+      }
+    }
+
+    return data[nearestIndex].xValue;
+  };
+
   return (
     <>
       <svg
@@ -170,28 +198,29 @@ function Chart<X extends StringLike, Series extends StringLike>(props: {
               </React.Fragment>
             );
           })}
-          {data.map((item) => (
-            <rect
-              key={`${item.series}-${item.xValue}-${item.yValue}`}
-              className={cn(s.mouseTargetLine)}
-              width={4}
-              x={(xScale(item.xValue) ?? 0) - 2}
-              height={innerHeight}
-              onMouseLeave={() => {
-                hideTooltip();
-              }}
-              onMouseMove={(event) => {
-                const eventSvgCoords = localPoint(event);
+          <rect
+            className={cn(s.mouseTargetLine)}
+            width={size.width - paddings.left - paddings.right}
+            height={innerHeight}
+            x={0}
+            fill="transparent"
+            onMouseLeave={() => {
+              hideTooltip();
+            }}
+            onMouseMove={(event) => {
+              const eventSvgCoords = localPoint(event);
+              if (eventSvgCoords) {
+                const nearestX = findNearestXValue(eventSvgCoords.x);
                 showTooltip({
                   tooltipData: {
-                    xValue: item.xValue,
+                    xValue: nearestX,
                   },
-                  tooltipTop: eventSvgCoords?.y,
-                  tooltipLeft: eventSvgCoords?.x,
+                  tooltipTop: eventSvgCoords.y,
+                  tooltipLeft: eventSvgCoords.x,
                 });
-              }}
-            />
-          ))}
+              }
+            }}
+          />
           <DefaultAxisLeft left={0} scale={yScale} />
           <DefaultAxisBottom left={0} top={innerHeight} scale={xScale} />
         </Group>

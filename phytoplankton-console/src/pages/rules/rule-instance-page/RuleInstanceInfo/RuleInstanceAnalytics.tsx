@@ -255,7 +255,7 @@ export const RuleInstanceAnalytics = (props: { ruleInstance: RuleInstance }) => 
                 <LineChart
                   data={success([...executionStats, ...falsePositiveStats, ...ruleUpdatedAtStats])}
                   colors={colors}
-                  height={200}
+                  height={275}
                   hideLegend={true}
                   // dashedLinesSeries={Object.keys(ruleUpdatedColors)}
                   // customTooltip={customContent}

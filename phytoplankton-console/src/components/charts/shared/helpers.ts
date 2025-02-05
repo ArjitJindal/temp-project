@@ -1,5 +1,4 @@
-import { StringLike } from '@visx/scale';
-import { ScaleBand, ScaleLinear } from 'd3-scale';
+import { ScaleBand, ScaleLinear, ScalePoint } from 'd3-scale';
 import {
   DEFAULT_AXIS_FONT_STYLE,
   FontStyle,
@@ -53,9 +52,9 @@ export const calcAxisPaddings = (
   };
 };
 
-type AbstractPlotScales<Category extends StringLike> = {
+export type AbstractPlotScales<X extends { toString(): string }> = {
+  xScale: ScaleBand<X> | ScalePoint<X>;
   yScale: ScaleLinear<number, number>;
-  xScale: ScaleBand<Category>;
 };
 
 /**
@@ -64,15 +63,12 @@ type AbstractPlotScales<Category extends StringLike> = {
   paddings
  */
 export function adjustScalesAndPaddings<
-  Category extends StringLike,
-  Scales extends AbstractPlotScales<Category>,
+  X extends { toString(): string },
+  Scales extends AbstractPlotScales<X>,
 >(
   initialPaddings: Paddings,
   getScales: (paddings: Paddings) => Scales,
-): {
-  scales: Scales;
-  paddings: Paddings;
-} {
+): { scales: Scales; paddings: Paddings } {
   const initialScales = getScales(initialPaddings);
 
   // Calculate size required for axis labels
