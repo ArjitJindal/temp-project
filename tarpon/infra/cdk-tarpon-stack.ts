@@ -138,7 +138,7 @@ const FEATURES = {
 }
 
 // TODO make this equal to !isQaEnv before merge
-const deployKinesisConsumer = !isQaEnv()
+const deployKinesisConsumer = true
 
 export class CdkTarponStack extends cdk.Stack {
   config: Config

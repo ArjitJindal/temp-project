@@ -57,7 +57,10 @@ import { envIsNot } from '@/utils/env'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import { insertToClickhouse } from '@/utils/clickhouse/utils'
+import {
+  batchInsertToClickhouse,
+  insertToClickhouse,
+} from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
 import { NangoRecord } from '@/@types/nango'
@@ -437,10 +440,23 @@ async function alertHandler(tenantId: string, alert: Alert | undefined) {
     return
   }
   alert.updatedAt = Date.now()
+  console.log('########## Alert Handler ##########', alert.alertId)
   await insertToClickhouse<AlertClickhouse>(
     CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
     alert,
     tenantId
+  )
+}
+
+async function alertsHandler(tenantId: string, newAlerts: Array<Alert>) {
+  console.log('########## Alerts Handler Group ##########', newAlerts)
+  newAlerts.forEach((alert) => {
+    alert.updatedAt = Date.now()
+  })
+  await batchInsertToClickhouse(
+    tenantId,
+    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+    newAlerts
   )
 }
 
@@ -635,6 +651,7 @@ const tarponBuilder = new StreamConsumerBuilder(
   .setAlertHandler((tenantId, oldAlert, newAlert) =>
     alertHandler(tenantId, newAlert)
   )
+  .setAlertsHandler((tenantId, newAlerts) => alertsHandler(tenantId, newAlerts))
   .setAlertCommentHandler((tenantId, alertId, oldComment, newComment) =>
     alertCommentHandler(tenantId, alertId, newComment)
   )

@@ -80,6 +80,11 @@ type UsersHandler = (
   newUsers: Array<UserWithRulesResult | BusinessWithRulesResult>,
   dbClients: DbClients
 ) => Promise<void>
+type AlertsHandler = (
+  tenantId: string,
+  newAlerts: Array<Alert>,
+  dbClients: DbClients
+) => Promise<void>
 type UserEventHandler = (
   tenantId: string,
   oldUserEvent: ConsumerUserEvent | undefined,
@@ -158,6 +163,7 @@ export class StreamConsumerBuilder {
   ruleInstanceHandler?: RuleInstanceHandler
   concurrentGroupBy?: ConcurrentGroupBy
   alertHandler?: AlertHandler
+  alertsHandler?: AlertsHandler
   alertCommentHandler?: AlertCommentHandler
   alertFileHandler?: AlertFileHandler
   nangoRecordHandler?: NangoRecordHandler
@@ -248,6 +254,11 @@ export class StreamConsumerBuilder {
     return this
   }
 
+  public setAlertsHandler(alertsHandler: AlertsHandler): StreamConsumerBuilder {
+    this.alertsHandler = alertsHandler
+    return this
+  }
+
   public setAlertCommentHandler(
     alertCommentHandler: AlertCommentHandler
   ): StreamConsumerBuilder {
@@ -325,6 +336,15 @@ export class StreamConsumerBuilder {
             update.NewImage as UserWithRulesResult | BusinessWithRulesResult
         )
         await this.usersHandler(userUpdates[0].tenantId, users, dbClients)
+      }
+    }
+    if (this.alertsHandler) {
+      const alertUpdates = groupUpdates.filter(
+        (update) => update.type === 'ALERT'
+      )
+      if (alertUpdates.length > 0) {
+        const alerts = alertUpdates.map((update) => update.NewImage as Alert)
+        await this.alertsHandler(alertUpdates[0].tenantId, alerts, dbClients)
       }
     }
   }
