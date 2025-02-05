@@ -677,13 +677,14 @@ export class RulesEngineService {
     )
     // Update transaction with the latest payload.
     const mergedHitRules = mergeRules(updatedTransaction.hitRules, hitRules)
+    const transactionStatus = getAggregatedRuleStatus(mergedHitRules)
     await this.transactionRepository.saveTransaction(updatedTransaction, {
       executedRules: mergeRules(
         updatedTransaction.executedRules,
         executedRules
       ),
       hitRules: mergedHitRules,
-      status: getAggregatedRuleStatus(mergedHitRules),
+      status: transactionStatus,
       riskScoreDetails,
       transactionId: transaction.transactionId,
     })
@@ -735,6 +736,7 @@ export class RulesEngineService {
 
     const updatedTransactionWithoutRulesResult = {
       ...updatedTransaction,
+      status: transactionStatus,
       executedRules: undefined,
       hitRules: undefined,
     }
