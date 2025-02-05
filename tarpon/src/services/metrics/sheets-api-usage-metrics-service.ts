@@ -19,6 +19,7 @@ import { TenantBasic } from '@/services/accounts'
 import { getSecretByName } from '@/utils/secrets-manager'
 import { traceable } from '@/core/xray'
 import { logger } from '@/core/logger'
+import dayjs from '@/utils/dayjs'
 
 const RETRY_OPTIONS: BackoffOptions = {
   startingDelay: 15 * 1000, // ms
@@ -212,12 +213,17 @@ export class SheetsApiUsageMetricsService {
     )
     const row = rows.findIndex((row) => {
       const rowData = row.toObject()
+      const sheetDate = dayjs(rowData[META_DATA_HEADERS_DAILY.DATE]).format(
+        'YYYY-MM-DD'
+      )
+      const metricsDate = dayjs(dailyMetrics.date).format('YYYY-MM-DD')
+
       return (
-        rowData[META_DATA_HEADERS_DAILY.DATE].toString() ===
-          dailyMetrics.date &&
+        sheetDate === metricsDate &&
         rowData[META_DATA_HEADERS_DAILY.TENANT_ID].toString() === this.tenantId
       )
     })
+
     const newRow = merge(
       this.getDailyUsageMetadata(dailyMetrics.date),
       ...dailyMetrics.values.map((value) => ({
@@ -250,8 +256,14 @@ export class SheetsApiUsageMetricsService {
     const tenantRow = tenantRows.findIndex((row) => {
       const rowData = row.toObject()
 
+      const sheetMonth = dayjs(rowData[META_DATA_HEADERS_MONTHLY.MONTH]).format(
+        'YYYY-MM'
+      )
+
+      const metricsMonth = dayjs(monthlyMetrics.month).format('YYYY-MM')
+
       return (
-        rowData[META_DATA_HEADERS_MONTHLY.MONTH] === monthlyMetrics.month &&
+        sheetMonth === metricsMonth &&
         rowData[META_DATA_HEADERS_MONTHLY.TENANT_ID] === this.tenantId
       )
     })
@@ -267,7 +279,8 @@ export class SheetsApiUsageMetricsService {
       tenantRows[tenantRow].assign(newRow)
       await tenantRows[tenantRow].save()
     } else {
-      await this.monthlyUsageMetricsSheet.addRow(newRow)
+      const row = await this.monthlyUsageMetricsSheet.addRow(newRow)
+      tenantRows.push(row)
     }
   }
 
