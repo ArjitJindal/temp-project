@@ -186,15 +186,20 @@ export class RoleService {
       { id: userId },
       { roles: [role.id as string] }
     )
+  }
 
+  private async updateUserRoleInAccounts(
+    tenantId: string,
+    userId: string,
+    roleName: string
+  ) {
     const accountsService = AccountsService.getInstance(this.dynamoDb)
-    const patchedUser = await accountsService.auth0.patchAccount(
-      tenantId,
-      userId,
-      { role: roleName, app_metadata: { role: roleName } }
-    )
+
+    await accountsService.auth0.patchAccount(tenantId, userId, {
+      role: roleName,
+    })
+
     await accountsService.cache.patchAccount(tenantId, userId, {
-      ...patchedUser,
       role: roleName,
     })
   }

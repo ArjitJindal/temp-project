@@ -186,6 +186,9 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
             ...(patchData.blockedReason !== undefined && {
               blockedReason: patchData.blockedReason,
             }),
+            ...(patchData.role && {
+              role: patchData.role,
+            }),
           },
           user_metadata: {
             ...user.user_metadata,

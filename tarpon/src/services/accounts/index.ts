@@ -213,50 +213,52 @@ export class AccountsService {
   ): Promise<Account> {
     let account: Account | null = null
     try {
-      const existingUser = await this.auth0.getAccountByEmail(params.email)
+      account = await this.getAccountByEmail(params.email)
 
-      if (existingUser) {
-        /* Temporary workaround for adding again blocked user to organization need to be removed after unblock user flow will be implemented */
-        if (existingUser.blocked) {
-          account = await this.auth0.patchAccount(tenant.id, existingUser.id, {
-            blocked: false,
-            blockedReason: null,
-          })
-          await this.roleService.setRole(
-            tenant.id,
-            existingUser.id,
-            params.role
-          )
+      if (!account) {
+        account = await this.createAccountInternal(tenant, params)
+        await this.roleService.setRole(tenant.id, account.id, params.role)
+      } else {
+        if (account.blocked) {
+          await this.updateBlockedReason(tenant.id, account.id, false, null)
+          await this.roleService.setRole(tenant.id, account.id, params.role)
         } else {
           throw new BadRequest('The user already exists.')
         }
-      } else {
-        account = await this.auth0.createAccount(tenant.id, {
-          type: 'AUTH0',
-          params,
-        })
-        logger.info('Created user', { email: params.email })
-        await this.roleService.setRole(tenant.id, account.id, params.role)
       }
-      await this.auth0.addAccountToOrganization(tenant, account)
-      logger.info(`Added user to orginization ${tenant.orgId}`, {
-        email: params.email,
-        account: account.id,
-      })
+
+      await this.addAccountToOrganizationInternal(tenant, account)
       await this.sendPasswordResetEmail(params.email)
-      await this.cache.createAccount(tenant.id, {
-        type: 'DATABASE',
-        params: account,
-      })
-      await this.cache.addAccountToOrganization(tenant, account)
     } catch (e) {
       if (account) {
-        await this.auth0.deleteAccount(account)
-        logger.info('Deleted user', { email: params.email })
+        await this.deleteAuth0User(account)
       }
       throw e
     }
     return account
+  }
+
+  private async createAccountInternal(
+    tenant: Tenant,
+    params: InternalUserCreate
+  ): Promise<Account> {
+    const account = await this.auth0.createAccount(tenant.id, {
+      type: 'AUTH0',
+      params,
+    })
+    await this.cache.createAccount(tenant.id, {
+      type: 'DATABASE',
+      params: account,
+    })
+    return account
+  }
+
+  private async addAccountToOrganizationInternal(
+    tenant: Tenant,
+    account: Account
+  ) {
+    await this.auth0.addAccountToOrganization(tenant, account)
+    await this.cache.addAccountToOrganization(tenant, account)
   }
 
   public async sendPasswordResetEmail(email: string): Promise<void> {

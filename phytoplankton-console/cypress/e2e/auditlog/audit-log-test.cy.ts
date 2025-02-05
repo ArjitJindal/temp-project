@@ -1,11 +1,6 @@
 import { PERMISSIONS } from '../../support/permissions';
 
 describe('Audit log filter - entity type', () => {
-  const REQUIRED_PERMISSIONS = PERMISSIONS.AUDIT_LOG;
-  beforeEach(() => {
-    cy.loginWithPermissions({ permissions: REQUIRED_PERMISSIONS });
-  });
-
   describe('Audit log filter - entity type', () => {
     const REQUIRED_PERMISSIONS = PERMISSIONS.AUDIT_LOG;
 
