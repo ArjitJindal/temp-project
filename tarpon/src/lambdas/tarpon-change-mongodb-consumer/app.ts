@@ -440,7 +440,11 @@ async function alertHandler(tenantId: string, alert: Alert | undefined) {
     return
   }
   alert.updatedAt = Date.now()
-  console.log('########## Alert Handler ##########', alert.alertId)
+  logger.info(
+    '########## Alert Handler ##########',
+    alert.alertId,
+    alert.updatedAt
+  )
   await insertToClickhouse<AlertClickhouse>(
     CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
     alert,
@@ -449,7 +453,7 @@ async function alertHandler(tenantId: string, alert: Alert | undefined) {
 }
 
 async function alertsHandler(tenantId: string, newAlerts: Array<Alert>) {
-  console.log('########## Alerts Handler Group ##########', newAlerts)
+  logger.info('########## Alerts Handler Group ##########', Date.now())
   newAlerts.forEach((alert) => {
     alert.updatedAt = Date.now()
   })
