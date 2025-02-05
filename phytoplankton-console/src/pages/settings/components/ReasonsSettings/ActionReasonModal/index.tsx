@@ -39,6 +39,9 @@ export default function ActionReasonModal(props: Props) {
         setInputReason('');
         setReasons([]);
       }}
+      okProps={{
+        isDisabled: !reasons?.length,
+      }}
     >
       <div className={s.root}>
         <Label label="Reason" />
