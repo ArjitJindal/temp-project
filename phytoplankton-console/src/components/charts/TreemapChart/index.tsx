@@ -54,13 +54,15 @@ export default function TreemapChart<Name extends StringLike>(props: Props<Name>
   const showSkeleton = isLoading(data) && getOr(data, null) == null;
   const dataValue: TreemapData<string> = getOr(
     map(data, (value) => {
-      return value.map((item) => {
-        const name = item.name ? formatName(item.name) : '';
-        return {
-          name: name,
-          value: disabledSeries.includes(name) ? 0 : item.value,
-        };
-      });
+      return value
+        .filter((item) => item.value !== 0)
+        .map((item) => {
+          const name = item.name ? formatName(item.name) : '';
+          return {
+            name: name,
+            value: disabledSeries.includes(name) ? 0 : item.value,
+          };
+        });
     }),
     showSkeleton ? SKELETON_DATA : [],
   );

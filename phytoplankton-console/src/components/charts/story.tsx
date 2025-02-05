@@ -52,17 +52,27 @@ export default function (): JSX.Element {
   const LINE_DATA = [...LINE_DATA_1, ...LINE_DATA_2];
   LINE_DATA.sort((x, y) => x.xValue.toString().localeCompare(y.xValue.toString()));
 
-  const TREEMAP_DATA: TreemapData<string> = [...new Array(3 + Math.round(prnd() * 30))].map(
-    (_, i) => ({
+  const TREEMAP_DATA: TreemapData<string> = [
+    {
+      name: `this is empty value and should not be visible anywhere`,
+      value: 0,
+    },
+    ...[...new Array(3 + Math.round(prnd() * 30))].map((_, i) => ({
       name: `value ${i + 1}`,
       value: 5 * (i + 1) * prnd(),
-    }),
-  );
+    })),
+  ];
 
-  const DONUT_DATA: DonutData<string> = [...new Array(3 + Math.round(prnd() * 30))].map((_, i) => ({
-    name: `value ${i + 1}`,
-    value: 5 * (i + 1) * prnd(),
-  }));
+  const DONUT_DATA: DonutData<string> = [
+    {
+      name: `this is empty value and should not be visible anywhere`,
+      value: 0,
+    },
+    ...[...new Array(3 + Math.round(prnd() * 30))].map((_, i) => ({
+      name: `value ${i + 1}`,
+      value: 5 * (i + 1) * prnd(),
+    })),
+  ];
 
   return (
     <>
@@ -85,7 +95,7 @@ export default function (): JSX.Element {
       <UseCase title={'DonutChart'}>
         <DonutChart
           data={skeletonMode ? loading() : success(DONUT_DATA)}
-          colors={uniq(LINE_DATA.map(({ series }) => series)).reduce(
+          colors={uniq(DONUT_DATA.map(({ name }) => name)).reduce(
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
             {},
           )}
