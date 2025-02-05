@@ -1,5 +1,4 @@
 import React from 'react';
-import PlaceOfBirth from 'src/pages/users-item/UserDetails/shared/PlaceOfBirth';
 import { InternalConsumerUser } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import { DATE_TIME_FORMAT_WITHOUT_SECONDS, dayjs, DEFAULT_DATE_FORMAT } from '@/utils/dayjs';
@@ -61,10 +60,6 @@ export default function GeneralDetails(props: Props) {
         {
           label: 'Gender',
           value: user.userDetails?.gender ? GENDER_MAP[user.userDetails?.gender] : '-',
-        },
-        {
-          label: 'Place of birth',
-          value: user.userDetails?.placeOfBirth ? <PlaceOfBirth user={user} /> : '-',
         },
         { label: 'Occupation', value: user?.occupation },
         {
