@@ -10,7 +10,6 @@ import {
   AlertsRepository,
   FLAGRIGHT_SYSTEM_USER,
 } from '@/services/alerts/repository'
-import { logger } from '@/core/logger'
 import { CASES_COLLECTION } from '@/utils/mongodb-definitions'
 import { AccountsService } from '@/services/accounts'
 import { Alert } from '@/@types/openapi-internal/Alert'
@@ -18,15 +17,15 @@ import { Assignment } from '@/@types/openapi-internal/Assignment'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { Auth0RolesRepository } from '@/services/roles/repository/auth0'
 
-async function migrateTenant(tenant: Tenant) {
+async function migrateTenant(tenant: Tenant, auth0Domain: string) {
   const tenantId = tenant.id
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
   const accountsService = new AccountsService(
-    { auth0Domain: tenant.auth0Domain },
+    { auth0Domain: auth0Domain },
     { dynamoDb }
   )
-  const rolesRepository = new Auth0RolesRepository(tenant.auth0Domain)
+  const rolesRepository = new Auth0RolesRepository(auth0Domain)
   const tenantAccounts = await accountsService.getTenantAccounts(tenant)
   const tenantAccountIds = tenantAccounts.map((val) => val.id)
   if (!tenantAccounts || tenantAccounts.length == 0) {
@@ -48,7 +47,7 @@ async function migrateTenant(tenant: Tenant) {
       rolesRepository
     )
   }
-  logger.info(`Corrected all alert assignments for tenant: ${tenantId}`)
+  console.log(`Corrected all alert assignments for tenant: ${tenantId}`)
 }
 
 async function getRuleInstancesWithAutoAssignment(
@@ -128,7 +127,7 @@ async function fixAssignmentsForInstance(
           )
         })
       )
-      logger.info(
+      console.log(
         `Correctly assigned ${alerts.length} alerts for tenant ${tenant.id}`
       )
     },
