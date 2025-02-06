@@ -1,6 +1,6 @@
 import { uniqBy } from 'lodash'
 import { getRiskLevelFromScore } from '@flagright/lib/utils/risk'
-import { MongoClient } from 'mongodb'
+import { Collection, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { RiskRepository } from '../risk-scoring/repositories/risk-repository'
 import { RiskScoringV8Service } from '../risk-scoring/risk-scoring-v8-service'
@@ -13,6 +13,7 @@ import { RiskLevel } from '@/@types/openapi-internal/RiskLevel'
 import { User } from '@/@types/openapi-internal/User'
 import { UserUpdateRequest } from '@/@types/openapi-internal/UserUpdateRequest'
 import { UserTag } from '@/@types/openapi-internal/UserTag'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export const PNB_INTERNAL_RULES: RuleInstance[] = [
   {
@@ -1631,4 +1632,120 @@ const CONFLICTING_RULES = {
     'pnb-internal-trigger-complete-risk-levels-origin-user',
   'pnb-internal-trigger-incomplete-risk-levels-destination-user':
     'pnb-internal-trigger-complete-risk-levels-destination-user',
+}
+
+export const getUsersForPNB = async (
+  getUsersFromLists: (
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    listIds: string[]
+  ) => Promise<{ key: string; value: string }[]>,
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  usersCollection: Collection<InternalUser>,
+  ruleInstances?: RuleInstance[]
+) => {
+  const userIdFromODDList = await getUserIdFromODDList(
+    getUsersFromLists,
+    tenantId,
+    dynamoDb,
+    ruleInstances
+  )
+  const { userIdFromMOHAList, matchedMohaUsers } =
+    await getUserIdFromMOHARuleList(
+      getUsersFromLists,
+      tenantId,
+      dynamoDb,
+      usersCollection,
+      ruleInstances
+    )
+
+  const targetUserIds = new Set<string>()
+  const allNames: Set<string> = new Set()
+
+  userIdFromODDList.forEach((u) => {
+    targetUserIds.add(u.key)
+  })
+  matchedMohaUsers.forEach((u) => {
+    targetUserIds.add(u.userId)
+  })
+  userIdFromMOHAList.forEach((m) => {
+    const isMatched = isUserMatchMohaUser(m, matchedMohaUsers)
+    if (!isMatched) {
+      allNames.add(m.key)
+    }
+  })
+
+  return { targetUserIds, allNames }
+}
+
+const isUserMatchMohaUser = (
+  document: {
+    key: string
+    value: string
+  },
+  matchedMohaUsers: WithId<InternalUser>[]
+) => {
+  const value = matchedMohaUsers.find((u) =>
+    u.legalDocuments?.find((d) => d.documentNumber === document.value)
+  )
+  if (value) {
+    return true
+  }
+  return false
+}
+
+const getUserIdFromODDList = async (
+  getUsersFromLists: (
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    listIds: string[]
+  ) => Promise<{ key: string; value: string }[]>,
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  ruleInstances?: RuleInstance[]
+) => {
+  const ODDRulesLists = ['06b705b0-66ad-4add-b49c-9457e5fefcce']
+
+  const hasNonScreeningRules =
+    (ruleInstances?.filter((r) => r.nature !== 'SCREENING').length ?? 0) > 0
+
+  return hasNonScreeningRules
+    ? await getUsersFromLists(tenantId, dynamoDb, ODDRulesLists)
+    : []
+}
+
+const getUserIdFromMOHARuleList = async (
+  getUsersFromLists: (
+    tenantId: string,
+    dynamoDb: DynamoDBDocumentClient,
+    listIds: string[]
+  ) => Promise<{ key: string; value: string }[]>,
+  tenantId: string,
+  dynamoDb: DynamoDBDocumentClient,
+  usersCollection: Collection<InternalUser>,
+  ruleInstances?: RuleInstance[]
+) => {
+  const screeningRuleInstanceListId = ruleInstances?.map((r) => {
+    if (r.nature === 'SCREENING') {
+      return r.parameters?.listId
+    }
+    return null
+  })
+  const MOHARulesLists =
+    (screeningRuleInstanceListId?.filter(Boolean) as string[]) ?? []
+  const userIdFromMOHAList = await getUsersFromLists(
+    tenantId,
+    dynamoDb,
+    MOHARulesLists
+  )
+  const matchedMohaUsers = await usersCollection
+    .find({
+      'legalDocuments.documentNumber': {
+        $in: userIdFromMOHAList.map((u) => u.value),
+      },
+    })
+    .toArray()
+
+  return { userIdFromMOHAList, matchedMohaUsers }
 }

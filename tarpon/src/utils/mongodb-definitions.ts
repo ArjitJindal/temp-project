@@ -512,6 +512,7 @@ export function getMongoDbIndexDefinitions(tenantId: string): {
             ]
           ),
           { 'linkedEntities.parentUserId': 1 },
+          { 'legalDocuments.documentNumber': 1 },
         ].map((index) => ({
           index: { ...index, createdTimestamp: -1, _id: 1 },
         }))

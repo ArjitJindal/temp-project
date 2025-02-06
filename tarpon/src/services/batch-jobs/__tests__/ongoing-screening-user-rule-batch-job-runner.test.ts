@@ -494,7 +494,7 @@ describe('preprocessUsers', () => {
       },
     ])
 
-    const result = await preprocessUsers(tenantId, 25, client, dynamoDb)
+    const result = await preprocessUsers(tenantId, client, dynamoDb)
 
     expect(result).toEqual(new Set(['u1', 'u3']))
   })
@@ -528,7 +528,7 @@ describe('preprocessUsers', () => {
       },
     ])
 
-    const result = await preprocessUsers(tenantId, 25, client, dynamoDb)
+    const result = await preprocessUsers(tenantId, client, dynamoDb)
 
     expect(result).toEqual(new Set())
   })

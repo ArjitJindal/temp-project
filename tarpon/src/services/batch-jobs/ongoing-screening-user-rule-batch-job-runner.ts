@@ -1,5 +1,5 @@
 import pMap from 'p-map'
-import { Collection, MongoClient } from 'mongodb'
+import { Collection, FindCursor, MongoClient, WithId } from 'mongodb'
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { backOff } from 'exponential-backoff'
 import { getTimeDiff } from '../rules-engine/utils/time-utils'
@@ -7,6 +7,7 @@ import { LogicEvaluator } from '../logic-evaluator/engine'
 import { UserService } from '../users'
 import { isOngoingUserRuleInstance } from '../rules-engine/utils/user-rule-utils'
 import { ListRepository } from '../list/repositories/list-repository'
+import { getUsersForPNB } from '../rules-engine/pnb-custom-logic'
 import { mergeRules } from '../rules-engine/utils/rule-utils'
 import { BatchJobRunner } from './batch-job-runner-base'
 import { getMongoDbClient, processCursorInBatch } from '@/utils/mongodb-utils'
@@ -19,7 +20,7 @@ import { logger } from '@/core/logger'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
-import { tenantHasFeature } from '@/core/utils/context'
+import { tenantHasEitherFeatures, tenantHasFeature } from '@/core/utils/context'
 import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 import { Rule } from '@/@types/openapi-internal/Rule'
 import { CaseCreationService } from '@/services/cases/case-creation-service'
@@ -76,7 +77,6 @@ export async function getOngoingScreeningUserRuleInstances(tenantId: string) {
 @traceable
 export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   mongoDb?: MongoClient
-  tenantId?: string
   dynamoDb?: DynamoDBDocumentClient
   ruleRepository?: RuleRepository
   ruleInstanceRepository?: RuleInstanceRepository
@@ -86,7 +86,13 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
   userService?: UserService
   from?: string
   to?: string
-
+  tenantId?: string
+  constructor(jobId: string, tenantId?: string) {
+    super(jobId)
+    if (tenantId) {
+      this.tenantId = tenantId
+    }
+  }
   public async init(job: OngoingScreeningUserRuleBatchJob) {
     const tenantId = job.tenantId
     const mongoDb = await getMongoDbClient()
@@ -135,7 +141,16 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
     ])
   }
 
-  public async verifyUsersSequentialMode(ruleInstances: RuleInstance[]) {
+  public async verifyUsersSequentialMode(
+    ruleInstances: RuleInstance[],
+    inputUserCursor?: FindCursor<WithId<InternalUser>>
+  ) {
+    if (inputUserCursor && this.tenantId) {
+      await this.init({
+        type: 'ONGOING_SCREENING_USER_RULE',
+        tenantId: this.tenantId,
+      })
+    }
     if (ruleInstances.length === 0) {
       logger.info('No active ongoing screening user rule found. Skip.')
       return
@@ -147,8 +162,17 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 
     let preprocessedMatches: Set<string>
 
-    let usersCursor = this.userRepository?.getAllUsersCursor()
-    if (await tenantHasFeature(this.tenantId as string, 'PNB')) {
+    let usersCursor =
+      inputUserCursor ?? this.userRepository?.getAllUsersCursor()
+    //TODO: remove feature flag PNB we have search index for user collection
+    if (
+      (await tenantHasFeature(this.tenantId as string, 'PNB')) &&
+      (await tenantHasEitherFeatures(this.tenantId as string, [
+        'DOW_JONES',
+        'OPEN_SANCTIONS',
+        'ACURIS',
+      ]))
+    ) {
       let maxFuzziness = 0
       ruleInstances.forEach((r) => {
         const parameters: {
@@ -173,7 +197,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
       })
       preprocessedMatches = await preprocessUsers(
         this.tenantId as string,
-        maxFuzziness,
         this.mongoDb as MongoClient,
         this.dynamoDb as DynamoDBDocumentClient,
         this.from,
@@ -339,7 +362,6 @@ export class OngoingScreeningUserRuleBatchJobRunner extends BatchJobRunner {
 
 export async function preprocessUsers(
   tenantId: string,
-  fuzziness: number,
   client: MongoClient,
   dynamoDb: DynamoDBDocumentClient,
   from?: string,
@@ -347,7 +369,6 @@ export async function preprocessUsers(
   ruleInstances?: RuleInstance[]
 ) {
   const deltaSanctionsCollectionName = DELTA_SANCTIONS_COLLECTION(tenantId)
-  const allNames: Set<string> = new Set()
   const sanctionsCollection = client
     .db()
     .collection<SanctionsEntity>(deltaSanctionsCollectionName)
@@ -362,43 +383,22 @@ export async function preprocessUsers(
   if (to) {
     match = { id: { ...match.id, $lt: to } }
   }
+
+  const allNames: Set<string> = new Set()
   const targetUserIds = new Set<string>()
-  ;(
-    await getUserIdsForODDRulesForPNB(
-      ruleInstances ?? [],
-      dynamoDb as DynamoDBDocumentClient
-    )
-  ).forEach((u) => {
-    targetUserIds.add(u)
-  })
 
-  const mohaListUsers = await getMOHAListUserNames(
-    dynamoDb,
-    ruleInstances ?? []
-  )
-
-  const matchedMohaUsers = await usersCollection
-    .find({
-      'legalDocuments.documentNumber': {
-        $in: mohaListUsers.filter((u) => u.documentId).map((u) => u.documentId),
-      },
-    })
-    .toArray()
-
-  matchedMohaUsers.forEach((u) => {
-    targetUserIds.add(u.userId)
-  })
-
-  mohaListUsers.forEach((m) => {
-    const isMatched = Boolean(
-      matchedMohaUsers.find((u) =>
-        u.legalDocuments?.find((d) => d.documentNumber === m.documentId)
+  if (await tenantHasFeature(tenantId, 'PNB')) {
+    const { targetUserIds: pnbTargetUserIds, allNames: pnbAllNames } =
+      await getUsersForPNB(
+        getUsersFromLists,
+        tenantId,
+        dynamoDb,
+        usersCollection,
+        ruleInstances
       )
-    )
-    if (!isMatched) {
-      allNames.add(m.name)
-    }
-  })
+    pnbTargetUserIds.forEach((id) => targetUserIds.add(id))
+    pnbAllNames.forEach((name) => allNames.add(name))
+  }
 
   for await (const sanctionsEntity of sanctionsCollection.find(match)) {
     const docIds = new Set<string>()
@@ -492,64 +492,15 @@ async function processNames(
   )
 }
 
-async function getUserIdsForODDRulesForPNB(
-  ruleInstances: RuleInstance[],
-  dynamoDb: DynamoDBDocumentClient
-) {
-  const hasNonScreeningRules =
-    ruleInstances.filter((r) => r.nature !== 'SCREENING').length > 0
-  if (!hasNonScreeningRules) {
-    return []
-  }
-  const listIds = ['06b705b0-66ad-4add-b49c-9457e5fefcce']
-  const listRepository = new ListRepository(
-    'pnb',
-    dynamoDb as DynamoDBDocumentClient
-  )
-  const userIds: string[] = []
-  for await (const listId of listIds) {
-    const listHeader = await listRepository.getListHeader(listId)
-    if (listHeader) {
-      let fromCursorKey: string | undefined
-      let hasNext = true
-      while (hasNext) {
-        const listItems = await listRepository.getListItems(
-          listId,
-          {
-            pageSize: 100,
-            fromCursorKey,
-          },
-          listHeader.version
-        )
-        listItems.items.map((i) => {
-          if (typeof i.key === 'string') {
-            userIds.push(i.key)
-          }
-        })
-        fromCursorKey = listItems.next
-        hasNext = listItems.hasNext
-      }
-    }
-  }
-  return userIds
-}
-
-async function getMOHAListUserNames(
+const getUsersFromLists = async (
+  tenantId: string,
   dynamoDb: DynamoDBDocumentClient,
-  ruleInstances: RuleInstance[]
-) {
-  const listIds = ruleInstances
-    .map((r) => {
-      if (r.nature === 'SCREENING') {
-        return r.parameters?.listId
-      }
-      return null
-    })
-    .filter(Boolean) as string[]
-  const listRepository = new ListRepository('pnb', dynamoDb)
-  const users: {
-    name: string
-    documentId: string
+  listIds: string[]
+) => {
+  const listRepository = new ListRepository(tenantId, dynamoDb)
+  const entities: {
+    key: string
+    value: string
   }[] = []
   for await (const listId of listIds) {
     const listHeader = await listRepository.getListHeader(listId)
@@ -568,13 +519,13 @@ async function getMOHAListUserNames(
         fromCursorKey = listItems.next
         hasNext = listItems.hasNext
         listItems.items.map((i) =>
-          users.push({
-            name: i.key,
-            documentId: i.metadata?.reason,
+          entities.push({
+            key: i.key,
+            value: i.metadata?.reason,
           })
         )
       }
     }
   }
-  return users
+  return entities
 }

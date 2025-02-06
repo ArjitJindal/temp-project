@@ -124,12 +124,12 @@ async function dispatchOngoingScreeningJobs(
   if (!deltaCollection) {
     return
   }
-  const totalDocs = await deltaCollection.estimatedDocumentCount()
+  const filters = getFiltersForScreening(tenantId)
+  const totalDocs = await deltaCollection.countDocuments(filters)
   const batchSize = 10_000
   const numberOfJobs = Math.ceil(totalDocs / batchSize)
   logger.info(`${totalDocs} users for screening`)
   logger.info(`Creating batches of ${batchSize} size`)
-  const filters = getFiltersForScreening(tenantId)
   const froms = (
     await Promise.all(
       range(numberOfJobs).map(async (i): Promise<string | null> => {
@@ -150,7 +150,17 @@ async function dispatchOngoingScreeningJobs(
     )
   ).filter((p): p is string => Boolean(p))
 
-  logger.info(`Cursors: ${JSON.stringify(froms)}`)
+  if (numberOfJobs === 0) {
+    logger.info('Cursors: No users to screen, still running it once')
+    await sendBatchJobCommand({
+      type: 'ONGOING_SCREENING_USER_RULE',
+      tenantId: tenantId,
+      from: '0',
+      to: '0',
+    })
+    return
+  }
+
   for (let i = 0; i < froms.length; i++) {
     const from = froms[i]
     const to = froms[i + 1] || undefined // Use `null` as `to` for the last batch

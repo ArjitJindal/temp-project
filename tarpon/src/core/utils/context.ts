@@ -400,6 +400,27 @@ export async function tenantHasFeature(
   )
 }
 
+export async function tenantHasEitherFeatures(
+  tenantId: string,
+  features: Feature[]
+): Promise<boolean> {
+  let contextFeatures = getContext()?.features
+  if (!contextFeatures) {
+    const tenantRepository = new TenantRepository(tenantId, {
+      dynamoDb: getDynamoDbClient(),
+    })
+    contextFeatures =
+      (await tenantRepository.getTenantSettings(['features']))?.features ?? []
+    updateTenantFeatures(contextFeatures)
+  }
+
+  return (
+    contextFeatures?.some((feature) => features.includes(feature)) ||
+    getTestEnabledFeatures()?.some((feature) => features.includes(feature)) ||
+    false
+  )
+}
+
 export async function tenantSettings(
   tenantId: string
 ): Promise<TenantSettings> {
