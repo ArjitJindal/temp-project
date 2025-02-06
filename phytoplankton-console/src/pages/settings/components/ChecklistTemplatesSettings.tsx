@@ -264,6 +264,7 @@ export function ChecklistTemplatesSettings() {
             jsonSchema: qaPassCriteriaSchema,
           },
         ]}
+        enableClone={true}
       />
     </SettingsCard>
   );

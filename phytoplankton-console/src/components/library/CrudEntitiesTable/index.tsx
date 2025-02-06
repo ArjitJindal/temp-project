@@ -16,6 +16,8 @@ import { Authorized } from '@/components/utils/Authorized';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
 import Confirm from '@/components/utils/Confirm';
 import EditLineIcon from '@/components/ui/icons/Remix/design/edit-line.react.svg';
+import EyeLineIcon from '@/components/ui/icons/Remix/system/eye-line.react.svg';
+import FileCopyLineIcon from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
 import DeleteLineIcon from '@/components/ui/icons/Remix/system/delete-bin-line.react.svg';
 import { usePaginatedQuery } from '@/utils/queries/hooks';
 import { getMutationAsyncResource } from '@/utils/queries/mutations/helpers';
@@ -65,6 +67,7 @@ interface Props<GetParams, Entity extends { [key: string]: any }> {
   extraInfo?: { label: string; redirectUrl: string };
   onChange?: (formState: Entity) => void;
   portal?: boolean;
+  enableClone?: boolean;
 }
 
 export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any }>(
@@ -172,16 +175,42 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
           (entity?.status === undefined ? false : entity.status === 'DRAFT' ? false : true);
         return (
           <Space>
-            <Button
-              testName="edit-button"
-              size="MEDIUM"
-              type="SECONDARY"
-              icon={<EditLineIcon />}
-              onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
-              requiredPermissions={readOnly ? props.readPermissions : props.writePermissions}
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(80px, 1fr))',
+                gap: '8px',
+              }}
             >
-              {readOnly ? 'View' : 'Edit'}
-            </Button>
+              <Button
+                testName="edit-button"
+                size="MEDIUM"
+                type="SECONDARY"
+                icon={readOnly ? <EyeLineIcon /> : <EditLineIcon />}
+                onClick={() => (readOnly ? handleEntityView(entity) : handleEntityEdit(entity))}
+                requiredPermissions={readOnly ? props.readPermissions : props.writePermissions}
+              >
+                {readOnly ? 'View' : 'Edit'}
+              </Button>
+            </div>
+            {props.enableClone && (
+              <Button
+                testName="duplicate-button"
+                size="MEDIUM"
+                type="SECONDARY"
+                icon={<FileCopyLineIcon />}
+                onClick={() => {
+                  const entityToClone = { ...entity, status: 'DRAFT' } as Entity;
+                  delete entityToClone[props.entityIdField]; // Remove ID from cloned entity
+                  setSelectedEntity(entityToClone);
+                  setDrawerMode('CREATE');
+                }}
+                requiredPermissions={props.writePermissions}
+                isDisabled={creationMutation.isLoading}
+              >
+                Duplicate
+              </Button>
+            )}
             {isReadOnly ? undefined : (
               <Confirm
                 title={`Are you sure you want to delete this ${entityName}?`}
@@ -210,9 +239,10 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
         );
       },
       defaultSticky: 'RIGHT',
-      defaultWidth: 201,
+      defaultWidth: props.enableClone ? 321 : 201,
     });
   }, [
+    creationMutation,
     deletionMutation,
     entityName,
     handleEntityEdit,
@@ -221,6 +251,7 @@ export function CrudEntitiesTable<GetParams, Entity extends { [key: string]: any
     props.entityIdField,
     props.writePermissions,
     props.readPermissions,
+    props.enableClone,
   ]);
   const formInitialValues = useMemo(() => {
     return Object.fromEntries(
