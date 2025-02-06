@@ -12,11 +12,6 @@
       .rule--body {
         display: flex;
         justify-content: flex-start;
-        padding-left: 20px;
-
-        > *:first-child {
-          margin-left: -20px;
-        }
       }
       .rule--operator {
         flex: unset;
@@ -126,7 +121,7 @@
       gap: 12px;
       display: grid;
       grid-auto-flow: column;
-      grid-template-columns: minmax(32ch, 1.5fr) minmax(120px, min-content) minmax(20ch, 1fr);
+      grid-template-columns: minmax(200px, auto) minmax(120px, min-content) 3fr;
     }
 
     .rule--field-wrapper,
@@ -137,7 +132,6 @@
     .rule--field {
       min-width: 120px;
       flex: 1;
-      flex-grow: 1;
     }
     .rule--operator {
       flex: 1;
@@ -158,10 +152,10 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        flex-grow: 1;
       }
       .rule--widget--NUMBER {
         display: flex;
+        max-width: 20ch; /* Value will never be more than 10-12 charcaters */
       }
     }
     .widget--has-valuerscs {
@@ -286,49 +280,6 @@
       display: none;
     }
   }
-
-  &.mode-EDIT {
-    :global {
-      .rule--body {
-        display: flex;
-      }
-
-      .rule--field-wrapper {
-        flex: 2;
-      }
-
-      .rule--field {
-        min-width: 120px;
-        flex: 1;
-      }
-      .rule--operator {
-        flex-basis: 125px;
-        flex-grow: 0;
-        margin-left: 0;
-      }
-      .rule--operator-options {
-        .rule--operator {
-          margin-left: 0;
-        }
-      }
-      .rule--func {
-        min-width: 120px;
-      }
-      .widget--widget {
-        flex: 1;
-      }
-      .rule--value {
-        &:has(.rule--widget) {
-          flex: 1;
-        }
-      }
-
-      .rule--func--wrapper {
-        flex: 1;
-        align-items: stretch;
-      }
-    }
-  }
 }
 
 .selectedConjunction {
@@ -386,8 +337,4 @@
   svg {
     width: 18px;
   }
-}
-
-.numberInputWrapper {
-  width: 120px;
 }

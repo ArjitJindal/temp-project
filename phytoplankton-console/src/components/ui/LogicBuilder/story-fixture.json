@@ -25508,62 +25508,39 @@
   "logic": {
     "and": [
       {
-        "==": [
+        "in": [
           {
-            "var": "entity:b0ffbee3"
+            "var": "entity:2fd99444"
           },
-          "DEPOSIT"
-        ]
-      },
-      {
-        "<=": [
-          42,
-          {
-            "+": [
-              {
-                "var": "agg:b4b8bc21"
-              },
-              89987
-            ]
-          },
-          42
+          ["TRANSFER", "DEPOSIT", "EXTERNAL_PAYMENT"]
         ]
       },
       {
         "and": [
           {
-            "==": [
+            ">": [
               {
-                "var": "entity:d38e6d30"
+                "var": "agg:1ee80dbd"
               },
-              null
+              500
             ]
           },
           {
-            "!": {
-              "all": [
-                {
-                  "var": "agg:a3ecb74e$1"
-                },
-                {
-                  "in": [
-                    {
-                      "var": ""
-                    },
-                    ["ALGO", "AOA", "ALL", "AMD", "AFN", "ADA", "AED"]
-                  ]
-                }
-              ]
-            }
-          },
-          {
-            "==": [
+            "<": [
               {
-                "var": "entity:b0ffbee3"
+                "var": "agg:1ee80dbd"
               },
-              "TRANSFER"
+              200
             ]
           }
+        ]
+      },
+      {
+        "!=": [
+          {
+            "var": "entity:c152f75e"
+          },
+          null
         ]
       }
     ]
