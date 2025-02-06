@@ -1,10 +1,10 @@
 import { LogicFunction } from './types'
 
-const arraylen = (inputArray: any) => {
-  if (!Array.isArray(inputArray) || !Array.isArray(inputArray[0])) {
+const arraylen = (inputArray: any[]) => {
+  if (!Array.isArray(inputArray)) {
     return 0
   }
-  return inputArray[0].length
+  return inputArray.length
 }
 
 export const NUMBER_OF_ITEMS: LogicFunction<number> = {
@@ -21,7 +21,7 @@ export const NUMBER_OF_ITEMS: LogicFunction<number> = {
       },
     },
   },
-  run: async (inputArray: any): Promise<number> => {
+  run: async ([inputArray]: any[]): Promise<number> => {
     return arraylen(inputArray)
   },
 }
@@ -39,7 +39,7 @@ export const NUMBER_OF_OBJECTS: LogicFunction<number> = {
       },
     },
   },
-  run: async (inputArray: any): Promise<number> => {
+  run: async ([inputArray]: any[]): Promise<number> => {
     return arraylen(inputArray)
   },
 }

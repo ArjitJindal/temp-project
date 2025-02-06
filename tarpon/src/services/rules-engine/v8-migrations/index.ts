@@ -1300,7 +1300,11 @@ const V8_CONVERSION: Readonly<
     conditions.push({
       '>=': [
         {
-          number_of_items: ['agg:transactionsWithLowValueFilterIncoming$1'],
+          number_of_items: [
+            {
+              var: 'agg:transactionsWithLowValueFilterIncoming$1',
+            },
+          ],
         },
         lowTransactionCount,
       ],
@@ -1373,7 +1377,11 @@ const V8_CONVERSION: Readonly<
     conditions.push({
       '>=': [
         {
-          number_of_items: ['agg:transactionsWithLowValueFilterOutgoing$1'],
+          number_of_items: [
+            {
+              var: 'agg:transactionsWithLowValueFilterOutgoing$1',
+            },
+          ],
         },
         lowTransactionCount,
       ],
