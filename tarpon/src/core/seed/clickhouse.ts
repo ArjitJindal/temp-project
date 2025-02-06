@@ -47,7 +47,6 @@ export const seedClickhouse = async (tenantId: string) => {
               mongoTable,
               dataArray
             )
-
             await batchInsertToClickhouse(
               tenantId,
               clickhouseTable,

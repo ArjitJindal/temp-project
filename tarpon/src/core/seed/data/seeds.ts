@@ -27,3 +27,5 @@ export const USER_RULES_SEED = 15000
 export const SANCTION_SEARCH_SEED = 16000
 
 export const TRANSACTION_EVENTS_SEED = 17000
+
+export const NANGO_RECORDS_SEED = 20

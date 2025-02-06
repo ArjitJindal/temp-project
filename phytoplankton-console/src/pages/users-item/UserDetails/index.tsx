@@ -1,4 +1,3 @@
-import React from 'react';
 import BusinessUserDetails from './BusinessUserDetails';
 import ConsumerUserDetails from './ConsumerUserDetails';
 import s from './index.module.less';

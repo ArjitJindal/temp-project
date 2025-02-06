@@ -11245,6 +11245,7 @@ components:
         - CONCURRENT_DYNAMODB_CONSUMER
         - ALERTS_DYNAMO_POC
         - ACURIS
+        - CRM_FRESHDESK
         - LOCKS_FOR_AGGREGATION_UPDATE
       description: ''
     NewRiskFactorIdResponse:
@@ -16420,6 +16421,8 @@ components:
       type: string
       enum:
         - FreshDeskTicket
+        - SalesforceTicket
+        - ZendeskTicket
     CrmGetResponse:
       title: CrmRecords
       type: object
@@ -16479,6 +16482,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FreshdeskTicketConversation'
+        attachments:
+          type: array
+          items:
+            $ref: '#/components/schemas/FreshdeskTicketAttachment'
         description_text:
           type: string
         responder_id:
@@ -16521,6 +16528,29 @@ components:
           type: string
           nullable: true
         body_text:
+          type: string
+        cc_emails:
+          type: array
+          items:
+            type: string
+            nullable: true
+    FreshdeskTicketAttachment:
+      title: FreshdeskTicketAttachment
+      type: object
+      properties:
+        content_type:
+          type: string
+        size:
+          type: number
+        updated_at:
+          type: string
+        name:
+          type: string
+        created_at:
+          type: string
+        id:
+          type: number
+        attachment_url:
           type: string
     AlertTransactionsStats:
       type: object

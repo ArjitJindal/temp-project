@@ -41,7 +41,8 @@ export default function UserItem() {
 
   const queryClient = useQueryClient();
   const isSanctionsEnabled = useFeatureEnabled('SANCTIONS');
-  const isCrmEnabled = useFeatureEnabled('CRM');
+  const hasFreshdeskEnabled = useFeatureEnabled('CRM_FRESHDESK');
+  const isCrmEnabled = useFeatureEnabled('CRM') || hasFreshdeskEnabled;
   const isEntityLinkingEnabled = useFeatureEnabled('ENTITY_LINKING');
 
   const handleNewTags = (tags: UserTag[]) => {
@@ -205,7 +206,18 @@ export default function UserItem() {
                         </div>
                       ),
                       key: 'crm-monitoring',
-                      children: <CRMMonitoring userId={user.userId} />,
+                      children: (
+                        <CRMMonitoring
+                          userId={user.userId}
+                          userEmail={
+                            user.type === 'CONSUMER'
+                              ? user?.contactDetails?.emailIds?.[0] ?? ''
+                              : user.legalEntity.contactDetails?.emailIds?.[0] ?? ''
+                          }
+                          user={user}
+                          model={'FreshDeskTicket'}
+                        />
+                      ),
                       isClosable: false,
                       isDisabled: false,
                     },

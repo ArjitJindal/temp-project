@@ -1,12 +1,13 @@
 import React from 'react';
 import SegmentedControl from '@/components/library/SegmentedControl';
+import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 
-type ScopeSelectorValue = 'SUMMARY' | 'EMAILS' | 'TASKS' | 'NOTES';
+type ScopeSelectorValue = 'SUMMARY' | 'EMAILS' | 'TASKS' | 'NOTES' | 'TICKETS';
 
 interface Count {
   emails: number;
-  tasks: number;
-  notes: number;
+  tasks?: number;
+  notes?: number;
 }
 interface Props {
   selectedSection: string;
@@ -24,12 +25,16 @@ export default function ScopeSelector(props: Props) {
       onChange={(newValue) => {
         setSelectedSection(newValue);
       }}
-      items={[
-        { value: 'SUMMARY', label: 'AI Summary' },
-        { value: 'EMAILS', label: `Emails (${emails})` },
-        { value: 'TASKS', label: `Tasks (${tasks})` },
-        { value: 'NOTES', label: `Notes (${notes})` },
-      ]}
+      items={
+        useFeatureEnabled('CRM_FRESHDESK')
+          ? [{ value: 'TICKETS', label: 'Tickets' }]
+          : [
+              { value: 'SUMMARY', label: 'AI Summary' },
+              { value: 'EMAILS', label: `Emails (${emails})` },
+              { value: 'TASKS', label: `Tasks (${tasks})` },
+              { value: 'NOTES', label: `Notes (${notes})` },
+            ]
+      }
     />
   );
 }

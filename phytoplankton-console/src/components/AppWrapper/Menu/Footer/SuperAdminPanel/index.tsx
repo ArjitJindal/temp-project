@@ -155,6 +155,12 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'Alerts Dynamo POC (Experimental)',
     description: 'Enables alerts Dynamo POC (Experimental)',
   },
+
+  CRM_FRESHDESK: {
+    title: 'CRM Freshdesk Integration',
+    description: 'Enables CRM Freshdesk Integration',
+  },
+
   LOCKS_FOR_AGGREGATION_UPDATE: {
     title: 'Acquire locks for aggregation',
     description: 'Acquire locks while updating aggregation',

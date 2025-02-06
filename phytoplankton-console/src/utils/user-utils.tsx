@@ -6,8 +6,15 @@ import { ACCOUNT_LIST, ROLES_LIST } from './queries/keys';
 import { getOr, isLoading } from './asyncResource';
 import { QueryResult } from './queries/types';
 import { getBranding } from './branding';
+import { getUserName } from './api/users';
 import { useApi } from '@/api';
-import { Account, AccountRole, Permission } from '@/apis';
+import {
+  Account,
+  AccountRole,
+  Permission,
+  InternalConsumerUser,
+  InternalBusinessUser,
+} from '@/apis';
 
 export enum CommentType {
   COMMENT,
@@ -292,4 +299,20 @@ export function getDisplayedUserInfo(account?: Account | null): { name: string; 
     return { name: `${branding.companyName} System`, avatar: branding.systemAvatarUrl };
   }
   return { name: getAccountUserName(account), avatar: account.picture };
+}
+
+export function getAvatarText(
+  user: InternalConsumerUser | InternalBusinessUser | undefined,
+): string {
+  if (!user) {
+    return 'N';
+  }
+
+  const userName = getUserName(user);
+
+  const words = userName.trim().split(/\s+/);
+  const firstInitial = words[0][0];
+  const lastInitial = words.length > 1 ? words[words.length - 1][0] : '';
+
+  return firstInitial + lastInitial;
 }

@@ -5,6 +5,7 @@ import { Dayjs } from '@/utils/dayjs';
 import { ListType, ReasonType } from '@/apis';
 import { TransactionsUniquesField } from '@/apis/models/TransactionsUniquesField';
 import { UsersUniquesField } from '@/apis/models/UsersUniquesField';
+import { CrmModelType } from '@/apis/models/CrmModelType';
 
 type AnyParameters = unknown;
 
@@ -76,6 +77,13 @@ export const TRANSACTIONS_EVENTS_FIND = (transactionId: string, params: any): Qu
 export const ACCOUNT_LIST = (): QueryKey => ['accounts', 'list'];
 export const USER_INFO = (accessToken: string | null): QueryKey => ['userinfo', accessToken];
 export const CRM_ACCOUNT = (userId: string): QueryKey => ['crmaccount', userId];
+export const CRM_RECORDS = (
+  email: string,
+  model: CrmModelType,
+  page?: number,
+  pageSize?: number,
+  sortOrder?: 'ascend' | 'descend',
+): QueryKey => ['crmrecords', email, model, page, pageSize, sortOrder];
 
 export const USER_ENTITY = (userId: string): QueryKey => ['userentity', userId];
 export const ROLES_LIST = (): QueryKey => ['roles', 'list'];

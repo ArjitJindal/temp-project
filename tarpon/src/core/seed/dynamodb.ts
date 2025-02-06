@@ -5,6 +5,7 @@ import { logger } from '../logger'
 import { DynamoDbKeys, TenantSettingName } from '../dynamodb/dynamodb-keys'
 import { riskFactors } from './data/risk-factors'
 import { getCases } from './data/cases'
+import { getCrmRecords } from './data/crm-records'
 import { UserRepository } from '@/services/users/repositories/user-repository'
 import { users } from '@/core/seed/data/users'
 import { UserType } from '@/@types/user/user-type'
@@ -35,6 +36,7 @@ import { dangerouslyDeletePartition } from '@/utils/dynamodb'
 import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
+import { NangoRepository } from '@/services/nango/repository'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -52,6 +54,7 @@ export async function seedDynamo(
   const tenantRepo = new TenantRepository(tenantId, { dynamoDb })
   const txnRepo = new DynamoDbTransactionRepository(tenantId, dynamoDb)
   const ruleRepo = new RuleInstanceRepository(tenantId, { dynamoDb })
+  const nangoRepo = new NangoRepository(tenantId, dynamoDb)
 
   logger.info('Clear rule instances')
   await dangerouslyDeletePartition(
@@ -118,6 +121,10 @@ export async function seedDynamo(
       list.listId
     )
   }
+
+  const records = getCrmRecords()
+
+  await nangoRepo.storeRecord(records)
 
   logger.info('Creating transactions...')
   for (const txn of getTransactions()) {
