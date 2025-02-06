@@ -54,7 +54,6 @@ export function generateTransactionRequestBody(
       accountType: 'Savings',
       accountNumber: '121445521',
       bankName: 'State Bank of India',
-      name: 'Binod Ramamurthie',
       bankCode: 'SBI0033921',
       specialInstructions: 'IMPS',
       paymentChannel: 'Intra Bank',
@@ -82,10 +81,6 @@ export function generateUserRequestBody(userId: string): any {
     reasonForAccountOpening: ['Gasoline'],
     riskLevel: 'MEDIUM',
     userDetails: {
-      name: {
-        firstName: 'Jordie',
-        lastName: 'Alba',
-      },
       dateOfBirth: '1987-11-12',
       countryOfResidence: 'GB',
       countryOfNationality: 'DE',
