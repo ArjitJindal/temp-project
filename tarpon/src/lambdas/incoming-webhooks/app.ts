@@ -163,7 +163,7 @@ export const webhooksHandler = lambdaApi()(
         const accountsService = new AccountsService(
           {
             auth0Domain: `${log.data.tenant_name}.eu.auth0.com`,
-            alwaysUseCache: true,
+            useCache: true,
           },
           { dynamoDb: getDynamoDbClientByEvent(event) }
         )

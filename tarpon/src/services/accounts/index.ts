@@ -36,6 +36,7 @@ import { traceable } from '@/core/xray'
 import { AccountInvitePayload } from '@/@types/openapi-internal/AccountInvitePayload'
 import { envIs } from '@/utils/env'
 import { sendInternalProxyWebhook } from '@/utils/internal-proxy'
+import { getNonDemoTenantId } from '@/utils/tenant'
 
 export type TenantBasic = {
   id: string
@@ -50,10 +51,10 @@ export class AccountsService {
   private dynamoDb: DynamoDBDocumentClient
   public cache: DynamoAccountsRepository
   public auth0: Auth0AccountsRepository
-  public alwaysUseCache: boolean = false
+  public useCache: boolean | undefined
 
   constructor(
-    config: { auth0Domain: string; alwaysUseCache?: boolean },
+    config: { auth0Domain: string; useCache?: boolean },
     connections: { dynamoDb: DynamoDBDocumentClient }
   ) {
     this.config = config
@@ -64,7 +65,7 @@ export class AccountsService {
       this.dynamoDb
     )
     this.auth0 = new Auth0AccountsRepository(this.config.auth0Domain)
-    this.alwaysUseCache = config.alwaysUseCache ?? false
+    this.useCache = config.useCache ?? false
   }
 
   public async deleteOrganization(tenant: Tenant) {
@@ -73,20 +74,27 @@ export class AccountsService {
   }
 
   private shouldUseCache() {
-    if (this.alwaysUseCache) {
-      return true
+    if (this.useCache != null) {
+      return this.useCache
     }
 
-    return getContext()?.user?.role !== 'root'
+    if (
+      getContext()?.user?.role === 'whitelabel-root' ||
+      getContext()?.user?.role === 'root'
+    ) {
+      return false
+    }
+
+    return true
   }
 
   public static getInstance(
     dynamoDb: DynamoDBDocumentClient,
-    alwaysUseCache: boolean = false
+    useCache: boolean = false
   ) {
     const auth0Domain = (getContext()?.auth0Domain ??
       process.env.AUTH0_DOMAIN) as string // to get auth0 credentials for dashboard widget in demo mode.
-    return new AccountsService({ auth0Domain, alwaysUseCache }, { dynamoDb })
+    return new AccountsService({ auth0Domain, useCache }, { dynamoDb })
   }
 
   public async getAllAccountsCache(tenantId: string): Promise<Account[]> {
@@ -155,20 +163,22 @@ export class AccountsService {
     userId: string
   ) {
     const { newTenantId } = request.ChangeTenantPayload
+    this.useCache = false
     await this.changeUserTenant(request.accountId, newTenantId, userId)
     return
   }
 
   async getTenantById(rawTenantId: string): Promise<Tenant | null> {
+    const nonDemoTenantId = getNonDemoTenantId(rawTenantId)
     if (!this.shouldUseCache()) {
-      return this.auth0.getTenantById(rawTenantId)
+      return this.auth0.getTenantById(nonDemoTenantId)
     }
 
-    const tenant = await this.cache.getTenantById(rawTenantId)
+    const tenant = await this.cache.getTenantById(nonDemoTenantId)
     if (!tenant?.id) {
-      const data = await this.auth0.getTenantById(rawTenantId)
+      const data = await this.auth0.getTenantById(nonDemoTenantId)
       if (data) {
-        await this.cache.createOrganization(rawTenantId, {
+        await this.cache.createOrganization(nonDemoTenantId, {
           type: 'DATABASE',
           params: data,
         })

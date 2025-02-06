@@ -165,7 +165,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const { userId } = ctx
       const dynamoDb = getDynamoDbClientByEvent(event)
       const accountsService = new AccountsService(
-        { auth0Domain, alwaysUseCache: true },
+        { auth0Domain, useCache: true },
         { dynamoDb }
       )
       const organization = await accountsService.getAccountTenant(userId)
@@ -190,7 +190,7 @@ export const dashboardStatsHandler = lambdaApi()(
 
     handlers.registerGetDashboardStatsOverview(async (ctx) => {
       const accountsService = new AccountsService(
-        { auth0Domain, alwaysUseCache: true },
+        { auth0Domain, useCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
       const organization = await accountsService.getAccountTenant(ctx.userId)
@@ -252,7 +252,7 @@ export const dashboardStatsHandler = lambdaApi()(
       const { scope, pageSize, page } = request
       const { userId } = ctx
       const accountsService = new AccountsService(
-        { auth0Domain, alwaysUseCache: true },
+        { auth0Domain, useCache: true },
         { dynamoDb: getDynamoDbClientByEvent(event) }
       )
       const organization = await accountsService.getAccountTenant(userId)
