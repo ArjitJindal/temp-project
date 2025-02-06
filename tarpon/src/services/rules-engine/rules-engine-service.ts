@@ -724,6 +724,7 @@ export class RulesEngineService {
           },
         ]),
       hasFeature('RISK_SCORING') &&
+        !hasFeature('RISK_SCORING_V8') &&
         riskScoreDetails &&
         this.riskRepository.createOrUpdateArsScore(
           transaction.transactionId,
