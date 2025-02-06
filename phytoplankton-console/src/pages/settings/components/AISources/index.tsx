@@ -28,13 +28,13 @@ export const AISources = () => {
     return await api.getAiSources();
   });
   return (
-    <AsyncResourceRenderer resource={AI_SOURCES.data}>
-      {({ aiSources }) => {
-        return (
-          <SettingsCard
-            title="AI Sources"
-            description="Select the data sources to be used by the AI engine while generating narratives"
-          >
+    <SettingsCard
+      title="AI Sources"
+      description="Select the data sources to be used by the AI engine while generating narratives"
+    >
+      <AsyncResourceRenderer resource={AI_SOURCES.data}>
+        {({ aiSources }) => {
+          return (
             <>
               {AI_ATTRIBUTE_CATEGORYS.map((category, index) => (
                 <div key={index} className={s.categoryDiv}>
@@ -106,9 +106,9 @@ export const AISources = () => {
                 </Button>
               </div>
             </>
-          </SettingsCard>
-        );
-      }}
-    </AsyncResourceRenderer>
+          );
+        }}
+      </AsyncResourceRenderer>
+    </SettingsCard>
   );
 };

@@ -1,6 +1,9 @@
 @import 'src/components/ui/colors.less';
 
-.heading {
+.headingContainer {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   border-bottom: 0 !important;
   margin-bottom: 0;
 }
@@ -16,4 +19,11 @@
   border-radius: 8px;
   margin-bottom: 8px;
   padding: 16px;
+}
+
+.tooltipIcon {
+  align-items: center;
+  width: 16px;
+  color: @fr-colors-v2-gray-4;
+  margin-top: 3px; // this is to align the icon with the text
 }
