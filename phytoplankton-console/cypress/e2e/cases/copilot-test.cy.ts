@@ -16,7 +16,7 @@ describe('Copilot', () => {
   });
 
   it('should fetch the narrative and format', () => {
-    cy.visit('/case-management/cases');
+    cy.visit('/case-management/cases?page=1&pageSize=20&sort=-caseTransactionsCount&showCases=ALL');
     cy.assertSkeletonLoader();
     // Capture the userName without using promisify
     cy.get('td[data-cy="_userName"]')
