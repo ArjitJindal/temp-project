@@ -6,6 +6,7 @@ import {
   SIMILAR_TO_WORDS_OPERATOR,
 } from './similar-to-words'
 import { ENDS_WITH_OPERATOR, STARTS_WITH_OPERATOR } from './starts-ends-with'
+import { EQUAL_ARRAY_OPERATOR } from './equal-array'
 import {
   BETWEEN_TIME_OPERATOR,
   NOT_BETWEEN_TIME_OPERATOR,
@@ -60,4 +61,5 @@ export const JSON_LOGIC_BUILT_IN_OPERATORS = [
 export const CUSTOM_INTERNAL_OPERATORS = [
   ...CUSTOM_BUILT_IN_LOGIC_OPERATORS,
   HAS_ITEMS_OPERATOR,
+  EQUAL_ARRAY_OPERATOR,
 ]

@@ -14,8 +14,9 @@ import dayjs from '@/utils/dayjs'
 
 dynamoDbSetupHook()
 
-ruleVariantsTest({ aggregation: true }, () => {
+ruleVariantsTest({ aggregation: true, v8: true }, () => {
   const TEST_TENANT_ID = getTestTenantId()
+
   setUpRulesHooks(TEST_TENANT_ID, [
     {
       type: 'TRANSACTION',
@@ -34,6 +35,7 @@ ruleVariantsTest({ aggregation: true }, () => {
   ])
 
   describe('R-7 description formatting', () => {
+    const timestamp = dayjs('2024-01-01').valueOf()
     testRuleDescriptionFormatting(
       'first',
       TEST_TENANT_ID,
@@ -41,6 +43,7 @@ ruleVariantsTest({ aggregation: true }, () => {
         getTestTransaction({
           originUserId: 'description-1',
           destinationUserId: 'description-2',
+          timestamp,
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 6,
@@ -55,6 +58,7 @@ ruleVariantsTest({ aggregation: true }, () => {
         getTestTransaction({
           originUserId: 'description-1',
           destinationUserId: 'description-2',
+          timestamp: timestamp + 10,
           originAmountDetails: {
             country: 'DE',
             transactionAmount: 7,
@@ -74,55 +78,175 @@ ruleVariantsTest({ aggregation: true }, () => {
     )
   })
 
-  describe.each<TransactionRuleTestCase>([
-    {
-      name: 'hit',
-      transactions: [
-        getTestTransaction({
-          originUserId: '1-1',
-          destinationUserId: '1-2',
-          timestamp: dayjs('2024-01-01').valueOf(),
-          originAmountDetails: {
-            country: 'DE',
-            transactionAmount: 6,
-            transactionCurrency: 'EUR',
+  describe('Core logic', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const timestamp = dayjs('2022-01-01').valueOf()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'low-value-outgoing-transactions',
+        defaultParameters: {
+          lowTransactionValues: {
+            EUR: {
+              min: 2,
+              max: 10,
+            },
           },
-          destinationAmountDetails: {
-            country: 'IN',
-            transactionAmount: 6,
-            transactionCurrency: 'EUR',
-          },
-        }),
-        getTestTransaction({
-          originUserId: '1-1',
-          destinationUserId: '1-2',
-          timestamp: dayjs('2024-01-01').valueOf(),
-          originAmountDetails: {
-            country: 'DE',
-            transactionAmount: 7,
-            transactionCurrency: 'EUR',
-          },
-          destinationAmountDetails: {
-            country: 'IN',
-            transactionAmount: 7,
-            transactionCurrency: 'EUR',
-          },
-        }),
-      ],
-      expectedHits: [false, true],
-    },
-  ])('', ({ name, transactions, expectedHits }) => {
-    createTransactionRuleTestCase(
-      name,
-      TEST_TENANT_ID,
-      transactions,
-      expectedHits
-    )
+          lowTransactionCount: 2,
+        },
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: timestamp + 10,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 7,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 7,
+              transactionCurrency: 'EUR',
+            },
+          }),
+        ],
+        expectedHits: [false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
   })
 
+  describe('extended core logic', () => {
+    const TEST_TENANT_ID = getTestTenantId()
+    const timestamp = dayjs('2022-01-01').valueOf()
+    setUpRulesHooks(TEST_TENANT_ID, [
+      {
+        type: 'TRANSACTION',
+        ruleImplementationName: 'low-value-outgoing-transactions',
+        defaultParameters: {
+          lowTransactionValues: {
+            EUR: {
+              min: 2,
+              max: 10,
+            },
+          },
+          lowTransactionCount: 2,
+        },
+        defaultAction: 'FLAG',
+      },
+    ])
+
+    describe.each<TransactionRuleTestCase>([
+      {
+        name: 'extended hit',
+        transactions: [
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 6,
+              transactionCurrency: 'EUR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: timestamp + 10,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 17,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 17,
+              transactionCurrency: 'EUR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: timestamp + 20,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 7,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 7,
+              transactionCurrency: 'EUR',
+            },
+          }),
+          getTestTransaction({
+            originUserId: '1-1',
+            destinationUserId: '1-2',
+            timestamp: timestamp + 30,
+            originAmountDetails: {
+              country: 'DE',
+              transactionAmount: 5,
+              transactionCurrency: 'EUR',
+            },
+            destinationAmountDetails: {
+              country: 'IN',
+              transactionAmount: 5,
+              transactionCurrency: 'EUR',
+            },
+          }),
+        ],
+        expectedHits: [false, false, false, true],
+      },
+    ])('', ({ name, transactions, expectedHits }) => {
+      createTransactionRuleTestCase(
+        name,
+        TEST_TENANT_ID,
+        transactions,
+        expectedHits
+      )
+    })
+  })
+})
+
+ruleVariantsTest({ aggregation: true, v8: false }, () => {
   describe('Optional parameters - Payment Channel', () => {
     const TEST_TENANT_ID = getTestTenantId()
-
+    const timestamp = dayjs('2024-01-01').valueOf()
     setUpRulesHooks(TEST_TENANT_ID, [
       {
         type: 'TRANSACTION',
@@ -152,8 +276,8 @@ ruleVariantsTest({ aggregation: true }, () => {
         transactions: [
           getTestTransaction({
             originUserId: '1-1',
-            timestamp: dayjs('2021-01-01').valueOf(),
             destinationUserId: '1-2',
+            timestamp,
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 6,
@@ -172,7 +296,7 @@ ruleVariantsTest({ aggregation: true }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
-            timestamp: dayjs('2024-01-01').valueOf(),
+            timestamp: timestamp + 10,
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 7,
@@ -191,6 +315,7 @@ ruleVariantsTest({ aggregation: true }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: timestamp + 20,
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 6,
@@ -215,6 +340,7 @@ ruleVariantsTest({ aggregation: true }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp,
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 6,
@@ -234,6 +360,7 @@ ruleVariantsTest({ aggregation: true }, () => {
           getTestTransaction({
             originUserId: '1-1',
             destinationUserId: '1-2',
+            timestamp: timestamp + 10,
             originAmountDetails: {
               country: 'DE',
               transactionAmount: 7,
@@ -290,7 +417,7 @@ testAggregationRebuild(
       },
     }),
     getTestTransaction({
-      timestamp: dayjs('2024-01-02').valueOf(),
+      timestamp: dayjs('2024-01-02').valueOf() + 10,
       destinationUserId: '1',
       destinationAmountDetails: {
         country: 'DE',
@@ -299,7 +426,7 @@ testAggregationRebuild(
       },
     }),
     getTestTransaction({
-      timestamp: dayjs('2024-01-03').valueOf(),
+      timestamp: dayjs('2024-01-03').valueOf() + 20,
       destinationUserId: '1',
       destinationAmountDetails: {
         country: 'DE',

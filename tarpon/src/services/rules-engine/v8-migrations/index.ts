@@ -15,6 +15,7 @@ import { TransactionReferenceKeywordRuleParameters } from '../transaction-rules/
 import { TransactionsAverageAmountExceededParameters } from '../transaction-rules/transactions-average-amount-exceeded'
 import { TransactionsAverageNumberExceededParameters } from '../transaction-rules/transactions-average-number-exceeded'
 import { TransactionVolumeExceedsTwoPeriodsRuleParameters } from '../transaction-rules/total-transactions-volume-exceeds'
+import { LowValueTransactionsRuleParameters } from '../transaction-rules/low-value-transactions-base'
 import {
   getFiltersConditions,
   getHistoricalFilterConditions,
@@ -1236,6 +1237,153 @@ const V8_CONVERSION: Readonly<
       logic: { and: conditions },
       logicAggregationVariables,
       alertCreationDirection: 'AUTO',
+    }
+  },
+  'R-7': (params: LowValueTransactionsRuleParameters) => {
+    const { lowTransactionValues, lowTransactionCount } = params
+    const currency = Object.keys(lowTransactionValues)[0]
+    const { min, max } = lowTransactionValues[currency]
+
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:transactionsWithLowValueFilterIncoming$1',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      lastNEntities: lowTransactionCount,
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        '<=': [
+          min,
+          { var: 'TRANSACTION:destinationAmountDetails-transactionAmount' },
+          max,
+        ],
+      },
+    })
+    logicAggregationVariables.push({
+      key: 'agg:transactionsWithoutLowValueFilterIncoming$1',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'RECEIVER',
+      transactionDirection: 'RECEIVING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      lastNEntities: lowTransactionCount,
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    let baseCurrency: CurrencyCode = 'USD'
+
+    if (currency) {
+      baseCurrency = currency as unknown as CurrencyCode
+    }
+
+    const conditions: any[] = []
+
+    conditions.push({
+      'op:equalArray': [
+        { var: 'agg:transactionsWithLowValueFilterIncoming$1' },
+        { var: 'agg:transactionsWithoutLowValueFilterIncoming$1' },
+      ],
+    })
+
+    conditions.push({
+      '>=': [
+        {
+          number_of_items: ['agg:transactionsWithLowValueFilterIncoming$1'],
+        },
+        lowTransactionCount,
+      ],
+    })
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'DESTINATION',
+      baseCurrency,
+    }
+  },
+  'R-8': (params: LowValueTransactionsRuleParameters) => {
+    const { lowTransactionValues, lowTransactionCount } = params
+    const currency = Object.keys(lowTransactionValues)[0]
+    const { min, max } = lowTransactionValues[currency]
+
+    const logicAggregationVariables: LogicAggregationVariable[] = []
+
+    logicAggregationVariables.push({
+      key: 'agg:transactionsWithLowValueFilterOutgoing$1',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      lastNEntities: lowTransactionCount,
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+      filtersLogic: {
+        '<=': [
+          min,
+          { var: 'TRANSACTION:originAmountDetails-transactionAmount' },
+          max,
+        ],
+      },
+    })
+    logicAggregationVariables.push({
+      key: 'agg:transactionsWithoutLowValueFilterOutgoing$1',
+      type: 'USER_TRANSACTIONS',
+      aggregationFunc: 'UNIQUE_VALUES',
+      userDirection: 'SENDER',
+      transactionDirection: 'SENDING',
+      aggregationFieldKey: 'TRANSACTION:transactionId',
+      lastNEntities: lowTransactionCount,
+      timeWindow: {
+        start: { units: 0, granularity: 'all_time' },
+        end: { units: 0, granularity: 'now' },
+      },
+      includeCurrentEntity: true,
+    })
+
+    let baseCurrency: CurrencyCode = 'USD'
+
+    if (currency) {
+      baseCurrency = currency as unknown as CurrencyCode
+    }
+
+    const conditions: any[] = []
+
+    conditions.push({
+      'op:equalArray': [
+        { var: 'agg:transactionsWithLowValueFilterOutgoing$1' },
+        { var: 'agg:transactionsWithoutLowValueFilterOutgoing$1' },
+      ],
+    })
+
+    conditions.push({
+      '>=': [
+        {
+          number_of_items: ['agg:transactionsWithLowValueFilterOutgoing$1'],
+        },
+        lowTransactionCount,
+      ],
+    })
+
+    return {
+      logic: { and: conditions },
+      logicAggregationVariables,
+      alertCreationDirection: 'ORIGIN',
+      baseCurrency,
     }
   },
 }

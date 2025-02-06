@@ -12,6 +12,7 @@ export type TextLogicOperator = LogicOperator<
 export type InternalCustomOperatorKeys =
   | CustomBuiltInLogicOperatorKeyType
   | 'op:hasItems'
+  | 'op:equalArray'
 export type LogicOperator<LHS = any, RHS = any> = {
   key: LogicOperatorType | InternalCustomOperatorKeys
   uiDefinition: Operator<Config>
