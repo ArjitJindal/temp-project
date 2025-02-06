@@ -1,5 +1,6 @@
 import { skipOn } from '@cypress/skip-test';
 import { random } from 'lodash';
+import { v4 as uuidv4 } from 'uuid';
 import { checkQAUrl } from '../../../src/utils/qaUrl';
 import { PERMISSIONS } from '../../support/permissions';
 import { generateTransactionRequestBody, generateUserRequestBody } from '../../support/utils';
@@ -30,8 +31,10 @@ describe('Case Creation test', () => {
     //1.create rule
     cy.visit('/rules/rules-library');
     cy.intercept('POST', '**/rule_instances').as('createdRule');
+    cy.intercept('GET', '**/rule-instances/rules-with-alerts').as('getRuleWithAlerts');
     cy.get('button[data-cy="configure-rule-button"]').eq(1).click();
-    const ruleName = 'Test rule : Transaction too high';
+    // adding random uuid to ensure we create rule with unique rule name
+    const ruleName = 'Test rule : Transaction too high' + ' ' + uuidv4();
     cy.get('input[placeholder="Enter rule name"]').clear().type(ruleName);
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
     cy.get('button[data-cy="drawer-next-button"]').eq(0).click();
@@ -43,7 +46,7 @@ describe('Case Creation test', () => {
       cy.message(`Rule created - ${ruleInstanceId}`).should('exist');
 
       //2.create case and verify
-      //making a post request to api.dev.flagright/transactions to hit the rule R-2
+      //making a post request to api.dev.flagright/transactions to hit the rule R-2 i
       const requestBody = generateTransactionRequestBody(
         transactionId,
         originUserId,
@@ -51,10 +54,16 @@ describe('Case Creation test', () => {
       );
 
       cy.publicApiHandler('POST', 'transactions', requestBody);
-      cy.visit('/case-management/cases');
+      cy.visit(
+        '/case-management/cases?caseStatus=OPEN%2CREOPENED%2CCLOSED%2CESCALATED%2CIN_REVIEW%2CIN_PROGRESS',
+      );
       cy.intercept('GET', '**/cases**').as('case');
 
       cy.wait('@case').then((interception) => {
+        expect(interception.response?.statusCode).to.eq(200);
+      });
+
+      cy.wait('@getRuleWithAlerts').then((interception) => {
         expect(interception.response?.statusCode).to.eq(200);
       });
 
