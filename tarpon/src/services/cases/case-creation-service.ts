@@ -104,6 +104,7 @@ import { getDynamoDbClientByEvent } from '@/utils/dynamodb'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { getCredentialsFromEvent } from '@/utils/credentials'
 import { SLAPolicy } from '@/@types/openapi-internal/SLAPolicy'
+import { isDemoTenant } from '@/utils/tenant'
 
 type CaseSubject =
   | {
@@ -1411,6 +1412,9 @@ export class CaseCreationService {
     timestampBeforeCasesCreation: number,
     cases: Case[]
   ) {
+    if (isDemoTenant(tenantId)) {
+      return
+    }
     const newAlerts = flatten(cases.map((c) => c.alerts)).filter(
       (alert) =>
         alert &&
