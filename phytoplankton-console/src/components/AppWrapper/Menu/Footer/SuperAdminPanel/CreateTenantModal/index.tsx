@@ -94,6 +94,11 @@ export const CreateTenantModal = (props: Props) => {
     const emailsOfAdmins = formDetails.emailsOfAdmins.map((email) => email.replaceAll(' ', ''));
     const { featureFlags, demoMode, sanctionsMarketType, siloDataMode } = formDetails;
 
+    if (tenantId && tenantId.endsWith('-test')) {
+      message.error('Tenant id should not end with -test');
+      return;
+    }
+
     if (
       !(tenantName && tenantWebsite && auth0DisplayName && auth0Domain && emailsOfAdmins?.length)
     ) {

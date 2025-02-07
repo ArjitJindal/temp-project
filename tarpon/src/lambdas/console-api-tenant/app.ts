@@ -3,7 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { shortId } from '@flagright/lib/utils'
-import createHttpError from 'http-errors'
+import createHttpError, { BadRequest } from 'http-errors'
 import { compact, isEmpty, isEqual } from 'lodash'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import {
@@ -31,7 +31,7 @@ import {
   RuleQueueWithId,
   RuleQueuesService,
 } from '@/services/tenants/rule-queue-service'
-import { getFullTenantId } from '@/utils/tenant'
+import { getFullTenantId, isDemoTenant } from '@/utils/tenant'
 import {
   addSentryExtras,
   getContext,
@@ -131,12 +131,16 @@ export const tenantsHandler = lambdaApi()(
 
     handlers.registerPostCreateTenant(async (ctx, request) => {
       assertCurrentUserRole('root')
-      const newTenantId = shortId(10)
+      // check for tenant id before taking any action
+      const newTenantId = request.TenantCreationRequest.tenantId ?? shortId(10)
+      if (newTenantId && isDemoTenant(newTenantId)) {
+        throw new BadRequest('Tenant id should not end with -test')
+      }
       const dynamoDb = getDynamoDbClient()
-      const tenantService = new TenantService(
-        request.TenantCreationRequest.tenantId ?? newTenantId,
-        { mongoDb, dynamoDb }
-      )
+      const tenantService = new TenantService(newTenantId, {
+        mongoDb,
+        dynamoDb,
+      })
       try {
         const response = await tenantService.createTenant(
           request.TenantCreationRequest
