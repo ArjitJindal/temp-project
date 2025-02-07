@@ -5,7 +5,6 @@ import { NangoRecord } from '@/@types/nango'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { batchWrite, batchGet, getDynamoDbClient } from '@/utils/dynamodb'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { traceable } from '@/core/xray'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
@@ -47,7 +46,6 @@ export class NangoRepository {
           )
 
           keys.push(primaryKey)
-          logger.info('Written record', { primaryKey })
 
           return {
             PutRequest: {

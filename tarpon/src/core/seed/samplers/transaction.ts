@@ -1,6 +1,7 @@
 import { v4 as uuid } from 'uuid'
 import { COUNTRY_CODES } from '@flagright/lib/constants'
 import { BaseSampler } from './base'
+import { names } from './dictionary'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { CardDetails } from '@/@types/openapi-public/CardDetails'
 import { IBANDetails } from '@/@types/openapi-public/IBANDetails'
@@ -16,6 +17,8 @@ import { RULE_ACTIONS } from '@/@types/openapi-public-custom/RuleAction'
 import { paymentAddresses } from '@/core/seed/data/address'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { DeviceData } from '@/@types/openapi-internal/DeviceData'
+import { CURRENCY_CODES } from '@/@types/openapi-public-custom/CurrencyCode'
+import { WALLET_NETWORKS } from '@/@types/openapi-public-custom/WalletNetwork'
 
 const TRANSACTION_REFERENCES = [
   'Urgent',
@@ -178,11 +181,11 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
       method: 'CARD' as const,
       cardFingerprint: 'FNGR' + this.rng.randomInt(),
       cardIssuedCountry: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
-      transactionReferenceField: 'transactionReferenceField',
+      transactionReferenceField: this.rng.pickRandom(TRANSACTION_REFERENCES),
       nameOnCard: {
-        firstName: 'very long firstName here',
-        middleName: 'very long middleName here',
-        lastName: 'very long lastName here',
+        firstName: this.rng.pickRandom(names),
+        middleName: this.rng.pickRandom(names),
+        lastName: this.rng.pickRandom(names),
       },
       cardExpiry: {
         month: 3,
@@ -196,15 +199,28 @@ export class CardDetailsSampler extends BaseSampler<CardDetails> {
       paymentChannel: this.rng.pickRandom(['WEB', 'MOBILE', 'POS']),
       cardType: this.rng.pickRandom(['VIRTUAL', 'PHYSICAL']),
       merchantDetails: {
-        id: 'id',
+        id: uuid(),
         category: this.rng.pickRandom([
           'RETAIL',
           'GROCERY',
           'GAS',
           'ECOMMERCE',
+          'HOTEL',
+          'TRAVEL',
+          'TRANSPORTATION',
+          'ENTERTAINMENT',
+          'OTHER',
         ]),
         MCC: this.rng.randomIntInclusive(1000, 9999).toString(),
-        city: this.rng.pickRandom(['NEW YORK', 'LOS ANGELES', 'CHICAGO']),
+        city: this.rng.pickRandom([
+          'NEW YORK',
+          'LOS ANGELES',
+          'CHICAGO',
+          'TORONTO',
+          'VANCOUVER',
+          'MONTREAL',
+          'OTTAWA',
+        ]),
         country: this.rng.pickRandom(COUNTRY_CODES) as CountryCode,
         state: this.rng.pickRandom(['NY', 'CA', 'IL', 'ON']),
         postCode: this.rng.randomIntInclusive(10000, 99999).toString(),
@@ -235,6 +251,7 @@ export class IBANDetailsSampler extends BaseSampler<IBANDetails> {
   generateSample(): IBANDetails {
     // TODO: refactor to use a single random number generator
     return {
+      name: this.rng.pickRandom(names),
       method: 'IBAN' as const,
       BIC: 'AABSDE' + (10 + this.rng.randomInt(90)).toString(),
       IBAN:
@@ -255,20 +272,36 @@ export class GenericBankAccountDetailsSampler extends BaseSampler<GenericBankAcc
     return this.rng.pickRandom<GenericBankAccountDetails>([
       {
         method: 'GENERIC_BANK_ACCOUNT',
-        bankName: 'Bank of America',
-        bankCode: 'BWEHRHRB',
-        name: 'Mark Schagal',
+        bankName: this.rng.pickRandom([
+          'Bank of America',
+          'Citigroup',
+          'JPMorgan Chase',
+          'Wells Fargo',
+          'Goldman Sachs',
+          'Morgan Stanley',
+          'Barclays',
+        ]),
+        bankCode: `BK${this.rng.randomInt(999999999)}`,
+        name: this.rng.pickRandom(names),
         accountNumber: `${this.rng.randomInt()}`,
-        accountType: 'SAVINGS',
+        accountType: this.rng.pickRandom(['SAVINGS', 'CURRENT']),
         bankAddress: this.rng.pickRandom(paymentAddresses()),
       },
       {
         method: 'GENERIC_BANK_ACCOUNT',
-        bankName: 'Citigroup',
-        bankCode: '123123',
+        bankName: this.rng.pickRandom([
+          'Bank of America',
+          'Citigroup',
+          'JPMorgan Chase',
+          'Wells Fargo',
+          'Goldman Sachs',
+          'Morgan Stanley',
+          'Barclays',
+        ]),
+        bankCode: `BK${this.rng.randomInt(999999999)}`,
         accountNumber: `${this.rng.randomInt()}`,
         accountType: 'CURRENT',
-        name: 'John Dow',
+        name: this.rng.pickRandom(names),
         bankAddress: this.rng.pickRandom(paymentAddresses()),
       },
     ])
@@ -281,6 +314,20 @@ export class ACHDetailsSampler extends BaseSampler<ACHDetails> {
       method: 'ACH',
       accountNumber: 'ACH' + this.rng.randomInt(),
       routingNumber: `${this.rng.randomInt()}`,
+      name: this.rng.pickRandom(names),
+      accountBalance: {
+        amountValue: this.rng.randomInt(1_00_000),
+        amountCurrency: this.rng.pickRandom(CURRENCY_CODES),
+      },
+      bankName: this.rng.pickRandom([
+        'Bank of America',
+        'Citigroup',
+        'JPMorgan Chase',
+        'Wells Fargo',
+        'Goldman Sachs',
+      ]),
+      beneficiaryName: this.rng.pickRandom(names),
+      bankAddress: this.rng.pickRandom(paymentAddresses()),
     }
   }
 }
@@ -291,6 +338,14 @@ export class SWIFTDetailsSampler extends BaseSampler<SWIFTDetails> {
       method: 'SWIFT',
       accountNumber: 'SWIFT' + this.rng.randomInt(),
       swiftCode: `${this.rng.randomInt()}`,
+      name: this.rng.pickRandom(names),
+      accountBalance: {
+        amountValue: this.rng.randomInt(1_00_000),
+        amountCurrency: this.rng.pickRandom(CURRENCY_CODES),
+      },
+      bankName: this.rng.pickRandom(['Bank of America', 'Citigroup']),
+      accountType: this.rng.pickRandom(['SAVINGS', 'CURRENT']),
+      bankAddress: this.rng.pickRandom(paymentAddresses()),
     }
   }
 }
@@ -311,6 +366,21 @@ export class UPIDetailsSampler extends BaseSampler<UPIDetails> {
     return {
       method: 'UPI',
       upiID: 'UPI' + this.rng.randomInt(),
+      name: this.rng.pickRandom(names),
+      bankProvider: this.rng.pickRandom([
+        'HDFC',
+        'ICICI',
+        'SBI',
+        'AXIS',
+        'KOTAK',
+      ]),
+      interfaceProvider: this.rng.pickRandom([
+        'HDFC',
+        'ICICI',
+        'SBI',
+        'AXIS',
+        'KOTAK',
+      ]),
     }
   }
 }
@@ -321,6 +391,12 @@ export class WalletDetailsSampler extends BaseSampler<WalletDetails> {
       method: 'WALLET',
       walletType: 'vault',
       walletId: `${this.rng.randomInt()}`,
+      name: this.rng.pickRandom(names),
+      network: this.rng.pickRandom(WALLET_NETWORKS),
+      walletBalance: {
+        amountValue: this.rng.randomInt(1_00_000),
+        amountCurrency: this.rng.pickRandom(CURRENCY_CODES),
+      },
     }
   }
 }
@@ -331,6 +407,7 @@ export class CheckDetailsSampler extends BaseSampler<CheckDetails> {
       method: 'CHECK',
       checkIdentifier: `${this.rng.randomInt()}`,
       checkNumber: `${this.rng.randomInt()}`,
+      name: this.rng.pickRandom(names),
     }
   }
 }

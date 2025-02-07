@@ -10,8 +10,7 @@ import { TransactionRule } from './rule'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { SanctionsSearchType } from '@/@types/openapi-internal/SanctionsSearchType'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
-import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
-import { formatConsumerName } from '@/utils/helpers'
+import { getPaymentDetailsName } from '@/utils/helpers'
 import { traceable } from '@/core/xray'
 import { notNullish } from '@/utils/array'
 import { User } from '@/@types/openapi-public/User'
@@ -48,62 +47,7 @@ export abstract class PaymentDetailsScreeningRuleBase extends TransactionRule<Pa
     paymentDetails: PaymentDetails,
     user?: User | Business
   ): Promise<SanctionsDetails[]> {
-    const namesToSearch: Array<{
-      name: string
-      entityType: SanctionsDetailsEntityType
-    }> = []
-    switch (paymentDetails.method) {
-      case 'CARD':
-        {
-          const formattedName = formatConsumerName(paymentDetails.nameOnCard)
-          if (formattedName != null) {
-            namesToSearch.push({
-              name: formattedName,
-              entityType: 'NAME_ON_CARD',
-            })
-          }
-        }
-        break
-      case 'GENERIC_BANK_ACCOUNT':
-      case 'IBAN':
-        {
-          if (paymentDetails.name) {
-            namesToSearch.push({
-              name: paymentDetails.name,
-              entityType: 'BANK_ACCOUNT_HOLDER_NAME',
-            })
-          }
-        }
-        break
-      case 'SWIFT':
-      case 'UPI':
-      case 'WALLET':
-      case 'CHECK':
-        if (paymentDetails.name != null) {
-          namesToSearch.push({
-            name: paymentDetails.name,
-            entityType: 'PAYMENT_NAME',
-          })
-        }
-        break
-      case 'ACH':
-        if (paymentDetails.name != null) {
-          namesToSearch.push({
-            name: paymentDetails.name,
-            entityType: 'PAYMENT_NAME',
-          })
-        }
-        if (paymentDetails.beneficiaryName != null) {
-          namesToSearch.push({
-            name: paymentDetails.beneficiaryName,
-            entityType: 'PAYMENT_BENEFICIARY_NAME',
-          })
-        }
-        break
-      case 'MPESA':
-      case 'CASH':
-        break
-    }
+    const namesToSearch = getPaymentDetailsName(paymentDetails)
 
     const namesToSearchFiltered = uniqBy(namesToSearch, (item) => item.name)
     const fuzziness = this.parameters.fuzziness

@@ -36,9 +36,7 @@ const COUNTRY_MAP: Partial<Record<CountryCode, string>> = {
 
 const COUNTRY_CODES = Object.keys(COUNTRY_MAP) as CountryCode[]
 
-const commentGenerator = (seed: number, hit: SanctionsHit) => {
-  const rng = new RandomNumberGenerator(seed)
-
+const commentGenerator = (rng: RandomNumberGenerator, hit: SanctionsHit) => {
   const generateOpenComment = (
     matchTypes: SanctionsMatchType[],
     entityName: string,
@@ -178,16 +176,14 @@ const commentGenerator = (seed: number, hit: SanctionsHit) => {
 }
 
 export const sanctionsSearchHit = (
-  seed: number,
+  rng: RandomNumberGenerator,
   searchId: string,
-  username: string,
-  userId: string,
+  userName: string,
+  userId?: string,
   ruleInstanceId?: string,
   transactionId?: string,
   entity?: string
 ): { hit: SanctionsHit; sanctionsEntity: SanctionsEntity } => {
-  const rng = new RandomNumberGenerator(seed)
-
   const id = uuid4()
   const selectedCountryCodes = rng.randomSubsetOfSize(
     COUNTRY_CODES,
@@ -231,7 +227,7 @@ export const sanctionsSearchHit = (
       media: mediaItems,
     }
   }
-  const name = `${username}#${rng.r(6).randomInt(1000)}`
+  const name = `${userName}#${rng.r(6).randomInt(1000)}`
   const mediaSources = [
     createMediaSource('Global News Database'),
     createMediaSource('Company Adverse Media'),
@@ -299,7 +295,7 @@ export const sanctionsSearchHit = (
     },
   }
 
-  const comment = commentGenerator(rng.randomInt(), hit)
+  const comment = commentGenerator(rng, hit)
 
   return {
     hit: { ...hit, comment },
@@ -307,20 +303,31 @@ export const sanctionsSearchHit = (
   }
 }
 
-export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
+export type SanctionsSearchHit = {
+  historyItem: SanctionsSearchHistory
+  hits: SanctionsHit[]
+  screeningDetails: SanctionsScreeningDetails
+}
+
+export class BusinessSanctionsSearchSampler extends BaseSampler<SanctionsSearchHit> {
+  private sanctionsRng: RandomNumberGenerator
+
+  constructor() {
+    super()
+    this.sanctionsRng = new RandomNumberGenerator(3000000)
+  }
+
   protected generateSample(
-    username: string,
+    name: string,
     userId: string,
     ruleInstanceId?: string,
     transactionId?: string,
     entity?: string
-  ): any {
-    const childSeed = this.rng.randomInt()
-
+  ): SanctionsSearchHit {
     const searchId = uuid4()
     const screeningDetails: SanctionsScreeningDetails = {
       searchId,
-      name: username,
+      name,
       ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
       userIds: [userId],
       transactionIds: transactionId ? [transactionId] : [],
@@ -332,12 +339,11 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
     }
     const hits: SanctionsHit[] = []
     const sanctionsEntityArray: SanctionsEntity[] = []
-    const hitsCount = this.rng.r(1).randomIntInclusive(3, 14)
-    for (let i = 0; i < hitsCount; i++) {
+    for (let i = 0; i < this.rng.r(2).randomIntInclusive(1, 20); i++) {
       const { hit, sanctionsEntity } = sanctionsSearchHit(
-        childSeed,
+        this.sanctionsRng,
         searchId,
-        username,
+        name,
         userId,
         ruleInstanceId,
         transactionId,
@@ -351,9 +357,9 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
       _id: searchId,
       provider: 'comply-advantage',
       request: {
-        searchTerm: username,
-        fuzziness: Number(this.rng.r(2).randomFloat(10).toFixed(1)),
-        types: this.rng
+        searchTerm: name,
+        fuzziness: Number(this.sanctionsRng.r(2).randomFloat(10).toFixed(1)),
+        types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
             SANCTIONS_SEARCH_TYPES,
@@ -361,7 +367,7 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
           ),
       },
       response: {
-        hitsCount,
+        hitsCount: 1,
         data: sanctionsEntityArray,
         searchId: searchId,
         providerSearchId: `provider-${searchId}`,
@@ -369,26 +375,32 @@ export class BusinessSanctionsSearchSampler extends BaseSampler<any> {
       },
       createdAt: 1683301138980,
     }
+
     return { historyItem, hits, screeningDetails }
   }
 }
 
-export class ConsumerSanctionsSearchSampler extends BaseSampler<any> {
+export class ConsumerSanctionsSearchSampler extends BaseSampler<SanctionsSearchHit> {
+  private sanctionsRng: RandomNumberGenerator
+
+  constructor() {
+    super()
+    this.sanctionsRng = new RandomNumberGenerator(2000000)
+  }
+
   protected generateSample(
-    username: string,
-    userId: string,
+    userName: string,
+    userId?: string,
     ruleInstanceId?: string,
     transactionId?: string,
     entity?: string
-  ) {
-    const childSeed = this.rng.randomInt()
-
+  ): SanctionsSearchHit {
     const searchId = uuid4()
     const screeningDetails: SanctionsScreeningDetails = {
       searchId,
-      name: username,
+      name: userName,
       ruleInstanceIds: ruleInstanceId ? [ruleInstanceId] : [],
-      userIds: [userId],
+      userIds: userId ? [userId] : [],
       transactionIds: transactionId ? [transactionId] : [],
       entity: entity as SanctionsScreeningEntity,
       isOngoingScreening: false,
@@ -397,14 +409,13 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<any> {
       isNew: false,
     }
 
-    const hits: SanctionsHit[] = []
     const sanctionsEntityArray: SanctionsEntity[] = []
-    const hitsCount = this.rng.r(1).randomIntInclusive(3, 14)
-    for (let i = 0; i < hitsCount; i++) {
+    const hits: SanctionsHit[] = []
+    for (let i = 0; i < this.rng.r(2).randomIntInclusive(1, 20); i++) {
       const { hit, sanctionsEntity } = sanctionsSearchHit(
-        childSeed,
+        this.sanctionsRng,
         searchId,
-        username,
+        userName,
         userId,
         ruleInstanceId,
         transactionId,
@@ -413,21 +424,22 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<any> {
       hits.push(hit)
       sanctionsEntityArray.push(sanctionsEntity)
     }
+
     const historyItem: SanctionsSearchHistory = {
       _id: searchId,
       provider: 'comply-advantage',
       request: {
-        searchTerm: username,
-        fuzziness: Number(this.rng.r(2).randomFloat(10).toFixed(1)),
-        types: this.rng
+        searchTerm: userName,
+        fuzziness: Number(this.sanctionsRng.r(2).randomFloat(10).toFixed(1)),
+        types: this.sanctionsRng
           .r(3)
           .randomSubsetOfSize(
             SANCTIONS_SEARCH_TYPES,
-            this.rng.r(4).randomIntInclusive(1, 3)
+            this.sanctionsRng.r(4).randomIntInclusive(1, 3)
           ),
       },
       response: {
-        hitsCount,
+        hitsCount: hits.length,
         data: sanctionsEntityArray,
         searchId: searchId,
         providerSearchId: searchId,
@@ -435,11 +447,8 @@ export class ConsumerSanctionsSearchSampler extends BaseSampler<any> {
       },
       createdAt: 1683301138980,
     }
-    return {
-      historyItem,
-      hits,
-      screeningDetails,
-    }
+
+    return { historyItem, hits, screeningDetails }
   }
 }
 

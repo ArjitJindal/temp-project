@@ -2,7 +2,7 @@ import { v4 as uuid4 } from 'uuid'
 import { ManipulateType } from '@flagright/lib/utils/dayjs'
 import { getRiskLevelFromScore } from '@flagright/lib/utils'
 import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { cloneDeep, uniq } from 'lodash'
+import { cloneDeep, compact, uniq } from 'lodash'
 import { getDemoDataS3Prefix } from '@lib/constants'
 import { ONLY_COUNTRIES } from '@flagright/lib/constants/countries'
 import {
@@ -36,12 +36,7 @@ import {
   phoneNumber,
   AddressWithUsageSampler,
 } from '@/core/seed/samplers/address'
-import {
-  businessRules,
-  consumerRules,
-  RuleSampler,
-  userRules,
-} from '@/core/seed/data/rules'
+import { consumerRules, RuleSampler, userRules } from '@/core/seed/data/rules'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
@@ -57,7 +52,10 @@ import { CONSUMER_USER_SEGMENTS } from '@/@types/openapi-internal-custom/Consume
 import { SAMPLE_CURRENCIES } from '@/core/seed/samplers/currencies'
 import { USER_REGISTRATION_STATUSS } from '@/@types/openapi-internal-custom/UserRegistrationStatus'
 import { DEFAULT_CLASSIFICATION_SETTINGS } from '@/services/risk-scoring/repositories/risk-repository'
-import { isBusinessUser } from '@/services/rules-engine/utils/user-rule-utils'
+import {
+  isBusinessUser,
+  isConsumerUser,
+} from '@/services/rules-engine/utils/user-rule-utils'
 import { SanctionsDetails } from '@/@types/openapi-public/SanctionsDetails'
 import { PEPStatus } from '@/@types/openapi-internal/PEPStatus'
 import { MARITAL_STATUSS } from '@/@types/openapi-public-custom/MaritalStatus'
@@ -66,6 +64,7 @@ import { EMPLOYMENT_STATUSS } from '@/@types/openapi-internal-custom/EmploymentS
 import { PEP_RANKS } from '@/@types/openapi-public-custom/PepRank'
 import { PersonAttachment } from '@/@types/openapi-internal/PersonAttachment'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { formatConsumerName, getUserName } from '@/utils/helpers'
 
 export const emailDomains = ['gmail.com', 'yahoo.com', 'hotmail.com']
 
@@ -359,11 +358,37 @@ ET\n`
     return this.rng.pickRandom(phoneNumber())
   }
 
-  protected sampleUserRules(
-    userId: string,
-    username: string,
-    type: 'CONSUMER' | 'BUSINESS'
-  ) {
+  private getNames(
+    user: InternalConsumerUser | InternalBusinessUser
+  ): string[] {
+    const names: string[] = []
+    const type = isConsumerUser(user) ? 'CONSUMER' : 'BUSINESS'
+
+    if (type === 'CONSUMER') {
+      const name = getUserName(user)
+      names.push(name)
+    } else {
+      const businessUser = user as InternalBusinessUser
+      const shareHolders = businessUser.shareHolders?.map((shareHolder) =>
+        formatConsumerName(shareHolder?.generalDetails?.name)
+      )
+      const directors = businessUser.directors?.map((director) =>
+        formatConsumerName(director?.generalDetails?.name)
+      )
+
+      names.push(
+        ...this.rng.randomSubset([
+          ...compact(shareHolders),
+          ...compact(directors),
+        ]),
+        getUserName(user)
+      )
+    }
+    return names
+  }
+
+  protected sampleUserRules(user: InternalConsumerUser | InternalBusinessUser) {
+    const type = isConsumerUser(user) ? 'CONSUMER' : 'BUSINESS'
     // TODO: consider creating a new sampler for UserRules
     const ruleRNG = new RandomNumberGenerator(this.rng.randomInt())
     const randomUserRules = () => {
@@ -384,30 +409,22 @@ ET\n`
         return r
       }
 
-      const entityTypes = [
-        'CONSUMER_NAME',
-        'NAME_ON_CARD',
-        'PAYMENT_NAME',
-        'PAYMENT_BENEFICIARY_NAME',
-      ] as const
-      const entity =
-        r.ruleId === 'R-32'
-          ? 'BANK'
-          : r.ruleId === 'R-169'
-          ? 'EXTERNAL_USER'
-          : 'USER'
-      for (const entityType of entityTypes) {
+      const entity = r.ruleId === 'R-32' ? 'BANK' : 'USER'
+
+      const names = this.getNames(user)
+
+      const sanctionsSearchSampler =
+        type === 'CONSUMER'
+          ? new ConsumerSanctionsSearchSampler()
+          : new BusinessSanctionsSearchSampler()
+
+      for (const name of names) {
         // Seed a sanctions response
-        const sanctionsSearchSampler =
-          type === 'CONSUMER'
-            ? new ConsumerSanctionsSearchSampler(this.rng.randomInt())
-            : new BusinessSanctionsSearchSampler(this.rng.randomInt())
 
         const { historyItem, hits, screeningDetails } =
           sanctionsSearchSampler.getSample(
             undefined, // seed already assigned
-            username,
-            userId,
+            name,
             r.ruleInstanceId,
             undefined,
             entity
@@ -418,9 +435,9 @@ ET\n`
         getSanctionsScreeningDetails().push(screeningDetails)
 
         const sanctionsDetails: SanctionsDetails = {
-          name: username,
+          name,
           searchId: historyItem._id,
-          entityType: type === 'CONSUMER' ? entityType : 'LEGAL_NAME',
+          entityType: type === 'CONSUMER' ? 'CONSUMER_NAME' : 'LEGAL_NAME',
           sanctionHitIds: uniq(hits.map((hit) => hit.sanctionsHitId)),
         }
 
@@ -680,16 +697,8 @@ class DirectorSampler extends UserSampler<Promise<Person[]>> {
 export class BusinessUserSampler extends UserSampler<
   Promise<InternalBusinessUser>
 > {
-  private ruleSampler: RuleSampler
   constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
     super(seed)
-    this.ruleSampler = new RuleSampler(
-      undefined,
-      businessRules,
-      [2, 3],
-      companies.length,
-      false
-    )
   }
 
   protected async generateSample(
@@ -710,11 +719,6 @@ export class BusinessUserSampler extends UserSampler<
     const transactionLimitSampler = new ExpectedTransactionLimitSampler()
     const paymentMethodSampler = new PaymentDetailsSampler()
 
-    const hitRules = this.ruleSampler.getSample(undefined, this.counter - 1)
-    const executedRules = businessRules.map((r) => ({
-      ...r,
-      ruleHit: hitRules.some((h) => h.ruleInstanceId === r.ruleInstanceId),
-    }))
     const paymentMethod: PaymentDetails[] = []
 
     for (let i = 0; i < this.rng.randomIntInclusive(0, 8); i++) {
@@ -751,8 +755,6 @@ export class BusinessUserSampler extends UserSampler<
         tagSampler.getSample(),
       ],
       userStateDetails: this.sampleUserStateDetails(),
-      executedRules: executedRules,
-      hitRules: hitRules,
       updatedAt: timestamp + 60 * 60 * 24 * 1000,
       comments: [],
       kycStatusDetails: this.sampleKycStatusDetails(),
@@ -825,6 +827,12 @@ export class BusinessUserSampler extends UserSampler<
 
     this.assignKrsAndDrsScores(user) // TOOD: make this into a sampler
 
+    user.executedRules = this.sampleUserRules(user)
+    user.hitRules = user.executedRules.map((r) => ({
+      ...r,
+      ruleHit: true,
+    }))
+
     return user
   }
 
@@ -874,15 +882,6 @@ export class ConsumerUserSampler extends UserSampler<
 
     const tagSampler = new TagSampler() // TODO: find a better seed
     const transactionLimitSampler = new ExpectedTransactionLimitSampler()
-
-    const hitRules = this.ruleSampler.getSample(
-      undefined,
-      this.counter - companies.length - 1
-    )
-    const executedRules = consumerRules.map((r) => ({
-      ...r,
-      ruleHit: hitRules.some((h) => h.ruleInstanceId === r.ruleInstanceId),
-    }))
 
     const legalDocuments: LegalDocument[] = []
     const attachments: PersonAttachment[] = []
@@ -965,8 +964,6 @@ export class ConsumerUserSampler extends UserSampler<
         employerName: this.rng.r(4).pickRandom(employerName),
         businessIndustry: [this.rng.r(5).pickRandom(businessIndustry)],
       },
-      executedRules: executedRules,
-      hitRules: hitRules,
       transactionLimits: transactionLimitSampler.getSample(),
       savedPaymentDetails: paymentMethod,
       pepStatus: Array.from({ length: Math.ceil(this.rng.randomInt(3)) }).map(
@@ -985,6 +982,11 @@ export class ConsumerUserSampler extends UserSampler<
     }
 
     this.assignKrsAndDrsScores(user)
+    user.executedRules = this.sampleUserRules(user)
+    user.hitRules = user.executedRules.map((r) => ({
+      ...r,
+      ruleHit: true,
+    }))
 
     return user
   }

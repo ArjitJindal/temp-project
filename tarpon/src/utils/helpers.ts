@@ -8,6 +8,8 @@ import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumer
 import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
 import { Business } from '@/@types/openapi-public/Business'
 import { User } from '@/@types/openapi-public/User'
+import { SanctionsDetailsEntityType } from '@/@types/openapi-internal/SanctionsDetailsEntityType'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
 
 export const checkEmail = (email: string) => {
   return isValidEmail(email)
@@ -133,4 +135,70 @@ export const isStatusInProgress = (status: CaseStatus | undefined): boolean => {
 
 export const isStatusOnHold = (status: CaseStatus | undefined): boolean => {
   return status?.includes('ON_HOLD') ?? false
+}
+
+type PaymentDetailsName = {
+  name: string
+  entityType: SanctionsDetailsEntityType
+}
+
+export const getPaymentDetailsName = (
+  paymentDetails: PaymentDetails
+): PaymentDetailsName[] => {
+  const namesToSearch: PaymentDetailsName[] = []
+
+  switch (paymentDetails.method) {
+    case 'CARD':
+      {
+        const formattedName = formatConsumerName(paymentDetails.nameOnCard)
+        if (formattedName != null) {
+          namesToSearch.push({
+            name: formattedName,
+            entityType: 'NAME_ON_CARD',
+          })
+        }
+      }
+      break
+    case 'GENERIC_BANK_ACCOUNT':
+    case 'IBAN':
+      {
+        if (paymentDetails.name) {
+          namesToSearch.push({
+            name: paymentDetails.name,
+            entityType: 'BANK_ACCOUNT_HOLDER_NAME',
+          })
+        }
+      }
+      break
+    case 'SWIFT':
+    case 'UPI':
+    case 'WALLET':
+    case 'CHECK':
+      if (paymentDetails.name != null) {
+        namesToSearch.push({
+          name: paymentDetails.name,
+          entityType: 'PAYMENT_NAME',
+        })
+      }
+      break
+    case 'ACH':
+      if (paymentDetails.name != null) {
+        namesToSearch.push({
+          name: paymentDetails.name,
+          entityType: 'PAYMENT_NAME',
+        })
+      }
+      if (paymentDetails.beneficiaryName != null) {
+        namesToSearch.push({
+          name: paymentDetails.beneficiaryName,
+          entityType: 'PAYMENT_BENEFICIARY_NAME',
+        })
+      }
+      break
+    case 'MPESA':
+    case 'CASH':
+      break
+  }
+
+  return namesToSearch
 }

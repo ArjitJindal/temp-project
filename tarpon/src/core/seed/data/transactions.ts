@@ -1,9 +1,6 @@
 import { compact, random, memoize, uniq, shuffle } from 'lodash'
 import { TransactionRiskScoreSampler } from '../samplers/risk_score_components'
-import {
-  BusinessSanctionsSearchSampler,
-  ConsumerSanctionsSearchSampler,
-} from '../raw-data/sanctions-search'
+import { ConsumerSanctionsSearchSampler } from '../raw-data/sanctions-search'
 import { BaseSampler } from '../samplers/base'
 import { getUserUniqueTags, users } from './users'
 import {
@@ -31,10 +28,8 @@ import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResu
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { envIs } from '@/utils/env'
-import { isConsumerUser } from '@/services/rules-engine/utils/user-rule-utils'
-import { User } from '@/@types/openapi-internal/User'
-import { Business } from '@/@types/openapi-internal/Business'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
+import { getPaymentDetailsName } from '@/utils/helpers'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
   ? Number(process.env.SEED_TRANSACTIONS_COUNT)
@@ -168,14 +163,6 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       this.userAccountMap.set(destinationUserId, destinationUserPaymentDetails)
     }
 
-    const originUser = users.find((u) => u.userId === originUserId) as
-      | User
-      | Business
-
-    const destinationUser = users.find(
-      (u) => u.userId === destinationUserId
-    ) as User | Business
-
     const transaction = this.transactionSampler.getSample(
       this.rng.randomInt(),
       {
@@ -185,40 +172,42 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
         destinationUserPaymentDetails,
       }
     )
+
     const getSanctionsSearch = (
-      user: User | Business,
+      paymentDetails: PaymentDetails,
+      userId: string,
       ruleInstanceId: string,
       transactionId: string
-    ): SanctionsDetails => {
-      const isConsumer = isConsumerUser(user)
-      const name = isConsumer
-        ? `${(user as User).userDetails?.name?.firstName} ${
-            (user as User).userDetails?.name?.middleName
-          } ${(user as User).userDetails?.name?.lastName}`.trim()
-        : (user as Business).legalEntity?.companyGeneralDetails?.legalName ?? ''
+    ): SanctionsDetails[] => {
+      const namesToSearch = getPaymentDetailsName(paymentDetails)
+      const sanctionsDetails: SanctionsDetails[] = []
 
-      const sanctionsSearchSampler = isConsumer
-        ? new ConsumerSanctionsSearchSampler(this.rng.randomInt())
-        : new BusinessSanctionsSearchSampler(this.rng.randomInt())
+      const sanctionsSearchSampler = new ConsumerSanctionsSearchSampler()
 
-      const data = sanctionsSearchSampler.getSample(
-        undefined, // seed already assigned
-        name,
-        user.userId,
-        ruleInstanceId,
-        transactionId,
-        'EXTERNAL_USER'
-      )
+      for (const n of namesToSearch) {
+        const { name, entityType } = n
+        const data = sanctionsSearchSampler.getSample(
+          undefined, // seed already assigned
+          name,
+          userId,
+          ruleInstanceId,
+          transactionId,
+          entityType
+        )
 
-      getSanctions().push(data.historyItem)
-      getSanctionsHits().push(...data.hits)
-      getSanctionsScreeningDetails().push(data.screeningDetails)
-      return {
-        name,
-        searchId: data.historyItem._id,
-        entityType: isConsumer ? 'CONSUMER_NAME' : 'LEGAL_NAME',
-        sanctionHitIds: data.hits.map((hit) => hit.searchId),
+        getSanctions().push(data.historyItem)
+        getSanctionsHits().push(...data.hits)
+        getSanctionsScreeningDetails().push(data.screeningDetails)
+
+        sanctionsDetails.push({
+          name,
+          searchId: data.historyItem._id,
+          entityType,
+          sanctionHitIds: data.hits.map((hit) => hit.sanctionsHitId),
+        })
       }
+
+      return sanctionsDetails
     }
 
     const transactionId = `T-${this.counter + 1}`
@@ -229,14 +218,16 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
       .filter((r) => !ZERO_HIT_RATE_RULE_IDS.includes(r.ruleInstanceId))
       .map((hitRule) => {
         if (hitRule.nature === 'SCREENING' && hitRule.ruleId === 'R-169') {
-          const sanctionsDetails = [
-            getSanctionsSearch(
-              originUser,
+          const sanctionsDetails: SanctionsDetails[] = [
+            ...getSanctionsSearch(
+              transaction.originPaymentDetails as PaymentDetails,
+              originUserId,
               hitRule.ruleInstanceId,
               transactionId
             ),
-            getSanctionsSearch(
-              destinationUser,
+            ...getSanctionsSearch(
+              transaction.destinationPaymentDetails as PaymentDetails,
+              destinationUserId,
               hitRule.ruleInstanceId,
               transactionId
             ),
