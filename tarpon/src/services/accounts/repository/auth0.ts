@@ -279,7 +279,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     tenantId: string,
     patch: Partial<Auth0TenantMetadata>
   ): Promise<Tenant> {
-    const tenant = await this.getTenantById(tenantId)
+    const tenant = await this.getTenantByIdInternal(tenantId)
 
     if (!tenant) {
       throw new createHttpError.NotFound(
@@ -294,7 +294,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
         { id: tenant?.orgId },
         {
           metadata: {
-            ...patch,
+            ...tenant.metadata,
             ...(patch.isProductionAccessDisabled != null && {
               isProductionAccessDisabled: patch.isProductionAccessDisabled
                 ? 'true'
@@ -338,7 +338,9 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     await userManager.delete({ id: account.id })
   }
 
-  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
+  async getTenantsInternal(
+    auth0Domain?: string
+  ): Promise<GetOrganizations200ResponseOneOfInner[]> {
     const domain = auth0Domain ?? this.auth0Domain
     const managementClient = await getAuth0ManagementClient(domain)
     const user = getContext()?.user
@@ -362,17 +364,27 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       morePagesAvailable = pagedOrganizations.total > organizations.length
     }
 
-    const tenants = organizations.map(organizationToTenant)
-
     if (envIsNot('prod') || !user?.allowedRegions) {
-      return tenants
+      return organizations
     }
 
-    return tenants
+    return organizations
+  }
+
+  async getTenants(auth0Domain?: string): Promise<Tenant[]> {
+    const tenants = await this.getTenantsInternal(auth0Domain)
+    return tenants.map(organizationToTenant)
   }
 
   async getTenantById(tenantId: string): Promise<Tenant | null> {
     const tenants = await this.getTenants()
+    return tenants.find((tenant) => tenant.id === tenantId) ?? null
+  }
+
+  private async getTenantByIdInternal(
+    tenantId: string
+  ): Promise<GetOrganizations200ResponseOneOfInner | null> {
+    const tenants = await this.getTenantsInternal()
     return tenants.find((tenant) => tenant.id === tenantId) ?? null
   }
 }

@@ -28,7 +28,8 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
     } else if (job.parameters.type === 'TENANT_IDS') {
       const tenantIds = job.parameters.tenantIds
       const accountsService = AccountsService.getInstance(
-        this.dynamoDb as DynamoDBClient
+        this.dynamoDb as DynamoDBClient,
+        false
       )
 
       for (const tenantId of tenantIds) {
