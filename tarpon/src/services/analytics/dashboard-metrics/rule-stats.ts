@@ -27,7 +27,6 @@ import {
 } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
 import { DEFAULT_PAGE_SIZE } from '@/utils/pagination'
-import { DashboardStatsRulesCount } from '@/@types/openapi-internal/DashboardStatsRulesCount'
 
 function getRuleStatsConditions(startDateText: string, endDateText: string) {
   return [
@@ -360,88 +359,77 @@ export class RuleHitsStatsDashboardMetric {
 
     // compiling the data as we do in the refreshstats above for mongo. Doing it once for clickhouse without storing the
     // data in a new table
+
     const transactionsQuery = `
-    WITH
-      arrayJoin(ruleInstancesHit) as ruleInstanceId,
-      JSONExtractString(data, 'hitRules') as hitRules
     SELECT 
-      ruleInstanceId,
-      JSONExtractString(arrayFirst(x -> JSONExtractString(x, 'ruleInstanceId') = ruleInstanceId, JSONExtractArrayRaw(data, 'hitRules')), 'ruleId') as ruleId,
+      arrayJoin(nonShadowHitRuleIdPairs).1 AS ruleInstanceId,
+      arrayJoin(nonShadowHitRuleIdPairs).2 AS ruleId,
       count() as hitCount
     FROM ${CLICKHOUSE_DEFINITIONS.TRANSACTIONS.tableName}
-    WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
-      AND JSONExtractBool(arrayFirst(x -> JSONExtractString(x, 'ruleInstanceId') = ruleInstanceId, JSONExtractArrayRaw(data, 'hitRules')), 'isShadow') != true
+    WHERE timestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
     GROUP BY ruleInstanceId, ruleId
   `
 
     const alertsQuery = `
     WITH
       arrayJoin(alerts) as alert
-  SELECT 
-    alert.ruleInstanceId as ruleInstanceId,
-    alert.ruleId as ruleId,
-    countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
-    countIf(alert.numberOfTransactionsHit = 0) as hitCount
-  FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
-  WHERE timestamp BETWEEN ${startTimestamp} AND ${endTimestamp}
-  GROUP BY ruleInstanceId, ruleId
+    SELECT 
+      alert.ruleInstanceId as ruleInstanceId,
+      alert.ruleId as ruleId,
+      countIf(alert.alertStatus != 'CLOSED') as openAlertsCount,
+      countIf(alert.numberOfTransactionsHit = 0) as hitCount
+    FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName}
+    WHERE alert.createdTimestamp BETWEEN '${startTimestamp}' AND '${endTimestamp}'
+    GROUP BY ruleInstanceId, ruleId
   `
 
     const finalQuery = `
-  WITH 
-    transactions AS (${transactionsQuery}),
-    alerts AS (${alertsQuery})
-  SELECT 
-    if(t.ruleId != '', t.ruleId, a.ruleId) as ruleId,
-    if(t.ruleInstanceId != '', t.ruleInstanceId, a.ruleInstanceId) as ruleInstanceId,
-    coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
-    a.openAlertsCount
-  FROM transactions t
-  FULL OUTER JOIN alerts a ON t.ruleInstanceId = a.ruleInstanceId
-  ORDER BY hitCount DESC
-  LIMIT ${limit}
-  OFFSET ${offset}
-  SETTINGS join_use_nulls = 1, output_format_json_quote_64bit_integers = 0
-`
-
-    const countQuery = `
-    WITH 
-      transactions AS (${transactionsQuery}),
-      alerts AS (${alertsQuery})
-    SELECT count() as total
-    FROM (
-      SELECT ruleInstanceId
-      FROM transactions
-      UNION DISTINCT
-      SELECT ruleInstanceId
-      FROM alerts
-      WHERE ruleInstanceId != ''
-    )
-  `
-
-    const [data, totalCount] = await Promise.all([
-      client
-        .query({
-          query: finalQuery,
-          format: 'JSONEachRow',
-        })
-        .then((res) => res.json<DashboardStatsRulesCount>()),
-      client
-        .query({
-          query: countQuery,
-          format: 'JSONEachRow',
-        })
-        .then((res) => res.json<{ total: number }>()),
-    ])
+      WITH 
+        transactions AS (${transactionsQuery}),
+        alerts AS (${alertsQuery}),
+        combined AS (
+          SELECT 
+            coalesce(NULLIF(t.ruleId, ''), NULLIF(a.ruleId, '')) as ruleId,
+            coalesce(NULLIF(t.ruleInstanceId, ''), NULLIF(a.ruleInstanceId, '')) as ruleInstanceId,
+            coalesce(t.hitCount, 0) + coalesce(a.hitCount, 0) as hitCount,
+            coalesce(a.openAlertsCount, 0) as openAlertsCount
+          FROM transactions t
+          FULL OUTER JOIN alerts a ON t.ruleInstanceId = a.ruleInstanceId AND t.ruleId = a.ruleId
+        ),
+        total_count AS (
+          SELECT count(*) as total FROM combined
+        )
+      SELECT 
+        ruleId,
+        ruleInstanceId,
+        hitCount,
+        openAlertsCount,
+        (SELECT total FROM total_count) as totalCount
+      FROM combined
+      ORDER BY hitCount DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `
+    console.log(finalQuery)
+    const data = await client.query({
+      query: finalQuery,
+      format: 'JSONEachRow',
+    })
+    const items = await data.json<{
+      ruleId: string
+      ruleInstanceId: string
+      hitCount: number
+      openAlertsCount: number
+      totalCount: number
+    }>()
 
     return {
-      data: data.map((row) => ({
-        ruleId: row.ruleId,
-        ruleInstanceId: row.ruleInstanceId,
-        hitCount: Number(row.hitCount ?? 0),
-        openAlertsCount: Number(row.openAlertsCount ?? 0),
+      data: items.map((item) => ({
+        ruleId: item.ruleId,
+        ruleInstanceId: item.ruleInstanceId,
+        hitCount: Number(item.hitCount ?? 0),
+        openAlertsCount: Number(item.openAlertsCount ?? 0),
       })),
-      total: Number(totalCount[0]?.total ?? 0),
+      total: Number(items[0]?.totalCount ?? 0),
     }
   }
 }

@@ -218,6 +218,16 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
           JSONExtractArrayRaw(data, 'hitRules')
         )
       )`,
+      `nonShadowHitRuleIdPairs Array(Tuple(ruleInstanceId String, ruleId String)) MATERIALIZED 
+        arrayMap(x -> (
+          JSONExtractString(x, 'ruleInstanceId'),
+          JSONExtractString(x, 'ruleId')
+        ),
+        arrayFilter(
+          x -> JSONExtractBool(x, 'isShadow') != true,
+          JSONExtractArrayRaw(data, 'hitRules')
+        )
+      )`,
       `nonShadowExecutedRules Array(String) MATERIALIZED arrayMap(
         x -> JSONExtractString(x, 'ruleInstanceId'),
         arrayFilter(
