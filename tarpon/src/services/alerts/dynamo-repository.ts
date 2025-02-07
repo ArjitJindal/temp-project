@@ -3,6 +3,7 @@ import {
   DeleteCommand,
   GetCommand,
   PutCommand,
+  TransactWriteCommand,
   UpdateCommand,
 } from '@aws-sdk/lib-dynamodb'
 import { StackConstants } from '@lib/constants'
@@ -212,21 +213,35 @@ export class DynamoAlertRepository {
       ':alertStatus': statusChange.caseStatus,
       ':empty_list': [],
     }
+    const chunks = alertIds.reduce((acc, alertId, i) => {
+      const chunkIndex = Math.floor(i / 25)
+      if (!acc[chunkIndex]) {
+        acc[chunkIndex] = []
+      }
+      acc[chunkIndex].push(alertId)
+      return acc
+    }, [] as string[][])
 
     await Promise.all(
-      alertIds.map(async (alertId) => {
-        const key = DynamoDbKeys.ALERT(this.tenantId, alertId)
-
+      chunks.map(async (chunk) => {
         await this.dynamoDb.send(
-          new UpdateCommand({
-            TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(this.tenantId),
-            Key: key,
-            UpdateExpression: updateExpression,
-            ExpressionAttributeValues: expressionAttributeValues,
+          new TransactWriteCommand({
+            TransactItems: chunk.map((alertId) => ({
+              Update: {
+                TableName: StackConstants.TARPON_DYNAMODB_TABLE_NAME(
+                  this.tenantId
+                ),
+                Key: DynamoDbKeys.ALERT(this.tenantId, alertId),
+                UpdateExpression: updateExpression,
+                ExpressionAttributeValues: expressionAttributeValues,
+              },
+            })),
           })
         )
 
-        await this.localChangeHandler(key)
+        await this.localChangeHandlerBatch(
+          chunk.map((alertId) => DynamoDbKeys.ALERT(this.tenantId, alertId))
+        )
       })
     )
   }
@@ -380,6 +395,20 @@ export class DynamoAlertRepository {
         '@/utils/local-dynamodb-change-handler'
       )
       await localTarponChangeCaptureHandler(this.tenantId, primaryKey)
+    }
+  }
+
+  private async localChangeHandlerBatch(
+    primaryKeys: {
+      PartitionKeyID: string
+      SortKeyID?: string
+    }[]
+  ) {
+    if (runLocalChangeHandler()) {
+      const { localTarponChangeCaptureHandlerBatch } = await import(
+        '@/utils/local-dynamodb-change-handler'
+      )
+      await localTarponChangeCaptureHandlerBatch(this.tenantId, primaryKeys)
     }
   }
 

@@ -57,12 +57,8 @@ import { envIsNot } from '@/utils/env'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { Comment } from '@/@types/openapi-internal/Comment'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
-import {
-  batchInsertToClickhouse,
-  insertToClickhouse,
-} from '@/utils/clickhouse/utils'
+import { batchInsertToClickhouse } from '@/utils/clickhouse/utils'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
-import { AlertClickhouse } from '@/services/alerts/clickhouse-repository'
 import { NangoRecord } from '@/@types/nango'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { getDynamoDbClient } from '@/utils/dynamodb'
@@ -439,21 +435,23 @@ async function alertHandler(tenantId: string, alert: Alert | undefined) {
   if (!alert || !alert.alertId) {
     return
   }
-  alert.updatedAt = Date.now()
-  logger.info(
-    '########## Alert Handler ##########',
-    alert.alertId,
-    alert.updatedAt
-  )
-  await insertToClickhouse<AlertClickhouse>(
-    CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
-    alert,
-    tenantId
-  )
+  // alert.updatedAt = Date.now()
+  // logger.info(
+  //   `########## Alert Handler ########## ${alert.alertId}, ${alert.updatedAt}`
+  // )
+  // await insertToClickhouse<AlertClickhouse>(
+  //   CLICKHOUSE_DEFINITIONS.ALERTS.tableName,
+  //   alert,
+  //   tenantId
+  // )
 }
 
 async function alertsHandler(tenantId: string, newAlerts: Array<Alert>) {
-  logger.info('########## Alerts Handler Group ##########', Date.now())
+  logger.info(
+    `########## Alerts Handler Group ########## ${Date.now()}, ${
+      newAlerts.length
+    }`
+  )
   newAlerts.forEach((alert) => {
     alert.updatedAt = Date.now()
   })
@@ -604,9 +602,17 @@ const tarponBuilder = new StreamConsumerBuilder(
 )
   .setConcurrentGroupBy((update) => {
     // We still process entities sequentially as it involes case creation
-    if (update.type === 'TRANSACTION' || update.type === 'USER') {
+    if (
+      update.type === 'TRANSACTION' ||
+      update.type === 'USER' ||
+      update.type === 'ALERT'
+    ) {
+      logger.info(
+        `########## Concurrent Group By ${update.entityId} ##########`
+      )
       return 'sequential-group'
     }
+    logger.info('########## Concurrent Group By ##########', update.entityId)
     // For events, we can process them concurrently
     return update.entityId ?? ''
   })
@@ -639,7 +645,7 @@ const tarponBuilder = new StreamConsumerBuilder(
     )
   )
   // Hammerhead Head change handlers
-  .setConcurrentGroupBy((update) => update.entityId ?? '')
+  // .setConcurrentGroupBy((update) => update.entityId ?? '')
   .setArsScoreEventHandler((tenantId, oldArsScore, newArsScore, dbClients) =>
     arsScoreEventHandler(tenantId, newArsScore, dbClients)
   )

@@ -288,6 +288,8 @@ export class StreamConsumerBuilder {
       updates,
       this.concurrentGroupBy ?? (() => 'sequential-group')
     )
+    // logger.info(`########## Updates ${JSON.stringify(updates)}, ${updates.length}, ${this.concurrentGroupBy ?? (() => 'sequential-group')} ##########`)
+    // logger.info(`########## Concurrent Groups ${JSON.stringify(concurrentGroups)}, ${Object.values(concurrentGroups).length} ##########`)
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
