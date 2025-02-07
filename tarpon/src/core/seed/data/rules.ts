@@ -1,8 +1,10 @@
 import { memoize } from 'lodash'
 import { getAccounts } from '../samplers/accounts'
 import { BaseSampler } from '../samplers/base'
+import { companies } from '../samplers/dictionary'
 import { getSLAPolicies } from './sla'
 import { RULES_SEED, TRANSACTION_RULES_SEED, USER_RULES_SEED } from './seeds'
+import { TXN_COUNT } from './transactions'
 import { ExecutedRulesResult } from '@/@types/openapi-public/ExecutedRulesResult'
 import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
@@ -1864,89 +1866,152 @@ export const consumerRules: ExecutedRulesResult[] = userRules().filter((rule) =>
 )
 
 export class RuleSampler extends BaseSampler<ExecutedRulesResult[]> {
-  entityRuleHitMap: Map<number, string[]>
-  entityIds: number[]
-  ruleToAssignWeight: ExecutedRulesResult[]
-  constructor(
-    seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
-    ruleToAssignWeight: ExecutedRulesResult[],
-    ruleHits: number[],
+  private entityToRuleHitsMap: Map<number, string[]> = new Map()
+  private availableRules: ExecutedRulesResult[] = []
+  private zeroHitRules: string[] = []
+  intalizeSampler(
+    availableRules: ExecutedRulesResult[],
+    hitPercentages: number[], // Array of hit percentages for rules (e.g. [50, 30, 20] means 50% hit rate for first group)
     entityCount: number,
-    shouldHaveZeroHit: boolean = false
+    shouldIncludeZeroHitRule: boolean = false
   ) {
-    super(seed)
+    // Validate that we don't have more hit percentages than entities
+    if (hitPercentages.length > entityCount) {
+      throw Error(
+        'Invalid argument: number of hit percentages cannot exceed entity count'
+      )
+    }
 
-    this.ruleToAssignWeight = ruleToAssignWeight
-    const totalWeight = ruleHits.reduce((sum, hits) => sum + 1 / hits, 0)
-    const ruleHitsPercentage = [
-      shouldHaveZeroHit ? 0 : 1 / ruleToAssignWeight.length,
-      ...ruleHits.map((hit) => 1 / (hit * totalWeight)),
+    // Sort hit percentages in descending order for consistent distribution
+    hitPercentages = hitPercentages.sort((a, b) => b - a)
+
+    // Initialize tracking of entities and their rule hit counts
+    // Key: number of rule hits, Value: array of entity IDs with that many hits
+    const entityHitCountMap = new Map<number, number[]>()
+    const allEntityIds: number[] = Array.from(
+      { length: entityCount },
+      (_, i) => i
+    )
+    // Initially all entities have 0 hits
+    entityHitCountMap.set(0, allEntityIds)
+
+    this.availableRules = availableRules
+
+    // Calculate distribution weights for rules
+    const totalDistributionWeight = hitPercentages.reduce(
+      (sum, hits) => sum + 1 / hits,
+      0
+    )
+    const ruleDistributionPercentages = [
+      // If zero-hit rules are required, allocate minimum percentage to ensure at least one rule has 0 hits
+      shouldIncludeZeroHitRule ? 1 / availableRules.length : 0,
+      // Calculate percentage for each hit rate group
+      ...hitPercentages.map(
+        (hitRate) => 1 / (hitRate * totalDistributionWeight)
+      ),
     ]
-    ruleHits = [0, ...ruleHits]
-    const ruleHitMap = new Map<string, number>()
+    hitPercentages = [0, ...hitPercentages]
 
-    ruleToAssignWeight.forEach((rule) => {
-      ruleHitMap.set(rule.ruleInstanceId ?? '', 3)
+    // Track hit rate for each rule
+    const ruleToHitRateMap = new Map<string, number>()
+    availableRules.forEach((rule) => {
+      ruleToHitRateMap.set(rule.ruleInstanceId ?? '', 3)
     })
 
-    const groups = this.divideIntoPercentage(
-      ruleToAssignWeight.map((rule) => rule.ruleInstanceId ?? ''),
-      ruleHitsPercentage
+    // Group rules by their hit percentages
+    const ruleGroups = this.divideIntoGroups(
+      availableRules.map((rule) => rule.ruleInstanceId ?? ''),
+      ruleDistributionPercentages
     )
-
-    groups.forEach((ele, i) => {
-      ele.forEach((id) => {
-        ruleHitMap.set(id, ruleHits[shouldHaveZeroHit ? i : i + 1])
+    ruleGroups.forEach((group, index) => {
+      group.forEach((ruleId) => {
+        if (hitPercentages[index] === 0) {
+          this.zeroHitRules.push(ruleId)
+        }
+        ruleToHitRateMap.set(ruleId, hitPercentages[index])
       })
     })
 
-    this.entityRuleHitMap = new Map()
-    this.entityIds = [...Array(entityCount)].map((_, i) => i)
-    ruleHitMap.forEach((value, key) => {
-      if (value !== 0) {
-        const entityToPick =
-          (value * entityCount) / 100 +
-          this.rng.randomIntInclusive(0, 0.02 * entityCount)
-        const pickedEntity = this.rng.randomSubsetOfSize(
-          this.entityIds,
-          entityToPick
-        )
-        pickedEntity.forEach((id) => {
-          if (this.entityRuleHitMap.has(id)) {
-            this.entityRuleHitMap.get(id)?.push(key)
-          } else {
-            this.entityRuleHitMap.set(id, [key])
-          }
-        })
+    // Initialize entity-rule mapping
+    this.entityToRuleHitsMap = new Map()
+
+    // Distribute rules to entities based on hit rates
+    ruleToHitRateMap.forEach((hitRate, ruleId) => {
+      if (hitRate === 0) {
+        return
       }
+
+      // Add small random variation to entity count for more realistic distribution
+      const randomVariation = this.rng.randomIntInclusive(
+        1,
+        Math.floor(0.009 * entityCount)
+      )
+      const targetEntityCount =
+        Math.floor((hitRate * entityCount) / 100) + randomVariation
+
+      const selectedEntities: number[] = this.rng.randomSubsetOfSize(
+        allEntityIds,
+        targetEntityCount
+      )
+
+      // Record rule assignments in entity-rule mapping
+      selectedEntities.forEach((entityId) => {
+        const existingRules = this.entityToRuleHitsMap.get(entityId) ?? []
+        this.entityToRuleHitsMap.set(entityId, [...existingRules, ruleId])
+      })
     })
   }
 
-  private divideIntoPercentage = <T>(
-    ids: T[],
-    weightToDivide: number[]
+  private divideIntoGroups = <T>(
+    items: T[],
+    groupPercentages: number[]
   ): T[][] => {
-    const unusedIds = new Set(ids)
+    const unassignedItems = new Set(items)
     const rng = new RandomNumberGenerator()
-    const dividedGroups: T[][] = []
+    const groups: T[][] = []
 
-    weightToDivide.forEach((weight) => {
-      const totalElements = ids.length * weight
-      const pickedElement = rng.randomSubsetOfSize(
-        Array.from(unusedIds),
-        totalElements
+    groupPercentages.forEach((percentage) => {
+      const groupSize = Math.ceil(items.length * percentage)
+      const selectedItems = rng.randomSubsetOfSize(
+        Array.from(unassignedItems),
+        groupSize
       )
-      dividedGroups.push(pickedElement)
-      pickedElement.forEach((id) => unusedIds.delete(id))
+      groups.push(selectedItems)
+      selectedItems.forEach((item) => unassignedItems.delete(item))
     })
 
-    return dividedGroups
+    return groups
   }
 
   generateSample(entityId: number): ExecutedRulesResult[] {
-    const ruleHitIds = this.entityRuleHitMap.get(entityId) ?? []
-    return this.ruleToAssignWeight.filter((rule) =>
-      ruleHitIds.includes(rule.ruleInstanceId ?? '')
+    const ruleIds = this.entityToRuleHitsMap.get(entityId) ?? []
+    return this.availableRules.filter((rule) =>
+      ruleIds.includes(rule.ruleInstanceId ?? '')
     )
+  }
+
+  getZeroHitRules(): string[] {
+    return this.zeroHitRules
+  }
+}
+
+export class ConsumerUserRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(consumerRules, [5, 6], 200, false)
+  }
+}
+
+export class BussinessUserRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(businessRules, [4, 5], companies.length, false)
+  }
+}
+
+export class TransactionRuleSampler extends RuleSampler {
+  constructor() {
+    super()
+    this.intalizeSampler(transactionRules(), [7, 8, 9, 10], TXN_COUNT, true)
   }
 }

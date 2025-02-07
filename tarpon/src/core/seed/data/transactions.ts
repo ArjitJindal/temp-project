@@ -23,12 +23,16 @@ import { getPaymentMethodId } from '@/core/dynamodb/dynamodb-keys'
 import { TRANSACTION_STATES } from '@/@types/openapi-internal-custom/TransactionState'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
 import { getAggregatedRuleStatus } from '@/services/rules-engine/utils'
-import { RuleSampler, transactionRules } from '@/core/seed/data/rules'
+import {
+  transactionRules,
+  TransactionRuleSampler,
+} from '@/core/seed/data/rules'
 import { ExecutedRulesResult } from '@/@types/openapi-internal/ExecutedRulesResult'
 import { TRANSACTION_TYPES } from '@/@types/openapi-public-custom/TransactionType'
 import { PaymentDetails } from '@/@types/tranasction/payment-type'
 import { envIs } from '@/utils/env'
 import { SanctionsDetails } from '@/@types/openapi-internal/SanctionsDetails'
+import { HitRulesDetails } from '@/@types/openapi-internal/HitRulesDetails'
 import { getPaymentDetailsName } from '@/utils/helpers'
 
 export const TXN_COUNT = process.env.SEED_TRANSACTIONS_COUNT
@@ -57,18 +61,10 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
   private transactionPairs: TransactionPair[]
   private userTransactionCount: Map<string, number>
   private transactionIndex: number
-  private ruleSampler: RuleSampler
+  private ruleSampler: TransactionRuleSampler = new TransactionRuleSampler()
 
   constructor(seed: number) {
     super(seed)
-
-    this.ruleSampler = new RuleSampler(
-      undefined,
-      transactionRules(),
-      [2, 5, 10, 13],
-      TXN_COUNT,
-      true
-    )
     this.userAccountMap = new Map<
       string,
       {
@@ -129,10 +125,8 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
     const type = this.rng.pickRandom(TRANSACTION_TYPES)
 
     // Hack in some suspended transactions for payment approvals
-    const hitRules: ExecutedRulesResult[] = this.ruleSampler.getSample(
-      undefined,
-      transactionIdForRule
-    )
+    const hitRules: ExecutedRulesResult[] =
+      this.ruleSampler.generateSample(transactionIdForRule)
 
     const numberoShadowRulesHit = (this.counter % 3) + 1
     const shadowRulesHit = hitRules
@@ -245,7 +239,7 @@ export class FullTransactionSampler extends BaseSampler<InternalTransaction> {
         if (
           hitRule.ruleHitMeta?.falsePositiveDetails?.isFalsePositive === true
         ) {
-          const modifiedHitRule = {
+          const modifiedHitRule: HitRulesDetails = {
             ...hitRule,
             ruleHitMeta: {
               ...hitRule.ruleHitMeta,

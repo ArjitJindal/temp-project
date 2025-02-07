@@ -17,7 +17,7 @@ import {
   TransactionRiskScoreSampler,
 } from './risk_score_components'
 import { BaseSampler } from './base'
-import { RandomNumberGenerator } from '@/core/seed/samplers/prng'
+import { RandomNumberGenerator } from './prng'
 import { USER_STATES } from '@/@types/openapi-internal-custom/UserState'
 import { KYC_STATUSS } from '@/@types/openapi-internal-custom/KYCStatus'
 import {
@@ -36,7 +36,14 @@ import {
   phoneNumber,
   AddressWithUsageSampler,
 } from '@/core/seed/samplers/address'
-import { consumerRules, RuleSampler, userRules } from '@/core/seed/data/rules'
+import {
+  businessRules,
+  BussinessUserRuleSampler,
+  consumerRules,
+  ConsumerUserRuleSampler,
+  RuleSampler,
+  userRules,
+} from '@/core/seed/data/rules'
 import { ACQUISITION_CHANNELS } from '@/@types/openapi-internal-custom/AcquisitionChannel'
 import dayjs from '@/utils/dayjs'
 import { Person } from '@/@types/openapi-internal/Person'
@@ -697,6 +704,7 @@ class DirectorSampler extends UserSampler<Promise<Person[]>> {
 export class BusinessUserSampler extends UserSampler<
   Promise<InternalBusinessUser>
 > {
+  private ruleSampler: RuleSampler = new BussinessUserRuleSampler()
   constructor(seed: number = Math.random() * Number.MAX_SAFE_INTEGER) {
     super(seed)
   }
@@ -825,13 +833,20 @@ export class BusinessUserSampler extends UserSampler<
       },
     }
 
+    const hitRulesFromSampler = this.ruleSampler
+      .generateSample(this.counter - 1)
+      .map((r) => ({ ...r, ruleHit: true }))
+    const hitRulesInstanceId = hitRulesFromSampler.map((r) => r.ruleInstanceId)
+    const executedRules = businessRules.map((r) => ({
+      ...r,
+      ruleHit: hitRulesInstanceId.includes(r.ruleInstanceId) ? true : false,
+    }))
+    const hitRules = this.sampleUserRules(user)
+
     this.assignKrsAndDrsScores(user) // TOOD: make this into a sampler
 
-    user.executedRules = this.sampleUserRules(user)
-    user.hitRules = user.executedRules.map((r) => ({
-      ...r,
-      ruleHit: true,
-    }))
+    user.executedRules = executedRules
+    user.hitRules = hitRules
 
     return user
   }
@@ -844,19 +859,12 @@ export class BusinessUserSampler extends UserSampler<
 export class ConsumerUserSampler extends UserSampler<
   Promise<InternalConsumerUser>
 > {
-  private ruleSampler: RuleSampler
+  private ruleSampler: RuleSampler = new ConsumerUserRuleSampler()
   constructor(
     seed: number = Math.random() * Number.MAX_SAFE_INTEGER,
     counter: number
   ) {
     super(seed, counter)
-    this.ruleSampler = new RuleSampler(
-      undefined,
-      consumerRules,
-      [2, 3],
-      200,
-      false
-    )
   }
   protected async generateSample(
     tenantId: string,
@@ -981,12 +989,19 @@ export class ConsumerUserSampler extends UserSampler<
       createdAt: timestamp,
     }
 
-    this.assignKrsAndDrsScores(user)
-    user.executedRules = this.sampleUserRules(user)
-    user.hitRules = user.executedRules.map((r) => ({
+    const hitRulesFromSampler = this.ruleSampler
+      .generateSample(this.counter - companies.length - 1)
+      .map((r) => ({ ...r, ruleHit: true }))
+    const hitRulesInstanceId = hitRulesFromSampler.map((r) => r.ruleInstanceId)
+    const hitRules = this.sampleUserRules(user)
+    const executedRules = consumerRules.map((r) => ({
       ...r,
-      ruleHit: true,
+      ruleHit: hitRulesInstanceId.includes(r.ruleInstanceId) ? true : false,
     }))
+
+    this.assignKrsAndDrsScores(user)
+    user.executedRules = executedRules
+    user.hitRules = hitRules
 
     return user
   }
