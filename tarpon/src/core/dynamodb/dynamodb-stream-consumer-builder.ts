@@ -290,6 +290,11 @@ export class StreamConsumerBuilder {
     )
     // logger.info(`########## Updates ${JSON.stringify(updates)}, ${updates.length}, ${this.concurrentGroupBy ?? (() => 'sequential-group')} ##########`)
     // logger.info(`########## Concurrent Groups ${JSON.stringify(concurrentGroups)}, ${Object.values(concurrentGroups).length} ##########`)
+    logger.info(
+      `########## Concurrent Groups ${
+        Object.values(concurrentGroups).length
+      } ##########`
+    )
     await Promise.all(
       Object.values(concurrentGroups).map(async (groupUpdates) => {
         for (const update of groupUpdates) {
@@ -491,6 +496,11 @@ export class StreamConsumerBuilder {
         Object.entries(groups).map(async (entry) => {
           const tenantId = entry[0]
           const tenantUpdates = entry[1]
+          logger.info(
+            `########## Tenant Updates ${JSON.stringify(tenantUpdates)}, ${
+              tenantUpdates.length
+            } ##########`
+          )
           await this.handleSqsDynamoUpdates(tenantId, tenantUpdates)
         })
       )
@@ -520,6 +530,11 @@ export class StreamConsumerBuilder {
         dynamoDb: getDynamoDbClient(),
         mongoDb: await getMongoDbClient(),
       }
+      logger.info(
+        `########## Updates ${JSON.stringify(updates)}, ${
+          updates.length
+        } ##########`
+      )
       await initializeTenantContext(tenantId)
       await this.handleDynamoDbUpdates(updates, dbClients)
     })
@@ -529,6 +544,11 @@ export class StreamConsumerBuilder {
     tenantId: string,
     updates: DynamoDbEntityUpdate[]
   ) {
+    logger.info(
+      `########## Kinesis Updates ${JSON.stringify(updates)}, ${
+        updates.length
+      } ##########`
+    )
     const tableName = this.getTableName(tenantId)
     await withContext(async () => {
       const dbClients: DbClients = {

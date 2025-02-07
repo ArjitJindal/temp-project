@@ -74,6 +74,9 @@ export async function bulkSendMessages(
   rawBatchRequestEntries: Array<Omit<SendMessageBatchRequestEntry, 'Id'>>,
   onBatchSent?: (batch: SendMessageBatchRequestEntry[]) => Promise<void>
 ) {
+  logger.info(
+    `########## Raw Batch Request Entries ${rawBatchRequestEntries.length} ##########`
+  )
   if (rawBatchRequestEntries.length === 0) {
     return
   }
@@ -91,7 +94,11 @@ export async function bulkSendMessages(
   // Helper function to calculate the byte size of an entry
   const getEntrySize = (entry: SendMessageBatchRequestEntry): number =>
     Buffer.byteLength(JSON.stringify(entry), 'utf8')
-
+  logger.info(
+    `########## Batch Request Entries ${JSON.stringify(batchRequestEntries)}, ${
+      batchRequestEntries.length
+    } ##########`
+  )
   // Group entries into batches that don't exceed MAX_BATCH_SIZE_BYTES and MAX_BATCH_SIZE_COUNT
   const batches = reduce(
     batchRequestEntries,
@@ -123,6 +130,9 @@ export async function bulkSendMessages(
   )
 
   for (const batch of batches) {
+    logger.info(
+      `########## Batch ${JSON.stringify(batch)}, ${batch.length} ##########`
+    )
     await sqsClient.send(
       new SendMessageBatchCommand({
         QueueUrl: queueUrl,
