@@ -154,6 +154,12 @@ export const genericJobRunnerHandler = async (job: BatchJobWithId) => {
     await jobRepository.updateJobStatus(job.jobId, 'FAILED')
     throw error
   }
+
+  logger.debug(`Job ${job.jobId} completed`, {
+    jobId: job.jobId,
+    type: job.type,
+    tenantId: job.tenantId,
+  })
 }
 
 export const jobRunnerHandler = lambdaConsumer()(genericJobRunnerHandler)

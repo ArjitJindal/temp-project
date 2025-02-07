@@ -3,6 +3,7 @@ import {
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
 import { NotFound } from 'http-errors'
+import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
 import { AutoNarrativeService } from '@/services/copilot/auto-narrative-service'
@@ -112,8 +113,19 @@ export const copilotHandler = lambdaApi({})(
     handlers.registerGetQuestionAutocomplete(async (ctx, request) => {
       const autocomplete = new AutocompleteService()
       const c = await caseService.getCaseByAlertId(request.alertId)
+      const alert = c?.alerts?.find((a) => a.alertId === request.alertId)
+      const suggestions = autocomplete.autocomplete(request.question || '', c)
+
+      if (alert?.ruleNature !== 'SCREENING') {
+        return { suggestions }
+      }
+
       return {
-        suggestions: autocomplete.autocomplete(request.question || '', c),
+        suggestions: suggestions.filter(
+          (s) =>
+            !COPILOT_QUESTIONS.CLEARED_HITS.includes(s) &&
+            !COPILOT_QUESTIONS.OPEN_HITS.includes(s)
+        ),
       }
     })
 
