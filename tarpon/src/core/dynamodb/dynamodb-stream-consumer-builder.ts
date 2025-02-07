@@ -3,7 +3,6 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { MongoClient } from 'mongodb'
 import { groupBy } from 'lodash'
 import {
-  hasFeature,
   initializeTenantContext,
   updateLogMetadata,
   withContext,
@@ -13,7 +12,6 @@ import { NangoRecord } from '../../@types/nango'
 import {
   DynamoDbEntityUpdate,
   getDynamoDbUpdates,
-  savePartitionKey,
 } from './dynamodb-stream-utils'
 import { ALERT_COMMENT_KEY_IDENTIFIER, ALERT_ID_PREFIX } from './dynamodb-keys'
 import { TransactionWithRulesResult } from '@/@types/openapi-public/TransactionWithRulesResult'
@@ -25,14 +23,14 @@ import { ArsScore } from '@/@types/openapi-internal/ArsScore'
 import { DrsScore } from '@/@types/openapi-internal/DrsScore'
 import { KrsScore } from '@/@types/openapi-internal/KrsScore'
 import { RuleInstance } from '@/@types/openapi-public-management/RuleInstance'
-import { bulkSendMessages, getSQSClient } from '@/utils/sns-sqs-client'
-import { envIs, envIsNot } from '@/utils/env'
+// import { getSQSClient } from '@/utils/sns-sqs-client'
+import { envIsNot } from '@/utils/env'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { UserWithRulesResult } from '@/@types/openapi-internal/UserWithRulesResult'
 import { BusinessWithRulesResult } from '@/@types/openapi-internal/BusinessWithRulesResult'
 import { AverageArsScore } from '@/@types/openapi-internal/AverageArsScore'
 import { acquireLock, releaseLock } from '@/utils/lock'
-import { generateChecksum } from '@/utils/object'
+// import { generateChecksum } from '@/utils/object'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { FileInfo } from '@/@types/openapi-internal/FileInfo'
 import { Comment } from '@/@types/openapi-internal/Comment'
@@ -144,7 +142,7 @@ type AlertFileHandler = (
 ) => Promise<void>
 type ConcurrentGroupBy = (update: DynamoDbEntityUpdate) => string
 
-const sqsClient = getSQSClient()
+// const sqsClient = getSQSClient()
 
 export class StreamConsumerBuilder {
   name: string
@@ -512,10 +510,8 @@ export class StreamConsumerBuilder {
       const updates = getDynamoDbUpdates(event)
       const groups = groupBy(updates, (update) => update.tenantId)
       await Promise.all(
-        Object.entries(groups).map(async (entry) => {
-          const tenantId = entry[0]
-          const tenantUpdates = entry[1]
-          await this.handleKinesisDynamoUpdates(tenantId, tenantUpdates)
+        Object.entries(groups).map(async () => {
+          await this.handleKinesisDynamoUpdates()
         })
       )
     }
@@ -540,58 +536,56 @@ export class StreamConsumerBuilder {
     })
   }
 
-  private async handleKinesisDynamoUpdates(
-    tenantId: string,
-    updates: DynamoDbEntityUpdate[]
-  ) {
-    logger.info(
-      `########## Kinesis Updates ${JSON.stringify(updates)}, ${
-        updates.length
-      } ##########`
-    )
-    const tableName = this.getTableName(tenantId)
-    await withContext(async () => {
-      const dbClients: DbClients = {
-        dynamoDb: getDynamoDbClient(),
-        mongoDb: await getMongoDbClient(),
-      }
-      await initializeTenantContext(tenantId)
-      const filteredUpdates = updates.filter(Boolean)
-      await Promise.all(
-        filteredUpdates.map(async (update) => {
-          /**   Store DynamoDB Keys in MongoDB * */
-          if (
-            update.NewImage &&
-            !update.NewImage.ttl &&
-            !tableName.includes(tenantId) // Stands for Silo Tables
-          ) {
-            await savePartitionKey(
-              update.tenantId,
-              update.partitionKeyId,
-              tableName
-            )
-          }
-        })
-      )
+  private async handleKinesisDynamoUpdates() {
+    return
+    //   logger.info(
+    //     `########## Kinesis Updates ${JSON.stringify(updates)}, ${
+    //       updates.length
+    //     } ##########`
+    //   )
+    //   const tableName = this.getTableName(tenantId)
+    //   await withContext(async () => {
+    //     const dbClients: DbClients = {
+    //       dynamoDb: getDynamoDbClient(),
+    //       mongoDb: await getMongoDbClient(),
+    //     }
+    //     await initializeTenantContext(tenantId)
+    //     const filteredUpdates = updates.filter(Boolean)
+    //     await Promise.all(
+    //       filteredUpdates.map(async (update) => {
+    //         /**   Store DynamoDB Keys in MongoDB * */
+    //         if (
+    //           update.NewImage &&
+    //           !update.NewImage.ttl &&
+    //           !tableName.includes(tenantId) // Stands for Silo Tables
+    //         ) {
+    //           await savePartitionKey(
+    //             update.tenantId,
+    //             update.partitionKeyId,
+    //             tableName
+    //           )
+    //         }
+    //       })
+    //     )
 
-      if (envIs('local', 'test')) {
-        await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
-        return
-      }
+    //     if (envIs('local', 'test')) {
+    //       await this.handleDynamoDbUpdates(filteredUpdates, dbClients)
+    //       return
+    //     }
 
-      const entries = filteredUpdates
-        .filter((update) => update.type && !update.NewImage?.ttl)
-        .map((update) => ({
-          MessageBody: JSON.stringify(update),
-          MessageGroupId: hasFeature('CONCURRENT_DYNAMODB_CONSUMER')
-            ? generateChecksum(update.entityId, 10)
-            : generateChecksum(update.tenantId, 10),
-          MessageDeduplicationId: `${generateChecksum(
-            update.entityId,
-            10
-          )}-${generateChecksum(update.sequenceNumber, 10)}`,
-        }))
-      await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
-    })
+    //     const entries = filteredUpdates
+    //       .filter((update) => update.type && !update.NewImage?.ttl)
+    //       .map((update) => ({
+    //         MessageBody: JSON.stringify(update),
+    //         MessageGroupId: hasFeature('CONCURRENT_DYNAMODB_CONSUMER')
+    //           ? generateChecksum(update.entityId, 10)
+    //           : generateChecksum(update.tenantId, 10),
+    //         MessageDeduplicationId: `${generateChecksum(
+    //           update.entityId,
+    //           10
+    //         )}-${generateChecksum(update.sequenceNumber, 10)}`,
+    //       }))
+    //     await bulkSendMessages(sqsClient, this.fanOutSqsQueue, entries)
+    //   })
   }
 }
