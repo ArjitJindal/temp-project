@@ -54,29 +54,51 @@ describe('Case Creation test', () => {
       );
 
       cy.publicApiHandler('POST', 'transactions', requestBody);
-      cy.visit(
-        '/case-management/cases?caseStatus=OPEN%2CREOPENED%2CCLOSED%2CESCALATED%2CIN_REVIEW%2CIN_PROGRESS',
-      );
-      cy.intercept('GET', '**/cases**').as('case');
 
-      cy.wait('@case').then((interception) => {
-        expect(interception.response?.statusCode).to.eq(200);
-      });
+      const baseWaitTime = 3000;
 
-      cy.wait('@getRuleWithAlerts').then((interception) => {
-        expect(interception.response?.statusCode).to.eq(200);
-      });
+      const checkForCreatedCase = (attempt = 1, baseWaitTime = 3000) => {
+        if (attempt > 5) {
+          throw new Error('Failed to find created case after 5 attempts');
+        }
+        const waitTime = baseWaitTime * Math.pow(2, attempt - 1);
+        // eslint-disable-next-line cypress/no-unnecessary-waiting
+        cy.wait(waitTime); // Give it some time to create the case
+        cy.visit(
+          '/case-management/cases?caseStatus=OPEN%2CREOPENED%2CCLOSED%2CESCALATED%2CIN_REVIEW%2CIN_PROGRESS',
+        );
+        cy.intercept('GET', '**/cases**').as('case');
 
-      // eslint-disable-next-line cypress/no-unnecessary-waiting
-      cy.wait(3000); // Give it some time to create the case
+        cy.wait('@case').then((interception) => {
+          expect(interception.response?.statusCode).to.eq(200);
+        });
 
-      cy.get('[data-cy="rules-filter"]').filter(':contains("Rules")').eq(0).should('exist').click();
-      cy.get('.ant-popover .ant-select-selector')
-        .should('exist')
-        .first()
-        .click()
-        .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`)
-        .click();
+        cy.wait('@getRuleWithAlerts').then((interception) => {
+          expect(interception.response?.statusCode).to.eq(200);
+          const ruleIds = interception.response?.body ?? [];
+          // checking if ruleIds is an array of string
+          expect(Array.isArray(ruleIds)).to.be.true;
+          expect(ruleIds.every((id) => typeof id === 'string')).to.be.true;
+          if (!ruleIds.includes(ruleInstanceId)) {
+            checkForCreatedCase(attempt + 1, baseWaitTime);
+            return;
+          }
+
+          cy.get('[data-cy="rules-filter"]')
+            .filter(':contains("Rules")')
+            .eq(0)
+            .should('exist')
+            .click();
+          cy.get('.ant-popover .ant-select-selector')
+            .should('exist')
+            .first()
+            .click()
+            .type(`${ruleName} ${ruleInstanceId} (R-2){enter}`)
+            .click();
+        });
+      };
+
+      checkForCreatedCase(1, baseWaitTime);
 
       cy.contains(originUserId).should('exist');
       cy.contains(destinationUserId).should('exist');
