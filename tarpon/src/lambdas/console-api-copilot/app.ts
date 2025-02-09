@@ -116,7 +116,7 @@ export const copilotHandler = lambdaApi({})(
       const alert = c?.alerts?.find((a) => a.alertId === request.alertId)
       const suggestions = autocomplete.autocomplete(request.question || '', c)
 
-      if (alert?.ruleNature !== 'SCREENING') {
+      if (alert?.ruleNature === 'SCREENING') {
         return { suggestions }
       }
 
