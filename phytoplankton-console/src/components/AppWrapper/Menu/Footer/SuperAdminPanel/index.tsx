@@ -61,7 +61,6 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     description: 'Demo feature for false positive check',
   },
   DEMO_MODE: { title: 'Demo mode', description: 'Enables demo mode' },
-  DEMO_RULES: { title: 'Demo rules', description: 'Enable demo rules, they don’t work actually' },
   SIMULATOR: { title: 'Simulator', description: 'Enables simulator for rules & risk levels' },
   CRM: {
     title: "CRM (Experimental Don't Use)",
