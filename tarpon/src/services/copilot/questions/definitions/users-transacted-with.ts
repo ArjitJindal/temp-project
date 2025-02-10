@@ -52,6 +52,8 @@ export const UsersTransactedWith: TableQuestion<
     let total = 0
 
     if (isClickhouseEnabled()) {
+      const derivedPageSize = pageSize || 20
+      const derivedPage = page || 1
       const paginationQuery = `
       SELECT 
         COUNT(*) AS count
@@ -74,8 +76,8 @@ export const UsersTransactedWith: TableQuestion<
       GROUP BY ${otherUserIdKey} 
       ORDER BY 
           count DESC 
-      LIMIT ${pageSize} 
-      OFFSET ${((page || 1) - 1) * (pageSize || 0)}
+      LIMIT ${derivedPageSize} 
+      OFFSET ${(derivedPage - 1) * derivedPageSize}
   ), 
   users_data AS (
       SELECT 
