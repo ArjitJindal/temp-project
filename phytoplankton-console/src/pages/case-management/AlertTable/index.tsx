@@ -657,10 +657,10 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
             : []),
           ...((isInReview
             ? [
-                helper.simple<'alertStatus'>({
+                helper.simple<'proposedAction'>({
                   title: 'Proposed action',
                   tooltip: 'Proposed action for the case',
-                  key: 'alertStatus',
+                  key: 'proposedAction',
                   type: {
                     render: (alertStatus) => {
                       return alertStatus ? (

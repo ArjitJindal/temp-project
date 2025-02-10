@@ -161,6 +161,7 @@ function presentAlertData(data: AlertListResponseItem[]): TableAlertItem[] {
         reasons: alert.lastStatusChange?.reason ?? [],
         otherReason: alert.lastStatusChange?.otherReason ?? null,
       },
+      proposedAction: alert.lastStatusChange?.caseStatus,
     };
   });
 }
