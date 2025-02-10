@@ -328,13 +328,17 @@ export const AggregationVariableFormContent: React.FC<
       }
     } else if (entityVariable?.key === 'TRANSACTION:transactionId') {
       options.push({ value: 'COUNT', label: 'Count' });
+      // we can use unique values for transaction id only if Last N is selected
+      if (formValues.lastNEntities) {
+        options.push({ value: 'UNIQUE_VALUES', label: 'Unique values' });
+      }
     } else if (entityVariable?.valueType === 'string') {
       options.push(...uniqueAggregationOptions);
     } else if (tagsVariableRegex.test(entityVariable?.key ?? '')) {
       options.push(...uniqueAggregationOptions);
     }
     return options;
-  }, [entityVariables, formValues.aggregationFieldKey]);
+  }, [entityVariables, formValues.aggregationFieldKey, formValues.lastNEntities]);
   const timeWindowValidationError = useMemo<ReactNode>(() => {
     return validateAggregationTimeWindow(formValues.timeWindow);
   }, [formValues.timeWindow]);
