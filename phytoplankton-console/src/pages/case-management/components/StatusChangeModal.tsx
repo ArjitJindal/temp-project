@@ -81,7 +81,7 @@ export default function StatusChangeModal(props: Props) {
     () => ({
       ...DEFAULT_INITIAL_VALUES,
       ...props.initialValues,
-      defaultReasons,
+      reasons: defaultReasons ?? [],
     }),
     [props.initialValues, defaultReasons],
   );
