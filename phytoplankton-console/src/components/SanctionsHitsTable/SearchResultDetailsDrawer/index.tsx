@@ -1,6 +1,6 @@
 import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
-import { compact, difference, groupBy, startCase, uniq } from 'lodash';
+import { compact, difference, groupBy, isEqual, startCase, uniq } from 'lodash';
 import { humanizeAuto, humanizeSnakeCase } from '@flagright/lib/utils/humanize';
 import { COUNTRIES } from '@flagright/lib/constants';
 import { COUNTRY_ALIASES } from '@flagright/lib/constants/countries';
@@ -291,27 +291,42 @@ export function CAEntityDetails(props: { entity: SanctionsEntity; pdfMode?: bool
           <Form.Layout.Label title={'Entity type'}>
             {startCase(entity?.entityType?.toLowerCase())}
           </Form.Layout.Label>
-          {entity.yearOfBirth && (entity.dateOfBirths?.length ?? 0) === 0 && (
+          {isEqual(entity.yearOfBirth, entity.dateOfBirths) ? (
             <Form.Layout.Label
-              key={entity.yearOfBirth[0]}
+              key={entity.yearOfBirth?.[0]}
               title={
                 isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
               }
             >
-              {entity.yearOfBirth.length > 0 ? entity.yearOfBirth.join(', ') : '-'}
+              {entity?.yearOfBirth?.length ? entity.yearOfBirth.join(', ') : '-'}
             </Form.Layout.Label>
+          ) : (
+            <>
+              {entity.yearOfBirth && (
+                <Form.Layout.Label
+                  key={entity.yearOfBirth[0]}
+                  title={
+                    isHitEntityPerson(entity.entityType) ? 'Year of Birth' : 'Year of Incorporation'
+                  }
+                >
+                  {(entity?.yearOfBirth?.length ?? 0) > 0 ? entity.yearOfBirth.join(', ') : '-'}
+                </Form.Layout.Label>
+              )}
+              {(entity.dateOfBirths?.length ?? 0) > 0 &&
+                entity.yearOfBirth &&
+                difference(entity.dateOfBirths, entity.yearOfBirth).length > 0 && (
+                  <Form.Layout.Label
+                    title={
+                      isHitEntityPerson(entity.entityType)
+                        ? 'Date of birth'
+                        : 'Date of incorporation'
+                    }
+                  >
+                    {difference(entity.dateOfBirths, entity.yearOfBirth).join(', ')}
+                  </Form.Layout.Label>
+                )}
+            </>
           )}
-          {(entity.dateOfBirths?.length ?? 0) > 0 &&
-            entity.yearOfBirth &&
-            difference(entity.dateOfBirths, entity.yearOfBirth).length > 0 && (
-              <Form.Layout.Label
-                title={
-                  isHitEntityPerson(entity.entityType) ? 'Date of birth' : 'Date of incorporation'
-                }
-              >
-                {entity.dateOfBirths?.join(', ')}
-              </Form.Layout.Label>
-            )}
           {entity.countries && entity.countries.length > 0 && (
             <Form.Layout.Label key={entity.countries?.join(',')} title={'Country'}>
               <div className={s.countryList}>
