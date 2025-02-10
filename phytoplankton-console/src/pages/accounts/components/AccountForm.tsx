@@ -5,6 +5,7 @@ import s from './styles.module.less';
 import { useIsInviteDisabled } from './utils';
 import { RoleSelect } from './RoleSelect';
 import SecondPersonFields, { SecondPerson } from './SecondPersonFields';
+import * as ArrayUtils from '@/utils/array';
 import { message } from '@/components/library/Message';
 import Button from '@/components/library/Button';
 import { useApi } from '@/api';
@@ -24,6 +25,7 @@ import { and } from '@/components/library/Form/utils/validation/combinators';
 import Alert from '@/components/library/Alert';
 import { getOr } from '@/utils/asyncResource';
 import AsyncResourceRenderer from '@/components/utils/AsyncResourceRenderer';
+import FormValidationErrors from '@/components/library/Form/utils/validation/FormValidationErrors';
 
 interface Props {
   editAccount: Account | null;
@@ -65,10 +67,17 @@ export default function AccountForm(props: Props) {
 
   const isEdit = editAccount !== null;
 
+  const accountId = editAccount?.id;
+
   const isInviteDisabled = useIsInviteDisabled();
 
   const isEscalationsEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const isMultiEscalationsEnabled = useFeatureEnabled('MULTI_LEVEL_ESCALATION');
+
+  const isReviewerIdAlreadyUsed =
+    isEdit && accounts.some((account) => account.reviewerId === accountId);
+  const isEscalationV2AlreadyUsed =
+    isEdit && accounts.some((account) => account.escalationReviewerId === accountId);
 
   const defaultValues = useMemo((): FormValues => {
     if (editAccount) {
@@ -183,22 +192,12 @@ export default function AccountForm(props: Props) {
     },
   );
 
-  const accountId = editAccount?.id;
-
   const editMutation = useMutation<unknown, unknown, FormValues>(
     async (payload) => {
       const hide = message.loading('Updating account...');
       try {
         if (accountId == null) {
           throw new Error(`Account id for editing can not be empty`);
-        }
-
-        // If any account already has this reviewerId, then we should not allow to change it
-        const isReviewerIdAlreadyUsed = accounts.some(
-          (account) => account.reviewerId === accountId,
-        );
-        if (isReviewerIdAlreadyUsed && payload.reviewPermissions === 'CHECKER') {
-          throw new Error('This checker is already assigned to a maker');
         }
 
         let escalationLevel: EscalationLevel | undefined = undefined;
@@ -333,6 +332,20 @@ export default function AccountForm(props: Props) {
         className={s.container}
         onSubmit={handleSubmit}
         alwaysShowErrors={showErrors}
+        formValidators={[
+          isReviewerIdAlreadyUsed &&
+            ((values) => {
+              return values?.reviewPermissions !== 'CHECKER'
+                ? 'This checker is already assigned to a maker'
+                : null;
+            }),
+          isEscalationV2AlreadyUsed &&
+            ((values) => {
+              return values?.reviewPermissions !== 'ESCALATION_L2'
+                ? 'This checker is already assigned to a maker'
+                : null;
+            }),
+        ].filter(ArrayUtils.notEmpty)}
         fieldValidators={({ values }) => ({
           email: and([notEmpty, email]),
           role: notEmpty,
@@ -498,6 +511,7 @@ export default function AccountForm(props: Props) {
                 }
               </AsyncResourceRenderer>
             )}
+            <FormValidationErrors />
           </>
         )}
       </Form>
