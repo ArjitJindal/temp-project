@@ -102,6 +102,7 @@ const useOptions = (props: Props) => {
       canReviewCases({ [caseId]: caseItem }, currentUser.userId)
     );
   }, [isMultiLevelEscalationEnabled, caseId, caseItem, currentUser, currentUserAccount]);
+
   return [
     ...(escalationEnabled &&
     !isReview &&

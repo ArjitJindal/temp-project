@@ -1043,6 +1043,18 @@ export default function CaseTable<FirstModalProps, SecondModalProps>(
                     status: caseClosedBefore ? 'REOPENED' : 'OPEN',
                     actionLabel: 'Send back',
                   },
+                  ESCALATED_L2: {
+                    status: 'ESCALATED',
+                    actionLabel: 'Send back',
+                  },
+                  ESCALATED_L2_IN_PROGRESS: {
+                    status: 'ESCALATED',
+                    actionLabel: 'Send back',
+                  },
+                  ESCALATED_L2_ON_HOLD: {
+                    status: 'ESCALATED',
+                    actionLabel: 'Send back',
+                  },
                 }}
                 updateModalState={(modalState) => {
                   updateFirstModalState(modalState as FirstModalProps);

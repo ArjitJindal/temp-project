@@ -1305,11 +1305,15 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
         selectedItems,
         'ESCALATED_L2',
       );
-      const caseId = params.caseId;
+
+      const selectedCaseIds = getSelectedCaseIdsForAlerts(selectedItems);
+      const selectedCaseId = selectedCaseIds.length === 1 ? selectedCaseIds[0] : undefined;
+      const caseId = params.caseId ?? selectedCaseId;
       const status = selectedItems[selectedIds[0]]?.alertStatus;
       const canMutateEscalatedL2Cases =
         canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) &&
         userAccount?.escalationLevel === 'L2';
+
       if (
         !escalationEnabled ||
         !caseId ||
@@ -1395,6 +1399,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
         'ESCALATED_L2',
       );
       const isReviewAlerts = isInReviewCases(selectedItems, true);
+
       if (
         !isAllAlertsOfStatusEscalated ||
         !canMutateEscalatedCases(selectedItems, user.userId, isMultiEscalationEnabled) ||
