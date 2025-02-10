@@ -46,6 +46,7 @@ interface Props {
 
 export const SearchBar = (props: Props) => {
   const { searchMutation, alertId, history } = props;
+  const isClickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const [showMore, setShowMore] = useState<boolean>(false);
   const [isDemoModeRes] = useDemoMode();
   const isDemoMode = getOr(isDemoModeRes, false);
@@ -86,6 +87,10 @@ export const SearchBar = (props: Props) => {
     }
   }, [isResponseReceived]);
   const searchInputText = highlightedSuggestion ?? searchText;
+
+  if (!isClickhouseEnabled) {
+    return null;
+  }
 
   return (
     <div className={s.root}>

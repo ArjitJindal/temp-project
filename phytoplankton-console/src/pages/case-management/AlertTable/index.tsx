@@ -162,6 +162,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
   const escalationEnabled = useFeatureEnabled('ADVANCED_WORKFLOWS');
   const sarEnabled = useFeatureEnabled('SAR');
   const slaEnabled = useFeatureEnabled('ALERT_SLA');
+  const clickhouseEnabled = useFeatureEnabled('CLICKHOUSE_ENABLED');
   const [qaMode] = useQaMode();
   const qaEnabled = useQaEnabled();
   const api = useApi();
@@ -795,7 +796,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
                       />
                     </div>
                   )}
-                  {handleInvestigateAlert && (
+                  {handleInvestigateAlert && clickhouseEnabled && (
                     <Link
                       to={makeUrl(
                         location.pathname,
@@ -940,6 +941,7 @@ export default function AlertTable<ModalProps>(props: Props<ModalProps>) {
     selectedTxns,
     qaEnabled,
     slaEnabled,
+    clickhouseEnabled,
     slaPolicies.items,
     qaMode,
     caseId,
