@@ -615,7 +615,7 @@ You have to answer in below format as string. If you don't know any field, just 
         v.timeWindow.end as TimeWindow
       )
       if (
-        afterTimestamp >= beforeTimestamp ||
+        afterTimestamp > beforeTimestamp ||
         (!canAggregate(v.timeWindow) &&
           dayjs(beforeTimestamp).diff(afterTimestamp, 'minute') > 60)
       ) {

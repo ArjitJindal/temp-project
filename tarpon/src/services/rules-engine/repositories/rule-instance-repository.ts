@@ -11,11 +11,12 @@ import {
   UpdateCommand,
   UpdateCommandInput,
 } from '@aws-sdk/lib-dynamodb'
-import { uniq, isEmpty, uniqBy } from 'lodash'
+import { uniq, isEmpty, uniqBy, groupBy } from 'lodash'
 import dayjsLib from '@flagright/lib/utils/dayjs'
 import pMap from 'p-map'
+import { replaceMagicKeyword } from '@flagright/lib/utils'
 import { isV2RuleInstance } from '../utils'
-import { getMigratedV8Config, RuleMigrationConfig } from '../v8-migrations'
+import { getMigratedV8Config } from '../v8-migrations'
 import { DynamoDbKeys } from '@/core/dynamodb/dynamodb-keys'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { paginateQuery } from '@/utils/dynamodb'
@@ -152,81 +153,97 @@ export class RuleInstanceRepository {
   }
 
   public getV8PropsForV2RuleInstance(ruleInstance: RuleInstance) {
-    const ruleId = ruleInstance.ruleId
-    let migratedData: RuleMigrationConfig | null = null
-    let v2RiskLevelLogic: RuleInstance['riskLevelLogic']
-    let baseCurrency = ruleInstance.baseCurrency
-    let logicAggregationVariables: LogicAggregationVariable[] = []
-
-    const v2RuleInstance = isV2RuleInstance(ruleInstance)
-    if (!v2RuleInstance) {
+    if (!isV2RuleInstance(ruleInstance)) {
       throw new Error('Rule instance is not a v2 rule instance')
     }
+    const ruleId = ruleInstance.ruleId
     if (!ruleId) {
       throw new Error('Rule ID is required for v2 rule instance')
     }
 
+    // Use default parameters if empty
     if (isEmpty(ruleInstance.parameters)) {
       ruleInstance.parameters =
         ruleInstance.riskLevelParameters?.[DEFAULT_RISK_LEVEL]
     }
 
-    migratedData = getMigratedV8Config(
+    const migratedData = getMigratedV8Config(
       ruleId,
       ruleInstance.parameters,
       ruleInstance.filters
     )
-
-    logicAggregationVariables.push(
-      ...(migratedData?.logicAggregationVariables ?? [])
-    )
-
     if (!migratedData) {
       return
     }
 
-    if (!baseCurrency && migratedData?.baseCurrency) {
-      baseCurrency = migratedData.baseCurrency
-    }
+    let baseCurrency = ruleInstance.baseCurrency || migratedData.baseCurrency
 
+    let logicAggregationVariables: LogicAggregationVariable[] = [
+      ...(migratedData.logicAggregationVariables ?? []),
+    ]
+
+    let v2RiskLevelLogic = {} as RiskLevelRuleLogic
     if (hasFeature('RISK_LEVELS') && ruleInstance.riskLevelParameters) {
-      v2RiskLevelLogic = Object.entries(
-        ruleInstance.riskLevelParameters
-      ).reduce((acc, [riskLevel, params]) => {
-        const migratedDataByRiskLevel = getMigratedV8Config(
-          ruleId,
-          params,
-          ruleInstance.filters
-        )
-
-        logicAggregationVariables.push(
-          ...(migratedDataByRiskLevel?.logicAggregationVariables ?? [])
-        )
-
-        if (!migratedData) {
-          migratedData = migratedDataByRiskLevel
+      Object.entries(ruleInstance.riskLevelParameters).forEach(
+        ([riskLevel, params]) => {
+          const migratedDataByRiskLevel = getMigratedV8Config(
+            ruleId,
+            params,
+            ruleInstance.filters
+          )
+          if (!migratedDataByRiskLevel) {
+            v2RiskLevelLogic = {
+              ...v2RiskLevelLogic,
+              [riskLevel]: undefined,
+            } as RiskLevelRuleLogic
+            return
+          }
+          logicAggregationVariables.push(
+            ...(migratedDataByRiskLevel.logicAggregationVariables ?? [])
+          )
+          if (!baseCurrency && migratedDataByRiskLevel.baseCurrency) {
+            baseCurrency = migratedDataByRiskLevel.baseCurrency
+          }
+          v2RiskLevelLogic = {
+            ...v2RiskLevelLogic,
+            [riskLevel]: migratedDataByRiskLevel.logic,
+          } as RiskLevelRuleLogic
         }
-
-        if (!baseCurrency && migratedDataByRiskLevel?.baseCurrency) {
-          baseCurrency = migratedDataByRiskLevel.baseCurrency
-        }
-
-        acc[riskLevel] = migratedDataByRiskLevel?.logic
-
-        return acc
-      }, {} as RiskLevelRuleLogic)
+      )
     }
 
-    logicAggregationVariables = uniqBy(logicAggregationVariables, (v) => {
-      return getAggVarHash(v, false)
-    }).map((newAggVar) => {
-      const existingAggVar = ruleInstance.logicAggregationVariables?.find(
-        (existingAggVar) => {
-          return (
-            getAggVarHash(newAggVar, false) ===
-            getAggVarHash(existingAggVar, false)
+    // Replace duplicate magic keywords in the main logic and risk-level logics
+    const commonVarHashMap = groupBy(logicAggregationVariables, (aggVar) =>
+      getAggVarHash(aggVar, false)
+    )
+
+    Object.values(commonVarHashMap).forEach((vars) => {
+      const [mainVar, ...duplicates] = vars // Picking the first aggVar as uniqBy and groupBy both work with existing order
+      if (migratedData?.logic) {
+        migratedData.logic = duplicates.reduce(
+          (logic, dupVar) =>
+            replaceMagicKeyword(logic ?? {}, dupVar.key, mainVar.key),
+          migratedData.logic
+        )
+      }
+      if (v2RiskLevelLogic) {
+        Object.keys(v2RiskLevelLogic).forEach((riskLevel) => {
+          v2RiskLevelLogic[riskLevel] = duplicates.reduce(
+            (logic, dupVar) =>
+              replaceMagicKeyword(logic ?? {}, dupVar.key, mainVar.key),
+            v2RiskLevelLogic[riskLevel]
           )
-        }
+        })
+      }
+    })
+
+    // Deduplicate aggregation variables
+    logicAggregationVariables = uniqBy(logicAggregationVariables, (aggVar) =>
+      getAggVarHash(aggVar, false)
+    ).map((newAggVar) => {
+      const existingAggVar = ruleInstance.logicAggregationVariables?.find(
+        (existing) =>
+          getAggVarHash(newAggVar, false) === getAggVarHash(existing, false)
       )
       return {
         ...newAggVar,
@@ -237,15 +254,16 @@ export class RuleInstanceRepository {
     const logic: object =
       migratedData?.logic ?? Object.values(v2RiskLevelLogic ?? {})[0]
 
-    const riskLevelLogic = v2RiskLevelLogic
-
-    const alertConfig = { ...ruleInstance.alertConfig }
-    if (migratedData?.alertCreationDirection) {
-      alertConfig.alertCreationDirection = migratedData.alertCreationDirection
+    const alertConfig = {
+      ...ruleInstance.alertConfig,
+      ...(migratedData?.alertCreationDirection && {
+        alertCreationDirection: migratedData.alertCreationDirection,
+      }),
     }
+
     return {
       logic,
-      riskLevelLogic,
+      riskLevelLogic: v2RiskLevelLogic,
       logicAggregationVariables,
       baseCurrency,
       alertConfig,
