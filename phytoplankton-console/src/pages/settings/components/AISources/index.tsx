@@ -56,7 +56,7 @@ export const AISources = () => {
                                 key={key}
                                 position="RIGHT"
                                 label={`${humanizeCamelCase(key)} ⓘ`}
-                                level={2}
+                                level={3}
                               >
                                 <Checkbox key={key} value={false} isDisabled />
                               </Label>
