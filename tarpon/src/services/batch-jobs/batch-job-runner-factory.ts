@@ -26,6 +26,7 @@ import { AggregationCleanupBatchJobRunner } from './aggregation-cleanup-batch-jo
 import { PnbTransactionUpdatesBatchJobRunner } from './pnb-transaction-updates'
 import { InHouseScreeningMigrationBatchJobRunner } from './in-house-screening-migration-batch-job-runner'
 import { SyncAuth0DataRunner } from './sync-auth0-data'
+import { FailingBatchJobRunner } from './failing-batch-job-runner'
 import { BatchJobType } from '@/@types/batch-job'
 import { ApiUsageMetricsBatchJobRunner } from '@/services/batch-jobs/api-usage-metrics-batch-job-runner'
 import { BatchJobRunner } from '@/services/batch-jobs/batch-job-runner-base'
@@ -104,6 +105,7 @@ export function getBatchJobRunner(type: BatchJobType, jobId: string) {
     IN_HOUSE_SCREENING_MIGRATION: (jobId) =>
       new InHouseScreeningMigrationBatchJobRunner(jobId),
     SYNC_AUTH0_DATA: (jobId) => new SyncAuth0DataRunner(jobId),
+    FAILING_BATCH_JOB: (jobId) => new FailingBatchJobRunner(jobId),
   }
   return jobRunnerMap[type](jobId)
 }

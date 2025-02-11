@@ -593,18 +593,20 @@ export const createCanarySuccessPercentageAlarm = (
 
 export const createStateMachineAlarm = (
   context: Construct,
-  betterUptimeTopic: Topic
+  betterUptimeTopic: Topic,
+  stateMachineName: string
 ) => {
+  // Temporary enable alarm for dev (QA) env
   if (isDevUserStack) {
     return null
   }
-  new Alarm(context, `stateMachineFailedAlarm`, {
+  return new Alarm(context, `stateMachineFailedAlarm`, {
     metric: new Metric({
       namespace: 'AWS/States',
       metricName: 'ExecutionsFailed',
-      // dimensionsMap: {
-      //   StateMachineArn: 'To specify if we'll have multiple state machines',
-      // }
+      dimensionsMap: {
+        StateMachineArn: stateMachineName,
+      },
       statistic: 'sum',
       period: Duration.minutes(5),
     }),

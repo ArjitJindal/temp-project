@@ -370,6 +370,11 @@ export type SyncAuth0DataBatchJob = {
   parameters: { type: 'ALL' } | { type: 'TENANT_IDS'; tenantIds: string[] }
 }
 
+export type FailingBatchJob = {
+  type: 'FAILING_BATCH_JOB'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -409,6 +414,7 @@ export type BatchJob =
   | PnbTransactionEventUpdatesBatchJob
   | InHouseScreeningMigrationBatchJob
   | SyncAuth0DataBatchJob
+  | FailingBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

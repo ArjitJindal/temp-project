@@ -368,6 +368,13 @@ export const tenantsHandler = lambdaApi()(
           })
           break
         }
+        case 'FAILING_BATCH_JOB': {
+          await sendBatchJobCommand({
+            type: 'FAILING_BATCH_JOB',
+            tenantId: tenantId,
+          })
+          break
+        }
         default: {
           throw new Error(`Unknown batch job type: ${batchJobType}`)
         }

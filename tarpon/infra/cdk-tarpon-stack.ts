@@ -1388,6 +1388,7 @@ export class CdkTarponStack extends cdk.Stack {
       new CdkTarponAlarmsStack(this, `${config.stage}-tarpon-alarms`, {
         config,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
+        batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
       })
 
       if (this.config.region !== 'me-1' && this.config.region !== 'asia-3') {

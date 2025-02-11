@@ -80,6 +80,7 @@ const KINESIS_STREAM_NAMES = [
 interface AlarmProps extends cdk.NestedStackProps {
   config: Config
   betterUptimeCloudWatchTopic: Topic
+  batchJobStateMachineArn: string
 }
 
 export class CdkTarponAlarmsStack extends cdk.NestedStack {
@@ -283,6 +284,10 @@ export class CdkTarponAlarmsStack extends cdk.NestedStack {
     createGlueJobFailedAlarm(this, this.betterUptimeCloudWatchTopic, 'stream')
     createGlueJobFailedAlarm(this, this.betterUptimeCloudWatchTopic, 'optimize')
 
-    createStateMachineAlarm(this, this.betterUptimeCloudWatchTopic)
+    createStateMachineAlarm(
+      this,
+      this.betterUptimeCloudWatchTopic,
+      props.batchJobStateMachineArn
+    )
   }
 }

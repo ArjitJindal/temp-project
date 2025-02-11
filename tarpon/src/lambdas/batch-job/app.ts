@@ -114,6 +114,7 @@ export const jobDecisionHandler = async (
     AGGREGATION_CLEANUP: 'FARGATE',
     SYNC_AUTH0_DATA: 'LAMBDA',
     IN_HOUSE_SCREENING_MIGRATION: 'FARGATE',
+    FAILING_BATCH_JOB: 'LAMBDA',
   }
 
   return {
