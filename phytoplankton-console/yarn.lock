@@ -8130,6 +8130,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"core-js@npm:^3.38.1":
+  version: 3.40.0
+  resolution: "core-js@npm:3.40.0"
+  checksum: db7946ada881e845d8b157061945b1187618fa45cf162f392a151e8a497962aed2da688c982eaa1d444c864be97a70f8be4d73385294b515d224dd164d19f1d4
+  languageName: node
+  linkType: hard
+
 "core-js@npm:^3.6.0, core-js@npm:^3.8.3":
   version: 3.30.2
   resolution: "core-js@npm:3.30.2"
@@ -15427,7 +15434,7 @@ __metadata:
     pluralize: "npm:^8.0.0"
     postcss: "npm:^8.4.14"
     postcss-less: "npm:^6.0.0"
-    posthog-js: "npm:^1.131.4"
+    posthog-js: "npm:^1.217.0"
     prettier: "npm:^2.7.1"
     prompts: "npm:^2.4.2"
     rc-resize-observer: "npm:^1.2.0"
@@ -15691,13 +15698,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"posthog-js@npm:^1.131.4":
-  version: 1.131.4
-  resolution: "posthog-js@npm:1.131.4"
+"posthog-js@npm:^1.217.0":
+  version: 1.217.0
+  resolution: "posthog-js@npm:1.217.0"
   dependencies:
+    core-js: "npm:^3.38.1"
     fflate: "npm:^0.4.8"
     preact: "npm:^10.19.3"
-  checksum: d12f742a4a7614b202e65f5762dc575254eaa35181d5d35a3199b1ff38f4d4f96151908a91e010737ef7e40d44c162ae891828edc169800e5ef4760bbf44a7e8
+    web-vitals: "npm:^4.2.0"
+  checksum: 449f4b1f3dbda3a1ca77dd272bde21091b39606c70c69a1bbaa860c4875a453dfca611fe98ea26f87d9835e345d8781a33ce0032d6869d029df25d79e67255bd
   languageName: node
   linkType: hard
 
@@ -19695,6 +19704,13 @@ __metadata:
   dependencies:
     defaults: "npm:^1.0.3"
   checksum: 5b61ca583a95e2dd85d7078400190efd452e05751a64accb8c06ce4db65d7e0b0cde9917d705e826a2e05cc2548f61efde115ffa374c3e436d04be45c889e5b4
+  languageName: node
+  linkType: hard
+
+"web-vitals@npm:^4.2.0":
+  version: 4.2.4
+  resolution: "web-vitals@npm:4.2.4"
+  checksum: 383c9281d5b556bcd190fde3c823aeb005bb8cf82e62c75b47beb411014a4ed13fa5c5e0489ed0f1b8d501cd66b0bebcb8624c1a75750bd5df13e2a3b1b2d194
   languageName: node
   linkType: hard
 
