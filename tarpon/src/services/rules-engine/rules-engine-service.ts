@@ -98,6 +98,7 @@ import {
   isAsyncRule,
   isShadowRule,
   isSyncRule,
+  isV2ScreeningRule,
   isV8RuleInstance,
   runOnV8Engine,
   sendAsyncRuleTasks,
@@ -1348,7 +1349,11 @@ export class RulesEngineService {
     let ruleResult: RuleHitResult | undefined
     let vars: ExecutedLogicVars[] | undefined
 
-    if (runOnV8Engine(ruleInstance) && logic) {
+    if (
+      runOnV8Engine(ruleInstance) &&
+      logic &&
+      !isV2ScreeningRule(ruleInstance)
+    ) {
       const data = transactionWithValidUserId
         ? ({
             type: 'TRANSACTION',

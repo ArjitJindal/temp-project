@@ -232,6 +232,10 @@ export function isV2RuleInstance(ruleInstance: RuleInstance): boolean {
   return !!(ruleInstance.ruleId && !ruleInstance.ruleId.startsWith('RC'))
 }
 
+export function isV2ScreeningRule(ruleInstance: RuleInstance): boolean {
+  return ruleInstance.nature === 'SCREENING' && isV2RuleInstance(ruleInstance)
+}
+
 export function runOnV8Engine(ruleInstance: RuleInstance): boolean {
   if (hasFeature('RULES_ENGINE_V8')) {
     if (envIs('test')) {
