@@ -23,13 +23,16 @@
   position: absolute;
   top: 0;
   right: 0;
-  transition-property: opacity;
-  transition-timing-function: @default-animation-function;
-  transition-duration: @default-animation-speed;
   z-index: 1;
   display: flex;
   flex-direction: column;
   gap: 5px;
+
+  > :not(.filters) {
+    transition-property: opacity;
+    transition-timing-function: @default-animation-function;
+    transition-duration: @default-animation-speed;
+  }
 }
 
 .filters {

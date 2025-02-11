@@ -1,33 +1,31 @@
-import { GraphFilters } from '../../UserGraph';
+import { capitalizeWords } from '@flagright/lib/utils/humanize';
+import { EntitiesEnum } from '../../UserGraph';
 import PopupContent from './PopupContent';
 import QuickFilterBase from '@/components/library/QuickFilter/QuickFilterBase';
 
 interface Props {
-  filters: GraphFilters;
-  setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
+  entities: EntitiesEnum;
+  setEntities: (value: EntitiesEnum) => void;
 }
 
 export function EntityFilterButton(props: Props) {
-  const { filters, setFilters } = props;
+  const { entities, setEntities } = props;
 
-  const isEntitiesEmpty = filters.entities.length === 0;
+  const isEntitiesEmpty = entities === 'all';
   return (
     <QuickFilterBase
       analyticsName="filters-entity"
       title="Entity"
-      buttonText={isEntitiesEmpty ? undefined : filters.entities.join(', ')}
+      buttonText={capitalizeWords(entities)}
       onClear={
         isEntitiesEmpty
           ? undefined
           : () => {
-              setFilters({ ...filters, entities: [] });
+              setEntities('all');
             }
       }
     >
-      <PopupContent
-        value={filters.entities}
-        onConfirm={(value) => setFilters({ ...filters, entities: value })}
-      />
+      <PopupContent value={[entities]} onConfirm={(value) => setEntities(value?.[0])} />
     </QuickFilterBase>
   );
 }

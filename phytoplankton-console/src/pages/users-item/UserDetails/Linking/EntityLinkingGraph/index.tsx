@@ -10,10 +10,10 @@ import {
   EdgeArrowPosition,
 } from 'reagraph';
 import cn from 'clsx';
+import { EntitiesEnum } from '../UserGraph';
 import parentS from '../index.module.less';
 import { UserPanel } from '../UserPanel';
 import { AttributePanel } from '../AttributePanel';
-import { GraphFilters } from '../UserGraph';
 import { ScopeSelectorValue } from '../entity_linking';
 import s from './index.module.less';
 import CommandKeyIcon from './command-key-icon.react.svg';
@@ -33,10 +33,10 @@ type EntityLinkingProps = {
   edgeInterpolation?: EdgeInterpolation;
   edgeArrowPosition?: EdgeArrowPosition;
   isFollowEnabled: (id: string) => boolean;
-  filters: GraphFilters;
-  setFilters: React.Dispatch<React.SetStateAction<GraphFilters>>;
   linkCount: number;
   setLinkCount: (value: number) => void;
+  entities: EntitiesEnum;
+  setEntities: (value: EntitiesEnum) => void;
 };
 export const EntityLinkingGraph = (props: EntityLinkingProps) => {
   const graphRef = useRef<GraphCanvasRef | null>(null);
@@ -52,10 +52,10 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
     edgeInterpolation = 'linear',
     isFollowEnabled,
     extraHints,
-    filters,
-    setFilters,
     linkCount,
     setLinkCount,
+    entities,
+    setEntities,
   } = props;
 
   const { selections, actives, onNodePointerOver, onNodePointerOut } = useSelection({
@@ -105,7 +105,7 @@ export const EntityLinkingGraph = (props: EntityLinkingProps) => {
         </Alert>
         {scope === 'TXN' && (
           <div className={s.filters}>
-            <EntityFilterButton filters={filters} setFilters={setFilters} />
+            <EntityFilterButton entities={entities} setEntities={setEntities} />
             <LinkCountFilterButton linkCount={linkCount} setLinkCount={setLinkCount} />
           </div>
         )}

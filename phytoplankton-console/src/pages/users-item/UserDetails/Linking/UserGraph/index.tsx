@@ -5,7 +5,7 @@ import s from '../index.module.less';
 import { EntityLinkingGraph } from '../EntityLinkingGraph';
 import { ScopeSelectorValue } from '../entity_linking';
 import * as Card from '@/components/ui/Card';
-import { EntitiesEnum, Graph, GraphEdges, GraphNodes } from '@/apis';
+import { Graph, GraphEdges, GraphNodes } from '@/apis';
 import Spinner from '@/components/library/Spinner';
 import { dayjs } from '@/utils/dayjs';
 
@@ -28,6 +28,7 @@ interface Props {
 }
 
 const DEFAULT_PAST_DAYS = 30;
+export type EntitiesEnum = 'all' | 'user' | 'payment-identifier';
 
 // entities
 export interface GraphFilters {
@@ -39,25 +40,21 @@ export default function UserGraph(props: Props) {
   const [entity, setEntity] = useState<Graph>();
   const [followed, setFollowed] = useState([props.userId]);
   const [linkCount, setLinkCount] = useState<number>(0);
+  const [entities, setEntities] = useState<EntitiesEnum>('all');
   const { getGraph } = props;
 
   const [nodes, setNodes] = useState<GraphNodes[]>([]);
   const [edges, setEdges] = useState<GraphEdges[]>([]);
 
-  // filters
-  const [filters, setFilters] = useState<GraphFilters>({
-    entities: ['all'],
-  });
   useEffect(() => {
     const DEFAULT_AFTER_TIMESTAMP = dayjs().subtract(DEFAULT_PAST_DAYS, 'day').valueOf();
     getGraph(userId, {
       afterTimestamp: DEFAULT_AFTER_TIMESTAMP,
       beforeTimestamp: undefined,
-      entities: filters.entities[0],
     })
       .then(setEntity)
       .then(() => setFollowed((followed) => [userId, ...followed]));
-  }, [getGraph, userId, filters]);
+  }, [getGraph, userId]);
 
   useEffect(() => {
     if (entity) {
@@ -69,13 +66,30 @@ export default function UserGraph(props: Props) {
   const filteredEdges = useMemo(() => {
     return edges.filter((edge) => {
       const label = edge.label;
+      const source = edge.source;
+      const target = edge.target;
       if (!label) {
         return true;
       }
 
       try {
         const numberedLabel = Number(label);
-        if (numberedLabel > linkCount) {
+        if (numberedLabel > linkCount && entities === 'all') {
+          return true;
+        }
+        if (
+          numberedLabel > linkCount &&
+          entities === 'user' &&
+          source.includes('user:') &&
+          target.includes('user:')
+        ) {
+          return true;
+        }
+        if (
+          numberedLabel > linkCount &&
+          entities === 'payment-identifier' &&
+          (source.includes('payment:') || target.includes('payment:'))
+        ) {
           return true;
         }
       } catch {
@@ -84,7 +98,7 @@ export default function UserGraph(props: Props) {
 
       return false;
     });
-  }, [edges, linkCount]);
+  }, [edges, linkCount, entities]);
 
   const filteredNodes = useMemo(() => {
     return nodes.filter((node) => {
@@ -104,6 +118,8 @@ export default function UserGraph(props: Props) {
             <EntityLinkingGraph
               linkCount={linkCount}
               setLinkCount={setLinkCount}
+              entities={entities}
+              setEntities={setEntities}
               nodes={filteredNodes}
               edges={filteredEdges}
               followed={followed}
@@ -113,8 +129,6 @@ export default function UserGraph(props: Props) {
               extraHints={[`Ontology displays data for the last ${DEFAULT_PAST_DAYS} days only`]}
               edgeInterpolation={props.edgeInterpolation}
               edgeArrowPosition={props.edgeArrowPosition}
-              filters={filters}
-              setFilters={setFilters}
               {...props}
             />
           </div>

@@ -1,9 +1,9 @@
 import { capitalizeWords } from '@flagright/lib/utils/humanize';
 import { List } from 'antd';
 import cn from 'clsx';
+import { EntitiesEnum } from '../../../UserGraph';
 import s from './style.module.less';
 import CheckLineIcon from '@/components/ui/icons/Remix/system/check-line.react.svg';
-import { EntitiesEnum } from '@/apis';
 
 interface Props {
   value: EntitiesEnum[];
@@ -16,7 +16,7 @@ export default function PopupContent(props: Props) {
   return (
     <div className={s.root}>
       <List
-        dataSource={['all', 'user', 'payment-identifiers'] as EntitiesEnum[]}
+        dataSource={['all', 'user', 'payment-identifier'] as EntitiesEnum[]}
         loading={false}
         rowKey={(item) => item}
         renderItem={(item: EntitiesEnum) => (

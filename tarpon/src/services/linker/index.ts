@@ -15,7 +15,6 @@ import { GraphEdges } from '@/@types/openapi-internal/GraphEdges'
 import { Address } from '@/@types/openapi-internal/Address'
 import { traceable } from '@/core/xray'
 import dayjs from '@/utils/dayjs'
-import { EntitiesEnum } from '@/@types/openapi-internal/EntitiesEnum'
 
 type UsersProjectedData = Pick<
   InternalUser,
@@ -129,23 +128,11 @@ export class LinkerService {
       map.set(link, uniq([user.userId]))
     }
   }
-  private shouldProcessTransaction(
-    userTxns: any,
-    entity: string,
-    allUserIds: string[]
-  ): boolean {
-    return (
-      entity === 'all' ||
-      (entity === 'user' && allUserIds.includes(userTxns._id)) ||
-      (entity === 'payment-identifiers' && !allUserIds.includes(userTxns._id))
-    )
-  }
 
   public async transactions(
     userId: string,
     afterTimestamp?: number,
-    beforeTimestamp?: number,
-    entity: EntitiesEnum = 'all'
+    beforeTimestamp?: number
   ): Promise<EntityGraph> {
     const mongoClient = await getMongoDbClient()
     const db = mongoClient.db()
@@ -272,22 +259,20 @@ export class LinkerService {
         allUserIds.includes(userTxns._id) ? 'user' : 'payment'
       }:${userTxns._id}`
 
-      if (this.shouldProcessTransaction(userTxns, entity, allUserIds)) {
-        nodes.push({
-          id: userSourceId,
-          label: allUserIds.includes(userTxns._id)
-            ? getUserName(userTxns.users[0])
-            : '',
-        })
+      nodes.push({
+        id: userSourceId,
+        label: allUserIds.includes(userTxns._id)
+          ? getUserName(userTxns.users[0])
+          : '',
+      })
 
-        edges.push({
-          id: `${userTxns._id}-${userId}`,
-          source: userSourceId,
-          target: userUpdatedId,
-          size: (userTxns.count / maxCount) * SCALE,
-          label: `${userTxns.count}`,
-        })
-      }
+      edges.push({
+        id: `${userTxns._id}-${userId}`,
+        source: userSourceId,
+        target: userUpdatedId,
+        size: (userTxns.count / maxCount) * SCALE,
+        label: `${userTxns.count}`,
+      })
     })
 
     debit.forEach((userTxns) => {
@@ -295,22 +280,20 @@ export class LinkerService {
         allUserIds.includes(userTxns._id) ? 'user' : 'payment'
       }:${userTxns._id}`
 
-      if (this.shouldProcessTransaction(userTxns, entity, allUserIds)) {
-        nodes.push({
-          id: userTargetId,
-          label: allUserIds.includes(userTxns._id)
-            ? getUserName(userTxns.users[0])
-            : '',
-        })
+      nodes.push({
+        id: userTargetId,
+        label: allUserIds.includes(userTxns._id)
+          ? getUserName(userTxns.users[0])
+          : '',
+      })
 
-        edges.push({
-          id: `${userId}-${userTxns._id}`,
-          source: userUpdatedId,
-          target: userTargetId,
-          size: (userTxns.count / maxCount) * SCALE,
-          label: `${userTxns.count}`,
-        })
-      }
+      edges.push({
+        id: `${userId}-${userTxns._id}`,
+        source: userUpdatedId,
+        target: userTargetId,
+        size: (userTxns.count / maxCount) * SCALE,
+        label: `${userTxns.count}`,
+      })
     })
 
     // Remove any nodes that don't have any edges

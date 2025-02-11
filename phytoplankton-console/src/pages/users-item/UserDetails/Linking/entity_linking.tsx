@@ -4,7 +4,6 @@ import UserGraph, { GraphParams } from './UserGraph';
 import * as Card from '@/components/ui/Card';
 import SegmentedControl, { Item } from '@/components/library/SegmentedControl';
 import { useApi } from '@/api';
-import { EntitiesEnum } from '@/apis';
 
 export type ScopeSelectorValue = 'ENTITY' | 'TXN';
 
@@ -29,15 +28,11 @@ const Linking = (props: Props) => {
   );
 
   const getTxn = useCallback<GraphParams>(
-    (
-      userId: string,
-      filters: { afterTimestamp?: number; beforeTimestamp?: number; entities?: EntitiesEnum },
-    ) => {
+    (userId: string, filters: { afterTimestamp?: number; beforeTimestamp?: number }) => {
       return api.getTxnLinking({
         userId,
         afterTimestamp: filters.afterTimestamp,
         beforeTimestamp: filters.beforeTimestamp,
-        entities: filters.entities,
       });
     },
     [api],
