@@ -20,7 +20,7 @@ services:
     ports:
       - 27018:27017
   clickhouse-server:
-    image: clickhouse/clickhouse-server:latest
+    image: clickhouse/clickhouse-server:25.1.2
     container_name: local-clickhouse-server
     ports:
       - '8123:8123'
