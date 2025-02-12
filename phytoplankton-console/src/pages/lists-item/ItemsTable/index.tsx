@@ -183,7 +183,7 @@ export default function ItemsTable(props: Props) {
   const listResult = useCursorQuery(LISTS_ITEM_TYPE(listId, listType, params), async ({ from }) => {
     const payload: DefaultApiGetWhiteListItemsRequest = {
       listId,
-      start: from,
+      start: params.from || from,
       pageSize: params.pageSize,
     };
 
