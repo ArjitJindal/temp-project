@@ -30,6 +30,7 @@ export function initializeEnvVars() {
   const batchJobQueueName: string = SQSQueues.BATCH_JOB_QUEUE_NAME.name
   const asyncRuleQueueName: string = SQSQueues.ASYNC_RULE_QUEUE_NAME.name
   const auditLogTopicName: string = StackConstants.AUDIT_LOG_TOPIC_NAME
+  const tarponQueueName: string = SQSQueues.TARPON_QUEUE_NAME.name
   const mongoUpdateConsumerQueueName: string =
     SQSQueues.MONGO_UPDATE_CONSUMER_QUEUE_NAME.name
   const mongoDbConsumerQueueName: string =
@@ -47,4 +48,5 @@ export function initializeEnvVars() {
     StackConstants.S3_DOCUMENT_BUCKET_PREFIX,
     getConfig()
   )
+  process.env.TARPON_QUEUE_URL = `https://sqs.${process.env.AWS_REGION}.amazonaws.com/${process.env.AWS_ACCOUNT}/${tarponQueueName}`
 }
