@@ -971,7 +971,7 @@ export class CdkTarponStack extends cdk.Stack {
         .addRetry({
           interval: Duration.seconds(30),
           maxDelay: Duration.hours(3),
-          maxAttempts: 30,
+          maxAttempts: 3,
           jitterStrategy: JitterType.FULL,
         })
         .next(
@@ -1010,7 +1010,7 @@ export class CdkTarponStack extends cdk.Stack {
                 .addRetry({
                   interval: Duration.seconds(30),
                   maxDelay: Duration.hours(1),
-                  maxAttempts: 15,
+                  maxAttempts: 3,
                   jitterStrategy: JitterType.FULL,
                 })
                 .next(
