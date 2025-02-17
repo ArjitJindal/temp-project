@@ -1,5 +1,6 @@
 import { compact } from 'lodash'
 import { Document, WithId } from 'mongodb'
+import { logger } from '../logger'
 import { getCases } from './data/cases'
 import {
   CLICKHOUSE_DEFINITIONS,
@@ -11,6 +12,7 @@ import {
   batchInsertToClickhouse,
   createTenantDatabase,
   isClickhouseEnabledInRegion,
+  getClickhouseClient,
 } from '@/utils/clickhouse/utils'
 import { MongoDbConsumer } from '@/lambdas/mongo-db-trigger-consumer'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
@@ -30,6 +32,29 @@ export const seedClickhouse = async (tenantId: string) => {
   const db = client.db()
 
   if (isClickhouseEnabledInRegion()) {
+    const clickhouseClient = await getClickhouseClient(tenantId)
+
+    const promises = ClickHouseTables.map(async (table) => {
+      try {
+        await clickhouseClient.exec({
+          query: `DELETE FROM ${table.table} WHERE 1=1`,
+        })
+      } catch (error) {
+        // error code 60 is returned when the table does not exist
+        // error code 81 is returned when the database does not exist
+        if (
+          error instanceof Error &&
+          'code' in error &&
+          (error.code == 60 || error.code == 81)
+        ) {
+          logger.warn(`Table ${table.table} does not exist`)
+        } else {
+          logger.warn(`Failed to delete from table ${table.table}: ${error}`)
+          throw error
+        }
+      }
+    })
+    await Promise.all(promises)
     const mongoConsumerService = new MongoDbConsumer(client)
     await createTenantDatabase(tenantId)
     await Promise.all(
