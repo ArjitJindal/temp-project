@@ -21,9 +21,10 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
       const tenants = await TenantService.getAllTenants()
 
       for (const tenant of tenants) {
-        await this.syncTenantAccounts(tenant.tenant, tenant.auth0Domain)
-        await this.syncTenantRoles(tenant.tenant, tenant.auth0Domain)
-        allAuth0Domains.add(tenant.auth0Domain)
+        const auth0Domain = tenant.auth0Domain ?? process.env.AUTH0_DOMAIN
+        await this.syncTenantAccounts(tenant.tenant, auth0Domain)
+        await this.syncTenantRoles(tenant.tenant, auth0Domain)
+        allAuth0Domains.add(auth0Domain)
       }
     } else if (job.parameters.type === 'TENANT_IDS') {
       const tenantIds = job.parameters.tenantIds
@@ -35,9 +36,10 @@ export class SyncAuth0DataRunner extends BatchJobRunner {
       for (const tenantId of tenantIds) {
         const tenant = await accountsService.getTenantById(tenantId)
         if (tenant) {
-          await this.syncTenantAccounts(tenant, tenant.auth0Domain)
-          await this.syncTenantRoles(tenant, tenant.auth0Domain)
-          allAuth0Domains.add(tenant.auth0Domain)
+          const auth0Domain = tenant.auth0Domain ?? process.env.AUTH0_DOMAIN
+          await this.syncTenantAccounts(tenant, auth0Domain)
+          await this.syncTenantRoles(tenant, auth0Domain)
+          allAuth0Domains.add(auth0Domain)
         }
       }
     }
