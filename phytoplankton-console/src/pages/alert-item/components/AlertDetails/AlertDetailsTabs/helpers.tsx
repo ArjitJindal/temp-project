@@ -321,7 +321,7 @@ export function useAlertTabs(props: Props): TabItem[] {
             children: <AiForensicsTab alert={alert} caseUserId={caseUserId} />,
           };
         }
-        if (tab === AlertTabs.TRANSACTIONS) {
+        if (tab === AlertTabs.TRANSACTIONS && alert.numberOfTransactionsHit > 0) {
           return {
             title: 'Transactions details',
             key: tab,
