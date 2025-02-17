@@ -203,6 +203,7 @@ function Content(props: {
   const comparisonItems = getComparisonItems(
     hit.entity.matchTypeDetails || [],
     hit.hitContext || { entity: 'USER' },
+    hit.entity,
   );
   return (
     <>
