@@ -29,7 +29,7 @@ export default function FilesDraggerInput(props: Props) {
     onChange,
     singleFile,
     size = 'SMALL',
-    info = 'Support for a single or bulk upload. Strictly prohibit from uploading company data or other related files.',
+    info = 'Supported file types: PDF, JPG, PNG, XLSX, DOCX',
     listType = 'comment',
     required = false,
     setUploading,
