@@ -74,33 +74,34 @@ export abstract class UserOngoingRule<P> extends Rule {
     const riskClassificationValues =
       await this.riskRepository.getRiskClassificationValues()
 
-    const hitUsersCursors = hasFeature('RISK_LEVELS')
-      ? Object.entries(this.riskLevelParameters).map(([key, params]) => {
-          const pipeline = [
-            {
-              $match: getUsersFilterByRiskLevel(
-                [key as RiskLevel],
-                riskClassificationValues
-              ),
-            },
-            {
-              $sort: {
-                userId: 1,
+    const hitUsersCursors =
+      hasFeature('RISK_LEVELS') && this.riskLevelParameters
+        ? Object.entries(this.riskLevelParameters).map(([key, params]) => {
+            const pipeline = [
+              {
+                $match: getUsersFilterByRiskLevel(
+                  [key as RiskLevel],
+                  riskClassificationValues
+                ),
               },
-            },
-            ...this.getHitRulePipline(params),
-          ]
+              {
+                $sort: {
+                  userId: 1,
+                },
+              },
+              ...this.getHitRulePipline(params),
+            ]
 
-          return usersCollection.aggregate<InternalUser>(pipeline, {
-            allowDiskUse: true,
+            return usersCollection.aggregate<InternalUser>(pipeline, {
+              allowDiskUse: true,
+            })
           })
-        })
-      : [
-          usersCollection.aggregate<InternalUser>(
-            this.getHitRulePipline(this.parameters),
-            { allowDiskUse: true }
-          ),
-        ]
+        : [
+            usersCollection.aggregate<InternalUser>(
+              this.getHitRulePipline(this.parameters),
+              { allowDiskUse: true }
+            ),
+          ]
 
     const hitResult: UserOngoingHitResult = {
       hitUsersCursors,
