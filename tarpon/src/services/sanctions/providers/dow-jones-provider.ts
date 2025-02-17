@@ -140,55 +140,7 @@ const NATIONALITY_COUNTRY_TYPE = [
   'Jurisdiction',
 ]
 
-export const RELATIONSHIP_CODE_TO_NAME = {
-  '1': 'Wife',
-  '2': 'Husband',
-  '3': 'Brother',
-  '4': 'Sister',
-  '5': 'Son',
-  '6': 'Daughter',
-  '7': 'Mother',
-  '8': 'Father',
-  '9': 'Cousin',
-  '10': 'Step-Son',
-  '11': 'Step-Daughter',
-  '12': 'Brother-in-law',
-  '13': 'Sister-in-law',
-  '14': 'Uncle',
-  '15': 'Aunt',
-  '16': 'Mother-in-law',
-  '17': 'Father-in-law',
-  '18': 'Grandfather',
-  '19': 'Grandmother',
-  '20': 'Son-in-law',
-  '21': 'Daughter-in-law',
-  '22': 'Niece',
-  '23': 'Nephew',
-  '24': 'Grandson',
-  '25': 'Granddaughter',
-  '26': 'Stepfather',
-  '27': 'Stepmother',
-  '28': 'Business Associate',
-  '29': 'Friend',
-  '30': 'Financial Adviser',
-  '31': 'Legal Adviser',
-  '32': 'Colleague',
-  '33': 'Agent/Representative',
-  '34': 'Employee',
-  '35': 'Associate',
-  '36': 'Child',
-  '37': 'Family Member',
-  '38': 'Political Adviser',
-  '39': 'Senior Official',
-  '40': 'Unmarried Partner',
-  '41': 'Same-sex Spouse',
-  '42': 'Employer',
-  '43': 'Shareholder/Owner',
-  '44': 'Associated Special Interest Person',
-  '45': 'Parent Company',
-  '46': 'Subsidiary',
-  '47': 'Asset',
-}
+export const RELATIONSHIP_CODE_TO_NAME: Record<string | number, string> = {}
 
 const ADVERSE_MEDIA_DESCRIPTION3_VALUES = [
   '7',
@@ -639,9 +591,13 @@ export class DowJonesProvider extends SanctionsDataFetcher {
 
     const sanctionSearchTypes: SanctionsSearchType[] = []
     const descriptions = this.getDescriptions(person)
-    const descriptionValues = descriptions?.map((d) => d['@_Description1'])
+    const descriptionValues = descriptions
+      ?.map((d) => d['@_Description1'])
+      .filter(Boolean)
     const pepRcaMatchTypes: string[] = []
-    const description2Values = descriptions?.map((d) => d['@_Description2'])
+    const description2Values = descriptions
+      ?.map((d) => d['@_Description2'])
+      .filter(Boolean)
     if (
       descriptionValues?.includes('1') &&
       !inactivePEP &&
@@ -876,7 +832,15 @@ export class DowJonesProvider extends SanctionsDataFetcher {
             },
           ]
         }
-
+        const sanctionsReferencesList = masters.SanctionsReferencesList
+        const relationshipCodeToName = Object.fromEntries(
+          Object.entries(masters.RelationshipList).map(([key, value]: any) => [
+            key,
+            value['@_name'],
+          ])
+        )
+        // Merging with RELATIONSHIP_CODE_TO_NAME to avoid loss of previous data
+        Object.assign(RELATIONSHIP_CODE_TO_NAME, relationshipCodeToName)
         const descriptions = this.getDescriptions(person)
         const { sanctionSearchTypes, pepRcaMatchTypes } =
           this.getScreeningTypesForPerson(person)
@@ -892,6 +856,13 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         const documents = this.getDocuments(person.IDNumberTypes)
         const occupations = this.getOccupations(person.RoleDetail)
         const aka = this.getNames(person.NameDetails?.Name)
+
+        const referenceNumbersToReferenceNameMap =
+          this.referenceNumbersToReferenceNameMap(
+            person,
+            sanctionsReferencesList
+          )
+
         const entity: SanctionsEntity = {
           id: person['@_id'],
           name,
@@ -908,9 +879,12 @@ export class DowJonesProvider extends SanctionsDataFetcher {
           documents,
           sanctionSearchTypes,
           occupations,
-          types: descriptions?.map((d) =>
-            this.getDescriptionsSpecific(d, masters, [1, 2, 3]).join(' - ')
-          ),
+          types: compact([
+            ...(descriptions?.map((d) =>
+              this.getDescriptionsSpecific(d, masters, [1, 2, 3]).join(' - ')
+            ) || []),
+            ...(referenceNumbersToReferenceNameMap ?? []),
+          ]),
           screeningSources: this.getSourceDescriptions(
             person.SourceDescription
           ),
@@ -973,6 +947,27 @@ export class DowJonesProvider extends SanctionsDataFetcher {
         ? masters.Description3List[description['@_Description3']]['#text']
         : undefined,
     ])
+  }
+
+  private referenceNumbersToReferenceNameMap(person, sanctionsReferencesList) {
+    let referenceNumbers: string[] = []
+    if (person['SanctionsReferences']) {
+      referenceNumbers = uniq(
+        person['SanctionsReferences']
+          .map((sanctionRef) => {
+            const ref = sanctionRef['Reference']
+            if (Array.isArray(ref)) {
+              return ref.map((r) => (typeof r === 'object' ? r['#text'] : r))
+            }
+            return ref?.['#text']
+          })
+          .flat()
+          .filter(Boolean)
+      )
+      return referenceNumbers
+        .map((ref) => sanctionsReferencesList[ref]?.['@_name'])
+        .filter(Boolean)
+    }
   }
 
   private isBank(description2Values, description3Values) {
