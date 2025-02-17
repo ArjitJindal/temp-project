@@ -363,9 +363,14 @@ export class AlertsService extends CaseAlertsCommonService {
       }
     }
 
+    const existingReviewAssignments =
+      statusEscalated(c.caseStatus) && !isStatusInReview(c.caseStatus)
+        ? c.alerts?.[0]?.reviewAssignments ?? []
+        : []
+
     const reviewAssignments = await this.getEscalationAssignments(
       c.caseStatus as CaseStatus,
-      [],
+      existingReviewAssignments,
       accounts
     )
 
@@ -424,6 +429,7 @@ export class AlertsService extends CaseAlertsCommonService {
                     assignedByUserId: currentUserId ?? '',
                     assigneeUserId: currentUserAccount.reviewerId,
                     timestamp: currentTimestamp,
+                    // TODO: I think we need to add the escalationLevel here
                   },
                 ]
               : !isStatusInReview(escalatedAlert.alertStatus)
