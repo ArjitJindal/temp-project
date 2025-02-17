@@ -1,154 +1,132 @@
 import { OpenAI } from 'openai'
-import { startCase } from 'lodash'
+import { compact } from 'lodash'
 import { AttributeSet } from './attributes/builder'
+import { BaseNarrativeService } from './narratives'
+import { CaseNarrativeService } from './narratives/case'
+import { AlertNarrativeService } from './narratives/alerts'
+import { SarNarrativeService } from './narratives/sar'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
-import { reasonNarratives } from '@/services/copilot/reason-narratives'
 import { prompt } from '@/utils/openai'
 import { getContext } from '@/core/utils/context'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
-import { AlertStatus } from '@/@types/openapi-internal/AlertStatus'
-import { CaseStatus } from '@/@types/openapi-internal/CaseStatus'
+import { logger } from '@/core/logger'
+import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
 
 const SEPARATOR = '---'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
 
-const getStatusToPrefix = (status: AlertStatus | CaseStatus) => {
-  switch (status) {
-    case 'OPEN':
-      return 'Opening'
-    case 'CLOSED':
-    case 'IN_REVIEW_CLOSED':
-      return 'Closed'
-    case 'IN_REVIEW_OPEN':
-    case 'REOPENED':
-    case 'IN_REVIEW_REOPENED':
-      return 'Reopening'
-    case 'ESCALATED':
-    case 'IN_REVIEW_ESCALATED':
-    case 'ESCALATED_L2':
-      return 'Escalation'
-    case 'OPEN_ON_HOLD':
-    case 'ESCALATED_ON_HOLD':
-    case 'ESCALATED_L2_ON_HOLD':
-      return 'Holding'
-    case 'OPEN_IN_PROGRESS':
-    case 'ESCALATED_IN_PROGRESS':
-    case 'ESCALATED_L2_IN_PROGRESS':
-      return 'In Progress'
-  }
-}
-
-const PLACEHOLDER_NARRATIVE = (
-  type: string,
-  attributes: AttributeSet,
-  additionalCopilotInfo?: AdditionalCopilotInfo
-) => {
-  const isScreening = attributes
-    ?.getAttribute('rules')
-    ?.some((r) => r.narrative === 'SCREENING')
-
-  const datePrefix = additionalCopilotInfo?.newCaseStatus
-    ? getStatusToPrefix(additionalCopilotInfo?.newCaseStatus ?? 'CLOSED')
-    : getStatusToPrefix(additionalCopilotInfo?.newAlertStatus ?? 'CLOSED')
-
-  let overview = ''
-
-  if (type === 'CASE') {
-    overview = `OVERVIEW \n\nName: [name] \n\nDate of Case Generation: [caseGenerationDate] \n\nReason for Case Generation: [ruleHitNames] \n\nInvestigation Period: [${attributes.getAttribute(
-      'caseGenerationDate'
-    )}] \n\n ${datePrefix} Date: [${attributes.getAttribute(
-      'caseActionDate'
-    )}] \n\n`
-  } else {
-    overview = `OVERVIEW \n\nName: [name] \n\nDate of Alert Generation: [alertGenerationDate] \n\nReason for Alert Generation: [ruleHitNames] \n\nInvestigation Period: [${attributes.getAttribute(
-      'alertGenerationDate'
-    )}] \n\n ${datePrefix} Date: [${attributes.getAttribute(
-      'alertActionDate'
-    )}] \n\n`
-  }
-
-  const background = `BACKGROUND \n\n[This section should contain general details about the ${startCase(
-    type
-  )} in question.]`
-  const investigation = `INVESTIGATION \n\n[This section should detail the method of the investigation and the ${startCase(
-    type
-  )}'s activities that took place during the investigation.]`
-  const findings = `FINDINGS AND ASSESSMENT \n\n[This section should contain an analysis of the ${startCase(
-    type
-  )}'s transactions and behaviors.]`
-
-  const screening = `SCREENING DETAILS \n\n[This section should contain information about sanctions, politically exposed persons (PEP), or adverse media screening results. If there is no information like this it can be neglected.]`
-  const conclusion = `CONCLUSION`
-
-  if (isScreening) {
-    return (
-      overview + background + investigation + findings + screening + conclusion
-    )
-  }
-
-  return overview + background + investigation + findings + conclusion
-}
-
 @traceable
 export class AutoNarrativeService {
-  async getSarNarrative(attributes: AttributeSet): Promise<NarrativeResponse> {
-    return this.generate(
-      [
-        {
-          role: 'system',
-          content: 'Please only output plaintext, markdown is not supported',
-        },
-        {
-          role: 'system',
-          content: `
-    The following is a template for suspicious activity report written by bank staff to justify why they are reporting a ${
-      attributes.getAttribute('userType') === 'BUSINESS'
-        ? 'business'
-        : 'customer'
-    } to the financial authorities.
-    
-    Example:
-    ${attributes
-      .getAttribute('rules')
-      ?.map((r) => r.narrative)
-      .join(', ')}"
-    
-    Please fill in the template above with relevant data from the following JSON blob maintaining the exact same structure and correct any spelling mistakes or grammatical errors:
-    `,
-        },
-      ],
-      attributes
-    )
-  }
-
   async getNarrative(
+    type: NarrativeType,
     attributes: AttributeSet,
-    type: 'CASE' | 'ALERT',
-    additionalCopilotInfo?: AdditionalCopilotInfo,
+    additionalCopilotInfo: AdditionalCopilotInfo,
     otherReason?: string
   ): Promise<NarrativeResponse> {
-    const customerType =
-      attributes.getAttribute('userType') === 'BUSINESS'
-        ? 'business'
-        : 'customer'
+    const service = await this.getService(
+      type,
+      additionalCopilotInfo,
+      attributes
+    )
+    let string = ''
+    const introductoryNarrative = service.introductoryNarrative()
+    string += introductoryNarrative
+    string += `\n\n${SEPARATOR}\n\n`
 
     const narrativeSize = getContext()?.settings?.narrativeMode ?? 'STANDARD'
 
-    const reasonNarrs = attributes
-      .getAttribute('reasons')
-      .map(
-        (reason: string) =>
-          reasonNarratives(type).find((rn) => rn.reason === reason)?.narrative
-      )
+    if (narrativeSize === 'STANDARD') {
+      string += service.placeholderNarrative()
+      string += `\n\n${SEPARATOR}\n\n`
+    }
+
+    const reasonNarratives = this.buildReasonNarratives(
+      service,
+      attributes,
+      otherReason
+    )
+
+    if (reasonNarratives.length) {
+      string += reasonNarratives.join(', ')
+      string += `\n\n${SEPARATOR}\n\n`
+    }
+
+    if (narrativeSize === 'STANDARD') {
+      string += `Please rewrite this information so that it conforms to the template above.`
+    } else {
+      string += `Please write a narrative strictly in a paragraph (no verbose) straightforward way that explains the activities and why they are being reported to the financial authorities.`
+      string += `\n\n${SEPARATOR}\n\n`
+      string += `No detailed information is required about rule, ${service.type} or any transaction details accommodate everything in a single paragraph and in a very concise and professional manner.`
+    }
+
+    string += `\n\n${SEPARATOR}\n\n`
+    string += service.closingNarrative()
+    string += `\nThe following template is a template for a document written by bank staff to justify why they have or have not reported a suspicious, please rewrite this information so that it conforms to the template above in a very professional manner.`
+
+    const completionMessages: OpenAI.ChatCompletionMessageParam[] = []
+
+    if (service.textType !== 'MARKDOWN') {
+      completionMessages.push({
+        role: 'system',
+        content: 'Please only output plaintext, markdown is not supported',
+      })
+    }
+
+    completionMessages.push({ role: 'system', content: string })
+
+    return this.generate(completionMessages, attributes)
+  }
+
+  async getService(
+    type: NarrativeType,
+    additionalCopilotInfo: AdditionalCopilotInfo,
+    attributes: AttributeSet
+  ): Promise<BaseNarrativeService<any>> {
+    switch (type) {
+      case 'CASE': {
+        const status = additionalCopilotInfo.newCaseStatus
+        if (!status) {
+          throw new Error('newCaseStatus is required for CASE narrative')
+        }
+
+        return new CaseNarrativeService({ status }, attributes)
+      }
+
+      case 'ALERT': {
+        const status = additionalCopilotInfo.newAlertStatus
+        if (!status) {
+          throw new Error('newAlertStatus is required for ALERT narrative')
+        }
+
+        return new AlertNarrativeService({ status }, attributes)
+      }
+
+      case 'REPORT': {
+        return new SarNarrativeService({}, attributes)
+      }
+
+      default:
+        throw new Error(`Unsupported narrative type: ${type}`)
+    }
+  }
+
+  public buildReasonNarratives(
+    narrativeInstance: BaseNarrativeService<any>,
+    attributes: AttributeSet,
+    otherReason?: string
+  ): string[] {
+    const reasonNarrs = compact(attributes.getAttribute('reasons'))?.map(
+      (reason: string) =>
+        narrativeInstance.reasonNarratives().find((rn) => rn.reason === reason)
+          ?.narrative
+    )
 
     if (otherReason) {
       reasonNarrs.push(`for the other reason: ${otherReason}`)
     }
 
-    const reasonsNotInCaseReasons = attributes
-      .getAttribute('reasons')
-      .filter((r) => !reasonNarratives(type).some((rn) => rn.reason === r))
+    const reasonsNotInCaseReasons = compact(attributes.getAttribute('reasons'))
 
     if (reasonsNotInCaseReasons.length) {
       reasonNarrs.push(
@@ -158,57 +136,13 @@ export class AutoNarrativeService {
       )
     }
 
-    const statusPrefix =
-      type === 'CASE'
-        ? getStatusToPrefix(additionalCopilotInfo?.newCaseStatus ?? 'CLOSED')
-        : getStatusToPrefix(additionalCopilotInfo?.newAlertStatus ?? 'CLOSED')
-
-    let string = `The following is a template for a document written by bank staff to justify why they have or have not reported a suspicious and why the ${startCase(
-      type
-    )} is being ${
-      statusPrefix ?? 'Closed'
-    } for the following reasons: ${attributes
-      .getAttribute('reasons')
-      .join(', ')}.`
-
-    string += `\n\n${SEPARATOR}\n\n`
-
-    if (narrativeSize === 'STANDARD') {
-      string += PLACEHOLDER_NARRATIVE(
-        customerType,
-        attributes,
-        additionalCopilotInfo
-      )
-      string += `\n\n${SEPARATOR}\n\n`
-    }
-
-    string += reasonNarrs.join(', ')
-
-    string += `The following JSON blob is information relevant to a single ${customerType} who is under investigation by bank staff.\n\n`
-
-    string += `\n\n${SEPARATOR}\n\n`
-
-    if (narrativeSize === 'STANDARD') {
-      string += `Please rewrite this information so that it conforms to the template above.`
-    } else {
-      string += `Please write a narrative strictly in a paragraph (no verbose) straightforward way that explains the ${customerType}'s activities and why they are being reported to the financial authorities.`
-      string += `\n\n${SEPARATOR}\n\n`
-      string += `No detailed information is required about rule, ${type.toLowerCase()} or any transaction details accommodate everything in a single paragraph and in a very concise and professional manner.`
-    }
-
-    string += `\n\n${SEPARATOR}\n\n`
-
-    string += `The following JSON blob is information relevant to a single ${customerType} who is under investigation by bank staff, please rewrite this information so that it conforms to the template above. This ${type.toLowerCase()} is being "${statusPrefix}" for the following reasons: ${attributes
-      .getAttribute('reasons')
-      .join(', ')}.`
-
-    return this.generate([{ content: string, role: 'system' }], attributes)
+    return compact(reasonNarrs)
   }
 
   private async generate(
     promptMessages: OpenAI.ChatCompletionMessageParam[],
     attributes: AttributeSet
-  ) {
+  ): Promise<NarrativeResponse> {
     const serialisedAttributes = await attributes.serialise()
     const promptWithContext = promptMessages.concat([
       {
@@ -223,7 +157,7 @@ export class AutoNarrativeService {
         response = await prompt(promptWithContext)
         break
       } catch (e) {
-        console.log(e)
+        logger.error(e)
       }
     }
 

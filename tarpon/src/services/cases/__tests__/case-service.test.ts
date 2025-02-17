@@ -3019,7 +3019,6 @@ describe('Test no double escalation review', () => {
       updatedCase?.caseHierarchyDetails?.childCaseIds?.[0] || ''
 
     const childCase = await caseService.getCase(childCaseId)
-    console.log(childCase)
     expect(childCase?.caseStatus).toBe('ESCALATED')
     expect(childCase?.reviewAssignments).toMatchObject([
       {

@@ -41,6 +41,7 @@ const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
 interface AttributeTypes extends Record<AIAttribute, any> {
   userType: string
   country: string
+  reasons: string[]
   rules: {
     name?: string
     checksFor?: any

@@ -409,7 +409,6 @@ export class RuleHitsStatsDashboardMetric {
       ORDER BY hitCount DESC
       LIMIT ${limit} OFFSET ${offset}
     `
-    console.log(finalQuery)
     const data = await client.query({
       query: finalQuery,
       format: 'JSONEachRow',

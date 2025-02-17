@@ -45,18 +45,13 @@ export const copilotHandler = lambdaApi({})(
         entityType,
         reasons
       )
-      if (entityType === 'REPORT') {
-        return copilotService.getSarNarrative(attributes)
-      }
 
-      if (entityType === 'CASE' || entityType === 'ALERT') {
-        return copilotService.getNarrative(
-          attributes,
-          entityType === 'CASE' ? 'CASE' : 'ALERT',
-          additionalCopilotInfo,
-          otherReason
-        )
-      }
+      return copilotService.getNarrative(
+        entityType,
+        attributes,
+        additionalCopilotInfo ?? {},
+        otherReason
+      )
 
       throw new NotFound(`Entity type not supported: ${entityType}`)
     })

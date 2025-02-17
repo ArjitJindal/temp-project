@@ -1,6 +1,6 @@
 import { CaseReasons } from '@/@types/openapi-internal/CaseReasons'
 
-export const reasonNarratives = (
+export const reasonNarrativesCasesAlerts = (
   type: 'CASE' | 'ALERT'
 ): { reason: CaseReasons; narrative: string }[] => {
   const entityGenerationDate =

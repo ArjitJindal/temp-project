@@ -129,8 +129,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    console.log(v2Result.score)
-    console.log(v8Result.score)
+
     expect(v2Result.score).toEqual(v8Result.score)
   })
   test('V8 result should be equivalent to V2 result domestic', async () => {
@@ -236,8 +235,7 @@ describe('Foreign Destination Country Consumer TRANSACTION Risk Factor', () => {
         type: 'TRANSACTION',
       }
     )
-    console.log(v2Result.score)
-    console.log(v8Result.score)
+
     expect(v2Result.score).toEqual(v8Result.score)
   })
   test('V8 result should handle null transaction country for foreign destination country consumer', async () => {
