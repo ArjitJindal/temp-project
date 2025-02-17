@@ -25,6 +25,7 @@ import { USER_ONGOING_SCREENING_RULES, USER_RULES } from './user-rules'
 import { MongoDbTransactionRepository } from './repositories/mongodb-transaction-repository'
 import { V8_MIGRATED_RULES } from './v8-migrations'
 import { PNB_INTERNAL_RULES } from './pnb-custom-logic'
+import { RuleInstanceClickhouseRepository } from './repositories/rule-instance-clickhouse-repository'
 import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { traceable } from '@/core/xray'
 import { RuleType } from '@/@types/openapi-internal/RuleType'
@@ -38,6 +39,10 @@ import { logger } from '@/core/logger'
 import dayjs from '@/utils/dayjs'
 import { RuleRunMode } from '@/@types/openapi-internal/RuleRunMode'
 import { hasFeature } from '@/core/utils/context'
+import {
+  getClickhouseClient,
+  isClickhouseEnabled,
+} from '@/utils/clickhouse/utils'
 
 const ALL_RULES = {
   ...TRANSACTION_RULES,
@@ -307,38 +312,60 @@ export class RuleInstanceService {
         [key: string]: number
       }
     } = {}
-    if (ruleInstance.type === 'TRANSACTION') {
-      const [hitStats, txStats] = await Promise.all([
-        this.transactionRepository.getRuleInstanceHitStats(
+
+    let clickhouseRepository: RuleInstanceClickhouseRepository | undefined
+    if (isClickhouseEnabled()) {
+      clickhouseRepository = new RuleInstanceClickhouseRepository(
+        this.tenantId,
+        {
+          clickhouseClient: await getClickhouseClient(this.tenantId),
+        }
+      )
+    }
+    if (clickhouseRepository) {
+      const { stats: clickhouseStats } =
+        await clickhouseRepository.getRuleInstanceStats(
+          ruleInstanceId,
+          timeRange,
+          ruleInstance,
+          isShadow
+        )
+      stats = clickhouseStats
+      transactionsHit = sumBy(Object.values(stats), 'hitCount')
+    } else {
+      if (ruleInstance.type === 'TRANSACTION') {
+        const [hitStats, txStats] = await Promise.all([
+          this.transactionRepository.getRuleInstanceHitStats(
+            ruleInstanceId,
+            timeRange,
+            isShadow
+          ),
+          // NOTE: We use the dashboard transaction stats to get the transaction count as a performance
+          // optimization to avoid scanning the transantions collection for the target time range
+          this.dashboardStatsRepository.getTransactionCountStats(
+            timeRange.afterTimestamp,
+            timeRange.beforeTimestamp,
+            'DAY'
+          ),
+        ])
+        const runStats = mapValues(keyBy(txStats, 'time'), (v) => ({
+          runCount: sum(
+            Object.entries(v)
+              .filter(([key]) => key.startsWith('status'))
+              .map((v) => v[1])
+          ),
+        }))
+        stats = merge(hitStats, runStats)
+        transactionsHit = sumBy(Object.values(stats), 'hitCount')
+      } else if (ruleInstance.type === 'USER') {
+        stats = await this.usersRepository.getRuleInstanceStats(
           ruleInstanceId,
           timeRange,
           isShadow
-        ),
-        // NOTE: We use the dashboard transaction stats to get the transaction count as a performance
-        // optimization to avoid scanning the transantions collection for the target time range
-        this.dashboardStatsRepository.getTransactionCountStats(
-          timeRange.afterTimestamp,
-          timeRange.beforeTimestamp,
-          'DAY'
-        ),
-      ])
-      const runStats = mapValues(keyBy(txStats, 'time'), (v) => ({
-        runCount: sum(
-          Object.entries(v)
-            .filter(([key]) => key.startsWith('status'))
-            .map((v) => v[1])
-        ),
-      }))
-      stats = merge(hitStats, runStats)
-      transactionsHit = sumBy(Object.values(stats), 'hitCount')
-    } else if (ruleInstance.type === 'USER') {
-      stats = await this.usersRepository.getRuleInstanceStats(
-        ruleInstanceId,
-        timeRange,
-        isShadow
-      )
-    } else {
-      throw new Error('Unsupported rule type')
+        )
+      } else {
+        throw new Error('Unsupported rule type')
+      }
     }
 
     const allTimeLabels = getTimeLabels(
@@ -347,6 +374,7 @@ export class RuleInstanceService {
       timeRange.beforeTimestamp,
       'DAY'
     )
+
     executionStats = allTimeLabels.map((timeLabel) => {
       if (!stats[timeLabel]) {
         return {
@@ -361,6 +389,7 @@ export class RuleInstanceService {
         hitCount: stats[timeLabel].hitCount ?? 0,
       }
     })
+
     usersHit = sumBy(
       Object.values(stats),
       (v) =>
@@ -370,36 +399,68 @@ export class RuleInstanceService {
 
     if (isShadow) {
       alertsHit = usersHit
-      investigationTime =
-        await OverviewStatsDashboardMetric.getAverageInvestigationTime(
-          this.tenantId,
-          'alerts'
-        )
+      investigationTime = clickhouseRepository
+        ? await OverviewStatsDashboardMetric.getAverageInvestigationTimeClickhouse(
+            this.tenantId,
+            'alerts'
+          )
+        : await OverviewStatsDashboardMetric.getAverageInvestigationTime(
+            this.tenantId,
+            'alerts'
+          )
     } else {
-      const stats = await this.alertsRepository.getRuleInstanceStats(
-        ruleInstanceId,
-        timeRange
-      )
-      alertsStats = allTimeLabels.map((timeLabel) => {
-        const stat = stats.find((v) => v.date === timeLabel)
-        return {
-          date: timeLabel,
-          alertsCreated: stat?.alertsCreated ?? 0,
-          falsePositiveAlerts: stat?.falsePositiveAlerts ?? 0,
+      if (clickhouseRepository) {
+        const alertStats = await clickhouseRepository.getAlertStats(
+          ruleInstanceId,
+          timeRange
+        )
+        alertsStats = allTimeLabels.map((timeLabel) => {
+          const stat = alertStats.find((v) => v.date === timeLabel)
+          return {
+            date: timeLabel,
+            alertsCreated: Number(stat?.alertsCreated ?? 0),
+            falsePositiveAlerts: Number(stat?.falsePositiveAlerts ?? 0),
+          }
+        })
+        const statusChangesData =
+          await this.alertsRepository.getAlertsForInvestigationTimesClickhouse(
+            ruleInstanceId,
+            timeRange.afterTimestamp,
+            timeRange.beforeTimestamp
+          )
+        const alertInvestigationTimes = statusChangesData
+          .map((v) => getLatestInvestigationTime(v.statusChanges))
+          .filter(Boolean)
+        if (alertInvestigationTimes.length) {
+          investigationTime = mean(alertInvestigationTimes)
         }
-      })
-      const alertsResult = await this.alertsRepository.getAlerts({
-        filterRulesHit: [ruleInstanceId],
-        filterAlertAfterCreatedTimestamp: timeRange.afterTimestamp,
-        filterAlertBeforeCreatedTimestamp: timeRange.beforeTimestamp,
-      })
-      const alertInvestigationTimes = alertsResult.data
-        .map((v) => getLatestInvestigationTime(v.alert.statusChanges))
-        .filter(Boolean)
-      if (alertInvestigationTimes.length) {
-        investigationTime = mean(alertInvestigationTimes)
+        alertsHit = sumBy(alertsStats, 'alertsCreated')
+      } else {
+        const stats = await this.alertsRepository.getRuleInstanceStats(
+          ruleInstanceId,
+          timeRange
+        )
+        alertsStats = allTimeLabels.map((timeLabel) => {
+          const stat = stats.find((v) => v.date === timeLabel)
+          return {
+            date: timeLabel,
+            alertsCreated: stat?.alertsCreated ?? 0,
+            falsePositiveAlerts: stat?.falsePositiveAlerts ?? 0,
+          }
+        })
+        const alertsResult = await this.alertsRepository.getAlerts({
+          filterRulesHit: [ruleInstanceId],
+          filterAlertAfterCreatedTimestamp: timeRange.afterTimestamp,
+          filterAlertBeforeCreatedTimestamp: timeRange.beforeTimestamp,
+        })
+        const alertInvestigationTimes = alertsResult.data
+          .map((v) => getLatestInvestigationTime(v.alert.statusChanges))
+          .filter(Boolean)
+        if (alertInvestigationTimes.length) {
+          investigationTime = mean(alertInvestigationTimes)
+        }
+        alertsHit = alertsResult.total
       }
-      alertsHit = alertsResult.total
     }
 
     return {

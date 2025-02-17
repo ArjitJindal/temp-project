@@ -96,6 +96,22 @@ export class AlertsRepository {
     )
   }
 
+  public async getAlertsForInvestigationTimesClickhouse(
+    ruleInstanceId: string,
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ) {
+    const clickhouseRepository = new ClickhouseAlertRepository(
+      await getClickhouseClient(this.tenantId)
+    )
+    const result = await clickhouseRepository.getAlertsForInvestigationTimes(
+      ruleInstanceId,
+      afterTimestamp,
+      beforeTimestamp
+    )
+    return result
+  }
+
   public async getAlerts(
     params: AlertParams,
     options?: { hideTransactionIds?: boolean }

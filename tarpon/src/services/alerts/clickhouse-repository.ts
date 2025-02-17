@@ -3,6 +3,7 @@ import { AlertParams } from './repository'
 import { Alert } from '@/@types/openapi-internal/Alert'
 import { DEFAULT_PAGE_SIZE, offsetPaginateClickhouse } from '@/utils/pagination'
 import { CLICKHOUSE_DEFINITIONS } from '@/utils/clickhouse/definition'
+import { CaseStatusChange } from '@/@types/openapi-internal/CaseStatusChange'
 
 export interface AlertClickhouse extends Alert {
   caseStatus?: string
@@ -13,6 +14,22 @@ export class ClickhouseAlertRepository {
 
   constructor(clickhouseClient: ClickHouseClient) {
     this.clickhouseClient = clickhouseClient
+  }
+
+  async getAlertsForInvestigationTimes(
+    ruleInstanceId: string,
+    afterTimestamp: number,
+    beforeTimestamp: number
+  ) {
+    const query = `SELECT alerts.statusChanges as statusChanges FROM ${CLICKHOUSE_DEFINITIONS.CASES.tableName} array join alerts WHERE alerts.ruleInstanceId = '${ruleInstanceId}' AND alerts.createdTimestamp >= ${afterTimestamp} AND alerts.createdTimestamp <= ${beforeTimestamp}`
+    const result = await this.clickhouseClient.query({
+      query,
+      format: 'JSONEachRow',
+    })
+    const statusChangesData = await result.json<{
+      statusChanges: CaseStatusChange[]
+    }>()
+    return statusChangesData
   }
 
   async getAlerts(

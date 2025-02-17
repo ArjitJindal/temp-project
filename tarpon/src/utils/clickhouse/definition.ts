@@ -247,6 +247,53 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       "originAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'originAmountDetails', 'amountInUsd')",
       "destinationAmountDetails_amountInUsd Float32 MATERIALIZED JSONExtractFloat(data, 'destinationAmountDetails', 'amountInUsd')",
       "reference String MATERIALIZED JSON_VALUE(data, '$.reference')",
+      `hitRulesWithMeta Array(
+        Tuple(
+          ruleInstanceId String,
+          hitDirections Array(String),
+          isShadow UInt8
+        )
+      ) MATERIALIZED 
+        arrayMap(x -> 
+          tuple(
+            JSONExtractString(x, 'ruleInstanceId'),
+            JSONExtractArrayRaw(JSONExtractRaw(x, 'ruleHitMeta'), 'hitDirections'),
+            JSONExtractBool(x, 'isShadow')
+          ),
+          JSONExtractArrayRaw(data, 'hitRules')
+        )`,
+
+      `originShadowHitRuleIds Array(String) MATERIALIZED
+        arrayMap(x -> x.1, 
+          arrayFilter(x -> 
+            hasAny(x.2, ['"ORIGIN"']) AND x.3 = 1, 
+            hitRulesWithMeta
+          )
+        )`,
+
+      `originNonShadowHitRuleIds Array(String) MATERIALIZED
+        arrayMap(x -> x.1,
+          arrayFilter(x -> 
+            hasAny(x.2, ['"ORIGIN"']) AND x.3 = 0, 
+            hitRulesWithMeta
+          )
+        )`,
+
+      `destinationShadowHitRuleIds Array(String) MATERIALIZED
+        arrayMap(x -> x.1, 
+          arrayFilter(x -> 
+            hasAny(x.2, ['"DESTINATION"']) AND x.3 = 1, 
+            hitRulesWithMeta
+          )
+        )`,
+
+      `destinationNonShadowHitRuleIds Array(String) MATERIALIZED
+        arrayMap(x -> x.1,
+          arrayFilter(x -> 
+            hasAny(x.2, ['"DESTINATION"']) AND x.3 = 0, 
+            hitRulesWithMeta
+          )
+        )`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, originUserId, destinationUserId, id)',
