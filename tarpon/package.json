@@ -241,8 +241,6 @@
     "html-entities": "^2.5.2",
     "html-to-text": "^9.0.5",
     "http-errors": "^2.0.0",
-    "ibankit": "^1.5.0",
-    "ibantools": "^4.2.2",
     "io-ts": "^2.2.16",
     "io-ts-reporters": "^2.0.1",
     "ip": "^2.0.1",

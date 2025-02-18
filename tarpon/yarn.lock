@@ -13415,20 +13415,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"ibankit@npm:^1.5.0":
-  version: 1.6.3
-  resolution: "ibankit@npm:1.6.3"
-  checksum: ab4cb29e283a30e86657ecfe7281330b454da9f1cab19c2cf2bdea17ed53687db4f363f9a67b525d3e5f2e5d76c1beff6784b07dce1227db45ba1992842b9851
-  languageName: node
-  linkType: hard
-
-"ibantools@npm:^4.2.2":
-  version: 4.3.9
-  resolution: "ibantools@npm:4.3.9"
-  checksum: 9da2b0d07c0de7de1545aa7e2ac12ef8d6f1ce799cb325af2636b2b2d8e121c32f2ca296e10938320244deae25947877841bff22a97411d0d46821d559ad4e97
-  languageName: node
-  linkType: hard
-
 "iconv-lite@npm:0.4.24, iconv-lite@npm:^0.4.24":
   version: 0.4.24
   resolution: "iconv-lite@npm:0.4.24"
@@ -19041,8 +19027,6 @@ __metadata:
     html-to-text: "npm:^9.0.5"
     http-errors: "npm:^2.0.0"
     husky: "npm:^8.0.1"
-    ibankit: "npm:^1.5.0"
-    ibantools: "npm:^4.2.2"
     io-ts: "npm:^2.2.16"
     io-ts-reporters: "npm:^2.0.1"
     ip: "npm:^2.0.1"
