@@ -6,7 +6,7 @@ export default function Tooltip(props: TooltipProps) {
   const { children } = props;
   return (
     <AntTooltip color={COLORS.gray10} {...props}>
-      {children}
+      <div>{children}</div>
     </AntTooltip>
   );
 }
