@@ -20,6 +20,7 @@ interface Props {
   selectedTransactionIds?: string[];
   onTransactionSelect?: (alertId: string, transactionIds: string[]) => void;
   escalatedTransactionIds?: string[];
+  fitHeight?: boolean;
   selectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
 }
 
@@ -31,6 +32,7 @@ export default function TransactionsTab(props: Props) {
     onTransactionSelect,
     selectedTransactionIds,
     selectionActions,
+    fitHeight,
   } = props;
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [params, setParams] = useState<TransactionsTableParams>(DEFAULT_PARAMS_STATE);
@@ -107,11 +109,11 @@ export default function TransactionsTab(props: Props) {
         queryResult={transactionsResponse}
         params={params}
         onChangeParams={setParams}
-        adjustPagination={true}
         showCheckedTransactionsButton={true}
         isModalVisible={isModalVisible}
         setIsModalVisible={setIsModalVisible}
         alert={alert}
+        fitHeight={fitHeight}
         extraFilters={[
           {
             key: 'userId',

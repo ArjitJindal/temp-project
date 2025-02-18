@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useNavigate, useParams } from 'react-router';
 import { Alert, SanctionsDetails, SanctionsHitStatus } from '@/apis';
@@ -116,12 +116,17 @@ export default function AlertDetailsTabs(props: Props) {
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
     transactionSelectionActions: transactionSelectionActions,
+    fitTablesHeight: true,
   });
+
+  const filteredTabItems = useMemo(() => {
+    return tabItems.filter(({ key }) => key !== AlertTabs.COMMENTS);
+  }, [tabItems]);
 
   return (
     <PageTabs
       sticky={entityHeaderHeight}
-      items={tabItems.filter(({ key }) => key !== AlertTabs.COMMENTS)}
+      items={filteredTabItems}
       type="line"
       activeKey={tab}
       onChange={(newTab) => {

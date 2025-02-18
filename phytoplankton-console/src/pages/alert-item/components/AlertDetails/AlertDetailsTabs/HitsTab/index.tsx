@@ -11,6 +11,7 @@ interface Props {
   alert?: Alert;
   params: StatePair<AllParams<SanctionsHitsTableParams>>;
   selectedSanctionsHitsIds?: string[];
+  fitHeight?: boolean;
   onSanctionsHitSelect?: (sanctionsHitsIds: string[]) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   queryResult: QueryResult<CursorPaginatedData<SanctionsHit>>;
@@ -22,6 +23,7 @@ export default function HitsTab(props: Props) {
     params,
     queryResult,
     selectedSanctionsHitsIds,
+    fitHeight,
     onSanctionsHitSelect,
     onSanctionsHitsChangeStatus,
   } = props;
@@ -38,6 +40,7 @@ export default function HitsTab(props: Props) {
       onSelect={onSanctionsHitSelect}
       onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
       alertCreatedAt={alert?.createdTimestamp}
+      fitHeight={fitHeight}
     />
   );
 }

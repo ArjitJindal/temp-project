@@ -194,7 +194,6 @@ type Props = {
   onSelect?: (ids: string[]) => void;
   hideSearchForm?: boolean;
   disableSorting?: boolean;
-  adjustPagination?: boolean;
   headerSubtitle?: string;
   fitHeight?: boolean | number;
   showCheckedTransactionsButton?: boolean;

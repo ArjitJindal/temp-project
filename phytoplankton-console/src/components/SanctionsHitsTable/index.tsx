@@ -55,6 +55,7 @@ interface Props {
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   alertCreatedAt?: number;
   showComment?: boolean;
+  fitHeight?: boolean | number;
 }
 
 // todo: delete when have information in sanction hit
@@ -76,6 +77,7 @@ export default function SanctionsHitsTable(props: Props) {
     onSanctionsHitsChangeStatus,
     alertCreatedAt,
     showComment,
+    fitHeight = 300,
   } = props;
   const [selectedSearchHit, setSelectedSearchHit] = useState<
     AsyncResource<SanctionsHit | undefined>
@@ -212,7 +214,7 @@ export default function SanctionsHitsTable(props: Props) {
         pagination={'HIDE_FOR_ONE_PAGE'}
         externalHeader={false}
         toolsOptions={false}
-        fitHeight={300}
+        fitHeight={fitHeight}
         cursor={queryResult.cursor}
       />
       {selectedSearchHit && (

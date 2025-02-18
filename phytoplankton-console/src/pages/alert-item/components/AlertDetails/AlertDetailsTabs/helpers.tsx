@@ -242,6 +242,7 @@ interface Props {
   ) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   transactionSelectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
+  fitTablesHeight?: boolean;
 }
 
 export function useAlertTabs(props: Props): TabItem[] {
@@ -256,6 +257,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     onTransactionSelect,
     onSanctionsHitsChangeStatus,
     transactionSelectionActions,
+    fitTablesHeight,
   } = props;
 
   const tabList = isScreeningAlert(alert) ? SCREENING_ALERT_TAB_LISTS : DEFAULT_TAB_LISTS;
@@ -327,6 +329,7 @@ export function useAlertTabs(props: Props): TabItem[] {
             key: tab,
             children: (
               <TransactionsTab
+                fitHeight={fitTablesHeight}
                 alert={alert}
                 caseUserId={caseUserId}
                 selectedTransactionIds={selectedTransactionIds}
@@ -366,6 +369,7 @@ export function useAlertTabs(props: Props): TabItem[] {
             key: tab,
             children: (
               <HitsTab
+                fitHeight={fitTablesHeight}
                 alert={alert}
                 params={[openTableParams, setOpenTableParams]}
                 selectedSanctionsHitsIds={selectedSanctionsHitsIds}
@@ -479,6 +483,7 @@ export function useAlertTabs(props: Props): TabItem[] {
     caseQueryResult.data,
     userQueryResult.data,
     isEntityLinkingEnabled,
+    fitTablesHeight,
   ]);
 
   return tabs;
