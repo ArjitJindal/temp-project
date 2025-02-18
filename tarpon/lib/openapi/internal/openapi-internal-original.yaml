@@ -10176,6 +10176,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/FileInfo'
+        otherReason:
+          type: string
       required:
         - comment
         - transactionIds
