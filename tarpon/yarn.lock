@@ -9284,9 +9284,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk@npm:~2.175.1":
-  version: 2.175.1
-  resolution: "aws-cdk@npm:2.175.1"
+"aws-cdk@npm:~2.176.0":
+  version: 2.176.0
+  resolution: "aws-cdk@npm:2.176.0"
   dependencies:
     fsevents: "npm:2.3.2"
   dependenciesMeta:
@@ -9294,7 +9294,7 @@ __metadata:
       optional: true
   bin:
     cdk: bin/cdk
-  checksum: b6d010d7eaaf6e0efbdc687fea0cde38dd3d9ade469391809623634110cafcc1845a7d55c0cc762746b3dfc6fb585bab00bbeea037b88b116a9d4fbe774ff359
+  checksum: 685e99814261c8d34238900ceb3048a4754bb093f7736884af9ad8e6cf6361d8826be2f424ed7789da9f5a82491584ece368f600433cb1b785b1eac33fa6d1fd
   languageName: node
   linkType: hard
 
@@ -18991,7 +18991,7 @@ __metadata:
     ajv: "npm:8.11.0"
     async-mutex: "npm:^0.5.0"
     auth0: "npm:^4.4.0"
-    aws-cdk: "npm:~2.175.1"
+    aws-cdk: "npm:~2.176.0"
     aws-cdk-lib: "npm:~2.176.0"
     aws-sdk: "npm:^2.1692.0"
     aws-sdk-client-mock: "npm:^2.0.1"
