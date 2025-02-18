@@ -11244,7 +11244,6 @@ components:
         - ALERTS_DYNAMO_POC
         - ACURIS
         - CRM_FRESHDESK
-        - LOCKS_FOR_AGGREGATION_UPDATE
       description: ''
     NewRiskFactorIdResponse:
       title: NewRiskFactorIdResponse

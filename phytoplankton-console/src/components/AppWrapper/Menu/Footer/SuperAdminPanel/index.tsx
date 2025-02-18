@@ -159,11 +159,6 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'CRM Freshdesk Integration',
     description: 'Enables CRM Freshdesk Integration',
   },
-
-  LOCKS_FOR_AGGREGATION_UPDATE: {
-    title: 'Acquire locks for aggregation',
-    description: 'Acquire locks while updating aggregation',
-  },
 };
 
 const isEnvLocal = process.env.ENV_NAME === 'local';
