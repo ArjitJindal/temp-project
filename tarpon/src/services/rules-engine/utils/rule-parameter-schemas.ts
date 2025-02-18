@@ -746,7 +746,7 @@ export const LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_SCHEMA = (
     maximum: 100,
     title: 'Fuzziness percentage (Levenshtein distance)',
     description:
-      'For example specifying 50% means that allowed Levenshtein distance will be half of the number of characters in username.',
+      'Fuzziness adjusts how closely strings must match. Lower values mean stricter matching—for example, 20% allows up to 20% character differences.',
   } as const)
 
 export const LEVENSHTEIN_DISTANCE_THRESHOLD_PERCENTAGE_OPTIONAL_SCHEMA = (

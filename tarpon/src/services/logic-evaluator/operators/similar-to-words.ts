@@ -8,7 +8,7 @@ import { logger } from '@/core/logger'
 export const FUZZINESS_PARAMETER: JSONSchemaType<any> = {
   title: 'Fuzziness %',
   description:
-    'The allowed Levenshtein distance as a percentage of the length of the string. For example specifying 50% means that the allowed Levenshtein distance will be half of the number of characters in the string.',
+    'Fuzziness adjusts how closely strings must match. Lower values mean stricter matching—for example, 20% allows up to 20% character differences.',
   type: 'number',
   minimum: 0,
   maximum: 100,
