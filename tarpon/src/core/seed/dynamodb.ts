@@ -37,6 +37,7 @@ import { ruleStatsHandler } from '@/lambdas/tarpon-change-mongodb-consumer/app'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { DynamoAlertRepository } from '@/services/alerts/dynamo-repository'
 import { NangoRepository } from '@/services/nango/repository'
+import { Feature } from '@/@types/openapi-internal/Feature'
 
 export const DYNAMO_KEYS = ['PartitionKeyID', 'SortKeyID']
 
@@ -237,6 +238,8 @@ export async function seedDynamo(
     const mergedFeatureFlags = uniq([
       ...(demoSettings.features ?? []),
       ...(nonDemoSettings.features ?? []),
+      'AI_FORENSICS' as Feature,
+      'MACHINE_LEARNING' as Feature,
     ])
     const getTenantSettingsKeysToDelete = (): TenantSettingName[] => {
       const keys = TenantSettings.attributeTypeMap
@@ -249,6 +252,8 @@ export async function seedDynamo(
       await tenantRepo.deleteTenantSettings(getTenantSettingsKeysToDelete())
       await tenantRepo.createOrUpdateTenantSettings({
         ...nonDemoSettings,
+        isAiEnabled: true,
+        isMlEnabled: true,
         features: mergedFeatureFlags,
       })
     }
