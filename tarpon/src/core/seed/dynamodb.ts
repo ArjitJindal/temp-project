@@ -112,6 +112,15 @@ export async function seedDynamo(
     })
   }
 
+  logger.info('Clear lists instance...')
+  await dangerouslyDeletePartition(
+    dynamoDb,
+    tenantId,
+    DynamoDbKeys.LIST_HEADER(tenantId).PartitionKeyID,
+    StackConstants.TARPON_DYNAMODB_TABLE_NAME(tenantId),
+    'Lists'
+  )
+
   logger.info('Creating lists...')
   for (const list of listsData()) {
     await listRepo.createList(
