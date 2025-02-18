@@ -27,7 +27,7 @@ export default function PaymentApprovalsTable(props: Props) {
   const queryKey = TRANSACTIONS_LIST({ ...params, filterStatus });
   const queryResult = useCursorQuery(queryKey, async ({ from }) => {
     return await api.getTransactionsList({
-      ...transactionParamsToRequest(params),
+      ...transactionParamsToRequest(params, { ignoreDefaultTimestamps: true }),
       filterStatus,
       start: from || params.from,
     });
