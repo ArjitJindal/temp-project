@@ -218,6 +218,8 @@ export const StackConstants = {
     'BetterUptimeCloudWatchTopic'
   ),
   BETTER_UPTIME_SUBSCRIPTION_NAME: getResourceName('Subscription'),
+  ZENDUTY_CLOUD_WATCH_TOPIC_NAME: getResourceName('ZendutyCloudWatchTopic'),
+  ZENDUTY_SUBSCRIPTION_NAME: getResourceName('ZendutySubscription'),
   TARPON_API_NAME: getResourceName('TarponAPI'),
   TARPON_API_GATEWAY_ALARM_NAME: getResourceName('TarponApiErrorPercentage'),
   TARPON_API_GATEWAY_THROTTLING_ALARM_NAME: getResourceName(

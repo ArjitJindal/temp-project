@@ -143,6 +143,7 @@ const deployKinesisConsumer = !isQaEnv()
 export class CdkTarponStack extends cdk.Stack {
   config: Config
   betterUptimeCloudWatchTopic: Topic
+  zendutyCloudWatchTopic: Topic
   functionProps: Partial<FunctionProps>
 
   private addTagsToResource(
@@ -173,10 +174,28 @@ export class CdkTarponStack extends cdk.Stack {
     )
     this.betterUptimeCloudWatchTopic = BetterUptimeCloudWatchTopic
 
+    const ZendutyCloudWatchTopic = new Topic(
+      this,
+      StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+      {
+        displayName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+        topicName: StackConstants.ZENDUTY_CLOUD_WATCH_TOPIC_NAME,
+      }
+    )
+    this.zendutyCloudWatchTopic = ZendutyCloudWatchTopic
+
     new Subscription(this, StackConstants.BETTER_UPTIME_SUBSCRIPTION_NAME, {
       topic: this.betterUptimeCloudWatchTopic,
       endpoint: config.application.BETTERUPTIME_HOOK_URL
         ? config.application.BETTERUPTIME_HOOK_URL
+        : '',
+      protocol: SubscriptionProtocol.HTTPS,
+    })
+
+    new Subscription(this, StackConstants.ZENDUTY_SUBSCRIPTION_NAME, {
+      topic: this.zendutyCloudWatchTopic,
+      endpoint: config.application.ZENDUTY_WEBHOOK_URL
+        ? config.application.ZENDUTY_WEBHOOK_URL
         : '',
       protocol: SubscriptionProtocol.HTTPS,
     })
@@ -1389,6 +1408,7 @@ export class CdkTarponStack extends cdk.Stack {
         config,
         betterUptimeCloudWatchTopic: this.betterUptimeCloudWatchTopic,
         batchJobStateMachineArn: batchJobStateMachine.stateMachineArn,
+        zendutyCloudWatchTopic: this.zendutyCloudWatchTopic,
       })
 
       if (this.config.region !== 'me-1' && this.config.region !== 'asia-3') {

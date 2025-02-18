@@ -111,6 +111,8 @@ export const config: Config = {
     MAXIMUM_ALLOWED_EXPORT_SIZE: 10000,
     BETTERUPTIME_HOOK_URL:
       'https://betteruptime.com/api/v1/aws-cloudwatch/webhook/b9EMVzubTbU3YRnn8tktYYnu',
+    ZENDUTY_WEBHOOK_URL:
+      'https://events.zenduty.com/integration/ro7ie/cloudwatch_v2/75d478cc-8253-4d21-a10e-b96ad60db52a/',
     CONSOLE_URI: 'https://console.flagright.dev',
     SLACK_CLIENT_ID: '2800969986821.3797458092182',
     SLACK_CLIENT_SECRET: '7e47e8df70f4bfade8d8679b743bac67',

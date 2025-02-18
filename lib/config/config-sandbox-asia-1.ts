@@ -13,6 +13,8 @@ export const config: Config = {
     MONGO_ATLAS_CLUSTER: 'Sandbox-SIN',
     BETTERUPTIME_HOOK_URL:
       'https://uptime.betterstack.com/api/v1/aws-cloudwatch/webhook/8kuHsa8jtTLABtyTSv4Fu77d',
+    ZENDUTY_WEBHOOK_URL:
+      'https://events.zenduty.com/integration/ro7ie/cloudwatch_v2/6830cfb2-8a0f-4f28-81af-06e2e74e7042/',
     MONGO_EVENT_TRIGGER_RULE_ID: '66ed4f296781e98cf16e7dad',
   },
   resource: {
