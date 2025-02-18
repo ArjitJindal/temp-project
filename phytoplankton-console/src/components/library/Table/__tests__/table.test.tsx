@@ -250,6 +250,108 @@ describe('Pagination', () => {
       }
     }
   });
+
+  test('Multi-rows renders into multiple row', async () => {
+    function TestComponent() {
+      const [params, setParams] = useState<AllParams<unknown>>(DEFAULT_PARAMS_STATE);
+      return (
+        <Table<Person>
+          rowKey={'id'}
+          data={{
+            items: [
+              {
+                spanBy: ['id'],
+                rows: [
+                  {
+                    id: 'test1',
+                    firstName: 'John',
+                    lastName: 'Dow',
+                  },
+                  {
+                    id: 'test1',
+                    firstName: 'Mike',
+                    lastName: 'Smith',
+                  },
+                ],
+              },
+            ],
+            total: 1,
+          }}
+          columns={[
+            helper.simple({
+              key: 'id',
+              title: 'ID',
+            }),
+            helper.simple({
+              key: 'firstName',
+              title: 'First name',
+            }),
+            helper.simple({
+              key: 'lastName',
+              title: 'Last name',
+            }),
+          ]}
+          params={params}
+          onChangeParams={(newParams) => setParams(newParams)}
+        />
+      );
+    }
+    render(<TestComponent />);
+    const rows = await findTableBodyRows();
+    expect(rows).toHaveLength(2);
+  });
+
+  test('Multi-rows collapse into single row if all visible columns are marked as spanned', async () => {
+    function TestComponent() {
+      const [params, setParams] = useState<AllParams<unknown>>(DEFAULT_PARAMS_STATE);
+      return (
+        <Table<Person>
+          rowKey={'id'}
+          data={{
+            items: [
+              {
+                spanBy: ['id'],
+                rows: [
+                  {
+                    id: 'test1',
+                    firstName: 'John',
+                    lastName: 'Dow',
+                  },
+                  {
+                    id: 'test1',
+                    firstName: 'Mike',
+                    lastName: 'Smith',
+                  },
+                ],
+              },
+            ],
+            total: 1,
+          }}
+          columns={[
+            helper.simple({
+              key: 'id',
+              title: 'ID',
+            }),
+            helper.simple({
+              key: 'firstName',
+              title: 'First name',
+              hideInTable: true,
+            }),
+            helper.simple({
+              key: 'lastName',
+              title: 'Last name',
+              hideInTable: true,
+            }),
+          ]}
+          params={params}
+          onChangeParams={(newParams) => setParams(newParams)}
+        />
+      );
+    }
+    render(<TestComponent />);
+    const rows = await findTableBodyRows();
+    expect(rows).toHaveLength(1);
+  });
 });
 
 /*
@@ -262,6 +364,14 @@ describe('Pagination', () => {
 
 async function findTableBody() {
   return (await screen.findByRole('table')).querySelector('tbody');
+}
+
+async function findTableBodyRows() {
+  const tableBodyEl = await findTableBody();
+  if (tableBodyEl == null) {
+    throw new Error(`Unable to find table body`);
+  }
+  return Array.from(tableBodyEl.querySelectorAll('tr'));
 }
 
 async function findColumn(title: string) {

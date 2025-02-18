@@ -23,6 +23,7 @@ import {
   DisplayColumn,
   EditContext,
   FieldAccessor,
+  flatColumns,
   getColumnId,
   isDerivedColumn,
   isDisplayColumn,
@@ -167,10 +168,38 @@ export function useTanstackTable<
     : getOr(dataRes, { items: [] });
 
   const preparedData: TableRow<Item>[] = useMemo(() => {
+    const visibleColumns = flatColumns(columns).filter((x) => {
+      if ((isSimpleColumn(x) || isDerivedColumn(x)) && x.hideInTable) {
+        return false;
+      }
+      return columnVisibility?.[getColumnId(x)] ?? true;
+    });
+
     let rowIndex = 0;
     return (data.items ?? []).flatMap((item, itemIndex): TableRow<Item>[] => {
       if (isMultiRows(item)) {
         const rows = item.rows ?? [];
+        // If all visible columns are spanned, no need to add empty rows - collapse into single row
+        const allVisibleColumnsAreSpanned = visibleColumns.every((column) => {
+          return item.spanBy.includes(getColumnId(column));
+        });
+        if (allVisibleColumnsAreSpanned) {
+          const firstRow = rows[0];
+          return firstRow
+            ? [
+                {
+                  spanBy: [],
+                  content: rows[0],
+                  rowsCount: 1,
+                  rowIndex: rowIndex++,
+                  itemIndex: itemIndex,
+                  isFirstRow: true,
+                  isLastRow: true,
+                },
+              ]
+            : [];
+        }
+
         return rows.map((row, i) => ({
           spanBy: [...item.spanBy, 'SELECT_COLUMN_ID'],
           content: row,
@@ -194,7 +223,7 @@ export function useTanstackTable<
         ];
       }
     });
-  }, [data.items]);
+  }, [data.items, columns, columnVisibility]);
 
   const isAnythingExpandable =
     !showSkeleton &&
