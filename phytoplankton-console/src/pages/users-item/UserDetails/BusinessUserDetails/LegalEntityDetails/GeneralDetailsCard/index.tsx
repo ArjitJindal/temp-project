@@ -11,7 +11,7 @@ import Tag from '@/components/library/Tag';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 import TagList from '@/components/library/Tag/TagList';
 import GenericConstantTag from '@/components/library/Tag/GenericConstantTag';
-
+import CountryDisplay from '@/components/ui/CountryDisplay';
 interface Props {
   user: InternalBusinessUser;
 }
@@ -74,6 +74,18 @@ export default function GeneralDetailsCard(props: Props) {
               },
             ]
           : []),
+        {
+          label: 'Operating countries',
+          value: (
+            <TagList>
+              {user.legalEntity.companyGeneralDetails?.operatingCountries?.length
+                ? user.legalEntity.companyGeneralDetails.operatingCountries.map((country) => (
+                    <CountryDisplay key={country} isoCode={country} />
+                  ))
+                : '-'}
+            </TagList>
+          ),
+        },
         ...(user.legalEntity?.sourceOfFunds?.length
           ? [
               {

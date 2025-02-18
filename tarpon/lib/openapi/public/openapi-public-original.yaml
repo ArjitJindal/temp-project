@@ -3387,6 +3387,11 @@ components:
           description: Segmentation of the business user
         userRegistrationStatus:
           $ref: '#/components/schemas/UserRegistrationStatus'
+        operatingCountries:
+          type: array
+          description: Countries where the business operates
+          items:
+            $ref: '#/components/schemas/CountryCode'
         alias:
           type: array
           items:
