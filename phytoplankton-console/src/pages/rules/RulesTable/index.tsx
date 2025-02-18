@@ -122,10 +122,10 @@ export const RulesTable: React.FC<Props> = (props) => {
         sorting: true,
         type: {
           render: (types) => {
-            return <>{types?.join('/ ')}</>;
+            return <>{types?.join('/')}</>;
           },
           stringify: (types) => {
-            return types?.join('/ ') ?? '-';
+            return types?.join('/') ?? '-';
           },
         },
       }),

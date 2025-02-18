@@ -130,7 +130,7 @@ export enum RuleTypology {
   IssuingFraud = 'Issuing fraud',
   CardFraud = 'Card fraud',
   Structuring = 'Structuring',
-  HiddenUnusualRelationships = 'Hidden / unusual relationships',
+  HiddenUnusualRelationships = 'Hidden/unusual relationships',
   Scams = 'Scams (romance, Nigerian Prince, inheritance and etc.)',
   TerroristFinancing = 'Terrorist financing',
   Layering = 'Layering',
@@ -1677,7 +1677,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
-        'Resolve an IBAN number to check if the bank name have matched against Sanctions/ PEP/ AM.',
+        'Resolve an IBAN number to check if the bank name have matched against Sanctions/PEP/AM.',
     }
   },
   () => {
@@ -1734,7 +1734,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
-        "A transaction’s recipient's name and bank name are checked against Sanctions/ PEP/ AM sanctions list, prompting further investigation.",
+        "A transaction’s recipient's name and bank name are checked against Sanctions/PEP/AM sanctions list, prompting further investigation.",
     }
   },
   () => {
@@ -1950,7 +1950,7 @@ const _RULES_LIBRARY: Array<
       types: [RuleTypeField.Screening],
       typologies: [RuleTypology.ScreeningHits],
       sampleUseCases:
-        'A transaction’s payment details are checked if userId not metioned against Sanctions/ PEP/ AM sanctions list, prompting further investigation.',
+        'A transaction’s payment details are checked if userId not metioned against Sanctions/PEP/AM sanctions list, prompting further investigation.',
     }
   },
 ]
