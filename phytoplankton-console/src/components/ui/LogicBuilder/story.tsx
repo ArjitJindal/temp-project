@@ -149,7 +149,7 @@ export default function (): JSX.Element {
           value: undefined,
           config: makeConfig({
             fields: fixture.fields as Fields,
-            enableNesting: true,
+            enableNesting: false,
           }),
         }}
       >

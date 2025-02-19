@@ -1,20 +1,9 @@
+import { ListItem, SelectFieldSettings, WidgetProps } from '@react-awesome-query-builder/core';
 import {
-  BooleanWidget,
-  ListItem,
-  MultiSelectWidget,
-  NumberWidget,
-  SelectFieldSettings,
-  SelectWidget,
-  TextWidget,
-  WidgetProps,
-} from '@react-awesome-query-builder/core';
-import {
-  BaseWidgetProps,
+  AsyncListValues,
   BasicConfig,
   Config,
   CoreWidgets,
-  DateTimeWidget,
-  FactoryWithContext,
   FieldWidget,
   MultiSelectFieldSettings,
   Operator,
@@ -80,10 +69,11 @@ export function isOperatorParameterField(props: any): boolean {
 }
 
 function WidgetWrapper(props: {
-  widgetFactoryProps: WidgetProps<QueryBuilderConfig>;
+  widgetFactoryProps: WidgetProps<Config>;
   children: React.ReactNode;
 }) {
   const { widgetFactoryProps } = props;
+
   if (isOperatorParameterField(widgetFactoryProps)) {
     const operator = getOperator(widgetFactoryProps);
     if (!operator || !operator.parameters) {
@@ -127,10 +117,14 @@ function WidgetWrapper(props: {
   if (!showLabel) {
     return <>{props.children}</>;
   }
-  return <Label label={'Value'}>{props.children}</Label>;
+  return (
+    <Label label={'Value'} testId={'value-source'}>
+      {props.children}
+    </Label>
+  );
 }
 
-const customNumberWidget: NumberWidget<QueryBuilderConfig> = {
+const customNumberWidget: CoreWidgets['number'] = {
   type: `number`,
   factory: (props) => {
     let value: number | undefined;
@@ -147,13 +141,15 @@ const customNumberWidget: NumberWidget<QueryBuilderConfig> = {
 
     return (
       <WidgetWrapper widgetFactoryProps={props}>
-        <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
+        <div className={s.numberInputWrapper}>
+          <NumberInput value={value} onChange={(v) => props.setValue(v ?? 0)} allowClear={true} />
+        </div>
       </WidgetWrapper>
     );
   },
 };
 
-const customTextWidget: TextWidget<QueryBuilderConfig> = {
+const customTextWidget: CoreWidgets['text'] = {
   type: `text`,
   factory: (props) => {
     const isEnumType = !isEmpty((props as SelectFieldSettings).listValues);
@@ -191,12 +187,31 @@ const customTextWidget: TextWidget<QueryBuilderConfig> = {
     }
 
     if (isEnumType) {
+      const validateValue = props.validateValue;
       if (MULTI_SELECT_BUILTIN_OPERATORS.includes(props.operator)) {
-        return (customMultiselectWidget.factory as FactoryWithContext<MultiSelectFieldSettings>)(
-          props,
-        );
+        return customMultiselectWidget.factory({
+          ...props,
+          value: Array.isArray(props.value) ? props.value : [],
+          setValue(val: null | undefined | string[] | number[], asyncListValues?: AsyncListValues) {
+            return props.setValue(val as unknown as string, asyncListValues);
+          },
+          validateValue(val, ...rest) {
+            return validateValue
+              ? val.every((x) =>
+                  validateValue?.call(this, typeof x === 'string' ? x : `${x}`, ...rest),
+                )
+              : true;
+          },
+        });
       } else {
-        return (customSelectWidget.factory as FactoryWithContext<SelectFieldSettings>)(props);
+        return customSelectWidget.factory({
+          ...props,
+          validateValue: function (val, ...rest) {
+            return validateValue
+              ? validateValue.call(this, typeof val === 'string' ? val : `${val}`, ...rest)
+              : true;
+          },
+        });
       }
     }
 
@@ -243,7 +258,7 @@ const customTextWidget: TextWidget<QueryBuilderConfig> = {
   },
 };
 
-const customBooleanWidget: BooleanWidget<QueryBuilderConfig> = {
+const customBooleanWidget: CoreWidgets['boolean'] = {
   type: `boolean`,
   factory: (props) => {
     if (props.value === undefined) {
@@ -264,7 +279,7 @@ const customBooleanWidget: BooleanWidget<QueryBuilderConfig> = {
   },
 };
 
-const customDateAndTimeWidget: DateTimeWidget<QueryBuilderConfig> = {
+const customDateAndTimeWidget: CoreWidgets['datetime'] = {
   type: `datetime`,
   factory: (props) => {
     const dayjsValue = props.value ? dayjs(props.value as any) : undefined;
@@ -286,7 +301,7 @@ const customDateAndTimeWidget: DateTimeWidget<QueryBuilderConfig> = {
 };
 
 function getSelectOptions(
-  props: BaseWidgetProps & SelectFieldSettings,
+  props: SelectFieldSettings | MultiSelectFieldSettings,
 ): Array<ListItem | string | number> {
   let listValues: Array<ListItem | string | number> = [];
   if (props.listValues == null) {
@@ -294,15 +309,17 @@ function getSelectOptions(
   } else if (Array.isArray(props.listValues)) {
     listValues = props.listValues;
   } else if (typeof props.listValues === 'object') {
-    listValues = Object.entries(props.listValues).map(([key, value]) => ({
-      title: humanizeAuto(key),
-      value: value,
-    }));
+    listValues = Object.entries(props.listValues).map(
+      ([key, value]): ListItem => ({
+        title: humanizeAuto(key),
+        value: value as string | number,
+      }),
+    );
   }
   return listValues;
 }
 
-const customSelectWidget: SelectWidget<QueryBuilderConfig> = {
+const customSelectWidget: CoreWidgets['select'] = {
   type: `select`,
   factory: (props) => {
     let listValues = getSelectOptions(props);
@@ -325,7 +342,6 @@ const customSelectWidget: SelectWidget<QueryBuilderConfig> = {
     return (
       <WidgetWrapper widgetFactoryProps={props}>
         <Select
-          autoTrim={true}
           dropdownMatchWidth={false}
           portaled={true}
           allowClear={true}
@@ -338,7 +354,7 @@ const customSelectWidget: SelectWidget<QueryBuilderConfig> = {
   },
 };
 
-const customMultiselectWidget: MultiSelectWidget<QueryBuilderConfig> = {
+const customMultiselectWidget: CoreWidgets['multiselect'] = {
   type: `select`,
   factory: (props) => {
     const listValues = getSelectOptions(props);
@@ -384,7 +400,7 @@ const customMultiselectWidget: MultiSelectWidget<QueryBuilderConfig> = {
   },
 };
 
-const customTimeWidget: DateTimeWidget<QueryBuilderConfig> = {
+const customTimeWidget: CoreWidgets['time'] = {
   type: `time`,
   jsonLogic: (val) => {
     if (typeof val === 'number') {
@@ -435,7 +451,7 @@ const customTimeWidget: DateTimeWidget<QueryBuilderConfig> = {
   },
 };
 
-const customSliderWidget: NumberWidget<QueryBuilderConfig> = {
+const customSliderWidget: CoreWidgets['slider'] = {
   type: `number`,
   factory: (props) => {
     if (isViewMode(props.config)) {
@@ -459,7 +475,6 @@ const customSliderWidget: NumberWidget<QueryBuilderConfig> = {
 
 const customFieldWidget: FieldWidget<Config> = {
   valueSrc: 'field',
-  formatValue: () => {}, // no need to format value
   factory: (props) => {
     const options = getFieldOptions(
       props.config?.fields ?? {},

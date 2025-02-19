@@ -1,9 +1,9 @@
-import { BasicConfig, Empty, Settings } from '@react-awesome-query-builder/ui';
+import { BasicConfig, Config, Settings, ValueSourceItem } from '@react-awesome-query-builder/ui';
 import '@react-awesome-query-builder/ui/css/styles.css';
 import cn from 'clsx';
 import { isEmpty } from 'lodash';
 import s from './index.module.less';
-import { JSON_LOGIC_OPERATORS, SELECT_OPERATORS, MULTI_SELECT_LIST_OPERATORS } from './operators';
+import { JSON_LOGIC_OPERATORS, MULTI_SELECT_LIST_OPERATORS, SELECT_OPERATORS } from './operators';
 import ViewModeTags from './ViewModeTags';
 import { LogicBuilderConfig, QueryBuilderConfig } from '@/components/ui/LogicBuilder/types';
 import { customWidgets, isOperatorParameterField } from '@/components/ui/LogicBuilder/widgets';
@@ -102,10 +102,13 @@ export function makeConfig(
             label,
           }));
         } else {
-          options = Object.entries(props.valueSources).map(([key, { label }]) => ({
-            value: key,
-            label,
-          }));
+          options = Object.entries(props.valueSources).map(([key, value]) => {
+            const { label } = value as ValueSourceItem;
+            return {
+              value: key,
+              label,
+            };
+          });
         }
         return (
           <Dropdown
@@ -290,7 +293,7 @@ function OptionalLabel(
 
 interface FieldInputProps {
   options: Option<any>[];
-  value: string | Empty;
+  value: string | null | undefined;
   onChange: (value) => void;
   showlabel?: boolean;
 }
@@ -313,6 +316,6 @@ export const FieldInput = (props: FieldInputProps) => {
   );
 };
 
-export function isViewMode(config: QueryBuilderConfig): boolean {
-  return config.settings.mode === 'VIEW';
+export function isViewMode(config: Config): boolean {
+  return (config as QueryBuilderConfig)?.settings?.mode === 'VIEW';
 }

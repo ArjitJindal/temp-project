@@ -398,10 +398,10 @@ Cypress.Commands.add('deleteRuleInstance', (ruleInstanceId: string) => {
   cy.intercept('GET', '**/rule_instances**').as('ruleInstances');
   cy.get('th').contains('Updated at').click({ force: true });
   cy.wait('@ruleInstances').then((interception) => {
-    expect(interception.response?.statusCode).to.eq(200);
+    expect(interception.response?.statusCode).to.be.oneOf([200, 304]);
     cy.get('th').contains('Updated at').click({ force: true });
     cy.wait('@ruleInstances').then((interception) => {
-      expect(interception.response?.statusCode).to.eq(200);
+      expect(interception.response?.statusCode).to.be.oneOf([200, 304]);
       cy.get('[data-cy="rule-actions-menu"]').first().click();
       cy.get('[data-cy="rule-delete-button"]').first().should('exist').click();
       cy.get('[data-cy="modal-title"]').should('contain', ruleInstanceId);

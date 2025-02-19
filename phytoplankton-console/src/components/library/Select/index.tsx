@@ -81,7 +81,7 @@ export default function Select<Value extends Comparable = string>(props: Props<V
     portaled = false,
     dropdownMatchWidth = true,
     autoTrim = false,
-    testId,
+    testId = `input select`,
     optionLabelProp,
     tooltip,
   } = props;

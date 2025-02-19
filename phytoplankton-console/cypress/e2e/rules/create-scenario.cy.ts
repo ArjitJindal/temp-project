@@ -46,9 +46,9 @@ describe('Create scenario', () => {
     cy.get('button[data-cy="add-logic-v8"]').click();
     cy.waitNothingLoading();
     if (type === 'USER') {
-      addCondition('User / id{enter}', '123');
+      addCondition('User / id', '123');
     } else {
-      addCondition('Transaction / type{enter}', 'Deposit{enter}');
+      addCondition('Transaction / type', 'Deposit{enter}');
     }
     addCondition('Variable 1', 5);
     cy.get('[data-cy="apply-to-risk-levels"]')
@@ -109,8 +109,10 @@ describe('Create scenario', () => {
     cy.get('.query-builder .group-or-rule-container')
       .last()
       .within(() => {
-        cy.get('[data-cy="logic-variable"]').click().type(`${variableName}{enter}`);
-        cy.get('.widget--has-valuerscs').click().type(`${value}{enter}`);
+        cy.get('[data-cy="logic-variable"] [data-cy~="input"]')
+          .click()
+          .type(`${variableName}{enter}`);
+        cy.get('[data-cy="value-source"] [data-cy~="input"]').click().type(`${value}{enter}`);
       });
   }
   /* eslint-disable cypress/no-unnecessary-waiting */

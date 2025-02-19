@@ -3311,9 +3311,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/core@npm:^6.6.0":
-  version: 6.6.0
-  resolution: "@react-awesome-query-builder/core@npm:6.6.0"
+"@react-awesome-query-builder/core@npm:^6.6.12":
+  version: 6.6.12
+  resolution: "@react-awesome-query-builder/core@npm:6.6.12"
   dependencies:
     "@babel/runtime": "npm:^7.24.5"
     clone: "npm:^2.1.2"
@@ -3324,15 +3324,15 @@ __metadata:
     moment: "npm:^2.30.1"
     spel2js: "npm:^0.2.8"
     sqlstring: "npm:^2.3.3"
-  checksum: c65a4f7ecbf169749dc4126e85e40052beaa5064e458ed24cefddff9f269724c3eb27446c52fa5785f7f20fe88583c6f1e54d94d42a0087e20fecbcb5b090e47
+  checksum: 155bf78d9d991bdac5ad923af864a6b95c165d8f3443065d63935d5cd3bed616a76ea17a90292f9f1a798c5eddfd679c621dfd4bdd4d7bcc79e189c888d313ac
   languageName: node
   linkType: hard
 
-"@react-awesome-query-builder/ui@npm:^6.6.0":
-  version: 6.6.0
-  resolution: "@react-awesome-query-builder/ui@npm:6.6.0"
+"@react-awesome-query-builder/ui@npm:^6.6.2":
+  version: 6.6.12
+  resolution: "@react-awesome-query-builder/ui@npm:6.6.12"
   dependencies:
-    "@react-awesome-query-builder/core": "npm:^6.6.0"
+    "@react-awesome-query-builder/core": "npm:^6.6.12"
     classnames: "npm:^2.5.1"
     lodash: "npm:^4.17.21"
     prop-types: "npm:^15.8.1"
@@ -3341,7 +3341,7 @@ __metadata:
   peerDependencies:
     react: ^16.8.4 || ^17.0.1 || ^18.0.0
     react-dom: ^16.8.4 || ^17.0.1 || ^18.0.0
-  checksum: 07c12d4ca57fbdcc559d66c4cd4ccae7356fba3615b125da15995ea2c68039ac26a6d49bf73ffd8364ca126cc3082b589ce980a706646d4532ddf949688d98df
+  checksum: 3b0c91e181b82fc1a54c8b171b28b59fad6ed917bced8e1a0a3a5639553361e69f7c6decfd6840c5535ae138122f22c89e4bff14902b4cb9d0376cb6c6646609
   languageName: node
   linkType: hard
 
@@ -15341,7 +15341,7 @@ __metadata:
     "@fingerprintjs/fingerprintjs": "npm:^4.5.0"
     "@flagright/lib": "link:../lib"
     "@openapitools/openapi-generator-cli": "npm:^2.7.0"
-    "@react-awesome-query-builder/ui": "npm:^6.6.0"
+    "@react-awesome-query-builder/ui": "npm:^6.6.2"
     "@rjsf/antd": "npm:^4.2.2"
     "@rjsf/core": "npm:^4.2.2"
     "@sentry/browser": "npm:^7.118.0"

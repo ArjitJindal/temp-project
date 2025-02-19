@@ -32,7 +32,7 @@ export default function TextInput(props: Props) {
     onBlur,
     onArrowUp,
     onArrowDown,
-    testName,
+    testName = 'input text-input',
     innerRef,
     enableEmptyString = false,
   } = props;
