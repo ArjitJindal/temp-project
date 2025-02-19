@@ -56,7 +56,7 @@ export const directionVars: VariableOptions<{ direction: Direction }> = {
 
 export function humanReadablePeriod(period: Period): string {
   if (!period.to && !period.from) {
-    return 'for all time'
+    return '(all time)'
   }
 
   const startDate = dayjs(period.from)

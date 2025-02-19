@@ -18,7 +18,7 @@ export const AlertHistory: TableQuestion<Period> = {
   version: 2,
   categories: ['CONSUMER', 'BUSINESS', 'PAYMENT'],
   title: async ({ humanReadableId }, vars) => {
-    return `Alerts for ${humanReadableId} ${humanReadablePeriod(vars)}`
+    return `Alerts ${humanReadableId} ${humanReadablePeriod(vars)}`
   },
   aggregationPipeline: async (
     { tenantId, userId, humanReadableId, paymentIdentifier },
