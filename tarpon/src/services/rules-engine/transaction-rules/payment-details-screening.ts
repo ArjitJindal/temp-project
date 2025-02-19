@@ -8,6 +8,10 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
   public async computeRule() {
     const hitRules: RuleHitResult = []
 
+    if (this.senderUser || this.receiverUser) {
+      return hitRules
+    }
+
     const isThresholdHit = this.parameters?.transactionAmountThreshold
       ? await checkTransactionAmountBetweenThreshold(
           this.transaction.originAmountDetails,
@@ -24,7 +28,7 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
       return hitRules
     }
 
-    if (!this.senderUser && this.transaction.originPaymentDetails) {
+    if (this.transaction.originPaymentDetails) {
       const sanctionsDetails = await this.checkCounterPartyTransaction(
         this.transaction.originPaymentDetails
       )
@@ -37,7 +41,7 @@ export class PaymentDetailsScreeningRule extends PaymentDetailsScreeningRuleBase
       }
     }
 
-    if (!this.receiverUser && this.transaction.destinationPaymentDetails) {
+    if (this.transaction.destinationPaymentDetails) {
       const sanctionsDetails = await this.checkCounterPartyTransaction(
         this.transaction.destinationPaymentDetails
       )

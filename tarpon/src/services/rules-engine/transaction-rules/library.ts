@@ -1936,9 +1936,9 @@ const _RULES_LIBRARY: Array<
       name: 'Payment details screening',
       type: 'TRANSACTION',
       description:
-        'Screening transaction’s payment details for Sanctions/PEP/Adverse media',
+        'Screening transaction’s payment details for Sanctions/PEP/Adverse media when neither the origin nor the destination user is present',
       descriptionTemplate:
-        'Screening transaction’s payment details for Sanctions/PEP/Adverse media',
+        'Screening transaction’s payment details for Sanctions/PEP/Adverse media when neither the origin nor the destination user is present',
       defaultParameters,
       defaultAction: 'SUSPEND',
       ruleImplementationName: 'payment-details-screening',
