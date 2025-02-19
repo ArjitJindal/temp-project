@@ -98,30 +98,43 @@ export class RuleInstanceClickhouseRepository {
       return { stats }
     } else if (ruleInstance.type === 'USER') {
       const query = `
+      WITH run_stats AS (
         SELECT
-          toString(toDate(timestamp/1000)) as time,
-          COUNT(*) as hitCount,
-          COUNT(*) as runCount
+          toString(toDate(executedRules.2/1000)) as date,
+          count() as runCount
         FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
-        WHERE timestamp BETWEEN ${timeRange.afterTimestamp} AND ${
-        timeRange.beforeTimestamp
-      }
-          AND has(ruleInstancesHit, '${ruleInstanceId}')
-          AND (${
-            isShadow
-              ? `has(ruleInstancesExecuted, '${ruleInstanceId}')`
-              : `has(nonShadowHitRules, '${ruleInstanceId}')`
-          })
-        GROUP BY time
-        ORDER BY time
-      `
+        ARRAY JOIN executedRules
+        WHERE executedRules.2 BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp}
+          AND executedRules.1 = '${ruleInstanceId}'
+          AND executedRules.3 = ${isShadow}
+        GROUP BY date
+      ),
+      hit_stats AS (
+        SELECT
+          toString(toDate(hitRules.2/1000)) as date,
+          count() as hitCount
+        FROM ${CLICKHOUSE_DEFINITIONS.USERS.tableName} FINAL
+        ARRAY JOIN hitRules
+        WHERE hitRules.2 BETWEEN ${timeRange.afterTimestamp} AND ${timeRange.beforeTimestamp}
+          AND hitRules.1 = '${ruleInstanceId}'
+          AND hitRules.3 = ${isShadow}
+        GROUP BY date
+      )
+      SELECT
+        coalesce(NULLIF(r.date, ''), NULLIF(h.date, '')) as date,
+        coalesce(r.runCount, 0) as runCount,
+        coalesce(h.hitCount, 0) as hitCount
+      FROM run_stats r
+      FULL OUTER JOIN hit_stats h ON r.date = h.date
+      ORDER BY date
+    `
       const results = await this.clickhouseClient.query({
         query,
         format: 'JSONEachRow',
       })
 
       const rows = await results.json<{
-        time: string
+        date: string
         hitCount: number
         runCount: number
       }>()
@@ -129,18 +142,16 @@ export class RuleInstanceClickhouseRepository {
       const stats = rows.reduce(
         (acc, row) => ({
           ...acc,
-          [row.time]: {
+          [row.date]: {
             hitCount: Number(row.hitCount),
             runCount: Number(row.runCount),
           },
         }),
         {}
       )
-
       return { stats }
     }
-
-    throw new Error('Unsupported rule type')
+    return { stats: {} }
   }
 
   public async getAlertStats(

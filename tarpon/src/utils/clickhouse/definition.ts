@@ -348,6 +348,10 @@ export const ClickHouseTables: ClickhouseTableDefinition[] = [
       `updatedAt Nullable(UInt64) MATERIALIZED toUInt64OrNull(JSON_VALUE(data, '$.updatedAt'))`,
       `userStateDetails_state String MATERIALIZED JSONExtractString(data, 'userStateDetails', 'state')`,
       `kycStatusDetails_status String MATERIALIZED JSONExtractString(data, 'kycStatusDetails', 'status')`,
+      `executedRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
+        JSONExtract(JSONExtractRaw(data, 'executedRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
+      `hitRules Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool)) MATERIALIZED 
+        JSONExtract(JSONExtractRaw(data, 'hitRules'), 'Array(Tuple(ruleInstanceId String, executedAt UInt64, isShadow Bool))')`,
     ],
     engine: 'ReplacingMergeTree',
     primaryKey: '(timestamp, id)',
