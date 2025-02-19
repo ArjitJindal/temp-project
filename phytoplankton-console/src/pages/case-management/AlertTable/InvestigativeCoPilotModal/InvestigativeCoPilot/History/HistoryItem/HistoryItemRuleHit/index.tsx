@@ -41,7 +41,7 @@ export default function HistoryItemRuleHit(props: Props) {
           <RuleActionStatus ruleAction={hitRulesDetails.ruleAction} />
         </Form.Layout.Label>
       </div>
-      {ruleType && ruleLogic && (
+      {ruleType && ruleLogic && hitRulesDetails.ruleId?.startsWith('RC') && (
         <>
           <div className={s.subtitle}>Rule logic</div>
           <div className={s.logicAndSummary}>
