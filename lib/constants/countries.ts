@@ -440,6 +440,9 @@ export const COUNTRY_REGIONS = {
     SWK: 'Sarawak',
     SGR: 'Selangor',
     TRG: 'Terengganu',
+    KL: 'WP Kuala Lumpur',
+    LBN: 'WP Labuan',
+    PJY: 'WP Putrajaya',
   },
 }
 
