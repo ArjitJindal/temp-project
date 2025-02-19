@@ -5,6 +5,7 @@ import { BaseNarrativeService } from './narratives'
 import { CaseNarrativeService } from './narratives/case'
 import { AlertNarrativeService } from './narratives/alerts'
 import { SarNarrativeService } from './narratives/sar'
+import { TransactionNarrativeService } from './narratives/transactions'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
 import { prompt } from '@/utils/openai'
@@ -104,6 +105,15 @@ export class AutoNarrativeService {
 
       case 'REPORT': {
         return new SarNarrativeService({}, attributes)
+      }
+
+      case 'TRANSACTION': {
+        const action = additionalCopilotInfo.action
+
+        if (!action) {
+          throw new Error('action is required for TRANSACTION narrative')
+        }
+        return new TransactionNarrativeService({ action }, attributes)
       }
 
       default:

@@ -115,6 +115,54 @@ const AI_SOURCES_MAP: Record<AIAttribute, AIAttributeData> = {
     isPii: false,
     category: 'CASE',
   },
+  originUserName: {
+    isPii: true,
+    category: 'TRANSACTION',
+  },
+  destinationUserName: {
+    isPii: true,
+    category: 'TRANSACTION',
+  },
+  originTransactionAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  destinationTransactionAmount: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  originTransactionCurrency: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  destinationTransactionCurrency: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  originPaymentDetails: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  destinationPaymentDetails: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  originTransactionCountry: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  destinationTransactionCountry: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  timeOfTransaction: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
+  transactionReference: {
+    isPii: false,
+    category: 'TRANSACTION',
+  },
 }
 
 export const AI_SOURCES: AiSource[] = Object.entries(AI_SOURCES_MAP).map(

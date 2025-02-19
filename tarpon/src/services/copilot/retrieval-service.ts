@@ -4,7 +4,9 @@ import {
 } from 'aws-lambda'
 import { Credentials } from '@aws-sdk/client-sts'
 import { BadRequest, NotFound } from 'http-errors'
+import { uniq } from 'lodash'
 import { CurrencyService } from '../currency'
+import { AlertsService } from '../alerts'
 import { CaseService } from '@/services/cases'
 import { UserService } from '@/services/users'
 import { MongoDbTransactionRepository } from '@/services/rules-engine/repositories/mongodb-transaction-repository'
@@ -21,9 +23,13 @@ import { tenantSettings } from '@/core/utils/context'
 import { AI_SOURCES } from '@/services/copilot/attributes/ai-sources'
 import { AIAttribute } from '@/@types/openapi-internal/AIAttribute'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
+import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
+import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
 
 export class RetrievalService {
   private readonly caseService: CaseService
+  private readonly alertService: AlertsService
   private readonly userService: UserService
   private readonly txnRepository: MongoDbTransactionRepository
   private readonly reportService: ReportService
@@ -47,13 +53,19 @@ export class RetrievalService {
           settings.aiSourcesDisabled.indexOf(s.sourceName) < 0)
     ).map((a) => a.sourceName)
 
-    const [caseService, userService, txnRepository, reportService] =
-      await Promise.all([
-        CaseService.fromEvent(event),
-        UserService.fromEvent(event),
-        MongoDbTransactionRepository.fromEvent(event),
-        ReportService.fromEvent(event),
-      ])
+    const [
+      caseService,
+      userService,
+      txnRepository,
+      reportService,
+      alertService,
+    ] = await Promise.all([
+      CaseService.fromEvent(event),
+      UserService.fromEvent(event),
+      MongoDbTransactionRepository.fromEvent(event),
+      ReportService.fromEvent(event),
+      AlertsService.fromEvent(event),
+    ])
     const ruleInstanceRepository = new RuleInstanceRepository(tenantId, {
       dynamoDb: getDynamoDbClientByEvent(event),
     })
@@ -63,7 +75,8 @@ export class RetrievalService {
       txnRepository,
       reportService,
       ruleInstanceRepository,
-      enabledAttributes
+      enabledAttributes,
+      alertService
     )
   }
 
@@ -73,7 +86,8 @@ export class RetrievalService {
     txnRepository: MongoDbTransactionRepository,
     reportService: ReportService,
     ruleInstanceRepository: RuleInstanceRepository,
-    enabledAttributes: AIAttribute[]
+    enabledAttributes: AIAttribute[],
+    alertService: AlertsService
   ) {
     this.caseService = caseService
     this.userService = userService
@@ -84,6 +98,7 @@ export class RetrievalService {
       DefaultAttributeBuilders,
       enabledAttributes
     )
+    this.alertService = alertService
   }
 
   async getAttributes(
@@ -99,7 +114,7 @@ export class RetrievalService {
       case 'ALERT':
         return this.getAlertAttributes(entityId, reasons)
       case 'TRANSACTION': {
-        throw new Error('Not implemented yet: "TRANSACTION" case')
+        return this.getTransactionAttributes(entityId, reasons)
       }
       case 'SANCTIONS_HIT': {
         throw new Error('Not implemented yet: "SANCTIONS_HIT" case')
@@ -134,6 +149,48 @@ export class RetrievalService {
       reasons,
       _case: caseItem,
       exchangeRates: exchangeRates.rates,
+    })
+  }
+
+  private async getTransactionAttributes(
+    transactionId: string,
+    reasons: Array<string>
+  ): Promise<AttributeSet> {
+    const transaction = await this.txnRepository.getTransactionById(
+      transactionId
+    )
+    if (!transaction) {
+      throw new BadRequest(`No transaction for ${transactionId}`)
+    }
+    let originUser: InternalUser | undefined
+    let destinationUser: InternalUser | undefined
+    if (transaction.originUserId) {
+      originUser = await this.userService.getUser(transaction.originUserId)
+    }
+    if (transaction.destinationUserId) {
+      destinationUser = await this.userService.getUser(
+        transaction.destinationUserId
+      )
+    }
+    const exchangeRates = await new CurrencyService().getExchangeData()
+    const _alerts = await this.alertService.getAlertsByIds(
+      transaction?.alertIds ?? []
+    )
+    const ruleInstances =
+      await this.ruleInstanceRepository.getRuleInstancesByIds(
+        uniq(_alerts.map((a) => a.ruleInstanceId))
+      )
+    return this.attributeBuilder.getAttributes({
+      currentTransaction: transaction,
+      reasons,
+      user: (originUser ?? destinationUser) as
+        | InternalConsumerUser
+        | InternalBusinessUser,
+      exchangeRates: exchangeRates.rates,
+      originUser,
+      destinationUser,
+      _alerts,
+      ruleInstances,
     })
   }
 

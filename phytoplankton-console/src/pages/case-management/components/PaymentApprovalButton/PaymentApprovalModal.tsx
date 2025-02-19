@@ -17,13 +17,8 @@ interface Props {
   onSuccess?: () => void;
 }
 
-export default function PaymentApprovalModal({
-  visible,
-  action,
-  transactionIds,
-  hide,
-  onSuccess,
-}: Props) {
+export default function PaymentApprovalModal(props: Props) {
+  const { visible, action, transactionIds, hide, onSuccess } = props;
   const formRef = useRef<FormRef<FormValues<CaseReasons>>>(null);
   const [narrativeValues, setNarrativeValues] = useState<NarrativeFormValues<CaseReasons>>({
     isValid: false,
@@ -93,7 +88,7 @@ export default function PaymentApprovalModal({
         onSubmit={(values) => {
           mutation.mutate(values);
         }}
-        additionalCopilotInfo={{}}
+        additionalCopilotInfo={{ action }}
         placeholder={'Write a narrative explaining the reason and findings, if any.'}
         entityType={'TRANSACTION'}
         onChange={setNarrativeValues}
@@ -102,6 +97,7 @@ export default function PaymentApprovalModal({
         isCopilotEnabled={true}
         otherReason={OTHER_REASON}
         formRef={formRef}
+        entityIds={transactionIds}
       />
     </Modal>
   );

@@ -1,5 +1,6 @@
 import { CurrencyExchangeUSDType } from '../../currency'
 import { AlertAttributeBuilder } from './alert-attribute-builder'
+import { CurrentTransactionBuilder } from './transaction-attribute-builder'
 import { InternalTransaction } from '@/@types/openapi-internal/InternalTransaction'
 import { InternalConsumerUser } from '@/@types/openapi-internal/InternalConsumerUser'
 import { InternalBusinessUser } from '@/@types/openapi-internal/InternalBusinessUser'
@@ -12,15 +13,20 @@ import { RuleInstance } from '@/@types/openapi-internal/RuleInstance'
 import { RuleNature } from '@/@types/openapi-public/RuleNature'
 import { NarrativeResponseAttributes } from '@/@types/openapi-internal/NarrativeResponseAttributes'
 import { Alert } from '@/@types/openapi-internal/Alert'
+import { PaymentDetails } from '@/@types/tranasction/payment-type'
+import { InternalUser } from '@/@types/openapi-internal/InternalUser'
 
 export type InputData = {
-  transactions: InternalTransaction[]
+  transactions?: InternalTransaction[]
   user: InternalConsumerUser | InternalBusinessUser
   _case?: Case
   ruleInstances?: RuleInstance[]
   reasons: Array<string>
   _alerts?: Alert[]
   exchangeRates: CurrencyExchangeUSDType['rates']
+  currentTransaction?: InternalTransaction
+  originUser?: InternalUser
+  destinationUser?: InternalUser
 }
 
 export interface AttributeBuilder {
@@ -38,21 +44,23 @@ const ObfuscatableAttributePlaceholders: Partial<Record<AIAttribute, string>> =
     websites: 'www.google.com',
   }
 
+type Rule = {
+  name?: string
+  checksFor?: any
+  types?: any
+  typologies?: any
+  sampleUseCases?: any
+  logic?: any
+  logicAggregationVariables?: any
+  nature?: RuleNature
+  narrative?: string
+}
+
 interface AttributeTypes extends Record<AIAttribute, any> {
   userType: string
   country: string
   reasons: string[]
-  rules: {
-    name?: string
-    checksFor?: any
-    types?: any
-    typologies?: any
-    sampleUseCases?: any
-    logic?: any
-    logicAggregationVariables?: any
-    nature?: RuleNature
-    narrative?: string
-  }[]
+  rules: Rule[]
   caseComments: string[]
   alertComments: string[]
   userComments: string[]
@@ -71,6 +79,17 @@ interface AttributeTypes extends Record<AIAttribute, any> {
   transactionIds: string[]
   ruleHitNames: string[]
   alertGenerationDate: string
+  originUser: InternalConsumerUser | InternalBusinessUser
+  destinationUser: InternalConsumerUser | InternalBusinessUser
+  originTransactionAmount: number
+  destinationTransactionAmount: number
+  originTransactionCurrency: string
+  destinationTransactionCurrency: string
+  originTransactionCountry: string
+  destinationTransactionCountry: string
+  originPaymentDetails: PaymentDetails
+  destinationPaymentDetails: PaymentDetails
+  timeOfTransaction: string
 }
 type AttributeValue<T extends AIAttribute> = T extends keyof AttributeTypes
   ? AttributeTypes[T]
@@ -209,17 +228,19 @@ export class AttributeSet extends Map<
 }
 
 type AttributeBuilders = {
-  transaction: AttributeBuilder
+  transactions: AttributeBuilder
   user: AttributeBuilder
   _case: AttributeBuilder
   _alerts: AttributeBuilder
+  currentTransaction: AttributeBuilder
 }
 
 export const DefaultAttributeBuilders: AttributeBuilders = {
-  transaction: new TransactionsBuilder(),
+  transactions: new TransactionsBuilder(),
   user: new UserAttributeBuilder(),
   _case: new CaseAttributeBuilder(),
   _alerts: new AlertAttributeBuilder(),
+  currentTransaction: new CurrentTransactionBuilder(),
 }
 
 export type BuilderKey = keyof AttributeBuilders
@@ -240,7 +261,8 @@ export class AttributeGenerator {
     // automatically using some DAG algorithm like Kahn's algorithm.
     this.builders.user.build(attributes, inputData)
     this.builders._case.build(attributes, inputData)
-    this.builders.transaction.build(attributes, inputData)
+    this.builders.transactions.build(attributes, inputData)
+    this.builders.currentTransaction.build(attributes, inputData)
     this.builders._alerts.build(attributes, inputData)
 
     return attributes

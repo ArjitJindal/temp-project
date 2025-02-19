@@ -12,13 +12,14 @@ import { CurrencyService } from '@/services/currency'
 @traceable
 export class TransactionsBuilder implements AttributeBuilder {
   dependencies(): BuilderKey[] {
-    return ['user']
+    return []
   }
 
   build(attributes: AttributeSet, inputData: InputData) {
-    if (inputData.transactions.length === 0) {
+    if (!inputData.transactions?.length) {
       return
     }
+
     let minOriginAmountInUSD: number | null = null
     let maxOriginAmountInUSD: number | null = null
     let minDestinationAmountInUSD: number | null = null
