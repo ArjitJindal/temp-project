@@ -9,10 +9,10 @@ import { TransactionNarrativeService } from './narratives/transactions'
 import { NarrativeResponse } from '@/@types/openapi-internal/NarrativeResponse'
 import { traceable } from '@/core/xray'
 import { prompt } from '@/utils/openai'
-import { getContext } from '@/core/utils/context'
 import { AdditionalCopilotInfo } from '@/@types/openapi-internal/AdditionalCopilotInfo'
 import { logger } from '@/core/logger'
 import { NarrativeType } from '@/@types/openapi-internal/NarrativeType'
+import { NarrativeMode } from '@/@types/openapi-internal/NarrativeMode'
 
 const SEPARATOR = '---'
 const PROMPT = `Please provide the same text but use placeholders or data from the JSON blob below to replace all the numerical data and qualitative decisions in the given format above. Please keep the exact same format for the text, without headers, explanations, or any additional content`
@@ -23,6 +23,7 @@ export class AutoNarrativeService {
     type: NarrativeType,
     attributes: AttributeSet,
     additionalCopilotInfo: AdditionalCopilotInfo,
+    narrativeMode: NarrativeMode,
     otherReason?: string
   ): Promise<NarrativeResponse> {
     const service = await this.getService(
@@ -35,9 +36,7 @@ export class AutoNarrativeService {
     string += introductoryNarrative
     string += `\n\n${SEPARATOR}\n\n`
 
-    const narrativeSize = getContext()?.settings?.narrativeMode ?? 'STANDARD'
-
-    if (narrativeSize === 'STANDARD') {
+    if (narrativeMode === 'STANDARD') {
       string += service.placeholderNarrative()
       string += `\n\n${SEPARATOR}\n\n`
     }
@@ -53,7 +52,7 @@ export class AutoNarrativeService {
       string += `\n\n${SEPARATOR}\n\n`
     }
 
-    if (narrativeSize === 'STANDARD') {
+    if (narrativeMode === 'STANDARD') {
       string += `Please rewrite this information so that it conforms to the template above.`
     } else {
       string += `Please write a narrative strictly in a paragraph (no verbose) straightforward way that explains the activities and why they are being reported to the financial authorities.`

@@ -10061,11 +10061,14 @@ components:
           $ref: '#/components/schemas/AdditionalCopilotInfo'
         otherReason:
           type: string
+        narrativeMode:
+          $ref: '#/components/schemas/NarrativeMode'
       required:
         - reasons
         - entityId
         - entityType
         - narrative
+        - narrativeMode
     AdditionalCopilotInfo:
       title: AdditionalCopilotInfo
       type: object
@@ -10451,6 +10454,12 @@ components:
         - USER
         - TRANSACTION
         - ALERT
+    NarrativeMode:
+      title: NarrativeMode
+      type: string
+      enum:
+        - COMPACT
+        - STANDARD
     TenantSettings:
       title: TenantSettings
       type: object
@@ -10529,10 +10538,9 @@ components:
             apiKeyView:
               type: number
         narrativeMode:
-          type: string
-          enum:
-            - STANDARD
-            - COMPACT
+          $ref: '#/components/schemas/NarrativeMode'
+        allowManualNarrativeModeUpdates:
+          type: boolean
         auth0Domain:
           type: string
         notificationsSubscriptions:

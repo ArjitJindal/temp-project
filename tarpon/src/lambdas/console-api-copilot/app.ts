@@ -2,7 +2,6 @@ import {
   APIGatewayEventLambdaAuthorizerContext,
   APIGatewayProxyWithLambdaAuthorizerEvent,
 } from 'aws-lambda'
-import { NotFound } from 'http-errors'
 import { COPILOT_QUESTIONS } from '@flagright/lib/utils'
 import { lambdaApi } from '@/core/middlewares/lambda-api-middlewares'
 import { JWTAuthorizerResult } from '@/@types/jwt'
@@ -38,6 +37,7 @@ export const copilotHandler = lambdaApi({})(
         reasons,
         otherReason,
         additionalCopilotInfo,
+        narrativeMode,
       } = request.NarrativeRequest
 
       const attributes = await retrievalService.getAttributes(
@@ -50,10 +50,9 @@ export const copilotHandler = lambdaApi({})(
         entityType,
         attributes,
         additionalCopilotInfo ?? {},
+        narrativeMode,
         otherReason
       )
-
-      throw new NotFound(`Entity type not supported: ${entityType}`)
     })
 
     handlers.registerFormatNarrative(async (_ctx, request) => {

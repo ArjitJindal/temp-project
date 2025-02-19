@@ -6,7 +6,12 @@ import Button from '@/components/library/Button';
 import BrainLineIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import MagicLineIcon from '@/components/ui/icons/Remix/design/magic-line.react.svg';
 import SearchIcon from '@/components/ui/icons/Remix/system/search-2-line.react.svg';
-import { AdditionalCopilotInfo, CaseReasons, NarrativeResponseAttributes } from '@/apis';
+import {
+  AdditionalCopilotInfo,
+  CaseReasons,
+  NarrativeResponseAttributes,
+  NarrativeMode,
+} from '@/apis';
 import { useApi } from '@/api';
 import { message } from '@/components/library/Message';
 import { useSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -15,6 +20,8 @@ import { getBranding } from '@/utils/branding';
 import { EntityType } from '@/components/Narrative';
 import Modal from '@/components/library/Modal';
 import AnimatedButton from '@/components/Narrative/AnimatedButton';
+import Dropdown from '@/components/library/Dropdown';
+import ArrowDownLine from '@/components/ui/icons/Remix/system/arrow-down-s-line.react.svg';
 
 type CopilotButtonProps = {
   askLoading: boolean;
@@ -25,6 +32,8 @@ type CopilotButtonProps = {
   narrative: string;
   copilotDisabled?: boolean;
   copilotDisabledReason?: string;
+  narrativeMode: NarrativeMode;
+  setNarrativeMode: (mode: NarrativeMode) => void;
 };
 
 export const CopilotButtons = (props: CopilotButtonProps) => {
@@ -38,6 +47,8 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
     onAskClick,
     copilotDisabled = false,
     copilotDisabledReason = '',
+    narrativeMode,
+    setNarrativeMode,
   } = props;
   const [showSources, setShowSources] = useState(false);
 
@@ -46,29 +57,44 @@ export const CopilotButtons = (props: CopilotButtonProps) => {
   }
   return (
     <div className={s.buttons}>
-      <Tooltip
-        title={
-          copilotDisabled
-            ? copilotDisabledReason
-            : settings.isAiEnabled
-            ? `Use AI to generate the narrative template`
-            : `Enable AI Features to generate a narrative`
-        }
-      >
-        <span>
-          <AnimatedButton
-            isLoading={askLoading}
-            className={s.copilotAskButton}
-            onClick={onAskClick}
-            icon={<BrainLineIcon />}
-            isDisabled={!settings?.isAiEnabled || askLoading || copilotDisabled}
-            testName="ask-copilot"
-            requiredPermissions={['copilot:narrative:write']}
+      <div className={s.narrativeMode}>
+        <Tooltip
+          title={
+            copilotDisabled
+              ? copilotDisabledReason
+              : settings.isAiEnabled
+              ? `Use AI to generate the narrative template`
+              : `Enable AI Features to generate a narrative`
+          }
+        >
+          <span>
+            <AnimatedButton
+              isLoading={askLoading}
+              className={s.copilotAskButton}
+              onClick={onAskClick}
+              icon={<BrainLineIcon />}
+              isDisabled={!settings?.isAiEnabled || askLoading || copilotDisabled}
+              testName="ask-copilot"
+              requiredPermissions={['copilot:narrative:write']}
+            >
+              Ask copilot
+            </AnimatedButton>
+          </span>
+        </Tooltip>
+        {settings.allowManualNarrativeModeUpdates && (
+          <Dropdown<NarrativeMode>
+            options={[
+              { value: 'COMPACT', label: 'Compact' },
+              { value: 'STANDARD', label: 'Standard' },
+            ]}
+            onSelect={(value) => setNarrativeMode(value.value)}
           >
-            Ask copilot
-          </AnimatedButton>
-        </span>
-      </Tooltip>
+            <Button type={'TEXT'} iconRight={<ArrowDownLine />}>
+              Narrative: {narrativeMode === 'COMPACT' ? 'Compact' : 'Standard'}
+            </Button>
+          </Dropdown>
+        )}
+      </div>
       <Tooltip
         title={
           settings.isAiEnabled
@@ -264,6 +290,10 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
   const [askLoading, setAskLoading] = useState(false);
   const [formatLoading, setFormatLoading] = useState(false);
   const [attributes, setAttributes] = useState<NarrativeResponseAttributes[]>([]);
+  const settings = useSettings();
+  const [narrativeMode, setNarrativeMode] = useState<NarrativeMode>(
+    settings.narrativeMode ?? 'STANDARD',
+  );
 
   const boldPlaceholders = (text: string) => text.replace(/\[(.*?)\]/g, '**[$1]**');
 
@@ -278,6 +308,7 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
           otherReason,
           narrative: '',
           additionalCopilotInfo,
+          narrativeMode,
         },
       });
       const processedNarrative = boldPlaceholders(response.narrative);
@@ -299,6 +330,7 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
           entityType: entityType || 'CASE',
           narrative,
           reasons: reasons as CaseReasons[],
+          narrativeMode,
         },
       });
       const processedNarrative = boldPlaceholders(response.narrative);
@@ -323,6 +355,8 @@ export const CopilotWrapperContent = (props: CopilotWrapperContentProps) => {
               narrative={narrative}
               copilotDisabled={copilotDisabled}
               copilotDisabledReason={copilotDisabledReason}
+              narrativeMode={narrativeMode}
+              setNarrativeMode={setNarrativeMode}
             />
           )}
         </div>
