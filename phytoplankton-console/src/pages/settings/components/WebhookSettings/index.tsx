@@ -6,7 +6,10 @@ import SelectionGroup, {
 } from '@/components/library/SelectionGroup';
 import SettingsCard from '@/components/library/SettingsCard';
 import { WebhookRetryOnlyFor, WebhookSettings as WebhookSettingsType } from '@/apis';
-import { useUpdateTenantSettings } from '@/components/AppWrapper/Providers/SettingsProvider';
+import {
+  useSettings,
+  useUpdateTenantSettings,
+} from '@/components/AppWrapper/Providers/SettingsProvider';
 import Button from '@/components/library/Button';
 
 const howLongToRetryForOptions: SelectionGroupOption<WebhookSettingsType['maxRetryHours']>[] = [
@@ -44,11 +47,14 @@ const onFailureWebhookActionOptions: SelectionGroupOption<
 ];
 
 export const WebhookSettings: React.FC = () => {
+  const settings = useSettings();
+
   const [webhookSettings, setWebhookSettings] = useState<WebhookSettingsType>({
     maxRetryHours: 24,
     retryOnlyFor: ['3XX', '4XX', '5XX'],
     retryBackoffStrategy: 'LINEAR',
     maxRetryReachedAction: 'DISABLE_WEBHOOK',
+    ...settings.webhookSettings,
   });
 
   const settingsMutation = useUpdateTenantSettings();
