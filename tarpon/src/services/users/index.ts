@@ -1912,9 +1912,13 @@ export class UserService {
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
         return {
-          oldImage: user.comments?.find((c) => c.id === commentId),
+          entities: [
+            {
+              oldImage: user.comments?.find((c) => c.id === commentId),
+              entityId: userId,
+            },
+          ],
           result: undefined,
-          entityId: userId,
         }
       }
     }
@@ -1947,9 +1951,13 @@ export class UserService {
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
         return {
-          oldImage: user.comments?.find((c) => c.id === commentId),
+          entities: [
+            {
+              oldImage: user.comments?.find((c) => c.id === commentId),
+              entityId: userId,
+            },
+          ],
           result: undefined,
-          entityId: userId,
         }
       }
     }
@@ -1982,9 +1990,13 @@ export class UserService {
         await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
         return {
-          oldImage: user.comments?.find((c) => c.id === commentId),
+          entities: [
+            {
+              oldImage: user.comments?.find((c) => c.id === commentId),
+              entityId: userId,
+            },
+          ],
           result: undefined,
-          entityId: userId,
         }
       }
     }
@@ -2011,9 +2023,13 @@ export class UserService {
     await Promise.all([deleteObjectsPromise, deleteCommentPromise])
 
     return {
-      oldImage: user.comments?.find((c) => c.id === commentId),
+      entities: [
+        {
+          oldImage: user.comments?.find((c) => c.id === commentId),
+          entityId: userId,
+        },
+      ],
       result: undefined,
-      entityId: userId,
     }
   }
 

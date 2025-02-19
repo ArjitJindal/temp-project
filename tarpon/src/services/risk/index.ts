@@ -98,10 +98,14 @@ export class RiskService {
     const oldClassificationValuesAsRiskClassificationScore =
       oldClassificationValues
     return {
-      oldImage: oldClassificationValuesAsRiskClassificationScore,
-      newImage: newClassificationValues,
+      entities: [
+        {
+          oldImage: oldClassificationValuesAsRiskClassificationScore,
+          newImage: newClassificationValues,
+          entityId: 'RISK_CLASSIFICATION_VALUES',
+        },
+      ],
       result: newClassificationValues,
-      entityId: 'RISK_CLASSIFICATION_VALUES',
     }
   }
 
@@ -153,21 +157,25 @@ export class RiskService {
       )
     )
     return {
-      oldImage: oldParameterRiskItemValue ?? undefined,
-      newImage: newParameterRiskItemValue,
+      entities: [
+        {
+          oldImage: oldParameterRiskItemValue ?? undefined,
+          newImage: newParameterRiskItemValue,
+          logMetadata: {
+            parameter: newParameterRiskItemValue.parameter,
+            riskEntityType: newParameterRiskItemValue.riskEntityType,
+            targetIterableParameter:
+              newParameterRiskItemValue.targetIterableParameter,
+          },
+          entityId: [
+            humanizeAuto('RISK_FACTOR'),
+            humanizeAuto(parameterAttributeRiskValues.riskEntityType),
+            parameterAttributeRiskValues.parameter,
+          ].join(' - '),
+        },
+      ],
       result: newParameterRiskItemValue,
       actionTypeOverride: oldParameterRiskItemValue ? 'UPDATE' : 'CREATE',
-      logMetadata: {
-        parameter: newParameterRiskItemValue.parameter,
-        riskEntityType: newParameterRiskItemValue.riskEntityType,
-        targetIterableParameter:
-          newParameterRiskItemValue.targetIterableParameter,
-      },
-      entityId: [
-        humanizeAuto('RISK_FACTOR'),
-        humanizeAuto(parameterAttributeRiskValues.riskEntityType),
-        parameterAttributeRiskValues.parameter,
-      ].join(' - '),
     }
   }
 
@@ -198,12 +206,17 @@ export class RiskService {
       transactionId: newDrsRiskItem?.transactionId,
       createdAt: newDrsRiskItem?.createdAt,
     }
+
     return {
-      oldImage: oldDrsRiskItem ?? undefined,
-      newImage: newDrsRiskItem,
+      entities: [
+        {
+          oldImage: oldDrsRiskItem ?? undefined,
+          newImage: newDrsRiskItem,
+          entityId: userId,
+          logMetadata,
+        },
+      ],
       result: newDrsRiskItem,
-      entityId: userId,
-      logMetadata,
     }
   }
 

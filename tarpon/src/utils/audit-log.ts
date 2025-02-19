@@ -7,18 +7,25 @@ import { AuditLogType } from '@/@types/openapi-internal/AuditLogType'
 import { getContext } from '@/core/utils/context'
 import { publishAuditLog } from '@/services/audit-log'
 
+export type AuditLogEntity<
+  O extends object = object,
+  N extends object = object
+> = {
+  entityId: string
+  oldImage?: O
+  newImage?: N
+  logMetadata?: object
+}
+
 export type AuditLogReturnData<
   R,
   O extends object = object,
   N extends object = object
 > = {
-  oldImage?: O
-  newImage?: N
+  entities: AuditLogEntity<O, N>[]
   result: R
-  entityId: string
   publishAuditLog?: () => boolean
   actionTypeOverride?: AuditLogActionEnum
-  logMetadata?: object
 }
 
 export function auditLog<
@@ -40,23 +47,27 @@ export function auditLog<
       // Modify the original async method
       ;(descriptor as any).value = async function (...args: any[]) {
         // Call the original async method and await the result
-        const result = await originalMethod.apply(this, args)
+        const parameter = await originalMethod.apply(this, args)
 
-        if (!result.publishAuditLog || result.publishAuditLog()) {
-          const auditLog: AuditLog = {
-            type,
-            subtype,
-            action: result.actionTypeOverride ?? action,
-            timestamp: Date.now(),
-            oldImage: result.oldImage,
-            newImage: result.newImage,
-            entityId: result.entityId,
-            logMetadata: result.logMetadata,
-          }
-          await publishAuditLog(getContext()?.tenantId as string, auditLog)
+        if (!parameter.publishAuditLog || parameter.publishAuditLog()) {
+          await Promise.all(
+            parameter.entities.map((entity) => {
+              const auditLog: AuditLog = {
+                type,
+                subtype,
+                action: parameter.actionTypeOverride ?? action,
+                timestamp: Date.now(),
+                oldImage: entity.oldImage,
+                newImage: entity.newImage,
+                entityId: entity.entityId,
+                logMetadata: entity.logMetadata,
+              }
+              return publishAuditLog(getContext()?.tenantId as string, auditLog)
+            })
+          )
         }
         // Return the result (the original return value)
-        return result
+        return parameter
       }
     }
 

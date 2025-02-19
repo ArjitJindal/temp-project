@@ -72,9 +72,13 @@ export class WebhookRepository {
     })
 
     return {
-      newImage: newWebhook,
       result: newWebhook,
-      entityId: webhookId,
+      entities: [
+        {
+          newImage: newWebhook,
+          entityId: webhookId,
+        },
+      ],
     }
   }
 
@@ -98,11 +102,15 @@ export class WebhookRepository {
     })
 
     return {
-      newImage: result?.value as WebhookConfiguration,
-      oldImage: webhook,
-      entityId: webhook._id as string,
+      entities: [
+        {
+          newImage: result?.value as WebhookConfiguration,
+          oldImage: webhook,
+          entityId: webhook._id as string,
+          logMetadata: { message },
+        },
+      ],
       result: undefined,
-      logMetadata: { message },
     }
   }
 
@@ -133,9 +141,12 @@ export class WebhookRepository {
     await collection.deleteOne({ _id: webhook._id })
 
     return {
-      newImage: undefined,
-      oldImage: webhook,
-      entityId: webhook._id as string,
+      entities: [
+        {
+          oldImage: webhook,
+          entityId: webhook._id as string,
+        },
+      ],
       result: undefined,
     }
   }

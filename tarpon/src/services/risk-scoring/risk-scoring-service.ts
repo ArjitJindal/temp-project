@@ -842,7 +842,11 @@ export class RiskScoringService {
       return {
         publishAuditLog: () => false,
         result: null,
-        entityId: userId,
+        entities: [
+          {
+            entityId: userId,
+          },
+        ],
       }
     }
 
@@ -853,7 +857,11 @@ export class RiskScoringService {
       return {
         publishAuditLog: () => false,
         result: drsObject?.drsScore,
-        entityId: userId,
+        entities: [
+          {
+            entityId: userId,
+          },
+        ],
       }
     }
 
@@ -872,12 +880,17 @@ export class RiskScoringService {
       transactionId: newDrsObject?.transactionId,
       createdAt: newDrsObject?.createdAt,
     }
+
     return {
-      oldImage: drsObject ?? undefined,
-      newImage: newDrsObject ?? undefined,
+      entities: [
+        {
+          oldImage: drsObject,
+          newImage: newDrsObject ?? undefined,
+          entityId: userId,
+          logMetadata,
+        },
+      ],
       result: newDrsObject?.drsScore,
-      entityId: userId,
-      logMetadata,
     }
   }
 
