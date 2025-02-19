@@ -114,6 +114,9 @@ const useOptions = (props: Props) => {
             value: 'ESCALATE',
             label: (
               <CasesStatusChangeButton
+                buttonProps={{
+                  type: 'TEXT',
+                }}
                 caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
                 onSaved={onReload}
@@ -124,7 +127,6 @@ const useOptions = (props: Props) => {
                   OPEN_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Escalate' },
                   OPEN_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Escalate' },
                 }}
-                className={s.statusButton}
                 haveModal={true}
               />
             ),
@@ -142,6 +144,9 @@ const useOptions = (props: Props) => {
             value: 'ESCALATED_SEND_BACK',
             label: (
               <CasesStatusChangeButton
+                buttonProps={{
+                  type: 'TEXT',
+                }}
                 caseIds={[caseId]}
                 caseStatus={caseItem.caseStatus}
                 onSaved={onReload}
@@ -160,7 +165,6 @@ const useOptions = (props: Props) => {
                   },
                 }}
                 haveModal={true}
-                className={s.statusButton}
               />
             ),
           },
@@ -172,13 +176,15 @@ const useOptions = (props: Props) => {
                   value: 'ESCALATE_L2',
                   label: (
                     <CasesStatusChangeButton
+                      buttonProps={{
+                        type: 'TEXT',
+                      }}
                       caseIds={[caseId]}
                       caseStatus={caseItem.caseStatus}
                       onSaved={onReload}
                       statusTransitions={{
                         ESCALATED: { status: 'ESCALATED_L2', actionLabel: 'Escalate L2' },
                       }}
-                      className={s.statusButton}
                       haveModal={true}
                     />
                   ),
@@ -193,6 +199,9 @@ const useOptions = (props: Props) => {
             value: 'ESCALATED_L2_SEND_BACK',
             label: (
               <CasesStatusChangeButton
+                buttonProps={{
+                  type: 'TEXT',
+                }}
                 caseIds={[caseId]}
                 onSaved={onReload}
                 caseStatus={caseItem.caseStatus ?? 'OPEN'}
@@ -201,7 +210,6 @@ const useOptions = (props: Props) => {
                   ESCALATED_L2_IN_PROGRESS: { status: 'ESCALATED', actionLabel: 'Send back' },
                   ESCALATED_L2_ON_HOLD: { status: 'ESCALATED', actionLabel: 'Send back' },
                 }}
-                className={s.statusButton}
                 haveModal={true}
               />
             ),

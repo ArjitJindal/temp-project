@@ -89,6 +89,9 @@ export const getAlertUrl = (caseId: string, alertId: string, alertPageEnabled: b
   );
 };
 
-export const getCaseUrl = (caseId: string) => {
+export const getCaseUrl = (caseId: string, tab?: string) => {
+  if (tab != null) {
+    return makeUrl(`/case-management/case/:caseId/:tab`, { caseId, tab });
+  }
   return makeUrl(`/case-management/case/:caseId`, { caseId });
 };

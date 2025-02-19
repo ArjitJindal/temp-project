@@ -5,13 +5,13 @@ import { capitalizeWords, humanizeConstant } from '@flagright/lib/utils/humanize
 import { useAuth0 } from '@auth0/auth0-react';
 import { useApi } from '@/api';
 import {
+  ApiException,
   Feature as FeatureName,
+  ManagedRoleName,
+  RiskLevel,
   RuleAction,
   TenantSettings,
   TransactionState,
-  RiskLevel,
-  ManagedRoleName,
-  ApiException,
 } from '@/apis';
 import { useQuery } from '@/utils/queries/hooks';
 import { SETTINGS } from '@/utils/queries/keys';
@@ -22,6 +22,7 @@ import ErrorPage from '@/components/ErrorPage';
 import { useAccountRole, UserRole } from '@/utils/user-utils';
 import { PageLoading } from '@/components/PageLoading';
 import { SuspendedAccount } from '@/components/SuspendedAccount';
+import Alert from '@/components/library/Alert';
 
 interface ContextValue {
   features: FeatureName[];
@@ -136,9 +137,20 @@ export function Feature(props: {
   name: FeatureName | FeatureName[];
   children: React.ReactNode;
   fallback?: React.ReactNode;
+  showError?: boolean;
 }) {
-  const isEnabled = useFeaturesEnabled(Array.isArray(props.name) ? props.name : [props.name]);
-  return isEnabled ? <>{props.children}</> : <>{props.fallback}</>;
+  const features = Array.isArray(props.name) ? props.name : [props.name];
+  const isEnabled = useFeaturesEnabled(features);
+  if (!isEnabled) {
+    if (props.fallback) {
+      return <>{props.fallback}</>;
+    }
+    if (props.showError) {
+      return <Alert type={'ERROR'}>{`Missing required features: ${features.join(', ')}`}</Alert>;
+    }
+    return <></>;
+  }
+  return <>{props.children}</>;
 }
 
 export function FeatureEnabled(props: {

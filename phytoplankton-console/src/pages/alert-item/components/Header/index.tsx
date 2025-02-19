@@ -1,6 +1,7 @@
 import React from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import SubHeader from './SubHeader';
+import StatusChangeMenu from './StatusChangeMenu';
 import { Alert, Case, Comment } from '@/apis';
 import { useApi } from '@/api';
 import EntityHeader from '@/components/ui/entityPage/EntityHeader';
@@ -50,6 +51,10 @@ export default function Header(props: Props) {
           to: alertItem.caseId ? getCaseUrl(alertItem.caseId) : undefined,
         },
         {
+          title: 'Alerts',
+          to: alertItem.caseId ? getCaseUrl(alertItem.caseId, 'alerts') : undefined,
+        },
+        {
           title: alertItem.alertId ?? 'Unknown alert',
           to:
             alertItem.caseId && alertItem.alertId
@@ -95,6 +100,12 @@ export default function Header(props: Props) {
           haveModal={true}
         />,
         ...actions,
+        <StatusChangeMenu
+          key={'status-change-menu'}
+          alertItem={alertItem}
+          isDisabled={isLoading}
+          onReload={props.onReload}
+        />,
       ]}
       subHeader={<SubHeader caseItemRes={caseQueryResults.data} alertItem={alertItem} />}
     />

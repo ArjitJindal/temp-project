@@ -4,7 +4,7 @@ import AlertsStatusChangeModal, {
   Props as AlertsStatusChangeModalProps,
 } from './AlertsStatusChangeModal';
 import { AlertStatus } from '@/apis';
-import { ButtonSize } from '@/components/library/Button';
+import { ButtonProps } from '@/components/library/Button';
 import { StatusChangeButton } from '@/pages/case-management/components/StatusChangeButton';
 
 export interface AlertsStatusChangeButtonProps {
@@ -14,7 +14,7 @@ export interface AlertsStatusChangeButtonProps {
   caseId?: string;
   status?: AlertStatus;
   initialValues?: Partial<FormValues>;
-  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  buttonProps?: Partial<ButtonProps>;
   statusTransitions?: Partial<
     Record<AlertStatus, { status: AlertStatus; actionLabel: ActionLabel }>
   >;

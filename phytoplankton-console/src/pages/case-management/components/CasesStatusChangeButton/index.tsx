@@ -3,7 +3,7 @@ import CasesStatusChangeModal, {
   Props as CasesStatusChangeModalProps,
 } from './CasesStatusChangeModal';
 import { CaseStatus } from '@/apis';
-import { ButtonSize } from '@/components/library/Button';
+import { ButtonProps } from '@/components/library/Button';
 import { StatusChangeButton } from '@/pages/case-management/components/StatusChangeButton';
 import { ActionLabel, FormValues } from '@/pages/case-management/components/StatusChangeModal';
 
@@ -11,7 +11,7 @@ export interface CasesStatusChangeButtonProps {
   caseIds: string[];
   caseStatus?: CaseStatus;
   initialValues?: FormValues;
-  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  buttonProps?: Partial<ButtonProps>;
   statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
   onSaved: (status?: CaseStatus) => void;
   isDisabled?: boolean;

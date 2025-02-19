@@ -3,7 +3,7 @@ import { compact } from 'lodash';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { ActionLabel } from './StatusChangeModal';
 import { AlertStatus, CaseStatus, FileInfo, Permission } from '@/apis';
-import Button, { ButtonSize } from '@/components/library/Button';
+import Button, { ButtonProps } from '@/components/library/Button';
 import { CaseReasons } from '@/apis/models/CaseReasons';
 import { neverReturn } from '@/utils/lang';
 import { getNextStatus } from '@/utils/case-utils';
@@ -58,7 +58,7 @@ export interface FormValues {
 interface Props {
   ids: string[];
   status?: CaseStatus | AlertStatus;
-  buttonProps?: { size?: ButtonSize | undefined; isBlue?: boolean; rounded?: boolean };
+  buttonProps?: Partial<ButtonProps>;
   statusTransitions?: Partial<Record<CaseStatus, { status: CaseStatus; actionLabel: ActionLabel }>>;
   isDisabled?: boolean;
   className?: string;
@@ -199,11 +199,11 @@ const ModalButton = (
             setModalVisibility(true);
           }}
           isDisabled={isDisabled ? isDisabled : !ids.length}
-          size={buttonProps.size}
           style={{ width: 'max-content' }}
           testName="update-status-button"
           requiredPermissions={requiredPermissions}
           className={className}
+          {...buttonProps}
         >
           {overridenStatus?.actionLabel ?? statusToOperationName(newStatus)}
         </Button>
