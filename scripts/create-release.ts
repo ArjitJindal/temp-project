@@ -3,6 +3,7 @@ import {
   getLinearTicketByID,
   getLinearTicketIDByGitRef,
   isIssueCustomerFacing,
+  TicketStatus,
   updateTicketStatusByID,
 } from './utils/linear'
 import {
@@ -153,7 +154,9 @@ async function updateLinearTickets() {
   const linearTicketIds = compact(headRefs.map(getLinearTicketIDByGitRef))
 
   for (const ticketId of linearTicketIds) {
-    await updateTicketStatusByID(ticketId, 'Done (Weekly)')
+    await updateTicketStatusByID(ticketId, TicketStatus.DoneWeekly, [
+      TicketStatus.QaFail,
+    ])
   }
 }
 

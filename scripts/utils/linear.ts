@@ -32,14 +32,19 @@ export async function getLinearTicketByID(ticketID: string): Promise<Issue> {
   return linearTicket
 }
 
+export enum TicketStatus {
+  InProgress = 'In Progress',
+  InReview = 'In Review',
+  ReadyToDeploy = 'Ready to Deploy',
+  ReadyToTest = 'Ready to Test',
+  DoneWeekly = 'Done (Weekly)',
+  QaFail = 'QA Fail',
+}
+
 export async function updateTicketStatusByID(
   ticketId: string,
-  status:
-    | 'In Progress'
-    | 'In Review'
-    | 'Ready to Deploy'
-    | 'Ready to Test'
-    | 'Done (Weekly)'
+  status: TicketStatus,
+  ifStatusIgnore?: TicketStatus[]
 ) {
   const linearTicket = await getLinearTicketByID(ticketId)
   const statuses = await linearClient.workflowStates({})
@@ -53,6 +58,11 @@ export async function updateTicketStatusByID(
     throw new Error(`Ticket ${ticketId} not found`)
   }
   console.info(`Updating ticket ${linearTicket.id} to status ${status}`)
+
+  if (ifStatusIgnore?.includes(status)) {
+    console.info(`Skipping ticket ${ticketId} update to status ${status}`)
+    return
+  }
 
   await linearClient.updateIssue(linearTicket.id, {
     stateId: foundStatus.id,
