@@ -122,7 +122,7 @@ export const config: Config = {
     SLACK_REDIRECT_URI:
       'https://sandbox.api.flagright.com/console/slack/oauth_redirect',
     WEBHOOK_REQUEST_TIMEOUT_SEC: 10,
-    INTEGRATION_TEST_API_KEY_ID: 'lvgtserzmf',
+    INTEGRATION_TEST_API_KEY_ID: 'saxgyun4d7',
     GOOGLE_SHEETS_CLIENT_EMAIL: `google-sheets-api-usage-metric@linen-waters-385109.iam.gserviceaccount.com`,
     API_USAGE_GOOGLE_SHEET_ID: '1sHbFc5uOMw5NGnRZMcVQBUwslwjrA9qpP3dUk_Shr3w',
     POSTHOG_HOST: 'https://eu.i.posthog.com',
