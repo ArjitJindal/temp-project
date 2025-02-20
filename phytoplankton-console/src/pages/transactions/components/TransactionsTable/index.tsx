@@ -234,6 +234,33 @@ const getAmountFromPayment = (
   };
 };
 
+const createAmountColumns = (
+  prefix: 'origin' | 'destination',
+  helper: ColumnHelper<TransactionTableItem>,
+) => {
+  return [
+    helper.derived({
+      id: `${prefix}Amount`,
+      title: `${prefix === 'origin' ? 'Origin' : 'Destination'} amount`,
+      value: (entity) => getAmountFromPayment(entity[`${prefix}Payment`]),
+      type: {
+        ...MONEY,
+        stringify: (val) => {
+          return String(val?.amountValue ?? '-');
+        },
+      },
+    }),
+    helper.derived({
+      id: `${prefix}AmountCurrency`,
+      title: `${prefix === 'origin' ? 'Origin' : 'Destination'} currency`,
+      value: (entity) => getAmountFromPayment(entity[`${prefix}Payment`])?.amountCurrency,
+      type: STRING,
+      exporting: true,
+      hideInTable: true,
+    }),
+  ];
+};
+
 export default function TransactionsTable(props: Props) {
   const [showDetailsView, setShowDetailsView] = useState<boolean>(false);
   const isRiskScoringEnabled = useFeatureEnabled('RISK_SCORING');
@@ -442,12 +469,7 @@ export default function TransactionsTable(props: Props) {
         type: STRING,
         filtering: true,
       }),
-      helper.derived({
-        id: 'originAmount',
-        title: 'Origin amount',
-        value: (entity) => getAmountFromPayment(entity.originPayment),
-        type: MONEY,
-      }),
+      ...createAmountColumns('origin', helper),
       helper.simple<'originPayment.country'>({
         title: 'Origin country',
         key: 'originPayment.country',
@@ -498,12 +520,7 @@ export default function TransactionsTable(props: Props) {
         type: STRING,
         filtering: true,
       }),
-      helper.derived({
-        id: 'destinationAmount',
-        title: 'Destination amount',
-        value: (entity) => getAmountFromPayment(entity.destinationPayment),
-        type: MONEY,
-      }),
+      ...createAmountColumns('destination', helper),
       helper.simple<'destinationPayment.country'>({
         title: 'Destination country',
         key: 'destinationPayment.country',
