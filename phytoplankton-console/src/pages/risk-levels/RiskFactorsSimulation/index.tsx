@@ -467,7 +467,7 @@ const RiskFactorsSimulationForm = (props: FormProps) => {
                 <TextInput
                   {...inputProps}
                   value={iteration.description}
-                  placeholder={'Enter iteration name'}
+                  placeholder={'Enter iteration description'}
                 />
               )}
             </InputField>
