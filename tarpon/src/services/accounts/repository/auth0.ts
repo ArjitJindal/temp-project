@@ -18,8 +18,6 @@ import {
   userToAccount,
 } from '@/utils/auth0-utils'
 import { Account } from '@/@types/openapi-internal/Account'
-import { getContext } from '@/core/utils/context'
-import { envIsNot } from '@/utils/env'
 import { logger } from '@/core/logger'
 import { traceable } from '@/core/xray'
 
@@ -291,7 +289,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
 
     const organization = await auth0AsyncWrapper(() =>
       organizationManager.update(
-        { id: tenant?.orgId },
+        { id: tenant.id },
         {
           metadata: {
             ...tenant.metadata,
@@ -343,7 +341,6 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
   ): Promise<GetOrganizations200ResponseOneOfInner[]> {
     const domain = auth0Domain ?? this.auth0Domain
     const managementClient = await getAuth0ManagementClient(domain)
-    const user = getContext()?.user
     const organizationManager = managementClient.organizations
     let pageNumber = 0
     const limitPerPage = 100
@@ -364,10 +361,6 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
       morePagesAvailable = pagedOrganizations.total > organizations.length
     }
 
-    if (envIsNot('prod') || !user?.allowedRegions) {
-      return organizations
-    }
-
     return organizations
   }
 
@@ -385,6 +378,9 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
     tenantId: string
   ): Promise<GetOrganizations200ResponseOneOfInner | null> {
     const tenants = await this.getTenantsInternal()
-    return tenants.find((tenant) => tenant.id === tenantId) ?? null
+    // tenant id is in metadata
+    return (
+      tenants.find((tenant) => tenant.metadata.tenantId === tenantId) ?? null
+    )
   }
 }
