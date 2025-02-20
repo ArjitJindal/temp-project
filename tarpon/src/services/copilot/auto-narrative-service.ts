@@ -53,16 +53,16 @@ export class AutoNarrativeService {
     }
 
     if (narrativeMode === 'STANDARD') {
-      string += `Please rewrite this information so that it conforms to the template above.`
+      string += `Please rewrite this information so that it conforms to the template above. Use natural, human-like language while maintaining professionalism. Avoid robotic or overly formal phrasing.`
     } else {
-      string += `Please write a narrative strictly in a paragraph (no verbose) straightforward way that explains the activities and why they are being reported to the financial authorities.`
+      string += `Please write a narrative in a natural, conversational way that explains the activities and why they are being reported to the financial authorities. Use clear, professional language but make it sound like it was written by a human rather than a machine.`
       string += `\n\n${SEPARATOR}\n\n`
-      string += `No detailed information is required about rule, ${service.type} or any transaction details accommodate everything in a single paragraph and in a very concise and professional manner.`
+      string += `No detailed information is required about rule, ${service.type} or any transaction details. Write everything in a single concise paragraph using natural language that a financial professional would use.`
     }
 
     string += `\n\n${SEPARATOR}\n\n`
     string += service.closingNarrative()
-    string += `\nThe following template is a template for a document written by bank staff to justify why they have or have not reported a suspicious, please rewrite this information so that it conforms to the template above in a very professional manner.`
+    string += `\nThe following template is for a document written by bank staff to justify their decision about reporting suspicious activity. Please rewrite this information in a natural, professional tone that sounds like it was written by an experienced financial professional.`
 
     const completionMessages: OpenAI.ChatCompletionMessageParam[] = []
 
