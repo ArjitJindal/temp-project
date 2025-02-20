@@ -40,7 +40,7 @@ export default class DowJonesConsumerUserRule extends UserRule<DowJonesConsumerU
           },
           title: 'Fuzziness range',
           description:
-            'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/ phonetics',
+            'Enter fuzziness % to set the flexibility of search. 0% will look for exact matches only & 100% will look for even the slightest match in spellings/phonetics',
         }),
         ongoingScreening: ENABLE_ONGOING_SCREENING_SCHEMA({
           description:
