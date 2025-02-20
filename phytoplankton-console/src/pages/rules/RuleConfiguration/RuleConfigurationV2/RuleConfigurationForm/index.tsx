@@ -164,7 +164,7 @@ const RuleConfigurationForm = (
         title: 'Basic details',
         isUnfilled:
           validateField(fieldValidators.basicDetailsStep, formState?.basicDetailsStep) != null,
-        description: 'Configure the basic details for this rule',
+        description: 'Configure basic details for this rule',
         tabs: [
           ...(simulationMode ? [{ key: 'simulation_details', title: 'Simulation details' }] : []),
           { key: 'rule_details', title: 'Rule details' },
@@ -183,7 +183,7 @@ const RuleConfigurationForm = (
         isUnfilled:
           validateField(fieldValidators.standardFiltersStep, formState?.standardFiltersStep) !=
           null,
-        description: 'Configure filters that are applicable to all rules',
+        description: 'Add additional segmentation and targeting logic by introducing filters',
         tabs: [
           { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
           { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
@@ -213,7 +213,7 @@ const RuleConfigurationForm = (
         title: 'Rule parameters',
         isUnfilled:
           validateField(fieldValidators.ruleParametersStep, formState?.ruleParametersStep) != null,
-        description: 'Configure filters & risk thresholds that are specific for this rule',
+        description: 'Configure filters & risk thresholds that are specific to this rule',
         tabs: isRiskLevelsEnabled
           ? [{ key: 'risk_based_thresholds', title: 'Risk-based thresholds' }]
           : [{ key: 'rule_specific_parameters', title: 'Rule-specific parameters' }],
