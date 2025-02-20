@@ -1705,7 +1705,10 @@ const getUserIdFromODDList = async (
   dynamoDb: DynamoDBDocumentClient,
   ruleInstances?: RuleInstance[]
 ) => {
-  const ODDRulesLists = ['06b705b0-66ad-4add-b49c-9457e5fefcce']
+  const ODDRulesLists = [
+    '06b705b0-66ad-4add-b49c-9457e5fefcce',
+    'fa4f98b1-dea6-4d92-9951-e0bfc05a1c72',
+  ]
 
   const hasNonScreeningRules =
     (ruleInstances?.filter((r) => r.nature !== 'SCREENING').length ?? 0) > 0
