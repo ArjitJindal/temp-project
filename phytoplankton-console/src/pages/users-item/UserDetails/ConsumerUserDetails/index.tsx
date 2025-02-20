@@ -1,9 +1,9 @@
-import ContactDetails from 'src/pages/users-item/UserDetails/shared/ContactDetailsCard';
-import ExpectedIncome from 'src/pages/users-item/UserDetails/shared/ExpectedIncome';
-import SavedPaymentDetails from 'src/pages/users-item/UserDetails/shared/SavedPaymentDetailsCard';
 import Attachments from '../Attachments';
 import GeneralDetails from './GeneralDetails';
 import LegalDocuments from './LegalDocuments';
+import ContactDetails from '@/pages/users-item/UserDetails/shared/ContactDetailsCard';
+import ExpectedIncome from '@/pages/users-item/UserDetails/shared/ExpectedIncome';
+import SavedPaymentDetails from '@/pages/users-item/UserDetails/shared/SavedPaymentDetailsCard';
 import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { Comment, InternalConsumerUser } from '@/apis';
 import Tags from '@/pages/users-item/UserDetails/shared/Tags';

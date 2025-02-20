@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   PepStatusLabel,
   PepStatusValue,
-} from 'src/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
+} from '@/pages/users-item/UserDetails/ConsumerUserDetails/PepDetails/PepStatus';
 import { InternalConsumerUser, PEPStatus } from '@/apis';
 import EntityPropertiesCard from '@/components/ui/EntityPropertiesCard';
 

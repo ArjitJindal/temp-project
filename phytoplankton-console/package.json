@@ -133,6 +133,7 @@
     "@aws-sdk/client-secrets-manager": "^3.370.0",
     "@aws-sdk/credential-providers": "^3.370.0",
     "@babel/plugin-transform-modules-commonjs": "^7.24.8",
+    "@babel/preset-typescript": "^7.26.0",
     "@cypress/skip-test": "^2.6.1",
     "@openapitools/openapi-generator-cli": "^2.7.0",
     "@sentry/cli": "^2.40.0",

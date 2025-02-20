@@ -5,7 +5,15 @@ import {
   MOCKED_ACCOUNTS,
   MOCKED_RULE_CONFIG,
 } from '@/components/AppWrapper/Providers/mocks/mockedData';
-import { Account, LogicConfig } from '@/apis';
+import {
+  Account,
+  AccountRole,
+  LogicConfig,
+  Rule,
+  RuleInstance,
+  RuleQueuesResponse,
+  SLAPoliciesResponse,
+} from '@/apis';
 
 interface Props {
   children: React.ReactNode;
@@ -23,9 +31,51 @@ const MOCK_API: FlagrightApi = new Proxy<FlagrightApi>({} as FlagrightApi, {
         return Promise.resolve([]);
       };
     }
+    if (prop === 'getSlaPolicies') {
+      return (): Promise<SLAPoliciesResponse> => {
+        const result: SLAPoliciesResponse = {
+          items: [],
+          total: 0,
+        };
+        return Promise.resolve(result);
+      };
+    }
     if (prop === 'getLogicConfig') {
       return (): Promise<LogicConfig> => {
         return Promise.resolve(MOCKED_RULE_CONFIG as unknown as LogicConfig);
+      };
+    }
+    if (prop === 'getRules') {
+      return (): Promise<Array<Rule>> => {
+        return Promise.resolve([]);
+      };
+    }
+    if (prop === 'getRuleInstances') {
+      return (): Promise<Array<RuleInstance>> => {
+        return Promise.resolve([]);
+      };
+    }
+    if (prop === 'getRulesWithAlerts') {
+      return (): Promise<Array<string>> => {
+        return Promise.resolve([]);
+      };
+    }
+    if (prop === 'getRuleQueues') {
+      return (): Promise<RuleQueuesResponse> => {
+        return Promise.resolve({
+          total: 0,
+          data: [],
+        });
+      };
+    }
+    if (prop === 'getUsersUniques') {
+      return (): Promise<Array<string>> => {
+        return Promise.resolve([]);
+      };
+    }
+    if (prop === 'getRoles') {
+      return (): Promise<Array<AccountRole>> => {
+        return Promise.resolve([]);
       };
     }
     throw new Error(

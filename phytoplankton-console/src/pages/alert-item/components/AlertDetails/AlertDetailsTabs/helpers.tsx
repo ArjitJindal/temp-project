@@ -1,11 +1,11 @@
 import React, { useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
-import AiForensicsTab from 'src/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import HitsTab from './HitsTab';
 import Checklist from './ChecklistTab';
 import TransactionsTab from './TransactionsTab';
 import CommentsTab from './CommentsTab';
 import ActivityTab from './ActivityTab';
+import AiForensicsTab from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/AiForensicsTab';
 import { TabItem } from '@/components/library/Tabs';
 import { useApi } from '@/api';
 import { CursorPaginatedData, useCursorQuery, useQuery } from '@/utils/queries/hooks';

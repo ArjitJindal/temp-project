@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import s from 'styles.module.less';
+import s from './styles.module.less';
 import { UserTag, ConsoleTag } from '@/apis';
 import Table from '@/components/library/Table';
 import { ColumnHelper } from '@/components/library/Table/columnHelper';

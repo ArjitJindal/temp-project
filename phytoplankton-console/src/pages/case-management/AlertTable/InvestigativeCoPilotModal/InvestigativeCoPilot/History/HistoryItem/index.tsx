@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { parseQuestionResponse, QuestionResponse } from '../../types';
-import HistoryItemRuleHit from './HistoryItemRuleHit';
 import HistoryItemTable from './HistoryItemTable';
 import HistoryItemStackedBarchart from './HistoryItemStackedBarchart';
 import HistoryItemTimeSeries from './HistoryItemTimeSeries';
@@ -20,6 +19,7 @@ import { FormValues as CommentEditorFormValues } from '@/components/CommentEdito
 import { CommonParams } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { sanitizeComment } from '@/components/markdown/MarkdownEditor/mention-utlis';
+import HistoryItemRuleHit from '@/pages/case-management/AlertTable/InvestigativeCoPilotModal/InvestigativeCoPilot/History/HistoryItem/HistoryItemRuleHit';
 
 interface Props {
   isUnread: boolean;

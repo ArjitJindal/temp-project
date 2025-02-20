@@ -1,9 +1,9 @@
 import React from 'react';
-import EntityInfoGrid from 'src/components/ui/EntityInfoGrid';
-import ContactDetails from 'src/pages/users-item/UserDetails/shared/ContactDetailsCard';
 import Attachments from '../../../Attachments';
 import LegalDocuments from '../../LegalDocuments';
 import GeneralDetails from './GeneralDetails';
+import ContactDetails from '@/pages/users-item/UserDetails/shared/ContactDetailsCard';
+import EntityInfoGrid from '@/components/ui/EntityInfoGrid';
 import { AttachmentUserType, Comment, Person } from '@/apis';
 import { CommentType } from '@/utils/user-utils';
 
