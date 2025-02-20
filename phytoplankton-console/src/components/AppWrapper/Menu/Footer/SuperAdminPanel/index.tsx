@@ -41,10 +41,19 @@ import ExpandContainer from '@/components/utils/ExpandContainer';
 import ExpandIcon from '@/components/library/ExpandIcon';
 import { useDeepEqualEffect } from '@/utils/hooks';
 
-export const featureDescriptions: Record<Feature, { title: string; description: string }> = {
+export enum FeatureTag {
+  ENG = 'Eng',
+  WIP = 'WIP',
+}
+
+export const featureDescriptions: Record<
+  Feature,
+  { title: string; description: string; tag?: FeatureTag }
+> = {
   ALERT_DETAILS_PAGE: {
     title: 'Alert details page',
     description: 'Enable showing alert details on a separate page',
+    tag: FeatureTag.WIP,
   },
   RISK_LEVELS: { title: 'Risk levels', description: 'Enable risk levels' },
   RISK_SCORING: { title: ' Risk scoring', description: 'Enables risk scoring' },
@@ -81,6 +90,7 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
   RULES_ENGINE_V8_FOR_V2_RULES: {
     title: 'Rules engine V8 for V2 Rules',
     description: 'Enables new rules Engine V8 for V2 rules (Experimental)',
+    tag: FeatureTag.WIP,
   },
   FILES_AI_SUMMARY: {
     title: 'AI attachment summarization',
@@ -89,6 +99,7 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
   CLICKHOUSE_ENABLED: {
     title: 'Clickhouse (Beta)',
     description: 'Enables Clickhouse for data retrieval (Experimental)',
+    tag: FeatureTag.ENG,
   },
   MACHINE_LEARNING: { title: 'Machine learning', description: 'Enables machine learning features' },
   ALERT_SLA: { title: 'Alerts SLA', description: 'Enables Alert SLA' },
@@ -115,10 +126,12 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
   CONCURRENT_ASYNC_RULES: {
     title: 'Concurrent async rules',
     description: 'Enables concurrent async rules',
+    tag: FeatureTag.ENG,
   },
   RULES_ENGINE_V8_SYNC_REBUILD: {
     title: 'Rules engine V8 sync rebuild ',
     description: 'Enables Rules engine V8 sync rebuild',
+    tag: FeatureTag.ENG,
   },
   PNB: {
     title: 'PNB',
@@ -132,6 +145,7 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
     title: 'Risk Scoring V8 for V2',
     description:
       'Enables both V2 and V8 engines together (requires: Risk scoring & Risk scoring V8)',
+    tag: FeatureTag.ENG,
   },
   STRICT_FILE_SECURITY: {
     title: 'Strict file security',
@@ -141,23 +155,28 @@ export const featureDescriptions: Record<Feature, { title: string; description: 
   MANUAL_PRE_AGGREGATION: {
     title: 'Manual pre-aggregation',
     description: 'Enables manual pre-aggregation',
+    tag: FeatureTag.ENG,
   },
   MANUAL_DASHBOARD_REFRESH: {
     title: 'Manual dashboard refresh',
     description: 'Enables manual dashboard refresh (dashboard will not auto-refresh)',
+    tag: FeatureTag.ENG,
   },
   CONCURRENT_DYNAMODB_CONSUMER: {
     title: 'Concurrent DynamoDB consumer',
     description: 'Enables concurrent DynamoDB consumer',
+    tag: FeatureTag.ENG,
   },
   ALERTS_DYNAMO_POC: {
     title: 'Alerts Dynamo POC (Experimental)',
     description: 'Enables alerts Dynamo POC (Experimental)',
+    tag: FeatureTag.ENG,
   },
 
   CRM_FRESHDESK: {
     title: 'CRM Freshdesk Integration',
     description: 'Enables CRM Freshdesk Integration',
+    tag: FeatureTag.WIP,
   },
 };
 
@@ -421,9 +440,14 @@ export default function SuperAdminPanel() {
                   .sort()
                   .map((featureKey) => {
                     return {
-                      label: featureDescriptions[featureKey].title,
+                      label:
+                        featureDescriptions[featureKey].title +
+                        (featureDescriptions[featureKey].tag
+                          ? ` (${featureDescriptions[featureKey].tag})`
+                          : ''),
                       value: featureKey as Feature,
                       title: featureDescriptions[featureKey].description,
+                      tag: featureDescriptions[featureKey].tag,
                     };
                   })}
                 onChange={(v) => setFeatures(v ?? [])}

@@ -180,7 +180,11 @@ export const CreateTenantModal = (props: Props) => {
           items: {
             type: 'string',
             enum: Object.keys(UPDATED_FEATURES),
-            enumNames: Object.keys(UPDATED_FEATURES).map((key) => featureDescriptions[key].title),
+            enumNames: Object.keys(UPDATED_FEATURES).map(
+              (key) =>
+                featureDescriptions[key].title +
+                (featureDescriptions[key].tag ? ` (${featureDescriptions[key].tag})` : ''),
+            ),
           },
         },
         ...(isSanctionsEnabled && {
