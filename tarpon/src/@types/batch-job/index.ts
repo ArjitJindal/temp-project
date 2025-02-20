@@ -375,6 +375,11 @@ export type FailingBatchJob = {
   tenantId: string
 }
 
+export type FixArsBreakdownBatchJob = {
+  type: 'FIX_ARS_BREAKDOWN'
+  tenantId: string
+}
+
 export type BatchJob =
   | SimulationRiskLevelsBatchJob
   | SimulationRiskFactorsBatchJob
@@ -415,6 +420,7 @@ export type BatchJob =
   | InHouseScreeningMigrationBatchJob
   | SyncAuth0DataBatchJob
   | FailingBatchJob
+  | FixArsBreakdownBatchJob
 
 export type BatchJobWithId = BatchJob & {
   jobId: string

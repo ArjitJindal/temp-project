@@ -115,6 +115,7 @@ export const jobDecisionHandler = async (
     SYNC_AUTH0_DATA: 'LAMBDA',
     IN_HOUSE_SCREENING_MIGRATION: 'FARGATE',
     FAILING_BATCH_JOB: 'LAMBDA',
+    FIX_ARS_BREAKDOWN: 'FARGATE',
   }
 
   return {
