@@ -16,7 +16,7 @@ export default function (): JSX.Element {
       key: 'second_item',
       title: 'Standard filters',
       description:
-        'Configure filters that are common for all the rules. This decription can be quite long',
+        'Configure filters that are applicable to all rules. This decription can be quite long',
       isOptional: true,
     },
     {

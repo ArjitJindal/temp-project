@@ -183,7 +183,7 @@ const RuleConfigurationForm = (
         isUnfilled:
           validateField(fieldValidators.standardFiltersStep, formState?.standardFiltersStep) !=
           null,
-        description: 'Configure filters that are common for all the rules',
+        description: 'Configure filters that are applicable to all rules',
         tabs: [
           { key: 'user_details', icon: <User3LineIcon />, title: 'User details' },
           { key: 'geography_details', icon: <EarthLineIcon />, title: 'Geography details' },
