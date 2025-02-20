@@ -9,11 +9,11 @@ interface Props {
 
 const RecommendedTag: React.FC<Props> = ({ tooltipTitle }) => {
   return (
-    <Tooltip title={tooltipTitle}>
-      <Tag className={style.root} icon={<CheckMark className={style.icon} />}>
-        Recommended
-      </Tag>
-    </Tooltip>
+    <Tag className={style.root} icon={<CheckMark className={style.icon} />}>
+      <Tooltip title={tooltipTitle}>
+        <span>Recommended</span>
+      </Tooltip>
+    </Tag>
   );
 };
 
