@@ -163,6 +163,7 @@ export default class MarkdownEditor extends React.Component<Props> {
             window.document.execCommand('insertText', false, text);
           }
         }}
+        data-cy={'comment-textbox'}
       >
         <Editor
           height={`${this.props.editorHeight ?? 200}px`}
