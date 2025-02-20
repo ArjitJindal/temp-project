@@ -1,6 +1,7 @@
 import { WebClient } from '@slack/web-api'
 import {
   getLinearTicketIDByGitRef,
+  TicketStatus,
   updateTicketStatusByID,
 } from './utils/linear'
 import { getToBeReleasedHeadRefs } from './utils/git'
@@ -18,7 +19,7 @@ async function updateLinearTickets() {
   const linearTicketIds = compact(headRefs.map(getLinearTicketIDByGitRef))
 
   for (const ticketId of linearTicketIds) {
-    await updateTicketStatusByID(ticketId, 'Ready to Test')
+    await updateTicketStatusByID(ticketId, TicketStatus.ReadyToTest)
   }
 }
 
