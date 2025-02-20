@@ -48,7 +48,6 @@ export const KycScoring: TableQuestion<{ userId: string }> = {
     return {
       data: {
         items,
-        total: items.length,
       },
       summary: ``,
     }
