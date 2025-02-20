@@ -40,6 +40,7 @@ export function SarButton(props: UserProps | CaseProps) {
   });
 
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [isLoading, setLoading] = useState(false);
   const [country, setCountry] = useState<string>();
   const [reportTypeId, setReportTypeId] = useState<string>();
 
@@ -53,9 +54,13 @@ export function SarButton(props: UserProps | CaseProps) {
       });
     },
     {
-      onSuccess: () => setIsModalVisible(false),
+      onSuccess: () => {
+        setIsModalVisible(false);
+        setLoading(false);
+      },
       onError: (error) => {
         message.fatal(`Failed to generate report draft! ${getErrorMessage(error)}`, error);
+        setLoading(false);
       },
     },
   );
@@ -84,10 +89,11 @@ export function SarButton(props: UserProps | CaseProps) {
         onCancel={() => setIsModalVisible(false)}
         okText="Generate"
         okProps={{
-          isDisabled: !reportTypeId,
+          isDisabled: !reportTypeId || isLoading,
         }}
         onOk={() => {
           if (reportTypeId) {
+            setLoading(true);
             draft.mutate(reportTypeId);
           }
         }}
