@@ -162,7 +162,7 @@ export default function SanctionsSearchTable(props: Props) {
         kind: 'number',
         displayAs: 'slider',
         min: 0,
-        max: 5,
+        max: 1,
         step: 0.1,
         defaultValue: 0.5,
       },
