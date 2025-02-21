@@ -10,10 +10,18 @@ import { joinReactNodes } from '@/utils/react';
 import NumberInput from '@/components/library/NumberInput';
 import { AutoFilterProps } from '@/components/library/Filter/types';
 import DateTimeRangeInput from '@/components/library/Filter/AutoFilter/DateTimeRangeInput';
+import Slider from '@/components/library/Slider';
 
 interface Props extends InputProps<unknown> {
   filter: AutoFilterProps;
   readOnly?: boolean;
+}
+
+interface SliderInputProps extends InputProps<number> {
+  min?: number;
+  max?: number;
+  step?: number;
+  defaultValue?: number;
 }
 
 export function AutoFilter(props: Props): JSX.Element {
@@ -113,20 +121,50 @@ export function AutoFilter(props: Props): JSX.Element {
     );
   }
   if (filter.dataType.kind === 'number') {
+    if (filter.dataType.displayAs === 'slider') {
+      return (
+        <InputQuickFilter<number>
+          {...sharedProps}
+          key={filter.key}
+          extraInputProps={{
+            innerRef: inputRef,
+            min: filter.dataType.min,
+            max: filter.dataType.max,
+            step: filter.dataType.step,
+            defaultValue: filter.dataType.defaultValue,
+          }}
+          debounce={true}
+          inputComponent={SliderWithInput}
+        />
+      );
+    } else {
+      return (
+        <InputQuickFilter<number>
+          {...sharedProps}
+          key={filter.key}
+          debounce={true}
+          inputComponent={NumberInput}
+          extraInputProps={{
+            min: filter.dataType.min,
+            max: filter.dataType.max,
+            step: filter.dataType.step,
+          }}
+        />
+      );
+    }
+  }
+  if (filter.dataType.kind === 'year') {
     return (
-      <InputQuickFilter<number>
+      <InputQuickFilter<string>
         {...sharedProps}
         key={filter.key}
+        extraInputProps={{ innerRef: inputRef }}
         debounce={true}
-        inputComponent={NumberInput}
-        extraInputProps={{
-          min: filter.dataType.min,
-          max: filter.dataType.max,
-          step: filter.dataType.step,
-        }}
+        inputComponent={YearPickerInput}
       />
     );
   }
+
   return (
     <InputQuickFilter<string>
       {...sharedProps}
@@ -146,6 +184,37 @@ function DateRangeInput(props: InputProps<[string | undefined, string | undefine
       onChange={(newValue) => {
         props.onChange?.(newValue ? [newValue[0]?.format(), newValue[1]?.format()] : undefined);
       }}
+    />
+  );
+}
+
+function YearPickerInput(props: InputProps<string>) {
+  const { value } = props;
+  return (
+    <DatePicker.YearPicker
+      value={value ? dayjs().year(parseInt(value)) : null}
+      onChange={(value: any) => props.onChange?.(value?.format('YYYY'))}
+    />
+  );
+}
+
+function SliderWithInput(props: SliderInputProps) {
+  const { value } = props;
+  const min = props.min ?? 0;
+  const max = props.max ?? 100;
+  const step = props.step ?? 0.1;
+
+  return (
+    <Slider
+      mode="SINGLE"
+      min={min}
+      max={max}
+      step={step}
+      value={value}
+      onChange={(value) => {
+        props.onChange?.(value);
+      }}
+      defaultValue={props.defaultValue}
     />
   );
 }

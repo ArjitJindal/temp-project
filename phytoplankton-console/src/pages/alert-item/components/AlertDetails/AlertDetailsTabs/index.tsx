@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import { humanizeConstant } from '@flagright/lib/utils/humanize';
 import { useNavigate, useParams } from 'react-router';
-import { Alert, SanctionsDetails, SanctionsHitStatus } from '@/apis';
+import { Alert, SanctionsDetails, SanctionsHit, SanctionsHitStatus } from '@/apis';
 import {
   AlertTabs,
+  SanctionsHitsTableParams,
   useAlertTabs,
 } from '@/pages/alert-item/components/AlertDetails/AlertDetailsTabs/helpers';
 import Select from '@/components/library/Select';
@@ -16,6 +17,7 @@ import AlertsStatusChangeButton from '@/pages/case-management/components/AlertsS
 import { statusEscalated, statusInReview } from '@/utils/case-utils';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
 import { notEmpty } from '@/utils/array';
+import { SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 
 interface Props {
   headerStickyElRef: HTMLDivElement | null;
@@ -31,6 +33,8 @@ interface Props {
     status: SanctionsHitStatus,
   ) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
+  selectionInfo: SelectionInfo;
+  selectionActions: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
 }
 
 export default function AlertDetailsTabs(props: Props) {
@@ -44,6 +48,8 @@ export default function AlertDetailsTabs(props: Props) {
     onSanctionsHitSelect,
     escalatedTransactionIds,
     onSanctionsHitsChangeStatus,
+    selectionInfo,
+    selectionActions,
   } = props;
 
   const { tab } = useParams<'tab'>() as { tab: string };
@@ -116,6 +122,8 @@ export default function AlertDetailsTabs(props: Props) {
     onSanctionsHitSelect: onSanctionsHitSelect,
     onSanctionsHitsChangeStatus: onSanctionsHitsChangeStatus,
     transactionSelectionActions: transactionSelectionActions,
+    selectionInfo: selectionInfo,
+    selectionActions: selectionActions,
     fitTablesHeight: true,
   });
 

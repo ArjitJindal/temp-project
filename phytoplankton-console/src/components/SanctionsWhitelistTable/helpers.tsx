@@ -240,7 +240,7 @@ export function useColumns(
             >
               {({ onClick }) => (
                 <Button
-                  type="SECONDARY"
+                  type="DANGER"
                   icon={<DeleteIcon />}
                   onClick={onClick}
                   isDisabled={!hasWritePermissions}

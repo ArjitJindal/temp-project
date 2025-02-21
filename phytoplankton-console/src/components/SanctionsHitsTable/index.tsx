@@ -8,6 +8,7 @@ import {
   AllParams,
   isSingleRow,
   SelectionAction,
+  SelectionInfo,
   TableColumn,
   TableData,
   TableDataItem,
@@ -55,9 +56,9 @@ interface Props {
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   alertCreatedAt?: number;
   showComment?: boolean;
+  selectionInfo?: SelectionInfo;
   fitHeight?: boolean | number;
 }
-
 // todo: delete when have information in sanction hit
 const TMP_IS_UPDATED = false;
 
@@ -77,6 +78,7 @@ export default function SanctionsHitsTable(props: Props) {
     onSanctionsHitsChangeStatus,
     alertCreatedAt,
     showComment,
+    selectionInfo,
     fitHeight = 300,
   } = props;
   const [selectedSearchHit, setSelectedSearchHit] = useState<
@@ -190,7 +192,6 @@ export default function SanctionsHitsTable(props: Props) {
         enableResizing: false,
       }),
   ]);
-
   return (
     <>
       <QueryResultsTable<SanctionsHit, SanctionsHitsTableParams>
@@ -199,10 +200,7 @@ export default function SanctionsHitsTable(props: Props) {
         onSelect={onSelect}
         selectedIds={selectedIds}
         selection={selection || (selectionActions != null && selectionActions.length > 0)}
-        selectionInfo={{
-          entityName: 'hit',
-          entityCount: selectedIds?.length ?? 0,
-        }}
+        selectionInfo={selectionInfo}
         selectionActions={selectionActions}
         extraTools={extraTools}
         queryResults={queryResult}

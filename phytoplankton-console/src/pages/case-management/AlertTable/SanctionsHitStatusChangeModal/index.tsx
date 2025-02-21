@@ -55,6 +55,11 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
 
   const [formState, setFormState] = useState<FormState>(initialFormState);
   const preNewStatus = usePrevious(newStatus);
+
+  // When TRUE_POSITIVE is selected, automatically uncheck the whitelist checkbox initially.
+  // Users can subsequently modify the whitelist checkbox state if desired.
+  const [hasUncheckedWhitelist, setHasUncheckedWhitelist] = useState(false);
+
   useEffect(() => {
     if (preNewStatus !== newStatus) {
       narrativeRef?.current?.reset();
@@ -62,6 +67,16 @@ export default function SanctionsHitStatusChangeModal(props: Props) {
       setFormState(initialFormState);
     }
   }, [initialFormState, preNewStatus, newStatus]);
+
+  useEffect(() => {
+    if (formState.values.reasons?.includes('TRUE_POSITIVE') && !hasUncheckedWhitelist) {
+      formRef.current?.setValues({
+        ...formState.values,
+        whitelistHits: false,
+      });
+      setHasUncheckedWhitelist(true);
+    }
+  }, [formState.values, formState.values.reasons, hasUncheckedWhitelist]);
 
   const formRef = useRef<FormRef<FormValues>>(null);
   const narrativeRef = useRef<NarrativeRef>(null);

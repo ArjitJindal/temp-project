@@ -3,7 +3,10 @@ import { uniqBy } from 'lodash';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { ExpandContentButton } from '../library/ExpandContentButton';
 import FilesDraggerInput from '../ui/FilesDraggerInput';
-import { ObjectFieldValidator } from '../library/Form/utils/validation/types';
+import {
+  ObjectFieldValidator,
+  trueFalseMutualExclusivity,
+} from '../library/Form/utils/validation/types';
 import MarkdownEditor from '../markdown/MarkdownEditor';
 import s from './index.module.less';
 import { useFeatureEnabled } from '@/components/AppWrapper/Providers/SettingsProvider';
@@ -126,7 +129,7 @@ function Narrative<R extends string>(props: NarrativeProps<R>, ref: React.Ref<Na
         }
       }}
       fieldValidators={{
-        reasons: notEmpty,
+        reasons: and([notEmpty, trueFalseMutualExclusivity]),
         comment: and([notEmpty, maxLength(MAX_COMMENT_LENGTH)]),
         reasonOther: isOtherReason ? and([notEmpty, maxLength(500)]) : undefined,
         ...advancedOptionsValidators,

@@ -11,6 +11,7 @@ import Section from './Section';
 import BrainIcon from '@/components/ui/icons/brain-icon-colored.react.svg';
 import {
   CountryCode,
+  GenericSanctionsSearchType,
   SanctionsEntity,
   SanctionsEntityType,
   SanctionsHit,
@@ -158,7 +159,7 @@ export default function SearchResultDetailsDrawer(props: Props) {
               onClick={() => onChangeStatus(newStatus)}
             >
               {newStatus === 'CLEARED' && 'Clear'}
-              {newStatus === 'OPEN' && 'Re-open'}
+              {newStatus === 'OPEN' && 'Restore'}
             </Button>
           )}
         </>
@@ -588,8 +589,14 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
             }))
         : []),
     ];
+
     return tabs
-      .filter((tab) => tab.sources.length > 0)
+      .filter((tab) => {
+        const searchType = tab.name
+          .toUpperCase()
+          .replace(/\s+/g, '_') as GenericSanctionsSearchType;
+        return entity.sanctionSearchTypes?.includes(searchType);
+      })
       .map((tab) => {
         return {
           key: tab.name,
@@ -675,6 +682,7 @@ function useTabs(entity: SanctionsEntity, pdfMode: boolean): TabItem[] {
     entity.sanctionsSources,
     pdfMode,
     entity.otherSources,
+    entity.sanctionSearchTypes,
   ]);
 }
 

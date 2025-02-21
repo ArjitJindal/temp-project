@@ -100,3 +100,12 @@ export function isResultValid(result: NestedValidationResult): boolean {
   }
   return keys.every((key) => isResultValid(result?.[key]));
 }
+export function trueFalseMutualExclusivity(values) {
+  const normalizedValues = values?.map((v) =>
+    v.toString().toLowerCase().replaceAll(' ', '_').replaceAll('-', '_'),
+  );
+  if (normalizedValues?.includes('true_positive') && normalizedValues?.includes('false_positive')) {
+    return 'Cannot select both True Positive and False Positive';
+  }
+  return null;
+}

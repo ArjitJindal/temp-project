@@ -622,8 +622,8 @@ export function useRoutes(): RouteItem[] {
             redirect: '/screening/:type',
           },
           {
-            path: '/sanctions/search/:searchId',
-            redirect: '/screening/search/:searchId',
+            path: '/sanctions/manual-screening/:searchId',
+            redirect: '/screening/manual-screening/:searchId',
           },
           {
             path: '/sanctions/activity',
@@ -646,8 +646,8 @@ export function useRoutes(): RouteItem[] {
                 path: '/screening',
                 redirect:
                   lastActiveSanctionsTab === 'search'
-                    ? '/screening/search'
-                    : '/screening/search-history',
+                    ? '/screening/manual-screening'
+                    : '/screening/manual-screening-history',
               },
               {
                 path: '/screening/:type',
@@ -655,7 +655,7 @@ export function useRoutes(): RouteItem[] {
                 component: SanctionsPage,
               },
               {
-                path: '/screening/search/:searchId',
+                path: '/screening/manual-screening/:searchId',
                 component: SanctionsPage,
                 name: 'search-history-item',
               },

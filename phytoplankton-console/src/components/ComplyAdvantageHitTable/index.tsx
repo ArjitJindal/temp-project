@@ -151,8 +151,7 @@ export default function SanctionsSearchTable(props: Props) {
       title: 'Year of birth',
       key: 'yearOfBirth',
       renderer: {
-        kind: 'number',
-        min: undefined,
+        kind: 'year',
       },
     },
     {
@@ -161,9 +160,11 @@ export default function SanctionsSearchTable(props: Props) {
       key: 'fuzziness',
       renderer: {
         kind: 'number',
+        displayAs: 'slider',
         min: 0,
-        max: 1,
+        max: 5,
         step: 0.1,
+        defaultValue: 0.5,
       },
     },
   ];

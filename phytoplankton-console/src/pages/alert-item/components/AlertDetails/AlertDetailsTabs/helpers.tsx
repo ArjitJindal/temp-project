@@ -15,7 +15,7 @@ import {
   SANCTIONS_HITS_ALL,
   SANCTIONS_HITS_SEARCH,
 } from '@/utils/queries/keys';
-import { AllParams, SelectionAction } from '@/components/library/Table/types';
+import { AllParams, SelectionAction, SelectionInfo } from '@/components/library/Table/types';
 import { DEFAULT_PARAMS_STATE } from '@/components/library/Table/consts';
 import { getOr, isSuccess, map } from '@/utils/asyncResource';
 import { notEmpty } from '@/utils/array';
@@ -242,6 +242,8 @@ interface Props {
   ) => void;
   onSanctionsHitsChangeStatus?: (sanctionsHitsIds: string[], newStatus: SanctionsHitStatus) => void;
   transactionSelectionActions?: SelectionAction<TransactionTableItem, TransactionsTableParams>[];
+  selectionInfo?: SelectionInfo;
+  selectionActions?: SelectionAction<SanctionsHit, SanctionsHitsTableParams>[];
   fitTablesHeight?: boolean;
 }
 
@@ -257,6 +259,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     onTransactionSelect,
     onSanctionsHitsChangeStatus,
     transactionSelectionActions,
+    selectionInfo,
+    selectionActions,
     fitTablesHeight,
   } = props;
 
@@ -381,6 +385,8 @@ export function useAlertTabs(props: Props): TabItem[] {
                 }}
                 onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
                 queryResult={openHitsQueryResults}
+                selectionInfo={selectionInfo}
+                selectionActions={selectionActions}
               />
             ),
           };
@@ -402,6 +408,8 @@ export function useAlertTabs(props: Props): TabItem[] {
                 }}
                 onSanctionsHitsChangeStatus={onSanctionsHitsChangeStatus}
                 queryResult={clearedHitsQueryResults}
+                selectionInfo={selectionInfo}
+                selectionActions={selectionActions}
               />
             ),
           };
@@ -483,6 +491,8 @@ export function useAlertTabs(props: Props): TabItem[] {
     caseQueryResult.data,
     userQueryResult.data,
     isEntityLinkingEnabled,
+    selectionInfo,
+    selectionActions,
     fitTablesHeight,
   ]);
 

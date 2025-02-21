@@ -30,6 +30,10 @@ function getAutoFilter(dataTypeKind: AutoFilterDataType['kind']): AutoFilterProp
     dataType = { kind: 'dateRange' };
   } else if (dataTypeKind === 'dateTimeRange') {
     dataType = { kind: 'dateTimeRange' };
+  } else if (dataTypeKind === 'year') {
+    dataType = { kind: 'year' };
+  } else if (dataTypeKind === 'slider') {
+    dataType = { kind: 'slider' };
   } else {
     dataType = neverReturn(dataTypeKind, { kind: 'string' });
   }

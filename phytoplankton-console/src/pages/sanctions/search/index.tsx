@@ -37,10 +37,11 @@ interface TableSearchParams {
 
 interface Props {
   searchId?: string;
+  setSearchTerm: (searchTerm: string) => void;
 }
 
 export function SearchResultTable(props: Props) {
-  const { searchId } = props;
+  const { searchId, setSearchTerm } = props;
   const api = useApi();
   const currentUser = useAuth0User();
 
@@ -73,6 +74,12 @@ export function SearchResultTable(props: Props) {
     }
   }, [historyItem]);
 
+  useEffect(() => {
+    if (historyItem?.request?.searchTerm) {
+      setSearchTerm(historyItem.request.searchTerm);
+    }
+  }, [historyItem?.request?.searchTerm, setSearchTerm]);
+
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useState<AllParams<TableSearchParams>>(params);
   const searchEnabled = !!searchParams.searchTerm;
@@ -99,7 +106,7 @@ export function SearchResultTable(props: Props) {
         if (data.searchId) {
           navigate(
             makeUrl(
-              `/screening/search/:searchId`,
+              `/screening/manual-screening/:searchId`,
               {
                 searchId: data.searchId,
               },
@@ -181,9 +188,10 @@ export function SearchResultTable(props: Props) {
           (() => (
             <Button
               onClick={() => {
-                navigate(makeUrl(`/sanctions/search`, {}, {}));
+                navigate(makeUrl(`/screening/manual-screening`, {}, {}));
                 setParams(DEFAULT_PARAMS_STATE);
                 setSearchParams(DEFAULT_PARAMS_STATE);
+                setSearchTerm('');
               }}
               requiredPermissions={['sanctions:search:read']}
             >

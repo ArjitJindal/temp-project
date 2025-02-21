@@ -1,22 +1,23 @@
 import { useNavigate, useParams } from 'react-router';
 import { useEffect, useState } from 'react';
 import { useLocalStorageState } from 'ahooks';
+import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import { SearchResultTable } from './search';
 import { SanctionsSearchHistoryTable } from './search-history';
 import { SanctionsScreeningActivity } from './activity';
 import PageWrapper, { PageWrapperContentContainer } from '@/components/PageWrapper';
 import PageTabs from '@/components/ui/PageTabs';
-import { useI18n } from '@/locales';
 import SegmentedControl from '@/components/library/SegmentedControl';
 import WhitelistTab from '@/pages/sanctions/whitelist';
+import Breadcrumbs from '@/components/library/Breadcrumbs';
+import { P } from '@/components/ui/Typography';
 
 export type SanctionsType = 'manual' | 'rule';
 
 const SanctionsPage: React.FC = () => {
-  const { type = 'search' } = useParams<'type'>();
+  const { type = 'manual-screening' } = useParams<'type'>();
   const { searchId } = useParams<'searchId'>();
   const navigate = useNavigate();
-  const i18n = useI18n();
   const [storedActiveType, setStoredActiveType] = useLocalStorageState<SanctionsType>(
     'sanctions-active-type',
     'rule',
@@ -27,8 +28,22 @@ const SanctionsPage: React.FC = () => {
     setStoredActiveType(activeType);
   }, [activeType, setStoredActiveType]);
 
+  const [searchTerm, setSearchTerm] = useState<string>('');
+
   return (
-    <PageWrapper title={i18n('menu.sanctions')}>
+    <PageWrapper
+      header={
+        <Breadcrumbs
+          items={[
+            { title: 'Screening', to: '/screening/manual-screening' },
+            { title: humanizeAuto(type), to: `/screening/${type}` },
+            ...(searchTerm
+              ? [{ title: searchTerm, to: `/screening/manual-screening/${searchTerm}` }]
+              : []),
+          ]}
+        />
+      }
+    >
       <PageTabs
         activeKey={type}
         onChange={(key) => {
@@ -36,11 +51,15 @@ const SanctionsPage: React.FC = () => {
         }}
         items={[
           {
-            key: 'search',
-            title: 'Search',
+            key: 'manual-screening',
+            title: 'Manual screening',
             children: (
               <PageWrapperContentContainer>
-                <SearchResultTable searchId={searchId} />
+                <P grey={true}>
+                  Manually screen individuals or entities against Sanctions/PEP/AML lists and view
+                  detailed match results.
+                </P>
+                <SearchResultTable searchId={searchId} setSearchTerm={setSearchTerm} />
               </PageWrapperContentContainer>
             ),
           },
@@ -49,6 +68,10 @@ const SanctionsPage: React.FC = () => {
             title: 'Activity',
             children: (
               <PageWrapperContentContainer>
+                <P grey={true}>
+                  View screening history and results from both rule-based and manual screening
+                  activities.
+                </P>
                 <SegmentedControl<SanctionsType>
                   items={[
                     { label: 'Rule', value: 'rule' },
@@ -67,6 +90,9 @@ const SanctionsPage: React.FC = () => {
             title: 'Whitelist',
             children: (
               <PageWrapperContentContainer>
+                <P grey={true}>
+                  Manage whitelisted entities that are excluded from screening hits.
+                </P>
                 <WhitelistTab />
               </PageWrapperContentContainer>
             ),

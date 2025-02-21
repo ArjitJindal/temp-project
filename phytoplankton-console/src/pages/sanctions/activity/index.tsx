@@ -137,7 +137,7 @@ export const SanctionsScreeningActivity = () => {
             <Row align="middle">
               <Space>
                 {!hasFeatureDowJones || entity.isHit ? (
-                  <Id to={`/screening/search/${entity.searchId}`}>{name}</Id>
+                  <Id to={`/screening/manual-screening/${entity.searchId}`}>{name}</Id>
                 ) : (
                   <div>{name}</div>
                 )}

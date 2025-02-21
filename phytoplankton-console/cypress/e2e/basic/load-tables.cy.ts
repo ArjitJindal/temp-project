@@ -97,7 +97,7 @@ describe.skip('Main pages loading', () => {
     },
     {
       testName: 'Screening(search)',
-      url: '/screening/search',
+      url: '/screening/manual-screening',
       title: 'Screening',
     },
     {

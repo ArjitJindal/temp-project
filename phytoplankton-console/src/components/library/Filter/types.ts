@@ -33,9 +33,24 @@ type WithSharedAutoFilterProps<T> = T & {
 
 export type AutoFilterDataType =
   | WithSharedAutoFilterProps<{ kind: 'string' }>
-  | WithSharedAutoFilterProps<{ kind: 'number'; max?: number; min?: number; step?: number }>
+  | WithSharedAutoFilterProps<{
+      kind: 'number';
+      max?: number;
+      min?: number;
+      step?: number;
+      defaultValue?: number;
+      displayAs?: 'input' | 'slider';
+    }>
   | WithSharedAutoFilterProps<{ kind: 'dateRange' }>
   | WithSharedAutoFilterProps<{ kind: 'dateTimeRange' }>
+  | WithSharedAutoFilterProps<{ kind: 'year' }>
+  | WithSharedAutoFilterProps<{
+      kind: 'slider';
+      min?: number;
+      max?: number;
+      step?: number;
+      defaultValue?: number;
+    }>
   | WithSharedAutoFilterProps<{
       kind: 'select';
       options: Option<string>[];
