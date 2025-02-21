@@ -1,6 +1,5 @@
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb'
 import { ClickHouseClient } from '@clickhouse/client'
-import { insertRiskScores } from '../utils/user-utils'
 import {
   DefaultApiGetAllUsersListV2Request,
   DefaultApiGetBusinessUsersListV2Request,
@@ -74,7 +73,7 @@ export class UserClickhouseRepository {
       dynamoDb: this.dynamoDb,
     })
 
-    const riskClassificationValues = this.isPulseEnabled()
+    const riskClassificationValues = isPulseEnabled
       ? await riskRepository.getRiskClassificationValues()
       : []
     const whereClause = await this.buildWhereClause(params, userType, {
@@ -140,9 +139,6 @@ export class UserClickhouseRepository {
               ?.casesCount || 0,
         })),
       }
-    }
-    if (isPulseEnabled) {
-      result.items = insertRiskScores(result.items, riskClassificationValues)
     }
 
     return {
