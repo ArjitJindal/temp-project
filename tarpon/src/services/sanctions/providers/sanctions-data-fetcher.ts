@@ -829,7 +829,7 @@ export abstract class SanctionsDataFetcher implements SanctionsDataProvider {
     } else {
       result = await this.searchWithMatchingNames(
         request,
-        isMigration ? 500 : 100
+        isMigration || request.manualSearch ? 500 : 100
       )
     }
     return {
