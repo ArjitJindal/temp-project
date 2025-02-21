@@ -12,6 +12,7 @@ import Button from '@/components/library/Button';
 import { makeRandomNumberGenerator } from '@/utils/prng';
 import LineChart, { LineData } from '@/components/charts/Line';
 import DonutChart, { DonutData } from '@/components/charts/DonutChart';
+import Slider from '@/components/library/Slider';
 
 export default function (): JSX.Element {
   const [skeletonMode, setSkeletonMode] = useState(false);
@@ -74,9 +75,13 @@ export default function (): JSX.Element {
     })),
   ];
 
+  const [height, setHeight] = useState(350);
+
   return (
     <>
-      <div style={{ display: 'flex', gap: 8, flexDirection: 'column', alignItems: 'flex-start' }}>
+      <div
+        style={{ display: 'grid', gap: 8, gridTemplateColumns: 'minmax(100px, min-content) auto' }}
+      >
         <Button
           onClick={() => {
             setSeed(Number.MAX_SAFE_INTEGER * Math.random());
@@ -91,9 +96,23 @@ export default function (): JSX.Element {
             onChange={(newValue) => setSkeletonMode(newValue ?? false)}
           />
         </Label>
+        <div style={{ gridColumn: 'span 2' }}>
+          <Label label={'Chart height'}>
+            <Slider
+              min={50}
+              max={500}
+              value={height}
+              mode={'SINGLE'}
+              onChange={(value) => {
+                setHeight(value ?? 50);
+              }}
+            />
+          </Label>
+        </div>
       </div>
       <UseCase title={'DonutChart'}>
         <DonutChart
+          height={height}
           data={skeletonMode ? loading() : success(DONUT_DATA)}
           colors={uniq(DONUT_DATA.map(({ name }) => name)).reduce(
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
@@ -109,6 +128,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'TreemapChart'}>
         <TreemapChart
+          height={height}
           data={skeletonMode ? loading() : success(TREEMAP_DATA)}
           colors={uniq(LINE_DATA.map(({ series }) => series)).reduce(
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
@@ -124,6 +144,7 @@ export default function (): JSX.Element {
       </UseCase>
       <UseCase title={'Line'}>
         <LineChart
+          height={height}
           data={skeletonMode ? loading() : success(LINE_DATA)}
           colors={uniq(LINE_DATA.map(({ series }) => series)).reduce(
             (acc, label, i) => ({ ...acc, [`${label}`]: ALL_CHART_COLORS[i] }),
@@ -138,7 +159,7 @@ export default function (): JSX.Element {
           formatSeries={(value) => {
             return `${value} (Series)`;
           }}
-        />
+        />{' '}
       </UseCase>
       <UseCase title={'Stacked column'}>
         {([state, setState]) => (
@@ -153,7 +174,7 @@ export default function (): JSX.Element {
             <BarChart
               grouping={'STACKED'}
               data={skeletonMode ? loading() : success(STACKED_COLUMN_DATA)}
-              height={350}
+              height={height}
               colors={uniq(STACKED_COLUMN_DATA.map(({ series }) => series)).reduce(
                 (acc, label, i) => ({ ...acc, [label]: ALL_CHART_COLORS[i] }),
                 {},
@@ -199,7 +220,7 @@ export default function (): JSX.Element {
             <BarChart
               grouping={'GROUPED'}
               data={skeletonMode ? loading() : success(STACKED_COLUMN_DATA)}
-              height={350}
+              height={height}
               colors={uniq(STACKED_COLUMN_DATA.map(({ series }) => series)).reduce(
                 (acc, label, i) => ({ ...acc, [label]: ALL_CHART_COLORS[i] }),
                 {},

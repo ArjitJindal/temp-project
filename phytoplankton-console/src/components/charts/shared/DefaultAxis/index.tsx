@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 import { AxisBottom as VisxAxisBottom, AxisLeft as VisxAvisLeft } from '@visx/axis';
 import { AxisScale, SharedAxisProps } from '@visx/axis/lib/types';
@@ -51,15 +51,33 @@ export function DefaultAxisBottom<Scale extends AxisScale>(props: Props<Scale>) 
   );
 }
 
+const Y_TICKS_GAP = 5;
+const Y_MIN_TICKS = 2;
+const Y_MAX_TICKS = 12;
+
 export function DefaultAxisLeft<Scale extends AxisScale>(props: Props<Scale>) {
-  const { showSkeleton = false, tickLabelProps, ...rest } = props;
+  const { showSkeleton = false, tickLabelProps, scale, ...rest } = props;
   const axisColor = showSkeleton ? COLORS_V2_SKELETON_COLOR : COLORS_V2_GRAY_6;
+
+  const ticksCount = useMemo(() => {
+    const range = scale.range();
+    const y1 = range[0]?.valueOf() ?? 0;
+    const y2 = range[1]?.valueOf() ?? 0;
+    const height = Math.max(y1 ?? 0, y2) - Math.min(y1, y2);
+    return Math.max(
+      Y_MIN_TICKS,
+      Math.min(Math.floor(height / (DEFAULT_AXIS_FONT_STYLE.fontSize + Y_TICKS_GAP)), Y_MAX_TICKS),
+    );
+  }, [scale]);
+
   return (
     <VisxAvisLeft
       stroke={axisColor}
+      numTicks={ticksCount}
       tickStroke={axisColor}
       tickComponent={showSkeleton ? SKELETON_TICK_COMPONENT : undefined}
       tickFormat={DEFAULT_NUMBER_FORMATTER}
+      scale={scale}
       {...rest}
       tickLabelProps={(...args) => {
         const tickLabelPropsResult = tickLabelProps ? tickLabelProps(...args) : {};
