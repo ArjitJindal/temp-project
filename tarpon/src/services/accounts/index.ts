@@ -312,6 +312,7 @@ export class AccountsService {
       type: 'DATABASE',
       params: { ...account, ...data },
     })
+    this.clearAccountCache(userId)
   }
 
   async getTenantAccounts(tenant: Tenant): Promise<Account[]> {
@@ -782,5 +783,19 @@ export class AccountsService {
         type: 'ACCOUNTS_REFRESH',
       }),
     ])
+  }
+
+  private clearAccountCache(id?: string) {
+    if (id) {
+      const fn = this.getAccountInternal as unknown as {
+        cache: { delete: (key: string) => void }
+      }
+      fn.cache.delete(id)
+    } else {
+      const fn = this.getAccountInternal as unknown as {
+        cache: { clear: () => void }
+      }
+      fn.cache.clear()
+    }
   }
 }
