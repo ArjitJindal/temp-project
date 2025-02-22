@@ -297,7 +297,7 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
               mfaEnabled: patch.mfaEnabled ? 'true' : 'false',
             }),
             ...(patch.passwordResetDays != null && {
-              passwordResetDays: patch.passwordResetDays,
+              passwordResetDays: patch.passwordResetDays.toString,
             }),
             ...(patch.isProductionAccessDisabled != null && {
               isProductionAccessDisabled: patch.isProductionAccessDisabled

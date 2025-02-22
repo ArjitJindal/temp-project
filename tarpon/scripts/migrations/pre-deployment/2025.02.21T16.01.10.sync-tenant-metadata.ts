@@ -5,8 +5,13 @@ import { TenantService } from '@/services/tenants'
 import { AccountsService } from '@/services/accounts'
 import { getMongoDbClient } from '@/utils/mongodb-utils'
 import { TenantSettings } from '@/@types/openapi-internal/TenantSettings'
+import { isDemoTenant } from '@/utils/tenant'
 
 async function migrateTenant(tenant: Tenant, auth0Domain: string) {
+  if (isDemoTenant(tenant.id)) {
+    return
+  }
+
   const dynamoDb = getDynamoDbClient()
   const mongoDb = await getMongoDbClient()
 
