@@ -293,6 +293,12 @@ export class Auth0AccountsRepository extends BaseAccountsRepository {
         {
           metadata: {
             ...tenant.metadata,
+            ...(patch.mfaEnabled != null && {
+              mfaEnabled: patch.mfaEnabled ? 'true' : 'false',
+            }),
+            ...(patch.passwordResetDays != null && {
+              passwordResetDays: patch.passwordResetDays,
+            }),
             ...(patch.isProductionAccessDisabled != null && {
               isProductionAccessDisabled: patch.isProductionAccessDisabled
                 ? 'true'

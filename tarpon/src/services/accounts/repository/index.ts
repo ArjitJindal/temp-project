@@ -42,6 +42,8 @@ export type Auth0TenantMetadata = {
   region: FlagrightRegion
   isProductionAccessDisabled: boolean
   tenantCreatedAt: string
+  mfaEnabled: boolean
+  passwordResetDays: number
 }
 
 /**

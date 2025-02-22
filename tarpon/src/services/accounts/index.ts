@@ -114,6 +114,7 @@ export class AccountsService {
     updatedMetadata: Partial<Auth0TenantMetadata>
   ): Promise<void> {
     await this.auth0.patchOrganization(tenantId, updatedMetadata)
+    await this.cache.patchOrganization(tenantId, updatedMetadata)
   }
 
   async resetPassword(accountId: string) {
@@ -644,6 +645,8 @@ export class AccountsService {
       region: process.env.REGION as FlagrightRegion,
       isProductionAccessDisabled: false,
       tenantCreatedAt: Date.now().toString(),
+      mfaEnabled: true,
+      passwordResetDays: 30,
     }
 
     const organization = await this.auth0.createOrganization(tenantId, {
