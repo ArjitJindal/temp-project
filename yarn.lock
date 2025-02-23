@@ -26,13 +26,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@aws-cdk/cloud-assembly-schema@npm:^39.0.1":
-  version: 39.1.42
-  resolution: "@aws-cdk/cloud-assembly-schema@npm:39.1.42"
+"@aws-cdk/cloud-assembly-schema@npm:^39.2.0":
+  version: 39.2.20
+  resolution: "@aws-cdk/cloud-assembly-schema@npm:39.2.20"
   dependencies:
     jsonschema: "npm:~1.4.1"
-    semver: "npm:^7.6.3"
-  checksum: 94e827349220fab81e70c1a1cd213000272e71e768bbc4e5b7fa2bcba4f10d95fa391f65d4073d4858b5cd0f5b66183e1b9592b794a01a02ef0078c3d19dbc71
+    semver: "npm:^7.7.1"
+  checksum: 94a96dc318627f2e3dfdd984134ad106f1e592d2eae41cd690069726c2f7aa4155e9f5196e71281eb199dc61b5f23cfbdbef59b8fda84d44da7a1aefb4a109af
   languageName: node
   linkType: hard
 
@@ -1683,14 +1683,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"aws-cdk-lib@npm:~2.176.0":
-  version: 2.176.0
-  resolution: "aws-cdk-lib@npm:2.176.0"
+"aws-cdk-lib@npm:~2.177.0":
+  version: 2.177.0
+  resolution: "aws-cdk-lib@npm:2.177.0"
   dependencies:
     "@aws-cdk/asset-awscli-v1": "npm:^2.2.208"
     "@aws-cdk/asset-kubectl-v20": "npm:^2.1.3"
     "@aws-cdk/asset-node-proxy-agent-v6": "npm:^2.1.0"
-    "@aws-cdk/cloud-assembly-schema": "npm:^39.0.1"
+    "@aws-cdk/cloud-assembly-schema": "npm:^39.2.0"
     "@balena/dockerignore": "npm:^1.0.2"
     case: "npm:1.6.3"
     fs-extra: "npm:^11.2.0"
@@ -1704,7 +1704,7 @@ __metadata:
     yaml: "npm:1.10.2"
   peerDependencies:
     constructs: ^10.0.0
-  checksum: 8b2506f6245572b508dbe4221f1fd64161bae46aea26686f3616b8c34cedbd1bc3c7b0a8f65722c625f945805dad52976f3564dbfa05afe4dcd39b1cfdc3fe1b
+  checksum: 5285957a8b62466490443219bbf6a93fe01d18713f19f2233808380a40fbeb54f1902a9b225803dabd3f74d30386a3c28ae996cb2e741534c6530ed2ff3907b3
   languageName: node
   linkType: hard
 
@@ -3160,6 +3160,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"semver@npm:^7.7.1":
+  version: 7.7.1
+  resolution: "semver@npm:7.7.1"
+  bin:
+    semver: bin/semver.js
+  checksum: fd603a6fb9c399c6054015433051bdbe7b99a940a8fb44b85c2b524c4004b023d7928d47cb22154f8d054ea7ee8597f586605e05b52047f048278e4ac56ae958
+  languageName: node
+  linkType: hard
+
 "shebang-command@npm:^2.0.0":
   version: 2.0.0
   resolution: "shebang-command@npm:2.0.0"
@@ -3345,7 +3354,7 @@ __metadata:
     "@tsconfig/node18": "npm:^18.2.1"
     "@types/lodash": "npm:^4.17.14"
     aws-cdk: "npm:~2.176.0"
-    aws-cdk-lib: "npm:~2.176.0"
+    aws-cdk-lib: "npm:~2.177.0"
     constructs: "npm:^10.4.2"
     husky: "npm:^8.0.1"
     lodash: "npm:^4.17.21"
