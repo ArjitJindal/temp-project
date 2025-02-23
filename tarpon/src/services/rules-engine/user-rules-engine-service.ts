@@ -342,7 +342,8 @@ export class UserManagementService {
         riskScoreDetails =
           await this.riskScoringService.calculateAndUpdateKRSAndDRS(
             updatedUser,
-            isDrsUpdatable
+            isDrsUpdatable,
+            isKrsLocked
           )
       }
     }
@@ -394,7 +395,8 @@ export class UserManagementService {
   public async verifyBusinessUserEvent(
     userEvent: BusinessUserEvent,
     allowUserTypeConversion = false,
-    isDrsUpdatable?: boolean
+    isDrsUpdatable?: boolean,
+    isKrsLocked?: boolean
   ): Promise<BusinessWithRulesResult> {
     return this.verifyUserEvent<'BUSINESS'>(
       'BUSINESS',
@@ -402,7 +404,8 @@ export class UserManagementService {
       allowUserTypeConversion,
       this.userRepository.getBusinessUser.bind(this.userRepository),
       this.userRepository.saveBusinessUser.bind(this.userRepository),
-      isDrsUpdatable
+      isDrsUpdatable,
+      isKrsLocked
     ) as Promise<BusinessWithRulesResult>
   }
 

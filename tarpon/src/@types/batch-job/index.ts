@@ -375,6 +375,11 @@ export type FailingBatchJob = {
   tenantId: string
 }
 
+export type FixLocksForKrs = {
+  type: 'FIX_LOCKS_FOR_KRS'
+  tenantId: string
+}
+
 export type FixArsBreakdownBatchJob = {
   type: 'FIX_ARS_BREAKDOWN'
   tenantId: string
@@ -420,6 +425,7 @@ export type BatchJob =
   | InHouseScreeningMigrationBatchJob
   | SyncAuth0DataBatchJob
   | FailingBatchJob
+  | FixLocksForKrs
   | FixArsBreakdownBatchJob
 
 export type BatchJobWithId = BatchJob & {

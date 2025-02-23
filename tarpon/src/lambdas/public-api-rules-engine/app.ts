@@ -366,7 +366,7 @@ export const userEventsHandler = lambdaApi()(
       const isDrsUpdatable = lockCraRiskLevel
         ? lockCraRiskLevel !== 'true'
         : undefined
-      const lockKrs = lockKycRiskLevel ? lockKycRiskLevel !== 'true' : undefined
+      const lockKrs = lockKycRiskLevel ? lockKycRiskLevel === 'true' : undefined
       const result: UserWithRulesResult =
         await userManagementService.verifyConsumerUserEvent(
           userEvent,
@@ -388,12 +388,14 @@ export const userEventsHandler = lambdaApi()(
           ConsumerUserEvent: userEvent,
           allowUserTypeConversion,
           lockCraRiskLevel,
+          lockKycRiskLevel,
         }
       ) => {
         return createUserEvent(
           userEvent,
           allowUserTypeConversion,
-          lockCraRiskLevel
+          lockCraRiskLevel,
+          lockKycRiskLevel
         )
       }
     )
@@ -458,6 +460,7 @@ export const userEventsHandler = lambdaApi()(
           BusinessUserEvent: userEvent,
           allowUserTypeConversion,
           lockCraRiskLevel,
+          lockKycRiskLevel,
         }
       ) => {
         userEvent.updatedBusinessUserAttributes =
@@ -485,14 +488,17 @@ export const userEventsHandler = lambdaApi()(
             userEvent.userId
           )
         }
-
+        const lockKrs = lockKycRiskLevel
+          ? lockKycRiskLevel === 'true'
+          : undefined
         const isDrsUpdatable = lockCraRiskLevel
           ? lockCraRiskLevel !== 'true'
           : undefined
         const result = await userManagementService.verifyBusinessUserEvent(
           userEvent,
           allowUserTypeConversion === 'true',
-          isDrsUpdatable
+          isDrsUpdatable,
+          lockKrs
         )
 
         return {
