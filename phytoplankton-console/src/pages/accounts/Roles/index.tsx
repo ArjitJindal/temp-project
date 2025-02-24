@@ -14,6 +14,8 @@ import RoleForm from '@/pages/accounts/Roles/RoleForm';
 import { isValidManagedRoleName } from '@/apis/models-custom/ManagedRoleName';
 import Button from '@/components/library/Button';
 import DownloadLineIcon from '@/components/ui/icons/Remix/system/download-line.react.svg';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import { getOr } from '@/utils/asyncResource';
 
 export default function Roles() {
   const api = useApi();
@@ -32,10 +34,22 @@ export default function Roles() {
   );
 }
 
+const getSantiziedRoleName = (roleName: string) => {
+  return roleName.replaceAll('demo-', '');
+};
+
 const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () => any }) => {
   const [key, setKey] = useState<string>(roles[0]?.id || '');
   const [isCreateRoleForm, setIsCreateRoleForm] = useState<boolean>(false);
   const existingRoleNames = useMemo(() => roles.map((r) => r.name), [roles]);
+  const [isDemoModeRes] = useDemoMode();
+  const isDemoMode = getOr(isDemoModeRes, false);
+
+  // removing demo rule if not in demo mode
+  if (!isDemoMode) {
+    roles = roles.filter((role) => !role.name.includes('demo-'));
+  }
+
   return (
     <div>
       <VerticalMenu
@@ -64,8 +78,8 @@ const RolesLayout = ({ roles, onChange }: { roles: AccountRole[]; onChange: () =
         }
         items={roles.map((r) => ({
           key: r.id,
-          title: startCase(r.name),
-          icon: isValidManagedRoleName(r.name) && (
+          title: startCase(getSantiziedRoleName(r.name)),
+          icon: isValidManagedRoleName(getSantiziedRoleName(r.name)) && (
             <span className={s.icon}>
               <LockFilled />
             </span>

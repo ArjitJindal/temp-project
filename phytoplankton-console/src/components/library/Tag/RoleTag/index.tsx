@@ -3,13 +3,14 @@ import cn from 'clsx';
 import { humanizeAuto } from '@flagright/lib/utils/humanize';
 import Tag from '../index';
 import s from './index.module.less';
+import { getSantiziedRoleName } from '@/pages/accounts/utils';
 
 interface Props {
   role: string;
 }
 
 export function getRoleTitle(role: string) {
-  return humanizeAuto(role);
+  return humanizeAuto(getSantiziedRoleName(role));
 }
 
 export default function RoleTag(props: Props): JSX.Element {

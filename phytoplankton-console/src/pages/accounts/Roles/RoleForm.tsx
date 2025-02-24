@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useState } from 'react';
 import { startCase } from 'lodash';
+import { getDemoRoleName, getSantiziedRoleName, isDemoRole } from '../utils';
 import { permissionsToRows } from './utils';
 import s from './RoleForm.module.less';
 import FileCopyOutlined from '@/components/ui/icons/Remix/document/file-copy-line.react.svg';
@@ -18,6 +19,8 @@ import { getErrorMessage } from '@/utils/lang';
 import ButtonGroup from '@/components/library/ButtonGroup';
 import { isValidPermission } from '@/apis/models-custom/Permission';
 import { TableRefType } from '@/components/library/Table/types';
+import { useDemoMode } from '@/components/AppWrapper/Providers/DemoModeProvider';
+import { getOr } from '@/utils/asyncResource';
 
 export interface FormValues {
   roleName: string;
@@ -31,11 +34,12 @@ type RoleFormProps = {
   type: 'create' | 'edit';
 };
 
-export default function RoleForm({ role, onChange, existingRoleNames, type }: RoleFormProps) {
+export default function RoleForm(props: RoleFormProps) {
+  const { role, onChange, existingRoleNames, type } = props;
   const api = useApi();
   const [edit, setEdit] = useState(!role);
   const [duplicate, setDuplicate] = useState(false);
-  const [roleName, setRoleName] = useState(role?.name);
+  const [roleName, setRoleName] = useState(getSantiziedRoleName(role?.name));
   const [isLoading, setLoading] = useState(false);
   const [permissions, setPermissions] = useState<Set<Permission>>(new Set(role?.permissions || []));
   const rows = permissionsToRows(permissions);
@@ -43,10 +47,12 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
     roleName: notEmpty,
     description: notEmpty,
   };
-  const canEdit = !isValidManagedRoleName(role?.name);
+  const canEdit = !isValidManagedRoleName(getSantiziedRoleName(role?.name));
   const isEditing = (duplicate || edit) && canEdit;
   const [allExpanded, setAllExpanded] = useState(false);
   const ref = useRef<FormRef<FormValues>>(null);
+  const [isDemoModeRes] = useDemoMode();
+  const isDemoMode = getOr(isDemoModeRes, false);
 
   const onSubmit = useCallback(
     async (
@@ -56,6 +62,8 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
       if (!isValid) {
         return;
       }
+
+      const demoRole = isDemoRole(role, isDemoMode);
       setLoading(true);
       try {
         if (isValidManagedRoleName(roleName)) {
@@ -70,6 +78,20 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
         if (type === 'create' && existingRole) {
           message.error(`Role name: ${roleName} already exists`);
           return;
+        }
+
+        if (roleName.includes(':')) {
+          message.error('Character : is not allowed in role name');
+          return;
+        }
+
+        if (roleName.includes('-')) {
+          message.error('Character - is not allowed in role name');
+          return;
+        }
+
+        if (demoRole) {
+          roleName = getDemoRoleName(roleName);
         }
 
         const accountRole: CreateAccountRole = {
@@ -91,7 +113,7 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
         setLoading(false);
       }
     },
-    [duplicate, existingRoleNames, permissions, role, type, api, onChange],
+    [role, isDemoMode, existingRoleNames, type, permissions, duplicate, onChange, api],
   );
 
   const onDelete = useCallback(async () => {
@@ -102,7 +124,7 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
         return;
       }
       await api.deleteRole({ roleId: role?.id });
-      message.success(`${role?.name} was deleted.`);
+      message.success(`${getSantiziedRoleName(role?.name)} was deleted.`);
       onChange(true, false);
     } catch (e) {
       message.fatal(`Failed to delete role - ${getErrorMessage(e)}`, e);
@@ -146,14 +168,17 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
       id={role?.id}
       key={role?.id}
       onSubmit={onSubmit}
-      initialValues={{ roleName: role?.name ?? '', description: role?.description ?? '' }}
+      initialValues={{
+        roleName: getSantiziedRoleName(role?.name) ?? '',
+        description: role?.description ?? '',
+      }}
       fieldValidators={fieldValidators}
       alwaysShowErrors={true}
       ref={ref}
     >
       {!isEditing && (
         <>
-          <h3 className={s.title}>{startCase(role?.name)}</h3>
+          <h3 className={s.title}>{startCase(getSantiziedRoleName(role?.name))}</h3>
           <h4>{role?.description}</h4>
         </>
       )}
@@ -169,7 +194,7 @@ export default function RoleForm({ role, onChange, existingRoleNames, type }: Ro
                 {...inputProps}
                 value={roleName}
                 onChange={(value) => {
-                  setRoleName(value);
+                  setRoleName(value ?? '');
                   inputProps.onChange?.(value);
                 }}
                 placeholder={'Enter role name'}

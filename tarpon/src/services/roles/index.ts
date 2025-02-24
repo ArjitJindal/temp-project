@@ -141,8 +141,8 @@ export class RoleService {
   }
 
   private async deleteRoleInternal(id: string) {
-    await this.auth0.deleteRole(id)
     await this.cache.deleteRole(id)
+    await this.auth0.deleteRole(id)
   }
 
   async getRole(roleId: string): Promise<AccountRole> {
@@ -186,6 +186,7 @@ export class RoleService {
       { id: userId },
       { roles: [role.id as string] }
     )
+    await this.updateUserRoleInAccounts(tenantId, userId, roleName)
   }
 
   private async updateUserRoleInAccounts(

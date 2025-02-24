@@ -1,5 +1,6 @@
 import { startCase } from 'lodash';
 import React from 'react';
+import { getSantiziedRoleName } from '../../utils';
 import Select, { SingleProps as SelectSingleProps } from '@/components/library/Select';
 import { useApi } from '@/api';
 import { useQuery } from '@/utils/queries/hooks';
@@ -22,7 +23,7 @@ export function RoleSelect(props: Props) {
       isLoading={isLoading(rolesResp.data)}
       options={getOr(rolesResp.data, []).map((name) => ({
         value: name.name,
-        label: startCase(name.name),
+        label: startCase(getSantiziedRoleName(name.name)),
       }))}
     />
   );

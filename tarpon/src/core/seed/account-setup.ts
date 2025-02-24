@@ -5,11 +5,12 @@ import { AccountsService } from '@/services/accounts'
 import { TenantRepository } from '@/services/tenants/repositories/tenant-repository'
 import { getNonDemoTenantId } from '@/utils/tenant'
 import { logger } from '@/core/logger'
+import { Account } from '@/@types/openapi-internal/Account'
 
 export async function fetchAndSetAccounts(
   tenantId: string,
   dynamoDb: DynamoDBDocumentClient
-): Promise<void> {
+): Promise<Account[]> {
   const originalTenantId = getNonDemoTenantId(tenantId)
   const tenantRepository = new TenantRepository(originalTenantId, {
     dynamoDb,
@@ -37,4 +38,6 @@ export async function fetchAndSetAccounts(
 
   logger.info(`Accounts: ${JSON.stringify(accounts.map((a) => a.email))}`)
   setAccounts(accounts)
+
+  return allAccounts
 }
